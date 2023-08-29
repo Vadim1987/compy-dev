@@ -225,6 +225,14 @@ local inputs = {
       'end',
     }
   },
+  {
+    compiles = true,
+    code = {
+      '  --[[',
+      '     wtf',
+      '  --]]',
+    }
+  },
   -- multiline string
   {
     compiles = false,
@@ -249,6 +257,14 @@ local inputs = {
       'local ml = [[ multiline',
       '  string',
       ']] -- comment',
+    }
+  },
+  {
+    compiles = true,
+    code = {
+      '  local ml = [[',
+      '     string',
+      ']]',
     }
   },
 }
