@@ -476,14 +476,9 @@ end
 
 function ConsoleController:autotest()
   local input = self.model.input
-  local output = self.model.output
-  local term = output.terminal
-  local w = term.width
-  local h = term.height
-  local char = 'x'
-  for _ = 1, (w * h) do
-    input:add_text(char)
-  end
+
+  input:add_text('example_projects()')
   self:evaluate_input()
-  input:add_text(char)
+  input:add_text('run_project("sine")')
+  -- self:evaluate_input()
 end
