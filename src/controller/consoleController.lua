@@ -252,8 +252,14 @@ function ConsoleController:_reset_executor_env()
 end
 
 function ConsoleController:reset()
+  self:quit_project()
+  self.model.input:reset(true) -- clear history
+end
+
+function ConsoleController:quit_project()
   self.model.output:reset()
   self.model.input:reset()
+  nativefs.setWorkingDirectory(love.filesystem.getSourceBaseDirectory())
   View.set_love_draw()
   self:_reset_executor_env()
 end
@@ -387,6 +393,9 @@ function ConsoleController:keypressed(k)
 
   -- Ctrl and Shift held
   if ctrl and shift then
+    if k == "q" then
+      self:quit_project()
+    end
     if k == "r" then
       self:reset()
     end
@@ -480,6 +489,8 @@ function ConsoleController:autotest()
 
   input:add_text('example_projects()')
   self:evaluate_input()
-  input:add_text('run_project("sine")')
+  input:add_text('list_projects()')
+  self:evaluate_input()
+  input:add_text('run_project("turtle")')
   -- self:evaluate_input()
 end
