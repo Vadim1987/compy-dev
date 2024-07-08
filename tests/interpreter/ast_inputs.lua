@@ -276,6 +276,7 @@ local clock_res = {
 local basics = {
   prep('local str = "asd"'),
   prep("local str = 'asd'", { 'local str = "asd"' }),
+  prep('local n = 3.0e2', 'local n = 300'),
 }
 
 local operators = {
