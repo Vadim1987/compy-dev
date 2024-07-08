@@ -473,6 +473,13 @@ local comments = {
 }
 
 local wrapping = {
+  prep('local t = { b = 2, 3, 4 }', {
+    'local t = {',
+    '  b = 2,',
+    '  3,',
+    '  4',
+    '}' }),
+  prep('a = 1 ; b = 2', { 'a = 1', 'b = 2' }),
   --- string literals and comments
   prep(
     'local long_string = "яяяяяяяяяяяяяяяяяяя22222222222222222eeeeeeeeeeeeeeeeeee6666666666666666666666666sssssssssss"',
@@ -524,7 +531,84 @@ local wrapping = {
     '  -- very long comment that will go over the line length',
     'end' }
   ),
+  prep({
+    'local s = [[asd',
+    'string',
+    ']]',
+  }, { [[local s = "asd\nstring\n"]] }),
+  prep({
+    'local s = [[asd',
+    'string',
+    '',
+    '',
+    ']]',
+  }, { [[local s = "asd\nstring\n\n\n"]] }),
+
+  prep({
+      'local ms=  [[█Bacon ipsum dolor amet ribeye hamburger',
+      'c█hislic pork short ribs',
+      'po█rchetta. Pork loin meatball ball tip',
+      'por█k chop pork capicola fatback andouille beef sausage short',
+      'loin█ bresaola venison.\\t]]',
+    },
+    -- --- [[ ]] version
+    -- {
+    --   'local ms = [[█Bacon ipsum dolor amet ribeye hamburger',
+    --   'c█hislic pork short ribs',
+    --   'po█rchetta. Pork loin meatball ball tip',Debug.text(comment_text)
+    -- }
+    --- " " version
+    {
+      'local ms = ',
+      [[  "█Bacon ipsum dolor amet ribeye hamburger\n" ..]],
+      [[  "c█hislic pork short ribs\n" ..]],
+      [[  "po█rchetta. Pork loin meatball ball tip\n" ..]],
+      [[  "por█k chop pork capicola fatback andouille beef sausage s" ..]],
+      [[  "hort\n" ..]],
+      [[  "loin█ bresaola venison.\t"]],
+    }
+  ),
+  prep({
+      'local str = "asd\\nbgf"',
+      'local mstr = [[rty',
+      'qwe]]',
+      'local ms = [[ms]]',
+      'local m_s = [[m\ns]]',
+    },
+    -- --- [[ ]] version
+    -- {
+    --   'local str = [[asd',
+    --   'bgf]]',
+    --   'local mstr = [[rty',
+    --   'qwe]]',
+    --   'local ms = "ms"',
+    -- }
+    --- " " version
+    {
+      [[local str = "asd\nbgf"]],
+      [[local mstr = "rty\nqwe"]],
+      'local ms = "ms"',
+      [[local m_s = "m\ns"]],
+    }
+  ),
   --- compound conditions
+  prep({
+    'if type(w) ~= "number" or w < 1 then',
+    '  fun()',
+    'end',
+  }),
+  prep({
+    'if type(w) ~= "number"',
+    '     or w < 1 then',
+    '  fun()',
+    'end',
+  }, {
+    'if type(w) ~= "number"',
+    '     or w < 1',
+    'then',
+    '  fun()',
+    'end',
+  }),
   prep({
     'local f = function()',
     '  for k, v in pairs(x) do',
@@ -875,72 +959,16 @@ local wrapping = {
     }),
 }
 
-local rest = {
-  ------------------
-  ---  canonize  ---
-  ------------------
-
-  prep('if a > b then     return a else return b end', {
-    'if b < a then',
-    '  return a',
-    'else',
-    '  return b',
-    'end' }
-  ),
-
+local functions = {
   prep({
-    'local draw = function()    x:draw()    end',
-  }, {
-    'local draw = function()',
-    '  x:draw()',
-    'end',
-  }),
-  --- operators
-  prep('if not (a == b) then end',
-    {
-      'if a ~= b then',
-      '  ',
-      'end'
-    }),
-  -----------------
-  --- splitting ---
-  -----------------
-  prep('local t = { b = 2, 3, 4 }', {
-    'local t = {',
-    '  b = 2,',
-    '  3,',
-    '  4',
-    '}' }),
-  prep('a = 1 ; b = 2', { 'a = 1', 'b = 2' }),
-
-  --------------------
-  --- conditionals ---
-  --------------------
-  prep({
-    'if type(w) ~= "number" or w < 1 then',
-    '  fun()',
-    'end',
-  }),
-  prep({
-    'if type(w) ~= "number"',
-    '     or w < 1 then',
-    '  fun()',
+    'love.draw = function()',
+    '  draw()',
     'end',
   }, {
-    'if type(w) ~= "number"',
-    '     or w < 1',
-    'then',
-    '  fun()',
+    'function love.draw()',
+    '  draw()',
     'end',
   }),
-  -----------------
-  --- functions ---
-  -----------------
-  -- prep({
-  --   'love.draw = function()',
-  --   '  draw()',
-  --   'end',
-  -- }),
   prep({
     'function love.draw()',
     '  draw()',
@@ -951,79 +979,18 @@ local rest = {
     '  ',
     'end',
   }),
-  -- prep({
-  --   'love.draw = function()',
-  --   '  -- f',
-  --   'end]]',
-  -- }),
-  -----------------
-  --- multliine ---
-  -----------------
-  prep({
-    'local s = [[asd',
-    'string',
-    ']]',
-  }, { [[local s = "asd\nstring\n"]] }),
-  prep({
-    'local s = [[asd',
-    'string',
-    '',
-    '',
-    ']]',
-  }, { [[local s = "asd\nstring\n\n\n"]] }),
-
-  prep({
-      'local ms=  [[█Bacon ipsum dolor amet ribeye hamburger',
-      'c█hislic pork short ribs',
-      'po█rchetta. Pork loin meatball ball tip',
-      'por█k chop pork capicola fatback andouille beef sausage short',
-      'loin█ bresaola venison.\\t]]',
-    },
-    -- --- [[ ]] version
-    -- {
-    --   'local ms = [[█Bacon ipsum dolor amet ribeye hamburger',
-    --   'c█hislic pork short ribs',
-    --   'po█rchetta. Pork loin meatball ball tip',Debug.text(comment_text)
-    -- }
-    --- " " version
-    {
-      'local ms = ',
-      [[  "█Bacon ipsum dolor amet ribeye hamburger\n" ..]],
-      [[  "c█hislic pork short ribs\n" ..]],
-      [[  "po█rchetta. Pork loin meatball ball tip\n" ..]],
-      [[  "por█k chop pork capicola fatback andouille beef sausage s" ..]],
-      [[  "hort\n" ..]],
-      [[  "loin█ bresaola venison.\t"]],
-    }
+  prep('local x = function() end', {
+    'local x = function()',
+    '  ',
+    'end',
+    --- TODO #46 consistent function sugar
+    --   'local function x()',
+    --   '  ',
+    --   'end',
+  }
   ),
-  prep({
-      'local str = "asd\\nbgf"',
-      'local mstr = [[rty',
-      'qwe]]',
-      'local ms = [[ms]]',
-      'local m_s = [[m\ns]]',
-    },
-    -- --- [[ ]] version
-    -- {
-    --   'local str = [[asd',
-    --   'bgf]]',
-    --   'local mstr = [[rty',
-    --   'qwe]]',
-    --   'local ms = "ms"',
-    -- }
-    --- " " version
-    {
-      [[local str = "asd\nbgf"]],
-      [[local mstr = "rty\nqwe"]],
-      'local ms = "ms"',
-      [[local m_s = "m\ns"]],
-    }
-  ),
-  -----------------
-  --- functions ---
-  -----------------
-
-  --- self :
+}
+local self = {
   prep({
     '--- @param t string|string[]',
     'function InputController:set_text(t)',
@@ -1072,80 +1039,113 @@ local rest = {
     '  return self.range',
     'end',
   }),
-  ------------
-  --- TODO ---
-  ------------
-  -- prep({
-  --   'local t = {',
-  --   '  draw = function(value)',
-  --   '    V:dibujar()',
-  --   '  end',
-  --   '  ',
-  --   '}'
-  -- }),
-  -- prep({
-  --   'local t = {',
-  --   '  draw = function(value)',
-  --   '    V:dibujar()',
-  --   '  end',
-  --   '  ',
-  --   '}'
-  -- }),
-  --prep({
-  --'if a == 2 then',
-  --'  function love.draw(sugar)',
-  --'    V:dibujar()',
-  --'  end',
-  ---- '  ',
-  --'end',
-  --}),
-  --prep({
-  --'if a == 2 then',
-  --'  love.draw = function(value)',
-  --'    V:dibujar()',
-  --'  end',
-  ---- '  ',
-  --'end',
-  --}, {
-  --'if a == 2 then',
-  --'  function love.draw(value)',
-  ---- '  love.draw = function(value)',
-  --'    V:dibujar()',
-  --'  end',
-  ---- '  ',
-  --'end',
-  --}),
 
-  --prep({
-  --'function love.draw(sugar)',
-  --'  V:dibujar()',
-  --'end',
-  --}),
-  --prep({
-  --'love.draw = function(value)',
-  --'  V:dibujar()',
-  --'end',
-  --}, {
-  --'function love.draw(value)',
-  ---- '  love.draw = function(value)',
-  --'  V:dibujar()',
-  --'end',
-  --}),
+  prep({
+    'local t = {',
+    '  draw = function(value)',
+    '    V:dibujar()',
+    '  end',
+    '  ',
+    '}'
+  }),
+  prep({
+    'local t = {',
+    '  draw = function(value)',
+    '    V:dibujar()',
+    '  end',
+    '  ',
+    '}'
+  }),
+  prep({
+    'if a == 2 then',
+    '  function love.draw(sugar)',
+    '    V:dibujar()',
+    '  end',
+    -- '  ',
+    'end',
+  }),
+  prep({
+    'if a == 2 then',
+    '  love.draw = function(value)',
+    '    V:dibujar()',
+    '  end',
+    -- '  ',
+    'end',
+  }, {
+    'if a == 2 then',
+    '  function love.draw(value)',
+    -- '  love.draw = function(value)',
+    '    V:dibujar()',
+    '  end',
+    -- '  ',
+    'end',
+  }),
+
+  prep({
+    'function love.draw(sugar)',
+    '  V:dibujar()',
+    'end',
+  }),
+  prep({
+    'love.draw = function(value)',
+    '  V:dibujar()',
+    'end',
+  }, {
+    'function love.draw(value)',
+    -- '  love.draw = function(value)',
+    '  V:dibujar()',
+    'end',
+  }),
+}
+
+local canon = {
+  prep('if a > b then     return a else return b end', {
+    'if b < a then',
+    '  return a',
+    'else',
+    '  return b',
+    'end' }
+  ),
+
+  prep({
+    'local draw = function()    x:draw()    end',
+  }, {
+    'local draw = function()',
+    '  x:draw()',
+    'end',
+  }),
+  --- operators
+  prep('if not (a == b) then end',
+    {
+      'if a ~= b then',
+      '  ',
+      'end'
+    }),
 }
 
 local full = {
   prep(sierpinski, sierpinski_res),
   prep(clock, clock_res),
   prep(meta, meta_res),
-
 }
 
+local todo = {
+  --- comment
+  -- prep({
+  --   'love.draw = function()',
+  --   '  -- f',
+  --   'end',
+  -- }),
+}
 return {
   { 'basics',    basics },
   { 'operators', operators },
+  { 'functions', functions },
+  { 'self',      self },
   { 'comments',  comments },
-  { 'rest',      rest },
+  { 'wrap',      wrapping },
+  { 'canon',     canon },
   { 'full',      full },
 
-  { 'wrap',      wrapping },
+  { 'todo',      todo },
 }
