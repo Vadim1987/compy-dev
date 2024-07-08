@@ -61,6 +61,9 @@ describe('parser #ast', function()
           local output = tc[2]
 
           Log.info(tag .. ' #' .. i)
+          if show_ast then
+            Log.info(tag .. ' #' .. i)
+          end
           local ok, r = parser.parse_prot(input)
           local result = {}
           if ok then
