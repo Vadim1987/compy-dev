@@ -77,12 +77,14 @@ end
 --- @return boolean success
 --- @return string? errmsg
 local function run_user_code(f, cc, project_path)
+  Log.info('run user code')
   local G = love.graphics
   local output = cc.model.output
   local env = cc:get_base_env()
 
   G.setCanvas(cc:get_canvas())
   G.push('all')
+
   G.setColor(Color[Color.black])
   local old_path = package.path
   local ok, call_err
@@ -92,10 +94,12 @@ local function run_user_code(f, cc, project_path)
   end
   ok, call_err = pcall(f)
   if project_path then -- user project exec
+    Log.info('run user project')
     Controller.set_user_handlers(env['love'])
   end
   package.path = old_path
   output:restore_main()
+
   G.pop()
   G.setCanvas()
   if not ok then
@@ -270,6 +274,7 @@ function ConsoleController.prepare_env(cc)
       local ok, run_err = run_user_code(f, cc, path)
       if ok then
         if Controller.has_user_update() then
+          Log.info('has user update')
           love.state.app_state = 'running'
         end
       else

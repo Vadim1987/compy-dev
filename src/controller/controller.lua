@@ -27,6 +27,7 @@ local set_handlers = function(userlove)
     local orig = Controller._defaults[key]
     local new = userlove[key]
     if orig and new and orig ~= new then
+      Log.warn('user handler set: ' .. key)
       love[key] = new
     end
   end
@@ -38,6 +39,7 @@ local set_handlers = function(userlove)
   -- update - special handling, inner updates
   local up = userlove.update
   if up and up ~= Controller._defaults.update then
+    Log.warn('user update() set')
     user_update = true
     Controller._userhandlers.update = up
   end
@@ -45,6 +47,7 @@ local set_handlers = function(userlove)
   -- drawing - separate table
   local draw = userlove.draw
   if draw and draw ~= View.main_draw then
+    Log.warn('user draw() set')
     love.draw = draw
     user_draw = true
   end
@@ -205,6 +208,7 @@ Controller = {
   --- @param C ConsoleController
   --- @param CV ConsoleView
   set_default_handlers = function(C, CV)
+    Log.info('set default handlers')
     Controller.set_love_keypressed(C)
     Controller.set_love_keyreleased(C)
     Controller.set_love_textinput(C)
