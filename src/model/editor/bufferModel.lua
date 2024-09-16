@@ -29,6 +29,7 @@ require('util.dequeue')
 --- @field get_selected_text function
 --- @field delete_selected_text function
 --- @field replace_selected_text function
+--- @field render_context fun(self): string[]
 BufferModel = {}
 BufferModel.__index = BufferModel
 
@@ -242,5 +243,22 @@ function BufferModel:replace_selected_text(t)
       return true, #t
     end
     return false
+  end
+end
+
+--- @return string[]
+function BufferModel:render_content()
+  if self.content_type == 'lua' then
+    local ret = Dequeue.typed('string')
+    for _, v in ipairs(self.content) do
+      if v.tag == 'empty' then
+        ret:append('')
+      elseif v.tag == 'chunk' then
+        ret:append_all(v.lines)
+      end
+    end
+    return ret
+  else
+    return self.content
   end
 end
