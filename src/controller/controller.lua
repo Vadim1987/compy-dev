@@ -37,6 +37,10 @@ local set_handlers = function(userlove)
   end
   -- update - special handling, inner updates
   local up = userlove.update
+  Log.debug(
+    Debug.mem(Controller._userhandlers.update),
+    Debug.mem(Controller._defaults.update)
+  )
   if up and up ~= Controller._defaults.update then
     user_update = true
     Controller._userhandlers.update = up
@@ -178,6 +182,8 @@ Controller = {
     if not Controller._defaults.update then
       Controller._defaults.update = update
     end
+    Log.debug('default update',
+      Debug.mem(update), Debug.mem(Controller._defaults.update))
     love.update = update
   end,
 
@@ -339,6 +345,7 @@ Controller = {
   set_user_handlers = set_handlers,
 
   has_user_update = function()
+    Log.debug(Debug.mem(Controller._userhandlers.update))
     return user_update
   end,
 
@@ -348,7 +355,11 @@ Controller = {
     local function save_if_differs(key)
       local orig = Controller._defaults[key]
       local new = userlove[key]
+      if key == 'update' then
+        Log.debug('user update', Debug.mem(new))
+      end
       if orig and new and orig ~= new then
+        Log.warn('setting user ' .. key)
         Controller._userhandlers[key] = new
       end
     end

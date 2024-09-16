@@ -255,6 +255,7 @@ function ConsoleController.prepare_env(cc)
   end
 
   prepared.run_project      = function(name)
+    Log.info('current:', love.state.app_state)
     if love.state.app_state == 'inspect' or
         love.state.app_state == 'running'
     then
@@ -268,6 +269,7 @@ function ConsoleController.prepare_env(cc)
       Log.info('Running \'' .. n .. '\'')
       local ok, run_err = run_user_code(f, cc, path)
       if ok then
+        Log.info('ok')
         if Controller.has_user_update() then
           love.state.app_state = 'running'
         end
@@ -508,6 +510,8 @@ function ConsoleController:finish_edit()
   if ok then
     love.state.app_state = love.state.prev_state
     love.state.prev_state = nil
+    Controller.set_default_handlers(self, self.view)
+    Controller.set_love_update(self)
   else
     print(err)
   end
