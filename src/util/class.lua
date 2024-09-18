@@ -4,14 +4,20 @@ return {
   create = function(constructor)
     local ret = {}
     ret.__index = ret
+    local function new(...)
+      if constructor then
+        return constructor(...)
+      end
+      return {}
+    end
 
     setmetatable(ret, {
       __call = function(cls, ...)
-        return cls.new(...)
+        local instance = new(...)
+        setmetatable(instance, cls)
+        return instance
       end,
     })
-
-    ret.new = constructor or function() end
 
     return ret
   end,
