@@ -1,6 +1,7 @@
 require("model.editor.content")
 require("model.interpreter.eval.luaEval")
 
+local class = require('util.class')
 require('util.table')
 require('util.range')
 require('util.string')
@@ -30,14 +31,7 @@ require('util.dequeue')
 --- @field delete_selected_text function
 --- @field replace_selected_text function
 --- @field render_context fun(self): string[]
-BufferModel = {}
-BufferModel.__index = BufferModel
-
-setmetatable(BufferModel, {
-  __call = function(cls, ...)
-    return cls.new(...)
-  end,
-})
+BufferModel = class.create()
 
 --- @param name string
 --- @param content string[]
@@ -45,7 +39,8 @@ setmetatable(BufferModel, {
 --- @param highlighter Highlighter
 --- @param printer function
 --- @return BufferModel?
-function BufferModel.new(name, content, chunker, highlighter, printer)
+function BufferModel.new(name, content,
+                         chunker, highlighter, printer)
   local _content, sel, ct
   local readonly = false
 
