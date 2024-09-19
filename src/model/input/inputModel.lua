@@ -1,4 +1,3 @@
-require("model.interpreter.item")
 require("model.input.inputText")
 require("model.input.selection")
 require("view.editor.visibleContent")
