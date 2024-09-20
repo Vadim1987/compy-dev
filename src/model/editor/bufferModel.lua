@@ -29,7 +29,7 @@ require('util.dequeue')
 --- @field get_selected_text function
 --- @field delete_selected_text function
 --- @field replace_selected_text function
---- @field render_context fun(self): string[]
+--- @field render_content fun(self): string[]
 BufferModel = class.create()
 
 --- @param name string
