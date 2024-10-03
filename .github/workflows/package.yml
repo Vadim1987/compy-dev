@@ -161,7 +161,7 @@ jobs:
           sed -i -e 's/%%APK%%/${{ env.LOVE_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
       - name: Package for android
         # commit hash
-        uses: compy-toys/love-actions-android@10afb672b148dd2ef21e997422068fec8b170b94
+        uses: compy-toys/love-actions-android@d93ffd901ac09d867eeae80c808cfc1fa18dd6f3
         with:
           love-ref: "loveputer"
           no-soft-keyboard: "enabled"
