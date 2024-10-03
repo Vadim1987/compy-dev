@@ -146,6 +146,7 @@ jobs:
         run: echo VER_CODE="$(echo $VERSION | sed -e 's/^v//' -e 's/\.//g')" >> $GITHUB_ENV
       - name: generate installer scripts
         run: |
+          mkdir -p ${{ env.OUTPUT_FOLDER }}
           sed -i -e 's/%%PACKAGE_NAME%%/${{ env.BUNDLE_ID }}/' misc/scripts/install_apk.sh
           cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
           cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
