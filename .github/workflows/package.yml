@@ -190,10 +190,17 @@ jobs:
       - name: upload
         uses: actions/upload-artifact@v4
         with:
-          path: ${{ env.OUTPUT_FOLDER }}/*.sh
+          name: ${{ env.APK_INSTALLER_DEBUG }}
+          path: ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
       - name: upload
         uses: actions/upload-artifact@v4
         with:
+          name: ${{ env.APK_INSTALLER_PROD }}
+          path: ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: files.txt
           path: ${{ env.OUTPUT_FOLDER }}/files.txt
 
   release:
