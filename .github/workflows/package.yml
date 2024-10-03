@@ -152,7 +152,7 @@ jobs:
           sed -i -e 's/%%APK%%/${{ env.LOVE_DEBUG_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
           sed -i -e 's/%%APK%%/${{ env.LOVE_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
       - name: Package for android
-        uses: compy-toys/love-actions-android@dc7e405
+        uses: compy-toys/love-actions-android@dc7e405a1111a61c0b2140a482ee65dcce8d5007
         with:
           love-ref: "loveputer"
           no-soft-keyboard: "enabled"
