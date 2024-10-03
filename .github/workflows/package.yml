@@ -180,6 +180,10 @@ jobs:
         with:
           name: ${{ env.LOVE_APK_NAME }}
           path: ${{ env.OUTPUT_FOLDER }}/${{ env.LOVE_APK_NAME }}
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{ env.OUTPUT_FOLDER }}/*.sh
 
   release:
     permissions:
