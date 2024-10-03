@@ -153,7 +153,7 @@ jobs:
           sed -i -e 's/%%APK%%/${{ env.LOVE_DEBUG_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
           sed -i -e 's/%%APK%%/${{ env.LOVE_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
       - name: Package for android
-        uses: compy-toys/love-actions-android@dc7e405a1111a61c0b2140a482ee65dcce8d5007
+        uses: compy-toys/love-actions-android@498fc44b0f2810b6b4110ecb4a7149c9f779c173
         with:
           love-ref: "loveputer"
           no-soft-keyboard: "enabled"
@@ -184,6 +184,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ${{ env.OUTPUT_FOLDER }}/*.sh
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{ env.OUTPUT_FOLDER }}/files.txt
 
   release:
     permissions:
