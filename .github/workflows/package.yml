@@ -144,8 +144,15 @@ jobs:
         env:
           VER: ${{ github.ref_name }}
         run: echo VER_CODE="$(echo $VERSION | sed -e 's/^v//' -e 's/\.//g')" >> $GITHUB_ENV
+      - name: generate installer scripts
+        run: |
+          sed -i -e 's/%%PACKAGE_NAME%%/${{ env.BUNDLE_ID }}/' misc/scripts/install_apk.sh
+          cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
+          cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
+          sed -i -e 's/%%APK%%/${{ env.LOVE_DEBUG_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
+          sed -i -e 's/%%APK%%/${{ env.LOVE_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
       - name: Package for android
-        uses: compy-toys/love-actions-android@ac152194a4e9d06013d0f2c57cfd1245db854527
+        uses: compy-toys/love-actions-android@dc7e405
         with:
           love-ref: "loveputer"
           no-soft-keyboard: "enabled"
@@ -162,14 +169,6 @@ jobs:
           keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           keystore-key-password: ${{ secrets.ANDROID_KEYSTORE_KEYPASSWORD }}
           keystore-store-password: ${{ secrets.ANDROID_KEYSTORE_STOREPASSWORD }}
-      - name: generate installer scripts
-        run: |
-          sed -i -e 's/%%PACKAGE_NAME%%/${{ env.BUNDLE_ID }}/' misc/scripts/install_apk.sh
-          cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
-          cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
-          sed -i -e 's/%%APK%%/${{ env.LOVE_DEBUG_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
-          sed -i -e 's/%%APK%%/${{ env.LOVE_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
-
       - name: upload
         uses: actions/upload-artifact@v4
         with:
