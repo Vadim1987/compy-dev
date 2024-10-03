@@ -27,6 +27,13 @@ jobs:
         with:
           submodules: "true"
 
+      - name: Cache interpreter and libraries
+        uses: actions/cache@v4
+        with:
+          path: |
+              .lua
+              .luarocks
+          key: lua_on_the_rocks
       - uses: jkl1337/gh-actions-lua@v11
         with:
           # luaVersion: "5.3"
