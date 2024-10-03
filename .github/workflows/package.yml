@@ -6,13 +6,15 @@ env:
   PRODUCT_NAME: ${{ vars.PRODUCT_NAME }}
   PRODUCT_NAME_ANSI: ${{ vars.PRODUCT_NAME_ANSI }}
   PRODUCT_NAME_SC: ${{ vars.PRODUCT_NAME_SC }}
-  BUNDLE_ID: com.example.${{ vars.PRODUCT_NAME_SC }}
+  BUNDLE_ID: ${{ vars.REVERSE_DOMAIN }}.app
   BUILD_TYPE: ${{ fromJSON('["dev", "release"]')[startsWith(github.ref, 'refs/tags/v')] }}
   OUTPUT_FOLDER: dist
   ARTIFACT_FOLDER: artifact
   LOVE_ARTIFACT_NAME: ${{ vars.PRODUCT_NAME_SC }}.love
   LOVE_DEBUG_APK_NAME: ${{ vars.PRODUCT_NAME }}-debug.apk
   LOVE_APK_NAME: ${{ vars.PRODUCT_NAME }}-release.apk
+  APK_INSTALLER_DEBUG: install_debug_apk.sh
+  APK_INSTALLER_PROD: install_prod_apk.sh
   LOVE_APPIMAGE: ${{ vars.PRODUCT_NAME_ANSI }}.AppImage
   LOVE_DEB: ${{ vars.PRODUCT_NAME_ANSI }}.deb
   LOVE_JS: ${{ vars.PRODUCT_NAME }}.web.zip
@@ -160,6 +162,14 @@ jobs:
           keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           keystore-key-password: ${{ secrets.ANDROID_KEYSTORE_KEYPASSWORD }}
           keystore-store-password: ${{ secrets.ANDROID_KEYSTORE_STOREPASSWORD }}
+      - name: generate installer scripts
+        run: |
+          sed -i -e 's/%%PACKAGE_NAME%%/${{ env.BUNDLE_ID }}/' misc/scripts/install_apk.sh
+          cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
+          cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
+          sed -i -e 's/%%APK%%/${{ env.LOVE_DEBUG_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
+          sed -i -e 's/%%APK%%/${{ env.LOVE_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
+
       - name: upload
         uses: actions/upload-artifact@v4
         with:
