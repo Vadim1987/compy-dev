@@ -154,7 +154,7 @@ jobs:
       - name: generate installer scripts
         run: |
           mkdir -p ${{ env.OUTPUT_FOLDER }}
-          sed -i -e 's/%%PACKAGE_NAME%%/${{ env.BUNDLE_ID }}/' misc/scripts/install_apk.sh
+          sed -i -e 's/%%BUNDLE_ID%%/${{ env.BUNDLE_ID }}/' misc/scripts/install_apk.sh
           cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
           cp misc/scripts/install_apk.sh ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_PROD }}
           sed -i -e 's/%%APK%%/${{ env.LOVE_DEBUG_APK_NAME }}/' ${{ env.OUTPUT_FOLDER }}/${{ env.APK_INSTALLER_DEBUG }}
