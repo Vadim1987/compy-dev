@@ -197,19 +197,16 @@ function BufferModel:replace_selected_text(t)
     local cs, ol = (function()
       local current = self.content[sel]
       if current then
-        return current.pos.start,
-            self.content[sel].pos:len()
+        return current.pos.start, self.content[sel].pos:len()
       end
       local last = self.content:last()
       if last then
-        return
-            self.content:last().pos.fin + 1, 0
+        return self.content:last().pos.fin + 1, 0
       else --- empty file
         return 1, 0
       end
     end)()
 
-    Log.debug(cs, ol, '\n', Debug.terse_array(self.content, sel))
     if n == 1 then
       self.content[sel] = chunks[1]
     else
