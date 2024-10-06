@@ -64,12 +64,13 @@ end
 --- @field chunker Chunker
 --- @field highlighter Highlighter
 --- @field printer Printer
+--- @field get_content function
+--- @field get_text_content function
 --- @field move_selection function
 --- @field get_selection function
 --- @field get_selected_text function
 --- @field delete_selected_text function
 --- @field replace_selected_text function
---- @field render_content fun(self): string[]
 BufferModel = class.create(new)
 
 --- @return Dequeue
@@ -81,7 +82,7 @@ end
 function BufferModel:get_text_content()
   if self.content_type == 'lua'
   then
-    return self:render_blocks(self.content)
+    return self:_render_blocks(self.content)
   elseif self.content_type == 'plain'
   then
     return self.content
@@ -90,7 +91,7 @@ function BufferModel:get_text_content()
 end
 
 --- @return string[]
-function BufferModel:render_blocks(blocks)
+function BufferModel:_render_blocks(blocks)
   local ret = Dequeue.typed('string')
   for _, v in ipairs(blocks) do
     if v.tag == 'chunk' then
@@ -273,22 +274,5 @@ function BufferModel:replace_selected_text(t)
       return true, #t
     end
     return false
-  end
-end
-
---- @return string[]
-function BufferModel:render_content()
-  if self.content_type == 'lua' then
-    local ret = Dequeue.typed('string')
-    for _, v in ipairs(self.content) do
-      if v.tag == 'empty' then
-        ret:append('')
-      elseif v.tag == 'chunk' then
-        ret:append_all(v.lines)
-      end
-    end
-    return ret
-  else
-    return self.content
   end
 end

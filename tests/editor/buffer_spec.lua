@@ -163,7 +163,7 @@ print(sierpinski(4))]])
         assert.same(n_blocks, #bc)
         assert.same(n_blocks, buffer:get_content_length())
 
-        assert.same(text, buffer:render_content())
+        assert.same(text, buffer:get_text_content())
 
         assert.same(n_blocks + 1, buffer:get_selection())
         local ln = buffer:get_selection_start_line()

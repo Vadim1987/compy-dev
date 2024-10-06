@@ -64,7 +64,7 @@ end
 function EditorController:close()
   local buf = self:get_active_buffer()
   self.input:clear()
-  local content = buf:render_content()
+  local content = buf:get_text_content()
   return buf.name, content
 end
 
