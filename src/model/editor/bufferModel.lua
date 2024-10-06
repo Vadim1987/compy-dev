@@ -234,6 +234,9 @@ function BufferModel:replace_selected_text(t)
     end)()
 
     if n == 1 then
+      local c = chunks[1]
+      local nr = c.pos:translate(cs - 1)
+      c.pos = nr
       self.content[sel] = chunks[1]
     else
       --- remove old chunk
