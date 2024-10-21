@@ -76,61 +76,87 @@ BlendMode = Alpha AlphaMode
 local blendModes = {
   { -- 1
     name = 'Alpha AlphaM',
-    blend = function() G.setBlendMode('alpha', "alphamultiply") end
+    blend = function()
+      G.setBlendMode('alpha', "alphamultiply")
+    end
   },
   { -- 2
     name = 'Alpha PreM',
-    blend = function() G.setBlendMode('alpha', "premultiplied") end
+    blend = function()
+      G.setBlendMode('alpha', "premultiplied")
+    end
   },
   -- add
   {
     name = 'Add AlphaM',
-    blend = function() G.setBlendMode('add', "alphamultiply") end
+    blend = function()
+      G.setBlendMode('add', "alphamultiply")
+    end
   },
   {
     name = 'Add PreM',
-    blend = function() G.setBlendMode('add', "premultiplied") end
+    blend = function()
+      G.setBlendMode('add', "premultiplied")
+    end
   },
   -- subtract
   {
     name = 'Subtract AlphaM',
-    blend = function() G.setBlendMode('subtract', "alphamultiply") end
+    blend = function()
+      G.setBlendMode('subtract', "alphamultiply")
+    end
   },
   {
     name = 'Subtract PreM',
-    blend = function() G.setBlendMode('subtract', "premultiplied") end
+    blend = function()
+      G.setBlendMode('subtract', "premultiplied")
+    end
   },
   -- replace
   {
     name = 'Replace AlphaM',
-    blend = function() G.setBlendMode('replace', "alphamultiply") end
+    blend = function()
+      G.setBlendMode('replace', "alphamultiply")
+    end
   },
   {
     name = 'Replace PreM',
-    blend = function() G.setBlendMode('replace', "premultiplied") end
+    blend = function()
+      G.setBlendMode('replace', "premultiplied")
+    end
   },
 
   -- pre only
   {
     name = 'Multiply PreM',
-    blend = function() G.setBlendMode('multiply', "premultiplied") end
+    blend = function()
+      G.setBlendMode('multiply', "premultiplied")
+    end
   },
   {
     name = 'Darken PreM',
-    blend = function() G.setBlendMode('darken', "premultiplied") end
+    blend = function()
+      G.setBlendMode('darken', "premultiplied")
+    end
   },
   {
     name = 'Lighten PreM',
-    blend = function() G.setBlendMode('lighten', "premultiplied") end
+    blend = function()
+      G.setBlendMode('lighten', "premultiplied")
+    end
   },
   -- screen
   {
     name = 'Screen AlphaM',
-    blend = function() G.setBlendMode('screen', "alphamultiply") end
+    blend = function()
+      G.setBlendMode('screen', "alphamultiply")
+    end
   },
   {
     name = 'Screen PreM',
-    blend = function() G.setBlendMode('screen', "premultiplied") end
+    blend = function()
+      G.setBlendMode('screen', "premultiplied")
+    end
   },
 }
 

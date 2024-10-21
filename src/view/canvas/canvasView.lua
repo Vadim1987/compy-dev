@@ -28,27 +28,7 @@ function CanvasView:draw(
   local cfg = self.cfg
   local test = cfg.drawtest
   local vcfg = cfg.view
-
-  G.reset()
-  G.push('all')
-  G.setBlendMode('alpha', 'alphamultiply') -- default
-  if ViewUtils.conditional_draw('show_snapshot') then
-    if snapshot then
-      G.draw(snapshot)
-    end
-    self.bg:draw(drawable_height)
-  end
-
-  if not test then
-    if ViewUtils.conditional_draw('show_terminal') then
-      -- G.setBlendMode('multiply', "premultiplied")
-      TerminalView.draw(terminal, term_canvas, snapshot)
-    end
-    if ViewUtils.conditional_draw('show_canvas') then
-      G.draw(canvas)
-    end
-    G.setBlendMode('alpha', 'alphamultiply') -- default
-  else
+  local function test_blend_modes()
     G.setBlendMode('alpha', 'alphamultiply') -- default
     for i = 0, love.test_grid_y - 1 do
       for j = 0, love.test_grid_x - 1 do
@@ -82,6 +62,29 @@ function CanvasView:draw(
         end
       end
     end
+  end
+
+  G.reset()
+  G.push('all')
+  G.setBlendMode('alpha', 'alphamultiply') -- default
+  if ViewUtils.conditional_draw('show_snapshot') then
+    if snapshot then
+      G.draw(snapshot)
+    end
+    self.bg:draw(drawable_height)
+  end
+
+  if not test then
+    if ViewUtils.conditional_draw('show_terminal') then
+      -- G.setBlendMode('multiply', "premultiplied")
+      TerminalView.draw(terminal, term_canvas, snapshot)
+    end
+    if ViewUtils.conditional_draw('show_canvas') then
+      G.draw(canvas)
+    end
+    G.setBlendMode('alpha', 'alphamultiply') -- default
+  else
+    test_blend_modes()
   end
 
   G.pop()
