@@ -132,6 +132,7 @@ jobs:
   deploy-staging:
     runs-on: ubuntu-latest
     needs: build-web
+    if: endsWith(github.repository, '-dev')
     environment: staging
     steps:
       - name: Download package
