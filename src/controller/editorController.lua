@@ -125,6 +125,11 @@ function EditorController:get_mode()
   return self.mode
 end
 
+--- @return boolean
+function EditorController:is_normal_mode()
+  return is_normal(self.mode)
+end
+
 --- @param clipboard string
 function EditorController:set_clipboard(clipboard)
   self.state.clipboard = clipboard
