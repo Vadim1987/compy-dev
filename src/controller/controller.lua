@@ -25,6 +25,8 @@ local _C
 
 --- @param msg string
 local function user_error_handler(msg)
+  --- TODO more robust extraction
+  --- TODO restore filename for non-web
   local parts = string.split(msg, ':')
   if #parts > 2 then
     local path       = parts[1]
@@ -34,7 +36,7 @@ local function user_error_handler(msg)
     local filename   = path_parts[#path_parts]
     msg              = string.format('%s:%s: %s', filename, ln, err)
   end
-  local user_msg = 'Execution error at ' .. msg
+  local user_msg = 'Execution error at ' .. (msg or '')
   _C:suspend_run(user_msg)
   print(user_msg)
 end
@@ -45,7 +47,16 @@ end
 --- @return any result
 --- @return any ...
 local function wrap(f, ...)
-  return xpcall(f, user_error_handler, ...)
+  if _G.web then
+    --- TODO: why is xpcall uncooperative on web
+    local ok, r = pcall(f, ...)
+    if not ok then
+      user_error_handler(r)
+    end
+    return r
+  else
+    return xpcall(f, user_error_handler, ...)
+  end
 end
 
 --- @param f function
