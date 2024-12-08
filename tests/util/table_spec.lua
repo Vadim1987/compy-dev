@@ -113,13 +113,15 @@ describe('table utils #table', function()
     it('works', function()
       local rt = table.new_reftable()
 
-      rt(1)
+      local val = 1
+      rt(val)
       local v = rt()
-      assert.same(v, rt())
+      assert.same(val, v)
 
-      rt('test')
+      local val2 = 'test'
+      rt(val2)
       v = rt()
-      assert.same(v, rt())
+      assert.same(val2, v)
     end)
     it('creates new table on every invocation', function()
       local rt1 = table.new_reftable()
