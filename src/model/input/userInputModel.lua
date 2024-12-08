@@ -1,5 +1,6 @@
 require("model.input.inputText")
 require("model.input.selection")
+require("model.input.history")
 require("model.lang.error")
 require("view.editor.visibleContent")
 
@@ -12,6 +13,7 @@ require("util.debug")
 --- @class UserInputModel
 --- @field oneshot boolean
 --- @field entered InputText
+--- @field history History
 --- @field evaluator Evaluator
 --- @field cursor Cursor
 --- @field error string[]?
@@ -44,6 +46,7 @@ function UserInputModel.new(cfg, eval, oneshot, custom_label)
   local self = setmetatable({
     oneshot = oneshot,
     entered = InputText(),
+    history = History(),
     evaluator = eval,
     cursor = Cursor(),
     selection = InputSelection(),
@@ -342,9 +345,14 @@ function UserInputModel:clear_input()
   self:clear_selection()
   self:_update_cursor(true)
   self.custom_status = nil
+  self.history:reset_index()
 end
 
-function UserInputModel:reset()
+--- @param history boolean?
+function UserInputModel:reset(history)
+  if history and self:keep_history() then
+    self.history = History()
+  end
   self:clear_input()
 end
 
@@ -371,6 +379,51 @@ function UserInputModel:highlight()
     local hl = p.highlighter(text)
 
     return { hl = hl, parse_err = parse_err }
+  end
+end
+
+----------------
+--  history   --
+----------------
+
+--- @return boolean
+function UserInputModel:keep_history()
+  return not self.oneshot
+end
+
+--- @private
+function UserInputModel:_remember()
+  if self:keep_history() then
+    local ent = self.entered
+    if string.is_non_empty_string_array(ent) then
+      self.history:remember(ent)
+    end
+  end
+end
+
+function UserInputModel:history_back()
+  if self:keep_history() then
+    local t = self:get_text()
+    local ok, hist = self.history:history_back(t)
+    -- TODO: remember cursor pos?
+    if ok then
+      self:set_text(hist)
+      self:jump_end()
+    end
+  end
+end
+
+function UserInputModel:history_fwd()
+  if self:keep_history() then
+    local t = self:get_text()
+    local ok, hist = self.history:history_fwd(t)
+    -- TODO: remember cursor pos?
+    if ok then
+      self:set_text(hist)
+      self:jump_end()
+    else
+      self:clear_input()
+    end
   end
 end
 
@@ -727,11 +780,10 @@ end
 --- @return string[]|EvalError[]
 function UserInputModel:handle(eval)
   local ent = self:get_text()
-  self.historic_index = nil
   local ok, result
   if string.is_non_empty_string_array(ent) then
     local ev = self.evaluator
-    -- self:_remember(ent)
+    self:_remember()
     if eval then
       ok, result = ev.apply(ent)
       if ok then

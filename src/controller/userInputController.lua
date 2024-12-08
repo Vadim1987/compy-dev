@@ -126,6 +126,22 @@ function UserInputController:jump_home()
 end
 
 ----------------------
+---     history    ---
+----------------------
+--- @param history boolean?
+function UserInputController:reset(history)
+  self.model:reset(history)
+end
+
+function UserInputController:history_back()
+  self.model:history_back()
+end
+
+function UserInputController:history_fwd()
+  self.model:history_fwd()
+end
+
+----------------------
 --- event handlers ---
 ----------------------
 
