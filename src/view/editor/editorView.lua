@@ -1,4 +1,3 @@
-require("view.input.interpreterView")
 require("view.input.userInputView")
 require("view.editor.bufferView")
 require("view.editor.search.searchView")

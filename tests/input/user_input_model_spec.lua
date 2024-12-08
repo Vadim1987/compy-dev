@@ -9,7 +9,7 @@ if not orig_print then
 end
 
 describe("input model spec #input", function()
-  local w        = 80
+  local w        = 64
   local mockConf = {
     view = {
       drawableChars = w,
@@ -677,59 +677,78 @@ describe("input model spec #input", function()
     end)
   end)
 
+  --- Handling what happens on the limits has been decoupled
+  --- from the input model, so the tests that assumed history
+  --- change are broken. This function is intended to simulate
+  --- part of what happens in real usages with history
+  --- @param m UserInputModel
+  --- @param dir VerticalDir
+  local history_wrapped_action = function(m, dir)
+    local l = m:cursor_vertical_move(dir)
+    if l then
+      if dir == 'up' then
+        m:history_back()
+      end
+      if dir == 'down' then
+        m:history_fwd()
+      end
+    end
+  end
+
   ----------------------
   -- Very long lines  --
   ----------------------
   describe('very long lines', function()
-    local w = 80
-    local cfg = {
-      view = {
-        drawableChars = w,
-        lines = 16,
-        input_max = 14
-      }
-    }
-    local model = UserInputModel(cfg, luaEval)
-    local n_char = w * 2 + 4
+    local model = UserInputModel(mockConf, TextEval)
+    local off = 4
+    local n_char = w * 2 + off
     local char1 = 'щ'
     describe('cursor', function()
-      for _ = 1, n_char do
-        model:add_text(char1)
-      end
-      local cl0, cc0 = model:_get_cursor_pos()
-      assert.same(1, cl0)
-      assert.same(n_char + 1, cc0)
+      setup(function()
+        for _ = 1, n_char do
+          model:add_text(char1)
+        end
+      end)
       it('moves up inside long line', function()
-        model:cursor_vertical_move('up')
-        model:cursor_vertical_move('up')
+        local cl0, cc0 = model:_get_cursor_pos()
+        assert.same(1, cl0)
+        assert.same(n_char + 1, cc0)
+        history_wrapped_action(model, 'up')
+        history_wrapped_action(model, 'up')
         local cl, cc = model:_get_cursor_pos()
         assert.same(1, cl)
-        -- TODO
-        -- assert.same(n_char + 1 - w, cc)
-        -- model:cursor_vertical_move('up')
-        -- cl, cc = model:_get_cursor_pos()
-        -- assert.same(1, cl)
-        -- assert.same(n_char + 1 - w - w, cc)
+        assert.same(off + 1, cc)
+        history_wrapped_action(model, 'up')
+        cl, cc = model:_get_cursor_pos()
+        assert.same(1, cl)
       end)
-      it('moves down inside long line', function()
+      it('moves up inside long line', function()
+        history_wrapped_action(model, 'down')
         model:jump_home()
         local cl, cc = model:_get_cursor_pos()
         assert.same(1, cl)
         assert.same(1, cc)
-        model:cursor_vertical_move('down')
+        history_wrapped_action(model, 'down')
         cl, cc = model:_get_cursor_pos()
         assert.same(1, cl)
-        -- TODO
-        -- assert.same(1 + w, cc)
-        -- model:cursor_vertical_move('down')
-        -- cl, cc = model:_get_cursor_pos()
-        -- assert.same(1, cl)
+        -- assert.same(w + 1, cc)
+        history_wrapped_action(model, 'down')
+        cl, cc = model:_get_cursor_pos()
+        assert.same(1, cl)
         -- assert.same(1 + w + w, cc)
       end)
-
-      model:cancel()
-      -- TODO
-      -- assert.same({ '' }, model:get_text())
+      it('moves up in history on first line', function()
+        model:cancel()
+        assert.same({ '' }, model:get_text())
+        local he = model.history:_get_entries()
+        -- Log.debug(Debug.terse_t(he, nil, nil, true))
+        history_wrapped_action(model, 'down')
+        -- Log.info(Debug.text_table(model:get_text()))
+        local cl, cc = model:_get_cursor_pos()
+        assert.same(1, cl)
+        -- assert.same(n_char + 1, cc)
+        model:cursor_vertical_move('up')
+      end)
     end)
   end)
 end)
