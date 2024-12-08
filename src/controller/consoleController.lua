@@ -1,6 +1,7 @@
-require("controller.inputController")
-require("controller.interpreterController")
+require("view.input.userInputView")
 require("controller.editorController")
+require("controller.userInputController")
+
 
 local class = require('util.class')
 require("util.testTerminal")
@@ -16,8 +17,7 @@ require("util.table")
 --- @field base_env LuaEnv
 --- @field project_env LuaEnv
 --- @field loaders function[]
---- @field input InputController
---- @field interpreter InterpreterController
+--- @field input UserInputController
 --- @field editor EditorController
 --- @field view ConsoleView?
 --- @field cfg Config
@@ -32,13 +32,12 @@ function ConsoleController.new(M)
   local pre_env = table.clone(env)
   local config = M.cfg
   pre_env.font = config.view.font
-  local IpC = InputController(M.interpreter.input)
-  local InC = InterpreterController(M.interpreter, IpC)
+  local IC = UserInputController(M.input)
   local EC = EditorController(M.editor)
   local self = setmetatable({
     time        = 0,
     model       = M,
-    interpreter = InC,
+    input       = IC,
     editor      = EC,
     -- console runner env
     main_env    = env,
@@ -149,8 +148,8 @@ function ConsoleController:run_project(name)
   if love.state.app_state == 'inspect' or
       love.state.app_state == 'running'
   then
-    self.interpreter:set_error(
-      "There's already a project running!", true)
+    self.input:set_error(
+      { "There's already a project running!" })
     return
   end
   local P = self.model.projects
@@ -166,8 +165,8 @@ function ConsoleController:run_project(name)
     if f then
       local n = name or P.current.name or 'project'
       Log.info('Running \'' .. n .. '\'')
-      local ok, run_err = run_user_code(f, self, path)
-      if ok then
+      local rok, run_err = run_user_code(f, self, path)
+      if rok then
         if Controller.has_user_update() then
           love.state.app_state = 'running'
         end
@@ -443,15 +442,14 @@ function ConsoleController:get_timestamp()
 end
 
 function ConsoleController:evaluate_input()
-  --- @type InterpreterController
-  local inter = self.interpreter
+  local inter = self.input
 
   local text = inter:get_text()
   local eval = inter:get_eval()
 
   local eval_ok, res = inter:evaluate()
 
-  if eval.parser then
+  if eval and eval.parser then
     if eval_ok then
       local code = string.unlines(text)
       local run_env = (function()
@@ -464,22 +462,18 @@ function ConsoleController:evaluate_input()
       if f then
         local _, err = run_user_code(f, self)
         if err then
-          inter:set_error(err, true)
+          inter:set_error({ err })
+        else
+          inter:clear()
         end
       else
-        -- this means that metalua failed to catch invalid code
-        local msg = LANG.get_call_error(load_err)
-        Log.error('Load error:', msg)
-        inter:set_error(load_err, true)
+        Log.error('Load error:', LANG.get_call_error(load_err))
+        inter:set_error(load_err)
       end
     else
       local eval_err = res
       if eval_err then
-        local msg = eval_err.msg
-        if string.is_non_empty_string(msg) then
-          orig_print(msg)
-          inter:set_error(msg, false)
-        end
+        inter:set_error(eval_err)
       end
     end
   end
@@ -491,7 +485,7 @@ end
 
 function ConsoleController:reset()
   self:quit_project()
-  self.interpreter:reset(true) -- clear history
+  self.input:reset(true) -- clear history
 end
 
 ---@return LuaEnv
@@ -534,7 +528,7 @@ function ConsoleController:suspend_run(msg)
   Log.info('Suspending project run')
   love.state.app_state = 'inspect'
   if msg then
-    self.interpreter:set_error(tostring(msg), true)
+    self.input:set_error({ tostring(msg) })
   end
 
   self.model.output:invalidate_terminal()
@@ -608,7 +602,7 @@ function ConsoleController:quit_project()
   self:stop_project_run()
   self:close_project()
   self.model.output:reset()
-  self.interpreter:reset()
+  self.input:reset()
 end
 
 --- @param name string
@@ -660,27 +654,27 @@ function ConsoleController:textinput(t)
   if love.state.app_state == 'editor' then
     self.editor:textinput(t)
   else
-    local inter = self.interpreter
-    if inter:has_error() then
-      inter:clear_error()
+    local input = self.input
+    if input:has_error() then
+      input:clear_error()
     else
       if Key.ctrl() and Key.shift() then
         return
       end
-      inter:textinput(t)
+      input:textinput(t)
     end
   end
 end
 
 --- @param k string
 function ConsoleController:keypressed(k)
-  local inter = self.interpreter
+  local input = self.input
 
   local function terminal_test()
     local out = self.model.output
     if not love.state.testing then
       love.state.testing = 'running'
-      inter:cancel()
+      input:cancel()
       TerminalTest.test(out.terminal)
     elseif love.state.testing == 'waiting' then
       TerminalTest.reset(out.terminal)
@@ -699,31 +693,31 @@ function ConsoleController:keypressed(k)
       return
     end
 
-    if inter:has_error() then
+    if input:has_error() then
       if k == 'space' or Key.is_enter(k)
           or k == "up" or k == "down" then
-        inter:clear_error()
+        input:clear_error()
       end
       return
     end
 
     if k == "pageup" then
-      inter:history_back()
+      input:history_back()
     end
     if k == "pagedown" then
-      inter:history_fwd()
+      input:history_fwd()
     end
-    local limit = inter:keypressed(k)
+    local limit = input:keypressed(k)
     if limit then
       if k == "up" then
-        inter:history_back()
+        input:history_back()
       end
       if k == "down" then
-        inter:history_fwd()
+        input:history_fwd()
       end
     end
     if not Key.shift() and Key.is_enter(k) then
-      if not inter:has_error() then
+      if not input:has_error() then
         self:evaluate_input()
       end
     end
@@ -745,7 +739,7 @@ end
 
 --- @param k string
 function ConsoleController:keyreleased(k)
-  self.interpreter:keyreleased(k)
+  self.input:keyreleased(k)
 end
 
 function ConsoleController:mousepressed(x, y, button)
@@ -754,7 +748,7 @@ function ConsoleController:mousepressed(x, y, button)
       self.editor.input:mousepressed(x, y, button)
     end
   else
-    self.interpreter:mousepressed(x, y, button)
+    self.input:mousepressed(x, y, button)
   end
 end
 
@@ -764,7 +758,7 @@ function ConsoleController:mousereleased(x, y, button)
       self.editor.input:mousereleased(x, y, button)
     end
   else
-    self.interpreter:mousereleased(x, y, button)
+    self.input:mousereleased(x, y, button)
   end
 end
 
@@ -774,7 +768,7 @@ function ConsoleController:mousemoved(x, y, dx, dy)
       self.editor.input:mousemoved(x, y)
     end
   else
-    self.interpreter:mousemoved(x, y)
+    self.input:mousemoved(x, y)
   end
 end
 
@@ -791,7 +785,7 @@ end
 --- @return ViewData
 function ConsoleController:get_viewdata()
   return {
-    w_error = self.interpreter:get_wrapped_error(),
+    w_error = self.input:get_wrapped_error(),
   }
 end
 

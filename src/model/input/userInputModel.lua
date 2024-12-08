@@ -357,7 +357,6 @@ function UserInputModel:reset(history)
 end
 
 function UserInputModel:text_change()
-  self.wrapped_text:wrap(self.entered)
   self.visible:wrap(self.entered)
   self.visible:check_range()
   self:_follow_cursor()
@@ -773,6 +772,7 @@ end
 
 function UserInputModel:cancel()
   self:handle(false)
+  self:reset()
 end
 
 --- @param eval boolean
@@ -792,6 +792,12 @@ function UserInputModel:handle(eval)
           love.event.push('userinput')
         end
       else
+        local perr = result[1]
+        if perr then
+          local c = perr.c
+          if c > 1 then c = c + 1 end
+          self:move_cursor(perr.l, c)
+        end
         return false, result
       end
     else

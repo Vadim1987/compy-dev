@@ -2,8 +2,9 @@ local class = require('util.class')
 require("util.key")
 require("util.string")
 
---- @param model InputModel
---- @param result function?
+--- @param model UserInputModel
+--- @param result table?
+--- @param disable_selection boolean?
 local new = function(model, result, disable_selection)
   return {
     model = model,
@@ -57,6 +58,11 @@ end
 --- @param eval Evaluator
 function UserInputController:set_eval(eval)
   self.model:set_eval(eval)
+end
+
+--- @return Evaluator
+function UserInputController:get_eval()
+  return self.model.evaluator
 end
 
 function UserInputController:clear()
@@ -118,7 +124,7 @@ function UserInputController:evaluate()
 end
 
 function UserInputController:cancel()
-  self.model:handle(false)
+  self.model:cancel()
 end
 
 function UserInputController:jump_home()
