@@ -82,8 +82,8 @@ function WrappedText:wrap(text)
     for i, l in ipairs(text) do
       local len = string.ulen(l)
       local brk = (function()
-        if len == 0 then return 0 end
-        local div = math.floor(len / w)
+        if not len or len == 0 then return 0 end
+        local div = math.intdiv(len, w)
         if math.fmod(len, w) == 0 then
           return div - 1
         else
