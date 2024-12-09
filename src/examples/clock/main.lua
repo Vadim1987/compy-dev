@@ -1,3 +1,5 @@
+local G = love.graphics
+
 width, height = G.getDimensions()
 midx = width / 2
 midy = height / 2
@@ -13,6 +15,7 @@ function setTime()
   S = os.date("%S")
   t = S + m * M + h * H
 end
+
 setTime()
 s = 0
 
