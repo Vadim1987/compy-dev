@@ -1,6 +1,4 @@
-r = {}
-
--- local length =
+r = user_input()
 
 min_length = function(n)
   return function(s)
@@ -41,10 +39,12 @@ is_number = function(s)
 end
 
 function love.update()
-  if not r[1] then
-    validated_input(r, { min_length(2), is_number })
+  if r:is_empty() then
+    validated_input(
+      { min_length(2), is_number },
+      'Enter a number greater than 100:')
   else
-    print(r[1])
-    r[1] = nil
+    local input = r()
+    print(input)
   end
 end

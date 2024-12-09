@@ -1,10 +1,10 @@
-r = {}
+r = user_input()
 
 function love.update()
-  if not r[1] then
-    input_text(r)
+  if r:is_empty() then
+    input_text()
   else
-    print(r[1])
-    r[1] = nil
+    local input = r()
+    print(input)
   end
 end

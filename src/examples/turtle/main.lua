@@ -1,3 +1,5 @@
+local G = love.graphics
+
 width, height = G.getDimensions()
 midx = width / 2
 midy = height / 2
@@ -9,7 +11,7 @@ debugColor = Color.yellow
 
 bg_color = Color.black
 
-local r = {}
+local r = user_input()
 
 function drawBackground(color)
   local c = bg_color
@@ -55,6 +57,7 @@ local function drawBody(x_r, y_r, head_r)
   -- head
   G.circle("fill", 0, 0 - y_r - head_r + 5, head_r, 100)
 end
+
 function drawTurtle(x, y)
   local head_r = 8
   local leg_r = 5
@@ -113,7 +116,7 @@ actions = {
 }
 
 function eval()
-  local input = r[1]
+  local input = r()
   local f = actions[input]
 
   if f then f() end
@@ -142,7 +145,7 @@ end
 
 function love.keyreleased(key)
   if key == 'i' then
-    input_text(r)
+    input_text('TURTLE')
   end
   if key == 'return' then
     eval()
