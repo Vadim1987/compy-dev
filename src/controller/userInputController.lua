@@ -14,7 +14,7 @@ end
 
 --- @class UserInputController
 --- @field model UserInputModel
---- @field result function
+--- @field result table
 --- @field disable_selection boolean
 UserInputController = class.create(new)
 
@@ -294,7 +294,7 @@ function UserInputController:keypressed(k)
       if ok then
         local text = evret
         local res = self.result
-        if type(res) == "function" then
+        if type(res) == "table" then
           local t = string.unlines(text)
           res(t)
         end

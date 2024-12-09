@@ -338,7 +338,7 @@ function ConsoleController.prepare_project_env(cc)
   require("controller.userInputController")
   require("model.input.userInputModel")
   require("view.input.userInputView")
-  local interpreter           = cc.model.interpreter
+  local cfg                   = cc.model.cfg
   ---@type table
   local project_env           = cc:get_pre_env_c()
   project_env.G               = love.graphics
@@ -369,40 +369,46 @@ function ConsoleController.prepare_project_env(cc)
     close_project(cc)
   end
 
+  local input_ref
+  local create_input_handle   = function()
+    input_ref = table.new_reftable()
+  end
+
   --- @param eval Evaluator
-  --- @param result table
-  local input                 = function(eval, result)
+  local input                 = function(eval)
     if love.state.user_input then
       return -- there can be only one
     end
-    local cfg = interpreter.cfg
-    local cb = function(v) table.insert(result, 1, v) end
 
+    if not input_ref then return end
     local input = UserInputModel(cfg, eval, true)
-    local controller = UserInputController(input, cb)
-    local view = UserInputView(cfg.view, controller)
+    local inp_con = UserInputController(input, input_ref)
+    local view = UserInputView(cfg.view, inp_con)
     love.state.user_input = {
-      M = input, C = controller, V = view
+      M = input, C = inp_con, V = view
     }
+    return input_ref
   end
 
-  project_env.input_code      = function(result)
-    return input(InputEvalLua, result)
-  end
-  project_env.input_text      = function(result)
-    return input(InputEvalText, result)
+  project_env.user_input      = function()
+    create_input_handle()
+    return input_ref
   end
 
-  project_env.validated_input = function(result, filters)
-    if love.state.user_input then
-      return -- there can be only one
-    end
-    return input(ValidatedTextEval(filters), result)
+  project_env.input_code      = function()
+    return input(InputEvalLua)
+  end
+  project_env.input_text      = function()
+    return input(InputEvalText)
+  end
+
+  project_env.validated_input = function(filters)
+    return input(ValidatedTextEval(filters))
   end
 
   if love.debug then
-    project_env.astv_input = function(result)
-      return input(LuaEditorEval, result)
+    project_env.astv_input = function()
+      return input(LuaEditorEval)
     end
   end
 
