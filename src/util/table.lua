@@ -1,18 +1,30 @@
 ---@alias reftable table
 ---@return reftable
 table.new_reftable = function()
-  return setmetatable({}, {
+  local RT = {}
+  --- @return boolean
+  function RT:is_empty()
+    if self.value then
+      return false
+    end
+    return true
+  end
+
+  setmetatable(RT, {
     __call = function(self, ...)
       local argv = { ... }
       local argc = #argv
 
       if argc == 0 then
-        return self.value
+        local v = self.value
+        self.value = nil
+        return v
       else
         self.value = argv[1]
       end
     end
   })
+  return RT
 end
 
 
