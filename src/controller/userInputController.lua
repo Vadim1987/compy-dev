@@ -281,6 +281,9 @@ function UserInputController:keypressed(k)
     if en and Key.shift() then
       input:hold_selection(false)
     end
+    if not Key.shift() then
+      input:release_selection()
+    end
   end
 
   local function cancel()
