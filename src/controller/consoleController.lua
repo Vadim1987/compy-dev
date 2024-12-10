@@ -545,6 +545,10 @@ end
 --- @return boolean success
 function ConsoleController:open_project(name)
   local P = self.model.projects
+  if not name then
+    print('No project name provided!')
+    return false
+  end
   local open, create, err = P:opreate(name)
   local ok = open or create
   if ok then
