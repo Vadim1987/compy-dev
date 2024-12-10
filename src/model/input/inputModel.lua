@@ -374,10 +374,7 @@ function InputModel:move_cursor(y, x, selection)
   else
     c = prev_c
   end
-  self.cursor = {
-    c = c,
-    l = l
-  }
+  self.cursor = Cursor(l, c)
 
   if selection == 'keep' then
   elseif selection == 'move' then

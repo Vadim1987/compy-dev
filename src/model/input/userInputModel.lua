@@ -210,7 +210,7 @@ function UserInputModel:swap_lines(ln_that, ln_this)
 
     self:_set_text_line(that, ln_this, true)
     self:_set_text_line(this, ln_that, true)
-    self:set_cursor({ l = ln_that, c = self:get_cursor_x() })
+    self:set_cursor(Cursor(ln_that, self:get_cursor_x()))
     self:text_change()
     return true
   end
@@ -442,10 +442,8 @@ function UserInputModel:move_cursor(y, x, selection)
   else
     c = prev_c
   end
-  self:set_cursor({
-    c = c,
-    l = l
-  })
+  self:set_cursor(Cursor(l, c))
+
 
   if selection == 'keep' then
   elseif selection == 'move' then
