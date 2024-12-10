@@ -8,11 +8,11 @@ local class = require('util.class')
 --- @param M EditorModel
 local function new(M)
   return {
-    input = UserInputController(M.input, nil, false),
+    input = UserInputController(M.input, nil, true),
     model = M,
     search = SearchController(
       M.search,
-      UserInputController(M.search.input, nil, false)
+      UserInputController(M.search.input, nil, true)
     ),
     view = nil,
     mode = 'edit',
