@@ -289,6 +289,7 @@ function UserInputController:keypressed(k)
     end
   end
   local function submit()
+    if self.model:get_text():is_empty() then return end
     if not Key.shift() and Key.is_enter(k) and input.oneshot then
       local ok, evret = input:evaluate()
       if ok then
