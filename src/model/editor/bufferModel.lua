@@ -353,7 +353,7 @@ function BufferModel:insert_newline(i)
 
     local ln = self:get_selection_start_line()
     self.content:insert(Empty(ln), bln)
-    self:_text_change()
+    self:_text_change(true)
     for j = bln + 1, self:get_content_length() do
       local b = self.content[j]
       local r = b.pos
