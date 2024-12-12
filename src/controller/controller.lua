@@ -351,6 +351,7 @@ Controller = {
       if k == 'f9' then
         if love.state.app_state == 'running'
             or love.state.app_state == 'inspect'
+            or love.state.app_state == 'project_open'
         then
           C:stop_project_run()
           local st = love.state.editor
