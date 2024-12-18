@@ -40,11 +40,22 @@ function is_number(s)
   return false, "NaN"
 end
 
+function is_natural(s)
+  local is_num, err = is_number(s)
+  if not is_num then
+    return false, err
+  end
+  local n = tonumber(s)
+  if n < 0 then
+    return false, "It's negative!"
+  end
+end
+
 function love.update()
   if not r:is_empty() then
     validated_input({
       min_length(2),
-      is_number
+      is_natural
     })
   else
     print(r())
