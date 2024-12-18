@@ -15,5 +15,6 @@ doc/parse
 src/assets/*.xcf
 src/assets/shot*.png
 src/ver.txt
+tests/autotest.lua
 host.lua
 local.just
