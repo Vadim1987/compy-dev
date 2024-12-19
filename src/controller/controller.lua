@@ -1,5 +1,6 @@
 require("util.string")
 require("util.key")
+local LANG = require("util.eval")
 
 local key_break_msg = "BREAK into program"
 
@@ -25,18 +26,8 @@ local _C
 
 --- @param msg string
 local function user_error_handler(msg)
-  --- TODO more robust extraction
-  --- TODO restore filename for non-web
-  local parts = string.split(msg, ':')
-  if #parts > 2 then
-    local path       = parts[1]
-    local ln         = parts[2]
-    local err        = string.trim(parts[3])
-    local path_parts = string.split(path, '/')
-    local filename   = path_parts[#path_parts]
-    msg              = string.format('%s:%s: %s', filename, ln, err)
-  end
-  local user_msg = 'Execution error at ' .. (msg or '')
+  local err = LANG.get_call_error(msg) or ''
+  local user_msg = 'Execution error at ' .. err
   _C:suspend_run(user_msg)
   print(user_msg)
 end
