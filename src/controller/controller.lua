@@ -339,7 +339,7 @@ Controller = {
           end
         end
       end
-      if k == 'f9' then
+      if k == 'f8' then
         if love.state.app_state == 'running'
             or love.state.app_state == 'inspect'
             or love.state.app_state == 'project_open'
