@@ -102,8 +102,8 @@ local function run_user_code(f, cc, project_path)
   output:restore_main()
   G.setCanvas()
   if not ok then
-    local e = LANG.get_call_error(call_err)
-    return false, e
+    local msg = LANG.get_call_error(call_err)
+    return false, msg
   end
   return true
 end
@@ -468,7 +468,8 @@ function ConsoleController:evaluate_input()
         end
       else
         -- this means that metalua failed to catch invalid code
-        Log.error('Load error:', LANG.get_call_error(load_err))
+        local msg = LANG.get_call_error(load_err)
+        Log.error('Load error:', msg)
         inter:set_error(load_err, true)
       end
     else
