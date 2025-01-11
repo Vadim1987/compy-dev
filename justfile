@@ -73,7 +73,7 @@ snap-examples:
   DIR="dist/examples/$TS"
   mkdir -p "$DIR"
 
-  for i in "$EX_PATH"/*/main.lua
+  for i in "$EX_PATH"/*/{main.lua,README}
   do
     P="$(basename $(dirname $i))"
     # du -sh "$PROJ_PATH/$P"
