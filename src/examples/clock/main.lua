@@ -6,9 +6,9 @@ midy = height / 2
 
 local M = 60
 local H = M * M
-local D = 24 * M * H
+local D = 24
 
-local h, m, s, t, ts
+local h, m, s, t
 function setTime()
   local time = os.date("*t")
   h = time.hour
@@ -18,7 +18,6 @@ function setTime()
 end
 
 setTime()
-ts = 0
 
 math.randomseed(os.time())
 color = math.random(7)
@@ -30,11 +29,9 @@ local function pad(i)
 end
 
 function getTimestamp()
-  local hours_f = pad(math.floor(ts / H))
-  local minutes_f = pad(math.fmod(math.floor(ts / M), M))
-  local hours = H <= ts and hours_f or "00"
-  local minutes = M <= ts and minutes_f or "00"
-  local seconds = pad(math.floor(math.fmod(ts, M)))
+  local hours = pad(math.fmod((t / H), D))
+  local minutes = pad(math.fmod((t / M), M))
+  local seconds = pad(math.fmod(t, M))
   return string.format("%s:%s:%s", hours, minutes, seconds)
 end
 
@@ -50,10 +47,6 @@ end
 
 function love.update(dt)
   t = t + dt
-  ts = math.floor(t)
-  if D < ts then
-    ts = 0
-  end
 end
 
 function cycle(c)
