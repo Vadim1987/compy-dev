@@ -19,6 +19,15 @@ describe("input model spec #input", function()
   }
   local luaEval  = LuaEval()
 
+  mock           = require("tests.mock")
+  local love     = {
+    state = {
+      --- @type AppState
+      app_state = 'ready',
+    },
+  }
+  mock.mock_love(love)
+
   -----------------
   --   ASCII     --
   -----------------
