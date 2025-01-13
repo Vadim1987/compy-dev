@@ -410,9 +410,10 @@ end
 --- @param k string
 function EditorController:_normal_mode_keys(k)
   local input          = self.input
+  local inputView      = self.view.input
   local is_empty       = input:is_empty()
-  local at_limit_start = input:is_at_limit('up')
-  local at_limit_end   = input:is_at_limit('down')
+  local at_limit_start = inputView:is_at_limit('up')
+  local at_limit_end   = inputView:is_at_limit('down')
   local passthrough    = true
   local block_input    = function() passthrough = false end
   --- @type BufferModel
