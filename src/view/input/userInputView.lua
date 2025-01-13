@@ -68,17 +68,6 @@ function UserInputView:draw_input(input, time)
 
   local start_y = h - apparentLines * fh
 
-  local drawBackground = function()
-    G.setColor(colors.bg)
-    G.rectangle("fill",
-      0,
-      start_y,
-      drawableWidth,
-      apparentHeight * fh)
-  end
-
-  start_y = h - apparentLines * fh
-
   local function drawCursor()
     local y_offset = math.floor(acc / w)
     local yi = y_offset + 1
@@ -100,6 +89,15 @@ function UserInputView:draw_input(input, time)
     G.setColor(cf_colors.input.cursor)
     G.print('|', (x_offset - 1.5) * fw, ch)
     G.pop()
+  end
+
+  local drawBackground = function()
+    G.setColor(colors.bg)
+    G.rectangle("fill",
+      0,
+      start_y,
+      drawableWidth,
+      apparentHeight * fh)
   end
 
   local highlight = input.highlight
