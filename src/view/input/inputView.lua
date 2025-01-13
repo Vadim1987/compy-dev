@@ -6,7 +6,7 @@ require("util.view")
 
 
 --- @param cfg ViewConfig
---- @param ctrl InputController
+--- @param ctrl UserInputController
 local function new(cfg, ctrl)
   return {
     cfg = cfg,
@@ -17,7 +17,7 @@ local function new(cfg, ctrl)
 end
 
 --- @class InputView : ViewBase
---- @field controller InputController
+--- @field controller UserInputController
 --- @field statusline table
 --- @field oneshot boolean
 InputView = class.create(new)

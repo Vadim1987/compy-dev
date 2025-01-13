@@ -10,6 +10,7 @@ local function press(k)
 end
 
 describe('mocker', function()
+  ---@diagnostic disable-next-line: missing-fields
   mock.mock_love({})
 
   describe('mocks keystrokes', function()
