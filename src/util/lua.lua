@@ -34,3 +34,19 @@ local t = {
 for k, v in pairs(t) do
   _G[k] = v
 end
+
+--- Returns the largest n such that n * y ≤ x ≤ (n + 1) * y
+--- with 0 as fallback in cases of IEEE754 (or math) shenanigans
+--- @param x number
+--- @param y number
+--- @return number
+local function intdiv(x, y)
+  local n, _ = math.modf(x / y)
+  if n ~= n then
+    return 0
+  else
+    return n
+  end
+end
+
+math.intdiv = intdiv
