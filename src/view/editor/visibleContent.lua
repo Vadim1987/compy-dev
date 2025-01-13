@@ -88,6 +88,7 @@ function VisibleContent:_update_meta()
   table.insert(rev, (#(self.text)))
   table.insert(fwd, { #(self.text) + 1 })
   self:_update_overscroll()
+  self:check_range()
 end
 
 --- @protected

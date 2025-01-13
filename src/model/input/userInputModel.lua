@@ -9,6 +9,7 @@ require("util.wrapped_text")
 require("util.dequeue")
 require("util.string")
 require("util.debug")
+require("util.lua")
 
 --- @class UserInputModel
 --- @field oneshot boolean
@@ -435,12 +436,13 @@ end
 function UserInputModel:_follow_cursor()
   local cl, cc = self:get_cursor_pos()
   local w = self.cfg.view.drawableChars
-  local acl = cl + (math.floor(cc / w) or 0)
+  local acl = cl + math.intdiv(cc, w)
   local vrange = self.visible:get_range()
   local diff = vrange:outside(acl)
   if diff ~= 0 then
     self.visible:move_range(diff)
   end
+  self.visible:check_range()
 end
 
 --- @private
