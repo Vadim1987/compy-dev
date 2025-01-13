@@ -71,7 +71,7 @@ end
 
 --- @param text Dequeue<string>
 function WrappedText:wrap(text)
-  local w = self.wrap_w
+  local w = self.wrap_w or 64
   local display = Dequeue.typed('string')
   local wrap_forward = {}
   local wrap_reverse = {}
