@@ -96,19 +96,24 @@ function UserInputModel:add_text(text)
       self:_set_text_line(nval, sl, true)
       self:_advance_cursor(string.ulen(text))
     else
-      for k, line in ipairs(lines) do
+      local ent = self.entered
+      local ins = table.clone(lines)
+      local fl = ins[1]
+      local ll = ins[n_added]
+      ins[1] = pre .. fl
+      ins[n_added] = ll .. post
+
+      for k = n_added, 1, -1 do
+        local line = ins[k]
+
         if k == 1 then
-          local nval = pre .. line
-          self:_set_text_line(nval, sl, true)
-        elseif k == n_added then
-          local nval = line .. post
-          local last_line_i = sl + k - 1
-          self:_set_text_line(nval, last_line_i, true)
-          self:move_cursor(last_line_i, string.ulen(line) + 1)
+          ent:update(line, sl)
         else
-          self:insert_text_line(line, sl + k - 1)
+          ent:insert(line, sl + 1)
         end
       end
+      local last_line_i = sl + n_added - 1
+      self:move_cursor(last_line_i, string.ulen(ll) + 1)
     end
     self:text_change()
   end
@@ -291,7 +296,7 @@ function UserInputModel:backspace()
     -- line merge
     pre = self:get_text_line(newcl)
     local pre_len = string.ulen(pre)
-    post = line
+    post = line or ''
     local nval = pre .. post
     self:_set_text_line(nval, newcl, true)
     self:move_cursor(newcl, pre_len + 1)
@@ -329,7 +334,7 @@ function UserInputModel:delete()
     pre = string.usub(line, 1, cc - 1)
     post = string.usub(line, cc + 1)
   end
-  local nval = pre .. post
+  local nval = (pre or '') .. (post or '')
   self:_set_text_line(nval, cl, true)
   self:text_change()
 end
