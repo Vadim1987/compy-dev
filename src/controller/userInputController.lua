@@ -90,6 +90,12 @@ function UserInputController:get_cursor_info()
   return self.model:get_cursor_info()
 end
 
+--- @return integer l
+--- @return integer c
+function UserInputController:get_cursor_pos()
+  return self.model:get_cursor_pos()
+end
+
 --- @param cursor Cursor
 function UserInputController:set_cursor(cursor)
   return self.model:set_cursor(cursor)
