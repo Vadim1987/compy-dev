@@ -212,3 +212,37 @@ function UserInputView:draw(input, time)
     self:draw_input(input, time)
   end
 end
+
+--- Whether the cursor is at limit, accounting for word wrap.
+--- If it's not at a limit line according to the model, it can't
+--- be there according to the view, but the reverse is not true,
+--- hence this utility function.
+--- @param dir VerticalDir
+--- @return boolean
+function UserInputView:is_at_limit(dir)
+  local ml = self.controller.model:is_at_limit(dir)
+  if not ml then
+    return false
+  else
+    local model = self.controller.model
+    local w = self.cfg.drawableChars
+    local cur = model:get_cursor_info().cursor
+    if dir == 'up' then
+      if cur.l ~= 1 then
+        return false
+      else
+        return cur.c < w
+      end
+    else
+      local nl = model:get_n_text_lines()
+      if cur.l ~= nl then
+        return false
+      else
+        local ll = string.ulen(model:get_current_line())
+        local il = math.floor(ll / w)
+        local c  = math.floor(cur.c / w)
+        return il == c
+      end
+    end
+  end
+end
