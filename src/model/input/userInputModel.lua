@@ -294,7 +294,7 @@ function UserInputModel:backspace()
       return
     end
     -- line merge
-    pre = self:get_text_line(newcl)
+    pre = self:get_text_line(newcl) or ''
     local pre_len = string.ulen(pre)
     post = line or ''
     local nval = pre .. post
