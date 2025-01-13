@@ -13,9 +13,18 @@ describe("input view spec #input", function()
     },
   }
 
-  local luaEval  = LuaEval()
-  local model    = UserInputModel(mockConf, luaEval)
-  local t        = string.times("x", mockConf.view.drawableChars + 3)
+  mock           = require("tests.mock")
+  local love     = {
+    state = {
+      --- @type AppState
+      app_state = 'ready',
+    },
+  }
+  mock.mock_love(love)
+
+  local luaEval = LuaEval()
+  local model   = UserInputModel(mockConf, luaEval)
+  local t       = string.times("x", mockConf.view.drawableChars + 3)
   model:add_text(t)
   local ctrl = UserInputController(model)
 
