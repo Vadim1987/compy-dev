@@ -239,6 +239,7 @@ function BufferModel:_text_change(rechunk)
   if self.content_type == 'lua' then
     if rechunk then
       self:rechunk()
+      self:rechunk()
     end
   end
 end
@@ -354,11 +355,6 @@ function BufferModel:insert_newline(i)
     local ln = self:get_selection_start_line()
     self.content:insert(Empty(ln), bln)
     self:_text_change(true)
-    for j = bln + 1, self:get_content_length() do
-      local b = self.content[j]
-      local r = b.pos
-      b.pos = r:translate(1)
-    end
   else
     self.content:insert('', bln)
     self:_text_change()
