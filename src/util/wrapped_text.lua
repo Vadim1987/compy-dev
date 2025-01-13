@@ -1,6 +1,7 @@
 local class = require('util.class')
 require("util.dequeue")
 require("util.string")
+require("util.lua")
 
 --- Example text: {
 --- 'ABBA',
