@@ -14,7 +14,6 @@ require("util.debug")
 --- @field entered InputText
 --- @field evaluator Evaluator
 --- @field cursor Cursor
---- @field wrapped_text WrappedText
 --- @field error string[]?
 --- @field visible VisibleContent
 --- @field selection InputSelection
@@ -31,7 +30,7 @@ require("util.debug")
 --- @field get_text fun(self): InputText
 --- @field get_text_line fun(self, integer): string
 --- @field get_n_text_lines fun(self): integer
---- @field get_wrapped_text fun(self): WrappedText
+--- @field get_wrapped_text fun(self): VisibleContent
 --- @field get_wrapped_error fun(self): string[]?
 --- @field swap_lines function
 UserInputModel = class.create()
@@ -42,13 +41,11 @@ UserInputModel = class.create()
 --- @param oneshot boolean?
 --- @param custom_label string?
 function UserInputModel.new(cfg, eval, oneshot, custom_label)
-  local w = cfg.view.drawableChars
   local self = setmetatable({
     oneshot = oneshot,
     entered = InputText(),
     evaluator = eval,
     cursor = Cursor(),
-    wrapped_text = WrappedText(w),
     selection = InputSelection(),
     custom_status = nil,
     custom_label = custom_label,
@@ -249,15 +246,15 @@ function UserInputModel:get_n_text_lines()
   return ent:length()
 end
 
---- @return WrappedText
+--- @return VisibleContent
 function UserInputModel:get_wrapped_text()
-  return self.wrapped_text
+  return self.visible
 end
 
 --- @param l integer
 --- @return string
 function UserInputModel:get_wrapped_text_line(l)
-  return self.wrapped_text:get_line(l)
+  return self:get_wrapped_text():get_line(l)
 end
 
 --- @return string
@@ -513,7 +510,7 @@ end
 --- @return boolean? limit
 function UserInputModel:cursor_vertical_move(dir)
   local cl, cc = self:_get_cursor_pos()
-  local w = self.wrapped_text.wrap_w
+  local w = self.visible.wrap_w
   local n = self:get_n_text_lines()
   local llen = string.ulen(self:get_text_line(cl))
   local full_lines = math.floor(llen / w)
@@ -765,7 +762,7 @@ function UserInputModel:get_wrapped_error()
   if self.error then
     local we = string.wrap_array(
       self.error,
-      self.wrapped_text.wrap_w)
+      self.visible.wrap_w)
     table.insert(we, 1, 'Errors:')
     return we
   end
@@ -798,13 +795,13 @@ end
 --- @param l integer
 --- @param c integer
 function UserInputModel:translate_grid_to_cursor(l, c)
-  local wt       = self.wrapped_text.wrap_reverse
+  local wt       = self.visible.wrap_reverse
   local li       = wt[l] or wt[#wt]
   local line     = self:get_wrapped_text_line(l)
   local llen     = string.ulen(line)
   local c_offset = math.min(llen + 1, c)
   local c_base   = l - li
-  local ci       = c_base * self.wrapped_text.wrap_w + c_offset
+  local ci       = c_base * self.visible.wrap_w + c_offset
   return li, ci
 end
 
