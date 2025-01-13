@@ -393,7 +393,7 @@ end
 function UserInputController:_handle_mouse(x, y, btn, handler)
   if btn == 1 then
     local im = self.model
-    local n_lines = im:get_wrapped_text():get_text_length()
+    local n_lines = im:get_wrapped_text():get_content_length()
     local c, l = self:_translate_to_input_grid(x, y)
     if l < n_lines then
       handler(n_lines - l, c)

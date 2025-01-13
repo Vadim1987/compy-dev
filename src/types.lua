@@ -63,7 +63,6 @@
 
 --- @class InputDTO table
 --- @field text InputText
---- @field wrapped_text WrappedText
 --- @field highlight Highlight
 --- @field wrapped_error string[]
 --- @field selection InputSelection
