@@ -4,6 +4,7 @@ require("util.range")
 
 --- @class VisibleContent: WrappedText
 --- @field range Range?
+--- @field offset integer
 --- @field size_max integer
 --- @field overscroll_max integer
 --- @field overscroll integer
@@ -51,7 +52,8 @@ function VisibleContent.new(w, fulltext, overscroll, size_max)
 end
 
 function VisibleContent:get_default_range()
-  local L = math.min(self.size_max, self:get_content_length())
+  local cl = self:get_content_length()
+  local L = math.min(self.size_max, cl)
   return Range(1, L)
 end
 

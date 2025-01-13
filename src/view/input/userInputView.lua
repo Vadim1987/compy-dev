@@ -44,12 +44,15 @@ function UserInputView:draw_input(input, time)
   local fw = cfg.fw
   local h = cfg.h
   local drawableWidth = cfg.drawableWidth
-  local drawableChars = cfg.drawableChars
+  local w = cfg.drawableChars
   -- drawtest hack
   if drawableWidth < love.fixWidth / 3 then
-    drawableChars = drawableChars * 2
+    w = w * 2
   end
 
+  local cursorInfo = self.controller:get_cursor_info()
+  local cl, cc = cursorInfo.cursor.l, cursorInfo.cursor.c
+  local acc = cc - 1
   local text = input.text
   local vc = input.visible
   local inLines = math.min(
@@ -77,9 +80,7 @@ function UserInputView:draw_input(input, time)
   start_y = h - apparentLines * fh
 
   local function drawCursor()
-    local cursorInfo = self.controller:get_cursor_info()
-    local cl, cc = cursorInfo.cursor.l, cursorInfo.cursor.c
-    local y_offset = math.floor((cc - 1) / drawableChars)
+    local y_offset = math.floor(acc / w)
     local yi = y_offset + 1
     local acl = (wrap_forward[cl] or { 1 })[yi] or 1
     local vcl = acl - vc.offset
@@ -88,8 +89,8 @@ function UserInputView:draw_input(input, time)
 
     local ch = start_y + (vcl - 1) * fh
     local x_offset = (function()
-      if cc > drawableChars then
-        return math.fmod(cc, drawableChars)
+      if cc > w then
+        return math.fmod(cc, w)
       else
         return cc
       end
@@ -103,7 +104,6 @@ function UserInputView:draw_input(input, time)
 
   local highlight = input.highlight
   local visible = vc:get_visible()
-  G.push('all')
   G.setFont(self.cfg.font)
   drawBackground()
   self.statusline:draw(status, apparentLines, time)
@@ -123,7 +123,7 @@ function UserInputView:draw_input(input, time)
         local hl_ci = (function()
           if #(wrap_forward[hl_li]) > 1 then
             local offset = l - hl_li
-            return c + drawableChars * offset
+            return c + w * offset
           else
             return c
           end
@@ -173,7 +173,6 @@ function UserInputView:draw_input(input, time)
     end
   end
   drawCursor()
-  G.pop()
 end
 
 --- @param input InputDTO
