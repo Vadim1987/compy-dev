@@ -53,12 +53,36 @@ function UserInputView:draw_input(input, time)
   local cursorInfo = self.controller:get_cursor_info()
   local cl, cc = cursorInfo.cursor.l, cursorInfo.cursor.c
   local acc = cc - 1
+  --- overflow binary and actual height (in lines)
+  local overflow = 0
+  local of_h = 0
+
   local text = input.text
   local vc = input.visible
   local inLines = math.min(
     vc:get_content_length(),
     cfg.input_max)
-  local apparentLines = inLines
+
+  --- The Overflow
+  --- When the cursor is on the last character of the line
+  --- we display it at the start of the next line as that's
+  --- where newly added text will appear
+  --- However, when the line also happens to be wrap-length,
+  --- there either is no next line yet, or it would look the
+  --- same as if it was at the start of the next.
+  --- Hence, the overflow phantom line.
+  local curline = text[cl]
+  local clen = string.ulen(curline)
+  local q, rem = math.modf(acc / w)
+  local ofpos = rem == 0 and acc == clen and clen > 0
+  if ofpos
+      and string.is_non_empty_string_array(text)
+  then
+    overflow = 1
+    of_h = q
+  end
+
+  local apparentLines = inLines + overflow
   local inHeight = inLines * fh
   local apparentHeight = inHeight
   local y = h - (#text * fh)
@@ -72,22 +96,16 @@ function UserInputView:draw_input(input, time)
     local y_offset = math.floor(acc / w)
     local yi = y_offset + 1
     local acl = (wrap_forward[cl] or { 1 })[yi] or 1
-    local vcl = acl - vc.offset
+    local vcl = acl - vc.offset + of_h
 
     if vcl < 1 then return end
 
     local ch = start_y + (vcl - 1) * fh
-    local x_offset = (function()
-      if cc > w then
-        return math.fmod(cc, w)
-      else
-        return cc
-      end
-    end)()
+    local x_offset = math.fmod(acc, w)
 
     G.push('all')
     G.setColor(cf_colors.input.cursor)
-    G.print('|', (x_offset - 1.5) * fw, ch)
+    G.print('|', (x_offset - .5) * fw, ch)
     G.pop()
   end
 
@@ -160,7 +178,12 @@ function UserInputView:draw_input(input, time)
         end)()
         --- number of lines back from EOF
         local diffset = #text - vc.range.fin
-        local dy = y - (-ln - diffset + 1) * fh
+        local of = overflow
+        --- push any further lines down to display phantom line
+        if ofpos and hl_li > cl then
+          of = of - 1
+        end
+        local dy = y - (-ln - diffset + 1 + of) * fh
         local dx = (c - 1) * fw
         ViewUtils.write_token(dy, dx,
           char, color, colors.bg, selected)
