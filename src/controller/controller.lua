@@ -5,6 +5,7 @@ local LANG = require("util.eval")
 local key_break_msg = "BREAK into program"
 
 local get_user_input = function()
+  if love.state.app_state == 'inspect' then return end
   return love.state.user_input
 end
 --- @type boolean
