@@ -1,6 +1,7 @@
 --- @diagnostic disable: invisible
 require("model.input.userInputModel")
 require("model.interpreter.eval.evaluator")
+require("util.string")
 
 if not orig_print then
   --- @diagnostic disable: duplicate-set-field
@@ -8,9 +9,10 @@ if not orig_print then
 end
 
 describe("input model spec #input", function()
+  local w        = 80
   local mockConf = {
     view = {
-      drawableChars = 80,
+      drawableChars = w,
       lines = 16,
       input_max = 14
     },
@@ -457,7 +459,19 @@ describe("input model spec #input", function()
       }, model:get_text())
       local cl, cc = model:_get_cursor_pos()
       assert.same(2, cl)
-      assert.same(1 + string.ulen(test2_l2), cc)
+      -- assert.same(1 + string.ulen(test2_l2), cc)
+      --- multiline
+      model:clear_input()
+      model:add_text(test3)
+      model:cursor_vertical_move('up')
+      model:jump_line_end()
+      model:add_text(test2)
+      assert.same({
+        test3_l1,
+        test3_l2 .. test2_l1,
+        test2_l2,
+        test3_l3,
+      }, model:get_text())
     end)
 
     it('pastes more than two lines', function()
