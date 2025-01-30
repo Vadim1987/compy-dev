@@ -10,6 +10,7 @@ local class = require('util.class')
 ---
 --- @field wrap fun(e: string|{msg: string}): Error?
 --- @field __tostring function
+--- @field get_first function
 
 --- @param msg string
 --- @param c number?
@@ -43,4 +44,35 @@ function Error:__tostring()
     end
   end
   return li .. self.msg
+end
+
+--- @param errors Error[]
+--- @return Error?
+function Error.get_first(errors)
+  if type(errors) == "table" then
+    local function get_ln(err)
+      if type(err) == "table" then
+        return err.l
+      end
+    end
+    local function same_ln(err, ln)
+      if type(err) == "table" then
+        return err.l == ln
+      end
+    end
+    local function get_c(err)
+      if type(err) == "table" then
+        return err.c
+      end
+    end
+    local earliest_line = table.min_by(errors, get_ln)
+    if earliest_line and earliest_line.l then
+      local line_first = table.filter_array(errors, function(t)
+        return same_ln(t, earliest_line.l)
+      end)
+      if #line_first > 0 then
+        return table.min_by(line_first, get_c)
+      end
+    end
+  end
 end
