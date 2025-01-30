@@ -36,7 +36,7 @@ local b = B(1, 2) --- results in a B instance where x = 1 and y = 2
 
 ```
 
-For more advanced uses, it will probably be necessary to manually control the
+For more advanced use cases, it will probably be necessary to manually control the
 metatable setup, this is achieved with the
 
 - `new()` method
