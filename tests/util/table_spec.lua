@@ -152,4 +152,16 @@ describe('table utils #table', function()
       assert.same(table.min_by(test, get_val), { v = 3 })
     end)
   end)
+
+  describe('filter', function()
+    it('simple', function()
+      local function pred(t) return t.v > 5 end
+
+      local res = {
+        { v = 10 },
+        { v = 8 },
+      }
+      assert.same(res, table.filter_array(test, pred))
+    end)
+  end)
 end)
