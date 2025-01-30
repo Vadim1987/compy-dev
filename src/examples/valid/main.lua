@@ -52,7 +52,7 @@ function is_natural(s)
 end
 
 function love.update()
-  if not r:is_empty() then
+  if r:is_empty() then
     validated_input({
       min_length(2),
       is_natural
