@@ -795,9 +795,11 @@ function UserInputModel:handle(eval)
       else
         local perr = result[1]
         if perr then
-          local c = perr.c
-          if c > 1 then c = c + 1 end
-          self:move_cursor(perr.l, c)
+          if perr.c then
+            local c = perr.c
+            if c > 1 then c = c + 1 end
+            self:move_cursor(perr.l, c)
+          end
         end
         return false, result
       end
