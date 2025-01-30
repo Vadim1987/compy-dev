@@ -280,6 +280,26 @@ function table.find_by(self, pred)
   end
 end
 
+--- Find element where the value returned by 'select' is the
+--- smallest, courtesy of Perplexity (mostly)
+--- @param self table[]
+--- @param select function
+--- @return table?
+function table.min_by(self, select)
+  local minValue = self[1]
+  local minKey = select(minValue)
+
+  for i = 2, #self do
+    local currentKey = select(self[i])
+    if currentKey < minKey then
+      minValue = self[i]
+      minKey = currentKey
+    end
+  end
+
+  return minValue
+end
+
 --- Return first n elements.
 --- TODO refactor to use slice()
 --- @param self table
