@@ -539,6 +539,11 @@ describe("input model spec #input", function()
     local test3_l1 = 'Вселяя'
     local test3_l2 = 'страх'
 
+    local test4 = ''
+    for _ = 1, w do
+      test4 = test4 .. 'x'
+    end
+
     it("jumps to start on [Home]", function()
       model:add_text(test1)
       model:jump_home()
@@ -644,6 +649,18 @@ describe("input model spec #input", function()
       local cl5, cc5 = model:get_cursor_pos()
       assert.same(cl5, test3_len)
       assert.same(cc5, 1)
+    end)
+
+    it('visible range check', function()
+      local m = UserInputModel(mockConf, luaEval)
+      m:cancel()
+      m:add_text(test4)
+      local cl, cc = model:get_cursor_pos()
+      assert.same(2, cl)
+      local vc = m.visible
+      local vis = vc:get_visible()
+      assert.same({ test4, }, vis)
+      assert.same(1, cc)
     end)
   end)
 
