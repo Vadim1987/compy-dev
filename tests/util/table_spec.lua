@@ -138,4 +138,18 @@ describe('table utils #table', function()
       assert.same(v2, rt2())
     end)
   end)
+
+  local test = {
+    { v = 10 },
+    { v = 3 },
+    { v = 8 },
+    { v = 5 },
+  }
+  describe('min_by', function()
+    it('simple', function()
+      local function get_val(t) return t.v end
+
+      assert.same(table.min_by(test, get_val), { v = 3 })
+    end)
+  end)
 end)
