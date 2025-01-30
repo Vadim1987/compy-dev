@@ -1,4 +1,5 @@
 require("model.lang.error")
+require("model.lang.syntaxHighlighter")
 
 require("util.debug")
 require("util.string")
@@ -117,14 +118,7 @@ return function(lib)
     if not tokens then return {} end
 
     --- @type SyntaxColoring
-    local colored_tokens = {}
-    setmetatable(colored_tokens, {
-      __index = function(table, key)
-        --- default value is an empty array
-        table[key] = {}
-        return table[key]
-      end
-    })
+    local colored_tokens = SyntaxColoring()
 
     --- @param tag string
     --- @param single boolean
