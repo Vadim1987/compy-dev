@@ -3,8 +3,8 @@ local class = require('util.class')
 --- AST scope, i.e. where a validation applies
 --- @class Scope
 
---- @alias ValidatorFilter fun(string): boolean, string|EvalError?
---- @alias AstValidatorFilter fun(AST): boolean, string|EvalError?
+--- @alias ValidatorFilter fun(string): boolean, string|Error?
+--- @alias AstValidatorFilter fun(AST): boolean, string|Error?
 
 --- @alias TransformerFilter fun(string): string
 

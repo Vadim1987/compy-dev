@@ -25,7 +25,7 @@ local function validate(self, s)
       local ok, verr = fv(s[1])
       if not ok and verr then
         valid = false
-        local e = EvalError.wrap(verr)
+        local e = Error.wrap(verr)
         table.insert(errors, e)
       end
     else
@@ -33,7 +33,7 @@ local function validate(self, s)
         local ok, verr = fv(l)
         if not ok and verr then
           valid = false
-          local e = EvalError.wrap(verr)
+          local e = Error.wrap(verr)
           if e and not e.l then e.l = i end
           table.insert(errors, e)
         end
@@ -124,7 +124,7 @@ LuaEditorEval = (function()
   --- AST validations
   local test = function(ast)
     -- Log.info('AST', Debug.terse_ast(ast, true, 'lua'))
-    -- return false, EvalError('test', 1, 1)
+    -- return false, Error('test', 1, 1)
     return true
   end
 
