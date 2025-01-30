@@ -72,7 +72,7 @@
 --- @field w_error string[]
 
 --- @class Highlight table
---- @field parse_err EvalError
+--- @field parse_err Error
 --- @field hl SyntaxColoring
 
 --- @alias TokenType

@@ -124,7 +124,7 @@ function UserInputController:get_wrapped_error()
 end
 
 --- @return boolean
---- @return EvalError[]
+--- @return Error[]
 function UserInputController:evaluate()
   return self.model:handle(true)
 end

@@ -778,7 +778,7 @@ end
 
 --- @param eval boolean
 --- @return boolean
---- @return string[]|EvalError[]
+--- @return string[]|Error[]
 function UserInputModel:handle(eval)
   local ent = self:get_text()
   local ok, result
@@ -829,7 +829,7 @@ function UserInputModel:get_wrapped_error()
   end
 end
 
---- @param errors EvalError[]?
+--- @param errors Error[]?
 function UserInputModel:set_error(errors)
   self.error = {}
   if type(errors) == "table" then

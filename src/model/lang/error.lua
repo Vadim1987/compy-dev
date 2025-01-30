@@ -3,36 +3,38 @@ local class = require('util.class')
 --- Input evaluation error class holding an error message and
 --- optionally the location of the error in the input.
 
---- @class EvalError
+--- @class Error
 --- @field msg string
 --- @field c number?
 --- @field l number
 ---
---- @field wrap fun(e: string|EvalError): EvalError?
+--- @field wrap fun(e: string|{msg: string}): Error?
 --- @field __tostring function
 
 --- @param msg string
 --- @param c number?
 --- @param l number?
 local newe = function(msg, c, l)
-  return { msg = msg, c = c, l = l }
+  return { msg = msg, c = c or 1, l = l or 1 }
 end
 
---- @type EvalError
-EvalError = class.create(newe)
+--- @type Error
+Error = class.create(newe)
 
---- @return EvalError
-function EvalError.wrap(e)
+--- @param e string|{msg: string}
+--- @return Error
+function Error.wrap(e)
   if type(e) == "string" then
-    return EvalError(e)
+    return Error(e)
   end
   if type(e) == "table" and type(e.msg) == "string" then
     return e
   end
-  return EvalError(tostring(e))
+  return Error(tostring(e))
 end
 
-function EvalError:__tostring()
+--- @return string
+function Error:__tostring()
   local li = ''
   if self.l then
     li = li .. 'L' .. self.l .. ':'
