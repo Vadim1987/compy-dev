@@ -17,22 +17,30 @@ function Cursor.inline(c)
   return Cursor(1, c)
 end
 
-function Cursor:compare(other)
-  if other and other.l and other.c then
-    if self.l > other.l then
+--- @param this {c: integer, l: integer}
+--- @param that {c: integer, l: integer}
+--- @return integer?
+function Cursor.ordering(this, that)
+  if type(this) == 'table' and this.c and this.l
+      and type(that) == 'table' and that.l and that.c then
+    if this.l > that.l then
       return -1
-    elseif self.l < other.l then
+    elseif this.l < that.l then
       return 1
     else
-      if self.c > other.c then
+      if this.c > that.c then
         return -1
-      elseif self.c < other.c then
+      elseif this.c < that.c then
         return 1
       else
         return 0
       end
     end
   end
+end
+
+function Cursor:compare(other)
+  return Cursor.ordering(self, other)
 end
 
 function Cursor:is_before(other)
