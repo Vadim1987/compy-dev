@@ -106,7 +106,8 @@ function table.pack(...)
   return t
 end
 
---- Return a new table containing keys which are present in the `other`, but not in `self`.
+--- Return a new table containing keys which are present in the
+--- `other`, but not in `self`.
 --- @param other table
 --- @return table difference
 function table.diff(self, other)
@@ -270,7 +271,7 @@ function table.find(self, e)
 end
 
 --- Find first element that the predicate holds for
---- @param self table
+--- @param self table[]
 --- @param pred function
 --- @return integer?
 function table.find_by(self, pred)
@@ -278,6 +279,33 @@ function table.find_by(self, pred)
   for i, v in pairs(self) do
     if pred(v) then return i end
   end
+end
+
+--- Filter elements that satisfy the predicate
+--- enumerates sequentially
+--- @param self table[]
+--- @param pred function
+--- @return table[]
+function table.filter_array(self, pred)
+  if not self or not pred then return {} end
+  local res = {}
+  for _, v in ipairs(self) do
+    if pred(v) then table.insert(res, v) end
+  end
+  return res
+end
+
+--- TODO testability for hash impl
+--- @param self table[]
+--- @param pred function
+--- @return table[]
+function table.filter(self, pred)
+  if not self or not pred then return {} end
+  local res = {}
+  for k, v in ipairs(self) do
+    if pred(v) then res[k] = v end
+  end
+  return res
 end
 
 --- Find element where the value returned by 'select' is the
