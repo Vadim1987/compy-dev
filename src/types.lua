@@ -87,8 +87,6 @@
 --- | 'comment'
 --- | 'error'
 
---- @alias SyntaxColoring LexType[][]
-
 --- @class UserInput table
 --- @field M UserInputModel
 --- @field V UserInputView
