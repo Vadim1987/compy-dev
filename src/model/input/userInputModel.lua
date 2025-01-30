@@ -786,7 +786,7 @@ function UserInputModel:handle(eval)
     local ev = self.evaluator
     self:_remember()
     if eval then
-      ok, result = ev.apply(ent)
+      ok, result = ev:apply(ent)
       if ok then
         if self.oneshot then
           --- @diagnostic disable-next-line: param-type-mismatch
