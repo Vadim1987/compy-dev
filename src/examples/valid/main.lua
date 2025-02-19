@@ -2,42 +2,63 @@ r = user_input()
 
 function min_length(n)
   return function(s)
-    if n < string.len(s) then
+    local l = string.ulen(s)
+    if n < l then
       return true
     end
-    return false, "too short!"
+    return false, Error("too short!", l)
   end
 end
 
 function max_length(n)
   return function(s)
-    if string.len(s) < n then
+    if string.len(s) <= n then
       return true
     end
-    return false, "too long!"
+    return false, Error("too long!", n + 1)
   end
 end
 
 function is_upper(s)
   local ret = true
-  for i = 1, string.ulen(s) do
+  local l = string.ulen(s)
+  local err_c
+  local i = 1
+  while ret and i <= l do
     local v = string.char_at(s, i)
     if v ~= string.upper(v) then
       ret = false
+      err_c = i
     end
+    i = i + 1
   end
+
   if ret then
     return true
   end
-  return false, "should be all uppercase"
+  return false, Error("should be all uppercase", err_c)
+end
+
+function is_lower(s)
+  local ok, err_c = string.forall(s, Char.is_lower)
+  if ok then
+    return true
+  end
+  return false, Error("NaN", err_c)
 end
 
 function is_number(s)
-  local n = tonumber(s)
-  if n then
+  local sign = string.usub(s, 1, 1)
+  local offset = 0
+  if sign == '-' then
+    offset = 1
+  end
+  local digits = string.usub(s, 1 + offset)
+  local ok, err_c = string.forall(digits, Char.is_digit)
+  if ok then
     return true
   end
-  return false, "NaN"
+  return false, Error("NaN", err_c + offset)
 end
 
 function is_natural(s)
@@ -47,7 +68,7 @@ function is_natural(s)
   end
   local n = tonumber(s)
   if n < 0 then
-    return false, "It's negative!"
+    return false, Error("It's negative!", 1)
   end
 end
 
@@ -55,7 +76,7 @@ function love.update()
   if r:is_empty() then
     validated_input({
       min_length(2),
-      is_natural
+      is_lower
     })
   else
     print(r())
