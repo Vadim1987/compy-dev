@@ -5,13 +5,13 @@ local class = require('util.class')
 
 --- @alias ValidatorFilter fun(string): boolean, string|Error?
 --- @alias AstValidatorFilter fun(AST): boolean, string|Error?
-
 --- @alias TransformerFilter fun(string): string
 
 --- @class Filters
 --- @field line_validators ValidatorFilter[]
 --- @field astValidators AstValidatorFilter[]
 --- @field transformers TransformerFilter[]
+--- @field validators_only function
 
 Filters = class.create(function(v, av, tf)
   return {
@@ -22,6 +22,7 @@ Filters = class.create(function(v, av, tf)
 end)
 
 --- @param flt function|function[]
+--- @return Filters
 function Filters.validators_only(flt)
   local fs = {}
   if type(flt) == 'function' then
