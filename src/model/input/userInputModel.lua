@@ -375,11 +375,6 @@ function UserInputModel:highlight()
     local parse_err
     if not ok then
       parse_err = p_err
-      if p_err.c then
-        --- Small hufbeschlag, so that partially entered code
-        --- doesn't highlight as _already_ wrong
-        parse_err.c = p_err.c + 1
-      end
     end
     local hl = p.highlighter(text)
 
