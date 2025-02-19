@@ -367,18 +367,20 @@ end
 function UserInputModel:highlight()
   local ev = self.evaluator
   if not ev then return end
+  local text = self:get_text()
 
   local p = ev.parser
   if p and p.highlighter then
-    local text = self:get_text()
-    local ok, err = p.parse(text)
+    local ok, p_err = p.parse(text)
     local parse_err
     if not ok then
-      parse_err = err
+      parse_err = p_err
     end
     local hl = p.highlighter(text)
 
     return { hl = hl, parse_err = parse_err }
+  else
+    return ev:validation_hl(text)
   end
 end
 

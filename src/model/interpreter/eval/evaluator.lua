@@ -1,4 +1,5 @@
 require('model.interpreter.eval.filter')
+require("model.lang.syntaxHighlighter")
 
 local class = require('util.class')
 
@@ -7,7 +8,6 @@ local class = require('util.class')
 --- @field parser Parser?
 --- @field apply function
 --- @field custom_apply function?
---- @field validate function
 --- @field line_validators ValidatorFilter[]
 --- @field astValidators AstValidatorFilter[]
 --- @field transformers TransformerFilter[]
@@ -91,6 +91,19 @@ function Evaluator.new(label, parser, filters, custom_apply)
       end
     end,
   }, Evaluator)
+end
+
+--- @param s string[]
+--- @return Highlight?
+function Evaluator:validation_hl(s)
+  local hl = SyntaxColoring()
+  if string.is_non_empty_string_array(s) then
+    local _, errors = validate(self, s)
+
+    local first_err = Error.get_first(errors)
+    return { hl = { {} }, parse_err = first_err }
+  end
+  return hl
 end
 
 --- @param label string
