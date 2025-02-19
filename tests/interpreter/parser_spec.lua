@@ -16,6 +16,8 @@ if not _G.unpack then
 end
 
 local parser_debug = os.getenv("PARSER_DEBUG")
+local highlighter_debug = os.getenv("HL_DEBUG")
+
 describe('parse #parser', function()
   -- print(Debug.print_t(parser))
   for i, input in ipairs(inputs) do
@@ -25,6 +27,9 @@ describe('parse #parser', function()
       local l, c, err
       if not ok then
         local p_err = r
+        if highlighter_debug then
+          Log.error(Debug.terse_t(r, nil, nil, true))
+        end
         if input.error then
           local el = input.error.l
           local ec = input.error.c
@@ -79,7 +84,6 @@ describe('parse #parser', function()
   end
 end)
 
-local highlighter_debug = os.getenv("HL_DEBUG")
 describe('highlight #parser', function()
   for i, input in ipairs(inputs) do
     local tag = 'input #' .. i
