@@ -235,4 +235,7 @@ return {
 
   --- literal
   invalid({ "local x = 'asd" }, Cursor.inline(9)),
+  --- test
+  invalid({ 'abc("xyz"' }, Cursor.inline(9)),
+  invalid({ 'abc("' }, Cursor.inline(4)),
 }

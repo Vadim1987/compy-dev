@@ -25,6 +25,7 @@ describe('parse #parser', function()
       local l, c, err
       if not ok then
         local p_err = r
+        Log.error(Debug.terse_t(r, nil, nil, true))
         if input.error then
           local el = input.error.l
           local ec = input.error.c
