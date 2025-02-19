@@ -149,8 +149,9 @@ function UserInputView:draw_input(input, time)
         local row = highlight.hl[hl_li] or {}
         local ttype = row[hl_ci]
         local color
-        if perr and ln > el or
-            (ln == el and (c > ec or ec == 1)) then
+        if perr and
+            ln > el or
+            (ln == el and c >= ec) then
           color = cf_colors.input.error
         else
           color = cf_colors.input.syntax[ttype] or colors.fg
