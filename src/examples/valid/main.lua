@@ -44,7 +44,7 @@ function is_lower(s)
   if ok then
     return true
   end
-  return false, Error("NaN", err_c)
+  return false, Error("should be lowercase", err_c)
 end
 
 function is_number(s)
