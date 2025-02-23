@@ -168,7 +168,7 @@ jobs:
         env:
           PACKAGE: ${{ env.LOVE_JS }}
           STAGING: ${{ secrets.STAGING }}
-          TDIR: public
+          TDIR: public/latest
         run: |
           rsync $PACKAGE staging:
           ssh staging "7z -y -o$TDIR x $PACKAGE"
