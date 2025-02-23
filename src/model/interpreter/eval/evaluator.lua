@@ -101,6 +101,14 @@ function Evaluator:validation_hl(s)
     local _, errors = validate(self, s)
 
     local first_err = Error.get_first(errors)
+    if first_err and first_err.c then
+      --- reversed hufbeschlag
+      --- due to quirks of display, the error should point
+      --- before what it's didactictally simple index is,
+      --- and we don't want to burden the validation author
+      --- with this detail
+      first_err.c = first_err.c - 1
+    end
     return { hl = { {} }, parse_err = first_err }
   end
   return hl
