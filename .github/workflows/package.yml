@@ -170,10 +170,22 @@ jobs:
         env:
           PACKAGE: ${{ env.LOVE_JS }}
           STAGING: ${{ secrets.STAGING }}
-          TDIR: public
+          TDIR: public/latest
         run: |
           rsync $PACKAGE staging:
           ssh staging "7z -y -o$TDIR x $PACKAGE"
+      - name: Deploy package for tag
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          PACKAGE: ${{ env.LOVE_JS }}
+          STAGING: ${{ secrets.STAGING }}
+          TDIR: public/
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          CH=${GITHUB_SHA::7}
+          rsync $PACKAGE staging:
+          ssh staging "7z -y -o$TDIR/$CH x $PACKAGE"
+          ssh staging "ln -s $CH $TDIR/$TAG_NAME ; chmod +rx $TDIR/*"
 
   build-android:
     runs-on: ubuntu-latest
