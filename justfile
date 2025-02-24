@@ -88,13 +88,18 @@ dev-dogfood-examples:
 
 # run webserver on 8080 with hot reload
 dev-js:
-  @{{MON}} --exec 'just package-js' -e lua &
-  @cd web ; node server.js
+  #!/usr/bin/env -S bash
+  {{MON}} --exec 'just package-js' -e lua &
+  cd web
+  node server.js
+  wait
 # run webserver on 8080 with hot reload (compat mode)
 dev-js-c:
-  @{{MON}} --exec 'just package-js-c' -e lua &
-  @cd {{WEBDIST-c}} ; \
-    live-server --no-browser --watch="../../src"
+  #!/usr/bin/env -S bash
+  {{MON}} --exec 'just package-js-c' -e lua &
+  cd {{WEBDIST-c}}
+  live-server --no-browser
+  wait
 
 # install prerequisites for running/packaging js verison
 setup-web-dev:
