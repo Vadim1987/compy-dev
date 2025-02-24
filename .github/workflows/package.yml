@@ -185,7 +185,7 @@ jobs:
           CH=${GITHUB_SHA::7}
           rsync $PACKAGE staging:
           ssh staging "7z -y -o$TDIR/$CH x $PACKAGE"
-          ssh staging "ln -s $CH $TDIR/$TAG_NAME ; chmod +rx $TDIR/*"
+          ssh staging "ln -sfT $CH $TDIR/$TAG_NAME ; chmod +rx $TDIR/*"
 
   build-android:
     runs-on: ubuntu-latest
