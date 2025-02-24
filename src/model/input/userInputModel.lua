@@ -23,6 +23,7 @@ require("util.lua")
 --- @field cfg Config
 --- @field custom_status CustomStatus?
 --- @field custom_label string?
+--- @field _memo table
 --- methods
 --- @field new function
 --- @field get_label fun(self): string?
@@ -53,6 +54,8 @@ function UserInputModel.new(cfg, eval, oneshot, custom_label)
     selection = InputSelection(),
     custom_status = nil,
     custom_label = custom_label,
+    --- @private
+    _memo = {},
 
     cfg = cfg,
   }, UserInputModel)
@@ -361,9 +364,12 @@ function UserInputModel:text_change()
   self.visible:wrap(self.entered)
   self.visible:check_range()
   self:_follow_cursor()
+  local ev = self.evaluator
+  if ev then
+    self:highlight()
+  end
 end
 
---- @return Highlight?
 function UserInputModel:highlight()
   local ev = self.evaluator
   if not ev then return end
@@ -378,10 +384,17 @@ function UserInputModel:highlight()
     end
     local hl = p.highlighter(text)
 
-    return { hl = hl, parse_err = parse_err }
+    self._memo.highlight = { hl = hl, parse_err = parse_err }
   else
-    return ev:validation_hl(text)
+    self._memo.highlight = ev:validation_hl(text)
   end
+end
+
+function UserInputModel:get_highlight()
+  if not self._memo.highlight then
+    self:highlight()
+  end
+  return self._memo.highlight
 end
 
 ----------------
@@ -554,7 +567,7 @@ end
 function UserInputModel:get_input()
   return {
     text          = self:get_text(),
-    highlight     = self:highlight(),
+    highlight     = self:get_highlight(),
     selection     = self:get_ordered_selection(),
     visible       = self.visible,
     wrapped_error = self:get_wrapped_error(),
