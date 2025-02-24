@@ -40,12 +40,15 @@ end
 --- @return any ...
 local function wrap(f, ...)
   if _G.web then
-    --- TODO: why is xpcall uncooperative on web
-    local ok, r = pcall(f, ...)
-    if not ok then
-      user_error_handler(r)
-    end
-    return r
+    -- local ok, r = pcall(f, ...)
+    -- if not ok then
+    --   user_error_handler(r)
+    -- end
+    -- return r
+    -- return xpcall(f, user_error_handler, ...)
+    --- TODO no error handling, sorry, it leads to a stack overflow
+    --- in love.wasm
+    return f(...)
   else
     return xpcall(f, user_error_handler, ...)
   end
