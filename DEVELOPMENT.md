@@ -57,6 +57,10 @@ if autotest then
 end
 ```
 
+### Web version
+
+https://github.com/Davidobot/love.js
+
 ## Testing
 
 ### Test modes
