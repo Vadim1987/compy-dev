@@ -129,6 +129,12 @@ package-web: package-js
     > /dev/null
   @echo packaged:
   @ls -lh {{DIST}}/{{PRODUCT_NAME}}-web.zip
+package-web-c: package-js-c
+  @rm -f {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip
+  @7z a {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip {{WEBDIST}}/* \
+    > /dev/null
+  @echo packaged:
+  @ls -lh {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip
 
 
 package-js-dir DT: version
