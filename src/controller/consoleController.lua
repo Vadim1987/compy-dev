@@ -258,6 +258,13 @@ function ConsoleController.prepare_env(cc)
     end
   end
 
+  prepared.clone            = function(old, new)
+    local ok, err = P:clone(old, new)
+    if not ok then
+      print(err)
+    end
+  end
+
   prepared.list_contents    = function()
     return check_open_pr(function()
       local p = P.current

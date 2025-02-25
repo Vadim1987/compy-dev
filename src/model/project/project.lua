@@ -298,6 +298,29 @@ function ProjectService:deploy_examples()
   return cp_ok, cp_err
 end
 
+--- @param old string
+--- @param new string
+--- @return boolean success
+--- @return string? error
+function ProjectService:clone(old, new)
+  local o_path, o_err =
+      is_project(ProjectService.path, old)
+  local n_path, n_err =
+      can_be_project(ProjectService.path, new)
+  if o_err or not o_path then
+    return false, o_err
+  end
+  if n_err or not n_path then
+    return false, n_err
+  end
+
+  local ok, err = FS.cp_r(o_path, n_path)
+  if not ok then
+    return false, err
+  end
+  return true
+end
+
 --- @param name string
 --- @param env table
 --- @return function?
