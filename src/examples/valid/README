@@ -1,7 +1,8 @@
 ### Input validation
 
 As an extension to the user input functionality, `validated_input()` allows arbitrary user-specified filters.
-A "filter" is a function, which takes a string as input and returns a boolean value of whether it is valid and an optional error message.
+A "filter" is a function, which takes a string as input and returns a boolean value of whether it is valid and an optional `Error`.
+The `Error` is structure which contains the error message (`msg`), and the location the error comes from, with line and character fields (`l` and `c`).
 
 Example:
 ```lua
@@ -13,6 +14,7 @@ function non_empty(s)
 end
 ```
 This is not a particularly useful validator, as the input will not be accepted and ran through the validations if it doesn't contain anything, but it demonstrates the idea quite well.
+
 Filters will be run line-by-line, if the input has multiple lines, the line number is also indicated when it's invalid.
 For increased visual usefulness, your validations can report on the first character which does not satisfy the criteria required:
 ```lua
@@ -27,6 +29,7 @@ function min_length(n)
 end
 ```
 This will result the entered text being red starting from the problem location.
+
 Of course, this means in some cases that the line has to be validated char-by-char. To facilitate this, we provide the `string.forall()` helper, and a `Char` table containing some classifier functions.
 `string.forall()` takes a validation function and runs it on each character, returning `true` if the string is valid, or `false` and the index of the offending character:
 ```lua
@@ -63,3 +66,5 @@ Validations are applied to the input by passing an array of functions. Note the 
 * `Char.is_punct(c)` - is `c` punctuation (!, ?, &, ;, parentheses, ...)
 
 Note that determining if something is a letter, or what case it is only reliable for the english alphabet.
+
+* `Error(msg, c, l)` - for creating errors, `l` and `c` are optional
