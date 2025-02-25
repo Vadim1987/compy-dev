@@ -25,7 +25,7 @@ function is_upper(s)
   local err_c
   local i = 1
   while ret and i <= l do
-    local v = string.char_at(s, i)
+    local v = string.usub(s, i, i)
     if v ~= string.upper(v) then
       ret = false
       err_c = i
