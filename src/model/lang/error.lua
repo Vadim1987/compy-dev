@@ -5,7 +5,7 @@ local class = require('util.class')
 
 --- @class Error
 --- @field msg string
---- @field c number?
+--- @field c number
 --- @field l number
 ---
 --- @field wrap fun(e: string|{msg: string}): Error?
