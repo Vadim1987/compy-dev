@@ -23,6 +23,15 @@ function is_natural(s)
   return true
 end
 
+function is_natural(s)
+  local digits = string.usub(s, 1)
+  local ok, err_c = string.forall(digits, Char.is_digit)
+  if ok then
+    return true
+  end
+  return false, Error("The guess should be a positive number", err_c)
+end
+
 function check(n)
   if not n then
     return
