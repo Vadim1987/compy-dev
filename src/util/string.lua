@@ -321,7 +321,7 @@ Char = require("util.char")
 --- @return integer?
 string.forall = function(s, f)
   for i = 1, string.ulen(s) do
-    local v = string.char_at(s, i)
+    local v = string.usub(s, i, i)
     if not f(v) then
       return false, i
     end
