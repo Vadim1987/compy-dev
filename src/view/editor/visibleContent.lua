@@ -44,9 +44,9 @@ function VisibleContent.new(w, fulltext, overscroll, size_max)
     offset = 0,
   }, VisibleContent)
   WrappedText._init(self, w, fulltext)
+
   self:_init()
   self:to_end()
-
 
   return self
 end
