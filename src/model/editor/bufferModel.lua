@@ -42,15 +42,17 @@ local function new(name, content, save,
     if ok then
       local len = #blocks
       sel = len + 1
-      local ana = analyzer.analyze(ast)
-      for bi, v in ipairs(blocks) do
-        if (v.pos) then
-          for _, l in ipairs(v.pos:enumerate()) do
-            revmap[l] = bi
+      local anaok, ana = pcall(analyzer.analyze, ast)
+      if anaok then
+        for bi, v in ipairs(blocks) do
+          if (v.pos) then
+            for _, l in ipairs(v.pos:enumerate()) do
+              revmap[l] = bi
+            end
           end
         end
+        semantic = bsi.convert(ana, revmap)
       end
-      semantic = bsi.convert(ana, revmap)
     else
       readonly = true
       sel = 1
