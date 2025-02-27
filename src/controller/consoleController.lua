@@ -582,17 +582,21 @@ end
 --- @return boolean success
 function ConsoleController:close_project()
   local P = self.model.projects
-  local name = P.current.name
-  local ok = P:close()
-  local lf = self:get_loader(name)
-  if lf then
-    table.delete_by_value(package.loaders, lf)
+  local open = P.current
+  if open then
+    local name = P.current.name
+    local ok = P:close()
+    local lf = self:get_loader(name)
+    if lf then
+      table.delete_by_value(package.loaders, lf)
+    end
+    self:_reset_executor_env()
+    self.model.output:clear_canvas()
+    View.clear_snapshot()
+    love.state.app_state = 'ready'
+    return ok
   end
-  self:_reset_executor_env()
-  self.model.output:clear_canvas()
-  View.clear_snapshot()
-  love.state.app_state = 'ready'
-  return ok
+  return true
 end
 
 function ConsoleController:stop_project_run()
