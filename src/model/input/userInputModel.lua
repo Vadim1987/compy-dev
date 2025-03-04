@@ -1,7 +1,7 @@
 require("model.input.inputText")
 require("model.input.selection")
 require("model.input.history")
-require("model.lang.error")
+require("model.lang.lua.error")
 require("view.editor.visibleContent")
 
 local class = require('util.class')

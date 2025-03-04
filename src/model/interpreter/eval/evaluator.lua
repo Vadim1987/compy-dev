@@ -1,5 +1,5 @@
 require('model.interpreter.eval.filter')
-require("model.lang.syntaxHighlighter")
+require("model.lang.lua.syntaxHighlighter")
 
 local class = require('util.class')
 
@@ -123,7 +123,7 @@ end
 
 TextEval = Evaluator.plain('text')
 
-local luaParser = require("model.lang.parser")()
+local luaParser = require("model.lang.lua.parser")()
 
 --- @param label string?
 --- @param filters Filters?

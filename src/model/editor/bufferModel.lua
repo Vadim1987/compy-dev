@@ -1,5 +1,5 @@
 require("model.editor.content")
-local analyzer = require("model.lang.analyze")
+local analyzer = require("model.lang.lua.analyze")
 local bsi = require("model.editor.bufferSemanticInfo")
 
 local class = require('util.class')

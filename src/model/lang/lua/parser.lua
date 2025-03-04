@@ -1,5 +1,5 @@
-require("model.lang.error")
-require("model.lang.syntaxHighlighter")
+require("model.lang.lua.error")
+require("model.lang.lua.syntaxHighlighter")
 
 require("util.debug")
 require("util.string")
