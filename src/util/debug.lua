@@ -432,7 +432,7 @@ end)()
 local annot = function(tag, color, args)
   local ret = tc.to_control(color)
   ret = ret .. tag .. ': '
-  for _, s in ipairs(args) do
+  for _, s in ipairs(args or {}) do
     ret = ret .. tostring(s or '') .. '\t'
   end
   ret = ret .. tc.reset

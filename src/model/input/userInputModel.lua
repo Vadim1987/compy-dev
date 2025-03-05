@@ -1,5 +1,6 @@
 require("model.input.inputText")
 require("model.input.selection")
+require("model.input.history")
 require("model.lang.error")
 require("view.editor.visibleContent")
 
@@ -8,19 +9,21 @@ require("util.wrapped_text")
 require("util.dequeue")
 require("util.string")
 require("util.debug")
+require("util.lua")
 
 --- @class UserInputModel
 --- @field oneshot boolean
 --- @field entered InputText
+--- @field history History
 --- @field evaluator Evaluator
 --- @field cursor Cursor
---- @field wrapped_text WrappedText
 --- @field error string[]?
 --- @field visible VisibleContent
 --- @field selection InputSelection
 --- @field cfg Config
 --- @field custom_status CustomStatus?
 --- @field custom_label string?
+--- @field _memo table
 --- methods
 --- @field new function
 --- @field get_label fun(self): string?
@@ -31,7 +34,7 @@ require("util.debug")
 --- @field get_text fun(self): InputText
 --- @field get_text_line fun(self, integer): string
 --- @field get_n_text_lines fun(self): integer
---- @field get_wrapped_text fun(self): WrappedText
+--- @field get_wrapped_text fun(self): VisibleContent
 --- @field get_wrapped_error fun(self): string[]?
 --- @field swap_lines function
 UserInputModel = class.create()
@@ -42,16 +45,17 @@ UserInputModel = class.create()
 --- @param oneshot boolean?
 --- @param custom_label string?
 function UserInputModel.new(cfg, eval, oneshot, custom_label)
-  local w = cfg.view.drawableChars
   local self = setmetatable({
     oneshot = oneshot,
     entered = InputText(),
+    history = History(),
     evaluator = eval,
     cursor = Cursor(),
-    wrapped_text = WrappedText(w),
     selection = InputSelection(),
     custom_status = nil,
     custom_label = custom_label,
+    --- @private
+    _memo = {},
 
     cfg = cfg,
   }, UserInputModel)
@@ -86,7 +90,7 @@ end
 function UserInputModel:add_text(text)
   if type(text) == 'string' then
     self:pop_selected_text()
-    local sl, cc    = self:_get_cursor_pos()
+    local sl, cc    = self:get_cursor_pos()
     local cur_line  = self:get_text_line(sl)
     local pre, post = string.split_at(cur_line, cc)
     local lines     = string.lines(text)
@@ -96,19 +100,24 @@ function UserInputModel:add_text(text)
       self:_set_text_line(nval, sl, true)
       self:_advance_cursor(string.ulen(text))
     else
-      for k, line in ipairs(lines) do
+      local ent = self.entered
+      local ins = table.clone(lines)
+      local fl = ins[1]
+      local ll = ins[n_added]
+      ins[1] = pre .. fl
+      ins[n_added] = ll .. post
+
+      for k = n_added, 1, -1 do
+        local line = ins[k]
+
         if k == 1 then
-          local nval = pre .. line
-          self:_set_text_line(nval, sl, true)
-        elseif k == n_added then
-          local nval = line .. post
-          local last_line_i = sl + k - 1
-          self:_set_text_line(nval, last_line_i, true)
-          self:move_cursor(last_line_i, string.ulen(line) + 1)
+          ent:update(line, sl)
         else
-          self:insert_text_line(line, sl + k - 1)
+          ent:insert(line, sl + 1)
         end
       end
+      local last_line_i = sl + n_added - 1
+      self:move_cursor(last_line_i, string.ulen(ll) + 1)
     end
     self:text_change()
   end
@@ -210,14 +219,14 @@ function UserInputModel:swap_lines(ln_that, ln_this)
 
     self:_set_text_line(that, ln_this, true)
     self:_set_text_line(this, ln_that, true)
-    self:set_cursor({ l = ln_that, c = self:get_cursor_x() })
+    self:set_cursor(Cursor(ln_that, self:get_cursor_x()))
     self:text_change()
     return true
   end
 end
 
 function UserInputModel:line_feed()
-  local cl, cc = self:_get_cursor_pos()
+  local cl, cc = self:get_cursor_pos()
   local cur_line = self:get_text_line(cl)
   local pre, post = string.split_at(cur_line, cc)
   self:_set_text_line(pre, cl, true)
@@ -244,15 +253,15 @@ function UserInputModel:get_n_text_lines()
   return ent:length()
 end
 
---- @return WrappedText
+--- @return VisibleContent
 function UserInputModel:get_wrapped_text()
-  return self.wrapped_text
+  return self.visible
 end
 
 --- @param l integer
 --- @return string
 function UserInputModel:get_wrapped_text_line(l)
-  return self.wrapped_text:get_line(l)
+  return self:get_wrapped_text():get_line(l)
 end
 
 --- @return string
@@ -280,7 +289,7 @@ end
 function UserInputModel:backspace()
   self:pop_selected_text()
   local line = self:get_current_line()
-  local cl, cc = self:_get_cursor_pos()
+  local cl, cc = self:get_cursor_pos()
   local newcl = cl - 1
   local pre, post
 
@@ -289,9 +298,9 @@ function UserInputModel:backspace()
       return
     end
     -- line merge
-    pre = self:get_text_line(newcl)
+    pre = self:get_text_line(newcl) or ''
     local pre_len = string.ulen(pre)
-    post = line
+    post = line or ''
     local nval = pre .. post
     self:_set_text_line(nval, newcl, true)
     self:move_cursor(newcl, pre_len + 1)
@@ -310,7 +319,7 @@ end
 function UserInputModel:delete()
   self:pop_selected_text()
   local line = self:get_current_line()
-  local cl, cc = self:_get_cursor_pos()
+  local cl, cc = self:get_cursor_pos()
   local pre, post
 
   local n = self:get_n_text_lines()
@@ -329,7 +338,7 @@ function UserInputModel:delete()
     pre = string.usub(line, 1, cc - 1)
     post = string.usub(line, cc + 1)
   end
-  local nval = pre .. post
+  local nval = (pre or '') .. (post or '')
   self:_set_text_line(nval, cl, true)
   self:text_change()
 end
@@ -340,35 +349,96 @@ function UserInputModel:clear_input()
   self:clear_selection()
   self:_update_cursor(true)
   self.custom_status = nil
+  self.history:reset_index()
 end
 
-function UserInputModel:reset()
+--- @param history boolean?
+function UserInputModel:reset(history)
+  if history and self:keep_history() then
+    self.history = History()
+  end
   self:clear_input()
 end
 
 function UserInputModel:text_change()
-  self.wrapped_text:wrap(self.entered)
   self.visible:wrap(self.entered)
   self.visible:check_range()
   self:_follow_cursor()
+  local ev = self.evaluator
+  if ev then
+    self:highlight()
+  end
 end
 
---- @return Highlight?
 function UserInputModel:highlight()
   local ev = self.evaluator
   if not ev then return end
+  local text = self:get_text()
 
   local p = ev.parser
   if p and p.highlighter then
-    local text = self:get_text()
-    local ok, err = p.parse(text)
+    local ok, p_err = p.parse(text)
     local parse_err
     if not ok then
-      parse_err = err
+      parse_err = p_err
     end
     local hl = p.highlighter(text)
 
-    return { hl = hl, parse_err = parse_err }
+    self._memo.highlight = { hl = hl, parse_err = parse_err }
+  else
+    self._memo.highlight = ev:validation_hl(text)
+  end
+end
+
+function UserInputModel:get_highlight()
+  if not self._memo.highlight then
+    self:highlight()
+  end
+  return self._memo.highlight
+end
+
+----------------
+--  history   --
+----------------
+
+--- @return boolean
+function UserInputModel:keep_history()
+  return not self.oneshot
+end
+
+--- @private
+function UserInputModel:_remember()
+  if self:keep_history() then
+    local ent = self.entered
+    if string.is_non_empty_string_array(ent) then
+      self.history:remember(ent)
+    end
+  end
+end
+
+function UserInputModel:history_back()
+  if self:keep_history() then
+    local t = self:get_text()
+    local ok, hist = self.history:history_back(t)
+    -- TODO: remember cursor pos?
+    if ok then
+      self:set_text(hist)
+      self:jump_end()
+    end
+  end
+end
+
+function UserInputModel:history_fwd()
+  if self:keep_history() then
+    local t = self:get_text()
+    local ok, hist = self.history:history_fwd(t)
+    -- TODO: remember cursor pos?
+    if ok then
+      self:set_text(hist)
+      self:jump_end()
+    else
+      self:clear_input()
+    end
   end
 end
 
@@ -379,14 +449,15 @@ end
 --- Follow cursor movement with visible range
 --- @private
 function UserInputModel:_follow_cursor()
-  local cl, cc = self:_get_cursor_pos()
+  local cl, cc = self:get_cursor_pos()
   local w = self.cfg.view.drawableChars
-  local acl = cl + (math.floor(cc / w) or 0)
+  local acl = cl + math.intdiv(cc, w)
   local vrange = self.visible:get_range()
   local diff = vrange:outside(acl)
   if diff ~= 0 then
     self.visible:move_range(diff)
   end
+  self.visible:check_range()
 end
 
 --- @private
@@ -406,7 +477,7 @@ end
 --- @param x integer?
 --- @param y integer?
 function UserInputModel:_advance_cursor(x, y)
-  local cur_l, cur_c = self:_get_cursor_pos()
+  local cur_l, cur_c = self:get_cursor_pos()
   local move_x = x or 1
   local move_y = y or 0
   if move_y == 0 then
@@ -427,7 +498,7 @@ end
 --- @param x integer?
 --- @param selection 'keep'|'move'?
 function UserInputModel:move_cursor(y, x, selection)
-  local prev_l, prev_c = self:_get_cursor_pos()
+  local prev_l, prev_c = self:get_cursor_pos()
   local c, l
   local line_limit = self:get_n_text_lines() + 1 -- allow for line just being added
   if y and y >= 1 and y <= line_limit then
@@ -442,10 +513,8 @@ function UserInputModel:move_cursor(y, x, selection)
   else
     c = prev_c
   end
-  self:set_cursor({
-    c = c,
-    l = l
-  })
+  self:set_cursor(Cursor(l, c))
+
 
   if selection == 'keep' then
   elseif selection == 'move' then
@@ -455,10 +524,9 @@ function UserInputModel:move_cursor(y, x, selection)
   self:_follow_cursor()
 end
 
---- @private
 --- @return integer l
 --- @return integer c
-function UserInputModel:_get_cursor_pos()
+function UserInputModel:get_cursor_pos()
   return self.cursor.l, self.cursor.c
 end
 
@@ -499,7 +567,7 @@ end
 function UserInputModel:get_input()
   return {
     text          = self:get_text(),
-    highlight     = self:highlight(),
+    highlight     = self:get_highlight(),
     selection     = self:get_ordered_selection(),
     visible       = self.visible,
     wrapped_error = self:get_wrapped_error(),
@@ -509,8 +577,8 @@ end
 --- @param dir VerticalDir
 --- @return boolean? limit
 function UserInputModel:cursor_vertical_move(dir)
-  local cl, cc = self:_get_cursor_pos()
-  local w = self.wrapped_text.wrap_w
+  local cl, cc = self:get_cursor_pos()
+  local w = self.visible.wrap_w
   local n = self:get_n_text_lines()
   local llen = string.ulen(self:get_text_line(cl))
   local full_lines = math.floor(llen / w)
@@ -596,7 +664,7 @@ function UserInputModel:cursor_vertical_move(dir)
 end
 
 function UserInputModel:cursor_left()
-  local cl, cc = self:_get_cursor_pos()
+  local cl, cc = self:get_cursor_pos()
   local nl, nc = (function()
     if cc > 1 then
       local next = cc - 1
@@ -618,7 +686,7 @@ function UserInputModel:cursor_left()
 end
 
 function UserInputModel:cursor_right()
-  local cl, cc = self:_get_cursor_pos()
+  local cl, cc = self:get_cursor_pos()
   local line = self:get_text_line(cl)
   local len = string.ulen(line)
   local next = cc + 1
@@ -720,26 +788,34 @@ end
 
 function UserInputModel:cancel()
   self:handle(false)
+  self:reset()
 end
 
 --- @param eval boolean
 --- @return boolean
---- @return string[]|EvalError[]
+--- @return string[]|Error[]
 function UserInputModel:handle(eval)
   local ent = self:get_text()
-  self.historic_index = nil
   local ok, result
   if string.is_non_empty_string_array(ent) then
     local ev = self.evaluator
-    -- self:_remember(ent)
+    self:_remember()
     if eval then
-      ok, result = ev.apply(ent)
+      ok, result = ev:apply(ent)
       if ok then
         if self.oneshot then
           --- @diagnostic disable-next-line: param-type-mismatch
           love.event.push('userinput')
         end
       else
+        local perr = result[1]
+        if perr then
+          if perr.c then
+            local c = perr.c
+            if c > 1 then c = c + 1 end
+            self:move_cursor(perr.l, c)
+          end
+        end
         return false, result
       end
     else
@@ -762,13 +838,13 @@ function UserInputModel:get_wrapped_error()
   if self.error then
     local we = string.wrap_array(
       self.error,
-      self.wrapped_text.wrap_w)
+      self.visible.wrap_w)
     table.insert(we, 1, 'Errors:')
     return we
   end
 end
 
---- @param errors EvalError[]?
+--- @param errors Error[]?
 function UserInputModel:set_error(errors)
   self.error = {}
   if type(errors) == "table" then
@@ -795,13 +871,13 @@ end
 --- @param l integer
 --- @param c integer
 function UserInputModel:translate_grid_to_cursor(l, c)
-  local wt       = self.wrapped_text.wrap_reverse
+  local wt       = self.visible.wrap_reverse
   local li       = wt[l] or wt[#wt]
   local line     = self:get_wrapped_text_line(l)
   local llen     = string.ulen(line)
   local c_offset = math.min(llen + 1, c)
   local c_base   = l - li
-  local ci       = c_base * self.wrapped_text.wrap_w + c_offset
+  local ci       = c_base * self.visible.wrap_w + c_offset
   return li, ci
 end
 
@@ -837,7 +913,7 @@ function UserInputModel:start_selection(l, c)
     if l and c then
       return Cursor(l, c)
     else -- default to current cursor position
-      return Cursor(self:_get_cursor_pos())
+      return Cursor(self:get_cursor_pos())
     end
   end)()
   self.selection.start = start
@@ -851,7 +927,7 @@ function UserInputModel:end_selection(l, c)
     if l and c then
       return Cursor(l, c)
     else -- default to current cursor position
-      return Cursor(self:_get_cursor_pos())
+      return Cursor(self:get_cursor_pos())
     end
   end)()
   local from, to      = self:diff_cursors(start, fin)

@@ -113,13 +113,15 @@ describe('table utils #table', function()
     it('works', function()
       local rt = table.new_reftable()
 
-      rt(1)
+      local val = 1
+      rt(val)
       local v = rt()
-      assert.same(v, rt())
+      assert.same(val, v)
 
-      rt('test')
+      local val2 = 'test'
+      rt(val2)
       v = rt()
-      assert.same(v, rt())
+      assert.same(val2, v)
     end)
     it('creates new table on every invocation', function()
       local rt1 = table.new_reftable()
@@ -134,6 +136,32 @@ describe('table utils #table', function()
       local v2 = 2
       rt2(v2)
       assert.same(v2, rt2())
+    end)
+  end)
+
+  local test = {
+    { v = 10 },
+    { v = 3 },
+    { v = 8 },
+    { v = 5 },
+  }
+  describe('min_by', function()
+    it('simple', function()
+      local function get_val(t) return t.v end
+
+      assert.same(table.min_by(test, get_val), { v = 3 })
+    end)
+  end)
+
+  describe('filter', function()
+    it('simple', function()
+      local function pred(t) return t.v > 5 end
+
+      local res = {
+        { v = 10 },
+        { v = 8 },
+      }
+      assert.same(res, table.filter_array(test, pred))
     end)
   end)
 end)

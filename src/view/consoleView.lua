@@ -1,7 +1,7 @@
 require("view.titleView")
 require("view.editor.editorView")
 require("view.canvas.canvasView")
-require("view.input.interpreterView")
+require("view.input.userInputView")
 
 local class = require("util.class")
 require("util.color")
@@ -16,7 +16,7 @@ local function new(cfg, ctrl)
   return {
     title = TitleView,
     canvas = CanvasView(cfg.view),
-    interpreter = InterpreterView(cfg.view, ctrl.interpreter),
+    input = UserInputView(cfg.view, ctrl.input),
     editor = EditorView(cfg.view, ctrl.editor),
     controller = ctrl,
     cfg = cfg,
@@ -27,7 +27,7 @@ end
 --- @class ConsoleView
 --- @field title table
 --- @field canvas CanvasView
---- @field interpreter InterpreterView
+--- @field input UserInputView
 --- @field editor EditorView
 --- @field controller ConsoleController
 --- @field cfg Config
@@ -54,7 +54,7 @@ function ConsoleView:draw(terminal, canvas, input, snapshot)
       if self.cfg.view.show_debug_timer then
         time = self.controller:get_timestamp()
       end
-      self.interpreter:draw(input, time)
+      self.input:draw(input, time)
     end
   end
 

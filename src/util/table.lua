@@ -1,18 +1,30 @@
 ---@alias reftable table
 ---@return reftable
 table.new_reftable = function()
-  return setmetatable({}, {
+  local RT = {}
+  --- @return boolean
+  function RT:is_empty()
+    if self.value then
+      return false
+    end
+    return true
+  end
+
+  setmetatable(RT, {
     __call = function(self, ...)
       local argv = { ... }
       local argc = #argv
 
       if argc == 0 then
-        return self.value
+        local v = self.value
+        self.value = nil
+        return v
       else
         self.value = argv[1]
       end
     end
   })
+  return RT
 end
 
 
@@ -94,7 +106,8 @@ function table.pack(...)
   return t
 end
 
---- Return a new table containing keys which are present in the `other`, but not in `self`.
+--- Return a new table containing keys which are present in the
+--- `other`, but not in `self`.
 --- @param other table
 --- @return table difference
 function table.diff(self, other)
@@ -258,7 +271,7 @@ function table.find(self, e)
 end
 
 --- Find first element that the predicate holds for
---- @param self table
+--- @param self table[]
 --- @param pred function
 --- @return integer?
 function table.find_by(self, pred)
@@ -266,6 +279,53 @@ function table.find_by(self, pred)
   for i, v in pairs(self) do
     if pred(v) then return i end
   end
+end
+
+--- Filter elements that satisfy the predicate
+--- enumerates sequentially
+--- @param self table[]
+--- @param pred function
+--- @return table[]
+function table.filter_array(self, pred)
+  if not self or not pred then return {} end
+  local res = {}
+  for _, v in ipairs(self) do
+    if pred(v) then table.insert(res, v) end
+  end
+  return res
+end
+
+--- TODO testability for hash impl
+--- @param self table[]
+--- @param pred function
+--- @return table[]
+function table.filter(self, pred)
+  if not self or not pred then return {} end
+  local res = {}
+  for k, v in ipairs(self) do
+    if pred(v) then res[k] = v end
+  end
+  return res
+end
+
+--- Find element where the value returned by 'select' is the
+--- smallest, courtesy of Perplexity (mostly)
+--- @param self table[]
+--- @param select function
+--- @return table?
+function table.min_by(self, select)
+  local minValue = self[1]
+  local minKey = select(minValue)
+
+  for i = 2, #self do
+    local currentKey = select(self[i])
+    if currentKey < minKey then
+      minValue = self[i]
+      minKey = currentKey
+    end
+  end
+
+  return minValue
 end
 
 --- Return first n elements.

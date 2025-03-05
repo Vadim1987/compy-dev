@@ -8,6 +8,7 @@
     "describe",
     "it",
     // project env
+    "user_input",
     "input_text",
     "input_code",
     "validated_input",

@@ -63,7 +63,6 @@
 
 --- @class InputDTO table
 --- @field text InputText
---- @field wrapped_text WrappedText
 --- @field highlight Highlight
 --- @field wrapped_error string[]
 --- @field selection InputSelection
@@ -73,7 +72,7 @@
 --- @field w_error string[]
 
 --- @class Highlight table
---- @field parse_err EvalError
+--- @field parse_err Error
 --- @field hl SyntaxColoring
 
 --- @alias TokenType
@@ -87,8 +86,6 @@
 --- | TokenType
 --- | 'comment'
 --- | 'error'
-
---- @alias SyntaxColoring LexType[][]
 
 --- @class UserInput table
 --- @field M UserInputModel

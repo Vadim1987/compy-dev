@@ -97,6 +97,35 @@ WrappedText *-- VisibleStructuredContent
 ```mermaid
 classDiagram
 
+class UserInputModel {
+  oneshot: boolean
+  entered: InputText
+  history: History
+  evaluator: EvalBase
+  cursor: Cursor
+  visible: VisibleContent
+  wrapped_error: string[]
+  selection: InputSelection
+  cfg: Config
+  custom_status: CustomStatus?
+
+  get_label()
+  add_text()
+  set_text()
+  line_feed()
+  get_text()
+  get_text_line()
+  get_n_text_lines()
+  get_wrapped_text() VisibleContent
+  get_wrapped_error()
+  swap_lines()
+}
+
+```
+
+```mermaid
+classDiagram
+
 class BufferModel {
   name: string
   content: Content

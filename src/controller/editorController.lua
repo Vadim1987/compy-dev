@@ -8,11 +8,11 @@ local class = require('util.class')
 --- @param M EditorModel
 local function new(M)
   return {
-    input = UserInputController(M.input, nil, false),
+    input = UserInputController(M.input, nil, true),
     model = M,
     search = SearchController(
       M.search,
-      UserInputController(M.search.input, nil, false)
+      UserInputController(M.search.input, nil, true)
     ),
     view = nil,
     mode = 'edit',
@@ -91,23 +91,24 @@ end
 
 --- @param mode EditorMode
 function EditorController:set_mode(mode)
+  local buf = self:get_active_buffer()
   local set_reorg = function()
     self:save_state()
   end
   local init_search = function()
     self:save_state()
-    local buf = self:get_active_buffer()
-    local ds = buf.semantic.definitions
+    local db = buf.semantic
+    local ds = db.definitions
     self.search:load(ds)
   end
 
   local current = self.mode
-  Log.info('-- ' .. string.upper(mode) .. ' --')
   if is_normal(current) then
     if mode == 'reorder' then
       set_reorg()
     end
     if mode == 'search' then
+      if not buf.semantic then return end
       init_search()
     end
     self.mode = mode
@@ -117,12 +118,18 @@ function EditorController:set_mode(mode)
       self.mode = mode
     end
   end
+  Log.info('-- ' .. string.upper(mode) .. ' --')
   self:update_status()
 end
 
 --- @return EditorMode
 function EditorController:get_mode()
   return self.mode
+end
+
+--- @return boolean
+function EditorController:is_normal_mode()
+  return is_normal(self.mode)
 end
 
 --- @param clipboard string
@@ -403,9 +410,10 @@ end
 --- @param k string
 function EditorController:_normal_mode_keys(k)
   local input          = self.input
+  local inputView      = self.view.input
   local is_empty       = input:is_empty()
-  local at_limit_start = input:is_at_limit('up')
-  local at_limit_end   = input:is_at_limit('down')
+  local at_limit_start = inputView:is_at_limit('up')
+  local at_limit_end   = inputView:is_at_limit('down')
   local passthrough    = true
   local block_input    = function() passthrough = false end
   --- @type BufferModel

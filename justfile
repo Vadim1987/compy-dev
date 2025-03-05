@@ -73,7 +73,7 @@ snap-examples:
   DIR="dist/examples/$TS"
   mkdir -p "$DIR"
 
-  for i in "$EX_PATH"/*/main.lua
+  for i in "$EX_PATH"/*/{main.lua,README}
   do
     P="$(basename $(dirname $i))"
     # du -sh "$PROJ_PATH/$P"
@@ -88,13 +88,18 @@ dev-dogfood-examples:
 
 # run webserver on 8080 with hot reload
 dev-js:
-  @{{MON}} --exec 'just package-js' -e lua &
-  @cd web ; node server.js
+  #!/usr/bin/env -S bash
+  {{MON}} --exec 'just package-js' -e lua &
+  cd web
+  node server.js
+  wait
 # run webserver on 8080 with hot reload (compat mode)
 dev-js-c:
-  @{{MON}} --exec 'just package-js-c' -e lua &
-  @cd {{WEBDIST-c}} ; \
-    live-server --no-browser --watch="../../src"
+  #!/usr/bin/env -S bash
+  {{MON}} --exec 'just package-js-c' -e lua &
+  cd {{WEBDIST-c}}
+  live-server --no-browser
+  wait
 
 # install prerequisites for running/packaging js verison
 setup-web-dev:
@@ -124,6 +129,12 @@ package-web: package-js
     > /dev/null
   @echo packaged:
   @ls -lh {{DIST}}/{{PRODUCT_NAME}}-web.zip
+package-web-c: package-js-c
+  @rm -f {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip
+  @7z a {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip {{WEBDIST}}/* \
+    > /dev/null
+  @echo packaged:
+  @ls -lh {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip
 
 
 package-js-dir DT: version

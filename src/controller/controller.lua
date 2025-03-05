@@ -1,9 +1,11 @@
 require("util.string")
 require("util.key")
+local LANG = require("util.eval")
 
 local key_break_msg = "BREAK into program"
 
 local get_user_input = function()
+  if love.state.app_state == 'inspect' then return end
   return love.state.user_input
 end
 --- @type boolean
@@ -25,16 +27,8 @@ local _C
 
 --- @param msg string
 local function user_error_handler(msg)
-  local parts = string.split(msg, ':')
-  if #parts > 2 then
-    local path       = parts[1]
-    local ln         = parts[2]
-    local err        = string.trim(parts[3])
-    local path_parts = string.split(path, '/')
-    local filename   = path_parts[#path_parts]
-    msg              = string.format('%s:%s: %s', filename, ln, err)
-  end
-  local user_msg = 'Execution error at ' .. msg
+  local err = LANG.get_call_error(msg) or ''
+  local user_msg = 'Execution error at ' .. err
   _C:suspend_run(user_msg)
   print(user_msg)
 end
@@ -45,7 +39,19 @@ end
 --- @return any result
 --- @return any ...
 local function wrap(f, ...)
-  return xpcall(f, user_error_handler, ...)
+  if _G.web then
+    -- local ok, r = pcall(f, ...)
+    -- if not ok then
+    --   user_error_handler(r)
+    -- end
+    -- return r
+    -- return xpcall(f, user_error_handler, ...)
+    --- TODO no error handling, sorry, it leads to a stack overflow
+    --- in love.wasm
+    return f(...)
+  else
+    return xpcall(f, user_error_handler, ...)
+  end
 end
 
 --- @param f function
@@ -337,9 +343,10 @@ Controller = {
           end
         end
       end
-      if k == 'f9' then
+      if k == 'f8' then
         if love.state.app_state == 'running'
             or love.state.app_state == 'inspect'
+            or love.state.app_state == 'project_open'
         then
           C:stop_project_run()
           local st = love.state.editor

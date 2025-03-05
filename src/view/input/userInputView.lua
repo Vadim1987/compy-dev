@@ -44,18 +44,45 @@ function UserInputView:draw_input(input, time)
   local fw = cfg.fw
   local h = cfg.h
   local drawableWidth = cfg.drawableWidth
-  local drawableChars = cfg.drawableChars
+  local w = cfg.drawableChars
   -- drawtest hack
   if drawableWidth < love.fixWidth / 3 then
-    drawableChars = drawableChars * 2
+    w = w * 2
   end
+
+  local cursorInfo = self.controller:get_cursor_info()
+  local cl, cc = cursorInfo.cursor.l, cursorInfo.cursor.c
+  local acc = cc - 1
+  --- overflow binary and actual height (in lines)
+  local overflow = 0
+  local of_h = 0
 
   local text = input.text
   local vc = input.visible
   local inLines = math.min(
     vc:get_content_length(),
     cfg.input_max)
-  local apparentLines = inLines
+
+  --- The Overflow
+  --- When the cursor is on the last character of the line
+  --- we display it at the start of the next line as that's
+  --- where newly added text will appear
+  --- However, when the line also happens to be wrap-length,
+  --- there either is no next line yet, or it would look the
+  --- same as if it was at the start of the next.
+  --- Hence, the overflow phantom line.
+  local curline = text[cl]
+  local clen = string.ulen(curline)
+  local q, rem = math.modf(acc / w)
+  local ofpos = rem == 0 and acc == clen and clen > 0
+  if ofpos
+      and string.is_non_empty_string_array(text)
+  then
+    overflow = 1
+    of_h = q
+  end
+
+  local apparentLines = inLines + overflow
   local inHeight = inLines * fh
   local apparentHeight = inHeight
   local y = h - (#text * fh)
@@ -64,6 +91,23 @@ function UserInputView:draw_input(input, time)
   local wrap_reverse = vc.wrap_reverse
 
   local start_y = h - apparentLines * fh
+
+  local function drawCursor()
+    local y_offset = math.floor(acc / w)
+    local yi = y_offset + 1
+    local acl = (wrap_forward[cl] or { 1 })[yi] or 1
+    local vcl = acl - vc.offset + of_h
+
+    if vcl < 1 then return end
+
+    local ch = start_y + (vcl - 1) * fh
+    local x_offset = math.fmod(acc, w)
+
+    G.push('all')
+    G.setColor(cf_colors.input.cursor)
+    G.print('|', (x_offset - .5) * fw, ch)
+    G.pop()
+  end
 
   local drawBackground = function()
     G.setColor(colors.bg)
@@ -74,36 +118,8 @@ function UserInputView:draw_input(input, time)
       apparentHeight * fh)
   end
 
-  start_y = h - apparentLines * fh
-
-  local function drawCursor()
-    local cursorInfo = self.controller:get_cursor_info()
-    local cl, cc = cursorInfo.cursor.l, cursorInfo.cursor.c
-    local y_offset = math.floor((cc - 1) / drawableChars)
-    local yi = y_offset + 1
-    local acl = (wrap_forward[cl] or { 1 })[yi] or 1
-    local vcl = acl - vc.offset
-
-    if vcl < 1 then return end
-
-    local ch = start_y + (vcl - 1) * fh
-    local x_offset = (function()
-      if cc > drawableChars then
-        return math.fmod(cc, drawableChars)
-      else
-        return cc
-      end
-    end)()
-
-    G.push('all')
-    G.setColor(cf_colors.input.cursor)
-    G.print('|', (x_offset - 1.5) * fw, ch)
-    G.pop()
-  end
-
   local highlight = input.highlight
   local visible = vc:get_visible()
-  G.push('all')
   G.setFont(self.cfg.font)
   drawBackground()
   self.statusline:draw(status, apparentLines, time)
@@ -117,13 +133,15 @@ function UserInputView:draw_input(input, time)
     end
     for l, s in ipairs(visible) do
       local ln = l + vc.offset
-      for c = 1, string.ulen(s) do
+      local tl = string.ulen(s)
+      if not tl then return end
+      for c = 1, tl do
         local char = string.usub(s, c, c)
         local hl_li = wrap_reverse[ln]
         local hl_ci = (function()
           if #(wrap_forward[hl_li]) > 1 then
             local offset = l - hl_li
-            return c + drawableChars * offset
+            return c + w * offset
           else
             return c
           end
@@ -160,7 +178,12 @@ function UserInputView:draw_input(input, time)
         end)()
         --- number of lines back from EOF
         local diffset = #text - vc.range.fin
-        local dy = y - (-ln - diffset + 1) * fh
+        local of = overflow
+        --- push any further lines down to display phantom line
+        if ofpos and hl_li > cl then
+          of = of - 1
+        end
+        local dy = y - (-ln - diffset + 1 + of) * fh
         local dx = (c - 1) * fw
         ViewUtils.write_token(dy, dx,
           char, color, colors.bg, selected)
@@ -173,7 +196,6 @@ function UserInputView:draw_input(input, time)
     end
   end
   drawCursor()
-  G.pop()
 end
 
 --- @param input InputDTO
@@ -210,5 +232,39 @@ function UserInputView:draw(input, time)
     end
   else
     self:draw_input(input, time)
+  end
+end
+
+--- Whether the cursor is at limit, accounting for word wrap.
+--- If it's not at a limit line according to the model, it can't
+--- be there according to the view, but the reverse is not true,
+--- hence this utility function.
+--- @param dir VerticalDir
+--- @return boolean
+function UserInputView:is_at_limit(dir)
+  local ml = self.controller.model:is_at_limit(dir)
+  if not ml then
+    return false
+  else
+    local model = self.controller.model
+    local w = self.cfg.drawableChars
+    local cur = model:get_cursor_info().cursor
+    if dir == 'up' then
+      if cur.l ~= 1 then
+        return false
+      else
+        return cur.c < w
+      end
+    else
+      local nl = model:get_n_text_lines()
+      if cur.l ~= nl then
+        return false
+      else
+        local ll = string.ulen(model:get_current_line())
+        local il = math.floor(ll / w)
+        local c  = math.floor(cur.c / w)
+        return il == c
+      end
+    end
   end
 end

@@ -80,3 +80,43 @@ describe('expression eval', function()
     end)
   end
 end)
+
+local msg_tests = {
+  -- {
+  --   fullmsg = '',
+  --   line = 0,
+  --   error = '',
+  -- },
+  {
+    fullmsg = [[[string "x()"]:1: attempt to call global 'x' (a nil value)]],
+    line = 1,
+    error = [[attempt to call global 'x' (a nil value)]]
+  },
+  {
+    fullmsg = '[string "--- @diagnostic disable duplicate-set-field,l..."]:43: e',
+    line = 43,
+    error = 'e'
+  },
+  {
+    fullmsg = '[string "--- @diagnostic disable: duplicate-set-field,l..."]:43: e',
+    line = 43,
+    error = 'e'
+  },
+}
+
+describe('extracts error message info', function()
+  local pce = LANG.parse_call_error
+  require('util.debug')
+
+  for i, v in ipairs(msg_tests) do
+    it('#' .. i, function()
+      local expected = v.error
+      local e = v.fullmsg
+      local eln = v.line
+      local ln, err = pce(e)
+
+      assert.same(expected, err)
+      assert.same(eln, ln)
+    end)
+  end
+end)

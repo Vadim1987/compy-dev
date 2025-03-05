@@ -2,8 +2,9 @@ local class = require('util.class')
 require("util.key")
 require("util.string")
 
---- @param model InputModel
---- @param result function?
+--- @param model UserInputModel
+--- @param result table?
+--- @param disable_selection boolean?
 local new = function(model, result, disable_selection)
   return {
     model = model,
@@ -14,7 +15,7 @@ end
 
 --- @class UserInputController
 --- @field model UserInputModel
---- @field result function
+--- @field result table
 --- @field disable_selection boolean
 UserInputController = class.create(new)
 
@@ -59,6 +60,11 @@ function UserInputController:set_eval(eval)
   self.model:set_eval(eval)
 end
 
+--- @return Evaluator
+function UserInputController:get_eval()
+  return self.model.evaluator
+end
+
 function UserInputController:clear()
   self.model:clear_input()
   self:clear_error()
@@ -82,6 +88,12 @@ end
 --- @return CursorInfo
 function UserInputController:get_cursor_info()
   return self.model:get_cursor_info()
+end
+
+--- @return integer l
+--- @return integer c
+function UserInputController:get_cursor_pos()
+  return self.model:get_cursor_pos()
 end
 
 --- @param cursor Cursor
@@ -112,17 +124,33 @@ function UserInputController:get_wrapped_error()
 end
 
 --- @return boolean
---- @return EvalError[]
+--- @return Error[]
 function UserInputController:evaluate()
   return self.model:handle(true)
 end
 
 function UserInputController:cancel()
-  self.model:handle(false)
+  self.model:cancel()
 end
 
 function UserInputController:jump_home()
   self.model:jump_home()
+end
+
+----------------------
+---     history    ---
+----------------------
+--- @param history boolean?
+function UserInputController:reset(history)
+  self.model:reset(history)
+end
+
+function UserInputController:history_back()
+  self.model:history_back()
+end
+
+function UserInputController:history_fwd()
+  self.model:history_fwd()
 end
 
 ----------------------
@@ -281,6 +309,9 @@ function UserInputController:keypressed(k)
     if en and Key.shift() then
       input:hold_selection(false)
     end
+    if not Key.shift() then
+      input:release_selection()
+    end
   end
 
   local function cancel()
@@ -289,12 +320,13 @@ function UserInputController:keypressed(k)
     end
   end
   local function submit()
+    if self.model:get_text():is_empty() then return end
     if not Key.shift() and Key.is_enter(k) and input.oneshot then
       local ok, evret = input:evaluate()
       if ok then
         local text = evret
         local res = self.result
-        if type(res) == "function" then
+        if type(res) == "table" then
           local t = string.unlines(text)
           res(t)
         end
@@ -392,7 +424,7 @@ end
 function UserInputController:_handle_mouse(x, y, btn, handler)
   if btn == 1 then
     local im = self.model
-    local n_lines = im:get_wrapped_text():get_text_length()
+    local n_lines = im:get_wrapped_text():get_content_length()
     local c, l = self:_translate_to_input_grid(x, y)
     if l < n_lines then
       handler(n_lines - l, c)

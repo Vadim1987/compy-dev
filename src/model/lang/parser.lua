@@ -1,4 +1,5 @@
 require("model.lang.error")
+require("model.lang.syntaxHighlighter")
 
 require("util.debug")
 require("util.string")
@@ -19,7 +20,7 @@ require("util.dequeue")
 --- type representing metalua AST
 --- @class AST : token[]
 
---- @alias ParseResult AST|EvalError
+--- @alias ParseResult AST|Error
 
 --- @class Parser
 --- @field parse fun(code: string[]): ParseResult
@@ -96,7 +97,7 @@ return function(lib)
 
   --- Finds error location and message in parse result
   --- @param result string
-  --- @return EvalError
+  --- @return Error
   local get_error = function(result)
     local err_lines = string.lines(result)
     local err_first_line = err_lines[1]
@@ -107,7 +108,7 @@ return function(lib)
     local line = tonumber(match2() or '') or -1
     local char = tonumber(match2() or '') or -1
     local errmsg = string.trim(colons[4])
-    return EvalError(errmsg, char, line)
+    return Error(errmsg, char, line)
   end
 
   --- Read lexstream and determine highlighting
@@ -117,14 +118,7 @@ return function(lib)
     if not tokens then return {} end
 
     --- @type SyntaxColoring
-    local colored_tokens = {}
-    setmetatable(colored_tokens, {
-      __index = function(table, key)
-        --- default value is an empty array
-        table[key] = {}
-        return table[key]
-      end
-    })
+    local colored_tokens = SyntaxColoring()
 
     --- @param tag string
     --- @param single boolean
@@ -322,7 +316,7 @@ return function(lib)
   --- @param single boolean
   --- @return boolean ok
   --- @return Block[]
-  --- @return AST|EvalError
+  --- @return AST|Error
   local chunker = function(text, w, single)
     require("model.editor.content")
     if string.is_non_empty_string_array(text) then

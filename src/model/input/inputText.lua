@@ -91,3 +91,8 @@ function InputText:traverse(from, to, options)
 
   return ret
 end
+
+--- @return boolean
+function InputText:is_empty()
+  return not string.is_non_empty_string_array(self:items())
+end

@@ -36,4 +36,17 @@ describe('VisibleContent #wrap', function()
       assert.same(rev2, content2.wrap_reverse)
     end)
   end)
+
+  describe('correctly determines visible range', function()
+    local w = 5
+    local L = 4
+    local starter = '123'
+    local wrapper = VisibleContent(w, { starter }, 0, L)
+    it('1', function()
+      assert.same({ starter }, wrapper:get_text())
+      assert.same(1, wrapper:get_text_length())
+      wrapper:check_range()
+      assert.same(Range(1, 1), wrapper:get_range())
+    end)
+  end)
 end)

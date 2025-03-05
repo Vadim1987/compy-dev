@@ -10,6 +10,7 @@
     "**/.vscode-oss/extensions/*": true,
     ".history/**": true,
     ".vscode/.history/**": true,
+    "dist/**": true,
   },
   "editor.rulers": [
     {

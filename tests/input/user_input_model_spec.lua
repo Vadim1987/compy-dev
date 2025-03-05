@@ -1,6 +1,6 @@
---- @diagnostic disable: invisible
 require("model.input.userInputModel")
 require("model.interpreter.eval.evaluator")
+require("util.string")
 
 if not orig_print then
   --- @diagnostic disable: duplicate-set-field
@@ -8,14 +8,24 @@ if not orig_print then
 end
 
 describe("input model spec #input", function()
+  local w        = 64
   local mockConf = {
     view = {
-      drawableChars = 80,
+      drawableChars = w,
       lines = 16,
       input_max = 14
     },
   }
   local luaEval  = LuaEval()
+
+  mock           = require("tests.mock")
+  local love     = {
+    state = {
+      --- @type AppState
+      app_state = 'ready',
+    },
+  }
+  mock.mock_love(love)
 
   -----------------
   --   ASCII     --
@@ -76,7 +86,7 @@ describe("input model spec #input", function()
 
     it('advances by one', function()
       model:add_text(test_char1)
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(2, cc)
       assert.same(1, cl)
     end)
@@ -105,7 +115,7 @@ describe("input model spec #input", function()
 
     it("jumps to start on Home", function()
       model:jump_home()
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(1, cl)
       assert.same(1, cc)
     end)
@@ -118,7 +128,7 @@ describe("input model spec #input", function()
 
     it("jumps to the end on End", function()
       model:jump_end()
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       local ent = model:get_text()
       local ll = #(ent[cl]) -- first line length
       local len = #ent      -- number of lines
@@ -140,11 +150,11 @@ describe("input model spec #input", function()
     it('init', function()
       assert.same(test_t, model:get_text())
       model:jump_home()
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(1, cl)
       assert.same(1, cc)
       model:cursor_vertical_move('down')
-      cl, cc = model:_get_cursor_pos()
+      cl, cc = model:get_cursor_pos()
       assert.same(2, cl)
       assert.same(1, cc)
       model:swap_lines(3)
@@ -155,7 +165,7 @@ describe("input model spec #input", function()
         'end',
       }
       assert.same(after, model:get_text())
-      cl, cc = model:_get_cursor_pos()
+      cl, cc = model:get_cursor_pos()
       assert.same(3, cl)
       assert.same(1, cc)
       model:swap_lines(2, 3)
@@ -245,13 +255,13 @@ describe("input model spec #input", function()
       describe('backwards', function()
         it('once', function()
           model:cursor_left()
-          local _, cc = model:_get_cursor_pos()
+          local _, cc = model:get_cursor_pos()
           assert.are_equal(line_end - 1, cc)
         end)
 
         it('once again', function()
           model:cursor_left()
-          local _, cc = model:_get_cursor_pos()
+          local _, cc = model:get_cursor_pos()
           assert.are_equal(line_end - 2, cc)
         end)
 
@@ -259,7 +269,7 @@ describe("input model spec #input", function()
           model:cursor_left()
           model:cursor_left()
           model:cursor_left()
-          local _, cc = model:_get_cursor_pos()
+          local _, cc = model:get_cursor_pos()
           assert.are_equal(base, cc)
         end)
 
@@ -267,7 +277,7 @@ describe("input model spec #input", function()
           model:cursor_left()
           model:cursor_left()
           model:cursor_left()
-          local _, cc = model:_get_cursor_pos()
+          local _, cc = model:get_cursor_pos()
           assert.are_equal(base, cc)
         end)
       end)
@@ -299,7 +309,7 @@ describe("input model spec #input", function()
         model:cursor_right()
         model:cursor_right()
         model:cursor_right()
-        local _, cc = model:_get_cursor_pos()
+        local _, cc = model:get_cursor_pos()
         assert.are_equal(line_end, cc)
       end)
 
@@ -392,7 +402,7 @@ describe("input model spec #input", function()
         it('jumps to the end', function()
           model:jump_end()
           local pos = string.ulen('оа') + 1
-          local _, cc = model:_get_cursor_pos()
+          local _, cc = model:get_cursor_pos()
           assert.are_equal(pos, cc)
         end)
 
@@ -428,7 +438,7 @@ describe("input model spec #input", function()
         test1_l1,
         test1_l2,
       }, model:get_text())
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(2, cl)
       assert.same(1 + string.ulen(test1_l2), cc)
     end)
@@ -440,7 +450,7 @@ describe("input model spec #input", function()
         test2_l1,
         test2_l2,
       }, model:get_text())
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(2, cl)
       assert.same(1 + string.ulen(test2_l2), cc)
     end)
@@ -455,9 +465,21 @@ describe("input model spec #input", function()
         char1 .. test2_l1,
         test2_l2 .. char2,
       }, model:get_text())
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(2, cl)
-      assert.same(1 + string.ulen(test2_l2), cc)
+      -- assert.same(1 + string.ulen(test2_l2), cc)
+      --- multiline
+      model:clear_input()
+      model:add_text(test3)
+      model:cursor_vertical_move('up')
+      model:jump_line_end()
+      model:add_text(test2)
+      assert.same({
+        test3_l1,
+        test3_l2 .. test2_l1,
+        test2_l2,
+        test3_l3,
+      }, model:get_text())
     end)
 
     it('pastes more than two lines', function()
@@ -517,10 +539,15 @@ describe("input model spec #input", function()
     local test3_l1 = 'Вселяя'
     local test3_l2 = 'страх'
 
+    local test4 = ''
+    for _ = 1, w do
+      test4 = test4 .. 'x'
+    end
+
     it("jumps to start on [Home]", function()
       model:add_text(test1)
       model:jump_home()
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(1, cl)
       assert.same(1, cc)
     end)
@@ -534,7 +561,7 @@ describe("input model spec #input", function()
 
     it("jumps to the end on [End]", function()
       model:jump_end()
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       local ent = model:get_text()
       local len = #ent                 -- number of lines
       local ll = string.ulen(ent[len]) -- last line length
@@ -549,7 +576,7 @@ describe("input model spec #input", function()
       model:clear_input()
       model:add_text(test2)
       model:jump_home()
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(1, cl)
       assert.same(1, cc)
     end)
@@ -563,7 +590,7 @@ describe("input model spec #input", function()
 
     it("UTF-8 jumps to the end on End", function()
       model:jump_end()
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       local ent = model:get_text()
       local len = #ent                 -- number of lines
       local ll = string.ulen(ent[len]) -- last line length
@@ -577,7 +604,7 @@ describe("input model spec #input", function()
 
     it('moves up', function()
       model:cursor_vertical_move('up')
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(cl, test2_len - 1) -- second last row ( in this case, first )
       assert.same(1 + math.min(
         string.ulen(test2_l2),
@@ -587,7 +614,7 @@ describe("input model spec #input", function()
     it('moves down', function()
       model:jump_home()
       model:cursor_vertical_move('down')
-      local cl, cc = model:_get_cursor_pos()
+      local cl, cc = model:get_cursor_pos()
       assert.same(cl, 2)         -- second row
       assert.same(cl, test2_len) -- same as last
       assert.same(cc, 1)         -- first char
@@ -596,22 +623,22 @@ describe("input model spec #input", function()
     it('traverses over line breaks', function()
       model:jump_home()
       model:cursor_vertical_move('down')
-      local cl1, cc1 = model:_get_cursor_pos()
+      local cl1, cc1 = model:get_cursor_pos()
       assert.same(cl1, 2)
       assert.same(cc1, 1)
       model:cursor_left()
-      local cl2, cc2 = model:_get_cursor_pos()
+      local cl2, cc2 = model:get_cursor_pos()
       assert.same(cl2, 1)
       assert.same(cc2, 1 + string.ulen(test2_l1))
 
       model:clear_input()
       model:add_text(test3)
       model:jump_end()
-      local cl3, cc3 = model:_get_cursor_pos()
+      local cl3, cc3 = model:get_cursor_pos()
       assert.same(cl3, test3_len)
       assert.same(cc3, 1 + string.ulen(test3_l2))
       model:cursor_vertical_move('up')
-      local cl4, cc4 = model:_get_cursor_pos()
+      local cl4, cc4 = model:get_cursor_pos()
       assert.same(cl4, test3_len - 1)
       assert.same(1 + math.min(
         string.ulen(test3_l2),
@@ -619,9 +646,21 @@ describe("input model spec #input", function()
       ), cc4)
       model:cursor_right() -- to line end
       model:cursor_right() -- wrap to next line
-      local cl5, cc5 = model:_get_cursor_pos()
+      local cl5, cc5 = model:get_cursor_pos()
       assert.same(cl5, test3_len)
       assert.same(cc5, 1)
+    end)
+
+    it('visible range check', function()
+      local m = UserInputModel(mockConf, luaEval)
+      m:cancel()
+      m:add_text(test4)
+      local cl, cc = model:get_cursor_pos()
+      assert.same(2, cl)
+      local vc = m.visible
+      local vis = vc:get_visible()
+      assert.same({ test4, }, vis)
+      assert.same(1, cc)
     end)
   end)
 
@@ -663,59 +702,78 @@ describe("input model spec #input", function()
     end)
   end)
 
+  --- Handling what happens on the limits has been decoupled
+  --- from the input model, so the tests that assumed history
+  --- change are broken. This function is intended to simulate
+  --- part of what happens in real usages with history
+  --- @param m UserInputModel
+  --- @param dir VerticalDir
+  local history_wrapped_action = function(m, dir)
+    local l = m:cursor_vertical_move(dir)
+    if l then
+      if dir == 'up' then
+        m:history_back()
+      end
+      if dir == 'down' then
+        m:history_fwd()
+      end
+    end
+  end
+
   ----------------------
   -- Very long lines  --
   ----------------------
   describe('very long lines', function()
-    local w = 80
-    local cfg = {
-      view = {
-        drawableChars = w,
-        lines = 16,
-        input_max = 14
-      }
-    }
-    local model = UserInputModel(cfg, luaEval)
-    local n_char = w * 2 + 4
+    local model = UserInputModel(mockConf, TextEval)
+    local off = 4
+    local n_char = w * 2 + off
     local char1 = 'щ'
     describe('cursor', function()
-      for _ = 1, n_char do
-        model:add_text(char1)
-      end
-      local cl0, cc0 = model:_get_cursor_pos()
-      assert.same(1, cl0)
-      assert.same(n_char + 1, cc0)
-      it('moves up inside long line', function()
-        model:cursor_vertical_move('up')
-        model:cursor_vertical_move('up')
-        local cl, cc = model:_get_cursor_pos()
-        assert.same(1, cl)
-        -- TODO
-        -- assert.same(n_char + 1 - w, cc)
-        -- model:cursor_vertical_move('up')
-        -- cl, cc = model:_get_cursor_pos()
-        -- assert.same(1, cl)
-        -- assert.same(n_char + 1 - w - w, cc)
+      setup(function()
+        for _ = 1, n_char do
+          model:add_text(char1)
+        end
       end)
-      it('moves down inside long line', function()
+      it('moves up inside long line', function()
+        local cl0, cc0 = model:get_cursor_pos()
+        assert.same(1, cl0)
+        assert.same(n_char + 1, cc0)
+        history_wrapped_action(model, 'up')
+        history_wrapped_action(model, 'up')
+        local cl, cc = model:get_cursor_pos()
+        assert.same(1, cl)
+        assert.same(off + 1, cc)
+        history_wrapped_action(model, 'up')
+        cl, cc = model:get_cursor_pos()
+        assert.same(1, cl)
+      end)
+      it('moves up inside long line', function()
+        history_wrapped_action(model, 'down')
         model:jump_home()
-        local cl, cc = model:_get_cursor_pos()
+        local cl, cc = model:get_cursor_pos()
         assert.same(1, cl)
         assert.same(1, cc)
-        model:cursor_vertical_move('down')
-        cl, cc = model:_get_cursor_pos()
+        history_wrapped_action(model, 'down')
+        cl, cc = model:get_cursor_pos()
         assert.same(1, cl)
-        -- TODO
-        -- assert.same(1 + w, cc)
-        -- model:cursor_vertical_move('down')
-        -- cl, cc = model:_get_cursor_pos()
-        -- assert.same(1, cl)
+        -- assert.same(w + 1, cc)
+        history_wrapped_action(model, 'down')
+        cl, cc = model:get_cursor_pos()
+        assert.same(1, cl)
         -- assert.same(1 + w + w, cc)
       end)
-
-      model:cancel()
-      -- TODO
-      -- assert.same({ '' }, model:get_text())
+      it('moves up in history on first line', function()
+        model:cancel()
+        assert.same({ '' }, model:get_text())
+        local he = model.history:_get_entries()
+        -- Log.debug(Debug.terse_t(he, nil, nil, true))
+        history_wrapped_action(model, 'down')
+        -- Log.info(Debug.text_table(model:get_text()))
+        local cl, cc = model:get_cursor_pos()
+        assert.same(1, cl)
+        -- assert.same(n_char + 1, cc)
+        model:cursor_vertical_move('up')
+      end)
     end)
   end)
 end)

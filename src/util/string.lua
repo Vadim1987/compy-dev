@@ -313,42 +313,18 @@ string.times = function(s, n)
   return res
 end
 
-----------------------------
---- validation utilities ---
-----------------------------
-local char = {
-  is_upper = function(c)
-    return c == string.upper(c)
-  end,
-  is_lower = function(c)
-    return c == string.lower(c)
-  end,
-}
+Char = require("util.char")
 
 --- @param s string
 --- @param f fun(string): boolean
 --- @return boolean
 --- @return integer?
-local forall = function(s, f)
+string.forall = function(s, f)
   for i = 1, string.ulen(s) do
-    local v = string.char_at(s, i)
+    local v = string.usub(s, i, i)
     if not f(v) then
       return false, i
     end
   end
   return true
-end
-
---- CAUTION: this doesn't work with non-ASCII characters
---- @param s string
---- @return boolean
-string.is_upper = function(s)
-  return forall(s, char.is_upper)
-end
-
---- CAUTION: this doesn't work with non-ASCII characters
---- @param s string
---- @return boolean
-string.is_lower = function(s)
-  return forall(s, char.is_lower)
 end
