@@ -119,7 +119,7 @@ function Parser:parse_table_row(sp, ep)
   end
   local inline_parser = InlineParser:new(self.subject, self.warn)
   self:add_match(sp, sp, "+cell")
-  local complete_cell = false
+  local complete_cell = nil
   while self.pos <= ep do
     -- parse a chunk as inline content
     local nextbar, _
@@ -488,7 +488,7 @@ function Parser:specs()
               self:find("^(````*)([ \t]*)([^%s`]*)[ \t]*[\r\n]")
         end
         if border then
-          local is_raw = find(lang, "^=") and true or false
+          local is_raw = find(lang or '', "^=") and true or false
           self:add_container(Container:new(spec, {
             border = border,
             indent = self.indent

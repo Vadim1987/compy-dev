@@ -104,8 +104,8 @@ local function traverse(node, filterpart)
 end
 
 --- Apply a filter to a document.
---- @param node document (AST)
---- @param filter the filter to apply
+--- @param node (AST)
+--- @param filter table the filter to apply
 local function apply_filter(node, filter)
   for _, filterpart in ipairs(filter) do
     traverse(node, filterpart)
@@ -116,8 +116,9 @@ end
 --- `fp` will be sought using `require`, so it may occur anywhere
 --- on the `LUA_PATH`, or in the working directory. On error,
 --- returns nil and an error message.
---- @param fp path of file containing filter
---- @return the compiled filter, or nil and and error message
+--- @param  fp string path of file containing filter
+--- @return table? the compiled filter
+--- @return string? or nil and and error message
 local function require_filter(fp)
   local oldpackagepath = package.path
   -- allow omitting or providing the .lua extension:
@@ -143,7 +144,8 @@ end
 --- form `return { ... }`.  On error, return nil and an
 --- error message.
 --- @param s string containing the filter
---- @return the compiled filter, or nil and and error message
+--- @return table? the compiled filter
+--- @return string? or nil and and error message
 local function load_filter(s)
   local fn, err
   if _VERSION:match("5.1") then

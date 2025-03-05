@@ -63,7 +63,7 @@ end
 --- @return (AST)
 local function parse(input, sourcepos, warn)
   local parser = Parser:new(input, warn)
-  return ast.to_ast(parser, sourcepos)
+  return ast.to_ast(parser, sourcepos or false)
 end
 
 --- Parses a djot text and returns an iterator over events, consisting
