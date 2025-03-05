@@ -19,7 +19,7 @@ local find, sub = string.find, string.sub
 -- states:
 local SCANNING = 0
 local SCANNING_ID = 1
-local SCANNING_CLASS= 2
+local SCANNING_CLASS = 2
 local SCANNING_KEY = 3
 local SCANNING_VALUE = 4
 local SCANNING_BARE_VALUE = 5
@@ -223,14 +223,14 @@ function AttributeParser:new(subject)
     begin = nil,
     lastpos = nil,
     matches = {}
-    }
+  }
   setmetatable(state, self)
   self.__index = self
   return state
 end
 
 function AttributeParser:add_match(sp, ep, tag)
-  self.matches[#self.matches + 1] = {sp, ep, tag}
+  self.matches[#self.matches + 1] = { sp, ep, tag }
 end
 
 function AttributeParser:get_matches()

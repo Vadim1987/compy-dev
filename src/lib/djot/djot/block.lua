@@ -676,8 +676,8 @@ function Parser:get_inline_matches()
   end
 end
 
-function Parser:find(patt)
-  return find(self.subject, patt, self.pos)
+function Parser:find(patt, pos)
+  return find(self.subject, patt, pos or self.pos)
 end
 
 function Parser:add_match(startpos, endpos, annotation)
@@ -763,7 +763,7 @@ function Parser:events()
         local last_match = self.containers[self.last_matched_container]
         local check_starts = not is_blank and
             (not last_match or last_match.content == "block") and
-            not self:find("^%a+%s")                   -- optimization
+            not self:find("^%a+%s") -- optimization
         while check_starts do
           check_starts = false
           for i = 1, #specs do

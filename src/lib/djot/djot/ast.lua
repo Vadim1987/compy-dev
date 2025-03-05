@@ -39,12 +39,12 @@ end
 local unpack = unpack or table.unpack
 
 local find, lower, sub, rep, format =
-  string.find, string.lower, string.sub, string.rep, string.format
+    string.find, string.lower, string.sub, string.rep, string.format
 
 -- Creates a sparse array whose indices are byte positions.
 -- sourcepos_map[bytepos] = "line:column:charpos"
 local function make_sourcepos_map(input)
-  local sourcepos_map = {line = {}, col = {}, charpos = {}}
+  local sourcepos_map = { line = {}, col = {}, charpos = {} }
   local line = 1
   local col = 0
   local charpos = 0
@@ -91,7 +91,7 @@ local function add_string_content(node, buffer)
   elseif node.t == "softbreak" then
     buffer[#buffer + 1] = "\n"
   elseif node.c then
-    for i=1, #node.c do
+    for i = 1, #node.c do
       add_string_content(node.c[i], buffer)
     end
   end
@@ -110,15 +110,16 @@ local roman_digits = {
   l = 50,
   c = 100,
   d = 500,
-  m = 1000 }
+  m = 1000
+}
 
 local function roman_to_number(s)
   -- go backwards through the digits
   local total = 0
   local prevdigit = 0
-  local i=#s
+  local i = #s
   while i > 0 do
-    local c = lower(sub(s,i,i))
+    local c = lower(sub(s, i, i))
     local n = roman_digits[c]
     assert(n ~= nil, "Encountered bad character in roman numeral " .. s)
     if n < prevdigit then -- e.g. ix
@@ -167,7 +168,7 @@ local function sortedpairs(compare_function, to_displaykey)
     end
     table.sort(keys, compare_function)
     local keyindex = 0
-    local function ordered_next(tabl,_)
+    local function ordered_next(tabl, _)
       keyindex = keyindex + 1
       local key = keys[keyindex]
       -- use canonical names
@@ -187,13 +188,15 @@ end
 -- which we use above for better performance:
 local mt = {}
 local special = {
-    children = 'c',
-    text = 's',
-    tag = 't' }
+  children = 'c',
+  text = 's',
+  tag = 't'
+}
 local displaykeys = {
-    c = 'children',
-    s = 'text',
-    t = 'tag' }
+  c = 'children',
+  s = 'text',
+  t = 'tag'
+}
 mt.__index = function(table, key)
   local k = special[key]
   if k then
@@ -210,25 +213,25 @@ mt.__newindex = function(table, key, val)
     rawset(table, key, val)
   end
 end
-mt.__pairs = sortedpairs(function(a,b)
-    if a == "t" then -- t is always first
-      return true
-    elseif a == "s" then -- s is always second
-      return (b ~= "t")
-    elseif a == "c" then -- c only before references, footnotes
-      return (b == "references" or b == "footnotes")
-    elseif a == "references" then
-      return (b == "footnotes")
-    elseif a == "footnotes" then
-      return false
-    elseif b == "t" or b == "s" then
-      return false
-    elseif b == "c" or b == "references" or b == "footnotes" then
-      return true
-    else
-      return (a < b)
-    end
-  end, function(k) return displaykeys[k] or k end)
+mt.__pairs = sortedpairs(function(a, b)
+  if a == "t" then     -- t is always first
+    return true
+  elseif a == "s" then -- s is always second
+    return (b ~= "t")
+  elseif a == "c" then -- c only before references, footnotes
+    return (b == "references" or b == "footnotes")
+  elseif a == "references" then
+    return (b == "footnotes")
+  elseif a == "footnotes" then
+    return false
+  elseif b == "t" or b == "s" then
+    return false
+  elseif b == "c" or b == "references" or b == "footnotes" then
+    return true
+  else
+    return (a < b)
+  end
+end, function(k) return displaykeys[k] or k end)
 
 
 --- Create a new AST node.
@@ -245,7 +248,7 @@ end
 --- @param child (AST) node child node
 local function add_child(node, child)
   if (not node.c) then
-    node.c = {child}
+    node.c = { child }
   else
     node.c[#node.c + 1] = child
   end
@@ -265,8 +268,10 @@ end
 local function new_attributes(tbl)
   local attr = tbl or {}
   -- ensure deterministic order of iteration
-  setmetatable(attr, {__pairs = sortedpairs(function(a,b) return a < b end,
-                                            function(k) return k end)})
+  setmetatable(attr, {
+    __pairs = sortedpairs(function(a, b) return a < b end,
+      function(k) return k end)
+  })
   return attr
 end
 
@@ -292,7 +297,7 @@ end
 --- @param source (table) associating keys and values
 local function copy_attributes(target, source)
   if source then
-    for k,v in pairs(source) do
+    for k, v in pairs(source) do
       insert_attribute(target, k, v)
     end
   end
@@ -302,7 +307,7 @@ end
 --- @param cs (AST)
 local function insert_attributes_from_nodes(targetnode, cs)
   targetnode.attr = targetnode.attr or new_attributes()
-  local i=1
+  local i = 1
   while i <= #cs do
     local x, y = cs[i].t, cs[i].s
     if x == "id" or x == "class" then
@@ -314,7 +319,7 @@ local function insert_attributes_from_nodes(targetnode, cs)
         -- resolve backslash escapes
         i = i + 1
       end
-      insert_attribute(targetnode.attr, y, table.concat(val,"\n"))
+      insert_attribute(targetnode.attr, y, table.concat(val, "\n"))
     end
     i = i + 1
   end
@@ -334,7 +339,7 @@ local function make_definition_list_item(node)
   if node.c[2] then
     local defn = new_node("definition")
     defn.c = {}
-    for i=2,#node.c do
+    for i = 2, #node.c do
       defn.c[#defn.c + 1] = node.c[i]
       node.c[i] = nil
     end
@@ -344,9 +349,9 @@ end
 
 local function resolve_style(list)
   local style = nil
-  for k,i in pairs(list.styles) do
+  for k, i in pairs(list.styles) do
     if not style or i < style.priority then
-      style = {name = k, priority = i}
+      style = { name = k, priority = i }
     end
   end
   list.style = style.name
@@ -372,8 +377,8 @@ local function add_sections(ast)
     return ast
   end
   local newast = new_node("doc")
-  local secs = { {sec = newast, level = 0 } }
-  for _,node in ipairs(ast.c) do
+  local secs = { { sec = newast, level = 0 } }
+  for _, node in ipairs(ast.c) do
     if node.t == "heading" then
       local level = node.level
       local curlevel = (#secs > 0 and secs[#secs].level) or 0
@@ -385,10 +390,10 @@ local function add_sections(ast)
       end
       -- now we know: curlevel < level
       local newsec = new_node("section")
-      newsec.attr = new_attributes{id = node.attr.id}
+      newsec.attr = new_attributes { id = node.attr.id }
       node.attr.id = nil
       add_child(newsec, node)
-      secs[#secs + 1] = {sec = newsec, level = level}
+      secs[#secs + 1] = { sec = newsec, level = level }
     else
       add_child(secs[#secs].sec, node)
     end
@@ -423,9 +428,9 @@ local function to_ast(parser, sourcepos)
 
   -- generate auto identifier for heading
   local function get_identifier(s)
-    local base = s:gsub("[][~!@#$%^&*(){}`,.<>\\|=+/?]","")
-                  :gsub("^%s+",""):gsub("%s+$","")
-                  :gsub("%s+","-")
+    local base = s:gsub("[][~!@#$%^&*(){}`,.<>\\|=+/?]", "")
+        :gsub("^%s+", ""):gsub("%s+$", "")
+        :gsub("%s+", "-")
     local i = 0
     local ident = base
     -- generate unique id
@@ -443,7 +448,7 @@ local function to_ast(parser, sourcepos)
   local function format_sourcepos(bytepos)
     if bytepos then
       return string.format("%d:%d:%d", sourceposmap.line[bytepos],
-              sourceposmap.col[bytepos], sourceposmap.charpos[bytepos])
+        sourceposmap.col[bytepos], sourceposmap.charpos[bytepos])
     end
   end
 
@@ -453,7 +458,7 @@ local function to_ast(parser, sourcepos)
       if node.pos then
         node.pos[1] = sp
       else
-        node.pos = {sp, nil}
+        node.pos = { sp, nil }
       end
     end
   end
@@ -464,7 +469,7 @@ local function to_ast(parser, sourcepos)
       if node.pos then
         node.pos[2] = ep
       else
-        node.pos = {nil, ep}
+        node.pos = { nil, ep }
       end
     end
   end
@@ -486,8 +491,8 @@ local function to_ast(parser, sourcepos)
 
   local block_attributes = nil
   local function add_block_attributes(node)
-    if block_attributes and blocktag[node.t:gsub("%|.*","")] then
-      for i=1,#block_attributes do
+    if block_attributes and blocktag[node.t:gsub("%|.*", "")] then
+      for i = 1, #block_attributes do
         insert_attributes_from_nodes(node, block_attributes[i])
       end
       -- add to identifiers table so we don't get duplicate auto-generated ids
@@ -499,7 +504,7 @@ local function to_ast(parser, sourcepos)
   end
 
   -- two variables used for tight/loose list determination:
-  local tags = {} -- used to keep track of blank lines
+  local tags = {}    -- used to keep track of blank lines
   local matchidx = 0 -- keep track of the index of the match
 
   local function is_tight(startidx, endidx, is_last_item)
@@ -511,13 +516,13 @@ local function to_ast(parser, sourcepos)
         endidx = endidx - 1
       end
     end
-    for i=startidx, endidx do
+    for i = startidx, endidx do
       local tag = tags[i]
       if tag == "blankline" then
-        if not ((string.find(tags[i+1], "%+list_item") or
-                (string.find(tags[i+1], "%-list_item") and
-                 (is_last_item or
-                   string.find(tags[i+2], "%-list_item"))))) then
+        if not ((string.find(tags[i + 1], "%+list_item") or
+              (string.find(tags[i + 1], "%-list_item") and
+                (is_last_item or
+                  string.find(tags[i + 2], "%-list_item"))))) then
           -- don't count blank lines before list starts
           -- don't count blank lines at end of nested lists or end of last item
           blanklines = blanklines + 1
@@ -540,9 +545,9 @@ local function to_ast(parser, sourcepos)
       end
       -- calculate tightness (TODO not quite right)
       local tight = true
-      for i=1,#child.c do
+      for i = 1, #child.c do
         tight = tight and is_tight(child.c[i].startidx,
-                                     child.c[i].endidx, i == #child.c)
+          child.c[i].endidx, i == #child.c)
         child.c[i].startidx = nil
         child.c[i].endidx = nil
       end
@@ -576,15 +581,14 @@ local function to_ast(parser, sourcepos)
       add_block_attributes(node)
 
       if tag == "heading" then
-         node.level = (endpos - startpos) + 1
-
+        node.level = (endpos - startpos) + 1
       elseif find(tag, "^list_item") then
         node.t = "list_item"
         node.startidx = matchidx -- for tight/loose determination
         local _, _, style_marker = string.find(tag, "(%|.*)")
         local styles = {}
         if style_marker then
-          local i=1
+          local i = 1
           for sty in string.gmatch(style_marker, "%|([^%|%]]*)") do
             styles[sty] = i
             i = i + 1
@@ -612,7 +616,7 @@ local function to_ast(parser, sourcepos)
           -- it's a list, but is it the right kind?
           local matched_styles = {}
           local has_match = false
-          for k,_ in pairs(styles) do
+          for k, _ in pairs(styles) do
             if tip.styles[k] then
               has_match = true
               matched_styles[k] = styles[k]
@@ -635,13 +639,10 @@ local function to_ast(parser, sourcepos)
             containers[#containers + 1] = list
           end
         end
-
-
       end
 
       -- add to container stack
       containers[#containers + 1] = node
-
     elseif mod == "-" then
       -- process close match:
       -- * check end of containers stack; if tag matches, add
@@ -665,7 +666,6 @@ local function to_ast(parser, sourcepos)
           block_attributes[#block_attributes + 1] = node.c
           return -- we don't add this to parent; instead we store
           -- the block attributes and add them to the next block
-
         elseif node.t == "attributes" then
           -- parse attributes, add to last node
           local tip = containers[#containers]
@@ -690,17 +690,16 @@ local function to_ast(parser, sourcepos)
             if has_children(node) and not endswithspace then
               insert_attributes_from_nodes(prevnode, node.c)
             else
-              warn({message = "Ignoring unattached attribute", pos = startpos})
+              warn({ message = "Ignoring unattached attribute", pos = startpos })
             end
           else
-            warn({message = "Ignoring unattached attribute", pos = startpos})
+            warn({ message = "Ignoring unattached attribute", pos = startpos })
           end
           return -- don't add the attribute node to the tree
-
         elseif tag == "reference_definition" then
           local dest = ""
           local key
-          for i=1,#node.c do
+          for i = 1, #node.c do
             if node.c[i].t == "reference_key" then
               key = node.c[i].s
             end
@@ -714,7 +713,6 @@ local function to_ast(parser, sourcepos)
             references[key].attr = node.attr
           end
           return -- don't include in tree
-
         elseif tag == "footnote" then
           local label
           if has_children(node) and node.c[1].t == "note_label" then
@@ -725,21 +723,18 @@ local function to_ast(parser, sourcepos)
             footnotes[label] = node
           end
           return -- don't include in tree
-
-
         elseif tag == "table" then
-
           -- Children are the rows. Look for a separator line:
           -- if found, make the preceding rows headings
           -- and set attributes for column alignments on the table.
 
-          local i=1
+          local i = 1
           local aligns = {}
           while i <= #node.c do
             local found, align, _
             if node.c[i].t == "row" then
               local row = node.c[i].c
-              for j=1,#row do
+              for j = 1, #row do
                 found, _, align = find(row[j].t, "^separator_(.*)")
                 if not found then
                   break
@@ -751,7 +746,7 @@ local function to_ast(parser, sourcepos)
                 local prevrow = node.c[i - 1]
                 if prevrow and prevrow.t == "row" then
                   prevrow.head = true
-                  for k=1,#prevrow.c do
+                  for k = 1, #prevrow.c do
                     -- set head on cells too
                     prevrow.c[k].head = true
                     if aligns[k] ~= "default" then
@@ -763,7 +758,7 @@ local function to_ast(parser, sourcepos)
                 -- we don't need to increment i because we removed ith elt
               else
                 if #aligns > 0 then
-                  for l=1,#node.c[i].c do
+                  for l = 1, #node.c[i].c do
                     if aligns[l] ~= "default" then
                       node.c[i].c[l].align = aligns[l]
                     end
@@ -773,7 +768,6 @@ local function to_ast(parser, sourcepos)
               end
             end
           end
-
         elseif tag == "code_block" then
           if has_children(node) then
             if node.c[1].t == "code_language" then
@@ -788,7 +782,6 @@ local function to_ast(parser, sourcepos)
           end
           node.s = get_string_content(node)
           node.c = nil
-
         elseif find(tag, "^list_item") then
           node.t = "list_item"
           node.endidx = matchidx -- for tight/loose determination
@@ -808,27 +801,22 @@ local function to_ast(parser, sourcepos)
           end
 
           node.style_marker = nil
-
         elseif tag == "inline_math" then
           node.t = "math"
           node.s = get_verbatim_content(node)
           node.c = nil
           node.display = false
-          node.attr = new_attributes{class = "math inline"}
-
+          node.attr = new_attributes { class = "math inline" }
         elseif tag == "display_math" then
           node.t = "math"
           node.s = get_verbatim_content(node)
           node.c = nil
           node.display = true
-          node.attr = new_attributes{class = "math display"}
-
+          node.attr = new_attributes { class = "math display" }
         elseif tag == "imagetext" then
           node.t = "image"
-
         elseif tag == "linktext" then
           node.t = "link"
-
         elseif tag == "div" then
           node.c = node.c or {}
           if node.c[1] and node.c[1].t == "class" then
@@ -836,17 +824,13 @@ local function to_ast(parser, sourcepos)
             insert_attribute(node.attr, "class", get_string_content(node.c[1]))
             table.remove(node.c, 1)
           end
-
         elseif tag == "verbatim" then
           node.s = get_verbatim_content(node)
           node.c = nil
-
         elseif tag == "url" then
           node.destination = get_string_content(node)
-
         elseif tag == "email" then
           node.destination = "mailto:" .. get_string_content(node)
-
         elseif tag == "caption" then
           local tip = containers[#containers]
           local prevnode = has_children(tip) and tip.c[#tip.c]
@@ -854,52 +838,51 @@ local function to_ast(parser, sourcepos)
             -- move caption in table node
             table.insert(prevnode.c, 1, node)
           else
-            warn({ message = "Ignoring caption without preceding table",
-                   pos = startpos })
+            warn({
+              message = "Ignoring caption without preceding table",
+              pos = startpos
+            })
           end
           return
-
         elseif tag == "heading" then
           local heading_str =
-                 get_string_content(node):gsub("^%s+",""):gsub("%s+$","")
+              get_string_content(node):gsub("^%s+", ""):gsub("%s+$", "")
           if not node.attr then
-            node.attr = new_attributes{}
+            node.attr = new_attributes {}
           end
-          if not node.attr.id then  -- generate id attribute from heading
+          if not node.attr.id then -- generate id attribute from heading
             insert_attribute(node.attr, "id", get_identifier(heading_str))
           end
           -- insert into references unless there's a same-named one already:
           if not references[heading_str] then
             references[heading_str] =
-              new_node("reference")
+                new_node("reference")
             references[heading_str].destination = "#" .. node.attr.id
           end
-
         elseif tag == "destination" then
-           local tip = containers[#containers]
-           local prevnode = has_children(tip) and tip.c[#tip.c]
-           assert(prevnode and (prevnode.t == "image" or prevnode.t == "link"),
-                  "destination with no preceding link or image")
-           prevnode.destination = get_string_content(node):gsub("\r?\n", "")
-           return  -- do not put on container stack
-
+          local tip = containers[#containers]
+          local prevnode = has_children(tip) and tip.c[#tip.c]
+          assert(prevnode and (prevnode.t == "image" or prevnode.t == "link"),
+            "destination with no preceding link or image")
+          prevnode.destination = get_string_content(node):gsub("\r?\n", "")
+          return -- do not put on container stack
         elseif tag == "reference" then
-           local tip = containers[#containers]
-           local prevnode = has_children(tip) and tip.c[#tip.c]
-           assert(prevnode and (prevnode.t == "image" or prevnode.t == "link"),
-                 "reference with no preceding link or image")
-           if has_children(node) then
-             prevnode.reference = get_string_content(node):gsub("\r?\n", " ")
-           else
-             prevnode.reference = get_string_content(prevnode):gsub("\r?\n", " ")
-           end
-           return  -- do not put on container stack
+          local tip = containers[#containers]
+          local prevnode = has_children(tip) and tip.c[#tip.c]
+          assert(prevnode and (prevnode.t == "image" or prevnode.t == "link"),
+            "reference with no preceding link or image")
+          if has_children(node) then
+            prevnode.reference = get_string_content(node):gsub("\r?\n", " ")
+          else
+            prevnode.reference = get_string_content(prevnode):gsub("\r?\n", " ")
+          end
+          return -- do not put on container stack
         end
 
         add_child_to_tip(containers, node)
       else
         assert(false, "unmatched " .. annot .. " encountered at byte " ..
-                  startpos)
+          startpos)
         return
       end
     else
@@ -930,7 +913,7 @@ local function to_ast(parser, sourcepos)
           prevnode.s = s
           prevnode.c = nil
           prevnode.format = sub(subject, startpos + 2, endpos - 1)
-          return  -- don't add this node to containers
+          return -- don't add this node to containers
         else
           node.s = sub(subject, startpos, endpos)
         end
@@ -939,12 +922,11 @@ local function to_ast(parser, sourcepos)
       end
 
       add_child_to_tip(containers, node)
-
     end
   end
 
   local doc = new_node("doc")
-  local containers = {doc}
+  local containers = { doc }
   for sp, ep, annot in parser:events() do
     handle_match(containers, sp, ep, annot)
   end
@@ -978,26 +960,26 @@ local function render_node(node, handle, indent)
     if node.pos then
       handle:write(format(" (%s-%s)", node.pos[1], node.pos[2]))
     end
-    for k,v in pairs(node) do
+    for k, v in pairs(node) do
       if type(k) == "string" and k ~= "children" and
-          k ~= "tag" and k ~= "pos" and k ~= "attr"  and
+          k ~= "tag" and k ~= "pos" and k ~= "attr" and
           k ~= "references" and k ~= "footnotes" then
         handle:write(format(" %s=%q", k, tostring(v)))
       end
     end
     if node.attr then
-      for k,v in pairs(node.attr) do
+      for k, v in pairs(node.attr) do
         handle:write(format(" %s=%q", k, v))
       end
     end
   else
     io.stderr:write("Encountered node without tag:\n" ..
-                      require'inspect'(node))
+      require 'inspect' (node))
     os.exit(1)
   end
   handle:write("\n")
   if node.c then
-    for _,v in ipairs(node.c) do
+    for _, v in ipairs(node.c) do
       render_node(v, handle, indent + 2)
     end
   end
@@ -1011,14 +993,14 @@ local function render(doc, handle)
   render_node(doc, handle, 0)
   if next(doc.references) ~= nil then
     handle:write("references\n")
-    for k,v in pairs(doc.references) do
+    for k, v in pairs(doc.references) do
       handle:write(format("  [%q] =\n", k))
       render_node(v, handle, 4)
     end
   end
   if next(doc.footnotes) ~= nil then
     handle:write("footnotes\n")
-    for k,v in pairs(doc.footnotes) do
+    for k, v in pairs(doc.footnotes) do
       handle:write(format("  [%q] =\n", k))
       render_node(v, handle, 4)
     end
@@ -1026,11 +1008,13 @@ local function render(doc, handle)
 end
 
 --- @export
-return { to_ast = to_ast,
-         render = render,
-         insert_attribute = insert_attribute,
-         copy_attributes = copy_attributes,
-         new_attributes = new_attributes,
-         new_node = new_node,
-         add_child = add_child,
-         has_children = has_children }
+return {
+  to_ast = to_ast,
+  render = render,
+  insert_attribute = insert_attribute,
+  copy_attributes = copy_attributes,
+  new_attributes = new_attributes,
+  new_node = new_node,
+  add_child = add_child,
+  has_children = has_children
+}

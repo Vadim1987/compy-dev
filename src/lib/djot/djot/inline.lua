@@ -25,19 +25,19 @@ local InlineParser = {}
 function InlineParser:new(subject, warn)
   local state =
   {
-    warn = warn or function() end,   -- function to issue warnings
-    subject = subject,               -- text to parse
-    matches = {},                    -- table pos : (endpos, annotation)
-    openers = {},                    -- map from closer_type to array of (pos, data) in reverse order
-    verbatim = 0,                    -- parsing verbatim span to be ended by n backticks
-    verbatim_type = nil,             -- whether verbatim is math or regular
-    destination = false,             -- parsing link destination in ()
-    firstpos = 0,                    -- position of first slice
-    lastpos = 0,                     -- position of last slice
-    allow_attributes = true,         -- allow parsing of attributes
-    attribute_parser = nil,          -- attribute parser
-    attribute_start = nil,           -- start of potential attribute
-    attribute_slices = nil,          -- slices we've tried to parse as attributes
+    warn = warn or function() end, -- function to issue warnings
+    subject = subject,             -- text to parse
+    matches = {},                  -- table pos : (endpos, annotation)
+    openers = {},                  -- map from closer_type to array of (pos, data) in reverse order
+    verbatim = 0,                  -- parsing verbatim span to be ended by n backticks
+    verbatim_type = nil,           -- whether verbatim is math or regular
+    destination = false,           -- parsing link destination in ()
+    firstpos = 0,                  -- position of first slice
+    lastpos = 0,                   -- position of last slice
+    allow_attributes = true,       -- allow parsing of attributes
+    attribute_parser = nil,        -- attribute parser
+    attribute_start = nil,         -- start of potential attribute
+    attribute_slices = nil,        -- slices we've tried to parse as attributes
   }
   setmetatable(state, self)
   self.__index = self
@@ -108,7 +108,7 @@ function InlineParser.between_matched(c, annotation, defaultmatch, opentest)
     local can_close = find(subject, "^%S", pos - 1)
     local has_open_marker = matches_pattern(self.matches[pos - 1], "^open%_marker")
     local has_close_marker = pos + 1 <= endpos and
-        byte(subject, pos + 1) == 125                       -- }
+        byte(subject, pos + 1) == 125 -- }
     local endcloser = pos
     local startopener = pos
 
@@ -266,7 +266,7 @@ InlineParser.matchers = {
   -- 91 = [
   [91] = function(self, pos, endpos)
     local sp, ep = bounded_find(self.subject, "^%^([^]]+)%]", pos + 1, endpos)
-    if sp then   -- footnote ref
+    if sp then -- footnote ref
       self:add_match(pos, ep, "footnote_reference")
       return ep + 1
     else
@@ -304,17 +304,17 @@ InlineParser.matchers = {
         return pos + 1
       elseif bounded_find(subject, "^%[", pos + 1, endpos) then
         opener[3] = "reference_link"
-        opener[4] = pos       -- intermediate ]
-        opener[5] = pos + 1   -- intermediate [
+        opener[4] = pos     -- intermediate ]
+        opener[5] = pos + 1 -- intermediate [
         self:add_match(pos, pos + 1, "str")
         -- remove any openers between [ and ]
         self:clear_openers(opener[1] + 1, pos - 1)
         return pos + 2
       elseif bounded_find(subject, "^%(", pos + 1, endpos) then
-        self.openers["("] = {}   -- clear ( openers
+        self.openers["("] = {} -- clear ( openers
         opener[3] = "explicit_link"
-        opener[4] = pos          -- intermediate ]
-        opener[5] = pos + 1      -- intermediate (
+        opener[4] = pos        -- intermediate ]
+        opener[5] = pos + 1    -- intermediate (
         self.destination = true
         self:add_match(pos, pos + 1, "str")
         -- remove any openers between [ and ]
@@ -345,7 +345,7 @@ InlineParser.matchers = {
     if not self.destination then return nil end
     local parens = self.openers["("]
     if parens and #parens > 0 and parens[#parens][1] then
-      parens[#parens] = nil   -- clear opener
+      parens[#parens] = nil -- clear opener
       self:add_match(pos, pos, "str")
       return pos + 1
     else
@@ -427,7 +427,7 @@ InlineParser.matchers = {
 
   -- 39 = '
   [39] = InlineParser.between_matched("'", "single_quoted", "right_single_quote",
-    function(self, pos)                        -- test to open
+    function(self, pos) -- test to open
       return pos == 1 or
           find(self.subject, "^[%s\"'-([]", pos - 1)
     end),
@@ -440,7 +440,7 @@ InlineParser.matchers = {
     local subject = self.subject
     local nextpos
     if byte(subject, pos - 1) == 123 or
-        byte(subject, pos + 1) == 125 then  -- (123 = { 125 = })
+        byte(subject, pos + 1) == 125 then -- (123 = { 125 = })
       nextpos = InlineParser.between_matched("-", "delete", "str",
         function(slf, p)
           return find(slf.subject, "^%{", p - 1) or
@@ -454,10 +454,10 @@ InlineParser.matchers = {
       ep = endpos
     end
     local hyphens = 1 + ep - pos
-    if byte(subject, ep + 1) == 125 then   -- 125 = }
-      hyphens = hyphens - 1                -- last hyphen is close del
+    if byte(subject, ep + 1) == 125 then -- 125 = }
+      hyphens = hyphens - 1              -- last hyphen is close del
     end
-    if hyphens == 0 then                   -- this means we have '-}'
+    if hyphens == 0 then                 -- this means we have '-}'
       self:add_match(pos, pos + 1, "str")
       return pos + 2
     end

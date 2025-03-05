@@ -31,16 +31,16 @@ local json = { _version = "0.1.2" }
 local encode
 
 local escape_char_map = {
-  [ "\\" ] = "\\",
-  [ "\"" ] = "\"",
-  [ "\b" ] = "b",
-  [ "\f" ] = "f",
-  [ "\n" ] = "n",
-  [ "\r" ] = "r",
-  [ "\t" ] = "t",
+  ["\\"] = "\\",
+  ["\""] = "\"",
+  ["\b"] = "b",
+  ["\f"] = "f",
+  ["\n"] = "n",
+  ["\r"] = "r",
+  ["\t"] = "t",
 }
 
-local escape_char_map_inv = { [ "/" ] = "/" }
+local escape_char_map_inv = { ["/"] = "/" }
 for k, v in pairs(escape_char_map) do
   escape_char_map_inv[v] = k
 end
@@ -82,7 +82,6 @@ local function encode_table(val, stack)
     end
     stack[val] = nil
     return "[" .. table.concat(res, ",") .. "]"
-
   else
     -- Treat as an object
     for k, v in pairs(val) do
@@ -112,11 +111,11 @@ end
 
 
 local type_func_map = {
-  [ "nil"     ] = encode_nil,
-  [ "table"   ] = encode_table,
-  [ "string"  ] = encode_string,
-  [ "number"  ] = encode_number,
-  [ "boolean" ] = tostring,
+  ["nil"]     = encode_nil,
+  ["table"]   = encode_table,
+  ["string"]  = encode_string,
+  ["number"]  = encode_number,
+  ["boolean"] = tostring,
 }
 
 
@@ -131,7 +130,7 @@ end
 
 
 function json.encode(val)
-  return ( encode(val) )
+  return (encode(val))
 end
 
 return json

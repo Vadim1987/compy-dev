@@ -84,7 +84,7 @@ local function handle_node(node, filterpart)
     end
   end
   if node.c then
-    for _,child in ipairs(node.c) do
+    for _, child in ipairs(node.c) do
       handle_node(child, filterpart)
     end
   end
@@ -107,7 +107,7 @@ end
 --- @param node document (AST)
 --- @param filter the filter to apply
 local function apply_filter(node, filter)
-  for _,filterpart in ipairs(filter) do
+  for _, filterpart in ipairs(filter) do
     traverse(node, filterpart)
   end
 end
@@ -122,18 +122,18 @@ local function require_filter(fp)
   local oldpackagepath = package.path
   -- allow omitting or providing the .lua extension:
   local ok, filter = pcall(function()
-                         package.path = "./?.lua;" .. package.path
-                         local f = require(fp:gsub("%.lua$",""))
-                         package.path = oldpackagepath
-                         return f
-                      end)
+    package.path = "./?.lua;" .. package.path
+    local f = require(fp:gsub("%.lua$", ""))
+    package.path = oldpackagepath
+    return f
+  end)
   if not ok then
     return nil, filter
   elseif type(filter) ~= "table" then
-    return nil,  "filter must be a table"
+    return nil, "filter must be a table"
   end
   if #filter == 0 then -- just a single filter part given
-    return {filter}
+    return { filter }
   else
     return filter
   end
@@ -154,10 +154,10 @@ local function load_filter(s)
   if fn then
     local filter = fn()
     if type(filter) ~= "table" then
-      return nil,  "filter must be a table"
+      return nil, "filter must be a table"
     end
     if #filter == 0 then -- just a single filter given
-      return {filter}
+      return { filter }
     else
       return filter
     end

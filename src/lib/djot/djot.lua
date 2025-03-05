@@ -57,8 +57,8 @@ end
 --- Parse a djot text and construct an abstract syntax tree (AST)
 --- representing the document.
 --- @param input (string) input string
---- @param sourcepos (boolean) if true, source positions are included in the AST
---- @param warn (function) function that processes a warning, accepting a warning
+--- @param sourcepos (boolean?) if true, source positions are included in the AST
+--- @param warn (function?) function that processes a warning, accepting a warning
 --- object with `pos` and `message` fields.
 --- @return (AST)
 local function parse(input, sourcepos, warn)
