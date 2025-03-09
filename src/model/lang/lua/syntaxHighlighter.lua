@@ -26,6 +26,7 @@ SyntaxColoring.new = function()
 end
 
 local tokenHL = {
+  --- @param t string tag
   --- @return integer?
   colorize = function(t)
     local type = types[t]
