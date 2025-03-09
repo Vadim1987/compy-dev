@@ -56,6 +56,7 @@ EditorController = class.create(new)
 function EditorController:open(name, content, save)
   local w = self.model.cfg.view.drawableChars
   local is_lua = string.match(name, '.lua$')
+  local is_md = string.match(name, '.md$')
   local ch, hl, pp
 
   if is_lua then
@@ -72,6 +73,10 @@ function EditorController:open(name, content, save)
     pp = function(t)
       return parser.pprint(t, w)
     end
+  elseif is_md then
+    local mdParser = MdParser(name).parser
+    if not mdParser then return end
+    hl = mdParser.highlighter
   else
     self.input:set_eval(TextEval)
   end

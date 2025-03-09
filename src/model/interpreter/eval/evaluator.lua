@@ -133,6 +133,14 @@ LuaEval = function(label, filters, custom_apply)
   return Evaluator(l, luaParser, filters, custom_apply)
 end
 
+local mdParser = require("model.lang.md.parser")
+
+--- @param label string?
+MdParser = function(label)
+  local l = label or 'markdown'
+  return Evaluator(l, mdParser)
+end
+
 InputEvalText = Evaluator.plain('text input')
 InputEvalLua = Evaluator('lua input', luaParser)
 
