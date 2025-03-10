@@ -35,16 +35,6 @@ require("util.dequeue")
 --- @field children mdAST[]
 --- @field pos? string[]
 
-local syntax_i = {
-  default     = 0,
-  emph        = 7,
-  strong      = 2,
-  heading     = 5,
-  link        = 6,
-  list_marker = 10,
-  inline      = 4,
-}
-
 local types = {
   heading     = true,
   emph        = true,
@@ -152,7 +142,8 @@ end
 --- @param t string tag
 --- @return integer?
 local colorize = function(t)
-  local type = types[t]
+  local syntax_i = require("conf.md")
+  local type     = types[t]
   if type then
     return syntax_i[t]
   else

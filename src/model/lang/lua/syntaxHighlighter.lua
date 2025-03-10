@@ -1,7 +1,6 @@
 require("util.color")
 local class = require('util.class')
-local c = require("conf.colors").input
-local colors = c.syntax_i
+local colors = require("conf.lua")
 
 local types = {
   kw_multi   = true, -- 'Keyword'

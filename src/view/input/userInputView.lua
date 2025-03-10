@@ -154,7 +154,7 @@ function UserInputView:draw_input(input, time)
             (ln == el and (c > ec or ec == 1)) then
           color = cf_colors.input.error
         else
-          color = cf_colors.input.syntax[ttype] or colors.fg
+          color = cf_colors.lua_syntax.colors[ttype] or colors.fg
         end
         local selected = (function()
           local sel = input.selection

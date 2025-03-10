@@ -332,7 +332,8 @@ function BufferView:draw(special)
                 return colors.fg
               end)()
               local color =
-                  cf_colors.input.syntax[lex_t] or colors.fg
+                  cf_colors.lua_syntax.colors[lex_t]
+                  or colors.fg
 
               G.setColor(color)
             else
