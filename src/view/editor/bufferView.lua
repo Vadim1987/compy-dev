@@ -55,11 +55,14 @@ function BufferView:open(buffer)
   local cont = buffer.content_type
   self.content_type = cont
 
-  local bufcon = buffer:get_content()
-  if cont == 'plain' then
+  if cont == 'plain' or cont == 'md' then
+    self.buffer:highlight()
+    local bufcon, hl = buffer:get_text_content()
     self.content = VisibleContent(
       self.w, bufcon, self.SCROLL_BY, L)
+    if hl then self.hl = hl end
   elseif cont == 'lua' then
+    local bufcon = buffer:get_content()
     self.content =
         VisibleStructuredContent(
           self.w,
@@ -100,8 +103,7 @@ function BufferView:_get_wrapped_selection()
         table.insert(ret, self.content.wrap_forward[l])
       end
     end
-  elseif self.content_type == 'plain'
-  then
+  else
     ret[1] = self.content.wrap_forward[sel]
   end
 
@@ -132,16 +134,15 @@ function BufferView:refresh(moved)
 
   if moved then
     local sel = self.buffer:get_selection()
-    if self.content_type == 'plain' then
-      local t = Dequeue(text)
-      t:move(moved, sel)
-      self.content:wrap(t)
-    end
     if self.content_type == 'lua' then
       local vsc = self.content
       local blocks = vsc.blocks
       blocks:move(moved, sel)
       vsc:recalc_range()
+    else
+      local t = Dequeue(text)
+      t:move(moved, sel)
+      self.content:wrap(t)
     end
   end
 
@@ -212,8 +213,7 @@ function BufferView:is_selection_visible()
   if self.content_type == 'lua'
   then
     s_w = self.content:get_block_app_pos(sel):enumerate()
-  elseif self.content_type == 'plain'
-  then
+  else
     s_w = self.content.wrap_forward[sel]
   end
 
@@ -298,7 +298,8 @@ function BufferView:draw(special)
       for _, v in ipairs(w) do
         if self.content.range:inc(v) then
           if (not self.cfg.show_append_hl)
-              and (v == self.content:get_content_length() + 1) then
+              and (v == self.content:get_content_length() + 1)
+          then
             --- skip hl
           else
             highlight_line(v - off)

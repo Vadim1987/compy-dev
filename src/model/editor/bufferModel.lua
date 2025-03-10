@@ -112,6 +112,13 @@ function BufferModel:save()
   return self.save_file(self:get_text_content())
 end
 
+function BufferModel:highlight()
+  if self.highlighter then
+    local text = self:get_text_content()
+    self.hl = self.highlighter(text)
+  end
+end
+
 --- @return Dequeue
 function BufferModel:get_content()
   return self.content
