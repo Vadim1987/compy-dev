@@ -135,6 +135,7 @@ function UserInputView:draw_input(input, time)
       local ln = l + vc.offset
       local tl = string.ulen(s)
       if not tl then return end
+
       for c = 1, tl do
         local char = string.usub(s, c, c)
         local hl_li = wrap_reverse[ln]
