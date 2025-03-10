@@ -15,12 +15,14 @@ require("util.lua")
 --- @alias WrapForward integer[][]
 --- Mapping from original line numbers to wrapped line numbers.
 --- e.g. {1: {1}, 2: {2, 3}}
+---
 --- @alias WrapReverse integer[]
 --- Inverse mapping from apparent line number to original
 --- Key is line number in wrapped, value is line number in
 --- unwrapped original, e.g. {1: 1, 2: 2, 3: 2} means two
 --- lines of text were broken up into three, because the second
 --- exceeded the width limit
+---
 --- @alias WrapRank integer[]
 --- The number of wraps that produced this line
 --- (i.e. offset from the original line number)
@@ -56,6 +58,9 @@ end
 function WrappedText:_init(w, text)
   if type(w) ~= "number" or w < 1 then
     error('invalid wrap length')
+  end
+  if type(text) == 'string' then
+    error('invalid string array passed')
   end
   self.text = Dequeue.typed('string')
   self.orig = Dequeue.typed('string')
