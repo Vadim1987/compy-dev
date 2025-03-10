@@ -74,7 +74,13 @@ local function terse_hash(t, level, prev_seen, jsonify)
       if type(k) == 'table' then
         res = res .. dent .. Debug.terse_hash(k, nil, nil, jsonify) .. ': '
       else
-        res = res .. dent .. k .. ': ' -- .. '// [' .. type(v) .. ']  '
+        local key = ''
+        if type(k) == 'number' then
+          key = Debug.text(tostring(k)) or ''
+        else
+          key = k
+        end
+        res = res .. dent .. key .. ': ' -- .. '// [' .. type(v) .. ']  '
       end
       if type(v) == 'table' then
         local table_text = Debug.terse_hash(v, indent + 1, seen, jsonify)
@@ -260,7 +266,7 @@ Debug = {
         return ': ', { o = '/* ', c = ' */ ' }
       end)()
       if type(t) == 'table' then
-        res = res .. string.times(tab, indent) .. '{'
+        res = res .. string.times(tab, indent) .. '{ '
         if seen[t] then return '' end
         seen[t] = true
 
@@ -276,6 +282,10 @@ Debug = {
               res = res .. dent .. terse(k, omit, style) .. assign
             elseif type(k) == 'number' and style == 'lua' then
               -- skip index
+              res = res .. dent .. '[' .. k .. '] ' .. assign
+            elseif type(k) == 'string' and not string.forall(k, Char.is_ascii) then
+              -- skip index
+              res = res .. dent .. "['" .. k .. "'] " .. assign
             else
               res = res .. dent
                   -- .. cmt.o .. type(v) .. cmt.c
