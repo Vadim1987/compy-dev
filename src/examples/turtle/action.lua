@@ -2,18 +2,21 @@
 function move_forward(d)
   ty = ty - (d or incr)
 end
+
 function move_back(d)
   ty = ty + (d or incr)
 end
+
 function move_left(d)
   tx = tx - (d or (2 * incr))
 end
+
 function move_right(d)
   tx = tx + (d or (2 * incr))
 end
 
-function pause()
-  pause("user pause")
+function pause(msg)
+  pause(msg or "user paused the game")
 end
 
 actions = {
