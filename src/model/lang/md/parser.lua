@@ -1,3 +1,15 @@
+local add_paths = {
+  'lib/' .. 'djot' .. '/?.lua',
+  'lib/?.lua',
+}
+if love and not TESTING then
+  local love_paths = string.join(add_paths, ';')
+  love.filesystem.setRequirePath(
+    love.filesystem.getRequirePath() .. love_paths)
+else
+  local lib_paths = string.join(add_paths, ';src/')
+  package.path = lib_paths .. ';' .. package.path
+end
 local djot = require("djot.djot")
 require("model.lang.lua.syntaxHighlighter")
 
