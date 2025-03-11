@@ -1,3 +1,4 @@
+require("model.input.cursor")
 require("util.wrapped_text")
 require("util.scrollable")
 require("util.range")
@@ -157,4 +158,48 @@ function VisibleContent:get_more()
     down = vrange.fin < vlen
   }
   return more
+end
+
+--- @param cur Cursor
+--- @return Cursor?
+function VisibleContent:translate_to_wrapped(cur)
+  local w = self.wrap_w
+  local ol = cur.l
+  local oc = cur.c
+  local c = (function()
+    if oc > w then
+      return math.fmod(oc, w)
+    else
+      return oc
+    end
+  end)()
+  local l = (function()
+    if oc > w then
+      local brk = math.modf(oc / w)
+      return ol + brk
+    else
+      return ol
+    end
+  end)()
+  return Cursor(l, c)
+end
+
+--- @param cur Cursor
+--- @return Cursor?
+function VisibleContent:translate_from_visible(cur)
+  local w = self.wrap_w
+  local rev = self.wrap_reverse
+  local wr = self.wrap_rank
+  local off = (self.offset or 0)
+  local ovl = cur.l + off --- orig visible line
+  local ln = rev[ovl]
+
+  local oc = cur.c
+  local rank = wr[ovl]
+  local c = oc + (rank * w)
+  local orig_line = self.orig[ln]
+  local oll = string.ulen(orig_line)
+  if c <= oll then
+    return Cursor(ln, c)
+  end
 end
