@@ -1,7 +1,7 @@
 require('util.table')
 
 --- identity function
-local id = function(n) return n end
+local id = function(...) return ... end
 
 
 --- @param node table
