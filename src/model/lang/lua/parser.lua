@@ -17,20 +17,6 @@ require("util.dequeue")
 --- @field multiline boolean
 --- @field prepend_newline boolean
 
---- type representing metalua AST
---- @class AST : token[]
-
---- @alias ParseResult AST|Error
-
---- @class Parser
---- @field parse fun(code: string[]): ParseResult
---- @field chunker fun(s: string[], integer, boolean?): Dequeue<Block>
---- @field highlighter fun(str): SyntaxColoring
---- @field pprint fun(c: string[], w: integer): string[]?
----
---- @field tokenize fun(str): table
---- @field syntax_hl fun(table): SyntaxColoring
-
 return function(lib)
   local l = lib or 'metalua'
   local add_paths = {

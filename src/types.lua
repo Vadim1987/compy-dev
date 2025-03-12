@@ -132,3 +132,21 @@
 --- @class ResultsDTO table
 --- @field results table[]
 --- @field selection integer
+
+
+--- @class luaAST : token[]
+
+--- @alias ParseResult<T> T|Error
+
+--- @alias Chunker fun(s: string[], integer, boolean?): boolean, Block[], ParseResult
+--- @alias Highlighter fun(c: str): SyntaxColoring
+--- @alias Printer fun(c: string[], integer?): string[]?
+
+--- @class Parser
+--- @field parse fun(code: string[]): ParseResult
+--- @field chunker Chunker
+--- @field pprint Printer?
+--- @field highlighter Highlighter?
+---
+--- @field tokenize fun(str): table
+--- @field syntax_hl fun(table): SyntaxColoring
