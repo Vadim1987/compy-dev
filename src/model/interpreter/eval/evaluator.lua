@@ -6,6 +6,7 @@ local class = require('util.class')
 --- @class Evaluator
 --- @field label string
 --- @field parser Parser?
+--- @field highlighter Highlighter?
 --- @field apply function
 --- @field custom_apply function?
 --- @field line_validators ValidatorFilter[]
@@ -67,15 +68,17 @@ local function default_apply(self, s)
 end
 
 --- @param label string
---- @param parser Parser?
+--- @param tools {parser: Parser?, highlighter: Highlighter?}
 --- @param filters Filters?
 --- @param custom_apply function?
-function Evaluator.new(label, parser, filters, custom_apply)
+function Evaluator.new(label, tools, filters, custom_apply)
   local f = filters or {}
+  local t = tools or {}
 
   return setmetatable({
     label           = label,
-    parser          = parser,
+    parser          = t.parser,
+    highlighter     = t.highlighter,
     line_validators = f.line_validators or {},
     astValidators   = f.astValidators or {},
     transformers    = f.transformers or {},
@@ -118,31 +121,39 @@ end
 --- @param filters Filters?
 --- @param custom_apply function?
 function Evaluator.plain(label, filters, custom_apply)
-  return Evaluator(label, nil, filters, custom_apply)
+  return Evaluator(label, {}, filters, custom_apply)
 end
 
 TextEval = Evaluator.plain('text')
 
 local luaParser = require("model.lang.lua.parser")()
+local luaTools = {
+  parser = luaParser,
+  highlighter = luaParser.highlighter
+}
 
 --- @param label string?
 --- @param filters Filters?
 --- @param custom_apply function?
 LuaEval = function(label, filters, custom_apply)
   local l = label or 'lua'
-  return Evaluator(l, luaParser, filters, custom_apply)
+  return Evaluator(l, luaTools, filters, custom_apply)
 end
 
 local mdParser = require("model.lang.md.parser")
+local mdTools = {
+  parser = mdParser,
+  highlighter = mdParser.highlighter
+}
 
 --- @param label string?
-MdParser = function(label)
+MdEval = function(label)
   local l = label or 'markdown'
-  return Evaluator(l, mdParser)
+  return Evaluator(l, mdTools)
 end
 
 InputEvalText = Evaluator.plain('text input')
-InputEvalLua = Evaluator('lua input', luaParser)
+InputEvalLua = Evaluator('lua input', luaTools)
 
 ValidatedTextEval = function(filter)
   local ft = Filters.validators_only(filter)

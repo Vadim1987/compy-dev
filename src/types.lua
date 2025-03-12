@@ -146,7 +146,6 @@
 --- @field parse fun(code: string[]): ParseResult
 --- @field chunker Chunker
 --- @field pprint Printer?
---- @field highlighter Highlighter?
 ---
 --- @field tokenize fun(str): table
 --- @field syntax_hl fun(table): SyntaxColoring

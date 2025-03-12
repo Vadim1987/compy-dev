@@ -64,7 +64,7 @@ function EditorController:open(name, content, save)
     local luaEval = LuaEval()
     local parser = luaEval.parser
     if not parser then return end
-    hl = parser.highlighter
+    hl = luaEval.highlighter
     --- @param t string[]
     --- @param single boolean
     ch = function(t, single)
@@ -74,9 +74,9 @@ function EditorController:open(name, content, save)
       return parser.pprint(t, w)
     end
   elseif is_md then
-    local mdParser = MdParser(name).parser
-    if not mdParser then return end
-    hl = mdParser.highlighter
+    local mdEval = MdEval(name)
+    hl = mdEval.highlighter
+    self.input:set_eval(mdEval)
   else
     self.input:set_eval(TextEval)
   end
