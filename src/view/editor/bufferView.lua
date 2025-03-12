@@ -1,3 +1,4 @@
+require("model.input.cursor")
 require("view.editor.visibleContent")
 require("view.editor.visibleStructuredContent")
 
@@ -56,11 +57,11 @@ function BufferView:open(buffer)
   self.content_type = cont
 
   if cont == 'plain' or cont == 'md' then
+    local bufcon = buffer:get_text_content()
     self.buffer:highlight()
-    local bufcon, hl = buffer:get_text_content()
     self.content = VisibleContent(
       self.w, bufcon, self.SCROLL_BY, L)
-    if hl then self.hl = hl end
+    self.hl = self.buffer:get_highlight()
   elseif cont == 'lua' then
     local bufcon = buffer:get_content()
     self.content =
@@ -127,6 +128,8 @@ function BufferView:refresh(moved)
     error('no buffer is open')
   end
   local text = self.buffer:get_text_content()
+  self.hl = self.buffer:get_highlight()
+
   self.content:wrap(text)
   if self.content_type == 'lua' then
     self.content:load_blocks(self.buffer.content)
@@ -350,6 +353,36 @@ function BufferView:draw(special)
         G.setColor(Color.with_alpha(colors.fg, 0.3))
         local text = string.unlines(content_text)
         G.print(text)
+      end
+    elseif self.content_type == 'md' then
+      local vis = vc:get_visible()
+      local hl  = self.hl
+
+      for l, line in ipairs(vis) do
+        local tl = string.ulen(line)
+
+        if l > self.cfg.lines
+            or not tl then
+          return
+        end
+
+        for c = 1, tl do
+          local char = string.usub(line, c, c)
+          local color = colors.fg
+          if hl then
+            --- @diagnostic disable-next-line: param-type-mismatch
+            local tlc = vc:translate_from_visible(Cursor(l, c))
+            if tlc then
+              local row = hl[tlc.l]
+              local lex_t = row[tlc.c]
+              color =
+                  cf_colors.md_syntax.colors[lex_t]
+                  or colors.fg
+            end
+          end
+          G.setColor(color)
+          G.print(char, (c - 1) * fw, (l - 1) * fh)
+        end
       end
     elseif self.content_type == 'plain' then
       G.setColor(colors.fg)

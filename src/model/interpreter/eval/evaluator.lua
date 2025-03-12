@@ -142,7 +142,6 @@ end
 
 local mdParser = require("model.lang.md.parser")
 local mdTools = {
-  parser = mdParser,
   highlighter = mdParser.highlighter
 }
 

@@ -57,6 +57,9 @@ local function new(name, content, save,
 
   if type(chunker) == "function" then
     luacontent(chunker)
+  elseif type(highlighter) == 'function' then
+    plaintext()
+    ct = 'md'
   else
     plaintext()
   end
@@ -93,7 +96,7 @@ end
 --- @field get_selected_text function
 --- @field delete_selected_text function
 --- @field replace_selected_text function
---- @field get_text_content fun(self): Dequeue<string>
+--- @field get_text_content function
 BufferModel = class.create(new)
 
 function BufferModel:rechunk()
@@ -104,7 +107,9 @@ function BufferModel:rechunk()
 end
 
 function BufferModel:save()
-  return self.save_file(self:get_text_content())
+  self:highlight()
+  local text = self:get_text_content()
+  return self.save_file(text)
 end
 
 function BufferModel:highlight()
@@ -120,6 +125,7 @@ function BufferModel:get_content()
 end
 
 --- Return the buffer content as a string array
+--- @return string[] content
 function BufferModel:get_text_content()
   --- TODO require
   require = _G.o_require or _G.require
@@ -127,11 +133,17 @@ function BufferModel:get_text_content()
   if self.content_type == 'lua'
   then
     return B.render_blocks(self.content)
-  elseif self.content_type == 'plain'
-  then
-    return self.content
+  else
+    return self.content:items()
   end
-  return Dequeue.typed('string')
+end
+
+--- @return SyntaxColoring? hl
+function BufferModel:get_highlight()
+  if self.highlighter
+  then
+    return self.hl
+  end
 end
 
 --- Returns number of lines/blocks
@@ -245,6 +257,9 @@ function BufferModel:_text_change(rechunk)
       self:rechunk()
       self:rechunk()
     end
+  end
+  if self.content_type == 'md' then
+    self:highlight()
   end
 end
 
