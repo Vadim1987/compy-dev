@@ -1,3 +1,5 @@
+require("util.string")
+
 local add_paths = {
   'lib/' .. 'djot' .. '/?.lua',
   'lib/?.lua',
@@ -14,7 +16,6 @@ local djot = require("djot.djot")
 require("model.lang.lua.syntaxHighlighter")
 
 require("util.debug")
-require("util.string")
 require("util.dequeue")
 
 --- @alias MdTagType
