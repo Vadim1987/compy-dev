@@ -130,25 +130,21 @@ end
 --- @return SyntaxColoring
 local highlighter = function(input)
   local doc = parse(input)
-  -- Log.info(Debug.terse_ast(doc, true, 'lua'))
 
   local colored_tokens = SyntaxColoring()
   --- @diagnostic disable-next-line: param-type-mismatch
   local tagged = transformAST(doc)
-  -- Log.warn(Debug.terse_t(tagged, nil, nil, true))
 
   for l, line in pairs(tagged) do
     for i, c in pairs(line) do
       local typ = tag_to_type[c]
       if typ then
-        -- Log.info(l, i, c)
         colored_tokens[l][i] = typ
       else
         -- colored_tokens[l][i] = 'default'
       end
     end
   end
-  -- return syntax_hl(tokenize(code))
   return colored_tokens
 end
 
