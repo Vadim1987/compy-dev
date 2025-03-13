@@ -1,6 +1,6 @@
 require("model.lang.lua.error")
 require("model.lang.lua.syntaxHighlighter")
-
+local ct = require("conf.lua")
 require("util.debug")
 require("util.string")
 require("util.dequeue")
@@ -215,7 +215,8 @@ return function(lib)
           single = true
         end
         for i = first.c, last.c do
-          colored_tokens[l][i] = getType(tag, single)
+          local typ            = getType(tag, single)
+          colored_tokens[l][i] = ct[typ]
         end
       else
         local tl = 2 --- a string block starts with '[['

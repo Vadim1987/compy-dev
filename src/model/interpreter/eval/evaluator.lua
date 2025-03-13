@@ -1,5 +1,6 @@
 require('model.interpreter.eval.filter')
 require("model.lang.lua.syntaxHighlighter")
+require("model.lang.highlight")
 
 local class = require('util.class')
 

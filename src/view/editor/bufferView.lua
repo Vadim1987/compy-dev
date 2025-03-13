@@ -317,6 +317,7 @@ function BufferView:draw(special)
     if self.content_type == 'lua' then
       --- @type VisibleBlock[]
       local vbl = vc:get_visible_blocks()
+      local color = colors.fg
       for _, block in ipairs(vbl) do
         local rs = block.app_pos.start
         --- @type WrappedText
@@ -329,15 +330,14 @@ function BufferView:draw(special)
             local char = string.usub(line, ci, ci)
             local hl = block.highlight
             if hl then
-              local lex_t = (function()
+              local lex_c = (function()
                 if hl[l] then
-                  return hl[l][ci] or colors.fg
+                  return hl[l][ci]
                 end
-                return colors.fg
               end)()
-              local color =
-                  cf_colors.lua_syntax.colors[lex_t]
-                  or colors.fg
+              if lex_c then
+                color = Color[lex_c] or colors.fg
+              end
 
               G.setColor(color)
             else
@@ -375,9 +375,9 @@ function BufferView:draw(special)
             if tlc then
               local row = hl[tlc.l]
               local lex_t = row[tlc.c]
-              color =
-                  cf_colors.md_syntax.colors[lex_t]
-                  or colors.fg
+              if lex_t then
+                color = Color[lex_t] or colors.fg
+              end
             end
           end
           G.setColor(color)

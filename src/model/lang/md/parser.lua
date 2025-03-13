@@ -1,3 +1,4 @@
+local ct = require("conf.md")
 require("util.string")
 
 local add_paths = {
@@ -139,9 +140,7 @@ local highlighter = function(input)
     for i, c in pairs(line) do
       local typ = tag_to_type[c]
       if typ then
-        colored_tokens[l][i] = typ
-      else
-        -- colored_tokens[l][i] = 'default'
+        colored_tokens[l][i] = ct[typ]
       end
     end
   end
@@ -155,8 +154,6 @@ local colorize = function(t)
   local type     = types[t]
   if type then
     return syntax_i[t]
-  else
-    -- Log.warn(t)
   end
 end
 
