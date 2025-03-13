@@ -376,17 +376,24 @@ function UserInputModel:highlight()
   local text = self:get_text()
 
   local p = ev.parser
-  if p and p.highlighter then
+  if p then
     local ok, p_err = p.parse(text)
     local parse_err
     if not ok then
       parse_err = p_err
     end
-    local hl = p.highlighter(text)
+    local hl
+    if ev.highlighter then
+      hl = ev.highlighter(text)
+    end
 
     self._memo.highlight = { hl = hl, parse_err = parse_err }
   else
-    self._memo.highlight = ev:validation_hl(text)
+    if ev.highlighter then
+      self._memo.highlight = { hl = ev.highlighter(text) }
+    else
+      self._memo.highlight = ev:validation_hl(text)
+    end
   end
 end
 

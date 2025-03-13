@@ -125,69 +125,129 @@ function UserInputView:draw_input(input, time)
   self.statusline:draw(status, apparentLines, time)
 
   if highlight then
-    local perr = highlight.parse_err
-    local el, ec
-    if perr then
-      el = perr.l
-      ec = perr.c
-    end
-    for l, s in ipairs(visible) do
-      local ln = l + vc.offset
-      local tl = string.ulen(s)
-      if not tl then return end
+    local hl = highlight.hl
+    if highlight.parse_err then
+      --- grammar = 'lua'
+      local color = colors.fg
+      local perr = highlight.parse_err
+      local el, ec
+      if perr then
+        el = perr.l
+        ec = perr.c
+      end
+      for l, s in ipairs(visible) do
+        local ln = l + vc.offset
+        local tl = string.ulen(s)
+        if not tl then return end
 
-      for c = 1, tl do
-        local char = string.usub(s, c, c)
-        local hl_li = wrap_reverse[ln]
-        local hl_ci = (function()
-          if #(wrap_forward[hl_li]) > 1 then
-            local offset = l - hl_li
-            return c + w * offset
-          else
-            return c
-          end
-        end)()
-        local row = highlight.hl[hl_li] or {}
-        local ttype = row[hl_ci]
-        local color
-        if perr and ln > el or
-            (ln == el and (c > ec or ec == 1)) then
-          color = cf_colors.input.error
-        else
-          color = cf_colors.lua_syntax.colors[ttype] or colors.fg
-        end
-        local selected = (function()
-          local sel = input.selection
-          local startl = sel.start and sel.start.l
-          local endl = sel.fin and sel.fin.l
-          if startl then
-            local startc = sel.start.c
-            local endc = sel.fin.c
-            if startc and endc then
-              if startl == endl then
-                local sc = math.min(sel.start.c, sel.fin.c)
-                local endi = math.max(sel.start.c, sel.fin.c)
-                return l == startl and c >= sc and c < endi
-              else
-                return
-                    (l == startl and c >= sel.start.c) or
-                    (l > startl and l < endl) or
-                    (l == endl and c < sel.fin.c)
-              end
+        for c = 1, tl do
+          local char = string.usub(s, c, c)
+          color = colors.fg
+
+          local hl_li = wrap_reverse[ln]
+          local tlc = vc:translate_from_visible(Cursor(l, c))
+
+          if tlc then
+            local row = hl[ln]
+            local lex_c = row[tlc.c]
+            if lex_c then
+              color = Color[lex_c] or colors.fg
             end
           end
-        end)()
-        --- number of lines back from EOF
-        local diffset = #text - vc.range.fin
-        local of = overflow
-        --- push any further lines down to display phantom line
-        if ofpos and hl_li > cl then
-          of = of - 1
+          if perr and ln > el or
+              (ln == el and (c > ec or ec == 1)) then
+            color = cf_colors.input.error
+          end
+          local selected = (function()
+            local sel = input.selection
+            local startl = sel.start and sel.start.l
+            local endl = sel.fin and sel.fin.l
+            if startl then
+              local startc = sel.start.c
+              local endc = sel.fin.c
+              if startc and endc then
+                if startl == endl then
+                  local sc = math.min(sel.start.c, sel.fin.c)
+                  local endi = math.max(sel.start.c, sel.fin.c)
+                  return l == startl and c >= sc and c < endi
+                else
+                  return
+                      (l == startl and c >= sel.start.c) or
+                      (l > startl and l < endl) or
+                      (l == endl and c < sel.fin.c)
+                end
+              end
+            end
+          end)()
+          --- number of lines back from EOF
+          local diffset = #text - vc.range.fin
+          local of = overflow
+          --- push any further lines down to display phantom line
+          if ofpos and hl_li > cl then
+            of = of - 1
+          end
+          local dy = y - (-ln - diffset + 1 + of) * fh
+          local dx = (c - 1) * fw
+          ViewUtils.write_token(dy, dx,
+            char, color, colors.bg, selected)
         end
-        local dy = y - (-ln - diffset + 1 + of) * fh
-        local dx = (c - 1) * fw
-        ViewUtils.write_token(dy, dx,
-          char, color, colors.bg, selected)
+      end
+    else
+      --- grammar = 'md'
+      for l, s in ipairs(visible) do
+        local ln = l + vc.offset
+        local tl = string.ulen(s)
+        if not tl then return end
+
+        for c = 1, tl do
+          local char = string.usub(s, c, c)
+          local color = colors.fg
+
+          --- @diagnostic disable-next-line: param-type-mismatch
+          local tlc = vc:translate_from_visible(Cursor(l, c))
+
+          if tlc then
+            local row = hl[tlc.l]
+            local lex_t = row[tlc.c]
+            if lex_t then
+              color = Color[lex_t] or colors.fg
+            end
+          end
+          local hl_li = wrap_reverse[ln]
+
+          local selected = (function()
+            local sel = input.selection
+            local startl = sel.start and sel.start.l
+            local endl = sel.fin and sel.fin.l
+            if startl then
+              local startc = sel.start.c
+              local endc = sel.fin.c
+              if startc and endc then
+                if startl == endl then
+                  local sc = math.min(sel.start.c, sel.fin.c)
+                  local endi = math.max(sel.start.c, sel.fin.c)
+                  return l == startl and c >= sc and c < endi
+                else
+                  return
+                      (l == startl and c >= sel.start.c) or
+                      (l > startl and l < endl) or
+                      (l == endl and c < sel.fin.c)
+                end
+              end
+            end
+          end)()
+          --- number of lines back from EOF
+          local diffset = #text - vc.range.fin
+          local of = overflow
+          --- push any further lines down to display phantom line
+          if ofpos and hl_li > cl then
+            of = of - 1
+          end
+          local dy = y - (-ln - diffset + 1 + of) * fh
+          local dx = (c - 1) * fw
+          ViewUtils.write_token(dy, dx,
+            char, color, colors.bg, selected)
+        end
       end
     end
   else
