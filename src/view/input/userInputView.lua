@@ -138,20 +138,23 @@ function UserInputView:draw_input(input, time)
       for l, s in ipairs(visible) do
         local ln = l + vc.offset
         local tl = string.ulen(s)
+
         if not tl then return end
 
         for c = 1, tl do
           local char = string.usub(s, c, c)
-          color = colors.fg
 
           local hl_li = wrap_reverse[ln]
           local tlc = vc:translate_from_visible(Cursor(l, c))
 
           if tlc then
-            local row = hl[ln]
-            local lex_c = row[tlc.c]
-            if lex_c then
-              color = Color[lex_c] or colors.fg
+            local ci = (function()
+              if hl[tlc.l] then
+                return hl[tlc.l][tlc.c]
+              end
+            end)()
+            if ci then
+              color = Color[ci] or colors.fg
             end
           end
           if perr and ln > el or

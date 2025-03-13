@@ -315,35 +315,45 @@ function BufferView:draw(special)
   local draw_text = function()
     G.setFont(font)
     if self.content_type == 'lua' then
-      --- @type VisibleBlock[]
+      local o = self.offset
       local vbl = vc:get_visible_blocks()
       local color = colors.fg
       for _, block in ipairs(vbl) do
         local rs = block.app_pos.start
         --- @type WrappedText
         local wt = block.wrapped
-        for l, line in ipairs(wt:get_text()) do
-          local ln = rs + (l - 1) - self.offset
-          if ln > self.cfg.lines then return end
+        local text = wt:get_text()
+        local hl = block.highlight
 
-          for ci = 1, string.ulen(line) do
-            local char = string.usub(line, ci, ci)
-            local hl = block.highlight
+        for l, line in ipairs(text) do
+          local tl = string.ulen(line)
+
+          local ln = l + rs - 1 - o
+          if ln > self.cfg.lines then return end
+          -- if l > self.cfg.lines
+          --     or not tl then
+          --   return
+          -- end
+
+          for c = 1, tl do
+            local char = string.usub(line, c, c)
+
             if hl then
-              local lex_c = (function()
-                if hl[l] then
-                  return hl[l][ci]
+              local tlc = Cursor(l, c)
+              local ci = (function()
+                if hl[tlc.l] then
+                  return hl[tlc.l][tlc.c]
                 end
               end)()
-              if lex_c then
-                color = Color[lex_c] or colors.fg
+              if ci then
+                color = Color[ci] or colors.fg
               end
-
-              G.setColor(color)
-            else
-              G.setColor(colors.fg)
             end
-            G.print(char, (ci - 1) * fw, (ln - 1) * fh)
+            G.setColor(color)
+            local dy = (ln - 1) * fh
+            local dx = (c - 1) * fw
+            ViewUtils.write_token(dy, dx,
+              char, color, colors.bg, false)
           end
         end
       end -- for
@@ -355,10 +365,11 @@ function BufferView:draw(special)
         G.print(text)
       end
     elseif self.content_type == 'md' then
-      local vis = vc:get_visible()
-      local hl  = self.hl
+      local text  = vc:get_visible()
+      local hl    = self.hl
+      local color = colors.fg
 
-      for l, line in ipairs(vis) do
+      for l, line in ipairs(text) do
         local tl = string.ulen(line)
 
         if l > self.cfg.lines
@@ -368,20 +379,25 @@ function BufferView:draw(special)
 
         for c = 1, tl do
           local char = string.usub(line, c, c)
-          local color = colors.fg
           if hl then
             --- @diagnostic disable-next-line: param-type-mismatch
             local tlc = vc:translate_from_visible(Cursor(l, c))
             if tlc then
-              local row = hl[tlc.l]
-              local lex_t = row[tlc.c]
-              if lex_t then
-                color = Color[lex_t] or colors.fg
+              local ci = (function()
+                if hl[tlc.l] then
+                  return hl[tlc.l][tlc.c]
+                end
+              end)()
+              if ci then
+                color = Color[ci] or colors.fg
               end
             end
           end
           G.setColor(color)
-          G.print(char, (c - 1) * fw, (l - 1) * fh)
+          local dy = (l - 1) * fh
+          local dx = (c - 1) * fw
+          ViewUtils.write_token(dy, dx,
+            char, color, colors.bg, false)
         end
       end
     elseif self.content_type == 'plain' then
