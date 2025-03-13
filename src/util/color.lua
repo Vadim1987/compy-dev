@@ -1,3 +1,4 @@
+--- @class Color
 Color = {
   color = {},
   __index = function(t, c)
