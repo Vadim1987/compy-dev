@@ -213,13 +213,12 @@ function EditorController:_generate_status(sel)
   local more = bufview.content:get_more()
   local cs
   local m = self.mode
-  if bufview.content_type == 'plain' then
-    cs = CustomStatus(bufview.content_type, len, more, sel, m)
-  end
-  if bufview.content_type == 'lua' then
+  local ct = bufview.content_type
+  if ct == 'lua' then
     local range = bufview.content:get_block_app_pos(sel)
-    cs = CustomStatus(
-      bufview.content_type, len, more, sel, m, range)
+    cs = CustomStatus(ct, len, more, sel, m, range)
+  else
+    cs = CustomStatus(ct, len, more, sel, m)
   end
 
   return cs
