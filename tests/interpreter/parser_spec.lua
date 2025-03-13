@@ -1,5 +1,4 @@
 local parser = require("model.lang.lua.parser")('metalua')
-local tokenHL = require("model.lang.lua.syntaxHighlighter")
 local term = require("util.termcolor")
 require("util.color")
 require("util.debug")
@@ -26,6 +25,7 @@ describe('parse #parser', function()
       local ok, r = parser.parse(input.code)
       local l, c, err
       if not ok then
+        --- @type Error
         local p_err = r
         if highlighter_debug then
           Log.error(Debug.terse_t(r, nil, nil, true))
@@ -94,7 +94,7 @@ describe('highlight #parser', function()
         for l, line in ipairs(input.code) do
           local rowc = hl[l] or {}
           for j = 1, #line do
-            local c = tokenHL.colorize(rowc[j])
+            local c = rowc[j]
             term.print_c(c, string.sub(line, j, j), true)
           end
           print()

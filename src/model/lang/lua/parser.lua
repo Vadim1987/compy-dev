@@ -1,5 +1,5 @@
 require("model.lang.lua.error")
-require("model.lang.lua.syntaxHighlighter")
+require("model.lang.highlight")
 local ct = require("conf.lua")
 require("util.debug")
 require("util.string")

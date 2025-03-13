@@ -1,5 +1,4 @@
 local parser = require("model.lang.lua.parser")('metalua')
-local tokenHL = require("model.lang.lua.syntaxHighlighter")
 local term = require("util.termcolor")
 require("util.color")
 require("util.debug")
@@ -37,7 +36,7 @@ describe('parser #ast', function()
       for l, line in ipairs(code_t) do
         io.write("'")
         for j = 1, #code do
-          local c = tokenHL.colorize(hl[l][j])
+          local c = (hl[l][j])
           term.print_c(c, string.usub(line, j, j), true)
         end
         io.write(term.reset)
@@ -106,6 +105,7 @@ describe('parser #ast', function()
             end)
           else
             Log.warn('syntax error in input #' .. i)
+            --- @diagnostic disable-next-line: undefined-field
             local err = string.gsub(r.msg, '\\n', '\n')
             Log.error(err)
           end

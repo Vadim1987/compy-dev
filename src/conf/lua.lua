@@ -1,3 +1,5 @@
+require("util.color")
+
 return {
   kw_multi   = Color.blue + Color.bright,
   kw_single  = Color.blue,

@@ -1,3 +1,5 @@
+require("util.color")
+
 return {
   default     = Color.black,
   emph        = Color.yellow,

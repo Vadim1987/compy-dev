@@ -1,4 +1,5 @@
 local ct = require("conf.md")
+require("model.lang.highlight")
 require("util.string")
 
 local add_paths = {
@@ -14,7 +15,6 @@ else
   package.path = lib_paths .. ';' .. package.path
 end
 local djot = require("djot.djot")
-require("model.lang.lua.syntaxHighlighter")
 
 require("util.debug")
 require("util.dequeue")
@@ -147,20 +147,9 @@ local highlighter = function(input)
   return colored_tokens
 end
 
---- @param t string tag
---- @return integer?
-local colorize = function(t)
-  local syntax_i = require("conf.md")
-  local type     = types[t]
-  if type then
-    return syntax_i[t]
-  end
-end
-
 return {
   parse        = parse,
   highlighter  = highlighter,
   transformAST = transformAST,
-  colorize     = colorize,
   render_html  = djot.render_html
 }
