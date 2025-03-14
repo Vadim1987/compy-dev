@@ -25,53 +25,6 @@ local function new(cfg)
   }
 end
 
---- @param text string[]
---- @param hl SyntaxColoring?
---- @param cfg {colors: BaseColors, fw: number, fh: number}
---- @param options {ltf: function, tf: function, limit: number}
-local function draw_hl_text(text, hl, cfg, options)
-  local colors = cfg.colors
-  local color = colors.fg
-  local fh = cfg.fh
-  local fw = cfg.fw
-
-  local ltf = options.ltf
-  local tf = options.tf
-  local limit = options.limit
-
-  for l, line in ipairs(text) do
-    local len = string.ulen(line)
-
-    local t_l = ltf(l)
-    if t_l > limit
-        or not len then
-      return
-    end
-
-    for c = 1, len do
-      local char = string.usub(line, c, c)
-      if hl then
-        local tlc = tf(Cursor(l, c))
-        if tlc then
-          local ci = (function()
-            if hl[tlc.l] then
-              return hl[tlc.l][tlc.c]
-            end
-          end)()
-          if ci then
-            color = Color[ci] or colors.fg
-          end
-        end
-      end
-      G.setColor(color)
-      local dy = (t_l - 1) * fh
-      local dx = (c - 1) * fw
-      ViewUtils.write_token(dy, dx,
-        char, color, colors.bg, false)
-    end
-  end
-end
-
 --- @class BufferView : ViewBase
 --- @field content VisibleContent|VisibleStructuredContent
 --- @field content_type ContentType
@@ -371,13 +324,13 @@ function BufferView:draw(special)
         local text = wt:get_text()
         local hl = block.highlight
         local ltf = function(l) return l + rs - 1 - o end
-        local tf = function(a) return a end
+        local ctf = function(a) return a end
         local limit = self.cfg.lines
 
-        draw_hl_text(text, hl, {
-          colors = colors, fw = fw, fh = fh
+        ViewUtils.draw_hl_text(text, hl, {
+          colors = { text = colors }, fw = fw, fh = fh
         }, {
-          ltf = ltf, tf = tf, limit = limit,
+          ltf = ltf, ctf = ctf, limit = limit,
         })
       end -- for
 
@@ -391,16 +344,16 @@ function BufferView:draw(special)
       local text  = vc:get_visible()
       local hl    = self.hl
       local ltf   = function(l) return l end
-      local tf    = function(a)
+      local ctf   = function(a)
         --- @diagnostic disable-next-line: param-type-mismatch
         return vc:translate_from_visible(a)
       end
       local limit = self.cfg.lines
 
-      draw_hl_text(text, hl, {
-        colors = colors, fw = fw, fh = fh
+      ViewUtils.draw_hl_text(text, hl, {
+        colors = { text = colors }, fw = fw, fh = fh
       }, {
-        ltf = ltf, tf = tf, limit = limit,
+        ltf = ltf, ctf = ctf, limit = limit,
       })
     elseif self.content_type == 'plain' then
       G.setColor(colors.fg)
