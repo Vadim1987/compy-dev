@@ -150,10 +150,12 @@ local blendModes = {
 --- @field limit integer ltf(line number) not shown starting here
 
 --- @param text string[]
---- @param hl SyntaxColoring?
+--- @param highlight Highlight
 --- @param cfg TextDisplayConfig
 --- @param options TextHighlightOpts
-local function draw_hl_text(text, hl, cfg, options)
+local function draw_hl_text(text, highlight, cfg, options)
+  local hl = highlight.hl
+
   local colors = cfg.colors
   local fg = colors.text.fg
   local bg = colors.text.bg

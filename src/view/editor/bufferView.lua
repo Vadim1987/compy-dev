@@ -315,19 +315,20 @@ function BufferView:draw(special)
   local draw_text = function()
     G.setFont(font)
     if self.content_type == 'lua' then
-      local o = self.offset
       local vbl = vc:get_visible_blocks()
       for _, block in ipairs(vbl) do
         local rs = block.app_pos.start
         --- @type WrappedText
         local wt = block.wrapped
         local text = wt:get_text()
-        local hl = block.highlight
-        local ltf = function(l) return l + rs - 1 - o end
+        local highlight = { hl = block.highlight }
+        local ltf = function(l)
+          return l + rs - 1 - self.offset
+        end
         local ctf = function(a) return a end
         local limit = self.cfg.lines
 
-        ViewUtils.draw_hl_text(text, hl, {
+        ViewUtils.draw_hl_text(text, highlight, {
           colors = { text = colors }, fw = fw, fh = fh
         }, {
           ltf = ltf, ctf = ctf, limit = limit,
@@ -341,16 +342,16 @@ function BufferView:draw(special)
         G.print(text)
       end
     elseif self.content_type == 'md' then
-      local text  = vc:get_visible()
-      local hl    = self.hl
-      local ltf   = function(l) return l end
-      local ctf   = function(a)
+      local text      = vc:get_visible()
+      local highlight = { hl = self.hl }
+      local ltf       = function(l) return l end
+      local ctf       = function(a)
         --- @diagnostic disable-next-line: param-type-mismatch
         return vc:translate_from_visible(a)
       end
-      local limit = self.cfg.lines
+      local limit     = self.cfg.lines
 
-      ViewUtils.draw_hl_text(text, hl, {
+      ViewUtils.draw_hl_text(text, highlight, {
         colors = { text = colors }, fw = fw, fh = fh
       }, {
         ltf = ltf, ctf = ctf, limit = limit,
