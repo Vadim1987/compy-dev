@@ -59,14 +59,15 @@ local types = {
 }
 
 local tag_to_type = {
-  str       = 'default',
-  heading   = 'heading',
-  emph      = 'emph',
-  strong    = 'strong',
-  verbatim  = 'inline',
-  list_item = 'list_marker',
-  link      = 'link',
-  image     = 'link',
+  str        = 'default',
+  heading    = 'heading',
+  emph       = 'emph',
+  strong     = 'strong',
+  verbatim   = 'code',
+  code_block = 'code',
+  list_item  = 'list_marker',
+  link       = 'link',
+  image      = 'link',
 }
 
 --- @param input str

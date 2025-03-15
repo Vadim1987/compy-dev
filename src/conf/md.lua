@@ -7,5 +7,5 @@ return {
   heading     = Color.cyan,
   link        = Color.green,
   list_marker = Color.red + Color.bright,
-  inline      = Color.blue + Color.bright,
+  code        = Color.blue + Color.bright,
 }
