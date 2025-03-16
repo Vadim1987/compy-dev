@@ -189,7 +189,10 @@ function Parser:specs()
       is_para = true,
       content = "inline",
       continue = function()
-        if self:find("^%S") then
+        if self:find("^%S")
+            --- next line starts a code block, consider closed
+            and not self:find("```%S+\n")
+        then
           return true
         else
           return false
