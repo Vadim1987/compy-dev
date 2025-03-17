@@ -5,6 +5,8 @@ require("util.debug")
 require("util.string")
 require("util.dequeue")
 
+--- @class luaAST : token[]
+
 --- @alias CPos 'first'|'last'
 
 --- @class Comment
@@ -73,7 +75,7 @@ return function(lib)
     return mlc:lexstream_to_ast(stream)
   end
 
-  --- @param ast token
+  --- @param ast luaAST
   --- @param ... any
   --- @return Comment[]
   local ast_extract_comments = function(ast, ...)
@@ -257,7 +259,7 @@ return function(lib)
   ---    Public    ---
   --------------------
 
-  --- @param ast token[]
+  --- @param ast luaAST
   --- @param ... any
   --- @return string
   local ast_to_src = function(ast, ...)
@@ -268,7 +270,7 @@ return function(lib)
   --- Parses code to AST
   --- @param code str
   --- @return boolean success
-  --- @return ParseResult
+  --- @return ParseResult<luaAST>
   local parse = function(code)
     local stream = stream_tokens(code)
     local ok, res = pcall(parse_stream, stream)
@@ -303,7 +305,7 @@ return function(lib)
   --- @param single boolean
   --- @return boolean ok
   --- @return Block[]
-  --- @return AST|Error
+  --- @return ParseResult<luaAST>
   local chunker = function(text, w, single)
     require("model.editor.content")
     if string.is_non_empty_string_array(text) then

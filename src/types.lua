@@ -134,8 +134,6 @@
 --- @field selection integer
 
 
---- @class luaAST : token[]
-
 --- @alias ParseResult<T> T|Error
 
 --- @alias Chunker fun(s: string[], integer, boolean?): boolean, Block[], ParseResult
