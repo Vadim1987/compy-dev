@@ -2,7 +2,7 @@ require("util.color")
 
 return {
   default     = Color.black,
-  emph        = Color.yellow,
+  emph        = Color.green + Color.bright,
   strong      = Color.red,
   heading     = Color.cyan,
   link        = Color.green,
