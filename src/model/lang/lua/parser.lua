@@ -98,7 +98,7 @@ return function(lib)
   end
 
   --- Read lexstream and determine highlighting
-  --- @param tokens AST
+  --- @param tokens luaAST
   --- @return SyntaxColoring
   local syntax_hl = function(tokens)
     if not tokens then return {} end
@@ -149,17 +149,17 @@ return function(lib)
 
       -- first line
       for i = cs, cs + string.ulen(lines[1]) + tl do
-        colored_tokens[ls][i] = lex_t
+        colored_tokens[ls][i] = ct[lex_t]
       end
       for i = 2, till - 1 do
         local e = string.ulen(lines[i])
         for j = 1, e + 2 do
-          colored_tokens[ls + i - 1][j] = lex_t
+          colored_tokens[ls + i - 1][j] = ct[lex_t]
         end
       end
       -- last line
       for i = 1, ce do
-        colored_tokens[le][i] = lex_t
+        colored_tokens[le][i] = ct[lex_t]
       end
     end
 
@@ -231,7 +231,7 @@ return function(lib)
         local ce = co.last.c
         if ls == le then
           for i = cs, ce do
-            colored_tokens[ls][i] = 'comment'
+            colored_tokens[ls][i] = ct['comment']
           end
         else
           local tl = 4 --- a block comment starts with '--[['
