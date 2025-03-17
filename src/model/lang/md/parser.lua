@@ -76,53 +76,52 @@ local function parse(input, skip_posinfo)
   return djot.parse(text, posinfo, logwarn)
 end
 
+--- @param pos string[]
+local function convert_pos(pos)
+  local startPos, endPos = pos[1], pos[2]
+
+  local startLine, startChar = startPos:match("(%d+):(%d+):")
+  local endLine, endChar = endPos:match("(%d+):(%d+):")
+  local sl, sc = tonumber(startLine), tonumber(startChar)
+  local el, ec = tonumber(endLine), tonumber(endChar)
+  return sl, sc, el, ec
+end
+
 --- courtesy of Claude
 --- @param node mdAST
---- @param result? table
-local function transformAST(node, result)
-  result = result or {}
-
-  -- Log.info(Debug.terse_t(node, nil, nil, true))
-  -- Log.debug("Processing node with tag: " .. (node.tag or "nil"))
+--- @param tags? string[][]
+--- @return string[][] tags
+local function transformAST(node, tags)
+  tags = tags or {}
 
   if node.pos then
     local text = node.s
-    local startPos, endPos = node.pos[1], node.pos[2]
+    local sl, sc, el, ec = convert_pos(node.pos)
 
-    local startLine, startChar = startPos:match("(%d+):(%d+):")
-    local endLine, endChar = endPos:match("(%d+):(%d+):")
-    startLine, startChar = tonumber(startLine), tonumber(startChar)
-    endLine, endChar = tonumber(endLine), tonumber(endChar)
+    for line = sl, el do
+      tags[line] = tags[line] or {}
 
-    -- Log.debug("\tPosition info found: "
-    --   .. startLine .. ':' .. startChar .. " to "
-    --   .. endLine .. ':' .. endChar
-    -- )
-
-    for line = startLine, endLine do
-      result[line] = result[line] or {}
-
-      local lineStartChar = (line == startLine) and startChar or 1
+      local lineStartChar = (line == sl) and sc or 1
       local lineEndChar =
-          (line == endLine)
-          and endChar
+          (line == el)
+          and ec
           or string.ulen(text or ' ')
 
       for char = lineStartChar, lineEndChar do
-        result[line][char] = node.tag
+        tags[line][char] = node.tag
       end
     end
   end
 
   if node.children then
     for _, child in ipairs(node.children) do
-      transformAST(child, result)
+      transformAST(child, tags)
     end
   end
 
-  -- Log.debug(Debug.terse_t(result, nil, nil, true))
+  return tags
+end
 
-  return result
 end
 
 --- Highlight string array
