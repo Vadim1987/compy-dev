@@ -45,6 +45,8 @@ local tmd  = [[
 
 local refs = [[
 
+##### Refs
+
 [löve2d]: https://love2d.org
 
 ]]
@@ -86,6 +88,30 @@ local function pad(i)
 
 end
 function getTimestamp()
+  -- comment
+  local f = actions[input]
+  local s = 'asd'
+end
+```
+]]
+local cod2 = [[
+### Section 1
+```lua
+local function pad(i)
+
+end
+function getTimestamp()
+end
+```
+
+### Section 2
+```lua
+function eval()
+  local input = r()
+  local f = actions[input]
+  if f then
+    f()
+  end
 end
 ```
 ]]
@@ -97,4 +123,5 @@ return {
   link,
   fst .. refs,
   code,
+  cod2,
 }
