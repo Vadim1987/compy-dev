@@ -72,13 +72,13 @@ end
 --- @param input (string) input string
 --- @param warn (function) function that processes a warning, accepting a warning
 --- object with `pos` and `message` fields.
---- @return integer, integer, string an iterator over events.
+--- @return (fun(): integer, integer, string) it an iterator over events.
 ---
 ---     for startpos, endpos, annotation in djot.parse_events("hello *world") do
 ---     ...
 ---     end
 local function parse_events(input, warn)
-  return Parser:new(input):events()
+  return Parser:new(input, warn):events()
 end
 
 --- Render a document's AST in human-readable form.
