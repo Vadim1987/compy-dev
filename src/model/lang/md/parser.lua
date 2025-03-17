@@ -1,4 +1,5 @@
 local ct = require("conf.md")
+local luahl = require("model.lang.lua.parser")().highlighter
 require("model.lang.highlight")
 require("util.string")
 require("util.debug")
@@ -76,6 +77,11 @@ local function parse(input, skip_posinfo)
   return djot.parse(text, posinfo, logwarn)
 end
 
+local function is_lua_block(t)
+  if not type(t) == "table" then return false end
+  return t.t == 'code_block' and t.lang == 'lua'
+end
+
 --- @param pos string[]
 local function convert_pos(pos)
   local startPos, endPos = pos[1], pos[2]
@@ -122,16 +128,39 @@ local function transformAST(node, tags)
   return tags
 end
 
+--- Recursively filters nodes in a tree structure
+--- @param node mdAST
+--- @param pred function
+--- @param results? table
+--- @return table
+local function filter_tree(node, pred, results)
+  if not node or not pred then return {} end
+
+  local results = results or {}
+
+  if pred(node) then
+    table.insert(results, node)
+  end
+  if node.children then
+    for _, child in ipairs(node.children) do
+      local filtered_children = filter_tree(child, pred)
+      for _, c in pairs(filtered_children) do
+        table.insert(results, c)
+      end
+    end
+  end
+
+  return results
 end
 
 --- Highlight string array
 --- @param input str
 --- @return SyntaxColoring
 local highlighter = function(input)
-  local doc = parse(input)
+  local doc = parse(input) --[[@as mdAST]]
+  local code_blocks = filter_tree(doc, is_lua_block)
 
   local colored_tokens = SyntaxColoring()
-  --- @diagnostic disable-next-line: param-type-mismatch
   local tagged = transformAST(doc)
 
   for l, line in pairs(tagged) do
@@ -139,6 +168,22 @@ local highlighter = function(input)
       local typ = tag_to_type[c]
       if typ then
         colored_tokens[l][i] = ct[typ]
+      end
+    end
+  end
+  for _, cb in ipairs(code_blocks) do
+    local sl, sc = convert_pos(cb.pos)
+    local stripped = (function()
+      --- remove trailing newline if present
+      if string.sub(cb.s, -1) == '\n' then
+        return string.sub(cb.s, 1, -2)
+      end
+      return cb.s
+    end)()
+    local hl = luahl(stripped)
+    for l, line in pairs(hl) do
+      for i, c in pairs(line) do
+        colored_tokens[l + sl][i + sc - 1] = c
       end
     end
   end
