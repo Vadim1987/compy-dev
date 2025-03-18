@@ -1,6 +1,5 @@
-local parser = require("model.lang.parser")('metalua')
-local analyzer = require("model.lang.analyze")
-local tokenHL = require("model.lang.syntaxHighlighter")
+local parser = require("model.lang.lua.parser")('metalua')
+local analyzer = require("model.lang.lua.analyze")
 local term = require("util.termcolor")
 require("util.color")
 require("util.debug")
@@ -35,7 +34,7 @@ describe('analyzer #analyzer', function()
       for l, line in ipairs(code_t) do
         io.write("'")
         for j = 1, #code do
-          local c = tokenHL.colorize(hl[l][j])
+          local c = hl[l][j]
           term.print_c(c, string.usub(line, j, j), true)
         end
         io.write(term.reset)

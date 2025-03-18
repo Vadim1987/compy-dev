@@ -1,6 +1,10 @@
 ----------------------------
 --- validation utilities ---
 ----------------------------
+
+--- 'c' is assumed to be a single character/grapheme, these
+--- functions won't be checking for it.
+
 local is_alpha = function(c)
   return string.match(c, "%a") ~= nil
 end
@@ -22,6 +26,10 @@ end
 local is_punct = function(c)
   return string.match(c, "%p") ~= nil
 end
+local is_ascii = function(c)
+  local byte = string.byte(c, 1)
+  return byte < 128
+end
 
 return {
   is_alpha = is_alpha,
@@ -31,4 +39,5 @@ return {
   is_digit = is_digit,
   is_space = is_space,
   is_punct = is_punct,
+  is_ascii = is_ascii,
 }

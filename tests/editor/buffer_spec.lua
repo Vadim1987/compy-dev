@@ -1,5 +1,5 @@
 require('model.editor.bufferModel')
-local parser = require('model.lang.parser')()
+local parser = require('model.lang.lua.parser')()
 
 require('util.table')
 

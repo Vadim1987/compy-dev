@@ -1,9 +1,11 @@
-require("model.lang.error")
-require("model.lang.syntaxHighlighter")
-
+require("model.lang.lua.error")
+require("model.lang.highlight")
+local ct = require("conf.lua")
 require("util.debug")
 require("util.string")
 require("util.dequeue")
+
+--- @class luaAST : token[]
 
 --- @alias CPos 'first'|'last'
 
@@ -16,20 +18,6 @@ require("util.dequeue")
 --- @field last Cursor
 --- @field multiline boolean
 --- @field prepend_newline boolean
-
---- type representing metalua AST
---- @class AST : token[]
-
---- @alias ParseResult AST|Error
-
---- @class Parser
---- @field parse fun(code: string[]): ParseResult
---- @field chunker fun(s: string[], integer, boolean?): Dequeue<Block>
---- @field highlighter fun(str): SyntaxColoring
---- @field pprint fun(c: string[], w: integer): string[]?
----
---- @field tokenize fun(str): table
---- @field syntax_hl fun(table): SyntaxColoring
 
 return function(lib)
   local l = lib or 'metalua'
@@ -87,7 +75,7 @@ return function(lib)
     return mlc:lexstream_to_ast(stream)
   end
 
-  --- @param ast token
+  --- @param ast luaAST
   --- @param ... any
   --- @return Comment[]
   local ast_extract_comments = function(ast, ...)
@@ -112,7 +100,7 @@ return function(lib)
   end
 
   --- Read lexstream and determine highlighting
-  --- @param tokens AST
+  --- @param tokens luaAST
   --- @return SyntaxColoring
   local syntax_hl = function(tokens)
     if not tokens then return {} end
@@ -163,17 +151,17 @@ return function(lib)
 
       -- first line
       for i = cs, cs + string.ulen(lines[1]) + tl do
-        colored_tokens[ls][i] = lex_t
+        colored_tokens[ls][i] = ct[lex_t]
       end
       for i = 2, till - 1 do
         local e = string.ulen(lines[i])
         for j = 1, e + 2 do
-          colored_tokens[ls + i - 1][j] = lex_t
+          colored_tokens[ls + i - 1][j] = ct[lex_t]
         end
       end
       -- last line
       for i = 1, ce do
-        colored_tokens[le][i] = lex_t
+        colored_tokens[le][i] = ct[lex_t]
       end
     end
 
@@ -229,7 +217,8 @@ return function(lib)
           single = true
         end
         for i = first.c, last.c do
-          colored_tokens[l][i] = getType(tag, single)
+          local typ            = getType(tag, single)
+          colored_tokens[l][i] = ct[typ]
         end
       else
         local tl = 2 --- a string block starts with '[['
@@ -244,7 +233,7 @@ return function(lib)
         local ce = co.last.c
         if ls == le then
           for i = cs, ce do
-            colored_tokens[ls][i] = 'comment'
+            colored_tokens[ls][i] = ct['comment']
           end
         else
           local tl = 4 --- a block comment starts with '--[['
@@ -270,7 +259,7 @@ return function(lib)
   ---    Public    ---
   --------------------
 
-  --- @param ast token[]
+  --- @param ast luaAST
   --- @param ... any
   --- @return string
   local ast_to_src = function(ast, ...)
@@ -281,7 +270,7 @@ return function(lib)
   --- Parses code to AST
   --- @param code str
   --- @return boolean success
-  --- @return ParseResult
+  --- @return ParseResult<luaAST>
   local parse = function(code)
     local stream = stream_tokens(code)
     local ok, res = pcall(parse_stream, stream)
@@ -316,7 +305,7 @@ return function(lib)
   --- @param single boolean
   --- @return boolean ok
   --- @return Block[]
-  --- @return AST|Error
+  --- @return ParseResult<luaAST>
   local chunker = function(text, w, single)
     require("model.editor.content")
     if string.is_non_empty_string_array(text) then

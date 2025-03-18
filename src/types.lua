@@ -18,6 +18,7 @@
 ---@alias ContentType
 ---| 'plain'
 ---| 'lua'
+---| 'md'
 
 ---@alias Fac # scaling
 ---| 1
@@ -72,7 +73,7 @@
 --- @field w_error string[]
 
 --- @class Highlight table
---- @field parse_err Error
+--- @field parse_err Error?
 --- @field hl SyntaxColoring
 
 --- @alias TokenType
@@ -131,3 +132,18 @@
 --- @class ResultsDTO table
 --- @field results table[]
 --- @field selection integer
+
+
+--- @alias ParseResult<T> T|Error
+
+--- @alias Chunker fun(s: string[], integer, boolean?): boolean, Block[], ParseResult
+--- @alias Highlighter fun(c: str): SyntaxColoring
+--- @alias Printer fun(c: string[], integer?): string[]?
+
+--- @class Parser
+--- @field parse fun(code: string[]): ParseResult
+--- @field chunker Chunker
+--- @field pprint Printer?
+---
+--- @field tokenize fun(str): table
+--- @field syntax_hl fun(table): SyntaxColoring

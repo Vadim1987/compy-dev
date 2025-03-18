@@ -1,8 +1,10 @@
+--- @class Color
 Color = {
   color = {},
   __index = function(t, c)
     local rc = rawget(Color, c)
     if rc then return rc end
+    if type(c) ~= 'number' then return end
     local bright = c > 7 and 1 or 0.75
     local oc = c
     local b = c % 2

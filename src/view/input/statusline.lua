@@ -88,14 +88,13 @@ function Statusline:draw(status, nLines, time)
         local lim = custom.buflen
         local sel, t_bbp, t_blp
         -- local more_i = ''
-        if custom.content_type == 'plain' then
-          sel = custom.selection
-          t_blp = 'L' .. sel
-        end
         if custom.content_type == 'lua' then
           sel = custom.selection
           t_bbp = 'B' .. sel .. ' '
           t_blp = custom.range:ln_label()
+        else
+          sel = custom.selection
+          t_blp = 'L' .. sel
         end
         local more_b = morelabel(custom.buffer_more) .. ' '
         local more_i = morelabel(status.input_more) .. ' '

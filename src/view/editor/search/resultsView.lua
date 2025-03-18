@@ -9,6 +9,7 @@ end
 
 --- @class ResultsView : ViewBase
 --- @field cfg ViewConfig
+--- @field draw function
 ResultsView = class.create(new)
 
 --- @param results ResultsDTO

@@ -1,4 +1,4 @@
-local analyzer = require("model.lang.error")
+require("model.lang.lua.error")
 
 describe(' #parse_error', function()
   -- it('', function() end)

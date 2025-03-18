@@ -88,7 +88,7 @@ if love and not TESTING then
       getDirectoryItemsInfo = getDirectoryItemsInfo,
     }
   else
-    _fs = require("lib/nativefs")
+    _fs = require("lib.nativefs.nativefs")
   end
 
   --- @param path string

@@ -134,10 +134,76 @@ local blendModes = {
   },
 }
 
+--- This is a subset of viewconfig needed for displaying text
+--- @class TextDisplayConfig
+--- @field colors TextDisplayColors
+--- @field fw integer
+--- @field fh integer
+
+--- @class TextDisplayColors
+--- @field text BaseColors
+--- @field error BaseColors?
+
+--- @class TextHighlightOpts
+--- @field ltf function line transformer
+--- @field ctf function coordinate transformer
+--- @field limit integer ltf(line number) not shown starting here
+
+--- @param text string[]
+--- @param highlight Highlight
+--- @param cfg TextDisplayConfig
+--- @param options TextHighlightOpts
+local function draw_hl_text(text, highlight, cfg, options)
+  local hl = highlight.hl
+
+  local colors = cfg.colors
+  local fg = colors.text.fg
+  local bg = colors.text.bg
+  local fh = cfg.fh
+  local fw = cfg.fw
+  local color = fg
+
+  local ltf = options.ltf
+  local tf = options.ctf
+  local limit = options.limit
+
+  for l, line in ipairs(text) do
+    local len = string.ulen(line)
+
+    local t_l = ltf(l)
+    if t_l > limit
+        or not len then
+      return
+    end
+
+    for c = 1, len do
+      local char = string.usub(line, c, c)
+      if hl then
+        local tlc = tf(Cursor(l, c))
+        if tlc then
+          local ci = (function()
+            if hl[tlc.l] then
+              return hl[tlc.l][tlc.c]
+            end
+          end)()
+          if ci then
+            color = Color[ci] or fg
+          end
+        end
+      end
+      G.setColor(color)
+      local dy = (t_l - 1) * fh
+      local dx = (c - 1) * fw
+      write_token(dy, dx, char, color, bg, false)
+    end
+  end
+end
+
 ViewUtils = {
   get_drawable_height = get_drawable_height,
   write_line = write_line,
   write_token = write_token,
+  draw_hl_text = draw_hl_text,
   conditional_draw = conditional_draw,
 
   blendModes = blendModes,

@@ -36,7 +36,7 @@ a project must be selected first.
 | Exit application                                                  | <kbd>Ctrl</kbd>+<kbd>Esc</kbd>                |
 | Pause project                                                     | <kbd>Ctrl</kbd>+<kbd>Pause</kbd>              |
 | Toggle edit/run                                                   | <kbd>F8</kbd>                                 |
-| **Input**                                                         |
+| **Input**                                                         |                                               |
 | Move cursor horizontally                                          | <kbd>⇦</kbd>/<kbd>⇨</kbd>                     |
 | Move cursor vertically                                            | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
 | Go back in command history                                        | <kbd>PageUp</kbd>                             |
@@ -50,14 +50,14 @@ a project must be selected first.
 | Delete current line                                               | <kbd>Ctrl</kbd>+<kbd>Y</kbd>                  |
 | Duplicate current line                                            | <kbd>Ctrl</kbd>+<kbd>D</kbd>                  |
 | Evaluate input                                                    | <kbd>Enter ⏎</kbd>                            |
-| **Editor**                                                        |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _same as Input, except for:_ |
+| **Editor**                                                        |                                               |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _same as Input, except for:_ |                                               |
 | Scroll up                                                         | <kbd>PageUp</kbd>                             |
 | Scroll down                                                       | <kbd>PageDown</kbd>                           |
 | Move selection (if in first/last line)                            | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
 | Move selection                                                    | <kbd>Ctrl</kbd>+<kbd>⇧</kbd>/<kbd>⇩</kbd>     |
 | Replace selection with input                                      | <kbd>Enter ⏎</kbd>                            |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _additionally_               |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _additionally_               |                                               |
 | Delete selected block                                             | <kbd>Ctrl</kbd>+<kbd>Delete</kbd>             |
 | Delete selected block (if input is empty)                         | <kbd>Ctrl</kbd>+<kbd>Y</kbd>                  |
 | Wipe input                                                        | <kbd>Ctrl</kbd>+<kbd>W</kbd>                  |
@@ -70,14 +70,14 @@ a project must be selected first.
 | Move selection to start                                           | <kbd>Ctrl</kbd>+<kbd>Home</kbd>               |
 | Move selecion to end                                              | <kbd>Ctrl</kbd>+<kbd>End</kbd>                |
 | Stop editor                                                       | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _move mode_                  |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _move mode_                  |                                               |
 | Switch to moving ("pick up" selection)                            | <kbd>Ctrl</kbd>+<kbd>M</kbd>                  |
 | Move selection                                                    | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
 | Move selection to start                                           | <kbd>Ctrl</kbd>+<kbd>Home</kbd>               |
 | Move selecion to end                                              | <kbd>Ctrl</kbd>+<kbd>End</kbd>                |
 | Cancel moving                                                     | <kbd>Esc</kbd>                                |
-| Move line/block to selection and return to normal mode            | <kbd>Enter ⏎</kbd>                            |  | <kbd>Ctrl</kbd>+<kbd>End</kbd> |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _search mode_                |
+| Move line/block to selection and return to normal mode            | <kbd>Enter ⏎</kbd>                            |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _search mode_                |                                               |
 | Search definitions                                                | <kbd>Ctrl</kbd>+<kbd>F</kbd>                  |
 | Exit search                                                       | <kbd>Esc</kbd>                                |
 | Jump to selected definition                                       | <kbd>Enter ⏎</kbd>                            |

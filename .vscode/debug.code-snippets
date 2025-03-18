@@ -42,6 +42,12 @@
       "Log.debug(Debug.terse_ast($0, true))",
     ]
   },
+  "dump ast lua": {
+    "prefix": "dumpal",
+    "body": [
+      "Log.debug(Debug.terse_ast($0, true, 'lua'))",
+    ]
+  },
   "dump table keys": {
     "prefix": "dumptk",
     "body": [

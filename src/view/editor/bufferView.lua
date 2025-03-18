@@ -1,3 +1,4 @@
+require("model.input.cursor")
 require("view.editor.visibleContent")
 require("view.editor.visibleStructuredContent")
 
@@ -55,11 +56,14 @@ function BufferView:open(buffer)
   local cont = buffer.content_type
   self.content_type = cont
 
-  local bufcon = buffer:get_content()
-  if cont == 'plain' then
+  if cont == 'plain' or cont == 'md' then
+    local bufcon = buffer:get_text_content()
+    self.buffer:highlight()
     self.content = VisibleContent(
       self.w, bufcon, self.SCROLL_BY, L)
+    self.hl = self.buffer:get_highlight()
   elseif cont == 'lua' then
+    local bufcon = buffer:get_content()
     self.content =
         VisibleStructuredContent(
           self.w,
@@ -100,8 +104,7 @@ function BufferView:_get_wrapped_selection()
         table.insert(ret, self.content.wrap_forward[l])
       end
     end
-  elseif self.content_type == 'plain'
-  then
+  else
     ret[1] = self.content.wrap_forward[sel]
   end
 
@@ -125,6 +128,8 @@ function BufferView:refresh(moved)
     error('no buffer is open')
   end
   local text = self.buffer:get_text_content()
+  self.hl = self.buffer:get_highlight()
+
   self.content:wrap(text)
   if self.content_type == 'lua' then
     self.content:load_blocks(self.buffer.content)
@@ -132,16 +137,15 @@ function BufferView:refresh(moved)
 
   if moved then
     local sel = self.buffer:get_selection()
-    if self.content_type == 'plain' then
-      local t = Dequeue(text)
-      t:move(moved, sel)
-      self.content:wrap(t)
-    end
     if self.content_type == 'lua' then
       local vsc = self.content
       local blocks = vsc.blocks
       blocks:move(moved, sel)
       vsc:recalc_range()
+    else
+      local t = Dequeue(text)
+      t:move(moved, sel)
+      self.content:wrap(t)
     end
   end
 
@@ -212,8 +216,7 @@ function BufferView:is_selection_visible()
   if self.content_type == 'lua'
   then
     s_w = self.content:get_block_app_pos(sel):enumerate()
-  elseif self.content_type == 'plain'
-  then
+  else
     s_w = self.content.wrap_forward[sel]
   end
 
@@ -298,7 +301,8 @@ function BufferView:draw(special)
       for _, v in ipairs(w) do
         if self.content.range:inc(v) then
           if (not self.cfg.show_append_hl)
-              and (v == self.content:get_content_length() + 1) then
+              and (v == self.content:get_content_length() + 1)
+          then
             --- skip hl
           else
             highlight_line(v - off)
@@ -311,36 +315,24 @@ function BufferView:draw(special)
   local draw_text = function()
     G.setFont(font)
     if self.content_type == 'lua' then
-      --- @type VisibleBlock[]
       local vbl = vc:get_visible_blocks()
       for _, block in ipairs(vbl) do
         local rs = block.app_pos.start
         --- @type WrappedText
         local wt = block.wrapped
-        for l, line in ipairs(wt:get_text()) do
-          local ln = rs + (l - 1) - self.offset
-          if ln > self.cfg.lines then return end
-
-          for ci = 1, string.ulen(line) do
-            local char = string.usub(line, ci, ci)
-            local hl = block.highlight
-            if hl then
-              local lex_t = (function()
-                if hl[l] then
-                  return hl[l][ci] or colors.fg
-                end
-                return colors.fg
-              end)()
-              local color =
-                  cf_colors.input.syntax[lex_t] or colors.fg
-
-              G.setColor(color)
-            else
-              G.setColor(colors.fg)
-            end
-            G.print(char, (ci - 1) * fw, (ln - 1) * fh)
-          end
+        local text = wt:get_text()
+        local highlight = { hl = block.highlight }
+        local ltf = function(l)
+          return l + rs - 1 - self.offset
         end
+        local ctf = function(a) return a end
+        local limit = self.cfg.lines
+
+        ViewUtils.draw_hl_text(text, highlight, {
+          colors = { text = colors }, fw = fw, fh = fh
+        }, {
+          ltf = ltf, ctf = ctf, limit = limit,
+        })
       end -- for
 
       if love.DEBUG then
@@ -349,6 +341,21 @@ function BufferView:draw(special)
         local text = string.unlines(content_text)
         G.print(text)
       end
+    elseif self.content_type == 'md' then
+      local text      = vc:get_visible()
+      local highlight = { hl = self.hl }
+      local ltf       = function(l) return l end
+      local ctf       = function(a)
+        --- @diagnostic disable-next-line: param-type-mismatch
+        return vc:translate_from_visible(a)
+      end
+      local limit     = self.cfg.lines
+
+      ViewUtils.draw_hl_text(text, highlight, {
+        colors = { text = colors }, fw = fw, fh = fh
+      }, {
+        ltf = ltf, ctf = ctf, limit = limit,
+      })
     elseif self.content_type == 'plain' then
       G.setColor(colors.fg)
       local text = string.unlines(content_text)

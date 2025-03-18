@@ -1,12 +1,4 @@
-local syntax_i = {
-  kw_multi   = Color.blue + Color.bright,
-  kw_single  = Color.blue,
-  number     = Color.magenta,
-  string     = Color.green,
-  comment    = Color.cyan,
-  identifier = Color.black,
-  error      = Color.red,
-}
+require("util.color")
 
 ---@alias InputTheme
 ---| 'console'
@@ -33,8 +25,10 @@ local syntax_i = {
 --- @field cursor RGB
 --- @field error RGB  -- TODO pair these
 --- @field error_bg RGB  -- TODO pair these
---- @field syntax_i table<string, integer>
---- @field syntax table<string, RGB>
+
+--- @class SyntaxColors
+--- @field indices table<string, integer>
+--- @field colors table<string, RGB>
 
 --- @class StatuslineColors
 --- @field bg RGB
@@ -45,11 +39,17 @@ local syntax_i = {
 
 local indicator = Color[Color.cyan + Color.bright]
 local special = Color[Color.cyan]
+
+local lua_i = require('conf.lua')
+local md_i = require('conf.md')
+
 --- @class Colors
 --- @field border RGB
 --- @field debug RGB
 --- @field terminal BaseColors
 --- @field editor EditorColors
+--- @field lua_syntax SyntaxColors
+--- @field md_syntax SyntaxColors
 --- @field input InputColors
 --- @field statusline table<InputTheme, StatuslineColors>
 return {
@@ -86,10 +86,22 @@ return {
     cursor = Color[Color.white + Color.bright],
     error = Color[Color.red],
     error_bg = Color[Color.black],
-    syntax_i = syntax_i,
-    syntax = (function()
+  },
+  lua_syntax = {
+    indices = lua_i,
+    colors = (function()
       local r = {}
-      for k, v in pairs(syntax_i) do
+      for k, v in pairs(lua_i) do
+        r[k] = Color[v]
+      end
+      return r
+    end)()
+  },
+  md_syntax = {
+    indices = md_i,
+    colors = (function()
+      local r = {}
+      for k, v in pairs(md_i) do
         r[k] = Color[v]
       end
       return r

@@ -1,3 +1,4 @@
+require("model.input.cursor")
 require("util.wrapped_text")
 require("util.scrollable")
 require("util.range")
@@ -17,7 +18,7 @@ require("util.range")
 --- @field set_default_range fun(self)
 --- @field move_range fun(self, integer): integer
 --- @field get_content_length fun(self): integer
---- @field get_visible fun(self): Dequeue<string>
+--- @field get_visible function
 --- @field get_more fun(self): More
 --- @field to_end fun(self)
 VisibleContent = {}
@@ -103,6 +104,7 @@ function VisibleContent:_init()
   self:_update_overscroll()
 end
 
+--- @param text string[]
 function VisibleContent:wrap(text)
   WrappedText.wrap(self, text)
   self:_update_meta()
@@ -124,6 +126,7 @@ function VisibleContent:set_default_range()
   self.offset = 0
 end
 
+--- @param by integer
 function VisibleContent:move_range(by)
   if type(by) == "number" then
     local r = self.range
@@ -137,6 +140,7 @@ function VisibleContent:move_range(by)
   return 0
 end
 
+--- @return string[]
 function VisibleContent:get_visible()
   local si, ei = self.range.start, self.range.fin
   return table.slice(self.text, si, ei)
@@ -154,4 +158,48 @@ function VisibleContent:get_more()
     down = vrange.fin < vlen
   }
   return more
+end
+
+--- @param cur Cursor
+--- @return Cursor?
+function VisibleContent:translate_to_wrapped(cur)
+  local w = self.wrap_w
+  local ol = cur.l
+  local oc = cur.c
+  local c = (function()
+    if oc > w then
+      return math.fmod(oc, w)
+    else
+      return oc
+    end
+  end)()
+  local l = (function()
+    if oc > w then
+      local brk = math.modf(oc / w)
+      return ol + brk
+    else
+      return ol
+    end
+  end)()
+  return Cursor(l, c)
+end
+
+--- @param cur Cursor
+--- @return Cursor?
+function VisibleContent:translate_from_visible(cur)
+  local w = self.wrap_w
+  local rev = self.wrap_reverse
+  local wr = self.wrap_rank
+  local off = (self.offset or 0)
+  local ovl = cur.l + off --- orig visible line
+  local ln = rev[ovl]
+
+  local oc = cur.c
+  local rank = wr[ovl]
+  local c = oc + (rank * w)
+  local orig_line = self.orig[ln]
+  local oll = string.ulen(orig_line)
+  if c <= oll then
+    return Cursor(ln, c)
+  end
 end

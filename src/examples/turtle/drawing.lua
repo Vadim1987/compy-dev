@@ -7,7 +7,7 @@ debugColor = Color.yellow
 function drawBackground(color)
   local c = bg_color
   local not_green = color ~= Color.green
-       and color ~= Color.green + Color.bright
+      and color ~= Color.green + Color.bright
   local color_valid = Color.valid(color) and not_green
   if color_valid then
     c = color
@@ -67,13 +67,15 @@ function drawTurtle(x, y)
   drawBody(x_r, y_r, head_r)
   G.pop()
 end
+
 function drawHelp()
   G.setColor(Color[Color.white])
   G.print("Press [I] to open console", 20, 20)
-  local help = "Enter 'forward', 'back', 'left', or 'right'" .. 
+  local help = "Enter 'forward', 'back', 'left', or 'right'" ..
       "to move the turtle!"
   G.print(help, 20, 50)
 end
+
 function drawDebuginfo()
   G.setColor(Color[debugColor])
   local dt = string.format("Turtle position: (%d, %d)", tx, ty)

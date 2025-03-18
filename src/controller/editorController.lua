@@ -56,6 +56,7 @@ EditorController = class.create(new)
 function EditorController:open(name, content, save)
   local w = self.model.cfg.view.drawableChars
   local is_lua = string.match(name, '.lua$')
+  local is_md = string.match(name, '.md$')
   local ch, hl, pp
 
   if is_lua then
@@ -63,7 +64,7 @@ function EditorController:open(name, content, save)
     local luaEval = LuaEval()
     local parser = luaEval.parser
     if not parser then return end
-    hl = parser.highlighter
+    hl = luaEval.highlighter
     --- @param t string[]
     --- @param single boolean
     ch = function(t, single)
@@ -72,6 +73,10 @@ function EditorController:open(name, content, save)
     pp = function(t)
       return parser.pprint(t, w)
     end
+  elseif is_md then
+    local mdEval = MdEval(name)
+    hl = mdEval.highlighter
+    self.input:set_eval(mdEval)
   else
     self.input:set_eval(TextEval)
   end
@@ -208,13 +213,12 @@ function EditorController:_generate_status(sel)
   local more = bufview.content:get_more()
   local cs
   local m = self.mode
-  if bufview.content_type == 'plain' then
-    cs = CustomStatus(bufview.content_type, len, more, sel, m)
-  end
-  if bufview.content_type == 'lua' then
+  local ct = bufview.content_type
+  if ct == 'lua' then
     local range = bufview.content:get_block_app_pos(sel)
-    cs = CustomStatus(
-      bufview.content_type, len, more, sel, m, range)
+    cs = CustomStatus(ct, len, more, sel, m, range)
+  else
+    cs = CustomStatus(ct, len, more, sel, m)
   end
 
   return cs
