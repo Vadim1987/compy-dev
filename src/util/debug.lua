@@ -283,7 +283,9 @@ Debug = {
             elseif type(k) == 'number' and style == 'lua' then
               -- skip index
               res = res .. dent .. '[' .. k .. '] ' .. assign
-            elseif type(k) == 'string' and not string.forall(k, Char.is_ascii) then
+            elseif type(k) == 'string'
+                and not string.forall(k, Char.is_ascii)
+            then
               -- skip index
               res = res .. dent .. "['" .. k .. "'] " .. assign
             else
