@@ -1,7 +1,7 @@
 # Compy
 
 A console-based Lua-programmable computer for children based on
-[LÖVE2D][löve2d] framework.
+the [LÖVE2D][löve2d] framework.
 
 ## Principles
 
