@@ -1,0 +1,16 @@
+name: Trigger publishing website
+on:
+  push:
+  workflow_run:
+    workflows: [pages]
+
+jobs:
+  trigger-publish-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.WEB_PUBLISH_TOKEN }}
+          repository: compy-toys/website
+          event-type: publish
