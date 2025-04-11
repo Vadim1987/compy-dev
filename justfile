@@ -39,6 +39,9 @@ dev-atest:
 dev-atest-dbg:
   @DEBUG=1 just dev-atest
 dev-autotest: dev-atest
+dev-ptest game:
+  @{{MON}} --exec 'clear; {{LOVE}} src play {{game}}' -e 'lua'
+dev-playtest game: (dev-ptest game)
 
 dev-dtest:
   @{{MON}} --exec 'clear; {{LOVE}} src test --draw' -e 'lua'
