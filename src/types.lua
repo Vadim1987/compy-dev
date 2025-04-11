@@ -1,5 +1,12 @@
 --- @alias str string|string[]
 
+--- @alias Mode
+--- | 'ide'
+--- | 'play'
+--- | 'test'
+--- @alias Testflags { auto: boolean?, draw: boolean?, size: boolean? }
+--- @alias Start { mode: Mode, testflags: Testflags? }
+
 --- @class PathInfo table
 --- @field storage_path string
 --- @field project_path string

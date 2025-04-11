@@ -45,13 +45,6 @@ local android_storage_find = function()
   return false
 end
 
---- @alias Mode
---- | 'ide'
---- | 'play'
---- | 'test'
---- @alias Testflags { auto: boolean?, draw: boolean?, size: boolean? }
---- @alias Start { mode: Mode, testflags: Testflags? }
-
 --- CLI arguments
 --- @param args table
 --- @return Start
