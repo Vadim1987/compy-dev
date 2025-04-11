@@ -65,6 +65,8 @@ if love and not TESTING then
 
   LFS = love.filesystem
 
+  --- @param path string
+  --- @param filtertype love.FileType?
   local getDirectoryItemsInfo = function(path, filtertype)
     local items = {}
     local ls = LFS.getDirectoryItems(path)
@@ -98,6 +100,9 @@ if love and not TESTING then
         return LFS.createDirectory(...)
       end,
       getDirectoryItemsInfo = getDirectoryItemsInfo,
+      mount = function(...)
+        return LFS.mount(...)
+      end,
     }
   else
     _fs = require("lib.nativefs.nativefs")
@@ -167,7 +172,7 @@ if love and not TESTING then
 
   --- @param path string
   --- @param data string
-  --- @return boolean success
+  --- @return boolean? success
   --- @return string? error
   function FS.write(path, data)
     return _fs.write(path, data)
@@ -266,7 +271,16 @@ if love and not TESTING then
 
     return cp_ok, cp_err
   end
+
+  --- @param path string
+  --- @param target string
+  --- @return boolean success
+  function FS.mount(path, target)
+    local ok = _fs.mount(path, target)
+    return ok
+  end
 else
+  --- used in unit tests where love utils are not available
   local lfs = require("lfs")
   --- @param path string
   --- @param data string
