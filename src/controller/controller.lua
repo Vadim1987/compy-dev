@@ -322,47 +322,53 @@ Controller = {
     local handlers = love.handlers
 
     handlers.keypressed = function(k)
-      if Key.ctrl() then
-        if k == "pause" then
-          C:suspend_run(key_break_msg)
-        end
-        if Key.shift() then
-          -- Ensure the user can get back to the console
-          if k == "q" then
-            C:quit_project()
-          end
-          if k == "s" then
-            if love.state.app_state == 'running' then
-              C:stop_project_run()
-            elseif love.state.app_state == 'editor' then
-              C:finish_edit()
+      local function quickswitch()
+        if k == 'f8' then
+          if love.state.app_state == 'running'
+              or love.state.app_state == 'inspect'
+              or love.state.app_state == 'project_open'
+          then
+            C:stop_project_run()
+            local st = love.state.editor
+            if st then
+              C:edit(st.buffer.filename, st)
+            else
+              C:edit()
+            end
+          elseif love.state.app_state == 'editor' then
+            if C.editor:is_normal_mode() then
+              local ed_state = C:finish_edit()
+              love.state.editor = ed_state
+              C:run_project()
             end
           end
-          if k == "r" then
-            C:reset()
+        end
+      end
+      local function project_state_change()
+        if Key.ctrl() then
+          if k == "pause" then
+            C:suspend_run(key_break_msg)
+          end
+          if Key.shift() then
+            -- Ensure the user can get back to the console
+            if k == "q" then
+              C:quit_project()
+            end
+            if k == "s" then
+              if love.state.app_state == 'running' then
+                C:stop_project_run()
+              elseif love.state.app_state == 'editor' then
+                C:finish_edit()
+              end
+            end
+            if k == "r" then
+              C:reset()
+            end
           end
         end
       end
-      if k == 'f8' then
-        if love.state.app_state == 'running'
-            or love.state.app_state == 'inspect'
-            or love.state.app_state == 'project_open'
-        then
-          C:stop_project_run()
-          local st = love.state.editor
-          if st then
-            C:edit(st.buffer.filename, st)
-          else
-            C:edit()
-          end
-        elseif love.state.app_state == 'editor' then
-          if C.editor:is_normal_mode() then
-            local ed_state = C:finish_edit()
-            love.state.editor = ed_state
-            C:run_project()
-          end
-        end
-      end
+        quickswitch()
+        project_state_change()
 
       local user_input = get_user_input()
       if user_input then
