@@ -20,7 +20,9 @@ local messages = {
   dataloss_warning =
   'DEMO: Project data is not guaranteed to persist!',
   play_no_project =
-  'Specifying a project is required for playback!'
+  'Specifying a project is required for playback!',
+  invalid_project =
+  'Not a valid project',
 }
 
 local exit = function(err)

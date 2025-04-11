@@ -10,13 +10,20 @@ FS = {
   end)(),
   messages = {
     enoent = function(name, type)
+      local n = name or ''
       if type == 'directory' or type == 'dir' then
-        return name .. ' is not a directory'
+        return n .. ' is not a directory'
       end
-      return name .. ' does not exist'
+      return n .. ' does not exist'
     end,
     mkdir_err = function(name, err)
-      return "Unable to create directory " .. name .. ': ' .. err
+      local n = name or ''
+      local err = err or ''
+      return "Unable to create directory " .. n .. ': ' .. err
+    end,
+    unreadable = function(name)
+      local n = name or ''
+      return "Unable to read " .. n
     end,
   }
 }

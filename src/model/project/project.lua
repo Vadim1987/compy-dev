@@ -29,14 +29,17 @@ local messages = {
 
   invalid_filename    = error_annot('Filename invalid'),
   already_exists      = function(name)
-    return 'A project already exists with this name: ' .. name
+    local n = name or ''
+    return 'A project already exists with this name: ' .. n
   end,
   write_error         = error_annot('Cannot write target directory'),
   pr_does_not_exist   = function(name)
-    return name .. ' is not an existing project'
+    local n = name or ''
+    return n .. ' is not an existing project'
   end,
   file_does_not_exist = function(name)
-    return name .. ' does not exist'
+    local n = name or ''
+    return n .. ' does not exist'
   end,
   no_open_project     = 'No project is open',
 }
