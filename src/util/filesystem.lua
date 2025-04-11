@@ -48,6 +48,18 @@ FS.join_path = function(...)
   return FS.remove_dup_separators(raw)
 end
 
+--- @param path string
+--- @return boolean
+FS.is_absolute = function(path)
+  if love.system.getOS() == "Windows" then
+    --- TODO: untested
+    --- starts with 'C:\' or any other drive letter
+    return string.matches_r(path, '^%a:\\')
+  else
+    return string.matches_r(path, '^' .. FS.path_sep)
+  end
+end
+
 if love and not TESTING then
   local _fs
 
