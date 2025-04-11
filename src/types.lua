@@ -5,7 +5,11 @@
 --- | 'play'
 --- | 'test'
 --- @alias Testflags { auto: boolean?, draw: boolean?, size: boolean? }
---- @alias Start { mode: Mode, testflags: Testflags? }
+
+--- @class Start
+--- @field mode Mode
+--- @field testflags Testflags?
+--- @field path string?
 
 --- @class PathInfo table
 --- @field storage_path string

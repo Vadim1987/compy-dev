@@ -18,8 +18,15 @@ G = love.graphics
 
 local messages = {
   dataloss_warning =
-  'DEMO: Project data is not guaranteed to persist!'
+  'DEMO: Project data is not guaranteed to persist!',
+  play_no_project =
+  'Specifying a project is required for playback!'
 }
+
+local exit = function(err)
+  print(err)
+  love.event.quit()
+end
 
 --- CLI arguments
 --- @param args table
@@ -53,7 +60,11 @@ local argparse = function(args)
         }
       }
     elseif m == 'play' then
-      return { mode = 'play' }
+      local a2 = args[2]
+      if not string.is_non_empty_string(a2) then
+        exit(messages.play_no_project)
+      end
+      return { mode = 'play', path = a2 }
     end
   end
   return { mode = 'ide' }
