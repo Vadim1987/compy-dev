@@ -61,34 +61,51 @@ end
 
 https://github.com/Davidobot/love.js
 
-## Testing
+## Test mode
 
-### Test modes
 
-#### normal
-
-The game can be run with the `--test` flag, which causes it to launch in test
-mode.
+The game can be run with a `test` subcommand, which causes it to
+launch in test mode.
 
 ```sh
-love src --test
+love src test
 ```
+### flags
 
-This is currently used for testing the canvas terminal, therefore it causes the
-terminal to be smaller (so overflows are clearly visible), and pre-fills it with
-characters.
-
-#### autotest
+#### auto
 
 ```sh
-love src --autotest
+love src test --auto
 ```
 
-#### drawtest
+Run the autotest function on startup. This is optionally defined
+in `tests/autotest.lua` with the following signature:
+```lua
+--- @param self ConsoleController
+local function autotest(self)
+  --- commands here
+end
+
+return autotest
+```
+
+#### size
 
 ```sh
-love src --drawtest
+love src test --size
 ```
+
+This is causes the terminal and the input field to be smaller
+(so overflows are clearly visible).
+
+#### draw
+
+```sh
+love src test --draw
+```
+
+For testing blend modes, draws several small canvases
+(implies `--size`).
 
 ### Running unit tests
 
