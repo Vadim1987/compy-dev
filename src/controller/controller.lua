@@ -314,6 +314,9 @@ Controller = {
 
   --- @param C ConsoleController
   setup_callback_handlers = function(C)
+    local cfg = C.cfg
+    local playback = cfg.mode == 'play'
+
     local clear_user_input = function()
       love.state.user_input = nil
     end

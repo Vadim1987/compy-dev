@@ -256,6 +256,7 @@ function love.load(args)
   local mode = startup.mode
   local autotest =
       mode == 'test' and startup.testflags.auto or false
+  local playback = mode == 'play'
 
   local viewconf = config_view(startup.testflags)
   --- Android specific settings
@@ -273,6 +274,11 @@ function love.load(args)
 
   local paths, has_removable = setup_storage()
   love.paths = paths
+  if playback then
+    --- it is not gonna be empty in this mode, but the
+    --- typesystem is unable to express that...
+    load_project(startup.path or '', paths)
+  end
 
   --- @type LoveState
   love.state = {
@@ -308,13 +314,6 @@ function love.load(args)
     hostconf.conf_app(viewconf)
   end
 
-
-  if mode == 'play' then
-    --- it is not gonna be empty in this mode, but the
-    --- typesystem is unable to express that...
-    load_project(startup.path or '', paths)
-  end
-
   --- MVC wiring
   local CM = ConsoleModel(baseconf)
   redirect_to(CM)
@@ -326,11 +325,15 @@ function love.load(args)
   Controller.setup_callback_handlers(CC)
   Controller.set_default_handlers(CC, CV)
 
-  if _G.web then
-    print(messages.dataloss_warning)
-    CM.projects:deploy_examples()
-  end
+  if playback then
 
-  --- run autotest on startup if invoked
-  if autotest then CC:autotest() end
+  else
+    if _G.web then
+      print(messages.dataloss_warning)
+      CM.projects:deploy_examples()
+    end
+
+    --- run autotest on startup if invoked
+    if autotest then CC:autotest() end
+  end
 end
