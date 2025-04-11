@@ -63,6 +63,7 @@
 --- @class Config table
 --- @field view ViewConfig
 --- @field autotest boolean
+--- @field mode Mode
 
 --- @alias More {up: boolean, down: boolean}
 

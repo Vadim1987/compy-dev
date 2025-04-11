@@ -218,11 +218,12 @@ local setup_storage = function()
 end
 
 --- @param args table
----@diagnostic disable-next-line: duplicate-set-field
+--- @diagnostic disable-next-line: duplicate-set-field
 function love.load(args)
   local startup = argparse(args)
   local mode = startup.mode
-  local autotest = mode == 'test' and startup.testflags.auto or false
+  local autotest =
+      mode == 'test' and startup.testflags.auto or false
 
   local viewconf = config_view(startup.testflags)
   --- Android specific settings
@@ -268,6 +269,7 @@ function love.load(args)
     view = viewconf,
     editor = editorconf,
     autotest = autotest,
+    mode = mode,
   }
 
   if hostconf then
