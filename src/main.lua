@@ -17,11 +17,13 @@ require("lib/error_explorer")
 G = love.graphics
 
 local messages = {
-  dataloss_warning = 'DEMO: Project data is not guaranteed to persist!'
+  dataloss_warning =
+  'DEMO: Project data is not guaranteed to persist!'
 }
 
 --- Find removable and user-writable storage
---- Assumptions are made, which might be specific to the target platform/device
+--- Assumptions are made, which might be specific to the target
+--- platform/device
 --- @return boolean success
 --- @return string? path
 local android_storage_find = function()
