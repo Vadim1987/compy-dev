@@ -216,6 +216,39 @@ local setup_storage = function()
   return paths, has_removable
 end
 
+--- @param path string
+--- @param paths PathInfo
+local load_project = function(path, paths)
+  local is_zip = string.matches_r(path, '.compy$')
+  local s_path = paths.storage_path
+  local p_path = paths.project_path
+  local m_path = 'play'
+
+  if is_zip then
+    local ex = FS.exists(path) or
+        FS.exists(FS.join_path(s_path, path))
+    if not ex then
+      exit(ProjectService.messages.file_does_not_exist(path))
+    end
+  else
+    local ex = FS.exists(path, 'directory') or
+        FS.exists(FS.join_path(s_path, path)) or
+        FS.exists(FS.join_path(p_path, path))
+    if not ex then
+      exit(ProjectService.messages.pr_does_not_exist(path))
+    end
+  end
+  local mok = FS.mount(path, m_path)
+  if mok then
+    local valid = ProjectService.is_project(m_path)
+    if not valid then
+      exit(messages.invalid_project)
+    end
+  else
+    exit(FS.messages.unreadable(path))
+  end
+end
+
 --- @param args table
 --- @diagnostic disable-next-line: duplicate-set-field
 function love.load(args)
@@ -238,8 +271,8 @@ function love.load(args)
       })
   end
 
-  local has_removable
-  love.paths, has_removable = setup_storage()
+  local paths, has_removable = setup_storage()
+  love.paths = paths
 
   --- @type LoveState
   love.state = {
@@ -273,6 +306,13 @@ function love.load(args)
 
   if hostconf then
     hostconf.conf_app(viewconf)
+  end
+
+
+  if mode == 'play' then
+    --- it is not gonna be empty in this mode, but the
+    --- typesystem is unable to express that...
+    load_project(startup.path or '', paths)
   end
 
   --- MVC wiring
