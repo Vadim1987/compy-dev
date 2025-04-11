@@ -109,9 +109,10 @@ if love and not TESTING then
   end
 
   --- @param path string
+  --- @param filtertype love.FileType?
   --- @return boolean
-  function FS.exists(path)
-    if _fs.getInfo(path) then return true end
+  function FS.exists(path, filtertype)
+    if _fs.getInfo(path, filtertype) then return true end
     return false
   end
 
