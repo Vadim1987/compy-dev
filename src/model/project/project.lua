@@ -182,18 +182,23 @@ end
 
 --- @param path string
 --- @param name string?
---- @return string? error
+--- @param check_vfs boolean?
 --- @return string? path
-function ProjectService.is_project(path, name)
+--- @return string? error
+function ProjectService.is_project(path, name, check_vfs)
   local p_path = FS.join_path(path, name)
-  if not FS.exists(p_path) then
+  if not FS.exists(p_path) and
+      check_vfs and not FS.dir(p_path, "directory", true)
+  then
     return nil, messages.pr_does_not_exist(name)
   end
   local main = FS.join_path(p_path, ProjectService.MAIN)
-  if not FS.exists(main) then
+  if not FS.exists(main) and
+      check_vfs and not FS.dir(main, "file", true)
+  then
     return nil, messages.pr_does_not_exist(name)
   end
-  return p_path
+  return p_path, nil
 end
 
 --- @param name string
