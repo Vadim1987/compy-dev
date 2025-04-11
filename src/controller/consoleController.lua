@@ -495,6 +495,11 @@ function ConsoleController:reset()
   self.input:reset(true) -- clear history
 end
 
+function ConsoleController:restart()
+  self:stop_project_run()
+  self:run_project()
+end
+
 ---@return LuaEnv
 function ConsoleController:get_console_env()
   return self.main_env
