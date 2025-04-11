@@ -370,8 +370,19 @@ Controller = {
           end
         end
       end
+      local function restart()
+        if Key.ctrl() and Key.alt() and k == "r" then
+          C:restart()
+        end
+      end
+
+      if playback then
+        restart()
+      else
+        restart()
         quickswitch()
         project_state_change()
+      end
 
       local user_input = get_user_input()
       if user_input then
