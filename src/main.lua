@@ -21,30 +21,6 @@ local messages = {
   'DEMO: Project data is not guaranteed to persist!'
 }
 
---- Find removable and user-writable storage
---- Assumptions are made, which might be specific to the target
---- platform/device
---- @return boolean success
---- @return string? path
-local android_storage_find = function()
-  local OS = require("util.os")
-  -- Yes, I know. We are working with the limitations of Android here.
-  local quadhex = string.times('[0-9A-F]', 4)
-  local uuid_regex = quadhex .. '-' .. quadhex
-  local regex = '/dev/fuse /storage/' .. uuid_regex
-  local grep = string.format("grep /proc/mounts -e '%s'", regex)
-  local _, result = OS.runcmd(grep)
-  local lines = string.lines(result or '')
-  if not string.is_non_empty_string_array(lines) then
-    return false
-  end
-  local tok = string.split(lines[1], ' ')
-  if string.is_non_empty_string_array(tok) then
-    return true, tok[2]
-  end
-  return false
-end
-
 --- CLI arguments
 --- @param args table
 --- @return Start
@@ -82,6 +58,9 @@ local argparse = function(args)
   end
   return { mode = 'ide' }
 end
+
+
+local OS_name = love.system.getOS()
 
 --- Display
 --- @param flags Testflags
@@ -160,24 +139,33 @@ local config_view = function(flags)
   }
 end
 
---- Android sepcific settings
-local setup_android = function(viewconf)
-  love.keyboard.setTextInput(true)
-  love.keyboard.setKeyRepeat(true)
-  if love.system.getOS() == 'Android' then
-    love.isAndroid = true
-    love.window.setMode(viewconf.w, viewconf.h, {
-      fullscreen = true,
-      fullscreentype = "exclusive",
-    })
+--- Find removable and user-writable storage
+--- Assumptions are made, which might be specific to the target
+--- platform/device
+--- @return boolean success
+--- @return string? path
+local android_storage_find = function()
+  local OS = require("util.os")
+  -- Yes, I know. We are working with the limitations of Android here.
+  local quadhex = string.times('[0-9A-F]', 4)
+  local uuid_regex = quadhex .. '-' .. quadhex
+  local regex = '/dev/fuse /storage/' .. uuid_regex
+  local grep = string.format("grep /proc/mounts -e '%s'", regex)
+  local _, result = OS.runcmd(grep)
+  local lines = string.lines(result or '')
+  if not string.is_non_empty_string_array(lines) then
+    return false
   end
+  local tok = string.split(lines[1], ' ')
+  if string.is_non_empty_string_array(tok) then
+    return true, tok[2]
+  end
+  return false
 end
-
 --- @return PathInfo
 --- @return boolean
 local setup_storage = function()
   local id = love.filesystem.getIdentity()
-  local OS_name = love.system.getOS()
   local storage_path = ''
   local project_path, has_removable
   if OS_name == 'Android' then
@@ -226,8 +214,18 @@ function love.load(args)
   local autotest = mode == 'test' and startup.testflags.auto or false
 
   local viewconf = config_view(startup.testflags)
-
-  setup_android(viewconf)
+  --- Android specific settings
+  love.keyboard.setTextInput(true)
+  love.keyboard.setKeyRepeat(true)
+  if OS_name == 'Android' then
+    love.window.setMode(
+      viewconf.w,
+      viewconf.h,
+      {
+        fullscreen = true,
+        fullscreentype = "exclusive",
+      })
+  end
 
   local has_removable
   love.paths, has_removable = setup_storage()
