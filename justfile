@@ -35,20 +35,20 @@ ut_all:
 dev:
   @{{MON}} --exec '{{LOVE}} src' -e 'lua'
 dev-atest:
-  @{{MON}} --exec 'clear; {{LOVE}} src --autotest' -e 'lua'
+  @{{MON}} --exec 'clear; {{LOVE}} src test --auto' -e 'lua'
 dev-atest-dbg:
   @DEBUG=1 just dev-atest
 dev-autotest: dev-atest
 
 dev-dtest:
-  @{{MON}} --exec 'clear; {{LOVE}} src --drawtest' -e 'lua'
+  @{{MON}} --exec 'clear; {{LOVE}} src test --draw' -e 'lua'
 dev-drawtest: dev-dtest
 
 dev-allt:
-  @{{MON}} --exec 'clear; {{LOVE}} src --drawtest --autotest' -e 'lua'
+  @{{MON}} --exec 'clear; {{LOVE}} src test --all' -e 'lua'
 
 dev-size:
-  @{{MON}} --exec '{{LOVE}} src --size' -e 'lua'
+  @{{MON}} --exec '{{LOVE}} src test --size' -e 'lua'
 
 # install examples to projects folder (same as in-app)
 deploy-examples:

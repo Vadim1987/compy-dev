@@ -45,26 +45,56 @@ local android_storage_find = function()
   return false
 end
 
+--- @alias Mode
+--- | 'ide'
+--- | 'play'
+--- | 'test'
+--- @alias Testflags { auto: boolean?, draw: boolean?, size: boolean? }
+--- @alias Start { mode: Mode, testflags: Testflags? }
+
 --- CLI arguments
 --- @param args table
+--- @return Start
 local argparse = function(args)
-  local autotest = false
-  local drawtest = false
-  local sizedebug = false
-  for _, a in ipairs(args) do
-    if a == '--autotest' then autotest = true end
-    if a == '--size' then sizedebug = true end
-    if a == '--drawtest' then
-      drawtest = true
-      sizedebug = true
+  if args[1] then
+    local m = args[1]
+    if m == 'test' then
+      local autotest = false
+      local drawtest = false
+      local sizedebug = false
+      for _, a in ipairs(args) do
+        if a == '--auto' then autotest = true end
+        if a == '--size' then sizedebug = true end
+        if a == '--draw' then
+          drawtest = true
+          sizedebug = true
+        end
+        if a == '--all' then
+          drawtest = true
+          sizedebug = true
+          autotest = true
+        end
+      end
+      return {
+        mode = 'test',
+        testflags = {
+          auto = autotest,
+          draw = drawtest,
+          size = sizedebug
+        }
+      }
+    elseif m == 'play' then
+      return { mode = 'play' }
     end
   end
-  return autotest, drawtest, sizedebug
+  return { mode = 'ide' }
 end
 
 --- Display
+--- @param flags Testflags
 --- @return ViewConfig
-local config_view = function(sizedebug)
+local config_view = function(flags)
+  local tf = flags or {}
   local FAC = 1
   if love.hiDPI then FAC = 2 end
   local font_size = 32.4 * FAC
@@ -75,13 +105,7 @@ local config_view = function(sizedebug)
     font_dir .. "ubuntu_mono_bold_nerd.ttf", font_size)
   local font_icon = G.newFont(
     font_dir .. "SFMonoNerdFontMono-Regular.otf", font_size)
-  local lh = (function()
-    if sizedebug then
-      return 1
-    else
-      return 1.0468
-    end
-  end)()
+  local lh = tf.size and 1 or 1.0468
   font_main:setLineHeight(lh)
   local fh = font_main:getHeight()
   -- we use a monospace font, so the width should be the same for any input
@@ -101,7 +125,7 @@ local config_view = function(sizedebug)
   local debugheight = math.floor(eh / (love.test_grid_y * fh))
   local debugwidth = math.floor(love.fixWidth / love.test_grid_x) / fw
   local drawableWidth = w - 2 * border
-  if sizedebug then
+  if tf.size then
     drawableWidth = debugwidth * fw
   end
   -- drawtest hack
@@ -137,6 +161,8 @@ local config_view = function(sizedebug)
     debugwidth = debugwidth,
     drawableWidth = drawableWidth,
     drawableChars = drawableChars,
+
+    drawtest = tf.draw,
   }
 end
 
@@ -201,10 +227,11 @@ end
 --- @param args table
 ---@diagnostic disable-next-line: duplicate-set-field
 function love.load(args)
-  local autotest, drawtest, sizedebug = argparse(args)
+  local startup = argparse(args)
+  local mode = startup.mode
+  local autotest = mode == 'test' and startup.testflags.auto or false
 
-  local viewconf = config_view(sizedebug)
-  viewconf.drawtest = drawtest
+  local viewconf = config_view(startup.testflags)
 
   setup_android(viewconf)
 
@@ -238,7 +265,7 @@ function love.load(args)
     view = viewconf,
     editor = editorconf,
     autotest = autotest,
-    sizedebug = sizedebug,
+    sizedebug = mode == 'test' and startup.testflags.size or false,
   }
 
   if hostconf then
