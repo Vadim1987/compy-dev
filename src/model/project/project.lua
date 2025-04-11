@@ -160,22 +160,7 @@ end
 --- @field run function
 ProjectService = class.create(newps)
 ProjectService.MAIN = 'main.lua'
-
-
---- @param name string
---- @return string? path
---- @return string? error
-local function is_project(path, name)
-  local p_path = FS.join_path(path, name)
-  if not FS.exists(p_path) then
-    return nil, messages.pr_does_not_exist(name)
-  end
-  local main = FS.join_path(p_path, ProjectService.MAIN)
-  if not FS.exists(main) then
-    return nil, messages.pr_does_not_exist(name)
-  end
-  return p_path
-end
+ProjectService.messages = messages
 
 --- @param name string
 --- @return string? path
@@ -188,6 +173,22 @@ local function can_be_project(path, name)
   local p_path = FS.join_path(path, name)
   if FS.exists(p_path) then
     return nil, messages.already_exists(name)
+  end
+  return p_path
+end
+
+--- @param path string
+--- @param name string?
+--- @return string? error
+--- @return string? path
+function ProjectService.is_project(path, name)
+  local p_path = FS.join_path(path, name)
+  if not FS.exists(p_path) then
+    return nil, messages.pr_does_not_exist(name)
+  end
+  local main = FS.join_path(p_path, ProjectService.MAIN)
+  if not FS.exists(main) then
+    return nil, messages.pr_does_not_exist(name)
   end
   return p_path
 end
@@ -222,7 +223,7 @@ function ProjectService:list()
   local ret = Dequeue()
   for _, f in pairs(folders) do
     if f.type and f.type == 'directory' then
-      local ok = is_project(ProjectService.path, f.name)
+      local ok = self.is_project(ProjectService.path, f.name)
       if ok then
         ret:push_back(Project(f.name))
       end
@@ -234,7 +235,7 @@ end
 --- @return boolean success
 --- @return string? errmsg
 function ProjectService:open(name)
-  local path, p_err = is_project(self.path, name)
+  local path, p_err = self.is_project(self.path, name)
   -- noop if already open
   if self.current == name then
     return true
@@ -304,7 +305,7 @@ end
 --- @return string? error
 function ProjectService:clone(old, new)
   local o_path, o_err =
-      is_project(ProjectService.path, old)
+      self.is_project(ProjectService.path, old)
   local n_path, n_err =
       can_be_project(ProjectService.path, new)
   if o_err or not o_path then
@@ -335,7 +336,7 @@ function ProjectService:run(name, env)
       return nil, messages.no_open_project
     end
   else
-    p_path, err = is_project(ProjectService.path, name)
+    p_path, err = self.is_project(ProjectService.path, name)
   end
   if p_path then
     self:open(name or self.current.name)
