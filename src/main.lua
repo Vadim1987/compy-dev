@@ -202,9 +202,6 @@ local setup_storage = function()
     end
   end
 
-  if not _G.web then
-    _G.nativefs = require("lib.nativefs.nativefs")
-  end
   project_path = FS.join_path(storage_path, 'projects')
   local paths = {
     storage_path = storage_path,
