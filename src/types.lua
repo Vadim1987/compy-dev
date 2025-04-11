@@ -47,11 +47,11 @@
 --- @field drawableWidth number
 --- @field drawableChars integer
 --- @field drawtest boolean
+--- @field sizedebug boolean
 
 --- @class Config table
 --- @field view ViewConfig
 --- @field autotest boolean
---- @field sizedebug boolean
 
 --- @alias More {up: boolean, down: boolean}
 

@@ -23,7 +23,7 @@ CanvasModel = class.create()
 --- @param cfg Config
 function CanvasModel.new(cfg)
   local w, h
-  if cfg.sizedebug then
+  if cfg.view.sizedebug then
     w = cfg.view.debugwidth * cfg.view.fw
     h = cfg.view.debugheight * cfg.view.fh
   else

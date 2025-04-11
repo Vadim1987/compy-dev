@@ -163,6 +163,7 @@ local config_view = function(flags)
     drawableChars = drawableChars,
 
     drawtest = tf.draw,
+    sizedebug = tf.size,
   }
 end
 
@@ -265,7 +266,6 @@ function love.load(args)
     view = viewconf,
     editor = editorconf,
     autotest = autotest,
-    sizedebug = mode == 'test' and startup.testflags.size or false,
   }
 
   if hostconf then
