@@ -14,6 +14,7 @@
 --- @class PathInfo table
 --- @field storage_path string
 --- @field project_path string
+--- @field play_path string
 
 --- @class CursorInfo table
 --- @field cursor Cursor

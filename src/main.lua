@@ -175,6 +175,7 @@ local android_storage_find = function()
   end
   return false
 end
+
 --- @return PathInfo
 --- @return boolean
 local setup_storage = function()
@@ -207,12 +208,14 @@ local setup_storage = function()
   project_path = FS.join_path(storage_path, 'projects')
   local paths = {
     storage_path = storage_path,
-    project_path = project_path
+    project_path = project_path,
   }
   for _, d in pairs(paths) do
     local ok, err = FS.mkdir(d)
     if not ok then Log(err) end
   end
+  --- this is virtual, we don't want to actually create it
+  paths.play_path = '/play'
   return paths, has_removable
 end
 
@@ -222,7 +225,9 @@ local load_project = function(path, paths)
   local is_zip = string.matches_r(path, '.compy$')
   local s_path = paths.storage_path
   local p_path = paths.project_path
-  local m_path = 'play'
+  local m_path = paths.play_path
+
+  local full_path = path
 
   if is_zip then
     local ex = FS.exists(path) or
@@ -245,7 +250,8 @@ local load_project = function(path, paths)
       exit(ProjectService.messages.pr_does_not_exist(path))
     end
   end
-  local mok = FS.mount(path, m_path)
+
+  local mok = FS.mount(full_path, m_path)
   if mok then
     local valid = ProjectService.is_project(m_path)
     if not valid then
