@@ -339,7 +339,11 @@ function love.load(args)
   Controller.set_default_handlers(CC, CV)
 
   if playback then
-
+    local ok, err = CC:open_project('play', true)
+    if not ok then
+      exit(err)
+    end
+    CC:run_project()
   else
     if _G.web then
       print(messages.dataloss_warning)

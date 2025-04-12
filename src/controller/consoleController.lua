@@ -549,14 +549,16 @@ function ConsoleController:suspend_run(msg)
   Controller.set_default_handlers(self, self.view)
 end
 
+--- @param name string
+--- @param play boolean
 --- @return boolean success
-function ConsoleController:open_project(name)
+function ConsoleController:open_project(name, play)
   local P = self.model.projects
   if not name then
     print('No project name provided!')
     return false
   end
-  local open, create, err = P:opreate(name)
+  local open, create, err = P:opreate(name, play)
   local ok = open or create
   if ok then
     local project_loader = (function()
