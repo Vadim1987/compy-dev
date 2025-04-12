@@ -164,16 +164,15 @@ if love and not TESTING then
   --- @param vfs boolean?
   --- @return string?
   function FS.read(path, vfs)
-    local lines
+    local contents
     if vfs then
-      local contents = LFS.read(path)
-      return contents
+      contents = LFS.read(path)
     else
-      lines = FS.lines(path)
-      if string.is_non_empty_string_array(lines) then
-        return string.unlines(lines)
-      end
+      contents = _fs.read('string', path, nil)
     end
+
+    ---@diagnostic disable-next-line: return-type-mismatch
+    return contents
   end
 
   --- @param path string
