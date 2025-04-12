@@ -231,9 +231,16 @@ local load_project = function(path, paths)
       exit(ProjectService.messages.file_does_not_exist(path))
     end
   else
-    local ex = FS.exists(path, 'directory') or
-        FS.exists(FS.join_path(s_path, path)) or
-        FS.exists(FS.join_path(p_path, path))
+    local ex = false
+    if FS.exists(path, 'directory') then
+      ex = true
+    elseif FS.exists(FS.join_path(s_path, path)) then
+      ex = true
+      full_path = FS.join_path(s_path, path)
+    elseif FS.exists(FS.join_path(p_path, path)) then
+      ex = true
+      full_path = FS.join_path(p_path, path)
+    end
     if not ex then
       exit(ProjectService.messages.pr_does_not_exist(path))
     end
