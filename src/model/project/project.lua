@@ -66,14 +66,19 @@ end
 --- @class Project
 --- @field name string
 --- @field path string
+--- @field play boolean
 --- @field contents function
 --- @field readfile function
 --- @field writefile function
 --- @field get_path function
-Project = class.create(function(pname)
+Project = class.create(function(pname, play)
+  local path = play and
+      love.paths.play_path or
+      FS.join_path(love.paths.project_path, pname)
   return {
     name = pname,
-    path = FS.join_path(love.paths.project_path, pname)
+    path = path,
+    play = play,
   }
 end)
 
@@ -84,15 +89,19 @@ end
 
 --- @param name string
 --- @return boolean success
---- @return table|string result|errmsg
+--- @return string?|string result|errmsg
 function Project:readfile(name)
-  local fp = FS.join_path(self.path, name)
+  local fp
+  if self.play then
+    fp = FS.join_path(love.paths.play_path, name)
+  else
+    fp = FS.join_path(self.path, name)
+  end
 
-  local ex = FS.exists(fp)
-  if not ex then
+  if not FS.exists(fp, "file", self.play) then
     return false, messages.file_does_not_exist(name)
   else
-    return true, FS.lines(fp)
+    return true, FS.combined_read(fp)
   end
 end
 
@@ -100,8 +109,7 @@ end
 function Project:load_file(filename)
   local rok, content = self:readfile(filename)
   if rok then
-    local code = string.unlines(content)
-    return codeload(code)
+    return codeload(content)
   end
 end
 
@@ -123,7 +131,7 @@ end
 
 --- @param name string
 --- @param data string
---- @return boolean success
+--- @return boolean? success
 --- @return string? error
 function Project:writefile(name, data)
   local valid, err = validate_filename(name)
@@ -145,7 +153,8 @@ local newps = function()
   ProjectService.messages = messages
   return {
     --- @type Project?
-    current = nil
+    current = nil,
+    play = false,
   }
 end
 
@@ -240,35 +249,49 @@ function ProjectService:list()
   return ret
 end
 
+--- @param name string?
+--- @param play boolean?
 --- @return boolean success
 --- @return string? errmsg
-function ProjectService:open(name)
-  local path, p_err = self.is_project(self.path, name)
-  -- noop if already open
-  if self.current == name then
+function ProjectService:open(name, play)
+  if play then
+    self.current = Project('play', true)
     return true
+  else
+    local path, p_err = self.is_project(self.path, name)
+    -- noop if already open
+    if self.current == name then
+      return true
+    end
+    if path then
+      self.current = Project(name)
+      return true
+    end
+    return false, p_err
   end
-  if path then
-    self.current = Project(name)
-    return true
-  end
-  return false, p_err
 end
 
+--- @param name string
+--- @param play boolean
 --- @return boolean open
 --- @return boolean create
 --- @return string? err
-function ProjectService:opreate(name)
-  local ook, _ = self:open(name)
-  if ook then
-    return ook, false
+function ProjectService:opreate(name, play)
+  if play then
+    local ok = self:open('play', true)
+    return ok, false
   else
-    local cok, c_err = self:create(name)
-    if cok then
-      self:open(name)
-      return false, cok
+    local ook, _ = self:open(name)
+    if ook then
+      return ook, false
     else
-      return false, false, c_err
+      local cok, c_err = self:create(name)
+      if cok then
+        self:open(name)
+        return false, cok
+      else
+        return false, false, c_err
+      end
     end
   end
 end
@@ -347,10 +370,7 @@ function ProjectService:run(name, env)
     p_path, err = self.is_project(ProjectService.path, name)
   end
   if p_path then
-    self:open(name or self.current.name)
-
-    local _, lines = self.current:readfile(ProjectService.MAIN)
-    local code = string.unlines(lines)
+    local _, code = self.current:readfile(ProjectService.MAIN)
     local content = codeload(code, env)
     return content, nil, p_path
   end
