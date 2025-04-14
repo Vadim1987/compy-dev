@@ -80,10 +80,7 @@ local OS_name = love.system.getOS()
 --- @return ViewConfig
 local config_view = function(flags)
   local tf = flags or {}
-  local FAC = 1
-  if love.hiDPI then FAC = 2 end
-  local font_size = 32.4 * FAC
-  local border = 0 * FAC
+  local font_size = 32.4
 
   local font_dir = "assets/fonts/"
   local font_main = G.newFont(
@@ -104,12 +101,12 @@ local config_view = function(flags)
   local font_labels = G.newFont(
     font_dir .. "PressStart2P-Regular.ttf", 12)
 
-  local w = G.getWidth() - 2 * border
+  local w = G.getWidth()
   local h = love.fixHeight
   local eh = h - 2 * fh
   local debugheight = math.floor(eh / (love.test_grid_y * fh))
   local debugwidth = math.floor(love.fixWidth / love.test_grid_x) / fw
-  local drawableWidth = w - 2 * border
+  local drawableWidth = w
   if tf.size then
     drawableWidth = debugwidth * fw
   end
@@ -136,8 +133,6 @@ local config_view = function(flags)
     lfh = font_labels:getHeight(),
     lfw = font_labels:getWidth('█'),
 
-    border = border,
-    FAC = FAC,
     w = w,
     h = h,
     colors = colors,

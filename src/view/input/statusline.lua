@@ -23,13 +23,12 @@ function Statusline:draw(status, nLines, time)
       return cf.colors.statusline.console
     end
   end)()
-  local b = cf.border
   local h = cf.h
   local w = cf.w
   local fh = cf.fh
   local font = cf.font
 
-  local sy = h - b - (1 + nLines) * fh
+  local sy = h - (1 + nLines) * fh
   local start_box = { x = 0, y = sy }
   local endTextX = start_box.x + w - fh
   local midX = (start_box.x + w) / 2
@@ -72,7 +71,7 @@ function Statusline:draw(status, nLines, time)
     if love.DEBUG then
       G.setColor(cf.colors.debug)
       if love.state.testing then
-        G.print('testing', midX - (8 * cf.fw + cf.border), start_text.y)
+        G.print('testing', midX - (8 * cf.fw), start_text.y)
       end
       G.print(love.state.app_state, midX - (13 * cf.fw), start_text.y)
       if time then
