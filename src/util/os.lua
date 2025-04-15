@@ -23,6 +23,33 @@ local function runcmd(cmd)
   if handle then
     local result = handle:read("*a")
     handle:close()
+    --- sadly, this doesn't capture the return code,
+    --- so it doesn't mean that it was a success
+    return true, result
+  end
+  return false
+end
+
+--- @param cmd string
+--- @return boolean success
+--- @return string? result
+local function runcmd_with_exit(cmd)
+  if not test_popen() then return false end
+  if get_name() ~= 'Linux' then
+    return false, 'OS not supported'
+  end
+  local handle = io.popen(cmd .. ' 2>&1; echo $?')
+  if handle then
+    local result = handle:read("*a")
+    handle:close()
+    local _, _, exit_code = result:find("(%d+)%s*$")
+    result = result:sub(1,
+      result:find("(%d+)%s*$") - 1):gsub("%s+$", ""
+    )
+    exit_code = tonumber(exit_code)
+    if exit_code ~= 0 then
+      return false, result
+    end
     return true, result
   end
   return false
