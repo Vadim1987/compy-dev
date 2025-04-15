@@ -139,6 +139,7 @@ HarmonyController = {
   --  keyboard  --
   ----------------
 
+  --- @private
   --- @param C ConsoleController
   set_love_keypressed = function(C)
     local function keypressed(k)
@@ -147,6 +148,7 @@ HarmonyController = {
     HarmonyController._defaults.keypressed = keypressed
     love.keypressed = keypressed
   end,
+  --- @private
   --- @param C ConsoleController
   set_love_keyreleased = function(C)
     --- @diagnostic disable-next-line: duplicate-set-field
@@ -156,6 +158,7 @@ HarmonyController = {
     HarmonyController._defaults.keyreleased = keyreleased
     love.keyreleased = keyreleased
   end,
+  --- @private
   --- @param C ConsoleController
   set_love_textinput = function(C)
     local function textinput(t)
@@ -168,6 +171,7 @@ HarmonyController = {
   --  mouse  --
   -------------
 
+  --- @private
   --- @param C ConsoleController
   set_love_mousepressed = function(C)
     local function mousepressed(x, y, button)
@@ -177,6 +181,7 @@ HarmonyController = {
     HarmonyController._defaults.mousepressed = mousepressed
     love.mousepressed = mousepressed
   end,
+  --- @private
   --- @param C ConsoleController
   set_love_mousereleased = function(C)
     local function mousereleased(x, y, button)
@@ -186,6 +191,7 @@ HarmonyController = {
     HarmonyController._defaults.mousereleased = mousereleased
     love.mousereleased = mousereleased
   end,
+  --- @private
   --- @param C ConsoleController
   set_love_mousemoved = function(C)
     local function mousemoved(x, y, dx, dy)
@@ -199,7 +205,7 @@ HarmonyController = {
   --------------
   --  update  --
   --------------
-
+  --- @private
   --- @param C ConsoleController
   set_love_update = function(C)
     local function update(dt)
@@ -238,6 +244,7 @@ HarmonyController = {
   ---------------
   --    draw   --
   ---------------
+  --- @private
   --- @param C ConsoleController
   --- @param CV ConsoleView
   set_love_draw = function(C, CV)
@@ -250,6 +257,7 @@ HarmonyController = {
     View.main_draw = love.draw
   end,
 
+  --- @private
   snapshot = function()
     if user_draw then
       View.snap_canvas()
