@@ -203,7 +203,7 @@ if love and not TESTING then
     end)()
     local srcinfo = getInfo(source)
     if not srcinfo or srcinfo.type ~= 'file' then
-      return false, FS.messages.enoent('source')
+      return false, FS.messages.enoent('source ' .. source)
     end
 
     local tgtinfo = _fs.getInfo(target)
@@ -217,7 +217,7 @@ if love and not TESTING then
       to = FS.join_path(target, fn)
     end
     if not to then
-      return false, FS.messages.enoent('target')
+      return false, FS.messages.enoent('target ' .. target)
     end
 
     --- @type string
@@ -230,7 +230,7 @@ if love and not TESTING then
       return false, tostring(s_err)
     end
 
-    local out, t_err = FS.write(target, content)
+    local out, t_err = FS.write(to, content)
     if not out then
       return false, t_err
     end
