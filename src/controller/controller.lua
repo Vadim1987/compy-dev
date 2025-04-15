@@ -93,16 +93,6 @@ local set_handlers = function(userlove)
   end
 end
 
---- @class Handlers
---- @field update function?
---- @field draw function?
---- @field keypressed function?
---- @field keyreleased function?
---- @field textinput function?
---- @field mousemoved function?
---- @field mousepressed function?
---- @field mousereleased function?
-
 --- @class Controller
 --- @field _defaults Handlers
 --- @field _userhandler Handlers
