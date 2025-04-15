@@ -133,6 +133,8 @@
 --- @field editor EditorState?
 
 --- @class LoveHarmony table
+--- @field tmpdir string?
+
 --- @class LoveDebug table
 --- @field show_snapshot boolean
 --- @field show_terminal boolean

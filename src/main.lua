@@ -24,6 +24,8 @@ local messages = {
   'Specifying a project is required for playback!',
   invalid_project =
   'Not a valid project',
+  no_tmpdir =
+  'Unable to create tmpdir',
 }
 
 local exit = function(err)
@@ -175,32 +177,46 @@ end
 --- @return boolean
 local setup_storage = function()
   local id = love.filesystem.getIdentity()
+  local harmony = love.harmony
   local storage_path = ''
-  local project_path, has_removable
-    local ok, sd_path = android_storage_find()
-    if not ok then
-      print('WARN: SD card not found')
-      has_removable = false
-      sd_path = '/storage/emulated/0'
-    end
-    has_removable = true
-    storage_path = string.format("%s/Documents/%s", sd_path, id)
-    print('INFO: Project path: ' .. storage_path)
-    _G.web = true
-    storage_path = ''
-  else
-    -- TODO: linux assumed, check other platforms, especially love.js
-    local home = os.getenv('HOME')
-    if home and string.is_non_empty_string(home) then
-      storage_path = string.format("%s/Documents/%s", home, id)
-    if OS.name == 'Android' then
-    elseif OS.name == 'Web' then
+  local has_removable = false
+
+  if harmony then
+    id = id .. '-harmony'
+    local ok, dir = OS.mktempdir(id .. '-XXXXXXX')
+    if ok then
+      local d = dir or ''
+      harmony.tmpdir = d
+      storage_path = d
     else
-      storage_path = love.filesystem.getSaveDirectory()
+      exit(messages.no_tmpdir)
+    end
+  else
+    if OS.name == 'Android' then
+      local ok, sd_path = android_storage_find()
+      if not ok then
+        print('WARN: SD card not found')
+        has_removable = false
+        sd_path = '/storage/emulated/0'
+      end
+      has_removable = true
+      storage_path = string.format("%s/Documents/%s", sd_path, id)
+      print('INFO: Project path: ' .. storage_path)
+    elseif OS.name == 'Web' then
+      _G.web = true
+      storage_path = ''
+    else
+      -- TODO: linux assumed, check other platforms, especially love.js
+      local home = os.getenv('HOME')
+      if home and string.is_non_empty_string(home) then
+        storage_path = string.format("%s/Documents/%s", home, id)
+      else
+        storage_path = love.filesystem.getSaveDirectory()
+      end
     end
   end
 
-  project_path = FS.join_path(storage_path, 'projects')
+  local project_path = FS.join_path(storage_path, 'projects')
   local paths = {
     storage_path = storage_path,
     project_path = project_path,
