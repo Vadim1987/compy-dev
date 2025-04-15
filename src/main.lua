@@ -4,6 +4,7 @@ require("controller.controller")
 require("controller.consoleController")
 require("view.view")
 require("view.consoleView")
+require("harmony.controller")
 
 local colors = require("conf.colors")
 local hostconf = prequire('host')
@@ -278,7 +279,8 @@ end
 function love.load(args)
   local startup = argparse(args)
   local mode = startup.mode
-  if mode == 'harmony' then
+  local harmony = mode == 'harmony'
+  if harmony then
     love.harmony = {}
   end
   local autotest =
@@ -341,6 +343,7 @@ function love.load(args)
     hostconf.conf_app(viewconf)
   end
 
+  local ctrl = harmony and HarmonyController or Controller
   --- MVC wiring
   local CM = ConsoleModel(baseconf)
   redirect_to(CM)
@@ -348,9 +351,9 @@ function love.load(args)
   local CV = ConsoleView(baseconf, CC)
   CC:set_view(CV)
 
-  Controller.init(CC)
-  Controller.setup_callback_handlers(CC)
-  Controller.set_default_handlers(CC, CV)
+  ctrl.init(CC)
+  ctrl.setup_callback_handlers(CC)
+  ctrl.set_default_handlers(CC, CV)
 
   if playback then
     local ok, err = CC:open_project('play', true)
