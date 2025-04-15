@@ -294,6 +294,18 @@ if love and not TESTING then
     end
     return false, cperr
   end
+
+  --- @param target string
+  --- @param vfs boolean?
+  --- @return boolean success
+  --- @return string? error
+  function FS.rm(target, vfs)
+    if vfs then
+      return LFS.remove(target)
+    end
+    return _fs.remove(target)
+  end
+
   --- @param path string
   --- @param target string
   --- @return boolean success
