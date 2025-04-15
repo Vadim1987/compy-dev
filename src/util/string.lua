@@ -19,6 +19,14 @@ string.matches_r = function(s, p)
   return string.matches(s, p, true)
 end
 
+--- @param s string
+--- @param sub string
+--- @return boolean
+string.starts_with = function(s, sub)
+  local p = '^' .. sub
+  return string.matches_r(s, p)
+end
+
 --- @param t string?
 --- @return string?
 string.debug_text = function(t)
