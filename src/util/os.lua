@@ -1,3 +1,13 @@
+--- @return string? osname
+local function get_name()
+  if type(love) == "table" and
+      type(love.system) == "table" then
+    return love.system.getOS()
+  elseif jit then
+    return jit.os
+  end
+end
+
 --- @return boolean success
 local function test_popen()
   local ok = pcall(io.popen, 'echo')
@@ -19,5 +29,6 @@ local function runcmd(cmd)
 end
 
 return {
+  name = get_name(),
   runcmd = runcmd,
 }
