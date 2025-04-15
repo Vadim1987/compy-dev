@@ -34,24 +34,26 @@ ut_all:
 # run app on file change
 dev:
   @{{MON}} --exec '{{LOVE}} src' -e 'lua'
+
 dev-atest:
   @{{MON}} --exec 'clear; {{LOVE}} src test --auto' -e 'lua'
 dev-atest-dbg:
   @DEBUG=1 just dev-atest
 dev-autotest: dev-atest
-dev-ptest game:
-  @{{MON}} --exec 'clear; {{LOVE}} src play {{game}}' -e 'lua'
 dev-playtest game: (dev-ptest game)
-
 dev-dtest:
   @{{MON}} --exec 'clear; {{LOVE}} src test --draw' -e 'lua'
 dev-drawtest: dev-dtest
-
+dev-size:
+  @{{MON}} --exec '{{LOVE}} src test --size' -e 'lua'
 dev-allt:
   @{{MON}} --exec 'clear; {{LOVE}} src test --all' -e 'lua'
 
-dev-size:
-  @{{MON}} --exec '{{LOVE}} src test --size' -e 'lua'
+dev-ptest game:
+  @{{MON}} --exec 'clear; {{LOVE}} src play {{game}}' -e 'lua'
+
+dev-harmony:
+  @{{MON}} --exec '{{LOVE}} src harmony' -e 'lua'
 
 # install examples to projects folder (same as in-app)
 deploy-examples:
