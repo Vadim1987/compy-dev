@@ -12,6 +12,7 @@ require("util.table")
 --- @class ConsoleController
 --- @field time number
 --- @field model Model
+--- @field main_ctrl table
 --- @field main_env LuaEnv
 --- @field pre_env LuaEnv
 --- @field base_env LuaEnv
@@ -27,7 +28,7 @@ require("util.table")
 ConsoleController = class.create()
 
 --- @param M Model
-function ConsoleController.new(M)
+function ConsoleController.new(M, main_ctrl)
   local env = getfenv()
   local pre_env = table.clone(env)
   local config = M.cfg
@@ -37,6 +38,7 @@ function ConsoleController.new(M)
   local self = setmetatable({
     time        = 0,
     model       = M,
+    main_ctrl   = main_ctrl,
     input       = IC,
     editor      = EC,
     -- console runner env
@@ -96,7 +98,7 @@ local function run_user_code(f, cc, project_path)
   end
   ok, call_err = pcall(f)
   if project_path and ok then -- user project exec
-    Controller.set_user_handlers(env['love'])
+    cc.main_ctrl.set_user_handlers(env['love'])
   end
   output:restore_main()
   G.setCanvas()
@@ -167,7 +169,7 @@ function ConsoleController:run_project(name)
       Log.info('Running \'' .. n .. '\'')
       local rok, run_err = run_user_code(f, self, path)
       if rok then
-        if Controller.has_user_update() then
+        if self.main_ctrl.has_user_update() then
           love.state.app_state = 'running'
         end
       else
@@ -365,7 +367,7 @@ function ConsoleController.prepare_project_env(cc)
     if love.state.app_state == 'inspect' then
       -- resume
       love.state.app_state = 'running'
-      Controller.restore_user_handlers()
+      cc.main_ctrl.restore_user_handlers()
     else
       print('No project halted')
     end
@@ -545,8 +547,8 @@ function ConsoleController:suspend_run(msg)
 
   self.model.output:invalidate_terminal()
 
-  Controller.save_user_handlers(runner_env['love'])
-  Controller.set_default_handlers(self, self.view)
+  self.main_ctrl.save_user_handlers(runner_env['love'])
+  self.main_ctrl.set_default_handlers(self, self.view)
 end
 
 --- @param name string
@@ -607,12 +609,12 @@ function ConsoleController:close_project()
 end
 
 function ConsoleController:stop_project_run()
-  Controller.set_default_handlers(self, self.view)
-  Controller.set_love_update(self)
+  self.main_ctrl.set_default_handlers(self, self.view)
+  self.main_ctrl.set_love_update(self)
   love.state.user_input = nil
   View.clear_snapshot()
-  Controller.set_love_draw(self, self.view)
-  Controller.clear_user_handlers()
+  self.main_ctrl.set_love_draw(self, self.view)
+  self.main_ctrl.clear_user_handlers()
   love.state.app_state = 'project_open'
 end
 

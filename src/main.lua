@@ -347,7 +347,7 @@ function love.load(args)
   --- MVC wiring
   local CM = ConsoleModel(baseconf)
   redirect_to(CM)
-  local CC = ConsoleController(CM)
+  local CC = ConsoleController(CM, ctrl)
   local CV = ConsoleView(baseconf, CC)
   CC:set_view(CV)
 
