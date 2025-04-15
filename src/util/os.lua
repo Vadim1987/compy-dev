@@ -1,3 +1,5 @@
+require("util.string")
+
 --- @return string? osname
 local function get_name()
   if type(love) == "table" and
@@ -55,7 +57,23 @@ local function runcmd_with_exit(cmd)
   return false
 end
 
+--- @param templ string?
+--- @return boolean success
+--- @return string? result
+local function mktempdir(templ)
+  if get_name() == 'Linux' then
+    local cmd = 'mktemp -d'
+    local tmpdir = '/tmp'
+    if string.is_non_empty_string(templ) then
+      cmd = string.format('%s -p %s %s', cmd, tmpdir, templ)
+    end
+    return runcmd_with_exit(cmd)
+  end
+  return false, 'OS not supported'
+end
+
 return {
   name = get_name(),
   runcmd = runcmd,
+  mktempdir = mktempdir,
 }
