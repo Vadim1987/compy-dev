@@ -9,6 +9,10 @@ function love.conf(t)
     love.DEBUG = true
   end
 
+  --- disable unused modules to shorten startup
+  t.modules.joystick = false
+  t.modules.physics = false
+
   local width = 1024
   local height = 600
   if hidpi == 'true' or hidpi == 'TRUE' then
