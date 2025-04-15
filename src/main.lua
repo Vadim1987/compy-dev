@@ -369,5 +369,8 @@ function love.load(args)
 
     --- run autotest on startup if invoked
     if autotest then CC:autotest() end
+    if harmony then
+      CM.projects:deploy_examples()
+    end
   end
 end
