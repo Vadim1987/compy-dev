@@ -283,6 +283,17 @@ if love and not TESTING then
     return cp_ok, cp_err
   end
 
+  --- @param source string
+  --- @param target string
+  --- @return boolean success
+  --- @return string? error
+  function FS.mv(source, target)
+    local cpok, cperr = FS.cp(source, target)
+    if cpok then
+      return FS.rm(source)
+    end
+    return false, cperr
+  end
   --- @param path string
   --- @param target string
   --- @return boolean success
