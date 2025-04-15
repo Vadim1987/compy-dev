@@ -159,7 +159,7 @@ function ConsoleController:run_project(name)
   if P.current then
     ok = true
   else
-    ok = self:open_project(name)
+    ok = self:open_project(name, false)
   end
   if ok then
     local runner_env   = self:get_project_env()
