@@ -8,6 +8,7 @@ require("view.consoleView")
 local colors = require("conf.colors")
 local hostconf = prequire('host')
 
+OS = require("util.os")
 require("util.key")
 require("util.debug")
 require("util.filesystem")
@@ -71,9 +72,6 @@ local argparse = function(args)
   end
   return { mode = 'ide' }
 end
-
-
-local OS_name = love.system.getOS()
 
 --- Display
 --- @param flags Testflags
@@ -177,7 +175,6 @@ local setup_storage = function()
   local id = love.filesystem.getIdentity()
   local storage_path = ''
   local project_path, has_removable
-  if OS_name == 'Android' then
     local ok, sd_path = android_storage_find()
     if not ok then
       print('WARN: SD card not found')
@@ -187,7 +184,6 @@ local setup_storage = function()
     has_removable = true
     storage_path = string.format("%s/Documents/%s", sd_path, id)
     print('INFO: Project path: ' .. storage_path)
-  elseif OS_name == 'Web' then
     _G.web = true
     storage_path = ''
   else
@@ -195,6 +191,8 @@ local setup_storage = function()
     local home = os.getenv('HOME')
     if home and string.is_non_empty_string(home) then
       storage_path = string.format("%s/Documents/%s", home, id)
+    if OS.name == 'Android' then
+    elseif OS.name == 'Web' then
     else
       storage_path = love.filesystem.getSaveDirectory()
     end
@@ -270,7 +268,7 @@ function love.load(args)
   --- Android specific settings
   love.keyboard.setTextInput(true)
   love.keyboard.setKeyRepeat(true)
-  if OS_name == 'Android' then
+  if OS.name == 'Android' then
     love.window.setMode(
       viewconf.w,
       viewconf.h,
