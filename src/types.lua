@@ -4,6 +4,7 @@
 --- | 'ide'
 --- | 'play'
 --- | 'test'
+--- | 'harmony'
 --- @alias Testflags { auto: boolean?, draw: boolean?, size: boolean? }
 
 --- @class Start
@@ -131,6 +132,7 @@
 --- @field prev_state AppState?
 --- @field editor EditorState?
 
+--- @class LoveHarmony table
 --- @class LoveDebug table
 --- @field show_snapshot boolean
 --- @field show_terminal boolean

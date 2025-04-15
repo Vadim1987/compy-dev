@@ -37,7 +37,9 @@ end
 local argparse = function(args)
   if args[1] then
     local m = args[1]
-    if m == 'test' then
+    if m == 'harmony' then
+      return { mode = 'harmony' }
+    elseif m == 'test' then
       local autotest = false
       local drawtest = false
       local sizedebug = false
@@ -260,6 +262,9 @@ end
 function love.load(args)
   local startup = argparse(args)
   local mode = startup.mode
+  if mode == 'harmony' then
+    love.harmony = {}
+  end
   local autotest =
       mode == 'test' and startup.testflags.auto or false
   local playback = mode == 'play'
