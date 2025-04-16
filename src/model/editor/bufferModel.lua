@@ -12,7 +12,7 @@ require('util.dequeue')
 --- @alias Content Dequeue<string>|Dequeue<Block>
 
 --- @param name string
---- @param content Dequeue<string>
+--- @param content string
 --- @param save function
 --- @param chunker Chunker?
 --- @param highlighter Highlighter?
@@ -24,16 +24,18 @@ local function new(name, content, save,
   local revmap = {}
   local readonly = false
 
+  local lines = string.lines(content or '')
+
   local function plaintext()
     ct = 'plain'
-    _content = Dequeue(content, 'string')
+    _content = Dequeue(lines, 'string')
     sel = #_content + 1
   end
   --- only passing this around so the linter shuts up about nil
   --- @param chk function
   local function luacontent(chk)
     ct = 'lua'
-    local ok, blocks, ast = chk(content)
+    local ok, blocks, ast = chk(lines)
     if ok then
       local len = #blocks
       sel = len + 1

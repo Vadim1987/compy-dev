@@ -123,14 +123,13 @@ end
 --- @param name string
 --- @return string[]?
 function ConsoleController:_readfile(name)
-  local PS            = self.model.projects
-  local p             = PS.current
-  local ok, lines_err = p:readfile(name)
+  local PS              = self.model.projects
+  local p               = PS.current
+  local ok, text_or_err = p:readfile(name)
   if ok then
-    local lines = lines_err
-    return lines
+    return text_or_err
   else
-    print(lines_err)
+    print(text_or_err)
   end
 end
 
@@ -306,8 +305,7 @@ function ConsoleController.prepare_env(cc)
   --- @param name string
   --- @return any
   prepared.runfile          = function(name)
-    local con = check_open_pr(cc._readfile, cc, name)
-    local code = string.unlines(con)
+    local code = check_open_pr(cc._readfile, cc, name)
     local chunk, err = load(code, '', 't')
     if chunk then
       chunk()
@@ -649,6 +647,7 @@ function ConsoleController:edit(name, state)
   local save = function(newcontent)
     return self:_writefile(filename, newcontent)
   end
+
   self.editor:open(filename, text, save)
   self.editor:restore_state(state)
 end

@@ -51,7 +51,7 @@ EditorController = class.create(new)
 
 
 --- @param name string
---- @param content string[]?
+--- @param content string?
 --- @param save function
 function EditorController:open(name, content, save)
   local w = self.model.cfg.view.drawableChars
@@ -65,7 +65,7 @@ function EditorController:open(name, content, save)
     local parser = luaEval.parser
     if not parser then return end
     hl = luaEval.highlighter
-    --- @param t string[]
+    --- @param t string
     --- @param single boolean
     ch = function(t, single)
       return parser.chunker(t, w, single)
