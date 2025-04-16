@@ -113,13 +113,15 @@ setup-web-dev:
 one:
   @{{LOVE}} src
 one-atest:
-  @{{LOVE}} src --autotest
+  @{{LOVE}} src test --auto
 one-dtest:
-  @{{LOVE}} src --drawtest
+  @{{LOVE}} src test --draw
 one-allt:
-  @{{LOVE}} src --drawtest --autotest
+  @{{LOVE}} src test --draw --auto
 one-size:
-  @{{LOVE}} src --size
+  @{{LOVE}} src test --size
+one-harmony:
+  @{{LOVE}} src harmony
 
 VERSION := `git describe --tags --long --always`
 
