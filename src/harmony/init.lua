@@ -281,16 +281,26 @@ local function runner()
 
   local context = ''
   local scenarios = {}
-  ---@diagnostic disable-next-line: unused-function
+  local done = true
+
   function scenario(tag, f)
     local id = context .. '.' .. tag
-    scenarios[id] = f
+    table.insert(scenarios, {
+      tag = id, sc = f,
+    })
   end
+
+  function hm_done(label)
+    done = true
+    love.harmony.utils.release_keys()
+    debug_print('done ' .. (label or ''))
+  end
+
+  local scrun
 
   return {
     load_scenarios = function()
       local ls = FS.dir("src/harmony/scenarios")
-      --- TODO multiscenario
       for _, d in ipairs(ls) do
         if d.type == 'file' then
           local module_name = string.sub(d.name, 1, -5)
@@ -298,17 +308,26 @@ local function runner()
           require("harmony.scenarios." .. module_name)
         end
       end
+      scrun = coroutine.create(function()
+        for _, v in ipairs(scenarios) do
+          local tag = v.tag
+          local sc = v.sc
+          debug_print('---- ' .. tag .. ' ----')
+          done = false
+          timer:script(function(wait)
+            sc(wait)
+          end)
+          coroutine.yield()
+        end
+      end)
     end,
 
     run_scenarios = function()
-      local i = 1
       timer:script(function(wait)
-        for tag, sc in pairs(scenarios) do
-          --- TODO multiscenario
-          if i < 2 then
-            debug_print('---- ' .. tag .. ' ----')
-            sc(wait)
-            i = i + 1
+        while coroutine.status(scrun) ~= "dead" do
+          wait(.5)
+          if done then
+            coroutine.resume(scrun)
           end
         end
       end)
