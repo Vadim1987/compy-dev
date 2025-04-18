@@ -7,6 +7,9 @@
     // busted
     "describe",
     "it",
+    // harmony
+    "scenario",
+    "hm_done",
     // project env
     "user_input",
     "input_text",
