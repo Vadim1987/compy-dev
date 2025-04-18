@@ -1,5 +1,10 @@
 require('util.lua')
 
+if _G.arg[2] == 'harmony' then
+  require("harmony.init")(true)
+end
+
+--- @diagnostic disable-next-line: duplicate-set-field
 function love.conf(t)
   t.identity = 'compy'
   t.window.title = 'Compy'

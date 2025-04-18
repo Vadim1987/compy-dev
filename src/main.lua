@@ -279,10 +279,7 @@ end
 function love.load(args)
   local startup = argparse(args)
   local mode = startup.mode
-  local harmony = mode == 'harmony'
-  if harmony then
-    love.harmony = {}
-  end
+  local harmony = love.harmony
   local autotest =
       mode == 'test' and startup.testflags.auto or false
   local playback = mode == 'play'
@@ -371,6 +368,11 @@ function love.load(args)
     if autotest then CC:autotest() end
     if harmony then
       CM.projects:deploy_examples()
+
+      harmony.load()
+      -- harmony.screenshot('startup')
+
+      harmony.run()
     end
   end
 end

@@ -214,6 +214,7 @@ HarmonyController = {
         wrap(uup, dt)
       end
       HarmonyController.snapshot()
+      love.harmony.timer_update(dt)
     end
 
     if not HarmonyController._defaults.update then
