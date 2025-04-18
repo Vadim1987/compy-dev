@@ -811,8 +811,14 @@ function UserInputModel:handle(eval)
       ok, result = ev:apply(ent)
       if ok then
         if self.oneshot then
-          --- @diagnostic disable-next-line: param-type-mismatch
-          love.event.push('userinput')
+          if love.harmony then
+            if love.harmony.utils then
+              love.harmony.utils.love_event('userinput')
+            end
+          else
+            --- @diagnostic disable-next-line: param-type-mismatch
+            love.event.push('userinput')
+          end
         end
       else
         local perr = result[1]
