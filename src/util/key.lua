@@ -16,6 +16,7 @@ local function is_shift(k)
 end
 --- @return boolean
 local function shift()
+  ---@diagnostic disable-next-line: param-type-mismatch
   return love.keyboard.isDown("lshift", "rshift")
 end
 
@@ -25,6 +26,7 @@ local function is_ctrl(k)
 end
 --- @return boolean
 local function ctrl()
+  ---@diagnostic disable-next-line: param-type-mismatch
   return love.keyboard.isDown("lctrl", "rctrl")
 end
 
@@ -34,6 +36,7 @@ local function is_alt(k)
 end
 --- @return boolean
 local function alt()
+  ---@diagnostic disable-next-line: param-type-mismatch
   return love.keyboard.isDown("lalt", "ralt")
 end
 
