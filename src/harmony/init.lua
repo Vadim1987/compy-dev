@@ -13,9 +13,13 @@ local frame_time = 0.001
 --- @field lock boolean
 --- @field pre string
 --- @field unpre function
+--- @field utils HarmonyUtils
 
+local instance
 local lock
-local debug_print = function(...) end
+local debug_print = function(...)
+  -- Log.debug(...)
+end
 
 Harmony = {
   --- @private
@@ -198,12 +202,21 @@ local function utils()
     end)
   end
 
+  local release_keys = function()
+    for k, v in pairs(held) do
+      if v then
+        held[k] = false
+      end
+    end
+  end
+
   --- @class HarmonyUtils
   --- @field patch_isDown function
   --- @field love_event function
   --- @field love_key function
   --- @field love_text function
   --- @field screenshot function
+  --- @field release_keys function
   return {
     patch_isDown = function()
       local down = love.keyboard.isDown
@@ -237,20 +250,20 @@ local function utils()
             debug_print(m .. ' held')
             held[m] = true
           else
-            -- keypress(v)
             love_event('keypressed', v)
-            love.timer.sleep(frame_time * 2)
             debug_print('\tkey ' .. v)
             love_event('keyreleased', v)
+            -- release_keys()
           end
         end
       else
         love_event('keypressed', key)
         debug_print('key ' .. key)
-        love.timer.sleep(frame_time * 2)
         love_event('keyreleased', key)
       end
     end,
+
+    release_keys = release_keys,
 
     screenshot = function(tag)
       timer:script(function(wait)
