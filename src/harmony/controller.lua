@@ -101,23 +101,6 @@ local set_handlers = function(userlove)
   end
 end
 
---- @param tag string
-local create_screenshot = function(tag)
-  Log.info('triggered screenshot ' .. tag)
-  local fn = tag .. '.png'
-  View.harmony_screenshot(function(shot)
-    if shot then
-      local from = FS.join_path(love.filesystem.getSaveDirectory(), fn)
-      local to = FS.join_path(love.harmony.tmpdir, fn)
-      shot:encode('png', fn)
-      local ok, err = FS.mv(from, to)
-      if not ok then
-        Log.err(err)
-      end
-    end
-  end)
-end
-
 --- @class HarmonyController
 --- @field _defaults Handlers
 --- @field _userhandler Handlers
@@ -138,7 +121,6 @@ HarmonyController = {
   ----------------
   --  keyboard  --
   ----------------
-
   --- @private
   --- @param C ConsoleController
   set_love_keypressed = function(C)
@@ -170,7 +152,6 @@ HarmonyController = {
   -------------
   --  mouse  --
   -------------
-
   --- @private
   --- @param C ConsoleController
   set_love_mousepressed = function(C)

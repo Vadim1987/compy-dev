@@ -29,11 +29,6 @@ View = {
   clear_snapshot = function()
     canvas_snapshot = nil
   end,
-
-  --- @param f fun(img: love.ImageData)
-  harmony_screenshot = function(f)
-    G.captureScreenshot(f)
-  end,
 }
 
 --- @class ViewBase
