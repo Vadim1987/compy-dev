@@ -1,4 +1,4 @@
-require("util.filesystem")
+local FS = require("util.filesystem")
 
 describe("FS utils", function()
   describe("removes duplicate separators", function()

@@ -1,6 +1,6 @@
 require("util.lua")
 require("util.string")
-require("util.filesystem")
+local FS = require("util.filesystem")
 local class = require('util.class')
 
 local function error_annot(base)

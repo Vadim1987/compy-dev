@@ -1,6 +1,6 @@
 require("util.string")
 
-FS = {
+local FS = {
   path_sep = (function()
     if love and love.system
         and love.system.getOS() == "Windows" then
@@ -89,7 +89,7 @@ if love and not TESTING then
   end
 
 
-  if love.system.getOS() == "Web" then
+  if love.system and love.system.getOS() == "Web" then
     _fs = {
       read = function(...)
         return LFS.read(...)

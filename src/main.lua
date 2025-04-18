@@ -9,10 +9,10 @@ require("harmony.controller")
 local colors = require("conf.colors")
 local hostconf = prequire('host')
 
-OS = require("util.os")
 require("util.key")
 require("util.debug")
-require("util.filesystem")
+OS = require("util.os")
+local FS = require("util.filesystem")
 
 require("lib/error_explorer")
 

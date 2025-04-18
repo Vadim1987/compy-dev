@@ -4,9 +4,10 @@ require("controller.userInputController")
 
 
 local class = require('util.class')
+local LANG = require("util.eval")
+local FS = require('util.filesystem')
 require("util.testTerminal")
 require("util.key")
-local LANG = require("util.eval")
 require("util.table")
 
 --- @class ConsoleController
