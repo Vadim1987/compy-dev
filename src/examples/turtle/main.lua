@@ -11,8 +11,7 @@ debug = false
 
 local r = user_input()
 
-function eval()
-  local input = r()
+function eval(input)
   local f = actions[input]
   if f then
     f()
@@ -45,11 +44,9 @@ end
 
 function love.keyreleased(key)
   if key == "i" then
-    input_text("TURTLE")
+    r = input_text("TURTLE")
   end
-  if key == "return" then
-    eval()
-  end
+
   if love.keyboard.isDown("lctrl", "rctrl") then
     if key == "escape" then
       love.event.quit()
@@ -60,5 +57,8 @@ end
 function love.update()
   if ty > midy then
     debugColor = Color.red
+  end
+  if not r:is_empty() then
+    eval(r())
   end
 end
