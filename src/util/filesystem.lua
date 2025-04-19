@@ -1,4 +1,5 @@
 require("util.string")
+local OS = require("util.os")
 
 local FS = {
   path_sep = (function()
@@ -366,6 +367,36 @@ else
   --- @return string? error
   function FS.unlink(path)
     return os.remove(path)
+  end
+
+  --- @param content str
+  --- @param ext string?
+  --- @param fixname string?
+  function FS.write_tempfile(content, ext, fixname)
+    local function create_temp()
+      local cmd = 'mktemp -u -p .'
+      if string.is_non_empty_string(ext) then
+        cmd = string.format('%s --suffix .%s', cmd, ext)
+      end
+      local _, result = OS.runcmd(cmd)
+      return result
+    end
+    local name =
+        string.is_non_empty_string(fixname)
+        and fixname .. (ext and '.' .. ext or '')
+        or create_temp()
+    local mok, merr = FS.mkdirp('./.debug')
+    if not mok then
+      return false, merr
+    end
+    local path = FS.join_path('./.debug', name)
+
+    local data = string.unlines(content)
+    local ok, err = FS.write(path, data)
+    if not ok then
+      return false, err
+    end
+    return ok
   end
 end
 

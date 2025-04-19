@@ -1,5 +1,6 @@
 local parser = require("model.lang.lua.parser")('metalua')
 local term = require("util.termcolor")
+local FS = require("util.filesystem")
 require("util.color")
 require("util.debug")
 
@@ -80,7 +81,7 @@ describe('parser #ast', function()
                   string.unlines(input),
                   tree
                 )
-                Debug.write_tempfile(f, 'json5', fn)
+                FS.write_tempfile(f, 'json5', fn)
               end
 
               has_lines = true
