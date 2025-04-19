@@ -370,7 +370,7 @@ function love.load(args)
       CM.projects:deploy_examples()
 
       harmony.load()
-      -- harmony.screenshot('startup')
+      harmony.screenshot('startup')
 
       harmony.run()
     end

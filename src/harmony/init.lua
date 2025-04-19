@@ -235,6 +235,7 @@ local function utils()
     love_event = love_event,
     love_text = function(t)
       timer:script(function(wait)
+        debug_print('text: ' .. t)
         love_event('textinput', t)
         wait(frame_time * 5)
       end)
