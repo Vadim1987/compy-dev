@@ -113,8 +113,11 @@ local function terse_hash(t, level, prev_seen, jsonify)
     res = res .. text(t_) .. ', '     --.. '// [' .. type(t) .. ']  '
   elseif type(t) == 'function' then
     res = res .. Debug.mem(t) .. ', ' --.. '// [' .. type(t) .. ']  '
+  elseif type(t) == 'boolean' then
+    local val = t and 'TRUE' or '#f'
+    res = res .. val
   else
-    res = res .. tostring(t) .. ', '  --.. '// [' .. type(t) .. ']  '
+    res = res .. tostring(t) .. ', ' --.. '// [' .. type(t) .. ']  '
   end
 
   return res
