@@ -321,7 +321,39 @@ string.times = function(s, n)
   return res
 end
 
-Char = require("util.char")
+----------------------------
+--- validation utilities ---
+----------------------------
+
+Char = {
+  --- 'c' is assumed to be a single character/grapheme, these
+  --- functions won't be checking for it.
+  is_alpha = function(c)
+    return string.match(c, "%a") ~= nil
+  end,
+  is_alnum = function(c)
+    return string.match(c, "%w") ~= nil
+  end,
+  is_upper = function(c)
+    return string.match(c, "%u") ~= nil
+  end,
+  is_lower = function(c)
+    return string.match(c, "%l") ~= nil
+  end,
+  is_digit = function(c)
+    return string.match(c, "%d") ~= nil
+  end,
+  is_space = function(c)
+    return string.match(c, "%s") ~= nil
+  end,
+  is_punct = function(c)
+    return string.match(c, "%p") ~= nil
+  end,
+  is_ascii = function(c)
+    local byte = string.byte(c, 1)
+    return byte < 128
+  end
+}
 
 --- @param s string
 --- @param f fun(string): boolean
