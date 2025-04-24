@@ -6,6 +6,8 @@ developed on version 11.5 (Mysterious Mysteries).
 For unit tests, we are using the [busted] framework. Also, we
 need to supply a [utf-8][luautf8] library, one of which comes
 with LOVE, but is not available for Lua 5.1 / Luajit by default.
+[Luafilesystem][lfs] is used in some tests and utility scripts
+used for generating documentation.
 
 The recommended way of installing these is with [LuaRocks]:
 
@@ -142,6 +144,7 @@ HIDPI=true love src
 
 [löve2d]: https://love2d.org
 [busted]: https://lunarmodules.github.io/busted/
+[lfs]: https://lunarmodules.github.io/luafilesystem/
 [luautf8]: https://github.com/starwing/luautf8
 [luarocks]: https://luarocks.org/
 [love.js]: https://github.com/Davidobot/love.js
