@@ -6,7 +6,7 @@ require("controller.userInputController")
 local class = require('util.class')
 local LANG = require("util.eval")
 local FS = require('util.filesystem')
-require("util.testTerminal")
+require("util.test_terminal")
 require("util.key")
 require("util.table")
 
