@@ -1,6 +1,6 @@
 --- @diagnostic disable: redefined-local
 
-require("util.string")
+require("util.string") -- pulls in utf8
 require("util.table")
 local tc = require("util.termcolor")
 

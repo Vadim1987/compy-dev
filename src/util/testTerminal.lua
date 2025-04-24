@@ -1,4 +1,4 @@
-local utf8 = require("utf8")
+local utf8 = require("util.utf")
 
 local Terminal = require("lib.terminal")
 
