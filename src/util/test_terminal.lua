@@ -2,9 +2,7 @@ local utf8 = require("util.utf")
 
 local Terminal = require("lib.terminal")
 
-TerminalTest = {}
-
-function TerminalTest.test(term)
+local function test(term)
   local w = term.width
   local h = term.height
   -- save previous state
@@ -89,7 +87,12 @@ function TerminalTest.test(term)
   set_colors()
 end
 
-function TerminalTest.reset(term)
+local function reset(term)
   term:move_to(1, 1)
   term:clear()
 end
+
+return {
+  test = test,
+  reset = reset,
+}

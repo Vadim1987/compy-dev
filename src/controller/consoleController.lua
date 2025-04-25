@@ -6,9 +6,9 @@ require("controller.userInputController")
 local class = require('util.class')
 local LANG = require("util.eval")
 local FS = require('util.filesystem')
-require("util.test_terminal")
 require("util.key")
 require("util.table")
+local TerminalTest = require("util.test_terminal")
 
 --- @class ConsoleController
 --- @field time number
