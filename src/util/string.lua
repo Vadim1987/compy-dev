@@ -296,6 +296,13 @@ string.interleave = function(prefix, text, postfix)
   return string.join({ prefix, postfix }, text)
 end
 
+--- Split a string into three around specified indices
+--- @param str string
+--- @param si number
+--- @param ei number
+--- @return string
+--- @return string
+--- @return string
 string.splice = function(str, si, ei)
   if not str or type(str) ~= 'string'
       or not string.is_non_empty_string(str, true) or si > ei then
@@ -311,8 +318,12 @@ string.splice = function(str, si, ei)
   return pre, mid, post
 end
 
+--- @param s string
+--- @param n number
+--- @return string?
 string.times = function(s, n)
   local till = n or 1
+  if type(till) ~= 'number' then return end
   local str = s or ''
   local res = ''
   for _ = 1, till do
@@ -328,27 +339,44 @@ end
 Char = {
   --- 'c' is assumed to be a single character/grapheme, these
   --- functions won't be checking for it.
+
+  --- @param c string
+  --- @return boolean
   is_alpha = function(c)
     return string.match(c, "%a") ~= nil
   end,
+  --- @param c string
+  --- @return boolean
   is_alnum = function(c)
     return string.match(c, "%w") ~= nil
   end,
+  --- @param c string
+  --- @return boolean
   is_upper = function(c)
     return string.match(c, "%u") ~= nil
   end,
+  --- @param c string
+  --- @return boolean
   is_lower = function(c)
     return string.match(c, "%l") ~= nil
   end,
+  --- @param c string
+  --- @return boolean
   is_digit = function(c)
     return string.match(c, "%d") ~= nil
   end,
+  --- @param c string
+  --- @return boolean
   is_space = function(c)
     return string.match(c, "%s") ~= nil
   end,
+  --- @param c string
+  --- @return boolean
   is_punct = function(c)
     return string.match(c, "%p") ~= nil
   end,
+  --- @param c string
+  --- @return boolean
   is_ascii = function(c)
     local byte = string.byte(c, 1)
     return byte < 128
