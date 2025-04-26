@@ -321,6 +321,11 @@ local function runner()
           end)
           coroutine.yield()
         end
+
+        if Harmony.lock then
+          Harmony.exit()
+        end
+        coroutine.yield()
       end)
     end,
 
@@ -357,6 +362,13 @@ function Harmony.run()
   timer:after(.1, function()
     Harmony.runner.load_scenarios()
     Harmony.runner.run_scenarios()
+  end)
+end
+
+function Harmony.exit()
+  love.harmony.timer:script(function(wait)
+    wait(.5)
+    Harmony.utils.love_event('quit')
   end)
 end
 
