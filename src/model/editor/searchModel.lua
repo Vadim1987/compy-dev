@@ -110,6 +110,9 @@ end
 
 --- @param input string
 function Search:narrow(input)
+  if input == '' then
+    self.selection = 1
+  end
   local csel = self.selection
   local selected = self.resultset[csel]
   self.resultset = nil
