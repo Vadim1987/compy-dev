@@ -135,6 +135,12 @@ if love and not TESTING then
   end
 
   --- @param path string
+  --- @return boolean success
+  function FS.mkdirp(path)
+    return FS.mkdir(path)
+  end
+
+  --- @param path string
   --- @param filtertype love.FileType?
   --- @param vfs boolean?
   --- @return table
