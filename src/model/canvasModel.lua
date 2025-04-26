@@ -33,7 +33,8 @@ function CanvasModel.new(cfg)
   end
   local canvas = G.newCanvas(w, h)
   local custom_height = cfg.view.fh * cfg.view.lh
-  local term = Terminal(w, h, cfg.view.font, nil, custom_height)
+  local term = Terminal(w, h, cfg.view.font,
+    nil, custom_height)
 
   local color = cfg.view.colors.terminal
   term:hide_cursor()
