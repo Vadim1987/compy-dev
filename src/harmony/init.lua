@@ -186,7 +186,21 @@ local function utils()
   --- @param tag string
   local take_screenshot = function(tag)
     local fn = tag .. '.png'
-    local dir = Harmony.tmpdir or '/tmp'
+    local tmp = Harmony.tmpdir or '/tmp'
+    local dir = FS.join_path(tmp, 'screenshots')
+
+    local ctx = _G.context
+    if type(ctx) == 'table' and
+        type(ctx.file) == 'string'
+    then
+      dir = FS.join_path(dir, ctx.file)
+      local t = ctx.tag
+      if string.is_non_empty_string(t) then
+        fn = t .. '.' .. fn
+      end
+    end
+
+    FS.mkdirp(dir)
     --- @param img_data love.ImageData
     G.captureScreenshot(function(img_data)
       if img_data then
