@@ -1,6 +1,7 @@
 local require = _G.o_require or _G.require
 FS = require("util.filesystem")
 
+require("util.string")
 require("util.debug")
 
 local Timer = require("lib.hump.timer")
@@ -313,7 +314,15 @@ local function runner()
   function hm_done(label)
     done = true
     love.harmony.utils.release_keys()
-    debug_print('done ' .. (label or ''))
+    local ctxl = (function()
+      local c = _G.context
+      if type(c) == 'table' then
+        return string.join({ c.file, c.tag }, '.')
+      else
+        return ''
+      end
+    end)()
+    debug_print('done ' .. (label or ctxl))
   end
 
   local scrun
