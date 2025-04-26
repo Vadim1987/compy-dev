@@ -372,8 +372,8 @@ function ProjectService:run(name, env)
   end
   if p_path then
     local _, code = self.current:readfile(ProjectService.MAIN)
-    local content = codeload(code, env)
-    return content, nil, p_path
+    local content, c_err = codeload(code, env)
+    return content, c_err, p_path
   end
   return nil, err
 end
