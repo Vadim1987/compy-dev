@@ -196,8 +196,9 @@ end
 --- @return string? error
 function ProjectService.is_project(path, name, check_vfs)
   local p_path = FS.join_path(path, name)
-  if not FS.exists(p_path) and
-      check_vfs and not FS.dir(p_path, "directory", true)
+  local ex = FS.exists(p_path)
+  if (not ex and not check_vfs) or
+      (check_vfs and not FS.dir(p_path, "directory", true))
   then
     return nil, messages.pr_does_not_exist(name)
   end
