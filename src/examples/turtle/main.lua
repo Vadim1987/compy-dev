@@ -56,7 +56,7 @@ end
 
 function love.update()
   if ty > midy then
-    debugColor = Color.red
+    debug_color = Color.red
   end
   if not r:is_empty() then
     eval(r())
