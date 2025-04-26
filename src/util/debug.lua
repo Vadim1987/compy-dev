@@ -54,11 +54,12 @@ local function terse_hash(t, level, prev_seen, jsonify)
   if not t then return '' end
 
   local seen = prev_seen or {}
-  local indent = level or 0
+  local indent = tonumber(level) or 0
   local res = ''
   local flat = true
   if type(t) == 'table' then
-    res = res .. string.times(tab, indent) .. '{'
+    local ind = string.times(tab, indent) or ''
+    res = res .. ind .. '{'
     if seen[t] then return '' end
     seen[t] = true
 
