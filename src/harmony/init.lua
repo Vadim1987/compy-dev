@@ -106,6 +106,7 @@ local function new(_lock)
   lock = _lock
   if lock then
     Harmony.pre = 'sazed_'
+    Harmony.lock = true
   end
   --- @private
   Harmony.timer = timer
