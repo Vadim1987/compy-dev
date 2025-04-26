@@ -338,6 +338,20 @@ local function runner()
         end
         context.file = nil
       end
+
+      context.file = '_'
+      scenario('done', function(wait)
+        love.harmony.utils.love_text("for _, c in")
+        wait(.2)
+        love.harmony.utils.love_text(" ipairs({'D', 'o', 'n', 'e'})")
+        wait(.2)
+        love.harmony.utils.love_text(" do print(c) end")
+        wait(.2)
+        love.harmony.utils.love_key('return')
+
+        hm_done()
+      end)
+
       scrun = coroutine.create(function()
         for _, v in ipairs(scenarios) do
           local tag = v.id
