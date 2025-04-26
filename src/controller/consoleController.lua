@@ -162,8 +162,8 @@ function ConsoleController:run_project(name)
     ok = self:open_project(name, false)
   end
   if ok then
-    local runner_env   = self:get_project_env()
-    local f, err, path = P:run(name, runner_env)
+    local runner_env        = self:get_project_env()
+    local f, load_err, path = P:run(name, runner_env)
     if f then
       local n = name or P.current.name or 'project'
       Log.info('Running \'' .. n .. '\'')
@@ -176,7 +176,8 @@ function ConsoleController:run_project(name)
         print('Error: ', run_err)
       end
     else
-      print(err)
+      --- TODO extract error message here
+      print(load_err)
     end
   end
 end
