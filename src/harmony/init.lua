@@ -281,15 +281,19 @@ local function runner()
   if love.harmony.runner then return end
 
 
-  local context = ''
+  local context = {}
   local scenarios = {}
   local done = true
 
   function scenario(tag, f)
-    local id = context .. '.' .. tag
+    context.tag = tag
+    local id = context.file .. '.' .. tag
     table.insert(scenarios, {
-      tag = id, sc = f,
+      context = table.clone(context),
+      id = id,
+      sc = f,
     })
+    context.tag = nil
   end
 
   function hm_done(label)
@@ -306,17 +310,20 @@ local function runner()
       for _, d in ipairs(ls) do
         if d.type == 'file' then
           local module_name = string.sub(d.name, 1, -5)
-          context = module_name
+          context.file = module_name
           require("harmony.scenarios." .. module_name)
         end
+        context.file = nil
       end
       scrun = coroutine.create(function()
         for _, v in ipairs(scenarios) do
-          local tag = v.tag
+          local tag = v.id
           local sc = v.sc
           debug_print('---- ' .. tag .. ' ----')
           done = false
           timer:script(function(wait)
+            _G.context = v.context
+
             sc(wait)
           end)
           coroutine.yield()
@@ -334,6 +341,7 @@ local function runner()
         while coroutine.status(scrun) ~= "dead" do
           wait(.5)
           if done then
+            _G.context = nil
             coroutine.resume(scrun)
           end
         end
