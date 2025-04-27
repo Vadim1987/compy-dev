@@ -435,6 +435,7 @@ function EditorController:_normal_mode_keys(k)
   local function newline()
     if not Key.ctrl() and Key.shift() and Key.is_enter(k) then
       buf:insert_newline()
+      self:save(buf)
       self.view:refresh()
       block_input()
     end
