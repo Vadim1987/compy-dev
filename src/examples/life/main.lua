@@ -8,7 +8,8 @@ local function initializeGrid()
   for x = 1, gridWidth do
     grid[x] = {}
     for y = 1, gridHeight do
-      grid[x][y] = math.random() > 0.7 and 1 or 0 -- Initialize with some random live cells
+      -- Initialize with some random live cells
+      grid[x][y] = math.random() > 0.7 and 1 or 0
     end
   end
 end
