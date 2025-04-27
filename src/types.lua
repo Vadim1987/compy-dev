@@ -1,5 +1,3 @@
---- @alias str string|string[]
-
 --- @alias Mode
 --- | 'ide'
 --- | 'play'
