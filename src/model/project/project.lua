@@ -323,7 +323,7 @@ function ProjectService:deploy_examples()
         cp_ok = false
         cp_err = err
       else
-        Log.info('copied example ' .. i.name .. ' to ' .. t_path)
+        Log.trace('copied example ' .. i.name .. ' to ' .. t_path)
       end
     end
   end
