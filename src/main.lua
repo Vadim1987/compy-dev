@@ -4,7 +4,6 @@ require("controller.controller")
 require("controller.consoleController")
 require("view.view")
 require("view.consoleView")
-require("harmony.controller")
 
 local colors = require("conf.colors")
 local hostconf = prequire('host')
@@ -343,7 +342,7 @@ function love.load(args)
   if harmony then
     harmony.load()
   end
-  local ctrl = harmony and HarmonyController or Controller
+  local ctrl = Controller
   --- MVC wiring
   local CM = ConsoleModel(baseconf)
   redirect_to(CM)
