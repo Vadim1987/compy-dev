@@ -1,8 +1,15 @@
+require("view.view")
+
 require("util.string")
 require("util.key")
 local LANG = require("util.eval")
 
-local key_break_msg = "BREAK into program"
+local messages = {
+  user_break = "BREAK into program",
+  exec_error = function(err)
+    return 'Execution error at ' .. err
+  end
+}
 
 local get_user_input = function()
   if love.state.app_state == 'inspect' then return end
@@ -28,7 +35,7 @@ local _C
 --- @param msg string
 local function user_error_handler(msg)
   local err = LANG.get_call_error(msg) or ''
-  local user_msg = 'Execution error at ' .. err
+  local user_msg = messages.exec_error(err)
   _C:suspend_run(user_msg)
   print(user_msg)
 end
@@ -105,13 +112,15 @@ end
 --- @field restore_user_handlers function
 --- @field has_user_update function
 Controller = {
+  --- @private
   _defaults = {},
+  --- @private
   _userhandlers = {},
 
   ----------------
   --  keyboard  --
   ----------------
-
+  --- @private
   --- @param C ConsoleController
   set_love_keypressed = function(C)
     local function keypressed(k)
@@ -143,6 +152,8 @@ Controller = {
     Controller._defaults.keypressed = keypressed
     love.keypressed = keypressed
   end,
+
+  --- @private
   --- @param C ConsoleController
   set_love_keyreleased = function(C)
     --- @diagnostic disable-next-line: duplicate-set-field
@@ -152,6 +163,8 @@ Controller = {
     Controller._defaults.keyreleased = keyreleased
     love.keyreleased = keyreleased
   end,
+
+  --- @private
   --- @param C ConsoleController
   set_love_textinput = function(C)
     local function textinput(t)
@@ -164,7 +177,7 @@ Controller = {
   -------------
   --  mouse  --
   -------------
-
+  --- @private
   --- @param C ConsoleController
   set_love_mousepressed = function(C)
     local function mousepressed(x, y, button)
@@ -177,6 +190,8 @@ Controller = {
     Controller._defaults.mousepressed = mousepressed
     love.mousepressed = mousepressed
   end,
+
+  --- @private
   --- @param C ConsoleController
   set_love_mousereleased = function(C)
     local function mousereleased(x, y, button)
@@ -186,6 +201,8 @@ Controller = {
     Controller._defaults.mousereleased = mousereleased
     love.mousereleased = mousereleased
   end,
+
+  --- @private
   --- @param C ConsoleController
   set_love_mousemoved = function(C)
     local function mousemoved(x, y, dx, dy)
@@ -199,7 +216,7 @@ Controller = {
   --------------
   --  update  --
   --------------
-
+  --- @private
   --- @param C ConsoleController
   set_love_update = function(C)
     local function update(dt)
@@ -227,6 +244,9 @@ Controller = {
         wrap(uup, dt)
       end
       Controller.snapshot()
+      if love.harmony then
+        love.harmony.timer_update(dt)
+      end
     end
 
     if not Controller._defaults.update then
@@ -238,6 +258,7 @@ Controller = {
   ---------------
   --    draw   --
   ---------------
+  --- @private
   --- @param C ConsoleController
   --- @param CV ConsoleView
   set_love_draw = function(C, CV)
@@ -250,6 +271,7 @@ Controller = {
     View.main_draw = love.draw
   end,
 
+  --- @private
   snapshot = function()
     if user_draw then
       View.snap_canvas()
@@ -340,7 +362,7 @@ Controller = {
       local function project_state_change()
         if Key.ctrl() then
           if k == "pause" then
-            C:suspend_run(key_break_msg)
+            C:suspend_run(messages.user_break)
           end
           if Key.shift() then
             -- Ensure the user can get back to the console
