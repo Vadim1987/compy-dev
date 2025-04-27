@@ -340,6 +340,9 @@ function love.load(args)
     hostconf.conf_app(viewconf)
   end
 
+  if harmony then
+    harmony.load()
+  end
   local ctrl = harmony and HarmonyController or Controller
   --- MVC wiring
   local CM = ConsoleModel(baseconf)
@@ -368,10 +371,7 @@ function love.load(args)
     if autotest then CC:autotest() end
     if harmony then
       CM.projects:deploy_examples()
-
-      harmony.load()
       harmony.screenshot('startup')
-
       harmony.run()
     end
   end

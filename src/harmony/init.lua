@@ -228,6 +228,7 @@ local function utils()
 
   --- @class HarmonyUtils
   --- @field patch_isDown function
+  --- @field patch_setTitle function
   --- @field love_event function
   --- @field love_key function
   --- @field love_text function
@@ -246,6 +247,14 @@ local function utils()
         end
       end
       love.keyboard.isDown = isDown
+    end,
+    patch_setTitle = function()
+      local set_title = love.window.setTitle
+      local setTitle = function(title)
+        local t = (title or '') .. ' - Harmony mode'
+        set_title(t)
+      end
+      love.window.setTitle = setTitle
     end,
 
     love_event = love_event,
@@ -394,6 +403,8 @@ function Harmony.load()
 
   Harmony.utils = utils()
   Harmony.utils.patch_isDown()
+  Harmony.utils.patch_setTitle()
+  love.window.setTitle(love.window.getTitle())
 
   Harmony.runner = runner()
 end
