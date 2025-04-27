@@ -13,6 +13,9 @@ function love.conf(t)
   if os.getenv("DEBUG") then
     love.DEBUG = true
   end
+  if os.getenv("TRACE") then
+    love.TRACE = true
+  end
 
   --- disable unused modules to shorten startup
   t.modules.joystick = false

@@ -464,6 +464,13 @@ local function _once(kh, args)
   end
 end
 
+
+local trace = function(...)
+  if not love.TRACE then return end
+  local args = { ... }
+  local s = annot('TRACE', Color.black, args)
+  printer(s)
+end
 local info = function(...)
   local args = { ... }
   local s = annot('INFO ', Color.cyan, args)
@@ -496,6 +503,7 @@ end
 
 
 Log = {
+  trace = trace,
   info = info,
   warning = warning,
   warn = warning,
