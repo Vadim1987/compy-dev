@@ -1,6 +1,6 @@
 require("view.editor.visibleContent")
 
-require("util.utf")
+require("util.string")
 
 describe('VisibleContent #wrap', function()
   local turtle_doc = {
