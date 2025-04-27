@@ -424,17 +424,6 @@ local annot = function(tag, color, args)
   return ret
 end
 
-local warning = function(...)
-  local args = { ... }
-  local s = annot('WARN ', Color.yellow, args)
-  printer(s)
-end
-local error = function(...)
-  local args = { ... }
-  local s = annot('ERROR', Color.red, args)
-  printer(s)
-end
-
 --- @param s string
 local function hash(s)
   local require = _G.o_require or _G.require
@@ -467,7 +456,7 @@ end
 local once_seen = {}
 local once_color = Color.white + Color.bright
 
-local function once(kh, args)
+local function _once(kh, args)
   if not once_seen[kh] then
     once_seen[kh] = true
     local s = annot('ONCE  ', once_color, args)
@@ -475,32 +464,46 @@ local function once(kh, args)
   end
 end
 
+local info = function(...)
+  local args = { ... }
+  local s = annot('INFO ', Color.cyan, args)
+  printer(s)
+end
+local warning = function(...)
+  local args = { ... }
+  local s = annot('WARN ', Color.yellow, args)
+  printer(s)
+end
+local error = function(...)
+  local args = { ... }
+  local s = annot('ERROR', Color.red, args)
+  printer(s)
+end
+local debug = function(...)
+  local args = { ... }
+  local ts = string.format("%.3f ", os.clock())
+  local s = annot(ts .. 'DEBUG ',
+    (Color.black + Color.bright), args)
+  printer(s)
+end
+local once = function(...)
+  if not love.DEBUG then return end
+  local args = { ... }
+  local key = love.debug.once .. string.join(args, '')
+  local kh = hash(key)
+  _once(kh, args)
+end
+
+
 Log = {
-  info = function(...)
-    local args = { ... }
-    local s = annot('INFO ', Color.cyan, args)
-    printer(s)
-  end,
+  info = info,
   warning = warning,
   warn = warning,
   error = error,
   err = error,
 
-  debug = function(...)
-    local args = { ... }
-    local ts = string.format("%.3f ", os.clock())
-    local s = annot(ts .. 'DEBUG ',
-      (Color.black + Color.bright), args)
-    printer(s)
-  end,
-
-  once = function(...)
-    if not love.DEBUG then return end
-    local args = { ... }
-    local key = love.debug.once .. string.join(args, '')
-    local kh = hash(key)
-    once(kh, args)
-  end,
+  debug = debug,
+  once = once,
 
   fire_once = function()
     if not love.DEBUG then return end
