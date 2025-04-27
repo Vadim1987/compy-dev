@@ -377,7 +377,16 @@ function EditorController:_reorg_mode_keys(k)
     if k == "end" then
       self:_move_sel('down', nil, true, self.state.moved)
     end
+
     -- scroll
+    if not Key.shift()
+        and k == "pageup" then
+      self:_scroll('up', Key.ctrl())
+    end
+    if not Key.shift()
+        and k == "pagedown" then
+      self:_scroll('down', Key.ctrl())
+    end
     if Key.shift()
         and k == "pageup" then
       self:_scroll('up', false, 1)
