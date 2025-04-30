@@ -10,7 +10,7 @@ local hostconf = prequire('host')
 
 require("util.key")
 require("util.debug")
-OS = require("util.os")
+local OS = require("util.os")
 local FS = require("util.filesystem")
 
 require("lib/error_explorer")
@@ -155,8 +155,8 @@ end
 --- @return boolean success
 --- @return string? path
 local android_storage_find = function()
-  local OS = require("util.os")
-  -- Yes, I know. We are working with the limitations of Android here.
+  -- Yes, I know. We are working with the limitations
+  --- of Android here.
   local quadhex = string.times('[0-9A-F]', 4)
   local uuid_regex = quadhex .. '-' .. quadhex
   local regex = '/dev/fuse /storage/' .. uuid_regex
@@ -192,7 +192,7 @@ local setup_storage = function()
       exit(messages.no_tmpdir)
     end
   else
-    if OS.name == 'Android' then
+    if OS.get_name() == 'Android' then
       local ok, sd_path = android_storage_find()
       if not ok then
         print('WARN: SD card not found')
@@ -202,7 +202,7 @@ local setup_storage = function()
       has_removable = true
       storage_path = string.format("%s/Documents/%s", sd_path, id)
       print('INFO: Project path: ' .. storage_path)
-    elseif OS.name == 'Web' then
+    elseif OS.get_name() == 'Web' then
       _G.web = true
       storage_path = ''
     else
@@ -287,13 +287,15 @@ function love.load(args)
   --- Android specific settings
   love.keyboard.setTextInput(true)
   love.keyboard.setKeyRepeat(true)
-  if OS.name == 'Android' then
+  if OS.get_name() == 'Android' then
     love.window.setMode(
       viewconf.w,
       viewconf.h,
       {
         fullscreen = true,
         fullscreentype = "exclusive",
+        resizable = false,
+        borderless = true
       })
   end
 

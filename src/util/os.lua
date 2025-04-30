@@ -2,6 +2,8 @@ require("util.string")
 
 --- @return string? osname
 local function get_name()
+  --- apparently this can't be cached, because
+  --- on Android, it returns Linux first
   if type(love) == "table" and
       type(love.system) == "table" then
     return love.system.getOS()
@@ -73,7 +75,7 @@ local function mktempdir(templ)
 end
 
 return {
-  name = get_name(),
+  get_name = get_name,
   runcmd = runcmd,
   mktempdir = mktempdir,
 }
