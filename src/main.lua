@@ -235,14 +235,24 @@ end
 local load_project = function(path, paths)
   local is_zip = string.matches_r(path, '.compy$')
   local s_path = paths.storage_path
+  local sb_dir = love.filesystem.getSourceBaseDirectory()
   local p_path = paths.project_path
   local m_path = paths.play_path
 
   local full_path = path
 
   if is_zip then
-    local ex = FS.exists(path) or
-        FS.exists(FS.join_path(s_path, path))
+    local ex = false
+    if FS.exists(path, 'file') then
+      ex = true
+    elseif FS.exists(FS.join_path(s_path, path), 'file') then
+      ex = true
+      full_path = FS.join_path(s_path, path)
+      Log.debug(full_path)
+    elseif FS.exists(FS.join_path(sb_dir, path), 'file') then
+      ex = true
+      full_path = FS.join_path(sb_dir, path)
+    end
     if not ex then
       exit(ProjectService.messages.file_does_not_exist(path))
     end
@@ -250,10 +260,10 @@ local load_project = function(path, paths)
     local ex = false
     if FS.exists(path, 'directory') then
       ex = true
-    elseif FS.exists(FS.join_path(s_path, path)) then
+    elseif FS.exists(FS.join_path(s_path, path), 'directory') then
       ex = true
       full_path = FS.join_path(s_path, path)
-    elseif FS.exists(FS.join_path(p_path, path)) then
+    elseif FS.exists(FS.join_path(p_path, path), 'directory') then
       ex = true
       full_path = FS.join_path(p_path, path)
     end
@@ -264,7 +274,7 @@ local load_project = function(path, paths)
 
   local mok = FS.mount(full_path, m_path)
   if mok then
-    local valid = ProjectService.is_project(m_path)
+    local valid = ProjectService.is_project(m_path, 'play', true)
     if not valid then
       exit(messages.invalid_project)
     end
