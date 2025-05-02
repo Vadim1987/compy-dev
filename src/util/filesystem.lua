@@ -4,7 +4,7 @@ local OS = require("util.os")
 local FS = {
   path_sep = (function()
     if love and love.system
-        and love.system.getOS() == "Windows" then
+        and OS.get_name() == "Windows" then
       return '\\'
     end
     return '/'
