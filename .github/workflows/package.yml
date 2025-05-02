@@ -1,6 +1,9 @@
 name: Package
 
-on: [push, pull_request]
+on:
+  - push
+  - pull_request
+  - workflow_dispatch
 
 env:
   PRODUCT_NAME: ${{ vars.PRODUCT_NAME }}
@@ -217,9 +220,9 @@ jobs:
           VER: ${{ github.ref_name }}
         run: echo VER_CODE="$(echo $VERSION | sed -e 's/^v//' -e 's/\.//g')" >> $GITHUB_ENV
       - name: Package for android
-        uses: compy-toys/love-actions-android@v0.2.1
+        uses: compy-toys/love-actions-android@v0.2.2
         with:
-          love-ref: "loveputer"
+          love-ref: "compy"
           no-soft-keyboard: "enabled"
           app-name: ${{ env.PRODUCT_NAME }}
           bundle-id: ${{ env.BUNDLE_ID }}
@@ -229,7 +232,6 @@ jobs:
           version-code: ${{ env.VER_CODE }}
           output-folder: ${{ env.OUTPUT_FOLDER }}
           love-package: ${{ env.LOVE_ARTIFACT_NAME }}
-          icon-specifier: "@drawable/${{ env.PRODUCT_NAME_SC }}"
           keystore-alias: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
           keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           keystore-key-password: ${{ secrets.ANDROID_KEYSTORE_KEYPASSWORD }}
