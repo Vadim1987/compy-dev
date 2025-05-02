@@ -144,6 +144,14 @@ package-web-c: package-js-c
   @ls -lh {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip
 
 
+zip-example name:
+  #!/usr/bin/env -S bash
+  PKG="{{name}}.compy"
+  7z -tzip a "$PKG" \
+     ./src/examples/{{name}}/* &> /dev/null \
+      && ls "$PKG" \
+      || echo 'ENOENT'
+
 package-js-dir DT: version
   #!/usr/bin/env -S bash
   WEB={{DT}}
