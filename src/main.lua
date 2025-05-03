@@ -173,9 +173,10 @@ local android_storage_find = function()
   return false
 end
 
+--- @param mode Mode
 --- @return PathInfo
 --- @return boolean
-local setup_storage = function()
+local setup_storage = function(mode)
   local id = love.filesystem.getIdentity()
   local harmony = love.harmony
   local storage_path = ''
@@ -193,15 +194,18 @@ local setup_storage = function()
     end
   else
     if OS.get_name() == 'Android' then
-      local ok, sd_path = android_storage_find()
-      if not ok then
-        print('WARN: SD card not found')
-        has_removable = false
-        sd_path = '/storage/emulated/0'
+      if mode == 'play' then
+
+      else
+        local ok, sd_path = android_storage_find()
+        if not ok then
+          print('WARN: SD card not found')
+          sd_path = '/storage/emulated/0'
+        end
+        has_removable = true
+        storage_path = string.format("%s/Documents/%s", sd_path, id)
+        print('INFO: Project path: ' .. storage_path)
       end
-      has_removable = true
-      storage_path = string.format("%s/Documents/%s", sd_path, id)
-      print('INFO: Project path: ' .. storage_path)
     elseif OS.get_name() == 'Web' then
       _G.web = true
       storage_path = ''
@@ -309,7 +313,7 @@ function love.load(args)
       })
   end
 
-  local paths, has_removable = setup_storage()
+  local paths, has_removable = setup_storage(mode)
   love.paths = paths
   if playback then
     --- it is not gonna be empty in this mode, but the
