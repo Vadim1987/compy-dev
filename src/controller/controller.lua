@@ -271,6 +271,20 @@ Controller = {
     View.main_draw = love.draw
   end,
 
+  --- Quit
+  --- @private
+  --- @param C ConsoleController
+  set_love_quit = function(C)
+    local function quit()
+      orig_print('quit')
+      if love.state.app_state == 'running' then
+        C:quit_project()
+        return true
+      end
+    end
+    love.quit = quit
+  end,
+
   --- @private
   snapshot = function()
     if user_draw then
@@ -322,6 +336,7 @@ Controller = {
     user_draw = false
     Controller.set_love_draw(C, CV)
     Controller._defaults.draw = View.main_draw
+    Controller.set_love_quit(C)
   end,
 
   --- @param C ConsoleController
