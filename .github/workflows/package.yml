@@ -1,6 +1,9 @@
 name: Package
 
-on: [push, pull_request]
+on:
+  - push
+  - pull_request
+  - workflow_dispatch
 
 env:
   PRODUCT_NAME: ${{ vars.PRODUCT_NAME }}
@@ -11,8 +14,10 @@ env:
   OUTPUT_FOLDER: dist
   ARTIFACT_FOLDER: artifact
   LOVE_ARTIFACT_NAME: ${{ vars.PRODUCT_NAME_SC }}.love
-  LOVE_DEBUG_APK_NAME: ${{ vars.PRODUCT_NAME }}-debug.apk
-  LOVE_APK_NAME: ${{ vars.PRODUCT_NAME }}-release.apk
+  IDE_DEBUG_APK_NAME: ${{ vars.PRODUCT_NAME }}-IDE-debug.apk
+  PLAYER_DEBUG_APK_NAME: ${{ vars.PRODUCT_NAME }}-player-debug.apk
+  IDE_APK_NAME: ${{ vars.PRODUCT_NAME }}-IDE-release.apk
+  PLAYER_APK_NAME: ${{ vars.PRODUCT_NAME }}-player-release.apk
   LOVE_APPIMAGE: ${{ vars.PRODUCT_NAME_ANSI }}.AppImage
   LOVE_DEB: ${{ vars.PRODUCT_NAME_ANSI }}.deb
   LOVE_JS: ${{ vars.PRODUCT_NAME }}-web.zip
@@ -24,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: "true"
+          submodules: "recursive"
 
       - uses: jkl1337/gh-actions-lua@v11
         with:
@@ -48,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: "true"
+          submodules: "recursive"
           fetch-depth: 0
           fetch-tags: true
       - name: Build bare love package
@@ -74,7 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: "true"
+          submodules: "recursive"
           fetch-depth: 0
           fetch-tags: "true"
       - name: Download love package
@@ -120,7 +125,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          submodules: "true"
+          submodules: "recursive"
           fetch-depth: 0
           fetch-tags: "true"
       - name: Download love package
@@ -200,10 +205,11 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     env:
       ACTIONS_STEP_DEBUG: true
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4G'"
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: "true"
+          submodules: "recursive"
           fetch-tags: "true"
           fetch-depth: 0
       - name: Download love package
@@ -217,9 +223,9 @@ jobs:
           VER: ${{ github.ref_name }}
         run: echo VER_CODE="$(echo $VERSION | sed -e 's/^v//' -e 's/\.//g')" >> $GITHUB_ENV
       - name: Package for android
-        uses: compy-toys/love-actions-android@v0.2.1
+        uses: compy-toys/love-actions-android@v0.2.5
         with:
-          love-ref: "loveputer"
+          love-ref: "compy"
           no-soft-keyboard: "enabled"
           app-name: ${{ env.PRODUCT_NAME }}
           bundle-id: ${{ env.BUNDLE_ID }}
@@ -229,7 +235,6 @@ jobs:
           version-code: ${{ env.VER_CODE }}
           output-folder: ${{ env.OUTPUT_FOLDER }}
           love-package: ${{ env.LOVE_ARTIFACT_NAME }}
-          icon-specifier: "@drawable/${{ env.PRODUCT_NAME_SC }}"
           keystore-alias: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
           keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           keystore-key-password: ${{ secrets.ANDROID_KEYSTORE_KEYPASSWORD }}
@@ -237,13 +242,23 @@ jobs:
       - name: upload
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.LOVE_DEBUG_APK_NAME }}
-          path: ${{ env.OUTPUT_FOLDER }}/${{ env.LOVE_DEBUG_APK_NAME }}
+          name: ${{ env.IDE_DEBUG_APK_NAME }}
+          path: ${{ env.OUTPUT_FOLDER }}/${{ env.IDE_DEBUG_APK_NAME }}
       - name: upload
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.LOVE_APK_NAME }}
-          path: ${{ env.OUTPUT_FOLDER }}/${{ env.LOVE_APK_NAME }}
+          name: ${{ env.PLAYER_DEBUG_APK_NAME }}
+          path: ${{ env.OUTPUT_FOLDER }}/${{ env.PLAYER_DEBUG_APK_NAME }}
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.IDE_APK_NAME }}
+          path: ${{ env.OUTPUT_FOLDER }}/${{ env.IDE_APK_NAME }}
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PLAYER_APK_NAME }}
+          path: ${{ env.OUTPUT_FOLDER }}/${{ env.PLAYER_APK_NAME }}
 
   release:
     permissions:
@@ -279,11 +294,19 @@ jobs:
           path: ${{ env.ARTIFACT_FOLDER }}
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ env.LOVE_DEBUG_APK_NAME }}
+          name: ${{ env.IDE_DEBUG_APK_NAME }}
           path: ${{ env.ARTIFACT_FOLDER }}
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ env.LOVE_APK_NAME }}
+          name: ${{ env.IDE_APK_NAME }}
+          path: ${{ env.ARTIFACT_FOLDER }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.PLAYER_DEBUG_APK_NAME }}
+          path: ${{ env.ARTIFACT_FOLDER }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.PLAYER_APK_NAME }}
           path: ${{ env.ARTIFACT_FOLDER }}
       - name: control
         run: ls -lR ${{ env.ARTIFACT_FOLDER }}/
