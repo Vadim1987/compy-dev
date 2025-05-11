@@ -384,13 +384,15 @@ function ConsoleController.prepare_project_env(cc)
 
   --- @param eval Evaluator
   --- @param prompt string?
-  local input                 = function(eval, prompt)
+  --- @param init str?
+  local input                 = function(eval, prompt, init)
     if love.state.user_input then
       return -- there can be only one
     end
 
     if not input_ref then return end
     local input = UserInputModel(cfg, eval, true, prompt)
+    input:set_text(init)
     local inp_con = UserInputController(input, input_ref)
     local view = UserInputView(cfg.view, inp_con)
     love.state.user_input = {
@@ -405,12 +407,14 @@ function ConsoleController.prepare_project_env(cc)
   end
 
   --- @param prompt string?
-  project_env.input_code      = function(prompt)
-    return input(InputEvalLua, prompt)
+  --- @param init str?
+  project_env.input_code      = function(prompt, init)
+    return input(InputEvalLua, prompt, init)
   end
   --- @param prompt string?
-  project_env.input_text      = function(prompt)
-    return input(InputEvalText, prompt)
+  --- @param init str?
+  project_env.input_text      = function(prompt, init)
+    return input(InputEvalText, prompt, init)
   end
 
   --- @param filters table
