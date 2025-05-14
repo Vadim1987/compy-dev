@@ -1,11 +1,11 @@
 --- @diagnostic disable: duplicate-set-field,lowercase-global
 cw, ch = love.graphics.getDimensions()
 
-count = 16
-size = 16
-spacing = 1
-offset = size / 2
 require('math')
+
+size = 28
+spacing = 3
+offset = size + 4
 
 local colors = {
   bg = Color[Color.black],
@@ -13,6 +13,7 @@ local colors = {
   neg = Color[Color.red],
 }
 
+count = 16
 local time = 0
 body = "return (x - y) - math.sin(t)"
 callback = function(t, i, x, y)
@@ -33,9 +34,11 @@ end
 function drawOutput()
   local index = 0
   local ts = time
-  for y = 1, count do
-    for x = 1, count do
-      local value = tonumber(callback(ts, index, x, y) or .1) or -.1
+
+  for y = 0, count - 1 do
+    for x = 0, count - 1 do
+      local value =
+          tonumber(callback(ts, index, x, y) or .1) or -.1
       local color = colors.pos
       local radius = (value * size) / 2
       if radius < 0 then
