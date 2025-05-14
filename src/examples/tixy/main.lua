@@ -3,6 +3,7 @@ math.randomseed(os.time())
 cw, ch = G.getDimensions()
 midx = cw / 2
 
+require('bit')
 require('math')
 require('examples')
 
