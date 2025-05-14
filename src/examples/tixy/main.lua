@@ -39,13 +39,14 @@ function pick_random(t)
   if type(t) == "table" then
     local n = #t
     local r = math.random(n)
-    return t[r]
+    return t[r], r
   end
 end
 
 function randomize()
-  local e = pick_random(examples)
+  local e, i = pick_random(examples)
   load_example(e)
+  ex_idx = i
 end
 
 function b2n(b)
