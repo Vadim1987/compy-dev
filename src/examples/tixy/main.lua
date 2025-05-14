@@ -22,9 +22,10 @@ body = 'return -i / (count * count)'
 legend = ''
 count = 16
 ex_idx = 1
-ex_idx = 14
+local time = 0
 
 function load_example(ex)
+  time   = 0
   body   = ex.code
   legend = ex.legend
 end
@@ -57,7 +58,6 @@ function n2b(n)
   if n ~= 0 then return true else return false end
 end
 
-local time = 0
 callback = function(t, i, x, y)
   local code = [[
     local count = ...
