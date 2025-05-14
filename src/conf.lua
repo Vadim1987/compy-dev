@@ -9,6 +9,7 @@ function love.conf(t)
   t.identity = 'compy'
   t.window.title = 'Compy'
   t.window.resizable = false
+  t.window.msaa = 4
   local hidpi = os.getenv("HIDPI")
   if os.getenv("DEBUG") then
     love.DEBUG = true
