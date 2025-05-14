@@ -836,7 +836,7 @@ function UserInputModel:handle(eval)
     end
   end
 
-  return ok, result
+  return ok, (result or ent)
 end
 
 ----------------

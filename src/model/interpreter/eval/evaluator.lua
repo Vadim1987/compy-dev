@@ -46,6 +46,9 @@ end
 
 --- @param self Evaluator
 --- @param s string[]
+--- @return boolean ok
+--- @return str content|errpr
+--- @return AST? ast
 local function default_apply(self, s)
   local valid, errors = validate(self, s)
   local parser = self.parser
@@ -58,7 +61,7 @@ local function default_apply(self, s)
         return false, errors
       else
         local ast = result
-        return true, ast
+        return true, s, ast
       end
     end
     return true, s
@@ -152,7 +155,10 @@ MdEval = function(label)
 end
 
 InputEvalText = Evaluator.plain('text input')
-InputEvalLua = Evaluator('lua input', luaTools)
+local function id(x)
+  return x
+end
+InputEvalLua = Evaluator('lua input', luaTools, nil, id)
 
 ValidatedTextEval = function(filter)
   local ft = Filters.validators_only(filter)
