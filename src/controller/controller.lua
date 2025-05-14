@@ -446,8 +446,8 @@ Controller = {
       if user_input then
         user_input.C:mousepressed(x, y, btn)
       else
-        if love.mousepressed then return love.mousepressed(x, y, btn) end
       end
+      if love.mousepressed then return love.mousepressed(x, y, btn) end
     end
 
     handlers.mousereleased = function(x, y, btn)
@@ -455,8 +455,8 @@ Controller = {
       if user_input then
         user_input.C:mousereleased(x, y, btn)
       else
-        if love.mousereleased then return love.mousereleased(x, y, btn) end
       end
+      if love.mousereleased then return love.mousereleased(x, y, btn) end
     end
 
     handlers.mousemoved = function(x, y, dx, dy)
@@ -464,8 +464,8 @@ Controller = {
       if user_input then
         user_input.C:mousemoved(x, y, dx, dy)
       else
-        if love.mousemoved then return love.mousemoved(x, y, dx, dy) end
       end
+      if love.mousemoved then return love.mousemoved(x, y, dx, dy) end
     end
 
     handlers.userinput = function()
