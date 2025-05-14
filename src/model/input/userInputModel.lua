@@ -126,7 +126,6 @@ end
 --- @param text str
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)
-  self.entered = nil
   if type(text) == 'string' then
     local lines = string.lines(text)
     local n_added = #lines
