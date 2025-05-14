@@ -5,6 +5,7 @@ count = 16
 size = 16
 spacing = 1
 offset = size / 2
+require('math')
 
 local colors = {
   bg = Color[Color.black],
@@ -15,10 +16,18 @@ local colors = {
 local time = 0
 body = "return (x - y) - math.sin(t)"
 callback = function(t, i, x, y)
-  local code = 'return function(t, i, x, y) ' .. body .. ' end'
-  local val = assert(loadstring(code))()(t, i, x, y)
+  local code = [[
+    local count = ...
+    return function(t, i, x, y)
+    ]] .. body ..
+      ' end'
+  local f    = loadstring(code)
+  if f then
+    setfenv(f, _G)
+    local val = assert(f)(count)(t, i, x, y)
 
-  return val
+    return val
+  end
 end
 
 function drawOutput()
