@@ -125,4 +125,13 @@ function love.update(dt)
   end
 end
 
+function love.mousepressed(_, _, button)
+  if button == 1 then
+    advance()
+  end
+  if button == 2 then
+    randomize()
+  end
+end
+
 advance()
