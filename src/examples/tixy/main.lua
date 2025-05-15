@@ -47,7 +47,7 @@ end
 function randomize()
   local e, i = pick_random(examples)
   load_example(e)
-  ex_idx = i
+  ex_idx = i + 1
 end
 
 function b2n(b)
