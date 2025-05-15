@@ -89,6 +89,8 @@ local config_view = function(flags)
     font_dir .. "ubuntu_mono_bold_nerd.ttf", font_size)
   local font_icon = G.newFont(
     font_dir .. "SFMonoNerdFontMono-Regular.otf", font_size)
+  local font_cjk = G.newFont(
+    font_dir .. "NotoSansCJK-Regular.ttc", font_size)
   local lh = tf.size and 1 or 1.0468
   font_main:setLineHeight(lh)
   local fh = font_main:getHeight()
@@ -123,6 +125,7 @@ local config_view = function(flags)
   return {
     font = font_main,
     iconfont = font_icon,
+    cjk_font = font_cjk,
     fh = fh,
     fw = fw,
     lh = lh,

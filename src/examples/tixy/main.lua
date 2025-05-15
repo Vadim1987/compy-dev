@@ -116,6 +116,7 @@ function love.draw()
   drawOutput()
   G.setColor(colors.text)
   local sof = (size / 2) + offset
+  G.setFont(cjk_font)
   G.printf(legend, midx + sof, sof, midx - sof)
 end
 

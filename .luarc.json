@@ -17,6 +17,7 @@
     "validated_input",
     "stop",
     "continue",
+    "cjk_font",
     // luautils
     "prequire",
     "codeload",

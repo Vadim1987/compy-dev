@@ -38,6 +38,7 @@
 --- @class ViewConfig table
 --- @field font love.Font
 --- @field iconfont love.Font
+--- @field cjk_font love.Font
 --- @field fh integer -- font height
 --- @field fw integer -- font width
 --- @field lh integer -- line height

@@ -34,6 +34,7 @@ function ConsoleController.new(M, main_ctrl)
   local pre_env = table.clone(env)
   local config = M.cfg
   pre_env.font = config.view.font
+  pre_env.cjk_font = config.view.cjk_font
   local IC = UserInputController(M.input)
   local EC = EditorController(M.editor)
   local self = setmetatable({
