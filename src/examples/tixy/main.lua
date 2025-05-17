@@ -13,8 +13,8 @@ offset = size + 4
 
 local colors = {
   bg   = Color[Color.black],
-  pos  = Color[Color.white],
-  neg  = Color[Color.red],
+  pos  = Color[Color.white + Color.bright],
+  neg  = Color[Color.red + Color.bright],
   text = Color[Color.white]
 }
 

@@ -124,6 +124,29 @@ examples = {
         'bit.lshift(1, x - 1) )',
     legend = "scrolling TIXY"
   },
+  {
+    code = "return (x-y) - sin(t) * 16",
+    legend = "wipe"
+  },
+  {
+    code = "return (x-y)/24 - sin(t)",
+    legend = "soft wipe"
+  },
 
-
+  {
+    code = "return sin(t*5) * tan(t*7)",
+    legend = "disco"
+  },
+  {
+    code = "return (x-(count/2))^2 + (y-(count/2))^2 - 15*cos(pi/4)",
+    legend = "日本"
+  },
+  {
+    code = "return (x-5)^2 + (y-5)^2 - 99*sin(t)",
+    legend = "create your own!"
+  },
+  -- {
+  --   code = "return ",
+  --   legend = ""
+  -- },
 }
