@@ -15,11 +15,17 @@ local colors = {
   bg   = Color[Color.black],
   pos  = Color[Color.white + Color.bright],
   neg  = Color[Color.red + Color.bright],
-  text = Color[Color.white]
+  text = Color[Color.white],
+  help = Color.with_alpha(Color[Color.white], .5),
 }
 
-body = 'return -i / (count * count)'
+body = ''
 legend = ''
+help = [[Hint:
+left click for next example
+shift + left click to go back
+right click for a random one]]
+showHelp = true
 count = 16
 ex_idx = 1
 local time = 0
@@ -35,6 +41,14 @@ function advance()
   local e = examples[ex_idx]
   load_example(e)
   if ex_idx < #examples then ex_idx = ex_idx + 1 end
+end
+
+function retreat()
+  if ex_idx > 0 then
+    local e = examples[ex_idx]
+    load_example(e)
+    ex_idx = ex_idx - 1
+  end
 end
 
 function pick_random(t)
@@ -118,6 +132,11 @@ function love.draw()
   G.setColor(colors.text)
   local sof = (size / 2) + offset
   G.printf(legend, midx + sof, sof, midx - sof)
+  if showHelp then
+    G.setColor(colors.help)
+    G.setFont(font)
+    G.printf(help, midx + sof, ch - (5 * sof), midx - sof)
+  end
 end
 
 r = user_input()
@@ -135,7 +154,11 @@ end
 
 function love.mousepressed(_, _, button)
   if button == 1 then
-    advance()
+    if Key.shift() then
+      retreat()
+    else
+      advance()
+    end
   end
   if button == 2 then
     randomize()
