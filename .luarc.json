@@ -14,6 +14,7 @@
     "user_input",
     "input_text",
     "input_code",
+    "write_to_input",
     "validated_input",
     "stop",
     "continue",

@@ -377,7 +377,7 @@ function ConsoleController.prepare_project_env(cc)
     close_project(cc)
   end
 
-  local input_ref
+  local ui_model, input_ref
   local create_input_handle   = function()
     input_ref = table.new_reftable()
   end
@@ -391,12 +391,12 @@ function ConsoleController.prepare_project_env(cc)
     end
 
     if not input_ref then return end
-    local input = UserInputModel(cfg, eval, true, prompt)
-    input:set_text(init)
-    local inp_con = UserInputController(input, input_ref)
+    ui_model = UserInputModel(cfg, eval, true, prompt)
+    ui_model:set_text(init)
+    local inp_con = UserInputController(ui_model, input_ref)
     local view = UserInputView(cfg.view, inp_con)
     love.state.user_input = {
-      M = input, C = inp_con, V = view
+      M = ui_model, C = inp_con, V = view
     }
     return input_ref
   end
@@ -415,6 +415,14 @@ function ConsoleController.prepare_project_env(cc)
   --- @param init str?
   project_env.input_text      = function(prompt, init)
     return input(InputEvalText, prompt, init)
+  end
+
+  --- @param content str
+  project_env.write_to_input  = function(content)
+    if not love.state.user_input then
+      return
+    end
+    ui_model:set_text(content)
   end
 
   --- @param filters table
