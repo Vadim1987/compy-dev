@@ -28,6 +28,7 @@ function load_example(ex)
   time   = 0
   body   = ex.code
   legend = ex.legend
+  write_to_input(body)
 end
 
 function advance()
