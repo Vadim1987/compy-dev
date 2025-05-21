@@ -1,152 +1,113 @@
-examples = {
-  {
-    code = "return math.random() < 0.1",
-    legend = "for every dot return 0 or 1 \nto change the visibility"
-  },
-  {
-    code = "return math.random()",
-    legend = "use a float between 0 and 1 \nto define the size"
-  },
-  {
-    code = "return math.sin(t)",
-    legend = "parameter `t` is \nthe time in seconds"
-  },
-  {
-    code = "return i / 256",
-    legend = "param `i` is the index \nof the dot (0..255)"
-  },
-  { -- 5
-    code = "return x / 16",
-    legend = "`x` is the column index\n from 0 to 15"
-  },
-  {
-    code = "return y / 16",
-    legend = "`y` is the row\n also from 0 to 15"
-  },
-  {
-    code = "return y - 7.5",
-    legend = "positive numbers are white,\nnegatives are red"
-  },
-  {
-    code = "return y - t",
-    legend = "use the time\nto animate values"
-  },
-  {
-    code = "return y - 4 * t",
-    legend = "multiply the time\nto change the speed"
-  },
-  { -- 10
-    code = "return ({1, 0, -1})[i % 3 + 1]",
-    legend = "create patterns using \ndifferent color"
-  },
-  {
-    code = "return sin(t - sqrt((x - 7.5)^2 + (y-6)^2) )",
-    legend = "skip `math.` to use methods \nand props like `sin` or `pi`"
-  },
-  {
-    -- code = "return math.sin(y/8 + t)",
-    code = "return sin(y/8 + t)",
-    legend = "more examples ..."
-  },
-  {
+examples = {}
 
-    code = "return y - x",
-    legend = "simple triangle"
-  },
-  {
-    code = "return b2n( (y > x) and (14 - x < y) )",
-    legend = "quarter triangle"
-  },
-  {
-    code = "return i % 4 - y % 4",
-    legend = "pattern"
-  },
-  {
-    code = "return b2n(n2b(math.fmod(x, 4)) and n2b(math.fmod(y, 4)))",
-    legend = "grid"
-  },
-  {
-    code = "return b2n( x>3 and y>3 and x<12 and y<12 )",
-    legend = "square"
-  },
-  {
-    code = "return -1 * b2n( x>t and y>t and x<15-t and y<15-t )",
-    legend = "animated square"
-  },
-  {
-    code = "return (y-6) * (x-6)",
-    legend = "mondrian squares"
-  },
-  {
-    code = "return floor(y - 4 * t) * floor(x - 2 - t)",
-    legend = "moving cross"
-  },
-  {
-    code = "return bit.band(4 * t, i, x, y)",
-    legend = "sierpinski"
-  },
-  {
-    code = "return y == 8 and bit.band(t * 10, bit.lshift(1, x)) or 0",
-    legend = "binary clock"
-  },
-  {
-    code = "return random() * 2 - 1",
-    legend = "random noise"
-  },
-  {
-    code = "return sin(i ^ 2)",
-    legend = "static smooth noise"
-  },
-  {
-    code = "return cos(t + i + x * y)",
-    legend = "animated smooth noise"
-  },
-  {
-    code = "return sin(x/2) - sin(x-t) - y+6",
-    legend = "waves"
-  },
-  {
-    code = "return (x-8) * (y-8) - sin(t) * 64",
-    legend = "bloop bloop bloop"
-  },
-  {
-    code = "return -.4 / (hypot(x - t%10, y - t%8) - t%2 * 9)",
-    legend = "fireworks"
-  },
-  {
-    -- code = "return sin(t - sqrt(x*x+y*y))",
-    code = "return sin(t - hypot(x, y))",
-    legend = "ripples"
-  },
-  { -- [5463,2194,2386][y+t*9&7]&1<<x-1"
-    code = 'return bit.band(' ..
-        ' ({5463,2194,2386})[ bit.band(y+t*9, 7) ] or 0, ' ..
-        'bit.lshift(1, x - 1) )',
-    legend = "scrolling TIXY"
-  },
-  {
-    code = "return (x-y) - sin(t) * 16",
-    legend = "wipe"
-  },
-  {
-    code = "return (x-y)/24 - sin(t)",
-    legend = "soft wipe"
-  },
+function example(c, l)
+  table.insert(examples, {code = c, legend = l})
+end
 
-  {
-    code = "return sin(t*5) * tan(t*7)",
-    legend = "disco"
-  },
-  {
-    code = "return (x-(count/2))^2 + (y-(count/2))^2 - 15*cos(pi/4)",
-    legend = "日本"
-  },
-  {
-    code = "return (x-5)^2 + (y-5)^2 - 99*sin(t)",
-    legend = "create your own!"
-  },
-  -- {
-  --   code = "return ",
-  --   legend = ""
-  -- },
-}
+example(
+  "return math.random() < 0.1",
+  "for every dot return 0 or 1 \nto change the visibility")
+example(
+  "return math.random()",
+  "use a float between 0 and 1 \nto define the size")
+example(
+  "return math.sin(t)",
+  "parameter `t` is \nthe time in seconds")
+example(
+  "return i / 256",
+  "param `i` is the index \nof the dot (0..255)")
+example(
+  "return x / 16",
+  "`x` is the column index\n from 0 to 15")
+example(
+  "return y / 16",
+  "`y` is the row\n also from 0 to 15")
+example(
+  "return y - 7.5",
+  "positive numbers are white,\nnegatives are red")
+example(
+  "return y - t",
+  "use the time\nto animate values")
+example(
+  "return y - 4 * t",
+  "multiply the time\nto change the speed")
+example(
+  "return ({1, 0, -1})[i % 3 + 1]",
+  "create patterns using \ndifferent color")
+example(
+  "return sin(t - sqrt((x - 7.5)^2 + (y-6)^2) )",
+  "skip `math.` to use methods \nand props like `sin` or `pi`")
+example(
+  "return sin(y/8 + t)",
+  "more examples ...")
+example(
+  "return y - x",
+  "simple triangle")
+example(
+  "return b2n( (y > x) and (14 - x < y) )",
+  "quarter triangle")
+example(
+  "return i % 4 - y % 4",
+  "pattern")
+example(
+  "return b2n(n2b(math.fmod(x, 4)) and n2b(math.fmod(y, 4)))",
+  "grid")
+example(
+  "return b2n( x>3 and y>3 and x<12 and y<12 )",
+  "square")
+example(
+  "return -1 * b2n( x>t and y>t and x<15-t and y<15-t )",
+  "animated square")
+example(
+  "return (y-6) * (x-6)",
+  "mondrian squares")
+example(
+  "return floor(y - 4 * t) * floor(x - 2 - t)",
+  "moving cross")
+example(
+  "return bit.band(4 * t, i, x, y)",
+  "sierpinski")
+example(
+  "return y == 8 and bit.band(t * 10, bit.lshift(1, x)) or 0",
+  "binary clock")
+example(
+  "return random() * 2 - 1",
+  "random noise")
+example(
+  "return sin(i ^ 2)",
+  "static smooth noise")
+example(
+  "return cos(t + i + x * y)",
+  "animated smooth noise")
+example(
+  "return sin(x/2) - sin(x-t) - y+6",
+  "waves")
+example(
+  "return (x-8) * (y-8) - sin(t) * 64",
+  "bloop bloop bloop")
+example(
+  "return -.4 / (hypot(x - t%10, y - t%8) - t%2 * 9)",
+  "fireworks")
+example(
+  -- "return sin(t - sqrt(x*x + y*y))"
+  "return sin(t - hypot(x, y))",
+  "ripples")
+example(
+  -- "[5463,2194,2386][y+t*9&7]&1<<x-1"
+  "return bit.band( ({5463,2194,2386})[ bit.band(y+t*9, 7) ] or 0, bit.lshift(1, x - 1) )",
+  "scrolling TIXY")
+example(
+  "return (x-y) - sin(t) * 16",
+  "wipe")
+example(
+  "return (x-y)/24 - sin(t)",
+  "soft wipe")
+example(
+  "return sin(t*5) * tan(t*7)",
+  "disco")
+example(
+  "return (x-(count/2))^2 + (y-(count/2))^2 - 15*cos(pi/4)",
+  "日本")
+example(
+  "return (x-5)^2 + (y-5)^2 - 99*sin(t)",
+  "create your own!")
