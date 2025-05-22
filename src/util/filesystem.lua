@@ -26,6 +26,10 @@ local FS = {
       local n = name or ''
       return "Unable to read " .. n
     end,
+    cannot_open = function(name)
+      local n = name or ''
+      return "Can't open " .. n
+    end,
   }
 }
 
@@ -190,10 +194,11 @@ if love and not TESTING then
 
   --- @param path string
   --- @param data string
-  --- @return boolean? success
+  --- @return boolean success
   --- @return string? error
   function FS.write(path, data)
-    return _fs.write(path, data)
+    local wok, werr = _fs.write(path, data)
+    return wok or false, werr
   end
 
   --- @param source string
@@ -323,6 +328,7 @@ if love and not TESTING then
 else
   --- used in unit tests where love utils are not available
   local lfs = require("lfs")
+
   --- @param path string
   --- @param data string
   --- @return boolean success
@@ -337,6 +343,44 @@ else
       return true, err
     end
     return false, oerr
+  end
+
+  --- @param path string
+  --- @return boolean success
+  --- @return string data|error
+  function FS.read(path)
+    local handle = io.open(path, "r")
+    if handle then
+      local content = handle:read("*a")
+      handle:close()
+      return true, content
+    else
+      return false, FS.messages.unreadable(path)
+    end
+  end
+
+  --- @param source string
+  --- @param target string
+  --- @return boolean success
+  --- @return string? error
+  function FS.cp(source, target)
+    local src = FS.exists(source)
+    local tgt = io.open(target, "w")
+
+    if not src then
+      return false, FS.messages.cannot_open(src)
+    end
+    if not tgt then
+      return false, FS.messages.cannot_open(tgt)
+    end
+
+    local rok, cont_err = FS.read(source)
+    if rok and cont_err then
+      local wok, werr = FS.write(target, cont_err)
+      return wok, werr
+    else
+      return false, cont_err
+    end
   end
 
   --- @param path string
