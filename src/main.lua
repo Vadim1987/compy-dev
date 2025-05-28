@@ -194,8 +194,10 @@ local setup_storage = function(mode)
     end
   else
     if OS.get_name() == 'Android' then
-      if mode == 'play' then
+      local savedir = love.filesystem.getSaveDirectory()
 
+      if mode == 'play' then
+        FS.mkdirp(savedir)
       else
         local ok, sd_path = android_storage_find()
         if not ok then
@@ -252,7 +254,6 @@ local load_project = function(path, paths)
     elseif FS.exists(FS.join_path(s_path, path), 'file') then
       ex = true
       full_path = FS.join_path(s_path, path)
-      Log.debug(full_path)
     elseif FS.exists(FS.join_path(sb_dir, path), 'file') then
       ex = true
       full_path = FS.join_path(sb_dir, path)
