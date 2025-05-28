@@ -116,7 +116,6 @@ function Statusline:draw(status, nLines, time)
         --- cursor pos
         G.print(t_ic, endTextX - cw_il, start_text.y)
         --- input more
-        G.setFont(self.cfg.iconfont)
         G.print(more_i, s_mi, start_text.y - 3)
 
         G.setColor(colors.fg)
@@ -125,7 +124,6 @@ function Statusline:draw(status, nLines, time)
           G.setColor(colors.special)
         end
         --- block line range / line
-        G.setFont(self.cfg.font)
         G.print(t_blp, sxl, start_text.y)
         G.setColor(colors.fg)
         --- block number
@@ -143,8 +141,7 @@ function Statusline:draw(status, nLines, time)
 
         --- buffer more
         G.setColor(colors.fg)
-        G.setFont(self.cfg.iconfont)
-        G.print(more_b, s_mb, start_text.y - 3)
+        G.print(more_b, s_mb, start_text.y)
       else
         --- normal statusline
         local pos_c = ':' .. c.c

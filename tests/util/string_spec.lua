@@ -3,6 +3,7 @@ require("util.string")
 describe("StringUtils #string", function()
   local utest1 = 'когда'
   local utest2 = 'あいうえお'
+  local utest3 = "日本"
 
   describe("splits", function()
     it('ASCII text', function()
@@ -22,6 +23,15 @@ describe("StringUtils #string", function()
       pre, post = string.split_at(utest1, 2)
       assert.equal('к', pre)
       assert.equal('огда', post)
+    end)
+
+    it('CJK text', function()
+      local pre, post = string.split_at(utest3, 1)
+      assert.equal('', pre)
+      assert.equal('日本', post)
+      pre, post = string.split_at(utest3, 2)
+      assert.equal('日', pre)
+      assert.equal('本', post)
     end)
 
     describe('on char', function()
