@@ -368,8 +368,6 @@ describe("StringUtils #string", function()
 
   describe('validates', function()
 
-
-
   end)
 
   describe('matches', function()
