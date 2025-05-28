@@ -1,3 +1,23 @@
+## Cloning
+
+Clone this project recursively, because libraries are included
+as submodules:
+
+```shell
+git clone --recurse-submodules
+# or
+git clone --recurse-submodules --shallow-submodules
+```
+
+If it's already cloned without, and you don't want to start over,
+they can be initialized with:
+
+```shell
+git submodule update --init
+# or
+git submodule update --init --depth 1
+```
+
 ## Installing
 
 To run the code, [LÖVE2D] is required. It's been tested and
