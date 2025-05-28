@@ -4,6 +4,7 @@ local canvas_snapshot = nil
 View = {
   prev_draw = nil,
   main_draw = nil,
+  end_draw = nil,
   --- @param C ConsoleController
   --- @param CV ConsoleView
   draw = function(C, CV)

@@ -111,6 +111,7 @@
 --- | 'editor'
 --- | 'running'
 --- | 'inspect'
+--- | 'shutdown'
 
 --- @class BufferState table
 --- @field filename string

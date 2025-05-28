@@ -6,6 +6,7 @@ local LANG = require("util.eval")
 
 local messages = {
   user_break = "BREAK into program",
+  exit_anykey = "Press any key to exit.",
   exec_error = function(err)
     return 'Execution error at ' .. err
   end
@@ -269,14 +270,35 @@ Controller = {
 
     View.prev_draw = love.draw
     View.main_draw = love.draw
+    View.end_draw = function()
+      local w, h = G.getDimensions()
+      G.setColor(Color[Color.white])
+      G.setFont(C.cfg.view.font)
+      G.clear()
+      G.printf(messages.exit_anykey, 0, h / 3, w, "center")
+    end
   end,
+
 
   --- Quit
   --- @private
   --- @param C ConsoleController
   set_love_quit = function(C)
+    local cfg = C.cfg
+
     local function quit()
-      orig_print('quit')
+      if love.state.app_state == 'shutdown' then
+        return false
+      end
+
+      if cfg.mode == 'play' then
+        C:quit_project()
+        love.state.app_state = 'shutdown'
+        love.state.user_input = nil
+
+        love.draw = View.end_draw
+        return true
+      end
       if love.state.app_state == 'running' then
         C:quit_project()
         return true
@@ -322,7 +344,6 @@ Controller = {
     -- SKIPPED mousefocus  - intented to run as kiosk app
     -- SKIPPED visible     - intented to run as kiosk app
 
-    -- SKIPPED quit        - intented to run as kiosk app - TODO
     -- SKIPPED threaderror - no threading support
 
     -- SKIPPED resize           - intented to run as kiosk app
@@ -404,6 +425,9 @@ Controller = {
       end
 
       if playback then
+        if love.state.app_state == 'shutdown' then
+          love.event.quit()
+        end
         restart()
       else
         restart()
