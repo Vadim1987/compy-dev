@@ -3,36 +3,37 @@ math.randomseed(os.time())
 cw, ch = G.getDimensions()
 midx = cw / 2
 
-require('bit')
-require('math')
-require('examples')
+require("bit")
+require("math")
+require("examples")
 
 size = 28
 spacing = 3
 offset = size + 4
 
 local colors = {
-  bg   = Color[Color.black],
-  pos  = Color[Color.white + Color.bright],
-  neg  = Color[Color.red + Color.bright],
+  bg = Color[Color.black],
+  pos = Color[Color.white + Color.bright],
+  neg = Color[Color.red + Color.bright],
   text = Color[Color.white],
-  help = Color.with_alpha(Color[Color.white], .5),
+  help = Color.with_alpha(Color[Color.white], 0.5)
 }
 
-body = ''
-legend = ''
-help = [[Hint:
-left click for next example
-shift + left click to go back
-right click for a random one]]
+body = ""
+legend = ""
+help =
+    "Hint:\n" ..
+    "left click for next example\n" ..
+    "shift + left click to go back\n" ..
+    "right click for a random one"
 showHelp = true
 count = 16
 ex_idx = 1
 local time = 0
 
 function load_example(ex)
-  time   = 0
-  body   = ex.code
+  time = 0
+  body = ex.code
   legend = ex.legend
   write_to_input(body)
 end
@@ -40,11 +41,13 @@ end
 function advance()
   local e = examples[ex_idx]
   load_example(e)
-  if ex_idx < #examples then ex_idx = ex_idx + 1 end
+  if ex_idx < #examples then
+    ex_idx = ex_idx + 1
+  end
 end
 
 function retreat()
-  if ex_idx > 0 then
+  if 0 < ex_idx then
     local e = examples[ex_idx]
     load_example(e)
     ex_idx = ex_idx - 1
@@ -66,69 +69,81 @@ function randomize()
 end
 
 function b2n(b)
-  if b then return 1 else return 0 end
+  if b then
+    return 1
+  else
+    return 0
+  end
 end
 
 function n2b(n)
-  if n ~= 0 then return true else return false end
+  if n ~= 0 then
+    return true
+  else
+    return false
+  end
 end
 
-callback = function(t, i, x, y)
-  local code = [[
-    local count = ...
-    return function(t, i, x, y)
-    ]] .. body ..
-      ' end'
-  local f    = loadstring(code)
+function callback(t, i, x, y)
+  local code = "local count = ...\n" ..
+      "return function(t, i, x, y)\n" .. body .. " end"
+  local f = loadstring(code)
   if f then
     setfenv(f, _G)
     local val = assert(f)(count)(t, i, x, y)
-
     return val
   end
+end
+
+function drawBackground()
+  G.setColor(colors.bg)
+  G.rectangle("fill", 0, 0, cw, ch)
+end
+
+function drawCircle(color, radius, x, y)
+  G.setColor(color)
+  G.circle(
+    "fill",
+    x * (size + spacing) + offset,
+    y * (size + spacing) + offset,
+    radius
+  )
+  G.circle(
+    "line",
+    x * (size + spacing) + offset,
+    y * (size + spacing) + offset,
+    radius
+  )
+end
+
+function clamp(value)
+  local color = colors.pos
+  local radius = (value * size) / 2
+  if radius < 0 then
+    radius = -radius
+    color = colors.neg
+  end
+  if size / 2 < radius then
+    radius = size / 2
+  end
+  return color, radius
 end
 
 function drawOutput()
   local index = 0
   local ts = time
-
   for y = 0, count - 1 do
     for x = 0, count - 1 do
       local value =
-          tonumber(callback(ts, index, x, y) or .1) or -.1
-      local color = colors.pos
-      local radius = (value * size) / 2
-      if radius < 0 then
-        radius = -radius
-        color = colors.neg
-      end
-
-      if radius > size / 2 then
-        radius = size / 2
-      end
-
-      G.setColor(color)
-      G.circle("fill",
-        x * (size + spacing) + offset,
-        y * (size + spacing) + offset,
-        radius
-      )
-      G.circle("line",
-        x * (size + spacing) + offset,
-        y * (size + spacing) + offset,
-        radius
-      )
+          tonumber(callback(ts, index, x, y) or 0.1) or -0.1
+      local color, radius = clamp(value)
+      drawCircle(color, radius, x, y)
       index = index + 1
     end
   end
 end
 
-function love.draw()
-  --- background
-  G.setColor(colors.bg)
-  G.rectangle("fill", 0, 0, cw, ch)
-
-  drawOutput()
+function drawText()
   G.setColor(colors.text)
   local sof = (size / 2) + offset
   G.printf(legend, midx + sof, sof, midx - sof)
@@ -139,16 +154,22 @@ function love.draw()
   end
 end
 
+function love.draw()
+  drawBackground()
+  drawOutput()
+  drawText()
+end
+
 r = user_input()
 
 function love.update(dt)
   time = time + dt
   if r:is_empty() then
-    input_code('function tixy(t, i, x, y)', string.lines(body))
+    input_code("function tixy(t, i, x, y)", string.lines(body))
   else
     local ret = r()
     body = string.unlines(ret)
-    legend = ''
+    legend = ""
   end
 end
 
