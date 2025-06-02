@@ -66,9 +66,9 @@ example(
   "return floor(y - 4 * t) * floor(x - 2 - t)",
   "moving cross"
 )
-example("return bit.band(4 * t, i, x, y)", "sierpinski")
+example("return band(4 * t, i, x, y)", "sierpinski")
 example(
-  "return y == 8 and bit.band(t * 10, bit.lshift(1, x)) or 0",
+  "return y == 8 and band(t * 10, lshift(1, x)) or 0",
   "binary clock"
 )
 example("return random() * 2 - 1", "random noise")
@@ -85,8 +85,8 @@ example(
 )
 example("return sin(t - hypot(x, y))", "ripples")
 example(
-  "return bit.band( ({5463,2194,2386})[ bit.band(y+t*9, 7) ]" ..
-  " or 0, bit.lshift(1, x - 1) )", "scrolling TIXY")
+  "return band( ({5463,2194,2386})[ band(y+t*9, 7) ]" ..
+  " or 0, lshift(1, x - 1) )", "scrolling TIXY")
 example("return (x-y) - sin(t) * 16", "wipe")
 example("return (x-y)/24 - sin(t)", "soft wipe")
 example("return sin(t*5) * tan(t*7)", "disco")
