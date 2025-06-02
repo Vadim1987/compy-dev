@@ -9,3 +9,4 @@
 --- @field mousemoved function?
 --- @field mousepressed function?
 --- @field mousereleased function?
+--- @field wheelmoved function?

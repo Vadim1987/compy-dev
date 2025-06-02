@@ -29,6 +29,7 @@ local _supported = {
   'mousemoved',
   'mousepressed',
   'mousereleased',
+  'wheelmoved',
 }
 
 local _C
@@ -214,6 +215,18 @@ Controller = {
     love.mousemoved = mousemoved
   end,
 
+  --- @private
+  --- @param C ConsoleController
+  set_love_wheelmoved = function(C)
+    local function wheelmoved(x, y)
+      --- TODO
+      -- C:wheelmoved(x, y)
+    end
+
+    Controller._defaults.wheelmoved = wheelmoved
+    love.wheelmoved = wheelmoved
+  end,
+
   --------------
   --  update  --
   --------------
@@ -345,7 +358,7 @@ Controller = {
     Controller.set_love_mousemoved(C)
     Controller.set_love_mousepressed(C)
     Controller.set_love_mousereleased(C)
-    -- SKIPPED wheelmoved - TODO
+    Controller.set_love_wheelmoved(C)
 
     -- SKIPPED touchpressed  - target device doesn't support touch
     -- SKIPPED touchreleased - target device doesn't support touch
