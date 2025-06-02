@@ -275,8 +275,9 @@ function EditorController:_handle_submit(go)
       local sel = buf:get_selection()
       local block = buf:get_content():get(sel)
       if not block then return end
-      local ln = block.pos.start
-      if ln then go({ Empty(ln) }) end
+      --- TODO: why did I do this?
+      -- local ln = block.pos.start
+      -- if ln then go({ Empty(ln) }) end
     else
       local pretty = buf.printer(raw)
       if pretty then
