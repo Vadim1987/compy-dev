@@ -32,10 +32,12 @@ local time = 0
 
 function load_example(ex)
   time = 0
-  body = ex.code
-  setupTixy()
-  legend = ex.legend
-  write_to_input(body)
+  if type(ex) == "table" then
+    body = ex.code
+    setupTixy()
+    legend = ex.legend
+    write_to_input(body)
+  end
 end
 
 function advance()
@@ -47,7 +49,7 @@ function advance()
 end
 
 function retreat()
-  if 0 < ex_idx then
+  if 1 < ex_idx then
     local e = examples[ex_idx]
     load_example(e)
     ex_idx = ex_idx - 1
@@ -136,8 +138,7 @@ function drawOutput()
   local ts = time
   for y = 0, count - 1 do
     for x = 0, count - 1 do
-      local value =
-          tonumber(tixy(ts, index, x, y)) or -0.1
+      local value = tonumber(tixy(ts, index, x, y)) or -0.1
       local color, radius = clamp(value)
       drawCircle(color, radius, x, y)
       index = index + 1
