@@ -11,6 +11,7 @@ web/node_modules/*
 doc/scratch/
 doc/parse
 *.lua_
+*.compy
 *.odg#
 src/assets/*.xcf
 src/assets/shot*.png

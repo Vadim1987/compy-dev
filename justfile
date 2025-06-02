@@ -88,7 +88,7 @@ snap-examples:
 
 dev-dogfood-examples:
   @{{MON}} --verbose \
-    --exec '{{LOVE}} src --autotest; just snap-examples' \
+    --exec 'just one-atest; just snap-examples' \
     -e 'lua' -w 'src'
 
 # run webserver on 8080 with hot reload
