@@ -89,7 +89,7 @@ function callback(t, i, x, y)
   local f = loadstring(code)
   if f then
     setfenv(f, _G)
-    local val = assert(f)(count)(t, i, x, y)
+    local val = f(count)(t, i, x, y)
     return val
   end
 end
