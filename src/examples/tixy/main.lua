@@ -84,12 +84,11 @@ function n2b(n)
 end
 
 function callback(t, i, x, y)
-  local code = "local count = ...\n" ..
-      "return function(t, i, x, y)\n" .. body .. " end"
+  local code = "return function(t, i, x, y)\n" .. body .. " end"
   local f = loadstring(code)
   if f then
     setfenv(f, _G)
-    local val = f(count)(t, i, x, y)
+    local val = f()(t, i, x, y)
     return val
   end
 end

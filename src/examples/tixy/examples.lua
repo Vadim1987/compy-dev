@@ -24,10 +24,10 @@ example(
   "param `i` is the index \nof the dot (0..255)"
 )
 example(
-  "return x / 16",
+  "return x / count",
   "`x` is the column index\n from 0 to 15"
 )
-example("return y / 16", "`y` is the row\n also from 0 to 15")
+example("return y / count", "`y` is the row\n also from 0 to 15")
 example(
   "return y - 7.5",
   "positive numbers are white,\nnegatives are red"
