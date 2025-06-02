@@ -146,11 +146,12 @@ end
 function drawText()
   G.setColor(colors.text)
   local sof = (size / 2) + offset
-  G.printf(legend, midx + sof, sof, midx - sof)
+  local hof = sof / 2
+  G.printf(legend, midx + hof, sof, midx - sof)
   if showHelp then
     G.setColor(colors.help)
     G.setFont(font)
-    G.printf(help, midx + sof, ch - (5 * sof), midx - sof)
+    G.printf(help, midx + hof, ch - (5 * sof), midx - sof)
   end
 end
 
