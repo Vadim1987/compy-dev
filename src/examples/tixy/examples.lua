@@ -8,7 +8,7 @@ function example(c, l)
 end
 
 example(
-  "return math.random() < 0.1",
+  "return b2n(math.random() < 0.1)",
   "for every dot return 0 or 1 \nto change the visibility"
 )
 example(
