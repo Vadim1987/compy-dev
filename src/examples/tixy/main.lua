@@ -98,6 +98,11 @@ function drawOutput()
         y * (size + spacing) + offset,
         radius
       )
+      G.circle("line",
+        x * (size + spacing) + offset,
+        y * (size + spacing) + offset,
+        radius
+      )
       index = index + 1
     end
   end
