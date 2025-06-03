@@ -40,8 +40,9 @@ jobs:
           luarocksVersion: "3.9.2"
       - name: install dependencies
         run: |
-          luarocks --local install busted
-          luarocks --local install luautf8
+          luarocks install busted
+          luarocks install luautf8
+          luarocks install luafilesystem
 
       - name: run unit tests
         run: busted tests -o utfTerminal
