@@ -18,6 +18,7 @@ require("lib/error_explorer")
 G = love.graphics
 
 local messages = {
+  how_to_exit = 'Press Ctrl-Esc to exit',
   dataloss_warning =
   'DEMO: Project data is not guaranteed to persist!',
   play_no_project =
@@ -380,6 +381,7 @@ function love.load(args)
     if not ok then
       exit(err)
     end
+    print(messages.how_to_exit)
     CC:run_project()
   else
     if _G.web then

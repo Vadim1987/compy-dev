@@ -690,6 +690,8 @@ end
 function ConsoleController:textinput(t)
   if love.state.app_state == 'editor' then
     self.editor:textinput(t)
+  elseif self.cfg.mode == 'play' then
+    --- console is disabled in this mode
   else
     local input = self.input
     if input:has_error() then
