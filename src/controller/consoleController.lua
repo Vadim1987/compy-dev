@@ -470,6 +470,10 @@ function ConsoleController:evaluate_input()
 
   local eval_ok, res = inter:evaluate()
 
+  if eval_ok and not string.is_non_empty(res) then
+    return
+  end
+
   if eval and eval.parser then
     if eval_ok then
       local code = string.unlines(text)
