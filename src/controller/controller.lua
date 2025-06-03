@@ -320,19 +320,6 @@ Controller = {
     love.quit = quit
   end,
 
-  --- Quit
-  --- @private
-  --- @param C ConsoleController
-  set_love_quit = function(C)
-    local function quit()
-      if love.state.app_state == 'running' then
-        C:quit_project()
-        return true
-      end
-    end
-    love.quit = quit
-  end,
-
   --- @private
   snapshot = function()
     if user_draw then
