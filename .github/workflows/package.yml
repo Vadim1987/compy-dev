@@ -33,8 +33,8 @@ jobs:
 
       - uses: jkl1337/gh-actions-lua@v11
         with:
-          # luaVersion: "5.3"
-          luaVersion: "luajit-git"
+          luaVersion: "5.1"
+          # luaVersion: "luajit-git"
       - uses: jkl1337/gh-actions-luarocks@v5
         with:
           luarocksVersion: "3.9.2"
