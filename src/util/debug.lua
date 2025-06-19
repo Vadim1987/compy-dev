@@ -1,10 +1,8 @@
 --- @diagnostic disable: redefined-local
 
-require("util.filesystem")
-require("util.string")
+require("util.string") -- pulls in utf8
 require("util.table")
 local tc = require("util.termcolor")
-local OS = require("util.os")
 
 local tab = '  '
 
@@ -56,11 +54,12 @@ local function terse_hash(t, level, prev_seen, jsonify)
   if not t then return '' end
 
   local seen = prev_seen or {}
-  local indent = level or 0
+  local indent = tonumber(level) or 0
   local res = ''
   local flat = true
   if type(t) == 'table' then
-    res = res .. string.times(tab, indent) .. '{'
+    local ind = string.times(tab, indent) or ''
+    res = res .. ind .. '{'
     if seen[t] then return '' end
     seen[t] = true
 
@@ -113,8 +112,11 @@ local function terse_hash(t, level, prev_seen, jsonify)
     res = res .. text(t_) .. ', '     --.. '// [' .. type(t) .. ']  '
   elseif type(t) == 'function' then
     res = res .. Debug.mem(t) .. ', ' --.. '// [' .. type(t) .. ']  '
+  elseif type(t) == 'boolean' then
+    local val = t and 'TRUE' or '#f'
+    res = res .. val
   else
-    res = res .. tostring(t) .. ', '  --.. '// [' .. type(t) .. ']  '
+    res = res .. tostring(t) .. ', ' --.. '// [' .. type(t) .. ']  '
   end
 
   return res
@@ -283,7 +285,9 @@ Debug = {
             elseif type(k) == 'number' and style == 'lua' then
               -- skip index
               res = res .. dent .. '[' .. k .. '] ' .. assign
-            elseif type(k) == 'string' and not string.forall(k, Char.is_ascii) then
+            elseif type(k) == 'string'
+                and not string.forall(k, Char.is_ascii)
+            then
               -- skip index
               res = res .. dent .. "['" .. k .. "'] " .. assign
             else
@@ -397,35 +401,6 @@ Debug = {
     end
   end,
 
-  --- @param content str
-  --- @param ext string?
-  --- @param fixname string?
-  write_tempfile = function(content, ext, fixname)
-    local function create_temp()
-      local cmd = 'mktemp -u -p .'
-      if string.is_non_empty_string(ext) then
-        cmd = string.format('%s --suffix .%s', cmd, ext)
-      end
-      local _, result = OS.runcmd(cmd)
-      return result
-    end
-    local name =
-        string.is_non_empty_string(fixname)
-        and fixname .. (ext and '.' .. ext or '')
-        or create_temp()
-    local mok, merr = FS.mkdirp('./.debug')
-    if not mok then
-      return false, merr
-    end
-    local path = FS.join_path('./.debug', name)
-
-    local data = string.unlines(content)
-    local ok, err = FS.write(path, data)
-    if not ok then
-      return false, err
-    end
-    return ok
-  end,
 }
 
 local printer = (function()
@@ -447,17 +422,6 @@ local annot = function(tag, color, args)
   end
   ret = ret .. tc.reset
   return ret
-end
-
-local warning = function(...)
-  local args = { ... }
-  local s = annot('WARN ', Color.yellow, args)
-  printer(s)
-end
-local error = function(...)
-  local args = { ... }
-  local s = annot('ERROR', Color.red, args)
-  printer(s)
 end
 
 --- @param s string
@@ -492,7 +456,7 @@ end
 local once_seen = {}
 local once_color = Color.white + Color.bright
 
-local function once(kh, args)
+local function _once(kh, args)
   if not once_seen[kh] then
     once_seen[kh] = true
     local s = annot('ONCE  ', once_color, args)
@@ -500,32 +464,54 @@ local function once(kh, args)
   end
 end
 
+
+local trace = function(...)
+  if not love.TRACE then return end
+  local args = { ... }
+  local s = annot('TRACE', Color.black, args)
+  printer(s)
+end
+local info = function(...)
+  local args = { ... }
+  local s = annot('INFO ', Color.cyan, args)
+  printer(s)
+end
+local warning = function(...)
+  local args = { ... }
+  local s = annot('WARN ', Color.yellow, args)
+  printer(s)
+end
+local error = function(...)
+  local args = { ... }
+  local s = annot('ERROR', Color.red, args)
+  printer(s)
+end
+local debug = function(...)
+  local args = { ... }
+  local ts = string.format("%.3f ", os.clock())
+  local s = annot(ts .. 'DEBUG ',
+    (Color.black + Color.bright), args)
+  printer(s)
+end
+local once = function(...)
+  if not love.DEBUG then return end
+  local args = { ... }
+  local key = love.debug.once .. string.join(args, '')
+  local kh = hash(key)
+  _once(kh, args)
+end
+
+
 Log = {
-  info = function(...)
-    local args = { ... }
-    local s = annot('INFO ', Color.cyan, args)
-    printer(s)
-  end,
+  trace = trace,
+  info = info,
   warning = warning,
   warn = warning,
   error = error,
   err = error,
 
-  debug = function(...)
-    local args = { ... }
-    local ts = string.format("%.3f ", os.clock())
-    local s = annot(ts .. 'DEBUG ',
-      (Color.black + Color.bright), args)
-    printer(s)
-  end,
-
-  once = function(...)
-    if not love.DEBUG then return end
-    local args = { ... }
-    local key = love.debug.once .. string.join(args, '')
-    local kh = hash(key)
-    once(kh, args)
-  end,
+  debug = debug,
+  once = once,
 
   fire_once = function()
     if not love.DEBUG then return end

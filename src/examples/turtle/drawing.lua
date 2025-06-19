@@ -2,12 +2,14 @@ local G = love.graphics
 
 font = G.newFont()
 bg_color = Color.black
-debugColor = Color.yellow
+body_color = Color.green
+limb_color = body_color + Color.bright
+debug_color = Color.yellow
 
 function drawBackground(color)
   local c = bg_color
-  local not_green = color ~= Color.green
-      and color ~= Color.green + Color.bright
+  local not_green = color ~= body_color
+      and color ~= limb_color
   local color_valid = Color.valid(color) and not_green
   if color_valid then
     c = color
@@ -17,7 +19,7 @@ function drawBackground(color)
 end
 
 function drawFrontLegs(x_r, y_r, leg_xr, leg_yr)
-  G.setColor(Color[Color.green + Color.bright])
+  G.setColor(Color[limb_color])
   G.push("all")
   G.translate(-x_r, -y_r / 2 - leg_xr)
   G.rotate(-math.pi / 4)
@@ -31,7 +33,7 @@ function drawFrontLegs(x_r, y_r, leg_xr, leg_yr)
 end
 
 function drawHindLegs(x_r, y_r, leg_r, leg_yr)
-  G.setColor(Color[Color.green + Color.bright])
+  G.setColor(Color[limb_color])
   G.push("all")
   G.translate(-x_r, y_r / 2 + leg_r)
   G.rotate(math.pi / 4)
@@ -46,7 +48,7 @@ end
 
 function drawBody(x_r, y_r, head_r)
   --- body
-  G.setColor(Color[Color.green])
+  G.setColor(Color[body_color])
   G.ellipse("fill", 0, 0, x_r, y_r, 100)
   --- head
   local neck = 5
@@ -77,7 +79,7 @@ function drawHelp()
 end
 
 function drawDebuginfo()
-  G.setColor(Color[debugColor])
+  G.setColor(Color[debug_color])
   local dt = string.format("Turtle position: (%d, %d)", tx, ty)
   G.print(dt, width - 200, 20)
 end

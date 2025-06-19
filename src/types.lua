@@ -1,8 +1,19 @@
---- @alias str string|string[]
+--- @alias Mode
+--- | 'ide'
+--- | 'play'
+--- | 'test'
+--- | 'harmony'
+--- @alias Testflags { auto: boolean?, draw: boolean?, size: boolean? }
+
+--- @class Start
+--- @field mode Mode
+--- @field testflags Testflags?
+--- @field path string?
 
 --- @class PathInfo table
 --- @field storage_path string
 --- @field project_path string
+--- @field play_path string
 
 --- @class CursorInfo table
 --- @field cursor Cursor
@@ -37,8 +48,6 @@
 --- @field labelfont love.Font
 --- @field lfh integer -- font height
 --- @field lfw integer -- font width
---- @field border integer
---- @field FAC Fac
 --- @field h integer
 --- @field w integer
 --- @field colors Colors
@@ -47,11 +56,12 @@
 --- @field drawableWidth number
 --- @field drawableChars integer
 --- @field drawtest boolean
+--- @field sizedebug boolean
 
 --- @class Config table
 --- @field view ViewConfig
 --- @field autotest boolean
---- @field sizedebug boolean
+--- @field mode Mode
 
 --- @alias More {up: boolean, down: boolean}
 
@@ -101,6 +111,7 @@
 --- | 'editor'
 --- | 'running'
 --- | 'inspect'
+--- | 'shutdown'
 
 --- @class BufferState table
 --- @field filename string

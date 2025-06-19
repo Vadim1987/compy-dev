@@ -23,13 +23,12 @@ function Statusline:draw(status, nLines, time)
       return cf.colors.statusline.console
     end
   end)()
-  local b = cf.border
   local h = cf.h
   local w = cf.w
   local fh = cf.fh
   local font = cf.font
 
-  local sy = h - b - (1 + nLines) * fh
+  local sy = h - (1 + nLines) * fh
   local start_box = { x = 0, y = sy }
   local endTextX = start_box.x + w - fh
   local midX = (start_box.x + w) / 2
@@ -72,7 +71,7 @@ function Statusline:draw(status, nLines, time)
     if love.DEBUG then
       G.setColor(cf.colors.debug)
       if love.state.testing then
-        G.print('testing', midX - (8 * cf.fw + cf.border), start_text.y)
+        G.print('testing', midX - (8 * cf.fw), start_text.y)
       end
       G.print(love.state.app_state, midX - (13 * cf.fw), start_text.y)
       if time then
@@ -117,7 +116,6 @@ function Statusline:draw(status, nLines, time)
         --- cursor pos
         G.print(t_ic, endTextX - cw_il, start_text.y)
         --- input more
-        G.setFont(self.cfg.iconfont)
         G.print(more_i, s_mi, start_text.y - 3)
 
         G.setColor(colors.fg)
@@ -126,7 +124,6 @@ function Statusline:draw(status, nLines, time)
           G.setColor(colors.special)
         end
         --- block line range / line
-        G.setFont(self.cfg.font)
         G.print(t_blp, sxl, start_text.y)
         G.setColor(colors.fg)
         --- block number
@@ -144,8 +141,7 @@ function Statusline:draw(status, nLines, time)
 
         --- buffer more
         G.setColor(colors.fg)
-        G.setFont(self.cfg.iconfont)
-        G.print(more_b, s_mb, start_text.y - 3)
+        G.print(more_b, s_mb, start_text.y)
       else
         --- normal statusline
         local pos_c = ':' .. c.c

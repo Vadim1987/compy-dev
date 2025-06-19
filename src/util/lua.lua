@@ -12,9 +12,11 @@ end
 --- @param code string
 --- @param env table?
 --- @return function? chunk
+--- @return string? err
 local codeload = function(code, env)
-  local f = loadstring(code)
-  if not f then return end
+  local f, err = loadstring(code)
+
+  if not f then return nil, err end
   if env then
     setfenv(f, env)
   end

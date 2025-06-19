@@ -110,6 +110,9 @@ end
 
 --- @param input string
 function Search:narrow(input)
+  if input == '' then
+    self.selection = 1
+  end
   local csel = self.selection
   local selected = self.resultset[csel]
   self.resultset = nil
@@ -118,7 +121,7 @@ function Search:narrow(input)
 
   local function match(val)
     local kw
-    if string.is_lower(input) then
+    if string.forall(input, Char.is_lower) then
       kw = string.lower(val)
     else
       kw = val

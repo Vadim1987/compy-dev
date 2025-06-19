@@ -34,21 +34,26 @@ ut_all:
 # run app on file change
 dev:
   @{{MON}} --exec '{{LOVE}} src' -e 'lua'
+
 dev-atest:
-  @{{MON}} --exec 'clear; {{LOVE}} src --autotest' -e 'lua'
+  @{{MON}} --exec 'clear; {{LOVE}} src test --auto' -e 'lua'
 dev-atest-dbg:
   @DEBUG=1 just dev-atest
 dev-autotest: dev-atest
-
+dev-playtest game: (dev-ptest game)
 dev-dtest:
-  @{{MON}} --exec 'clear; {{LOVE}} src --drawtest' -e 'lua'
+  @{{MON}} --exec 'clear; {{LOVE}} src test --draw' -e 'lua'
 dev-drawtest: dev-dtest
-
-dev-allt:
-  @{{MON}} --exec 'clear; {{LOVE}} src --drawtest --autotest' -e 'lua'
-
 dev-size:
-  @{{MON}} --exec '{{LOVE}} src --size' -e 'lua'
+  @{{MON}} --exec '{{LOVE}} src test --size' -e 'lua'
+dev-allt:
+  @{{MON}} --exec 'clear; {{LOVE}} src test --all' -e 'lua'
+
+dev-ptest game:
+  @{{MON}} --exec 'clear; {{LOVE}} src play {{game}}' -e 'lua'
+
+dev-harmony:
+  @{{MON}} --exec '{{LOVE}} src harmony' -e 'lua'
 
 # install examples to projects folder (same as in-app)
 deploy-examples:
@@ -83,7 +88,7 @@ snap-examples:
 
 dev-dogfood-examples:
   @{{MON}} --verbose \
-    --exec '{{LOVE}} src --autotest; just snap-examples' \
+    --exec 'just one-atest; just snap-examples' \
     -e 'lua' -w 'src'
 
 # run webserver on 8080 with hot reload
@@ -108,13 +113,15 @@ setup-web-dev:
 one:
   @{{LOVE}} src
 one-atest:
-  @{{LOVE}} src --autotest
+  @{{LOVE}} src test --auto
 one-dtest:
-  @{{LOVE}} src --drawtest
+  @{{LOVE}} src test --draw
 one-allt:
-  @{{LOVE}} src --drawtest --autotest
+  @{{LOVE}} src test --draw --auto
 one-size:
-  @{{LOVE}} src --size
+  @{{LOVE}} src test --size
+one-harmony:
+  @{{LOVE}} src harmony
 
 VERSION := `git describe --tags --long --always`
 
@@ -136,6 +143,14 @@ package-web-c: package-js-c
   @echo packaged:
   @ls -lh {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip
 
+
+zip-example name:
+  #!/usr/bin/env -S bash
+  PKG="{{name}}.compy"
+  7z -tzip a "$PKG" \
+     ./src/examples/{{name}}/* &> /dev/null \
+      && ls "$PKG" \
+      || echo 'ENOENT'
 
 package-js-dir DT: version
   #!/usr/bin/env -S bash

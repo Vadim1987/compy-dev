@@ -126,7 +126,6 @@ end
 --- @param text str
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)
-  self.entered = nil
   if type(text) == 'string' then
     local lines = string.lines(text)
     local n_added = #lines
@@ -811,8 +810,14 @@ function UserInputModel:handle(eval)
       ok, result = ev:apply(ent)
       if ok then
         if self.oneshot then
-          --- @diagnostic disable-next-line: param-type-mismatch
-          love.event.push('userinput')
+          if love.harmony then
+            if love.harmony.utils then
+              love.harmony.utils.love_event('userinput')
+            end
+          else
+            --- @diagnostic disable-next-line: param-type-mismatch
+            love.event.push('userinput')
+          end
         end
       else
         local perr = result[1]
@@ -830,7 +835,7 @@ function UserInputModel:handle(eval)
     end
   end
 
-  return ok, result
+  return ok, (result or ent)
 end
 
 ----------------

@@ -269,7 +269,6 @@ function UserInputView:draw(input, time)
   local isError = string.is_non_empty_string_array(err_text)
 
   local colors = self.cfg.colors
-  local b = self.cfg.border
   local fh = self.cfg.fh
   local h = self.cfg.h
 
@@ -278,11 +277,11 @@ function UserInputView:draw(input, time)
     local inLines = #err_text
     local inHeight = inLines * fh
     local apparentHeight = #err_text
-    local start_y = h - b - inHeight
+    local start_y = h - inHeight
     local drawBackground = function()
       G.setColor(colors.input.error_bg)
       G.rectangle("fill",
-        b,
+        0,
         start_y,
         drawableWidth,
         apparentHeight * fh)

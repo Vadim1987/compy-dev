@@ -4,14 +4,16 @@ require("controller.userInputController")
 
 
 local class = require('util.class')
-require("util.testTerminal")
-require("util.key")
 local LANG = require("util.eval")
+local FS = require('util.filesystem')
+require("util.key")
 require("util.table")
+local TerminalTest = require("util.test_terminal")
 
 --- @class ConsoleController
 --- @field time number
 --- @field model Model
+--- @field main_ctrl table
 --- @field main_env LuaEnv
 --- @field pre_env LuaEnv
 --- @field base_env LuaEnv
@@ -27,7 +29,7 @@ require("util.table")
 ConsoleController = class.create()
 
 --- @param M Model
-function ConsoleController.new(M)
+function ConsoleController.new(M, main_ctrl)
   local env = getfenv()
   local pre_env = table.clone(env)
   local config = M.cfg
@@ -37,6 +39,7 @@ function ConsoleController.new(M)
   local self = setmetatable({
     time        = 0,
     model       = M,
+    main_ctrl   = main_ctrl,
     input       = IC,
     editor      = EC,
     -- console runner env
@@ -96,7 +99,7 @@ local function run_user_code(f, cc, project_path)
   end
   ok, call_err = pcall(f)
   if project_path and ok then -- user project exec
-    Controller.set_user_handlers(env['love'])
+    cc.main_ctrl.set_user_handlers(env['love'])
   end
   output:restore_main()
   G.setCanvas()
@@ -121,14 +124,13 @@ end
 --- @param name string
 --- @return string[]?
 function ConsoleController:_readfile(name)
-  local PS            = self.model.projects
-  local p             = PS.current
-  local ok, lines_err = p:readfile(name)
+  local PS              = self.model.projects
+  local p               = PS.current
+  local ok, text_or_err = p:readfile(name)
   if ok then
-    local lines = lines_err
-    return lines
+    return text_or_err
   else
-    print(lines_err)
+    print(text_or_err)
   end
 end
 
@@ -157,24 +159,25 @@ function ConsoleController:run_project(name)
   if P.current then
     ok = true
   else
-    ok = self:open_project(name)
+    ok = self:open_project(name, false)
   end
   if ok then
-    local runner_env   = self:get_project_env()
-    local f, err, path = P:run(name, runner_env)
+    local runner_env        = self:get_project_env()
+    local f, load_err, path = P:run(name, runner_env)
     if f then
       local n = name or P.current.name or 'project'
       Log.info('Running \'' .. n .. '\'')
       local rok, run_err = run_user_code(f, self, path)
       if rok then
-        if Controller.has_user_update() then
+        if self.main_ctrl.has_user_update() then
           love.state.app_state = 'running'
         end
       else
         print('Error: ', run_err)
       end
     else
-      print(err)
+      --- TODO extract error message here
+      print(load_err)
     end
   end
 end
@@ -304,8 +307,7 @@ function ConsoleController.prepare_env(cc)
   --- @param name string
   --- @return any
   prepared.runfile          = function(name)
-    local con = check_open_pr(cc._readfile, cc, name)
-    local code = string.unlines(con)
+    local code = check_open_pr(cc._readfile, cc, name)
     local chunk, err = load(code, '', 't')
     if chunk then
       chunk()
@@ -365,7 +367,7 @@ function ConsoleController.prepare_project_env(cc)
     if love.state.app_state == 'inspect' then
       -- resume
       love.state.app_state = 'running'
-      Controller.restore_user_handlers()
+      cc.main_ctrl.restore_user_handlers()
     else
       print('No project halted')
     end
@@ -375,24 +377,26 @@ function ConsoleController.prepare_project_env(cc)
     close_project(cc)
   end
 
-  local input_ref
+  local ui_model, input_ref
   local create_input_handle   = function()
     input_ref = table.new_reftable()
   end
 
   --- @param eval Evaluator
   --- @param prompt string?
-  local input                 = function(eval, prompt)
+  --- @param init str?
+  local input                 = function(eval, prompt, init)
     if love.state.user_input then
       return -- there can be only one
     end
 
     if not input_ref then return end
-    local input = UserInputModel(cfg, eval, true, prompt)
-    local inp_con = UserInputController(input, input_ref)
+    ui_model = UserInputModel(cfg, eval, true, prompt)
+    ui_model:set_text(init)
+    local inp_con = UserInputController(ui_model, input_ref)
     local view = UserInputView(cfg.view, inp_con)
     love.state.user_input = {
-      M = input, C = inp_con, V = view
+      M = ui_model, C = inp_con, V = view
     }
     return input_ref
   end
@@ -403,12 +407,22 @@ function ConsoleController.prepare_project_env(cc)
   end
 
   --- @param prompt string?
-  project_env.input_code      = function(prompt)
-    return input(InputEvalLua, prompt)
+  --- @param init str?
+  project_env.input_code      = function(prompt, init)
+    return input(InputEvalLua, prompt, init)
   end
   --- @param prompt string?
-  project_env.input_text      = function(prompt)
-    return input(InputEvalText, prompt)
+  --- @param init str?
+  project_env.input_text      = function(prompt, init)
+    return input(InputEvalText, prompt, init)
+  end
+
+  --- @param content str
+  project_env.write_to_input  = function(content)
+    if not love.state.user_input then
+      return
+    end
+    ui_model:set_text(content)
   end
 
   --- @param filters table
@@ -456,6 +470,10 @@ function ConsoleController:evaluate_input()
 
   local eval_ok, res = inter:evaluate()
 
+  if eval_ok and not string.is_non_empty(res) then
+    return
+  end
+
   if eval and eval.parser then
     if eval_ok then
       local code = string.unlines(text)
@@ -493,6 +511,11 @@ end
 function ConsoleController:reset()
   self:quit_project()
   self.input:reset(true) -- clear history
+end
+
+function ConsoleController:restart()
+  self:stop_project_run()
+  self:run_project()
 end
 
 ---@return LuaEnv
@@ -540,18 +563,20 @@ function ConsoleController:suspend_run(msg)
 
   self.model.output:invalidate_terminal()
 
-  Controller.save_user_handlers(runner_env['love'])
-  Controller.set_default_handlers(self, self.view)
+  self.main_ctrl.save_user_handlers(runner_env['love'])
+  self.main_ctrl.set_default_handlers(self, self.view)
 end
 
+--- @param name string
+--- @param play boolean
 --- @return boolean success
-function ConsoleController:open_project(name)
+function ConsoleController:open_project(name, play)
   local P = self.model.projects
   if not name then
     print('No project name provided!')
     return false
   end
-  local open, create, err = P:opreate(name)
+  local open, create, err = P:opreate(name, play)
   local ok = open or create
   if ok then
     local project_loader = (function()
@@ -600,12 +625,12 @@ function ConsoleController:close_project()
 end
 
 function ConsoleController:stop_project_run()
-  Controller.set_default_handlers(self, self.view)
-  Controller.set_love_update(self)
+  self.main_ctrl.set_default_handlers(self, self.view)
+  self.main_ctrl.set_love_update(self)
   love.state.user_input = nil
   View.clear_snapshot()
-  Controller.set_love_draw(self, self.view)
-  Controller.clear_user_handlers()
+  self.main_ctrl.set_love_draw(self, self.view)
+  self.main_ctrl.clear_user_handlers()
   love.state.app_state = 'project_open'
 end
 
@@ -640,6 +665,7 @@ function ConsoleController:edit(name, state)
   local save = function(newcontent)
     return self:_writefile(filename, newcontent)
   end
+
   self.editor:open(filename, text, save)
   self.editor:restore_state(state)
 end
@@ -664,6 +690,8 @@ end
 function ConsoleController:textinput(t)
   if love.state.app_state == 'editor' then
     self.editor:textinput(t)
+  elseif self.cfg.mode == 'play' then
+    --- console is disabled in this mode
   else
     local input = self.input
     if input:has_error() then

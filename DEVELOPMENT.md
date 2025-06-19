@@ -1,3 +1,23 @@
+## Cloning
+
+Clone this project recursively, because libraries are included
+as submodules:
+
+```shell
+git clone --recurse-submodules
+# or
+git clone --recurse-submodules --shallow-submodules
+```
+
+If it's already cloned without, and you don't want to start over,
+they can be initialized with:
+
+```shell
+git submodule update --init
+# or
+git submodule update --init --depth 1
+```
+
 ## Installing
 
 To run the code, [LÖVE2D] is required. It's been tested and
@@ -6,6 +26,8 @@ developed on version 11.5 (Mysterious Mysteries).
 For unit tests, we are using the [busted] framework. Also, we
 need to supply a [utf-8][luautf8] library, one of which comes
 with LOVE, but is not available for Lua 5.1 / Luajit by default.
+[Luafilesystem][lfs] is used in some tests and utility scripts
+used for generating documentation.
 
 The recommended way of installing these is with [LuaRocks]:
 
@@ -61,34 +83,51 @@ end
 
 https://github.com/Davidobot/love.js
 
-## Testing
+## Test mode
 
-### Test modes
 
-#### normal
-
-The game can be run with the `--test` flag, which causes it to launch in test
-mode.
+The game can be run with a `test` subcommand, which causes it to
+launch in test mode.
 
 ```sh
-love src --test
+love src test
 ```
+### flags
 
-This is currently used for testing the canvas terminal, therefore it causes the
-terminal to be smaller (so overflows are clearly visible), and pre-fills it with
-characters.
-
-#### autotest
+#### auto
 
 ```sh
-love src --autotest
+love src test --auto
 ```
 
-#### drawtest
+Run the autotest function on startup. This is optionally defined
+in `tests/autotest.lua` with the following signature:
+```lua
+--- @param self ConsoleController
+local function autotest(self)
+  --- commands here
+end
+
+return autotest
+```
+
+#### size
 
 ```sh
-love src --drawtest
+love src test --size
 ```
+
+This is causes the terminal and the input field to be smaller
+(so overflows are clearly visible).
+
+#### draw
+
+```sh
+love src test --draw
+```
+
+For testing blend modes, draws several small canvases
+(implies `--size`).
 
 ### Running unit tests
 
@@ -125,6 +164,7 @@ HIDPI=true love src
 
 [löve2d]: https://love2d.org
 [busted]: https://lunarmodules.github.io/busted/
+[lfs]: https://lunarmodules.github.io/luafilesystem/
 [luautf8]: https://github.com/starwing/luautf8
 [luarocks]: https://luarocks.org/
 [love.js]: https://github.com/Davidobot/love.js

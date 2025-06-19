@@ -1,8 +1,16 @@
+require("view.view")
+
 require("util.string")
 require("util.key")
 local LANG = require("util.eval")
 
-local key_break_msg = "BREAK into program"
+local messages = {
+  user_break = "BREAK into program",
+  exit_anykey = "Press any key to exit.",
+  exec_error = function(err)
+    return 'Execution error at ' .. err
+  end
+}
 
 local get_user_input = function()
   if love.state.app_state == 'inspect' then return end
@@ -21,6 +29,7 @@ local _supported = {
   'mousemoved',
   'mousepressed',
   'mousereleased',
+  'wheelmoved',
 }
 
 local _C
@@ -28,7 +37,7 @@ local _C
 --- @param msg string
 local function user_error_handler(msg)
   local err = LANG.get_call_error(msg) or ''
-  local user_msg = 'Execution error at ' .. err
+  local user_msg = messages.exec_error(err)
   _C:suspend_run(user_msg)
   print(user_msg)
 end
@@ -93,16 +102,6 @@ local set_handlers = function(userlove)
   end
 end
 
---- @class Handlers
---- @field update function?
---- @field draw function?
---- @field keypressed function?
---- @field keyreleased function?
---- @field textinput function?
---- @field mousemoved function?
---- @field mousepressed function?
---- @field mousereleased function?
-
 --- @class Controller
 --- @field _defaults Handlers
 --- @field _userhandler Handlers
@@ -115,13 +114,15 @@ end
 --- @field restore_user_handlers function
 --- @field has_user_update function
 Controller = {
+  --- @private
   _defaults = {},
+  --- @private
   _userhandlers = {},
 
   ----------------
   --  keyboard  --
   ----------------
-
+  --- @private
   --- @param C ConsoleController
   set_love_keypressed = function(C)
     local function keypressed(k)
@@ -153,6 +154,8 @@ Controller = {
     Controller._defaults.keypressed = keypressed
     love.keypressed = keypressed
   end,
+
+  --- @private
   --- @param C ConsoleController
   set_love_keyreleased = function(C)
     --- @diagnostic disable-next-line: duplicate-set-field
@@ -162,6 +165,8 @@ Controller = {
     Controller._defaults.keyreleased = keyreleased
     love.keyreleased = keyreleased
   end,
+
+  --- @private
   --- @param C ConsoleController
   set_love_textinput = function(C)
     local function textinput(t)
@@ -174,7 +179,7 @@ Controller = {
   -------------
   --  mouse  --
   -------------
-
+  --- @private
   --- @param C ConsoleController
   set_love_mousepressed = function(C)
     local function mousepressed(x, y, button)
@@ -187,6 +192,8 @@ Controller = {
     Controller._defaults.mousepressed = mousepressed
     love.mousepressed = mousepressed
   end,
+
+  --- @private
   --- @param C ConsoleController
   set_love_mousereleased = function(C)
     local function mousereleased(x, y, button)
@@ -196,6 +203,8 @@ Controller = {
     Controller._defaults.mousereleased = mousereleased
     love.mousereleased = mousereleased
   end,
+
+  --- @private
   --- @param C ConsoleController
   set_love_mousemoved = function(C)
     local function mousemoved(x, y, dx, dy)
@@ -206,10 +215,22 @@ Controller = {
     love.mousemoved = mousemoved
   end,
 
+  --- @private
+  --- @param C ConsoleController
+  set_love_wheelmoved = function(C)
+    local function wheelmoved(x, y)
+      --- TODO
+      -- C:wheelmoved(x, y)
+    end
+
+    Controller._defaults.wheelmoved = wheelmoved
+    love.wheelmoved = wheelmoved
+  end,
+
   --------------
   --  update  --
   --------------
-
+  --- @private
   --- @param C ConsoleController
   set_love_update = function(C)
     local function update(dt)
@@ -237,6 +258,9 @@ Controller = {
         wrap(uup, dt)
       end
       Controller.snapshot()
+      if love.harmony then
+        love.harmony.timer_update(dt)
+      end
     end
 
     if not Controller._defaults.update then
@@ -248,6 +272,7 @@ Controller = {
   ---------------
   --    draw   --
   ---------------
+  --- @private
   --- @param C ConsoleController
   --- @param CV ConsoleView
   set_love_draw = function(C, CV)
@@ -258,8 +283,44 @@ Controller = {
 
     View.prev_draw = love.draw
     View.main_draw = love.draw
+    View.end_draw = function()
+      local w, h = G.getDimensions()
+      G.setColor(Color[Color.white])
+      G.setFont(C.cfg.view.font)
+      G.clear()
+      G.printf(messages.exit_anykey, 0, h / 3, w, "center")
+    end
   end,
 
+
+  --- Quit
+  --- @private
+  --- @param C ConsoleController
+  set_love_quit = function(C)
+    local cfg = C.cfg
+
+    local function quit()
+      if love.state.app_state == 'shutdown' then
+        return false
+      end
+
+      if cfg.mode == 'play' then
+        C:quit_project()
+        love.state.app_state = 'shutdown'
+        love.state.user_input = nil
+
+        love.draw = View.end_draw
+        return true
+      end
+      if love.state.app_state == 'running' then
+        C:quit_project()
+        return true
+      end
+    end
+    love.quit = quit
+  end,
+
+  --- @private
   snapshot = function()
     if user_draw then
       View.snap_canvas()
@@ -284,7 +345,7 @@ Controller = {
     Controller.set_love_mousemoved(C)
     Controller.set_love_mousepressed(C)
     Controller.set_love_mousereleased(C)
-    -- SKIPPED wheelmoved - TODO
+    Controller.set_love_wheelmoved(C)
 
     -- SKIPPED touchpressed  - target device doesn't support touch
     -- SKIPPED touchreleased - target device doesn't support touch
@@ -296,7 +357,6 @@ Controller = {
     -- SKIPPED mousefocus  - intented to run as kiosk app
     -- SKIPPED visible     - intented to run as kiosk app
 
-    -- SKIPPED quit        - intented to run as kiosk app - TODO
     -- SKIPPED threaderror - no threading support
 
     -- SKIPPED resize           - intented to run as kiosk app
@@ -310,10 +370,14 @@ Controller = {
     user_draw = false
     Controller.set_love_draw(C, CV)
     Controller._defaults.draw = View.main_draw
+    Controller.set_love_quit(C)
   end,
 
   --- @param C ConsoleController
   setup_callback_handlers = function(C)
+    local cfg = C.cfg
+    local playback = cfg.mode == 'play'
+
     local clear_user_input = function()
       love.state.user_input = nil
     end
@@ -322,46 +386,66 @@ Controller = {
     local handlers = love.handlers
 
     handlers.keypressed = function(k)
-      if Key.ctrl() then
-        if k == "pause" then
-          C:suspend_run(key_break_msg)
-        end
-        if Key.shift() then
-          -- Ensure the user can get back to the console
-          if k == "q" then
-            C:quit_project()
-          end
-          if k == "s" then
-            if love.state.app_state == 'running' then
-              C:stop_project_run()
-            elseif love.state.app_state == 'editor' then
-              C:finish_edit()
+      local function quickswitch()
+        if k == 'f8' then
+          if love.state.app_state == 'running'
+              or love.state.app_state == 'inspect'
+              or love.state.app_state == 'project_open'
+          then
+            C:stop_project_run()
+            local st = love.state.editor
+            if st then
+              C:edit(st.buffer.filename, st)
+            else
+              C:edit()
             end
-          end
-          if k == "r" then
-            C:reset()
+          elseif love.state.app_state == 'editor' then
+            if C.editor:is_normal_mode() then
+              local ed_state = C:finish_edit()
+              love.state.editor = ed_state
+              C:run_project()
+            end
           end
         end
       end
-      if k == 'f8' then
-        if love.state.app_state == 'running'
-            or love.state.app_state == 'inspect'
-            or love.state.app_state == 'project_open'
-        then
-          C:stop_project_run()
-          local st = love.state.editor
-          if st then
-            C:edit(st.buffer.filename, st)
-          else
-            C:edit()
+      local function project_state_change()
+        if Key.ctrl() then
+          if k == "pause" then
+            C:suspend_run(messages.user_break)
           end
-        elseif love.state.app_state == 'editor' then
-          if C.editor:is_normal_mode() then
-            local ed_state = C:finish_edit()
-            love.state.editor = ed_state
-            C:run_project()
+          if Key.shift() then
+            -- Ensure the user can get back to the console
+            if k == "q" then
+              C:quit_project()
+            end
+            if k == "s" then
+              if love.state.app_state == 'running' then
+                C:stop_project_run()
+              elseif love.state.app_state == 'editor' then
+                C:finish_edit()
+              end
+            end
+            if k == "r" then
+              C:reset()
+            end
           end
         end
+      end
+      local function restart()
+        if Key.ctrl() and Key.alt() and k == "r" then
+          C:restart()
+        end
+      end
+
+      if playback then
+        if love.state.app_state == 'shutdown' then
+          love.event.quit()
+        end
+        restart()
+      else
+        restart()
+        quickswitch()
+        project_state_change()
       end
 
       local user_input = get_user_input()
@@ -400,8 +484,8 @@ Controller = {
       if user_input then
         user_input.C:mousepressed(x, y, btn)
       else
-        if love.mousepressed then return love.mousepressed(x, y, btn) end
       end
+      if love.mousepressed then return love.mousepressed(x, y, btn) end
     end
 
     handlers.mousereleased = function(x, y, btn)
@@ -409,8 +493,8 @@ Controller = {
       if user_input then
         user_input.C:mousereleased(x, y, btn)
       else
-        if love.mousereleased then return love.mousereleased(x, y, btn) end
       end
+      if love.mousereleased then return love.mousereleased(x, y, btn) end
     end
 
     handlers.mousemoved = function(x, y, dx, dy)
@@ -418,8 +502,8 @@ Controller = {
       if user_input then
         user_input.C:mousemoved(x, y, dx, dy)
       else
-        if love.mousemoved then return love.mousemoved(x, y, dx, dy) end
       end
+      if love.mousemoved then return love.mousemoved(x, y, dx, dy) end
     end
 
     handlers.userinput = function()

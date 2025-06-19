@@ -1,5 +1,7 @@
 require("util.table")
 
+local unpack  = unpack or table.unpack
+
 local shift_k = { "lshift", "rshift" }
 local ctrl_k  = { "lctrl", "rctrl" }
 local alt_k   = { "lalt", "ralt" }
@@ -16,7 +18,8 @@ local function is_shift(k)
 end
 --- @return boolean
 local function shift()
-  return love.keyboard.isDown("lshift", "rshift")
+  ---@diagnostic disable-next-line: param-type-mismatch
+  return love.keyboard.isDown(unpack(shift_k))
 end
 
 --- @return boolean
@@ -25,7 +28,8 @@ local function is_ctrl(k)
 end
 --- @return boolean
 local function ctrl()
-  return love.keyboard.isDown("lctrl", "rctrl")
+  ---@diagnostic disable-next-line: param-type-mismatch
+  return love.keyboard.isDown(unpack(ctrl_k))
 end
 
 --- @return boolean
@@ -34,7 +38,8 @@ local function is_alt(k)
 end
 --- @return boolean
 local function alt()
-  return love.keyboard.isDown("lalt", "ralt")
+  ---@diagnostic disable-next-line: param-type-mismatch
+  return love.keyboard.isDown(unpack(alt_k))
 end
 
 Key = {

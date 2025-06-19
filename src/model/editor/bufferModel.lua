@@ -8,11 +8,27 @@ require('util.range')
 require('util.string')
 require('util.dequeue')
 
+--- Convert Blocks to string array
+--- @param blocks Block[]
+--- @return Dequeue<string>
+local function render_blocks(blocks)
+  local ret = Dequeue.typed('string')
+  for _, v in ipairs(blocks) do
+    if v:is_empty() then
+      ret:append('')
+    else
+      ret:append_all(v.lines)
+    end
+  end
+  ret:append('')
+  return ret
+end
+
 --- Todo: convert to class, store revmap
 --- @alias Content Dequeue<string>|Dequeue<Block>
 
 --- @param name string
---- @param content Dequeue<string>
+--- @param content string
 --- @param save function
 --- @param chunker Chunker?
 --- @param highlighter Highlighter?
@@ -24,16 +40,18 @@ local function new(name, content, save,
   local revmap = {}
   local readonly = false
 
+  local lines = string.lines(content or '')
+
   local function plaintext()
     ct = 'plain'
-    _content = Dequeue(content, 'string')
+    _content = Dequeue(lines, 'string')
     sel = #_content + 1
   end
   --- only passing this around so the linter shuts up about nil
   --- @param chk function
   local function luacontent(chk)
     ct = 'lua'
-    local ok, blocks, ast = chk(content)
+    local ok, blocks, ast = chk(lines)
     if ok then
       local len = #blocks
       sel = len + 1
@@ -129,10 +147,9 @@ end
 function BufferModel:get_text_content()
   --- TODO require
   require = _G.o_require or _G.require
-  local B = require('util.block')
   if self.content_type == 'lua'
   then
-    return B.render_blocks(self.content)
+    return render_blocks(self.content)
   else
     return self.content:items()
   end

@@ -1,5 +1,10 @@
 require('util.lua')
 
+if _G.arg[2] == 'harmony' then
+  require("harmony.init")(true)
+end
+
+--- @diagnostic disable-next-line: duplicate-set-field
 function love.conf(t)
   t.identity = 'compy'
   t.window.title = 'Compy'
@@ -8,6 +13,13 @@ function love.conf(t)
   if os.getenv("DEBUG") then
     love.DEBUG = true
   end
+  if os.getenv("TRACE") then
+    love.TRACE = true
+  end
+
+  --- disable unused modules to shorten startup
+  t.modules.joystick = false
+  t.modules.physics = false
 
   local width = 1024
   local height = 600

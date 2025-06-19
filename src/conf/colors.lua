@@ -44,7 +44,6 @@ local lua_i = require('conf.lua')
 local md_i = require('conf.md')
 
 --- @class Colors
---- @field border RGB
 --- @field debug RGB
 --- @field terminal BaseColors
 --- @field editor EditorColors
@@ -53,7 +52,6 @@ local md_i = require('conf.md')
 --- @field input InputColors
 --- @field statusline table<InputTheme, StatuslineColors>
 return {
-  border = Color[Color.black + Color.bright],
   debug = Color[Color.yellow],
   terminal = {
     fg = Color[Color.black],

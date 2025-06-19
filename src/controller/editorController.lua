@@ -51,7 +51,7 @@ EditorController = class.create(new)
 
 
 --- @param name string
---- @param content string[]?
+--- @param content string?
 --- @param save function
 function EditorController:open(name, content, save)
   local w = self.model.cfg.view.drawableChars
@@ -65,7 +65,7 @@ function EditorController:open(name, content, save)
     local parser = luaEval.parser
     if not parser then return end
     hl = luaEval.highlighter
-    --- @param t string[]
+    --- @param t string
     --- @param single boolean
     ch = function(t, single)
       return parser.chunker(t, w, single)
@@ -275,8 +275,9 @@ function EditorController:_handle_submit(go)
       local sel = buf:get_selection()
       local block = buf:get_content():get(sel)
       if not block then return end
-      local ln = block.pos.start
-      if ln then go({ Empty(ln) }) end
+      --- TODO: why did I do this?
+      -- local ln = block.pos.start
+      -- if ln then go({ Empty(ln) }) end
     else
       local pretty = buf.printer(raw)
       if pretty then
@@ -377,7 +378,16 @@ function EditorController:_reorg_mode_keys(k)
     if k == "end" then
       self:_move_sel('down', nil, true, self.state.moved)
     end
+
     -- scroll
+    if not Key.shift()
+        and k == "pageup" then
+      self:_scroll('up', Key.ctrl())
+    end
+    if not Key.shift()
+        and k == "pagedown" then
+      self:_scroll('down', Key.ctrl())
+    end
     if Key.shift()
         and k == "pageup" then
       self:_scroll('up', false, 1)
@@ -426,6 +436,7 @@ function EditorController:_normal_mode_keys(k)
   local function newline()
     if not Key.ctrl() and Key.shift() and Key.is_enter(k) then
       buf:insert_newline()
+      self:save(buf)
       self.view:refresh()
       block_input()
     end

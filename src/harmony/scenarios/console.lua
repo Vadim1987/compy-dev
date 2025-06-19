@@ -1,0 +1,68 @@
+local h = love.harmony.utils or error()
+
+local function console()
+  scenario('1', function(wait)
+    wait(.1)
+    h.love_text('print("1")')
+    wait(.1)
+    h.love_key('return')
+    wait(.1)
+
+    hm_done()
+  end)
+
+  scenario('2', function(wait)
+    wait(.1)
+    h.love_text('print("2")')
+    wait(.1)
+    h.love_key('return')
+    wait(.1)
+    h.screenshot('after-2')
+    wait(.1)
+
+    hm_done()
+  end)
+
+  scenario('for', function(wait)
+    h.love_key('C-l')
+    wait(.1)
+    h.release_keys()
+
+    wait(.1)
+    h.love_text('for i = 1,17 do print("line " .. i) end')
+    wait(.1)
+    h.love_key('return')
+    wait(.1)
+    h.screenshot('for')
+    wait(.5)
+
+    hm_done()
+  end)
+
+  scenario('syntax_error', function(wait)
+    wait(.3)
+    h.love_key('C-l')
+    wait(.1)
+    h.release_keys()
+
+    wait(.1)
+    h.love_text('for i = 1 do print("line " .. i) end')
+    wait(.1)
+    h.screenshot('bad-code')
+    wait(.1)
+    h.love_key('return')
+    wait(.1)
+    h.screenshot('code-error')
+    wait(.1)
+    h.love_key('down')
+    wait(.1)
+    h.screenshot('error-hl')
+    wait(.5)
+    h.love_key('down')
+    wait(.1)
+
+    hm_done()
+  end)
+end
+
+console()

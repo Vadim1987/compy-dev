@@ -1,5 +1,6 @@
 // https://github.com/tapio/live-server
-const { start } = require('live-server')
+import server from 'live-server'
+const { start } = server
 
 const params = {
   port: 8080,
@@ -7,7 +8,7 @@ const params = {
   root: '../dist/web',
   open: false,
   ignore: '',
-  wait: 100, // Waits for all changes, before reloading. Defaults to 0 sec.
+  wait: 100, // Waits for all changes, before reloading
   middleware: [
     function (_req, res, next) {
       res.setHeader('Cross-Origin-Opener-Policy', 'same-origin')

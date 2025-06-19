@@ -1,0 +1,4 @@
+--- @class hump.Timer
+--- @field update fun(dt: number)
+--- @field script fun(f: function)
+--- TODO

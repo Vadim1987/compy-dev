@@ -1,7 +1,7 @@
 # Compy
 
 A console-based Lua-programmable computer for children based on
-[LÖVE2D][löve2d] framework.
+the [LÖVE2D][löve2d] framework.
 
 ## Principles
 
@@ -14,7 +14,7 @@ A console-based Lua-programmable computer for children based on
 - Share software in source package form
 - Minimize frustration
 
-# Usage
+# Usage (IDE mode)
 
 Rather than the default LÖVE storage locations (save directory,
 cache, etc), the application uses a folder under _Documents_ to
@@ -27,12 +27,13 @@ a project must be selected first.
 
 ## Keys
 
-| Command                                                           | Keymap                                        |
+| Command                                                           | Combination                                   |
 | :---------------------------------------------------------------- | :-------------------------------------------- |
 | Clear terminal                                                    | <kbd>Ctrl</kbd>+<kbd>L</kbd>                  |
 | Stop project                                                      | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
 | Quit project (stop and close)                                     | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd> |
 | Reset application to initial state                                | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> |
+| Reset project to initial state                                    | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd>   |
 | Exit application                                                  | <kbd>Ctrl</kbd>+<kbd>Esc</kbd>                |
 | Pause project                                                     | <kbd>Ctrl</kbd>+<kbd>Pause</kbd>              |
 | Toggle edit/run                                                   | <kbd>F8</kbd>                                 |
@@ -82,7 +83,7 @@ a project must be selected first.
 | Exit search                                                       | <kbd>Esc</kbd>                                |
 | Jump to selected definition                                       | <kbd>Enter ⏎</kbd>                            |
 
-### Projects
+## Projects
 
 A _project_ is a folder in the application's storage which
 contains at least a `main.lua` file. Projects can be loaded and
@@ -143,7 +144,7 @@ contents.
 
   Run _file_ if it's a lua script.
 
-### Editor
+## Editor
 
 If a project is open, the files inside can be edited or new ones
 created. Run the `edit()` command to do so.
@@ -187,5 +188,30 @@ without moving, press <kbd>Esc</kbd>.
 
 ![search](./doc/interface/search.apng)
 
+
+# Usage (playback mode)
+
+`love compy.love play <project>`
+
+* `<project>` is either
+  * a `.compy` package (a zipped project)
+  * a folder containing a valid project
+
+Paths will be searched in the following order:
+* for zips:
+  * current directory (or absolute path)
+  * compy storage directory
+* for folders
+  * current directory (or absolute path)
+  * compy storage directory
+  * projects directory
+
+## Keys
+
+| Command                        | Combination                                 |
+| :----------------------------- | :------------------------------------------ |
+| Reset project to initial state | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> |
+
+#
 
 [löve2d]: https://love2d.org

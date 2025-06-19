@@ -1,22 +1,34 @@
 require("util.string")
+local OS = require("util.os")
 
-FS = {
+local FS = {
   path_sep = (function()
     if love and love.system
-        and love.system.getOS() == "Windows" then
+        and OS.get_name() == "Windows" then
       return '\\'
     end
     return '/'
   end)(),
   messages = {
     enoent = function(name, type)
+      local n = name or ''
       if type == 'directory' or type == 'dir' then
-        return name .. ' is not a directory'
+        return n .. ' is not a directory'
       end
-      return name .. ' does not exist'
+      return n .. ' does not exist'
     end,
     mkdir_err = function(name, err)
-      return "Unable to create directory " .. name .. ': ' .. err
+      local n = name or ''
+      local err = err or ''
+      return "Unable to create directory " .. n .. ': ' .. err
+    end,
+    unreadable = function(name)
+      local n = name or ''
+      return "Unable to read " .. n
+    end,
+    cannot_open = function(name)
+      local n = name or ''
+      return "Can't open " .. n
     end,
   }
 }
@@ -48,11 +60,25 @@ FS.join_path = function(...)
   return FS.remove_dup_separators(raw)
 end
 
+--- @param path string
+--- @return boolean
+FS.is_absolute = function(path)
+  if love.system.getOS() == "Windows" then
+    --- TODO: untested
+    --- starts with 'C:\' or any other drive letter
+    return string.matches_r(path, '^%a:\\')
+  else
+    return string.matches_r(path, '^' .. FS.path_sep)
+  end
+end
+
 if love and not TESTING then
   local _fs
 
   LFS = love.filesystem
 
+  --- @param path string
+  --- @param filtertype love.FileType?
   local getDirectoryItemsInfo = function(path, filtertype)
     local items = {}
     local ls = LFS.getDirectoryItems(path)
@@ -68,7 +94,7 @@ if love and not TESTING then
   end
 
 
-  if love.system.getOS() == "Web" then
+  if love.system and love.system.getOS() == "Web" then
     _fs = {
       read = function(...)
         return LFS.read(...)
@@ -86,22 +112,36 @@ if love and not TESTING then
         return LFS.createDirectory(...)
       end,
       getDirectoryItemsInfo = getDirectoryItemsInfo,
+      mount = function(...)
+        return LFS.mount(...)
+      end,
     }
   else
     _fs = require("lib.nativefs.nativefs")
   end
 
   --- @param path string
+  --- @param filtertype love.FileType?
+  --- @param vfs boolean?
   --- @return boolean
-  function FS.exists(path)
-    if _fs.getInfo(path) then return true end
-    return false
+  function FS.exists(path, filtertype, vfs)
+    if vfs then
+      return LFS.getInfo(path, filtertype) and true or false
+    else
+      return _fs.getInfo(path, filtertype) and true or false
+    end
   end
 
   --- @param path string
   --- @return boolean success
   function FS.mkdir(path)
     return _fs.createDirectory(path)
+  end
+
+  --- @param path string
+  --- @return boolean success
+  function FS.mkdirp(path)
+    return FS.mkdir(path)
   end
 
   --- @param path string
@@ -135,16 +175,15 @@ if love and not TESTING then
   --- @param vfs boolean?
   --- @return string?
   function FS.read(path, vfs)
-    local lines
+    local contents
     if vfs then
-      local contents = LFS.read(path)
-      return contents
+      contents = LFS.read(path)
     else
-      lines = FS.lines(path)
-      if string.is_non_empty_string_array(lines) then
-        return string.unlines(lines)
-      end
+      contents = _fs.read('string', path, nil)
     end
+
+    ---@diagnostic disable-next-line: return-type-mismatch
+    return contents
   end
 
   --- @param path string
@@ -158,7 +197,8 @@ if love and not TESTING then
   --- @return boolean success
   --- @return string? error
   function FS.write(path, data)
-    return _fs.write(path, data)
+    local wok, werr = _fs.write(path, data)
+    return wok or false, werr
   end
 
   --- @param source string
@@ -175,7 +215,7 @@ if love and not TESTING then
     end)()
     local srcinfo = getInfo(source)
     if not srcinfo or srcinfo.type ~= 'file' then
-      return false, FS.messages.enoent('source')
+      return false, FS.messages.enoent('source ' .. source)
     end
 
     local tgtinfo = _fs.getInfo(target)
@@ -189,7 +229,7 @@ if love and not TESTING then
       to = FS.join_path(target, fn)
     end
     if not to then
-      return false, FS.messages.enoent('target')
+      return false, FS.messages.enoent('target ' .. target)
     end
 
     --- @type string
@@ -202,7 +242,7 @@ if love and not TESTING then
       return false, tostring(s_err)
     end
 
-    local out, t_err = FS.write(target, content)
+    local out, t_err = FS.write(to, content)
     if not out then
       return false, t_err
     end
@@ -254,8 +294,41 @@ if love and not TESTING then
 
     return cp_ok, cp_err
   end
+
+  --- @param source string
+  --- @param target string
+  --- @return boolean success
+  --- @return string? error
+  function FS.mv(source, target)
+    local cpok, cperr = FS.cp(source, target)
+    if cpok then
+      return FS.rm(source)
+    end
+    return false, cperr
+  end
+
+  --- @param target string
+  --- @param vfs boolean?
+  --- @return boolean success
+  --- @return string? error
+  function FS.rm(target, vfs)
+    if vfs then
+      return LFS.remove(target)
+    end
+    return _fs.remove(target)
+  end
+
+  --- @param path string
+  --- @param target string
+  --- @return boolean success
+  function FS.mount(path, target)
+    local ok = _fs.mount(path, target)
+    return ok
+  end
 else
+  --- used in unit tests where love utils are not available
   local lfs = require("lfs")
+
   --- @param path string
   --- @param data string
   --- @return boolean success
@@ -270,6 +343,44 @@ else
       return true, err
     end
     return false, oerr
+  end
+
+  --- @param path string
+  --- @return boolean success
+  --- @return string data|error
+  function FS.read(path)
+    local handle = io.open(path, "r")
+    if handle then
+      local content = handle:read("*a")
+      handle:close()
+      return true, content
+    else
+      return false, FS.messages.unreadable(path)
+    end
+  end
+
+  --- @param source string
+  --- @param target string
+  --- @return boolean success
+  --- @return string? error
+  function FS.cp(source, target)
+    local src = FS.exists(source)
+    local tgt = io.open(target, "w")
+
+    if not src then
+      return false, FS.messages.cannot_open(src)
+    end
+    if not tgt then
+      return false, FS.messages.cannot_open(tgt)
+    end
+
+    local rok, cont_err = FS.read(source)
+    if rok and cont_err then
+      local wok, werr = FS.write(target, cont_err)
+      return wok, werr
+    else
+      return false, cont_err
+    end
   end
 
   --- @param path string
@@ -306,6 +417,36 @@ else
   --- @return string? error
   function FS.unlink(path)
     return os.remove(path)
+  end
+
+  --- @param content str
+  --- @param ext string?
+  --- @param fixname string?
+  function FS.write_tempfile(content, ext, fixname)
+    local function create_temp()
+      local cmd = 'mktemp -u -p .'
+      if string.is_non_empty_string(ext) then
+        cmd = string.format('%s --suffix .%s', cmd, ext)
+      end
+      local _, result = OS.runcmd(cmd)
+      return result
+    end
+    local name =
+        string.is_non_empty_string(fixname)
+        and fixname .. (ext and '.' .. ext or '')
+        or create_temp()
+    local mok, merr = FS.mkdirp('./.debug')
+    if not mok then
+      return false, merr
+    end
+    local path = FS.join_path('./.debug', name)
+
+    local data = string.unlines(content)
+    local ok, err = FS.write(path, data)
+    if not ok then
+      return false, err
+    end
+    return ok
   end
 end
 
