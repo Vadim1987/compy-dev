@@ -1,8 +1,20 @@
 --- original from https://github.com/Aethelios/Conway-s-Game-of-Life-in-Lua-and-Love2D
 
 local cellSize = 10
-local gridWidth, gridHeight = G.getDimensions()
+local screenWidth, screenHeight = G.getDimensions()
+local gridWidth = screenWidth / cellSize
+local gridHeight = screenHeight / cellSize
 local grid = {}
+
+local speed = 10
+local time = 0
+local tick = function(dt)
+  time = time + dt
+  if time > (1 / speed) then
+    time = 0
+    return true
+  end
+end
 
 local function initializeGrid()
   for x = 1, gridWidth do
@@ -12,6 +24,11 @@ local function initializeGrid()
       grid[x][y] = math.random() > 0.7 and 1 or 0
     end
   end
+end
+
+local function init()
+  time = 0
+  initializeGrid()
 end
 
 local function countAliveNeighbors(x, y)
@@ -25,7 +42,8 @@ local function countAliveNeighbors(x, y)
             and ny >= 1
             and ny <= gridHeight
         then
-          count = count + grid[nx][ny]
+          local row = grid[nx] or {}
+          count = count + (row[ny] or 0)
         end
       end
     end
@@ -52,11 +70,25 @@ local function updateGrid()
 end
 
 function love.update(dt)
-  if love.keyboard.isDown('r') then
-    initializeGrid()
+  if tick(dt) then
+    updateGrid()
   end
+end
 
-  updateGrid()
+function love.keypressed(k)
+  if k == 'r' then
+    init()
+  end
+  if k == '-' then
+    if speed > 1 then
+      speed = speed - 1
+    end
+  end
+  if k == '+' or k == '=' then
+    if speed < 100 then
+      speed = speed + 1
+    end
+  end
 end
 
 function love.draw()
@@ -78,8 +110,13 @@ function love.draw()
     end
   end
 
-  G.setColor(1, 1, 1)
-  G.print("Press 'r' to reset", 10, G.getHeight() - 30)
+  G.setColor(1, 1, 1, .5)
+  G.print("Press 'r' to reset, +/- to adjust speed",
+    10, screenHeight - 30)
+  local speedLabel = "Speed: " .. speed
+  G.print(speedLabel, screenWidth - font:getWidth(speedLabel),
+    screenHeight - 30)
 end
 
+G.setFont(font)
 initializeGrid()
