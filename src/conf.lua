@@ -1,6 +1,9 @@
 require('util.lua')
+local init = require('init')
 
-if _G.arg[2] == 'harmony' then
+local start = init.argparse()
+
+if start.mode == 'harmony' then
   require("harmony.init")(true)
 end
 
@@ -43,4 +46,5 @@ function love.conf(t)
   if hostconf then
     hostconf.conf_love(t)
   end
+  love.start = start
 end

@@ -34,50 +34,6 @@ local exit = function(err)
   love.event.quit()
 end
 
---- CLI arguments
---- @param args table
---- @return Start
-local argparse = function(args)
-  if args[1] then
-    local m = args[1]
-    if m == 'harmony' then
-      return { mode = 'harmony' }
-    elseif m == 'test' then
-      local autotest = false
-      local drawtest = false
-      local sizedebug = false
-      for _, a in ipairs(args) do
-        if a == '--auto' then autotest = true end
-        if a == '--size' then sizedebug = true end
-        if a == '--draw' then
-          drawtest = true
-          sizedebug = true
-        end
-        if a == '--all' then
-          drawtest = true
-          sizedebug = true
-          autotest = true
-        end
-      end
-      return {
-        mode = 'test',
-        testflags = {
-          auto = autotest,
-          draw = drawtest,
-          size = sizedebug
-        }
-      }
-    elseif m == 'play' then
-      local a2 = args[2]
-      if not string.is_non_empty_string(a2) then
-        exit(messages.play_no_project)
-      end
-      return { mode = 'play', path = a2 }
-    end
-  end
-  return { mode = 'ide' }
-end
-
 --- Display
 --- @param flags Testflags
 --- @return ViewConfig
@@ -293,15 +249,19 @@ local load_project = function(path, paths)
   end
 end
 
---- @param args table
 --- @diagnostic disable-next-line: duplicate-set-field
-function love.load(args)
-  local startup = argparse(args)
+function love.load()
+  local startup = love.start
   local mode = startup.mode
   local harmony = love.harmony
   local autotest =
       mode == 'test' and startup.testflags.auto or false
   local playback = mode == 'play'
+
+  if playback and not string.is_non_empty_string(startup.path) then
+    exit(messages.play_no_project)
+    return
+  end
 
   local viewconf = config_view(startup.testflags)
   --- Android specific settings
