@@ -65,16 +65,16 @@ local config_view = function(flags)
     font_dir .. "PressStart2P-Regular.ttf", 12)
 
   local w = G.getWidth()
-  local h = love.fixHeight
+  local h = G.getHeight()
   local eh = h - 2 * fh
   local debugheight = math.floor(eh / (love.test_grid_y * fh))
-  local debugwidth = math.floor(love.fixWidth / love.test_grid_x) / fw
+  local debugwidth = math.floor(w / love.test_grid_x) / fw
   local drawableWidth = w
   if tf.size then
     drawableWidth = debugwidth * fw
   end
   -- drawtest hack
-  if drawableWidth < love.fixWidth / 3 then
+  if drawableWidth < w / 3 then
     drawableWidth = drawableWidth * 2
   end
 
