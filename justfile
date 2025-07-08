@@ -143,7 +143,7 @@ package-web-c: package-js-c
   @echo packaged:
   @ls -lh {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip
 
-
+# package an example to a .compy
 zip-example name:
   #!/usr/bin/env -S bash
   PKG="{{name}}.compy"
