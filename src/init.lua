@@ -8,6 +8,9 @@
 local argparse = function()
   local args = _G.arg
 
+  for k, v in pairs(args) do
+    print('init| ' .. k .. ' ' .. v)
+  end
   local m = args[2]
   if m then
     if m == 'harmony' then
