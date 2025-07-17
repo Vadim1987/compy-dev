@@ -347,23 +347,26 @@ Controller = {
     Controller.set_love_mousereleased(C)
     Controller.set_love_wheelmoved(C)
 
-    -- SKIPPED touchpressed  - target device doesn't support touch
-    -- SKIPPED touchreleased - target device doesn't support touch
-    -- SKIPPED touchmoved    - target device doesn't support touch
+    --- target device doesn't support touch
+    --- SKIPPED touchpressed
+    --- SKIPPED touchreleased
+    --- SKIPPED touchmoved
 
-    -- SKIPPED joystick and gamepad support
+    --- SKIPPED joystick and gamepad support
 
-    -- SKIPPED focus       - intented to run as kiosk app
-    -- SKIPPED mousefocus  - intented to run as kiosk app
-    -- SKIPPED visible     - intented to run as kiosk app
+    --- intented to run as kiosk app
+    --- SKIPPED focus
+    --- SKIPPED mousefocus
+    --- SKIPPED visible
+    --- SKIPPED resize
+    --- SKIPPED filedropped
+    --- SKIPPED directorydropped
 
-    -- SKIPPED threaderror - no threading support
+    --- target device has laptop form factor, hence disabled
+    --- SKIPPED displayrotated
 
-    -- SKIPPED resize           - intented to run as kiosk app
-    -- SKIPPED filedropped      - intented to run as kiosk app
-    -- SKIPPED directorydropped - intented to run as kiosk app
-    -- SKIPPED lowmemory
-    -- SKIPPED displayrotated   - target device has laptop form factor
+    --- SKIPPED threaderror
+    --- SKIPPED lowmemory
 
     user_update = false
     Controller.set_love_update(C)
