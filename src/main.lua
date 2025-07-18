@@ -43,8 +43,9 @@ local config_view = function(flags)
   local font_size = 32.4
 
   local font_dir = "assets/fonts/"
+  local mf = "ubuntu_mono_bold_nerd.ttf"
   local font_main = G.newFont(
-    font_dir .. "ubuntu_mono_bold_nerd.ttf", font_size)
+    font_dir .. mf, font_size)
   local font_icon = G.newFont(
     font_dir .. "SFMonoNerdFontMono-Regular.otf", font_size)
   local font_cjk = G.newFont(
@@ -62,9 +63,7 @@ local config_view = function(flags)
   local lines = 16
   local input_max = 14
 
-  local font_labels = G.newFont(
-    font_dir .. "PressStart2P-Regular.ttf", 12)
-
+  local font_labels = G.newFont(font_dir .. mf, 12)
   local w = G.getWidth()
   local h = G.getHeight()
   local eh = h - 2 * fh
@@ -94,8 +93,6 @@ local config_view = function(flags)
     show_debug_timer = false,
 
     labelfont = font_labels,
-    lfh = font_labels:getHeight(),
-    lfw = font_labels:getWidth('█'),
 
     w = w,
     h = h,

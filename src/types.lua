@@ -46,8 +46,6 @@
 --- @field show_append_hl boolean
 --- @field show_debug_timer boolean
 --- @field labelfont love.Font
---- @field lfh integer -- font height
---- @field lfw integer -- font width
 --- @field h integer
 --- @field w integer
 --- @field colors Colors
