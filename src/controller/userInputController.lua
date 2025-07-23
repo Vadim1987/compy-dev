@@ -1,6 +1,6 @@
 local class = require('util.class')
 require("util.key")
-require("util.string")
+require("util.string.string")
 
 --- @param model UserInputModel
 --- @param result table?

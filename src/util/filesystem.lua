@@ -1,5 +1,4 @@
-require("util.string")
-local OS = require("util.os")
+local OS = require("util.os") --- pulls in string
 
 local FS = {
   path_sep = (function()

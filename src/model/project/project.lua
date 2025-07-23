@@ -1,5 +1,5 @@
 require("util.lua")
-require("util.string")
+require("util.string.string")
 local FS = require("util.filesystem")
 local class = require('util.class')
 

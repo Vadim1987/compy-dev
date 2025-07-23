@@ -1,5 +1,5 @@
 require("util.dequeue")
-require("util.string")
+require("util.string.string")
 require("util.view")
 local class = require('util.class')
 local Terminal = require("lib.terminal")

@@ -1,6 +1,6 @@
 require("view.view")
 
-require("util.string")
+require("util.string.string")
 require("util.key")
 local LANG = require("util.eval")
 

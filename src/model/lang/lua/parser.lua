@@ -2,7 +2,7 @@ require("model.lang.lua.error")
 require("model.lang.highlight")
 local ct = require("conf.lua")
 require("util.debug")
-require("util.string")
+require("util.string.string")
 require("util.dequeue")
 
 --- @class luaAST : token[]

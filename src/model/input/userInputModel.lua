@@ -7,7 +7,7 @@ require("view.editor.visibleContent")
 local class = require('util.class')
 require("util.wrapped_text")
 require("util.dequeue")
-require("util.string")
+require("util.string.string")
 require("util.debug")
 require("util.lua")
 
