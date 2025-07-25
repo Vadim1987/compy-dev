@@ -1,4 +1,5 @@
 local redirect_to = require("model.io.redirect")
+local OS = require("util.os")
 require("model.consoleModel")
 require("controller.controller")
 require("controller.consoleController")
@@ -10,10 +11,9 @@ local hostconf = prequire('host')
 
 require("util.key")
 require("util.debug")
-local OS = require("util.os")
 local FS = require("util.filesystem")
 
-require("lib/error_explorer")
+require("lib.error_explorer")
 
 G = love.graphics
 
@@ -33,6 +33,7 @@ local exit = function(err)
   print(err)
   love.event.quit()
 end
+
 
 --- Display
 --- @param flags Testflags
