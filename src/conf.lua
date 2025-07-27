@@ -9,6 +9,7 @@ end
 
 --- @diagnostic disable-next-line: duplicate-set-field
 function love.conf(t)
+  t.window.resizable = false
   if os.getenv("DEBUG") then
     love.DEBUG = true
   end
@@ -35,6 +36,8 @@ function love.conf(t)
     end
     love.fixHeight = t.window.height
     love.fixWidth = t.window.width
+    -- Android: use SD card for storage
+    t.externalstorage = true
   end
   love.test_grid_x = 4
   love.test_grid_y = 4
@@ -43,8 +46,6 @@ function love.conf(t)
   t.modules.joystick = false
   t.modules.physics = false
 
-  -- Android: use SD card for storage
-  t.externalstorage = true
 
   local hostconf = prequire('host')
   if hostconf then
