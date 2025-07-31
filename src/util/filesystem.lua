@@ -139,8 +139,19 @@ if love and not TESTING then
 
   --- @param path string
   --- @return boolean success
+  --- @return string? err
   function FS.mkdirp(path)
-    return FS.mkdir(path)
+    local sep = FS.path_sep
+    local segments = string.split(path, sep)
+    for i, _ in ipairs(segments) do
+      local partial = table.slice(segments, 1, i)
+      local p = string.join(partial, sep)
+      local ok = FS.mkdir(p)
+      if not ok then
+        return false, FS.messages.mkdir_err(p)
+      end
+    end
+    return true
   end
 
   --- @param path string
