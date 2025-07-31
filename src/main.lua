@@ -31,6 +31,7 @@ local messages = {
 
 local exit = function(err)
   print(err)
+  love.state.app_state = 'shutdown'
   love.event.quit()
 end
 
