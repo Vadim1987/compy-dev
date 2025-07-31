@@ -146,7 +146,7 @@ package-web-c: package-js-c
 # package an example to a .compy
 zip-example name:
   #!/usr/bin/env -S bash
-  PKG="{{name}}.compy"
+  PKG="dist/{{name}}.compy"
   7z -tzip a "$PKG" \
      ./src/examples/{{name}}/* &> /dev/null \
       && ls "$PKG" \
