@@ -154,9 +154,8 @@ local setup_storage = function(mode)
     end
   else
     if OS.get_name() == 'Android' then
-      local savedir = love.filesystem.getSaveDirectory()
-
       if mode == 'play' then
+        local savedir = love.filesystem.getSaveDirectory()
         FS.mkdirp(savedir)
       else
         local ok, sd_path = android_storage_find()
@@ -199,11 +198,15 @@ end
 --- @param path string
 --- @param paths PathInfo
 local load_project = function(path, paths)
-  local is_zip = string.matches_r(path, '.compy$')
-  local s_path = paths.storage_path
-  local sb_dir = love.filesystem.getSourceBaseDirectory()
-  local p_path = paths.project_path
-  local m_path = paths.play_path
+  local is_zip    = string.matches_r(path, '.compy$')
+  local s_path    = paths.storage_path
+  local savedir   = love.filesystem.getSaveDirectory()
+  local id        = love.filesystem.getIdentity()
+  local base      = string.gsub(savedir, '/files/save/' .. id, '')
+  local cache     = FS.join_path(base, 'cache')
+  local sb_dir    = love.filesystem.getSourceBaseDirectory()
+  local p_path    = paths.project_path
+  local m_path    = paths.play_path
 
   local full_path = path
 
@@ -214,6 +217,9 @@ local load_project = function(path, paths)
     elseif FS.exists(FS.join_path(s_path, path), 'file') then
       ex = true
       full_path = FS.join_path(s_path, path)
+    elseif FS.exists(FS.join_path(cache, path), 'file') then
+      ex = true
+      full_path = FS.join_path(cache, path)
     elseif FS.exists(FS.join_path(sb_dir, path), 'file') then
       ex = true
       full_path = FS.join_path(sb_dir, path)
