@@ -46,7 +46,12 @@ Hacking on this requires [Node.js][node] and [NPM][npm] (or your
 [node runtime][deno] and [package manager][yarn] of choice), to
 run [love.js].
 
-### Just
+### Tools
+
+* [Just](just)
+* [nodemon]
+* [live-server]
+* [rsync]
 
 For automating tasks, we use [just][just]. For example, to set
 up the [web version](#web-version) for development, you can run
@@ -81,7 +86,7 @@ end
 
 ### Web version
 
-https://github.com/Davidobot/love.js
+[lovejs][love.js]
 
 ## Test mode
 
@@ -173,3 +178,6 @@ HIDPI=true love src
 [deno]: https://deno.land/
 [yarn]: https://yarnpkg.com/
 [just]: https://github.com/casey/just
+[live-server]: https://github.com/tapio/live-server
+[nodemon]: https://nodemon.io/
+[rsync]: https://rsync.samba.org/
