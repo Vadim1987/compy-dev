@@ -92,7 +92,7 @@ jobs:
         env:
           ACTIONS_STEP_DEBUG: true
         id: build-packages
-        uses: love-actions/love-actions-linux@v1
+        uses: compy-toys/love-actions-linux@v2.0.2
         with:
           app-name: ${{ env.PRODUCT_NAME }}
           bundle-id: ${{ env.BUNDLE_ID }}
