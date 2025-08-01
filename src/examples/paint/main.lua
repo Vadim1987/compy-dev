@@ -1,5 +1,3 @@
---- @diagnostic disable: duplicate-set-field,lowercase-global
-
 local goose = { 0.303, 0.431, 0.431 }
 local width, height = G.getDimensions()
 --- color palette
@@ -303,7 +301,6 @@ end
 
 function love.draw()
   drawBackground()
-  -- G.draw(canvas)
   drawToolbox()
   drawColorPalette()
   G.draw(canvas, box_w)
