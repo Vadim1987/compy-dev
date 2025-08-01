@@ -132,6 +132,21 @@ function love.mousereleased(_, _, button)
   end
 end
 
+function drawHelp()
+  G.setColor(1, 1, 1, .5)
+  local margin = 5
+  local bottom = screenHeight - margin
+  local right_edge = screenWidth - margin
+  local h = font:getHeight()
+  local reset_msg = "Reset: [r] key or long press"
+  local speed_msg = "Set speed: [+]/[-] key or drag up/down"
+  G.print(reset_msg, margin, bottom - h - h)
+  G.print(speed_msg, margin, bottom - h)
+  local speedLabel = "Speed: " .. speed
+  local labelWidth = font:getWidth(speedLabel)
+  G.print(speedLabel, right_edge - labelWidth, bottom - h)
+end
+
 function love.draw()
   for x = 1, gridWidth do
     for y = 1, gridHeight do
@@ -151,12 +166,7 @@ function love.draw()
     end
   end
 
-  G.setColor(1, 1, 1, .5)
-  G.print("Press 'r' to reset, +/- to adjust speed",
-    10, screenHeight - 30)
-  local speedLabel = "Speed: " .. speed
-  G.print(speedLabel, screenWidth - font:getWidth(speedLabel),
-    screenHeight - 30)
+  drawHelp()
 end
 
 G.setFont(font)
