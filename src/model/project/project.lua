@@ -234,7 +234,7 @@ print('Hello world!')
     return false, write_err
   end
   local readme = FS.join_path(p_path, ProjectService.README)
-  local r_text = '# ' .. name
+  local r_text = '## ' .. name
   local rok, r_err = FS.write(readme, r_text)
   if not rok then
     return false, r_err
