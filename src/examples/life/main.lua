@@ -8,10 +8,10 @@ local grid = {}
 
 g_dir = nil
 mouse_held = false
+hold_time = 0
 local speed = 10
 local time = 0
-local tick = function(dt)
-  time = time + dt
+local tick = function()
   if time > (1 / speed) then
     time = 0
     return true
@@ -83,7 +83,11 @@ function change_speed(d)
 end
 
 function love.update(dt)
-  if tick(dt) then
+  time = time + dt
+  if love.mouse.isDown(1) then
+    hold_time = hold_time + dt
+  end
+  if tick() then
     updateGrid()
   end
 end
@@ -119,7 +123,12 @@ end
 function love.mousereleased(_, _, button)
   if button == 1 then
     mouse_held = false
-    change_speed(g_dir)
+    if hold_time > 1 then
+      init()
+    elseif g_dir then
+      change_speed(g_dir)
+    end
+    hold_time = 0
   end
 end
 
