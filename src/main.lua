@@ -65,8 +65,8 @@ local config_view = function(flags)
   local input_max = 14
 
   local font_labels = G.newFont(font_dir .. mf, 12)
-  local w = G.getWidth()
-  local h = G.getHeight()
+  local w = love.fixWidth or G.getWidth()
+  local h = love.fixHeight or G.getHeight()
   local eh = h - 2 * fh
   local debugheight = math.floor(eh / (love.test_grid_y * fh))
   local debugwidth = math.floor(w / love.test_grid_x) / fw
