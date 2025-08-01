@@ -6,6 +6,8 @@ local gridWidth = screenWidth / cellSize
 local gridHeight = screenHeight / cellSize
 local grid = {}
 
+g_dir = nil
+mouse_held = false
 local speed = 10
 local time = 0
 local tick = function(dt)
@@ -95,6 +97,29 @@ function love.keypressed(k)
   end
   if k == '+' or k == '=' then
     change_speed(1)
+  end
+end
+
+function love.mousemoved(_, _, _, dy)
+  if love.mouse.isDown(1) then
+    if dy < 0 then
+      g_dir = 1
+    elseif dy > 0 then
+      g_dir = -1
+    end
+  end
+end
+
+function love.mousepressed(_, _, button)
+  if button == 1 then
+    mouse_held = true
+  end
+end
+
+function love.mousereleased(_, _, button)
+  if button == 1 then
+    mouse_held = false
+    change_speed(g_dir)
   end
 end
 
