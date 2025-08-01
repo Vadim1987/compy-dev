@@ -172,6 +172,7 @@ end
 --- @field run function
 ProjectService = class.create(newps)
 ProjectService.MAIN = 'main.lua'
+ProjectService.README = 'README.md'
 ProjectService.messages = messages
 
 --- @param name string
@@ -231,6 +232,12 @@ print('Hello world!')
   local ok, write_err = FS.write(main, example)
   if not ok then
     return false, write_err
+  end
+  local readme = FS.join_path(p_path, ProjectService.README)
+  local r_text = '# ' .. name
+  local rok, r_err = FS.write(readme, r_text)
+  if not rok then
+    return false, r_err
   end
   return true
 end
