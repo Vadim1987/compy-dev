@@ -97,6 +97,7 @@ function point(x, y, btn)
   if inWeightRange(x, y) then
     setLineWeight(y)
   end
+end
 ```
 
 Simply check where the click is, and forward it to the respective handler. If we set up our functions correctly, there should not be more than one thing happening in any single interaction.
