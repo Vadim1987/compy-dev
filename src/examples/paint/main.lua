@@ -58,15 +58,15 @@ function drawBackground()
   G.rectangle("fill", 0, 0, width, height)
 end
 
-function drawColorPalette()
-  local y = height - block_h
-
+function drawPaletteOutline(y)
   G.setColor(Color[bg_color])
   G.rectangle("fill", 0, y - block_h, block_w * 2, block_h * 2)
   G.setColor(Color[Color.white])
   G.rectangle("line", 0, y - block_h, sel_w, pal_h)
   G.rectangle("line", sel_w, y - block_h, width, pal_h)
-  -- display selection
+end
+
+function drawSelectedColor(y)
   G.setColor(Color[color])
   G.rectangle("fill", block_w / 2, y - (block_h / 2),
     block_w, block_h)
@@ -78,8 +78,9 @@ function drawColorPalette()
   G.setColor(Color[line_color])
   G.rectangle("line", block_w / 2, y - (block_h / 2),
     block_w, block_h)
+end
 
-  -- available colors
+function drawColorBoxes(y)
   for c = 0, 7 do
     local x = block_w * (c + 2)
     G.setColor(Color[c])
@@ -92,6 +93,12 @@ function drawColorPalette()
   end
 end
 
+function drawColorPalette()
+  local y = height - block_h
+  drawPaletteOutline(y)
+  drawSelectedColor(y)
+  drawColorBoxes(y)
+end
 function drawBrush(cx, cy)
   G.push()
   G.translate(cx, cy)
