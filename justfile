@@ -152,6 +152,13 @@ zip-example name:
       && ls "$PKG" \
       || echo 'ENOENT'
 
+zip-examples-all:
+  #!/usr/bin/env -S bash
+  for e in ./src/examples/*
+  do
+    just zip-example $(basename $e)
+  done
+
 package-js-dir DT: version
   #!/usr/bin/env -S bash
   WEB={{DT}}

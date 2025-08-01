@@ -14,6 +14,7 @@ env:
   OUTPUT_FOLDER: dist
   ARTIFACT_FOLDER: artifact
   LOVE_ARTIFACT_NAME: ${{ vars.PRODUCT_NAME_SC }}.love
+  EXAMPLES_ARTIFACT_NAME: ${{ vars.PRODUCT_NAME_SC }}-examples.zip
   IDE_DEBUG_APK_NAME: ${{ vars.PRODUCT_NAME }}-IDE-debug.apk
   PLAYER_DEBUG_APK_NAME: ${{ vars.PRODUCT_NAME }}-player-debug.apk
   IDE_APK_NAME: ${{ vars.PRODUCT_NAME }}-IDE-release.apk
@@ -72,6 +73,23 @@ jobs:
         with:
           name: game.love
           path: ${{ env.OUTPUT_FOLDER }}/${{ env.LOVE_ARTIFACT_NAME }}
+
+  build-examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Just
+        uses: extractions/setup-just@v3
+      - name: Package examples
+        run: just zip-examples-all
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          compression-level: 0
+          name: ${{ env.EXAMPLES_ARTIFACT_NAME }}
+          path: ${{ env.OUTPUT_FOLDER }}/*.compy
 
   build-linux:
     runs-on: ubuntu-latest
@@ -308,6 +326,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ${{ env.PLAYER_APK_NAME }}
+          path: ${{ env.ARTIFACT_FOLDER }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.EXAMPLES_ARTIFACT_NAME }}
           path: ${{ env.ARTIFACT_FOLDER }}
       - name: control
         run: ls -lR ${{ env.ARTIFACT_FOLDER }}/
