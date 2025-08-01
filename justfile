@@ -67,6 +67,7 @@ deploy-examples:
     # du -sh "$PROJ_PATH/$P"
     cp -r "$EX_PATH/$P" "$PROJ_PATH/"
   done
+
 # copy examples from project folder to dist and examples folder
 snap-examples:
   #!/usr/bin/env -S bash
@@ -116,6 +117,8 @@ one-atest:
   @{{LOVE}} src test --auto
 one-dtest:
   @{{LOVE}} src test --draw
+one-ptest game:
+  @{{LOVE}} src play {{game}}
 one-allt:
   @{{LOVE}} src test --draw --auto
 one-size:
