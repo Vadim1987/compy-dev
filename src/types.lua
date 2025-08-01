@@ -18,6 +18,10 @@
 --- @class CursorInfo table
 --- @field cursor Cursor
 
+--- @class Point table
+--- @field x number
+--- @field y number
+
 ---@alias VerticalDir
 ---| 'up'
 ---| 'down'

@@ -109,9 +109,32 @@ local set_handlers = function(userlove)
   end
 end
 
+local click_delay = 0.2
+local drift_tolerance = 2.5
+
 local click_count = 0
 local click_timer = 0
-local click_delay = 0.3
+--- @type Point?
+local click_pos = nil
+
+--- @param prev Point?
+--- @param cur Point?
+--- @return boolean
+local function no_drift(prev, cur)
+  if prev and cur
+  then
+    local px, py = prev.x, prev.y
+    local cx, cy = cur.x, cur.y
+    if px and cx and math.abs(px - cx) < drift_tolerance
+    then
+      if py and cy and math.abs(py - cy) < drift_tolerance
+      then
+        return true
+      end
+    end
+  end
+  return false
+end
 
 --- @class Controller
 --- @field _defaults Handlers
@@ -325,14 +348,20 @@ Controller = {
           local handler = love.singleclick
           if handler then
             local x, y = love.mouse.getPosition()
-            handler(x, y)
+            local cur = { x = x, y = y }
+            if no_drift(click_pos, cur) then
+              handler(x, y)
+            end
           end
         elseif click_count >= 2 then
           -- double click detected
           local dbl_handler = love.doubleclick
           if dbl_handler then
             local x, y = love.mouse.getPosition()
-            dbl_handler(x, y)
+            local cur = { x = x, y = y }
+            if no_drift(click_pos, cur) then
+              dbl_handler(x, y)
+            end
           end
         end
         click_count = 0
@@ -609,6 +638,7 @@ Controller = {
       if btn == 1 then
         click_count = click_count + 1
         click_timer = click_delay
+        click_pos = { x = x, y = y }
       end
       local user_input = get_user_input()
       if user_input then
