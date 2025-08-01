@@ -6,9 +6,10 @@ local grid_w = screen_w / cell_size
 local grid_h = screen_h / cell_size
 local grid = {}
 
-g_dir = nil
 mouse_held = false
+hold_y = nil
 hold_time = 0
+epsilon = 3
 local speed = 10
 local time = 0
 local tick = function()
@@ -72,14 +73,17 @@ local function updateGrid()
 end
 
 function changeSpeed(d)
-  if not d then return end
-  if d > 0 and speed >= 100 then
+  if not d
+      or math.abs(d) < epsilon
+  then
     return
   end
-  if d < 0 and speed < 1 then
-    return
+  if d < 0 and speed > 1 then
+    speed = speed - 1
   end
-  speed = speed + d
+  if d > 0 and speed < 99 then
+    speed = speed + 1
+  end
 end
 
 function love.update(dt)
@@ -104,30 +108,25 @@ function love.keypressed(k)
   end
 end
 
-function love.mousemoved(_, _, _, dy)
-  if love.mouse.isDown(1) then
-    if dy < 0 then
-      g_dir = 1
-    elseif dy > 0 then
-      g_dir = -1
-    end
-  end
-end
-
-function love.mousepressed(_, _, button)
+function love.mousepressed(_, y, button)
   if button == 1 then
     mouse_held = true
+    hold_y = y
   end
 end
 
-function love.mousereleased(_, _, button)
+function love.mousereleased(_, y, button)
   if button == 1 then
     mouse_held = false
     if hold_time > 1 then
       init()
-    elseif g_dir then
-      changeSpeed(g_dir)
+    else
+      if hold_y then
+        local dy = hold_y - y
+        changeSpeed(dy)
+      end
     end
+    hold_y = nil
     hold_time = 0
   end
 end
@@ -170,4 +169,5 @@ function love.draw()
 end
 
 G.setFont(font)
+math.randomseed(os.time())
 initializeGrid()
