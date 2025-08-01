@@ -384,14 +384,6 @@ function love.mousemoved(x, y, dx, dy)
   end
 end
 
-function love.touchpressed(_, x, y)
-  point(x, y)
-end
-
-function love.touchmoved(_, x, y)
-  use_canvas(x, y)
-end
-
 colorkeys = {
   ['1'] = 0,
   ['2'] = 1,
