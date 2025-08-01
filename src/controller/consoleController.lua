@@ -472,6 +472,7 @@ function ConsoleController:evaluate_input()
   local inter = self.input
 
   local text = inter:get_text()
+  if text:is_empty() then return end
   local eval = inter:get_eval()
 
   local eval_ok, res = inter:evaluate()
