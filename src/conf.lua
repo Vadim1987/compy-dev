@@ -64,7 +64,6 @@ function love.conf(t)
   end
 
   t.identity = 'compy'
-  t.window.title = 'Compy'
   t.window.resizable = false
 
   if start.mode ~= 'play' then
@@ -84,6 +83,15 @@ function love.conf(t)
     love.fixWidth = t.window.width
     -- Android: use SD card for storage
     t.externalstorage = true
+
+    t.window.title = 'Compy IDE'
+  else
+    local gp = start.path or ''
+    local title = 'Compy Player'
+    if string.len(gp) > 0 then
+      title = string.format('%s - %s', 'Compy Player', gp)
+    end
+    t.window.title = title
   end
   love.test_grid_x = 4
   love.test_grid_y = 4
