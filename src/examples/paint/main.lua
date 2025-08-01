@@ -1,38 +1,40 @@
-local goose = { 0.303, 0.431, 0.431 }
-local width, height = G.getDimensions()
+width, height = G.getDimensions()
 --- color palette
-local block_w = width / 10
-local block_h = block_w / 2
-local pal_h = 2 * block_h
-local pal_w = 8 * block_w
-local sel_w = 2 * block_w
---- tool
-local margin = block_h / 10
-local m_2 = margin * 2
-local m_4 = margin * 4
-local box_w = 1.5 * block_w
-local box_h = height - pal_h
-local marg_l = box_w - m_2
-local tool_h = box_h / 2
-local mid_t = box_w / 2
-local n_t = 2
-local icon_h = (tool_h - m_4) / n_t
-local icon_w = (box_w - m_4 - m_4) / 1 -- one col for now
-local icon_d = math.min(icon_w, icon_h)
+block_w = width / 10
+block_h = block_w / 2
+pal_h = 2 * block_h
+pal_w = 8 * block_w
+sel_w = 2 * block_w
 
+--- tool pane
+margin = block_h / 10
+m_2 = margin * 2
+m_4 = margin * 4
+box_w = 1.5 * block_w
+box_h = height - pal_h
+marg_l = box_w - m_2
+tool_h = box_h / 2
+tool_midx = box_w / 2
+
+n_t = 2
+icon_h = (tool_h - m_4 - m_2) / n_t
+icon_w = (box_w - m_4 - m_4) / 1 -- one col for now
+icon_d = math.min(icon_w, icon_h)
 -- line weight
-local weight_h = box_h / 2
-local wb_y = box_h - weight_h
-local weights = { 1, 2, 4, 5, 6, 9, 11, 13 }
---- canvas
-local can_w = width - box_w
-local can_h = height - pal_h
-local canvas = G.newCanvas(can_w, can_h)
+weight_h = box_h / 2
+wb_y = box_h - weight_h
+weights = { 1, 2, 4, 5, 6, 9, 11, 13 }
 
-local color = 0    -- black
-local bg_color = 0 -- black
-local weight = 3
-local tool = 1     -- brush
+--- canvas
+can_w = width - box_w
+can_h = height - pal_h
+canvas = G.newCanvas(can_w, can_h)
+
+--- selected
+color = 0    -- black
+bg_color = 0 -- black
+weight = 3
+tool = 1     -- brush
 
 function inCanvasRange(x, y)
   if y <= height - pal_h then
@@ -187,15 +189,17 @@ function drawEraser(cx, cy)
   G.pop()
 end
 
+-- this is a color
+goose = { 0.303, 0.431, 0.431 }
 local tools = {
   drawBrush,
   drawEraser,
 }
 function drawTools()
-  local tb = icon_d --(tool_h - m_4) / n_t
+  local tb = icon_d
   local tb_half = tb / 2
   for i = 1, n_t do
-    local x = mid_t - tb_half
+    local x = tool_midx - tb_half
     local y = (i - 1) * (m_2 + tb)
     if i == tool then
       G.setColor(Color[Color.black])
@@ -208,7 +212,7 @@ function drawTools()
     G.rectangle("line", x, y + m_2, tb, tb)
 
     local draw = tools[i]
-    draw(mid_t - m_2, y + tb_half + m_4)
+    draw(tool_midx - m_2, y + tb_half + m_4)
   end
 end
 
