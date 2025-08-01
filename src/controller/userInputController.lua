@@ -422,6 +422,7 @@ end
 --- @param btn integer
 --- @param handler function
 function UserInputController:_handle_mouse(x, y, btn, handler)
+  if self.disable_selection then return end
   if btn == 1 then
     local im = self.model
     local n_lines = im:get_wrapped_text():get_content_length()
@@ -439,6 +440,7 @@ end
 --- @param presses number
 function UserInputController:mousepressed(
     x, y, btn, touch, presses)
+  if self.disable_selection then return end
   local im = self.model
   self:_handle_mouse(x, y, btn, function(l, c)
     im:mouse_click(l, c)
@@ -452,6 +454,7 @@ end
 --- @param presses number
 function UserInputController:mousereleased(
     x, y, btn, touch, presses)
+  if self.disable_selection then return end
   local im = self.model
   self:_handle_mouse(x, y, btn, function(l, c)
     im:mouse_release(l, c)
@@ -465,6 +468,7 @@ end
 --- @param dy number
 --- @param touch boolean
 function UserInputController:mousemoved(x, y, dx, dy, touch)
+  if self.disable_selection then return end
   local im = self.model
   self:_handle_mouse(x, y, 1, function(l, c)
     im:mouse_drag(l, c)
