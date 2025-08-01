@@ -376,7 +376,7 @@ Controller = {
           end
           local user_input = get_user_input()
           if user_input then
-            user_input.V:draw(user_input.C:get_input())
+            user_input.V:draw(user_input.C:get_input(), C.time)
           end
         end
         View.prev_draw = draw
@@ -445,7 +445,7 @@ Controller = {
         return true
       end
       if love.state.app_state == 'running' then
-        C:quit_project()
+        C:stop_project_run()
         return true
       end
     end
