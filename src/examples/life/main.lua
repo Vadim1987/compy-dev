@@ -1,30 +1,37 @@
 --- original from https://github.com/Aethelios/Conway-s-Game-of-Life-in-Lua-and-Love2D
 
-local cell_size = 10
-local screen_w, screen_h = G.getDimensions()
-local grid_w = screen_w / cell_size
-local grid_h = screen_h / cell_size
-local grid = {}
+G = love.graphics
+G.setFont(font)
+fh = font:getHeight()
+
+cell_size = 10
+margin = 5
+screen_w, screen_h = G.getDimensions()
+grid_w = screen_w / cell_size
+grid_h = screen_h / cell_size
+grid = {}
 
 mouse_held = false
 hold_y = nil
 hold_time = 0
+speed = 10
+time = 0
 epsilon = 3
-local speed = 10
-local time = 0
-local tick = function()
+reset_time = 1
+
+tick = function()
   if time > (1 / speed) then
     time = 0
     return true
   end
 end
 
-local function initializeGrid()
+function initializeGrid()
   for x = 1, grid_w do
     grid[x] = {}
     for y = 1, grid_h do
       -- Initialize with some random live cells
-      grid[x][y] = math.random() > 0.7 and 1 or 0
+      grid[x][y] = 0.7 < math.random() and 1 or 0
     end
   end
 end
@@ -34,20 +41,26 @@ local function init()
   initializeGrid()
 end
 
-local function countAliveNeighbors(x, y)
+function countHelper(nx, ny)
+  local c = 0
+  if 1 <= nx
+      and nx <= grid_w
+      and 1 <= ny
+      and ny <= grid_h
+  then
+    local row = grid[nx] or {}
+    c = c + (row[ny] or 0)
+  end
+  return c
+end
+
+function countAliveNeighbors(x, y)
   local count = 0
   for dx = -1, 1 do
     for dy = -1, 1 do
       if dx ~= 0 or dy ~= 0 then
         local nx, ny = x + dx, y + dy
-        if nx >= 1
-            and nx <= grid_w
-            and ny >= 1
-            and ny <= grid_h
-        then
-          local row = grid[nx] or {}
-          count = count + (row[ny] or 0)
-        end
+        count = count + countHelper(nx, ny)
       end
     end
   end
@@ -59,13 +72,12 @@ local function updateGrid()
   for x = 1, grid_w do
     newGrid[x] = {}
     for y = 1, grid_h do
-      local aliveNeighbors = countAliveNeighbors(x, y)
-      if grid[x][y] == 1
-      then
-        newGrid[x][y] = (aliveNeighbors == 2
-          or aliveNeighbors == 3) and 1 or 0
+      local neighbors = countAliveNeighbors(x, y)
+      if grid[x][y] == 1 then
+        newGrid[x][y] =
+            (neighbors == 2 or neighbors == 3) and 1 or 0
       else
-        newGrid[x][y] = (aliveNeighbors == 3) and 1 or 0
+        newGrid[x][y] = (neighbors == 3) and 1 or 0
       end
     end
   end
@@ -73,15 +85,11 @@ local function updateGrid()
 end
 
 function changeSpeed(d)
-  if not d
-      or math.abs(d) < epsilon
-  then
-    return
-  end
-  if d < 0 and speed > 1 then
+  if not d then return end
+  if d < 0 and 1 < speed then
     speed = speed - 1
   end
-  if d > 0 and speed < 99 then
+  if 0 < d and speed < 99 then
     speed = speed + 1
   end
 end
@@ -97,13 +105,13 @@ function love.update(dt)
 end
 
 function love.keypressed(k)
-  if k == 'r' then
+  if k == "r" then
     init()
   end
-  if k == '-' then
+  if k == "-" then
     changeSpeed(-1)
   end
-  if k == '+' or k == '=' then
+  if k == "+" or k == "=" then
     changeSpeed(1)
   end
 end
@@ -118,12 +126,14 @@ end
 function love.mousereleased(_, y, button)
   if button == 1 then
     mouse_held = false
-    if hold_time > 1 then
+    if reset_time < hold_time then
       init()
     else
       if hold_y then
         local dy = hold_y - y
-        changeSpeed(dy)
+        if math.abs(dy) > epsilon then
+          changeSpeed(dy)
+        end
       end
     end
     hold_y = nil
@@ -132,42 +142,43 @@ function love.mousereleased(_, y, button)
 end
 
 function drawHelp()
-  G.setColor(1, 1, 1, .5)
-  local margin = 5
   local bottom = screen_h - margin
   local right_edge = screen_w - margin
-  local h = font:getHeight()
   local reset_msg = "Reset: [r] key or long press"
   local speed_msg = "Set speed: [+]/[-] key or drag up/down"
-  G.print(reset_msg, margin, bottom - h - h)
-  G.print(speed_msg, margin, bottom - h)
-  local speed_label = "Speed: " .. speed
+  G.print(reset_msg, margin, (bottom - fh) - fh)
+  G.print(speed_msg, margin, bottom - fh)
+  local speed_label = string.format("Speed: %02d", speed)
   local label_w = font:getWidth(speed_label)
-  G.print(speed_label, right_edge - label_w, bottom - h)
+  G.print(speed_label, right_edge - label_w, bottom - fh)
+end
+
+function drawCell(x, y)
+  G.setColor(.9, .9, .9)
+  G.rectangle('fill',
+    (x - 1) * cell_size,
+    (y - 1) * cell_size,
+    cell_size, cell_size)
+  G.setColor(.3, .3, .3)
+
+  G.rectangle('line',
+    (x - 1) * cell_size,
+    (y - 1) * cell_size,
+    cell_size, cell_size)
 end
 
 function love.draw()
   for x = 1, grid_w do
     for y = 1, grid_h do
       if grid[x][y] == 1 then
-        G.setColor(.9, .9, .9)
-        G.rectangle('fill',
-          (x - 1) * cell_size,
-          (y - 1) * cell_size,
-          cell_size, cell_size)
-        G.setColor(.3, .3, .3)
-
-        G.rectangle('line',
-          (x - 1) * cell_size,
-          (y - 1) * cell_size,
-          cell_size, cell_size)
+        drawCell(x, y)
       end
     end
   end
 
+  G.setColor(1, 1, 1, 0.5)
   drawHelp()
 end
 
-G.setFont(font)
 math.randomseed(os.time())
 initializeGrid()
