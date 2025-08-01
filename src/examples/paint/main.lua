@@ -384,6 +384,16 @@ function love.touchmoved(_, x, y)
   use_canvas(x, y)
 end
 
+colorkeys = {
+  ['1'] = 0,
+  ['2'] = 1,
+  ['3'] = 2,
+  ['4'] = 3,
+  ['5'] = 4,
+  ['6'] = 5,
+  ['7'] = 6,
+  ['8'] = 7,
+}
 function love.keypressed(k)
   if k == 'tab' then
     if tool >= n_t then
@@ -401,5 +411,12 @@ function love.keypressed(k)
     if weight < #weights then
       weight = weight + 1
     end
+  end
+  local c = colorkeys[k]
+  if c then
+    if Key.shift() then
+      c = c + 8
+    end
+    color = c
   end
 end
