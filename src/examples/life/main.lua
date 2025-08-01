@@ -69,6 +69,17 @@ local function updateGrid()
   grid = newGrid
 end
 
+function change_speed(d)
+  if not d then return end
+  if d > 0 and speed >= 100 then
+    return
+  end
+  if d < 0 and speed < 1 then
+    return
+  end
+  speed = speed + d
+end
+
 function love.update(dt)
   if tick(dt) then
     updateGrid()
@@ -80,14 +91,10 @@ function love.keypressed(k)
     init()
   end
   if k == '-' then
-    if speed > 1 then
-      speed = speed - 1
-    end
+    change_speed(-1)
   end
   if k == '+' or k == '=' then
-    if speed < 100 then
-      speed = speed + 1
-    end
+    change_speed(1)
   end
 end
 
