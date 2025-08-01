@@ -18,7 +18,8 @@ tool_midx = box_w / 2
 
 n_t = 2
 icon_h = (tool_h - m_4 - m_2) / n_t
-icon_w = (box_w - m_4 - m_4) / 1 -- one col for now
+-- one col for now
+icon_w = (box_w - m_4 - m_4) / 1
 icon_d = math.min(icon_w, icon_h)
 -- line weight
 weight_h = box_h / 2
@@ -219,8 +220,6 @@ function drawWeightSelector()
       local rx2 = 5 * margin
       local ry1 = mid - margin
       local ry2 = ry1 + m_2
-      -- G.rectangle("fill", 3 * margin, y + margin, m_2, m_2)
-      -- G.polygon("fill", rx1, ry1, rx1, ry2, rx2, ry2, rx2, ry1)
       local x1 = 5 * margin
       local x2 = 7 * margin
       local y1 = mid - m_2
@@ -297,10 +296,7 @@ function love.draw()
 end
 
 function setColor(x, y, btn)
-  local row = (function()
-    if (height - y) > block_h then return 1 end
-    return 0
-  end)()
+  local row = math.modf((height - y) / block_h)
   local col = math.modf((x - sel_w) / block_w)
   if btn == 1 then
     color = col + (8 * row)
@@ -309,7 +305,7 @@ function setColor(x, y, btn)
   end
 end
 
-function selectTool(_, y)
+function setTool(_, y)
   local h = icon_d + m_4
   local sel = math.modf(y / h) + 1
   if sel <= n_t then
@@ -318,9 +314,10 @@ function selectTool(_, y)
 end
 
 function setLineWeight(y)
-  local h = weight_h / 8
+  local ws = #weights
+  local h = weight_h / ws
   local lw = math.modf((y - wb_y) / h) + 1
-  if lw > 0 and lw <= 8 then
+  if lw > 0 and lw <= ws then
     weight = lw
   end
 end
@@ -349,7 +346,7 @@ function point(x, y, btn)
     useCanvas(x, y, btn)
   end
   if inToolRange(x, y) then
-    selectTool(x, y)
+    setTool(x, y)
   end
   if inWeightRange(x, y) then
     setLineWeight(y)
