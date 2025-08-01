@@ -313,7 +313,11 @@ function setColor(x, y, btn)
     return 0
   end)()
   local col = math.modf((x - sel_w) / block_w)
-  color = col + (8 * row)
+  if btn == 1 then
+    color = col + (8 * row)
+  elseif btn > 1 then
+    bg_color = col + (8 * row)
+  end
 end
 
 function selectTool(_, y)
@@ -333,20 +337,24 @@ function setLineWeight(y)
 end
 
 function useCanvas(x, y, btn)
+  local aw = getWeight()
   canvas:renderTo(function()
-    local aw = getWeight()
-    if tool == 1 then
-      G.setColor(Color[color])
-    elseif tool == 2 then
+    if btn == 1 then
+      if tool == 1 then
+        G.setColor(Color[color])
+      elseif tool == 2 then
+        G.setColor(Color[bg_color])
+      end
+    elseif btn == 2 then
       G.setColor(Color[bg_color])
     end
     G.circle("fill", x - box_w, y, aw)
   end)
 end
 
-function point(x, y)
-    set_color(x, y)
+function point(x, y, btn)
   if inPaletteRange(x, y) then
+    setColor(x, y, btn)
   end
   if inCanvasRange(x, y) then
     useCanvas(x, y, btn)
@@ -360,11 +368,7 @@ function point(x, y)
 end
 
 function love.mousepressed(x, y, button)
-  if button == 1 then
-    point(x, y)
-  end
-  if button == 2 then
-  end
+  point(x, y, button)
 end
 
 function love.mousemoved(x, y, dx, dy)
