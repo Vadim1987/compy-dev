@@ -191,9 +191,15 @@ local function project_require(cc, name)
   local open = P.current
   if open then
     local chunk = open:load_file(fn)
+    local pr_env = cc:get_project_env()
     if chunk then
-      setfenv(chunk, cc:get_project_env())
+      setfenv(chunk, pr_env)
       chunk()
+    else
+      --- hack around love.js not having the bit lib
+      if name == 'bit' and _G.web then
+        pr_env.bit = o_require('util.luabit')
+      end
     end
     --- TODO: is it desirable to allow out-of-project require?
     -- else
