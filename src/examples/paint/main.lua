@@ -37,44 +37,20 @@ weight = 3
 tool = 1     -- brush
 
 function inCanvasRange(x, y)
-  if y <= height - pal_h then
-    if x >= box_w then
-      return true
-    end
-  end
-  return false
+  return (y < height - pal_h and box_w < x)
 end
 
 function inPaletteRange(x, y)
-  if y >= height - pal_h then
-    if x >= width - pal_w
-        and x <= width
-    then
-      return true
-    end
-  end
-  return false
+  return (height - pal_h <= y
+    and width - pal_w <= x and x <= width)
 end
 
 function inToolRange(x, y)
-  if x <= box_w then
-    if y <= tool_h
-    then
-      return true
-    end
-  end
-  return false
+  return (x <= box_w and y <= tool_h)
 end
 
 function inWeightRange(x, y)
-  if x <= box_w then
-    if y <= height - pal_h
-        and y >= wb_y
-    then
-      return true
-    end
-  end
-  return false
+  return (x <= box_w and y < height - pal_h and wb_y < y)
 end
 
 function drawBackground()
