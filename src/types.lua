@@ -56,8 +56,13 @@
 --- @field drawtest boolean
 --- @field sizedebug boolean
 
+--- @class EditorConfig table
+--- @field mouse_enabled boolean
+--- @field touch_enabled boolean
+
 --- @class Config table
 --- @field view ViewConfig
+--- @field editor EditorConfig
 --- @field autotest boolean
 --- @field mode Mode
 

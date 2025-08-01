@@ -435,7 +435,10 @@ end
 --- @param x integer
 --- @param y integer
 --- @param btn integer
-function UserInputController:mousepressed(x, y, btn)
+--- @param touch boolean
+--- @param presses number
+function UserInputController:mousepressed(
+    x, y, btn, touch, presses)
   local im = self.model
   self:_handle_mouse(x, y, btn, function(l, c)
     im:mouse_click(l, c)
@@ -445,7 +448,10 @@ end
 --- @param x integer
 --- @param y integer
 --- @param btn integer
-function UserInputController:mousereleased(x, y, btn)
+--- @param touch boolean
+--- @param presses number
+function UserInputController:mousereleased(
+    x, y, btn, touch, presses)
   local im = self.model
   self:_handle_mouse(x, y, btn, function(l, c)
     im:mouse_release(l, c)
@@ -453,13 +459,53 @@ function UserInputController:mousereleased(x, y, btn)
   im:release_selection()
 end
 
---- @param x integer
---- @param y integer
---- @param dx integer?
---- @param dy integer?
-function UserInputController:mousemoved(x, y, dx, dy)
+--- @param x number
+--- @param y number
+--- @param dx number
+--- @param dy number
+--- @param touch boolean
+function UserInputController:mousemoved(x, y, dx, dy, touch)
   local im = self.model
   self:_handle_mouse(x, y, 1, function(l, c)
     im:mouse_drag(l, c)
   end)
+end
+
+--- @param x integer
+--- @param y integer
+function UserInputController:wheelmoved(x, y)
+  --- TODO
+end
+
+--- @param id userdata
+--- @param x number
+--- @param y number
+--- @param dx number?
+--- @param dy number?
+--- @param pressure number?
+function UserInputController:touchpressed(id, x, y,
+                                          dx, dy, pressure)
+  --- TODO
+end
+
+--- @param id userdata
+--- @param x number
+--- @param y number
+--- @param dx number?
+--- @param dy number?
+--- @param pressure number?
+function UserInputController:touchreleased(id, x, y,
+                                           dx, dy, pressure)
+  --- TODO
+end
+
+--- @param id userdata
+--- @param x number
+--- @param y number
+--- @param dx number?
+--- @param dy number?
+--- @param pressure number?
+function UserInputController:touchmoved(id, x, y,
+                                        dx, dy, pressure)
+  --- TODO
 end

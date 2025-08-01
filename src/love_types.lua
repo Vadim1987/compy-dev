@@ -10,3 +10,6 @@
 --- @field mousepressed function?
 --- @field mousereleased function?
 --- @field wheelmoved function?
+--- @field touchmoved function?
+--- @field touchpressed function?
+--- @field touchreleased function?

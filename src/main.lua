@@ -312,6 +312,7 @@ function love.load()
   local editorconf = {
     --- TODO
     mouse_enabled = false,
+    touch_enabled = false,
   }
 
   --- @class Config
