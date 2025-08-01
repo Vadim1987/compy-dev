@@ -93,6 +93,10 @@ function InputText:traverse(from, to, options)
 end
 
 --- @return boolean
+function InputText:non_empty()
+  return string.is_non_empty_string_array(self:items())
+end
+--- @return boolean
 function InputText:is_empty()
   return not string.is_non_empty_string_array(self:items())
 end

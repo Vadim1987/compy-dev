@@ -803,7 +803,7 @@ end
 function UserInputModel:handle(eval)
   local ent = self:get_text()
   local ok, result
-  if string.is_non_empty_string_array(ent) then
+  if ent:non_empty() then
     local ev = self.evaluator
     self:_remember()
     if eval then
