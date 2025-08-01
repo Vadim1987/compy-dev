@@ -30,6 +30,9 @@ local _supported = {
   'mousepressed',
   'mousereleased',
   'wheelmoved',
+  --- custom handlers
+  'singleclick',
+  'doubleclick',
 
   'touchmoved',
   'touchpressed',
@@ -106,6 +109,10 @@ local set_handlers = function(userlove)
   end
 end
 
+local click_count = 0
+local click_timer = 0
+local click_delay = 0.3
+
 --- @class Controller
 --- @field _defaults Handlers
 --- @field _userhandler Handlers
@@ -119,7 +126,10 @@ end
 --- @field has_user_update function
 Controller = {
   --- @private
-  _defaults = {},
+  _defaults = {
+    singleclick = function() end,
+    doubleclick = function() end,
+  },
   --- @private
   _userhandlers = {},
 
@@ -306,6 +316,27 @@ Controller = {
   --- @param C ConsoleController
   set_love_update = function(C)
     local function update(dt)
+      if click_timer > 0 then
+        click_timer = click_timer - dt
+      end
+      if click_timer <= 0 then
+        if click_count == 1 then
+          -- single click confirmed after delay
+          local handler = love.singleclick
+          if handler then
+            local x, y = love.mouse.getPosition()
+            handler(x, y)
+          end
+        elseif click_count >= 2 then
+          -- double click detected
+          local dbl_handler = love.doubleclick
+          if dbl_handler then
+            local x, y = love.mouse.getPosition()
+            dbl_handler(x, y)
+          end
+        end
+        click_count = 0
+      end
       local ddr = View.prev_draw
       local ldr = love.draw
       local ui = get_user_input()
@@ -575,6 +606,10 @@ Controller = {
     --- @param touch boolean
     --- @param presses number
     handlers.mousereleased = function(x, y, btn, touch, presses)
+      if btn == 1 then
+        click_count = click_count + 1
+        click_timer = click_delay
+      end
       local user_input = get_user_input()
       if user_input then
         user_input.C:mousereleased(x, y, btn, touch, presses)

@@ -13,3 +13,6 @@
 --- @field touchmoved function?
 --- @field touchpressed function?
 --- @field touchreleased function?
+--- bespoke
+--- @field singleclick function?
+--- @field doubleclick function?
