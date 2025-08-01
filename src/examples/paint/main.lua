@@ -47,7 +47,9 @@ end
 
 function inPaletteRange(x, y)
   if y >= height - pal_h then
-    if x >= width - pal_w then
+    if x >= width - pal_w
+        and x <= width
+    then
       return true
     end
   end
@@ -83,8 +85,9 @@ end
 function drawColorPalette()
   local y = height - block_h
 
+  G.setColor(Color[bg_color])
+  G.rectangle("fill", 0, y - block_h, block_w * 2, block_h * 2)
   G.setColor(Color[Color.white])
-  -- G.rectangle("fill", 0, y - block_h, block_w * 2, block_h * 2)
   G.rectangle("line", 0, y - block_h, sel_w, pal_h)
   G.rectangle("line", sel_w, y - block_h, width, pal_h)
   -- display selection
@@ -92,7 +95,11 @@ function drawColorPalette()
   G.rectangle("fill", block_w / 2, y - (block_h / 2),
     block_w, block_h)
   -- outline
-  G.setColor(Color[Color.white + Color.bright])
+  local line_color = Color.white + Color.bright
+  if color == line_color then
+    line_color = Color.black
+  end
+  G.setColor(Color[line_color])
   G.rectangle("line", block_w / 2, y - (block_h / 2),
     block_w, block_h)
 
