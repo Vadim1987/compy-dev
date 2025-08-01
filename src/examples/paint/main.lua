@@ -27,7 +27,7 @@ weights = { 1, 2, 4, 5, 6, 9, 11, 13 }
 
 --- canvas
 can_w = width - box_w
-can_h = height - pal_h
+can_h = height - pal_h - 1
 canvas = G.newCanvas(can_w, can_h)
 
 --- selected
@@ -99,6 +99,7 @@ function drawColorPalette()
   drawSelectedColor(y)
   drawColorBoxes(y)
 end
+
 function drawBrush(cx, cy)
   G.push()
   G.translate(cx, cy)
@@ -200,7 +201,8 @@ function drawTools()
 end
 
 function drawWeightSelector()
-  G.rectangle("line", 0, box_h - weight_h, box_w, weight_h)
+  G.setColor(Color[Color.white + Color.bright])
+  G.rectangle("line", 0, box_h - weight_h, box_w - 1, weight_h)
   local h = (weight_h - (2 * margin)) / 8
   local w = marg_l
   for i = 0, 7 do
@@ -260,9 +262,9 @@ end
 function drawToolbox()
   --- outline
   G.setColor(Color[Color.white])
-  G.rectangle("fill", 0, 0, box_w, height - pal_h)
+  G.rectangle("fill", 0, 0, box_w - 1, height - pal_h)
   G.setColor(Color[Color.white + Color.bright])
-  G.rectangle("line", 0, 0, box_w, box_h)
+  G.rectangle("line", 0, 0, box_w - 1, box_h)
   drawTools()
   drawWeightSelector()
 end
