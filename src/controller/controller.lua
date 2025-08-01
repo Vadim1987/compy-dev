@@ -146,7 +146,7 @@ end
 --- @field save_user_handlers function
 --- @field clear_user_handlers function
 --- @field restore_user_handlers function
---- @field has_user_update function
+--- @field user_is_blocking function
 Controller = {
   --- @private
   _defaults = {
@@ -731,8 +731,8 @@ Controller = {
 
   set_user_handlers = set_handlers,
 
-  has_user_update = function()
-    return user_update
+  user_is_blocking = function()
+    return (user_update or user_draw)
   end,
 
   --- @param userlove table

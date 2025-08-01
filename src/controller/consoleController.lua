@@ -169,7 +169,7 @@ function ConsoleController:run_project(name)
       Log.info('Running \'' .. n .. '\'')
       local rok, run_err = run_user_code(f, self, path)
       if rok then
-        if self.main_ctrl.has_user_update() then
+        if self.main_ctrl.user_is_blocking() then
           love.state.app_state = 'running'
         end
       else
