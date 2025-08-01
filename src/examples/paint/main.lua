@@ -367,8 +367,12 @@ function point(x, y, btn)
   end
 end
 
-function love.mousepressed(x, y, button)
-  point(x, y, button)
+function love.singleclick(x, y)
+  point(x, y, 1)
+end
+
+function love.doubleclick(x, y)
+  point(x, y, 2)
 end
 
 function love.mousemoved(x, y, dx, dy)
