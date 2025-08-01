@@ -36,7 +36,7 @@ local bg_color = 0 -- black
 local weight = 3
 local tool = 1     -- brush
 
-function in_canvas_range(x, y)
+function inCanvasRange(x, y)
   if y <= height - pal_h then
     if x >= box_w then
       return true
@@ -45,7 +45,7 @@ function in_canvas_range(x, y)
   return false
 end
 
-function in_select_range(x, y)
+function inPaletteRange(x, y)
   if y >= height - pal_h then
     if x >= width - pal_w then
       return true
@@ -54,7 +54,7 @@ function in_select_range(x, y)
   return false
 end
 
-function in_tool_range(x, y)
+function inToolRange(x, y)
   if x <= box_w then
     if y <= tool_h
     then
@@ -64,7 +64,7 @@ function in_tool_range(x, y)
   return false
 end
 
-function in_weight_range(x, y)
+function inWeightRange(x, y)
   if x <= box_w then
     if y <= height - pal_h
         and y >= wb_y
@@ -287,7 +287,7 @@ end
 
 function drawTarget()
   local x, y = love.mouse.getPosition()
-  if in_canvas_range(x, y) then
+  if inCanvasRange(x, y) then
     local aw = getWeight()
     G.setColor(Color[Color.white])
     G.circle("line", x, y, aw)
@@ -303,7 +303,7 @@ function love.draw()
   drawTarget()
 end
 
-function set_color(x, y)
+function setColor(x, y, btn)
   local row = (function()
     if (height - y) > block_h then return 1 end
     return 0
@@ -312,7 +312,7 @@ function set_color(x, y)
   color = col + (8 * row)
 end
 
-function select_tool(x, y)
+function selectTool(_, y)
   local h = icon_d + m_4
   local sel = math.modf(y / h) + 1
   if sel <= n_t then
@@ -320,7 +320,7 @@ function select_tool(x, y)
   end
 end
 
-function set_line_weight(y)
+function setLineWeight(y)
   local h = weight_h / 8
   local lw = math.modf((y - wb_y) / h) + 1
   if lw > 0 and lw <= 8 then
@@ -328,7 +328,7 @@ function set_line_weight(y)
   end
 end
 
-function use_canvas(x, y)
+function useCanvas(x, y, btn)
   canvas:renderTo(function()
     local aw = getWeight()
     if tool == 1 then
@@ -341,17 +341,17 @@ function use_canvas(x, y)
 end
 
 function point(x, y)
-  if in_select_range(x, y) then
     set_color(x, y)
+  if inPaletteRange(x, y) then
   end
-  if in_canvas_range(x, y) then
-    use_canvas(x, y)
+  if inCanvasRange(x, y) then
+    useCanvas(x, y, btn)
   end
-  if in_tool_range(x, y) then
-    select_tool(x, y)
+  if inToolRange(x, y) then
+    selectTool(x, y)
   end
-  if in_weight_range(x, y) then
-    set_line_weight(y)
+  if inWeightRange(x, y) then
+    setLineWeight(y)
   end
 end
 
@@ -364,10 +364,15 @@ function love.mousepressed(x, y, button)
 end
 
 function love.mousemoved(x, y, dx, dy)
-  if love.mouse.isDown(1)
-      and in_canvas_range(x, y)
+  if inCanvasRange(x, y)
   then
-    use_canvas(x, y)
+    for btn = 1, 2 do
+      if
+          love.mouse.isDown(btn)
+      then
+        useCanvas(x, y, btn)
+      end
+    end
   end
 end
 
