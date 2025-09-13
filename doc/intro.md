@@ -50,4 +50,4 @@ highlight, the entered text is inserted before it. If there is a bright yellow
 highlight, the entered text replaces it.
 
 For more information, please see the documentation of the [editor](EDITOR.md) 
-and the console.
+and the [console](../README.md).
