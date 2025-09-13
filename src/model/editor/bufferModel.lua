@@ -5,7 +5,7 @@ local bsi = require("model.editor.bufferSemanticInfo")
 local class = require('util.class')
 require('util.table')
 require('util.range')
-require('util.string')
+require('util.string.string')
 require('util.dequeue')
 
 --- Convert Blocks to string array

@@ -8,6 +8,6 @@ function hypot(a, b)
 end
 
 require("bit")
-for k, v in pairs(bit) do
+for k, v in pairs(bit or {}) do
   _G[k] = v
 end

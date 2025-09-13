@@ -1,6 +1,6 @@
 require("view.editor.visibleContent")
 require("model.input.cursor")
-require("util.string")
+require("util.string.string")
 require("util.debug")
 
 local md_ex = [[### Input validation

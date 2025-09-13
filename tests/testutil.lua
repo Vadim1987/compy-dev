@@ -1,5 +1,5 @@
 require('util.table')
-require('util.string')
+require('util.string.string')
 
 --- @param init str
 --- @return fun(str): boolean, string?

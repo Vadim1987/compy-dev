@@ -1,7 +1,7 @@
 local require = _G.o_require or _G.require
 FS = require("util.filesystem")
 
-require("util.string")
+require("util.string.string")
 require("util.debug")
 
 local Timer = require("lib.hump.timer")

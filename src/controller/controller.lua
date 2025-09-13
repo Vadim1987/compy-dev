@@ -1,6 +1,6 @@
 require("view.view")
 
-require("util.string")
+require("util.string.string")
 require("util.key")
 local LANG = require("util.eval")
 
@@ -30,6 +30,13 @@ local _supported = {
   'mousepressed',
   'mousereleased',
   'wheelmoved',
+  --- custom handlers
+  'singleclick',
+  'doubleclick',
+
+  'touchmoved',
+  'touchpressed',
+  'touchreleased',
 }
 
 local _C
@@ -102,6 +109,33 @@ local set_handlers = function(userlove)
   end
 end
 
+local click_delay = 0.2
+local drift_tolerance = 2.5
+
+local click_count = 0
+local click_timer = 0
+--- @type Point?
+local click_pos = nil
+
+--- @param prev Point?
+--- @param cur Point?
+--- @return boolean
+local function no_drift(prev, cur)
+  if prev and cur
+  then
+    local px, py = prev.x, prev.y
+    local cx, cy = cur.x, cur.y
+    if px and cx and math.abs(px - cx) < drift_tolerance
+    then
+      if py and cy and math.abs(py - cy) < drift_tolerance
+      then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 --- @class Controller
 --- @field _defaults Handlers
 --- @field _userhandler Handlers
@@ -112,10 +146,13 @@ end
 --- @field save_user_handlers function
 --- @field clear_user_handlers function
 --- @field restore_user_handlers function
---- @field has_user_update function
+--- @field user_is_blocking function
 Controller = {
   --- @private
-  _defaults = {},
+  _defaults = {
+    singleclick = function() end,
+    doubleclick = function() end,
+  },
   --- @private
   _userhandlers = {},
 
@@ -182,11 +219,16 @@ Controller = {
   --- @private
   --- @param C ConsoleController
   set_love_mousepressed = function(C)
-    local function mousepressed(x, y, button)
+    --- @param x number
+    --- @param y number
+    --- @param button number
+    --- @param touch boolean
+    --- @param presses number
+    local function mousepressed(x, y, button, touch, presses)
       if love.DEBUG then
         Log.info(string.format('click! {%d, %d}', x, y))
       end
-      C:mousepressed(x, y, button)
+      C:mousepressed(x, y, button, touch, presses)
     end
 
     Controller._defaults.mousepressed = mousepressed
@@ -196,8 +238,13 @@ Controller = {
   --- @private
   --- @param C ConsoleController
   set_love_mousereleased = function(C)
-    local function mousereleased(x, y, button)
-      C:mousereleased(x, y, button)
+    --- @param x number
+    --- @param y number
+    --- @param button number
+    --- @param touch boolean
+    --- @param presses number
+    local function mousereleased(x, y, button, touch, presses)
+      C:mousereleased(x, y, button, touch, presses)
     end
 
     Controller._defaults.mousereleased = mousereleased
@@ -207,8 +254,13 @@ Controller = {
   --- @private
   --- @param C ConsoleController
   set_love_mousemoved = function(C)
-    local function mousemoved(x, y, dx, dy)
-      C:mousemoved(x, y, dx, dy)
+    --- @param x number
+    --- @param y number
+    --- @param dx number
+    --- @param dy number
+    --- @param touch boolean
+    local function mousemoved(x, y, dx, dy, touch)
+      C:mousemoved(x, y, dx, dy, touch)
     end
 
     Controller._defaults.mousemoved = mousemoved
@@ -218,13 +270,66 @@ Controller = {
   --- @private
   --- @param C ConsoleController
   set_love_wheelmoved = function(C)
+    --- @param x number
+    --- @param y number
     local function wheelmoved(x, y)
-      --- TODO
-      -- C:wheelmoved(x, y)
+      C:wheelmoved(x, y)
     end
 
     Controller._defaults.wheelmoved = wheelmoved
     love.wheelmoved = wheelmoved
+  end,
+
+  -------------
+  --  touch  --
+  -------------
+  --- @private
+  --- @param C ConsoleController
+  set_love_touchpressed = function(C)
+    --- @param id userdata
+    --- @param x number
+    --- @param y number
+    --- @param dx number?
+    --- @param dy number?
+    --- @param pressure number?
+    local function touchpressed(id, x, y, dx, dy, pressure)
+      C:touchpressed(id, x, y, dx, dy, pressure)
+    end
+
+    Controller._defaults.touchpressed = touchpressed
+    love.touchpressed = touchpressed
+  end,
+  --- @private
+  --- @param C ConsoleController
+  set_love_touchreleased = function(C)
+    --- @param id userdata
+    --- @param x number
+    --- @param y number
+    --- @param dx number?
+    --- @param dy number?
+    --- @param pressure number?
+    local function touchreleased(id, x, y, dx, dy, pressure)
+      C:touchreleased(id, x, y, dx, dy, pressure)
+    end
+
+    Controller._defaults.touchreleased = touchreleased
+    love.touchreleased = touchreleased
+  end,
+  --- @private
+  --- @param C ConsoleController
+  set_love_touchmoved = function(C)
+    --- @param id userdata
+    --- @param x number
+    --- @param y number
+    --- @param dx number?
+    --- @param dy number?
+    --- @param pressure number?
+    local function touchmoved(id, x, y, dx, dy, pressure)
+      C:touchmoved(id, x, y, dx, dy, pressure)
+    end
+
+    Controller._defaults.touchmoved = touchmoved
+    love.touchmoved = touchmoved
   end,
 
   --------------
@@ -234,6 +339,33 @@ Controller = {
   --- @param C ConsoleController
   set_love_update = function(C)
     local function update(dt)
+      if click_timer > 0 then
+        click_timer = click_timer - dt
+      end
+      if click_timer <= 0 then
+        if click_count == 1 then
+          -- single click confirmed after delay
+          local handler = love.singleclick
+          if handler then
+            local x, y = love.mouse.getPosition()
+            local cur = { x = x, y = y }
+            if no_drift(click_pos, cur) then
+              handler(x, y)
+            end
+          end
+        elseif click_count >= 2 then
+          -- double click detected
+          local dbl_handler = love.doubleclick
+          if dbl_handler then
+            local x, y = love.mouse.getPosition()
+            local cur = { x = x, y = y }
+            if no_drift(click_pos, cur) then
+              dbl_handler(x, y)
+            end
+          end
+        end
+        click_count = 0
+      end
       local ddr = View.prev_draw
       local ldr = love.draw
       local ui = get_user_input()
@@ -244,7 +376,7 @@ Controller = {
           end
           local user_input = get_user_input()
           if user_input then
-            user_input.V:draw(user_input.C:get_input())
+            user_input.V:draw(user_input.C:get_input(), C.time)
           end
         end
         View.prev_draw = draw
@@ -313,7 +445,7 @@ Controller = {
         return true
       end
       if love.state.app_state == 'running' then
-        C:quit_project()
+        C:stop_project_run()
         return true
       end
     end
@@ -347,23 +479,25 @@ Controller = {
     Controller.set_love_mousereleased(C)
     Controller.set_love_wheelmoved(C)
 
-    -- SKIPPED touchpressed  - target device doesn't support touch
-    -- SKIPPED touchreleased - target device doesn't support touch
-    -- SKIPPED touchmoved    - target device doesn't support touch
+    Controller.set_love_touchpressed(C)
+    Controller.set_love_touchreleased(C)
+    Controller.set_love_touchmoved(C)
 
-    -- SKIPPED joystick and gamepad support
+    --- SKIPPED joystick and gamepad support
 
-    -- SKIPPED focus       - intented to run as kiosk app
-    -- SKIPPED mousefocus  - intented to run as kiosk app
-    -- SKIPPED visible     - intented to run as kiosk app
+    --- intented to run as kiosk app
+    --- SKIPPED focus
+    --- SKIPPED mousefocus
+    --- SKIPPED visible
+    --- SKIPPED resize
+    --- SKIPPED filedropped
+    --- SKIPPED directorydropped
 
-    -- SKIPPED threaderror - no threading support
+    --- target device has laptop form factor, hence disabled
+    --- SKIPPED displayrotated
 
-    -- SKIPPED resize           - intented to run as kiosk app
-    -- SKIPPED filedropped      - intented to run as kiosk app
-    -- SKIPPED directorydropped - intented to run as kiosk app
-    -- SKIPPED lowmemory
-    -- SKIPPED displayrotated   - target device has laptop form factor
+    --- SKIPPED threaderror
+    --- SKIPPED lowmemory
 
     user_update = false
     Controller.set_love_update(C)
@@ -479,31 +613,57 @@ Controller = {
       end
     end
 
-    handlers.mousepressed = function(x, y, btn)
+    --- @param x integer
+    --- @param y integer
+    --- @param btn integer
+    --- @param touch boolean
+    --- @param presses number
+    handlers.mousepressed = function(x, y, btn, touch, presses)
       local user_input = get_user_input()
       if user_input then
-        user_input.C:mousepressed(x, y, btn)
+        user_input.C:mousepressed(x, y, btn, touch, presses)
       else
       end
-      if love.mousepressed then return love.mousepressed(x, y, btn) end
+      if love.mousepressed then
+        return love.mousepressed(x, y, btn, touch, presses)
+      end
     end
 
-    handlers.mousereleased = function(x, y, btn)
+    --- @param x integer
+    --- @param y integer
+    --- @param btn integer
+    --- @param touch boolean
+    --- @param presses number
+    handlers.mousereleased = function(x, y, btn, touch, presses)
+      if btn == 1 then
+        click_count = click_count + 1
+        click_timer = click_delay
+        click_pos = { x = x, y = y }
+      end
       local user_input = get_user_input()
       if user_input then
-        user_input.C:mousereleased(x, y, btn)
+        user_input.C:mousereleased(x, y, btn, touch, presses)
       else
       end
-      if love.mousereleased then return love.mousereleased(x, y, btn) end
+      if love.mousereleased then
+        return love.mousereleased(x, y, btn, touch, presses)
+      end
     end
 
-    handlers.mousemoved = function(x, y, dx, dy)
+    --- @param x number
+    --- @param y number
+    --- @param dx number
+    --- @param dy number
+    --- @param touch boolean
+    handlers.mousemoved = function(x, y, dx, dy, touch)
       local user_input = get_user_input()
       if user_input then
-        user_input.C:mousemoved(x, y, dx, dy)
+        user_input.C:mousemoved(x, y, dx, dy, touch)
       else
       end
-      if love.mousemoved then return love.mousemoved(x, y, dx, dy) end
+      if love.mousemoved then
+        return love.mousemoved(x, y, dx, dy, touch)
+      end
     end
 
     handlers.userinput = function()
@@ -513,14 +673,66 @@ Controller = {
       end
     end
 
+    --- @param id userdata
+    --- @param x number
+    --- @param y number
+    --- @param dx number?
+    --- @param dy number?
+    --- @param pressure number?
+    handlers.touchpressed = function(id, x, y, dx, dy, pressure)
+      local user_input = get_user_input()
+      if user_input then
+        user_input.C:touchpressed(id, x, y, dx, dy, pressure)
+      else
+      end
+      if love.touchpressed then
+        return love.touchpressed(id, x, y, dx, dy, pressure)
+      end
+    end
+
+    --- @param id userdata
+    --- @param x number
+    --- @param y number
+    --- @param dx number?
+    --- @param dy number?
+    --- @param pressure number?
+    handlers.touchreleased = function(id, x, y, dx, dy, pressure)
+      local user_input = get_user_input()
+      if user_input then
+        user_input.C:touchreleased(id, x, y, dx, dy, pressure)
+      else
+      end
+      if love.touchreleased then
+        return love.touchreleased(id, x, y, dx, dy, pressure)
+      end
+    end
+
+    --- @param id userdata
+    --- @param x number
+    --- @param y number
+    --- @param dx number?
+    --- @param dy number?
+    --- @param pressure number?
+    handlers.touchmoved = function(id, x, y, dx, dy, pressure)
+      local user_input = get_user_input()
+      if user_input then
+        user_input.C:touchmoved(id, x, y, dx, dy, pressure)
+      else
+      end
+      if love.touchmoved then
+        return love.touchmoved(id, x, y, dx, dy, pressure)
+      end
+    end
+
+
     --- @diagnostic disable-next-line: undefined-field
     table.protect(love.handlers)
   end,
 
   set_user_handlers = set_handlers,
 
-  has_user_update = function()
-    return user_update
+  user_is_blocking = function()
+    return (user_update or user_draw)
   end,
 
   --- @param userlove table

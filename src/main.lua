@@ -1,4 +1,5 @@
 local redirect_to = require("model.io.redirect")
+local OS = require("util.os")
 require("model.consoleModel")
 require("controller.controller")
 require("controller.consoleController")
@@ -10,10 +11,9 @@ local hostconf = prequire('host')
 
 require("util.key")
 require("util.debug")
-local OS = require("util.os")
 local FS = require("util.filesystem")
 
-require("lib/error_explorer")
+require("lib.error_explorer")
 
 G = love.graphics
 
@@ -31,52 +31,10 @@ local messages = {
 
 local exit = function(err)
   print(err)
+  love.state.app_state = 'shutdown'
   love.event.quit()
 end
 
---- CLI arguments
---- @param args table
---- @return Start
-local argparse = function(args)
-  if args[1] then
-    local m = args[1]
-    if m == 'harmony' then
-      return { mode = 'harmony' }
-    elseif m == 'test' then
-      local autotest = false
-      local drawtest = false
-      local sizedebug = false
-      for _, a in ipairs(args) do
-        if a == '--auto' then autotest = true end
-        if a == '--size' then sizedebug = true end
-        if a == '--draw' then
-          drawtest = true
-          sizedebug = true
-        end
-        if a == '--all' then
-          drawtest = true
-          sizedebug = true
-          autotest = true
-        end
-      end
-      return {
-        mode = 'test',
-        testflags = {
-          auto = autotest,
-          draw = drawtest,
-          size = sizedebug
-        }
-      }
-    elseif m == 'play' then
-      local a2 = args[2]
-      if not string.is_non_empty_string(a2) then
-        exit(messages.play_no_project)
-      end
-      return { mode = 'play', path = a2 }
-    end
-  end
-  return { mode = 'ide' }
-end
 
 --- Display
 --- @param flags Testflags
@@ -86,8 +44,9 @@ local config_view = function(flags)
   local font_size = 32.4
 
   local font_dir = "assets/fonts/"
+  local mf = "ubuntu_mono_bold_nerd.ttf"
   local font_main = G.newFont(
-    font_dir .. "ubuntu_mono_bold_nerd.ttf", font_size)
+    font_dir .. mf, font_size)
   local font_icon = G.newFont(
     font_dir .. "SFMonoNerdFontMono-Regular.otf", font_size)
   local font_cjk = G.newFont(
@@ -105,20 +64,18 @@ local config_view = function(flags)
   local lines = 16
   local input_max = 14
 
-  local font_labels = G.newFont(
-    font_dir .. "PressStart2P-Regular.ttf", 12)
-
-  local w = G.getWidth()
-  local h = love.fixHeight
+  local font_labels = G.newFont(font_dir .. mf, 12)
+  local w = love.fixWidth or G.getWidth()
+  local h = love.fixHeight or G.getHeight()
   local eh = h - 2 * fh
   local debugheight = math.floor(eh / (love.test_grid_y * fh))
-  local debugwidth = math.floor(love.fixWidth / love.test_grid_x) / fw
+  local debugwidth = math.floor(w / love.test_grid_x) / fw
   local drawableWidth = w
   if tf.size then
     drawableWidth = debugwidth * fw
   end
   -- drawtest hack
-  if drawableWidth < love.fixWidth / 3 then
+  if drawableWidth < w / 3 then
     drawableWidth = drawableWidth * 2
   end
 
@@ -137,8 +94,6 @@ local config_view = function(flags)
     show_debug_timer = false,
 
     labelfont = font_labels,
-    lfh = font_labels:getHeight(),
-    lfw = font_labels:getWidth('█'),
 
     w = w,
     h = h,
@@ -199,9 +154,8 @@ local setup_storage = function(mode)
     end
   else
     if OS.get_name() == 'Android' then
-      local savedir = love.filesystem.getSaveDirectory()
-
       if mode == 'play' then
+        local savedir = love.filesystem.getSaveDirectory()
         FS.mkdirp(savedir)
       else
         local ok, sd_path = android_storage_find()
@@ -244,11 +198,15 @@ end
 --- @param path string
 --- @param paths PathInfo
 local load_project = function(path, paths)
-  local is_zip = string.matches_r(path, '.compy$')
-  local s_path = paths.storage_path
-  local sb_dir = love.filesystem.getSourceBaseDirectory()
-  local p_path = paths.project_path
-  local m_path = paths.play_path
+  local is_zip    = string.matches_r(path, '.compy$')
+  local s_path    = paths.storage_path
+  local savedir   = love.filesystem.getSaveDirectory()
+  local id        = love.filesystem.getIdentity()
+  local base      = string.gsub(savedir, '/files/save/' .. id, '')
+  local cache     = FS.join_path(base, 'cache')
+  local sb_dir    = love.filesystem.getSourceBaseDirectory()
+  local p_path    = paths.project_path
+  local m_path    = paths.play_path
 
   local full_path = path
 
@@ -259,6 +217,9 @@ local load_project = function(path, paths)
     elseif FS.exists(FS.join_path(s_path, path), 'file') then
       ex = true
       full_path = FS.join_path(s_path, path)
+    elseif FS.exists(FS.join_path(cache, path), 'file') then
+      ex = true
+      full_path = FS.join_path(cache, path)
     elseif FS.exists(FS.join_path(sb_dir, path), 'file') then
       ex = true
       full_path = FS.join_path(sb_dir, path)
@@ -293,15 +254,19 @@ local load_project = function(path, paths)
   end
 end
 
---- @param args table
 --- @diagnostic disable-next-line: duplicate-set-field
-function love.load(args)
-  local startup = argparse(args)
+function love.load()
+  local startup = love.start
   local mode = startup.mode
   local harmony = love.harmony
   local autotest =
       mode == 'test' and startup.testflags.auto or false
   local playback = mode == 'play'
+
+  if playback and not string.is_non_empty_string(startup.path) then
+    exit(messages.play_no_project)
+    return
+  end
 
   local viewconf = config_view(startup.testflags)
   --- Android specific settings
@@ -347,6 +312,7 @@ function love.load(args)
   local editorconf = {
     --- TODO
     mouse_enabled = false,
+    touch_enabled = false,
   }
 
   --- @class Config

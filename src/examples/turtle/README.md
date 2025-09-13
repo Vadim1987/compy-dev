@@ -28,10 +28,10 @@ For the most simple example of this, let's represent the turtle with only an ell
 ```lua
 local x_r = 15
 local y_r = 20
-function turtle_a(x, y)
+function turtleA(x, y)
   G.ellipse("fill", x, y, x_r, y_r, 100)
 end
-function turtle_b(x, y)
+function turtleB(x, y)
   G.translate(x, y)
   G.ellipse("fill", 0, 0, x_r, y_r, 100)
 end

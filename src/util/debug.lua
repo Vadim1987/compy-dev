@@ -1,6 +1,6 @@
 --- @diagnostic disable: redefined-local
 
-require("util.string") -- pulls in utf8
+require("util.string.string") --- pulls in utf8
 require("util.table")
 local tc = require("util.termcolor")
 
@@ -146,6 +146,121 @@ local function terse_array(a, skip)
   end
 end
 
+--- @alias dumpstyle
+--- | 'lua'
+--- | 'json5'
+--- @param ast token[]?
+--- @param skip_lineinfo boolean?
+--- @param style dumpstyle?
+--- @return string
+local function terse_ast(ast, skip_lineinfo, style)
+  if type(ast) ~= 'table' then return '' end
+  local style = style or 'json5'
+
+  --- @param t table?
+  --- @param omit any[]?
+  --- @param style dumpstyle?
+  --- @param level integer?
+  --- @param prev_seen table?
+  --- @return string
+  local function terse(t, omit, style, level, prev_seen)
+    if not t then return '' end
+
+    local seen = prev_seen or {}
+    local omit = omit or {}
+    local indent = level or 0
+    local res = ''
+    local flat = true
+    --- TODO: finish type display
+    local assign, cmt = (function()
+      if style == 'lua' then
+        return ' = ', { o = '--[[ ', c = ' ]] ' }
+      end
+      return ': ', { o = '/* ', c = ' */ ' }
+    end)()
+    if type(t) == 'table' then
+      res = res .. string.times(tab, indent) .. '{ '
+      if seen[t] then return '' end
+      seen[t] = true
+
+      for k, v in pairs(t) do
+        if not omit[k] then
+          local dent = ''
+          if type(v) == 'table' then
+            flat = false
+            dent = '\n' .. string.times(tab, indent + 1)
+          end
+
+          if type(k) == 'table' then
+            res = res .. dent .. terse(k, omit, style) .. assign
+          elseif type(k) == 'number' and style == 'lua' then
+            -- skip index
+            res = res .. dent .. '[' .. k .. '] ' .. assign
+          elseif type(k) == 'string'
+              and not string.forall(k, Char.is_ascii)
+          then
+            -- skip index
+            res = res .. dent .. "['" .. k .. "'] " .. assign
+          else
+            res = res .. dent
+                -- .. cmt.o .. type(v) .. cmt.c
+                .. k .. assign
+          end
+          if type(v) == 'table' then
+            local table_text =
+                terse(v, omit, style, indent + 1, seen)
+            if string.is_non_empty_string(table_text, true) then
+              res = res .. '\n' .. tab .. table_text
+            else
+              res = res .. '{},' .. '\n' .. string.times(tab, indent + 1)
+            end
+          elseif type(v) == nil then
+            res = res .. 'null, '
+          elseif type(v) == 'boolean' and v == false then
+            res = res .. 'false, '
+          else
+            res = res .. Debug.terse_hash(v, indent + 1, seen)
+          end
+        end
+      end
+      local br = (function()
+        if flat then return '' else return '\n' end
+      end)()
+      local dent = br .. string.times(tab, indent)
+      res = res .. dent .. '}'
+      res = res .. ', '
+    elseif type(t) == 'string' then
+      local t_ = (function()
+        local l = string.lines(t)
+        return string.join(l, '\\n')
+      end)()
+      res = res .. string.format('%q', t_)
+          -- .. cmt.o .. '[' .. type(t) .. ']' .. cmt.o
+          .. ', '
+    else
+      res = res .. tostring(t)
+          -- .. cmt .. '[' .. type(t) .. ']' .. cmt.o
+          .. ', '
+    end
+
+    return res
+  end
+
+  local om = {
+    source = true,
+  }
+  if skip_lineinfo then
+    om.lineinfo = true
+  end
+  local pre = ''
+  if style == 'lua' then
+    pre = 'local t = '
+  end
+  local res = pre .. terse(ast, om, style, nil, nil)
+  local str = string.gsub(res, ', ?$', '')
+  return str
+end
+
 Debug = {
   --- @param t table
   --- @param tag string?
@@ -235,120 +350,7 @@ Debug = {
     end
   end,
 
-  --- @alias dumpstyle
-  --- | 'lua'
-  --- | 'json5'
-  --- @param ast token[]?
-  --- @param skip_lineinfo boolean?
-  --- @param style dumpstyle?
-  --- @return string
-  terse_ast = function(ast, skip_lineinfo, style)
-    if type(ast) ~= 'table' then return '' end
-    local style = style or 'json5'
-
-    --- @param t table?
-    --- @param omit any[]?
-    --- @param style dumpstyle?
-    --- @param level integer?
-    --- @param prev_seen table?
-    --- @return string
-    local function terse(t, omit, style, level, prev_seen)
-      if not t then return '' end
-
-      local seen = prev_seen or {}
-      local omit = omit or {}
-      local indent = level or 0
-      local res = ''
-      local flat = true
-      --- TODO: finish type display
-      local assign, cmt = (function()
-        if style == 'lua' then
-          return ' = ', { o = '--[[ ', c = ' ]] ' }
-        end
-        return ': ', { o = '/* ', c = ' */ ' }
-      end)()
-      if type(t) == 'table' then
-        res = res .. string.times(tab, indent) .. '{ '
-        if seen[t] then return '' end
-        seen[t] = true
-
-        for k, v in pairs(t) do
-          if not omit[k] then
-            local dent = ''
-            if type(v) == 'table' then
-              flat = false
-              dent = '\n' .. string.times(tab, indent + 1)
-            end
-
-            if type(k) == 'table' then
-              res = res .. dent .. terse(k, omit, style) .. assign
-            elseif type(k) == 'number' and style == 'lua' then
-              -- skip index
-              res = res .. dent .. '[' .. k .. '] ' .. assign
-            elseif type(k) == 'string'
-                and not string.forall(k, Char.is_ascii)
-            then
-              -- skip index
-              res = res .. dent .. "['" .. k .. "'] " .. assign
-            else
-              res = res .. dent
-                  -- .. cmt.o .. type(v) .. cmt.c
-                  .. k .. assign
-            end
-            if type(v) == 'table' then
-              local table_text =
-                  terse(v, omit, style, indent + 1, seen)
-              if string.is_non_empty_string(table_text, true) then
-                res = res .. '\n' .. tab .. table_text
-              else
-                res = res .. '{},' .. '\n' .. string.times(tab, indent + 1)
-              end
-            elseif type(v) == nil then
-              res = res .. 'null, '
-            elseif type(v) == 'boolean' and v == false then
-              res = res .. 'false, '
-            else
-              res = res .. Debug.terse_hash(v, indent + 1, seen)
-            end
-          end
-        end
-        local br = (function()
-          if flat then return '' else return '\n' end
-        end)()
-        local dent = br .. string.times(tab, indent)
-        res = res .. dent .. '}'
-        res = res .. ', '
-      elseif type(t) == 'string' then
-        local t_ = (function()
-          local l = string.lines(t)
-          return string.join(l, '\\n')
-        end)()
-        res = res .. string.format('%q', t_)
-            -- .. cmt.o .. '[' .. type(t) .. ']' .. cmt.o
-            .. ', '
-      else
-        res = res .. tostring(t)
-            -- .. cmt .. '[' .. type(t) .. ']' .. cmt.o
-            .. ', '
-      end
-
-      return res
-    end
-
-    local om = {
-      source = true,
-    }
-    if skip_lineinfo then
-      om.lineinfo = true
-    end
-    local pre = ''
-    if style == 'lua' then
-      pre = 'local t = '
-    end
-    local res = pre .. terse(ast, om, style, nil, nil)
-    local str = string.gsub(res, ', ?$', '')
-    return str
-  end,
+  terse_ast = terse_ast,
 
   --- @param o any
   --- @return string

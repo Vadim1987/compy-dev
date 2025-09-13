@@ -1,5 +1,5 @@
 require('util.dequeue')
-require('util.string')
+require('util.string.string')
 require('util.debug')
 
 local held = {

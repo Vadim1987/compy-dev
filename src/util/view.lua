@@ -1,4 +1,4 @@
-require("util.string")
+require("util.string.string")
 
 --- @param cfg ViewConfig
 --- @return number

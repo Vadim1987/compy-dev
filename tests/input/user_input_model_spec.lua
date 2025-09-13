@@ -1,6 +1,6 @@
 require("model.input.userInputModel")
 require("model.interpreter.eval.evaluator")
-require("util.string")
+require("util.string.string")
 
 if not orig_print then
   --- @diagnostic disable: duplicate-set-field

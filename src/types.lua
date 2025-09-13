@@ -18,6 +18,10 @@
 --- @class CursorInfo table
 --- @field cursor Cursor
 
+--- @class Point table
+--- @field x number
+--- @field y number
+
 ---@alias VerticalDir
 ---| 'up'
 ---| 'down'
@@ -46,8 +50,6 @@
 --- @field show_append_hl boolean
 --- @field show_debug_timer boolean
 --- @field labelfont love.Font
---- @field lfh integer -- font height
---- @field lfw integer -- font width
 --- @field h integer
 --- @field w integer
 --- @field colors Colors
@@ -58,8 +60,13 @@
 --- @field drawtest boolean
 --- @field sizedebug boolean
 
+--- @class EditorConfig table
+--- @field mouse_enabled boolean
+--- @field touch_enabled boolean
+
 --- @class Config table
 --- @field view ViewConfig
+--- @field editor EditorConfig
 --- @field autotest boolean
 --- @field mode Mode
 

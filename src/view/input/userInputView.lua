@@ -46,7 +46,7 @@ function UserInputView:draw_input(input, time)
   local drawableWidth = cfg.drawableWidth
   local w = cfg.drawableChars
   -- drawtest hack
-  if drawableWidth < love.fixWidth / 3 then
+  if drawableWidth < G.getWidth() / 3 then
     w = w * 2
   end
 
