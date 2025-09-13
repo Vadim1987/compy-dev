@@ -49,5 +49,5 @@ console will be appended to the end of the file. If there is a bright white
 highlight, the entered text is inserted before it. If there is a bright yellow 
 highlight, the entered text replaces it.
 
-For more information, please see the documentation of the editor and the 
-console.
+For more information, please see the documentation of the [editor](EDITOR.md) 
+and the console.
