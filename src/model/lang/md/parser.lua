@@ -1,7 +1,7 @@
 local ct = require("conf.md")
 local luahl = require("model.lang.lua.parser")().highlighter
 require("model.lang.highlight")
-require("util.string")
+require("util.string.string")
 require("util.debug")
 require("util.dequeue")
 

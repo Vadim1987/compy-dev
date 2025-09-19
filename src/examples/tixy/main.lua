@@ -31,7 +31,6 @@ ex_idx = 1
 local time = 0
 
 function load_example(ex)
-  time = 0
   if type(ex) == "table" then
     body = ex.code
     setupTixy()
@@ -45,6 +44,7 @@ function advance()
   load_example(e)
   if ex_idx < #examples then
     ex_idx = ex_idx + 1
+    time = 0
   end
 end
 
@@ -53,6 +53,7 @@ function retreat()
     local e = examples[ex_idx]
     load_example(e)
     ex_idx = ex_idx - 1
+    time = 0
   end
 end
 

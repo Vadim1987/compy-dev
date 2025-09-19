@@ -2,7 +2,7 @@ require("view.input.userInputView")
 require("view.editor.bufferView")
 require("view.editor.search.searchView")
 
-require("util.string")
+require("util.string.string")
 local class = require('util.class')
 
 --- @param cfg ViewConfig

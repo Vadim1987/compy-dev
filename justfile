@@ -67,6 +67,7 @@ deploy-examples:
     # du -sh "$PROJ_PATH/$P"
     cp -r "$EX_PATH/$P" "$PROJ_PATH/"
   done
+
 # copy examples from project folder to dist and examples folder
 snap-examples:
   #!/usr/bin/env -S bash
@@ -116,6 +117,8 @@ one-atest:
   @{{LOVE}} src test --auto
 one-dtest:
   @{{LOVE}} src test --draw
+one-ptest game:
+  @{{LOVE}} src play {{game}}
 one-allt:
   @{{LOVE}} src test --draw --auto
 one-size:
@@ -143,14 +146,21 @@ package-web-c: package-js-c
   @echo packaged:
   @ls -lh {{DIST}}/{{PRODUCT_NAME}}-web-compat.zip
 
-
+# package an example to a .compy
 zip-example name:
   #!/usr/bin/env -S bash
-  PKG="{{name}}.compy"
+  PKG="dist/{{name}}.compy"
   7z -tzip a "$PKG" \
      ./src/examples/{{name}}/* &> /dev/null \
       && ls "$PKG" \
       || echo 'ENOENT'
+
+zip-examples-all:
+  #!/usr/bin/env -S bash
+  for e in ./src/examples/*
+  do
+    just zip-example $(basename $e)
+  done
 
 package-js-dir DT: version
   #!/usr/bin/env -S bash

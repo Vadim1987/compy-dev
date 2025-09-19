@@ -1,4 +1,4 @@
-require("util.string")
+require("util.string.string")
 
 --- @return string? osname
 local function get_name()

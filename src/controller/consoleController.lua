@@ -169,7 +169,7 @@ function ConsoleController:run_project(name)
       Log.info('Running \'' .. n .. '\'')
       local rok, run_err = run_user_code(f, self, path)
       if rok then
-        if self.main_ctrl.has_user_update() then
+        if self.main_ctrl.user_is_blocking() then
           love.state.app_state = 'running'
         end
       else
@@ -191,9 +191,15 @@ local function project_require(cc, name)
   local open = P.current
   if open then
     local chunk = open:load_file(fn)
+    local pr_env = cc:get_project_env()
     if chunk then
-      setfenv(chunk, cc:get_project_env())
+      setfenv(chunk, pr_env)
       chunk()
+    else
+      --- hack around love.js not having the bit lib
+      if name == 'bit' and _G.web then
+        pr_env.bit = o_require('util.luabit')
+      end
     end
     --- TODO: is it desirable to allow out-of-project require?
     -- else
@@ -466,6 +472,7 @@ function ConsoleController:evaluate_input()
   local inter = self.input
 
   local text = inter:get_text()
+  if text:is_empty() then return end
   local eval = inter:get_eval()
 
   local eval_ok, res = inter:evaluate()
@@ -781,33 +788,114 @@ function ConsoleController:keyreleased(k)
   self.input:keyreleased(k)
 end
 
-function ConsoleController:mousepressed(x, y, button)
+--- @param x integer
+--- @param y integer
+--- @param btn integer
+--- @param touch boolean
+--- @param presses number
+function ConsoleController:mousepressed(
+    x, y, btn, touch, presses)
   if love.state.app_state == 'editor' then
     if self.cfg.editor.mouse_enabled then
-      self.editor.input:mousepressed(x, y, button)
+      self.editor.input:mousepressed(x, y, btn, touch, presses)
     end
   else
-    self.input:mousepressed(x, y, button)
+    self.input:mousepressed(x, y, btn, touch, presses)
   end
 end
 
-function ConsoleController:mousereleased(x, y, button)
+--- @param x integer
+--- @param y integer
+--- @param btn integer
+--- @param touch boolean
+--- @param presses number
+function ConsoleController:mousereleased(
+    x, y, btn, touch, presses)
   if love.state.app_state == 'editor' then
     if self.cfg.editor.mouse_enabled then
-      self.editor.input:mousereleased(x, y, button)
+      self.editor.input:mousereleased(x, y, btn, touch, presses)
     end
   else
-    self.input:mousereleased(x, y, button)
+    self.input:mousereleased(x, y, btn, touch, presses)
   end
 end
 
-function ConsoleController:mousemoved(x, y, dx, dy)
+--- @param x number
+--- @param y number
+--- @param dx number
+--- @param dy number
+--- @param touch boolean
+function ConsoleController:mousemoved(x, y, dx, dy, touch)
   if love.state.app_state == 'editor' then
     if self.cfg.editor.mouse_enabled then
-      self.editor.input:mousemoved(x, y)
+      self.editor.input:mousemoved(x, y, dx, dy, touch)
     end
   else
-    self.input:mousemoved(x, y)
+    self.input:mousemoved(x, y, dx, dy, touch)
+  end
+end
+
+--- @param x number
+--- @param y number
+function ConsoleController:wheelmoved(x, y)
+  if love.state.app_state == 'editor' then
+    if self.cfg.editor.mouse_enabled then
+      self.editor.input:wheelmoved(x, y)
+    end
+  else
+    self.input:wheelmoved(x, y)
+  end
+end
+
+--- @param id userdata
+--- @param x number
+--- @param y number
+--- @param dx number?
+--- @param dy number?
+--- @param pressure number?
+function ConsoleController:touchpressed(id, x, y,
+                                        dx, dy, pressure)
+  if love.state.app_state == 'editor' then
+    if self.cfg.editor.touch_enabled then
+      self.editor.input:touchpressed(id, x, y, dx, dy, pressure)
+    end
+  else
+    self.input:touchpressed(id, x, y, dx, dy, pressure)
+  end
+end
+
+--- @param id userdata
+--- @param x number
+--- @param y number
+--- @param dx number?
+--- @param dy number?
+--- @param pressure number?
+function ConsoleController:touchreleased(id, x, y,
+                                         dx, dy, pressure)
+  if love.state.app_state == 'editor' then
+    if self.cfg.editor.touch_enabled then
+      self.editor.input:touchreleased(id, x, y,
+        dx, dy, pressure)
+    end
+  else
+    self.input:touchreleased(id, x, y, dx, dy, pressure)
+  end
+end
+
+--- @param id userdata
+--- @param x number
+--- @param y number
+--- @param dx number?
+--- @param dy number?
+--- @param pressure number?
+function ConsoleController:touchmoved(id, x, y,
+                                      dx, dy, pressure)
+  if love.state.app_state == 'editor' then
+    if self.cfg.editor.touch_enabled then
+      self.editor.input:touchmoved(id, x, y, dx, dy, pressure)
+    end
+  else
+    self.input:touchmoved(id, x, y, dx, dy, pressure)
   end
 end
 

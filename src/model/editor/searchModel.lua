@@ -122,6 +122,7 @@ function Search:narrow(input)
   local function match(val)
     local kw
     if string.forall(input, Char.is_lower) then
+      if type(val) ~= 'string' then return end
       kw = string.lower(val)
     else
       kw = val

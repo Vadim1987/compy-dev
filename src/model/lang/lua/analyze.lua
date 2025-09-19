@@ -215,15 +215,17 @@ local function analyze(ast)
     then
       local ci = table.find_by(candidates, defmatch(v.name))
       local c = candidates[ci]
-      if c then
-        local a = {
-          name = v.name,
-          line = v.line,
-          type = c.type,
-        }
-        table.insert(assignments, a)
-      else
-        table.insert(assignments, v)
+      if type(v.name) == 'string' then
+        if c then
+          local a = {
+            name = v.name,
+            line = v.line,
+            type = c.type,
+          }
+          table.insert(assignments, a)
+        else
+          table.insert(assignments, v)
+        end
       end
     else
       table.insert(candidates, v)

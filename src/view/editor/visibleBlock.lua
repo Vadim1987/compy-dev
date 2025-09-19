@@ -1,5 +1,5 @@
 require("util.range")
-require("util.string")
+require("util.string.string")
 local class = require('util.class')
 
 --- @param w integer
