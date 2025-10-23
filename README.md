@@ -1,217 +1,398 @@
-# Compy
+# Pong - Two-player Game
 
-A console-based Lua-programmable computer for children based on
-the [LÖVE2D][löve2d] framework.
+In this example, we explore dual input systems, 
+multiplayer gameplay, collision detection, and game 
+state management. You will learn how to create a 
+competitive game where two players face each other 
+in real-time.
 
-## Principles
+```
+     |   10 : 8   |
+     |            |
+ [|] |     []     | [|]
+     |            |
+```
 
-- Command-line based UI
-- Full control over each pixel of the display
-- Ability to easily reset to initial state
-- Impossible to damage with non-violent interaction
-- Syntactic mistakes caught early, not accepted on input
-- Possibility to test/try parts of program separately
-- Share software in source package form
-- Minimize frustration
-
-# Usage (IDE mode)
-
-Rather than the default LÖVE storage locations (save directory,
-cache, etc), the application uses a folder under _Documents_ to
-store projects. Ideally, this is located on removable storage to
-enable sharing programs the user writes.
-
-For simplicity and security reasons, the user is only allowed to
-access files inside a project. To interact with the filesystem,
-a project must be selected first.
-
-## Keys
-
-| Command                                                           | Combination                                   |
-| :---------------------------------------------------------------- | :-------------------------------------------- |
-| Clear terminal                                                    | <kbd>Ctrl</kbd>+<kbd>L</kbd>                  |
-| Stop project                                                      | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
-| Quit project (stop and close)                                     | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd> |
-| Reset application to initial state                                | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> |
-| Reset project to initial state                                    | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd>   |
-| Exit application                                                  | <kbd>Ctrl</kbd>+<kbd>Esc</kbd>                |
-| Pause project                                                     | <kbd>Ctrl</kbd>+<kbd>Pause</kbd>              |
-| Toggle edit/run                                                   | <kbd>F8</kbd>                                 |
-| **Input**                                                         |                                               |
-| Move cursor horizontally                                          | <kbd>⇦</kbd>/<kbd>⇨</kbd>                     |
-| Move cursor vertically                                            | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
-| Go back in command history                                        | <kbd>PageUp</kbd>                             |
-| Go forward in command history                                     | <kbd>PageDown</kbd>                           |
-| Move in history (if in first/last line)                           | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
-| Jump to start                                                     | <kbd>Home</kbd>                               |
-| Jump to end                                                       | <kbd>End</kbd>                                |
-| Jump to line start                                                | <kbd>Alt</kbd>+<kbd>Home</kbd>                |
-| Jump to line end                                                  | <kbd>Alt</kbd>+<kbd>End</kbd>                 |
-| Insert newline                                                    | <kbd>Shift</kbd>+<kbd>Enter ⏎</kbd>           |
-| Delete current line                                               | <kbd>Ctrl</kbd>+<kbd>Y</kbd>                  |
-| Duplicate current line                                            | <kbd>Ctrl</kbd>+<kbd>D</kbd>                  |
-| Evaluate input                                                    | <kbd>Enter ⏎</kbd>                            |
-| **Editor**                                                        |                                               |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _same as Input, except for:_ |                                               |
-| Scroll up                                                         | <kbd>PageUp</kbd>                             |
-| Scroll down                                                       | <kbd>PageDown</kbd>                           |
-| Move selection (if in first/last line)                            | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
-| Move selection                                                    | <kbd>Ctrl</kbd>+<kbd>⇧</kbd>/<kbd>⇩</kbd>     |
-| Replace selection with input                                      | <kbd>Enter ⏎</kbd>                            |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _additionally_               |                                               |
-| Delete selected block                                             | <kbd>Ctrl</kbd>+<kbd>Delete</kbd>             |
-| Delete selected block (if input is empty)                         | <kbd>Ctrl</kbd>+<kbd>Y</kbd>                  |
-| Wipe input                                                        | <kbd>Ctrl</kbd>+<kbd>W</kbd>                  |
-| Load selected content to input (discards previous content)        | <kbd>Esc</kbd>                                |
-| Insert selected content into input                                | <kbd>Shift</kbd>+<kbd>Esc</kbd>               |
-| Scroll to start                                                   | <kbd>Ctrl</kbd>+<kbd>PageUp</kbd>             |
-| Scroll to end                                                     | <kbd>Ctrl</kbd>+<kbd>PageDown</kbd>           |
-| Scroll up by one line                                             | <kbd>Shift</kbd>+<kbd>PageUp</kbd>            |
-| Scroll down by one line                                           | <kbd>Shift</kbd>+<kbd>PageDown</kbd>          |
-| Move selection to start                                           | <kbd>Ctrl</kbd>+<kbd>Home</kbd>               |
-| Move selecion to end                                              | <kbd>Ctrl</kbd>+<kbd>End</kbd>                |
-| Stop editor                                                       | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _move mode_                  |                                               |
-| Switch to moving ("pick up" selection)                            | <kbd>Ctrl</kbd>+<kbd>M</kbd>                  |
-| Move selection                                                    | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
-| Move selection to start                                           | <kbd>Ctrl</kbd>+<kbd>Home</kbd>               |
-| Move selecion to end                                              | <kbd>Ctrl</kbd>+<kbd>End</kbd>                |
-| Cancel moving                                                     | <kbd>Esc</kbd>                                |
-| Move line/block to selection and return to normal mode            | <kbd>Enter ⏎</kbd>                            |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _search mode_                |                                               |
-| Search definitions                                                | <kbd>Ctrl</kbd>+<kbd>F</kbd>                  |
-| Exit search                                                       | <kbd>Esc</kbd>                                |
-| Jump to selected definition                                       | <kbd>Enter ⏎</kbd>                            |
-
-## Projects
-
-A _project_ is a folder in the application's storage which
-contains at least a `main.lua` file. Projects can be loaded and
-ran. At any time, pressing <kbd>Ctrl-Shift-Q</kbd> quits and
-returns to the console
-
-- `list_projects()`
-
-  List available projects.
-
-- `project(proj)`
-
-  Open project _proj_ or create a new one if it doesn't exist.
-  New projects are supplied with example code to demonstrate the
-  structure.
-
-- `current_project()`
-
-  Print the currently open project's name (if any).
-
-- `run_project(proj?)` / `run(proj?)`
-
-  Run either _proj_ or the currently open project if no
-  arguments are passed.
-
-- `example_projects()`
-
-  Copy the included example projects to the projects folder.
-
-- `close_project()`
-
-  Close currently opened project.
-
-- `edit(file)`
-
-  Open file in editor. If it does not exist yet, a new file will
-  be created. See [Editor mode](#editor)
-
-### Files
-
-Once a project is open, file operations are available on it's
-contents.
-
-- `list_contents()`
-
-  List files in the project.
-
-- `readfile(file)`
-
-  Open _file_ and display it's contents.
-
-- `writefile(file, content)`
-
-  Write to _file_ the text supplied as the _content_ parameter.
-  This can be either a string, or an array of strings.
-
-- `runfile(file)`
-
-  Run _file_ if it's a lua script.
-
-## Editor
-
-If a project is open, the files inside can be edited or new ones
-created. Run the `edit()` command to do so.
-
-![edit](./doc/interface/open_edit.apng)
-
-When a file is opened, the editor is scrolled to the end by
-default, and entered input will be appended to the end.
-
-![hello](./doc/interface/hello.apng)
-
-To modify an existing line, navigate there with
-<kbd>⇧</kbd>/<kbd>⇩</kbd>. Then load the text by pressing
-<kbd>Esc</kbd>, make the desired changes, then send it back with
-<kbd>Enter ⏎</kbd>
-
-![capitalized](./doc/interface/hello_cap.apng)
-
-Happy with the modifications now, we can quit by pressing
-<kbd>Ctrl-Shift-Q</kbd>
-
-![quit](./doc/interface/quit_editor.apng)
-
-#### Moving
-
-Select the block you want to move and press <kbd>Ctrl-M</kbd>.
-Move the highlight with <kbd>⇧</kbd>/<kbd>⇩</kbd> and hit
-<kbd>Enter ⏎</kbd> when you found it's new home.
-
-![move1](./doc/interface/move_line.apng)
-![move2](./doc/interface/move_block.apng)
-
-#### Searching
-
-Definitions can be searched with <kbd>Ctrl-F</kbd>. Pressing
-this combination switches to search mode, in which the
-definitions are listed, and there's a highlight, which can be
-moved as usual. Hitting <kbd>Enter ⏎</kbd> returns to editing,
-highlighting the selected definition. To exit search mode
-without moving, press <kbd>Esc</kbd>.
-
-![search](./doc/interface/search.apng)
+This program implements a two-player Pong game with:
+- Keyboard and mouse control for left player
+- Keyboard control for right player
+- Real-time collision detection
+- Score tracking and game states
 
 
-# Usage (playback mode)
+## Concepts Covered
 
-`love compy.love play <project>`
+- **Dual input systems** - keyboard and mouse together
+- **Multiplayer input** - handling two players
+- **Game loop** - update and draw callbacks
+- **Collision detection** - AABB rectangle overlap
+- **State management** - start, play, and game over
+- **Delta time** - frame-rate independent movement
 
-* `<project>` is either
-  * a `.compy` package (a zipped project)
-  * a folder containing a valid project
 
-Paths will be searched in the following order:
-* for zips:
-  * current directory (or absolute path)
-  * compy storage directory
-* for folders
-  * current directory (or absolute path)
-  * compy storage directory
-  * projects directory
+## Files
 
-## Keys
+**constants.lua** - configuration values
+```lua
+PADDLE_WIDTH   = 10
+PADDLE_HEIGHT  = 60
+PADDLE_SPEED   = 180
+BALL_SIZE      = 10
+BALL_SPEED_X   = 240
+BALL_SPEED_Y   = 120
+WIN_SCORE      = 10
+MOUSE_SENSITIVITY = 1.0
+```
 
-| Command                        | Combination                                 |
-| :----------------------------- | :------------------------------------------ |
-| Reset project to initial state | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> |
+**main.lua** - game logic, rendering, and input
 
-#
 
-[löve2d]: https://love2d.org
+## Program Structure
+
+### State Table
+
+All game state is kept in a single global table `S`:
+
+```lua
+S = {
+  player = {},   -- left paddle
+  opp = {},      -- right paddle
+  ball = {},     -- ball
+  ps = 0,        -- left player score
+  os = 0,        -- right player score
+  state = "start"
+}
+```
+
+This makes inspection and debugging easier. During 
+gameplay, you can press BREAK and examine or modify 
+any value in the `S` table.
+
+
+### Coordinate System
+
+Screen coordinates start at the top-left corner:
+
+```
+(0,0) ────────────> X (increases right)
+  │
+  │   [paddle]
+  │   at x=30, y=200
+  ↓
+  Y (increases down)
+```
+
+Moving "up" means decreasing Y, moving "down" means 
+increasing Y.
+
+
+## Input Handling
+
+### Left Player - Keyboard
+
+The left player uses Q and A keys:
+
+```lua
+function updateLeft(dt)
+  local dir = 0
+  if love.keyboard.isDown("q") then 
+    dir = -1   -- up
+  end
+  if love.keyboard.isDown("a") then 
+    dir = 1    -- down
+  end
+  movePaddle(S.player, dir, dt)
+end
+```
+
+
+### Left Player - Mouse
+
+We enable relative mouse mode for the left player:
+
+```lua
+love.mouse.setRelativeMode(true)
+mouseEnabled = true
+```
+
+This provides cursor-free control:
+
+```lua
+function love.mousemoved(x, y, dx, dy, istouch)
+  if not mouseEnabled then return end
+  if istouch then return end
+  if S.state ~= "play" then return end
+  
+  local p = S.player
+  p.y = p.y + dy * MOUSE_SENSITIVITY
+  clampPaddle(p)
+end
+```
+
+The `dy` parameter represents vertical mouse 
+displacement. Moving up 5 pixels gives `dy = -5`.
+
+
+### Right Player - Keyboard
+
+The right player uses arrow keys:
+
+```lua
+function updateRight(dt)
+  local dir = 0
+  if love.keyboard.isDown("up") then 
+    dir = -1   -- up
+  end
+  if love.keyboard.isDown("down") then 
+    dir = 1    -- down
+  end
+  movePaddle(S.opp, dir, dt)
+end
+```
+
+
+### Why Dual Input Works
+
+Both keyboard and mouse modify `S.player.y`:
+
+```lua
+-- Keyboard in love.update():
+if love.keyboard.isDown("q") then
+  S.player.y = S.player.y - PADDLE_SPEED * dt
+end
+
+-- Mouse in love.mousemoved():
+S.player.y = S.player.y + dy * MOUSE_SENSITIVITY
+```
+
+Their effects combine naturally. The left player can 
+use either or both simultaneously.
+
+
+## Movement and Physics
+
+### Delta Time
+
+Movement uses `dt` (delta time) for consistency:
+
+```lua
+function movePaddle(p, dir, dt)
+  if dir ~= 0 then
+    p.dy = PADDLE_SPEED * dir
+  else
+    p.dy = 0
+  end
+  
+  p.y = p.y + p.dy * dt
+  clampPaddle(p)
+end
+```
+
+Without `dt`, movement would depend on frame rate.
+
+Example:
+```
+PADDLE_SPEED = 180 pixels/second
+dt = 0.016 seconds (60 FPS)
+Movement = 180 * 0.016 = 2.88 pixels per frame
+```
+
+
+### Boundary Clamping
+
+Paddles must stay on screen:
+
+```lua
+function clampPaddle(p)
+  if p.y < 0 then 
+    p.y = 0
+    p.dy = 0
+  end
+  
+  local maxY = H() - p.h
+  if p.y > maxY then 
+    p.y = maxY
+    p.dy = 0
+  end
+end
+```
+
+
+
+## Collision Detection
+
+### AABB Collision
+
+Two rectangles overlap if all four edge comparisons 
+are true:
+
+```lua
+function collide(b, p, offset)
+  local hitX = b.x < p.x + p.w
+  local hitX2 = b.x + b.s > p.x
+  local hitY = b.y < p.y + p.h
+  local hitY2 = b.y + b.s > p.y
+  
+  if hitX and hitX2 and hitY and hitY2 then
+    b.x = p.x + offset
+    b.dx = -b.dx
+  end
+end
+```
+
+Visualization:
+```
+Paddle:          Ball:
+┌────┐          ┌──┐
+│    │          └──┘
+│    │  Check: overlap on all axes?
+└────┘
+
+All edges overlap → collision
+Ball reverses direction
+```
+
+
+### Wall Bouncing
+
+The ball reflects off top and bottom walls:
+
+```lua
+function bounceWalls(b)
+  if b.y <= 0 then 
+    b.y = 0
+    b.dy = -b.dy
+  end
+  
+  local maxY = H() - b.s
+  if b.y >= maxY then
+    b.y = maxY
+    b.dy = -b.dy
+  end
+end
+```
+
+
+## Game Loop
+
+The game runs continuously:
+
+```lua
+function love.update(dt)
+  if S.state ~= "play" then return end
+
+  updateLeft(dt)    -- left player input
+  updateRight(dt)   -- right player input
+  updateBall(dt)    -- physics
+  
+  if checkScore() then return end
+  if ballOut() then resetBall() end
+end
+```
+
+Each frame:
+1. Check game state
+2. Process both players' input
+3. Update ball position and collisions
+4. Check for scoring
+5. Reset ball if needed
+
+
+## Code Reuse
+
+Both paddles use identical movement logic:
+
+```lua
+function updateLeft(dt)
+  local dir = 0
+  if love.keyboard.isDown("q") then dir = -1 end
+  if love.keyboard.isDown("a") then dir = 1 end
+  movePaddle(S.player, dir, dt)  -- shared
+end
+
+function updateRight(dt)
+  local dir = 0
+  if love.keyboard.isDown("up") then dir = -1 end
+  if love.keyboard.isDown("down") then dir = 1 end
+  movePaddle(S.opp, dir, dt)     -- same function
+end
+```
+
+This demonstrates DRY (Don't Repeat Yourself). 
+Changes to paddle behavior happen in one place.
+
+
+## Relative Mouse Mode
+
+Normal vs Relative mode comparison:
+
+**Normal mode:**
+```
+Cursor visible
+Mouse at x=100, y=200
+Move 5 pixels right
+Result: x=105, y=200
+```
+
+**Relative mode:**
+```
+Cursor hidden
+Mouse position unknown/irrelevant
+Move 5 pixels right
+Result: dx=5, dy=0
+```
+
+Relative mode advantages:
+- No cursor interference
+- No screen edge limits
+- Precise game control
+
+
+## Experimentation
+
+The program encourages exploration:
+
+**Adjust game speed:**
+```lua
+PADDLE_SPEED = 120   -- slower paddles
+BALL_SPEED_X = 400   -- faster ball
+```
+
+**Change mouse feel:**
+```lua
+MOUSE_SENSITIVITY = 0.5  -- less sensitive
+MOUSE_SENSITIVITY = 2.0  -- more sensitive
+```
+
+**Modify appearance:**
+```lua
+COLOR_BG = {0, 0.1, 0.2}  -- dark blue
+COLOR_FG = {0, 1, 0}      -- green
+PADDLE_HEIGHT = 80        -- taller paddles
+```
+
+Colors use RGB from 0 to 1:
+- `{1, 0, 0}` = red
+- `{0, 1, 0}` = green
+- `{0, 0, 1}` = blue
+
+
+## User Documentation
+
+This program is a two-player competitive Pong game.
+
+**Controls:**
+- Left player: `Q` (up) / `A` (down) or mouse
+- Right player: `↑` (up) / `↓` (down)
+- `Space` - start or restart game
+- `Esc` - quit
+
+**Gameplay:**
+First to reach 10 points wins. The ball bounces off 
+walls and paddles. When the ball goes past a paddle, 
+the other player scores.
+
+The left player can use keyboard, mouse, or both 
+simultaneously for maximum control.
+
+
