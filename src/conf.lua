@@ -63,14 +63,26 @@ function love.conf(t)
     love.TRACE = true
   end
 
+  if os.getenv("COMPY_PROF") then
+    print('DEBUG: initializing profiler')
+    local frames = os.getenv("FRAMES") or 50
+    love.PROFILE = {
+      reports = {},
+      frame = 0,
+      n_frames = frames,
+      n_rows = 7,
+      fpsc = 'T_R_B'
+    }
+  end
+
   t.identity = 'compy'
   t.window.resizable = false
 
+  local width = 1024
+  local height = 600
   if start.mode ~= 'play' then
     local hidpi = os.getenv("HIDPI")
 
-    local width = 1024
-    local height = 600
     if hidpi == 'true' or hidpi == 'TRUE' then
       t.window.width = width * 2
       t.window.height = height * 2
@@ -91,6 +103,9 @@ function love.conf(t)
     if string.len(gp) > 0 then
       title = string.format('%s - %s', 'Compy Player', gp)
     end
+    t.window.resizable = true
+    love.fixHeight = height
+    love.fixWidth = width
     t.window.title = title
   end
   love.test_grid_x = 4

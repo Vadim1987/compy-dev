@@ -1,5 +1,6 @@
 local class = require('util.class')
 require("util.key")
+require("util.view")
 require("util.string.string")
 
 --- @param model UserInputModel
@@ -15,9 +16,26 @@ end
 
 --- @class UserInputController
 --- @field model UserInputModel
+--- @field view UserInputView?
 --- @field result table
 --- @field disable_selection boolean
 UserInputController = class.create(new)
+
+--- @return boolean
+function UserInputController:is_oneshot()
+  return self.model.oneshot
+end
+
+--- @param v UserInputView
+function UserInputController:init_view(v)
+  self.view = v
+end
+
+function UserInputController:update_view()
+  local input = self.model:get_input()
+  local status = self:get_status()
+  self.view:render(input, status)
+end
 
 ---------------
 --  entered  --
@@ -36,6 +54,7 @@ end
 --- @param t str
 function UserInputController:set_text(t)
   self.model:set_text(t)
+  self:update_view()
 end
 
 --- @return boolean
@@ -113,7 +132,7 @@ function UserInputController:clear_error()
   self.model:clear_error()
 end
 
---- @param error string[]?
+--- @param error string[]|Error[]?
 function UserInputController:set_error(error)
   self.model:set_error(error)
 end
@@ -126,7 +145,9 @@ end
 --- @return boolean
 --- @return Error[]
 function UserInputController:evaluate()
-  return self.model:handle(true)
+  local ok, res = self.model:handle(true)
+  self:update_view()
+  return ok, res
 end
 
 function UserInputController:cancel()
@@ -164,6 +185,7 @@ end
 --- @param k string
 --- @return boolean? limit
 function UserInputController:keypressed(k)
+  self:update_view()
   if _G.web and k == 'space' then
     self:textinput(' ')
   end
@@ -362,12 +384,13 @@ function UserInputController:keypressed(k)
     submit()
   end
 
-
+  self:update_view()
   return ret
 end
 
 --- @param t string
 function UserInputController:textinput(t)
+  self:update_view()
   if self.model:has_error() then
     return
   end
@@ -375,11 +398,13 @@ function UserInputController:textinput(t)
     return
   end
   self.model:add_text(t)
+  self:update_view()
 end
 
 --- @param k string
 function UserInputController:keyreleased(k)
   local input = self.model
+  self:update_view()
 
   if input:has_error() then
     if k == 'space' then
@@ -395,12 +420,14 @@ function UserInputController:keyreleased(k)
   end
 
   selection()
+  self:update_view()
 end
 
 ---------------
 --   mouse   --
 ---------------
 
+--- @private
 --- @param x integer
 --- @param y integer
 --- @return integer c
@@ -417,6 +444,7 @@ function UserInputController:_translate_to_input_grid(x, y)
   return char, line
 end
 
+--- @private
 --- @param x integer
 --- @param y integer
 --- @param btn integer
