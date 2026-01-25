@@ -263,6 +263,24 @@ end
 
 -- Set up audio table
 local compy_audio = require("util.audio")
+local get_compy_terminal = function(terminal)
+  return {
+    --- @param x number
+    --- @param y number
+    gotoxy = function(x, y)
+      return terminal:move_to(x, y)
+    end,
+    show_cursor = function()
+      return terminal:show_cursor()
+    end,
+    hide_cursor = function()
+      return terminal:hide_cursor()
+    end,
+    clear = function()
+      return terminal:clear()
+    end
+  }
+end
 
 function ConsoleController.prepare_env(cc)
   local prepared            = cc.main_env
@@ -379,22 +397,7 @@ function ConsoleController.prepare_env(cc)
 
   local terminal            = cc.model.output.terminal
   local compy_namespace     = {
-    terminal = {
-      --- @param x number
-      --- @param y number
-      gotoxy = function(x, y)
-        return terminal:move_to(x, y)
-      end,
-      show_cursor = function()
-        return terminal:show_cursor()
-      end,
-      hide_cursor = function()
-        return terminal:hide_cursor()
-      end,
-      clear = function()
-        return terminal:clear()
-      end
-    },
+    terminal = get_compy_terminal(terminal),
     audio = compy_audio,
   }
   prepared.compy            = compy_namespace
@@ -424,11 +427,6 @@ function ConsoleController.prepare_project_env(cc)
   local cfg                   = cc.model.cfg
   ---@type table
   local project_env           = cc:get_pre_env_c()
-  project_env.gfx             = love.graphics
-
-  project_env.compy           = {
-    audio = compy_audio
-  }
 
   project_env.require         = function(name)
     return project_require(name)
@@ -557,6 +555,14 @@ function ConsoleController.prepare_project_env(cc)
   project_env.edit       = function(name)
     return cc:edit(name)
   end
+
+  project_env.gfx        = love.graphics
+
+  project_env.compy      = {
+    audio = compy_audio,
+    terminal = get_compy_terminal(cc.model.output.terminal),
+    text_input = input_text
+  }
 
   project_env.eval       = LANG.eval
   project_env.print_eval = LANG.print_eval
