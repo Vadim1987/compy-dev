@@ -3,6 +3,7 @@
     // LOVE / libs
     "utf8",
     "lfs",
+    "compy",
     // "pending",
     // busted
     "describe",
@@ -23,6 +24,8 @@
     "readlines",
     "writefile",
     // luautils
+    "noop",
+    "identity",
     "prequire",
     "codeload",
     "error_test",

@@ -24,6 +24,8 @@ local codeload = function(code, env)
 end
 
 local t = {
+  noop = function() end,
+  identity = function(a) return a end,
   prequire = prequire,
   error_test = function()
     if love and love.DEBUG then
