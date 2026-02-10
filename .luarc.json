@@ -19,10 +19,14 @@
     "stop",
     "pause",
     "continue",
+    "readfile",
+    "readlines",
+    "writefile",
     // luautils
     "prequire",
     "codeload",
     "error_test",
+    "parse_int",
     // end of array
     ""
   ],
