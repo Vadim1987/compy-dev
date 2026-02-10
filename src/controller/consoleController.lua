@@ -135,7 +135,7 @@ end
 
 --- @private
 --- @param name string
---- @return string[]?
+--- @return string?
 function ConsoleController:_readfile(name)
   local PS              = self.model.projects
   local p               = PS.current
@@ -144,6 +144,16 @@ function ConsoleController:_readfile(name)
     return text_or_err
   else
     print(text_or_err)
+  end
+end
+
+--- @private
+--- @param name string
+--- @return string[]?
+function ConsoleController:_readlines(name)
+  local s = self:_readfile(name)
+  if s then
+    return string.lines(s)
   end
 end
 
@@ -325,9 +335,15 @@ function ConsoleController.prepare_env(cc)
   end
 
   --- @param name string
-  --- @return string[]?
+  --- @return string?
   prepared.readfile         = function(name)
     return check_open_pr(cc._readfile, cc, name)
+  end
+
+  --- @param name string
+  --- @return string[]?
+  prepared.readlines        = function(name)
+    return check_open_pr(cc._readlines, cc, name)
   end
 
   --- @param name string
