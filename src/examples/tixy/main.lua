@@ -90,7 +90,10 @@ function tixy(t, i, x, y)
 end
 
 function setupTixy()
-  local code = "return function(t, i, x, y)\n" .. body .. " end"
+  local code = "return function(t, i, x, y)\n" ..
+      "  " .. body ..
+      "  return r\n" ..
+      "end"
   local f = loadstring(code)
   if f then
     setfenv(f, _G)
