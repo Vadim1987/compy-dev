@@ -2,7 +2,7 @@
 
 ### sanity checks
 
-[ -z "$1" ] && {
+[[ -z "$1" ]] && {
   echo 'Provide an export xml' > /dev/stderr
   exit 13
 }
@@ -22,11 +22,11 @@ cd "$TMPDIR" || exit
 WM=wmark
 MD=md
 
-mkdir -p $WM
-mkdir -p $MD
+mkdir -p "$WM"
+mkdir -p "$MD"
 
 TMP=$(mktemp XXXXX.json)
-cat "$IN" | yq -p xml '.mediawiki.page' -ojson \
+yq -p xml '.mediawiki.page' -ojson < "$IN" \
   | jq 'map( {title: .title, content: .revision.text."+content" } )' \
   > "$TMP"
 
@@ -45,6 +45,6 @@ done
 for m in "$WM"/*
 do
   NAME=$(basename "$m" mediawiki)
-  pandoc -f mediawiki -t markdown "$m" -o $MD/"$NAME".md \
+  pandoc -f mediawiki -t markdown "$m" -o "$MD"/"$NAME".md \
     || echo 'parse error in' "$NAME" > /dev/stderr
 done
