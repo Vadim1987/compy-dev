@@ -42,17 +42,15 @@ end
 --- @param flags Testflags
 --- @return ViewConfig
 local config_view = function(flags)
-  local tf = flags or {}
-  local font_size = 32.4
+  local fonts = require("util.fonts")
 
-  local font_dir = "assets/fonts/"
-  local mf = "ubuntu_mono_bold_nerd.ttf"
-  local font_main = gfx.newFont(
-    font_dir .. mf, font_size)
-  local font_icon = gfx.newFont(
-    font_dir .. "SFMonoNerdFontMono-Regular.otf", font_size)
-  local font_cjk = gfx.newFont(
-    font_dir .. "SarasaGothicJ-Bold.ttf", font_size * (2 / 3))
+  local tf = flags or {}
+  local font_size = fonts.default_size
+  local label_size = fonts.label_size
+
+  local font_main = gfx.newFont(fonts.main, font_size)
+  local font_icon = gfx.newFont(fonts.icon, font_size)
+  local font_cjk = gfx.newFont(fonts.cjk, font_size * (2 / 3))
   font_main:setFallbacks(font_icon, font_cjk)
 
   local lh = tf.size and 1 or 1.0468
@@ -66,7 +64,7 @@ local config_view = function(flags)
   local lines = 16
   local input_max = 14
 
-  local font_labels = gfx.newFont(font_dir .. mf, 12)
+  local font_labels = gfx.newFont(fonts.main, label_size)
   local w = love.fixWidth or gfx.getWidth()
   local h = love.fixHeight or gfx.getHeight()
   local eh = h - 2 * fh
