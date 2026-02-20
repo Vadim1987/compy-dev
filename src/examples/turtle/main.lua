@@ -18,12 +18,16 @@ function eval(input)
   end
 end
 
+local font = gfx.newFont(compy.fonts.mono, 32)
+local debug_font = gfx.newFont(compy.fonts.serif, 20)
+
 function love.draw()
   gfx.setFont(font)
   drawBackground()
   drawHelp()
   drawTurtle(tx, ty)
   if debug then
+    gfx.setFont(debug_font)
     drawDebuginfo()
   end
 end

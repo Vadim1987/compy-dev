@@ -29,7 +29,7 @@ setTime()
 math.randomseed(os.time())
 color = math.random(7)
 bg_color = math.random(7)
-font = gfx.newFont(144)
+local font = gfx.newFont(compy.fonts.sans, 172)
 
 local function pad(i)
   return string.format("%02d", i)

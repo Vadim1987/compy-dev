@@ -2,6 +2,7 @@
 --- original from https://github.com/Aethelios/Conway-s-Game-of-Life-in-Lua-and-Love2D
 
 gfx = love.graphics
+local font = gfx.newFont(compy.fonts.mono, 32)
 gfx.setFont(font)
 fh = font:getHeight()
 
