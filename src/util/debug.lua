@@ -514,6 +514,10 @@ local once = function(...)
   _once(kh, args)
 end
 
+local fire_once = function()
+  if not love or not love.DEBUG then return end
+  love.debug.once = love.debug.once + 1
+end
 
 Log = {
   trace = trace,
@@ -526,9 +530,10 @@ Log = {
   debug = debug,
   once = once,
 
-  fire_once = function()
-    if not love or not love.DEBUG then return end
-    love.debug.once = love.debug.once + 1
+  fire_once = fire_once,
+  fire_noted = function(...)
+    info(...)
+    fire_once()
   end,
   --- @param color integer
   set_once_color = function(color)
