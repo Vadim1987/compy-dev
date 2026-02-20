@@ -309,6 +309,7 @@ local get_compy_terminal = function(terminal)
       return terminal:hide_cursor()
     end,
     clear = function()
+      terminal:move_to(1, 1)
       return terminal:clear()
     end
   }
