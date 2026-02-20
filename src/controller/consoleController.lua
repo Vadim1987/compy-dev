@@ -329,10 +329,12 @@ local get_compy_terminal = function(terminal)
   }
 end
 local get_compy_namespace = function(terminal)
+  require("util.namespace.fonts")
   return {
     terminal = get_compy_terminal(terminal),
     audio = compy_audio,
-    graphics = compy_graphics
+    graphics = compy_graphics,
+    fonts = CompyFonts()
   }
 end
 
