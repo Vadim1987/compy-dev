@@ -6,6 +6,7 @@ require("util.dequeue")
 --- @class InputText: Dequeue
 --- @field new function
 --- @field traverse function
+--- @field render fun(): string
 InputText = class.create()
 
 --- @param values string[]?
@@ -92,10 +93,20 @@ function InputText:traverse(from, to, options)
   return ret
 end
 
+--- @return string
+function InputText:render()
+  if string.is_non_empty_string_array(self:items()) then
+    return string.unlines(self:items())
+  else
+    return ''
+  end
+end
+
 --- @return boolean
 function InputText:non_empty()
   return string.is_non_empty_string_array(self:items())
 end
+
 --- @return boolean
 function InputText:is_empty()
   return not string.is_non_empty_string_array(self:items())
