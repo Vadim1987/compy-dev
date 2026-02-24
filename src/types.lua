@@ -182,3 +182,10 @@
 --- @field n_frames integer
 --- @field n_rows integer
 --- @field fpsc FPSC
+
+--- @class Compy
+--- @field singleclick function?
+--- @field doubleclick function?
+--- @field terminal table?
+--- @field audio table?
+--- @field font table?

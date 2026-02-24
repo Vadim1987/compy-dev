@@ -192,11 +192,11 @@ Double clicks/taps are a workable solution, but there is a problem: detecting th
 To solve for this, we created custom handlers for single and double clicks:
 
 ```lua
-function love.singleclick(x, y)
+function compy.singleclick(x, y)
   point(x, y, 1)
 end
 
-function love.doubleclick(x, y)
+function compy.doubleclick(x, y)
   point(x, y, 2)
 end
 ```

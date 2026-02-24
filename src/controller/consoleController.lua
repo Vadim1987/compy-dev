@@ -185,6 +185,22 @@ function ConsoleController:writefile(name, content)
   end
 end
 
+--- @param name string
+--- @return function? handler
+function ConsoleController:get_compy_handler(name)
+  local env = self:get_project_env()
+  if not env then return end
+  local active_compy = env['compy']
+  if not active_compy then return end
+  local handler = active_compy[name]
+  if not handler then
+    return
+  else
+    return handler
+  end
+end
+
+--- @param name string
 function ConsoleController:run_project(name)
   if love.state.app_state == 'inspect' or
       love.state.app_state == 'running'
