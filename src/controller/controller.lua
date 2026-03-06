@@ -40,27 +40,27 @@ local _supported = {
   'touchreleased',
 }
 
---- @param C ConsoleController
+--- @param CC ConsoleController
 --- @param msg string
-local function user_error_handler(C, msg)
+local function user_error_handler(CC, msg)
   Log.debug('user error: ' .. msg)
   local err = LANG.get_call_error(msg) or ''
   local user_msg = messages.exec_error(err)
-  C:suspend_run(user_msg)
+  CC:suspend_run(user_msg)
   print(user_msg)
 end
 
 --- @param f function
---- @param C ConsoleController
+--- @param CC ConsoleController
 --- @param ...   any
 --- @return boolean success
 --- @return any result
 --- @return any ...
-local function wrap(f, C, ...)
+local function wrap(f, CC, ...)
   if _G.web then
     local ok, r = pcall(f, ...)
     if not ok then
-      user_error_handler(C, r)
+      user_error_handler(CC, r)
     end
     return r
   else
@@ -83,15 +83,15 @@ local function error_wrapper(f, C)
 end
 
 --- @param userlove table
---- @param C ConsoleController
-local set_handlers = function(userlove, C)
+--- @param CC ConsoleController
+local set_handlers = function(userlove, CC)
   --- @param key string
   local function hook_if_differs(key)
     local orig = Controller._defaults[key]
     local new = userlove[key]
     if orig and new and orig ~= new then
       --- @type function
-      love[key] = error_wrapper(new, C)
+      love[key] = error_wrapper(new, CC)
     end
   end
 
@@ -171,8 +171,8 @@ Controller = {
   --  keyboard  --
   ----------------
   --- @private
-  --- @param C ConsoleController
-  set_love_keypressed = function(C)
+  --- @param CC ConsoleController
+  set_love_keypressed = function(CC)
     local function keypressed(k)
       if Key.ctrl() and Key.shift() then
         if love.DEBUG then
@@ -194,32 +194,32 @@ Controller = {
       if Key.ctrl() and Key.alt() then
         if love.DEBUG then
           if k == "d" then
-            Log.debug(Debug.termdebug(C.model.output.terminal))
+            Log.debug(Debug.termdebug(CC.model.output.terminal))
           end
         end
       end
-      C:keypressed(k)
+      CC:keypressed(k)
     end
     Controller._defaults.keypressed = keypressed
     love.keypressed = keypressed
   end,
 
   --- @private
-  --- @param C ConsoleController
-  set_love_keyreleased = function(C)
+  --- @param CC ConsoleController
+  set_love_keyreleased = function(CC)
     --- @diagnostic disable-next-line: duplicate-set-field
     local function keyreleased(k)
-      C:keyreleased(k)
+      CC:keyreleased(k)
     end
     Controller._defaults.keyreleased = keyreleased
     love.keyreleased = keyreleased
   end,
 
   --- @private
-  --- @param C ConsoleController
-  set_love_textinput = function(C)
+  --- @param CC ConsoleController
+  set_love_textinput = function(CC)
     local function textinput(t)
-      C:textinput(t)
+      CC:textinput(t)
     end
     Controller._defaults.textinput = textinput
     love.textinput = textinput
@@ -229,8 +229,8 @@ Controller = {
   --  mouse  --
   -------------
   --- @private
-  --- @param C ConsoleController
-  set_love_mousepressed = function(C)
+  --- @param CC ConsoleController
+  set_love_mousepressed = function(CC)
     --- @param x number
     --- @param y number
     --- @param button number
@@ -240,7 +240,7 @@ Controller = {
       if love.DEBUG then
         Log.info(string.format('click! {%d, %d}', x, y))
       end
-      C:mousepressed(x, y, button, touch, presses)
+      CC:mousepressed(x, y, button, touch, presses)
     end
 
     Controller._defaults.mousepressed = mousepressed
@@ -248,15 +248,15 @@ Controller = {
   end,
 
   --- @private
-  --- @param C ConsoleController
-  set_love_mousereleased = function(C)
+  --- @param CC ConsoleController
+  set_love_mousereleased = function(CC)
     --- @param x number
     --- @param y number
     --- @param button number
     --- @param touch boolean
     --- @param presses number
     local function mousereleased(x, y, button, touch, presses)
-      C:mousereleased(x, y, button, touch, presses)
+      CC:mousereleased(x, y, button, touch, presses)
     end
 
     Controller._defaults.mousereleased = mousereleased
@@ -264,15 +264,15 @@ Controller = {
   end,
 
   --- @private
-  --- @param C ConsoleController
-  set_love_mousemoved = function(C)
+  --- @param CC ConsoleController
+  set_love_mousemoved = function(CC)
     --- @param x number
     --- @param y number
     --- @param dx number
     --- @param dy number
     --- @param touch boolean
     local function mousemoved(x, y, dx, dy, touch)
-      C:mousemoved(x, y, dx, dy, touch)
+      CC:mousemoved(x, y, dx, dy, touch)
     end
 
     Controller._defaults.mousemoved = mousemoved
@@ -280,12 +280,12 @@ Controller = {
   end,
 
   --- @private
-  --- @param C ConsoleController
-  set_love_wheelmoved = function(C)
+  --- @param CC ConsoleController
+  set_love_wheelmoved = function(CC)
     --- @param x number
     --- @param y number
     local function wheelmoved(x, y)
-      C:wheelmoved(x, y)
+      CC:wheelmoved(x, y)
     end
 
     Controller._defaults.wheelmoved = wheelmoved
@@ -296,8 +296,8 @@ Controller = {
   --  touch  --
   -------------
   --- @private
-  --- @param C ConsoleController
-  set_love_touchpressed = function(C)
+  --- @param CC ConsoleController
+  set_love_touchpressed = function(CC)
     --- @param id userdata
     --- @param x number
     --- @param y number
@@ -305,15 +305,15 @@ Controller = {
     --- @param dy number?
     --- @param pressure number?
     local function touchpressed(id, x, y, dx, dy, pressure)
-      C:touchpressed(id, x, y, dx, dy, pressure)
+      CC:touchpressed(id, x, y, dx, dy, pressure)
     end
 
     Controller._defaults.touchpressed = touchpressed
     love.touchpressed = touchpressed
   end,
   --- @private
-  --- @param C ConsoleController
-  set_love_touchreleased = function(C)
+  --- @param CC ConsoleController
+  set_love_touchreleased = function(CC)
     --- @param id userdata
     --- @param x number
     --- @param y number
@@ -321,15 +321,15 @@ Controller = {
     --- @param dy number?
     --- @param pressure number?
     local function touchreleased(id, x, y, dx, dy, pressure)
-      C:touchreleased(id, x, y, dx, dy, pressure)
+      CC:touchreleased(id, x, y, dx, dy, pressure)
     end
 
     Controller._defaults.touchreleased = touchreleased
     love.touchreleased = touchreleased
   end,
   --- @private
-  --- @param C ConsoleController
-  set_love_touchmoved = function(C)
+  --- @param CC ConsoleController
+  set_love_touchmoved = function(CC)
     --- @param id userdata
     --- @param x number
     --- @param y number
@@ -337,7 +337,7 @@ Controller = {
     --- @param dy number?
     --- @param pressure number?
     local function touchmoved(id, x, y, dx, dy, pressure)
-      C:touchmoved(id, x, y, dx, dy, pressure)
+      CC:touchmoved(id, x, y, dx, dy, pressure)
     end
 
     Controller._defaults.touchmoved = touchmoved
@@ -435,11 +435,11 @@ Controller = {
   --    draw   --
   ---------------
   --- @private
-  --- @param C ConsoleController
+  --- @param CC ConsoleController
   --- @param CV ConsoleView
-  set_love_draw = function(C, CV)
+  set_love_draw = function(CC, CV)
     local function draw()
-      View.draw(C, CV)
+      View.draw(CC, CV)
       View.drawFPS()
     end
     love.draw = draw
@@ -449,7 +449,7 @@ Controller = {
     View.end_draw = function()
       local w, h = gfx.getDimensions()
       gfx.setColor(Color[Color.white])
-      gfx.setFont(C.cfg.view.font)
+      gfx.setFont(CC.cfg.view.font)
       gfx.clear()
       gfx.printf(messages.exit_anykey, 0, h / 3, w, "center")
     end
@@ -458,9 +458,9 @@ Controller = {
 
   --- Quit
   --- @private
-  --- @param C ConsoleController
-  set_love_quit = function(C)
-    local cfg = C.cfg
+  --- @param CC ConsoleController
+  set_love_quit = function(CC)
+    local cfg = CC.cfg
 
     local function quit()
       if love.state.app_state == 'shutdown' then
@@ -468,7 +468,7 @@ Controller = {
       end
 
       if cfg.mode == 'play' then
-        C:quit_project()
+        CC:quit_project()
         love.state.app_state = 'shutdown'
         love.state.user_input = nil
 
@@ -476,7 +476,7 @@ Controller = {
         return true
       end
       if love.state.app_state == 'running' then
-        C:stop_project_run()
+        CC:stop_project_run()
         return true
       end
     end
@@ -486,22 +486,22 @@ Controller = {
   ----------------
   ---  public  ---
   ----------------
-  --- @param C ConsoleController
+  --- @param CC ConsoleController
   --- @param CV ConsoleView
-  set_default_handlers = function(C, CV)
-    Controller.set_love_keypressed(C)
-    Controller.set_love_keyreleased(C)
-    Controller.set_love_textinput(C)
+  set_default_handlers = function(CC, CV)
+    Controller.set_love_keypressed(CC)
+    Controller.set_love_keyreleased(CC)
+    Controller.set_love_textinput(CC)
     -- SKIPPED textedited - IME support, TODO?
 
-    Controller.set_love_mousemoved(C)
-    Controller.set_love_mousepressed(C)
-    Controller.set_love_mousereleased(C)
-    Controller.set_love_wheelmoved(C)
+    Controller.set_love_mousemoved(CC)
+    Controller.set_love_mousepressed(CC)
+    Controller.set_love_mousereleased(CC)
+    Controller.set_love_wheelmoved(CC)
 
-    Controller.set_love_touchpressed(C)
-    Controller.set_love_touchreleased(C)
-    Controller.set_love_touchmoved(C)
+    Controller.set_love_touchpressed(CC)
+    Controller.set_love_touchreleased(CC)
+    Controller.set_love_touchmoved(CC)
 
     --- SKIPPED joystick and gamepad support
 
@@ -520,16 +520,16 @@ Controller = {
     --- SKIPPED lowmemory
 
     user_update = false
-    Controller.set_love_update(C)
+    Controller.set_love_update(CC)
     user_draw = false
-    Controller.set_love_draw(C, CV)
+    Controller.set_love_draw(CC, CV)
     Controller._defaults.draw = View.main_draw
-    Controller.set_love_quit(C)
+    Controller.set_love_quit(CC)
   end,
 
-  --- @param C ConsoleController
-  setup_callback_handlers = function(C)
-    local cfg = C.cfg
+  --- @param CC ConsoleController
+  setup_callback_handlers = function(CC)
+    local cfg = CC.cfg
     local playback = cfg.mode == 'play'
 
     local clear_user_input = function()
@@ -547,18 +547,18 @@ Controller = {
               or love.state.app_state == 'inspect'
               or love.state.app_state == 'project_open'
           then
-            C:stop_project_run()
+            CC:stop_project_run()
             local st = love.state.editor
             if st then
-              C:edit(st.buffer.filename, st)
+              CC:edit(st.buffer.filename, st)
             else
-              C:edit()
+              CC:edit()
             end
           elseif love.state.app_state == 'editor' then
-            if C.editor:is_normal_mode() then
-              local ed_state = C:finish_edit()
+            if CC.editor:is_normal_mode() then
+              local ed_state = CC:finish_edit()
               love.state.editor = ed_state
-              C:run_project()
+              CC:run_project()
             end
           end
         end
@@ -566,33 +566,33 @@ Controller = {
       local function project_state_change()
         if Key.ctrl() then
           if k == "pause" then
-            C:suspend_run(messages.user_break)
+            CC:suspend_run(messages.user_break)
           end
           if k == "q" then
-            C:quit_project()
+            CC:quit_project()
           end
           if k == "s" then
             if love.state.app_state == 'running' then
-              C:stop_project_run()
+              CC:stop_project_run()
             elseif love.state.app_state == 'editor' then
               if Key.shift() then
-                C:finish_edit()
+                CC:finish_edit()
               else
-                C:close_buffer()
+                CC:close_buffer()
               end
             end
           end
           if Key.shift() then
             --- Ensure the user can get back to the console
             if k == "r" then
-              C:reset()
+              CC:reset()
             end
           end
         end
       end
       local function restart()
         if Key.ctrl() and Key.alt() and k == "r" then
-          C:restart()
+          CC:restart()
         end
       end
       local function profile()
@@ -808,9 +808,9 @@ Controller = {
     save_if_differs('draw')
   end,
 
-  --- @param C ConsoleController
-  restore_user_handlers = function(C)
-    set_handlers(Controller._userhandlers, C)
+  --- @param CC ConsoleController
+  restore_user_handlers = function(CC)
+    set_handlers(Controller._userhandlers, CC)
   end,
 
   clear_user_handlers = function()
