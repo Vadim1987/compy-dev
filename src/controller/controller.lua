@@ -34,9 +34,6 @@ local _supported = {
   'mousepressed',
   'mousereleased',
   'wheelmoved',
-  --- custom handlers
-  'singleclick',
-  'doubleclick',
 
   'touchmoved',
   'touchpressed',
@@ -365,10 +362,11 @@ Controller = {
           -- single click confirmed after delay
           local handler = CC:get_compy_handler('singleclick')
           if handler then
+            local h = CC:wrap_handler(handler, wrap)
             local x, y = love.mouse.getPosition()
             local cur = { x = x, y = y }
             if no_drift(click_pos, cur) then
-              handler(x, y)
+              h(x, y)
             end
           end
         elseif click_count >= 2 then
@@ -376,10 +374,11 @@ Controller = {
           local dbl_handler =
               CC:get_compy_handler('doubleclick')
           if dbl_handler then
+            local h = CC:wrap_handler(dbl_handler, wrap)
             local x, y = love.mouse.getPosition()
             local cur = { x = x, y = y }
             if no_drift(click_pos, cur) then
-              dbl_handler(x, y)
+              h(x, y)
             end
           end
         end

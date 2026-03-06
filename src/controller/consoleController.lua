@@ -185,6 +185,22 @@ function ConsoleController:writefile(name, content)
   end
 end
 
+--- Wrap `f` with errhand if passed, and set target canvas
+--- @param f function
+--- @param errhand function?
+--- @return function wrapped_handler
+function ConsoleController:wrap_handler(f, errhand)
+  local eh = errhand or identity
+  return function(...)
+    local args = { ... }
+    self:use_canvas(
+      function()
+        return eh(f, self, unpack(args))
+      end
+    )
+  end
+end
+
 --- @param name string
 --- @return function? handler
 function ConsoleController:get_compy_handler(name)
