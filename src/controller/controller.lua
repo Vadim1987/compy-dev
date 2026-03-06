@@ -68,20 +68,6 @@ local function wrap(f, CC, ...)
   end
 end
 
---- @param f function
---- @param C ConsoleController
---- @return function
-local function error_wrapper(f, C)
-  return function(...)
-    local args = { ... }
-    C:use_canvas(
-      function()
-        return wrap(f, C, unpack(args))
-      end
-    )
-  end
-end
-
 --- @param userlove table
 --- @param CC ConsoleController
 local set_handlers = function(userlove, CC)
@@ -91,7 +77,7 @@ local set_handlers = function(userlove, CC)
     local new = userlove[key]
     if orig and new and orig ~= new then
       --- @type function
-      love[key] = error_wrapper(new, CC)
+      love[key] = CC:wrap_handler(new, wrap)
     end
   end
 
