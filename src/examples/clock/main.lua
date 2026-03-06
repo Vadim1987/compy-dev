@@ -43,8 +43,9 @@ function getTimestamp()
 end
 
 function love.draw()
+  gfx.setColor(Color[bg_color])
+  gfx.rectangle('fill', 0, 0, width, height)
   gfx.setColor(Color[color + Color.bright])
-  gfx.setBackgroundColor(Color[bg_color])
   gfx.setFont(font)
   local text = getTimestamp()
   local off_x = font:getWidth(text) / 2
