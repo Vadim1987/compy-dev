@@ -47,6 +47,9 @@ end
 --- there either is no next line yet, or it would look the
 --- same as if it was at the start of the next.
 --- Hence, the overflow phantom line.
+--- @param w integer
+--- @param text string[]
+--- @param cursor Cursor
 local calc_overflow = function(w, text, cursor)
   local cl, cc = cursor.l, cursor.c
   local acc = cc - 1
@@ -76,7 +79,6 @@ function UserInputView:render_input(input, status)
 
   local fh = cfg.fh
   local fw = cfg.fw
-  local h = 0
   local drawableWidth = cfg.drawableWidth
   local w = cfg.drawableChars
   -- drawtest hack
@@ -122,6 +124,9 @@ function UserInputView:render_input(input, status)
     gfx.push('all')
     gfx.setColor(cf_colors.input.cursor)
     gfx.print('|', x, ch)
+    if x_offset == 0 then
+      gfx.print('|', x + 4, ch)
+    end
     gfx.pop()
   end
 

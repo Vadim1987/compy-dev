@@ -353,11 +353,11 @@ function point(x, y, btn)
   end
 end
 
-function love.singleclick(x, y)
+function compy.singleclick(x, y)
   point(x, y, 1)
 end
 
-function love.doubleclick(x, y)
+function compy.doubleclick(x, y)
   point(x, y, 2)
 end
 

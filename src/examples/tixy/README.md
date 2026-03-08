@@ -54,7 +54,7 @@ First, to take some string and if it's valid code, turn it into a function, we u
 local f = loadstring(code)
 ```
 
-Should there be some syntactic problem, we will get `nil` back, so the next stop is checking for that. In our case, the input already validates, so we should not find ourselves on the unhappy side of this.
+Should there be some syntactic problem, we will get `nil` back, so the next stop is checking for it. In our case, the input already validates, so we should not find ourselves on the unhappy side of this.
 
 Next, set up the environment the function will run in, which should be `_G`, the same environment we prepared with easy access to math functions and bit operations.
 
@@ -72,7 +72,8 @@ Here's what the actual function looks like:
 ```lua
 function f()
   return function(t, i, x, y)
-    -- body
+    -- r = ... -- function body
+    return r
   end
 end
 ```

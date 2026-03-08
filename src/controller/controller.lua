@@ -34,9 +34,6 @@ local _supported = {
   'mousepressed',
   'mousereleased',
   'wheelmoved',
-  --- custom handlers
-  'singleclick',
-  'doubleclick',
 
   'touchmoved',
   'touchpressed',
@@ -123,7 +120,7 @@ local set_handlers = function(userlove, C)
   end
 end
 
-local click_delay = 0.2
+local click_delay = 0.4
 local drift_tolerance = 2.5
 
 local click_count = 0
@@ -351,8 +348,8 @@ Controller = {
   --  update  --
   --------------
   --- @private
-  --- @param C ConsoleController
-  set_love_update = function(C)
+  --- @param CC ConsoleController
+  set_love_update = function(CC)
     local function update(dt)
       if love.PROFILE then
         Prof.update()
@@ -363,22 +360,25 @@ Controller = {
       if click_timer <= 0 then
         if click_count == 1 then
           -- single click confirmed after delay
-          local handler = love.singleclick
+          local handler = CC:get_compy_handler('singleclick')
           if handler then
+            local h = CC:wrap_handler(handler, wrap)
             local x, y = love.mouse.getPosition()
             local cur = { x = x, y = y }
             if no_drift(click_pos, cur) then
-              handler(x, y)
+              h(x, y)
             end
           end
         elseif click_count >= 2 then
           -- double click detected
-          local dbl_handler = love.doubleclick
+          local dbl_handler =
+              CC:get_compy_handler('doubleclick')
           if dbl_handler then
+            local h = CC:wrap_handler(dbl_handler, wrap)
             local x, y = love.mouse.getPosition()
             local cur = { x = x, y = y }
             if no_drift(click_pos, cur) then
-              dbl_handler(x, y)
+              h(x, y)
             end
           end
         end
@@ -391,7 +391,7 @@ Controller = {
         local draw = function()
           if ldr then
             gfx.push('all')
-            wrap(ldr, C)
+            wrap(ldr, CC)
             gfx.pop()
           end
           local ui = get_user_input()
@@ -403,20 +403,20 @@ Controller = {
         View.prev_draw = draw
         love.draw = draw
       end
-      C:pass_time(dt)
+      CC:pass_time(dt)
 
       local uup = Controller._userhandlers.update
       if user_update and uup
       then
-        C:use_canvas(function()
-          wrap(uup, C, dt)
+        CC:use_canvas(function()
+          wrap(uup, CC, dt)
         end)
       end
       if love.state.app_state == 'snapshot' then
         gfx.captureScreenshot(function(img)
           local snap = gfx.newImage(img)
           View.snapshot = snap
-          C:suspend()
+          CC:suspend()
         end)
       end
 

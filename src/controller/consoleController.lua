@@ -135,7 +135,7 @@ end
 
 --- @private
 --- @param name string
---- @return string[]?
+--- @return string?
 function ConsoleController:_readfile(name)
   local PS              = self.model.projects
   local p               = PS.current
@@ -144,6 +144,16 @@ function ConsoleController:_readfile(name)
     return text_or_err
   else
     print(text_or_err)
+  end
+end
+
+--- @private
+--- @param name string
+--- @return string[]?
+function ConsoleController:_readlines(name)
+  local s = self:_readfile(name)
+  if s then
+    return string.lines(s)
   end
 end
 
@@ -159,6 +169,54 @@ function ConsoleController:_writefile(name, content)
   return p:writefile(name, text)
 end
 
+function ConsoleController:writefile(name, content)
+  local P = self.model.projects
+  local p = P.current
+  local fpath = p:get_path(name)
+  local ex = FS.exists(fpath)
+  if ex then
+    -- TODO: confirm overwrite
+  end
+  local ok, err = self:_writefile(name, content)
+  if ok then
+    print(name .. ' written')
+  else
+    print(err)
+  end
+end
+
+--- Wrap `f` with errhand if passed, and set target canvas
+--- @param f function
+--- @param errhand function?
+--- @return function wrapped_handler
+function ConsoleController:wrap_handler(f, errhand)
+  local eh = errhand or identity
+  return function(...)
+    local args = { ... }
+    self:use_canvas(
+      function()
+        return eh(f, self, unpack(args))
+      end
+    )
+  end
+end
+
+--- @param name string
+--- @return function? handler
+function ConsoleController:get_compy_handler(name)
+  local env = self:get_project_env()
+  if not env then return end
+  local active_compy = env['compy']
+  if not active_compy then return end
+  local handler = active_compy[name]
+  if not handler then
+    return
+  else
+    return handler
+  end
+end
+
+--- @param name string
 function ConsoleController:run_project(name)
   if love.state.app_state == 'inspect' or
       love.state.app_state == 'running'
@@ -237,6 +295,25 @@ end
 
 -- Set up audio table
 local compy_audio = require("util.audio")
+local get_compy_terminal = function(terminal)
+  return {
+    --- @param x number
+    --- @param y number
+    gotoxy = function(x, y)
+      return terminal:move_to(x, y)
+    end,
+    show_cursor = function()
+      return terminal:show_cursor()
+    end,
+    hide_cursor = function()
+      return terminal:hide_cursor()
+    end,
+    clear = function()
+      terminal:move_to(1, 1)
+      return terminal:clear()
+    end
+  }
+end
 
 function ConsoleController.prepare_env(cc)
   local prepared            = cc.main_env
@@ -325,28 +402,21 @@ function ConsoleController.prepare_env(cc)
   end
 
   --- @param name string
-  --- @return string[]?
+  --- @return string?
   prepared.readfile         = function(name)
     return check_open_pr(cc._readfile, cc, name)
   end
 
   --- @param name string
+  --- @return string[]?
+  prepared.readlines        = function(name)
+    return check_open_pr(cc._readlines, cc, name)
+  end
+
+  --- @param name string
   --- @param content string[]
   prepared.writefile        = function(name, content)
-    return check_open_pr(function()
-      local p = P.current
-      local fpath = p:get_path(name)
-      local ex = FS.exists(fpath)
-      if ex then
-        -- TODO: confirm overwrite
-      end
-      local ok, err = cc:_writefile(name, content)
-      if ok then
-        print(name .. ' written')
-      else
-        print(err)
-      end
-    end)
+    return check_open_pr(cc.writefile, cc, name, content)
   end
 
   --- @param name string
@@ -360,22 +430,7 @@ function ConsoleController.prepare_env(cc)
 
   local terminal            = cc.model.output.terminal
   local compy_namespace     = {
-    terminal = {
-      --- @param x number
-      --- @param y number
-      gotoxy = function(x, y)
-        return terminal:move_to(x, y)
-      end,
-      show_cursor = function()
-        return terminal:show_cursor()
-      end,
-      hide_cursor = function()
-        return terminal:hide_cursor()
-      end,
-      clear = function()
-        return terminal:clear()
-      end
-    },
+    terminal = get_compy_terminal(terminal),
     audio = compy_audio,
   }
   prepared.compy            = compy_namespace
@@ -405,11 +460,6 @@ function ConsoleController.prepare_project_env(cc)
   local cfg                   = cc.model.cfg
   ---@type table
   local project_env           = cc:get_pre_env_c()
-  project_env.gfx             = love.graphics
-
-  project_env.compy           = {
-    audio = compy_audio
-  }
 
   project_env.require         = function(name)
     return project_require(name)
@@ -420,6 +470,26 @@ function ConsoleController.prepare_project_env(cc)
   -- project_env.require         = function(name)
   --   return project_require(name, 'run')
   -- end
+
+  --- @param name string
+  --- @return string?
+  project_env.readfile        = function(name)
+    --- @diagnostic disable-next-line: invisible
+    return cc:_readfile(name)
+  end
+
+  --- @param name string
+  --- @return string[]?
+  project_env.readlines       = function(name)
+    --- @diagnostic disable-next-line: invisible
+    return cc:_readlines(name)
+  end
+
+  --- @param name string
+  --- @param content string[]
+  project_env.writefile       = function(name, content)
+    return cc:writefile(name, content)
+  end
 
   --- @param msg string?
   project_env.pause           = function(msg)
@@ -518,6 +588,14 @@ function ConsoleController.prepare_project_env(cc)
   project_env.edit       = function(name)
     return cc:edit(name)
   end
+
+  project_env.gfx        = love.graphics
+
+  project_env.compy      = {
+    audio = compy_audio,
+    terminal = get_compy_terminal(cc.model.output.terminal),
+    text_input = input_text
+  }
 
   project_env.eval       = LANG.eval
   project_env.print_eval = LANG.print_eval
@@ -811,15 +889,6 @@ function ConsoleController:finish_edit()
   self.editor:close()
   local ok = true
   local errs = {}
-  -- local bfs = self.editor:close()
-  -- for _, bc in ipairs(bfs) do
-  --   local name, newcontent = bc.name, bc.content
-  --   local bok, err = self:_writefile(name, newcontent)
-  --   if not bok then
-  --     ok = false
-  --     table.insert(errs, err)
-  --   end
-  -- end
   if ok then
     love.state.app_state = love.state.prev_state
     love.state.prev_state = nil

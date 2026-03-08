@@ -3,6 +3,7 @@
     // LOVE / libs
     "utf8",
     "lfs",
+    "compy",
     // "pending",
     // busted
     "describe",
@@ -19,10 +20,16 @@
     "stop",
     "pause",
     "continue",
+    "readfile",
+    "readlines",
+    "writefile",
     // luautils
+    "noop",
+    "identity",
     "prequire",
     "codeload",
     "error_test",
+    "parse_int",
     // end of array
     ""
   ],
