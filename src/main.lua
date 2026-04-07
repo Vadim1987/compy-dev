@@ -107,6 +107,12 @@ local config_view = function(flags)
     h = h,
     colors = colors,
 
+    blink = {
+      enable = true,
+      width = 0.333,
+      duty = 0.5,
+    },
+
     debugheight = debugheight,
     debugwidth = debugwidth,
     drawableWidth = drawableWidth,

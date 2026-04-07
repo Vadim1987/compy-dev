@@ -39,6 +39,11 @@
 ---| 1
 ---| 2
 
+--- @class BlinkConfig table
+--- @field enable boolean
+--- @field duty number
+--- @field width number
+
 --- @class ViewConfig table
 --- @field font love.Font
 --- @field iconfont love.Font
@@ -54,6 +59,7 @@
 --- @field h integer
 --- @field w integer
 --- @field colors Colors
+--- @field blink BlinkConfig
 --- @field debugheight integer
 --- @field debugwidth integer
 --- @field drawableWidth number

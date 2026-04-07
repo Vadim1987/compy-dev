@@ -71,7 +71,7 @@ end
 
 --- @param input InputDTO
 --- @param status Status
-function UserInputView:render_input(input, status)
+function UserInputView:render_input(input, status, time)
   local gfx = love.graphics
   local cfg = self.cfg
   local cf_colors = cfg.colors
@@ -109,6 +109,15 @@ function UserInputView:render_input(input, status)
   local vpH = gfx.getHeight()
   self.start_h = vpH - (inLines + overflow + 1) * fh
 
+
+  local showCursor = function()
+    local t = time or love.timer.getTime()
+    local pw = cfg.blink.width
+    local dc = cfg.blink.duty
+    local period = pw / dc
+    local ct = t % period
+    return ct < pw
+  end
   local function drawCursor()
     local y_offset = math.floor(acc / w)
     local yi = y_offset + 1
@@ -224,7 +233,9 @@ function UserInputView:render_input(input, status)
     end
     gfx.pop()
   end
-  drawCursor()
+  if showCursor() then
+    drawCursor()
+  end
 end
 
 --- @param err_text string[]
@@ -262,7 +273,7 @@ end
 
 --- @param input InputDTO
 --- @param status Status
-function UserInputView:render(input, status)
+function UserInputView:render(input, status, time)
   local gfx = love.graphics
   --- @diagnostic disable-next-line: undefined-field
   if gfx.mock then return end
@@ -275,7 +286,7 @@ function UserInputView:render(input, status)
     if isError then
       self:render_error(err_text)
     else
-      self:render_input(input, status)
+      self:render_input(input, status, time)
     end
     gfx.pop()
   end)
