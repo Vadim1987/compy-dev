@@ -295,6 +295,7 @@ end
 
 -- Set up audio table
 local compy_audio = require("util.audio")
+local compy_graphics = {}
 local get_compy_terminal = function(terminal)
   return {
     --- @param x number
@@ -312,6 +313,13 @@ local get_compy_terminal = function(terminal)
       terminal:move_to(1, 1)
       return terminal:clear()
     end
+  }
+end
+local get_compy_namespace = function(terminal)
+  return {
+    terminal = get_compy_terminal(terminal),
+    audio = compy_audio,
+    graphics = compy_graphics
   }
 end
 
@@ -429,10 +437,7 @@ function ConsoleController.prepare_env(cc)
   end
 
   local terminal            = cc.model.output.terminal
-  local compy_namespace     = {
-    terminal = get_compy_terminal(terminal),
-    audio = compy_audio,
-  }
+  local compy_namespace     = get_compy_namespace(terminal)
   prepared.compy            = compy_namespace
   prepared.tty              = compy_namespace.terminal
 
@@ -585,23 +590,22 @@ function ConsoleController.prepare_project_env(cc)
   end
 
   --- @param name string
-  project_env.edit       = function(name)
+  project_env.edit           = function(name)
     return cc:edit(name)
   end
 
-  project_env.gfx        = love.graphics
+  project_env.gfx            = love.graphics
 
-  project_env.compy      = {
-    audio = compy_audio,
-    terminal = get_compy_terminal(cc.model.output.terminal),
-    text_input = input_text
-  }
+  local terminal             = cc.model.output.terminal
+  local compy_namespace      = get_compy_namespace(terminal)
+  compy_namespace.text_input = input_text
+  project_env.compy          = compy_namespace
 
-  project_env.eval       = LANG.eval
-  project_env.print_eval = LANG.print_eval
+  project_env.eval           = LANG.eval
+  project_env.print_eval     = LANG.print_eval
 
-  local base             = table.clone(project_env)
-  local project          = table.clone(project_env)
+  local base                 = table.clone(project_env)
+  local project              = table.clone(project_env)
   cc:_set_base_env(base)
   cc:_set_project_env(project)
 end
