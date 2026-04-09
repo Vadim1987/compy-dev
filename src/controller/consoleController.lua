@@ -295,7 +295,9 @@ end
 
 -- Set up audio table
 local compy_audio = require("util.audio")
-local compy_graphics = require("util.graphics.shape2d")
+local compy_graphics = {
+  shape2d = require("util.graphics.shape2d")
+}
 local get_compy_terminal = function(terminal)
   return {
     --- @param x number

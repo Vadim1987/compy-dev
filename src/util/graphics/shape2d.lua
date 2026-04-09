@@ -5,7 +5,7 @@
 -- from bezier.lua and polygon decomposition from
 -- bentley_ottmann.lua.
 
--- Table to become compy.graphics
+-- Table to become compy.graphics.shape2d
 
 local bezier = require("util.graphics.bezier")
 local bo = require("util.graphics.bentley_ottmann")
@@ -19,7 +19,7 @@ local MIN_LINE = 4
 
 -- Flatten cache: path table -> flat coords
 
-local flat_cache = { }
+local flat_cache = setmetatable({ }, { __mode = "k" })
 
 -- Get flat coords, flatten once on first call
 
@@ -43,7 +43,7 @@ end
 
 -- Triangle cache
 
-local tri_cache = { }
+local tri_cache = setmetatable({ }, { __mode = "k" })
 
 -- Fill convex polygon: flatten + draw
 
@@ -84,7 +84,7 @@ end
 
 -- Self-intersection decomposition cache
 
-local selfx_cache = { }
+local selfx_cache = setmetatable({ }, { __mode = "k" })
 
 -- Fill one decomposed sub-polygon
 
