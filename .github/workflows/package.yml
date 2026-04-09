@@ -277,6 +277,7 @@ jobs:
           name: ${{ env.PLAYER_DEBUG_APK_NAME }}
           path: ${{ env.OUTPUT_FOLDER }}/${{ env.PLAYER_DEBUG_APK_NAME }}
       - name: upload
+        if: startsWith(github.ref, 'refs/tags/release/')
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.IDE_APK_NAME }}
