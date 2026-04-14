@@ -41,8 +41,8 @@
 
 --- @class BlinkConfig table
 --- @field enable boolean
+--- @field period number
 --- @field duty number
---- @field width number
 
 --- @class ViewConfig table
 --- @field font love.Font

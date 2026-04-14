@@ -112,8 +112,9 @@ function UserInputView:render_input(input, status, time)
 
   local showCursor = function()
     local t = time or love.timer.getTime()
-    local pw = cfg.blink.width
+    local pe = cfg.blink.period
     local dc = cfg.blink.duty
+    local pw = (pe * dc)
     local period = pw / dc
     local ct = t % period
     return ct < pw

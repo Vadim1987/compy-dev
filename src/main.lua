@@ -109,7 +109,7 @@ local config_view = function(flags)
 
     blink = {
       enable = true,
-      width = 0.333,
+      period = 0.666666,
       duty = 0.5,
     },
 
