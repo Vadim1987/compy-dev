@@ -185,6 +185,16 @@ function ConsoleController:writefile(name, content)
   end
 end
 
+_G.o_loadfile = _G.loadfile
+--- @param name string
+--- @return function?
+function ConsoleController:loadfile(name)
+  local PS               = self.model.projects
+  local p                = PS.current
+  local chunk = p:load_file(name)
+  return chunk
+end
+
 --- Wrap `f` with errhand if passed, and set target canvas
 --- @param f function
 --- @param errhand function?
@@ -216,7 +226,7 @@ function ConsoleController:get_compy_handler(name)
   end
 end
 
---- @param name string
+--- @param name string?
 function ConsoleController:run_project(name)
   if love.state.app_state == 'inspect' or
       love.state.app_state == 'running'
@@ -231,7 +241,7 @@ function ConsoleController:run_project(name)
   if cur and (not name or cur.name == name) then
     ok = true
   else
-    ok = self:open_project(name, false)
+    ok = self:open_project(name or '', false)
   end
 
   if ok then
@@ -292,6 +302,7 @@ local function project_dofile(cc, filename, env)
     end
   end
 end
+
 
 -- Set up audio table
 local compy_audio = require("util.audio")
@@ -418,6 +429,12 @@ function ConsoleController.prepare_env(cc)
   end
 
   --- @param name string
+  --- @return function? chunk
+  prepared.loadfile         = function(name)
+    return check_open_pr(cc.loadfile, cc, name)
+  end
+
+  --- @param name string
   --- @return string[]?
   prepared.readlines        = function(name)
     return check_open_pr(cc._readlines, cc, name)
@@ -494,8 +511,14 @@ function ConsoleController.prepare_project_env(cc)
 
   --- @param name string
   --- @param content string[]
-  project_env.writefile       = function(name, content)
+  project_env.writefile = function(name, content)
     return cc:writefile(name, content)
+  end
+
+  --- @param name string
+  --- @return function? chunk
+  project_env.loadfile         = function(name)
+    return cc:loadfile(name)
   end
 
   --- @param msg string?
