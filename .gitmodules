@@ -1,6 +1,7 @@
 [submodule "src/lib/metalua"]
 	path = src/lib/metalua
 	url = https://github.com/compy-toys/metalua.git
+	branch = dev
 
 [submodule "src/util/string"]
 	path = src/util/string

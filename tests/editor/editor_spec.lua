@@ -599,6 +599,68 @@ describe('Editor #editor', function()
                       "saved content not changed")
           session:assert_cursor_at(session:input_line_of(f_over_new))
         end)
+
+        -- see issue #114
+        it ("extra emptyline+comment before single LOC", function()
+          local emptyline = ''
+          local comment = '-- comment'
+          local single_loc = 'print("original line of code")'
+
+
+          local orig = src(single_loc, emptyline)
+          local edited = src(emptyline, comment, single_loc)
+
+          local input, buffer = session:open(orig)
+          session:select_and_open_block(1, single_loc)
+
+          session:submit( edited )
+
+          local expected  = src(emptyline,
+                                comment,
+                                emptyline,
+                                single_loc,
+                                emptyline)
+
+          assert.same( expected, savefile() )
+        end)
+
+        it ("extra emptyline+comment before block", function()
+          local emptyline = ''
+          local comment = '-- comment'
+          local block = mock_func_snippet("orig_block")
+
+
+          local orig = src(block, emptyline)
+          local edited = src(emptyline, comment, block)
+
+          local input, buffer = session:open(orig)
+          session:select_and_open_block(1, single_loc)
+
+          session:submit( edited )
+
+          local expected  = src(emptyline,
+                                comment,
+                                emptyline,
+                                block,
+                                emptyline)
+
+          assert.same( expected, savefile() )
+        end)
+
+        it ("extra emptyline before comment", function()
+          local emptyline = ''
+          local comment = '-- comment'
+
+          local orig = src(comment)
+          local edited = src(emptyline, comment)
+
+          local input, buffer = session:open(orig)
+          session:select_and_open_block(1, comment)
+
+          session:submit( edited )
+          assert.same( edited.."\n", savefile() )
+        end)
+
       end)
 
       describe("insertion of", function()
