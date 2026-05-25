@@ -341,14 +341,26 @@ function EditorController:_handle_submit(go)
       local ok, res = inter:evaluate()
       local _, chunks = buf.chunker(pretty, true)
       if ok then
+        local newlines_injection_needed = (#chunks > 1)
         if #chunks < #raw_chunks then
           local rc = raw_chunks
-          if rc[1].tag == 'empty' then
+          if rc[1]:is_empty() then
             table.insert(chunks, 1, Empty(0))
           end
-          if rc[#rc].tag == 'empty' then
+          if rc[#rc]:is_empty() then
             local li = chunks[#chunks].pos.fin
             table.insert(chunks, Empty(li + 1))
+          end
+        end
+        if newlines_injection_needed then
+          for i = #chunks, 2, -1 do
+            local ch=chunks
+            local this_nonempty = not(ch[i]:is_empty())
+            local prev_nonempty = not(ch[i-1]:is_empty())
+            if this_nonempty and prev_nonempty then
+              local prev_pos = ch[i-1].pos.fin
+              table.insert(ch, i, Empty(prev_pos+1))
+            end
           end
         end
         go(chunks)
@@ -589,42 +601,98 @@ function EditorController:_normal_mode_keys(k)
   --- handlers
   local function submit()
     local bufv = self.view:get_current_buffer()
-    local function replace(newtext)
-      if bufv:is_selection_visible() then
-        if buf:loaded_is_sel(true) then
-          local _, n = buf:replace_content(newtext)
-          buf:clear_loaded()
-          self:save(buf)
-          input:clear()
-          self.view:refresh()
-          self:_move_sel('down', n)
-          load_selection()
-          self:update_status()
-        else
-          buf:select_loaded()
-          bufv:follow_selection()
-        end
-      else
-        bufv:follow_selection()
+    local is_lua = bufv.content_type == 'lua'
+    local size_limit = bufv:get_max_size()
+    --- @param v Block
+    --- @return boolean
+    local is_oversized_chunk = function(v)
+      return (v and v.pos and v.pos:len() > size_limit)
+    end
+    --- @param chunks Block[]
+    --- @return integer?
+    local first_oversized_chunk = function(chunks)
+      if is_lua then
+        return table.find_by(chunks, is_oversized_chunk)
       end
+    end
+    --- @param chunks Block[]
+    --- @param idx integer
+    local reject_oversized = function(chunks, idx)
+      local block = chunks[idx]
+      if not block or not block.pos then return end
+      input.model:move_cursor(block.pos.start, 1)
+      input:update_view()
+    end
+    --- @param newtext Block[]
+    --- @return Block[]|false
+    --- @return integer? first oversized chunk index
+    local analyze_input = function(newtext)
+      local oversized = first_oversized_chunk(newtext)
+      if not oversized then
+        return newtext
+      end
+      return false, oversized
+    end
+
+    --- @param newtext Block[]
+    local function replace(newtext)
+      if not bufv:is_selection_visible(true) then
+        return bufv:follow_selection()
+      end
+
+      if not buf:loaded_is_sel(true) then
+        buf:select_loaded()
+        bufv:follow_selection()
+        return
+      end
+
+      local approved, oversized = analyze_input(newtext)
+      if not approved then
+        if oversized then
+          reject_oversized(newtext, oversized)
+        end
+        return
+      end
+
+      local _, n = buf:replace_content(approved)
+      self:save(buf)
+      self.view:refresh()
+      self:_move_sel('down', n)
+      buf:clear_loaded()
+      input:clear()
+
+      load_selection()
+
+      self:update_status()
     end
 
     if Key.ctrl()
         and not Key.shift()
         and not Key.alt()
         and Key.is_enter(k) then
+      --- @param newtext Block[]
       local function add(newtext)
-        if bufv:is_selection_visible() then
-          local sel = buf:get_selection()
-          local _, n = buf:insert_content(newtext, sel)
-          self:save(buf)
-          self.view:refresh()
-          self:_move_sel('down', n)
-          buf:clear_loaded()
-          self:update_status()
-        else
-          bufv:follow_selection()
+        if not bufv:is_selection_visible() then
+          return bufv:follow_selection()
         end
+
+        local approved, oversized = analyze_input(newtext)
+        if not approved then
+          if oversized then
+            reject_oversized(newtext, oversized)
+          end
+          return
+        end
+
+        local sel = buf:get_selection()
+        local _, n = buf:insert_content(approved, sel)
+        self:save(buf)
+        self.view:refresh()
+        self:_move_sel('down', n)
+        buf:clear_loaded()
+        input:clear()
+
+        self:update_status()
       end
 
       self:_handle_submit(add)

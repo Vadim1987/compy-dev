@@ -120,6 +120,11 @@ function BufferView:get_state()
   }
 end
 
+--- @return integer
+function BufferView:get_max_size()
+  return self.LINES
+end
+
 --- @param moved integer?
 function BufferView:refresh(moved)
   if not self.content then
@@ -208,10 +213,11 @@ function BufferView:scroll_to_line(ln)
   self:scroll_to(off)
 end
 
+--- @param tolerate_oversize boolean?
 --- @return boolean
 --- @return VerticalDir?
 --- @return number? diff
-function BufferView:is_selection_visible()
+function BufferView:is_selection_visible(tolerate_oversize)
   local sel = self.buffer:get_selection()
 
   local s_w
@@ -226,6 +232,13 @@ function BufferView:is_selection_visible()
   local sel_e = s_w[#s_w]
   local r = self.content:get_range()
   if r:inc(sel_s) and r:inc(sel_e) then return true end
+
+  -- handle monster blocks
+  if tolerate_oversize then
+    if (sel_s == r.start) and (sel_e > r.fin) then
+      return true
+    end
+  end
 
   local dir = (function()
     if r.start > sel_s then return 'up' end
