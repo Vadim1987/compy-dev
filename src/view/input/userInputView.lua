@@ -109,16 +109,6 @@ function UserInputView:render_input(input, status, time)
   local vpH = gfx.getHeight()
   self.start_h = vpH - (inLines + overflow + 1) * fh
 
-
-  local showCursor = function()
-    local t = time or love.timer.getTime()
-    local pe = cfg.blink.period
-    local dc = cfg.blink.duty
-    local pw = (pe * dc)
-    local period = pw / dc
-    local ct = t % period
-    return ct < pw
-  end
   local function drawCursor()
     local y_offset = math.floor(acc / w)
     local yi = y_offset + 1
@@ -234,7 +224,8 @@ function UserInputView:render_input(input, status, time)
     end
     gfx.pop()
   end
-  if showCursor() then
+
+  if true then
     drawCursor()
   end
 end
