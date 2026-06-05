@@ -21,7 +21,20 @@ local names = {
   "toggle",
   "win",
   "wow",
-  "wrong"
+  "wrong",
+  "chirp",
+  "powerup",
+  "step",
+  "ubit_giggle",
+  "ubit_happy",
+  "ubit_hello",
+  "ubit_mysterious",
+  "ubit_sad",
+  "ubit_slide",
+  "ubit_soaring",
+  "ubit_spring",
+  "ubit_twinkle",
+  "ubit_yawn"
 }
 for _,name in pairs(names) do
   local filename = "assets/sounds/"..name..".ogg"
