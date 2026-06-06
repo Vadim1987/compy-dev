@@ -12,8 +12,10 @@ A persistent, callback-driven input widget for Compy projects:
 one configurable edit area with `show`/`hide`/`configure`
 lifecycle, event callbacks for submit, cancel, key combos,
 text input, and cursor boundary hits, and programmatic cursor
-and content access. Existing API (`input_text()` etc.) continues
-to work as facade wrappers. Console and editor migration is
+and content access. The legacy text-input functions
+(`input_text()` etc.) are **removed** — no backward compatibility
+(D-1 discarded, stakeholders round 1); the examples that used
+them migrate to the new API. Console and editor migration is
 a separate follow-on.
 
 ---
@@ -94,7 +96,7 @@ changes.
 | `compy.input.before_submit` / `after_submit` | Hooks around framework's evaluate step |
 | `compy.input.before_cancel` / `after_cancel` | Hooks around framework's dismiss step |
 | `compy.input.on_limit_reached` | Cursor hit input boundary |
-| Legacy wrappers | `input_text()`, `input_code()`, `validated_input()`, `user_input()`, `write_to_input()` rewired as facades; polling still works |
+| Legacy text-input globals | **Removed** — `input_text()`, `input_code()`, `validated_input()`, `user_input()`, `write_to_input()` no longer exist (D-1 discarded); examples migrate to `compy.input.*`. Native `love.keypressed` coexistence (D-9) is retained |
 
 ---
 

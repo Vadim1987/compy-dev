@@ -40,7 +40,7 @@ The table is owned by `Controller` (global controller,
 `love.handlers.keyreleased` (remove key) call, before any
 downstream handler runs.
 
-Downstream consumers — `ProjectController`, legacy wrappers,
+Downstream consumers — `ProjectController` and the project
 callbacks — receive the table as a **read-only proxy**: an
 iterator-only wrapper. Direct indexing on the proxy is not
 supported; consumers iterate with `for k in pairs(proxy) do`.
@@ -305,10 +305,8 @@ pre-submit side effects (e.g. logging, visual feedback).
 
 ### `compy.input.after_submit(result)`
 
-Fires after the framework has evaluated the input, filled
-the reftable, and pushed `'userinput'`. `result` is the
-evaluated text string (the value that was stored in the
-reftable).
+Fires after the framework has evaluated the input and pushed
+`'userinput'`. `result` is the evaluated text string.
 
 Fires only on successful evaluation. Does not fire if the
 validator rejected the input (input stays locked with error
@@ -357,54 +355,33 @@ Return value is ignored.
 
 ---
 
-## 5. Legacy API Compatibility
+## 5. Legacy API Removal
 
-### Rewired functions
+D-1 was discarded by stakeholders (`input.md`, feedback round 1):
+no backward compatibility. The legacy text-input globals are
+**removed** from the project environment — not wrapped as facades:
 
-The following functions remain in the project environment
-and continue to work:
-
-| Function | Behaviour |
+| Removed function | Replacement |
 |---|---|
-| `user_input()` | Allocates and returns a reftable; does **not** activate the singleton. The overlay appears on the subsequent `input_text()`/`input_code()`/`validated_input()` call. |
-| `input_text(prompt, init)` | `compy.input.show({prompt=prompt, text=init, validator=InputEvalText})`; wires reftable; returns reftable |
-| `input_code(prompt, init)` | `compy.input.show({prompt=prompt, text=init, highlighter=lua_hl, validator=InputEvalLua})`; wires reftable; returns reftable |
-| `validated_input(fn, prompt)` | `compy.input.show({prompt=prompt, validator=ValidatedTextEval(fn)})`; wires reftable; returns reftable |
-| `write_to_input(content)` | `compy.input.set_text(content)` — replace full content; no-op if no session active |
+| `user_input()` | None — the reftable / `is_empty()` polling idiom is gone. Submit is observed via `compy.input.after_submit(result)`. |
+| `input_text(prompt, init)` | `compy.input.show({ prompt = prompt, text = init, validator = InputEvalText })` + `compy.input.after_submit` |
+| `input_code(prompt, init)` | `compy.input.show({ prompt = prompt, text = init, highlighter = lua_hl, validator = InputEvalLua })` + `compy.input.after_submit` |
+| `validated_input(fn, prompt)` | `compy.input.show({ prompt = prompt, validator = ValidatedTextEval(fn) })` + `compy.input.after_submit` |
+| `write_to_input(content)` | `compy.input.set_text(content)` |
 
-Each showing wrapper (`input_text`, `input_code`,
-`validated_input`):
-1. Re-points the singleton's `result` to the current reftable.
-2. Configures the singleton from its arguments.
-3. Registers a `compy.input.after_submit` callback that fills the
-   reftable with the result value.
-4. Calls `compy.input.show()`.
-5. Returns the reftable reference.
-
-The existing polling pattern (`if r:is_empty() then ...`)
-continues to work without modification.
-
-On cancel (Escape), the reftable stays empty — same
-behaviour as the current implementation.
-
-### Deprecation warnings
-
-Each legacy wrapper emits a deprecation warning via the
-debug log when called in debug mode (`DEBUG=1`). The warning
-identifies the function name and suggests the new API. No
-warning in normal mode.
-
-A future `strict_input = true` flag in the project
-environment will make legacy calls raise an error, providing
-a clean opt-in deprecation path.
+There is no deprecation shim and no `strict_input` flag — the
+functions simply no longer exist. The in-repo examples that used
+them are migrated to the patterns above (roadmap M8). The break
+is bounded to text input; native `love.keypressed`/`textinput`
+handling is unaffected (§6).
 
 ### `love.state.user_input`
 
-Continues to be set and cleared by the singleton's
-`show()`/`hide()` methods. Points to the singleton instance
-(not a freshly created object) when active. Set to `nil`
-when hidden. Existing code that checks `love.state.user_input`
-for nil-ness continues to work correctly.
+Set and cleared by the singleton's `show()`/`hide()` methods,
+exactly as for any new-API caller. Points to the singleton
+instance when active; set to `nil` when hidden. There is no
+separate legacy code path that touches it. Framework code that
+checks `love.state.user_input` for nil-ness continues to work.
 
 ---
 
@@ -471,8 +448,7 @@ changes (FR-3/FR-4).
 ### Project stops while input is active
 
 Behaviour: silent hide. The singleton's `hide()` is called
-as part of project teardown. No cancel chain fires. The
-reftable (if a legacy wrapper was used) stays empty.
+as part of project teardown. No cancel chain fires.
 `love.state.user_input` is set to nil. Callbacks are reset.
 The project has already stopped and cannot observe any
 teardown event.

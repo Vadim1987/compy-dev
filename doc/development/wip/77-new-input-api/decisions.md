@@ -1,10 +1,13 @@
 # Feature #77 — Blocking Decisions
 
-> **Status — local design proposal.** This entire document (D-1…D-10) is a
-> local design proposal derived from `input.md`. Neither the original D-1…D-7
-> round nor the round-1 resolutions (D-8, D-9 and annotations) nor the round-2
-> addition (D-10) have received stakeholder sign-off. The file is pending a single eventual
-> approve/veto review against `input.md`. No entry here is stakeholder-approved.
+> **Status — local design proposal, with one stakeholder ruling.** This
+> document is a local design proposal derived from `input.md`, with one
+> exception: **D-1 has been ruled on by stakeholders** (consensus in
+> `input.md`, feedback round 1, 2026-06-06: **DISCARDED** — no backward
+> compatibility). D-1's resolution below is therefore stakeholder ground
+> truth, not a proposal. The remaining entries (D-2…D-10) are still a local
+> proposal awaiting a single eventual approve/veto review against `input.md`;
+> none of those is stakeholder-approved.
 
 ## The blocking decisions
 
@@ -128,13 +131,18 @@ to accidentally suppress it. The framework always runs its
 own structural behaviour (evaluate on Enter, close on
 Escape); projects extend rather than replace it.
 
-**3. Existing API continues to work** (addresses D-1).
-`input_text()`, `input_code()`, `validated_input()`, and
-`user_input()` become wrappers over the new API. Internally
-they configure the persistent widget and wire a callback
-that fills the existing reftable. The current polling
-pattern continues to work. Projects migrate to direct
-callbacks when they choose.
+**3. The legacy text-input API is removed** (addresses D-1,
+**discarded** by stakeholders — see `input.md` round 1).
+`input_text()`, `input_code()`, `validated_input()`,
+`user_input()`, and `write_to_input()` are removed, not kept
+as facades. The reftable / `is_empty()` polling pattern goes
+with them. The in-repo examples that use these functions are
+migrated to the `compy.input.*` callback API (priority:
+`tixy`, `balloons`; the rest convert-or-exclude per the owner's
+release call). This is scope **3** of the design; it does not
+affect the native-handler coexistence path (D-9), which is a
+separate surface and is retained — only text-input examples are
+affected ("only text fields", per `input.md`).
 
 ---
 
@@ -142,16 +150,16 @@ callbacks when they choose.
 
 | | Decision | Resolution |
 |---|---|---|
-| D-1 | Backward compat | Facade wrappers; reftable filled by submit callback; `strict_input=true` for hard errors |
+| D-1 | Backward compat | **Discarded** (stakeholder consensus, `input.md` round 1): no backward compatibility. Legacy text-input globals removed; examples migrated (`tixy`/`balloons` priority) or excluded from the release. D-9 native coexistence is unaffected. |
 | D-2 | Second setup call | Dissolved — singleton accepts configure/show, no create |
 | D-3 | Key event coverage | Three-tier dispatch; sink is default of `on_key_pressed`; modifier-first generic-folded combo format; metatable-normalised registration; overloadable matcher |
 | D-4 | Cancel/submit | Named chains: `before_X → X → after_X`; framework owns middle; `oneshot` is `UserInputModel` field, deleted in M6 |
 | D-5 | Boundary | `on_limit_reached(direction)` hook; whole-input boundary; second arg reserved |
 | D-6 | Modifier + character | Superseded (round 1): two independent channels, no exclusivity; `on_text_entered(text, keys_pressed)` |
 | D-7 | Rollout scope | Overlay context first; FR-11/FR-12 walkthrough added to `design.md §7` |
-| D-8 | Cursor contract + live surface | 2D `(line, col)` source-line coords; `compy.input.get_cursor`, `compy.input.set_cursor`, `compy.input.set_text`; `write_to_input` facade |
+| D-8 | Cursor contract + live surface | 2D `(line, col)` source-line coords; `compy.input.get_cursor`, `compy.input.set_cursor`, `compy.input.set_text`; `set_text` supersedes the removed `write_to_input` |
 | D-9 | Native handler coexistence | Auto-provisioning via legacy heuristic; lifecycle-split wrapper; transition diagnostics |
-| D-10 | Namespace isolation | New feature-#77 surface lives under `compy.input.*`; `compy.keys_pressed` stays global; legacy globals unchanged |
+| D-10 | Namespace isolation | New feature-#77 surface lives under `compy.input.*`; `compy.keys_pressed` stays global; legacy text-input globals removed (D-1 discarded) |
 
 ---
 
@@ -172,15 +180,41 @@ migration but adds a maintenance surface.
 **Affects:** Overall API shape, whether examples need
 updating, implementation scope.
 
-**Source:** `requirements.md §5`
+**Source:** `requirements.md §5`; **resolved by `input.md`
+feedback round 1 (2026-06-06).**
 
-**Suggested decision:** Keep existing functions as
-backward-compatible facades over the new API. Each facade
-configures the singleton and registers a submit callback that
-fills the reftable, preserving the polling interface. On
-cancel, the reftable stays empty — same behaviour as today.
-Deprecation warnings in debug mode. Projects that want hard
-errors opt in via `strict_input = true`.
+**Stakeholder decision: DISCARDED — no backward compatibility.**
+The project is pre-1.0; all software that uses the input API is
+known and must be updated anyway (and benefits from doing so).
+Keeping the legacy functions in a release would defeat the
+purpose of shipping the new API. Consensus reached among three
+stakeholders (full dialogue in `input.md`).
+
+Consequences:
+
+- `input_text()`, `input_code()`, `validated_input()`,
+  `user_input()`, and `write_to_input()` are **removed** from
+  the project environment — no facades, no deprecation shims,
+  no `strict_input` flag. The reftable / `is_empty()` polling
+  idiom is removed with them.
+- The in-repo examples that use these functions are migrated to
+  the `compy.input.*` callback API (see roadmap **M8**). Migration
+  priority is the showcase set the owner named: `tixy` and
+  `balloons` (and `maze`, not yet in the repo). The remaining
+  text-input examples (`repl`, `guess`, `valid`, `turtle`) are
+  converted if time allows, otherwise excluded from the next
+  release — the owner's call at release time, not a blocker.
+- **Scope is text input only.** The native `love.keypressed` /
+  `love.textinput` coexistence path (D-9) is a separate surface
+  and is **retained** — games that drive their own keyboard
+  handling keep working. Per the stakeholder exchange, removing
+  the legacy API "won't break all keyboard input, only text
+  fields". Old releases remain available, so the existing
+  experience is not deleted while migration proceeds.
+
+*(Stakeholder feedback, round 1, 2026-06-06. The earlier
+"Suggested decision" — keep backward-compatible facades — is
+superseded by this ruling.)*
 
 ---
 
@@ -476,7 +510,7 @@ line 1"), which only works single-line and contradicts the
 `multiline` flag.
 
 **Affects:** FR-8/9/10 API surface, `compy.input.show()` `cursor`
-field, `write_to_input` backward compat, roadmap M3/M7.
+field, roadmap M7.
 
 **Source:** `requirements.md §2.4`, `assessment.md §4`.
 
@@ -495,16 +529,21 @@ New project-facing functions delegating to the singleton:
 | `compy.input.set_cursor(line, col)` | `model:move_cursor(line, col)` | Clamps to valid range; no-op when hidden |
 | `compy.input.set_text(text [, keep_cursor])` | `model:set_text(...)` + `update_view` | Live write; explicit exception to `configure()` text-immutability |
 
-`write_to_input` is rewired as a facade over `compy.input.set_text`,
-preserving its semantics (replace full content, no-op when hidden).
-Added to the legacy facade list and to M3's scope so examples stay
-green from M3 onward.
+`write_to_input` is **removed** with the rest of the legacy
+text-input globals (D-1 discarded). The example that used it
+(`tixy`) migrates to `compy.input.set_text` directly; there is no
+`write_to_input` facade. `compy.input.set_text` is the live-write
+surface that supersedes it.
 
 Model fix required: `UserInputModel:set_text` must honour
 `keep_cursor` (skip the unconditional `jump_end()` when
-`keep_cursor` is true). Roadmap: the facade wiring goes in M3;
-the full `compy.input.set_text`/`compy.input.get_cursor`/`compy.input.set_cursor`
-surface goes in M7.
+`keep_cursor` is true). Roadmap: the full
+`compy.input.set_text`/`compy.input.get_cursor`/`compy.input.set_cursor`
+surface goes in M7; the legacy-global removal and example
+migration happen in M8.
+
+*(Updated by stakeholder feedback, round 1, 2026-06-06: the
+`write_to_input` facade is dropped — see D-1.)*
 
 *(Origin: local design round 1, 2026-06. See
 `validation/recommendations_1.md` Item 1.)*
@@ -523,12 +562,17 @@ takes the slot.
 native LÖVE handlers via `save_user_handlers` /
 `hook_if_differs` (`controller.lua:73–107`). Projects never
 *actually* bind `love.*`; the framework captures and re-routes
-them. D-1's backward compat scope was the four input functions;
-native handler coexistence is an equally real surface that was
-not addressed.
+them. D-1 was about the four text-input functions; native
+handler coexistence is a **separate** surface. With D-1 now
+discarded (no backward compatibility for the text-input API),
+D-9 is what keeps the stakeholders' "only text fields break"
+guarantee true: games that drive their own keyboard handling
+continue to work unchanged. D-9 therefore stands on its own and
+is **retained** independently of D-1's removal.
 
-**Affects:** backward compat scope (extends D-1), `ProjectController`
-startup, FR-6.
+**Affects:** native-handler coexistence (independent of the
+discarded D-1 text-input surface), `ProjectController` startup,
+FR-6.
 
 **Source:** `validation/recommendations_1.md` Item 4.
 
@@ -575,7 +619,9 @@ edited `design.md`/`spec.md`/`roadmap.md`. Recording it here makes
 it visible to the eventual stakeholder review.
 
 **Affects:** every new feature-#77 name; NFR-3 (namespace
-consistency); the legacy facades' internal call targets.
+consistency). (The legacy globals that this decision originally
+left flat are now removed entirely — D-1 discarded — so there is
+no longer a legacy call-target to consider.)
 
 **Source:** `validation/recommendations_1.md` "Namespace
 isolation"; surfaced as a decision per
@@ -594,10 +640,11 @@ structured, and leaves room for sibling sub-namespaces later.
   state (physical reality), not the input-manipulation layer
   (interpretation). Keeping it out of `compy.input.*` makes that
   boundary explicit at the namespace level.
-- **Unchanged — legacy globals:** `input_text()`, `input_code()`,
-  `validated_input()`, `user_input()`, `write_to_input()` stay as
-  project-env globals (the D-1 backward-compat surface); only their
-  internal calls now target `compy.input.*`.
+- **Removed — legacy text-input globals:** `input_text()`,
+  `input_code()`, `validated_input()`, `user_input()`, and
+  `write_to_input()` are removed, not kept (D-1 discarded —
+  stakeholder feedback round 1). There is no legacy surface left to
+  re-point; the new API lives entirely under `compy.input.*`.
 
 The `compy.input` table is created once at namespace setup;
 reset-on-stop clears `compy.input.handlers` and the `compy.input.*`

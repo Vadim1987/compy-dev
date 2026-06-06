@@ -165,7 +165,7 @@ described in §2 and §6.
 | `compy.input.on_key_pressed` | callback | Generic keypressed callback (fires for all keys; default = sink) |
 | `compy.input.on_text_entered` | callback | Character input callback (default = textinput sink) |
 | `compy.input.before_submit` | callback | Hook before framework evaluates |
-| `compy.input.after_submit` | callback | Hook after evaluation and reftable fill |
+| `compy.input.after_submit` | callback | Hook after evaluation (receives the result) |
 | `compy.input.before_cancel` | callback | Hook before framework dismisses |
 | `compy.input.after_cancel` | callback | Hook after dismissal |
 | `compy.input.on_limit_reached` | callback | Cursor hit input boundary |
@@ -261,7 +261,7 @@ but extensible via named callback chains.
 ```
 framework_handlers['return']:
   before_submit(keys_pressed)
-  → submit: model:evaluate() → fill reftable → push 'userinput'
+  → submit: model:evaluate() → push 'userinput'
   → after_submit(result)
 ```
 
@@ -285,37 +285,31 @@ observation point.
 
 ---
 
-## 6. Legacy API Compatibility
+## 6. Legacy API Removal
 
-`input_text()`, `input_code()`, `validated_input()`, and
-`user_input()` are rewired as facade wrappers. The showing
-facades (`input_text`, `input_code`, `validated_input`):
+The legacy text-input globals — `input_text()`, `input_code()`,
+`validated_input()`, `user_input()`, and `write_to_input()` —
+are **removed**, not wrapped as facades (D-1 discarded by
+stakeholders; see `input.md` round 1 and `decisions.md` D-1).
+There is no backward-compatibility layer, no deprecation shim,
+and no `strict_input` flag. The reftable / `is_empty()` polling
+idiom is removed with them; the new API is callback-based
+(`after_submit(result)` is the submit observation point that
+replaces the polled reftable).
 
-1. Configure the singleton (evaluator, highlighter, prompt,
-   initial text) from their arguments, re-pointing `result`
-   (the reftable) on the singleton so each call wires the
-   current reftable.
-2. Register a submit callback that fills the reftable —
-   preserving the polling observation point projects use.
-3. Call `compy.input.show()`.
+The in-repo examples that use these functions are migrated to
+`compy.input.*` (roadmap M8). `write_to_input`'s one consumer
+(`tixy`) moves to `compy.input.set_text`. Because migration needs
+the full `compy.input.*` surface (config with validator/highlighter,
+the callback chain, `set_text`/cursor), removal and migration
+land together as the last milestone, after M7.
 
-`user_input()` is reftable-only: it allocates and returns a
-reftable without activating the singleton. The overlay appears
-on the subsequent `input_text()` / `input_code()` /
-`validated_input()` call.
+`love.state.user_input` is set on `compy.input.show()` and cleared
+on `compy.input.hide()`, exactly as for any new-API caller — there
+is no separate legacy path setting it.
 
-`write_to_input(content)` is rewired as a facade over
-`compy.input.set_text(content)`, preserving today's semantics —
-replace full content, no-op when no session active.
-
-`love.state.user_input` continues to be set/cleared.
-During the transition it points to the singleton instance;
-it is set to `nil` on hide.
-
-Deprecation warnings are emitted inside the legacy wrappers
-in debug mode. A future `strict_input = true` flag will
-make them hard-fail, providing a clean gradual deprecation
-path.
+The break is bounded to text input. Native keyboard handling is
+a separate surface and is unaffected — see below.
 
 ### Native handler coexistence
 
@@ -340,17 +334,23 @@ completed and verified before the next begins:
 |---|---|---|
 | 1. `keys_pressed` table | Live modifier state; combo serialisation | No behaviour change; existing tests pass |
 | 2. Singleton extraction | Widget created at startup | Existing tests pass; no allocation change visible |
-| 3. Legacy facades | `input_text()` etc. rewired | All existing examples work |
-| 4. ProjectController + gate removal | New routing; existing behaviour preserved via sink | Overlay input works as before; project key events now routable |
-| 5. Three-level dispatch | `compy.input.handlers`, `compy.input.on_key_pressed` | Handler registration and bubbling work |
-| 6. Before/after chains | Submit/cancel callbacks; Escape dismisses | Named hooks fire; Escape limitation resolved |
+| 3. ProjectController + gate removal | New routing; existing behaviour preserved via sink | Overlay input works as before; project key events now routable |
+| 4. Three-level dispatch | `compy.input.handlers`, `compy.input.on_key_pressed` | Handler registration and bubbling work |
+| 5. Before/after chains | Submit/cancel callbacks; Escape dismisses | Named hooks fire; Escape limitation resolved |
+| 6. Legacy removal + example migration | Legacy text-input globals deleted; examples on the new API | Priority examples (tixy, balloons) run; legacy globals gone |
 
-Step 3 (legacy facades) does not require Step 4 to be
-started — the singleton exists from Step 2 and the facades
-wire to it. Step 4 does not require Steps 5 or 6. Steps 5
-and 6 each build on Step 4 independently. The dependency
-chain is linear from 1 through 4, then 5 and 6 are
-independent extensions of 4.
+Steps 1→2 are behaviour-neutral infrastructure. Step 3 (the
+gate removal) needs only Step 2. Steps 4 and 5 each build on
+Step 3 independently. Step 6 (legacy removal + migration) comes
+last, because migrating the examples needs the full new surface
+(callbacks from Steps 4–5 and the cursor/`set_text` surface).
+The legacy text-input globals are not built as facades at any
+step — they are simply removed once the examples no longer need
+them (D-1 discarded; see §6). Note: the roadmap milestones
+(`roadmap.md`) keep the cursor/`set_text` surface as a separate
+M7 and the legacy removal as M8, so the milestone numbering is
+M1–M8; these six implementation steps are the coarser
+dependency grouping.
 
 The console and editor migration (Step 6 of the
 `solution_sketch.md` description) is a clean follow-on:
@@ -372,7 +372,7 @@ onto the new API, fulfilling D-7's walkthrough promise
 
 | Action | Maps to |
 |---|---|
-| Enter → evaluate and submit | `framework_handlers['return']` (evaluate + fill reftable + push `'userinput'`) |
+| Enter → evaluate and submit | `framework_handlers['return']` (evaluate + push `'userinput'` + `after_submit`) |
 | Up/Down at history boundary | limit signal from sink → `compy.input.on_limit_reached(direction)` → history navigation handler |
 | Ctrl+L clear terminal | `compy.input.handlers['ctrl+l'] = function() clear_terminal() return true end` |
 | Error display | sink (unchanged — model handles it internally) |

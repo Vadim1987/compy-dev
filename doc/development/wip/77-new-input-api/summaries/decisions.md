@@ -4,9 +4,11 @@
 and decision dialogue are in that document and in
 `notes/decisions.md`.*
 
-> **Status:** This entire document (D-1…D-10) is a local design
-> proposal derived from `input.md`, pending a single eventual
-> stakeholder approve/veto review. No entry is stakeholder-approved.
+> **Status:** A local design proposal derived from `input.md`,
+> pending a single eventual stakeholder approve/veto review — with
+> one exception: **D-1 has been ruled on** (`input.md`, feedback
+> round 1: **DISCARDED**, no backward compatibility). D-1 below is
+> stakeholder ground truth; D-2…D-10 are still proposal.
 
 ---
 
@@ -143,10 +145,15 @@ Submit and cancel have named before/after callback points;
 the framework always runs its structural behaviour and
 projects extend it.
 
-**Existing API continues to work** (D-1). `input_text()`,
-`input_code()` and the rest become facade wrappers over the
-new singleton API. The polling pattern still works. Projects
-move to direct callbacks when they choose.
+**Legacy text-input API removed** (D-1 — **discarded** by
+stakeholders, round 1). `input_text()`, `input_code()`,
+`validated_input()`, `user_input()`, and `write_to_input()`
+are removed, not kept as facades; the reftable / polling idiom
+goes with them. The examples that used them are migrated to the
+`compy.input.*` callback API (priority: `tixy`, `balloons`),
+others converted or excluded from the release at the owner's
+call. The break is bounded to text input — native keyboard
+handling (D-9) is unaffected.
 
 **Console and editor migration path.** The new API is
 expressive enough to re-implement both (FR-11/FR-12). The
@@ -160,13 +167,13 @@ controller's migration is a named follow-on feature.
 
 | | Decision | Resolution |
 |---|---|---|
-| D-1 | Backward compat | Facade wrappers; polling still works; deprecation warnings in debug mode |
+| D-1 | Backward compat | **Discarded** (stakeholders, round 1): no backward compat. Legacy text-input globals removed; examples migrated (`tixy`/`balloons` priority) or excluded. D-9 native coexistence unaffected. |
 | D-2 | Second setup call | Dissolved — singleton accepts configure/show, no create call |
 | D-3 | Key event coverage | Three-tier dispatch; sink = default of `on_key_pressed`; modifier-first generic-folded combo format; metatable-normalised; overloadable matcher |
 | D-4 | Cancel/submit | Named chains `before_X → X → after_X`; framework owns middle; `oneshot` is `UserInputModel` field, deleted in M6 |
 | D-5 | Cursor boundary | Single `on_limit_reached(direction)` hook; whole-input boundary |
 | D-6 | Modifier + character | Superseded (round 1): two independent channels, no exclusivity; `on_text_entered(text, keys_pressed)` |
 | D-7 | Rollout scope | ProjectController first; FR-11/FR-12 walkthrough added to `design.md §7` |
-| D-8 | Cursor contract + live surface | 2D `(line, col)` source-line coords; `compy.input.get_cursor`, `compy.input.set_cursor`, `compy.input.set_text`; `write_to_input` facade |
+| D-8 | Cursor contract + live surface | 2D `(line, col)` source-line coords; `compy.input.get_cursor`, `compy.input.set_cursor`, `compy.input.set_text`; `set_text` supersedes the removed `write_to_input` |
 | D-9 | Native handler coexistence | Auto-provisioning via legacy heuristic; lifecycle-split wrapper; transition diagnostics |
-| D-10 | Namespace isolation | New surface under `compy.input.*`; `compy.keys_pressed` stays global; legacy globals unchanged |
+| D-10 | Namespace isolation | New surface under `compy.input.*`; `compy.keys_pressed` stays global; legacy text-input globals removed (D-1 discarded) |

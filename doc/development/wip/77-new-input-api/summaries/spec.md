@@ -90,7 +90,7 @@ Replaces text content while active (live write; exception to
 | `compy.input.on_key_pressed` | `fn(k, keys_pressed, isrepeat)` | All keypressed events; default = text-editing sink; assigning replaces sink |
 | `compy.input.handlers[combo]` | `fn(k, keys_pressed) → truthy\|nil` | Combo match (metatable-normalised); return truthy to consume chain |
 | `compy.input.before_submit` | `fn(keys_pressed)` | Before framework evaluates; cannot suppress |
-| `compy.input.after_submit` | `fn(result)` | After evaluation succeeds and reftable is filled |
+| `compy.input.after_submit` | `fn(result)` | After evaluation succeeds (receives the result) |
 | `compy.input.before_cancel` | `fn(keys_pressed)` | Before framework dismisses (Escape); cannot suppress |
 | `compy.input.after_cancel` | `fn()` | After singleton dismissed |
 | `compy.input.on_limit_reached` | `fn(direction, _reserved)` | Cursor hit whole-input boundary; direction = `'up'` or `'down'` |
@@ -116,21 +116,25 @@ suppression.
 
 ---
 
-## Legacy API
+## Legacy API — removed
 
-| Function | Internal behaviour |
+D-1 discarded (stakeholders, round 1): no backward compatibility.
+The legacy text-input globals are **removed**, not wrapped:
+
+| Removed function | Replacement |
 |---|---|
-| `user_input()` | Allocates and returns reftable; does **not** show singleton |
-| `input_text(p, i)` | `compy.input.show({prompt, text, validator=InputEvalText})`; wires reftable |
-| `input_code(p, i)` | `compy.input.show({prompt, text, highlighter=lua_hl, validator=InputEvalLua})`; wires reftable |
-| `validated_input(fn, p)` | `compy.input.show({prompt, validator=ValidatedTextEval(fn)})`; wires reftable |
-| `write_to_input(content)` | `compy.input.set_text(content)` — no-op if no session active |
+| `user_input()` | None — reftable / `is_empty()` polling gone; use `compy.input.after_submit(result)` |
+| `input_text(p, i)` | `compy.input.show({ prompt, text, validator = InputEvalText })` + `after_submit` |
+| `input_code(p, i)` | `compy.input.show({ prompt, text, highlighter = lua_hl, validator = InputEvalLua })` + `after_submit` |
+| `validated_input(fn, p)` | `compy.input.show({ prompt, validator = ValidatedTextEval(fn) })` + `after_submit` |
+| `write_to_input(content)` | `compy.input.set_text(content)` |
 
-Each showing wrapper returns a reftable; existing polling
-pattern continues to work. Deprecation warning in debug mode only.
+No deprecation shim, no `strict_input` flag — the functions are
+gone. Examples migrate (roadmap M8). The break is text-input only;
+native keyboard handling is unaffected.
 
-`love.state.user_input`: still set on `show()`, nil on
-`hide()`; points to singleton (not a fresh object).
+`love.state.user_input`: set on `show()`, nil on `hide()`; points
+to the singleton (not a fresh object).
 
 ---
 

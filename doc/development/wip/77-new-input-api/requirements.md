@@ -147,12 +147,16 @@ The following are not addressed by this feature:
 The following items are not specified in the stakeholder input
 and require a decision before or during design:
 
-- **Backward compatibility.** Whether `input_text()`,
-  `input_code()`, `validated_input()`, and `user_input()` must
-  continue to work unchanged is not stated. Options include full
-  backward compatibility, deprecation shims, or a clean break.
-  Existing examples (tixy, repl, guess, turtle, valid, balloons)
-  rely on the current API.
+- **Backward compatibility — RESOLVED (clean break).** Whether
+  `input_text()`, `input_code()`, `validated_input()`, and
+  `user_input()` must continue to work was originally unstated.
+  Stakeholders ruled on it in `input.md` (feedback round 1,
+  2026-06-06): **no backward compatibility** — the legacy
+  text-input functions are removed, and the existing examples
+  (tixy, repl, guess, turtle, valid, balloons) that rely on them
+  are migrated to the new API or excluded from the release. The
+  break is bounded to text input; native keyboard handling is
+  unaffected. See `decisions.md` D-1.
 
 - **Behaviour when setup is called while already active.** The
   expected result — silently skip, replace, or error — is

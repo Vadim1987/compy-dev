@@ -96,6 +96,17 @@ When writing analysis, specs, or review notes:
 
 ---
 
+## Summaries for Stakeholders
+
+When writing a stakeholder-facing summary or "in brief" section:
+
+- **Mirror the stakeholders' own tone and everyday vocabulary** from the source input — their words ("get rid of the legacy API", "only text fields", "before 1.0", "showcase", "trivial to convert"), not internal jargon (milestone IDs, "PERT", "reftable", "facade", "sink"). Spell a term or figure out only the first time it is genuinely unavoidable.
+- **Keep it short without losing meaning.** A summary is a statement, not a dialogue — no second-person address.
+- **Do not re-explain stakeholders' own requests back to them in the same words.** They already know what they asked for. In a feedback-check context, answer what they actually want to know: whether any architectural regression resulted, whether price / risk / order changed, and what the new plan is — and point them to the updated `roadmap.md` / `summaries/roadmap.md`, which is where they will look.
+- **Read whether they are confirming or exploring.** Judge the register of the ask first: are they *assuming* something and looking to have it confirmed or disproved, or are they *unsure* and want more information? When they are clearly assuming (a leading question, a stated presumption), frame a matching finding as a confirmation ("Confirmed: …", "as expected") rather than presenting it as a surprise — and disprove just as directly when the assumption is wrong. When they are genuinely unsure, lead with the information plainly.
+
+---
+
 ## Commit Messages
 
 Conventional Commits, driven by semver semantics. Full guide: `doc/development/conventions/git.md`.

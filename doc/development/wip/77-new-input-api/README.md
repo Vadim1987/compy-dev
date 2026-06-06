@@ -4,8 +4,12 @@
 functions (`input_text`, `input_code`, `validated_input`, `user_input`). It
 turned out to touch keyboard routing across the whole app, not just the REPL —
 so it got a proper upfront analysis instead of a dive-in. **Complex, but
-solvable**, and pre-planned so building can start on a green light. Old
-functions keep working; nothing existing breaks.
+solvable**, and pre-planned so building can start on a green light. Per
+stakeholder feedback (round 1), the legacy text-input functions are **removed**
+— no backward compatibility; the examples that used them migrate to the new
+API, others can be excluded from the release. The break is bounded to text
+input: native keyboard handling is unchanged, and old releases remain
+available.
 
 ## Start here
 
@@ -20,7 +24,7 @@ altitude, ~30 min total. The one that needs your call is
 | 3 | `summaries/decisions.md` ⭐ | The calls awaiting approve / veto |
 | 4 | `summaries/design.md` | How it works |
 | 5 | `summaries/spec.md` | The API contract |
-| 6 | `summaries/roadmap.md` | Build plan + effort (~35–59 h) |
+| 6 | `summaries/roadmap.md` | Build plan + effort (~37–63 h) |
 
 ## If you want to dig
 
