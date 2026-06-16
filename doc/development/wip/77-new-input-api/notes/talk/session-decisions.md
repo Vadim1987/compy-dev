@@ -105,3 +105,32 @@ track) left for later, must not gate the first sprint.
 
 - `materialization_rule.md` added to the project's `agents/`: valuable chat
   insights/attestations → saved as notes under `./notes/talk/` by default.
+
+---
+
+## E1 outcome + rulings (session 02, 2026-06-16)
+
+Resolves the "self-report, possibly stale" flag above — **E1 verified the design
+IS converged** (not just self-reported). Full finding: `session02/report.md`.
+
+- **D-1…D-7 stakeholder-settled.** The round-2 stakeholder cycle
+  (`design/input/stakeholder2_notes.md`, 2026-06-10) *was* the approve/veto pass the
+  `decisions.md` header was still "awaiting"; the body incorporated all seven rulings.
+  The header (L3-10, "none stakeholder-approved") is **stale and self-contradictory** —
+  predates the cycle.
+- **Owner ruling: D-8/D-9/D-10 = architect's discretion** → go to implementation now.
+  Rationale (human): don't make stakeholders resolve every detail in their head before
+  seeing implementation; **practical DevX is a better feedback source**; re-fit in a
+  quick design round if they object later. *"Fortune favours the bold."* (D-8/D-9 are
+  arguably non-discretionary anyway — restore a dropped req / honor an asserted
+  guarantee; D-10 namespace is the one genuinely-discretionary item, and the stakeholder
+  note already uses `compy.input.show`, an implicit endorsement.)
+- **Process hazard found (feeds E4):** two distinct "round" axes wear the same labels —
+  *stakeholder* rounds (`input.md` / `input/`) vs *internal validation* rounds
+  (`validation/`, all 2026-06-08). Convergence status lived in a hand-maintained prose
+  header that drifted from the body; no single per-decision status ledger.
+- **Entrypoints re-mapped:** E1 ✓ · **E2 dissolved** (premise false → now only a
+  contingency re-fit round iff stakeholders object) · **E4 ▶ recommended next** (slices
+  the converged spec into per-milestone specs sprint01 needs; **folds in** the stale-header
+  fix + round-axis disambiguation) · **E3 open but gated on E4**. Owner flagged E4 as
+  needed before E3: *"otherwise I won't have clear per-milestone specs sliced."*
