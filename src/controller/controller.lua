@@ -133,6 +133,24 @@ local function no_drift(prev, cur)
   return false
 end
 
+local COMBO_MODS = {
+  { 'lctrl', 'rctrl', 'ctrl' },
+  { 'lalt', 'ralt', 'alt' },
+  { 'lshift', 'rshift', 'shift' },
+  { 'lgui', 'rgui', 'gui' },
+}
+
+local function combo_string(k, keys_pressed)
+  local parts = { }
+  for _, m in ipairs(COMBO_MODS) do
+    if keys_pressed[m[1]] or keys_pressed[m[2]] then
+      parts[#parts + 1] = m[3]
+    end
+  end
+  parts[#parts + 1] = k
+  return table.concat(parts, '+')
+end
+
 --- @class Controller
 --- @field _defaults Handlers
 --- @field _userhandler Handlers
@@ -152,6 +170,9 @@ Controller = {
   },
   --- @private
   _userhandlers = {},
+
+  keys_pressed = { },
+  combo_string = combo_string,
 
   ----------------
   --  keyboard  --
@@ -526,6 +547,7 @@ Controller = {
     local handlers = love.handlers
 
     handlers.keypressed = function(k)
+      Controller.keys_pressed[k] = true
       --- Power shortcuts
       local function quickswitch()
         if Key.ctrl() and not Key.alt() and k == 't' then
@@ -640,6 +662,7 @@ Controller = {
     end
 
     handlers.keyreleased = function(k)
+      Controller.keys_pressed[k] = nil
       if Key.ctrl() then
         if k == "escape" then
           love.event.quit()
