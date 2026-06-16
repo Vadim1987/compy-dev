@@ -15,8 +15,11 @@ for submit, cancel, key events, text input, and cursor
 boundary hits, and programmatic cursor and content access.
 The console REPL and editor are not migrated within this
 feature; their migration to the same API is a named follow-on.
-Touch input, multiple simultaneous edit areas, and changes
-to the editor's internal block navigation are out of scope.
+Multiple simultaneous edit areas and changes to the editor's
+internal block navigation are out of scope. Touch needs no
+separate work: it is already covered to the extent it is part of
+the existing mouse handlers, so it is not a distinct scope item
+(stakeholder feedback round 2).
 
 ---
 
@@ -49,7 +52,7 @@ natural extension point for callbacks.
 
 ### The new model
 
-The gate is removed. `ProjectController` — a new controller,
+The gate is removed. `ProjectInputController` — a new controller,
 sibling to `ConsoleController` and `EditorController` — owns
 all input handling for the project-running context.
 `UserInputController` becomes the universal terminal sink at
@@ -69,7 +72,7 @@ love.handlers.keypressed
         │     ├─ framework_handlers (Enter, Esc, Ctrl+M, etc.)
         │     ├─ editor-registered handlers / callbacks
         │     └─ → UserInputController:keypressed  [sink]
-        └─ ProjectController:keypressed  [new]
+        └─ ProjectInputController:keypressed  [new]
               ├─ framework_handlers (Enter, Escape, etc.)
               ├─ compy.input.handlers[combo]  [project-registered]
               ├─ compy.input.on_key_pressed   [generic, overloadable, default: sink]
@@ -83,7 +86,7 @@ widget visibility is a state on the singleton, not a gate.
 **Native handler coexistence (legacy heuristic).** Projects
 that define native `love.keypressed` (captured by the existing
 `save_user_handlers` path) but set none of the new `compy.*`
-surfaces are treated as legacy. `ProjectController` detects
+surfaces are treated as legacy. `ProjectInputController` detects
 this at load time and **auto-provisions `compy.input.on_key_pressed`**
 as a lifecycle-split wrapper: when the singleton is visible, the
 wrapper routes to the text-editing sink; when hidden, it routes
@@ -111,8 +114,10 @@ call — a live set of currently-held key names.
 
 Passed as a secondary argument to every `keypressed` and
 `textinput` callback flowing downstream. Downstream consumers
-receive a read-only proxy (iterator only), not the table
-directly, to prevent tampering. Replaces the ad-hoc
+receive a read-only proxy — read-indexable (`proxy[k]`) and
+iterable, with writes blocked (`__newindex` raises) — not the
+table directly, to prevent tampering. (Round 2: read indexing is
+allowed; only writes are blocked.) Replaces the ad-hoc
 `Key.ctrl()` / `Key.shift()` calls scattered across handlers.
 Makes combo serialisation (`"ctrl+s"`) deterministic without
 per-handler modifier checks.
@@ -133,18 +138,24 @@ controller object from project code.
 The `oneshot` flag (a `UserInputModel` field, `userInputModel.lua:15,49`)
 is deleted in M6, once both its jobs are covered: activation by
 `show()`/`hide()` and submit by `framework_handlers['return']` in
-`ProjectController`. Until M6 it stays and continues to drive
+`ProjectInputController`. Until M6 it stays and continues to drive
 submit exactly as today. At M6, deletion touches `userInputModel.lua`
 (field removal) and `userInputController.lua` (submit-path code
 that reads `self.model.oneshot`).
 
-### `ProjectController`
+### `ProjectInputController`
 
 New controller, a sibling to `ConsoleController` and
 `EditorController`. Active when `app_state = 'running'` or
 `'project_open'`. Owns `keypressed` and `textinput` handling
 for all project states, whether or not the singleton is
 currently visible.
+
+Named `ProjectInputController` (not `ProjectController`) per
+stakeholder feedback round 2: a bare `ProjectController` reads as a
+manager of project creation / deletion — the role `ProjectService`
+already fills — whereas this controller's responsibility is input
+routing. The name states the responsibility.
 
 Implements the three-level dispatch (§4). On project stop,
 resets `compy.input.handlers` and all project callbacks via
@@ -168,7 +179,7 @@ described in §2 and §6.
 | `compy.input.after_submit` | callback | Hook after evaluation (receives the result) |
 | `compy.input.before_cancel` | callback | Hook before framework dismisses |
 | `compy.input.after_cancel` | callback | Hook after dismissal |
-| `compy.input.on_limit_reached` | callback | Cursor hit input boundary |
+| `compy.input.on_limit_reached` | callback | Cursor hit a boundary: `(direction, scope)`, direction up/down/left/right, scope input/line |
 | `compy.input.get_cursor()` | function | Query cursor position while active; returns `line, col` (2D, 1-based source-line); returns `nil` when hidden |
 | `compy.input.set_cursor(line, col)` | function | Set cursor position while active; no-op when hidden |
 | `compy.input.set_text(text [, keep_cursor])` | function | Replace text content while active (live write; exception to `configure()` text-immutability) |
@@ -177,7 +188,7 @@ described in §2 and §6.
 
 ## 4. Three-Level Dispatch
 
-`ProjectController:keypressed` implements three tiers:
+`ProjectInputController:keypressed` implements three tiers:
 
 ```
 framework_handlers[combo]        non-overridable structural keys:
@@ -217,7 +228,7 @@ not return values, for ordering; they are not subject to the
 ### Shared dispatch function
 
 All three controller branches eventually will share one dispatch
-implementation written once. `ProjectController` uses it first;
+implementation written once. `ProjectInputController` uses it first;
 `ConsoleController` and `EditorController` migrate to it when ready.
 
 ```lua
@@ -253,7 +264,7 @@ matching and is project-overloadable.
 ## 5. Enter and Escape Handling
 
 Both keys are `framework_handlers` entries in
-`ProjectController` — non-overridable from project space
+`ProjectInputController` — non-overridable from project space
 but extensible via named callback chains.
 
 **Enter:**
@@ -315,7 +326,7 @@ a separate surface and is unaffected — see below.
 
 Projects that define native `love.keypressed`/`textinput`
 (without any `compy.*` surfaces) are handled transparently:
-`ProjectController` auto-provisions `compy.input.on_key_pressed` as
+`ProjectInputController` auto-provisions `compy.input.on_key_pressed` as
 a lifecycle-split wrapper. When the singleton is visible, the
 wrapper routes to the text-editing sink; when hidden, it routes
 to the project's native handler. This reproduces today's gated
@@ -334,7 +345,7 @@ completed and verified before the next begins:
 |---|---|---|
 | 1. `keys_pressed` table | Live modifier state; combo serialisation | No behaviour change; existing tests pass |
 | 2. Singleton extraction | Widget created at startup | Existing tests pass; no allocation change visible |
-| 3. ProjectController + gate removal | New routing; existing behaviour preserved via sink | Overlay input works as before; project key events now routable |
+| 3. ProjectInputController + gate removal | New routing; existing behaviour preserved via sink | Overlay input works as before; project key events now routable |
 | 4. Three-level dispatch | `compy.input.handlers`, `compy.input.on_key_pressed` | Handler registration and bubbling work |
 | 5. Before/after chains | Submit/cancel callbacks; Escape dismisses | Named hooks fire; Escape limitation resolved |
 | 6. Legacy removal + example migration | Legacy text-input globals deleted; examples on the new API | Priority examples (tixy, balloons) run; legacy globals gone |
@@ -373,10 +384,10 @@ onto the new API, fulfilling D-7's walkthrough promise
 | Action | Maps to |
 |---|---|
 | Enter → evaluate and submit | `framework_handlers['return']` (evaluate + push `'userinput'` + `after_submit`) |
-| Up/Down at history boundary | limit signal from sink → `compy.input.on_limit_reached(direction)` → history navigation handler |
+| Up/Down at history boundary | limit signal from sink → `compy.input.on_limit_reached(direction, scope)` (`direction='up'/'down'`, `scope='input'`) → history navigation handler |
 | Ctrl+L clear terminal | `compy.input.handlers['ctrl+l'] = function() clear_terminal() return true end` |
 | Error display | sink (unchanged — model handles it internally) |
-| Escape → clear input line | on migration, `ConsoleController` registers `framework_handlers['escape']` = clear-line; `ProjectController`'s dismiss-Escape is per-controller and never clobbers it |
+| Escape → clear input line | on migration, `ConsoleController` registers `framework_handlers['escape']` = clear-line; `ProjectInputController`'s dismiss-Escape is per-controller and never clobbers it |
 
 **Editor input (FR-12):**
 
@@ -384,7 +395,7 @@ onto the new API, fulfilling D-7's walkthrough promise
 |---|---|
 | Enter → submit block | `framework_handlers['return']` |
 | Escape → load / cancel edit | `framework_handlers['escape']` + `before_cancel` |
-| Up/Down at boundary → block navigation | `compy.input.on_limit_reached(direction)` |
+| Up/Down at boundary → block navigation | `compy.input.on_limit_reached(direction, scope)` (`scope='input'`; left/right + `'line'` scope also available for caret-edge navigation) |
 | Ctrl+M / Ctrl+F mode switches | `compy.input.handlers['ctrl+m']` / `compy.input.handlers['ctrl+f']` |
 | Load block text into input | `compy.input.set_text(block_text)` (FR-10 surface, D-8) |
 | Read cursor position | `compy.input.get_cursor()` → `line, col` (FR-8 surface, D-8) |

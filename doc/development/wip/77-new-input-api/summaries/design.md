@@ -38,7 +38,7 @@ love.handlers.keypressed
         └─ project's own love.keypressed  [or nothing]
 ```
 
-**After:** the gate is removed. `ProjectController` (new) is
+**After:** the gate is removed. `ProjectInputController` (new) is
 a first-class sibling to the other controllers. All branches
 terminate at the same sink. Routing does not change based on
 whether the input widget is visible.
@@ -55,7 +55,7 @@ love.handlers.keypressed
         │     ├─ framework_handlers (Enter, Esc, Ctrl+M, etc.)
         │     ├─ editor-registered handlers / callbacks
         │     └─ → UserInputController:keypressed  [sink]
-        └─ ProjectController:keypressed  [new]
+        └─ ProjectInputController:keypressed  [new]
               ├─ framework_handlers (Enter, Escape, etc.)
               ├─ compy.input.handlers[combo]  [project-registered]
               ├─ compy.input.on_key_pressed   [generic; default: sink]
@@ -68,7 +68,7 @@ change (`show()`/`hide()`), not a routing change.
 
 **Native handler coexistence.** Projects that define native
 `love.keypressed` (without any `compy.*` surfaces) are handled
-transparently via the *legacy heuristic*: `ProjectController`
+transparently via the *legacy heuristic*: `ProjectInputController`
 auto-provisions `compy.input.on_key_pressed` as a lifecycle-split
 wrapper (routes to sink when visible; to native handler when
 hidden), reproducing today's gated behaviour with zero example
@@ -82,7 +82,7 @@ changes.
 |---|---|
 | `keys_pressed` table | Live set of held key names; updated on every keypressed/keyreleased; combo serialisation foundation |
 | `UserInputController` singleton | Created once at startup; reconfigured per session via `compy.*` API; text-editing sink |
-| `ProjectController` | New controller; owns keypressed/textinput for project-running context; implements three-level dispatch |
+| `ProjectInputController` | New controller; owns keypressed/textinput for project-running context; implements three-level dispatch |
 | `compy.input.show(config)` | Activate singleton with config (prompt, text, cursor `{line,col}`, highlighter, validator, multiline) |
 | `compy.input.hide()` | Deactivate silently |
 | `compy.input.configure(config)` | Live-update config fields mid-session |
@@ -95,7 +95,7 @@ changes.
 | `compy.input.on_text_entered` | Character input callback (default value is the textinput sink) |
 | `compy.input.before_submit` / `after_submit` | Hooks around framework's evaluate step |
 | `compy.input.before_cancel` / `after_cancel` | Hooks around framework's dismiss step |
-| `compy.input.on_limit_reached` | Cursor hit input boundary |
+| `compy.input.on_limit_reached` | Cursor hit a boundary `(direction, scope)`: up/down/left/right, input/line (round 2) |
 | Legacy text-input globals | **Removed** — `input_text()`, `input_code()`, `validated_input()`, `user_input()`, `write_to_input()` no longer exist (D-1 discarded); examples migrate to `compy.input.*`. Native `love.keypressed` coexistence (D-9) is retained |
 
 ---

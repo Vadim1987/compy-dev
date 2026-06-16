@@ -65,7 +65,7 @@ The structural change that makes all three improvements
 possible is routing unification. The
 `if user_input then ... else ... end` gate in
 `love.handlers.keypressed` (`controller.lua`) is removed.
-A new `ProjectController` — a sibling to `ConsoleController`
+A new `ProjectInputController` — a sibling to `ConsoleController`
 and `EditorController` — takes ownership of all input
 handling for the project-running context. `UserInputController`
 becomes the universal terminal sink at the bottom of every
@@ -83,7 +83,7 @@ never destroyed. Projects call `show()`, `hide()`, and
 — is the structural default.
 
 **How does project code receive input events?**
-Through a callback chain attached to `ProjectController`'s
+Through a callback chain attached to `ProjectInputController`'s
 dispatch. When the user types, the framework fires:
 `on_text_entered` for character input, `on_key_pressed`
 for non-character keys and modifier combos, named chain
@@ -92,7 +92,7 @@ events. The framework always runs its own structural
 behaviour; project code extends it.
 
 **How are key events not swallowed?**
-`ProjectController` implements a three-level dispatch:
+`ProjectInputController` implements a three-level dispatch:
 `framework_handlers → compy.input.handlers[combo] → compy.input.on_key_pressed`.
 The text-editing sink is the **default value** of
 `compy.input.on_key_pressed` — not a separate fourth tier.
@@ -138,7 +138,7 @@ existing tests.
 
 **Keyboard events now reach project code** while a prompt
 is active (FR-5–FR-7, NFR-2). Currently they are silently
-consumed. `ProjectController`'s three-level dispatch
+consumed. `ProjectInputController`'s three-level dispatch
 ensures all keys pass through project-registered handlers
 and callbacks before reaching the text-editing sink.
 Submit and cancel have named before/after callback points;
@@ -168,12 +168,12 @@ controller's migration is a named follow-on feature.
 | | Decision | Resolution |
 |---|---|---|
 | D-1 | Backward compat | **Discarded** (stakeholders, round 1): no backward compat. Legacy text-input globals removed; examples migrated (`tixy`/`balloons` priority) or excluded. D-9 native coexistence unaffected. |
-| D-2 | Second setup call | Dissolved — singleton accepts configure/show, no create call |
+| D-2 | Second setup call | `show()` while active no-ops by default; `show({force=true})` reconfigures (round 2); `configure()` is the mid-run live-update path |
 | D-3 | Key event coverage | Three-tier dispatch; sink = default of `on_key_pressed`; modifier-first generic-folded combo format; metatable-normalised; overloadable matcher |
 | D-4 | Cancel/submit | Named chains `before_X → X → after_X`; framework owns middle; `oneshot` is `UserInputModel` field, deleted in M6 |
-| D-5 | Cursor boundary | Single `on_limit_reached(direction)` hook; whole-input boundary |
+| D-5 | Cursor boundary | `on_limit_reached(direction, scope)`; directions up/down **and left/right** (round 2); `scope` = `'input'`/`'line'` (defined v1); always propagates |
 | D-6 | Modifier + character | Superseded (round 1): two independent channels, no exclusivity; `on_text_entered(text, keys_pressed)` |
-| D-7 | Rollout scope | ProjectController first; FR-11/FR-12 walkthrough added to `design.md §7` |
+| D-7 | Rollout scope | ProjectInputController first; FR-11/FR-12 walkthrough added to `design.md §7` |
 | D-8 | Cursor contract + live surface | 2D `(line, col)` source-line coords; `compy.input.get_cursor`, `compy.input.set_cursor`, `compy.input.set_text`; `set_text` supersedes the removed `write_to_input` |
 | D-9 | Native handler coexistence | Auto-provisioning via legacy heuristic; lifecycle-split wrapper; transition diagnostics |
 | D-10 | Namespace isolation | New surface under `compy.input.*`; `compy.keys_pressed` stays global; legacy text-input globals removed (D-1 discarded) |

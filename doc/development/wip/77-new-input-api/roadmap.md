@@ -53,7 +53,8 @@ once, never destroyed. Zero behaviour change.
 startup (lazily). The widget is no longer created on each
 input call. `compy.input.show()` and `compy.input.hide()` are
 available on the namespace (required before later milestones
-use them). Existing examples still work at this point (the
+use them). `show()` on an already-active singleton is a no-op
+unless called with `{ force = true }` (round 2 — D-2). Existing examples still work at this point (the
 legacy globals are untouched until M8); allocation-per-session
 is gone. Existing tests pass. The `oneshot` flag is **not**
 removed in this milestone — it continues to drive submit
@@ -92,7 +93,7 @@ this slot is intentionally empty.
 
 ---
 
-### M4 — `ProjectController` introduction and overlay gate removal
+### M4 — `ProjectInputController` introduction and overlay gate removal
 
 **Description:** New controller for the project-running
 context. The `if user_input then` gate in `controller.lua`
@@ -101,19 +102,19 @@ is removed. Routing becomes symmetric.
 **Input:** M2 complete (singleton stable). The removed M3 was
 never a functional dependency of this milestone.
 
-**Output:** `ProjectController:keypressed` and
+**Output:** `ProjectInputController:keypressed` and
 `:textinput` occupy `love.keypressed` and `love.textinput`
 when a project runs. Overlay input works as before (via
 the sink). Project key events are no longer silently dropped
 while the singleton is active. Existing tests pass.
 
 **Files created or modified:**
-- `src/projectController.lua` — new file; implements
-  `ProjectController` class with `keypressed`, `textinput`,
+- `src/projectInputController.lua` — new file; implements
+  `ProjectInputController` class with `keypressed`, `textinput`,
   `keyreleased` methods; basic sink delegation only (M5
   adds the full dispatch)
 - `src/controller.lua` — remove overlay gate; wire
-  ProjectController into `set_handlers()` / `love.keypressed`
+  ProjectInputController into `set_handlers()` / `love.keypressed`
   slot for project-running states
 
 **Risk:** Largest integration step. The overlay gate
@@ -124,23 +125,23 @@ marking complete.
 
 ---
 
-### M5 — Three-level dispatch in `ProjectController`
+### M5 — Three-level dispatch in `ProjectInputController`
 
 **Description:** `compy.input.handlers`, `compy.input.on_key_pressed`,
 and return-value bubbling implemented in
-`ProjectController:keypressed`.
+`ProjectInputController:keypressed`.
 
-**Input:** M4 complete (ProjectController exists; sink
+**Input:** M4 complete (ProjectInputController exists; sink
 delegation works).
 
 **Output:** `compy.input.handlers['ctrl+s'] = fn` works.
 `compy.input.on_key_pressed` fires for unregistered keys.
 Returning truthy from a handler prevents the sink from
 running. The shared `dispatch()` function is written and
-used by ProjectController.
+used by ProjectInputController.
 
 **Files created or modified:**
-- `src/projectController.lua` — add three-level dispatch;
+- `src/projectInputController.lua` — add three-level dispatch;
   add `dispatch()` function (shared; ConsoleController and
   EditorController will migrate to it later)
 - `src/compy_namespace.lua` (or equivalent) — expose
@@ -168,22 +169,31 @@ covered — activation by `show()`/`hide()` from M2, submit by
 **Output:** All six named hooks fire at correct points.
 Escape dismisses the overlay and fires `before_cancel` /
 `after_cancel`. Submit fires `before_submit` / `after_submit`
-with correct arguments. `on_limit_reached('up'/'down')`
-fires when cursor hits boundary. The `oneshot` flag is gone.
+with correct arguments. `on_limit_reached(direction, scope)`
+fires when the cursor hits a boundary — `direction` up/down/left/
+right, `scope` input/line (round 2; was up/down whole-input only).
+The `oneshot` flag is gone.
 
 **Files created or modified:**
-- `src/projectController.lua` — add `framework_handlers`
+- `src/projectInputController.lua` — add `framework_handlers`
   table; add `'return'` and `'escape'` entries with
   before/after chain logic
 - `src/userInputController.lua` — expose limit signal to
-  caller; remove submit-path code that reads `model.oneshot`
+  caller (now carrying `direction` + `scope`); remove submit-path
+  code that reads `model.oneshot`
 - `src/userInputModel.lua` — remove `oneshot` field
-  (lines ~15, ~49); this is the field's home (the submit-path
-  code that reads it is in `userInputController.lua`)
+  (lines ~15, ~49); **extend `is_at_limit`** (line ~558) from
+  vertical-only to also report horizontal (`'left'`/`'right'`,
+  first/last character) and line-scope vs input-scope boundaries
+  (round 2 — D-5); the existing vertical whole-input case is
+  unchanged
 
 **Risk:** Escape dismiss: ensure `push('userinput')` fires
 in the cancel path (it currently fires only on successful
-submit with `oneshot`).
+submit with `oneshot`). Boundary extension: the horizontal /
+line-scope cases are new `is_at_limit` logic; keep the existing
+vertical whole-input semantics (the editor's block navigation
+depends on them) intact.
 
 ---
 
@@ -280,7 +290,7 @@ idiom disappears from the example corpus.
   API surface.
 - Update `doc/development/overview.md` architecture section
   if the controller listing or app_state machine description
-  needs to account for `ProjectController`.
+  needs to account for `ProjectInputController`.
 - Archive or annotate stale wip notes after release
   (primarily `notes/design.md`, `notes/plan.md`).
 
@@ -290,10 +300,14 @@ Busted tests for:
 - `keys_pressed` table: key add/remove, combo serialisation,
   multi-modifier ordering
 - Singleton lifecycle: show/hide state, configure fields,
-  clear, show-while-active reconfiguration
+  clear, show-while-active (no-op by default; `force=true`
+  reconfigures)
 - Dispatch chain (each level): handler registration,
   return-value bubbling, default callback fires when no
   handler matches
+- `on_limit_reached`: all four directions (up/down/left/right)
+  at both scopes (input/line); single-line collapses line→input
+  (round 2)
 - Example migration (M8): the priority examples (`tixy`,
   `balloons`) run on the `compy.input.*` callback API; the legacy
   globals are gone (calling `input_text` etc. is now a `nil`
@@ -316,16 +330,25 @@ M = most-likely, P = pessimistic. Hours.*
 |---|---|---|---|---|
 | M1 `keys_pressed` table | 2 | 3 | 4 | 3.0 |
 | M2 Singleton extraction | 3 | 6 | 9 | 6.0 |
-| M4 ProjectController + gate removal | 4 | 8 | 14 | 8.3 |
+| M4 ProjectInputController + gate removal | 4 | 8 | 14 | 8.3 |
 | M5 Three-level dispatch | 3 | 5 | 8 | 5.2 |
-| M6 Before/after chains (+ `oneshot` deletion) | 4 | 7 | 11 | 7.2 |
+| M6 Before/after chains (+ `oneshot` del., **boundary ext.**) | 5 | 9 | 14 | 9.2 |
 | M7 Extended API (+ cursor surface, model fix) | 3 | 6 | 9 | 6.0 |
 | M8 Legacy removal + example migration | 4 | 8 | 14 | 8.3 |
 | Documentation updates | 4 | 8 | 12 | 8.0 |
-| Test coverage | 7 | 11 | 16 | 11.2 |
-| **Total** | **34** | **62** | **97** | **≈ 63 h** |
+| Test coverage | 8 | 12 | 18 | 12.3 |
+| **Total** | **36** | **65** | **102** | **≈ 66 h** |
 
-Project PERT (O=34, M=62, P=97): `(34 + 4×62 + 97) / 6 ≈ 63 h`.
+Project PERT (O=36, M=65, P=102): `(36 + 4×65 + 102) / 6 ≈ 66 h`.
+
+**Round-2 delta (+≈ 3 h vs. ≈ 63 h).** The D-5 boundary extension
+(horizontal `left`/`right` directions and the `'line'` scope on
+top of vertical whole-input) is new `is_at_limit` model work and
+adds ≈ 2 h to M6; the extra `on_limit_reached` direction/scope
+cases add ≈ 1 h to test coverage. The `show()` `force` flag (M2),
+the `ProjectInputController` rename (M4 file), and the
+read-indexable `keys_pressed` proxy shape (M1) are each within
+estimating noise and are absorbed in the existing M1/M2/M4 cells.
 
 Note: discarding backward compatibility (D-1) *raised* the
 estimate. The old M3 facade layer (≈ 4 h) is gone, but M8 —
@@ -352,16 +375,22 @@ least on M2 (cross-component refactor verified by hand), M4
 |---|---|---|---|---|---|
 | M1 `keys_pressed` table | 1 | 2 | 3 | 2.0 | High |
 | M2 Singleton extraction | 2 | 4 | 6 | 4.0 | Low |
-| M4 ProjectController + gate removal | 3 | 5 | 9 | 5.3 | Medium |
+| M4 ProjectInputController + gate removal | 3 | 5 | 9 | 5.3 | Medium |
 | M5 Three-level dispatch | 2 | 3 | 5 | 3.2 | High |
-| M6 Before/after chains (+ `oneshot` deletion) | 2 | 5 | 8 | 5.0 | Low–medium |
+| M6 Before/after chains (+ `oneshot` del., **boundary ext.**) | 3 | 6 | 10 | 6.2 | Low–medium |
 | M7 Extended API (+ cursor surface, model fix) | 2 | 4 | 6 | 4.0 | High |
 | M8 Legacy removal + example migration | 2 | 4 | 8 | 4.3 | High |
 | Documentation updates | 2 | 3 | 5 | 3.2 | High |
-| Test coverage | 4 | 6 | 9 | 6.2 | High |
-| **Total** | **20** | **36** | **59** | **≈ 37 h** |
+| Test coverage | 4 | 7 | 10 | 7.0 | High |
+| **Total** | **21** | **38** | **62** | **≈ 39 h** |
 
-Project PERT (O=20, M=36, P=59): `(20 + 4×36 + 59) / 6 ≈ 37 h`.
+Project PERT (O=21, M=38, P=62): `(21 + 4×38 + 62) / 6 ≈ 39 h`.
+
+**Round-2 delta (+≈ 2 h vs. ≈ 37 h).** Same source as the
+without-LLM delta: the D-5 boundary extension (M6 model work) and
+its extra test cases. The boundary model logic is verification-
+sensitive, so the LLM saving on it is only moderate; the test
+cases are mechanical (High).
 
 Confidence: moderate. The saving is largest for well-specified
 generative work (M1, M5, M7, M8, tests, docs) — rewriting the

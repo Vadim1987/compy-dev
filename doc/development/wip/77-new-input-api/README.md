@@ -24,7 +24,7 @@ altitude, ~30 min total. The one that needs your call is
 | 3 | `summaries/decisions.md` ⭐ | The calls awaiting approve / veto |
 | 4 | `summaries/design.md` | How it works |
 | 5 | `summaries/spec.md` | The API contract |
-| 6 | `summaries/roadmap.md` | Build plan + effort (~37–63 h) |
+| 6 | `summaries/roadmap.md` | Build plan + effort (~39–66 h) |
 
 ## If you want to dig
 

@@ -40,19 +40,24 @@ The table is owned by `Controller` (global controller,
 `love.handlers.keyreleased` (remove key) call, before any
 downstream handler runs.
 
-Downstream consumers — `ProjectController` and the project
-callbacks — receive the table as a **read-only proxy**: an
-iterator-only wrapper. Direct indexing on the proxy is not
-supported; consumers iterate with `for k in pairs(proxy) do`.
-This prevents project code from tampering with the live
-modifier state.
+Downstream consumers — `ProjectInputController` and the project
+callbacks — receive the table as a **read-only proxy**:
+`__index` reads through to the live set, so direct indexing is
+supported (`proxy['lctrl']` returns `true`/`nil`), and `pairs`
+iteration is supported; `__newindex` is blocked (assignment
+raises). This lets project code query and iterate held keys
+freely while preventing it from tampering with the live modifier
+state. (Round 2: the proxy was widened from iterator-only to
+read-indexable — blocking writes only — per stakeholder feedback;
+a read/write-split proxy is straightforward and the
+indexing restriction had no rationale.)
 
 The proxy is passed as the second argument to every
 `keypressed` and `textinput` callback downstream:
 
 ```lua
-ProjectController:keypressed(k, keys_pressed, isrepeat)
-ProjectController:textinput(t, keys_pressed)
+ProjectInputController:keypressed(k, keys_pressed, isrepeat)
+ProjectInputController:textinput(t, keys_pressed)
 ```
 
 ### Combo serialisation
@@ -105,11 +110,21 @@ Activates the singleton with the given configuration.
 | `highlighter` | function | Syntax highlighter: `fn(text) → highlighted_text` |
 | `validator` | function | Per-submit validator: `fn(text) → ok, err_msg` |
 | `multiline` | boolean | Allow Shift+Enter newlines (default false) |
+| `force` | boolean | Opt-in to re-activate over an already-active session (default false); see below |
 
-Calling `show()` while the singleton is already visible:
-the singleton is reconfigured in-place with the new config.
-No error is raised; no cancel chain fires; content is
-replaced if `text` is provided, preserved otherwise.
+Calling `show()` while the singleton is already visible is a
+**no-op by default** — the call does nothing, the active session
+is left exactly as it was, no error is raised and no cancel chain
+fires. To deliberately re-activate over an active session, pass
+`force = true`: the singleton is then reconfigured in-place with
+the new config (content replaced if `text` is provided, preserved
+otherwise), still with no cancel chain. (Round 2: the default was
+changed from silent in-place reconfigure to block-by-default, so
+that clobbering an active session is always an explicit choice.)
+
+To change `prompt`, `validator`, or `highlighter` on a *running*
+session without re-activating, use `configure()` — that is the
+live-update path and needs no flag.
 
 `love.state.user_input` is set to the singleton instance
 on `show()`.
@@ -171,7 +186,10 @@ view update.
 
 No access control is enforced in this version. A project
 calling `show()` while another subsystem is using the
-singleton will reconfigure it. This is a known future
+singleton is a no-op by default (round 2), but a project
+calling `show({ force = true })` will still reconfigure it
+across subsystems — `force` opts past the active-session block,
+not past ownership, which is unenforced. This is a known future
 concern; it is not in scope for this feature.
 
 ---
@@ -329,29 +347,41 @@ No arguments.
 
 ---
 
-## 4. `on_limit_reached(direction)`
+## 4. `on_limit_reached(direction, scope)`
 
 ```lua
-compy.input.on_limit_reached = function(direction, _reserved)
-  -- direction: 'up' or 'down'
+compy.input.on_limit_reached = function(direction, scope)
+  -- direction: 'up' | 'down' | 'left' | 'right'
+  -- scope:     'input' | 'line'
 end
 ```
 
-Fires when the cursor attempts to move past the first or
-last valid position in the input area (a whole-input
-boundary, consistent with the existing `UserInputModel:is_at_limit`
-implementation).
+Fires when the cursor attempts to move past a valid boundary of
+the input area (round 2: extended from vertical-only to all four
+directions, with an explicit `scope`).
 
-- `direction`: `'up'` when the cursor tries to move past
-  the first line; `'down'` when it tries to move past the
-  last line.
-- Second argument `_reserved`: undefined in v1; reserved for
-  future boundary-level granularity (e.g. line-level vs.
-  input-level). Do not use.
+- `direction`:
+  - `'up'` — cursor tries to move past the first line.
+  - `'down'` — cursor tries to move past the last line.
+  - `'left'` — cursor tries to move past the first character.
+  - `'right'` — cursor tries to move past the last character.
+- `scope` (second argument, **defined in v1** — previously
+  reserved):
+  - `'input'` — a whole-input boundary, consistent with the
+    existing `UserInputModel:is_at_limit` semantics (first/last
+    line of the buffer; first/last character of the whole input).
+  - `'line'` — a current-line boundary (start/end of the line the
+    cursor is on). In a single-line input, `'line'` and `'input'`
+    coincide.
 
-The callback always propagates — both project code and
-framework code observe the same boundary event independently.
-Return value is ignored.
+The callback always propagates — both project code and framework
+code observe the same boundary event independently. Return value
+is ignored.
+
+*Prior art: the editor's block navigation already drives the
+vertical whole-input boundary via `UserInputModel:is_at_limit`
+(`editorController.lua:511-512`). The horizontal directions and the
+`'line'` scope are the round-2 additions.*
 
 ---
 
@@ -385,15 +415,15 @@ checks `love.state.user_input` for nil-ness continues to work.
 
 ---
 
-## 6. `ProjectController`
+## 6. `ProjectInputController`
 
 ### Activation
 
-`ProjectController` becomes the occupant of `love.keypressed`
+`ProjectInputController` becomes the occupant of `love.keypressed`
 when `app_state` transitions to `'running'` or
 `'project_open'`. This is the same slot mechanism used by
 `ConsoleController`; `set_handlers()` places
-`ProjectController:keypressed` in `love.keypressed` when a
+`ProjectInputController:keypressed` in `love.keypressed` when a
 project starts.
 
 ### Deactivation
@@ -406,12 +436,12 @@ reset to their defaults.
 
 ### Relationship to `love.keypressed` slot
 
-`ProjectController:keypressed` IS the `love.keypressed`
+`ProjectInputController:keypressed` IS the `love.keypressed`
 occupant during project execution. It is not called from
 within `love.handlers.keypressed` by special case — the
 overlay gate is removed. The framework's
 `love.handlers.keypressed` dispatches to whatever is in
-`love.keypressed`, which is `ProjectController:keypressed`
+`love.keypressed`, which is `ProjectInputController:keypressed`
 while a project runs.
 
 ### Native handler coexistence
@@ -419,8 +449,8 @@ while a project runs.
 Projects that define `love.keypressed`/`love.textinput`
 natively (captured by the existing `save_user_handlers` path)
 AND set none of the `compy.*` input surfaces are treated as
-**legacy** by `ProjectController`. At load time,
-`ProjectController` auto-provisions `compy.input.on_key_pressed` as
+**legacy** by `ProjectInputController`. At load time,
+`ProjectInputController` auto-provisions `compy.input.on_key_pressed` as
 a lifecycle-split wrapper:
 
 - **Singleton visible:** routes to the text-editing sink.
@@ -440,10 +470,13 @@ wrapper is cleared on project stop (via `stop_project_run` /
 
 ### `show()` while already active
 
-Behaviour: reconfigures in-place. Content replaced if `text`
-is specified; otherwise preserved. No cancel chain fires.
-No error. This is the intended API for dynamic prompt
-changes (FR-3/FR-4).
+Behaviour: **no-op by default** — the call is ignored and the
+active session is untouched (no error, no cancel chain). With
+`force = true`, it reconfigures in-place: content replaced if
+`text` is specified, otherwise preserved; still no cancel chain.
+Dynamic prompt changes (FR-3/FR-4) on a running session go
+through `configure()`, not a re-`show()`. (Round 2 change; see §2
+`show()` and `decisions.md` D-2.)
 
 ### Project stops while input is active
 

@@ -346,7 +346,7 @@ clears input content via `reset()` but does **not** push
 the current limitation that `design.md §5` is built to fix
 ("Escape clears input content but does not dismiss the
 overlay"). In the new model, `framework_handlers['escape']`
-in `ProjectController` owns cancel and pushes `'userinput'`
+in `ProjectInputController` owns cancel and pushes `'userinput'`
 unconditionally, resolving the limitation.
 
 **Text character + modifier co-occurrence**: LÖVE2D delivers

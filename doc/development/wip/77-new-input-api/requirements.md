@@ -128,8 +128,12 @@ The following are not addressed by this feature:
 - **Multiple simultaneous edit areas.** The single active edit
   area constraint is not relaxed; the requirements do not ask
   for more than one at a time.
-- **Touch input.** Touch event handling is not mentioned and is
-  separately deferred in the codebase.
+- **Touch input.** Already handled to the extent it is part of
+  the existing mouse handlers — neither the API user nor this
+  effort has to do anything for that to keep working. It is listed
+  here only to note that there is no *separate* touch work; framing
+  it as a distinct out-of-scope item is misleading (stakeholder
+  feedback round 2).
 - **Built-in function key support.** The Compy device's
   built-in keyboard has its top-row function keys intercepted
   by Android. FR-6 covers external keyboards; built-in function
@@ -172,8 +176,13 @@ and require a decision before or during design:
   non-character key events should trigger the same notification
   or separate ones is left to design.
 
-- **Boundary definition in multiline input (FR-7).** In a
-  multiline edit area, "boundary" may mean end-of-current-line,
-  end-of-the-entire-input, or both. The distinction matters for
-  how projects use the callback (e.g. block navigation in an
-  editor-like interface). Clarification is needed.
+- **Boundary definition in multiline input (FR-7) — RESOLVED
+  (round 2).** In a multiline edit area, "boundary" may mean
+  end-of-current-line, end-of-the-entire-input, or both. The
+  distinction matters for how projects use the callback (e.g.
+  block navigation in an editor-like interface). Stakeholders
+  ruled (`input/stakeholder2_structured.md` item 5): **both**.
+  `on_limit_reached` reports a `direction` (up/down vertical,
+  left/right horizontal) and a `scope` (`'input'` whole-input, or
+  `'line'` current-line). Single-line inputs collapse the two
+  scopes. See `decisions.md` D-5.

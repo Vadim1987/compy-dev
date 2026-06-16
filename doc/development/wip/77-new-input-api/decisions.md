@@ -86,7 +86,7 @@ reference variable on every frame.
 The structural basis is routing unification. The
 `if user_input then ... else ... end` gate in
 `love.handlers.keypressed` (`controller.lua`) is removed.
-A new `ProjectController` — a sibling to `ConsoleController`
+A new `ProjectInputController` — a sibling to `ConsoleController`
 and `EditorController` — takes ownership of all input
 handling for the project-running context. `UserInputController`
 becomes the universal terminal sink at the bottom of every
@@ -151,10 +151,10 @@ affected ("only text fields", per `input.md`).
 | | Decision | Resolution |
 |---|---|---|
 | D-1 | Backward compat | **Discarded** (stakeholder consensus, `input.md` round 1): no backward compatibility. Legacy text-input globals removed; examples migrated (`tixy`/`balloons` priority) or excluded from the release. D-9 native coexistence is unaffected. |
-| D-2 | Second setup call | Dissolved — singleton accepts configure/show, no create |
+| D-2 | Second setup call | `show()` while active is a **no-op by default**; `show({force=true})` reconfigures (round 2). Mid-run prompt/validator/highlighter change is `configure()` (unchanged, no flag) |
 | D-3 | Key event coverage | Three-tier dispatch; sink is default of `on_key_pressed`; modifier-first generic-folded combo format; metatable-normalised registration; overloadable matcher |
 | D-4 | Cancel/submit | Named chains: `before_X → X → after_X`; framework owns middle; `oneshot` is `UserInputModel` field, deleted in M6 |
-| D-5 | Boundary | `on_limit_reached(direction)` hook; whole-input boundary; second arg reserved |
+| D-5 | Boundary | `on_limit_reached(direction, scope)` hook; directions up/down **and left/right** (round 2); `scope` = `'input'` or `'line'` (was "reserved", now defined v1); always propagates |
 | D-6 | Modifier + character | Superseded (round 1): two independent channels, no exclusivity; `on_text_entered(text, keys_pressed)` |
 | D-7 | Rollout scope | Overlay context first; FR-11/FR-12 walkthrough added to `design.md §7` |
 | D-8 | Cursor contract + live surface | 2D `(line, col)` source-line coords; `compy.input.get_cursor`, `compy.input.set_cursor`, `compy.input.set_text`; `set_text` supersedes the removed `write_to_input` |
@@ -234,12 +234,28 @@ configuration in-place, or treat it as an error.
 
 **Source:** `requirements.md §5`, `assessment.md §2`
 
-**Suggested decision:** Dissolved by the singleton design.
-There is no "setup call while active" because there is no
-setup call — only configure/show on a persistent widget.
-Projects that want to change the prompt label or evaluator
-mid-run call a reconfigure method directly. The silent-skip
-guard is removed.
+**Suggested decision (original — superseded by stakeholder
+feedback round 2; see annotation below):** Dissolved by the
+singleton design. There is no "setup call while active" because
+there is no setup call — only configure/show on a persistent
+widget. Projects that want to change the prompt label or evaluator
+mid-run call a reconfigure method directly. The silent-skip guard
+is removed.
+
+*(Stakeholder feedback, round 2, 2026-06-10.)* **Resolution:
+block by default, `force` to override.** Calling `show()` while
+the singleton is already active is a **no-op by default** — the
+second call does nothing, rather than silently reconfiguring
+in-place. A project that genuinely intends to re-activate over an
+active session passes an explicit opt-in: `show({ force = true, … })`,
+which reconfigures (and replaces content if `text` is given). The
+mid-run change path the original resolution had in mind —
+changing prompt / validator / highlighter without re-activating —
+is `configure()` (the live-update surface), which is unchanged and
+needs no flag. The `force` gate lives on `show()` only; `configure()`
+stays a plain live update. Rationale (stakeholder): a bare
+re-`show()` clobbering an active session is the kind of thing that
+should be asked for explicitly, not be the default.
 
 ---
 
@@ -265,7 +281,7 @@ round-1 annotation below for the current three-tier model, combo
 form, and signature):** All key events are covered through a
 unified `_on_key_pressed(k, pressed, isrepeat)` dispatch
 where `pressed` is the current `compy.keys_pressed` set.
-Three dispatch levels inside `ProjectController:keypressed`:
+Three dispatch levels inside `ProjectInputController:keypressed`:
 framework_handlers → compy.input.handlers → `compy.input.on_key_pressed`,
 with `UserInputController:keypressed` as the terminal sink
 below all three. Combo registration uses serialised sorted
@@ -273,7 +289,7 @@ key names (e.g. `"lctrl+s"`) consistent with LÖVE2D
 conventions. Modifier+character events go through
 `_on_textinput`, not keypressed — no overlap. The same
 dispatch function is shared across all three controller
-branches (written once; `ProjectController` uses it first;
+branches (written once; `ProjectInputController` uses it first;
 `ConsoleController` and `EditorController` migrate when
 ready). Specific serialisation format is a spec detail.
 
@@ -296,6 +312,18 @@ extension seam for future glob/prefix matching. Signature:
 `on_key_pressed(k, keys, isrepeat)` — `isrepeat` as trailing
 arg so the common `(k, keys)` form stays clean.
 
+*(Stakeholder feedback, round 2.)* **Scope ratified.** The base
+approach is passing through what LÖVE does; the stakeholder
+initially flagged that "further helpers should be added, but not
+as part of this effort," then, after reading the spec, accepted
+that the combo / `handlers` / dispatch layer described above is a
+worthwhile **improvement** on raw pass-through ("it makes sense
+with this implementation to improve upon it"). The boundary: this
+effort ships exactly the dispatch layer specified here — no
+additional convenience helpers. The further ideas already recorded
+as **future seams** (overloadable matcher beyond exact match, the
+`mods` string in D-6) remain seams, not built in v1.
+
 ---
 
 ### D-4 · Cancel and submit notifications
@@ -304,6 +332,17 @@ arg so the common `(k, keys)` form stays clean.
 when the user dismisses the input (Escape) or submits (Enter),
 and how does the framework's own teardown relate to project
 callbacks?
+
+*(Clarification, round 2 — "the framework's own teardown" was
+unclear to the stakeholder.)* "The framework's own teardown" is
+the **framework-owned middle step of each named chain** — the
+structural work the framework always performs and projects cannot
+suppress: on cancel, `model:cancel()` → push `'userinput'` → hide
+the singleton; on submit, evaluate + store + push `'userinput'`.
+Project `before_*` / `after_*` callbacks run around this step but
+never replace it. (Stakeholder confirmed the dedicated-callback
+design itself — "at first glance, definitely" — and expects
+refinement during implementation.)
 
 **Context:** Escape and Enter currently trigger framework
 behaviour (teardown, evaluate) with no notification to project
@@ -329,7 +368,7 @@ The `oneshot` flag is deleted as a consequence of D-2 combined
 with D-4. Previously, `oneshot` encoded two signals: "widget is
 the active overlay" and "widget owns submit." Both are replaced:
 `show()`/`hide()` on the singleton carry the activation signal;
-`framework_handlers['return']` in `ProjectController` owns
+`framework_handlers['return']` in `ProjectInputController` owns
 submit. The flag has nothing left to do.
 
 *(Origin: local design round 1, 2026-06. See
@@ -341,7 +380,7 @@ deletion file target is `userInputModel.lua` (field removal) and
 `userInputController.lua` (submit-path code that reads it).
 (2) The deletion is moved to **M6**, not M2. `oneshot` currently
 drives both submit gating and the `'userinput'` push; its
-replacement (`framework_handlers['return']` in `ProjectController`)
+replacement (`framework_handlers['return']` in `ProjectInputController`)
 arrives only in M6. Deleting it in M2 would strand submit across
 M2–M5, contradicting M2's "zero behaviour change" claim. Until M6,
 `oneshot` stays and continues to drive submit exactly as today.
@@ -363,13 +402,41 @@ the whole-input level (first/last line of the buffer).
 
 **Source:** `requirements.md §5`, `assessment.md §3`
 
-**Suggested decision:** Single `on_limit_reached(direction)`
-hook where direction is `'up'` or `'down'`. Covers
-whole-input boundary only, consistent with the existing
-`is_at_limit` implementation. A hook always propagates —
+**Suggested decision (original — extended by stakeholder
+feedback round 2; see annotation below):** Single
+`on_limit_reached(direction)` hook where direction is `'up'` or
+`'down'`. Covers whole-input boundary only, consistent with the
+existing `is_at_limit` implementation. A hook always propagates —
 both project code and framework code observe the same event
-independently. Second positional argument reserved for
-future boundary-level granularity, undefined in v1.
+independently. Second positional argument reserved for future
+boundary-level granularity, undefined in v1.
+
+*(Stakeholder feedback, round 2, 2026-06-10.)* **Extended:
+horizontal directions + line/input granularity.** The stakeholder
+endorsed the hook and broadened the boundary set, citing the
+editor's existing navigation as prior art and noting it is
+intuitive:
+
+- **Vertical** — `direction` `'up'` / `'down'`: the cursor is on
+  the first / last line.
+- **Horizontal** — `direction` `'left'` / `'right'`: the cursor is
+  on the first / last character.
+
+The boundary can be observed **for the whole input or for the
+current line**. The previously-reserved second positional argument
+now carries this granularity and is **defined in v1** as `scope`:
+`'input'` (whole-input boundary, the existing
+`UserInputModel:is_at_limit` semantics) or `'line'` (start/end of
+the current line). All four directions still always propagate to
+both project and framework code.
+
+Implementation note: `UserInputModel:is_at_limit`
+(`userInputModel.lua:558`) is vertical-only today and the editor's
+block navigation drives it via the `'up'`/`'down'` cases
+(`editorController.lua:511-512`) — the prior art the stakeholder
+referenced. The horizontal cases and the `'line'` scope are new
+model work; the whole-input vertical case is unchanged. The hook
+firing point is M6 (see `roadmap.md`).
 
 ---
 
@@ -462,7 +529,7 @@ or stage the work.
 
 **Suggested decision:** The new routing model applies to the
 project-running context first. The `if user_input then` gate
-in `controller.lua` is removed. `ProjectController` (new)
+in `controller.lua` is removed. `ProjectInputController` (new)
 becomes the occupant of `love.keypressed` when a project is
 running — exactly as `ConsoleController` is when no project
 runs. The singleton wiring refactor (moving construction to
@@ -474,6 +541,15 @@ The conceptual shift: "overlay" as a routing concept dissolves
 
 `ConsoleController` and `EditorController` retain their
 existing key handling paths for now.
+
+*(Stakeholder feedback, round 2.)* Confirmed: this effort is "just
+for user code, running in projects." The stakeholder added that
+"soon there won't be another way to run user code" — i.e. the REPL
+run path is expected to converge on the project run path. That
+reinforces project-context-first as the right staging (it is the
+context that will subsume the others) and does not pull console /
+editor migration into this feature; FR-11/FR-12 remain
+expressiveness targets, not migration tasks here.
 
 FR-11/FR-12 are satisfied when the API can express the key
 patterns the console and editor use — they do not require
@@ -553,9 +629,9 @@ migration happen in M8.
 ### D-9 · Native `love.keypressed`/`textinput` coexistence via auto-provisioning
 
 **Question:** How do projects that define `love.keypressed`
-natively interact with `ProjectController` owning the slot?
+natively interact with `ProjectInputController` owning the slot?
 Shipped examples (pong, life, paint, turtle) rely on native
-handlers; without a solution they break when `ProjectController`
+handlers; without a solution they break when `ProjectInputController`
 takes the slot.
 
 **Context:** The routing layer already transparently intercepts
@@ -571,17 +647,17 @@ continue to work unchanged. D-9 therefore stands on its own and
 is **retained** independently of D-1's removal.
 
 **Affects:** native-handler coexistence (independent of the
-discarded D-1 text-input surface), `ProjectController` startup,
+discarded D-1 text-input surface), `ProjectInputController` startup,
 FR-6.
 
 **Source:** `validation/recommendations_1.md` Item 4.
 
-**Decision:** When a project is loaded, `ProjectController`
+**Decision:** When a project is loaded, `ProjectInputController`
 inspects what it defined. **Legacy heuristic (the gate):** if the
 project has native `love.keypressed`/`textinput` (captured by
 `save_user_handlers`) AND has set none of the new `compy.*` surfaces
 (`compy.input.on_key_pressed`, `compy.input.handlers`, `compy.input.on_text_entered`),
-`ProjectController` auto-provisions `compy.input.on_key_pressed` on the
+`ProjectInputController` auto-provisions `compy.input.on_key_pressed` on the
 project's behalf as a **lifecycle-split wrapper**:
 
 - **Singleton visible** → run the text-editing sink (text editing wins).

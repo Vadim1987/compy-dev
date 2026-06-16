@@ -11,8 +11,9 @@ Edge cases are in `spec.md`.*
 Format: `{ ['lctrl'] = true, ['s'] = true }` — LÖVE2D key
 names as keys, `true` as values.
 
-Passed downstream as a **read-only proxy** (iterate with
-`for k in pairs(proxy) do`; direct indexing not supported).
+Passed downstream as a **read-only proxy**: read-indexable
+(`proxy[k]`) and iterable (`for k in pairs(proxy)`), writes
+blocked (round 2).
 
 **Combo string format:** modifier-first by fixed precedence
 (ctrl, alt, shift, gui) then the triggering key, joined with
@@ -33,9 +34,12 @@ Activates the singleton; all `config` fields are optional.
 | `highlighter` | function | nil |
 | `validator` | function | nil (accept all) |
 | `multiline` | boolean | false |
+| `force` | boolean | false |
 
-Calling `show()` while already active reconfigures in-place
-without triggering the cancel chain.
+Calling `show()` while already active is a no-op by default
+(round 2); pass `force = true` to reconfigure in-place. Neither
+triggers the cancel chain. Mid-run prompt/validator/highlighter
+changes use `configure()`.
 
 ---
 
@@ -102,7 +106,7 @@ All are reset to defaults when the project stops.
 
 ---
 
-## Three-level dispatch (inside `ProjectController:keypressed`)
+## Three-level dispatch (inside `ProjectInputController:keypressed`)
 
 ```
 framework_handlers[combo]   → compy.input.handlers[combo]
@@ -138,10 +142,10 @@ to the singleton (not a fresh object).
 
 ---
 
-## `ProjectController` activation
+## `ProjectInputController` activation
 
 Active when `app_state = 'running'` or `'project_open'`;
-`ProjectController:keypressed` occupies the `love.keypressed`
+`ProjectInputController:keypressed` occupies the `love.keypressed`
 slot. Deactivated on project stop; callbacks and
 `compy.input.handlers` reset via `stop_project_run` /
 `clear_user_handlers`. Projects using native `love.keypressed`
