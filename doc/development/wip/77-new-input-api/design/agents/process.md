@@ -115,6 +115,13 @@ can rot.
   folded into `requirements.md §1`; versioning churn deferred — design is converged, low
   regression risk). This split realises the "new inputs fan out across
   requirements/constraints/remarks" reprocess workflow.
+- **Input-layer refinements** (parked side-note,
+  [`../../notes/future-input-layer-refinements.md`](../../notes/future-input-layer-refinements.md)):
+  separate analytical reflection from true inputs/verdicts; move analytical loops to a separate
+  `analysis/` dir off the critical path (contradiction → analysis → new input); split ingest by
+  source (stakeholder vs architect); wipe inferred text from `notes/` once it lands in
+  requirements/constraints/remarks. Open: whether `decisions` joins that input layer.
+
 *(Done in E4, no longer deferred: the `status.md` dashboard + versioning, the `notes/` ingest
 consolidation, the summaries re-merge, the round-history archive, and the
 `assessment.md → context.md` rename.)*
