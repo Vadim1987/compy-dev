@@ -13,23 +13,24 @@ available.
 
 ## Start here
 
-Read the **`summaries/`** folder — that's the whole feature at stakeholder
-altitude, ~30 min total. The one that needs your call is
-**`summaries/decisions.md`**.
+Each chain doc now **opens with its own stakeholder-altitude `## Summary`** (reverse-pyramid)
+— read the summaries top-to-bottom for the whole feature in ~30 min, then dive into any
+doc's detail as needed. Convergence + the decision calls live in **[`status.md`](status.md)**.
 
-| # | Summary | What it answers |
+| # | Doc (read its `## Summary` first) | What it answers |
 |---|---|---|
-| 1 | `summaries/requirements.md` | What was asked for |
-| 2 | `summaries/assessment.md` | What the code does today |
-| 3 | `summaries/decisions.md` ⭐ | The calls awaiting approve / veto |
-| 4 | `summaries/design.md` | How it works |
-| 5 | `summaries/spec.md` | The API contract |
-| 6 | `summaries/roadmap.md` | Build plan + effort (~39–66 h) |
+| 1 | [`requirements.md`](requirements.md) | What was asked for |
+| 2 | [`context.md`](context.md) | What the code does today (the `context` node — the architecture assessment) |
+| 3 | [`status.md`](status.md) ⭐ | Chain convergence + the blocking-decision calls & resolutions |
+| 4 | [`design.md`](design.md) | How it works |
+| 5 | [`spec.md`](spec.md) + [`spec/`](spec/) | The API contract (cross-cutting + per-milestone slices) |
+| 6 | [`roadmap.md`](roadmap.md) | Build plan + effort (~39–66 h) |
 
 ## If you want to dig
 
-- **Full docs** — same names in this folder (`decisions.md`, `design.md`, …),
-  for when a summary isn't enough.
-- **`input.md`** — your ticket + clarification, verbatim.
-- **`notes/`** — supporting codebase analysis.
-- **`validation/`** — the review rounds and their fixes.
+- **`notes/`** — the ingest tier: your ticket (`notes/input.md`), stakeholder feedback
+  (`notes/input/`), the deep decision rationale (`notes/decisions.md`), and codebase
+  analysis. See [`notes/index.md`](notes/index.md).
+- **`status/archive/`** — the round-based review history (`validation/`, `reevaluations/`).
+- **`agents/`** — how this lifecycle works ([`agents/process.md`](agents/process.md)) and the
+  SDLC binding ([`agents/sdlc.md`](agents/sdlc.md)).

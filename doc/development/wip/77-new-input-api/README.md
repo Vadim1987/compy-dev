@@ -14,13 +14,15 @@ design/  ──(outcome: roadmap + spec)──▶  sprint01/ sprint02/ …  ─�
 ## `design/` — the design lifecycle
 
 Iterative **conceptual design with repetitive stakeholder feedback**: surface
-gaps, record resolutions (the `decisions.md` ledger), and check consistency
-downstream to the roadmap + estimates. Its **outcome is the converged roadmap +
-spec** — a plan, not yet code. This phase is essentially complete; what remains
-open is the approve/veto on `design/decisions.md` (D-2…D-10).
+gaps, record resolutions, and check consistency downstream to the roadmap +
+estimates. Its **outcome is the converged roadmap + per-milestone specs** — a
+plan, not yet code. This phase is **converged** (E1) and now formally enrolled as
+a **canonical SDLC instance** (binding: [`design/agents/sdlc.md`](design/agents/sdlc.md);
+process: [`design/agents/process.md`](design/agents/process.md)). Chain convergence
+and the blocking-decision track live in [`design/status.md`](design/status.md).
 
 Start at **[`design/README.md`](design/README.md)** (the feature at stakeholder
-altitude; read `design/summaries/` first).
+altitude; each chain doc now opens with its own summary).
 
 ## `sprintNN/` — the implementation sprints (agile)
 

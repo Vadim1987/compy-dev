@@ -6,6 +6,55 @@ notes. Implementation spec is in `spec.md`.*
 
 ---
 
+## Summary — the design at a glance
+
+*(Stakeholder altitude, ~10 min. The before/after routing diagrams are in §2 below; the
+component table here is the quickest entry point.)*
+
+**What it adds.** A persistent, callback-driven input widget for Compy projects: one
+configurable edit area with `show`/`hide`/`configure` lifecycle; event callbacks for submit,
+cancel, key combos, text input, and cursor-boundary hits; and programmatic cursor/content
+access. The legacy text-input globals (`input_text()` etc.) are **removed** — no backward
+compat (D-1 discarded); their examples migrate. Console/editor migration is a separate
+follow-on.
+
+**The architectural change — routing unification.** The "overlay gate" in
+`love.handlers.keypressed` (which routed all keys exclusively to the input widget when
+active, leaving project code unreachable) is **removed**. A new `ProjectInputController`
+becomes a first-class sibling to `ConsoleController`/`EditorController`; every branch
+terminates at the same `UserInputController` **sink**. Because the singleton is always the
+sink, its lifecycle is a *state change* (`show`/`hide`), not a routing change. (Before/after
+diagrams: §2.) Native `love.keypressed` projects (no `compy.*` surfaces) are handled by a
+*legacy-heuristic* auto-provisioned lifecycle-split wrapper — today's gated behaviour, zero
+example changes (D-9).
+
+**Three-level dispatch** (inside `ProjectInputController:keypressed`):
+`framework_handlers[combo]` (Enter/Escape, non-overridable) → `compy.input.handlers[combo]`
+(project per-combo, return truthy to consume) → `compy.input.on_key_pressed` (generic;
+**default value is the text-editing sink** — no separate fourth tier; replacing it removes
+the sink). The `keypressed` and `textinput` channels fire independently (no suppression).
+
+**Component surface.**
+
+| Component | Role |
+|---|---|
+| `keys_pressed` table | Live set of held key names; combo-serialisation foundation |
+| `UserInputController` singleton | Created once at startup; reconfigured per session; the text-editing sink |
+| `ProjectInputController` | New; owns keypressed/textinput for project context; three-level dispatch |
+| `compy.input.show/hide/configure/clear` | Lifecycle + live config of the singleton |
+| `compy.input.get_cursor/set_cursor/set_text` | Programmatic cursor + live text (2D `{line,col}`) |
+| `compy.input.handlers[combo]` | Project per-combo handlers (metatable-normalised, `"ctrl+s"`) |
+| `compy.input.on_key_pressed / on_text_entered` | Channel callbacks; default = the respective sink |
+| `compy.input.before/after_submit · before/after_cancel` | Hooks around the framework's evaluate/dismiss steps |
+| `compy.input.on_limit_reached` | Cursor boundary `(direction, scope)`: up/down/left/right, input/line |
+| Legacy text-input globals | **Removed** (D-1); native `love.keypressed` coexistence retained (D-9) |
+
+**Escape fix.** Currently Escape clears content but doesn't dismiss; now
+`framework_handlers['escape']` fires the cancel chain and dismisses unconditionally
+(observable via `before_cancel`/`after_cancel`).
+
+---
+
 ## 1. Problem and Scope
 
 Feature #77 adds a persistent, callback-driven input widget

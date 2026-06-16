@@ -6,6 +6,38 @@ solutions or reference implementation internals.*
 
 ---
 
+## Summary — what was asked for
+
+*(Stakeholder altitude. Read the numbered sections below for the full list, NFRs,
+out-of-scope, and open questions.)*
+
+**The problem.** The current input API is polling-based and fragmented: projects must
+repeatedly check a reference variable to detect input, cannot react to keyboard events
+while a prompt is on screen, and cannot show/hide a prompt without tearing it down. Hotkeys
+during input, dynamic prompts, and text-adventure patterns are awkward or impossible.
+
+**What was requested.**
+- **A configurable input area** — one setup call taking optional initial text, cursor
+  position, highlighter, validator, and prompt label.
+- **Event notifications instead of polling** — callbacks for submit (Enter), non-text key
+  events (Ctrl combos, navigation, function keys), and cursor hitting a boundary.
+- **Programmatic control** — read/set cursor position and replace text while active.
+- **Lifecycle control** — hide/show without losing state; remove programmatically.
+- **Consistency** — expressive enough that the REPL and editor *could* be re-implemented on
+  it (a completeness target, not a commitment to rewrite).
+
+**Key constraints.** No new object graph allocated per session; simple use cases stay simple
+(no framework internals to show a prompt and get a result).
+
+**Not in scope.** Multiple simultaneous input areas, touch input, editor internal block
+navigation.
+
+**Decisions.** Seven questions (backward compat, lifecycle, callback shape, scope) gated
+design — now resolved; the ledger + status lives in [`status.md`](status.md), deep rationale
+in [`notes/decisions.md`](notes/decisions.md).
+
+---
+
 ## 1. Context and Purpose
 
 Compy user projects currently access text input through a small

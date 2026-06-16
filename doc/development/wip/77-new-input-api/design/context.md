@@ -7,6 +7,40 @@ what the reuse potential is. Does not propose solutions.
 References are to source files under `src/`. Line numbers are
 approximate and may drift as the code evolves.
 
+*(Role: this is the SDLC `context` node — current-architecture assessment. See
+[`agents/sdlc.md`](agents/sdlc.md).)*
+
+---
+
+## Summary — what the architecture can and cannot do today
+
+*(Stakeholder altitude. Per-requirement analysis with file/function refs is below.)*
+
+**Reusable as-is.** The core input widget — text editing, cursor movement, selection,
+history, highlighting, validation, error display — is solid. The model already detects cursor
+boundaries; the view renders correctly; the evaluator pipeline is clean. ~Half the work is
+already done at the component level.
+
+**What is missing.**
+- **Keyboard events don't reach projects while a prompt is active** — the largest gap; all
+  key events route to the prompt widget, bypassing the project's handler. Fixing it touches
+  the shared event-routing layer.
+- **No callbacks — only polling.** Projects poll a reference object each frame; no
+  submit/keypress/boundary callback exists. The whole examples library is built on polling.
+- **No lifecycle control.** The prompt can't be hidden/shown/removed by project code (only by
+  Enter/Escape) — the balloons limitation.
+- **Cursor/prompt not accessible** from project code.
+
+**What needs structural work (vs localised additions):** the **event routing** (so keys reach
+project code while a prompt is active) and the **object lifecycle** (widget created once,
+reconfigured). Everything else follows once those two are resolved.
+
+**Risks.** (1) The widget is shared across REPL / editor / project overlays — routing changes
+must be compatible with all three or explicitly isolated to the overlay path (framework-wide
+reach is the main scope risk). (2) Modifier+character co-occurrence fires two LÖVE events —
+needs an explicit policy before the callback model (D-6). (3) `compy.text_input` (documented
+alias for `input_text`) never worked due to a stale ref — no consumer, replace cleanly.
+
 ---
 
 ## 1. Edit Area Setup (FR-1)

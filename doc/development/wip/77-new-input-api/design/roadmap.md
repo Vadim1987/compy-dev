@@ -14,6 +14,28 @@ the `## Estimates` section at the bottom.*
 
 ---
 
+## Summary — milestones at a glance
+
+*(Full per-milestone detail, file lists, and three-point estimates are below. Per-milestone
+**specs** — what each sprint consumes — are in [`spec/`](spec/). M3 was removed; numbering
+kept for cross-refs.)*
+
+| # | Name | Deliverable | Key files |
+|---|---|---|---|
+| M1 | `keys_pressed` table | Live modifier set + `combo_string()` (modifier-first, l/r folded); no behaviour change | `controller.lua` |
+| M2 | Singleton extraction | Widget created once; `compy.input.show`/`hide` on namespace; `oneshot` stays | `main.lua`, `consoleController.lua`, `userInputController.lua`, `compy_namespace.lua` |
+| M4 | ProjectInputController + gate removal | New controller owns project input; overlay gate removed; all 4 modes verified | `controller.lua`, `projectInputController.lua` (new) |
+| M5 | Three-level dispatch | `handlers[combo]` + `on_key_pressed`; return-value bubbling | `projectInputController.lua`, `compy_namespace.lua` |
+| M6 | Before/after chains | Submit/cancel hooks; Escape dismisses; `on_limit_reached(direction,scope)`; `framework_handlers['return']` owns submit; `oneshot` deleted | `projectInputController.lua`, `userInputController.lua`, `userInputModel.lua` |
+| M7 | Extended singleton API | `configure`/`clear`/`get_cursor`/`set_cursor`/`set_text` | `userInputController.lua`, `compy_namespace.lua` |
+| M8 | Legacy removal + migration | Globals removed; `tixy`/`balloons` migrated (priority), others convert-or-exclude; native examples unaffected (D-9) | `consoleController.lua`, `src/examples/*` |
+
+**Estimates at a glance** (PERT = (O+4M+P)/6): **≈ 66 h** without LLM, **≈ 39 h** with. Widest
+tail: M4 (gate removal); M8 next. Discarding D-1 *raised* the total (the ≈4 h facade layer →
+≈8 h M8). Round 2 added ≈2–3 h (D-5 boundary extension + tests).
+
+---
+
 ## Milestones
 
 ---
