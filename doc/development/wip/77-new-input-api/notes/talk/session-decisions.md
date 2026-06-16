@@ -95,6 +95,11 @@ track) left for later, must not gate the first sprint.
 - **Honesty correction:** "design not converged" is the docs' *self-report*, not a
   verified conclusion (and possibly stale vs the round-2 + validation work).
   Verifying it = entrypoint **E1 (revalidate the design)**, the agreed next step.
+- **Dependency insight (human):** **resolving open decisions _is_ altering the
+  design**; the ad-hoc process survived 2 rounds but may turn to a mess beyond them.
+  So **E4 (establish the design process) gates E2 (resolve decisions)** — formalize
+  before altering further. Only the *already-converged* branch (per E1) lets
+  implementation (E3) bypass E4.
 
 ## Standing rule activated this session
 
