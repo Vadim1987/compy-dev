@@ -10,16 +10,17 @@ feature closes**, not carried into the project at large._
 > decision into the relevant milestone's spec/outcome.
 >
 > **Closure is planned, not just anticipated.** Where a debt item is committed to close at a
-> milestone, that closure is **commissioned by an adjacent `MN-0X.md` spec** (never by editing the
-> frozen design-time `MN.md`). Items with no committed closure are marked *accepted* or *anticipated*.
+> milestone, that closure is **commissioned by an adjacent `MN-NN-<why>.md` spec** (never by editing
+> the frozen design-time `MN.md`). Items with no committed closure are marked *accepted* or
+> *anticipated*.
 
 ## Dispatch map
 
 | Item | Kind | Disposition | Closure |
 |---|---|---|---|
-| F-5 | open boundary | **planned** | adjacent spec [`../design/spec/M7-02.md`](../design/spec/M7-02.md) (decided at M7) |
-| G-1 | dead code | **planned** | adjacent spec [`../design/spec/M8-01.md`](../design/spec/M8-01.md) (M8 legacy removal) |
-| G-2 | dead code | **planned** | adjacent spec [`../design/spec/M6-01.md`](../design/spec/M6-01.md) (M6 oneshot removal) |
+| F-5 | open boundary | **planned** | adjacent spec [`../design/spec/M7-01-retarget.md`](../design/spec/M7-01-retarget.md) (decided at M7) |
+| G-1 | dead code | **planned** | adjacent spec [`../design/spec/M8-01-dead-text-input.md`](../design/spec/M8-01-dead-text-input.md) (M8 legacy removal) |
+| G-2 | dead code | **planned** | adjacent spec [`../design/spec/M6-01-oneshot-snapshot.md`](../design/spec/M6-01-oneshot-snapshot.md) (M6 oneshot removal) |
 | F-4 | spec deviation | **accepted** | none — ships as a documented deviation |
 | `combo_string` alloc | perf | **anticipated** | evaluate at M5 dispatch; close only if hot |
 | `gui_k` no consumer | API shape | **anticipated** | decide when `gui`'s modifier status is settled |
@@ -34,16 +35,16 @@ feature closes**, not carried into the project at large._
 
 ## Open boundaries
 
-### F-5 — `force` / `configure()` cannot re-target an active session's `result`/`eval` — **planned → M7-02**
+### F-5 — `force` / `configure()` cannot re-target an active session's `result`/`eval` — **planned → M7-01**
 
 - **Where:** `src/controller/userInputController.lua` — `force` re-applies only `text`; a fresh
   activation runs `apply_config` (eval, prompt, text, result).
 - **State:** A running session's `result` sink and evaluator are fixed at `show()`. `M2.md` frames
   `force` purely in terms of content, and `M7.md`'s `configure()` no-ops non-`prompt`/highlighter/
   validator fields while active — so no surface currently re-targets `result`/`eval` mid-session.
-- **Closure:** **commissioned** by [`../design/spec/M7-02.md`](../design/spec/M7-02.md) — building
-  M7's `configure()` forces the decision, so M7-02 commands it be made and written down (extend the
-  surface, or document a deliberate fixed-at-`show()` constraint). Strike this entry when M7-02 lands.
+- **Closure:** **commissioned** by [`../design/spec/M7-01-retarget.md`](../design/spec/M7-01-retarget.md) — building
+  M7's `configure()` forces the decision, so M7-01 commands it be made and written down (extend the
+  surface, or document a deliberate fixed-at-`show()` constraint). Strike this entry when M7-01 lands.
 
 ---
 
