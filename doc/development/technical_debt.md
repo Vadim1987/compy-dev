@@ -12,50 +12,22 @@ and the analytic-notes guidance in [`../../agents/rules.md`](../../agents/rules.
 
 ## Input API (issue 77)
 
-### `combo_string` allocates a fresh table per call
-
-- **Where:** `src/controller/controller.lua` — `combo_string` builds a `parts` table and
-  `table.concat`s it on every call.
-- **State:** Inert today — nothing calls it in M1. M4/M5 will put it on the per-keystroke
-  dispatch path (`compy.input.handlers[combo]`).
-- **Why it stands:** Keystroke dispatch is not a per-frame hot path, so the allocation is
-  acceptable for now; `rules.md` flags allocation in `update`/`draw`, not per-event helpers.
-- **Revisit:** When M4/M5 wire the consumer — if dispatch lands anywhere hot, switch to a
-  reused buffer or a concat-free comparison.
-
-### `gui_k` modifier pair has no real consumer
-
-- **Where:** `src/util/key.lua` — `gui_k = { "lgui", "rgui" }` (added in M2a). It feeds only
-  `mod_triples`; there is no `gui()` / `is_gui()` accessor paralleling `shift()` / `is_shift()`,
-  and `combo_string` is itself not yet consumed (see the allocation entry above).
-- **State:** A defined modifier pair with no behavioural reader. The other `*_k` pairs are read
-  by `love.keyboard.isDown` accessors; `gui_k` is not. Could be a deliberate unspoken constraint
-  ("ignore gui keys" — never expose them as a held modifier), or an expansion point left open
-  for a future `gui()` accessor.
-- **Why it stands:** Keeping it as a named local parallels the established `*_k` pattern and the
-  M2a spec called for the `gui` pair explicitly; the asymmetry is harmless and additive.
-- **Revisit:** When the input API decides whether `gui` is a first-class modifier — either add
-  the `gui()` / `is_gui()` accessors to give it a consumer, or, if gui is intentionally ignored,
-  record that decision so the unused pair is understood as policy rather than an oversight.
+> Most debt surfaced *during* the #77 implementation is **interim** — tied to this feature's own
+> milestones and expected to be swept (or formally accepted) before it ships. That lives in the
+> feature-scoped ledger
+> [`wip/77-new-input-api/implementation/technical_debt.md`](wip/77-new-input-api/implementation/technical_debt.md),
+> **not** here. Only the entry below survives the feature as a standing property of the codebase.
 
 ### `keys_pressed` can go stale on focus loss
 
 - **Where:** `src/controller/controller.lua` — `keys_pressed` is maintained from
   `keypressed`/`keyreleased` only.
 - **State:** If the window loses focus with a key held, `keyreleased` may never fire and the
-  entry lingers (a general LÖVE limitation of any held-key mirror).
-- **Why it stands:** Out of M1 scope; no consumer reads the set until M4/M5.
-- **Revisit:** The M4/M5 consumer must not assume the set is leak-free across focus changes;
-  if it matters, clear the set on `love.focus(false)`.
-
-### Design-doc path mismatch: `src/controller.lua`
-
-- **Where:** `design/spec/M1.md`, `design/roadmap.md`, and other 77-new-input-api design docs
-  reference `src/controller.lua`; the real path is `src/controller/controller.lua`.
-- **State:** Documentation only; implementation uses the correct path. Noted in the M1 prompt
-  and outcomes.
-- **Why it stands:** Cosmetic; the design docs are frozen reference for the sprint.
-- **Revisit:** Correct opportunistically when those docs are next edited.
+  entry lingers (a general LÖVE limitation of any held-key mirror). This persists beyond #77 — it
+  is a property of the mechanism, not of the feature work.
+- **Why it stands:** No cheap, fully-correct fix; the consumer can defend against it.
+- **Revisit:** Any consumer of `keys_pressed` must not assume the set is leak-free across focus
+  changes; if it matters, clear the set on `love.focus(false)`.
 
 ---
 
