@@ -107,7 +107,19 @@ carry these sections:
 | **M1** — `keys_pressed` table | [`prompts/M1.md`](prompts/M1.md) | [`outcomes/M1.md`](outcomes/M1.md) · [`reviews/M1-01.md`](reviews/M1-01.md) | ✅ implemented + reviewed (ship-it) |
 | **M2a** — M1 follow-up hygiene | [`prompts/M2a.md`](prompts/M2a.md) | — | ✅ landed |
 | **M2** — singleton extraction | [`prompts/M2.md`](prompts/M2.md) | [`outcomes/M2.md`](outcomes/M2.md) · [`reviews/M2-01.md`](reviews/M2-01.md) | ❌ take-1 not approved (dropped `.V`; stale text) |
-| **M2 (corrective take)** — restore `{ M, C, V }` | [`prompts/M2-01-restore-mvc.md`](prompts/M2-01-restore-mvc.md) | _pending_ | ▶ commissioned — awaiting hand-off to the implement/review cycle |
+| **M2-01** (corrective take) — restore `{ M, C, V }` | [`prompts/M2-01-restore-mvc.md`](prompts/M2-01-restore-mvc.md) | [`outcomes/M2-01-restore-mvc.md`](outcomes/M2-01-restore-mvc.md) · [`reviews/M2-01-restore-mvc.md`](reviews/M2-01-restore-mvc.md) | ◐ code approved by reviewer; C-1 + C-2-runtime (turtle) confirmed; not closeable until M2-02 lands |
+| **M2-02** — real-submit reprompt test (closes C-2 unit-test half) | [`prompts/M2-02-submit-path-test.md`](prompts/M2-02-submit-path-test.md) | _pending_ | ▶ commissioned — **test-only**; hand to the implement cycle |
+
+> **Reviewer bootloader:** [`review-prompt.md`](review-prompt.md) is the **generic, reusable** Opus
+> review prompt — clone it per milestone (fill the spec/outcome/commit placeholders). It now also
+> instructs the reviewer to **check & correct tech-debt tracking** and **verify dev docs were updated**.
+
+> **Before commissioning M4 (overlay/dispatch rework):** read
+> [`../notes/talk/build-continuity-vs-product-bc.md`](../notes/talk/build-continuity-vs-product-bc.md).
+> Product backwards-compat was withdrawn by stakeholders, but **build-time continuity is still in
+> force**; the `{ M, C, V }` handle M2-01 restored is **partly transitional scaffolding** (`.M` has no
+> non-test consumer; `.V` is the current overlay's handle). M4 *may* drop/rework it — but only with a
+> coordinated consumer sweep in the same slice, never narrow-ahead-of-the-sweep (the M2 take-1 lesson).
 
 > Adjacent **closure specs** already commissioned for later milestones (pick up with their milestone):
 > [`../design/spec/M6-01-oneshot-snapshot.md`](../design/spec/M6-01-oneshot-snapshot.md) (M6),

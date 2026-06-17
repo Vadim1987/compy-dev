@@ -10,7 +10,7 @@ Legend: ▶ recommended next · ○ open · ⏳ blocked (see depends-on) · ✓ 
 
 | # | Action | Status | Depends on | Where |
 |---|---|---|---|---|
-| E7 | **Run the M2 corrective take** — take-1 was **not approved** (review [`implementation/reviews/M2-01.md`](implementation/reviews/M2-01.md): the singleton narrowed `love.state.user_input` `{M,C,V}`→`{C}`, crashing the running-project draw overlay; plus stale text across re-prompts). The corrective spec + prompt are **commissioned**: hand [`implementation/prompts/M2-01-restore-mvc.md`](implementation/prompts/M2-01-restore-mvc.md) to the **implement/review cycle** (Sonnet implements, Opus reviews — see process model below), then ingest the result back here. | ▶ | — | `implementation/prompts/M2-01-restore-mvc.md`, `design/spec/M2-01-restore-mvc.md` |
+| E7 | **Close M2 — run M2-02.** The corrective take **M2-01 landed + was reviewed**: code approved ([`reviews/M2-01-restore-mvc.md`](implementation/reviews/M2-01-restore-mvc.md)), C-1 + C-2-runtime confirmed (turtle: submit `REMEMBERME` → reopen empty). **One step left:** hand [`implementation/prompts/M2-02-submit-path-test.md`](implementation/prompts/M2-02-submit-path-test.md) (test-only — real `handle(true)`→reprompt regression + mutate→red fidelity check) to the implement/review cycle (Opus review uses the generic [`implementation/review-prompt.md`](implementation/review-prompt.md)), then ingest. When it lands: **strike the C-2 debt row, sign off M2-01, close E7.** | ▶ | — | `implementation/prompts/M2-02-submit-path-test.md`, `design/spec/M2-02-submit-path-test.md` |
 | E8 | **Continue the roadmap M4 → M8** — commission each milestone's prompt per the black-box model when reached. Adjacent **closure specs already commissioned**: `M6-01-oneshot-snapshot` (rides M6), `M7-01-retarget` (rides M7), `M8-01-dead-text-input` (rides M8). M5 must also weigh the **anticipated** debt (`combo_string` allocation, `gui_k` consumer) in `implementation/technical_debt.md`. M4/M6 may warrant **escalation** to a managed subtopic (integration-heavy). | ○ | E7 (M2 must land first) | `design/spec/M4…M8.md`, `design/roadmap.md` |
 | E5 | **Apply the E4 revalidation cleanups** (session 04 findings; optional, **non-blocking** — pure consistency tidy on a frozen design). F1: sweep stale bare `decisions.md` refs in live chain docs → `notes/decisions-record.md`/`status.md`. F2: fix `process.md` §1/§4 `decisions.md`→`status.md`. F3: narrow-or-sweep the SR/VR over-claim. Plus: add `Derived from:` to the 5 pipeline docs **or** document the intentional non-wiring in `sdlc.md`. | ○ | — | `sessions/.../session04/report.md` |
 | E6 | **Build the agentic dev image (M0)** — `just`/`lua5.1`/`luarocks`/`busted`+`luautf8`+`luafilesystem`/`love2d` **+ Claude Code** add-on; prereq for running the suite. | ✓ | — | `implementation/outcomes/M0.md` |
@@ -45,10 +45,14 @@ Legend: ▶ recommended next · ○ open · ⏳ blocked (see depends-on) · ✓ 
 
 - **Design** — converged (E1) + canonical lifecycle (E4), both revalidated. Roadmap + per-milestone
   specs `design/spec/M1…M8.md` are the frozen input.
-- **Implementation** — M0 ✅, M1 ✅ (reviewed), M2a ✅. **M2 take-1 ❌** (see E7). The forward path is
+- **Implementation** — M0 ✅, M1 ✅ (reviewed), M2a ✅. **M2 take-1 ❌**, **M2-01 ◐** (corrective:
+  code approved + C-1/C-2-runtime confirmed; closes once **M2-02** test lands — see E7). Forward path
   **E7 → E8**.
 - **Sweep gate:** `implementation/technical_debt.md` must be clear (closed or accepted) before #77
-  ships — F-5→M7-01, G-1→M8-01, G-2→M6-01 planned; F-4 accepted; `combo_string`/`gui_k`/path-mismatch
-  anticipated.
+  ships — **C-2** runtime done, unit-test half → M2-02; F-5→M7-01, G-1→M8-01, G-2→M6-01 planned; F-4
+  accepted; `combo_string`/`gui_k`/path-mismatch + new G-A/G-B/turtle-`Esc` anticipated/needs-investigation.
+- **Build continuity vs product BC** — product backwards-compat is **withdrawn**, build-time continuity
+  is **in force**; `{M,C,V}` is partly transitional scaffolding (read `notes/talk/build-continuity-vs-product-bc.md`
+  before M4).
 - See topic `README.md` (two-phase model), `design/README.md` (the chain), and `notes/talk/` for how
   we got here.

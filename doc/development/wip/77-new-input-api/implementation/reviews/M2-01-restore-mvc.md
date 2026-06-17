@@ -184,3 +184,35 @@ driven (≈M4 dispatch).
   method-semantics suite is unchanged.
 - [x] The outcome ledger records the real `{ M, C, V }` shape and its
   consumers; no repeat of the inaccurate "verified safe" claim.
+
+---
+
+## Runtime addendum — C-2 re-check (human, 2026-06-17, session 07 supervision)
+
+The human re-ran the C-2 runtime check after the review; recorded here because it **moves the open
+gate**.
+
+- **turtle (oneshot `input_text`) — C-2 confirmed.** The trigger key `i` is itself consumed as input
+  once the terminal is open, so the terminal cannot be dismissed without **submitting**. After a real
+  submit the terminal closes; reopening it with `i` shows the input **clear/empty**. That submit →
+  close → reopen-empty sequence *is* the C-2 acceptance path (a successful oneshot submit followed by
+  a fresh prompt with no `init`), and it opened empty. **C-2's runtime half is satisfied.** Re-run
+  the same day with a **distinctive** value (`REMEMBERME`): submit → terminal closes → reopen leaves
+  **no trace** (reopens empty). Unambiguous — runtime C-2 is closed.
+- **turtle — `Esc` clears the input *in place* without hiding the terminal.** A separate, previously
+  unrecorded behaviour. Not a C-2 contradiction (it is neither `hide()` nor `force`), but its intent
+  is unverified, and it is the **opposite** of G-B (editor `Esc` does **not** clear) — so the two
+  surfaces disagree on `Esc`. Logged for characterisation, not actioned.
+- **tixy is not a usable C-2 vehicle.** It appears to keep the terminal **always on** (a persistent /
+  re-armed `input_code` prompt rather than a oneshot that closes), so there is no clean submit → close
+  → reopen cycle to observe. **turtle is the canonical C-2 runtime vehicle**; tixy stays a C-1
+  (no-fault) witness only.
+
+**Revised C-2 verdict.** The **runtime** half of C-2 is now confirmed (turtle). The remaining gap is
+purely the **unit-test** half — a regression net that drives the real `model:handle(true)` submit, not
+the `show/hide` proxy. That is commissioned as **M2-02**
+(`../../design/spec/M2-02-submit-path-test.md`). The ledger's C-2 row is updated accordingly: runtime
+struck, unit-test half → M2-02. With M2-02 landed, C-2 closes and M2-01 is formally sign-off-able.
+
+**Revised acceptance line:** the C-2 checkbox above moves to *runtime-confirmed via turtle; unit-test
+coverage of the real submit path outstanding → M2-02.*

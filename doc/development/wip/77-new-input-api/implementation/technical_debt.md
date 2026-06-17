@@ -27,7 +27,10 @@ feature closes**, not carried into the project at large._
 | `gui_k` no consumer | API shape | **anticipated** | decide when `gui`'s modifier status is settled |
 | design-doc path mismatch | docs | **anticipated** | opportunistic; or at feature wrap when docs unfreeze |
 | overlay test vs. stub | test coverage | **anticipated** | when the real `set_love_update` overlay path is driven (≈M4 dispatch) |
-| C-2 empty re-prompt unverified | acceptance gap | **open** | confirm at runtime **and** add a real `handle(true)` → reprompt unit test, before sign-off |
+| C-2 empty re-prompt | acceptance gap | **open (narrowed)** | runtime **confirmed** (turtle, 2026-06-17); remaining = the real `handle(true)`→reprompt unit test → commissioned as **M2-02** |
+| turtle `Esc` clears input in place | behaviour / needs-investigation | **anticipated** | characterise intended `Esc` semantics; reconcile with G-B (editor `Esc` does *not* clear) |
+| G-A tixy shift+click sequence | UX / needs-investigation | **anticipated** | characterise before the input surface is called author-stable |
+| G-B editor buffer not cleared on Escape | possible defect / needs-investigation | **anticipated** | branch-level search first; file as a defect only if confirmed |
 
 > The **planned** rows have a commissioned closure spec; pick them up with their milestone. The
 > **anticipated** rows are deliberately *not* commissioned — they may never need action; revisit at
@@ -56,24 +59,38 @@ feature closes**, not carried into the project at large._
   when M2-01 is formally accepted. Resolution may be scheduled separately; tracked here so the
   milestone is not treated as closed on a smoke-test confirmation.
 
-### M2-01 — C-2 (empty re-prompt) verified by neither runtime nor suite — **open**
+### M2-01 — C-2 (empty re-prompt): runtime confirmed, unit-test half outstanding — **open (narrowed)**
 
 - **Where:** C-2 acceptance; `tests/input/overlay_spec.lua` (the empty-on-reprompt test) and the
-  runtime smoke test.
+  runtime check.
 - **State:** C-2's real trigger is a successful `UserInputModel:handle(true)` leaving `entered`
-  populated, so the *next* prompt re-opens it pre-filled. The fix clears on fresh activation, but
-  that end-to-end submit → empty path is currently confirmed by **neither**:
-  - the **suite** — the unit test uses a `show({ text })` → `hide()` → `show()` proxy, which earns a
-    real red→green for the clear-on-fresh-activation logic but never drives `handle(true)`; and
-  - **runtime** — the human smoke test confirmed C-1 (no-fault) but the empty-re-prompt step was not
-    an obvious part of it and may not have run.
-- **Why it matters:** M2-01's spec makes runtime confirmation of C-2 an explicit acceptance
-  requirement ("confirmed at runtime, not only by suite"). With both paths short of the real submit
-  flow, the empty-re-prompt behaviour is plausibly correct (the fix logic is sound and unit-tested in
-  proxy form) but not actually verified end-to-end.
-- **Closure:** before sign-off — (a) add a unit test that drives `model:handle(true)` on a oneshot
-  session then `show()` with no `text` and asserts empty, **and** (b) confirm the empty re-prompt at
-  runtime on `tixy`/`turtle`. Strike when both land. Resolution may be scheduled separately.
+  populated, so the *next* prompt re-opens it pre-filled. The M2-01 fix clears on fresh activation.
+  - **runtime → DONE.** Human re-check 2026-06-17 (turtle): submit → terminal closes → reopen with
+    `i` → input is **empty**. That submit → close → reopen-empty *is* the C-2 path. Confirmed (see the
+    review's runtime addendum). tixy is **not** a usable vehicle — it keeps the terminal always on, so
+    no clean submit→reopen cycle; turtle is canonical.
+  - **suite → still proxy.** The unit test uses a `show({ text })` → `hide()` → `show()` proxy; it
+    earns a real red→green for the clear-on-fresh-activation logic but never drives `handle(true)`.
+- **Why it still stands:** the runtime half satisfies the spec's explicit runtime criterion, but a
+  regression net on the **real submit path** is still missing, so a future change to `handle`/submit
+  could silently re-break reprompt-empty without a test catching it.
+- **Closure:** **commissioned as M2-02** ([`../design/spec/M2-02-submit-path-test.md`](../design/spec/M2-02-submit-path-test.md)) —
+  a test driving `model:handle(true)` then `show()` with no text, with a mutate→red fidelity check.
+  Strike this row when M2-02 lands; M2-01 + M2-02 then jointly close C-2.
+
+### turtle `Esc` clears the input in place without hiding the terminal — needs-investigation
+
+- **Where:** turtle (oneshot `input_text`) runtime; observed 2026-06-17. Likely the controller
+  `cancel()` path (`userInputController.lua:153`).
+- **State:** Pressing `Esc` empties the input buffer but leaves the terminal open. Not a C-2
+  contradiction (it is neither `hide()` nor `force`, both of which preserve content per `M2.md`), but
+  it is the **opposite** of G-B (editor `Esc` does **not** clear) — the two surfaces disagree on what
+  `Esc` means.
+- **Why it stands:** Intent unverified; may be deliberate (clear-in-place to retype) or incidental.
+  Off the M2-01/M2-02 critical path.
+- **Revisit:** Characterise the intended `Esc` semantics for the input surface and reconcile with G-B;
+  decide whether the editor/oneshot `Esc` behaviours should converge. Commission a spec only if a
+  milestone forces the decision.
 
 ### F-5 — `force` / `configure()` cannot re-target an active session's `result`/`eval` — **planned → M7-01**
 
@@ -159,4 +176,29 @@ concrete need appears.
 - **Revisit:** When a milestone next touches the overlay/dispatch wiring (≈M4, when the controller
   owns dispatch) — add a test that drives the actual `set_love_update` draw wrapper against the
   singleton, closing the slice take 1 first exposed.
+
+### G-A — tixy shift+click example-sequence behaviour unclear
+
+- **Where:** `tixy` running project; reported in
+  [`outcomes/M2-01-restore-mvc.md`](outcomes/M2-01-restore-mvc.md) "Surfaced gaps".
+- **State:** shift+click is expected to advance through the built-in example sequence, but the
+  intended order is not obvious from the UI and may not match expectations. Observed during the
+  M2-01 approval run; not reproduced or characterised. **Out of M2-01's scope** — reported, not fixed
+  (per `development.md`).
+- **Why it stands:** Uncharacterised; may be a UX wrinkle in an example project rather than an input-API
+  defect. Not on the M2-01 critical path.
+- **Revisit:** Investigate before the input API surface is considered stable for project authors;
+  characterise reproducibly, then decide defect vs. expected.
+
+### G-B — editor input buffer not cleared on Escape
+
+- **Where:** the editor input buffer; reported in
+  [`outcomes/M2-01-restore-mvc.md`](outcomes/M2-01-restore-mvc.md) "Surfaced gaps".
+- **State:** After Escape in the editor, the buffer retains its content rather than emptying. A fix was
+  *believed* to exist but is **not present** on this branch (`feature/77-newapi-analysis-s20260615`) —
+  may live on another branch or may never have landed. **Out of M2-01's scope** — reported, not fixed.
+- **Why it stands:** Surface is the editor, distinct from the oneshot-prompt surface C-2 governs;
+  unconfirmed whether it is a regression or a missing-fix. Needs a branch-level search before filing.
+- **Revisit:** `git log`/branch search for the believed fix first; if genuinely absent and reproducible,
+  file as a defect and decide whether it blocks the feature or is independent of #77.
 
