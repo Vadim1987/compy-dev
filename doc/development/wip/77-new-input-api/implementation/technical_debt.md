@@ -27,7 +27,7 @@ feature closes**, not carried into the project at large._
 | `gui_k` no consumer | API shape | **anticipated** | decide when `gui`'s modifier status is settled |
 | design-doc path mismatch | docs | **anticipated** | opportunistic; or at feature wrap when docs unfreeze |
 | overlay test vs. stub | test coverage | **anticipated** | when the real `set_love_update` overlay path is driven (≈M4 dispatch) |
-| C-2 empty re-prompt | acceptance gap | **open (narrowed)** | runtime **confirmed** (turtle, 2026-06-17); remaining = the real `handle(true)`→reprompt unit test → commissioned as **M2-02** |
+| ~~C-2 empty re-prompt~~ | ~~acceptance gap~~ | ~~**closed**~~ | ~~runtime **confirmed** (turtle, 2026-06-17); unit-test half closed via M2-02~~ |
 | turtle `Esc` clears input in place | behaviour / needs-investigation | **anticipated** | characterise intended `Esc` semantics; reconcile with G-B (editor `Esc` does *not* clear) |
 | G-A tixy shift+click sequence | UX / needs-investigation | **anticipated** | characterise before the input surface is called author-stable |
 | G-B editor buffer not cleared on Escape | possible defect / needs-investigation | **anticipated** | branch-level search first; file as a defect only if confirmed |
@@ -59,7 +59,7 @@ feature closes**, not carried into the project at large._
   when M2-01 is formally accepted. Resolution may be scheduled separately; tracked here so the
   milestone is not treated as closed on a smoke-test confirmation.
 
-### M2-01 — C-2 (empty re-prompt): runtime confirmed, unit-test half outstanding — **open (narrowed)**
+### ~~M2-01 — C-2 (empty re-prompt): runtime confirmed, unit-test half outstanding — **open (narrowed)**~~ **Closed**
 
 - **Where:** C-2 acceptance; `tests/input/overlay_spec.lua` (the empty-on-reprompt test) and the
   runtime check.
@@ -69,14 +69,9 @@ feature closes**, not carried into the project at large._
     `i` → input is **empty**. That submit → close → reopen-empty *is* the C-2 path. Confirmed (see the
     review's runtime addendum). tixy is **not** a usable vehicle — it keeps the terminal always on, so
     no clean submit→reopen cycle; turtle is canonical.
-  - **suite → still proxy.** The unit test uses a `show({ text })` → `hide()` → `show()` proxy; it
-    earns a real red→green for the clear-on-fresh-activation logic but never drives `handle(true)`.
-- **Why it still stands:** the runtime half satisfies the spec's explicit runtime criterion, but a
-  regression net on the **real submit path** is still missing, so a future change to `handle`/submit
-  could silently re-break reprompt-empty without a test catching it.
-- **Closure:** **commissioned as M2-02** ([`../design/spec/M2-02-submit-path-test.md`](../design/spec/M2-02-submit-path-test.md)) —
-  a test driving `model:handle(true)` then `show()` with no text, with a mutate→red fidelity check.
-  Strike this row when M2-02 lands; M2-01 + M2-02 then jointly close C-2.
+  - **suite → DONE.** Driven by `tests/input/overlay_spec.lua` via a real submit test (M2-02).
+- **Why it still stands:** Closed.
+- **Closure:** M2-01 + M2-02 jointly closed C-2.
 
 ### turtle `Esc` clears the input in place without hiding the terminal — needs-investigation
 

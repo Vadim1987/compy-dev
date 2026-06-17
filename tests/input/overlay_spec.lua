@@ -50,5 +50,29 @@ describe('UserInputController overlay #input', function()
       c:show()
       assert.truthy(c:is_empty())
     end)
+
+    it('real submit reprompt opens empty (C2T-1)', function()
+      local c = make_ctrl()
+      c:show()
+      c:set_text('REMEMBER_ME')
+
+      local push_called = false
+      love.event = {
+        push = function(ev)
+          if ev == 'userinput' then
+            push_called = true
+          end
+        end
+      }
+
+      local ok, result = c.model:handle(true)
+      assert.truthy(ok)
+      assert.truthy(push_called)
+
+      c:hide()
+      c:show()
+      assert.truthy(c:is_empty())
+      assert.is_not.equal('REMEMBER_ME', c:get_text():render())
+    end)
   end)
 end)
