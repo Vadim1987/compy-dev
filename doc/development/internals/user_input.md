@@ -167,9 +167,9 @@ session; per-session allocation is eliminated.
 
 Activation: `compy.input.show(config)` (or the legacy wrapper
 `input_code()`/`input_text()`) calls `UserInputController:show(config)`,
-which sets `love.state.user_input = { C = singleton }` and runs a view
-update. Deactivation: `UserInputController:hide()` (or `hide()` on the
-`compy.input` table) sets `love.state.user_input = nil`.
+which sets `love.state.user_input = { M = model, C = singleton, V = view }`
+and runs a view update. Deactivation: `UserInputController:hide()` (or
+`hide()` on the `compy.input` table) sets `love.state.user_input = nil`.
 
 `show()` on an already-active singleton is a no-op unless
 `{ force = true }` is passed. With `force`, the text is replaced if
@@ -182,7 +182,9 @@ While `love.state.user_input` is set:
 
 - **Text input** (`love.handlers.textinput`): goes to `user_input.C:textinput(t)` instead of the main controller
 - **Key input** (`love.handlers.keypressed`): goes to `user_input.C:keypressed(k)`
-- **The overlay view** is drawn by the framework's `love.update` wrapping of the user draw function
+- **The overlay view** is drawn via `user_input.V:draw()` inside the
+  framework's `love.update` wrapping of the project draw function
+  (`controller.lua`, `set_love_update`)
 
 The project polls `r:is_empty()` in `love.update`. When the user presses Enter, the evaluator runs, and if it passes, the result is stored in the `reftable` ref. On the next `update()`, `r:is_empty()` returns false, `r()` returns the value and resets to empty.
 

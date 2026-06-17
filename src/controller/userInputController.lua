@@ -195,6 +195,23 @@ local apply_config = function(self, cfg)
   end
 end
 
+--- Fresh activation: clear when no text given, apply config,
+--- then expose the full { M, C, V } overlay handle.
+--- @param self UserInputController
+--- @param cfg table
+local open_fresh = function(self, cfg)
+  if cfg.text == nil then
+    self.model:clear_input()
+  end
+  apply_config(self, cfg)
+  love.state.user_input = {
+    M = self.model,
+    C = self,
+    V = self.view,
+  }
+  self:update_view()
+end
+
 --- Activate the singleton.
 --- No-op if already active, unless force=true.
 --- @param config table?
@@ -208,9 +225,7 @@ function UserInputController:show(config)
     end
     return
   end
-  apply_config(self, cfg)
-  love.state.user_input = { C = self }
-  self:update_view()
+  open_fresh(self, cfg)
 end
 
 --- Deactivate without firing the cancel chain.
