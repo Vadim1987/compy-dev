@@ -70,6 +70,32 @@ Global shortcuts in `love.handlers.keypressed` (controller.lua:520+) are interce
 
 If `love.state.user_input` is set (overlay active), key events go to the overlay controller, bypassing the main input.
 
+### Key state: `Controller.keys_pressed` and `combo_string`
+
+`Controller.keys_pressed` is a `{keyname → true}` table maintained on
+the global `Controller`. It is updated at the very top of
+`love.handlers.keypressed` (add) and `love.handlers.keyreleased`
+(remove), before any downstream handler runs. Key names are LÖVE2D
+canonical (`"lctrl"`, `"rshift"`, `"return"`, etc.); left/right
+variants are stored without folding — `lctrl` and `rctrl` are two
+separate entries, not merged into `ctrl`.
+
+`Controller.combo_string(k, keys_pressed)` serialises a key event
+into a canonical combo string. It prepends any held modifiers in
+fixed precedence order — `ctrl`, `alt`, `shift`, `gui` — then
+appends the triggering key. Left/right variants are folded to the
+generic name at this point (`lctrl`/`rctrl` → `ctrl`, etc.). A key
+with no held modifiers serialises to just the key name.
+
+```lua
+-- lctrl held, s triggers     → "ctrl+s"
+-- lalt + lshift held, f4     → "alt+shift+f4"
+-- escape with nothing held   → "escape"
+```
+
+These two surfaces will be consumed by the `ProjectInputController`
+dispatch table (`compy.input.handlers[combo]`) introduced in M4/M5.
+
 ### Console-specific keys
 
 - **PageUp/PageDown**: history back/forward

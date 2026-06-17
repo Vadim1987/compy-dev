@@ -1,3 +1,4 @@
+-- view.view calls gfx.newFont() at top level; needs gfx ctx
 package.preload['view.view'] = function()
   View = {
     prev_draw = nil,
@@ -8,6 +9,7 @@ package.preload['view.view'] = function()
     drawFPS = function() end,
   }
 end
+-- profiler may load lib.profile; stub to avoid LÖVE2D dep
 package.preload['controller.profiler'] = function()
   Prof = {
     update = function() end,
@@ -18,6 +20,7 @@ package.preload['controller.profiler'] = function()
   return Prof
 end
 
+-- handlers access love.state/keyboard/DEBUG/event at runtime
 local mock = require('tests.mock')
 mock.mock_love({
   state = {
@@ -29,14 +32,17 @@ mock.mock_love({
   PROFILE = false,
   event = { quit = function() end },
 })
+-- mock_love omits handlers; needed by setup_callback_handlers
 love.handlers = { }
 
 require('controller.controller')
 
+-- wires keypressed/keyreleased closures into love.handlers
 Controller.setup_callback_handlers({
   cfg = { mode = 'dev' },
 })
 
+-- save refs: other test files replace _G.love during collection
 local kp_handler = love.handlers.keypressed
 local kr_handler = love.handlers.keyreleased
 
