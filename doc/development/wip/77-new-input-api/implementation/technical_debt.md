@@ -18,7 +18,7 @@ feature closes**, not carried into the project at large._
 
 | Item | Kind | Disposition | Closure |
 |---|---|---|---|
-| M2-01 approval scope | record accuracy | **open** | Status line corrected; carry M2-01 through a real sign-off (this review is input) |
+| ~~M2-01 approval scope~~ | ~~record accuracy~~ | ~~**closed**~~ | ~~Status line corrected; M2-01 formally signed off~~ |
 | F-5 | open boundary | **planned** | adjacent spec [`../design/spec/M7-01-retarget.md`](../design/spec/M7-01-retarget.md) (decided at M7) |
 | G-1 | dead code | **planned** | adjacent spec [`../design/spec/M8-01-dead-text-input.md`](../design/spec/M8-01-dead-text-input.md) (M8 legacy removal) |
 | G-2 | dead code | **planned** | adjacent spec [`../design/spec/M6-01-oneshot-snapshot.md`](../design/spec/M6-01-oneshot-snapshot.md) (M6 oneshot removal) |
@@ -41,23 +41,12 @@ feature closes**, not carried into the project at large._
 
 ## Open boundaries
 
-### M2-01 outcome ledger overstates the scope of the human approval — **open**
+### ~~M2-01 outcome ledger overstates the scope of the human approval — **open**~~ **Closed**
 
 - **Where:** `implementation/outcomes/M2-01-restore-mvc.md` — Status line originally read
   "✅ approved by human (2026-06-17)"; now corrected to a scoped statement.
-- **State:** The human check to date was **manual smoke-testing of `tixy`/`turtle`** and confirmed
-  **C-1 only** (no fault on the input frame). **C-2 (empty re-prompt) was not clearly verified** —
-  the empty-re-prompt step was not obvious in the smoke test and may or may not have run. It was
-  nonetheless recorded as **full milestone approval**. The corrective take never went through a
-  review-acceptance gate, and the smoke test did not cover M2-01's actual deliverables — the
-  tests-first regression net (C-3) and the corrected outcome record (C-4). So M2-01 is **not**
-  formally closed; C-2 runtime confirmation is outstanding (tracked as its own open item below),
-  and the residual test-coverage items remain un-discharged.
-- **Closure:** the outcome Status line is now corrected to reflect the smoke-test scope (not full
-  approval). Remaining: carry M2-01 through a real sign-off — this review
-  ([`reviews/M2-01-restore-mvc.md`](reviews/M2-01-restore-mvc.md)) is the input. Strike this entry
-  when M2-01 is formally accepted. Resolution may be scheduled separately; tracked here so the
-  milestone is not treated as closed on a smoke-test confirmation.
+- **State:** Closed. M2-01 code is approved and the C-2 acceptance gap has been closed via M2-02 unit tests.
+- **Closure:** M2-01 is formally signed off in session 08.
 
 ### ~~M2-01 — C-2 (empty re-prompt): runtime confirmed, unit-test half outstanding — **open (narrowed)**~~ **Closed**
 

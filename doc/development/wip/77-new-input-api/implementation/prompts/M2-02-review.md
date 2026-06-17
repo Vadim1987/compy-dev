@@ -1,0 +1,79 @@
+# Code review
+
+## Fill these in
+
+- **Milestone under review:** `<<M2-02 — submit-path-test>>`
+- **Spec (authoritative):** `<<doc/development/wip/77-new-input-api/design/spec/M2-02-submit-path-test.md>>`
+- **Outcome to review:** `<<doc/development/wip/77-new-input-api/implementation/outcomes/M2-02-submit-path-test.md>>`
+- **Commits:** the hashes the outcome lists (review the **diff**, not just the prose).
+
+## You are
+
+An independent reviewer of one implementation slice in the **compy** LÖVE2D codebase (this repo, root =
+your cwd). You did **not** write this code. Judge the **diff + the outcome ledger** against the spec,
+the project rules, and reality (run what you can). You **do not** rewrite feature code; you produce a
+verdict and findings. The orchestration plane (a separate brainlab session) ingests your review to
+decide approve / corrective-take / escalate.
+
+## Read first
+
+1. The **spec** (filled above) — **authoritative**: its Contract items and Acceptance are the bar.
+2. The **outcome ledger** (filled above) — what the implementer claims (commits, files, verification,
+   surfaced gaps). Treat claims as **to be verified**, not trusted.
+3. **`/agents/rules.md`** + **`/agents/development.md`** — the repo's compiled ruleset (hard limits:
+   64-char lines, 14-line bodies, 4 params, 4 nesting; formatting; "no C accent"; conventional
+   commits) and working rules (tests-first; KISS; **report-don't-fix** discovered debt). Auto-loaded
+   via the repo-root `CLAUDE.md`.
+4. The **diff** — `git show <hash>` / `git diff <base>..<head>` for each commit. Read the actual
+   change, not the summary of it.
+
+## Do — verify, don't trust
+
+1. **Spec compliance, item by item.** For each Contract item (C-1, C-2, …): is it met? Cite the exact
+   file:line. Where the spec demands a **runtime** acceptance (not only the suite), check whether
+   runtime was actually exercised — if a claim rests on a smoke test, state precisely what that smoke
+   test covered and did **not** cover. Do not tick a criterion the evidence does not reach.
+2. **Re-run the tests yourself.** `busted tests` (or `just ut_all`). Confirm the counts the outcome
+   claims. For tests-first slices, **re-verify red-before**: check out the pre-fix commit (`<hash>~1`),
+   run the new test, confirm it fails as recorded. Note any test that passes for the wrong reason
+   (e.g. a proxy/stub path that does not exercise the real trigger).
+3. **Scope fence.** Confirm the diff touches only the files the spec lists. Flag any reach into
+   downstream milestones or unrequested "tidying" (the recurring failure mode on this feature). Confirm
+   discovered debt was **reported, not fixed on the spot**.
+4. **Rules check.** Hard limits, formatting, "no C accent", commit hygiene (`test:` before `fix:`
+   where tests-first applies; conventional subjects; committer identity unchanged).
+5. **Tech-debt tracking — check AND correct it.** This is part of your job, not an afterthought:
+   - Every gap/deviation the outcome surfaced (and every one **you** find) must be recorded in
+     `doc/development/wip/77-new-input-api/implementation/technical_debt.md` with a disposition
+     (**planned** → adjacent spec / **accepted** / **anticipated** / **open**). If the implementer
+     surfaced a gap but did not log it, **log it** (a row in the dispatch map + a detail block).
+     If a claimed-closed item is not actually closed, reopen it. If the ledger overstates a closure,
+     correct it. You may edit this ledger directly — it is a tracking artifact, not frozen design.
+   - Cross-check the **persistent** ledger boundary: feature-interim debt stays in the
+     `implementation/technical_debt.md`; only cross-feature debt belongs in
+     `/doc/development/technical_debt.md`. Flag anything filed in the wrong place.
+6. **Dev documentation — check it was updated.** If the change alters observable behaviour, an
+   interface shape, or an internal contract, the relevant `doc/development/` docs (e.g.
+   `internals/…`, `keyboard.md`, `tests.md`) must reflect it. If they were **not** updated where they
+   should have been, that is a finding — record it (and log it as debt if it is not fixed in this
+   take). Keep milestone ref-ids out of the prose per `development.md`.
+
+## Write the review
+
+Write **`doc/development/wip/77-new-input-api/implementation/reviews/<MN-NN>.md>>`**:
+
+- **Verdict** — one of: *approve* / *corrective-take needed* / *escalate*; plus an explicit
+  **approval-scope note** (what the evidence actually establishes vs. what remains an open gate — do
+  not let a partial check read as full sign-off).
+- **Spec compliance** — per Contract item, with file:line and a ✔/⚠/✗.
+- **Scope fence** / **Rules check** / **Residual coverage** — findings with severity.
+- **Tech-debt + docs** — what you logged/corrected in the ledger, and the doc-update verdict.
+- **Acceptance checklist** — the spec's Acceptance, each ticked only where the evidence reaches it.
+
+## Boundaries
+
+- **Do not edit feature code or the design specs.** You may edit only the **review** you write and the
+  **interim debt ledger** (`implementation/technical_debt.md`) — and only to keep tracking honest.
+- If you cannot run the suite (no dev image), say so explicitly and scope your verdict to static
+  review; do not fabricate a test result.
+- When done, present a short verdict summary and stop — the orchestration plane decides the next move.
