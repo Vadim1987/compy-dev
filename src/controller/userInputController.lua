@@ -175,6 +175,50 @@ function UserInputController:history_fwd()
 end
 
 ----------------------
+--- singleton API  ---
+----------------------
+
+--- @param self UserInputController
+--- @param cfg table
+local apply_config = function(self, cfg)
+  if cfg.eval then
+    self.model:set_eval(cfg.eval)
+  end
+  if cfg.prompt ~= nil then
+    self.model.custom_label = cfg.prompt
+  end
+  if cfg.text ~= nil then
+    self.model:set_text(cfg.text)
+  end
+  if cfg.result ~= nil then
+    self.result = cfg.result
+  end
+end
+
+--- Activate the singleton.
+--- No-op if already active, unless force=true.
+--- @param config table?
+function UserInputController:show(config)
+  local cfg = config or {}
+  if love.state.user_input then
+    if not cfg.force then return end
+    if cfg.text ~= nil then
+      self.model:set_text(cfg.text)
+      self:update_view()
+    end
+    return
+  end
+  apply_config(self, cfg)
+  love.state.user_input = { C = self }
+  self:update_view()
+end
+
+--- Deactivate without firing the cancel chain.
+function UserInputController:hide()
+  love.state.user_input = nil
+end
+
+----------------------
 --- event handlers ---
 ----------------------
 

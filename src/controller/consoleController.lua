@@ -328,13 +328,26 @@ local get_compy_terminal = function(terminal)
     end
   }
 end
+local get_compy_input = function()
+  return {
+    show = function(cfg)
+      local ui = love.state.user_input_controller
+      if ui then ui:show(cfg) end
+    end,
+    hide = function()
+      local ui = love.state.user_input_controller
+      if ui then ui:hide() end
+    end,
+  }
+end
 local get_compy_namespace = function(terminal)
   require("util.namespace.fonts")
   return {
     terminal = get_compy_terminal(terminal),
     audio = compy_audio,
     graphics = compy_graphics,
-    fonts = CompyFonts()
+    fonts = CompyFonts(),
+    input = get_compy_input(),
   }
 end
 
@@ -552,7 +565,7 @@ function ConsoleController.prepare_project_env(cc)
     close_project(cc)
   end
 
-  local ui_model, ui_con, input_ref
+  local input_ref
   local create_input_handle   = function()
     input_ref = table.new_reftable()
   end
@@ -561,21 +574,16 @@ function ConsoleController.prepare_project_env(cc)
   --- @param prompt string?
   --- @param init str?
   local input                 = function(eval, prompt, init)
-    if love.state.user_input then
-      return -- there can be only one
-    end
-
+    if love.state.user_input then return end
+    local ui = love.state.user_input_controller
+    if not ui then return end
     if not input_ref then return end
-    ui_model = UserInputModel(cfg, eval, true, prompt)
-    ui_model:set_text(init)
-    ui_con = UserInputController(ui_model, input_ref, true)
-    local view = UserInputView(cfg.view, ui_con)
-    ui_con:init_view(view)
-    ui_con:update_view()
-
-    love.state.user_input = {
-      M = ui_model, C = ui_con, V = view
-    }
+    ui:show({
+      eval = eval,
+      prompt = prompt,
+      text = init,
+      result = input_ref,
+    })
     return input_ref
   end
 
@@ -597,11 +605,9 @@ function ConsoleController.prepare_project_env(cc)
 
   --- @param content str
   project_env.write_to_input  = function(content)
-    if not love.state.user_input then
-      return
-    end
-    ui_model:set_text(content)
-    ui_con:update_view()
+    local ui = love.state.user_input
+    if not ui then return end
+    ui.C:set_text(content)
   end
 
   --- @param filters table

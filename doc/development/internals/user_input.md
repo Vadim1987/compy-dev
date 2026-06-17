@@ -158,15 +158,43 @@ Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with 
 
 ## The `user_input` Overlay — Input Perspective
 
-When a project calls `input_text()`, `input_code()`, or `validated_input()`, a new `UserInputModel` + `UserInputController` + `UserInputView` is created and stored in `love.state.user_input`. From this point:
+### Singleton lifecycle (M2+)
+
+`UserInputController` is a singleton created once in `love.load()`
+(in `src/main.lua`) and stored in `love.state.user_input_controller`.
+The same model, controller, and view are reused across every overlay
+session; per-session allocation is eliminated.
+
+Activation: `compy.input.show(config)` (or the legacy wrapper
+`input_code()`/`input_text()`) calls `UserInputController:show(config)`,
+which sets `love.state.user_input = { C = singleton }` and runs a view
+update. Deactivation: `UserInputController:hide()` (or `hide()` on the
+`compy.input` table) sets `love.state.user_input = nil`.
+
+`show()` on an already-active singleton is a no-op unless
+`{ force = true }` is passed. With `force`, the text is replaced if
+a `text` field is in the config; otherwise the existing text is
+preserved. No cancel chain fires in either case.
+
+### Dispatch while active
+
+While `love.state.user_input` is set:
 
 - **Text input** (`love.handlers.textinput`): goes to `user_input.C:textinput(t)` instead of the main controller
 - **Key input** (`love.handlers.keypressed`): goes to `user_input.C:keypressed(k)`
-- **The overlay view** (`user_input.V`) is drawn by the framework's `love.update` wrapping of the user draw function (appended after the user draw call)
+- **The overlay view** is drawn by the framework's `love.update` wrapping of the user draw function
 
 The project polls `r:is_empty()` in `love.update`. When the user presses Enter, the evaluator runs, and if it passes, the result is stored in the `reftable` ref. On the next `update()`, `r:is_empty()` returns false, `r()` returns the value and resets to empty.
 
-Only one overlay can exist at a time. If `love.state.user_input` is already set, subsequent calls to `input_text()` etc. return immediately.
+### `compy.input` namespace
+
+`compy.input` is a table created once at namespace setup (inside
+`get_compy_namespace()` in `consoleController.lua`). It exposes:
+- `compy.input.show(config)` — activates the singleton
+- `compy.input.hide()` — deactivates without firing cancel chain
+
+(M7 will add `configure`, `clear`, `get_cursor`, `set_cursor`,
+`set_text`.)
 
 ---
 

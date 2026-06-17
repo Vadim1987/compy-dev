@@ -357,6 +357,12 @@ function love.load()
   local CC = ConsoleController(CM, ctrl)
   local CV = ConsoleView(baseconf, CC)
 
+  local ui_m = UserInputModel(baseconf, InputEvalText, true)
+  local ui_c = UserInputController(ui_m, nil, true)
+  local ui_v = UserInputView(baseconf.view, ui_c)
+  ui_c:init_view(ui_v)
+  love.state.user_input_controller = ui_c
+
   ctrl.setup_callback_handlers(CC)
   ctrl.set_default_handlers(CC, CV)
 
