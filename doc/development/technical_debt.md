@@ -57,6 +57,32 @@ and the analytic-notes guidance in [`../../agents/rules.md`](../../agents/rules.
 - **Why it stands:** Cosmetic; the design docs are frozen reference for the sprint.
 - **Revisit:** Correct opportunistically when those docs are next edited.
 
+### `compy.input` table is rebuilt per project-env, not once at namespace setup
+
+- **Where:** `src/controller/consoleController.lua` — `get_compy_input()` is called from
+  `get_compy_namespace()`, which `prepare_project_env()` invokes per project setup, so the
+  `compy.input` table is reconstructed each time a project env is prepared.
+- **State:** No functional impact. The `show`/`hide` closures on the table resolve
+  `love.state.user_input_controller` dynamically, so they always reach the live singleton regardless
+  of when the table was built. A wording deviation from the singleton spec ("created once at namespace
+  setup"), not a defect — the dynamic-lookup design is the right call and keeps `compy.input`
+  resilient to the singleton being (re)assigned. Surfaced by the M2 review.
+- **Why it stands:** Reconciling the wording to a literal once-only build buys nothing and risks the
+  resilience the dynamic lookup gives.
+- **Revisit:** Only if a single-build invariant ever becomes load-bearing (it currently is not).
+
+### `show({ force = true })` re-applies only `text`
+
+- **Where:** `src/controller/userInputController.lua` — the `force` branch of `show()` sets only
+  `text`, whereas a fresh activation runs `apply_config` (eval, prompt, text, result).
+- **State:** A `show({ force = true })` on an already-active session cannot re-target `result` or swap
+  the evaluator — only its text can be replaced. This matches the singleton spec, which frames `force`
+  purely in terms of content; flagged by the M2 review as a known boundary, not a defect.
+- **Why it stands:** Correct for the single-consumer model; broadening `force` now would pre-empt a
+  decision that belongs to the extended-configure surface.
+- **Revisit:** When the extended singleton API (`configure`) lands — decide there whether an active
+  session can be re-targeted (eval/result), and align `force` with that.
+
 ---
 
 ## Pre-existing (surfaced during issue 77, predates it)
