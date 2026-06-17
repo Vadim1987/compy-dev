@@ -60,4 +60,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # ── Claude Code (on-board implementation agent) ──────────────────────
 RUN npm install -g @anthropic-ai/claude-code
 
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash - 
+
 WORKDIR /repo
