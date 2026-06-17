@@ -9,17 +9,6 @@ package.preload['view.view'] = function()
     drawFPS = function() end,
   }
 end
--- profiler may load lib.profile; stub to avoid LÖVE2D dep
-package.preload['controller.profiler'] = function()
-  Prof = {
-    update = function() end,
-    start_oneshot = function() end,
-    stop_profiler = function() end,
-    report = function() end,
-  }
-  return Prof
-end
-
 -- handlers access love.state/keyboard/DEBUG/event at runtime
 local mock = require('tests.mock')
 mock.mock_love({

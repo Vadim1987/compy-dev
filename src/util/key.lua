@@ -5,6 +5,14 @@ local unpack  = unpack or table.unpack
 local shift_k = { "lshift", "rshift" }
 local ctrl_k  = { "lctrl", "rctrl" }
 local alt_k   = { "lalt", "ralt" }
+local gui_k   = { "lgui", "rgui" }
+
+local mod_triples = {
+  { ctrl_k[1],  ctrl_k[2],  "ctrl" },
+  { alt_k[1],   alt_k[2],   "alt" },
+  { shift_k[1], shift_k[2], "shift" },
+  { gui_k[1],   gui_k[2],   "gui" },
+}
 
 --- @param k string
 --- @return boolean
@@ -43,11 +51,12 @@ local function alt()
 end
 
 Key = {
-  is_enter = is_enter,
-  shift    = shift,
-  is_shift = is_shift,
-  ctrl     = ctrl,
-  is_ctrl  = is_ctrl,
-  alt      = alt,
-  is_alt   = is_alt,
+  mod_triples = mod_triples,
+  is_enter    = is_enter,
+  shift       = shift,
+  is_shift    = is_shift,
+  ctrl        = ctrl,
+  is_ctrl     = is_ctrl,
+  alt         = alt,
+  is_alt      = is_alt,
 }

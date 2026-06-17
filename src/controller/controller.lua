@@ -133,12 +133,7 @@ local function no_drift(prev, cur)
   return false
 end
 
-local COMBO_MODS = {
-  { 'lctrl', 'rctrl', 'ctrl' },
-  { 'lalt', 'ralt', 'alt' },
-  { 'lshift', 'rshift', 'shift' },
-  { 'lgui', 'rgui', 'gui' },
-}
+local COMBO_MODS = Key.mod_triples
 
 local function combo_string(k, keys_pressed)
   local parts = { }
