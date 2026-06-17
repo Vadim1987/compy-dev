@@ -23,6 +23,21 @@ and the analytic-notes guidance in [`../../agents/rules.md`](../../agents/rules.
 - **Revisit:** When M4/M5 wire the consumer — if dispatch lands anywhere hot, switch to a
   reused buffer or a concat-free comparison.
 
+### `gui_k` modifier pair has no real consumer
+
+- **Where:** `src/util/key.lua` — `gui_k = { "lgui", "rgui" }` (added in M2a). It feeds only
+  `mod_triples`; there is no `gui()` / `is_gui()` accessor paralleling `shift()` / `is_shift()`,
+  and `combo_string` is itself not yet consumed (see the allocation entry above).
+- **State:** A defined modifier pair with no behavioural reader. The other `*_k` pairs are read
+  by `love.keyboard.isDown` accessors; `gui_k` is not. Could be a deliberate unspoken constraint
+  ("ignore gui keys" — never expose them as a held modifier), or an expansion point left open
+  for a future `gui()` accessor.
+- **Why it stands:** Keeping it as a named local parallels the established `*_k` pattern and the
+  M2a spec called for the `gui` pair explicitly; the asymmetry is harmless and additive.
+- **Revisit:** When the input API decides whether `gui` is a first-class modifier — either add
+  the `gui()` / `is_gui()` accessors to give it a consumer, or, if gui is intentionally ignored,
+  record that decision so the unused pair is understood as policy rather than an oversight.
+
 ### `keys_pressed` can go stale on focus loss
 
 - **Where:** `src/controller/controller.lua` — `keys_pressed` is maintained from
