@@ -25,8 +25,26 @@ prompts/MN.md   ──▶   [ black-box implementation agent @ repo root ]   ─
 - **`outcomes/MN.md`** — the result ledger: commit refs (world-out), verification record, and any
   gaps the spec didn't anticipate. The black box writes the draft; the human fills commit hashes on
   commit.
-- **Per-milestone, on activation only.** No `prompts/`/`outcomes/` entry exists until its milestone
-  is picked up. We don't pre-shard the roadmap.
+- **`reviews/MN-NN.md`** — an **independent review** of the implementation, produced *after* the
+  outcome, against the diff + the outcome ledger. Verdict + findings; it is what the orchestration
+  plane ingests to decide approve / corrective-take / escalate.
+- **Per-milestone, on activation only.** No `prompts/`/`outcomes/`/`reviews/` entry exists until its
+  milestone is picked up. We don't pre-shard the roadmap.
+
+## Two planes — orchestration vs. execution
+
+Implement and review do **not** run under brainlab. They run as **lightweight agent sessions outside
+the framework**, driven directly by the human, each with a tiny context (`/agents/rules.md` +
+`/agents/development.md` + one task):
+
+- **Implement** the commissioned `prompts/MN….md` → **Sonnet** → commits + `outcomes/MN….md`.
+- **Review** the result against the outcome + diff → **Opus** → `reviews/MN-NN.md`.
+
+The **brainlab-managed session is the orchestration plane**: it commissions the prompts, authors and
+adjusts the specs (corrective + adjacent closure slices, `design/spec/MN-NN-<why>.md`, never editing
+the frozen `MN.md`), then **ingests the outcome + review and decides** the next move. It does not
+itself write feature code, run the implementation, or produce the review. Full model:
+[`../notes/talk/implementation-orchestration-model.md`](../notes/talk/implementation-orchestration-model.md).
 
 ## Where the black box operates (project repo, project rules)
 
@@ -83,10 +101,19 @@ carry these sections:
 
 ## Index
 
-| # | Prompt | Outcome | Status |
+| # | Prompt | Outcome / Review | Status |
 |---|---|---|---|
-| **M0** — agentic dev image (just/lua/luarocks/busted/love2d **+ Claude on board**) | [`prompts/M0.md`](prompts/M0.md) | [`outcomes/M0.md`](outcomes/M0.md) | drafted — awaiting hand-off (**prereq for running tests**) |
-| **M1** — `keys_pressed` table | [`prompts/M1.md`](prompts/M1.md) | [`outcomes/M1.md`](outcomes/M1.md) | drafted — awaiting hand-off |
+| **M0** — agentic dev image (just/lua/luarocks/busted/love2d **+ Claude on board**) | [`prompts/M0.md`](prompts/M0.md) | [`outcomes/M0.md`](outcomes/M0.md) | ✅ built |
+| **M1** — `keys_pressed` table | [`prompts/M1.md`](prompts/M1.md) | [`outcomes/M1.md`](outcomes/M1.md) · [`reviews/M1-01.md`](reviews/M1-01.md) | ✅ implemented + reviewed (ship-it) |
+| **M2a** — M1 follow-up hygiene | [`prompts/M2a.md`](prompts/M2a.md) | — | ✅ landed |
+| **M2** — singleton extraction | [`prompts/M2.md`](prompts/M2.md) | [`outcomes/M2.md`](outcomes/M2.md) · [`reviews/M2-01.md`](reviews/M2-01.md) | ❌ take-1 not approved (dropped `.V`; stale text) |
+| **M2 (corrective take)** — restore `{ M, C, V }` | [`prompts/M2-01-restore-mvc.md`](prompts/M2-01-restore-mvc.md) | _pending_ | ▶ commissioned — awaiting hand-off to the implement/review cycle |
+
+> Adjacent **closure specs** already commissioned for later milestones (pick up with their milestone):
+> [`../design/spec/M6-01-oneshot-snapshot.md`](../design/spec/M6-01-oneshot-snapshot.md) (M6),
+> [`../design/spec/M7-01-retarget.md`](../design/spec/M7-01-retarget.md) (M7),
+> [`../design/spec/M8-01-dead-text-input.md`](../design/spec/M8-01-dead-text-input.md) (M8). Feature
+> interim-debt sweep gate: [`technical_debt.md`](technical_debt.md).
 
 > **M0 is a tooling prerequisite, not a roadmap milestone** — it builds the **agentic image** the code
 > milestones (M1+) run *inside* (project toolchain **+ Claude Code on board**). It has no `design/spec`

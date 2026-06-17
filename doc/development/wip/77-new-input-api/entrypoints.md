@@ -10,42 +10,45 @@ Legend: ▶ recommended next · ○ open · ⏳ blocked (see depends-on) · ✓ 
 
 | # | Action | Status | Depends on | Where |
 |---|---|---|---|---|
+| E7 | **Run the M2 corrective take** — take-1 was **not approved** (review [`implementation/reviews/M2-01.md`](implementation/reviews/M2-01.md): the singleton narrowed `love.state.user_input` `{M,C,V}`→`{C}`, crashing the running-project draw overlay; plus stale text across re-prompts). The corrective spec + prompt are **commissioned**: hand [`implementation/prompts/M2-01-restore-mvc.md`](implementation/prompts/M2-01-restore-mvc.md) to the **implement/review cycle** (Sonnet implements, Opus reviews — see process model below), then ingest the result back here. | ▶ | — | `implementation/prompts/M2-01-restore-mvc.md`, `design/spec/M2-01-restore-mvc.md` |
+| E8 | **Continue the roadmap M4 → M8** — commission each milestone's prompt per the black-box model when reached. Adjacent **closure specs already commissioned**: `M6-01-oneshot-snapshot` (rides M6), `M7-01-retarget` (rides M7), `M8-01-dead-text-input` (rides M8). M5 must also weigh the **anticipated** debt (`combo_string` allocation, `gui_k` consumer) in `implementation/technical_debt.md`. M4/M6 may warrant **escalation** to a managed subtopic (integration-heavy). | ○ | E7 (M2 must land first) | `design/spec/M4…M8.md`, `design/roadmap.md` |
+| E5 | **Apply the E4 revalidation cleanups** (session 04 findings; optional, **non-blocking** — pure consistency tidy on a frozen design). F1: sweep stale bare `decisions.md` refs in live chain docs → `notes/decisions-record.md`/`status.md`. F2: fix `process.md` §1/§4 `decisions.md`→`status.md`. F3: narrow-or-sweep the SR/VR over-claim. Plus: add `Derived from:` to the 5 pipeline docs **or** document the intentional non-wiring in `sdlc.md`. | ○ | — | `sessions/.../session04/report.md` |
+| E6 | **Build the agentic dev image (M0)** — `just`/`lua5.1`/`luarocks`/`busted`+`luautf8`+`luafilesystem`/`love2d` **+ Claude Code** add-on; prereq for running the suite. | ✓ | — | `implementation/outcomes/M0.md` |
+| E3 | **Implement M1 (`keys_pressed` table)** + the **M2a** follow-up hygiene — both **landed and reviewed** (M1 ship-it: [`reviews/M1-01.md`](implementation/reviews/M1-01.md)). | ✓ | — | `implementation/outcomes/M1.md`, `reviews/M1-01.md` |
+| E4 | **Establish the design lifecycle's process/rules** — `design/` enrolled as a canonical-SDLC instance; per-milestone spec slices; canonical shape. **Revalidated (session 04).** | ✓ | — | `design/agents/`, `entrypoints/E4-restructure.md` |
 | E1 | **Revalidate the design's convergence.** | ✓ | — | `sessions/.../session02/report.md` |
-| E4 | **Establish the design lifecycle's process/rules** — enrolled `design/` as a canonical-SDLC instance: stamped the binding (`design/agents/sdlc.md`) + process doc (`design/agents/process.md`), sliced the spec into **per-milestone specs** (`design/spec/M1…M8.md`), and reshaped `design/` to the canonical shape (status.md dashboard + decision track; notes/ ingest; summaries re-merged; round-history archived; `assessment→context` rename). Outcome: the design lifecycle is **fully canonical in shape**. **Revalidated in session 04** (lossy moves clean, slices correct) — accepted as-is; cleanups deferred to **E5**. Full chain + record in **[`entrypoints/E4-restructure.md`](entrypoints/E4-restructure.md)**. | ✓ | — | `design/agents/`, `design/status.md`, `entrypoints/E4-restructure.md`, `sessions/.../session04/report.md` |
-| E6 | **Build the agentic dev image (M0)** — black-box tooling step; prereq for running the suite during M1+. Prompt at [`implementation/prompts/M0.md`](implementation/prompts/M0.md) → installs `just`/`lua5.1`/`luarocks`/`busted`+`luautf8`+`luafilesystem`/`love2d` (per `DEVELOPMENT.md` + CI `package.yml`) **+ Claude Code on board**, as an add-on to the current base. Lives under `implementation/docker/` — **not** a dockerization of the canonical project. Result in [`implementation/outcomes/M0.md`](implementation/outcomes/M0.md). | ▶ | — | `implementation/prompts/M0.md`, `DEVELOPMENT.md` |
-| E3 | **Implement M1 (`keys_pressed` table)** — via the **black-box implementation model** (no per-sprint SDLC; see `README.md` → `implementation/`). Prompt at [`implementation/prompts/M1.md`](implementation/prompts/M1.md); hand it to the implementation agent; results land in [`implementation/outcomes/M1.md`](implementation/outcomes/M1.md). Input = [`design/spec/M1.md`](design/spec/M1.md) + `design/spec.md §1`; the agent **commits locally** (Conventional Commits) and **waits for approval**. Slices ready; prompt seeded. Needs **E6** to run the suite during verification. | ○ | E6 (for test-run) | `implementation/prompts/M1.md`, `design/spec/M1.md` |
-| E5 | **Apply the E4 revalidation cleanups** (session 04 findings; optional, **non-blocking** — pure consistency tidy on a frozen design). F1: sweep stale bare `decisions.md` refs in live chain docs (`spec.md`, `requirements.md`, `design.md`, `context.md`) → `notes/decisions-record.md`/`status.md`. F2: fix `process.md` §1/§4 `decisions.md`→`status.md` (contradicts §5). F3: narrow-or-sweep the SR/VR "wherever they appear" over-claim. Plus: add `Derived from:` to the 5 pipeline docs **or** document the intentional non-wiring in `sdlc.md`. | ○ | — | `sessions/.../session04/report.md` |
-| E2 | ~~Resolve the genuinely-open decisions.~~ **Dissolved by E1.** D-1…D-7 are stakeholder-settled; D-8/D-9/D-10 were ruled **architect's discretion** (proceed now, re-fit later if needed). Collapses to a *contingency*, not an open step: a quick re-fit design round **only if** stakeholders object to D-8/9/10 after seeing implementation. | ✓ | — | `design/decisions.md` |
+| E2 | ~~Resolve the genuinely-open decisions.~~ **Dissolved by E1** (D-1…D-7 stakeholder-settled; D-8/9/10 architect discretion). A *contingency* only: re-fit round **if** stakeholders object after seeing implementation. | ✓ | — | `design/decisions.md` |
 
-## Notes for whoever picks this up
+## How implementation runs now — two planes (read before commissioning)
 
-- **E1 settled the branch.** The design is **converged** (`session02/report.md`):
-  the seven core stakeholder questions (D-1…D-7) carry explicit round-2 stakeholder
-  rulings; D-8/D-9/D-10 are architect commitments the owner ruled as discretion.
-  Validation chain is at PASS-WITH-NOTES (residue only). This is the *already-converged*
-  fast branch — implementation is unblocked.
-- **E4 is done (session 03).** Both E1-surfaced cleanups landed: the stale "none
-  stakeholder-approved" header is gone (convergence now **derived** from the decision ledger
-  in `design/status.md`), and the two "round" axes are disambiguated (**SR** stakeholder vs
-  **VR** validation — see `design/agents/process.md` §4). The design lifecycle was also
-  reshaped to the **canonical SDLC shape** (see `design/agents/sdlc.md` for the binding).
-- **E4 was revalidated (session 04).** E4's output is **sound and accepted as-is** — the lossy
-  moves preserved intent and the spec slices are correct. It surfaced consistency residue only
-  (stale `decisions.md` refs in live chain docs; a `process.md` internal contradiction; an
-  over-claimed SR/VR sweep; 5 pipeline docs missing `Derived from:`). The owner ruled
-  **leave-as-findings** → captured as **E5** (optional, non-blocking). Detail:
-  `session04/report.md`.
-- **The two design outcomes are settled:** design side = converged roadmap + per-milestone
-  specs (`design/spec/M1…M8.md`); implementation side = list of commits in this repo, recorded
-  per milestone in `implementation/outcomes/MN.md`.
-- **Implementation is unmanaged (black-box) by default** — session 05 retired the per-sprint
-  SDLC model: implementing a frozen-spec milestone is mechanical, so it runs as a single
-  self-contained prompt (`implementation/prompts/MN.md`) with a thin outcome ledger, no SDLC
-  chain. A milestone is promoted to a **managed subtopic** only if it proves cognition-heavy
-  (e.g. M4 gate removal, M6 boundary model). See `README.md` → `implementation/`.
-- **Next is E6 then E3** — build the dev/test image (`implementation/prompts/M0.md`), then hand
-  `implementation/prompts/M1.md` to the implementation agent (it can run the suite, commit locally,
-  and waits for approval). **E5** (the E4 cleanups) is independent and blocks neither.
-- See the topic `README.md` for the two-phase model, `design/README.md` to read the chain,
-  `session02/report.md` for the full E1 finding, and `notes/migration/` + `notes/talk/` for how
+- **Orchestration plane = the brainlab session (this one).** It commissions implementation prompts,
+  authors/adjusts specs (corrective + adjacent closure slices `design/spec/MN-NN-<why>.md`, **never**
+  editing the frozen `MN.md`), and **ingests outcome + review to decide** approve / corrective-take /
+  escalate. It does **not** write feature code or run the review itself.
+- **Execution plane = lightweight sessions outside brainlab**, driven by the human, tiny context
+  (`/agents/rules.md` + `/agents/development.md` + one task): **implement** (Sonnet) → commits +
+  `outcomes/MN….md`; **review** (Opus) → `reviews/MN-NN.md`.
+- Full model: [`notes/talk/implementation-orchestration-model.md`](notes/talk/implementation-orchestration-model.md);
+  black-box mechanics: [`implementation/README.md`](implementation/README.md).
+
+## Conventions in force
+
+- **Adjacent specs** (corrective takes, closure slices): `design/spec/MN-NN-<why>.md` — per-milestone
+  counter from `01`, short purpose suffix in the filename; in-doc id stays bare `MN-NN`. Corrective
+  **prompts and outcomes mirror** the spec filename. The design-time `MN.md` slices stay **frozen**.
+- **Debt placement:** `/doc/development/technical_debt.md` holds **persistent** (cross-feature) debt
+  only; **#77-interim** debt lives in [`implementation/technical_debt.md`](implementation/technical_debt.md)
+  and is **swept or formally accepted before the feature ships**. Closures that are *committed* get an
+  adjacent spec; *anticipated/conditional* items stay as ledger notes until a need appears.
+
+## State of play
+
+- **Design** — converged (E1) + canonical lifecycle (E4), both revalidated. Roadmap + per-milestone
+  specs `design/spec/M1…M8.md` are the frozen input.
+- **Implementation** — M0 ✅, M1 ✅ (reviewed), M2a ✅. **M2 take-1 ❌** (see E7). The forward path is
+  **E7 → E8**.
+- **Sweep gate:** `implementation/technical_debt.md` must be clear (closed or accepted) before #77
+  ships — F-5→M7-01, G-1→M8-01, G-2→M6-01 planned; F-4 accepted; `combo_string`/`gui_k`/path-mismatch
+  anticipated.
+- See topic `README.md` (two-phase model), `design/README.md` (the chain), and `notes/talk/` for how
   we got here.
