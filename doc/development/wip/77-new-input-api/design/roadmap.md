@@ -24,6 +24,7 @@ kept for cross-refs.)*
 |---|---|---|---|
 | M1 | `keys_pressed` table | Live modifier set + `combo_string()` (modifier-first, l/r folded); no behaviour change | `controller.lua` |
 | M2 | Singleton extraction | Widget created once; `compy.input.show`/`hide` on namespace; `oneshot` stays | `main.lua`, `consoleController.lua`, `userInputController.lua`, `compy_namespace.lua` |
+| M2a | M1 follow-up hygiene | Drop dead profiler test stub; single source of truth for l/r modifier fold; no behaviour change | `controller.lua`, `util/key.lua`, M1 test |
 | M4 | ProjectInputController + gate removal | New controller owns project input; overlay gate removed; all 4 modes verified | `controller.lua`, `projectInputController.lua` (new) |
 | M5 | Three-level dispatch | `handlers[combo]` + `on_key_pressed`; return-value bubbling | `projectInputController.lua`, `compy_namespace.lua` |
 | M6 | Before/after chains | Submit/cancel hooks; Escape dismisses; `on_limit_reached(direction,scope)`; `framework_handlers['return']` owns submit; `oneshot` deleted | `projectInputController.lua`, `userInputController.lua`, `userInputModel.lua` |
@@ -95,6 +96,38 @@ through M2–M5.
 **Risk:** Care needed to preserve `love.state.user_input`
 set/clear behaviour. Existing tests exercise this path;
 run all before and after.
+
+---
+
+### M2a — M1 follow-up hygiene
+
+**Description:** Two cleanups surfaced by the M1 review,
+scoped on their own rather than folded into M2 (which touches
+none of these files). Zero behaviour change.
+
+**Input:** M1 complete. Independent of M2 — can run in
+either order.
+
+**Output:** The dead `controller.profiler` stub is removed
+from the M1 test (verified unnecessary: suite is 685/685
+without it). The l/r modifier fold has a single source of
+truth — `util/key.lua` exports the `(left, right, generic)`
+triples (gaining a `gui` pair) and `combo_string` consumes
+them, dropping its duplicate `COMBO_MODS` literal. All
+existing tests pass; `combo_string` output unchanged.
+
+**Files created or modified:**
+- `tests/input/keys_pressed_spec.lua` — remove the
+  `controller.profiler` preload block
+- `src/util/key.lua` — add the `gui` pair; export modifier
+  triples in precedence order
+- `src/controller/controller.lua` — replace the local
+  `COMBO_MODS` with the exported triples
+
+**Risk:** None. Refactor plus test cleanup; run the full
+suite before and after.
+
+Spec: [`spec/M2a.md`](spec/M2a.md).
 
 ---
 
