@@ -18,6 +18,7 @@ feature closes**, not carried into the project at large._
 
 | Item | Kind | Disposition | Closure |
 |---|---|---|---|
+| M2-01 approval scope | record accuracy | **open** | Status line corrected; carry M2-01 through a real sign-off (this review is input) |
 | F-5 | open boundary | **planned** | adjacent spec [`../design/spec/M7-01-retarget.md`](../design/spec/M7-01-retarget.md) (decided at M7) |
 | G-1 | dead code | **planned** | adjacent spec [`../design/spec/M8-01-dead-text-input.md`](../design/spec/M8-01-dead-text-input.md) (M8 legacy removal) |
 | G-2 | dead code | **planned** | adjacent spec [`../design/spec/M6-01-oneshot-snapshot.md`](../design/spec/M6-01-oneshot-snapshot.md) (M6 oneshot removal) |
@@ -25,6 +26,8 @@ feature closes**, not carried into the project at large._
 | `combo_string` alloc | perf | **anticipated** | evaluate at M5 dispatch; close only if hot |
 | `gui_k` no consumer | API shape | **anticipated** | decide when `gui`'s modifier status is settled |
 | design-doc path mismatch | docs | **anticipated** | opportunistic; or at feature wrap when docs unfreeze |
+| overlay test vs. stub | test coverage | **anticipated** | when the real `set_love_update` overlay path is driven (≈M4 dispatch) |
+| C-2 empty re-prompt unverified | acceptance gap | **open** | confirm at runtime **and** add a real `handle(true)` → reprompt unit test, before sign-off |
 
 > The **planned** rows have a commissioned closure spec; pick them up with their milestone. The
 > **anticipated** rows are deliberately *not* commissioned — they may never need action; revisit at
@@ -34,6 +37,43 @@ feature closes**, not carried into the project at large._
 ---
 
 ## Open boundaries
+
+### M2-01 outcome ledger overstates the scope of the human approval — **open**
+
+- **Where:** `implementation/outcomes/M2-01-restore-mvc.md` — Status line originally read
+  "✅ approved by human (2026-06-17)"; now corrected to a scoped statement.
+- **State:** The human check to date was **manual smoke-testing of `tixy`/`turtle`** and confirmed
+  **C-1 only** (no fault on the input frame). **C-2 (empty re-prompt) was not clearly verified** —
+  the empty-re-prompt step was not obvious in the smoke test and may or may not have run. It was
+  nonetheless recorded as **full milestone approval**. The corrective take never went through a
+  review-acceptance gate, and the smoke test did not cover M2-01's actual deliverables — the
+  tests-first regression net (C-3) and the corrected outcome record (C-4). So M2-01 is **not**
+  formally closed; C-2 runtime confirmation is outstanding (tracked as its own open item below),
+  and the residual test-coverage items remain un-discharged.
+- **Closure:** the outcome Status line is now corrected to reflect the smoke-test scope (not full
+  approval). Remaining: carry M2-01 through a real sign-off — this review
+  ([`reviews/M2-01-restore-mvc.md`](reviews/M2-01-restore-mvc.md)) is the input. Strike this entry
+  when M2-01 is formally accepted. Resolution may be scheduled separately; tracked here so the
+  milestone is not treated as closed on a smoke-test confirmation.
+
+### M2-01 — C-2 (empty re-prompt) verified by neither runtime nor suite — **open**
+
+- **Where:** C-2 acceptance; `tests/input/overlay_spec.lua` (the empty-on-reprompt test) and the
+  runtime smoke test.
+- **State:** C-2's real trigger is a successful `UserInputModel:handle(true)` leaving `entered`
+  populated, so the *next* prompt re-opens it pre-filled. The fix clears on fresh activation, but
+  that end-to-end submit → empty path is currently confirmed by **neither**:
+  - the **suite** — the unit test uses a `show({ text })` → `hide()` → `show()` proxy, which earns a
+    real red→green for the clear-on-fresh-activation logic but never drives `handle(true)`; and
+  - **runtime** — the human smoke test confirmed C-1 (no-fault) but the empty-re-prompt step was not
+    an obvious part of it and may not have run.
+- **Why it matters:** M2-01's spec makes runtime confirmation of C-2 an explicit acceptance
+  requirement ("confirmed at runtime, not only by suite"). With both paths short of the real submit
+  flow, the empty-re-prompt behaviour is plausibly correct (the fix logic is sound and unit-tested in
+  proxy form) but not actually verified end-to-end.
+- **Closure:** before sign-off — (a) add a unit test that drives `model:handle(true)` on a oneshot
+  session then `show()` with no `text` and asserts empty, **and** (b) confirm the empty re-prompt at
+  runtime on `tixy`/`turtle`. Strike when both land. Resolution may be scheduled separately.
 
 ### F-5 — `force` / `configure()` cannot re-target an active session's `result`/`eval` — **planned → M7-01**
 
@@ -102,3 +142,21 @@ concrete need appears.
 - **Why it stands:** Cosmetic; the design docs are frozen reference for the sprint.
 - **Revisit:** Correct opportunistically when those docs are next edited (e.g. at feature wrap, once
   the design slices are no longer frozen).
+
+### M2-01 overlay-shape test runs against a stub, not the real wiring
+
+- **Where:** `tests/input/overlay_spec.lua` — the overlay-shape test builds an ad-hoc `make_ctrl`
+  controller with a `draw`-only stub view and asserts `love.state.user_input.V` is truthy and
+  callable.
+- **State:** Guards against a re-narrowing of the handle to `{ C }` (the take-1 regression), but does
+  **not** exercise the `main.lua` startup-singleton wiring or the real `controller.lua:401`
+  (`set_love_update`) overlay wrapper — the exact path that faulted at runtime. M2-01's spec set the
+  stub level as the floor and named the real-wiring level only as the ideal, so the take is compliant;
+  the residual is that the regression net is shape-level, not integration-level. Runtime confirmation
+  on `turtle`/`tixy` covered it for this take.
+- **Why it stands:** Driving the real `love.draw` overlay from a unit test needs `main.lua` wiring /
+  love harness that the input suite does not currently stand up.
+- **Revisit:** When a milestone next touches the overlay/dispatch wiring (≈M4, when the controller
+  owns dispatch) — add a test that drives the actual `set_love_update` draw wrapper against the
+  singleton, closing the slice take 1 first exposed.
+

@@ -2,7 +2,16 @@
 
 _Implemented by LLM(Claude Sonnet 4.6): 2026-06-17 (session 09)._
 
-**Status:** ✅ approved by human (2026-06-17)
+**Status:** runtime smoke-test by human (`tixy`/`turtle`, 2026-06-17)
+confirmed **C-1 only** — no fault on the input frame. **C-2 (empty
+re-prompt) was not clearly verified at runtime** and remains
+outstanding (the spec requires runtime confirmation, not only the
+suite; the unit test exercises a `show/hide` proxy, not the real submit
+path). Not a full milestone sign-off: the C-3 regression tests and C-4
+record were not part of the smoke test, and no review-acceptance gate
+has run. Formal approval pending (see review
+`../reviews/M2-01-restore-mvc.md` and the open items in
+`../technical_debt.md`).
 **Spec implemented:** [`../../design/spec/M2-01-restore-mvc.md`](../../design/spec/M2-01-restore-mvc.md)
 
 ---
@@ -54,9 +63,13 @@ unchanged and still pass. Total suite grew from 696 to 698.
 
 ### Runtime observation (C-1 / C-2)
 
-Verified by human on 2026-06-17:
+Human on 2026-06-17:
 - `tixy` and `turtle`: no fault on the input frame (C-1 ✅)
-- submit → re-prompt opens empty (C-2 ✅)
+- submit → re-prompt opens empty (C-2 — **not clearly verified**; the
+  empty-re-prompt check was not an obvious step in the smoke test and
+  may or may not have been exercised). C-2 runtime confirmation is
+  outstanding; the spec requires it and the unit test only covers a
+  `show/hide` proxy, not the real submit path.
 - REPL and editor unaffected
 
 ## Corrected shape record (C-4)
