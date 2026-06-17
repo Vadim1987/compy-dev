@@ -2,7 +2,7 @@
 
 _Implemented by LLM(Claude Sonnet 4.6): 2026-06-17 (session 09)._
 
-**Status:** implemented — awaiting human approval
+**Status:** ✅ approved by human (2026-06-17)
 **Spec implemented:** [`../../design/spec/M2-01-restore-mvc.md`](../../design/spec/M2-01-restore-mvc.md)
 
 ---
@@ -54,15 +54,10 @@ unchanged and still pass. Total suite grew from 696 to 698.
 
 ### Runtime observation (C-1 / C-2)
 
-Runtime check could not be performed: no display is available in this
-execution environment (`DISPLAY` and `WAYLAND_DISPLAY` are both unset).
-The unit tests cover both defects; the code path exercised by the tests
-(`show()` → `open_fresh` → `{ M, C, V }` assignment; clear on no-text)
-is the same path that `turtle`/`tixy` exercise at runtime.
-
-Human approval of this ledger should include a manual runtime check
-of `turtle` (or `tixy`): submit → re-prompt must (a) not fault and
-(b) open empty.
+Verified by human on 2026-06-17:
+- `tixy` and `turtle`: no fault on the input frame (C-1 ✅)
+- submit → re-prompt opens empty (C-2 ✅)
+- REPL and editor unaffected
 
 ## Corrected shape record (C-4)
 
@@ -89,5 +84,19 @@ The inaccurate G-3 claim from the take-1 ledger ("no consumer reads
 
 ## Surfaced gaps
 
-None beyond the four already recorded as out of scope (F-4, F-5,
-G-1, G-2). No new gaps discovered during this corrective take.
+Two new gaps spotted during runtime approval; neither is blocking for
+this take and neither touches M2-01's file set.
+
+**G-A — tixy shift+click: example-sequence behaviour unclear.**
+In `tixy`, shift+click is expected to advance through the built-in
+sequence of examples, but the intended order is not obvious from the
+UI and may not match user expectations. Observed during approval run;
+not reproducible or characterised fully. Worth a dedicated investigation
+before the input API surface is considered stable for project authors.
+
+**G-B — editor buffer not cleared on Escape.**
+After pressing Escape in the editor, the input buffer retains its
+content rather than emptying. A fix was believed to exist but is not
+present on this branch (`feature/77-newapi-analysis-s20260615`). May be
+on a different branch or may not have landed yet. Needs a branch-level
+search before filing as a new defect.
