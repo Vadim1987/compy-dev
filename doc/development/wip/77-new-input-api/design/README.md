@@ -24,7 +24,8 @@ doc's detail as needed. Convergence + the decision calls live in **[`status.md`]
 | 3 | [`status.md`](status.md) ⭐ | Chain convergence + the blocking-decision calls & resolutions |
 | 4 | [`design.md`](design.md) | How it works |
 | 5 | [`spec.md`](spec.md) + [`spec/`](spec/) | The API contract (cross-cutting + per-milestone slices) |
-| 6 | [`roadmap.md`](roadmap.md) | Build plan + effort (~39–66 h) |
+| 6 | [`roadmap.md`](roadmap.md) | Build plan (frozen total + total-estimated log) |
+| 7 | [`estimates.md`](estimates.md) | Per-milestone effort sizing (~39–66 h; first-class derived node) |
 
 ## If you want to dig
 

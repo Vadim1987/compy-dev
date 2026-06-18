@@ -2,8 +2,10 @@
 
 *Scoped to this feature only. Milestones in
 implementation-dependency order, matching the section
-order in `notes/solution_sketch.md`. Estimates are in
-the `## Estimates` section at the bottom.*
+order in `notes/solution_sketch.md`. Per-milestone estimates
+live in [`estimates.md`](estimates.md) (first-class derived
+node); the `## Estimates` section below carries only the
+frozen design-phase total + the total-estimated log.*
 
 > **Status — derived proposal document.** This roadmap is a derived
 > part of the feature-#77 proposal chain, pre-built on the
@@ -16,9 +18,9 @@ the `## Estimates` section at the bottom.*
 
 ## Summary — milestones at a glance
 
-*(Full per-milestone detail, file lists, and three-point estimates are below. Per-milestone
-**specs** — what each sprint consumes — are in [`spec/`](spec/). M3 was removed; numbering
-kept for cross-refs.)*
+*(Full per-milestone detail and file lists are below; three-point estimates live in
+[`estimates.md`](estimates.md). Per-milestone **specs** — what each sprint consumes — are in
+[`spec/`](spec/). M3 was removed; numbering kept for cross-refs.)*
 
 | # | Name | Deliverable | Key files |
 |---|---|---|---|
@@ -31,9 +33,11 @@ kept for cross-refs.)*
 | M7 | Extended singleton API | `configure`/`clear`/`get_cursor`/`set_cursor`/`set_text` | `userInputController.lua`, `compy_namespace.lua` |
 | M8 | Legacy removal + migration | Globals removed; `tixy`/`balloons` migrated (priority), others convert-or-exclude; native examples unaffected (D-9) | `consoleController.lua`, `src/examples/*` |
 
-**Estimates at a glance** (PERT = (O+4M+P)/6): **≈ 66 h** without LLM, **≈ 39 h** with. Widest
-tail: M4 (gate removal); M8 next. Discarding D-1 *raised* the total (the ≈4 h facade layer →
-≈8 h M8). Round 2 added ≈2–3 h (D-5 boundary extension + tests).
+**Estimates** are a first-class derived node — full per-milestone PERT lives in
+[`estimates.md`](estimates.md) (+ [`estimates.versions/`](estimates.versions/)). This roadmap keeps
+only the **frozen design-phase total** and an **append-only log** of recalculated totals; see
+[`## Estimates`](#estimates) below. (Design-phase total: **≈ 66 h** without LLM, **≈ 39 h** with;
+widest tail M4, then M8.)
 
 ---
 
@@ -374,83 +378,35 @@ Busted tests for:
 
 ## Estimates
 
-*Implementor assumed: senior engineer, solo. Familiar with Lua
-and LÖVE2D. Has read the design and spec documents. Three-point
-estimates per line; PERT = (O + 4M + P) / 6, where O = optimistic,
-M = most-likely, P = pessimistic. Hours.*
+*Estimates are a **first-class derived node** of this lifecycle — the full per-milestone PERT
+(both bases, deltas, confidence, methodology) lives in [`estimates.md`](estimates.md), versioned
+under [`estimates.versions/`](estimates.versions/). This section is deliberately thin: it carries
+only the frozen design-phase total and the running total-estimated log, never a re-derived table
+(`agents/process.md` §7).*
 
-### Without LLM assistance
+### Design-phase total — FROZEN (historical artifact)
 
-| Item | O | M | P | PERT |
-|---|---|---|---|---|
-| M1 `keys_pressed` table | 2 | 3 | 4 | 3.0 |
-| M2 Singleton extraction | 3 | 6 | 9 | 6.0 |
-| M4 ProjectInputController + gate removal | 4 | 8 | 14 | 8.3 |
-| M5 Three-level dispatch | 3 | 5 | 8 | 5.2 |
-| M6 Before/after chains (+ `oneshot` del., **boundary ext.**) | 5 | 9 | 14 | 9.2 |
-| M7 Extended API (+ cursor surface, model fix) | 3 | 6 | 9 | 6.0 |
-| M8 Legacy removal + example migration | 4 | 8 | 14 | 8.3 |
-| Documentation updates | 4 | 8 | 12 | 8.0 |
-| Test coverage | 8 | 12 | 18 | 12.3 |
-| **Total** | **36** | **65** | **102** | **≈ 66 h** |
+The project total as sized **at design convergence** (session-10 baseline, carried verbatim into
+`estimates.md version01`). This figure is a **historical artifact — it is never recalculated in
+place.** Later sizing changes are recorded in the log below, not by editing this number.
 
-Project PERT (O=36, M=65, P=102): `(36 + 4×65 + 102) / 6 ≈ 66 h`.
+| Basis | Design-phase total (PERT) |
+|---|---|
+| Without LLM assistance | **≈ 66 h** |
+| With LLM assistance | **≈ 39 h** |
 
-**Round-2 delta (+≈ 3 h vs. ≈ 63 h).** The D-5 boundary extension
-(horizontal `left`/`right` directions and the `'line'` scope on
-top of vertical whole-input) is new `is_at_limit` model work and
-adds ≈ 2 h to M6; the extra `on_limit_reached` direction/scope
-cases add ≈ 1 h to test coverage. The `show()` `force` flag (M2),
-the `ProjectInputController` rename (M4 file), and the
-read-indexable `keys_pressed` proxy shape (M1) are each within
-estimating noise and are absorbed in the existing M1/M2/M4 cells.
+> Provenance: PERT = (O+4M+P)/6 over the per-milestone three-point estimates. Discarding D-1
+> *raised* the total (the ≈ 4 h facade layer → ≈ 8 h M8); round-2 D-5 boundary work added ≈ 2–3 h.
+> Full derivation: [`estimates.md`](estimates.md).
 
-Note: discarding backward compatibility (D-1) *raised* the
-estimate. The old M3 facade layer (≈ 4 h) is gone, but M8 —
-removing the legacy globals and migrating the examples — is
-larger (≈ 8 h), because rewriting the example corpus is more
-work than wrapping the old calls. The net is +≈ 4 h vs. the
-facade plan.
+### Total estimated — log (append-only)
 
-Confidence: moderate. M4 (gate removal, central dispatch path)
-remains the widest pessimistic tail; M8 is the next-widest, as
-the per-example migration effort and the convert-or-exclude
-release decision both vary with the owner's call.
+The **current** derived total, recomputed whenever the milestone set changes (a milestone added or
+pivoted — e.g. `M3-01`) or on periodic review. Each estimates recalc writes an
+`estimates.versions/` baseline and **appends one line here** — the latest line is the live total.
+This log is *derived* (a dated transcription of `estimates.md`'s total at each version), not an
+independently maintained figure. Maintenance is operational entrypoint **E11**.
 
-### With LLM assistance
-
-LLM helps most with boilerplate wiring (M1, M7), example
-rewriting (M8), new-file scaffolding (M5), test scaffolding, and
-doc updates. It saves
-least on M2 (cross-component refactor verified by hand), M4
-(integration; the engineer must trace the dispatch paths), and M6
-(ordering semantics).
-
-| Item | O | M | P | PERT | LLM value |
-|---|---|---|---|---|---|
-| M1 `keys_pressed` table | 1 | 2 | 3 | 2.0 | High |
-| M2 Singleton extraction | 2 | 4 | 6 | 4.0 | Low |
-| M4 ProjectInputController + gate removal | 3 | 5 | 9 | 5.3 | Medium |
-| M5 Three-level dispatch | 2 | 3 | 5 | 3.2 | High |
-| M6 Before/after chains (+ `oneshot` del., **boundary ext.**) | 3 | 6 | 10 | 6.2 | Low–medium |
-| M7 Extended API (+ cursor surface, model fix) | 2 | 4 | 6 | 4.0 | High |
-| M8 Legacy removal + example migration | 2 | 4 | 8 | 4.3 | High |
-| Documentation updates | 2 | 3 | 5 | 3.2 | High |
-| Test coverage | 4 | 7 | 10 | 7.0 | High |
-| **Total** | **21** | **38** | **62** | **≈ 39 h** |
-
-Project PERT (O=21, M=38, P=62): `(21 + 4×38 + 62) / 6 ≈ 39 h`.
-
-**Round-2 delta (+≈ 2 h vs. ≈ 37 h).** Same source as the
-without-LLM delta: the D-5 boundary extension (M6 model work) and
-its extra test cases. The boundary model logic is verification-
-sensitive, so the LLM saving on it is only moderate; the test
-cases are mechanical (High).
-
-Confidence: moderate. The saving is largest for well-specified
-generative work (M1, M5, M7, M8, tests, docs) — rewriting the
-small example files to the new API is exactly the kind of
-mechanical edit an LLM does well, so M8's LLM value is High. The
-integration milestones (M2, M4) are serial and verification-heavy,
-so LLM code generation speeds them up but the manual verification
-cost is largely fixed.
+| Date | Total (no-LLM / LLM) | Baseline | Trigger |
+|---|---|---|---|
+| 2026-06-18 | ≈ 66 h / ≈ 39 h | [`version01`](estimates.versions/version01.md) | Genesis — extraction (E10). Equals the frozen design-phase total; no milestone change since convergence. |

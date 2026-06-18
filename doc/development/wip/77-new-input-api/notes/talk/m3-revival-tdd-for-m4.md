@@ -2,6 +2,12 @@
 
 _Materialised from a chat discussion (2026-06-18, session 09). Human raised; agent analysed. Decision: **open — not yet decided, successor entrypoint created.**_
 
+> **Superseded in part (session 12).** The "M4 split — failing tests before the controller exists
+> doesn't work" claim below is **wrong** — tests can precede code when the *spec* fixes the contract
+> (TDD). M3 is renamed **`M4-0`** and the strategy is reframed as two tiers (characterization net +
+> per-milestone test-first acceptance). See [`two-tier-test-strategy.md`](two-tier-test-strategy.md),
+> which is now authoritative. This note is kept as the originating analysis.
+
 ## The problem
 
 M4 (overlay gate removal) is the **highest-risk** milestone. Its acceptance currently rests on:
