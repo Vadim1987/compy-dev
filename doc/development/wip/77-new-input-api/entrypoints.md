@@ -19,6 +19,17 @@ Legend: ▶ recommended next · ○ open · ⏳ blocked (see depends-on) · ✓ 
 | E4 | **Establish the design lifecycle's process/rules** — `design/` enrolled as a canonical-SDLC instance; per-milestone spec slices; canonical shape. **Revalidated (session 04).** | ✓ | — | `design/agents/`, `entrypoints/E4-restructure.md` |
 | E1 | **Revalidate the design's convergence.** | ✓ | — | `sessions/.../session02/report.md` |
 | E2 | ~~Resolve the genuinely-open decisions.~~ **Dissolved by E1** (D-1…D-7 stakeholder-settled; D-8/9/10 architect discretion). A *contingency* only: re-fit round **if** stakeholders object after seeing implementation. | ✓ | — | `design/decisions.md` |
+| E10 | **Operational — extract estimates into a first-class doc.** Move `roadmap.md §Estimates` into `design/estimates.md` (+ `estimates.versions/` baseline), and trim the roadmap to a **derived total roll-up + pointer** (one source of truth). Realises the rule formalised in `design/agents/process.md §7`. Touches the frozen `roadmap.md`, so run as a deliberate restructure (cf. E4). | ○ | — | `design/estimates.md`, `design/roadmap.md`, `design/agents/process.md §7` |
+| E11 | **Operational — estimate maintenance (recurring, beyond milestones).** Whenever the milestone set changes (a milestone added or **pivoted** — e.g. `M3-01`) or on periodic review: estimate the new/changed milestone → recalc the roadmap total → write an `estimates.versions/` baseline. Standing action, not a one-off. | ⏳ | E10 | `design/estimates.md`, `design/estimates.versions/`, `design/agents/process.md §7` |
+
+## Operational actions (beyond milestones)
+
+Not every entrypoint is a milestone or a feature step. **Operational** entrypoints maintain the
+design lifecycle's own artifacts — they recur as the plan evolves rather than closing once. The
+estimates pair (**E10** extract, **E11** recurring recalc) is the first of this class: formalised
+as a rule in [`design/agents/process.md`](design/agents/process.md) §7 and bound in
+[`design/agents/sdlc.md`](design/agents/sdlc.md). When a milestone is added or pivoted, E11 fires
+alongside the milestone work — keep it open as a standing reminder, don't close it after one use.
 
 ## How implementation runs now — two planes (read before commissioning)
 
