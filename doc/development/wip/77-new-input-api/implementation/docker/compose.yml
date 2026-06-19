@@ -8,7 +8,9 @@
 # sidecar, no network. See src/agent/mcp.json.
 #
 # uid/gid: defaults to 1000. On a non-1000 host, build with matching ids:
-#   UID=$(id -u) GID=$(id -g) docker compose build
+#   HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose build
+# (HOST_ prefix on purpose: bash's $UID/$EUID are readonly, so an inline
+#  `UID=... docker compose build` aborts with "readonly variable".)
 # API keys come from the host env (claude: ANTHROPIC_API_KEY,
 # cursor: CURSOR_API_KEY; agy authenticates interactively on first run).
 
@@ -19,8 +21,8 @@ services:
     build:
       context: ./src/agent
       args:
-        UID: "${UID:-1000}"
-        GID: "${GID:-1000}"
+        UID: "${HOST_UID:-1000}"
+        GID: "${HOST_GID:-1000}"
     image: compy-dev-agent
     container_name: codeinspect
     tty: true          # keep the bash session alive for `compose exec`
@@ -31,6 +33,8 @@ services:
       # injected from host; never baked into the image
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
       CURSOR_API_KEY: "${CURSOR_API_KEY:-}"
+    tmpfs:
+      - /tmp
     volumes:
       # read/write + commit: develop and review need to edit the tree
       - ../../../../../../:/repo:rw

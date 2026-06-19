@@ -31,7 +31,8 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Host-matching uid/gid so files written into the /repo bind mount stay
-# owned by the human. Override: UID=$(id -u) GID=$(id -g) docker compose build
+# owned by the human. Override (note HOST_ prefix — $UID is readonly in bash):
+#   HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose build
 ARG UID=1000
 ARG GID=1000
 
@@ -97,6 +98,12 @@ RUN ver=$(curl -fsSL https://api.github.com/repos/LuaLS/lua-language-server/rele
     && rm /tmp/luals.tar.gz \
     && ln -s /opt/lua-language-server/bin/lua-language-server \
         /usr/local/bin/lua-language-server
+
+# ── /impl shortcut (root: claude can't write to /) ───────────────────
+# Short, stable handle for the spec/outcome/review tree. Dangling at build
+# time — resolves once /repo mounts. Outside /repo, so the tree stays clean.
+# In a CLI chat:  "implement /impl/prompts/M2.md" · "run /impl/review-prompt.md"
+RUN ln -s /repo/doc/development/wip/77-new-input-api/implementation /impl
 
 # ── unprivileged agent user ──────────────────────────────────────────
 RUN groupadd -g ${GID} claude \

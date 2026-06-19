@@ -17,9 +17,10 @@ navigation (defs/refs/diagnostics).
 ## Use
 
 ```sh
-# from this directory. On a non-1000 host, prefix with UID/GID:
-#   UID=$(id -u) GID=$(id -g) docker compose build
-docker compose up -d
+# from this directory. On a non-1000 host, prefix with HOST_UID/HOST_GID
+# ($UID is readonly in bash, so the HOST_ prefix is required):
+#   HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose build
+docker compose up -d --build
 docker compose exec codeinspect bash
 
 # inside the container (cwd = /repo), launch one CLI and work:
@@ -29,8 +30,10 @@ agy                    # first run: interactive Google auth (persisted)
 ```
 
 Specs / outcomes / reviews live under
-`/repo/doc/development/wip/77-new-input-api/implementation/`
-(`prompts/`, `outcomes/`, `reviews/`, `review-prompt.md`).
+`/repo/doc/development/wip/77-new-input-api/implementation/` (`prompts/`,
+`outcomes/`, `reviews/`, `review-prompt.md`) — reachable via the baked
+**`/impl`** symlink, so in a CLI chat you just say e.g.
+`implement /impl/prompts/M2.md` or `run /impl/review-prompt.md`.
 
 ## Lua MCP↔LSP
 
@@ -45,9 +48,39 @@ mcp-language-server --workspace /repo --lsp lua-language-server \
   built in a Go stage and copied into the image.
 - `lua-language-server` (LuaLS) is installed from its latest GitHub release.
 
+**Picking up the agent's edits:** the bridge runs an fsnotify (→ inotify
+on Linux) `WorkspaceWatcher`. When a CLI edits a `.lua` on disk — outside
+the LSP — the watcher debounces and fires `didChangeWatchedFiles`, so LuaLS
+reindexes that file. Writer (the CLI) and watcher share one container +
+kernel + bind mount on a native-Linux host, so events are *not* crossing a
+FUSE/VM boundary — this is reliable here (unlike host→container inotify on
+Docker Desktop). Edits land asynchronously, hence the `sleep 1`-before-query
+rule in `orientation.md`. If a session ever logs `too many open files`,
+raise `fs.inotify.max_user_watches`/`max_user_instances` on the host.
+
 > The earlier draft's `nzrsky/lsp-mcp-server` sidecar was dropped: its image
 > isn't published (ghcr 403), it's a *stdio* server (no TCP container needed),
 > and it doesn't support Lua.
+
+### Is it working?
+
+The bridge isn't a daemon — each CLI spawns it (and `lua-language-server`
+under it) as a child of *that session* when the CLI starts, and tears it
+down on exit. So check it from inside a CLI, not from the bash prompt:
+
+```sh
+# build-time sanity (binaries present):
+docker compose exec codeinspect mcp-language-server --help
+docker compose exec codeinspect lua-language-server --version
+
+# while a CLI session is open, in a second shell:
+docker compose exec codeinspect ps -ef | grep -E 'mcp-language|lua-language'
+docker compose exec codeinspect cat /tmp/lua-ls-log   # LuaLS activity
+
+# inside `claude`: /mcp  → lists `lua-lsp` + its connection status/tools
+#   then ask it "find references to <fn>" and confirm it answers from
+#   the LSP rather than re-reading files.
+```
 
 ## Notes / assumptions to verify
 
