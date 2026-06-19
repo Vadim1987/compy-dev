@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. The Centralized LSP-MCP Bridge
+  # ==========================================
+  lsp-mcp:
+    image: mcp-lsp:lua
+    build: 
+      context: ./src/mcp
+    container_name: lsp-mcp
+    volumes:
+      # The LSP server needs read access to your codebase to build the AST
+      - ../../../../../../:/repo:ro
+    user: "${UID:-1000}:${GID:-1000}"
+    networks:
+      - mcp-internal-net
+
+  # ==========================================
+  # 2. Interactive LLM Assistants
+  # ==========================================
+  codeinspect:
+    image: compy-dev-agent
+    build: 
+      context: ./src/agent
+    container_name: developer
+    tty: true          # Keeps the bash session alive for docker-exec
+    stdin_open: true
+    command: /bin/bash
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      # Developer agent gets read/write access to actually write code
+      - ../../../../../../:/repo:ro
+      - ../notes:/notes:rw
+    networks:
+      - mcp-internal-net
+
+networks:
+  # A dedicated internal bridge network. Nothing is exposed to the host system.
+  mcp-internal-net:
+    driver: bridge

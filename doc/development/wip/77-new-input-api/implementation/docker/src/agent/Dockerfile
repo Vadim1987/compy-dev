@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
         ca-certificates \
         curl \
         wget \
+        socat \
         git \
         build-essential \
         software-properties-common \
@@ -57,9 +58,24 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
+USER claude
+VOLUME /home/claude/.local
+RUN mkdir /home/claude/.local/bin
+ENV PATH=/home/claude/.local/bin:/home/claude/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
 # ── Claude Code (on-board implementation agent) ──────────────────────
 RUN npm install -g @anthropic-ai/claude-code
 
 RUN curl -fsSL https://antigravity.google/cli/install.sh | bash - 
 
 WORKDIR /repo
+VOLUME /repo
+VOLUME /repo/.cursor
+
+ADD mcp.json /home/claude/.cursor/mcp.json
+ADD mcp.json /usr/share/claude/.mcp.json
+ADD file_mcp_rule.md /usr/share/claude/rules/
+add CLAUDE.md /usr/share/claude/CLAUDE.md
+
+ENV CLAUDE_CONFIG_DIR=/usr/share/claude
+ENV AGY_MCP_CONFIG=/usr/share/claude/.mcp.json

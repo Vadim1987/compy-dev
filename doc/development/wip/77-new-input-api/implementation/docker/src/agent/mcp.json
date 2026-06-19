@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lua-lsp": {
+      "command": "socat",
+      "args": ["STDIO", "TCP:lsp-mcp:5000"]
+    }
+  }
+}
