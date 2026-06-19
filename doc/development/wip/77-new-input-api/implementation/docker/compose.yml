@@ -38,6 +38,7 @@ services:
     volumes:
       # read/write + commit: develop and review need to edit the tree
       - ../../../../../../:/repo:rw
+      - ../:/impl:rw
       # per-CLI config/state/auth — named volumes so image seeds land on
       # first `up` and self-edits persist (a bind mount would not seed)
       - claude-config:/home/claude/.claude

@@ -19,7 +19,15 @@ LÖVE2D project. The project root is mounted at **/repo** and is your cwd.
 - **/repo/agents/context.md** — system overview + the command cheatsheet.
 
 Reference docs under **/repo/doc/development/** (overview, conventions/,
-internals/, drawing_system). Load on demand, not upfront.
+internals/, drawing_system) are pre-extracted, synthetic knowledge —
+on-demand, not upfront, **but they are the right first source, not a last
+resort**. When a question is **architectural or about intent** ("how does
+X reach Y", "why is this structured this way", design contracts), or when
+you're **unsure how a subsystem fits together**, read the relevant doc
+**before** reverse-engineering from code — code tells you *what*, the doc
+tells you *why* and the intended shape (assume minor drift; the code wins
+on facts). `internals/user_input.md` covers cross-component input usage
+directly relevant to this feature.
 
 ## This workflow — human-managed, no brainlab process
 
@@ -35,8 +43,30 @@ internals/, drawing_system). Load on demand, not upfront.
 ## Lua MCP↔LSP (the `lua-lsp` MCP server)
 
 A local stdio bridge (`mcp-language-server` → `lua-language-server` over
-the `/repo` workspace) gives you defs/refs/diagnostics over an AST —
-prefer it to re-reading files; it cuts token churn.
+the `/repo` workspace) gives you defs / refs / diagnostics over a real
+**AST**. Reach for it for **correctness**, not as an optional optimization
+— string search and re-reading files give you *guesses* (comments,
+shadowed names, drifted memory); the LSP gives you *facts*. **You can
+always use it when unsure** — if you're not certain where something is
+defined, who calls it, or whether an edit type-checks, ask the LSP rather
+than inferring.
+
+Use the right tool for the query:
+
+- **Exploratory / multi-symbol / "where is this pattern"** → grep first
+  (correct opening move). Once you've **landed on a concrete symbol**,
+  switch to the LSP to resolve it precisely — don't keep grepping a name
+  you already have.
+- **A symbol in hand** (you know the name + rough place) → LSP
+  `definition` / `hover`, not another grep.
+- **Impact / "who calls this", "what breaks if I change it"** → LSP
+  `references` / call-hierarchy. This is its highest-value use and is
+  central to **this** feature (unifying controller topology + rewiring
+  event propagation = exactly this question).
+- **Completeness-critical refactor sweeps** → LSP **plus** grep as a
+  backstop, cross-checked. Lua is dynamically typed; LSP refs can be
+  **incomplete**, and a thin result you *trust* will hide a caller. Treat
+  refs as a strong hint, not ground truth — grep confirms you missed none.
 
 After a bash/script edit to any `.lua` or `.luarc.json` file, **pause
 ~1s (`sleep 1`) before** calling the MCP refs/defs/diagnostics tools —

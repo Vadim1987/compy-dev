@@ -103,7 +103,7 @@ RUN ver=$(curl -fsSL https://api.github.com/repos/LuaLS/lua-language-server/rele
 # Short, stable handle for the spec/outcome/review tree. Dangling at build
 # time — resolves once /repo mounts. Outside /repo, so the tree stays clean.
 # In a CLI chat:  "implement /impl/prompts/M2.md" · "run /impl/review-prompt.md"
-RUN ln -s /repo/doc/development/wip/77-new-input-api/implementation /impl
+#RUN ln -s /repo/doc/development/wip/77-new-input-api/implementation /impl
 
 # ── unprivileged agent user ──────────────────────────────────────────
 RUN groupadd -g ${GID} claude \
