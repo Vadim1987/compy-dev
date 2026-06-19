@@ -1,2 +1,0 @@
-File Editing Protocol:
-After using a bash command or script to modify any .lua or .luarc.json file, you MUST pause execution for 1 second (e.g., sleep 1) before utilizing any MCP tools to fetch references, definitions, or diagnostics. This ensures the external Language Server has fully re-indexed the workspace.

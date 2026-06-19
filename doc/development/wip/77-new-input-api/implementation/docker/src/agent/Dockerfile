@@ -1,14 +1,28 @@
 # Agentic dev image for the feat/77 implementation workflow.
-# NOT a dockerization of the canonical project — see M0 prompt.
+# NOT a dockerization of the canonical project — see ../../prompts/M0.md.
 #
-# Provides: LuaJIT 5.1, LuaRocks 3.12.0, busted/luautf8/luafilesystem,
-# LÖVE 11.5, just, Node 20 LTS, Claude Code.
-# Unit tests (busted tests) do NOT need love — mock_love covers them.
-# love src requires a display; wrap with xvfb-run for headless use.
+# Hosts THREE interchangeable assistant CLIs over the compy toolchain:
+#   - claude        (Claude Code, global npm)
+#   - cursor-agent  (Cursor CLI, ~/.local/bin)
+#   - agy           (Google Antigravity, ~/.local/bin)
+# Exec a bash session in, launch whichever one, then: chat about the
+# code, hand it a spec from /repo/.../implementation/prompts/, or run a
+# review. Each CLI keeps its own config dir; compose.yml mounts those as
+# named volumes, so the image-baked seeds (MCP wiring, orientation) land
+# on first `up` and the human's later edits + auth tokens persist.
+#
+# Toolchain: LuaJIT 5.1 / luarocks 3.12.0 / busted+luautf8+luafilesystem
+# / LÖVE 11.5 / just / Node 20 LTS.
+# Unit tests (busted) do NOT need LÖVE — mock_love covers them.
+# `love src` needs a display; wrap with `xvfb-run` for headless use.
 
 FROM ubuntu:22.04
-
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Host-matching uid/gid so files written into the /repo bind mount stay
+# owned by the human. Override: UID=$(id -u) GID=$(id -g) docker compose build
+ARG UID=1000
+ARG GID=1000
 
 # ── base utilities + LuaJIT ─────────────────────────────────────────
 RUN apt-get update && apt-get install -y \
@@ -42,7 +56,7 @@ RUN luarocks install busted \
     && luarocks install luautf8 \
     && luarocks install luafilesystem
 
-# ── LÖVE2D 11.5 (DEVELOPMENT.md) ────────────────────────────────────
+# ── LÖVE2D 11.5 (DEVELOPMENT.md; ppa love-stable currently 11.5) ─────
 RUN add-apt-repository ppa:bartbes/love-stable \
     && apt-get update \
     && apt-get install -y love \
@@ -58,24 +72,38 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-USER claude
-VOLUME /home/claude/.local
-RUN mkdir /home/claude/.local/bin
-ENV PATH=/home/claude/.local/bin:/home/claude/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
-# ── Claude Code (on-board implementation agent) ──────────────────────
+# ── Claude Code (global; on PATH for every user) ─────────────────────
 RUN npm install -g @anthropic-ai/claude-code
 
-RUN curl -fsSL https://antigravity.google/cli/install.sh | bash - 
+# ── unprivileged agent user ──────────────────────────────────────────
+RUN groupadd -g ${GID} claude \
+    && useradd -m -u ${UID} -g ${GID} -s /bin/bash claude
+USER claude
+ENV HOME=/home/claude
+ENV PATH=/home/claude/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
+# ── Cursor CLI (cursor-agent → ~/.local/bin) ────────────────────────
+RUN curl https://cursor.com/install -fsS | bash
+
+# ── Google Antigravity CLI (agy → ~/.local/bin) ─────────────────────
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
+
+# ── MCP-LSP wiring ───────────────────────────────────────────────────
+# One mcp.json (lua-lsp over socat→lsp-mcp:5000) seeded into each CLI's
+# native MCP config path — all three accept the same {mcpServers} shape.
+# These dirs are named volumes (compose.yml): seed lands on first `up`,
+# edits persist after.
+COPY --chown=claude:claude mcp.json /home/claude/.cursor/mcp.json
+COPY --chown=claude:claude mcp.json /home/claude/.gemini/antigravity-cli/mcp_config.json
+COPY --chown=claude:claude mcp.json /home/claude/.claude.json
+
+# ── orientation pointer (no rule duplication — points at /repo's own
+#    rule chain + the LSP re-index protocol). claude/cursor auto-load
+#    /repo/CLAUDE.md + /repo/AGENTS.md from cwd; agy needs an explicit
+#    global context file, and claude's user-memory reinforces the LSP
+#    rule, so seed both. ──────────────────────────────────────────────
+COPY --chown=claude:claude orientation.md /home/claude/.gemini/GEMINI.md
+COPY --chown=claude:claude orientation.md /home/claude/.claude/CLAUDE.md
+
+# API keys are injected at run time (compose `environment:`), never baked.
 WORKDIR /repo
-VOLUME /repo
-VOLUME /repo/.cursor
-
-ADD mcp.json /home/claude/.cursor/mcp.json
-ADD mcp.json /usr/share/claude/.mcp.json
-ADD file_mcp_rule.md /usr/share/claude/rules/
-add CLAUDE.md /usr/share/claude/CLAUDE.md
-
-ENV CLAUDE_CONFIG_DIR=/usr/share/claude
-ENV AGY_MCP_CONFIG=/usr/share/claude/.mcp.json

@@ -1,41 +1,67 @@
-version: '3.8'
+# feat/77 human-managed agent stack. `docker compose up -d`, then
+#   docker compose exec codeinspect bash
+# launch one of: claude · cursor-agent · agy — to inspect, implement a
+# spec, or run a review. No brainlab process; the human drives it.
+#
+# uid/gid: defaults to 1000. On a non-1000 host, build with matching ids:
+#   UID=$(id -u) GID=$(id -g) docker compose build
+# API keys come from the host env (claude: ANTHROPIC_API_KEY,
+# cursor: CURSOR_API_KEY; agy authenticates interactively on first run).
+
+name: compy-feat77-agents
 
 services:
-  # ==========================================
-  # 1. The Centralized LSP-MCP Bridge
-  # ==========================================
+  # ── MCP-LSP bridge for Lua ────────────────────────────────────────
+  # Gives the CLIs structural navigation (defs/refs/diagnostics) over an
+  # AST instead of re-reading files — cuts token churn.
+  # ⚠ base image internals UNVERIFIED — see src/mcp/Dockerfile. The agent
+  #   container works without it (the MCP server just won't connect), so
+  #   `docker compose build codeinspect` is independently checkable.
   lsp-mcp:
-    image: mcp-lsp:lua
-    build: 
+    build:
       context: ./src/mcp
+    image: compy-lsp-mcp:lua
     container_name: lsp-mcp
     volumes:
-      # The LSP server needs read access to your codebase to build the AST
+      # read-only: the LSP only needs to read the codebase to build the AST
       - ../../../../../../:/repo:ro
-    user: "${UID:-1000}:${GID:-1000}"
     networks:
       - mcp-internal-net
 
-  # ==========================================
-  # 2. Interactive LLM Assistants
-  # ==========================================
+  # ── agent container (the three CLIs live here) ────────────────────
   codeinspect:
-    image: compy-dev-agent
-    build: 
+    build:
       context: ./src/agent
-    container_name: developer
-    tty: true          # Keeps the bash session alive for docker-exec
+      args:
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
+    image: compy-dev-agent
+    container_name: codeinspect
+    tty: true          # keep the bash session alive for `compose exec`
     stdin_open: true
     command: /bin/bash
-    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /repo
+    environment:
+      # injected from host; never baked into the image
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      CURSOR_API_KEY: "${CURSOR_API_KEY:-}"
     volumes:
-      # Developer agent gets read/write access to actually write code
-      - ../../../../../../:/repo:ro
-      - ../notes:/notes:rw
+      # read/write + commit: develop and review need to edit the tree
+      - ../../../../../../:/repo:rw
+      # per-CLI config/state/auth — named volumes so image seeds land on
+      # first `up` and self-edits persist (a bind mount would not seed)
+      - claude-config:/home/claude/.claude
+      - cursor-config:/home/claude/.cursor
+      - agy-config:/home/claude/.gemini
     networks:
       - mcp-internal-net
 
 networks:
-  # A dedicated internal bridge network. Nothing is exposed to the host system.
+  # dedicated internal bridge; nothing exposed to the host
   mcp-internal-net:
     driver: bridge
+
+volumes:
+  claude-config:
+  cursor-config:
+  agy-config:
