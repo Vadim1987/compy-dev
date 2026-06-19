@@ -32,7 +32,11 @@ internals/, drawing_system). Load on demand, not upfront.
 - `doc/development/wip/77-new-input-api/design/` is a **frozen input** —
   read it, never edit it.
 
-## LSP re-index protocol (when the lua-lsp MCP server is connected)
+## Lua MCP↔LSP (the `lua-lsp` MCP server)
+
+A local stdio bridge (`mcp-language-server` → `lua-language-server` over
+the `/repo` workspace) gives you defs/refs/diagnostics over an AST —
+prefer it to re-reading files; it cuts token churn.
 
 After a bash/script edit to any `.lua` or `.luarc.json` file, **pause
 ~1s (`sleep 1`) before** calling the MCP refs/defs/diagnostics tools —

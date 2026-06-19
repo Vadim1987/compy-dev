@@ -11,11 +11,22 @@
 # named volumes, so the image-baked seeds (MCP wiring, orientation) land
 # on first `up` and the human's later edits + auth tokens persist.
 #
+# Lua MCP↔LSP (token-saving code nav): each CLI spawns, over stdio,
+# `mcp-language-server --workspace /repo --lsp lua-language-server`
+# (no sidecar, no network — see mcp.json).
+#
 # Toolchain: LuaJIT 5.1 / luarocks 3.12.0 / busted+luautf8+luafilesystem
 # / LÖVE 11.5 / just / Node 20 LTS.
 # Unit tests (busted) do NOT need LÖVE — mock_love covers them.
 # `love src` needs a display; wrap with `xvfb-run` for headless use.
 
+# ── stage 1: build the generic MCP↔LSP bridge (Go) ──────────────────
+# Built here, copied as a static binary into the final image — keeps Go
+# out of the runtime layer.
+FROM golang:1.23-bookworm AS lspbridge
+RUN go install github.com/isaacphi/mcp-language-server@latest
+
+# ── final image ──────────────────────────────────────────────────────
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -29,7 +40,6 @@ RUN apt-get update && apt-get install -y \
         ca-certificates \
         curl \
         wget \
-        socat \
         git \
         build-essential \
         software-properties-common \
@@ -75,6 +85,19 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # ── Claude Code (global; on PATH for every user) ─────────────────────
 RUN npm install -g @anthropic-ai/claude-code
 
+# ── Lua MCP↔LSP: generic bridge (from stage 1) + lua-language-server ─
+# x86_64 asset; on arm64 swap the LuaLS asset suffix to -linux-arm64.
+COPY --from=lspbridge /go/bin/mcp-language-server /usr/local/bin/mcp-language-server
+RUN ver=$(curl -fsSL https://api.github.com/repos/LuaLS/lua-language-server/releases/latest \
+            | grep -oP '"tag_name":\s*"\K[^"]+') \
+    && wget -q -O /tmp/luals.tar.gz \
+        "https://github.com/LuaLS/lua-language-server/releases/download/${ver}/lua-language-server-${ver}-linux-x64.tar.gz" \
+    && mkdir -p /opt/lua-language-server \
+    && tar -xzf /tmp/luals.tar.gz -C /opt/lua-language-server \
+    && rm /tmp/luals.tar.gz \
+    && ln -s /opt/lua-language-server/bin/lua-language-server \
+        /usr/local/bin/lua-language-server
+
 # ── unprivileged agent user ──────────────────────────────────────────
 RUN groupadd -g ${GID} claude \
     && useradd -m -u ${UID} -g ${GID} -s /bin/bash claude
@@ -88,11 +111,11 @@ RUN curl https://cursor.com/install -fsS | bash
 # ── Google Antigravity CLI (agy → ~/.local/bin) ─────────────────────
 RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 
-# ── MCP-LSP wiring ───────────────────────────────────────────────────
-# One mcp.json (lua-lsp over socat→lsp-mcp:5000) seeded into each CLI's
-# native MCP config path — all three accept the same {mcpServers} shape.
-# These dirs are named volumes (compose.yml): seed lands on first `up`,
-# edits persist after.
+# ── MCP wiring ───────────────────────────────────────────────────────
+# One mcp.json (lua-lsp via the local stdio bridge) seeded into each
+# CLI's native MCP config path — all three accept the same {mcpServers}
+# shape. These dirs are named volumes (compose.yml): seed lands on first
+# `up`, edits persist after.
 COPY --chown=claude:claude mcp.json /home/claude/.cursor/mcp.json
 COPY --chown=claude:claude mcp.json /home/claude/.gemini/antigravity-cli/mcp_config.json
 COPY --chown=claude:claude mcp.json /home/claude/.claude.json

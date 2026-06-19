@@ -1,8 +1,14 @@
 {
   "mcpServers": {
     "lua-lsp": {
-      "command": "socat",
-      "args": ["STDIO", "TCP:lsp-mcp:5000"]
+      "command": "mcp-language-server",
+      "args": [
+        "--workspace", "/repo",
+        "--lsp", "lua-language-server",
+        "--",
+        "--logpath=/tmp/lua-ls-log",
+        "--metapath=/tmp/lua-ls-meta"
+      ]
     }
   }
 }

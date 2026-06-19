@@ -3,6 +3,10 @@
 # launch one of: claude · cursor-agent · agy — to inspect, implement a
 # spec, or run a review. No brainlab process; the human drives it.
 #
+# Single container: the three CLIs each spawn the Lua MCP↔LSP bridge
+# (mcp-language-server -> lua-language-server) locally over stdio — no
+# sidecar, no network. See src/agent/mcp.json.
+#
 # uid/gid: defaults to 1000. On a non-1000 host, build with matching ids:
 #   UID=$(id -u) GID=$(id -g) docker compose build
 # API keys come from the host env (claude: ANTHROPIC_API_KEY,
@@ -11,24 +15,6 @@
 name: compy-feat77-agents
 
 services:
-  # ── MCP-LSP bridge for Lua ────────────────────────────────────────
-  # Gives the CLIs structural navigation (defs/refs/diagnostics) over an
-  # AST instead of re-reading files — cuts token churn.
-  # ⚠ base image internals UNVERIFIED — see src/mcp/Dockerfile. The agent
-  #   container works without it (the MCP server just won't connect), so
-  #   `docker compose build codeinspect` is independently checkable.
-  lsp-mcp:
-    build:
-      context: ./src/mcp
-    image: compy-lsp-mcp:lua
-    container_name: lsp-mcp
-    volumes:
-      # read-only: the LSP only needs to read the codebase to build the AST
-      - ../../../../../../:/repo:ro
-    networks:
-      - mcp-internal-net
-
-  # ── agent container (the three CLIs live here) ────────────────────
   codeinspect:
     build:
       context: ./src/agent
@@ -53,13 +39,6 @@ services:
       - claude-config:/home/claude/.claude
       - cursor-config:/home/claude/.cursor
       - agy-config:/home/claude/.gemini
-    networks:
-      - mcp-internal-net
-
-networks:
-  # dedicated internal bridge; nothing exposed to the host
-  mcp-internal-net:
-    driver: bridge
 
 volumes:
   claude-config:
