@@ -23,7 +23,7 @@
 # ── stage 1: build the generic MCP↔LSP bridge (Go) ──────────────────
 # Built here, copied as a static binary into the final image — keeps Go
 # out of the runtime layer.
-FROM golang:1.23-bookworm AS lspbridge
+FROM golang:1.24-bookworm AS lspbridge
 RUN go install github.com/isaacphi/mcp-language-server@latest
 
 # ── final image ──────────────────────────────────────────────────────
