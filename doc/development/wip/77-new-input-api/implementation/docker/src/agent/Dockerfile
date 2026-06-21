@@ -27,7 +27,7 @@ FROM golang:1.24-bookworm AS lspbridge
 RUN go install github.com/isaacphi/mcp-language-server@latest
 
 # ── final image ──────────────────────────────────────────────────────
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Host-matching uid/gid so files written into the /repo bind mount stay
@@ -35,6 +35,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 #   HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose build
 ARG UID=1000
 ARG GID=1000
+ARG USER=agent
 
 # ── base utilities + LuaJIT ─────────────────────────────────────────
 RUN apt-get update && apt-get install -y \
@@ -79,7 +80,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf \
     | bash -s -- --to /usr/local/bin
 
 # ── Node.js 20 LTS (CI: node-version "lts/Iron") ────────────────────
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
@@ -106,11 +107,12 @@ RUN ver=$(curl -fsSL https://api.github.com/repos/LuaLS/lua-language-server/rele
 #RUN ln -s /repo/doc/development/wip/77-new-input-api/implementation /impl
 
 # ── unprivileged agent user ──────────────────────────────────────────
-RUN groupadd -g ${GID} claude \
-    && useradd -m -u ${UID} -g ${GID} -s /bin/bash claude
-USER claude
-ENV HOME=/home/claude
-ENV PATH=/home/claude/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+RUN groupadd -g ${GID} ${USER} \
+    && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER}
+USER ${USER}
+ENV HOME=/home/${USER}
+ENV PATH=/home/${USER}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+VOLUME /home/${USER}
 
 # ── Cursor CLI (cursor-agent → ~/.local/bin) ────────────────────────
 RUN curl https://cursor.com/install -fsS | bash
@@ -123,17 +125,17 @@ RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 # CLI's native MCP config path — all three accept the same {mcpServers}
 # shape. These dirs are named volumes (compose.yml): seed lands on first
 # `up`, edits persist after.
-COPY --chown=claude:claude mcp.json /home/claude/.cursor/mcp.json
-COPY --chown=claude:claude mcp.json /home/claude/.gemini/antigravity-cli/mcp_config.json
-COPY --chown=claude:claude mcp.json /home/claude/.claude.json
+COPY --chown=${USER}:${USER} mcp.json /home/${USER}/.cursor/mcp.json
+COPY --chown=${USER}:${USER} mcp.json /home/${USER}/.gemini/antigravity-cli/mcp_config.json
+COPY --chown=${USER}:${USER} mcp.json /home/${USER}/.claude.json
 
 # ── orientation pointer (no rule duplication — points at /repo's own
 #    rule chain + the LSP re-index protocol). claude/cursor auto-load
 #    /repo/CLAUDE.md + /repo/AGENTS.md from cwd; agy needs an explicit
 #    global context file, and claude's user-memory reinforces the LSP
 #    rule, so seed both. ──────────────────────────────────────────────
-COPY --chown=claude:claude orientation.md /home/claude/.gemini/GEMINI.md
-COPY --chown=claude:claude orientation.md /home/claude/.claude/CLAUDE.md
+COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.gemini/GEMINI.md
+COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.claude/CLAUDE.md
 
 # API keys are injected at run time (compose `environment:`), never baked.
 WORKDIR /repo

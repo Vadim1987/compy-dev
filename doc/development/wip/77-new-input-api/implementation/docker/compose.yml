@@ -17,7 +17,7 @@
 name: compy-feat77-agents
 
 services:
-  codeinspect:
+  agent:
     build:
       context: ./src/agent
       args:
