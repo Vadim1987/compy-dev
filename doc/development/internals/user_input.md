@@ -33,9 +33,7 @@ The input is not single-line. `Shift+Enter` inserts a newline (`line_feed()`). T
 
 > What assembles multiline input together, providing special handling of Shift+Enter? Love2d? Custom code in UserInputController?
 
-The input view height is `input_max = 14` lines. This is a display limit only — the model can hold more lines, and scrolling within the input works normally. In the editor context this becomes relevant when loading a monster block (> 16 lines): all content is in the model, but only 14 lines are visible at once. See `editor.md` — Monster Blocks for the full picture.
-
-> Remark: 16 lines seems to be implementation mistake, should be same 14?
+The input view height is `input_max = 14` lines. This is a display limit only — the model can hold more lines, and scrolling within the input works normally. In the editor context this becomes relevant when loading a monster block: the editor's buffer viewport is `LINES = 16`, a **separate** limit from `input_max`, so a block can exceed the 14-line input strip — all content stays in the model, but only 14 lines are visible at once. **Open:** `input_max` (14) and `LINES` (16) currently differ, and whether 14 or 16 is the correct monster-block threshold is **not yet settled** — reconciling them is a pending review item (see `editor.md` — *`input_max` vs `LINES`* and *Monster Blocks*).
 
 ### Selection
 
@@ -108,10 +106,14 @@ with no held modifiers serialises to just the key name.
 ```
 
 These two surfaces will be consumed by the `ProjectInputController`
-dispatch table (`compy.input.handlers[combo]`) introduced in M4/M5.
-
-> Weren't there also a requirement to pass the keys pressed to the textinput handler, or text_entered(), as a second argument?
-> we should not reference m4/m5 outside of version context -- for persistent docs the specific implementation milestones are useless without a context
+dispatch table (`compy.input.handlers[combo]`), planned for 0.1.0-m4/m5.
+Those `ProjectInputController` handlers additionally receive the live
+`keys_pressed` proxy as a second argument
+(`:keypressed(k, keys_pressed, isrepeat)`, `:textinput(t, keys_pressed)`).
+The bottom input sink documented here does **not** currently receive it —
+but whether it should (e.g. to handle Shift+Enter or similar uniformly at
+the sink) is a design decision **not yet settled**, to be resolved in the
+0.1.0-m4/m5 design session.
 
 ### Console-specific keys
 
@@ -183,7 +185,7 @@ Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with 
 
 ## The `user_input` Overlay — Input Perspective
 
-### Singleton lifecycle (M2+)
+### Singleton lifecycle (since 0.1.0-m2)
 > Milestone identifiers are meaningless in persistent documentation. Let's stick to semantic versioning and speak about current version -- maybe with prefixes like x.y-m2...
 
 `UserInputController` is a singleton created once in `love.load()`
@@ -229,10 +231,9 @@ The project polls `r:is_empty()` in `love.update`. When the user presses Enter, 
 - `compy.input.show(config)` — activates the singleton
 - `compy.input.hide()` — deactivates without firing cancel chain
 
-(M7 will add `configure`, `clear`, `get_cursor`, `set_cursor`,
-`set_text`.)
-
-> Mark versions -- it was not there before current work, and m7 is an ongoing version (x.y-m7?)
+(Planned for 0.1.0-m7: `configure`, `clear`, `get_cursor`,
+`set_cursor`, `set_text`. The `compy.input` namespace itself is new
+in 0.1.0-m2.)
 
 ---
 

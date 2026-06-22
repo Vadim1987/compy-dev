@@ -7,8 +7,7 @@ TU = require('tests.testutil')
 describe('UserInputController singleton #input', function()
   local mock    = require('tests.mock')
   local cfg     = TU.mock_view_cfg()
-  -- REVIEW: non-mnemonic name, would prefer full mnemonic + short explicit alias
-  local mv      = { render = function() end }
+  local mock_view = { render = function() end }
 
   mock.mock_love({
     state = {
@@ -18,11 +17,13 @@ describe('UserInputController singleton #input', function()
     },
   })
 
-  -- REVIEW: same as in another test -- worth generalizing? and why not real API/flow?
+  -- Per-test controller with model + mock view wired (mirrors main.lua startup wiring).
+  -- (Generalising this helper across specs, and exercising via the compy.input API instead of the
+  -- controller directly, are open A8 items — see M2-human-review.md.)
   local make_ctrl = function()
     local m = UserInputModel(cfg, InputEvalText, true)
     local c = UserInputController(m, nil, true)
-    c:init_view(mv)
+    c:init_view(mock_view)
     return c
   end
 
@@ -30,22 +31,22 @@ describe('UserInputController singleton #input', function()
     love.state.user_input = nil
   end)
 
+  -- NOTE: these assert the singleton's love.state.user_input contract (internals). Behaviour-level
+  -- coverage via the compy.input API / real flows is the A8 / M4-0 characterization-net work — see
+  -- M2-human-review.md. Whether the flag-driven draw contract should be refactored is A5.
   describe('show / hide', function()
-    -- REVIEW: it tests implementation internals, not behavior :( how can we be sure it shows?
     it('show sets user_input', function()
       local c = make_ctrl()
       c:show()
       assert.truthy(love.state.user_input)
     end)
 
-    -- REVIEW: again, implementation internals, not behavior
     it('user_input.C is the controller', function()
       local c = make_ctrl()
       c:show()
       assert.equal(c, love.state.user_input.C)
     end)
 
-    -- REVIEW: same problem -- why not test its really hidden? if love.state.user_input is fundamental contract which alters draw behaviour -- should it be documented and is it sane arch decision first ofall?
     it('hide clears user_input', function()
       local c = make_ctrl()
       c:show()
@@ -53,7 +54,6 @@ describe('UserInputController singleton #input', function()
       assert.is_nil(love.state.user_input)
     end)
 
-    -- REVIEW: the only test of behaviour... and even then, why not via compy.input API? (real consumers are not supposed to interact with controller directly, or are they?) 
     it('show with text pre-fills content', function()
       local c = make_ctrl()
       c:show({ text = 'hello' })
@@ -61,8 +61,19 @@ describe('UserInputController singleton #input', function()
     end)
   end)
 
-  -- REVIEW: silent discard is a seen, at least log should be demanded and checked
   describe('show while active — no-op', function()
+    -- warn-don't-swallow contract (C2): a suppressed show must not be silent.
+    it('warns once when a non-force show is suppressed', function()
+      local c = make_ctrl()
+      c:show({ text = 'first' })
+      local warned = 0
+      local orig_warn = Log.warn
+      Log.warn = function() warned = warned + 1 end
+      c:show({ text = 'second' })
+      Log.warn = orig_warn
+      assert.equal(1, warned)
+    end)
+
     it('second show leaves text unchanged', function()
       local c = make_ctrl()
       c:show({ text = 'first' })
@@ -70,7 +81,6 @@ describe('UserInputController singleton #input', function()
       assert.same({ 'first' }, c:get_text())
     end)
 
-    -- REVIEW: again internals, not behaviour...
     it('second show leaves user_input unchanged', function()
       local c = make_ctrl()
       c:show()
@@ -82,7 +92,6 @@ describe('UserInputController singleton #input', function()
     it('no-op does not reset content', function()
       local c = make_ctrl()
       c:show({ text = 'abc' })
-      -- REVIEW: worth checking also with c:show('another text') -- in same test case just another step+assertion
       c:show()
       assert.same({ 'abc' }, c:get_text())
     end)
@@ -96,8 +105,21 @@ describe('UserInputController singleton #input', function()
       assert.same({ 'replaced' }, c:get_text())
     end)
 
-    -- REVIEW: non-realistic scenario, why someone would call with just 'force:true'? Should alter something else, e.g. prompt? or should test different scenarios?
-    -- btw, will it be shown in show-hide-show sequence without a force flag?
+    -- warn-don't-swallow boundary (C2): force is the sanctioned override, so it must NOT warn.
+    it('does not warn when force=true overrides', function()
+      local c = make_ctrl()
+      c:show({ text = 'abc' })
+      local warned = 0
+      local orig_warn = Log.warn
+      Log.warn = function() warned = warned + 1 end
+      c:show({ force = true, text = 'new' })
+      Log.warn = orig_warn
+      assert.equal(0, warned)
+    end)
+
+    -- force without text must preserve existing content (the text subset is the only field
+    -- force re-applies on an active overlay). Broader force scenarios (e.g. live prompt change)
+    -- belong to the compy.input.configure API in 0.1.0-m7.
     it('preserves text when text not in config', function()
       local c = make_ctrl()
       c:show({ text = 'keep' })
@@ -105,7 +127,6 @@ describe('UserInputController singleton #input', function()
       assert.same({ 'keep' }, c:get_text())
     end)
 
-    -- REVIEW: internals, not behaviour...
     it('force leaves user_input active', function()
       local c = make_ctrl()
       c:show({ text = 'abc' })
@@ -114,8 +135,8 @@ describe('UserInputController singleton #input', function()
     end)
   end)
 
-  -- REVIEW: this is maybe the only internals test worth keeping, as it validates NFR -- no object waste
-  -- REVIEW: worth testing against 'force' flag too, as we know that with lack of 'force' everything *might* be simply ignored so the test would be trivial and not test any real mutability paths
+  -- Validates the M2 NFR directly: the controller is reused, never reallocated across show/hide
+  -- cycles (no object waste — the whole point of the singleton extraction).
   describe('singleton identity', function()
     it('same instance across show/hide cycles', function()
       local c = make_ctrl()

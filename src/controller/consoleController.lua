@@ -309,6 +309,10 @@ local compy_audio = require("util.audio")
 local compy_graphics = {
   shape2d = require("util.graphics.shape2d")
 }
+-- Builds the `compy.terminal` sub-namespace — the console OUTPUT surface. These wrap the live
+-- `terminal` (the REPL/console text grid): position the grid cursor (gotoxy), show/hide it, and
+-- clear the screen. This is where a project WRITES to the console; it is always present while the
+-- project runs. Contrast with `compy.input` below, which is the input-solicitation surface.
 local get_compy_terminal = function(terminal)
   return {
     --- @param x number
@@ -328,11 +332,18 @@ local get_compy_terminal = function(terminal)
     end
   }
 end
--- QUESTION: how it coexists with get_compy_terminal ? what is the purpose of both? worth adding comments
--- REMARK: make it clear that its where we contruct new 'input API' (as its how it will be mentioned and documented everywhere)
--- REMARK: worth immediately put here all other planned methods as noops/not-implemented?
--- REMARK: worth explaining that it wraps user input controller? (well it does, but its in fact architectural contract, not occasional 'it happens to')
--- REMARK: worth adding new doc or section in doc about new input api, explicitly?
+-- Builds the `compy.input` sub-namespace — the input-SOLICITATION surface, complementary to
+-- compy.terminal (above). Where compy.terminal is the always-present console OUTPUT grid that the
+-- project WRITES to, compy.input is a transient overlay widget the project pops up to ASK the user
+-- for text and get a value back (show/hide the field now; configure/cursor/text planned). The two
+-- "cursor" notions differ: terminal.gotoxy moves the console grid cursor, whereas the planned
+-- input.get_cursor/set_cursor address the caret WITHIN the input field.
+-- By architectural contract these wrappers are the ONLY project-facing surface for the input
+-- singleton: they wrap UserInputController (love.state.user_input_controller); projects never touch
+-- the controller directly. Namespace + lifecycle docs: doc/development/internals/user_input.md.
+-- DEFERRED (0.1.0-m7): whether to pre-stub the planned methods (configure/clear/get_cursor/
+-- set_cursor/set_text) here as explicit not-implemented no-ops is unsettled — to be resolved in the
+-- m7 design session.
 local get_compy_input = function()
   return {
     show = function(cfg)
@@ -346,7 +357,8 @@ local get_compy_input = function()
   }
 end
 
--- QUESTION: what and when is expected to call it? worth adding comment clarifying the purpose
+-- Builds the `compy.*` table injected into a project's sandbox env (terminal, audio, graphics,
+-- fonts, input); called while preparing the project environment.
 local get_compy_namespace = function(terminal)
   require("util.namespace.fonts")
   return {
@@ -572,36 +584,47 @@ function ConsoleController.prepare_project_env(cc)
     close_project(cc)
   end
 
-  -- this line was not there before patch, why? was it globalized by mistake and now we forcefully localize it? anything breaks?
+  -- Per-session reftable handle the project polls (r:is_empty()/r()). Local by design: M2 dropped the
+  -- now-unused ui_model/ui_con companions from this declaration (the singleton is built in main.lua).
   local input_ref
   local create_input_handle   = function()
     input_ref = table.new_reftable()
   end
 
-  -- REVIEW: why and where its called from? what's the purpose of this 'input' function?  
-  -- REVIEW: why return value is not specified?
+  -- Legacy shared entry behind project_env.input_text / input_code / user_input: opens the input
+  -- singleton with the project's evaluator and returns the poll reftable. Removed in 0.1.0-m8
+  -- (projects migrate to the compy.input callback API).
   --- @param eval Evaluator
   --- @param prompt string?
   --- @param init str?
+  --- @return table? input_ref  the poll reftable, or nil if the open was suppressed
   local input                 = function(eval, prompt, init)
-    -- REVIEW(line below): is the one-line return compatible with coding styleguide?
-    -- REVIEW(line below): worth log warning? (traceless ignorance is bad)
-    if love.state.user_input then return end
-    -- REVIEW(line below): when its instantiated? when could it be *not* instantiated? arent' we having it provisioned as a singleton?
-    local ui = love.state.user_input_controller
-    -- REVIEW (line below): warn and explain why? (btw: why and when would it happen)
-    if not ui then return end
-    -- REVIEW (line below): warn and explain why? (btw: why and when would it happen)
-    if not input_ref then return end
-    -- REVIEW: where's the 'force' flag interpretation/passthrough? or its the legacy wrapper which is presumed to keep old behaviour and be tolerant to suppressions?
-    ui:show({
+    -- C2 (warn-don't-swallow): suppressed opens are logged, not silent.
+    if love.state.user_input then
+      Log.warn('input() ignored — an input overlay is already active')
+      return
+    end
+    -- the controller is provisioned once at startup (main.lua); nil only before load / in bare tests.
+    local uic = love.state.user_input_controller
+    if not uic then
+      Log.warn('input() ignored — user_input_controller not initialised')
+      return
+    end
+    if not input_ref then
+      Log.warn('input() ignored — no input handle; call user_input() first')
+      return
+    end
+    -- DEFERRED (0.1.0-m4/m5): force-flag passthrough for this legacy wrapper is unspecified — it
+    -- currently relies on show()'s default (no force). To be resolved in the m4/m5 design session.
+    uic:show({
       eval = eval,
       prompt = prompt,
       text = init,
       result = input_ref,
     })
-    -- REVIEW: previously exissting explicit initializations of model and view are removed (ui_con:init_view(), ui_con:update_view...
-    --         while its clear that we do it by purpose (avoid recreation of triade on each request), are we sure user_input_controller will handle it itself? and once again, where it was initialized?
+    -- View init/update are intentionally NOT called here: the singleton owns its view (bound once via
+    -- init_view in main.lua) and show()->open_fresh()->update_view() renders it. (Verified safe — no
+    -- missing init; avoids recreating the M/V/C triade per request.)
     return input_ref
   end
 
@@ -621,17 +644,22 @@ function ConsoleController.prepare_project_env(cc)
     return input(InputEvalText, prompt, init)
   end
 
+  --- Legacy live-write of the input's text content (not the prompt). Replaced by
+  --- compy.input.set_text in 0.1.0-m7 and removed in 0.1.0-m8.
   --- @param content str
   project_env.write_to_input  = function(content)
-    local ui = love.state.user_input
-    -- REVIEW: silent ignorace - bad, worth at least log warning?
-    if not ui then return end
-    -- REVIEW: is it a new method? Also: while ui is a controller itself, and its ui.C is likely reference to itself, why call via reference? why not just ui.set_text?
-    -- REVIEW: 'ui' is a poor abbreviation, I undertstand it stands for 'user input' but could be easily mistaken for 'user_interface'
-    -- REVIEW: will it update view correctly? (if view is redrawn from within framework 'draw' loop, will we have a stale view?)
-    -- REVIEW: its not exactly clear from the method name, will this thing set prompt or the text content itself
-    -- REVIEW: why not use compy.input for that? (afaik, write_to_input is a legacy method which we plan to ditch?)
-    ui.C:set_text(content)
+    -- `overlay` is the published { M, C, V } handle; .C is the controller, whose set_text mutates
+    -- the model's text. (Named `overlay`, not `ui`, to avoid reading as "user interface".)
+    local overlay = love.state.user_input
+    -- C2 (warn-don't-swallow):
+    if not overlay then
+      Log.warn('write_to_input ignored — no active input overlay')
+      return
+    end
+    -- DEFERRED (0.1.0-m7): whether this path refreshes the view correctly (vs. a stale frame when the
+    -- view is redrawn inside the framework draw loop) is the same question as its durable replacement
+    -- compy.input.set_text — to be resolved in the m7 design session.
+    overlay.C:set_text(content)
   end
 
   --- @param filters table

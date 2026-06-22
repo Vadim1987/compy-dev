@@ -357,13 +357,17 @@ function love.load()
   local CC = ConsoleController(CM, ctrl)
   local CV = ConsoleView(baseconf, CC)
 
-  -- REVIEW: cannot controller provision its Model and View? Why M and V are even managed separately?
+  -- UserInput M/V/C are constructed explicitly here (mirroring the Console M/V/C triple above)
+  -- and injected, not self-provisioned by the controller. Whether the controller should own its
+  -- model/view construction is the open A5 question — see implementation/reviews/M2-human-review.md.
   local ui_m = UserInputModel(baseconf, InputEvalText, true)
   local ui_c = UserInputController(ui_m, nil, true)
   local ui_v = UserInputView(baseconf.view, ui_c)
-  -- REVIEW: does it mean unconditional show? what is 'init_view' exactly doing?
+  -- init_view binds the view to the controller (self.view = v); it is NOT an activation/show.
   ui_c:init_view(ui_v)
-  -- REVIEW: do I remember correctly that its an instance which only purpose is to be accessed by API wrappers? (compy.input) why is it in the global state then?
+  -- App-wide handle for the singleton: the compy.input wrappers and the overlay draw path resolve
+  -- the controller through love.state (service-locator pattern; the flag/registry shape is part of
+  -- the A5 contract question).
   love.state.user_input_controller = ui_c
 
   ctrl.setup_callback_handlers(CC)

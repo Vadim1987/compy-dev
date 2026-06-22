@@ -1,8 +1,7 @@
--- REVIEW: is this boilerplate loaded anywhere else? if so, why would not we reuse it? if not, why we need it here?
-
--- REVIEW: which interface is mimiced/mocked? reference neeeded
--- REVIEW/remark: gfx is normally a shortcut for love.graphics (or compy.graphics)
--- view.view calls gfx.newFont() at top level; needs gfx ctx
+-- Stub view.view before anything requires it: the real module (src/view/view.lua) calls
+-- gfx.newFont() at load time (gfx = love.graphics), which needs a graphics context absent in
+-- tests. This minimal stub mirrors the fields the controller path touches.
+-- (Dedup of this stub across the input specs is an open A8 test-infra item — see M2-human-review.md.)
 package.preload['view.view'] = function()
   View = {
     prev_draw = nil,
@@ -14,9 +13,8 @@ package.preload['view.view'] = function()
   }
 end
 
--- REVIEW: same question about boilerplate: used elsewhere? needed here? why?
--- REVIEW: comment mentions keyboard, but I do not see keyboard mocked 
--- handlers access love.state/keyboard/DEBUG/event at runtime
+-- The controller handlers read love.state / DEBUG / event at runtime; mock just those.
+-- (love.keyboard is not mocked and the suite passes, so this path doesn't poll it.)
 local mock = require('tests.mock')
 mock.mock_love({
   state = {
@@ -26,25 +24,24 @@ mock.mock_love({
   },
   DEBUG = false,
   PROFILE = false,
-  -- REVIEW: we do not test quit here, just ensure the process does not crash?
+  -- quit is a no-op: we assert the handlers don't crash, not quit behaviour.
   event = { quit = function() end },
 })
 
--- REVIEW: what is setup_callback_handlers and how its related to our task? why not wire it into mock.mock_love above?
--- mock_love omits handlers; needed by setup_callback_handlers
+-- mock_love omits love.handlers; setup_callback_handlers installs the real keypressed/
+-- keyreleased closures into it, so the table must exist first.
 love.handlers = { }
 
 require('controller.controller')
 
-
--- REVIEW: is it reproducing some real workflow?
--- wires keypressed/keyreleased closures into love.handlers
+-- Reproduce the app's real startup wiring: setup_callback_handlers is the production path that
+-- registers the input handlers (not a test shortcut).
 Controller.setup_callback_handlers({
   cfg = { mode = 'dev' },
 })
 
--- REVIEW: do we have a problem with test isolation here? does it need more fundamental resolution? do other tests perform the same setup?
--- save refs: other test files replace _G.love during collection
+-- Save handler refs now: other spec files replace _G.love during collection, which would
+-- otherwise clobber these. (Shared cross-spec love mutation is an open A8 isolation item.)
 local kp_handler = love.handlers.keypressed
 local kr_handler = love.handlers.keyreleased
 
@@ -58,35 +55,40 @@ describe('keys_pressed table #input', function()
     assert.truthy(Controller.keys_pressed['s'])
   end)
 
-  -- REVIEW: why not test as a single flow? kp_handler / assert pressed / kp_released / assert not pressed
-  -- REVIEW: I understand the idea of testing once concern per test. but one concern is not one assertion. also we test the *feature* not *implementation*? and feature is both key_pressed/key_released, they are not parts used independently 
+  -- A8 (test the contract): single press->release flow + behaviour-vs-internals restructure
+  -- is deferred to the 0.1.0-m4 test-strategy pass — see M2-human-review.md.
   it('removes key on keyreleased', function()
     Controller.keys_pressed['s'] = true
     kr_handler('s')
     assert.is_nil(Controller.keys_pressed['s'])
   end)
 
-  -- REVIEW: this is good but is worth assertion that no more keys are returning truthy if they are not pressed
   it('tracks multiple held keys', function()
     kp_handler('lctrl')
     kp_handler('s')
     assert.truthy(Controller.keys_pressed['lctrl'])
     assert.truthy(Controller.keys_pressed['s'])
+    -- unpressed keys stay falsey
+    assert.is_nil(Controller.keys_pressed['rctrl'])
+    assert.is_nil(Controller.keys_pressed['a'])
   end)
 
-  -- REVIEW: and where the fold happens? should not the last assertion be actually truthy, because either lctrl and rctrl semantically means ctrl is pressed? (there's no separate 'ctrl' key which is neither left not right -- so this scenario assumes the last assertion is always falsey and never changes, therefore makes no sense?
-  it('does not fold lr variants in table', function()
+  -- The table keeps RAW l/r names distinct; folding to a generic "ctrl" happens only in
+  -- combo_string, never in keys_pressed itself. (Replaces the old is_nil('ctrl') assertion,
+  -- which was a tautology: nothing ever writes a folded 'ctrl' key to the table.)
+  it('keeps lr variants distinct; fold is combo_string\'s job', function()
     kp_handler('lctrl')
     kp_handler('rctrl')
     assert.truthy(Controller.keys_pressed['lctrl'])
     assert.truthy(Controller.keys_pressed['rctrl'])
-    assert.is_nil(Controller.keys_pressed['ctrl'])
+    -- positive proof the fold lives in combo_string, not the table:
+    assert.equal('ctrl+x', Controller.combo_string('x', Controller.keys_pressed))
   end)
 end)
 
 
--- REVIEW: as said during documentation review I think we should deserialize combo strings on hooks setup (into constructed-in-place hook dispatcher function)
--- REVIEW: I know the idea above may contradict no-if-arrows-rule but I wonder whether we can find better resolution because current implemetation means creating empty table on each keypressed just for serialization
+-- A6 (serialize-vs-match): proposal to replace per-keypress combo_string serialisation with
+-- registration-time dispatcher closures is deferred to the 0.1.0-m5 design — see M2-human-review.md.
 describe('combo_string #input', function()
   local cs = Controller.combo_string
 

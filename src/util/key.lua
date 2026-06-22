@@ -5,11 +5,14 @@ local unpack  = unpack or table.unpack
 local shift_k = { "lshift", "rshift" }
 local ctrl_k  = { "lctrl", "rctrl" }
 local alt_k   = { "lalt", "ralt" }
--- REVIEW: gui button not used anywhere -- mark it explicitly (better check if we are purposefully not using it, e.g. by limiting ourselves to minimalistic ANSI keys set?)
+-- gui = super/cmd/win. Kept in the modifier set for parity with ctrl/alt/shift so
+-- combo_string can serialise gui-combos; no framework handler registers one yet.
 local gui_k   = { "lgui", "rgui" }
 
-
--- REVIEW: exact purpose of using these triples? how they were not neededbefore?
+-- Single source of truth for left/right modifier folding. Each row is
+-- { left-key, right-key, generic-name }; combo_string folds e.g. lctrl|rctrl -> "ctrl"
+-- (precedence order: ctrl, alt, shift, gui). Centralised here in 0.1.0-m2a — it was
+-- previously a duplicate COMBO_MODS literal in controller.lua.
 local mod_triples = {
   { ctrl_k[1],  ctrl_k[2],  "ctrl" },
   { alt_k[1],   alt_k[2],   "alt" },
