@@ -7,6 +7,7 @@ TU = require('tests.testutil')
 describe('UserInputController overlay #input', function()
   local mock = require('tests.mock')
   local cfg  = TU.mock_view_cfg()
+  -- REVIEW: I only understood that 'mv' means mock_view on maybe third re-read of the code. can we consider using semantically meaningful names, and aliasing them explicitly only if justified?
   -- view with both render (update_view) and draw (overlay)
   local mv = {
     render = function() end,
@@ -21,6 +22,7 @@ describe('UserInputController overlay #input', function()
     },
   })
 
+  -- REVIEW: absolutely not obvious what this function is for, why its needed, how it helps the test
   local make_ctrl = function()
     local m = UserInputModel(cfg, InputEvalText, true)
     local c = UserInputController(m, nil, true)
@@ -28,11 +30,14 @@ describe('UserInputController overlay #input', function()
     return c
   end
 
+  -- REVIEW: no code is supposed to call love.state.user_input=nil directly? if so, what we are testing here? why not call explicitly the api function which nullifies it?
+  -- REVIEW, unrelated: previous implementation destroyed user input on text submission (in some scenarios), do we test them? 
   before_each(function()
     love.state.user_input = nil
   end)
 
   describe('overlay shape', function()
+    -- REVIEW: which code is supossed to call V.draw()? is not it a controllers duty to draw?
     it('user_input.V is drawable after show', function()
       local c = make_ctrl()
       c:show()
@@ -57,6 +62,7 @@ describe('UserInputController overlay #input', function()
       c:set_text('REMEMBER_ME')
 
       local push_called = false
+      -- REVIEW: why redefine love.event table instead of just an element in it?
       love.event = {
         push = function(ev)
           if ev == 'userinput' then
@@ -67,6 +73,7 @@ describe('UserInputController overlay #input', function()
 
       local ok, result = c.model:handle(true)
       assert.truthy(ok)
+      -- REVIEW: poor flag name, I'd prefer it to be something like userinput_emitted -- explaining the purpose of the test not the mechanics of the mock
       assert.truthy(push_called)
 
       c:hide()

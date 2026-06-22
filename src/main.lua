@@ -357,10 +357,13 @@ function love.load()
   local CC = ConsoleController(CM, ctrl)
   local CV = ConsoleView(baseconf, CC)
 
+  -- REVIEW: cannot controller provision its Model and View? Why M and V are even managed separately?
   local ui_m = UserInputModel(baseconf, InputEvalText, true)
   local ui_c = UserInputController(ui_m, nil, true)
   local ui_v = UserInputView(baseconf.view, ui_c)
+  -- REVIEW: does it mean unconditional show? what is 'init_view' exactly doing?
   ui_c:init_view(ui_v)
+  -- REVIEW: do I remember correctly that its an instance which only purpose is to be accessed by API wrappers? (compy.input) why is it in the global state then?
   love.state.user_input_controller = ui_c
 
   ctrl.setup_callback_handlers(CC)

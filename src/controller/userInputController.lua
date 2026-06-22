@@ -178,6 +178,9 @@ end
 --- singleton API  ---
 ----------------------
 
+-- REVIEW: worth mentioning that its internal api, not exposed directly to consumers? (only via wrappers)
+-- REVIEW: why not class methods as in the code above? looks inconsistent
+
 --- @param self UserInputController
 --- @param cfg table
 local apply_config = function(self, cfg)
@@ -190,25 +193,32 @@ local apply_config = function(self, cfg)
   if cfg.text ~= nil then
     self.model:set_text(cfg.text)
   end
+  -- REVIEW: what is it?
   if cfg.result ~= nil then
     self.result = cfg.result
   end
 end
+
+-- REVIEW: when its initiated? why separate method? what happens if its called once again? why 'open_fresh' and not something more conventional (init), if function does not bear its own purpose beyond initialization of singleton lifecycle?
 
 --- Fresh activation: clear when no text given, apply config,
 --- then expose the full { M, C, V } overlay handle.
 --- @param self UserInputController
 --- @param cfg table
 local open_fresh = function(self, cfg)
+  -- REVIEW: why not manage this special condition inside apply_config? what is so special about it that its treated in a different place?
   if cfg.text == nil then
     self.model:clear_input()
   end
   apply_config(self, cfg)
+  -- REVIEW: it its legacy placholder not supposed to stand -- mark it in comments?
+  -- REVIEW: are M and V accessed directly? by whom/what? More generic question: what will access this '.user_input'? Worth factoring out as separate function like 'setup_legacy_user_input' which would therefore clearly signal legacy status and also would be annotated/commented regarding its purpose (what and when is supposed to use it)
   love.state.user_input = {
     M = self.model,
     C = self,
     V = self.view,
   }
+  -- REVIEW: when else update_view will happen?
   self:update_view()
 end
 
@@ -218,8 +228,10 @@ end
 function UserInputController:show(config)
   local cfg = config or {}
   if love.state.user_input then
+    -- REVIEW: warn in log? traceless ignorance is evil
     if not cfg.force then return end
     if cfg.text ~= nil then
+      -- REVIEW: is it documented somewhere that we only apply said subset of config? why can we set text this way but not clear? is it documented?
       self.model:set_text(cfg.text)
       self:update_view()
     end
@@ -228,6 +240,7 @@ function UserInputController:show(config)
   open_fresh(self, cfg)
 end
 
+-- REVIEW: when and how is it supposed to physically hide thing from the screen? is some redrawing method checking the presence of 'user_input' flag? why would it use the flag presence instead of quering the singletone controller state itself?
 --- Deactivate without firing the cancel chain.
 function UserInputController:hide()
   love.state.user_input = nil
@@ -237,20 +250,26 @@ end
 --- event handlers ---
 ----------------------
 
+-- REVIEW: absence of at least stub function is weird, but let it be for now
+
 ----------------
 --  keyboard  --
 ----------------
 
+-- REVIEW: why set of keys pressed is not passed along? it was in the design
 --- @param k string
 --- @return boolean? limit
 function UserInputController:keypressed(k)
-  self:update_view()
+  -- REVIEW: why update_view is invoked first of all, especially before processing, when nothing is changed yet in the model or state?
+  self:update_view() 
+  -- REVIEW: what is '_G.web' and why the condition? but ok... maybe we are not touching this piece yet? 
   if _G.web and k == 'space' then
     self:textinput(' ')
   end
   local input = self.model
   local ret
 
+  -- REVIEW: if this piece was untouched, is combo string assembled elsewhere?
   if input:has_error() then
     if Key.is_enter(k)
         or k == "up" or k == "down"
@@ -447,6 +466,7 @@ function UserInputController:keypressed(k)
   return ret
 end
 
+-- REVIEW: again, where's the info about keys pressed? why we collect it but do not pass?
 --- @param t string
 function UserInputController:textinput(t)
   self:update_view()

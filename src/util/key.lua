@@ -5,8 +5,11 @@ local unpack  = unpack or table.unpack
 local shift_k = { "lshift", "rshift" }
 local ctrl_k  = { "lctrl", "rctrl" }
 local alt_k   = { "lalt", "ralt" }
+-- REVIEW: gui button not used anywhere -- mark it explicitly (better check if we are purposefully not using it, e.g. by limiting ourselves to minimalistic ANSI keys set?)
 local gui_k   = { "lgui", "rgui" }
 
+
+-- REVIEW: exact purpose of using these triples? how they were not neededbefore?
 local mod_triples = {
   { ctrl_k[1],  ctrl_k[2],  "ctrl" },
   { alt_k[1],   alt_k[2],   "alt" },
