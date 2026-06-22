@@ -1,5 +1,7 @@
 # paint
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Pixel paint application** with a color palette, brush/eraser tools, and line weight selector.
 
 ## Architecture

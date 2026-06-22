@@ -1,5 +1,7 @@
 # sapper
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Minesweeper** implemented entirely in pen-and-paper mode. The board is drawn once at init and updated incrementally on each user action.
 
 ## Architecture

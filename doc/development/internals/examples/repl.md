@@ -1,5 +1,7 @@
 # repl
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Minimal REPL.** Accepts text input from the user and echoes it to the terminal.
 
 ## Code

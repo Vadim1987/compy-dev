@@ -1,5 +1,7 @@
 # life
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Conway's Game of Life.** Full real-time simulation with keyboard and mouse controls, speed adjustment, and random initialization.
 
 ## Architecture

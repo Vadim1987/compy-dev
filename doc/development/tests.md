@@ -1,5 +1,7 @@
 # Test Suite Review
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 Assessment of `tests/` relative to the codebase and the knowledge base under `doc/development/`. Organised into: relevant infrastructure, coverage map, gaps.
 
 ---

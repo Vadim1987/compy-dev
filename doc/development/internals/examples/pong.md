@@ -1,5 +1,7 @@
 # pong
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Full Pong game** with two AI difficulty levels, two-player keyboard mode, fixed-timestep physics, and mouse control for the player paddle.
 
 ## Architecture

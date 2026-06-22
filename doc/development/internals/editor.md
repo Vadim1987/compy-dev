@@ -1,5 +1,7 @@
 # Editor — Implementation Overview
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 ## The Core Concept: Block-Centric Editing
 
 The editor does not operate on lines. For Lua files, it operates on **blocks** — top-level syntactic units produced by the metalua chunker. A block is either a `Chunk` (one or more source lines forming a complete top-level statement/expression) or an `Empty` (a blank separator line). The selection highlight, navigation, submit, delete, insert, and move operations all act on blocks, not on individual lines.

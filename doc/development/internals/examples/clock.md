@@ -1,5 +1,7 @@
 # clock
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Animated digital clock** with randomly picked foreground and background colors. Uses a LÖVE stencil for a decorative moving-circle mask effect.
 
 ## Architecture

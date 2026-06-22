@@ -1,5 +1,7 @@
 # turtle
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Turtle graphics interpreter** driven by typed commands and keyboard input.
 
 ## Architecture

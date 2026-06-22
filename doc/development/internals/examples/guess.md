@@ -1,5 +1,7 @@
 # guess
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Number guessing game** with per-character input validation.
 
 ## Architecture

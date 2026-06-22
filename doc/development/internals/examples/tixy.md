@@ -1,5 +1,7 @@
 # tixy
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Live-coded pixel grid** inspired by tixy.land. A 16×16 grid of circles whose radii and colors are driven by a user-editable formula `tixy(t, i, x, y)`.
 
 ## Architecture

@@ -1,5 +1,7 @@
 # Implementation Overview
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 High-level implementation details for Compy. Load this when you need architecture context beyond what CLAUDE.md provides.
 
 ## Hardware and Platform Context

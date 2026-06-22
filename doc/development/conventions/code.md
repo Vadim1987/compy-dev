@@ -1,5 +1,7 @@
 # Code Conventions
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 > These conventions are not fully fixed — they evolve with experience. Some are unique to this project by design.
 > Further discussion: https://github.com/compy-toys/compy/issues/54
 

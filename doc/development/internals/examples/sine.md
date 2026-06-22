@@ -1,5 +1,7 @@
 # sine
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **One-shot sine wave plot.** Draws axes and a sine curve at startup using `gfx.points`. No update loop, no input.
 
 ## Code pattern

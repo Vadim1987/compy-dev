@@ -1,5 +1,7 @@
 # balloons
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Real-time typing game.** Balloons carrying words fall from the top of the screen; the player types the words to pop them before they reach the bottom.
 
 ## Architecture

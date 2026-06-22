@@ -1,5 +1,7 @@
 # Drawing System
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 ## Two Modes
 
 User projects can draw in one of two ways, selected by whether `love.draw` is overridden.

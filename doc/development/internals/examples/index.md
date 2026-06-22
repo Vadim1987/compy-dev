@@ -1,5 +1,7 @@
 # Examples — Index
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 All examples live under `src/examples/`. Each is a self-contained project with a `main.lua`. They demonstrate different combinations of framework capabilities.
 
 Detailed docs for each are in this directory.

@@ -1,5 +1,7 @@
 # Architecture Principles
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 Compy is an educational artifact as much as a software project. Its architecture reflects that: the goal is to model good habits for students, not to maximize abstraction or minimize developer friction.
 
 ---

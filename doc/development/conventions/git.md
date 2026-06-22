@@ -1,5 +1,7 @@
 # Commit Message Conventions
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 This project follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). The primary motivation is **automatic semantic versioning** — commit types signal the severity of a change, not just its category.
 
 ## Types

@@ -1,5 +1,7 @@
 # Console Mode — Implementation Overview
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 Console mode is the default application state — active when no project is running and the editor is not open. It presents the user with a REPL-like interface: type Lua, press Enter, see results. It is also the lifecycle manager for projects: opening, running, suspending, stopping, and closing them.
 
 ---

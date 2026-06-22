@@ -1,5 +1,7 @@
 # Project Documentation Review
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 Assessment of `doc/` relative to the codebase and the knowledge base under `doc/development/`. Organised into: relevant (usable as-is), drift (needs attention), gaps.
 
 ---

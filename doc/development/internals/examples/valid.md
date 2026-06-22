@@ -1,5 +1,7 @@
 # valid
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 **Validator showcase.** Collects user input with a combination of custom validators and prints the result.
 
 ## Architecture

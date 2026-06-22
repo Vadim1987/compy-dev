@@ -1,5 +1,7 @@
 # User Input — Implementation Overview
 
+<!-- authored By LLM; human-approved NOT YET -->
+
 Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget shared across console, editor, and project overlays) and **mouse/pointer input** (handled partly by the framework, partly delegated to projects). This doc covers both, with mode-specific notes where the behavior differs.
 
 ---
