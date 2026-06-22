@@ -328,6 +328,11 @@ local get_compy_terminal = function(terminal)
     end
   }
 end
+-- QUESTION: how it coexists with get_compy_terminal ? what is the purpose of both? worth adding comments
+-- REMARK: make it clear that its where we contruct new 'input API' (as its how it will be mentioned and documented everywhere)
+-- REMARK: worth immediately put here all other planned methods as noops/not-implemented?
+-- REMARK: worth explaining that it wraps user input controller? (well it does, but its in fact architectural contract, not occasional 'it happens to')
+-- REMARK: worth adding new doc or section in doc about new input api, explicitly?
 local get_compy_input = function()
   return {
     show = function(cfg)
@@ -340,6 +345,8 @@ local get_compy_input = function()
     end,
   }
 end
+
+-- QUESTION: what and when is expected to call it? worth adding comment clarifying the purpose
 local get_compy_namespace = function(terminal)
   require("util.namespace.fonts")
   return {
@@ -565,25 +572,36 @@ function ConsoleController.prepare_project_env(cc)
     close_project(cc)
   end
 
+  -- this line was not there before patch, why? was it globalized by mistake and now we forcefully localize it? anything breaks?
   local input_ref
   local create_input_handle   = function()
     input_ref = table.new_reftable()
   end
 
+  -- REVIEW: why and where its called from? what's the purpose of this 'input' function?  
+  -- REVIEW: why return value is not specified?
   --- @param eval Evaluator
   --- @param prompt string?
   --- @param init str?
   local input                 = function(eval, prompt, init)
+    -- REVIEW(line below): is the one-line return compatible with coding styleguide?
+    -- REVIEW(line below): worth log warning? (traceless ignorance is bad)
     if love.state.user_input then return end
+    -- REVIEW(line below): when its instantiated? when could it be *not* instantiated? arent' we having it provisioned as a singleton?
     local ui = love.state.user_input_controller
+    -- REVIEW (line below): warn and explain why? (btw: why and when would it happen)
     if not ui then return end
+    -- REVIEW (line below): warn and explain why? (btw: why and when would it happen)
     if not input_ref then return end
+    -- REVIEW: where's the 'force' flag interpretation/passthrough? or its the legacy wrapper which is presumed to keep old behaviour and be tolerant to suppressions?
     ui:show({
       eval = eval,
       prompt = prompt,
       text = init,
       result = input_ref,
     })
+    -- REVIEW: previously exissting explicit initializations of model and view are removed (ui_con:init_view(), ui_con:update_view...
+    --         while its clear that we do it by purpose (avoid recreation of triade on each request), are we sure user_input_controller will handle it itself? and once again, where it was initialized?
     return input_ref
   end
 
@@ -606,7 +624,13 @@ function ConsoleController.prepare_project_env(cc)
   --- @param content str
   project_env.write_to_input  = function(content)
     local ui = love.state.user_input
+    -- REVIEW: silent ignorace - bad, worth at least log warning?
     if not ui then return end
+    -- REVIEW: is it a new method? Also: while ui is a controller itself, and its ui.C is likely reference to itself, why call via reference? why not just ui.set_text?
+    -- REVIEW: 'ui' is a poor abbreviation, I undertstand it stands for 'user input' but could be easily mistaken for 'user_interface'
+    -- REVIEW: will it update view correctly? (if view is redrawn from within framework 'draw' loop, will we have a stale view?)
+    -- REVIEW: its not exactly clear from the method name, will this thing set prompt or the text content itself
+    -- REVIEW: why not use compy.input for that? (afaik, write_to_input is a legacy method which we plan to ditch?)
     ui.C:set_text(content)
   end
 

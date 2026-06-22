@@ -133,9 +133,14 @@ local function no_drift(prev, cur)
   return false
 end
 
+-- REVIEW: why we need 'triples'? which purpose they serve? (that's what any reader of this code will immediately ask -- names are not self-explanatory)
 local COMBO_MODS = Key.mod_triples
 
+-- REVIEW: signature type annotations, purpose?
 local function combo_string(k, keys_pressed)
+  -- REVIEW: GC churn? how often will this table be created and recreated? is there a more accurate way to build a string? (hint: we have combo mods already)
+  -- REVIEW: as we're only going to use this string for handlers registration purposes, can we register them e.g. by boolean matcher instead of serialization? (therefore combo-string won't be needed)
+  -- REVIEW: I can imagine a custom function built in-place during callbacks registration, which is simply receiving k, keys_pressed and fires appropriate callback if its condition (encoded as combo-string is met). But we have no need to calculate combo-string on each keypress -- in most cases it will be miss, no need to do that
   local parts = { }
   for _, m in ipairs(COMBO_MODS) do
     if keys_pressed[m[1]] or keys_pressed[m[2]] then
