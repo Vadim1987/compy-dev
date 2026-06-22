@@ -14,7 +14,7 @@
 # API keys come from the host env (claude: ANTHROPIC_API_KEY,
 # cursor: CURSOR_API_KEY; agy authenticates interactively on first run).
 
-name: compy-feat77-agents
+name: compy
 
 services:
   agent:
@@ -24,28 +24,20 @@ services:
         UID: "${HOST_UID:-1000}"
         GID: "${HOST_GID:-1000}"
     image: compy-dev-agent
-    container_name: codeinspect
     tty: true          # keep the bash session alive for `compose exec`
     stdin_open: true
     command: /bin/bash
     working_dir: /repo
-    environment:
-      # injected from host; never baked into the image
-      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
-      CURSOR_API_KEY: "${CURSOR_API_KEY:-}"
+    #environment:
+    #  # injected from host; never baked into the image
+    #  ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    #  CURSOR_API_KEY: "${CURSOR_API_KEY:-}"
     tmpfs:
       - /tmp
     volumes:
-      # read/write + commit: develop and review need to edit the tree
+      - compy-agent-home:/home/agent
       - ../../../../../../:/repo:rw
       - ../:/impl:rw
-      # per-CLI config/state/auth — named volumes so image seeds land on
-      # first `up` and self-edits persist (a bind mount would not seed)
-      - claude-config:/home/claude/.claude
-      - cursor-config:/home/claude/.cursor
-      - agy-config:/home/claude/.gemini
 
 volumes:
-  claude-config:
-  cursor-config:
-  agy-config:
+  compy-agent-home:

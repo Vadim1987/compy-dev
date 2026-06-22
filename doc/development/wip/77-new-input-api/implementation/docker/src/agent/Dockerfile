@@ -107,7 +107,9 @@ RUN ver=$(curl -fsSL https://api.github.com/repos/LuaLS/lua-language-server/rele
 #RUN ln -s /repo/doc/development/wip/77-new-input-api/implementation /impl
 
 # ── unprivileged agent user ──────────────────────────────────────────
-RUN groupadd -g ${GID} ${USER} \
+# uid 1000 ships taken by the default `ubuntu` user on 24.04 — remove it first.
+RUN userdel -r ubuntu 2>/dev/null || true \
+    && groupadd -g ${GID} ${USER} \
     && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER}
 USER ${USER}
 ENV HOME=/home/${USER}
