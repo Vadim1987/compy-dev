@@ -20,14 +20,22 @@ LÖVE2D textinput event
           → updates InputText (cursor-aware string)
             → view re-renders
 ```
+> NOTE: this doc does not show handling events via project -- neither via new Controller nor via old 'overlay'. it *mentions* overlay but does not show how UserInputController:textinput is triggered
+> Also, do we have (or will we implement) a mechanism that will hook project code to e.g. 'textinput' (not just draining it down into UserInputController, which I assume is default/last-resort if no custom handling of textinput is defined by project)?
 
 Text characters arrive via `love.textinput` (OS-processed, handles IME and layout). Raw key events for non-character keys (backspace, enter, arrows) arrive via `love.keypressed`.
+> Side-question: Does Love2d guarantee the order in which textinput/keypressed arrive when character key is pressed? (there's evidence that KP *is* fired for characters-keys too, as it reflects the event of physical keyboard)
+> Side-question: what about 'isrepeat' modifier? Where its defined, where its suppressed and why?
 
 ### Multiline input
 
 The input is not single-line. `Shift+Enter` inserts a newline (`line_feed()`). The cursor model tracks both line and column. Lines are stored as a `Dequeue<string>` in `InputText`. The view wraps long lines at `drawableChars` width (same wrap machinery as the editor's `VisibleContent`).
 
+> What assembles multiline input together, providing special handling of Shift+Enter? Love2d? Custom code in UserInputController?
+
 The input view height is `input_max = 14` lines. This is a display limit only — the model can hold more lines, and scrolling within the input works normally. In the editor context this becomes relevant when loading a monster block (> 16 lines): all content is in the model, but only 14 lines are visible at once. See `editor.md` — Monster Blocks for the full picture.
+
+> Remark: 16 lines seems to be implementation mistake, should be same 14?
 
 ### Selection
 
@@ -68,7 +76,11 @@ love.handlers.keypressed
 
 Global shortcuts in `love.handlers.keypressed` (controller.lua:520+) are intercepted before anything reaches the controller: Ctrl+Pause suspends, Ctrl+Q quits project, Ctrl+S stops run or closes buffer, Ctrl+Shift+R resets application, Ctrl+Alt+R restarts project, Ctrl+Esc exits app.
 
+> our plan includes firing "before_quit", "before_suspend" on the project? 
+
 If `love.state.user_input` is set (overlay active), key events go to the overlay controller, bypassing the main input.
+
+> what defined the overlay controller before we introduced the singleton change? Was every projet defining their own controller and view, or they simply read the r() for text input values, with everything else being totally obscure for them? Was the recreation of M,V,C triade (before change) just a brute-force way of resetting the state, not leaving anything behind?
 
 ### Key state: `Controller.keys_pressed` and `combo_string`
 
@@ -79,6 +91,8 @@ the global `Controller`. It is updated at the very top of
 canonical (`"lctrl"`, `"rshift"`, `"return"`, etc.); left/right
 variants are stored without folding — `lctrl` and `rctrl` are two
 separate entries, not merged into `ctrl`.
+
+> Let's mark "introduced in version..." like Love2D does. Can also include "planned for version" instead of milestone references
 
 `Controller.combo_string(k, keys_pressed)` serialises a key event
 into a canonical combo string. It prepends any held modifiers in
@@ -96,6 +110,9 @@ with no held modifiers serialises to just the key name.
 These two surfaces will be consumed by the `ProjectInputController`
 dispatch table (`compy.input.handlers[combo]`) introduced in M4/M5.
 
+> Weren't there also a requirement to pass the keys pressed to the textinput handler, or text_entered(), as a second argument?
+> we should not reference m4/m5 outside of version context -- for persistent docs the specific implementation milestones are useless without a context
+
 ### Console-specific keys
 
 - **PageUp/PageDown**: history back/forward
@@ -103,6 +120,8 @@ dispatch table (`compy.input.handlers[combo]`) introduced in M4/M5.
 - **Enter** (no shift): submit → `evaluate_input()`
 - **Ctrl+L**: clear terminal output
 - **Shift+Enter**: insert newline in input (multiline expression)
+
+> In this context what is 'console-specific'? Specific for console mode? If so, are they interpreted at console controller (where they would belong) or in generic controller (which would therefore be assuming duties of specific mode and which would be wrong?)? 
 
 ### Editor-specific keys
 
@@ -112,11 +131,17 @@ See `editor.md` for full detail. Key differences from console mode:
 - Escape loads selected block text into input
 - Ctrl+M / Ctrl+F switch modes
 
+> Techically, how its different? Which hooks are redefined?
+
 ### UserInputController keypressed (shared)
 
 `UserInputController:keypressed` handles the low-level input operations regardless of context: removers (backspace, delete, Ctrl+Y delete line), vertical cursor movement, horizontal movement (Left/Right, Home/End, Alt+Home/End for line vs field boundaries), Shift+Enter newline, Ctrl+D duplicate line, copy/cut/paste (Ctrl+C/X/V and Shift+Insert/Delete), selection management.
 
+> what 'regardless of context' means there? Projects can or cannot redefine their own hooks?
+
 The `oneshot` flag on `UserInputModel` (set for project overlays) enables a submit path inside `UserInputController:keypressed` — on Enter, the evaluator runs and the result is sent to the callback. Console submission is handled separately in `ConsoleController:keypressed`, not here.
+
+> what exactly 'oneshot' is? I do not get it. Is it auto-triggering of text evaluator when Enter is keypressed? Is it reasonable way of handling event? Is there better way, are we planning for it?
 
 ---
 
@@ -159,6 +184,7 @@ Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with 
 ## The `user_input` Overlay — Input Perspective
 
 ### Singleton lifecycle (M2+)
+> Milestone identifiers are meaningless in persistent documentation. Let's stick to semantic versioning and speak about current version -- maybe with prefixes like x.y-m2...
 
 `UserInputController` is a singleton created once in `love.load()`
 (in `src/main.lua`) and stored in `love.state.user_input_controller`.
@@ -176,6 +202,8 @@ and runs a view update. Deactivation: `UserInputController:hide()` (or
 a `text` field is in the config; otherwise the existing text is
 preserved. No cancel chain fires in either case.
 
+> Functional adjustment: let's warn if 'show' without force is suppressed? (rationale: no silent action)
+
 ### Dispatch while active
 
 While `love.state.user_input` is set:
@@ -186,7 +214,13 @@ While `love.state.user_input` is set:
   framework's `love.update` wrapping of the project draw function
   (`controller.lua`, `set_love_update`)
 
+> we're going to disable the path "instead of main controller", aren't we? Worth mentioning
+
 The project polls `r:is_empty()` in `love.update`. When the user presses Enter, the evaluator runs, and if it passes, the result is stored in the `reftable` ref. On the next `update()`, `r:is_empty()` returns false, `r()` returns the value and resets to empty.
+
+> the project can poll r:is_empty() from wherever? love.update is just typical place to do that? 
+> worth mentioning we're going to deprecate this way of polling? (do we?)
+> I am sure that overlay view is not always redrawn -- it was a problem in balloons on the game end? or it was a different problem (model not updated, therefore view reflecting old model)?
 
 ### `compy.input` namespace
 
@@ -197,6 +231,8 @@ The project polls `r:is_empty()` in `love.update`. When the user presses Enter, 
 
 (M7 will add `configure`, `clear`, `get_cursor`, `set_cursor`,
 `set_text`.)
+
+> Mark versions -- it was not there before current work, and m7 is an ongoing version (x.y-m7?)
 
 ---
 
@@ -213,3 +249,5 @@ The project polls `r:is_empty()` in `love.update`. When the user presses Enter, 
 | `src/view/input/userInputView.lua` | Renders the input strip and status line |
 | `src/controller/controller.lua` | Global key dispatch, click detection, user handler management |
 | `src/controller/consoleController.lua` | Top-level key/text dispatch, overlay creation API |
+
+> key files are good, but its not clear what uses them
