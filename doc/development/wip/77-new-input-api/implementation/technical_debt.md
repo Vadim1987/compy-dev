@@ -31,6 +31,11 @@ feature closes**, not carried into the project at large._
 | turtle `Esc` clears input in place | behaviour / needs-investigation | **anticipated** | characterise intended `Esc` semantics; reconcile with G-B (editor `Esc` does *not* clear) |
 | G-A tixy shift+click sequence | UX / needs-investigation | **anticipated** | characterise before the input surface is called author-stable |
 | G-B editor buffer not cleared on Escape | possible defect / needs-investigation | **anticipated** | branch-level search first; file as a defect only if confirmed |
+| M4-0 `input_session.lua` driver unused | dead code / inconsistency | **open** | M4 test-first step should adopt it as the net's driver, or the net's inline copy is redundant |
+| M4-0 keyboard-debounce reimplemented in-test | test coverage | **open** | revisit at M8 keyboard migration; pin the example's own debounce, not a test-local copy |
+| M4-0 `mock.keystroke` isrepeat/scancode opts unexercised | test coverage | **anticipated** | path goes live when M4 converts the isrepeat `pending` → live |
+| M4-0 maze Lua-command path not black-box characterizable | scope boundary | **anticipated** | M8 scope; routing + `is_empty` covered, so not blocking M4 |
+| M4-0 `tests.md` not updated for new emitters | docs | **open** | document `mock.textinput` + `keystroke` opts at M4-0 closure or M4 |
 
 > The **planned** rows have a commissioned closure spec; pick them up with their milestone. The
 > **anticipated** rows are deliberately *not* commissioned — they may never need action; revisit at
@@ -160,6 +165,46 @@ concrete need appears.
 - **Revisit:** When a milestone next touches the overlay/dispatch wiring (≈M4, when the controller
   owns dispatch) — add a test that drives the actual `set_love_update` draw wrapper against the
   singleton, closing the slice take 1 first exposed.
+
+### M4-0 — `tests/helpers/input_session.lua` exists but the net does not use it — **open**
+
+- **Where:** `tests/helpers/input_session.lua` (new driver) vs.
+  `tests/input/characterization_spec.lua` — the net **inlines a verbatim copy** of the driver
+  (`local session = { press/release/type/repeat_press }`) instead of `require`-ing the helper.
+  `grep -rn input_session` finds no consumer.
+- **State:** The Acceptance bullet "a driver exists **and is used by the net**" is half-met: it
+  exists, but the net duplicates it rather than consuming it. Harmless to the green suite, but it is
+  dead code today and a DRY breach — and M4/M5/M6 are told to build their test-first steps on this
+  driver.
+- **Why it stands:** Reviewer does not edit feature code. Cheap to fix (delete the inline copy, add
+  `local session = require('tests.helpers.input_session').new()` after the mock_love setup).
+- **Revisit:** M4's test-first step — adopt the helper as the net's single driver, or remove it.
+
+### M4-0 — keyboard once-per-press "debounce" is reimplemented in-test, not characterized
+
+- **Where:** `tests/input/characterization_spec.lua` `keyboard once-per-press debounce` —
+  `before_each` defines its own `love.keypressed`/`love.keyreleased` with a local `held_keys`
+  edge-tracker; the 4 tests then assert against **that test-local logic**, not the `keyboard`
+  example's code.
+- **State:** The only *production* behaviour these tests pin is handler→`love.keypressed` routing
+  (which already duplicates the D-9 tests — see outcome perturbation 2, where breaking routing reds
+  both). A regression in the real `keyboard` example's debounce would **not** be caught. The spec
+  named this the "best characterization showcase"; as written it does not characterize the example.
+- **Why it stands:** Acceptable for guarding **M4–M7** (those rework controller dispatch/routing, and
+  the routing teeth are real); the example itself is migrated at M8.
+- **Revisit:** When `keyboard` migrates (M8), pin the example's own debounce, driven from its code.
+
+### M4-0 — overlay-mechanism collapse + uncharacterized maze Lua path
+
+- **Where:** tixy/balloons/turtle/editor-REPL/maze-`is_empty` all drive the **same**
+  `make_overlay(InputEvalText, …)` path (generic `UserInputController` + `InputEvalText`), differing
+  only by typed string — they characterize the overlay submit/cancel mechanism, not the individual
+  example projects' wiring (root shared with the *overlay test vs. stub* entry above).
+- **State + maze:** Defensible per spec/outcome (same mechanism), but coverage is mechanism-level not
+  per-example. Maze's `ctrl_update` / Lua-command path is **not** black-box characterizable without
+  loading the project (outcome "Surfaced gaps"). Input to the M4 escalate-vs-black-box call: **not
+  blocking** — D-9 routing and `is_empty` polling are covered; the Lua-command path is M8 scope.
+- **Revisit:** M8 (full-project characterization) when examples migrate.
 
 ### G-A — tixy shift+click example-sequence behaviour unclear
 
