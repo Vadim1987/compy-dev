@@ -109,10 +109,18 @@ carry these sections:
 | **M2** — singleton extraction | [`prompts/M2.md`](prompts/M2.md) | [`outcomes/M2.md`](outcomes/M2.md) · [`reviews/M2-01.md`](reviews/M2-01.md) | ❌ take-1 not approved (dropped `.V`; stale text) |
 | **M2-01** (corrective take) — restore `{ M, C, V }` | [`prompts/M2-01-restore-mvc.md`](prompts/M2-01-restore-mvc.md) | [`outcomes/M2-01-restore-mvc.md`](outcomes/M2-01-restore-mvc.md) · [`reviews/M2-01-restore-mvc.md`](reviews/M2-01-restore-mvc.md) | ◐ code approved by reviewer; C-1 + C-2-runtime (turtle) confirmed; not closeable until M2-02 lands |
 | **M2-02** — real-submit reprompt test (closes C-2 unit-test half) | [`prompts/M2-02-submit-path-test.md`](prompts/M2-02-submit-path-test.md) | _pending_ | ▶ commissioned — **test-only**; hand to the implement cycle |
+| **M4-0** — characterization net + harness extension (precondition) | [`prompts/M4-0-characterization-net.md`](prompts/M4-0-characterization-net.md) · review: [`prompts/M4-0-characterization-net-review.md`](prompts/M4-0-characterization-net-review.md) | _pending_ | ◐ commissioned (session 22) — **test/harness-only**; forward isrepeat assert rides as `pending`; hand to the implement cycle |
+| **M4** — `ProjectInputController` + overlay-gate removal | [`prompts/M4.md`](prompts/M4.md) · review: [`prompts/M4-review.md`](prompts/M4-review.md) | _pending_ | ◐ commissioned (session 22) — **black-box, guarded by M4-0**; sink-delegation + gate-removal + `isrepeat` thread (M5 dispatch OUT); run after M4-0 |
 
 > **Reviewer bootloader:** [`review-prompt.md`](review-prompt.md) is the **generic, reusable** Opus
 > review prompt — clone it per milestone (fill the spec/outcome/commit placeholders). It now also
 > instructs the reviewer to **check & correct tech-debt tracking** and **verify dev docs were updated**.
+
+> **Launcher shortcuts (repo root):** `agents/dev.md` (implement) and `agents/review.md` (review) let a
+> fresh execution session start from just a **milestone id** instead of the full feature-doc path. Each
+> carries a single ACTIVE-FEATURE pointer line (retarget on feature switch) and delegates everything
+> milestone-specific to the resolved `prompts/<id>.md` / `prompts/<id>-review.md` (review.md falls back
+> to cloning `review-prompt.md` when no filled review prompt exists).
 
 > **Before commissioning M4 (overlay/dispatch rework):** read
 > [`../notes/talk/build-continuity-vs-product-bc.md`](../notes/talk/build-continuity-vs-product-bc.md).
