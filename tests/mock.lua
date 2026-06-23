@@ -53,9 +53,12 @@ local function release_keys()
 end
 
 --- @param s string
---- @param press function
+--- @param press function?
 --- @param hold boolean?
-local function keystroke(s, press, hold)
+--- @param opts table?  e.g. {isrepeat=true, scancode='a'}
+local function keystroke(s, press, hold, opts)
+  local isrepeat = opts and opts.isrepeat or false
+  local scancode = opts and opts.scancode or ''
   local keypress = press or love.keypressed
   local ks = string.split(s, '-')
   for _, v in ipairs(ks) do
@@ -63,7 +66,7 @@ local function keystroke(s, press, hold)
     if m then
       held[m] = true
     else
-      keypress(v)
+      keypress(v, scancode, isrepeat)
     end
   end
   if not hold then
@@ -71,8 +74,22 @@ local function keystroke(s, press, hold)
   end
 end
 
+--- Emit a textinput(t) event through the installed handler.
+--- Independently orderable relative to keypressed (P1: no ordering
+--- guarantee between keypressed and textinput on real devices).
+--- @param t string
+--- @param press function?  defaults to love.handlers.textinput
+local function textinput(t, press)
+  local handler = press
+  if not handler and love.handlers then
+    handler = love.handlers.textinput
+  end
+  if handler then handler(t) end
+end
+
 return {
-  mock_love = mock_love,
-  keystroke = keystroke,
+  mock_love    = mock_love,
+  keystroke    = keystroke,
+  textinput    = textinput,
   release_keys = release_keys,
 }
