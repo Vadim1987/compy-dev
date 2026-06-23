@@ -42,20 +42,22 @@ E13 (session 12) walked how each landed; all are absorbed into the converged des
 
 ---
 
-## SR3 — stakeholder round 3 (`notes/stakeholder-3-input/`, 2026-06-22) — **in-flight → E9**
+## SR3 — stakeholder round 3 (`notes/stakeholder-3-input/`, 2026-06-22) — **resolved at E9 (session 20)**
 
 Pre-feature **pain statements** + two working examples. Assessed by **E20** (verdict: design direction
-holds — validated, not altered) and revalidated clean (session 19). Authoritative processing:
-[`notes/stakeholder-3-input/assessment.md`](stakeholder-3-input/assessment.md) (§"Hand-off to E9").
+holds — validated, not altered), revalidated clean (session 19), and **all six items resolved at the E9
+architect call** (session 20). Authoritative processing:
+[`notes/stakeholder-3-input/assessment.md`](stakeholder-3-input/assessment.md) (§"Hand-off to E9");
+decisions: [`entrypoints/E9-architect-call.md`](../entrypoints/E9-architect-call.md).
 
 | Item | Kind | Where absorbed | Status |
 |---|---|---|---|
-| **Combo-tier repeat semantics** — do `handlers[combo]`/`framework_handlers` fire on key-repeats or only fresh presses? (the one genuinely-open design Q) | open design question | **E9** (next to A6); human-provisional default = handler fires once / `on_key_pressed` sees repeats | ◐ carried to E9 |
-| **`isrepeat` (+`scancode`) threading** — undo the incidental drop at `controller.lua:554` | regression-undo | **E9** + **M4-0 assert** | ◐ carried to E9 |
-| **P1 event-order** — no runtime order guarantee owed; only M4-0 must not bake keypressed→textinput as an invariant | test-design constraint | **E9 / A8 / M4-0** | ◐ carried to E9 |
-| **P3 modifier chords** — solved by combo dispatch (no fix needed) | validation | reinforces **A6** (decide before M5) | ✓ validated |
-| **P4 exit/global-state** — real leak is T3 raw-`love.*` global state across run boundaries → framework snapshot/restore (not a project hook) | out-of-#77-scope sibling | **A1** (project-run-lifecycle); narrowed interrogation pending | ◐ carried to E9 |
-| **Examples `keyboard` + `maze`** — new-style characterization + D-9/M8 migration surfaces | coverage anchors | **M4-0** characterization + migration targets | ◐ carried to E9/M4-0 |
+| **Combo-tier repeat semantics** | open design question | **E9 §6** — ratified **fresh-only** handlers / `on_key_pressed` sees repeats, via structural **`handlers[isrepeat][combo]`** keying | ✓ decided (E9) |
+| **`isrepeat` (+`scancode`) threading** | regression-undo | **E9 §6** — threaded at `controller.lua:554` in **M4**; **M4-0 asserts** (red-until-fixed) | ✓ decided (E9) |
+| **P1 event-order** — no runtime guarantee owed | test-design constraint | **E9 §9** + **M4-0** acceptance (must not bake keypressed→textinput order) | ✓ decided (E9) |
+| **P3 modifier chords** — solved by combo dispatch | validation | reinforces **A6** (E9 §5, decided) | ✓ validated |
+| **P4 exit/global-state** — T3 raw-`love.*` leak | two-layer (hook + framework) | **E9 §8** — (1) project `before_exit()` hook, enabled-not-enforced, **near-term** (M6-family); (2) framework T3 snapshot/restore, guaranteed but **postponed**, A1 sibling | ◐ L1 near-term / L2 parked |
+| **Examples `keyboard` + `maze`** | coverage anchors | **`design/spec/M4-0-characterization-net.md`** — named characterization + D-9/M8 migration targets | ✓ landed (M4-0) |
 
 ---
 
