@@ -20,13 +20,15 @@ frozen design-phase total + the total-estimated log.*
 
 *(Full per-milestone detail and file lists are below; three-point estimates live in
 [`estimates.md`](estimates.md). Per-milestone **specs** — what each sprint consumes — are in
-[`spec/`](spec/). M3 was removed; numbering kept for cross-refs.)*
+[`spec/`](spec/). The old M3 (facade) was discarded by D-1; its roadmap slot now carries the
+**`M4-0`** characterization-net precondition slice — not a revived M3 (see that section).)*
 
 | # | Name | Deliverable | Key files |
 |---|---|---|---|
 | M1 | `keys_pressed` table | Live modifier set + `combo_string()` (modifier-first, l/r folded); no behaviour change | `controller.lua` |
 | M2 | Singleton extraction | Widget created once; `compy.input.show`/`hide` on namespace; `oneshot` stays | `main.lua`, `consoleController.lua`, `userInputController.lua`, `compy_namespace.lua` |
 | M2a | M1 follow-up hygiene | Drop dead profiler test stub; single source of truth for l/r modifier fold; no behaviour change | `controller.lua`, `util/key.lua`, M1 test |
+| M4-0 | Characterization net + harness extension (precondition slice) | Tier-1 feature-global safety net pinning current input-path behaviour + keypress-level driver/mock emitters; guards M4 | `tests/helpers/input_session.lua` (new), `tests/mock.lua`, `tests/input/characterization_spec.lua` (new) |
 | M4 | ProjectInputController + gate removal | New controller owns project input; overlay gate removed; all 4 modes verified | `controller.lua`, `projectInputController.lua` (new) |
 | M5 | Three-level dispatch | `handlers[combo]` + `on_key_pressed`; return-value bubbling | `projectInputController.lua`, `compy_namespace.lua` |
 | M6 | Before/after chains | Submit/cancel hooks; Escape dismisses; `on_limit_reached(direction,scope)`; `framework_handlers['return']` owns submit; `oneshot` deleted | `projectInputController.lua`, `userInputController.lua`, `userInputModel.lua` |
@@ -135,20 +137,47 @@ Spec: [`spec/M2a.md`](spec/M2a.md).
 
 ---
 
-### M3 — *(removed — superseded by stakeholder feedback round 1)*
+### M4-0 — feature-global characterization net + harness extension (precondition slice)
 
-The original M3 built backward-compatible facade wrappers for
-the legacy text-input functions. **D-1 was discarded by
-stakeholders** (`input.md`, feedback round 1, 2026-06-06): no
-backward compatibility is maintained, so no facades are built.
-The legacy text-input globals are instead **removed**, and the
-examples are migrated to the new API — see **M8** (the work
-moves to the end of the plan because migrating the examples
-needs the full `compy.input.*` surface).
+*(This is the roadmap's old **M3 slot**. The original M3 — backward-compatible facade wrappers — was
+**discarded by D-1** (`input.md`, SR1, 2026-06-06): no backward compatibility, so no facades; the legacy
+globals are **removed** and examples migrated instead — that work moved to **M8**. The slot is **not**
+left empty and is **not** a revived M3: reusing a dead id for a live test-net would overload it. It now
+carries the **`M4-0` precondition slice** — the Tier-1 characterization net, authored *before* M4. The
+`-0` suffix = precondition/pre-net, vs the `-01+` corrective/closure slices that ride *after* a milestone
+(`agents/process.md §9`). Cross-refs that pointed at "the M3 slot" now resolve here.)*
 
-The milestone numbering M4–M7 is kept unchanged to preserve the
-many cross-references to those numbers elsewhere in the chain;
-this slot is intentionally empty.
+**Description:** Tier-1 of the two-tier test strategy — a feature-global **characterization safety net**
+pinning the existing, organically-grown input-path behaviour (oracle = **current runtime**, no spec)
+*before* M4 touches the path, plus the **harness extension** that makes driving a project-level input
+flow possible at all. Protects M4–M7 by contract; evolves at M8 (baselines re-pinned).
+
+**Input:** M2 complete (stable singleton) + the existing busted harness. **Precedes M4** — it is M4's
+guardrail (what makes the black-box M4 safe).
+
+**Output:** A keypress-level driver (`tests/helpers/input_session.lua`) drives the real
+`love.handlers.{keypressed,textinput,keyreleased}` slots — the raw-handler pattern per
+`keys_pressed_spec`, **not** an `EditorSession` generalisation (that helper is editor-block-nav-specific
+and bypasses the love slots). `mock.lua` can emit `textinput` **independently of** `keypressed`
+(order-independent — P1) and emit a **repeat** (`isrepeat`/`scancode`). The characterization suite is
+**green against current code** for the example flows (tixy/balloons/turtle + Esc/editor REPL), the
+`keyboard` example, editor `is_at_limit` vertical block-nav, D-9 (`pong`) and `maze`. One **forward**
+assertion — *`isrepeat` reaches the keypressed path* — is **red until M4 threads it** (the regression-undo
+guardrail), and is the only red assertion against current code.
+
+**Files created or modified:**
+- `tests/helpers/input_session.lua` — **new**; keypress-level driver over the installed
+  `love.handlers.*` slots (raw-handler pattern)
+- `tests/mock.lua` — extend: order-independent `textinput` emission, `isrepeat`/`scancode` emission
+- `tests/input/characterization_spec.lua` (+ as needed) — **new**; the feature-global net
+- (reuse, **unchanged**) `tests/helpers/editor_session.lua` — used **only** for the editor block-nav
+  coverage item, not as the harness base
+
+**Risk:** Medium-infra, low-design — the work is harness capability, not new feature logic. Chief trap:
+a synchronous harness baking in a keypressed→textinput order the device doesn't honour (P1) → false-green;
+the net must **not** encode that ordering as an invariant.
+
+Spec: [`spec/M4-0-characterization-net.md`](spec/M4-0-characterization-net.md). Sizing: [`estimates.md`](estimates.md).
 
 ---
 
@@ -158,8 +187,15 @@ this slot is intentionally empty.
 context. The `if user_input then` gate in `controller.lua`
 is removed. Routing becomes symmetric.
 
-**Input:** M2 complete (singleton stable). The removed M3 was
-never a functional dependency of this milestone.
+**Input:** M2 complete (singleton stable) **and `M4-0` green** — the
+characterization net is M4's guardrail (it is what makes the black-box
+M4 safe; escalate only if M4-0 proves the integration can't be
+characterized). The old M3 facade was never a functional dependency.
+
+**Test guardrail:** M4 runs **black-box** against the `M4-0` net + manual
+4-mode verification (REPL / editor / project+overlay / project no-overlay).
+M4 also **threads `isrepeat`/`scancode`** through the harvest wrapper
+(`controller.lua:554`), flipping M4-0's one red assertion green.
 
 **Output:** `ProjectInputController:keypressed` and
 `:textinput` occupy `love.keypressed` and `love.textinput`
@@ -193,6 +229,11 @@ and return-value bubbling implemented in
 **Input:** M4 complete (ProjectInputController exists; sink
 delegation works).
 
+**Test-first (Tier 2):** acceptance tests authored from the frozen
+[`spec/M5.md`](spec/M5.md) run **before** implementation — red suite first,
+implementation turns it green. The test step may run on a **cheaper model**
+(it transcribes a fixed spec into assertions). See `agents/process.md §9`.
+
 **Output:** `compy.input.handlers['ctrl+s'] = fn` works.
 `compy.input.on_key_pressed` fires for unregistered keys.
 Returning truthy from a handler prevents the sink from
@@ -224,6 +265,11 @@ covered — activation by `show()`/`hide()` from M2, submit by
 `framework_handlers['return']` here).
 
 **Input:** M4 complete (M5 is independent of M6).
+
+**Test-first (Tier 2):** acceptance tests authored from the frozen
+[`spec/M6.md`](spec/M6.md) run **before** implementation — red suite first,
+implementation turns it green. Test step may run on a **cheaper model**.
+See `agents/process.md §9`.
 
 **Output:** All six named hooks fire at correct points.
 Escape dismisses the overlay and fires `before_cancel` /
@@ -266,6 +312,11 @@ programmatically read and written while active (FR-8/9/10).
 
 **Input:** M2 complete. M5/M6 are not required (this is an
 API surface extension, not a dispatch change).
+
+**Test-first (Tier 2):** acceptance tests authored from the frozen
+[`spec/M7.md`](spec/M7.md) run **before** implementation — red suite first,
+implementation turns it green. Test step may run on a **cheaper model**.
+See `agents/process.md §9`.
 
 **Output:** `compy.input.configure({prompt='new prompt'})` updates
 the displayed prompt without tearing down the session.
@@ -332,7 +383,7 @@ on all of it. It is therefore the last milestone.
   — migrate or mark excluded
 
 **Risk:** The examples are the only consumers, so the blast
-radius is contained. There is a window (M3-slot onward) where
+radius is contained. There is a window (M4 onward) where
 the text-input examples do not run on the in-development build;
 this is internal and acceptable (the work is unreleased and old
 releases remain available — `input.md`). The reftable / polling
@@ -410,3 +461,4 @@ independently maintained figure. Maintenance is operational entrypoint **E11**.
 | Date | Total (no-LLM / LLM) | Baseline | Trigger |
 |---|---|---|---|
 | 2026-06-18 | ≈ 66 h / ≈ 39 h | [`version01`](estimates.versions/version01.md) | Genesis — extraction (E10). Equals the frozen design-phase total; no milestone change since convergence. |
+| 2026-06-23 | ≈ 74 h / ≈ 44 h | [`version02`](estimates.versions/version02.md) | E16 propagation — **`M4-0`** characterization net + harness extension added (E9 sizing: modest harness + suite). M5/M6/M7 gain test-first acceptance steps (re-sequenced from the existing Test-coverage bucket — no volume delta). Delta +≈ 8 h / +≈ 5 h = M4-0. |
