@@ -41,8 +41,9 @@ local _supported = {
 }
 
 --- @param CC ConsoleController
---- @param msg string
+--- @param msg any
 local function user_error_handler(CC, msg)
+  msg = tostring(msg)
   Log.debug('user error: ' .. msg)
   local err = LANG.get_call_error(msg) or ''
   local user_msg = messages.exec_error(err)
