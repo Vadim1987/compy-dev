@@ -19,6 +19,7 @@ View = {
   end,
 
   clear_snapshot = function()
+    if View.snapshot then View.snapshot:release() end
     View.snapshot = nil
   end,
 
