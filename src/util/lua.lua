@@ -14,6 +14,9 @@ end
 --- @return function? chunk
 --- @return string? err
 local codeload = function(code, env)
+  if type(code) ~= 'string' then
+    return nil, 'no code to load'
+  end
   local f, err = loadstring(code)
 
   if not f then return nil, err end
