@@ -210,8 +210,11 @@ Both tiers are mapped **upfront**; they differ in *where the oracle comes from*.
 
 This binds the execution-plane handoff: each new-behaviour milestone splits into an ordered
 **test-prompt → implementation-prompt** pair (see the two-plane model in
-[`../../entrypoints.md`](../../entrypoints.md)). M4 is the exception — it is guarded by the `M4-0` net
-+ manual 4-mode verification and runs black-box, with no separate Tier-2 step.
+[`../../entrypoints.md`](../../entrypoints.md)). M4 was originally the exception (black-box, guarded by the
+`M4-0` characterization net + manual 4-mode verification). **Reframed session 24:** `M4-0` is now M4's
+**front-tests** (`spec/M4-0-01-front-tests.md`) — regression smoke (green) + new-behaviour tests carried
+`pending` → M4 greens them — so **M4 is test-first too**, with manual 4-mode verification retained as the
+live-integration check the unit suite can't cover.
 
 ### 9.3 Doc-rules in force (C1, C2 — settled session 17)
 
@@ -223,3 +226,8 @@ This binds the execution-plane handoff: each new-behaviour milestone splits into
 - **In-code `DEFERRED (0.1.0-mN)` markers** keep open/postponed review questions greppable at the code
   site (never a raw `REVIEW`, never silently removed) — intermediary decisions stay *visibly*
   intermediary.
+- **C3 — no milestone/sprint ids in tests (settled session 24).** Tests are self-contained product code;
+  their `describe`/`it` descriptions and file names must name **behaviour**, never ephemeral
+  implementation terminology (`M4`, `D-9`, "characterization net", sprint ids). This extends C1 from
+  persistent docs into the test suite. (In-code `DEFERRED (0.1.0-mN)` *comments* are the one allowed
+  exception — they are greppable bookkeeping, not test names.)

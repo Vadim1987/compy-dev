@@ -28,7 +28,7 @@ frozen design-phase total + the total-estimated log.*
 | M1 | `keys_pressed` table | Live modifier set + `combo_string()` (modifier-first, l/r folded); no behaviour change | `controller.lua` |
 | M2 | Singleton extraction | Widget created once; `compy.input.show`/`hide` on namespace; `oneshot` stays | `main.lua`, `consoleController.lua`, `userInputController.lua`, `compy_namespace.lua` |
 | M2a | M1 follow-up hygiene | Drop dead profiler test stub; single source of truth for l/r modifier fold; no behaviour change | `controller.lua`, `util/key.lua`, M1 test |
-| M4-0 | Characterization net + harness extension (precondition slice) | Tier-1 feature-global safety net pinning current input-path behaviour + keypress-level driver/mock emitters; guards M4 | `tests/helpers/input_session.lua` (new), `tests/mock.lua`, `tests/input/characterization_spec.lua` (new) |
+| M4-0 | **M4 front-tests** (corrective `-01`; was char-net) | Routing-level suite: regression smoke (green) + new-behaviour tests carried `pending` → M4 greens them; keypress-level driver/mock emitters kept | `tests/input/input_routing_spec.lua` (renamed), `tests/mock.lua`, `tests/helpers/input_session.lua` |
 | M4 | ProjectInputController + gate removal | New controller owns project input; overlay gate removed; all 4 modes verified | `controller.lua`, `projectInputController.lua` (new) |
 | M5a | Callbacks (split from M5) | `on_key_pressed` / `on_text_entered` exposed; `framework_handlers` slot established | `projectInputController.lua`, `compy_namespace.lua` |
 | M5b | Handlers sugar (deferred) | `handlers[combo]` + normalisation + dispatch + fresh-only keying | `projectInputController.lua`, `compy_namespace.lua` |
@@ -138,7 +138,16 @@ Spec: [`spec/M2a.md`](spec/M2a.md).
 
 ---
 
-### M4-0 — feature-global characterization net + harness extension (precondition slice)
+### M4-0 — M4 front-tests (corrective `-01`; was: characterization net)
+
+> **Reframed (session 24, 2026-06-28).** The characterization-net framing below is **superseded by
+> [`spec/M4-0-01-front-tests.md`](spec/M4-0-01-front-tests.md)**: M4-0 is now **M4's front-tests** — a
+> small routing-level suite (regression smoke that stays green + new-behaviour tests carried `pending`
+> until M4 greens them), not a feature-global characterization net. The char-net pinned per-example
+> behaviour that product-BC withdrawal frees and M8 migrates, and missed the integrated routing/slot
+> surface M4 rewrites. The **harness extension survives** (`mock.textinput` + `keystroke` opts +
+> `input_session.lua`). This also makes **M4 test-first**, not black-box. The prose below is kept as the
+> origin record.
 
 *(This is the roadmap's old **M3 slot**. The original M3 — backward-compatible facade wrappers — was
 **discarded by D-1** (`input.md`, SR1, 2026-06-06): no backward compatibility, so no facades; the legacy
@@ -188,15 +197,20 @@ Spec: [`spec/M4-0-characterization-net.md`](spec/M4-0-characterization-net.md). 
 context. The `if user_input then` gate in `controller.lua`
 is removed. Routing becomes symmetric.
 
-**Input:** M2 complete (singleton stable) **and `M4-0` green** — the
-characterization net is M4's guardrail (it is what makes the black-box
-M4 safe; escalate only if M4-0 proves the integration can't be
-characterized). The old M3 facade was never a functional dependency.
+**Input:** M2 complete (singleton stable) **and the `M4-0` front-tests
+authored** (Group-1 regression smoke green, Group-2 carried `pending`) —
+M4 is **test-first** against them (greens Group-2); escalate only if M4
+can't be integrated cleanly. The old M3 facade was never a functional
+dependency.
 
-**Test guardrail:** M4 runs **black-box** against the `M4-0` net + manual
-4-mode verification (REPL / editor / project+overlay / project no-overlay).
-M4 also **threads `isrepeat`/`scancode`** through the harvest wrapper
-(`controller.lua:554`), flipping M4-0's one red assertion green.
+**Test guardrail:** M4 is **test-first** against the `M4-0` front-tests
+([`spec/M4-0-01-front-tests.md`](spec/M4-0-01-front-tests.md)): it keeps the
+Group-1 regression smoke green and **converts the Group-2 `pending` tests →
+live green** (project events not dropped, slot ownership/restoration, D-9
+native coexistence, `isrepeat`). Plus manual 4-mode verification (REPL /
+editor / project+overlay / project no-overlay). The `isrepeat`/`scancode`
+thread through the harvest wrapper (`controller.lua:554`) greens the
+`isrepeat` front-test.
 
 **Output:** `ProjectInputController:keypressed` and
 `:textinput` occupy `love.keypressed` and `love.textinput`

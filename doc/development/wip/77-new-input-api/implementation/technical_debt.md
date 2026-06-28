@@ -31,8 +31,9 @@ feature closes**, not carried into the project at large._
 | turtle `Esc` clears input in place | behaviour / needs-investigation | **anticipated** | characterise intended `Esc` semantics; reconcile with G-B (editor `Esc` does *not* clear) |
 | G-A tixy shift+click sequence | UX / needs-investigation | **anticipated** | characterise before the input surface is called author-stable |
 | G-B editor buffer not cleared on Escape | possible defect / needs-investigation | **anticipated** | branch-level search first; file as a defect only if confirmed |
-| M4-0 `input_session.lua` driver unused | dead code / inconsistency | **open** | M4 test-first step should adopt it as the net's driver, or the net's inline copy is redundant |
-| M4-0 keyboard-debounce reimplemented in-test | test coverage | **open** | revisit at M8 keyboard migration; pin the example's own debounce, not a test-local copy |
+| M4-0 `input_session.lua` driver unused | dead code / inconsistency | **planned** | [`M4-0-01-front-tests.md`](../design/spec/M4-0-01-front-tests.md) — the front-tests **consume** the driver (inline copy removed) |
+| M4-0 keyboard-debounce reimplemented in-test | test coverage | **planned** | [`M4-0-01-front-tests.md`](../design/spec/M4-0-01-front-tests.md) **deletes** the in-test reimpl; the example's own debounce = M8 migration / M5a `on_key_pressed` forward acceptance |
+| editor sets input-widget cursor outside the project API | API consistency / open design Q | **anticipated** | route the editor's cursor-set through `compy.input.set_cursor` (M7 surface) **or** keep separate — **placement undecided** (may ride M7 or be postponed); decide when M7's cursor API is built |
 | M4-0 `mock.keystroke` isrepeat/scancode opts unexercised | test coverage | **anticipated** | path goes live when M4 converts the isrepeat `pending` → live |
 | M4-0 maze Lua-command path not black-box characterizable | scope boundary | **anticipated** | M8 scope; routing + `is_empty` covered, so not blocking M4 |
 | M4-0 `tests.md` not updated for new emitters | docs | **open** | document `mock.textinput` + `keystroke` opts at M4-0 closure or M4 |
@@ -205,6 +206,19 @@ concrete need appears.
   loading the project (outcome "Surfaced gaps"). Input to the M4 escalate-vs-black-box call: **not
   blocking** — D-9 routing and `is_empty` polling are covered; the Lua-command path is M8 scope.
 - **Revisit:** M8 (full-project characterization) when examples migrate.
+
+### Editor's input-widget cursor is set outside the project cursor API — open design Q (placement undecided)
+
+- **Where:** the editor sets the cursor *inside the input widget* via its own path; the project-facing
+  cursor surface is `compy.input.get_cursor` / `set_cursor` (FR-8/9, D-8), scheduled at **M7**.
+- **State:** Two code paths can move the same widget cursor — the editor's internal one and (once built)
+  the project API. Surfaced in the session-24 M4-0 review. **Not a dropped requirement** — the
+  project-facing cursor API is fully in the chain (requirements/design/M7); this is about whether the
+  editor's own cursor-setting should *consolidate onto* that API or stay separate.
+- **Why it stands:** It's an M7-era consistency call, not M4 scope. **Placement deliberately left open:**
+  it may ride M7 when the cursor API is implemented, or be postponed past it — no final decision now.
+- **Revisit:** When M7's `set_cursor`/`get_cursor` surface is built — decide consolidate-vs-separate and
+  record it; commission an adjacent spec only if M7 forces the call.
 
 ### G-A — tixy shift+click example-sequence behaviour unclear
 
