@@ -38,7 +38,7 @@ Color = {
   --- @param alpha number
   with_alpha = function(color, alpha)
     if type(color) == "table" then
-      local red, blue, green = color[1], color[2], color[3]
+      local red, green, blue = color[1], color[2], color[3]
       return { red, green, blue, alpha }
     end
   end,
