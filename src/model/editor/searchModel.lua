@@ -31,6 +31,7 @@ Search = class.create(function(cfg)
     input = UserInputModel(cfg, nil, false, 'search'),
     searchset = {},
     resultset = {},
+    selection = 1,
     visible = ScrollableContent(0, 1, l)
   }
 end)
