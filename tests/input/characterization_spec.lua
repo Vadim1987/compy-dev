@@ -5,6 +5,7 @@
 
 -- Stub view.view before any require loads the real module
 -- (view.lua calls gfx.newFont at load; needs graphics context).
+-- REVIEW: are these APIs mimicing real production flow and API? what is difference between draw and drawFPS?
 package.preload['view.view'] = function()
   View = {
     prev_draw = nil,
@@ -37,8 +38,10 @@ mock.mock_love({
   event   = { quit = function() end, push = function() end },
 })
 
+-- REVIEW: is it ok to set empty handlers once? not in 'before' cycle?
 love.handlers = {}
 require('controller.controller')
+-- REVIEW: what exactly does this method do? is it production flow?
 Controller.setup_callback_handlers({ cfg = { mode = 'dev' } })
 
 -- Capture production-slot handler refs (same as keys_pressed_spec).
@@ -57,6 +60,7 @@ local session = {
 local cfg      = TU.mock_view_cfg()
 local mock_view = { render = function() end, draw = function() end }
 
+-- REVIEW: what part of real flow does it mimic? what normal code does instead?
 -- Build a oneshot UserInputController overlay and publish it.
 local function make_overlay(eval, result_ref)
   local m = UserInputModel(cfg, eval or InputEvalText, true)
@@ -82,6 +86,7 @@ end
 
 -- ── Characterization tests ──────────────────────────────────
 
+-- REVIEW: weird naming
 describe('characterization net #input', function()
 
   before_each(function()
@@ -94,7 +99,9 @@ describe('characterization net #input', function()
   end)
 
   -- ── D-9: native coexistence (pong-like) ────────────────────
+  -- REVIEW: weird naming (native coexistence of what? (and D-9 is sprint-specific code not undertsandable out of implementation context)
   describe('D-9 native coexistence', function()
+    -- REVIEW: session.press is literally alias of love.keypressed so what is tested there?
     it('keypressed routes to love.keypressed', function()
       local got = {}
       love.keypressed = function(k) got[#got+1] = k end
@@ -102,6 +109,7 @@ describe('characterization net #input', function()
       assert.same({ 'space' }, got)
     end)
 
+    -- REVIEW: session.type is literally alias of love.textinput, so what is tested here???
     it('textinput routes to love.textinput', function()
       local got = {}
       love.textinput = function(t) got[#got+1] = t end
@@ -109,6 +117,7 @@ describe('characterization net #input', function()
       assert.same({ 'a' }, got)
     end)
 
+    -- REVIEW: session.release is literally alias/wrapper of love.keyreleased, so what is tested there?
     it('keyreleased routes to love.keyreleased', function()
       local got = {}
       love.keyreleased = function(k) got[#got+1] = k end
@@ -125,7 +134,9 @@ describe('characterization net #input', function()
   describe('tixy input_code: overlay text submit', function()
     it('typed text + return populates reftable', function()
       local r = table.new_reftable()
+      -- REVIEW: how real projects establish overlay? Should not same framework code be used?
       make_overlay(InputEvalText, r)
+      -- REVIEW: the test logic below is good, except why first three keystrokes are 'type' and last one is 'return'? in reality user presses/releases all four keys the same way, why the difference?
       session.type('1')
       session.type('+')
       session.type('1')
@@ -136,6 +147,7 @@ describe('characterization net #input', function()
   end)
 
   -- ── balloons input_text ──────────────────────────────────────
+  -- REVIEW: how its different from the test above? no point in duplicating
   describe('balloons input_text: text-eval overlay', function()
     it('typed text + return populates reftable', function()
       local r = table.new_reftable()
@@ -152,6 +164,7 @@ describe('characterization net #input', function()
 
   -- ── turtle input_text + Esc dismiss ─────────────────────────
   describe('turtle input_text + Esc', function()
+    -- REVIEW: good test, but has nothing specific about turtle
     it('escape clears entered text (cancel)', function()
       local r = table.new_reftable()
       local c = make_overlay(InputEvalText, r)
@@ -159,9 +172,11 @@ describe('characterization net #input', function()
       session.type('P')
       assert.is_false(c:is_empty())
       session.press('escape')
+      -- REVIEW: should only emptify or also hide?
       assert.is_true(c:is_empty())
     end)
 
+    -- REVIEW: its literally the same test as above, only one needs to stand
     it('escape does not populate the reftable', function()
       local r = table.new_reftable()
       make_overlay(InputEvalText, r)
@@ -172,6 +187,7 @@ describe('characterization net #input', function()
   end)
 
   -- ── editor REPL submit (running mode) ───────────────────────
+  -- REVIEW: again, retesting same path? anything really testing validation?
   describe('editor REPL submit', function()
     it('typed text + return submits to reftable', function()
       local r = table.new_reftable()
@@ -188,6 +204,8 @@ describe('characterization net #input', function()
   -- The keyboard example maintains INPUT.held to filter repeats
   -- because controller.lua:554 drops isrepeat (function(k)).
   -- Pins the edge-tracking pattern (P2 surface for M4-M7).
+  -- REVIEW: it was decided thay keyboard is not part of acceptance -- its *intents* should be carried forward to acceptance tests
+  -- REVIEW: but, on the other hand, if any *other* example (or REPL or editor) uses keypressed... (I do not think it happens - as the whole problem was keypressed events not reaching the project)
   describe('keyboard once-per-press debounce', function()
     local hit_count, held_keys
 
@@ -232,6 +250,7 @@ describe('characterization net #input', function()
 
   -- ── maze legacy idiom ────────────────────────────────────────
   describe('maze legacy idiom', function()
+    -- REVIEW: 'typing' is literally a textinput event. we already checked that textinput is delivered after hitting 'enter' (and I guess its love2d contract?). what we are testing here?
     it('is_empty true before typing, false after', function()
       local r = table.new_reftable()
       local c = make_overlay(InputEvalText, r)
@@ -241,6 +260,7 @@ describe('characterization net #input', function()
     end)
 
     it('native keypressed reached when no overlay', function()
+      -- REVIEW: session.press literally invokes love.keypressed -- what we are testing here? invocation of lambda functions in lua?
       local got = {}
       love.keypressed = function(k) got[#got+1] = k end
       love.state.user_input = nil
@@ -249,6 +269,7 @@ describe('characterization net #input', function()
       assert.same({ 'up', 'right' }, got)
     end)
 
+    -- REVIEW: what is tested here? Why mix of session.type and mock.keystroke? why not mimicing whole input (e.g. via 'keypressed', 'keypressed', 'keyreleased') -- I do not insist it should be done that way, am just asking why this was chosen and what are tradeoffs?
     it('Shift+Enter inserts newline (multiline input)', function()
       local r = table.new_reftable()
       make_overlay(InputEvalText, r)
@@ -272,6 +293,8 @@ describe('characterization net #input', function()
       love.state.app_state = 'editor'
     end)
 
+    -- REVIEW: here we test editor nav logic, which is only indirectly triggered by 'at buffer limit'
+    -- REVIEW:  that's probably fine but we need to somehow explain that (that we're testing *indirectly*)
     it('up at top limit navigates block; up below stays in input',
       function()
         local es  = make_editor_session()
@@ -312,5 +335,8 @@ describe('characterization net #input', function()
       -- assert.is_true(received_isrepeat)
     end
   )
+
+  -- REVIEW: should not we also test that editor's manipulation of cursor works? 
+  -- e.g. moving cursor at the first tall block
 
 end)
