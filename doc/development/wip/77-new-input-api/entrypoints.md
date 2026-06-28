@@ -73,6 +73,12 @@ E9's scope is unshifted (its inputs are merely sharpened). The standing estimate
   (`spec/M6-02-before-exit.md`); E11 recalc fired (≈76/≈45, `version03`); API demo authored
   (`notes/talk/api-demo.md`); E22 (M4-0 tests rework) + E23 (M5a commissioning) opened.
   **Next: run M4** (implementor prompt committed session 22; prefer E22 resolved first — soft).
+- **E8 ◐ (session 24) — M4-0 reframed char-net → M4 front-tests (E22 ✓):** human review re-grounded
+  M4-0 under withdrawn product-BC; corrective slice `spec/M4-0-01-front-tests.md` (+ prompt) written,
+  char-net superseded. M4 now **test-first** (Group-1 smoke green + Group-2 `pending` → M4 greens; M4
+  prompt/roadmap/§9.2 updated). **C3** convention codified (no milestone ids in tests). M7 editor-cursor
+  open item recorded (placement undecided). No re-estimate (human call). Forward run order: **execute
+  `M4-0-01` (Opus) → ingest → run M4.**
 - **Net effect:** **E8 is in progress at M4.** M4 implementor + reviewer prompts are commissioned.
   The next execution-plane run is **M4** (ingested here to approve/escalate); then sequential M5a →
   M6 (+M6-02) → M7 → M8. M5b deferred (after M6/M7 or concurrent). E15/E11 operational. E22 soft-blocks
@@ -123,7 +129,7 @@ alongside the milestone work — keep it open as a standing reminder, don't clos
 
 - **Design** — converged (E1) + canonical lifecycle (E4), both revalidated. Roadmap + per-milestone
   specs `design/spec/M1…M8.md` are the frozen input.
-- **Implementation** — M0 ✅, M1 ✅ (reviewed), M2a ✅. **M2 take-1 ❌**, **M2-01 ✅**, **M2-02 ✅**. **M2 human review closed (E12 ✅, session 17) — code sign-off-clean** (triage: `implementation/reviews/M2-human-review.md`). **M4-0 ✅ APPROVED (session 23)**: 717/1 pending, Opus review approve-with-non-blocking-follow-ups; keyboard excluded from char net (Tier-2 forward acceptance); maze = textinput-channel anchor; carry-forwards to M4 test-first. Forward path: **E14 ✅** → **E20 ✅** → **E9 ✅** → **E16 ✅** → **E8 ◐** resumes at **M4** — prompts commissioned (session 22), M4-0 approved (session 23). **Session-23 roadmap pivots:** M5 split (M5a callbacks / M5b handlers sugar deferred; `spec/M5-01-split.md`); `compy.before_exit` slotted (M6-02 adjacent; `spec/M6-02-before-exit.md`); E11 recalc ≈76h/≈45h `version03`. **Next:** E22 (human reviews M4-0 tests) → run M4 → E23 (commission M5a).
+- **Implementation** — M0 ✅, M1 ✅ (reviewed), M2a ✅. **M2 take-1 ❌**, **M2-01 ✅**, **M2-02 ✅**. **M2 human review closed (E12 ✅, session 17) — code sign-off-clean** (triage: `implementation/reviews/M2-human-review.md`). **M4-0 ✅ APPROVED (session 23)**: 717/1 pending, Opus review approve-with-non-blocking-follow-ups; keyboard excluded from char net (Tier-2 forward acceptance); maze = textinput-channel anchor; carry-forwards to M4 test-first. Forward path: **E14 ✅** → **E20 ✅** → **E9 ✅** → **E16 ✅** → **E8 ◐** resumes at **M4** — prompts commissioned (session 22), M4-0 approved (session 23). **Session-23 roadmap pivots:** M5 split (M5a callbacks / M5b handlers sugar deferred; `spec/M5-01-split.md`); `compy.before_exit` slotted (M6-02 adjacent; `spec/M6-02-before-exit.md`); E11 recalc ≈76h/≈45h `version03`. **Next:** E22 ✓ (M4-0 reframed → M4 front-tests, `spec/M4-0-01-front-tests.md`); execute `M4-0-01` → run M4 (test-first) → E23 (commission M5a).
 - **Sweep gate:** `implementation/technical_debt.md` must be clear (closed or accepted) before #77 ships — **C-2** closed; F-5→M7-01, G-1→M8-01, G-2→M6-01 planned; F-4 accepted; `combo_string`/`gui_k`/path-mismatch + new G-A/G-B/turtle-`Esc` anticipated/needs-investigation.
 - **Build continuity vs product BC** — product backwards-compat is **withdrawn**, build-time continuity
   is **in force**; `{M,C,V}` is partly transitional scaffolding (read `notes/talk/build-continuity-vs-product-bc.md`
