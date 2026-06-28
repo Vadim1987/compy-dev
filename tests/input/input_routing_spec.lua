@@ -1,9 +1,34 @@
 -- Input routing through the installed love.handlers.* gate.
+--
+-- WHAT THIS TESTS: the path a keystroke takes from LOVE to the
+-- controller that consumes it. main.lua installs the gate via
+-- Controller.setup_callback_handlers, which wraps love.handlers
+-- keypressed/textinput/keyreleased. Every key/char event enters
+-- there, and the gate alone decides who consumes it.
+--
+-- THREE SINKS, picked by app_state (and overlay presence). Each
+-- has its OWN model -- the three modes do not share one:
+--   * REPL console -- app_state 'ready'. Sink is CC.input, a
+--     UserInputController; CC.input.model is its UserInputModel
+--     (the line being typed at the console prompt).
+--   * editor -- app_state 'editor'. ConsoleController delegates
+--     to CC.editor, an EditorController it builds and owns from
+--     construction (not on mode switch); it has its own model.
+--   * input overlay -- the singleton modal dialog (e.g. project
+--     prompts). When shown it publishes itself to
+--     love.state.user_input; the gate then routes to it,
+--     overriding the console/editor sink. Its own model again.
+--
+-- EVENT VOCABULARY: 'textinput' is LOVE's character-typed event
+-- (one per printable char, e.g. 'Z') -- NOT a key like Enter,
+-- which arrives as 'keypressed'('return'). The driver below
+-- (session.type / session.press) and mock.textinput just fire
+-- these real events through the gate.
+--
 -- Each test drives a real production slot and asserts the REAL
--- consumer (Console/Editor controller, or input singleton)
--- received it -- never a hand-rolled lambda. The tests are
--- agnostic to the gate mechanism, so the regression group holds
--- before and after the overlay-gate rewrite.
+-- consumer received it -- never a hand-rolled lambda. The tests
+-- are agnostic to the gate's internals, so the regression group
+-- holds before and after the overlay-gate rewrite.
 
 -- Stub view.view before any require loads the real module:
 -- view.lua calls gfx.newFont at load and needs a graphics
@@ -97,14 +122,23 @@ ConsoleView(cfg, CC)
 Controller.set_love_keypressed(CC)
 Controller.set_love_keyreleased(CC)
 Controller.set_love_textinput(CC)
+-- The driver: input_session installs the gate and exposes it as
+-- session.press(key) (keypressed), session.type(char)
+-- (textinput) and session.repeat_press(key). Every call goes
+-- through the real love.handlers.* path, never straight to a
+-- controller.
 local session = input_session.new(CC)
 
--- Overlay singleton built + published like main.lua startup.
+-- Build the input overlay singleton the way main.lua does at
+-- startup: its own model + controller, then :show() publishes
+-- it to love.state.user_input. Once published the gate routes
+-- to it and overrides the console/editor sink -- this is the
+-- "a modal dialog is open" condition the overlay tests need.
 local overlay_view = {
   render = function() end,
   draw   = function() end,
 }
-local function make_overlay(result_ref)
+local function show_input_overlay(result_ref)
   local m = UserInputModel(cfg, InputEvalText, true)
   local c = UserInputController(m, result_ref, true)
   c:init_view(overlay_view)
@@ -126,10 +160,11 @@ local function make_editor_session()
   return EditorSession(ec, press, save, mock)
 end
 
--- Spy that records receipt at a real consumer's method boundary
--- and auto-restores after each test. Record-only: it proves the
--- gate delivered to this exact instance without depending on
--- downstream view state.
+-- Spy that records receipt at a REAL consumer's method boundary
+-- (obj[name]) and auto-restores after each test. Record-only:
+-- swallows the call, so it proves the gate delivered to this
+-- exact instance without depending on downstream view/buffer
+-- state. Returns the list of received args to assert on.
 local cleanup = { }
 local function record_calls(obj, name)
   local calls = { }
@@ -147,6 +182,8 @@ describe('input routing #input', function()
   end)
 
   before_each(function()
+    -- Reset to a clean REPL: no held keys, no overlay shown,
+    -- console mode, and an empty console input line.
     Controller.keys_pressed = { }
     love.state.user_input   = nil
     love.state.app_state    = 'ready'
@@ -159,7 +196,11 @@ describe('input routing #input', function()
   describe('must-not-degrade', function()
 
     it('console text reaches the console input', function()
-      -- driven via the mock.textinput emitter (through the gate)
+      -- app_state 'ready' = REPL mode (set in before_each).
+      -- mock.textinput fires LOVE's character-typed event 'Z'
+      -- (the tests/mock.lua emitter, through the gate) -- this
+      -- is a typed letter, not Enter. Assert the REPL console
+      -- input (CC.input, a UserInputController) captured it.
       mock.textinput('Z')
       assert.same({ 'Z' }, CC.input:get_text())
     end)
@@ -185,7 +226,7 @@ describe('input routing #input', function()
     end)
 
     it('active overlay receives input', function()
-      local c = make_overlay()
+      local c = show_input_overlay()
       local calls = record_calls(c, 'keypressed')
       session.press('a')
       assert.same({ 'a' }, calls)
@@ -194,7 +235,7 @@ describe('input routing #input', function()
     -- Routing exclusivity: an active overlay must not also fire
     -- the native slot (no double-delivery).
     it('active overlay does not also fire native', function()
-      make_overlay()
+      show_input_overlay()
       local native = 0
       local slot = love.keypressed
       love.keypressed = function(...)
