@@ -30,7 +30,8 @@ frozen design-phase total + the total-estimated log.*
 | M2a | M1 follow-up hygiene | Drop dead profiler test stub; single source of truth for l/r modifier fold; no behaviour change | `controller.lua`, `util/key.lua`, M1 test |
 | M4-0 | Characterization net + harness extension (precondition slice) | Tier-1 feature-global safety net pinning current input-path behaviour + keypress-level driver/mock emitters; guards M4 | `tests/helpers/input_session.lua` (new), `tests/mock.lua`, `tests/input/characterization_spec.lua` (new) |
 | M4 | ProjectInputController + gate removal | New controller owns project input; overlay gate removed; all 4 modes verified | `controller.lua`, `projectInputController.lua` (new) |
-| M5 | Three-level dispatch | `handlers[combo]` + `on_key_pressed`; return-value bubbling | `projectInputController.lua`, `compy_namespace.lua` |
+| M5a | Callbacks (split from M5) | `on_key_pressed` / `on_text_entered` exposed; `framework_handlers` slot established | `projectInputController.lua`, `compy_namespace.lua` |
+| M5b | Handlers sugar (deferred) | `handlers[combo]` + normalisation + dispatch + fresh-only keying | `projectInputController.lua`, `compy_namespace.lua` |
 | M6 | Before/after chains | Submit/cancel hooks; Escape dismisses; `on_limit_reached(direction,scope)`; `framework_handlers['return']` owns submit; `oneshot` deleted | `projectInputController.lua`, `userInputController.lua`, `userInputModel.lua` |
 | M7 | Extended singleton API | `configure`/`clear`/`get_cursor`/`set_cursor`/`set_text` | `userInputController.lua`, `compy_namespace.lua` |
 | M8 | Legacy removal + migration | Globals removed; `tixy`/`balloons` migrated (priority), others convert-or-exclude; native examples unaffected (D-9) | `consoleController.lua`, `src/examples/*` |
@@ -220,9 +221,16 @@ marking complete.
 
 ---
 
-### M5 — Three-level dispatch in `ProjectInputController`
+### M5a / M5b — Three-level dispatch (split; see `spec/M5-01-split.md`)
 
-**Description:** `compy.input.handlers`, `compy.input.on_key_pressed`,
+**Session-23 pivot:** M5 is split into **M5a** (callbacks: `on_key_pressed` /
+`on_text_entered` / `framework_handlers` slot — ships next after M4) and **M5b**
+(handlers sugar: `handlers[combo]` + normalisation + dispatch — **deferred** after
+M6/M7 or concurrent). Frozen `M5.md` unchanged; the split is governed by
+[`spec/M5-01-split.md`](spec/M5-01-split.md). Details below reflect the *combined*
+M5 surface; see the split spec for per-sub-milestone scope.
+
+**Description (combined):** `compy.input.handlers`, `compy.input.on_key_pressed`,
 and return-value bubbling implemented in
 `ProjectInputController:keypressed`.
 
@@ -462,3 +470,4 @@ independently maintained figure. Maintenance is operational entrypoint **E11**.
 |---|---|---|---|
 | 2026-06-18 | ≈ 66 h / ≈ 39 h | [`version01`](estimates.versions/version01.md) | Genesis — extraction (E10). Equals the frozen design-phase total; no milestone change since convergence. |
 | 2026-06-23 | ≈ 74 h / ≈ 44 h | [`version02`](estimates.versions/version02.md) | E16 propagation — **`M4-0`** characterization net + harness extension added (E9 sizing: modest harness + suite). M5/M6/M7 gain test-first acceptance steps (re-sequenced from the existing Test-coverage bucket — no volume delta). Delta +≈ 8 h / +≈ 5 h = M4-0. |
+| 2026-06-24 | ≈ 76 h / ≈ 45 h | [`version03`](estimates.versions/version03.md) | E11 recalc — **M5 split** (M5a callbacks / M5b handlers sugar deferred, session-23 strategic decision) + **M6-02** (`compy.before_exit` project-stop hook). Net delta +≈ 2 h / +≈ 1 h. |
