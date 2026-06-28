@@ -375,13 +375,8 @@ else
   --- @return string? error
   function FS.cp(source, target)
     local src = FS.exists(source)
-    local tgt = io.open(target, "w")
-
     if not src then
-      return false, FS.messages.cannot_open(src)
-    end
-    if not tgt then
-      return false, FS.messages.cannot_open(tgt)
+      return false, FS.messages.cannot_open(source)
     end
 
     local rok, cont_err = FS.read(source)
