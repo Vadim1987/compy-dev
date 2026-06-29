@@ -37,6 +37,8 @@ feature closes**, not carried into the project at large._
 | M4-0 `mock.keystroke` isrepeat/scancode opts unexercised | test coverage | **anticipated** | path goes live when M4 converts the isrepeat `pending` → live |
 | M4-0 maze Lua-command path not black-box characterizable | scope boundary | **anticipated** | M8 scope; routing + `is_empty` covered, so not blocking M4 |
 | M4-0 `tests.md` not updated for new emitters | docs | **open** | document `mock.textinput` + `keystroke` opts at M4-0 closure or M4 |
+| M4-0-03 P5 touch BOTH not black-box expressible | test coverage | **anticipated** | greens when a touch consumer lands (carried `pending` in the suite) |
+| M4-0-03 "force does not warn" (C2) coverage dropped | test coverage | **accepted** | inverse of the kept warn-on-suppress P10 row; restore only if the C2 force-path needs an explicit guard |
 
 > The **planned** rows have a commissioned closure spec; pick them up with their milestone. The
 > **anticipated** rows are deliberately *not* commissioned — they may never need action; revisit at
@@ -238,4 +240,30 @@ concrete need appears.
   unconfirmed whether it is a regression or a missing-fix. Needs a branch-level search before filing.
 - **Revisit:** `git log`/branch search for the believed fix first; if genuinely absent and reproducible,
   file as a defect and decide whether it blocks the feature or is independent of #77.
+
+### M4-0-03 — P5 touch BOTH not black-box expressible today — anticipated
+
+- **Where:** `tests/input/input_routing_spec.lua` — the `pointer delivery is BOTH` block carries
+  `pending('a touch reaches the widget and the route both')`.
+- **State:** Both the widget and the route touch handlers are no-op TODO stubs
+  (`userInputController` / `consoleController`), so touch delivery mutates no observable state
+  anywhere; a delivery probe would be the method-name spy Bucket A forbids. The §3.6 *delivery*
+  contract is therefore not expressible on the current public surface. The contract record's own §3.6
+  frames touch as delivery-only with no-op handlers, so this is consistent with the record, not a
+  contradiction. Surfaced by the implementer; logged here per the review process.
+- **Why it stands:** No observable seam exists until a touch consumer lands; carrying it `pending`
+  keeps the contract visible without a mechanism spy.
+- **Revisit:** Green the row when a real touch consumer is wired (the mouse BOTH rows already guard the
+  pointer-delivery shape M4 must not break).
+
+### M4-0-03 — singleton_spec's "force does not warn" (C2 boundary) not re-homed — accepted
+
+- **Where:** old `tests/input/singleton_spec.lua` had a `force=true ⇒ warned == 0` row (the sanctioned
+  override must **not** warn). The re-authored P10 block keeps the warn-on-suppression assertion
+  (non-force re-show warns once) and the force-reapplies-text assertion, but does **not** re-assert the
+  zero-warn boundary on the force path.
+- **Why it stands:** It is the inverse of a kept contract and low-risk; the C2 "warn-on-suppression,
+  never silent" guarantee is still covered by the kept non-force row.
+- **Revisit:** Restore an explicit force-path no-warn assertion only if the force/reconfigure surface
+  evolves (M7 `configure()`) and the boundary needs re-pinning.
 
