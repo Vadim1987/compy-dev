@@ -149,6 +149,15 @@ otherwise-frozen spec, this correction only):
   **not** ruled (settle nearer implementation), with the added
   owner constraint that **existing combos keep their current
   behaviour unless explicitly altered**.
+- **Slot occupant clarified (§2A, glossary)** — the **controller
+  (route)** occupies the LÖVE handler slot and dispatches each
+  event internally (handlers → project slots on the LÖVE clone →
+  userinput as final sink). The **widget never occupies a slot in
+  any context** — it is one surface the controller forwards to
+  along the internal path. Resolves the open question from the
+  prior round (the hidden-widget rule is purely intra-route; it
+  does not touch slot ownership, because the widget never owned a
+  slot to begin with).
 
 ## Open rulings left provisional
 

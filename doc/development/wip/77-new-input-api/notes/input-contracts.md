@@ -162,7 +162,9 @@ determines routing by merely existing.
 >   as the overlay singleton (`love.state.user_input`) — the
 >   mechanism the rewrite removes. A widget can serve as its
 >   route's sink (text editing), but the two notions are
->   distinct.
+>   distinct. A widget **never occupies a LÖVE handler slot in
+>   any context** — the route's controller occupies the slot and
+>   forwards to the widget internally (see §2A).
 >
 > Pointer (mouse/touch) and wheel are **not** exceptions to
 > exactly-one-route: like keyboard/text they reach the single
@@ -181,6 +183,17 @@ project runs, the project's route (the overlay today;
 keyboard/text slots (§3). (Current realization: `app_state`
 branching inside CC, the overlay gate, and `set_handlers` slot
 swaps.)
+
+**The slot occupant is the controller, not the widget**
+(endorsed design). A **controller** (route) occupies the LÖVE
+handler slot and dispatches each event **internally**: through
+its **handlers**, then the **project slots** established on the
+LÖVE clone, with **userinput as the final destination** (the
+sink). The widget is one surface the controller may forward to
+along that internal path — it is **never itself a slot
+occupant**, in any context. So "the active route owns the slot"
+and "a widget solicits input" are different layers: inter-route
+slot ownership vs. intra-route forwarding.
 
 **(B) Widgets — a route-managed surface.** A **widget** (the
 overlay singleton today) is shown / reset / hidden by the
