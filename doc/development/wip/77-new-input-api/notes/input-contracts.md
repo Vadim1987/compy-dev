@@ -198,6 +198,16 @@ independent of mode; that independence is mechanism, not
 contract — forward, the widget is owned by the routed
 controller.
 
+**(C) Hidden widget does not consume.** [PRESERVE — owner ruling
+(prompt12) + common logic.] An event that reaches a widget while
+the widget is **hidden** is **ignored or passed through by the
+widget** — never used to mutate widget state. When the widget is
+not on screen, no user intent to modify its state can be assumed.
+This is an **intra-route** rule (the route's surface declines the
+event); inter-route dispatch is unchanged — the event still
+reached its one active route (§3). It applies to **every** event
+type a widget might be offered.
+
 **Two-step nature.** First a route is selected by mode/context;
 then that route may have a widget (de)activated within it. The
 widget never changes the route; the route (`inspect` open —
@@ -299,9 +309,12 @@ Ctrl+Escape quit guard (§4.3) run first and do not consume.
 
 ### 3.4 Mode override: `inspect` — the console owns the input surface [CHARACTERIZE-PROVISIONAL · OWNER RULING PENDING]
 
-> **OWNER RULING PENDING — inspect/overlay boundary.** Which
-> route owns `inspect` after unification is **design-silent**.
-> Carried CHARACTERIZE-PROVISIONAL; do **not** invent a contract.
+> **Owner ruling (prompt12): deliberately deferred — keep the
+> assumption.** How `inspect` is meant to operate after
+> unification is still not pinned, and the feature is dev-facing;
+> the owner chose to **retain the current assumption** rather
+> than rule now. Carried CHARACTERIZE-PROVISIONAL; do **not**
+> invent a contract — revisit when the routing model lands.
 
 **Current behaviour [provisional — not pinned, see ruling]:**
 when `app_state == 'inspect'`, the input surface serves the
@@ -655,13 +668,18 @@ Genuinely unresolved; not relitigating settled design.
   silently disables `on_limit_reached`** (the boundary hook the
   sink drove). Flagged for the owner as a **deliberate-or-not**
   decision — not asserted here as a contract.
-- **Combo-tier key-repeat semantics (D-C) — OWNER RULING
-  PENDING.** Do `handlers[combo]` / `framework_handlers` fire on
-  every repeat or only on fresh presses? Intent is **silent**;
-  tier-3 flagged it as the one substantive open question. The
-  provisional leaning — *fresh-only at the handler tier;
-  `on_key_pressed` sees repeats* — is **recorded as provisional,
-  not ruled**. Do not promote it to a contract.
+- **Combo-tier key-repeat semantics (D-C) — provisional leaning,
+  owner-confirmed not-yet-ruled.** Do `handlers[combo]` /
+  `framework_handlers` fire on every repeat or only on fresh
+  presses? Intent is **silent**; tier-3 flagged it as the one
+  substantive open question. The provisional leaning — *fresh-only
+  at the handler tier; `on_key_pressed` sees repeats* — is
+  **recorded as provisional, not ruled** (owner, prompt12: settle
+  it nearer implementation). **Added constraint (owner ruling):
+  existing combos keep their current behaviour *unless* explicitly
+  altered** — the provisional dispatch keying must not silently
+  change a combo that works today. Do not promote the leaning to a
+  contract.
 
 ### 6.1 Revalidation outcomes (s26: P3 + human rulings)
 

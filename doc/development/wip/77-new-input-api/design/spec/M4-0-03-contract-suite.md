@@ -98,6 +98,7 @@ the public entry + asserted at observable outcome.
 | P9 | legacy solicitation (§4.5) | one successful submit fills the reftable **and** closes the widget; guarded refusals **warn** (never silent, C2) | retired at **m8** |
 | P10 | widget activation/reset (§4.6) | active+no-force → warn+no-op (state untouched); active+force → text-subset reapplied, other config ignored; fresh+no-text → empty; hide() deactivates; oneshot submit deactivates | the **"no cancel chain"** assertions flip at **m6** (F-D) |
 | P11 | click detection (§4.7) | single-click confirmed only after the debounce window; suppressed on pointer drift; confirmation calls project `compy.singleclick`/`doubleclick` (default no-ops). *Constants = mechanism, not asserted; outcomes asserted* | — |
+| P12 | hidden widget does not consume (§2C) | an event offered to a widget while it is **hidden** is ignored / passed through — widget state is **not** mutated (no user intent to modify an off-screen surface). Intra-route rule; inter-route dispatch unchanged | — |
 
 ### Bucket B — IMPLEMENT (forward contracts; `pending` → green)
 
@@ -145,9 +146,10 @@ through the public surface.)
 Current behaviour **expected to change** — documented so the
 change is visible, never silent; **not** a preserve-contract.
 
-- CP1 inspect (§3.4, R2 · OWNER RULING PENDING) — under
+- CP1 inspect (§3.4, R2 · owner-deferred, prompt12) — under
   `inspect` the console owns the input surface; the project
-  widget is not honoured; input is not dead.
+  widget is not honoured; input is not dead. Owner kept the
+  current assumption; revisit when the routing model lands.
 - CP2 wheel (§3.7, R1) — wheel reaches the **active route**; the
   route does not forward it to a widget and the default is a
   no-op unless the project sets `love.wheelmoved`. The

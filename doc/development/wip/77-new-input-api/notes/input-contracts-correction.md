@@ -67,13 +67,14 @@ PRESERVE. The absence of this gate is what let the drift in.
 | pointer reaches "BOTH route and widget" inter-route (former §3.5 table) | **removed** | today's mechanism (un-gated mouse path) promoted to invariant; no mandate, no principle — fails the gate |
 | touch pressed/released/moved reaches the active route (§3.6) | PRESERVE | ratified principle (§2) |
 | intra-route forwarding to a widget (parallel handling) (§2, §3.5/3.8) | not a dispatch contract | tier-1 "parallel handling" — but it is intra-route, invisible to inter-route dispatch |
+| hidden widget ignores / passes through events; widget state not mutated (§2C) | PRESERVE | **owner ruling (prompt12)** + common logic (no user intent to modify an off-screen surface) |
 | wheelmoved reaches the active route (§3.7) | PRESERVE (route axis) | ratified principle (§2) |
 | wheel "never the widget" / no-op default (§3.7) | CHARACTERIZE-PROVISIONAL | mechanism by omission (no gateway wheel entry); intended pass-through (R1) is provisional |
-| `inspect`: console owns the surface, project widget not honoured (§3.4) | CHARACTERIZE-PROVISIONAL · OWNER RULING PENDING | design-silent; provisional/silent |
+| `inspect`: console owns the surface, project widget not honoured (§3.4) | CHARACTERIZE-PROVISIONAL · owner-deferred | design-silent; owner (prompt12) kept the assumption — dev-facing, revisit at routing-model land |
 | global shortcuts non-consuming (§4.3) | PRESERVE (carried as-is) | observed + recorded; the key still reaches its active route — open whether mandated vs incidental (§7 of model note) |
 | native-handler coexistence: "no project handler set ⇒ default propagates to the active route's sink" (§5.3, D-D) | forward / 0.1.0-m4 | reframed from "legacy" — a project setting its own `love.keypressed` is legitimate; serves tier-1 "only text fields break" |
 | sink-as-default coupling: overriding `on_key_pressed` disables `on_limit_reached` (§6, D-E) | flagged, not asserted | derived coupling (`design.md §4`); owner deliberate-or-not call |
-| combo-tier key-repeat semantics (§6, D-C) | OWNER RULING PENDING | intent silent; tier-3's one open question; provisional leaning recorded, not ruled |
+| combo-tier key-repeat semantics (§6, D-C) | provisional (owner: not yet ruled) | intent silent; tier-3's one open question; leaning recorded, not ruled — **plus owner constraint: existing combos keep behaviour unless explicitly altered** |
 
 ## Rows whose bucket / framing changed
 
@@ -133,14 +134,29 @@ otherwise-frozen spec, this correction only):
 - **`src/`, tests, any other design doc**: out of bounds (the
   suite is regenerated downstream by M4-0-04, separately).
 
+## Owner decisions (prompt12 review)
+
+- **inspect** — deliberately **deferred**, not ruled: the
+  feature is dev-facing and inspect's eventual shape is still
+  unknown. Keep the current assumption (CHARACTERIZE-PROVISIONAL);
+  revisit when the routing model lands.
+- **New invariant added — hidden widget does not consume**
+  (§2C; suite P12). An event reaching a widget while it is hidden
+  is ignored or passed through; widget state is not mutated. Owner
+  ruling + common logic (no user intent to modify an off-screen
+  surface). Tagged PRESERVE; applies to every event type.
+- **combo-tier key-repeat (D-C)** — provisional leaning kept,
+  **not** ruled (settle nearer implementation), with the added
+  owner constraint that **existing combos keep their current
+  behaviour unless explicitly altered**.
+
 ## Open rulings left provisional
 
-- **inspect/overlay boundary** (§3.4) — which route owns
-  `inspect` after unification. CHARACTERIZE-PROVISIONAL · OWNER
-  RULING PENDING.
+- **inspect/overlay boundary** (§3.4) — owner-deferred (above);
+  CHARACTERIZE-PROVISIONAL until the routing model lands.
 - **combo-tier key-repeat semantics** (D-C) — fire on every
   repeat vs fresh-only at the handler tier. Provisional leaning
-  recorded, not ruled. OWNER RULING PENDING.
+  recorded, not ruled; existing combos preserved unless altered.
 - **keyreleased under a widget** (§3.3) — provisional; possibly a
   defect to fix rather than preserve; open whether any consumer
   consumes `keyreleased` today.
