@@ -15,6 +15,14 @@
      forward-controllable per SR2 (R6); §5 scope-fenced to
      m4/m5 (R7); widget/overlay glossary (R8); §6.1 reworked
      seed→resolutions. Stable-now OUTCOME contracts unchanged. -->
+<!-- s27 (orchestrator, Opus 4.8): retired LLM-coined "base
+     sink" (overlay-gate mechanism leaking into durable
+     vocabulary — human contest). Canonical vocabulary =
+     route / sink / widget (§2 glossary). §2 reframed (routing
+     + route-owned widgets; the "mode × widget orthogonality"
+     was an overlay artifact, dropped); §3 notation + tables
+     "route" → "route". OUTCOMES UNCHANGED — vocabulary
+     only. human-approved: pending. -->
 
 Companion (descriptive "how it works today"):
 [user_input.md](../../../internals/user_input.md).
@@ -68,39 +76,79 @@ use semver pre-release markers (e.g. _0.1.0-m4_), never bare
 
 ---
 
-## 2. The two activation families (orthogonal axes)
+## 2. Routing — one route per event, plus widgets
 
-Routing is governed by **two independent activations**. Model
-them as two axes, not one chain.
+Routing selects **one route** per keyboard/text event (see
+Glossary); a route may have a **widget** up. The earlier "two
+orthogonal activations (mode × widget)" framing is **retired**:
+that orthogonality was an artifact of the global overlay gate (a
+widget independent of mode). Once the widget is **route-owned**
+it is not orthogonal to the route — it belongs to the routed
+controller.
 
-> **Glossary.** **"widget"** = the durable role of an input
-> surface that intercepts events; the **"overlay singleton"**
-> (the term the source docs use) is its *current mechanism*.
-> This note says "widget" for the role and treats "overlay" as
-> the implementation behind it (R8).
+> **Glossary — canonical input-routing vocabulary (s27).**
+> Reference these three terms from the suite and specs; do not
+> coin alternates. (Supersedes the LLM-coined "route,"
+> retired as overlay-gate mechanism leaking into durable vocab.)
+>
+> - **route** — the path a keyboard/text event takes to its
+>   consumer. Routing selects **exactly one route per event**.
+>   Current value set: `{ overlay, ConsoleController,
+>   EditorController }`; the rewrite replaces it with
+>   `{ ConsoleController, EditorController,
+>   ProjectInputController }` — the global overlay gate is
+>   removed and the project gains a first-class route.
+>   **Contract (intact across the rewrite): every keyboard/text
+>   event travels via exactly one route — never silently
+>   dropped, never more than one.**
+> - **sink** — the default / last-resort disposition a route
+>   provides and manages for an event it did not specifically
+>   handle (no matching handler or combo). Deliberately
+>   implementation-light: routes need **not** realize it
+>   identically — Console/Editor may differ from the project
+>   route. *Current realization:* `UserInputController` is
+>   purposefully a **global singleton** the active route takes
+>   control of; "UIC becomes the *universal* terminal sink"
+>   (`design.md §2`) is a **recommended objective**, not a
+>   present fact — Console/Editor routing-through-UIC is
+>   postponed and may be contested. A widget often serves as its
+>   route's sink, but not always.
+> - **widget** — the route-managed input *surface* that solicits
+>   text. Owned by the active route's controller, **not** a
+>   free-floating global. Today the project's widget is realized
+>   as the overlay singleton (`love.state.user_input`) — the
+>   mechanism the rewrite removes. A widget can serve as its
+>   route's sink (text editing), but the two notions are
+>   distinct.
+>
+> Pointer (mouse/touch) and wheel are the documented exceptions
+> to exactly-one-route — outcomes in §3.5–3.7.
 
-**(A) Mode activation — the base sink.** The application
-`app_state` selects which consumer owns the event slot:
-`ready` / `project_open` / `running` / `inspect` / `snapshot`
-/ `editor` / `shutdown` (_inv §2_). Mode determines the
-**base sink** — the consumer an event reaches when no input
-widget intercepts. In every non-running state the base sink
-is the single `ConsoleController` (CC), which sub-routes
-console-vs-editor internally; a running project may take over
-individual slots (§3). (Current realization: `app_state`
-branching inside CC, and `set_handlers` slot swaps.)
+**(A) Routing — which consumer owns the event.** The
+application `app_state` selects which **route** owns the event
+slot: `ready` / `project_open` / `running` / `inspect` /
+`snapshot` / `editor` / `shutdown` (_inv §2_). In every
+non-running state the route is the single `ConsoleController`
+(CC), which sub-routes console-vs-editor internally; while a
+project runs, the project's route (the overlay today;
+`ProjectInputController` after the rewrite) owns the
+keyboard/text slots (§3). (Current realization: `app_state`
+branching inside CC, the overlay gate, and `set_handlers` slot
+swaps.)
 
-**(B) Widget activation / reset — the override.** An input
-**widget** (the overlay singleton today) is shown / reset /
-hidden **orthogonally** to mode. While active it **overrides**
-the base sink for keyboard and text, and is **added alongside**
-it for pointer events (§3). Mode and widget are independent:
-any mode can have the widget up or down.
+**(B) Widgets — a route-managed surface.** A **widget** (the
+overlay singleton today) is shown / reset / hidden by the
+active route. While a text widget is up it **takes the
+keyboard/text events of its route**, and pointer events reach
+**both** it and the route's other handling (§3). Today the
+overlay is global and appears independent of mode; that
+independence is mechanism, not contract — forward, the widget
+is owned by the routed controller.
 
-**Two-step nature.** First a mode is active (a base sink is
-chosen); then a widget may be (de)activated *on top of* it.
-The widget never changes the mode; the mode (except `inspect`,
-§3.4) never changes whether the widget is honoured.
+**Two-step nature.** First a route is selected; then that route
+may have a widget (de)activated within it. The widget never
+changes the route; the route (except `inspect`, §3.4) governs
+whether a widget is honoured.
 
 **Reset semantics (widget re-activation).** Re-activating an
 already-active widget is **not** a fresh activation:
@@ -118,13 +166,15 @@ already-active widget is **not** a fresh activation:
 
 ---
 
-## 3. The contract table — `(mode × widget-state)` per event
+## 3. The contract table — per route × widget-state, per event
 
-Notation. **base sink** = the mode-selected consumer (§2A).
-**widget** = the active input widget (§2B). **EXCLUSIVE** =
-exactly one consumer receives the event. **BOTH** = widget and
-base sink each receive it. "widget active" means a widget is
-shown **and** not suppressed by mode (§3.4).
+Notation. **route** = the consumer the event is dispatched to
+(§2; the mode route — Console/Editor — or the project route).
+**widget** = the active input surface within a route (§2B).
+**EXCLUSIVE** = exactly **one route** receives the event.
+**BOTH** = the widget and the route's other handling each
+receive it. "widget active" means a widget is shown **and** not
+suppressed by the route (`inspect`, §3.4).
 
 All contracts in this section are **[stable-now]** unless a
 row says otherwise.
@@ -134,7 +184,7 @@ row says otherwise.
 | widget active? | receives |
 |---|---|
 | yes | widget only |
-| no  | base sink only |
+| no  | route only |
 
 The key reaches **one** consumer, never both. Global shortcuts
 (§4.3) and held-key tracking (§4.1) run first but do **not**
@@ -155,8 +205,8 @@ above. (_inv §4 keypressed_. Current realization:
 
 ### 3.2 textinput — EXCLUSIVE
 
-Same shape as keypressed: widget-only when active, else base
-sink only. Never both. (_inv §4 textinput_.)
+Same shape as keypressed: widget-only when active, else route
+only. Never both. (_inv §4 textinput_.)
 
 ### 3.3 keyreleased — EXCLUSIVE
 
@@ -194,15 +244,15 @@ mechanism, non-binding.)
 
 | widget active? | receives |
 |---|---|
-| yes | widget **and** base sink (widget first) |
-| no  | base sink only |
+| yes | widget **and** route (widget first) |
+| no  | route only |
 
 Pointer delivery is **non-exclusive**: an active widget does
-not deny the base sink. **The guarantee is that both receive
+not deny the route. **The guarantee is that both receive
 it; the order is incidental** — today the widget is called
 before the sink (current realization), but nothing is owed to
 that ordering (R3). Under `inspect` the widget half is
-suppressed (§3.4); the base sink half is unaffected. (_inv §4
+suppressed (§3.4); the route half is unaffected. (_inv §4
 mouse*, §10_.)
 
 ### 3.6 touchpressed / touchreleased / touchmoved — BOTH
@@ -212,15 +262,15 @@ touch handlers are no-ops today — that is mechanism, not part
 of the contract; the **delivery** is what is guaranteed.)
 (_inv §4 touch*_.)
 
-### 3.7 wheelmoved — reaches the base/project sink, never the widget
+### 3.7 wheelmoved — reaches the route, never the widget
 
 | widget active? | receives |
 |---|---|
-| yes | base sink only |
-| no  | base sink only |
+| yes | route only |
+| no  | route only |
 
 Present state: the input **widget is never offered wheel
-events** — wheel reaches only the mode/project sink, and the
+events** — wheel reaches only the route, and the
 framework **default is a no-op**: nothing acts on a wheel move
 unless the project defines its own `love.wheelmoved` handler.
 Unlike the other pointer events (BOTH, §3.5), the widget half is
@@ -248,11 +298,11 @@ omission.)
 ### 3.8 The two canonical asymmetries, stated as one rule
 
 - **Keyboard / text** (keypressed, textinput, keyreleased) =
-  **EXCLUSIVE** — widget XOR base sink.
+  **EXCLUSIVE** — widget XOR route.
 - **Mouse / touch** (pressed/released/moved) = **BOTH** —
-  widget and base sink both receive it (order incidental,
+  widget and route both receive it (order incidental,
   §3.5).
-- **Wheel** = reaches the base/project sink, never the widget
+- **Wheel** = reaches the route, never the widget
   today; **no-op by default**; intended shape is pass-through to
   the project with project-opt-in consume (§3.7).
 - **`inspect`** = console owns input; project widget not
@@ -302,14 +352,14 @@ release) **fire their effect but do not consume the key** — it
 still reaches its sink per §3. Play mode (`cfg.mode=='play'`)
 narrows the active set to restart/profile; that mode gate is
 itself a contract. (_inv §7_.) DEBUG-only view toggles live in
-the base-sink keypressed (not the framework shortcut layer) and
+the route keypressed (not the framework shortcut layer) and
 so are only reachable when the widget does **not** intercept
 (EXCLUSIVE keyboard path) — a consequence of §3.1, recorded
 for completeness.
 
 ### 4.4 Slot restoration on project stop — [stable-now]
 
-On project stop, the base sink for **every** slot is restored
+On project stop, the route for **every** slot is restored
 to the framework default (CC-owned) — wholesale, not per-key:
 whatever handlers a running project installed are overwritten
 by the default set, and `update`/`draw`/widget handle are
@@ -447,14 +497,25 @@ reproducing today's gated behaviour after the gate is removed.
 [M5-01-split.md](../design/spec/M5-01-split.md).)
 
 ### 5.4 `isrepeat` reaches the keypressed path
-**[forward / 0.1.0-m5]**
+**[forward — split across 0.1.0-m4 / m5 (s27 D-γ)]**
 
-`isrepeat` becomes available to the project keyboard callback
-(`compy.input.on_key_pressed(k, keys_pressed, isrepeat)`, with
-fresh-vs-repeat dispatch keying). Today `isrepeat` is
-**structurally dropped** at the gateway/slot signatures, which
-bind only `k` (_inv §8, §11.3_) — no consumer sees it.
-(Source: [M5.md](../design/spec/M5.md);
+`isrepeat` is **structurally dropped** today at the gateway /
+slot signatures, which bind only `k` (_inv §8, §11.3_) — no
+consumer sees it. The rewrite restores it in **two steps**
+(reconciling the roadmap, which threads it at M4, with the
+prior single-m5 tag):
+- **[0.1.0-m4]** `isrepeat` is no longer dropped at the gateway
+  (the `function(k)` slot signature at `controller.lua:554`
+  widens) — it reaches the keypressed path.
+- **[0.1.0-m5]** `isrepeat` is delivered to the project keyboard
+  callback (`compy.input.on_key_pressed(k, keys_pressed,
+  isrepeat)`), with fresh-vs-repeat dispatch keying.
+
+Per **s27 D-α**, the whole keypressed path carries the uniform
+`(k, keys_pressed, isrepeat)` triple — **the sink included**,
+not only the project callback (§6 Q1, resolved). (Source:
+[M4.md](../design/spec/M4.md) test-guardrail;
+[M5.md](../design/spec/M5.md);
 [M5-01](../design/spec/M5-01-split.md).)
 
 ---
@@ -463,13 +524,16 @@ bind only `k` (_inv §8, §11.3_) — no consumer sees it.
 
 Genuinely unresolved; not relitigating settled design.
 
-- **Should the base/bottom sink receive `keys_pressed` (and
-  `isrepeat`)?** The forward project callback receives the
-  held-key set and repeat flag (§5.4); whether the bottom
-  input sink should also receive them uniformly (e.g. to handle
-  Shift+Enter at one place) is flagged **not yet settled** in
-  the companion doc, to be resolved in the 0.1.0-m4/m5 design
-  session. (Source:
+- **Should the bottom/default sink receive `keys_pressed` (and
+  `isrepeat`)? — RESOLVED (s27 D-α): yes, uniformly.** The
+  whole keypressed path carries `(k, keys_pressed, isrepeat)`,
+  the bottom/default sink **included** — not only the project
+  callback. Rationale: one signature across the path (so e.g.
+  Shift+Enter can be handled in one place); the sink is the
+  default value of `on_key_pressed`, which already binds the
+  triple (`design.md §4`), so pinning it merely makes that
+  explicit. (Was: open, deferred to the m4/m5 design session —
+  that session is s27. Source:
   [user_input.md](../../../internals/user_input.md) — "Key
   state" section.)
 - **Is `app_state == 'starting'` ever observed by an input
