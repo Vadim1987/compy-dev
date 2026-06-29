@@ -4,6 +4,17 @@
 <!-- P2 of 2: contracts distilled from the inventory. -->
 <!-- candidate to promote to doc/development/internals/ at
      feature close. -->
+<!-- s26 (orchestrator, Opus 4.8), two passes:
+     (1) planned-vs-existing separation — forward caveats on
+     §3.1 (F-A) + §4.6 (F-D); intent flags on §3.4/§3.7/order.
+     (2) post cold-revalidation (P3) + human rulings — §3.7
+     wheel = pass-through-by-default / project-opt-in (R1);
+     §3.4 inspect = deliberate modal, outcome pinned + mechanism
+     dropped + reversible (R2); §3.5/§3.8 within-event order =
+     incidental (R3); §4.6 force = reconfig flag-gated, scope
+     forward-controllable per SR2 (R6); §5 scope-fenced to
+     m4/m5 (R7); widget/overlay glossary (R8); §6.1 reworked
+     seed→resolutions. Stable-now OUTCOME contracts unchanged. -->
 
 Companion (descriptive "how it works today"):
 [user_input.md](../../../internals/user_input.md).
@@ -62,6 +73,12 @@ use semver pre-release markers (e.g. _0.1.0-m4_), never bare
 Routing is governed by **two independent activations**. Model
 them as two axes, not one chain.
 
+> **Glossary.** **"widget"** = the durable role of an input
+> surface that intercepts events; the **"overlay singleton"**
+> (the term the source docs use) is its *current mechanism*.
+> This note says "widget" for the role and treats "overlay" as
+> the implementation behind it (R8).
+
 **(A) Mode activation — the base sink.** The application
 `app_state` selects which consumer owns the event slot:
 `ready` / `project_open` / `running` / `inspect` / `snapshot`
@@ -89,8 +106,10 @@ The widget never changes the mode; the mode (except `inspect`,
 already-active widget is **not** a fresh activation:
 - without `force` → the request is **suppressed and warned**,
   state untouched (warn-on-suppression is a contract, §4.6).
-- with `force` → only the `text` subset is applied live;
-  other config is ignored, and **no cancel chain fires**.
+- with `force` → a live reconfiguration is applied (**today
+  only the `text` subset** takes effect, other config ignored;
+  the reconfiguration *scope* is forward-controllable, §4.6),
+  and **no cancel chain fires**.
 - a fresh activation (widget was inactive) with **no text
   supplied starts empty** — re-show does not inherit prior
   text.
@@ -123,6 +142,17 @@ consume — the same key still arrives at exactly one of the two
 above. (_inv §4 keypressed_. Current realization:
 `get_user_input()` gate at the dispatch point.)
 
+> **[stable-now abstraction — one consequence is FORWARD,
+> see §5.1] (F-A).** The *exactly-one-consumer* guarantee is
+> stable-now and the rewrite must keep it. But the present
+> **realization** that a running project's sink is *bypassed
+> entirely* while a widget is active is **slated to change**:
+> the rewrite removes the overlay gate and routes project
+> keys to the `ProjectInputController` (§5.1). Read §3.1–3.3
+> as "exactly one consumer," **not** as a contract to
+> preserve project-key-drop-under-widget — that drop is a
+> limitation being fixed, not a guarantee.
+
 ### 3.2 textinput — EXCLUSIVE
 
 Same shape as keypressed: widget-only when active, else base
@@ -134,14 +164,31 @@ Same shape. The held-key removal (§4.1) and the
 Ctrl+Escape quit guard (§4.3) run first and do not consume.
 (_inv §4 keyreleased_.)
 
-### 3.4 Mode override: `inspect` suppresses the widget
+### 3.4 Mode override: `inspect` — the console owns the input surface
 
-When `app_state == 'inspect'`, the widget is **suppressed**:
-keyboard/text/pointer events flow to the base sink **as if no
-widget were active**, even when one is set. This is the one
-place mode overrides widget. **[stable-now]** (_inv §4 head,
-§11.2_. Current realization: `get_user_input()` returns nil
-under `inspect`.)
+**Current behaviour [provisional — not pinned, see ruling]:**
+when `app_state == 'inspect'`, the input surface serves the
+**console REPL** (console-owned); a project-set widget is **not
+honoured**. Input is **not blocked** — the project is frozen and
+the REPL is live over it, so keyboard / text / pointer drive the
+console. This is the one place mode overrides widget. (_inv §4
+head, §11.2_. Current realization: `get_user_input()` returns
+nil under `inspect`, and suspend restores console handlers —
+mechanism, non-binding.)
+
+> **Provisional — kept for now, expected to change (s26 ruling,
+> was F-C).** This is **current behaviour we retain as-is**, not
+> a preserve-forever contract. The routing unification and the
+> new singleton / `ProjectInputController` model may
+> **legitimately revise** how inspect ownership works (e.g. one
+> input widget reconfigured by owner — console vs project —
+> rather than a separate console path). So it is **not** tagged
+> `[stable-now]` must-preserve: **characterize** the current
+> shape, do **not** write a regression guard that would red on a
+> deliberate inspect change. Design-silent — no M4–M8 spec
+> addresses inspect routing — revisit when the routing model
+> lands (the REPL is itself an input surface, so "modal" here
+> means console-owned, not input-disabled).
 
 ### 3.5 mousepressed / mousereleased / mousemoved — BOTH
 
@@ -151,9 +198,12 @@ under `inspect`.)
 | no  | base sink only |
 
 Pointer delivery is **non-exclusive**: an active widget does
-not deny the base sink. Order is widget-then-sink. Under
-`inspect` the widget half is suppressed (§3.4); the base sink
-half is unaffected. (_inv §4 mouse*, §10_.)
+not deny the base sink. **The guarantee is that both receive
+it; the order is incidental** — today the widget is called
+before the sink (current realization), but nothing is owed to
+that ordering (R3). Under `inspect` the widget half is
+suppressed (§3.4); the base sink half is unaffected. (_inv §4
+mouse*, §10_.)
 
 ### 3.6 touchpressed / touchreleased / touchmoved — BOTH
 
@@ -162,30 +212,51 @@ touch handlers are no-ops today — that is mechanism, not part
 of the contract; the **delivery** is what is guaranteed.)
 (_inv §4 touch*_.)
 
-### 3.7 wheelmoved — base sink only (widget never sees it)
+### 3.7 wheelmoved — reaches the base/project sink, never the widget
 
 | widget active? | receives |
 |---|---|
 | yes | base sink only |
 | no  | base sink only |
 
-Wheel is **EXCLUSIVE to the base sink**: the widget is **never**
-offered wheel events, regardless of activation. This is an
-asymmetry vs the other pointer events (which are BOTH). It is a
-real present-state guarantee, not an oversight to silently
-"fix" — note it explicitly so the rewrite preserves or
-deliberately revises it. (_inv §1, §4 wheelmoved, §11.1_.
-Current realization: there is no wheel entry in the gateway, so
-wheel bypasses the widget by omission.)
+Present state: the input **widget is never offered wheel
+events** — wheel reaches only the mode/project sink, and the
+framework **default is a no-op**: nothing acts on a wheel move
+unless the project defines its own `love.wheelmoved` handler.
+Unlike the other pointer events (BOTH, §3.5), the widget half is
+absent. (_inv §1, §4 wheelmoved, §11.1_. Current realization: no
+wheel entry in the gateway, so wheel bypasses the widget by
+omission.)
+
+> **Intent (s26 ruling, was F-B): pass-through by default,
+> project-opt-in to consume — do not structurally block.** The
+> authoritative descriptive docs treat wheel as forwarded to
+> project handlers via the standard LÖVE2D mechanism
+> (`internals/user_input.md:169`, `event_routing.md:319-322`),
+> never as framework-consumed — so widget-bypass is
+> **incidental by-omission**, not a designed asymmetry. Intended
+> shape: **wheel passes through to the project; the framework
+> consumes it only if the project explicitly opts in (no-op by
+> default)**. Structurally blocking wheel would be an exotic,
+> hard-to-maintain solution and is not wanted; revise toward
+> project-opt-in if/when wheel is unified — do **not** pin
+> widget-never-sees-wheel as a preserve-forever guarantee.
+> (System-owned surfaces such as the error explorer do consume
+> mousewheel — `error_explorer.md:26` — but that is outside the
+> project-input contract.)
 
 ### 3.8 The two canonical asymmetries, stated as one rule
 
 - **Keyboard / text** (keypressed, textinput, keyreleased) =
   **EXCLUSIVE** — widget XOR base sink.
 - **Mouse / touch** (pressed/released/moved) = **BOTH** —
-  widget and base sink, widget first.
-- **Wheel** = base sink only, widget never.
-- **`inspect`** = widget suppressed everywhere (§3.4).
+  widget and base sink both receive it (order incidental,
+  §3.5).
+- **Wheel** = reaches the base/project sink, never the widget
+  today; **no-op by default**; intended shape is pass-through to
+  the project with project-opt-in consume (§3.7).
+- **`inspect`** = console owns input; project widget not
+  honoured (provisional — expected to change, §3.4).
 - **Global shortcuts** = non-consuming (§4.3) — they fire and
   the key still reaches its consumer.
 
@@ -272,13 +343,36 @@ then its guarantees above hold. (_inv §9_.)
 Restating §2's reset semantics as standalone contracts:
 - **already-active without `force` → warn + no-op** (state
   untouched).
-- **already-active with `force` → text-only live update**, no
-  other config applied, no cancel chain.
+- **already-active with `force` → live reconfiguration**;
+  **today only the `text` subset takes effect** (other config
+  ignored), no cancel chain.
 - **fresh activation with no text → empty.**
 - **`hide()` deactivates without firing a cancel chain.**
 - **auto-close on submit:** a successful oneshot submit
   deactivates the widget (today via a pushed `userinput`
   event). (_inv §5, §6_.)
+
+> **[stable-now; superseded FORWARD / 0.1.0-m6] (F-D).** The
+> "no cancel chain" facts above (and in §2's reset semantics)
+> describe **today**. The rewrite introduces **named
+> submit/cancel chains** (design decision D-4); from
+> _0.1.0-m6_ `hide()` and cancel paths *do* fire a cancel
+> chain. These are stable-now-**until-superseded**, not
+> preserve-forever. (Source: M6 spec. The m6 forward contract
+> is not enumerated in §5 — see the §5 scope note, §6.1.)
+
+> **[stable-now contract = the flag-gate; reconfig scope
+> FORWARD] (R6).** Per SR2 (authoritative over the architect's
+> "allow all hot reconfigs"), live reconfiguration is permitted
+> **only behind the explicit `force` flag** — that gate is the
+> durable contract. The **scope** of what `force` reconfigures
+> is a deliberately **code-controllable, evolving** question:
+> today text-only, to widen/tighten as the `compy.input` API
+> matures (D-2 "force reconfigures"; M7 `configure()`). Read
+> "text-only on force" as **today's scope, not a preserve-
+> forever limitation** — the rewrite may legitimately expand
+> it. (**M7 verification item:** whether `force` itself widens
+> or `configure()` owns reconfigure is an open design read.)
 
 ### 4.7 Framework click detection — [stable-now]
 
@@ -307,6 +401,14 @@ These outcomes are **introduced by the rewrite**; they are
 **not** present today. Each is tagged with the version that
 establishes it. Do not read any of these as a current
 guarantee.
+
+> **Scope (R7).** This forward set covers the **_0.1.0-m4/m5_
+> horizon only** — enough to drive the M4-scoped contract-test
+> rewrite. The m6/m7 outcomes the design introduces (named
+> submit/cancel chains + `compy.before_exit` (M6/M6-02, D-4),
+> D-5 boundary callbacks `on_limit_reached`, M7 `set_text` /
+> cursor / `configure`) are **not** enumerated here; they are
+> to be added before this note is promoted to `internals/`.
 
 ### 5.1 Project key/text reach a project sink
 **[forward / 0.1.0-m4]**
@@ -375,6 +477,45 @@ Genuinely unresolved; not relitigating settled design.
   any event arrives, the state is already `ready` or later, so
   no contract is asserted for `starting`. Recorded so the
   rewrite does not assume one exists. (_inv §2, §Coverage_.)
+
+### 6.1 Revalidation outcomes (s26: P3 + human rulings)
+
+The cold revalidation (P3,
+[`input-contracts-revalidation.md`](input-contracts-revalidation.md))
+verdict was **sound after listed corrections** — no factual
+error against code, no contract invented or dropped. The s26
+seed flags are now resolved and folded into the sections above:
+
+- **(F-A) keyboard EXCLUSIVE / project-drop** → **confirmed**
+  (R4): exactly-one-consumer is preserved; project-key-drop is
+  fixed-not-preserved. §3.1 caveat stands.
+- **(F-D) hide / no-cancel-chain** → **confirmed** (R5):
+  superseded at _0.1.0-m6_. §4.6 caveat stands.
+- **(F-B) wheel bypass** → **incidental** (R1): intended shape
+  is project pass-through with project-opt-in consume (§3.7).
+- **(F-C) inspect input ownership** → **provisional, not pinned**
+  (R2): current behaviour (console/REPL owns input, project
+  widget not honoured, input not dead) is **kept for now but
+  expected to change** under routing unification + the singleton
+  — characterize, do not regression-guard (§3.4).
+- **(F-E) within-event order** → **incidental** (R3), not a
+  guarantee (§3.5/§3.8). Cross-event textinput-before-keypressed
+  order remains correctly **un-pinned** (E20/E9: no event-order
+  guarantee owed).
+- **(§5 scope)** → acceptable m4/m5 scoping for now; §5 is
+  scope-fenced and the m6/m7 set is enumerated before
+  `internals/` promotion (R7).
+- **(R6, new — found by revalidation)** → `force` reconfigure:
+  the flag-gate is pinned, the reconfigure *scope* is forward-
+  controllable (§4.6). SR2 authoritative.
+
+**Verification carried forward** (cannot be asserted from the
+docs; resolve in the milestone that touches them):
+- **R2 / M4** — inspect ownership is **provisional**: when the
+  routing model lands, decide its inspect behaviour
+  **deliberately** (a change is expected, not a silent break).
+- **R6 / M7** — whether `force` itself widens or `configure()`
+  owns live reconfigure is a design read.
 
 ---
 
