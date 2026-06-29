@@ -167,3 +167,20 @@ reflexively to one's own process. It is sound. Corrections to this note's earlie
 
 Net: the process caught the drift by the right mechanism at the right gate. The standing
 lesson is **gate-by-reliability**, not "calibrate earlier."
+
+## Two lessons (architect, s27 close)
+
+**(a) The contract spec is a primary deliverable, co-equal to the API.** The feature's
+lasting output is not only the new input API — it is the **input contracts materialized as
+a testable spec**, which makes a previously-undocumented load-bearing column **predictable**
+for the first time. The API is the visible deliverable; the contract is the one that cures
+the actual disease (no written source of truth) and makes every *future* change to this
+column safe — its value compounds. Treat the spec as an output to ship, not scaffolding to
+discard.
+
+**(b) Don't deep-review generated prose; scan it and contest what catches the eye.**
+Reviewing every aspect of derived prose for fidelity is low-reliability effort. Give it a
+quick read, challenge anything that stands out, and spend the real review budget on the
+**materialized outcome**. Guardrail: this is safe *only because* a rigorous outcome gate
+exists downstream — cheap prose review without a reliable outcome gate is negligence, not
+economy. The two are a pair.
