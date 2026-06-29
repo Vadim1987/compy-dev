@@ -247,6 +247,87 @@ describe('input routing #input', function()
       session.press('a')
       assert.equal(0, native)
     end)
+
+    -- textinput EXCLUSIVE (§3.2): overlay active → overlay
+    -- receives it; with no overlay → base sink (already above).
+    it('active overlay receives textinput', function()
+      local c = show_input_overlay()
+      local calls = record_calls(c, 'textinput')
+      session.type('Z')
+      assert.same({ 'Z' }, calls)
+    end)
+
+    it('active overlay blocks native textinput', function()
+      show_input_overlay()
+      local native = 0
+      local slot = love.textinput
+      love.textinput = function(...)
+        native = native + 1
+        return slot(...)
+      end
+      cleanup[#cleanup + 1] =
+        function() love.textinput = slot end
+      session.type('Z')
+      assert.equal(0, native)
+    end)
+
+    -- keyreleased EXCLUSIVE (§3.3): base sink (no overlay),
+    -- overlay-only when active, never both.
+    it('console keyreleased reaches the console', function()
+      local calls = record_calls(CC, 'keyreleased')
+      session.release('a')
+      assert.same({ 'a' }, calls)
+    end)
+
+    it('active overlay receives keyreleased', function()
+      local c = show_input_overlay()
+      local calls = record_calls(c, 'keyreleased')
+      session.release('a')
+      assert.same({ 'a' }, calls)
+    end)
+
+    it('active overlay blocks native keyreleased', function()
+      show_input_overlay()
+      local native = 0
+      local slot = love.keyreleased
+      love.keyreleased = function(...)
+        native = native + 1
+        return slot(...)
+      end
+      cleanup[#cleanup + 1] =
+        function() love.keyreleased = slot end
+      session.release('a')
+      assert.equal(0, native)
+    end)
+
+    -- mousepressed BOTH (§3.5): overlay active → widget AND
+    -- base sink each receive (order incidental, R3).
+    it('mousepressed reaches widget and base sink', function()
+      local c = show_input_overlay()
+      local wgt = record_calls(c, 'mousepressed')
+      local base = 0
+      love.mousepressed =
+        function() base = base + 1 end
+      cleanup[#cleanup + 1] =
+        function() love.mousepressed = nil end
+      session.mousepressed(100, 200, 1, false, 1)
+      assert.equal(1, #wgt)
+      assert.equal(1, base)
+    end)
+  end)
+
+  -- inspect ownership — provisional characterization only.
+  -- A deliberate inspect routing change must not red this suite.
+  describe('inspect ownership', function()
+    -- Current behaviour (§3.4): under app_state='inspect',
+    -- get_user_input() returns nil (controller.lua:20), so a
+    -- shown widget is not offered keyboard/text; the
+    -- console/REPL receives via love.keypressed/textinput.
+    --
+    -- PROVISIONAL (contract §3.4): kept for now, expected to
+    -- change under routing unification; characterize, do not
+    -- regression-guard. Revisit when the routing model lands.
+    pending('inspect: console owns input — provisional')
   end)
 
   -- ── editor block-nav at buffer limit #editor ──

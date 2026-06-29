@@ -17,13 +17,15 @@ local function new(cfg)
   local kp = love.handlers.keypressed
   local kr = love.handlers.keyreleased
   local ti = love.handlers.textinput
+  local mp = love.handlers.mousepressed
   return {
     press        = function(k) kp(k, '', false) end,
     release      = function(k) kr(k)            end,
     type         = function(t) ti(t)            end,
     -- isrepeat=true: currently dropped at controller.lua:554
     -- (function(k) signature); M4 threads it.
-    repeat_press = function(k) kp(k, '', true)  end,
+    repeat_press  = function(k) kp(k, '', true) end,
+    mousepressed  = function(...) mp(...)        end,
   }
 end
 
