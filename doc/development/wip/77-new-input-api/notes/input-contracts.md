@@ -23,6 +23,18 @@
      was an overlay artifact, dropped); §3 notation + tables
      "route" → "route". OUTCOMES UNCHANGED — vocabulary
      only. human-approved: pending. -->
+<!-- prompt12 (cold pass, Opus 4.8): unbiased correction of the
+     interpretation drift the intent-fidelity audit localized
+     here (D-A..D-E). §2/§3 re-founded on SINGLE inter-route
+     EXCLUSIVITY for EVERY event type (keyboard/text/pointer),
+     grounded in mode-exclusivity + the ratified three-controller
+     topology; widget-presence demoted to today's-mechanism
+     notes; the EXCLUSIVE-keyboard/BOTH-pointer asymmetry retired
+     (§3.5/§3.8). Per-row provenance tags added (PRESERVE vs
+     CHARACTERIZE-PROVISIONAL). D-D reframed (native handling =
+     legitimate, not legacy, §5.3); D-E + D-C carried as owner
+     questions (§6). Ledger: notes/input-contracts-correction.md.
+     human-approved: pending — STOP for owner blessing. -->
 
 Companion (descriptive "how it works today"):
 [user_input.md](../../../internals/user_input.md).
@@ -76,15 +88,46 @@ use semver pre-release markers (e.g. _0.1.0-m4_), never bare
 
 ---
 
-## 2. Routing — one route per event, plus widgets
+## 2. Routing — one route per event (all event types)
 
-Routing selects **one route** per keyboard/text event (see
-Glossary); a route may have a **widget** up. The earlier "two
-orthogonal activations (mode × widget)" framing is **retired**:
-that orthogonality was an artifact of the global overlay gate (a
-widget independent of mode). Once the widget is **route-owned**
-it is not orthogonal to the route — it belongs to the routed
-controller.
+Routing selects **one route** per input event — keyboard, text,
+**AND** pointer (see Glossary); a route may have a **widget** up.
+The earlier "two orthogonal activations (mode × widget)" framing
+is **retired**: that orthogonality was an artifact of the global
+overlay gate (a widget independent of mode). Once the widget is
+**route-owned** it is not orthogonal to the route — it belongs to
+the routed controller.
+
+**The invariant, grounded in mode-exclusivity.** The screen is
+always in exactly one mode — console / editor / project-running /
+a special mode (e.g. `inspect`). Modes are mutually exclusive, so
+the routes they bind are mutually exclusive, so **inter-route
+dispatch is EXCLUSIVE for every event type**: each event reaches
+exactly one route — the active one, fixed by mode/context. Never
+zero (no silent drop), never two. The widget is an **operational
+surface** the active route drives and configures; it never
+determines routing by merely existing.
+
+> **Provenance of this invariant (PRESERVE).** It is a **ratified
+> design rule**, not a stakeholder mandate. Intent is *silent* on
+> inter-route topology per se; the rule **derives** from
+> mode-exclusivity (a real system property) + the architect-
+> ratified three-controller topology (Console / Editor /
+> ProjectInputController), endorsed via
+> [`decisions.md`](../design/notes/decisions.md). State it as
+> design authority, not as something a stakeholder demanded.
+
+> **"EXCLUSIVE" disambiguation (D-B).** Here EXCLUSIVE is on the
+> **route axis** (one *route* per event). It does **not** collide
+> with the stakeholders' "**no exclusivity, no suppression**",
+> which is on the **channel axis** (key and text are two
+> independent channels that both fire — §4 / `spec.md §1`). The
+> two senses are different axes; do not read one as the other.
+> The only legitimate **"both" is intra-route** (a route
+> delivering one event to its own logic *and* to a surface it
+> activated — the "parallel handling" tier-1 asks for); that is
+> the route's private affair and is **invisible** to this
+> inter-route contract.
 
 > **Glossary — canonical input-routing vocabulary (s27).**
 > Reference these three terms from the suite and specs; do not
@@ -121,8 +164,11 @@ controller.
 >   route's sink (text editing), but the two notions are
 >   distinct.
 >
-> Pointer (mouse/touch) and wheel are the documented exceptions
-> to exactly-one-route — outcomes in §3.5–3.7.
+> Pointer (mouse/touch) and wheel are **not** exceptions to
+> exactly-one-route: like keyboard/text they reach the single
+> active route. Any forwarding to a widget is **intra-route** (the
+> route's concern), not a second inter-route delivery — outcomes
+> in §3.5–3.7.
 
 **(A) Routing — which consumer owns the event.** The
 application `app_state` selects which **route** owns the event
@@ -138,17 +184,27 @@ swaps.)
 
 **(B) Widgets — a route-managed surface.** A **widget** (the
 overlay singleton today) is shown / reset / hidden by the
-active route. While a text widget is up it **takes the
-keyboard/text events of its route**, and pointer events reach
-**both** it and the route's other handling (§3). Today the
-overlay is global and appears independent of mode; that
-independence is mechanism, not contract — forward, the widget
-is owned by the routed controller.
+active route. A widget changes only **intra-route handling** —
+how the active route processes an event it has already received
+(e.g. the project route delegating text editing to a soliciting
+widget). It **never** changes inter-route dispatch. The present
+realization — *widget up ⇒ the widget consumes its route's
+keys/text, the route's own sink bypassed; a click reaching both
+the widget and the route's other handling* — is **today's
+mechanism** (the overlay gate on the keyboard path, the
+un-gated mouse path), characterized per event in §3, **not** a
+routing contract. Today the overlay is global and appears
+independent of mode; that independence is mechanism, not
+contract — forward, the widget is owned by the routed
+controller.
 
-**Two-step nature.** First a route is selected; then that route
-may have a widget (de)activated within it. The widget never
-changes the route; the route (except `inspect`, §3.4) governs
-whether a widget is honoured.
+**Two-step nature.** First a route is selected by mode/context;
+then that route may have a widget (de)activated within it. The
+widget never changes the route; the route (`inspect` open —
+§3.4) governs whether a widget is honoured. "Widget up while in
+console mode via a free-floating `show_widget()`" is therefore
+an **incoherent scenario** under this model: a widget only
+exists when its owning route is active.
 
 **Reset semantics (widget re-activation).** Re-activating an
 already-active widget is **not** a fresh activation:
@@ -166,55 +222,86 @@ already-active widget is **not** a fresh activation:
 
 ---
 
-## 3. The contract table — per route × widget-state, per event
+## 3. The contract table — per active route, per event
 
 Notation. **route** = the consumer the event is dispatched to
-(§2; the mode route — Console/Editor — or the project route).
-**widget** = the active input surface within a route (§2B).
-**EXCLUSIVE** = exactly **one route** receives the event.
-**BOTH** = the widget and the route's other handling each
-receive it. "widget active" means a widget is shown **and** not
-suppressed by the route (`inspect`, §3.4).
+(§2; the mode route — Console/Editor — or the project route),
+selected by mode/context. **widget** = the active input surface
+*within* a route (§2B). **EXCLUSIVE** = exactly **one route**
+receives the event — for **every** event type (keyboard, text,
+pointer). There is **no inter-route "BOTH"**: the only "both" is
+**intra-route** (a route forwarding an event it received to a
+surface it activated), which is the route's concern and invisible
+to this contract (§2).
+
+Each row carries a **provenance** tag (the anti-drift gate):
+- **PRESERVE** — traces to a tier-1/2 mandate (cited) **or** to
+  the ratified inter-route-exclusivity principle (§2).
+- **CHARACTERIZE-PROVISIONAL** — observed current behaviour with
+  no mandate; **expected to change, no stakeholder mandate**.
+A row with neither a mandate nor the principle behind it may
+**not** be PRESERVE.
 
 All contracts in this section are **[stable-now]** unless a
 row says otherwise.
 
-### 3.1 keypressed — EXCLUSIVE
+### 3.1 keypressed — EXCLUSIVE on the active route [PRESERVE]
 
-| widget active? | receives |
-|---|---|
-| yes | widget only |
-| no  | route only |
+**Contract.** A `keypressed` reaches **exactly one route** — the
+active one, fixed by mode/context (§2). Never zero, never two.
+Global shortcuts (§4.3) and held-key tracking (§4.1) run first
+but do **not** consume — the same key still arrives at that one
+route. (_inv §4 keypressed_.)
 
-The key reaches **one** consumer, never both. Global shortcuts
-(§4.3) and held-key tracking (§4.1) run first but do **not**
-consume — the same key still arrives at exactly one of the two
-above. (_inv §4 keypressed_. Current realization:
-`get_user_input()` gate at the dispatch point.)
+**Provenance — PRESERVE.** Inter-route exclusivity = the ratified
+principle (§2). The further tier-1 mandate it must honour: *"no
+backward compat, but only TEXT FIELDS break; native keyboard
+handling must keep working"* — stated **at the route level**: a
+running project's route keeps receiving keys (its native keyboard
+handling is not broken). The break is bounded to text fields, not
+to keyboard dispatch.
 
-> **[stable-now abstraction — one consequence is FORWARD,
-> see §5.1] (F-A).** The *exactly-one-consumer* guarantee is
-> stable-now and the rewrite must keep it. But the present
-> **realization** that a running project's sink is *bypassed
-> entirely* while a widget is active is **slated to change**:
-> the rewrite removes the overlay gate and routes project
-> keys to the `ProjectInputController` (§5.1). Read §3.1–3.3
-> as "exactly one consumer," **not** as a contract to
-> preserve project-key-drop-under-widget — that drop is a
-> limitation being fixed, not a guarantee.
+> **What is NOT the contract — today's mechanism [CHARACTERIZE-
+> PROVISIONAL] (was F-A, D-A).** Today routing is keyed on
+> **widget presence**: *widget up ⇒ the widget consumes, the
+> project sink bypassed entirely* — literally the `if
+> get_user_input() then …` overlay gate at the dispatch point
+> (`controller.lua`). That is **today's realization, expected to
+> change, no stakeholder mandate** — it is the precise drift #77
+> exists to cure. The rewrite removes the gate and routes project
+> keys to the `ProjectInputController` (§5.1). Read §3.1–3.3 as
+> "exactly one **route**," **never** as a contract to preserve
+> project-key-drop-under-widget — that drop is a limitation being
+> fixed, not a guarantee. Which surface the active route uses
+> internally (a widget, its sink) is intra-route and invisible
+> here.
 
-### 3.2 textinput — EXCLUSIVE
+### 3.2 textinput — EXCLUSIVE on the active route [PRESERVE]
 
-Same shape as keypressed: widget-only when active, else route
-only. Never both. (_inv §4 textinput_.)
+Same shape and provenance as keypressed (§3.1): `textinput`
+reaches exactly one route, the active one. The widget-presence
+keying is the same today's-mechanism note as §3.1 — CHARACTERIZE-
+PROVISIONAL, not the contract. (_inv §4 textinput_.)
 
-### 3.3 keyreleased — EXCLUSIVE
+### 3.3 keyreleased — EXCLUSIVE on the active route [PRESERVE]
 
-Same shape. The held-key removal (§4.1) and the
+Same shape and provenance: `keyreleased` reaches exactly one
+route, the active one. The held-key removal (§4.1) and the
 Ctrl+Escape quit guard (§4.3) run first and do not consume.
 (_inv §4 keyreleased_.)
 
-### 3.4 Mode override: `inspect` — the console owns the input surface
+> **Today's mechanism [CHARACTERIZE-PROVISIONAL].** Today a
+> release does **not** reach the route under a widget (same gate
+> as §3.1). Under the route-centric model a release should reach
+> the active route; this is **expected to change** (possibly a
+> defect to fix, not preserve). Open: does any consumer consume
+> `keyreleased` today at all? — carry provisional.
+
+### 3.4 Mode override: `inspect` — the console owns the input surface [CHARACTERIZE-PROVISIONAL · OWNER RULING PENDING]
+
+> **OWNER RULING PENDING — inspect/overlay boundary.** Which
+> route owns `inspect` after unification is **design-silent**.
+> Carried CHARACTERIZE-PROVISIONAL; do **not** invent a contract.
 
 **Current behaviour [provisional — not pinned, see ruling]:**
 when `app_state == 'inspect'`, the input surface serves the
@@ -240,43 +327,53 @@ mechanism, non-binding.)
 > lands (the REPL is itself an input surface, so "modal" here
 > means console-owned, not input-disabled).
 
-### 3.5 mousepressed / mousereleased / mousemoved — BOTH
+### 3.5 mousepressed / mousereleased / mousemoved — EXCLUSIVE on the active route [PRESERVE]
 
-| widget active? | receives |
-|---|---|
-| yes | widget **and** route (widget first) |
-| no  | route only |
+**Contract.** A pointer event reaches **the active route** — the
+one fixed by mode/context (§2). **Intra-route forwarding to a
+widget is the route's concern**, not a second inter-route
+delivery: when a route has a widget up it may hand the pointer to
+that widget *and* to its own logic, in parallel — that is the
+route's private affair (§2), invisible to this contract.
 
-Pointer delivery is **non-exclusive**: an active widget does
-not deny the route. **The guarantee is that both receive
-it; the order is incidental** — today the widget is called
-before the sink (current realization), but nothing is owed to
-that ordering (R3). Under `inspect` the widget half is
-suppressed (§3.4); the route half is unaffected. (_inv §4
-mouse*, §10_.)
+**Provenance — PRESERVE** (ratified principle, §2).
 
-### 3.6 touchpressed / touchreleased / touchmoved — BOTH
+> **No inter-route "BOTH" (was the §3.5 BOTH table; D + the
+> pointer correction).** An earlier draft tabulated pointer as
+> inter-route **BOTH** ("a click reaches both a route and a
+> widget"). That was **today's mechanism promoted to invariant**:
+> the keyboard path has the overlay gate, the **mouse path does
+> not**, so today a click happens to reach both the underlying
+> controller and the widget. When a project is running, a click
+> is **not** propagated to the editor route — the running mode
+> owns the whole screen; there is no second top-level route to
+> receive it. So pointer is EXCLUSIVE inter-route like every
+> other event; the "both" is intra-route only. Today the widget
+> is called before the sink, but nothing is owed to that ordering
+> (R3). Under `inspect` (§3.4) the route's intra-route forwarding
+> to a project widget is suppressed; the active route is
+> unaffected. (_inv §4 mouse*, §10_.)
 
-Same BOTH contract and order as mouse (§3.5). (The widget's
-touch handlers are no-ops today — that is mechanism, not part
-of the contract; the **delivery** is what is guaranteed.)
-(_inv §4 touch*_.)
+### 3.6 touchpressed / touchreleased / touchmoved — EXCLUSIVE on the active route [PRESERVE]
 
-### 3.7 wheelmoved — reaches the route, never the widget
+Same contract and provenance as mouse (§3.5): touch reaches the
+active route; intra-route forwarding to a widget is the route's
+concern. (The widget's touch handlers are no-ops today — that is
+mechanism, not part of the contract; the **delivery** to the
+active route is what is guaranteed.) (_inv §4 touch*_.)
 
-| widget active? | receives |
-|---|---|
-| yes | route only |
-| no  | route only |
+### 3.7 wheelmoved — reaches the active route [CHARACTERIZE-PROVISIONAL]
 
-Present state: the input **widget is never offered wheel
-events** — wheel reaches only the route, and the
-framework **default is a no-op**: nothing acts on a wheel move
-unless the project defines its own `love.wheelmoved` handler.
-Unlike the other pointer events (BOTH, §3.5), the widget half is
-absent. (_inv §1, §4 wheelmoved, §11.1_. Current realization: no
-wheel entry in the gateway, so wheel bypasses the widget by
-omission.)
+**Contract (route axis, PRESERVE):** `wheelmoved` reaches the
+**active route**, like every other event (§2).
+
+**Provisional today:** the framework **default is a no-op** —
+nothing acts on a wheel move unless the project defines its own
+`love.wheelmoved` handler; and the active route does not forward
+wheel to a widget. The "widget is never offered wheel" framing is
+**mechanism by omission** (no wheel entry in the gateway), **not**
+a designed asymmetry — CHARACTERIZE-PROVISIONAL. (_inv §1, §4
+wheelmoved, §11.1_.)
 
 > **Intent (s26 ruling, was F-B): pass-through by default,
 > project-opt-in to consume — do not structurally block.** The
@@ -295,20 +392,27 @@ omission.)
 > mousewheel — `error_explorer.md:26` — but that is outside the
 > project-input contract.)
 
-### 3.8 The two canonical asymmetries, stated as one rule
+### 3.8 The one rule — inter-route exclusivity for every event
 
-- **Keyboard / text** (keypressed, textinput, keyreleased) =
-  **EXCLUSIVE** — widget XOR route.
-- **Mouse / touch** (pressed/released/moved) = **BOTH** —
-  widget and route both receive it (order incidental,
-  §3.5).
-- **Wheel** = reaches the route, never the widget
-  today; **no-op by default**; intended shape is pass-through to
-  the project with project-opt-in consume (§3.7).
-- **`inspect`** = console owns input; project widget not
-  honoured (provisional — expected to change, §3.4).
+The earlier "two canonical asymmetries (keyboard EXCLUSIVE vs
+pointer BOTH)" is **retired** (D-A / pointer correction): it
+encoded today's mechanism (keyboard gated, mouse un-gated), not
+an invariant. There is **one** rule:
+
+- **Every event type** — keypressed, textinput, keyreleased,
+  mouse, touch, wheel — is **EXCLUSIVE inter-route**: it reaches
+  exactly one route, the active one fixed by mode/context (§2).
+  [PRESERVE — ratified principle.]
+- The only **"both" is intra-route**: a route may forward an
+  event it received to a widget it activated *and* run its own
+  logic, in parallel — the route's private affair, invisible to
+  inter-route dispatch (§2). This is the "parallel handling"
+  tier-1 asks for.
+- **`inspect`** = console owns the input surface; project widget
+  not honoured (CHARACTERIZE-PROVISIONAL — §3.4, OWNER RULING
+  PENDING).
 - **Global shortcuts** = non-consuming (§4.3) — they fire and
-  the key still reaches its consumer.
+  the key still reaches its active route.
 
 ---
 
@@ -352,10 +456,10 @@ release) **fire their effect but do not consume the key** — it
 still reaches its sink per §3. Play mode (`cfg.mode=='play'`)
 narrows the active set to restart/profile; that mode gate is
 itself a contract. (_inv §7_.) DEBUG-only view toggles live in
-the route keypressed (not the framework shortcut layer) and
-so are only reachable when the widget does **not** intercept
-(EXCLUSIVE keyboard path) — a consequence of §3.1, recorded
-for completeness.
+the route keypressed (not the framework shortcut layer); they
+fire when the active route handles the key itself rather than
+forwarding it intra-route to a soliciting widget — a consequence
+of §3.1, recorded for completeness.
 
 ### 4.4 Slot restoration on project stop — [stable-now]
 
@@ -484,16 +588,20 @@ restoration target rather than an emergent property of
 reinstalling defaults. (Source:
 [M4.md](../design/spec/M4.md) — Deactivation.)
 
-### 5.3 Legacy native-handler coexistence (D-9)
+### 5.3 Native-handler coexistence (D-9)
 **[forward / 0.1.0-m4]**
 
-A project defining a native `love.keypressed` /
-`love.textinput` but none of the new `compy.input` surfaces is
-treated as legacy: `ProjectInputController` auto-provisions so
-the singleton-shown case routes to the widget and the
-singleton-hidden case routes to the project's native handler —
-reproducing today's gated behaviour after the gate is removed.
-(Source: [M4.md](../design/spec/M4.md) — D-9;
+A project setting its own `love.keypressed` / `love.textinput`
+is **legitimate, not legacy** (D-D). The contract: **when the
+project sets no `compy.input` handler, the default propagates to
+the active route's sink**; a project that *does* set a native
+handler has that handler driven by the project route.
+`ProjectInputController` auto-provisions so the soliciting case
+forwards intra-route to the widget and the non-soliciting case
+reaches the project's native handler — the same observable end
+state as today, after the gate is removed, founded on the active
+route rather than on widget presence. (Source:
+[M4.md](../design/spec/M4.md) — D-9;
 [M5-01-split.md](../design/spec/M5-01-split.md).)
 
 ### 5.4 `isrepeat` reaches the keypressed path
@@ -541,6 +649,19 @@ Genuinely unresolved; not relitigating settled design.
   any event arrives, the state is already `ready` or later, so
   no contract is asserted for `starting`. Recorded so the
   rewrite does not assume one exists. (_inv §2, §Coverage_.)
+- **Sink-as-default coupling (D-E) — owner call.** The sink is
+  the **default value** of `on_key_pressed` (`design.md §4`).
+  Consequence: a project that **overrides `on_key_pressed`
+  silently disables `on_limit_reached`** (the boundary hook the
+  sink drove). Flagged for the owner as a **deliberate-or-not**
+  decision — not asserted here as a contract.
+- **Combo-tier key-repeat semantics (D-C) — OWNER RULING
+  PENDING.** Do `handlers[combo]` / `framework_handlers` fire on
+  every repeat or only on fresh presses? Intent is **silent**;
+  tier-3 flagged it as the one substantive open question. The
+  provisional leaning — *fresh-only at the handler tier;
+  `on_key_pressed` sees repeats* — is **recorded as provisional,
+  not ruled**. Do not promote it to a contract.
 
 ### 6.1 Revalidation outcomes (s26: P3 + human rulings)
 
