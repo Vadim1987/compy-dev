@@ -957,9 +957,7 @@ function ConsoleController:keypressed(k)
 
   local function terminal_test()
     local out = self.model.output
-    if love.state.app_state ~= 'ready'
-        and love.state.app_state ~= 'project_open'
-    then
+    if love.state.app_state ~= 'ready' then
       return
     end
     if not love.state.testing then
