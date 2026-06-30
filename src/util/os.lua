@@ -14,7 +14,8 @@ end
 
 --- @return boolean success
 local function test_popen()
-  local ok = pcall(io.popen, 'echo')
+  local ok, handle = pcall(io.popen, 'echo')
+  if ok and handle then handle:close() end
   return ok
 end
 
@@ -46,10 +47,11 @@ local function runcmd_with_exit(cmd)
   if handle then
     local result = handle:read("*a")
     handle:close()
-    local _, _, exit_code = result:find("(%d+)%s*$")
-    result = result:sub(1,
-      result:find("(%d+)%s*$") - 1):gsub("%s+$", ""
-    )
+    local s, _, exit_code = result:find("(%d+)%s*$")
+    if not s then
+      return false, result
+    end
+    result = result:sub(1, s - 1):gsub("%s+$", "")
     exit_code = tonumber(exit_code)
     if exit_code ~= 0 then
       return false, result
