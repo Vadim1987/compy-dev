@@ -384,6 +384,9 @@ function ProjectService:run(name, env)
   if p_path then
     local ok, code = self.current:readfile(ProjectService.MAIN)
     if not ok then return nil, code, p_path end
+    if type(code) ~= 'string' then
+      return nil, FS.messages.unreadable(ProjectService.MAIN), p_path
+    end
     local content, c_err = codeload(code, env)
     return content, c_err, p_path
   end
