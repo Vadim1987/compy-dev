@@ -402,6 +402,7 @@ Controller = {
       if love.state.app_state == 'snapshot' then
         gfx.captureScreenshot(function(img)
           local snap = gfx.newImage(img)
+          if View.snapshot then View.snapshot:release() end
           View.snapshot = snap
           CC:suspend()
         end)
