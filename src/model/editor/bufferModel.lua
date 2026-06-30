@@ -242,6 +242,9 @@ end
 
 --- @param sel integer
 function BufferModel:set_selection(sel)
+  local max = self:get_content_length() + 1
+  if not sel or sel < 1 then sel = 1 end
+  if sel > max then sel = max end
   self.selection = sel
 end
 
@@ -258,7 +261,8 @@ function BufferModel:_get_selected_block()
 
   local sel = self.selection
   if sel == self:get_content_length() + 1 then
-    local ln = self.content:last().pos.fin + 1
+    local last = self.content:last()
+    local ln = (last and last.pos.fin or 0) + 1
     return Empty(ln)
   end
   return self.content[sel]
