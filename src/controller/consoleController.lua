@@ -1156,15 +1156,17 @@ function ConsoleController:get_canvas()
 end
 
 --- @param f function
+--- @return any ... result of f
 function ConsoleController:use_canvas(f)
   local canvas = self.model.output.canvas
   gfx.setCanvas({
     canvas, -- this is actually [1] = canvas
     stencil = true
   })
-  local r = f()
+  local r = { pcall(f) }
   gfx.setCanvas()
-  return r
+  if not r[1] then error(r[2], 0) end
+  return unpack(r, 2)
 end
 
 --- @return ViewData
