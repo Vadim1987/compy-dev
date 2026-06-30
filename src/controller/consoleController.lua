@@ -1156,6 +1156,7 @@ function ConsoleController:get_canvas()
 end
 
 --- @param f function
+--- @return any ... result of f
 function ConsoleController:use_canvas(f)
   local canvas = self.model.output.canvas
   gfx.setCanvas({
