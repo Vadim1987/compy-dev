@@ -99,9 +99,6 @@ local function require_modules()
   require('controller.controller')
 end
 
--- REVIEW: if those ~35 lines below mimic the way actual main.lua does bootstrapping, I'd prefer references to specific main.lua lines -- otherwise drift is coming soon
--- REVIEW: even better would be wrap those 35 lines into something like "mock_compy_bootloading" so the boundary (reproduced prod bootload) is clean. Right now these functions look like first-class instruments which may be used at will (but I suspect its not the case)
-
 -- The Console MVC the way main.lua wires it; ConsoleView's
 -- constructor calls CC:init_view(self) internally.
 local function build_console(cfg)
@@ -148,7 +145,6 @@ local F = {
   cfg       = cfg,
 }
 
--- REVIEW: I undertsand the intent (abstract away the implementation), but names similarity may trigger confusion and grep problems. WHy not either stick to compy.input (assuming its fundamental) or get_compy_input_api()  (which would be tests-specific helper, agnostic to how exactly API is mounted inside compy. namespace)
 -- The project-facing public surface (compy.input.show/hide); it
 -- resolves the singleton from love.state, exactly as a project does.
 function F.compy_input()
@@ -175,7 +171,15 @@ function F.show_widget(opts)
   return singleton
 end
 
---- REVIEW: why explicitly setting UIM/UIC and wiring it into love.state.user_input? Is not it responsibility of a singleton?
+-- Stand a running project on screen whose native LÖVE callback
+-- is fn. With no widget up the gateway routes the event to
+-- love[name], so the project's own callback is the public seam
+-- witnessing delivery to the project route (§3.1; §5.3).
+function F.running_project(name, fn)
+  love.state.app_state = 'running'
+  love[name] = fn
+end
+
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
 -- singleton disables selection, making pointer delivery a no-op —
@@ -196,13 +200,21 @@ function F.reset()
   love.state.user_input         = nil
   love.state.app_state          = 'ready'
   love.state.editor             = nil
+  -- Undo any project-native slot a test installed via
+  -- running_project, so the next test starts on the framework
+  -- route.
+  love.keypressed    = Controller._defaults.keypressed
+  love.textinput     = Controller._defaults.textinput
+  love.keyreleased   = Controller._defaults.keyreleased
+  love.mousepressed  = Controller._defaults.mousepressed
+  love.mousereleased = Controller._defaults.mousereleased
   local compy                   = CC:get_project_env().compy
   compy.singleclick             = nil
   compy.doubleclick             = nil
   love.update(1.0)
   CC.input:clear()
+  CC.editor.input:clear()
   singleton:clear()
 end
 
---- REVIEW: why F ? not very mnemonic/meaningful
 return F

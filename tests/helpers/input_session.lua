@@ -30,8 +30,10 @@ end
 -- set up. @param CC ConsoleController  (read for cfg + shortcuts)
 local function new(CC)
   love.handlers = { }
-  -- REVIEW: is this *or* really needed, when do we use this alternative option?
-  -- REVIEW: reference explicitly, which part of production bootloading flow is mimiced here
+  -- Installs the production gateway (controller.lua
+  -- setup_callback_handlers, the love.run wiring main.lua
+  -- performs) onto a fresh love.handlers. The `or` default lets
+  -- a bare driver stand up without a ConsoleController.
   Controller.setup_callback_handlers(
     CC or { cfg = { mode = 'dev' } }
   )
