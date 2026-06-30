@@ -290,8 +290,8 @@ end
 --- @return string? err
 function ProjectService:opreate(name, play)
   if play then
-    local ok = self:open('play', true)
-    return ok, false
+    local ok, err = self:open('play', true)
+    return ok, false, err
   else
     local ook, _ = self:open(name, false)
     if ook then
