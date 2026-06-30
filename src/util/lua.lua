@@ -15,7 +15,7 @@ end
 --- @return string? err
 local codeload = function(code, env)
   if type(code) ~= 'string' then
-    return nil, 'no code to load'
+    return nil, ('code must be a string (got %s)'):format(type(code))
   end
   local f, err = loadstring(code)
 
