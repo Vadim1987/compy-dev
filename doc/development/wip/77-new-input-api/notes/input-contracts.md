@@ -113,9 +113,13 @@ determines routing by merely existing.
 > inter-route topology per se; the rule **derives** from
 > mode-exclusivity (a real system property) + the architect-
 > ratified three-controller topology (Console / Editor /
-> ProjectInputController), endorsed via
-> [`decisions.md`](../design/notes/decisions.md). State it as
-> design authority, not as something a stakeholder demanded.
+> ProjectInputController) **derived in
+> [`design.md`](../design/design.md) §2** through the design
+> process. (`decisions.md` endorses the **naming**
+> `ProjectInputController` and the project↔console run-path
+> convergence — **not** the routing topology itself; cite it only
+> for those.) State it as design authority, not as something a
+> stakeholder demanded.
 
 > **"EXCLUSIVE" disambiguation (D-B).** Here EXCLUSIVE is on the
 > **route axis** (one *route* per event). It does **not** collide
@@ -211,8 +215,9 @@ independent of mode; that independence is mechanism, not
 contract — forward, the widget is owned by the routed
 controller.
 
-**(C) Hidden widget does not consume.** [PRESERVE — owner ruling
-(prompt12) + common logic.] An event that reaches a widget while
+**(C) Hidden widget does not consume.** [PRESERVE — owner-minted:
+owner ruling (prompt12) + common logic; a fresh top-authority
+decision, not a code-preserved invariant.] An event that reaches a widget while
 the widget is **hidden** is **ignored or passed through by the
 widget** — never used to mutate widget state. When the widget is
 not on screen, no user intent to modify its state can be assumed.
@@ -258,12 +263,15 @@ surface it activated), which is the route's concern and invisible
 to this contract (§2).
 
 Each row carries a **provenance** tag (the anti-drift gate):
-- **PRESERVE** — traces to a tier-1/2 mandate (cited) **or** to
-  the ratified inter-route-exclusivity principle (§2).
+- **PRESERVE** — traces to a tier-1/2 mandate (cited), to the
+  ratified inter-route-exclusivity principle (§2), or to an
+  explicit **owner ruling** (a fresh top-authority decision, cited
+  as such and tagged *owner-minted* — legitimate, but **not**
+  code-preserving; do not read it as a reverse-engineered invariant).
 - **CHARACTERIZE-PROVISIONAL** — observed current behaviour with
   no mandate; **expected to change, no stakeholder mandate**.
-A row with neither a mandate nor the principle behind it may
-**not** be PRESERVE.
+A row with none of a mandate, the principle, or an owner ruling
+behind it may **not** be PRESERVE.
 
 All contracts in this section are **[stable-now]** unless a
 row says otherwise.

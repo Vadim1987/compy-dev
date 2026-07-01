@@ -174,8 +174,29 @@ otherwise-frozen spec, this correction only):
 - **global shortcuts non-consuming** (§4.3) — carried as-is;
   open whether mandated invariant or incidental.
 
+## Post-review precision fixes (F1/F2 — applied session 28)
+
+The prompt13 review (`reviews/input-contracts-correction.md`) returned
+**APPROVE** with three precision/labelling findings. Two were applied to the
+**live record** (`input-contracts.md`) at the owner's instruction; this ledger
+body is left as the as-authored cold record.
+
+- **F1 — owner-minted PRESERVE.** The §3 provenance gate now names **owner
+  ruling** as a third admissible PRESERVE source (tagged *owner-minted*, not
+  code-preserving); the hidden-widget row (§2C) is retagged accordingly. The
+  gate no longer reads as if P12 sneaks past a two-source rule.
+- **F2 — topology citation.** §2 provenance now cites **`design.md §2`** for the
+  three-controller routing topology (its actual derived home); `decisions.md` is
+  reserved for the *naming* + run-path convergence it genuinely endorses.
+- **F3 — interleaved test commit (`4c8e1d0`)** is the owner's own inline
+  `-- REVIEW:` markup on the M4-0-03 suite + the retro note, **not** a silent
+  suite edit under the frozen fence. The ledger's "tests untouched" claim holds
+  for prompt12's own work. No action on the record; the REVIEW remarks are
+  consumed as symptom-signal by the resuite (M4-0-04).
+
 ---
 
 _Authored by LLM (Opus 4.8), prompt12 cold pass, 2026-06-29.
 Two files edited in one reviewable change. **Not final** — STOP
-for owner blessing; revise on contest._
+for owner blessing; revise on contest. (F1/F2 precision fixes applied
+post-review, session 28 — see addendum above.)_

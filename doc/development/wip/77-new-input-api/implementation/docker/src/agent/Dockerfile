@@ -84,9 +84,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Claude Code (global; on PATH for every user) ─────────────────────
-RUN npm install -g @anthropic-ai/claude-code
-
 # ── Lua MCP↔LSP: generic bridge (from stage 1) + lua-language-server ─
 # x86_64 asset; on arm64 swap the LuaLS asset suffix to -linux-arm64.
 COPY --from=lspbridge /go/bin/mcp-language-server /usr/local/bin/mcp-language-server
@@ -99,12 +96,6 @@ RUN ver=$(curl -fsSL https://api.github.com/repos/LuaLS/lua-language-server/rele
     && rm /tmp/luals.tar.gz \
     && ln -s /opt/lua-language-server/bin/lua-language-server \
         /usr/local/bin/lua-language-server
-
-# ── /impl shortcut (root: claude can't write to /) ───────────────────
-# Short, stable handle for the spec/outcome/review tree. Dangling at build
-# time — resolves once /repo mounts. Outside /repo, so the tree stays clean.
-# In a CLI chat:  "implement /impl/prompts/M2.md" · "run /impl/review-prompt.md"
-#RUN ln -s /repo/doc/development/wip/77-new-input-api/implementation /impl
 
 # ── unprivileged agent user ──────────────────────────────────────────
 # uid 1000 ships taken by the default `ubuntu` user on 24.04 — remove it first.
@@ -121,6 +112,11 @@ RUN curl https://cursor.com/install -fsS | bash
 
 # ── Google Antigravity CLI (agy → ~/.local/bin) ─────────────────────
 RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
+
+USER root
+# ── Claude Code ─────────────────────
+RUN ACTUALIZE=20260701 npm install -g @anthropic-ai/claude-code
+USER ${USER}
 
 # ── MCP wiring ───────────────────────────────────────────────────────
 # One mcp.json (lua-lsp via the local stdio bridge) seeded into each
@@ -139,5 +135,4 @@ COPY --chown=${USER}:${USER} mcp.json /home/${USER}/.claude.json
 COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.gemini/GEMINI.md
 COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.claude/CLAUDE.md
 
-# API keys are injected at run time (compose `environment:`), never baked.
 WORKDIR /repo
