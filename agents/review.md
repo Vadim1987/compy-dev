@@ -27,5 +27,13 @@ plane (a separate brainlab session) ingests your review to decide approve / corr
 4. **Edit only** the review you write + the interim debt ledger
    (`<FEATURE>/implementation/technical_debt.md`). **Never edit feature code or `<FEATURE>/design/`.**
 
+## Test-quality gate
+
+Judge the tests, not just the code. Flag any **empty test** — one that stubs/mocks the unit
+under test and then only asserts the mock was called, so it passes without exercising a real
+production code path. A test must drive real production code and assert on its observable
+behaviour/output; mocks belong only at genuine boundaries (I/O, love2d, external systems).
+An empty test adds no net to the safety net the diff claims — record it as a finding.
+
 > Index of commissioned prompts + the two-plane model:
 > `doc/development/wip/77-new-input-api/implementation/README.md`.

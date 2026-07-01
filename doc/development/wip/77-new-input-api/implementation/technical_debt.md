@@ -37,8 +37,12 @@ feature closes**, not carried into the project at large._
 | M4-0 `mock.keystroke` isrepeat/scancode opts unexercised | test coverage | **anticipated** | path goes live when M4 converts the isrepeat `pending` → live |
 | M4-0 maze Lua-command path not black-box characterizable | scope boundary | **anticipated** | M8 scope; routing + `is_empty` covered, so not blocking M4 |
 | M4-0 `tests.md` not updated for new emitters | docs | **open** | document `mock.textinput` + `keystroke` opts at M4-0 closure or M4 |
-| M4-0-03 P5 touch BOTH not black-box expressible | test coverage | **anticipated** | greens when a touch consumer lands (carried `pending` in the suite) |
+| M4-0-03 P5 touch not black-box expressible | test coverage | **anticipated** | greens when a touch consumer lands (carried `pending` in the suite) |
 | M4-0-03 "force does not warn" (C2) coverage dropped | test coverage | **accepted** | inverse of the kept warn-on-suppress P10 row; restore only if the C2 force-path needs an explicit guard |
+| M4-0-04 fixture-ergonomics (bootstrap refs / naming) | test coverage / ergonomics | **anticipated** | non-blocking; revisit if the fixture's standup grows harder to follow |
+| M4-0-04 editor keypressed EXCLUSIVE sibling missing | test coverage | **open** | add the missing editor `keypressed` sibling test + retitle the mislabeled one (review `M4-0-04.md` Finding 1) |
+| M4-0-04 `F.reset()` exceeds 14-line body limit | rules (hard limit) | **open** | extract native-slot restore into a helper (review `M4-0-04.md` Finding 2) |
+| `implementation/prompts/M4.md` names the pre-rename suite + superseded Group vocabulary | docs | **open** | reconcile file name (`input_contracts_spec.lua`) + Bucket A-D vocabulary before M4 is commissioned (review `M4-0-04.md`) |
 
 > The **planned** rows have a commissioned closure spec; pick them up with their milestone. The
 > **anticipated** rows are deliberately *not* commissioned — they may never need action; revisit at
@@ -241,10 +245,13 @@ concrete need appears.
 - **Revisit:** `git log`/branch search for the believed fix first; if genuinely absent and reproducible,
   file as a defect and decide whether it blocks the feature or is independent of #77.
 
-### M4-0-03 — P5 touch BOTH not black-box expressible today — anticipated
+### M4-0-03 — touch not black-box expressible today — anticipated
 
-- **Where:** `tests/input/input_routing_spec.lua` — the `pointer delivery is BOTH` block carries
-  `pending('a touch reaches the widget and the route both')`.
+- **Where:** `tests/input/input_contracts_spec.lua:259` (renamed from `input_routing_spec.lua` by
+  M4-0-04) — the `pointer exclusive to the active route` block carries
+  `pending('touch reaches the active route')`. (Updated by the M4-0-04 review: the row's framing moved
+  from the retired inter-route "BOTH" model to active-route EXCLUSIVE, tracking the
+  `input-contracts.md` correction; the underlying gap is unchanged.)
 - **State:** Both the widget and the route touch handlers are no-op TODO stubs
   (`userInputController` / `consoleController`), so touch delivery mutates no observable state
   anywhere; a delivery probe would be the method-name spy Bucket A forbids. The §3.6 *delivery*
@@ -253,8 +260,56 @@ concrete need appears.
   contradiction. Surfaced by the implementer; logged here per the review process.
 - **Why it stands:** No observable seam exists until a touch consumer lands; carrying it `pending`
   keeps the contract visible without a mechanism spy.
-- **Revisit:** Green the row when a real touch consumer is wired (the mouse BOTH rows already guard the
-  pointer-delivery shape M4 must not break).
+- **Revisit:** Green the row when a real touch consumer is wired (the mouse EXCLUSIVE rows already guard
+  the pointer-delivery shape M4 must not break).
+
+### M4-0-04 — fixture-ergonomics debt not previously logged — anticipated
+
+- **Where:** `tests/helpers/input_fixture.lua` — the standup boilerplate (`require_modules` /
+  `build_console` block) and the `F` table name.
+- **State:** The owner's `-- REVIEW:` symptoms asked whether the ~35-line standup should reference exact
+  `main.lua` bootstrap lines or be wrapped as a named `mock_compy_bootloading`-style seam, and whether
+  `F` / `compy_input` naming risks confusion with the real `compy` namespace. M4-0-04 resolved the
+  symptoms it could resolve structurally (removed the stale comments) but left the naming/traceability
+  question itself unresolved — reported, not fixed (report-don't-fix).
+- **Why it stands:** Cosmetic/ergonomic; does not affect correctness or coverage.
+- **Revisit:** If the fixture's standup grows harder to trace to `main.lua`, or the `F`/`compy_input`
+  naming causes real confusion, address opportunistically.
+
+### M4-0-04 — editor keypressed EXCLUSIVE has no sibling test — open
+
+- **Where:** `tests/input/input_contracts_spec.lua:87-93` — `it('editor mode routes keys to the
+  editor', ...)` drives `F.session.type('q')` (`textinput`), not `F.session.press` (`keypressed`).
+- **State:** The keypressed EXCLUSIVE contract (§3.1) has sibling coverage for console (`:80`) and
+  project (`:95`) but **not** editor — despite `ConsoleController:keypressed` genuinely branching to
+  `self.editor:keypressed(k)` in editor mode (`consoleController.lua:1033-1034`), so the sibling is both
+  meaningful and missing. The suite's own banner comment and the outcome ledger both claim full
+  3-route sibling coverage for §3.1-3.3; that claim overstates what is asserted for keypressed. Full
+  detail in review `M4-0-04.md`, Finding 1.
+- **Why it stands:** Not blocking merge of the corrected-content rewrite itself, but this is exactly the
+  regression net M4's gate-removal will lean on.
+- **Revisit:** Add the missing test + retitle the mislabeled one before M4 begins.
+
+### M4-0-04 — `F.reset()` exceeds the 14-line function-body hard limit — open
+
+- **Where:** `tests/helpers/input_fixture.lua:198-217`.
+- **State:** Was 10 code lines pre-M4-0-04; this slice added 5 native-slot restores +
+  `CC.editor.input:clear()`, bringing it to 16 code lines against `agents/rules.md`'s 14-line hard
+  limit. Full detail in review `M4-0-04.md`, Finding 2.
+- **Why it stands:** Mechanical, not a design question — `rules.md`: "redesign, don't raise the limit."
+- **Revisit:** Extract the native-slot restores into a small helper; trivial, test-only fix.
+
+### `implementation/prompts/M4.md` names the pre-rename suite + superseded vocabulary — open
+
+- **Where:** `implementation/prompts/M4.md` §"Read first" item 5 and "Boundaries" — names
+  `tests/input/input_routing_spec.lua` (renamed to `input_contracts_spec.lua` by M4-0-04) and the
+  "Group 1"/"Group 2" vocabulary from the `M4-0-01`/`M4-0-02` era, superseded by M4-0-03/M4-0-04's
+  Bucket A-D model.
+- **State:** Not a defect of M4-0-04 (out of its boundaries to edit another milestone's prompt); found
+  by the M4-0-04 review, not the implementer.
+- **Why it stands:** Will mislead the M4 cold-implementer (grepping for a file that no longer exists) if
+  handed out as-is.
+- **Revisit:** Reconcile file name + vocabulary before `prompts/M4.md` is commissioned to an executor.
 
 ### M4-0-03 — singleton_spec's "force does not warn" (C2 boundary) not re-homed — accepted
 

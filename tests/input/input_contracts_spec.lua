@@ -47,6 +47,7 @@ require('tests.helpers.editor_session')
 -- navigation, the one row that is editor behaviour rather than
 -- framework routing (the routing siblings below go through the
 -- gate).
+-- REVIEW: why would we use editor session (that was designed to test *internal* editor logic and _likely_ triggers events inside the controller, therefore not testing their propagation from love/compy framework)?
 local function make_editor_session()
   local model = EditorModel(F.cfg)
   local ec    = EditorController(model)
@@ -63,6 +64,7 @@ describe('input contracts #input', function()
   -- Bucket A — PRESERVE (stable-now contracts; green now)
   -- ====================================================
 
+  -- REVIEW:  a bit too much prose here, and if we refere some paragraphs I'd prefer a doc link included
   -- Keyboard and text are EXCLUSIVE on the active route
   -- (§3.1-3.3): each event reaches exactly one route — the one
   -- fixed by the screen mode — never two, never dropped. The
@@ -77,7 +79,16 @@ describe('input contracts #input', function()
   -- never preserved.)
   describe('keyboard exclusive to the active route', function()
 
+    -- REVIEW: is it a problem that we do not test various editor input variations? because in fact editor has self.input and self.search (both currently variations of UAC)
+
+    -- REVIEW: why not subgroup/describe deeper by mode?
+    -- REVIEW: e.g. describe('console mode', function() it('routes keys to the console',...), it('routes text to the console...') )
+
+    -- REVIEW: explain test reader how key event is different from text event and what generates them
+
     it('console mode routes keys to the console', function()
+      -- REVIEW: should not we test the love2d->compy->console routing under console mode instead of testing console's own method?
+      -- REVIEW: should not we also test that keypressed table is passed along? (as presumed in design)
       F.console:add_text('ab')
       F.session.press('backspace')
       assert.same({ 'a' }, F.console:get_text())
@@ -87,6 +98,9 @@ describe('input contracts #input', function()
     it('editor mode routes keys to the editor', function()
       love.state.app_state = 'editor'
       F.cc.editor:open('t.lua', '', function() return true end)
+      -- REVIEW: here II guess we're testing it correctly -- via love2d -> compy dispatching
+      -- REVIEW: but should we use 'type' or 'press' here?
+      -- REVIEW: should not we also test that keypressed table is passed along? (as presumed in design)
       F.session.type('q')
       assert.same({ 'q' }, F.cc.editor.input:get_text())
       assert.is_true(F.console:is_empty())
@@ -97,6 +111,8 @@ describe('input contracts #input', function()
       F.running_project('keypressed', function(k)
         got[#got + 1] = k
       end)
+      -- REVIEW: conceptually proper test, but 'type' or 'press'?
+      -- REVIEW: should not we also test that keypressed table is passed along? (as presumed in design)
       F.session.press('a')
       assert.same({ 'a' }, got)
       assert.is_true(F.console:is_empty())
@@ -122,6 +138,8 @@ describe('input contracts #input', function()
     -- is observed at the project's own release callback — the
     -- active route receives exactly once. (keyreleased IS
     -- consumed: the held-key tracker removes the key, §4.1.)
+    -- REVIEW: we discovered that current codebase is a bit inconsistently handling keyrelease
+    -- REVIEW: however, we need to ensure consistent delivery -- therefore test is almost good except it does not replicate across project/editor/console
     it('the active route receives the key release', function()
       local got = 0
       F.running_project('keyreleased', function()
@@ -132,12 +150,14 @@ describe('input contracts #input', function()
     end)
   end)
 
+  -- REVIEW: too much prose, paragraph without doc-link, internal references meaningless to reader ("D-alpha", seriously?)
   -- Held-key set lifecycle (§4.1): a key is added on press and
   -- removed on release BEFORE any dispatch runs, so the set
   -- already reflects the event when a route consumer runs. (The
   -- forward, route-observable form — the set handed to the
   -- route as a read-only proxy — is Bucket B I4 / D-α, not yet
   -- wired.)
+  -- REVIEW: we're testing implementation here, which is kinda red-flag!!! Let's test behaviour! (and behaviour should be passing keypressed table alongside textinput/keypressed/keyreleased events to consumers?
   describe('held-key set lifecycle', function()
 
     it('the pressed key is in the held set', function()
@@ -175,6 +195,7 @@ describe('input contracts #input', function()
     end)
   end)
 
+  -- REVIEW: paragraphs without doc-link
   -- Global shortcuts are non-consuming (§4.3): a framework
   -- shortcut fires its effect AND the key still reaches its
   -- route. (Carried as-is — open whether this is a mandated
@@ -197,6 +218,8 @@ describe('input contracts #input', function()
     -- (quit/stop/quickswitch) do not. Driven on an isolated
     -- play-mode gate (save/restore the shared love.handlers so
     -- the fixture gate is untouched).
+    -- REVIEW: what play mode is, and is it different from project_running? why it narrows the set?
+    -- REVIEW: what we are actually test here, why we stub callback handlers with something custom?
     it('play mode narrows the active shortcut set', function()
       local calls = { }
       local stub = {
@@ -232,6 +255,8 @@ describe('input contracts #input', function()
     -- The production singleton disables selection (its pointer
     -- handler is a no-op), so an observable selection on the
     -- console route witnesses active-route delivery.
+    -- REVIEW: is pointer used for selection?
+    -- REVIEW: this case tests console route only without claiming it, and does not test for causality hard enough ("has_selection" -- but does it match the selector position? was not it preexisting before mouse events?)
     it('a pointer reaches the active route', function()
       F.console:set_text({ 'aa', 'bb', 'cc' })
       F.session.mousepressed(10, 540, 1, false, 1)
@@ -239,6 +264,7 @@ describe('input contracts #input', function()
       assert.is_true(F.console.model:has_selection())
     end)
 
+    -- REVIEW: I wonder why *console* model is modified if we're testing projcet path?
     it('project run routes the pointer', function()
       local got = 0
       F.running_project('mousepressed', function()
@@ -263,8 +289,11 @@ describe('input contracts #input', function()
   -- from raw pointer delivery. The 0.4s / 2.5px constants are
   -- mechanism — only the outcomes are asserted, against the
   -- project-defined handlers (default no-ops).
+  -- REVIEW: explain why we're testing it here, could it be broken or affected by new input API implementation?
   describe('framework click detection', function()
 
+    -- REVIEW: not directly related to feature, but good to test and document as convention
+    -- REVIEW: does not test propagation though, only capture (which matches 'describe: framework deetction')
     it('a single click confirms after the window', function()
       local hit = 0
       local bump = function() hit = hit + 1 end
@@ -287,6 +316,7 @@ describe('input contracts #input', function()
       assert.equal(0, hit)
     end)
 
+    -- REVIEW: slightly odd naming -- test actually tests the framework (like all in this scope, 'project' is not involved)'
     it('a double click calls the project handler', function()
       local hit = 0
       local bump = function() hit = hit + 1 end
@@ -297,8 +327,13 @@ describe('input contracts #input', function()
       F.update(0.5)
       assert.equal(1, hit)
     end)
+
+    -- REVIEW: I like that we document and test click-handling. Its worth separate test suite maybe? or should be augmented by propagation
   end)
 
+
+  -- REVIEW: "slot restoration" is invented jargon. The concept under test is important -- but it should be behavioural
+  -- REVIEW: too much prose, lack of docklink around paragraphs, internal ref-ids
   -- Slot restoration on project stop (§4.4): after stop, no
   -- project handler remains in any slot — the console owns
   -- input again. (The form is renamed to a console-named
@@ -306,6 +341,7 @@ describe('input contracts #input', function()
   -- asserted here is identical, row stays green.)
   describe('slot restoration on project stop', function()
 
+    -- REVIEW: once again, what exactly is tested here? why project stopped but not launched? REDEFINE/REWRITE THE CASE!
     it('no project handler remains after stop', function()
       love.keypressed = function() end
       F.cc:stop_project_run()
@@ -322,20 +358,27 @@ describe('input contracts #input', function()
   -- refusals warn (never silent). The path retires at m8.
   describe('legacy text solicitation #legacy', function()
 
+
+    -- REVIEW: do we preserve this behaviour in new architecture? If not, why? If yes, why?
+    -- REVIEW: I would say that 'legacy' only relates to *wiring* the user-input controller, not to its behaviour (it still can be 'one-shot', still can self-close)
     it('a submit fills the handle and closes', function()
       local env = F.cc:get_project_env()
       local ref = env.user_input()
+      -- REVIEW: testing that legacy API works is fine -- but beware, we plan to remove it. ANd 'reaction' to event should be a separate test likely?
       env.input_text('prompt?')
       local closed = false
       love.event.push = function(ev)
         if ev == 'userinput' then closed = true end
       end
+      -- REVIEW: what exactly is tested here? Why we intercept singleton instead of mimicing user input?
       F.singleton:set_text('42')
       F.session.press('return')
       assert.equal('42', ref())
       assert.is_true(closed)
     end)
 
+    -- REVIEW: again, implementation testing. "Guarded refusal" sounds cryptic.
+    -- REVIEW: we likely want to test that new API warns, the old method will be just removed in next iteration or two -- and its not warning *now*. REDEFINE AS PENDING?
     it('a guarded refusal warns, never silent', function()
       love.state.user_input = { }
       local env = F.cc:get_project_env()
@@ -354,6 +397,7 @@ describe('input contracts #input', function()
   -- observable content. The "no cancel chain" facts are
   -- stable-now; they flip at m6, when hide()/cancel fire a
   -- chain.
+  -- REVIEW: good, this is testing towards new API. Worth its own group? (describe "new input api") or even suite?
   describe('widget activation and reset', function()
 
     it('re-activation without force warns + no-ops', function()
@@ -368,6 +412,7 @@ describe('input contracts #input', function()
       assert.same({ 'first' }, F.singleton:get_text())
     end)
 
+    -- REVIEW: still, why we only apply text? Need to also explain how text (content) differs from label(prompt) -- at least I am confused. Need to show both paths
     it('re-activation with force reapplies text', function()
       local input = F.compy_input()
       input.show({ text = 'original' })
@@ -375,6 +420,7 @@ describe('input contracts #input', function()
       assert.same({ 'replaced' }, F.singleton:get_text())
     end)
 
+    -- REVIEW: what force without text does then? Is it no-op? (then should be warned) Is it showing the previously hidden widget? Than it should be tested
     it('force without text leaves content intact', function()
       local input = F.compy_input()
       input.show({ text = 'keep' })
@@ -382,7 +428,9 @@ describe('input contracts #input', function()
       assert.same({ 'keep' }, F.singleton:get_text())
     end)
 
+    -- REVIEW: that's what we should start with
     it('a fresh activation with no text is empty', function()
+      -- REVIEW: why not F.compy.input , or even project_env.compy.input ?
       local input = F.compy_input()
       input.show({ text = 'hello' })
       input.hide()
@@ -392,6 +440,7 @@ describe('input contracts #input', function()
 
     -- After hide the widget is no longer the surface the active
     -- route forwards to, so input reaches the console route.
+    -- REVIEW: actual assertion contradicts the claim -- because it literally tests that input REACHED the widget despite being hidden
     it('hide deactivates the widget', function()
       local input = F.compy_input()
       input.show()
@@ -402,6 +451,7 @@ describe('input contracts #input', function()
 
     -- A oneshot submit pushes userinput, which deactivates the
     -- widget; subsequent input reaches the console route.
+    -- REVIEW: this is legay behaviour tested in the scope of new API. Weird. Better test how new API implements it (and legacy test elsewhere... which I think we did)
     it('a oneshot submit deactivates the widget', function()
       local env = F.cc:get_project_env()
       env.user_input()
@@ -414,6 +464,8 @@ describe('input contracts #input', function()
     end)
   end)
 
+  -- REVIEW: paragraphs without doclinks should be prohibited
+  -- REVIEW: too much prose should be prohibited (3-5 lines enough, 7 absolute max if justified -- and text should be comprehensive, not a flow just wrapped at 80)
   -- Hidden widget does not consume (§2C) [owner-minted: a fresh
   -- owner ruling (prompt12) + common logic — no user intent to
   -- modify an off-screen surface — NOT a reverse-engineered,
@@ -433,6 +485,11 @@ describe('input contracts #input', function()
     end)
   end)
 
+  -- REVIEW: THIS TEST IS A MESS
+  -- REVIEW: too much prose
+  -- REVIEW: why testing indirectly? If we test that user-input *informs* the editor of limit hit (I am not sure it does), than we need to test exactly this boundary (and its implementation... which means why we should test it at all). If we test the behaviour (visible impact) -- ok this test would belong there ONLY if editor relies on signals from UserInputController in any form (if it tracks)
+  -- REVIEW: in all cases, I am not happy about using 'es.mock.keystroke' -- if it mimics real input, why not doing it the same way as other tests in this suite do? (start from mimicing native love event)
+  -- REVIEW: I am not sure what actually we are testing here. the invisible contract is that UIC informs editor of boundary hit (which would require *one* test in every direction).
   -- Editor block navigation at the buffer limit (editor-route
   -- behaviour, not framework routing). Exercises block-nav
   -- INDIRECTLY through the at-limit condition: only an up/down
@@ -473,6 +530,7 @@ describe('input contracts #input', function()
   describe('provisional — expected to change, no mandate',
     function()
 
+      -- REVIEW: Let's mark it as skipped or whatever -- inspect mode rules are not yet defined (TODO: inspect how its supposed to work!)
       -- inspect (§3.4, OWNER RULING PENDING): under inspect the
       -- console REPL owns the input surface; a shown project
       -- widget is not honoured; input is not dead. The owner
@@ -493,10 +551,12 @@ describe('input contracts #input', function()
       -- widget" is mechanism-by-omission, not a designed
       -- asymmetry. Intended shape (not asserted): project
       -- pass-through, opt-in consume.
+      -- REVIEW: I wonder if any real project uses wheelmoved? if there's a conscious decision not to track wheel movements and not rely on them? (e.g. any comments etc.). Looking forward, we'd rather track and propagate like any other event, just assume that by default its noop
       it('wheel has no framework gateway entry', function()
         assert.is_nil(F.session.handlers.wheelmoved)
       end)
 
+      -- REVIEW: does it align with recent system's assessments? (created *after* this spec)
       -- keyreleased under a widget (§3.3 note): today the
       -- overlay gate diverts the release to the widget, so a
       -- project release handler is bypassed. Possibly a defect
@@ -522,6 +582,8 @@ describe('input contracts #input', function()
   -- NFR guard is for.
   -- ====================================================
   describe('mechanism / NFR guards — not behaviour', function()
+
+    -- REVIEW: ok, good tests -- but maybe also explicitly test towards modes switching. Also its actually a forward-looking thing -- at the momen of spec writing, console, editor.input and editor.search use their own UICs -- wiring them to singleton is considered for the future, yet not approved
 
     -- Singleton identity: the same UserInputController instance
     -- backs the widget across show/hide cycles.
@@ -558,6 +620,7 @@ describe('input contracts #input', function()
       -- so project key/text/release reach the project route
       -- even while a widget is up, instead of being dropped by
       -- the gate (§5.1).
+      -- REVIEW: project keys reach the project *controller* which dispatches based on a) combo handlers b) project's 'love,keypressed' c) userinput singleton (if activated)
       pending('project keys reach the project sink',
         function()
           local got = { }
@@ -574,6 +637,7 @@ describe('input contracts #input', function()
       -- ConsoleController as a NAMED target, not as an emergent
       -- property of reinstalling defaults (§5.2). Same end
       -- state the 'slot restoration' PRESERVE row guards.
+      -- REVIEW: test behavour not implementation or claims!!!! WEAK TEST, REDO
       pending('stop names the console as restored route',
         function()
           F.cc:stop_project_run()
@@ -587,6 +651,8 @@ describe('input contracts #input', function()
       -- hidden, and the text-editing sink while it is shown —
       -- same end state as today, founded on the active route
       -- not widget presence. (Native is legitimate.)
+      -- REVIEW: what does it mean? I do not understand the formulation. Who coexists with whom? What is 'provision_native'?
+      -- REVIEW: POSSIBLY BAD AND MISUNDERSTOOD TEST
       pending('a native handler coexists with the sink',
         function()
           local native = 0
@@ -605,6 +671,8 @@ describe('input contracts #input', function()
       -- Per D-α the WHOLE keypressed path carries the uniform
       -- (k, keys_pressed, isrepeat) triple — the SINK included,
       -- not only the project callback.
+      -- REVIEW: what is "carries the triple"? WHere this 'triple' comes from? (let alone its NOT tested)
+      -- REVIEW: If its about propagation of keyspressed and repeat flag down to consumer's (ProjectInputController) handler -- lets write it this way
       pending('the keypressed path carries the triple',
         function()
           local seen
@@ -621,6 +689,7 @@ describe('input contracts #input', function()
       -- AND on_text_entered are exposed; assigning one replaces
       -- the sink, firing dispatches to the project (default =
       -- the sink) (design §4).
+      -- REVIEW: iirc, "type" fires 'textinput' which is simply any printable character. on_text_entered should operate on the full block of text, after "enter" is hit -- is not it?
       pending('on_key_pressed and on_text_entered exist',
         function()
           local k_got, t_got
@@ -638,6 +707,7 @@ describe('input contracts #input', function()
       -- (§5.4-m5). Distinct from I4 (which only stops the
       -- gateway dropping it): here it reaches on_key_pressed —
       -- false on a fresh press, true on a repeat.
+      -- REVIEW: ok, this one is good, but maybe test together with keys_pressed? (we can have multiple assertions inside same case, and scenario is essentially the same)
       pending('on_key_pressed receives isrepeat',
         function()
           local seen = { }
@@ -648,12 +718,14 @@ describe('input contracts #input', function()
           assert.same({ false, true }, seen)
         end)
 
+      -- REVIEW: milestones ref-ids, paragraphs without doclinks
       -- DEFERRED (0.1.0-m5b): I7 — compy.input.handlers[combo]
       -- dispatch on the normalised combo string (§4.2).
       -- Fresh-vs-repeat keying is PROVISIONAL (§6 D-C, owner
       -- not-yet-ruled); existing combos keep their behaviour
       -- unless explicitly altered — repeat semantics are NOT
       -- asserted as settled here.
+      -- REVIEW: its yet to be defimed how exactly engine would grab combo definitions from Project or other consumers
       pending('combo handlers dispatch on the combo',
         function()
           local fired
