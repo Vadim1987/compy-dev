@@ -4,6 +4,8 @@
 
 Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget shared across console, editor, and project overlays) and **mouse/pointer input** (handled partly by the framework, partly delegated to projects). This doc covers both, with mode-specific notes where the behavior differs.
 
+Companion doc — the routing **contracts** (what must hold across the feature #77 rewrite, with provenance and stability tags): [`wip/77-new-input-api/notes/input-contracts.md`](../wip/77-new-input-api/notes/input-contracts.md). This doc stays the descriptive "how it works today" narrative; the contracts doc is where OUTCOME-vs-MECHANISM and blast-radius classification live.
+
 ---
 
 ## Text Input Widget
@@ -135,6 +137,8 @@ Global shortcuts in `love.handlers.keypressed` (controller.lua:520+) are interce
 If `love.state.user_input` is set (overlay active), key events go to the overlay controller, bypassing the main input.
 
 > what defined the overlay controller before we introduced the singleton change? Was every projet defining their own controller and view, or they simply read the r() for text input values, with everything else being totally obscure for them? Was the recreation of M,V,C triade (before change) just a brute-force way of resetting the state, not leaving anything behind?
+
+**`inspect` mode overrides all of the above.** While `app_state == 'inspect'` (a paused/broken-into project), the console REPL owns every input channel and a project-set overlay is not honoured, regardless of the routing described above — see [`input-contracts.md`](../wip/77-new-input-api/notes/input-contracts.md) §5.4 for the full current-behaviour trace (mechanism, provenance, and why it's carried provisional rather than fixed).
 
 ### Key state: `Controller.keys_pressed` and `combo_string`
 
