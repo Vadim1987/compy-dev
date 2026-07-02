@@ -493,6 +493,7 @@ describe('input contracts #input', function()
   -- whole-input block nav; disposition (relocate to
   -- tests/editor/, or recut as a boundary-signal
   -- contract) is the human's call — see the punch list.
+  -- REVIEW: this test in thsi form should be relocated under tests/editor. Input contract should test delivery *and only if editor really relies on it* (situation where editor *may* not rely on it: just counting keystrokes itself and translating them into files' coordinates with every move -- therefore block-nav is triggered not by event emitted by input widget, but by the mere fact that internal navigation map says the cursor in 'project space' is no more inside current selection lines)
   describe('editor block navigation at the limit #editor',
     function()
 
@@ -694,6 +695,7 @@ describe('input contracts #input', function()
             F.cc:active_keyboard_route())
         end)
 
+      -- REVIEW: what else could bring up the widget if project does not? A bit strange test. Testing just default keys delivery would be fine. Also I think our design assumes keys are anyway delivered into project input controller -- whether they reach text sink (if its installed) is determined on what projects' keypressed and combo handlers return -- we discussed convention of returning truthy/falsey value to enable/disable propagation
       -- DEFERRED (0.1.0-m4): native-handler coexistence
       -- (doc A §7.3, design D-9). Plainly: a project that
       -- installs its own love.keypressed (and never opens
