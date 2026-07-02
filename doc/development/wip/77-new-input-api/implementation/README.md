@@ -122,6 +122,11 @@ carry these sections:
 > milestone-specific to the resolved `prompts/<id>.md` / `prompts/<id>-review.md` (review.md falls back
 > to cloning `review-prompt.md` when no filled review prompt exists).
 
+> **Multi-milestone launcher (session 31):** `agents/sweep.md` → `prompts/M4-M8-sweep-mandate.md`
+> collapses orchestration + execution for a **continue-if-ok** run across M4→M8 (Fable, inside the M0
+> image), instead of one `dev.md` cycle per milestone. Use `dev.md`/`review.md` for a one-shot task;
+> use `sweep.md` only when explicitly commissioning the multi-milestone run.
+
 > **Before commissioning M4 (overlay/dispatch rework):** read
 > [`../notes/talk/build-continuity-vs-product-bc.md`](../notes/talk/build-continuity-vs-product-bc.md).
 > Product backwards-compat was withdrawn by stakeholders, but **build-time continuity is still in
