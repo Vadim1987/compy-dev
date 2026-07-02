@@ -22,6 +22,27 @@ describe('history #history', function()
     history = History()
   end)
 
+  it('caps the number of entries', function()
+    local h = History()
+    for i = 1, 110 do
+      h:remember({ 'entry ' .. i })
+    end
+    assert.are_equal(100, h:length())
+    assert.same({ 'entry 11' }, h:get(1))
+    assert.same({ 'entry 110' }, h:get(100))
+  end)
+
+  it('keeps navigation position across eviction', function()
+    local h = History()
+    for i = 1, 100 do
+      h:remember({ 'e' .. i })
+    end
+    h:history_back({ '' })
+    local at = h:get(h.index)
+    h:remember({ 'typed' })
+    assert.same(at, h:get(h.index))
+  end)
+
   it('remembers', function()
     history:remember(t1)
     local h1 = { t1 }
