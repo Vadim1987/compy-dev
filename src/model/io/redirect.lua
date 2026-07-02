@@ -13,7 +13,9 @@ local function set_print(M)
       if i ~= l then out = out .. '\t' end
     end
     origPrint(out)
-    pcall(M.output.push, M.output, out)
+    -- origPrint above has already emitted the output
+    -- (and the error, if there was any)
+    local _ = pcall(M.output.push, M.output, out)
   end
   _G.print = magicPrint
 end
