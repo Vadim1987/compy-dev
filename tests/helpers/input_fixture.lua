@@ -4,7 +4,9 @@
 -- keypress-level driver — so a contract test reads as a one-line
 -- statement (see tests/helpers/input_session). The ~175 ln of
 -- MVC/gfx/font boilerplate that used to sit inline in
--- input_routing_spec lives here; it is consumed, never copied.
+-- input_contracts_spec lives here; consumed, never copied.
+-- "doc A" = the contract record:
+-- doc/development/wip/77-new-input-api/notes/input-contracts.md
 
 -- view.view stub: the real module calls gfx.newFont at load and
 -- needs a graphics context absent here. Set BEFORE any view
@@ -126,7 +128,7 @@ require_modules()
 
 local CC = build_console(cfg)
 -- Native slots: the gate's last-resort route when no widget is up,
--- and the route half of pointer delivery (§3.5 BOTH).
+-- and the route half of pointer delivery (doc A §5.5).
 Controller.set_love_keypressed(CC)
 Controller.set_love_keyreleased(CC)
 Controller.set_love_textinput(CC)
@@ -152,7 +154,7 @@ function F.compy_input()
 end
 
 -- Register a project click handler (compy.singleclick/doubleclick),
--- the target the framework click path invokes (§4.7).
+-- the target the framework click path invokes (doc A §6.7).
 function F.set_compy_handler(name, fn)
   CC:get_project_env().compy[name] = fn
 end
@@ -174,7 +176,7 @@ end
 -- Stand a running project on screen whose native LÖVE callback
 -- is fn. With no widget up the gateway routes the event to
 -- love[name], so the project's own callback is the public seam
--- witnessing delivery to the project route (§3.1; §5.3).
+-- witnessing delivery to the project route (doc A §5.1-5.3).
 function F.running_project(name, fn)
   love.state.app_state = 'running'
   love[name] = fn
@@ -183,7 +185,7 @@ end
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
 -- singleton disables selection, making pointer delivery a no-op —
--- §3.6). Used to witness pointer delivery to the widget half.
+-- doc A §5.5). Witnesses pointer delivery to the widget half.
 function F.show_selectable_widget(lines)
   local m = UserInputModel(cfg, InputEvalText, true)
   local w = UserInputController(m, nil, false)
@@ -193,6 +195,17 @@ function F.show_selectable_widget(lines)
   return w
 end
 
+-- Undo any project-native slot a test installed via
+-- running_project, so the next test starts on the framework
+-- route.
+local function restore_native_slots()
+  love.keypressed    = Controller._defaults.keypressed
+  love.textinput     = Controller._defaults.textinput
+  love.keyreleased   = Controller._defaults.keyreleased
+  love.mousepressed  = Controller._defaults.mousepressed
+  love.mousereleased = Controller._defaults.mousereleased
+end
+
 -- Clean slate between tests: no held keys, no widget, console mode,
 -- empty console line, drained click state, cleared click handlers.
 function F.reset()
@@ -200,14 +213,7 @@ function F.reset()
   love.state.user_input         = nil
   love.state.app_state          = 'ready'
   love.state.editor             = nil
-  -- Undo any project-native slot a test installed via
-  -- running_project, so the next test starts on the framework
-  -- route.
-  love.keypressed    = Controller._defaults.keypressed
-  love.textinput     = Controller._defaults.textinput
-  love.keyreleased   = Controller._defaults.keyreleased
-  love.mousepressed  = Controller._defaults.mousepressed
-  love.mousereleased = Controller._defaults.mousereleased
+  restore_native_slots()
   local compy                   = CC:get_project_env().compy
   compy.singleclick             = nil
   compy.doubleclick             = nil
