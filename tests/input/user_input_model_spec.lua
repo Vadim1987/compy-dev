@@ -27,6 +27,34 @@ describe("input model spec #input", function()
   }
   mock.mock_love(love)
 
+  describe('invalid UTF-8', function()
+    local invalid = 'abc\195('
+
+    it('add_text drops invalid bytes', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:add_text(invalid)
+      assert.same({ 'abc(' }, model:get_text())
+    end)
+
+    it('paste drops invalid bytes across lines', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:paste('abc\ndef' .. invalid)
+      assert.same({ 'abc', 'defabc(' }, model:get_text())
+    end)
+
+    it('set_text drops invalid bytes', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:set_text(invalid)
+      assert.same({ 'abc(' }, model:get_text())
+    end)
+
+    it('set_text drops invalid bytes in tables', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:set_text({ 'ok', invalid })
+      assert.same({ 'ok', 'abc(' }, model:get_text())
+    end)
+  end)
+
   -----------------
   --   ASCII     --
   -----------------

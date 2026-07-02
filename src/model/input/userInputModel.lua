@@ -82,6 +82,19 @@ function UserInputModel:init_visible(text)
   self.visible:set_default_range()
 end
 
+--- Drop bytes that do not form valid UTF-8
+--- @param s string
+--- @return string
+local function sanitize_utf8(s)
+  local r = s
+  local n, pos = utf8.len(r)
+  while not n do
+    r = string.sub(r, 1, pos - 1) .. string.sub(r, pos + 1)
+    n, pos = utf8.len(r)
+  end
+  return r
+end
+
 ----------------
 --  entered   --
 ----------------
@@ -89,6 +102,7 @@ end
 --- @param text string
 function UserInputModel:add_text(text)
   if type(text) == 'string' then
+    text = sanitize_utf8(text)
     self:pop_selected_text()
     local sl, cc    = self:get_cursor_pos()
     local cur_line  = self:get_text_line(sl)
@@ -127,6 +141,7 @@ end
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)
   if type(text) == 'string' then
+    text = sanitize_utf8(text)
     local lines = string.lines(text)
     local n_added = #lines
     if n_added == 1 then
@@ -136,7 +151,11 @@ function UserInputModel:set_text(text, keep_cursor)
       self:_update_cursor(true)
     end
   elseif type(text) == 'table' then
-    self.entered = InputText(text)
+    local clean = {}
+    for i, l in ipairs(text) do
+      clean[i] = sanitize_utf8(l)
+    end
+    self.entered = InputText(clean)
   end
   self:text_change()
   if not keep_cursor then
