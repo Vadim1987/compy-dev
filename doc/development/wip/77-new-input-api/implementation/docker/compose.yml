@@ -38,6 +38,8 @@ services:
       - compy-agent-home:/home/agent
       - ../../../../../../:/repo:rw
       - ../:/impl:rw
+      - ../../../../../../../brainlab/sessions/git/doc/development/wip/77-new-input-api/SWEEP:/impl/sessions:rw
+      - ../../../../../../../brainlab/sessions/git/doc/development/wip/77-new-input-api/SWEEP:/repo/doc/development/wip/77-new-input-api/implementation/sessions:rw
 
 volumes:
   compy-agent-home:

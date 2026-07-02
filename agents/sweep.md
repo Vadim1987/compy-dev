@@ -1,22 +1,26 @@
-# Sweep session — self-orchestrating multi-milestone launcher
+# Sweep session — M4→M8 boot pointer
 
-Point a fresh **Fable** session here (inside the M0 image, repo root = cwd) to run the M4→M8 sweep.
-Unlike `dev.md`/`review.md` (one milestone, one role, then stop), this collapses the orchestration and
-execution planes for a run of milestones with continue-if-ok between them.
+Point a fresh **Fable** session here (M0 image, repo root = cwd) to run/resume the M4→M8 sweep.
+Read the mandate first, then boot the CURRENT PROMPT. Unlike `dev.md`/`review.md` (one milestone,
+one role, no session management), the sweep runs brainlab-style session governance inside this repo
+— see the mandate for the full cycle.
 
-## Active feature (the only line that changes when the feature changes)
+## Fixed pointers
 
 - **FEATURE:** `doc/development/wip/77-new-input-api`
 - **MANDATE:** `doc/development/wip/77-new-input-api/implementation/prompts/M4-M8-sweep-mandate.md`
+  — the workflow (session cycle, gates, track, wrap, boundaries). **Read it before the prompt.**
 
-## Boot
+## Volatile pointer — the only line that changes between sessions
 
-1. **Read and follow `<MANDATE>`** — it is self-contained and authoritative: your role, the
-   continue-if-ok / stop criteria, the per-milestone loop, tracking duty, context discipline.
-2. `agents/rules.md` + `agents/development.md` are auto-loaded via the repo-root `CLAUDE.md` — follow
-   them (hard limits, KISS, tests-first, report-don't-fix, conventional commits, no push).
-3. **Never edit `<FEATURE>/design/`** — the specs are frozen input you read.
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session01/prompt.md`
 
-> This launcher exists alongside `agents/dev.md` (single milestone, execution-plane only) and
-> `agents/review.md` (single milestone, review-plane only) — use those for a one-shot task; use this
-> one only when explicitly commissioning a multi-milestone continue-if-ok run.
+## Wrap-up rule (mechanical — no inference)
+
+After writing the successor `sessionNN+1/prompt.md`, repoint CURRENT PROMPT above. Only the session
+number changes:
+
+```sh
+# replace 02 with the new session number
+sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1session02\2#' agents/sweep.md
+```

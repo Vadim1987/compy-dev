@@ -123,9 +123,11 @@ carry these sections:
 > to cloning `review-prompt.md` when no filled review prompt exists).
 
 > **Multi-milestone launcher (session 31):** `agents/sweep.md` → `prompts/M4-M8-sweep-mandate.md`
-> collapses orchestration + execution for a **continue-if-ok** run across M4→M8 (Fable, inside the M0
-> image), instead of one `dev.md` cycle per milestone. Use `dev.md`/`review.md` for a one-shot task;
-> use `sweep.md` only when explicitly commissioning the multi-milestone run.
+> collapses orchestration + execution for the M4→M8 run (Fable, inside the M0 image), instead of one
+> `dev.md` cycle per milestone. It runs brainlab-style session governance in project space
+> (`sessions/sessionNN/` handover prompts, running tracks) with a **hard human gate at every
+> milestone boundary** plus judgment-call stops. Use `dev.md`/`review.md` for a one-shot task; use
+> `sweep.md` only when explicitly commissioning the multi-milestone run.
 
 > **Before commissioning M4 (overlay/dispatch rework):** read
 > [`../notes/talk/build-continuity-vs-product-bc.md`](../notes/talk/build-continuity-vs-product-bc.md).
