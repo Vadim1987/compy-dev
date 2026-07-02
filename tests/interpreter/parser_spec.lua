@@ -103,4 +103,11 @@ describe('highlight #parser', function()
       end
     end)
   end
+
+  it('does not propagate lexer errors', function()
+    local invalid = 'local s = "\\999"'
+    local ok, hl = pcall(parser.highlighter, invalid)
+    assert.is_true(ok)
+    assert.are_equal('table', type(hl))
+  end)
 end)
