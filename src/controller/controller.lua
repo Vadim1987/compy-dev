@@ -1,5 +1,6 @@
 Prof = require("controller.profiler")
 require("view.view")
+require("controller.projectInputController")
 
 require("util.string.string")
 require("util.key")
@@ -20,16 +21,49 @@ local get_user_input = function()
   if love.state.app_state == 'inspect' then return end
   return love.state.user_input
 end
+
+--- Intra-route forward: the console route hands the event
+--- to the widget it activated (nil under 'inspect' — the
+--- console owns that surface itself).
+--- @param k string
+--- @param isr boolean?
+--- @return boolean forwarded
+local function forward_keypressed(k, isr)
+  local ui = get_user_input()
+  if not ui then return false end
+  ui.C:keypressed(k, Controller.keys_pressed, isr)
+  return true
+end
+
+--- @param t string
+--- @return boolean forwarded
+local function forward_textinput(t)
+  local ui = get_user_input()
+  if not ui then return false end
+  ui.C:textinput(t)
+  return true
+end
+
+--- @param k string
+--- @return boolean forwarded
+local function forward_keyreleased(k)
+  local ui = get_user_input()
+  if not ui then return false end
+  ui.C:keyreleased(k)
+  return true
+end
 --- @type boolean
 local user_update
 --- @type boolean
 local user_draw
 
-local _supported = {
+local _keyboard = {
   'keypressed',
   'keyreleased',
   'textinput',
+}
 
+local _pointer = {
   'mousemoved',
   'mousepressed',
   'mousereleased',
@@ -39,6 +73,14 @@ local _supported = {
   'touchpressed',
   'touchreleased',
 }
+
+local _supported = {}
+for _, k in ipairs(_keyboard) do
+  table.insert(_supported, k)
+end
+for _, k in ipairs(_pointer) do
+  table.insert(_supported, k)
+end
 
 --- @param CC ConsoleController
 --- @param msg string
@@ -68,31 +110,78 @@ local function wrap(f, CC, ...)
   end
 end
 
+--- The project's own handler for a slot, error-wrapped —
+--- nil when the project did not define one.
 --- @param userlove table
 --- @param CC ConsoleController
-local set_handlers = function(userlove, CC)
-  --- @param key string
-  local function hook_if_differs(key)
-    local orig = Controller._defaults[key]
-    local new = userlove[key]
-    if orig and new and orig ~= new then
+--- @param key string
+--- @return function? wrapped
+local function wrapped_native(userlove, CC, key)
+  local orig = Controller._defaults[key]
+  local new = userlove[key]
+  if orig and new and orig ~= new then
+    return CC:wrap_handler(new, wrap)
+  end
+end
+
+--- @param userlove table
+--- @param CC ConsoleController
+--- @return table natives
+local function project_natives(userlove, CC)
+  return {
+    keypressed =
+        wrapped_native(userlove, CC, 'keypressed'),
+    textinput =
+        wrapped_native(userlove, CC, 'textinput'),
+    keyreleased =
+        wrapped_native(userlove, CC, 'keyreleased'),
+  }
+end
+
+--- The project route occupies the keyboard/text slots for
+--- the run; the project's own handlers ride along for
+--- delegation (never slot occupants themselves).
+--- @param userlove table
+--- @param CC ConsoleController
+local function occupy_keyboard(userlove, CC)
+  local pic = Controller.project_input
+  local compy = CC:get_project_env().compy
+  pic:activate(project_natives(userlove, CC), compy.input)
+  love.keypressed = function(k, sc, isr)
+    return pic:keypressed(k, sc, isr)
+  end
+  love.textinput = function(t)
+    return pic:textinput(t)
+  end
+  love.keyreleased = function(k)
+    return pic:keyreleased(k)
+  end
+  Controller._keyboard_route = pic
+end
+
+--- @param userlove table
+--- @param CC ConsoleController
+local function hook_pointer(userlove, CC)
+  for _, k in ipairs(_pointer) do
+    local w = wrapped_native(userlove, CC, k)
+    if w then
       --- @type function
-      love[key] = CC:wrap_handler(new, wrap)
+      love[k] = w
     end
   end
+end
 
-  -- input hooks
-  for _, k in ipairs(_supported) do
-    hook_if_differs(k)
-  end
-  -- update - special handling, inner updates
+--- @param userlove table
+local function hook_update(userlove)
   local up = userlove.update
   if up and up ~= Controller._defaults.update then
     user_update = true
     Controller._userhandlers.update = up
   end
+end
 
-  -- drawing - separate table
+--- @param userlove table
+local function hook_draw(userlove)
   local udr = userlove.draw
   local mdr = View.main_draw
   if udr and udr ~= mdr then
@@ -104,6 +193,15 @@ local set_handlers = function(userlove, CC)
     love.draw = ndr
     user_draw = true
   end
+end
+
+--- @param userlove table
+--- @param CC ConsoleController
+local set_handlers = function(userlove, CC)
+  occupy_keyboard(userlove, CC)
+  hook_pointer(userlove, CC)
+  hook_update(userlove)
+  hook_draw(userlove)
 end
 
 local click_delay = 0.4
@@ -185,7 +283,7 @@ Controller = {
   --- @private
   --- @param CC ConsoleController
   set_love_keypressed = function(CC)
-    local function keypressed(k)
+    local function keypressed(k, _, isr)
       if Key.ctrl() and Key.shift() then
         if love.DEBUG then
           if k == "1" then
@@ -210,9 +308,11 @@ Controller = {
           end
         end
       end
+      if forward_keypressed(k, isr) then return end
       CC:keypressed(k)
     end
     Controller._defaults.keypressed = keypressed
+    Controller._keyboard_route = CC
     love.keypressed = keypressed
   end,
 
@@ -221,6 +321,7 @@ Controller = {
   set_love_keyreleased = function(CC)
     --- @diagnostic disable-next-line: duplicate-set-field
     local function keyreleased(k)
+      if forward_keyreleased(k) then return end
       CC:keyreleased(k)
     end
     Controller._defaults.keyreleased = keyreleased
@@ -231,6 +332,7 @@ Controller = {
   --- @param CC ConsoleController
   set_love_textinput = function(CC)
     local function textinput(t)
+      if forward_textinput(t) then return end
       CC:textinput(t)
     end
     Controller._defaults.textinput = textinput
@@ -501,6 +603,9 @@ Controller = {
   --- @param CC ConsoleController
   --- @param CV ConsoleView
   set_default_handlers = function(CC, CV)
+    -- the console is the NAMED restore target: releasing
+    -- the project route precedes reinstalling the console
+    Controller.project_input:deactivate()
     Controller.set_love_keypressed(CC)
     Controller.set_love_keyreleased(CC)
     Controller.set_love_textinput(CC)
@@ -551,7 +656,7 @@ Controller = {
     --- @diagnostic disable-next-line: undefined-field
     local handlers = love.handlers
 
-    handlers.keypressed = function(k)
+    handlers.keypressed = function(k, sc, isr)
       Controller.keys_pressed[k] = true
       --- Power shortcuts
       local function quickswitch()
@@ -649,20 +754,17 @@ Controller = {
         project_state_change()
       end
 
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:keypressed(k)
-      else
-        if love.keypressed then return love.keypressed(k) end
+      -- no overlay gate: the slot occupant (the active
+      -- route's controller) always receives; widgets are
+      -- reached intra-route, never by dispatch here
+      if love.keypressed then
+        return love.keypressed(k, sc, isr)
       end
     end
 
     handlers.textinput = function(t)
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:textinput(t)
-      else
-        if love.textinput then return love.textinput(t) end
+      if love.textinput then
+        return love.textinput(t)
       end
     end
 
@@ -673,11 +775,8 @@ Controller = {
           love.event.quit()
         end
       end
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:keyreleased(k)
-      else
-        if love.keyreleased then return love.keyreleased(k) end
+      if love.keyreleased then
+        return love.keyreleased(k)
       end
     end
 
@@ -799,6 +898,14 @@ Controller = {
 
   set_user_handlers = set_handlers,
 
+  --- The route controller currently owning the keyboard
+  --- slots (console by default and after project stop;
+  --- the project route during a run).
+  --- @return table route
+  active_keyboard_route = function()
+    return Controller._keyboard_route
+  end,
+
   user_is_blocking = function()
     return (user_update or user_draw)
   end,
@@ -845,3 +952,6 @@ Controller = {
     end
   end,
 }
+
+-- the single project-route instance the slot wiring uses
+Controller.project_input = ProjectInputController()

@@ -120,21 +120,36 @@ differently — Ctrl+L vs. Escape vs. Ctrl+W vs. Ctrl+Q vs. nothing at all for t
 ### Dispatch chain
 
 ```
-love.handlers.keypressed
-  → global shortcuts (pause, quit, restart, editor-toggle) — controller.lua
-    → ConsoleController:keypressed
-      → if editor state: EditorController:keypressed
-      → else: console key handling
-        → history navigation (PageUp/Down)
-        → UserInputController:keypressed (cursor, edit, submit)
-        → Enter → ConsoleController:evaluate_input
+love.handlers.keypressed (k, scancode, isrepeat)
+  → held-key bookkeeping + global shortcuts — controller.lua
+    → love.keypressed — the slot occupant (the active route)
+      ├─ console/editor (the default slot handler):
+      │    → overlay widget shown (except inspect):
+      │        UserInputController:keypressed
+      │          (k, keys_pressed, isrepeat)
+      │    → else ConsoleController:keypressed
+      │        → if editor state: EditorController:keypressed
+      │        → else: console key handling
+      │          → history navigation (PageUp/Down)
+      │          → UserInputController:keypressed
+      │          → Enter → ConsoleController:evaluate_input
+      └─ project run: ProjectInputController:keypressed
+           → widget shown: the text-editing sink
+               (UserInputController, uniform triple)
+           → widget hidden: the project's own native
+               love.keypressed, if it defined one (via the
+               auto-provisioned lifecycle-split wrapper)
+           → neither: no-op (a hidden widget consumes
+               nothing; no other consumer exists)
 ```
 
 Global shortcuts in `love.handlers.keypressed` (controller.lua:520+) are intercepted before anything reaches the controller: Ctrl+Pause suspends, Ctrl+Q quits project, Ctrl+S stops run or closes buffer, Ctrl+Shift+R resets application, Ctrl+Alt+R restarts project, Ctrl+Esc exits app.
 
 > our plan includes firing "before_quit", "before_suspend" on the project? 
 
-If `love.state.user_input` is set (overlay active), key events go to the overlay controller, bypassing the main input.
+As of 0.1.0-m4 the gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The slot occupant (the active route's controller) always receives the event and forwards to the overlay widget itself when one is shown: the console-route default handlers forward when `love.state.user_input` is set (except under `inspect`), and `ProjectInputController` delegates to the same widget as its text-editing sink. The widget is never a routing destination of the gateway and never a slot occupant. On project stop the console is the *named* restore target — `Controller.active_keyboard_route()` reports the occupant (the ConsoleController by default, the project route during a run).
+
+While a project run occupies the slots but the state has left `'running'` (a non-blocking project that returned: `app_state == 'project_open'`), `ProjectInputController` forwards events to the console default handlers — non-running states route to the console (the REPL stays live after a script finishes).
 
 > what defined the overlay controller before we introduced the singleton change? Was every projet defining their own controller and view, or they simply read the r() for text input values, with everything else being totally obscure for them? Was the recreation of M,V,C triade (before change) just a brute-force way of resetting the state, not leaving anything behind?
 
@@ -166,14 +181,14 @@ with no held modifiers serialises to just the key name.
 ```
 
 These two surfaces will be consumed by the `ProjectInputController`
-dispatch table (`compy.input.handlers[combo]`), planned for 0.1.0-m4/m5.
-Those `ProjectInputController` handlers additionally receive the live
-`keys_pressed` proxy as a second argument
-(`:keypressed(k, keys_pressed, isrepeat)`, `:textinput(t, keys_pressed)`).
-The bottom input sink documented here does **not** currently receive it —
-but whether it should (e.g. to handle Shift+Enter or similar uniformly at
-the sink) is a design decision **not yet settled**, to be resolved in the
-0.1.0-m4/m5 design session.
+dispatch table (`compy.input.handlers[combo]`), planned for 0.1.0-m5.
+Since 0.1.0-m4 the gateway no longer drops `isrepeat`/`scancode` at
+the slot signature, and the whole keypressed path hands the widget
+sink the uniform `(k, keys_pressed, isrepeat)` triple — the sink is
+included by design (one signature across the path; see
+`input-contracts.md` §9). The sink's own implementation still binds
+only `k`; it starts consuming the extra arguments when its dispatch
+milestone (0.1.0-m5) lands.
 
 ### Console-specific keys
 
@@ -198,14 +213,16 @@ callback to hand it to yet — this is the one point where the signal is genuine
 recomputed elsewhere. Full trace:
 [`notes/fr2-fr6-fr7-provenance-and-gaps.md`](../../wip/77-new-input-api/notes/fr2-fr6-fr7-provenance-and-gaps.md).
 
-**FR-6 (project notification of key events): the exclusion is total, and keyboard-only.** While
-`love.state.user_input` is set, `controller.lua`'s `handlers.keypressed`/`handlers.textinput` call
-*only* the overlay — the project's own `love.keypressed`/`love.textinput` are not called at all,
-consumed or not (binary, not partial). Mouse never had this problem: `handlers.mousepressed`/
-`mousereleased` call the overlay conditionally but call the project's own handler
-**unconditionally**, always, regardless of overlay state — confirmed by reading both handlers side
-by side. This is why touch/mouse needed no separate #77 scope item: only keyboard was ever
-exclusively gated.
+**FR-6 (project notification of key events): the keyboard exclusion is resolved as of 0.1.0-m4.**
+Historically, while `love.state.user_input` was set, `controller.lua`'s
+`handlers.keypressed`/`handlers.textinput` called *only* the overlay — the project's own
+`love.keypressed`/`love.textinput` were not called at all (binary, not partial). With the gate
+removed, project key/text events always reach the project route (`ProjectInputController`); which
+surface consumes them (the overlay sink while shown, the project's native handler while hidden) is
+the route's internal delegation, no longer a gateway drop. Mouse never had this problem:
+`handlers.mousepressed`/`mousereleased` call the overlay conditionally but call the project's own
+handler **unconditionally**, regardless of overlay state. This is why touch/mouse needed no
+separate #77 scope item: only keyboard was ever exclusively gated.
 
 ### Editor-specific keys
 
@@ -257,8 +274,11 @@ The `oneshot` flag on `UserInputModel` (set for project overlays) enables a subm
 ### Key release
 
 `keypressed`/`textinput` get careful three-way routing (console / editor / project); **`keyreleased`
-does not.** `handlers.keyreleased` (`controller.lua:669-682`) checks the project overlay first (same
-as the other two channels), but otherwise falls straight to `love.keyreleased` = `CC:keyreleased`
+gets route-level delegation but no editor fork.** Since 0.1.0-m4, `handlers.keyreleased` dispatches
+to the slot occupant like the other channels: during a project run `ProjectInputController:keyreleased`
+delegates to the shown widget, else to the project's native `love.keyreleased` (sink delegation only —
+no release dispatch tier exists; that scope is descoped, see the 0.1.0-m4 outcome ledger). On the
+console route the default handler forwards to a shown widget, else falls to `CC:keyreleased`
 = `ConsoleController:keyreleased` (`consoleController.lua:1090-1093`), which **unconditionally** calls
 `self.input:keyreleased(k)` — console's own instance — with **no `app_state == 'editor'` fork**.
 `EditorController` and `SearchController` do not define a `:keyreleased` method at all. Net effect:

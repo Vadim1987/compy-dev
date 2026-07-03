@@ -482,6 +482,21 @@ describe('input contracts #input', function()
       assert.same({ 'keep' }, F.singleton:get_text())
       assert.same({ 'Z' }, F.console:get_text())
     end)
+
+    -- The keypressed sibling: with the overlay gate gone
+    -- the key channel also travels the route while the
+    -- widget is hidden — the key mutates the active
+    -- route's model (console), and the hidden widget's
+    -- content, history and cursor stay untouched.
+    it('a key while hidden does not mutate it', function()
+      local input = F.compy_input()
+      input.show({ text = 'keep' })
+      input.hide()
+      F.console:add_text('ab')
+      F.session.press('backspace')
+      assert.same({ 'keep' }, F.singleton:get_text())
+      assert.same({ 'a' }, F.console:get_text())
+    end)
   end)
 
   -- OPEN (owner call, carried from the review passes):
@@ -557,18 +572,23 @@ describe('input contracts #input', function()
 
       -- keyreleased under a widget (doc A §5.3 note,
       -- provenance: assessment/keyreleased-isrepeat-
-      -- events.md): today the overlay gate diverts the
+      -- events.md): the overlay gate used to divert the
       -- release to the widget, bypassing a project release
-      -- handler. Possibly a defect, not a contract —
-      -- expected to change with the gate removal.
-      it('a release under a widget is not routed',
+      -- handler. FLIPPED DELIBERATELY with the gate
+      -- removal (the anticipated change happened): the
+      -- slot occupant now receives the release even while
+      -- a widget is up. In the live app the run-time
+      -- occupant is the project route, which forwards to
+      -- the sink while the widget is shown; here the raw
+      -- slot stands in for the occupant.
+      it('a release under a widget reaches the occupant',
         function()
           local got = 0
           love.state.app_state = 'running'
           love.keyreleased = function() got = got + 1 end
           F.show_widget()
           F.session.release('a')
-          assert.equal(0, got)
+          assert.equal(1, got)
         end)
     end)
 
@@ -662,13 +682,13 @@ describe('input contracts #input', function()
   describe('forward contracts (pending until implemented)',
     function()
 
-      -- DEFERRED (0.1.0-m4): the overlay gate is removed;
-      -- project keys reach the project's controller even
-      -- while a widget is up, instead of being dropped.
-      -- The controller then dispatches internally: combo
-      -- handlers, the project's own love.keypressed, the
-      -- userinput singleton as sink (doc A §7.1).
-      pending('project keys reach the project sink',
+      -- The overlay gate is removed; project keys reach
+      -- the project's controller even while a widget is
+      -- up, instead of being dropped. The controller then
+      -- dispatches internally — the userinput singleton is
+      -- the sink, never a dispatch target of the gateway
+      -- (doc A §7.1; combo tiers arrive at 0.1.0-m5).
+      it('project keys reach the project sink',
         function()
           local got = { }
           F.running_project('keypressed', function(k)
@@ -679,59 +699,69 @@ describe('input contracts #input', function()
           assert.same({ 'a' }, got)
         end)
 
-      -- DEFERRED (0.1.0-m4): on stop the keyboard/text
-      -- slots are restored to the console as a NAMED
-      -- target, not as an emergent effect of reinstalling
-      -- defaults (doc A §7.2). The behavioural end state
-      -- is already guarded green by the PRESERVE row
-      -- ("project stop returns input to the console");
-      -- this pending guards only the named-target API
-      -- shape m4 introduces — assert on whatever public
-      -- accessor m4 lands.
-      pending('stop names the console as restored route',
+      -- On stop the keyboard/text slots are restored to
+      -- the console as a NAMED target, not as an emergent
+      -- effect of reinstalling defaults (doc A §7.2). The
+      -- behavioural end state is guarded green by the
+      -- PRESERVE row ("project stop returns input to the
+      -- console"); this row guards the named-target API
+      -- shape: Controller.active_keyboard_route() names
+      -- the console route (the ConsoleController).
+      it('stop names the console as restored route',
         function()
           F.cc:stop_project_run()
-          assert.equal(F.console,
-            F.cc:active_keyboard_route())
+          assert.equal(F.cc,
+            Controller.active_keyboard_route())
         end)
 
-      -- REVIEW: what else could bring up the widget if project does not? A bit strange test. Testing just default keys delivery would be fine. Also I think our design assumes keys are anyway delivered into project input controller -- whether they reach text sink (if its installed) is determined on what projects' keypressed and combo handlers return -- we discussed convention of returning truthy/falsey value to enable/disable propagation
-      -- DEFERRED (0.1.0-m4): native-handler coexistence
-      -- (doc A §7.3, design D-9). Plainly: a project that
-      -- installs its own love.keypressed (and never opens
-      -- a compy.input surface) keeps receiving keys while
-      -- no widget is shown; while a widget IS shown, keys
-      -- go to the text-editing sink instead — same end
-      -- state as today, but founded on the active route,
-      -- not on widget presence. provision_native is a
-      -- placeholder for the m4 auto-provision wrapper.
-      pending('a native handler coexists with the sink',
+      -- Native-handler coexistence (doc A §7.3, design
+      -- D-9): a project that installs its own
+      -- love.keypressed (and sets no compy input callback)
+      -- keeps receiving keys while no widget is shown;
+      -- while a widget IS shown, keys go to the
+      -- text-editing sink instead — same end state as
+      -- today, founded on the active route, not on widget
+      -- presence. Driven through the real activation path:
+      -- Controller.set_user_handlers is what a project run
+      -- calls, and it auto-provisions the lifecycle-split
+      -- wrapper for the native handler. (In-app the widget
+      -- is brought up by the legacy solicitation the
+      -- project itself calls, e.g. input_text.)
+      it('a native handler coexists with the sink',
         function()
           local native = 0
-          F.cc:provision_native(function()
-            native = native + 1
-          end)
+          love.state.app_state = 'running'
+          Controller.set_user_handlers({
+            keypressed = function()
+              native = native + 1
+            end,
+          }, F.cc)
           F.session.press('a')
           assert.equal(1, native)
           F.show_widget()
           F.session.press('a')
           assert.equal(1, native)
+          F.cc:stop_project_run()
         end)
 
-      -- DEFERRED (0.1.0-m4): today the gateway slot is
-      -- function(k) — isrepeat is dropped at the door. m4
-      -- widens the slot so every keypressed consumer,
-      -- the sink included, receives the uniform
-      -- (k, keys_pressed, isrepeat) triple (doc A §7.4;
-      -- §9 resolves that the sink is included).
-      pending('the keypressed path carries the triple',
+      -- The gateway slot was function(k) — isrepeat was
+      -- dropped at the door. The widened slot hands every
+      -- keypressed consumer, the sink included, the
+      -- uniform (k, keys_pressed, isrepeat) triple (doc A
+      -- §7.4; §9 resolves that the sink is included). The
+      -- sink is a method, so the patch signature carries
+      -- self first; restored after the assertion since
+      -- the singleton is shared.
+      it('the keypressed path carries the triple',
         function()
           local seen
           F.show_widget()
-          F.singleton.keypressed = function(_, keys, isr)
-            seen = { keys, isr }
-          end
+          F.singleton.keypressed =
+              function(_, _, keys, isr)
+                seen = { keys, isr }
+              end
           F.session.repeat_press('a')
+          F.singleton.keypressed = nil
           assert.is_table(seen[1])
           assert.is_true(seen[2])
         end)
