@@ -867,7 +867,7 @@ end
 function UserInputModel:set_error(errors)
   self.error = nil
   if type(errors) == "table" then
-    if type(errors[1] == "string") then
+    if type(errors[1]) == "string" then
       self.error = errors
     else
       self.error = {}

@@ -30,6 +30,16 @@ describe("input model spec #input", function()
   -----------------
   --   ASCII     --
   -----------------
+  describe('errors', function()
+    it('converts non-string errors', function()
+      local model = UserInputModel(mockConf, luaEval)
+      --- @diagnostic disable-next-line: invisible
+      model:set_error({ 42 })
+      --- @diagnostic disable-next-line: invisible
+      assert.same({ '42' }, model.error)
+    end)
+  end)
+
   describe('basics', function()
     local model = UserInputModel(mockConf, luaEval)
 

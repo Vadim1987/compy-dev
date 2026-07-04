@@ -78,7 +78,7 @@ local function parse(input, skip_posinfo)
 end
 
 local function is_lua_block(t)
-  if not type(t) == "table" then return false end
+  if type(t) ~= "table" then return false end
   return t.t == 'code_block' and t.lang == 'lua'
 end
 
