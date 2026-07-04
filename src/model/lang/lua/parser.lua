@@ -296,7 +296,11 @@ return function(lib)
   --- @param code str
   --- @return SyntaxColoring
   local highlighter = function(code)
-    return syntax_hl(tokenize(code))
+    local ok, tokens = pcall(tokenize, code)
+    if not ok then
+      return SyntaxColoring()
+    end
+    return syntax_hl(tokens)
   end
 
   --- @param text string[]
