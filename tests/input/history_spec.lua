@@ -23,17 +23,29 @@ describe('history #history', function()
   end)
 
   it('caps the number of entries', function()
-    local h = History()
-    for i = 1, 110 do
+    local h = History(10)
+    for i = 1, 15 do
       h:remember({ 'entry ' .. i })
     end
-    assert.are_equal(100, h:length())
-    assert.same({ 'entry 11' }, h:get(1))
-    assert.same({ 'entry 110' }, h:get(100))
+    assert.are_equal(10, h:length())
+    assert.same({ 'entry 6' }, h:get(1))
+    assert.same({ 'entry 15' }, h:get(10))
+  end)
+
+  it('treats 0 as unlimited', function()
+    local h = History(0)
+    for i = 1, 15 do
+      h:remember({ 'entry ' .. i })
+    end
+    assert.are_equal(15, h:length())
+  end)
+
+  it('defaults the limit', function()
+    assert.are_equal(1000, History().limit)
   end)
 
   it('keeps navigation position across eviction', function()
-    local h = History()
+    local h = History(100)
     for i = 1, 100 do
       h:remember({ 'e' .. i })
     end
