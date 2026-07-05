@@ -29,6 +29,8 @@ local function log_branch(branch)
   end
 end
 
+
+--- REVIEW: I refuse to even consider 'sink' as a first-class architectural concept. It was just an internal term to determine default/final/last-resort receiver of the event, *whatever it will be* (yet it *happpens* to be UserInputController in current design). 'sink' is not something that special or important to participate in routing decisions and names of functions!
 --- The route's default disposition: the text-editing sink
 --- when the singleton is shown; a keystroke arriving while
 --- it is hidden mutates nothing.
@@ -37,13 +39,16 @@ end
 --- @param isr boolean?
 local function sink_keypressed(k, keys, isr)
   local ui = love.state.user_input
+  -- REVIEW: why not just call compy.input.* method and let it decide whether it consumed event or not? what's the point of talking with UI controller directly? (tangling/depending on its implementation)
   if ui then
     -- the sink binds only k until its dispatch milestone
     --- @diagnostic disable-next-line: redundant-parameter
     return ui.C:keypressed(k, keys, isr)
+  -- REVIEW: silent swallow on 'else', no warning, nothing...
   end
 end
 
+-- REVIEW: as said many times, logic seems inverted to me. there should be no if-governed 'native-split', just a unified chain of processing, one of the consumers (last) being user input, which noops if its hidden
 --- Lifecycle-split wrapper (native coexistence): singleton
 --- shown -> the text-editing sink; hidden -> the project's
 --- own native handler. The trailing scancode keeps the
@@ -63,6 +68,7 @@ local function native_split(native)
   end
 end
 
+-- REVIEW: what calls 'activate'? Why we support 'legacy' if no backwards-compatibility is required?
 --- Take the keyboard route for a project run. `natives`
 --- holds the project's own love.* keyboard handlers
 --- (error-wrapped by the caller). A project with a native
@@ -84,6 +90,7 @@ function ProjectInputController:activate(natives, compy_input)
   end
 end
 
+-- REVIEW: what calls deactivate? why? why cannot upper-level *controller* detach routing without doing anything special inside routed ProjectInputController ?
 --- Release the route on project stop; the auto-provisioned
 --- callback goes with the rest of the project state.
 function ProjectInputController:deactivate()
@@ -105,10 +112,13 @@ end
 --- @param sc string?
 --- @param isr boolean?
 function ProjectInputController:keypressed(k, sc, isr)
+  -- REVIEW: whether app is running is not a concern of THIS controller -- upper-level controller should change routing, therefore condition checked would never fire
   if love.state.app_state ~= 'running' then
     --- @diagnostic disable-next-line: redundant-parameter
     return Controller._defaults.keypressed(k, sc, isr)
   end
+  -- REVIEW: where is the handling of project-installed keypressed hook? let alone stub for handlers before it? all connected via truthy/falthy return value?
+  -- REVIEW: why all the code below and not just compy.input.on_key_pressed ? (which *should* be noop if not installed) how sink_keypressed is different? it routes same stuff to the same consumer, just via legacy interface -- I see no use of it at all.
   local ci = self.compy_input
   local cb = ci and ci.on_key_pressed
   if cb then
@@ -118,6 +128,7 @@ function ProjectInputController:keypressed(k, sc, isr)
 end
 
 --- @param t string
+-- REVIEW: same problem as described -- does not match design of unified routing (combos -> projecthandler -> compy.input )
 function ProjectInputController:textinput(t)
   if love.state.app_state ~= 'running' then
     return Controller._defaults.textinput(t)
@@ -133,6 +144,7 @@ function ProjectInputController:textinput(t)
   end
 end
 
+-- REVIEW: why not unified routing for all types of events? could be one function with signal name as parameter
 --- Sink delegation only — no release dispatch tier exists;
 --- the native delegation mirrors keypressed.
 --- @param k string

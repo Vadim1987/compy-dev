@@ -117,6 +117,13 @@ differently — Ctrl+L vs. Escape vs. Ctrl+W vs. Ctrl+Q vs. nothing at all for t
 
 ## Keyboard Handling
 
+>> REVIEW: I think it does not fully align with supposed design. Problem of 'keypressed' still remains inside project -- if widget is active it swallows keypressed.
+>> I think the real flow we designed (as ProjectInputController:keypressed) is
+>>  if combos designed (not implemented yet) -- run keypressed through matching combo handler (default noop). If handler returns true -- stop propagating
+>>  if project keypressed defined  -- run keypressed through it. if it returns true -- stop, otherwise continue
+>>  (this also could be just default 'project keypressed handler') if widget is open, pass keypressed to it, otherwise noop. 
+>> and wherever possible on this route prefer explicit funcmap invocation instead of 'if-driven logic' -- but ensure the flow is readable and obvious
+
 ### Dispatch chain
 
 ```
@@ -146,6 +153,13 @@ love.handlers.keypressed (k, scancode, isrepeat)
 Global shortcuts in `love.handlers.keypressed` (controller.lua:520+) are intercepted before anything reaches the controller: Ctrl+Pause suspends, Ctrl+Q quits project, Ctrl+S stops run or closes buffer, Ctrl+Shift+R resets application, Ctrl+Alt+R restarts project, Ctrl+Esc exits app.
 
 > our plan includes firing "before_quit", "before_suspend" on the project? 
+
+>> REVIEW START: 
+>>   great that console shares user_input widget with project (same singleton). Now I wonder why it should explicitly check love.state.user_input instead of accessing it via new compy.* API?
+>>   ALSO why in the diagram above Console has two routes to UserInputCOntroller -- and why UIC is prioritized when shown but also receives data when not shown -- is it how routing worked *before*? looks a bit weird
+>>   also, prose below states that 'widget is never a routing destination' while in fact it is under the controllers - does it mean that its not routing destionation on a highest level?
+>>   also, I do not understant the condition 'when project left "running"' and 'project_open' stuff... its obvious in inspect or when project is open but not run we should not drive events to it. However, wyh is there a special mechanism? should not projectInputController simply be not connected until project is running?
+>> REVIEW END
 
 As of 0.1.0-m4 the gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The slot occupant (the active route's controller) always receives the event and forwards to the overlay widget itself when one is shown: the console-route default handlers forward when `love.state.user_input` is set (except under `inspect`), and `ProjectInputController` delegates to the same widget as its text-editing sink. The widget is never a routing destination of the gateway and never a slot occupant. On project stop the console is the *named* restore target — `Controller.active_keyboard_route()` reports the occupant (the ConsoleController by default, the project route during a run).
 
@@ -272,6 +286,8 @@ The `oneshot` flag on `UserInputModel` (set for project overlays) enables a subm
 > [`notes/keyreleased-isrepeat-events.md`](../../wip/77-new-input-api/notes/keyreleased-isrepeat-events.md).
 
 ### Key release
+
+>> REVIEW: "else falls to" sounds misaligned with design. I think we explicitly designed for unified scheme of routing "combos, keyreleased, widget-if-shown" -- with only passing event to next consumer if preceding consumer does not exist or does not return 'true' (like in DOM events propagation). IF WE DID NOT TOUCH THE CONSOLE ROUTING ON THIS PASS, THEN LEGACY BEHAVIOUR INSIDE CONSOLE MAY BE KEPT. but at least intent to switch to unified three-stage routing must be documented in comments. (maybe as "TBD:" notes or whatever will be appropriate)
 
 `keypressed`/`textinput` get careful three-way routing (console / editor / project); **`keyreleased`
 gets route-level delegation but no editor fork.** Since 0.1.0-m4, `handlers.keyreleased` dispatches

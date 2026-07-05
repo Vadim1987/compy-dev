@@ -483,6 +483,10 @@ describe('input contracts #input', function()
       assert.same({ 'Z' }, F.console:get_text())
     end)
 
+
+    -- REVIEW: now I am concerned about the very concept. Was it in place before? (that console absorbs any interaction when project is active but widget is hidden) How it correlates with common logic? Will it mean somewhere in the console random keystrokes are accumulating? What for? User even does not see the console if project is running -- will it see a garbage on 'inspect'? what is user occasionally types some destructive or ambiguous command while project is running -- will console evaluate/execute it? if so, its dangerous and strange; if not, there's no point in routing input to console. MY UNDERSTANDING IS: if "project/editor" is active -- its an active route -- events travel down through it. Whether they end up in user_widget (shown) or in noop (if widget is hidden), or intercepted by project combos/handlers and interpreted other way -- is totally the responsibility of the route (e.g. project input controller or editor controlle or console controller). Is this logic reasonable?
+    -- REVIEW: admitting change is nice, but it will read weirdly half a year later -- nobody will know what 'the overlay gate gone' even means...
+    -- REVIEW: once again -- the very concept of console secretly and meaningfully processing user input while not being on the screen looks weird to me.
     -- The keypressed sibling: with the overlay gate gone
     -- the key channel also travels the route while the
     -- widget is hidden — the key mutates the active
@@ -581,6 +585,7 @@ describe('input contracts #input', function()
       -- occupant is the project route, which forwards to
       -- the sink while the widget is shown; here the raw
       -- slot stands in for the occupant.
+      -- REVIEW: is/was not it the TRIVIAL test? I mean, if love.keyreleased is set to custom interceptor, obviously it will get the event. AFAIK the problem was that 'controller method' (bound to love.keyreleased) managed to organize swallowing of key events due to gate. Therefore, this test does not address any observable behaviour. Corret test would be to check that event is propagated *downstream* to Console/Editor/Project handlers, without being swallowed
       it('a release under a widget reaches the occupant',
         function()
           local got = 0
@@ -611,6 +616,7 @@ describe('input contracts #input', function()
       -- in the keypressed triple — is the Bucket B
       -- forward (doc A §7.4); until it lands, the guard
       -- necessarily reads Controller.keys_pressed.
+      -- REVIEW: when we come to testing *propagation* of keypressed into consumers, we will need to ensure its the same table -- OR replace this implementation test with end-to-end test ensuring that what was pressed (all keys held) is what is received at consumer
       it('the pressed key is in the held set', function()
         local seen
         local orig = love.keypressed
@@ -640,6 +646,7 @@ describe('input contracts #input', function()
       -- Folding lctrl/rctrl to 'ctrl' is combo_string's
       -- job (doc A §6.2, covered in keys_pressed_spec),
       -- not the held set's.
+      -- REVIEW: why not set 'ctrl' as pressed too? Much cheaper, no?
       it('left/right names stay raw in the held set',
         function()
           F.session.press('lctrl')
@@ -651,6 +658,7 @@ describe('input contracts #input', function()
       -- only the overlay singleton is wired; wiring the
       -- console/editor/search widgets to it is a future
       -- consideration (doc A §8), not asserted here.
+      -- REVIEW: do we have pending tests outlined for future consideration?
       it('the widget keeps identity across cycles',
         function()
           F.show_widget()
@@ -707,6 +715,8 @@ describe('input contracts #input', function()
       -- console"); this row guards the named-target API
       -- shape: Controller.active_keyboard_route() names
       -- the console route (the ConsoleController).
+      -- REVIEW: why all this mechanics with "named" targets? What is the goal pursued? How 'stop' is different from project exit or inspection?
+      -- REVIEW: what triggers cc:stop_project_run() in the normal (production) envrionment? Which consequences its supposed to bear?
       it('stop names the console as restored route',
         function()
           F.cc:stop_project_run()
@@ -727,6 +737,8 @@ describe('input contracts #input', function()
       -- wrapper for the native handler. (In-app the widget
       -- is brought up by the legacy solicitation the
       -- project itself calls, e.g. input_text.)
+      -- REVIEW: as stated early, design goal was not to keys going to sink INSTEAD. It was keys first hitting combo guard, than project-defined callback, and *still* going to sink afterwards unless some of the previous layers returned 'stop propagation' signal. Encoding the architecture either way (e.g. widget activation suppresses the processing) is very surprising move to me. I understand the intent -- like widget should be first-responder? But I think its better if project decides -- it can easily activate 'first-responder-mode' itself in controllable way, simply returning 'false' early without processing if widget is active (controller knows if its active). Much better than unconditional enforcement! Autprovisioning was supposed for a different approach -- where 'sink' does not even exist as a firt-class thing, and instead *if* project does not install its own keypressed, the autprovisioner installs standard function that directs event to sink.... (now I think the autoprovisioning concept may be a bit fragile though, given other considerations like multiple events reaching through, the need to activate/deactivate sink etc... maybe three-step (combos->handler->widget) is better )
+      -- REVIEW: special punch for 'native handler' and 'the sink' -- both are not first-class terms in stakeholders' vocabulary, even if adopted for design purposes on architect side
       it('a native handler coexists with the sink',
         function()
           local native = 0
@@ -736,6 +748,7 @@ describe('input contracts #input', function()
               native = native + 1
             end,
           }, F.cc)
+          -- REVIEW: why we even involved F.cc in the previous line? I do not understand whole setup/scenario
           F.session.press('a')
           assert.equal(1, native)
           F.show_widget()
