@@ -121,6 +121,16 @@ the sink strictly terminal — strictly closer to ruling 1 ("sink always last") 
 special mechanics; the participant is just a handler that declines). **Recommended: ratify the
 yield form.** Either form passes the behaviour test; only one keeps the model clean.
 
+> **SUPERSEDED at Gate 1 (2026-07-05, remark R7 ruling).** The behaviour-preservation premise
+> itself was lifted: the architect ruled **pure wrap** — natives auto-provision as plain tier-3
+> participants with **no** widget-aware gating at all; the two exposed examples (turtle, maze)
+> are **broken-and-fixed** under the SR1 text-fields break mandate ("not only mandated but
+> *expected*"). D-9's "zero example changes" clause is formally lifted for those two. The
+> empirical verification above stands as the record of *what today's behaviour was* and *which
+> examples are affected*; the yield-vs-truthy question is moot. See
+> [`ratified-model.md`](ratified-model.md) + the rulings record in
+> [`../../notes/talk/ratified-model-remarks-analysis.md`](../../notes/talk/ratified-model-remarks-analysis.md).
+
 ---
 
 ## 4. Residue — true statements that must survive into the re-derivation
