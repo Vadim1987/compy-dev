@@ -739,6 +739,12 @@ describe('input contracts #input', function()
       -- project itself calls, e.g. input_text.)
       -- REVIEW: as stated early, design goal was not to keys going to sink INSTEAD. It was keys first hitting combo guard, than project-defined callback, and *still* going to sink afterwards unless some of the previous layers returned 'stop propagation' signal. Encoding the architecture either way (e.g. widget activation suppresses the processing) is very surprising move to me. I understand the intent -- like widget should be first-responder? But I think its better if project decides -- it can easily activate 'first-responder-mode' itself in controllable way, simply returning 'false' early without processing if widget is active (controller knows if its active). Much better than unconditional enforcement! Autprovisioning was supposed for a different approach -- where 'sink' does not even exist as a firt-class thing, and instead *if* project does not install its own keypressed, the autprovisioner installs standard function that directs event to sink.... (now I think the autoprovisioning concept may be a bit fragile though, given other considerations like multiple events reaching through, the need to activate/deactivate sink etc... maybe three-step (combos->handler->widget) is better )
       -- REVIEW: special punch for 'native handler' and 'the sink' -- both are not first-class terms in stakeholders' vocabulary, even if adopted for design purposes on architect side
+      -- STALE (E29 / ratified AC-31 / M5c AC-36): this GREEN assertion encodes the REVERSED
+      -- day-one mutation -- that showing the widget SUPPRESSES the native handler (native "stays
+      -- 1"). The ratified model flips this: a native is a plain tier-3 participant that RECEIVES
+      -- the event EVEN while the widget is shown, falling through to the sink on a falsey return
+      -- (native should reach 2). M5c re-derives this row from AC-31; do NOT preserve it green
+      -- as-is. See reviews/m5c-m8-corpus-validation.md (Addendum).
       it('a native handler coexists with the sink',
         function()
           local native = 0
