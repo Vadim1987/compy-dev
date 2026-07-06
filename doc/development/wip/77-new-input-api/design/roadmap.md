@@ -48,9 +48,9 @@ frozen design-phase total + the total-estimated log.*
 | M4 | ProjectInputController + gate removal | New controller owns project input; overlay gate removed; all 4 modes verified | `controller.lua`, `projectInputController.lua` (new) |
 | ~~M5a/M5b~~ | ~~Callbacks / handlers sugar~~ | **SUPERSEDED by M5c** (E29 re-cut) | — |
 | ~~M6~~ | ~~Before/after chains~~ | **SUPERSEDED by M5c** (E29 re-cut) | — |
-| **M5c** | **The dispatch chain** (consolidated: old M5a+M5b+M6 + QUALITY corrective + turtle/maze) | Full four-tier chain on all 3 kbd/text channels (keyreleased unified); submit/cancel chains, Escape dismisses, `oneshot` deleted; ruling-3 connection window; R7 pure wrap + turtle/maze migrated; R3 boundary; ~18 QUALITY remarks dispositioned; M6-01 + M6-02 ride | `controller.lua`, `projectInputController.lua`, `userInputController.lua`, `userInputModel.lua`, `userInputView.lua`, namespace, `examples/{turtle,maze}` |
-| M7 | Extended singleton API | `configure`/`clear`/`get_cursor`/`set_cursor`/`set_text` (spec.md §6 now authority; M7-01 rides) | `userInputController.lua`, `compy_namespace.lua` |
-| M8 | Legacy removal + migration | Globals removed; `tixy`/`balloons` migrated (priority), others convert-or-exclude; **turtle/maze moved to M5c**; native examples fine under R7 pure wrap | `consoleController.lua`, `src/examples/*` |
+| **M5c** | **The dispatch chain** (consolidated: old M5a+M5b+M6 + QUALITY corrective + turtle/maze) | Full four-tier chain on all 3 kbd/text channels (keyreleased unified); submit/cancel chains, Escape dismisses, `oneshot` deleted; ruling-3 connection window; R7 pure wrap + turtle/maze migrated (maze = uncommitted patch, foreign checkout); R3 boundary; ~18 QUALITY remarks dispositioned; M6-01 + M6-02 ride | `controller.lua`, `projectInputController.lua`, `userInputController.lua`, `userInputModel.lua`, `userInputView.lua`, namespace, `examples/{turtle,maze}` |
+| M7 | Extended singleton API | `configure`/`clear`/`get_cursor`/`set_cursor`/`set_text` (implement against [`spec/M7-02-recut.md`](spec/M7-02-recut.md); M7-01 folded in) | `userInputController.lua`, `compy_namespace.lua` |
+| M8 | Legacy removal + migration | Globals removed; `tixy`/`balloons` migrated (priority; balloons = uncommitted patch, foreign checkout), `repl`/`guess`/`valid` convert-or-exclude; **turtle/maze moved to M5c**; native examples fine under R7 pure wrap (implement against [`spec/M8-02-recut.md`](spec/M8-02-recut.md); M8-01 folded in) | `consoleController.lua`, `src/examples/*` |
 
 **Estimates** are a first-class derived node — full per-milestone PERT lives in
 [`estimates.md`](estimates.md) (+ [`estimates.versions/`](estimates.versions/)). This roadmap keeps
@@ -279,6 +279,12 @@ implementation; converts the contract suite's m5/m5a/m5b/m6-family `pending` row
 green. Manual: 4-mode check + ruling-3 non-blocking-script check + migrated turtle/maze
 played by hand.
 
+**Out-of-repo example (Gate-3, 2026-07-06):** `src/examples/maze/` is a **copied-in checkout**
+(own nested `.git`, untracked by this repo — empirical census; the same holds for `balloons`
+and `keyboard`). Its migration stays in this slice (the sequencing constraint holds) but is
+delivered as **uncommitted working-tree changes** — the sweep never commits inside the nested
+checkout; the human carries the patch upstream. turtle is tracked in-repo and commits normally.
+
 **Risk:** widest slice of the re-cut plan (≈ 2× M4's PERT), accepted for review coherence;
 mitigated by test-first, independently-revertible internal commits, mid-slice stop rules
 (amended mandate), and the hard gate. Semantic traps listed in the slice spec (no
@@ -393,6 +399,10 @@ depends on them) intact.
 > stays valid where it agrees — on any divergence the new spec.md wins, reconciled via an
 > adjacent slice or the test-first prompt at commissioning (`agents/process.md` §9.1).
 > [`M7-01`](spec/M7-01-retarget.md) still rides. **Input becomes: M5c complete** (not M5/M6).
+> **Gate-3 re-spec (2026-07-06):** to remove staleness risk, the reconciliation is done
+> up-front — **[`spec/M7-02-recut.md`](spec/M7-02-recut.md)** is the fresh, self-contained
+> implementation target (re-derived from spec.md §3/§6, acceptance criteria included, M7-01
+> folded); the frozen `spec/M7.md` stays as history. Implement against **M7-02** only.
 
 **Description:** `compy.input.configure()`, `compy.input.clear()`,
 `compy.input.get_cursor()`, `compy.input.set_cursor()`, and
@@ -438,6 +448,16 @@ removed `write_to_input` (see M8).
 > (natives = initial tier-3 callback values; pure-native examples unaffected). Contract
 > authority: [`spec.md`](spec.md) §9 (mapping table) + §8. [`M8-01`](spec/M8-01-dead-text-input.md)
 > still rides. **Input becomes: M5c and M7 complete.**
+> **Gate-3 re-spec + census (2026-07-06):** **[`spec/M8-02-recut.md`](spec/M8-02-recut.md)** is
+> the fresh, self-contained implementation target (re-derived from spec.md §8/§9, acceptance
+> criteria included, M8-01 folded); the frozen `spec/M8.md` stays as history. Empirical census
+> corrects the example map: **`balloons` is a copied-in checkout** (own nested `.git`,
+> untracked — like `maze` and `keyboard`), and it IS on disk — its priority migration is
+> delivered as **uncommitted working-tree changes** in the nested checkout (the sweep never
+> commits there; the human carries the patch upstream). `keyboard` is foreign too but
+> pure-native — unaffected, nothing to do. `tixy` is tracked in-repo and commits normally.
+> Convert-or-exclude shrinks to `repl`/`guess`/`valid` (turtle rode M5c). **M8-02 must be
+> revalidated at commissioning, after M5c/M7 land** (human-accepted staleness risk).
 
 **Description:** Remove the legacy text-input globals and migrate
 the in-repo examples that use them to the `compy.input.*` callback

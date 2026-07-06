@@ -17,6 +17,21 @@ Supersedes (as implementation targets): [`M5.md`](M5.md), [`M5-01-split.md`](M5-
 > sink's hidden-check internalizes; suppressed return values *become* the chain's
 > truthy-propagation contract). Polishing code about to be replaced would be effort burn.
 
+## Summary — the slice in plain language
+
+After this slice, a project's keyboard and text input flows through one predictable pipeline.
+When a key is pressed (or text arrives, or a key is released), the framework first checks its
+own reserved keys (Enter/Escape — only while the input widget is on screen), then the
+project's registered shortcuts (`compy.input.handlers.keypressed['ctrl+s'] = fn`), then the
+project's catch-all callback (`on_key_pressed` / `on_text_input` / `on_key_released`), and
+finally the input widget itself — which does ordinary text editing when visible and nothing
+when hidden. Any stage can declare the event handled (return truthy) and nothing after it
+runs for that event — but nothing ever unplugs a later stage. Enter submits (validate →
+deliver the text → close the widget); Escape now genuinely dismisses the widget; the old
+`oneshot` flag and the `push('userinput')` machinery are gone. A project's plain
+`love.keypressed`-style handlers keep working as ordinary pipeline participants; turtle and
+maze — the two examples whose behaviour visibly changes — are migrated in this same slice.
+
 ## Scope — what this slice delivers
 
 The complete four-tier dispatch chain of `spec.md` §2, on all three keyboard/text channels,
@@ -47,6 +62,12 @@ in the project route — plus everything the ratified model changed about M4's l
    callback values; `native_split`/lifecycle-split wrapper deleted. **turtle + maze migrate
    in this slice** (design.md §5 sequencing constraint — never deferred to M8, else an
    interim window ships misbehaving examples). SR1 break mandate covers them.
+   **Delivery mechanics (Gate-3 ruling, 2026-07-06):** `src/examples/maze/` is a **copied-in
+   checkout** — it has its own nested `.git` and is not tracked by this repo. Migrate it in
+   place, but deliver the migration as **uncommitted working-tree changes**: never commit
+   inside `src/examples/maze/`, never touch its `.git`; the outcome ledger lists the changed
+   files and the human carries the patch upstream. turtle is tracked in-repo and commits
+   normally.
 7. **Mutable/immutable boundary** (R3, `spec.md` §7): exactly the `handlers` tables +
    `on_*`/`before_*`/`after_*` fields; everything else errors loudly on assignment.
 8. **QUALITY corrective** (in-slice; per-remark disposition required in the outcome ledger —
@@ -83,10 +104,126 @@ chain adoption (R10 — later, no model cost).
 | U3 | keyreleased unified routing is landed and documented (no TBD left) |
 | U2a | *Note only:* console still checks `love.state.user_input` — console migration is the named follow-on, not this slice |
 
+## Acceptance criteria (verbatim, self-contained — the review surface)
+
+*Added at Gate 3 (2026-07-06) on the architect's request: every criterion states the full
+behaviour in place — ruling ids in parentheses are anchors, never required reading. The red
+acceptance suite transcribes these; the outcome ledger cites them by `AC` id.*
+
+**The chain**
+
+- **AC-1** Every keyboard/text event in the project route traverses, in order: framework
+  handlers → project combo handlers → per-event generic callback → the widget's editor (the
+  sink). No other order; no other participants.
+- **AC-2** A truthy return at any stage consumes the event: nothing after it runs — the sink
+  included — for that event. A falsey return falls through to the next stage.
+- **AC-3** A stage with no participant for the event falls through silently.
+- **AC-4** Consuming never removes (R13): after any handler consumes an event, all stages
+  remain configured, and the next event traverses the full chain again.
+- **AC-5** Assigning a generic callback (e.g. `compy.input.on_key_pressed = fn`) replaces
+  only that callback; the sink still runs for events the new callback does not consume.
+- **AC-6** Combo handlers live in three per-event tables — `compy.input.handlers.keypressed`,
+  `.keyreleased`, `.textinput` (R14). There is no flat combined table.
+- **AC-7** Combo keys normalise on assignment: `handlers.keypressed['Ctrl+S'] = fn` is stored
+  and matched as `'ctrl+s'` (modifier-first, l/r folded, `+`-joined).
+- **AC-8** Signatures are uniform at every stage including the sink: keypressed participants
+  receive `(k, keys_pressed, isrepeat)`; textinput `(text, keys_pressed)`; keyreleased
+  `(k, keys_pressed)`. `keys_pressed` is a read-only proxy (writes raise).
+- **AC-9** `keyreleased` runs the same chain shape (ruling 4); by the time its consumers run,
+  the key is already absent from `keys_pressed`.
+- **AC-10** The default generic callbacks are noop + debug log — they never edit text and
+  never consume.
+- **AC-11** An event with no participant anywhere (widget hidden, no handlers, default
+  callbacks) falls through every stage to the hidden sink's **internal** no-op: a debug-log
+  line is the only trace, and nothing mutates — no model, view, history, cursor, or
+  selection change.
+
+**Widget and widget outputs**
+
+- **AC-12** Sink visible: ordinary text editing — insert, backspace, cursor moves, selection,
+  clipboard, and Shift+Enter newline when `multiline`.
+- **AC-13** Sink hidden: a delivered keystroke mutates nothing (as AC-11).
+- **AC-14** The sink's return value carries no chain meaning (R12); boundary and submit
+  conditions surface **only** through the widget outputs below, never through return values.
+- **AC-15** `on_limit_reached(direction, scope)` fires when the cursor attempts to cross a
+  boundary: `direction` ∈ up/down/left/right, `scope` ∈ input/line; single-line inputs
+  collapse the two scopes. It is observational — its return value is ignored.
+- **AC-16** Every widget output (`on_text_entered`, `on_limit_reached`, `validator`,
+  `highlighter`) is settable both as a `show()`/`configure()` config key and as an assignable
+  `compy.input` field — one underlying slot, two ergonomics.
+
+**Submit and cancel**
+
+- **AC-17** Enter with the widget shown runs: `before_submit(keys_pressed)` → validator →
+  on accept: `on_text_entered(text)` with the full assembled text → the widget deactivates →
+  `after_submit(text)`.
+- **AC-18** Validator reject: the error is displayed and input locks until acknowledged
+  (Enter/Space/arrows); `on_text_entered` and `after_submit` do **not** fire; the session
+  stays active for correction or Escape.
+- **AC-19** Escape with the widget shown runs: `before_cancel(keys_pressed)` → content
+  cleared + widget hidden → `after_cancel()`. Escape genuinely dismisses (the old
+  clears-but-does-not-dismiss behaviour is gone).
+- **AC-20** Enter/Escape with the widget hidden are ordinary keys — no framework entry
+  engages; they fall down the chain like any other key.
+- **AC-21** Enter/Escape with the widget shown cannot be shadowed by project handlers: the
+  framework entries run first, unconditionally.
+- **AC-22** Shift+Return is not intercepted by the framework — it reaches the sink and
+  inserts a newline when `multiline`.
+- **AC-23** `hide()` fires no cancel chain. `show()` while a session is active is a no-op +
+  warning; `{force=true}` reconfigures in place (content replaced iff `text` given), still
+  with no cancel chain.
+- **AC-24** Continuous-session idiom: `after_submit = function() compy.input.show{…} end`
+  re-activates within the same submit sequence, before the frame draws (no visible gap);
+  fresh activation without `text` starts empty; callbacks and `handlers.*` persist across
+  deactivation (only project stop resets them).
+- **AC-25** The `oneshot` flag is gone from the codebase. The `push('userinput')` custom
+  event no longer exists as contract; the observable order is fixed: `on_text_entered` sees
+  the session still active, `after_submit` sees it deactivated (unless the hook itself
+  re-activated it).
+- **AC-26** All four hooks (`before_/after_submit`, `before_/after_cancel`) default to
+  noop + debug log.
+
+**Route connection and teardown**
+
+- **AC-27** The project route owns the keyboard/text slots only while the run state is
+  `'running'` (ruling 3). When a non-blocking `main.lua` returns (no `update`/`draw`), the
+  state drops to `'project_open'` and typing reaches the REPL again.
+- **AC-28** Pointer slots are **not** part of that disconnect: a pen-and-paper example
+  (`sapper`) stays clickable in `'project_open'`. Do not unify pointer disconnection in.
+- **AC-29** Project stop is a full teardown: all slots restore to framework defaults; the
+  `handlers.*` tables and every mutable field reset; a shown widget is silently hidden with
+  no cancel chain; nothing installed by the project survives it.
+- **AC-30** `inspect` is the console route bound over the project environment; the project
+  route is disconnected and the project's widget goes unhonoured. No special rules.
+
+**Legacy natives**
+
+- **AC-31** A project's native `love.keypressed`/`love.textinput`/`love.keyreleased` are
+  captured at load as the initial values of the corresponding generic callbacks (R7 pure
+  wrap) — plain participants that see events **even while the widget is shown**; a falsey
+  return falls through to the sink; assigning the field replaces the wrapped native.
+- **AC-32** turtle and maze are migrated in this slice and hand-playable afterwards; maze is
+  delivered as uncommitted working-tree changes in its nested checkout (scope item 6).
+
+**Mutable boundary**
+
+- **AC-33** Exactly the `handlers` tables and the `on_*`/`before_*`/`after_*` fields are
+  project-assignable; assigning anything else on `compy.input` raises a loud error (never a
+  silent swallow).
+
+**Hygiene**
+
+- **AC-34** Every pinned QUALITY remark and SCOPE row has an explicit disposition (`fixed` /
+  `dissolved-by-rework` / `note-only`, with remark id) in the outcome ledger; every resolved
+  `>> REVIEW` marker is removed with a ledger line citing the resolving contract point.
+- **AC-35** The contract suite's m5/m5a/m5b/m6-family `pending` rows are live green; m7 rows
+  stay pending; the full suite is green.
+
 ## Test strategy
 
-Tier-2 **test-first** (`agents/process.md` §9.2): acceptance tests authored from `spec.md`
-§§2/4/5/7/8 run red before implementation; the 8 carried `pending` rows of the contract suite
+Tier-2 **test-first** (`agents/process.md` §9.2): acceptance tests transcribed from the
+**Acceptance criteria above** (backed by `spec.md`
+§§2/4/5/7/8) run red before implementation; the 8 carried `pending` rows of the contract suite
 in the m5/m5a/m5b/m6 families convert to live green (m7 rows stay pending). C3 rule: test
 names state behaviour, no milestone ids. Manual verification: 4-mode check (REPL / editor /
 project+widget / project no-widget) **plus** the ruling-3 case (non-blocking script — typing

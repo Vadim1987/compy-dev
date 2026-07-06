@@ -39,8 +39,11 @@ nouns outside it.*
 > SUPERSEDED by this re-derivation** — do not implement against them. The Stage-3 re-cut
 > (E29) mints the replacement set: **[`spec/M5c-dispatch-chain.md`](spec/M5c-dispatch-chain.md)**
 > (one consolidated dispatch-chain slice — absorbs old M5a/M5b/M6, the M4-pushback QUALITY
-> corrective, and the turtle/maze migration), then **M7**, **M8** (frozen slices survive with
-> re-cut deltas recorded in the roadmap). Frozen slices are never edited; supersession is
+> corrective, and the turtle/maze migration), then **M7**, **M8**. *(Gate-3 re-spec,
+> 2026-07-06: the M7/M8 implementation targets are the fresh
+> **[`spec/M7-02-recut.md`](spec/M7-02-recut.md)** / **[`spec/M8-02-recut.md`](spec/M8-02-recut.md)**
+> — self-contained, acceptance criteria included, M7-01/M8-01 folded; the frozen
+> `M7.md`/`M8.md` stay as history.)* Frozen slices are never edited; supersession is
 > recorded here and in the re-cut [`roadmap.md`](roadmap.md).
 
 ---

@@ -172,6 +172,48 @@ configured callbacks (ruled R1 — "routing out of the widget, not into it"):
   difference is the routes' job, now explicit in route-owned tier-1 tables instead of
   flag-encoded in the widget. If a persistent project-route mode is ever genuinely needed, it
   is an **additive route-policy extension** (R9-adjacent: reserved, not built, not precluded).
+- **Why Enter/Escape live at tier 1 — and what that does not preclude (Gate-3 Q1 ruling,
+  2026-07-06; rationale only, no semantic change — §8/§9 unaffected).** The D-4 rationale,
+  restated from its corpus ([`notes/solution_sketch.md`](notes/solution_sketch.md) §5,
+  [`notes/routing_unification.md`](notes/routing_unification.md) FR-5,
+  [`notes/enter_escape_routing.md`](notes/enter_escape_routing.md)):
+  (1) **guaranteed semantics** — while the widget is shown, submit/cancel cannot be shadowed
+  by project participants (tier 1 is non-overridable), so Enter always submits and Escape
+  always dismisses; (2) **authority** — deliver-and-close and dismiss are session-lifecycle
+  acts above the widget's pay grade; widget-owned Escape is precisely today's
+  clears-but-cannot-dismiss limitation; (3) **a sink mute by convention this pass** — the
+  sink stays a pure text editor and results travel through widget outputs invoked by the
+  route's submit step, not inferred from sink returns (R12). "Mute" is scope, not a ban: a
+  diagnostic status-return is not precluded in principle — see precision (a) below.
+  **Non-preclusion.** Tier-1 entries are **route-minted policy, not hard-wired mechanism**:
+  each route decides which structural keys it intercepts (the project route: `return`/`escape`
+  while shown; console/editor mint their own at migration), and an unlisted combo simply
+  falls through — `shift+return` reaching the sink as a newline is the in-design proof. A
+  route that does *not* intercept Enter/Escape, letting them fall to the sink and
+  orchestrating submit-like behaviour from below — tier-2/tier-3 participants calling the
+  widget-surface API (`hide`/`show`/`clear`/`set_text`) — is therefore expressible without
+  touching the model; that is the console/editor shape (controller decides, widget edits)
+  generalized, not blocked. Two precisions: (a) pre-sink interception happens at tiers 2–3;
+  the sink's own outbound surface is the **widget outputs** (§3/R1 — `on_limit_reached`
+  fires from the sink's own processing; `on_text_entered` is the widget's delivery callback,
+  invoked in this pass by the route's submit step, D-a). In this pass no submit *result*
+  rides a chain **return value** — results travel through those widget outputs instead
+  (R12). That is a **current-scope convention, not a prohibition**: a *status* return — say
+  an "event went unconsumed by the whole chain" signal that a route or the console reads to
+  emit one warn there, instead of scattering no-op warns across every tier — is useful in
+  principle and **not precluded**; it is simply unbuilt because nothing needs it yet. What
+  R12 actually fixes is narrower: a terminal sink cannot report *upward* through the chain
+  (there is nothing above it to read the return), so submit/boundary results must use the
+  widget's own outputs. Widget-output callbacks may freely call the lifecycle API
+  (`hide`/`show`/`clear`) — the continuous-session idiom does exactly that;
+  (b) the **project route ships no opt-out knob** in this pass — non-overridability *is* the
+  shipped guarantee; a project-facing opt-out, if ever genuinely needed, is an additive
+  route-policy extension (R9-adjacent: reserved, not built, not precluded).
+  **Not dogma (Gate-3 Q1 follow-up, recorded).** Tier-1 origination of submit is **approved
+  policy for this pass, not a structural law**. The stakeholder position that the
+  sink/widget should become the source of truth for submit is on record and stays arguable
+  at the designated next-simplification venue (console/editor migration, §2 scope
+  discipline); this doc binds the current shape without foreclosing that argument.
 - **Cursor/text control is widget-surface API** (R99): `get_cursor` / `set_cursor` /
   `set_text` / `configure` / `clear` under D-8's 2D `(line, col)` contract — FR-8/9/10.
   Contract detail in [`spec.md`](spec.md); ships as its own slice (currently M7).

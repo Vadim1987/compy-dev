@@ -48,6 +48,13 @@ simplification/unification in-slice — that round is deferred to the console/ed
    rows are pinned in `spec/M5c-dispatch-chain.md`; each gets an explicit disposition
    (`fixed` / `dissolved-by-rework` / `note-only`, with remark id) in the outcome ledger —
    asserted, never re-discovered.
+7. **Nested-checkout discipline (Gate-3, 2026-07-06).** `src/examples/balloons/`,
+   `src/examples/keyboard/`, `src/examples/maze/` are **copied-in checkouts** with their own
+   nested `.git`, untracked by this repo. **Never commit inside them; never touch their
+   `.git`.** Migrations there (maze in M5c, balloons in M8) are delivered as **uncommitted
+   working-tree changes**, listed file-by-file in the outcome ledger — the human carries the
+   patch upstream. (`keyboard` is pure-native: unaffected, nothing to do.) The commit-locally
+   authorisation in this mandate covers **this repo only**.
 
 ## Roles, topology, cycle (unchanged from the predecessor mandate)
 

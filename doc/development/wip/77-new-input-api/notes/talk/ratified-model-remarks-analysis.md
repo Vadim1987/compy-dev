@@ -355,3 +355,119 @@ moment to talk with stakeholders about what could be changed or dropped on the *
 facets** of those modes. Disposition: recorded in `design.md` §2 (follow-on bullet) and the
 re-cut roadmap's follow-on note; binds the sweep to *not* attempt opportunistic unification
 beyond the ratified model in-slice.
+
+---
+
+## Gate 3 — round-1 remarks (2026-07-06)
+
+Human reviewed the Gate-3 surface (roadmap re-cut, M5c slice spec, amended mandate,
+estimates v04) and raised three reassurance questions plus four review verdicts.
+
+- **G3-Q1 — submit/cancel generated at framework tier before Enter/Escape reach the widget:
+  suspicious; intuition says both should originate inside the widget.** Initially ruled
+  REOPEN; the provenance check (derivation-mutation tripwire duty) then showed tier-1
+  Enter/Escape is the **architect's own D-4 core** with triple day-one provenance
+  (solution_sketch §5 — "submit is always the framework_handlers entry's responsibility,
+  never the sink's"; routing_unification FR-5; the dedicated 262-line
+  notes/enter_escape_routing.md), that console/editor **already** work controller-owns-submit
+  today (`oneshot=false` → widget `submit()` no-ops), that widget-owns-submit is exactly the
+  `oneshot=true` overlay hack the design deletes, and that widget-originated Escape is the
+  current clears-but-cannot-dismiss known limitation. On re-ruling the human **withdrew the
+  reopen** and re-anchored on the console/editor scenario, with one requirement: confirm the
+  model does not *preclude* widget-adjacent submit patterns (a route not intercepting
+  Enter/Escape, keys falling to the sink, submit/clear hooked from callbacks that may
+  hide/show the widget). **Confirmed with two precisions**: hook points for such a pattern
+  are tiers 2–3 + the widget-surface API, never sink callbacks/returns (R12); the project
+  route ships no opt-out knob (non-overridability is the shipped guarantee) — an opt-out
+  would be an additive route-policy extension (R9-adjacent), while console/editor inherently
+  own their tier-1 tables at migration. **Disposition: rationale + non-preclusion recorded in
+  design.md §3 (new bullet, marked "rationale only, no semantic change"); D-4 stands
+  unchanged; no propagation needed.**
+- **G3-Q2 — out-of-repo examples (human listed maze/keyboard/sapper): patch as separate
+  effort?** Empirical census corrected the list: **balloons, keyboard, maze** are copied-in
+  checkouts with their own nested `.git` (not tracked by the project repo); turtle, sapper,
+  tixy are tracked in-repo. Ruled: **maze stays in M5c** (the design.md §5 sequencing
+  constraint holds — the R7 behaviour change and its fix must land together), delivered as an
+  **uncommitted patch inside the nested checkout** — the sweep never commits there; the human
+  carries the patch upstream. Same rule applies to balloons at M8. Keyboard needs nothing
+  (pure-native, unaffected under R7). Dispositions: M5c spec delivery note, roadmap
+  out-of-repo annotations (M5c maze, M8 balloons), mandate nested-repo discipline guardrail.
+- **G3-Q3 — M7/M8 staleness: want certainty specs won't divert/be misinterpreted.** Ruled:
+  re-derive **fresh M7/M8 slice specs AND sweep prompts now, in one pass** (human accepts the
+  M8-prompt post-M5c staleness risk; flag it for revalidation at commissioning), plus
+  commission a **cold Opus validation pass** of the whole implementation corpus (slices +
+  prompts + mandate) against the approved design.
+- **G3-V1…V4 — review verdicts on the surface.** Roadmap: good at summary level, adjusted for
+  the out-of-repo census (G3-Q2). **M5c slice spec: UNREVIEWABLE as presented** — no summary,
+  ephemeral cross-doc IDs; ruled fix: fold a verbatim, self-contained **ACCEPTANCE CRITERIA**
+  section into the slice (reviewable by the human + directly usable by the implementor).
+  Mandate: sane, judged by results. Estimates: informational, non-blocking; evolution vs
+  factual churn checked in retro.
+
+- **G3-Q1-b — follow-up contest: "the sink has no callbacks" overstated.** Human (correctly)
+  contested the wording in the fresh design.md §3 rationale bullet: the widget certainly has
+  callbacks — `on_text_entered` is a widget configuration callback, and nothing prevents a
+  project from calling `hide()` from within it. Accepted, correction incorporated: the
+  sink's outbound surface is the **widget outputs** (`on_limit_reached` fires from the
+  sink's own processing; `on_text_entered` is the widget's delivery callback, invoked in
+  this pass by the route's submit step per D-a); R12 forbids exactly one thing — signalling
+  through chain **return values** — and widget-output callbacks may freely call the
+  lifecycle API. **Stakeholder position recorded (not a ruling, not a reopen):** the human
+  finds route-owned action on `on_text_entered` "tolerable now but a bit unnatural" and
+  **will advocate for the sink as the source of truth for submit in the future**; venue =
+  the console/editor migration (the Gate-2 designated next-simplification round). The
+  design.md bullet gained an explicit "not dogma" close: tier-1 submit origination is
+  approved policy for this pass, not a structural law — a future re-ruling would amend the
+  spec §5 scope note ("the widget never owns submit") rather than contradict it silently.
+
+- **G3-Q1-c — second softening: R12 "forbids" overstated.** Human (Opus session, same day):
+  "I see no reason to *prohibit* signalling status from the sink widget (R12) — we simply do
+  not have plans to use it right now, but it can be useful in principle." Concrete example he
+  gave: instead of spreading `warn`s across every no-op handler, a route or the console could
+  emit **one** warn when an event went **unconsumed by the whole chain** — i.e. a status
+  return, read out-of-band, not smuggled up a tier. Accepted; not a reopen. The design.md §3
+  precision (a) and numbered reason (3) reworded: dropped "R12 forbids exactly one thing" in
+  favour of "in this pass no submit *result* rides a chain return value … a **status** return
+  … is useful in principle and **not precluded**; simply unbuilt." **R12's actual content is
+  narrower than the prose implied and is unchanged:** a terminal sink cannot report *upward*
+  through the chain (nothing above reads its return), so submit/boundary *results* use the
+  widget's own outputs. That correctness fix stands (design.md core rulings + the ASCII
+  diagram note untouched). What changed is only the framing of an unbuilt, non-precluded
+  status channel — consistent with G3-Q1-b's "not dogma" discipline. Third recorded softening
+  in the same anti-creep thread (Q1 provenance → Q1-b callbacks-exist → Q1-c status-not-banned).
+
+### Gate 3 — incorporations executed (2026-07-06, session34)
+
+All round-1/-2 dispositions landed; the surface for the next review round:
+
+- **M5c spec** (`spec/M5c-dispatch-chain.md`, editable until the Gate-3 stamp): gained a
+  plain-language **Summary**, a verbatim self-contained **Acceptance criteria** section
+  (**AC-1…AC-35** — the G3-V review-surface fix; the red suite transcribes them, the outcome
+  ledger cites them), and the **maze uncommitted-patch delivery mechanics** in scope item 6.
+- **Roadmap**: M5c section + summary rows annotated (maze/balloons = foreign checkouts,
+  uncommitted-patch delivery; keyboard foreign-but-pure-native); M7/M8 delta fences repointed
+  at the fresh targets; M8 fence carries the census correction + the revalidate-at-
+  commissioning flag.
+- **Mandate**: new **guardrail 7 — nested-checkout discipline** (never commit inside
+  balloons/keyboard/maze, never touch their `.git`; migrations there ship as uncommitted
+  working-tree changes; commit-locally authorisation covers this repo only).
+- **M7/M8 de-staled (G3-Q3 ruling executed):** fresh self-contained implementation targets
+  **`spec/M7-02-recut.md`** and **`spec/M8-02-recut.md`** (re-derived from spec.md §3/§6 and
+  §8/§9; each with plain-language summary, explicit **Delta vs the frozen slice** — incl. the
+  M8 `user_input()`→`on_text_entered` correction of the pre-R1 mapping — acceptance criteria,
+  and M7-01/M8-01 folded in), plus pre-authored black-box prompts
+  **`implementation/prompts/M7.md`** / **`M8.md`** under the amended mandate. The M8
+  pair carries a hard **revalidate-after-M5c/M7** banner (human-accepted risk). spec.md's
+  slice-index blockquote repointed (pointer refresh, no semantics).
+- **Post-Gate-2 doc touches, enumerated for transparency:** design.md §3 (Q1 rationale
+  bullet, marked rationale-only) and the spec.md slice-index pointer — zero semantic delta
+  to the Gate-2-approved surface (§8/§9/§11 untouched).
+
+Next (per the human's declared plan): hand to **Opus** for the cold corpus-validation pass +
+gate close + execution. On approval, the stamps flip (`M5c-dispatch-chain.md`,
+`M7-02-recut.md`, `M8-02-recut.md`, the M7/M8 prompts, `M5c-M8-sweep-mandate.md`,
+`estimates.md` + `version04.md`, `status.md` summary), entrypoints E29 ◐→✓, and the sweep
+resumes (session02 prompt for M5c + `agents/sweep.md` repoint). No estimates recalc needed —
+the milestone set did not change (no E11 refire).
+
+Gate 3 remains **open** pending the incorporations above; stamps stay "NOT YET".
