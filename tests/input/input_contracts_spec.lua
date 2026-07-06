@@ -717,6 +717,13 @@ describe('input contracts #input', function()
       -- the console route (the ConsoleController).
       -- REVIEW: why all this mechanics with "named" targets? What is the goal pursued? How 'stop' is different from project exit or inspection?
       -- REVIEW: what triggers cc:stop_project_run() in the normal (production) envrionment? Which consequences its supposed to bear?
+      -- ESCALATED (M5c Scope 10 (a); session36): the "slots restored to console" / "named
+      -- restored route" lexicon is suspected misinterpretation-era. The ratified model marks
+      -- slot-swap FREE MECHANISM (routing table below FIXED slots = sound direction; §0 glossary,
+      -- design §2), so the binding assertion is the ACTIVE ROUTE/MODE, not slot restoration.
+      -- Re-derivation of the real restore cases (project-exit / stop / inspect-bound-over-project-
+      -- env) deferred to a cold architectural session. See
+      -- notes/talk/m5c-suite-reconciliation-open-contradictions.md.
       it('stop names the console as restored route',
         function()
           F.cc:stop_project_run()
