@@ -337,3 +337,21 @@ now the running remarks record for all E29 gates).
   heaviest future consumer (editor Escape load-selection = set_text). "Only for wrong
   inputs" undersells — error-jump is one consumer among several. Pinned in design.md §3
   (cursor bullet) + spec §6 consumers note.
+
+## Gate 2 — CLOSED (2026-07-06)
+
+The human **greenlighted Stage 3** after the round-1 resolutions above ("next stage (Stage 3)
+is greenlighted"). Gate 2 is closed; `design.md` + `spec.md` stamps flip to
+`Approved by human?: YES` at the review-surface level (design.md §8 claims-diff + §9
+deviations, spec.md §11 — per the pushback resolution path Step 2: ratify the surface, not
+2,800 lines of prose).
+
+**Closing scoping ruling (record verbatim in substance).** The human, on reviewing the
+G2-Q6/Q7 resolutions: the result is more complex than hoped; the wish for deeper
+simplification/unification of the architecture is *deferred, not dropped* — **"we should not
+pursue ideal architecture on all facets in one pass."** The designated venue for the next
+simplification/unification round is the **console/editor migration**, which is also the right
+moment to talk with stakeholders about what could be changed or dropped on the **dev-facing
+facets** of those modes. Disposition: recorded in `design.md` §2 (follow-on bullet) and the
+re-cut roadmap's follow-on note; binds the sweep to *not* attempt opportunistic unification
+beyond the ratified model in-slice.

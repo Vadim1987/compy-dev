@@ -14,6 +14,22 @@ frozen design-phase total + the total-estimated log.*
 > or adjust parts without blocking implementation — there is no
 > requirement to freeze the plan before work starts.
 
+> **RE-CUT (E29 Stage 3, 2026-07-06 — Gate 3 in review).** After the M4 architect pushback,
+> the design corpus was re-derived from the Gate-1 **ratified model**
+> ([`notes/ratified-model.md`](notes/ratified-model.md); `design.md`/`spec.md` Gate-2
+> approved 2026-07-06). The remaining plan is re-cut against the new spec:
+> **M5a / M5b / M6 are SUPERSEDED** (their sections below carry fences; frozen `spec/` slices
+> stay as history) and are replaced by **one consolidated slice —
+> [`M5c` (the dispatch chain)](spec/M5c-dispatch-chain.md)** — which also absorbs the
+> M4-pushback **QUALITY corrective** (~18 remarks) and the **turtle/maze migration**
+> (sequencing constraint, `design.md` §5). **M7 and M8 survive** with deltas noted in their
+> sections. Sweep governance: the amended mandate
+> [`../implementation/prompts/M5c-M8-sweep-mandate.md`](../implementation/prompts/M5c-M8-sweep-mandate.md).
+> Remaining order: **M5c → M7 → M8**, hard human gate at every boundary.
+> **Follow-on scope discipline (Gate-2 closing ruling):** no further simplification/
+> unification is pursued in this pass; the console/editor migration is the designated venue
+> for the next round, with stakeholder input on the dev-facing facets of those modes.
+
 ---
 
 ## Summary — milestones at a glance
@@ -30,11 +46,11 @@ frozen design-phase total + the total-estimated log.*
 | M2a | M1 follow-up hygiene | Drop dead profiler test stub; single source of truth for l/r modifier fold; no behaviour change | `controller.lua`, `util/key.lua`, M1 test |
 | M4-0 | **M4 front-tests** (corrective `-01`; was char-net) | Routing-level suite: regression smoke (green) + new-behaviour tests carried `pending` → M4 greens them; keypress-level driver/mock emitters kept | `tests/input/input_routing_spec.lua` (renamed), `tests/mock.lua`, `tests/helpers/input_session.lua` |
 | M4 | ProjectInputController + gate removal | New controller owns project input; overlay gate removed; all 4 modes verified | `controller.lua`, `projectInputController.lua` (new) |
-| M5a | Callbacks (split from M5) | `on_key_pressed` / `on_text_entered` exposed; `framework_handlers` slot established | `projectInputController.lua`, `compy_namespace.lua` |
-| M5b | Handlers sugar (deferred) | `handlers[combo]` + normalisation + dispatch + fresh-only keying | `projectInputController.lua`, `compy_namespace.lua` |
-| M6 | Before/after chains | Submit/cancel hooks; Escape dismisses; `on_limit_reached(direction,scope)`; `framework_handlers['return']` owns submit; `oneshot` deleted | `projectInputController.lua`, `userInputController.lua`, `userInputModel.lua` |
-| M7 | Extended singleton API | `configure`/`clear`/`get_cursor`/`set_cursor`/`set_text` | `userInputController.lua`, `compy_namespace.lua` |
-| M8 | Legacy removal + migration | Globals removed; `tixy`/`balloons` migrated (priority), others convert-or-exclude; native examples unaffected (D-9) | `consoleController.lua`, `src/examples/*` |
+| ~~M5a/M5b~~ | ~~Callbacks / handlers sugar~~ | **SUPERSEDED by M5c** (E29 re-cut) | — |
+| ~~M6~~ | ~~Before/after chains~~ | **SUPERSEDED by M5c** (E29 re-cut) | — |
+| **M5c** | **The dispatch chain** (consolidated: old M5a+M5b+M6 + QUALITY corrective + turtle/maze) | Full four-tier chain on all 3 kbd/text channels (keyreleased unified); submit/cancel chains, Escape dismisses, `oneshot` deleted; ruling-3 connection window; R7 pure wrap + turtle/maze migrated; R3 boundary; ~18 QUALITY remarks dispositioned; M6-01 + M6-02 ride | `controller.lua`, `projectInputController.lua`, `userInputController.lua`, `userInputModel.lua`, `userInputView.lua`, namespace, `examples/{turtle,maze}` |
+| M7 | Extended singleton API | `configure`/`clear`/`get_cursor`/`set_cursor`/`set_text` (spec.md §6 now authority; M7-01 rides) | `userInputController.lua`, `compy_namespace.lua` |
+| M8 | Legacy removal + migration | Globals removed; `tixy`/`balloons` migrated (priority), others convert-or-exclude; **turtle/maze moved to M5c**; native examples fine under R7 pure wrap | `consoleController.lua`, `src/examples/*` |
 
 **Estimates** are a first-class derived node — full per-milestone PERT lives in
 [`estimates.md`](estimates.md) (+ [`estimates.versions/`](estimates.versions/)). This roadmap keeps
@@ -235,7 +251,47 @@ marking complete.
 
 ---
 
-### M5a / M5b — Three-level dispatch (split; see `spec/M5-01-split.md`)
+### M5c — The dispatch chain (E29 re-cut; consolidated slice)
+
+**Spec:** [`spec/M5c-dispatch-chain.md`](spec/M5c-dispatch-chain.md) — frozen at Gate-3
+approval; contract authority is the re-derived [`spec.md`](spec.md) §§1–2/4/5/7/8.
+
+**Description:** The complete four-tier chain (`framework_handlers.<event>[combo]` →
+`handlers.<event>[combo]` → per-event generic callback → sink) on all three keyboard/text
+channels, with the tier-1 submit/cancel semantic chains, `oneshot` deletion, the ruling-3
+connection window (keyboard/text slots occupied only while `'running'` — the M4 forwarding
+removed), R7 pure-wrap natives with **turtle/maze migrated in-slice**, the R3
+mutable/immutable boundary, and the M4-pushback QUALITY corrective (~18 remarks, per-remark
+dispositions in the outcome ledger). Adjacents **M6-01** (view `oneshot` snapshot) and
+**M6-02** (`compy.before_exit`, approved session 23) ride this slice.
+
+**Why one slice (verified hypothesis, session32→33):** old M5a+M5b+M6 are one semantic — the
+chain; the M4 gate showed slicing mid-semantic produces scope-parallax review noise (8 SCOPE
+remarks). Most QUALITY remarks target code this slice deletes/rewrites (`native_split`,
+`forward_*` wrappers, suppressed returns) — a separate pre-corrective would polish code about
+to be replaced.
+
+**Input:** M4 landed (`c537909` + pushback processed); the Gate-2-approved corpus; Gate-3
+approval of this re-cut.
+
+**Test-first (Tier 2):** red acceptance suite from `spec.md` §§2/4/5/7/8 precedes
+implementation; converts the contract suite's m5/m5a/m5b/m6-family `pending` rows to live
+green. Manual: 4-mode check + ruling-3 non-blocking-script check + migrated turtle/maze
+played by hand.
+
+**Risk:** widest slice of the re-cut plan (≈ 2× M4's PERT), accepted for review coherence;
+mitigated by test-first, independently-revertible internal commits, mid-slice stop rules
+(amended mandate), and the hard gate. Semantic traps listed in the slice spec (no
+replace-semantics, R12/R13/R14, pointer disconnect stays out).
+
+---
+
+### ~~M5a / M5b — Three-level dispatch~~ (SUPERSEDED)
+
+> **SUPERSEDED (E29 Stage 3, 2026-07-06)** by [`M5c`](spec/M5c-dispatch-chain.md) — the E29
+> re-derivation removed the corpus semantics this split was cut against (replace-semantics,
+> flat handler table). Frozen `spec/M5.md` + `spec/M5-01-split.md` stay as history; do not
+> implement against them. Prose below kept as the origin record.
 
 **Session-23 pivot:** M5 is split into **M5a** (callbacks: `on_key_pressed` /
 `on_text_entered` / `framework_handlers` slot — ships next after M4) and **M5b**
@@ -276,7 +332,12 @@ that returns truthy to verify chain stops.
 
 ---
 
-### M6 — Before/after chains for submit and cancel
+### ~~M6 — Before/after chains for submit and cancel~~ (SUPERSEDED)
+
+> **SUPERSEDED (E29 Stage 3, 2026-07-06)** by [`M5c`](spec/M5c-dispatch-chain.md) — the
+> submit/cancel chains are tier-1 entries of the one chain semantic; the `push('userinput')`
+> cancel-path note below is dissolved (spec.md §5 mechanism note). Frozen `spec/M6.md` stays
+> as history. M6-01/M6-02 ride M5c. Prose below kept as the origin record.
 
 **Description:** `before_submit`, `after_submit`,
 `before_cancel`, `after_cancel` hooks. Escape dismisses
@@ -326,6 +387,13 @@ depends on them) intact.
 
 ### M7 — Extended singleton API
 
+> **E29 re-cut delta (2026-07-06).** M7 **survives** — the cursor/config surface is
+> unchanged by the re-derivation (FR-8/9/10, D-8 contract). Contract authority is now
+> [`spec.md`](spec.md) §3/§6 (incl. the Gate-2 consumers note); the frozen `spec/M7.md`
+> stays valid where it agrees — on any divergence the new spec.md wins, reconciled via an
+> adjacent slice or the test-first prompt at commissioning (`agents/process.md` §9.1).
+> [`M7-01`](spec/M7-01-retarget.md) still rides. **Input becomes: M5c complete** (not M5/M6).
+
 **Description:** `compy.input.configure()`, `compy.input.clear()`,
 `compy.input.get_cursor()`, `compy.input.set_cursor()`, and
 `compy.input.set_text()` implemented. Live reconfiguration of
@@ -363,6 +431,13 @@ removed `write_to_input` (see M8).
 ---
 
 ### M8 — Legacy text-input removal and example migration
+
+> **E29 re-cut delta (2026-07-06).** M8 **survives**, trimmed: **turtle and maze migrate in
+> M5c** (sequencing constraint, `design.md` §5 — the R7 behaviour change and its fix must
+> land together). The D-9 lifecycle-split language below is superseded by **R7 pure wrap**
+> (natives = initial tier-3 callback values; pure-native examples unaffected). Contract
+> authority: [`spec.md`](spec.md) §9 (mapping table) + §8. [`M8-01`](spec/M8-01-dead-text-input.md)
+> still rides. **Input becomes: M5c and M7 complete.**
 
 **Description:** Remove the legacy text-input globals and migrate
 the in-repo examples that use them to the `compy.input.*` callback
@@ -485,3 +560,4 @@ independently maintained figure. Maintenance is operational entrypoint **E11**.
 | 2026-06-18 | ≈ 66 h / ≈ 39 h | [`version01`](estimates.versions/version01.md) | Genesis — extraction (E10). Equals the frozen design-phase total; no milestone change since convergence. |
 | 2026-06-23 | ≈ 74 h / ≈ 44 h | [`version02`](estimates.versions/version02.md) | E16 propagation — **`M4-0`** characterization net + harness extension added (E9 sizing: modest harness + suite). M5/M6/M7 gain test-first acceptance steps (re-sequenced from the existing Test-coverage bucket — no volume delta). Delta +≈ 8 h / +≈ 5 h = M4-0. |
 | 2026-06-24 | ≈ 76 h / ≈ 45 h | [`version03`](estimates.versions/version03.md) | E11 recalc — **M5 split** (M5a callbacks / M5b handlers sugar deferred, session-23 strategic decision) + **M6-02** (`compy.before_exit` project-stop hook). Net delta +≈ 2 h / +≈ 1 h. |
+| 2026-07-06 | ≈ 77 h / ≈ 45 h | [`version04`](estimates.versions/version04.md) | E29 Stage-3 re-cut (E11 op) — M5a/M5b/M6 superseded → **M5c** consolidated dispatch-chain slice (absorbs the QUALITY corrective + turtle/maze migration); M8 trimmed accordingly. Net delta +≈ 1 h / ≈ 0 h. |

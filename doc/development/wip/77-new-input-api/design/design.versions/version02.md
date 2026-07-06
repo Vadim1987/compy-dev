@@ -1,6 +1,6 @@
 # design — version 02 (E29 re-derivation)
 
-_LLM(Claude Fable 5): 2026-07-05 (E29 Stage 2, session33); Approved by human?: NOT YET;_
+_LLM(Claude Fable 5): 2026-07-05 (E29 Stage 2, session33); Approved by human?: YES — Gate 2, 2026-07-06 (review surface: design.md §8/§9);_
 
 > **Latest version → references up to canonical.** Per doc-format §6/§6.1, the single latest
 > version file points up to the canonical doc (it *is* canonical at this moment); only
