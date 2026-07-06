@@ -230,3 +230,110 @@ console surface.
 - **R11 — RULED (round 3): correct resolution, no doubts.** Inspect folded into the model as
   the mode→route line (console route over project env; project route disconnected; widget
   unhonoured because its owning route is inactive).
+
+---
+
+## Round-4 remarks (human, 2026-07-05 chat, delivered WITH ratification) — folded
+
+The human ratified the model and simultaneously injected three remarks framed as "cosmetic /
+formal clarifications aimed to prevent future misinterpretation (like the one which caused the
+arch drift)". Checked; none surfaces a misunderstanding; all three incorporated (no contest).
+
+- **R12 — sink description: "returns limit signal" → widget outputs.** Incorporated, and it is
+  a correctness fix, not cosmetics: "returns limit signal" leaked today's implementation (UIC
+  `keypressed` returning `ret` up the call stack) into the model AND collided with the chain
+  return convention — the sink is terminal, so its return value can have no chain meaning.
+  Model now says: boundary/submit conditions surface through the widget's own outputs
+  (`on_limit_reached`, `on_text_entered`…), never through chain return values. Today's console
+  limit→history behaviour becomes the console route wiring `on_limit_reached` → history nav —
+  a proof case for the widget-outputs surface (R1), not an exception.
+- **R13 — consuming ≠ removing.** Incorporated. "Overriding tier 3 NEVER removes tier 4" was
+  ambiguous in exactly the drift-causing direction (readable as "tier 4 always runs" — the
+  sketch-aside that mutated into replace-semantics). Precise statement now in the diagram:
+  **configuration is permanent, flow is per-event** — truthy at any tier stops the event
+  travelling further (sink included) *for that event*; no override ever removes a lower tier
+  from configuration; replace-semantics exists nowhere.
+- **R14 — combo tiers keyed event-type-first.** Incorporated as a binding structure rule:
+  `handlers.keypressed[combo]` / `handlers.keyreleased[combo]` / `handlers.textinput[combo]`
+  (and `framework_handlers.*` likewise). Was presumed ("per-channel tables") but never pinned;
+  the old spec's flat `handlers[combo]` is precisely the shape a derivation would collapse back
+  into — now explicitly forbidden as a known drift attractor. Naming per R3 stays tweakable;
+  the structure does not.
+
+**Gate 1 status: RATIFIED (2026-07-05), rev round-4.** Stage 2 unblocked.
+
+---
+
+## Gate 2 — round-1 remarks (2026-07-06)
+
+Human reviewed the Gate-2 surface (design.md §8+§9, spec.md §11) and raised three questions
+plus one written `>> REVIEW` remark before greenlighting. Ledger continues here (this note is
+now the running remarks record for all E29 gates).
+
+- **G2-R1 — `oneshot` precision (written remark in design.md §8).** Incorporated. The gloss
+  "oneshot simply calls hide on the widget itself after submission" is right at the behavioural
+  level with two mechanical nuances: (1) in current code the flag *also* gates submit ownership
+  — `oneshot=false` (console/editor) makes the widget's `submit()` a deliberate no-op so the
+  controller above handles Enter; (2) the self-dismiss is `push('userinput')`, not a `hide()`
+  call (no `hide()` exists pre-M2). Claims-diff row 14 rewritten to state both jobs and where
+  each goes: submit ownership → per-route `framework_handlers.keypressed['return']`; self-close
+  → the unconditional deactivate step of the submit sequence (spec §5) — the `oneshot=true`
+  behaviour kept, no longer flag-gated. Non-breaking, as the remark hoped. REVIEW marker
+  removed from design.md.
+- **G2-Q2 — callback teardown across project/route changes (chat question).** Already covered
+  by spec §8 Stop (full reset of slots + `handlers.*` + every mutable field) and §10 edge case;
+  made explicit as a named **teardown invariant** in spec §8: no callback, combo entry, or
+  widget configuration survives its creating project; disconnected routes receive nothing;
+  a widget whose owning route is inactive goes unhonoured (R11 inspect = the model case).
+  Editor-as-singleton-user remains part of the console/editor migration follow-on; the
+  invariant is what that migration must preserve.
+- **G2-Q3 — framework Enter/Escape only-while-shown: status quo? (chat question).** Confirmed
+  empirically from notes/enter_escape_routing.md: today, project running with no overlay ⇒
+  Enter/Escape go straight to the project's own `love.keypressed` (no framework involvement
+  beyond global shortcuts); overlay shown ⇒ the widget consumes them. The new tier-1
+  engage-only-while-shown rule preserves exactly this. The one deliberate change is ruled:
+  Escape now genuinely dismisses (known-limitation fix, sketch §5 / D-4). Ctrl+Escape quit
+  stays a global shortcut on keyrelease, untouched.
+- **G2-Q4 — continuous input sessions (balloons case).** Supported, via idiom rather than
+  mode: deactivate-on-submit stays unconditional (a keep-open flag would be `oneshot` reborn,
+  polarity flipped); a project re-activates from `after_submit` with `compy.input.show{prompt=…}`
+  — fresh activation starts empty (clear for free), callbacks/handlers persist (only stop
+  resets), re-show runs before the frame draws (no visible gap). Pinned in spec §5 + §11 row 12.
+  Balloons census: today it re-shows via `input_text()` on every hint write and polls the
+  reftable each `update` — under the new API that whole loop becomes `show` once +
+  `configure{prompt=…}` + `on_text_entered`/`after_submit`. If the human prefers a keep-open
+  config key instead, that is a D-a-adjacent ruling — recommendation stands against it.
+- **G2-Q5 — `push('userinput')` purpose + disposition.** Census: oneshot submit fills the
+  reftable synchronously, then pushes the custom `'userinput'` event; `handlers.userinput`
+  nulls `love.state.user_input` on the NEXT event dispatch — i.e. deferred dismissal, so the
+  overlay never tears itself down inside its own `keypressed` call stack (plus the polling
+  loop gets one frame with reftable filled + overlay still up). Disposition: **dissolved** —
+  notify job → `on_text_entered` (polling removed with legacy API), deferral job → the
+  deactivate step of the submit sequence; sync-vs-deferred realization is mechanism,
+  non-binding (ruling 5). Contract fixes only observable order: `on_text_entered` sees the
+  session active, `after_submit` sees it deactivated (or re-activated by the hook itself).
+  Pinned in spec §5 mechanism note.
+- **G2-Q6 — always-ephemeral project input vs future console/editor persistence (least
+  astonishment).** Resolved by scoping, not redesign. Assessment: the contradiction lives in
+  a mis-attribution the docs permitted — deactivate-on-submit could be read as *widget*
+  nature, when it is **project-route tier-1 policy**. The uniform binding part of submit is
+  its shape (widget never owns submit; the owning route's framework handler does, wrapped in
+  the D-4 hook chain — the per-controller split enter_escape_routing.md already names:
+  console evaluates-and-stays, editor flushes-and-stays, project delivers-and-closes). At
+  migration, console/editor mint their own middle steps: **true persistence** — the widget
+  session simply continues; the re-show idiom is the project-route minority path, never the
+  migration template. Least astonishment holds where users experience it: within a context
+  submit is invariant; across contexts Enter has always meant different things — now
+  route-owned and explicit instead of flag-encoded (oneshot). A persistent project-route
+  option remains an additive reserved extension (R9-adjacent). This was drift-shaped
+  ambiguity worth fixing at the gate: design.md §3 gained the scoping block, spec §5 a
+  binding scope note, D-a amended, spec §11 row 13 added.
+- **G2-Q7 — what are set_cursor/highlighter for if project input is ephemeral?** Ephemeral ≠
+  momentary: a session spans the whole composition (minutes for input_code-style entry).
+  Consumers: live highlighter while composing (flagship: input_code); validator-reject
+  error-jump (today's evaluate-fail path already moves the cursor to the error line/col);
+  on_limit_reached → set_text/set_cursor flows (history navigation — console proof case,
+  available to projects); draft restore (show{text,cursor}); console/editor migration the
+  heaviest future consumer (editor Escape load-selection = set_text). "Only for wrong
+  inputs" undersells — error-jump is one consumer among several. Pinned in design.md §3
+  (cursor bullet) + spec §6 consumers note.
