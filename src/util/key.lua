@@ -20,6 +20,64 @@ local mod_triples = {
   { gui_k[1],   gui_k[2],   "gui" },
 }
 
+-- Generic modifier names in combo-string precedence order
+-- (spec §1: ctrl < alt < shift < gui), and the l/r fold that
+-- maps held key-names onto them ('lctrl' -> 'ctrl').
+local mod_rank = {
+  ctrl = 1, alt = 2, shift = 3, gui = 4,
+}
+local mod_order = { 'ctrl', 'alt', 'shift', 'gui' }
+local fold_mod = { }
+for _, row in ipairs(mod_triples) do
+  fold_mod[row[1]] = row[3]
+  fold_mod[row[2]] = row[3]
+end
+
+--- Split a combo string into a generic-modifier set and the
+--- trigger token. Tokens fold l/r to generic names; anything
+--- that is not a modifier is the trigger (last one wins).
+--- @param combo string
+--- @return table mods
+--- @return string? trigger
+local function split_combo(combo)
+  local mods, trigger = { }, nil
+  for tok in combo:lower():gmatch('[^+]+') do
+    local g = fold_mod[tok] or tok
+    if mod_rank[g] then mods[g] = true else trigger = g end
+  end
+  return mods, trigger
+end
+
+--- Canonicalise a combo string (spec §1): lower-cased, l/r
+--- folded, modifiers in fixed precedence, trigger last,
+--- '+'-joined. 'Ctrl+S' -> 'ctrl+s'; bare 'S' -> 's'. Matches
+--- what combo_string() (controller.lua) emits at dispatch.
+--- @param combo string
+--- @return string
+local function normalize_combo(combo)
+  local mods, trigger = split_combo(combo)
+  local parts = { }
+  for _, name in ipairs(mod_order) do
+    if mods[name] then parts[#parts + 1] = name end
+  end
+  if trigger then parts[#parts + 1] = trigger end
+  return table.concat(parts, '+')
+end
+
+--- A project handlers sub-table (spec §1, R14): assigned combo
+--- keys normalise on registration, so handlers.keypressed
+--- ['Ctrl+S'] is stored (and dispatch-matched) as 'ctrl+s'.
+--- The default matcher is exact canonical lookup (O(1)); the
+--- normalising seam is where a future glob matcher would live.
+--- @return table
+local function new_handler_table()
+  return setmetatable({ }, {
+    __newindex = function(t, k, v)
+      rawset(t, normalize_combo(k), v)
+    end,
+  })
+end
+
 --- @param k string
 --- @return boolean
 local function is_enter(k)
@@ -58,6 +116,8 @@ end
 
 Key = {
   mod_triples = mod_triples,
+  normalize_combo = normalize_combo,
+  new_handler_table = new_handler_table,
   is_enter    = is_enter,
   shift       = shift,
   is_shift    = is_shift,

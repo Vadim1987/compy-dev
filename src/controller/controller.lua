@@ -24,28 +24,27 @@ end
 
 --- Intra-route forward: the console route hands the event
 --- to the widget it activated (nil under 'inspect' — the
---- console owns that surface itself).
+--- console owns that surface itself). The sink receives the
+--- uniform per-channel signature with the read-only
+--- keys_pressed proxy (spec §2, AC-8). Returns whether the
+--- widget was the surface (true = forwarded), so the caller
+--- falls back to the console line only when no widget is up.
 --- @param k string
 --- @param isr boolean?
 --- @return boolean forwarded
---- REVIEW: silent drop noticed (where's warn? if 'warn' is too noisy, can demote to debug or only fire once?)
---- REVIEW: 'forward_keypressed' only forwards to the user input, but its not obvious from the function name
---- REVIEW: why return 'true' instead of returning what ui.C.keypressed returned? If this func does nothing with actual processing, how it decides whether processing is final to return 'true'?
 local function forward_keypressed(k, isr)
   local ui = get_user_input()
   if not ui then return false end
-  -- REVIEW: good candidate to rewire as 'Compy.input.on_key_pressed' -- accessing internal components of UIC across several layers of abstraction is smelly
-  ui.C:keypressed(k, Controller.keys_pressed, isr)
+  ui.C:keypressed(k, Controller.held_keys(), isr)
   return true
 end
 
---- REVIEW: this and successor function look like duplication of prevous one. Why not generalize into one function and symbolic event type?
 --- @param t string
 --- @return boolean forwarded
 local function forward_textinput(t)
   local ui = get_user_input()
   if not ui then return false end
-  ui.C:textinput(t)
+  ui.C:textinput(t, Controller.held_keys())
   return true
 end
 
@@ -54,7 +53,7 @@ end
 local function forward_keyreleased(k)
   local ui = get_user_input()
   if not ui then return false end
-  ui.C:keyreleased(k)
+  ui.C:keyreleased(k, Controller.held_keys())
   return true
 end
 --- @type boolean
@@ -131,17 +130,55 @@ local function wrapped_native(userlove, CC, key)
   end
 end
 
+--- Wrap a project keyboard native as a chain participant: run
+--- it inside the project canvas with project error handling AND
+--- PROPAGATE its return value — the chain's truthy=consume
+--- contract depends on it (resolves C3/C14 return-propagation;
+--- wrap_handler above discards the return, which is fine for the
+--- fire-and-forget pointer/click handlers but not for a chain
+--- tier). A raised error routes to user_error_handler and the
+--- call reports non-consuming (nil).
+--- @param CC ConsoleController
+--- @param fn function
+--- @return function
+local function chain_native(CC, fn)
+  return function(...)
+    local args = { ... }
+    return CC:use_canvas(function()
+      local ok, res = xpcall(fn, function(m)
+        user_error_handler(CC, m)
+      end, unpack(args))
+      if ok then return res end
+    end)
+  end
+end
+
+--- @param userlove table
+--- @param CC ConsoleController
+--- @param key string
+--- @return function?
+local function keyboard_native(userlove, CC, key)
+  local orig = Controller._defaults[key]
+  local new = userlove[key]
+  if orig and new and orig ~= new then
+    return chain_native(CC, new)
+  end
+end
+
+--- The project's own keyboard/text handlers, error-wrapped as
+--- tier-3 chain participants (R7 pure wrap) — return values
+--- preserved so a native can consume like any participant.
 --- @param userlove table
 --- @param CC ConsoleController
 --- @return table natives
 local function project_natives(userlove, CC)
   return {
     keypressed =
-        wrapped_native(userlove, CC, 'keypressed'),
+        keyboard_native(userlove, CC, 'keypressed'),
     textinput =
-        wrapped_native(userlove, CC, 'textinput'),
+        keyboard_native(userlove, CC, 'textinput'),
     keyreleased =
-        wrapped_native(userlove, CC, 'keyreleased'),
+        keyboard_native(userlove, CC, 'keyreleased'),
   }
 end
 
@@ -269,6 +306,30 @@ local function combo_string(k, keys_pressed)
   return table.concat(parts, '+')
 end
 
+-- Memoised read-only view over Controller.keys_pressed handed to
+-- every chain consumer (spec §1, AC-8): reads pass through to the
+-- live held set; assignment raises. Rebuilt only when the backing
+-- identity changes (tests swap the table wholesale), so dispatch
+-- allocates nothing per event. NOTE: under LuaJIT/Lua 5.1 `pairs`
+-- ignores __pairs, so pairs(proxy) yields nothing on this
+-- platform; the load-bearing contract (read-through + write-raise)
+-- holds, and __pairs is kept for 5.2+ hosts.
+local held_backing, held_proxy
+local function held_keys()
+  local backing = Controller.keys_pressed
+  if held_backing ~= backing then
+    held_backing = backing
+    held_proxy = setmetatable({ }, {
+      __index = backing,
+      __newindex = function()
+        error('keys_pressed is read-only', 2)
+      end,
+      __pairs = function() return pairs(backing) end,
+    })
+  end
+  return held_proxy
+end
+
 --- @class Controller
 --- @field _defaults Handlers
 --- @field _userhandler Handlers
@@ -291,6 +352,7 @@ Controller = {
 
   keys_pressed = { },
   combo_string = combo_string,
+  held_keys = held_keys,
 
   ----------------
   --  keyboard  --

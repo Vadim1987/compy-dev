@@ -344,8 +344,61 @@ end
 -- DEFERRED (0.1.0-m7): whether to pre-stub the planned methods (configure/clear/get_cursor/
 -- set_cursor/set_text) here as explicit not-implemented no-ops is unsettled — to be resolved in the
 -- m7 design session.
+-- The project-assignable tier-3 generic callbacks (spec §7 /
+-- R3). Everything else on compy.input is callable API and
+-- raises loudly on assignment (AC-33). Later chunks widen this
+-- allowlist with before_/after_ hooks and the widget-output
+-- fields (on_text_entered, on_limit_reached, validator,
+-- highlighter) — they are NOT part of chunk 1.
+local INPUT_CALLBACKS = {
+  on_key_pressed  = true,
+  on_text_input   = true,
+  on_key_released = true,
+}
+
+--- Assemble the compy.input surface over its backing `state`
+--- (the three normalising handler sub-tables + the tier-3
+--- callback slots) and the callable `methods`. The R3 boundary
+--- lives in the metatable: reads resolve handlers / callbacks /
+--- methods; writes are refused unless the key is an allowed
+--- tier-3 callback (AC-33 — loud error, never a silent swallow).
+--- The proxy table itself stays empty so __newindex fires for
+--- every assignment (a raw data key would bypass the guard).
+--- @param state table
+--- @param methods table
+--- @return table
+local function build_input_surface(state, methods)
+  return setmetatable({ }, {
+    __index = function(_, k)
+      if k == 'handlers' then return state.handlers end
+      if INPUT_CALLBACKS[k] then return state[k] end
+      return methods[k]
+    end,
+    __newindex = function(_, k, v)
+      if not INPUT_CALLBACKS[k] then
+        error("compy.input: '" .. tostring(k)
+          .. "' is not assignable", 2)
+      end
+      state[k] = v
+    end,
+  })
+end
+
+-- Builds the compy.input surface: the four-tier dispatch surface
+-- (spec §2) a project registers against. `handlers.<event>` are
+-- the R14 per-event combo sub-tables (normalising, §1); the
+-- on_* slots are the tier-3 generic callbacks. show/hide drive
+-- the singleton overlay (resolved from love.state, never held by
+-- the project).
 local get_compy_input = function()
-  return {
+  local state = {
+    handlers = {
+      keypressed  = Key.new_handler_table(),
+      keyreleased = Key.new_handler_table(),
+      textinput   = Key.new_handler_table(),
+    },
+  }
+  local methods = {
     show = function(cfg)
       local ui = love.state.user_input_controller
       if ui then ui:show(cfg) end
@@ -355,6 +408,7 @@ local get_compy_input = function()
       if ui then ui:hide() end
     end,
   }
+  return build_input_surface(state, methods)
 end
 
 -- Builds the `compy.*` table injected into a project's sandbox env (terminal, audio, graphics,

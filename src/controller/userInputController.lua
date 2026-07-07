@@ -262,17 +262,38 @@ end
 --- event handlers ---
 ----------------------
 
+--- The terminal sink of the project route's chain runs on the
+--- ONE published overlay singleton (love.state.user_input_
+--- controller). It is "shown" only while love.state.user_input
+--- is set (show()/hide() toggle it). A keystroke reaching the
+--- sink while the overlay is hidden must mutate nothing (AC-11/
+--- AC-13) — this is the chain's INTERNAL hidden-check, replacing
+--- the old external gating wrapper. The console REPL input is a
+--- DIFFERENT UserInputController instance (never the published
+--- singleton), so this never gates ordinary console typing.
+--- @return boolean
+function UserInputController:_is_hidden_overlay()
+  return self == love.state.user_input_controller
+      and not love.state.user_input
+end
+
 ----------------
 --  keyboard  --
 ----------------
 
 --- @param k string
+--- @param keys_pressed table?  read-only held-key proxy (spec §1)
+--- @param isr boolean?
 --- @return boolean? limit
--- DEFERRED (0.1.0-m4/m5, A2): this bottom sink does not currently receive keys_pressed; the
--- modifier proxy is passed at the ProjectInputController dispatch layer. Whether the sink should
--- also receive it (e.g. to handle Shift+Enter or similar uniformly) is unsettled — to be resolved
--- in the m4/m5 design session. See implementation/reviews/M2-human-review.md.
-function UserInputController:keypressed(k)
+-- The sink now receives the uniform (k, keys_pressed, isr)
+-- triple (spec §2 / AC-8; resolves the m4/m5 A2 open note). Its
+-- own editing logic still reads modifiers via Key.* (love.
+-- keyboard) — widening that to the proxy is not required here.
+function UserInputController:keypressed(k, keys_pressed, isr)
+  if self:_is_hidden_overlay() then
+    if love.DEBUG then Log.debug('input sink: hidden no-op') end
+    return
+  end
   -- Defensive render-on-entry: guarantees the view catches up to the model even if a prior
   -- branch returned without re-rendering. Mutating branches below re-render at their end,
   -- so this is belt-and-suspenders, not the primary update.
@@ -483,14 +504,18 @@ function UserInputController:keypressed(k)
 end
 
 --- @param t string
--- DEFERRED (0.1.0-m4/m5, A2): as with keypressed, whether this sink should receive keys_pressed
--- is unsettled — to be resolved in the m4/m5 design session.
-function UserInputController:textinput(t)
-  self:update_view()
-  if self.model:has_error() then
+--- @param keys_pressed table?  read-only held-key proxy (spec §1)
+-- Uniform textinput signature (spec §2 / AC-8). Visibility is
+-- decided by the internal hidden-check (shown -> edit; hidden ->
+-- no-op), which supersedes the old self.result/running gate: a
+-- shown widget edits regardless of the legacy poll reftable.
+function UserInputController:textinput(t, keys_pressed)
+  if self:_is_hidden_overlay() then
+    if love.DEBUG then Log.debug('input sink: hidden no-op') end
     return
   end
-  if not self.result and love.state.app_state == 'running' then
+  self:update_view()
+  if self.model:has_error() then
     return
   end
   self.model:add_text(t)
@@ -498,7 +523,12 @@ function UserInputController:textinput(t)
 end
 
 --- @param k string
-function UserInputController:keyreleased(k)
+--- @param keys_pressed table?  read-only held-key proxy (spec §1)
+function UserInputController:keyreleased(k, keys_pressed)
+  if self:_is_hidden_overlay() then
+    if love.DEBUG then Log.debug('input sink: hidden no-op') end
+    return
+  end
   local input = self.model
   self:update_view()
 

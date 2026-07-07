@@ -117,12 +117,11 @@ differently — Ctrl+L vs. Escape vs. Ctrl+W vs. Ctrl+Q vs. nothing at all for t
 
 ## Keyboard Handling
 
->> REVIEW: I think it does not fully align with supposed design. Problem of 'keypressed' still remains inside project -- if widget is active it swallows keypressed.
->> I think the real flow we designed (as ProjectInputController:keypressed) is
->>  if combos designed (not implemented yet) -- run keypressed through matching combo handler (default noop). If handler returns true -- stop propagating
->>  if project keypressed defined  -- run keypressed through it. if it returns true -- stop, otherwise continue
->>  (this also could be just default 'project keypressed handler') if widget is open, pass keypressed to it, otherwise noop. 
->> and wherever possible on this route prefer explicit funcmap invocation instead of 'if-driven logic' -- but ensure the flow is readable and obvious
+The project route implements the flow the review below asked for:
+a per-event chain, tier by tier, each tier consuming only if it
+returns truthy — combo handler → project generic callback →
+widget-if-shown — with no `if`-governed native-split and the
+hidden-check moved *inside* the sink.
 
 ### Dispatch chain
 
@@ -140,14 +139,20 @@ love.handlers.keypressed (k, scancode, isrepeat)
       │          → history navigation (PageUp/Down)
       │          → UserInputController:keypressed
       │          → Enter → ConsoleController:evaluate_input
-      └─ project run: ProjectInputController:keypressed
-           → widget shown: the text-editing sink
-               (UserInputController, uniform triple)
-           → widget hidden: the project's own native
-               love.keypressed, if it defined one (via the
-               auto-provisioned lifecycle-split wrapper)
-           → neither: no-op (a hidden widget consumes
-               nothing; no other consumer exists)
+      └─ project run: ProjectInputController — ONE four-tier
+           chain, same shape on keypressed/keyreleased/textinput:
+           1. framework_handlers.<event>[combo]  (structural
+                keys; return/escape land in a later slice)
+           2. compy.input.handlers.<event>[combo]  (project
+                combo handlers; per-event tables, normalising)
+           3. per-event generic callback  (on_key_pressed /
+                on_text_input / on_key_released) — precedence:
+                explicit on_* > project native captured at
+                activate > noop+log
+           4. the sink (UserInputController) — terminal; edits
+                when shown, INTERNAL no-op when hidden
+         Truthy at any tier consumes (stop, sink included);
+         falsey falls through. Consuming never removes a tier.
 ```
 
 Global shortcuts in `love.handlers.keypressed` (controller.lua:520+) are intercepted before anything reaches the controller: Ctrl+Pause suspends, Ctrl+Q quits project, Ctrl+S stops run or closes buffer, Ctrl+Shift+R resets application, Ctrl+Alt+R restarts project, Ctrl+Esc exits app.
@@ -161,7 +166,7 @@ Global shortcuts in `love.handlers.keypressed` (controller.lua:520+) are interce
 >>   also, I do not understant the condition 'when project left "running"' and 'project_open' stuff... its obvious in inspect or when project is open but not run we should not drive events to it. However, wyh is there a special mechanism? should not projectInputController simply be not connected until project is running?
 >> REVIEW END
 
-As of 0.1.0-m4 the gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The slot occupant (the active route's controller) always receives the event and forwards to the overlay widget itself when one is shown: the console-route default handlers forward when `love.state.user_input` is set (except under `inspect`), and `ProjectInputController` delegates to the same widget as its text-editing sink. The widget is never a routing destination of the gateway and never a slot occupant. On project stop the console is the *named* restore target — `Controller.active_keyboard_route()` reports the occupant (the ConsoleController by default, the project route during a run).
+As of 0.1.0-m4 the gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The slot occupant (the active route's controller) always receives the event. Since 0.1.0-m5 the project route runs the four-tier chain above: the M4 `native_split`/lifecycle-split wrapper is gone (R7 pure wrap), a project native auto-provisions as the tier-3 default participant (seen even while the widget is shown, only when the project set no `on_*` — explicit `on_*` takes precedence), and the widget sink is the terminal tier with its hidden-check now *internal* (it no-ops on the published singleton while `love.state.user_input` is nil, so a hidden widget mutates nothing without any external gate). The console-route default handlers still forward to the widget when `love.state.user_input` is set (except under `inspect`). The widget is never a routing destination of the gateway and never a slot occupant. On project stop the console is the restore target — `Controller.active_keyboard_route()` reports the occupant (the ConsoleController by default, the project route during a run).
 
 While a project run occupies the slots but the state has left `'running'` (a non-blocking project that returned: `app_state == 'project_open'`), `ProjectInputController` forwards events to the console default handlers — non-running states route to the console (the REPL stays live after a script finishes).
 
@@ -287,13 +292,15 @@ The `oneshot` flag on `UserInputModel` (set for project overlays) enables a subm
 
 ### Key release
 
->> REVIEW: "else falls to" sounds misaligned with design. I think we explicitly designed for unified scheme of routing "combos, keyreleased, widget-if-shown" -- with only passing event to next consumer if preceding consumer does not exist or does not return 'true' (like in DOM events propagation). IF WE DID NOT TOUCH THE CONSOLE ROUTING ON THIS PASS, THEN LEGACY BEHAVIOUR INSIDE CONSOLE MAY BE KEPT. but at least intent to switch to unified three-stage routing must be documented in comments. (maybe as "TBD:" notes or whatever will be appropriate)
+On the **project route** keyreleased is now the unified chain the review below asked for
+(combos → generic callback → widget-if-shown, DOM-style truthy-stops-propagation) — see the
+dispatch-chain diagram above. The note below concerns the **console route**, which this pass
+deliberately did not touch (its legacy fork stays until the console/editor migration).
 
 `keypressed`/`textinput` get careful three-way routing (console / editor / project); **`keyreleased`
-gets route-level delegation but no editor fork.** Since 0.1.0-m4, `handlers.keyreleased` dispatches
-to the slot occupant like the other channels: during a project run `ProjectInputController:keyreleased`
-delegates to the shown widget, else to the project's native `love.keyreleased` (sink delegation only —
-no release dispatch tier exists; that scope is descoped, see the 0.1.0-m4 outcome ledger). On the
+gets route-level delegation but no editor fork.** Since 0.1.0-m5, `ProjectInputController:keyreleased`
+runs the same four-tier chain as the other channels (combo → `on_key_released` → sink), the released
+key already absent from the held set. On the
 console route the default handler forwards to a shown widget, else falls to `CC:keyreleased`
 = `ConsoleController:keyreleased` (`consoleController.lua:1090-1093`), which **unconditionally** calls
 `self.input:keyreleased(k)` — console's own instance — with **no `app_state == 'editor'` fork**.
