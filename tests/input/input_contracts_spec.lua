@@ -717,13 +717,14 @@ describe('input contracts #input', function()
       -- the console route (the ConsoleController).
       -- REVIEW: why all this mechanics with "named" targets? What is the goal pursued? How 'stop' is different from project exit or inspection?
       -- REVIEW: what triggers cc:stop_project_run() in the normal (production) envrionment? Which consequences its supposed to bear?
-      -- ESCALATED (M5c Scope 10 (a); session36): the "slots restored to console" / "named
-      -- restored route" lexicon is suspected misinterpretation-era. The ratified model marks
-      -- slot-swap FREE MECHANISM (routing table below FIXED slots = sound direction; §0 glossary,
-      -- design §2), so the binding assertion is the ACTIVE ROUTE/MODE, not slot restoration.
-      -- Re-derivation of the real restore cases (project-exit / stop / inspect-bound-over-project-
-      -- env) deferred to a cold architectural session. See
-      -- notes/talk/m5c-suite-reconciliation-open-contradictions.md.
+      -- RESOLVED (E30, session37; M5c Scope 10 (a) + AC-29): the "slots restored to console" /
+      -- "named restored route" lexicon was misinterpretation-era. The binding concept is the
+      -- ACTIVE ROUTE/MODE, not slot restoration (frozen design already states this — AC-27..30).
+      -- RETARGET this row to AC-29 TEARDOWN: stop's distinctive contract is the full teardown
+      -- (project participants unwired, widget silently hidden), NOT "keyboard route == console"
+      -- (that end-state is shared by project-exit and inspect; it is not stop-specific). DROP the
+      -- active_keyboard_route() accessor assertion (C23 — no unconsumed public surface). The M5c
+      -- implementor conforms this row; see notes/talk/m5c-suite-reconciliation-open-contradictions.md §Resolution.
       it('stop names the console as restored route',
         function()
           F.cc:stop_project_run()
@@ -752,6 +753,8 @@ describe('input contracts #input', function()
       -- the event EVEN while the widget is shown, falling through to the sink on a falsey return
       -- (native should reach 2). M5c re-derives this row from AC-31; do NOT preserve it green
       -- as-is. See reviews/m5c-m8-corpus-validation.md (Addendum).
+      -- E30 (session37) precision: the native is the tier-3 DEFAULT PARTICIPANT, seeded only when
+      -- the project set no on_* (explicit on_* takes PRECEDENCE; no "replace the native"). AC-31/AC-36.
       it('a native handler coexists with the sink',
         function()
           local native = 0

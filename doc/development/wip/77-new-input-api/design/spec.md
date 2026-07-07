@@ -305,13 +305,19 @@ post-implementation; the boundary is not.
 - **`inspect` (R11):** the console route active, bound over the project environment; project
   route disconnected; the project widget unhonoured (owning route inactive). No special rules.
 - **Native handlers = pure wrap (R7):** natives (`love.keypressed`/`textinput`/`keyreleased`)
-  a project defines are captured at load and installed as the **initial values of the
-  corresponding tier-3 callbacks** (`on_key_pressed`/`on_text_input`/`on_key_released`) —
-  plain participants, no widget-aware gating. A native returning nothing falls through to the
-  sink like any tier-3 falsey return; a project assigning the field replaces the wrapped
-  native like any callback (tier 4 untouched, R13). Consequence: natives see events while the
-  widget is shown; turtle/maze migrate under the SR1 break mandate (rides the dispatch-chain
-  slice — [`design.md`](design.md) §5).
+  a project defines auto-provision as **plain tier-3 participants** (`on_key_pressed`/
+  `on_text_input`/`on_key_released`) — no widget-aware gating; they are the material for the
+  tier-3 **default participant** that would otherwise be a noop. The tier-3 slot resolves by
+  **precedence**: an explicit `compy.input.on_*` assignment **always takes precedence** over a
+  captured native, which takes precedence over the default noop. Concretely a native seeds the
+  slot **only when the project set no `on_*`**; `love.*` is read **once at load** for that
+  purpose and is **never re-consulted** — reassigning `love.*` after load does not flow back
+  into the slot and never overrides an installed `on_*`. (No "assignment replaces the wrapped
+  native" semantics: there is no native to replace when an `on_*` is present; the two are
+  mutually exclusive by precedence, not by overwrite.) A native returning falsey falls through
+  to the sink like any tier-3 participant (tier 4 untouched, R13). Consequence: natives see
+  events while the widget is shown; turtle/maze migrate under the SR1 break mandate (rides the
+  dispatch-chain slice — [`design.md`](design.md) §5).
 
 ## §9 Legacy API removal (D-1 — unchanged)
 
@@ -357,7 +363,7 @@ diff; this table adds only what this file pins):
 | 5 | Framework Enter/Escape engage only while the widget is shown; otherwise fall through | consequence of "a tier with no participants falls through" (RM) — structural keys are widget-session keys |
 | 6 | Widget outputs as config keys AND fields | flagged deviation [design.md §9 D-b]; R3 makes the fields mutable regardless |
 | 7 | `on_text_entered(text)` single-arg | flagged deviation [design.md §9 D-c] |
-| 8 | Natives installed as initial tier-3 callback values | R7 pure wrap — "plain tier-3 participants"; assignment-replaces follows from R3 boundary |
+| 8 | Natives auto-provision as the tier-3 **default participant** — seeded **only when no `on_*` is set**; explicit `on_*` takes precedence (no replace-of-native semantics; `love.*` read once at load, never overrides an `on_*`) | R7 pure wrap = "plain tier-3 participants" (model R7 + design §5, which carry no replace relationship); precedence resolves the both-defined case (E30, session37 — realigns this file to the ratified model) |
 | 9 | Kbd/text-only disconnect scope | Stage-1 census (revalidation §2) — binding precision on ruling 3 |
 | 10 | `show`/`hide`/`configure`/`clear`/cursor semantics, force-gate, D-5 scopes, combo format, matcher seam | salvage from spec v01 (round-2 stakeholder records — [design.md §11]) |
 | 11 | Warn-on-suppression everywhere a call is refused (hidden no-ops, show-while-active) | C2 + doc A §6.5/§6.6 |

@@ -107,3 +107,59 @@ Both (a) and (b) may implicate **Gate-2-approved `spec.md`**, not just the in-re
 resolving them can require reopening approved design, which is the human's call (mandate "human
 reversal is always in-bounds"). The cold session's job is to **inspect frozen design and report the
 correct formulation**; any spec/design edits then land through the normal gate.
+
+## Resolution (E30, session37 — 2026-07-07)
+
+Cold read of the four authority docs (ratified model, `spec.md`, `design.md`, M5c) + the landed
+suite rows + the inline `-- REVIEW:` comments. Human ruled both. Dispositions:
+
+### (a) route-restoration lexicon — RESOLVED, no contract reopen
+
+Finding: the frozen contract **already speaks route/mode**, correctly. **AC-27–30** (M5c) state
+project-exit / stop / inspect in active-route terms with no slot lexicon. The "slots restored to
+console" phrasing survives only in (i) non-binding mechanism *asides* in `spec.md` §8 / `design.md`
+§4 that co-state the correct route-level statement, and (ii) the landed suite row L727
+`stop names the console as restored route`.
+
+The suite row is worse than stale — its **target is wrong**: it asserts
+`active_keyboard_route() == console` after stop, but "keyboard reaches the console" is the *generic*
+not-project-active state (identical for project-exit and inspect), **not** stop-specific. Stop's
+distinctive contract is **teardown** (AC-29). This is exactly the L718 REVIEW ("how is stop different
+from project exit or inspection?") — answer: for the keyboard-destination question alone, it isn't.
+
+Disposition: **no design.md/spec.md reopen** (AC-27–30 already correct; the prose asides are
+non-binding and may stay). Land in M5c only: **retarget the row to AC-29 teardown**, drop the
+`active_keyboard_route()` accessor (C23). Suite `-- ESCALATED` marker → converted to a RESOLVED
+retarget note.
+
+### (b) assign-replaces-capture — RESOLVED to precedence; minimal spec.md hardening
+
+Finding: the "assignment **replaces** the wrapped native" phrasing lives only in `spec.md` §8 R7 +
+§11 #8 (+ M5c AC-31) — absent from the ratified model R7 and design §5, which carry **no** replace
+relationship. As literally written it **permits the reverse-override** the human feared: a project
+assigning `on_*` early then defining `love.*` later in the chunk → capture-at-load reads the final
+`love.*` → native overwrites the explicit `on_*`. And `spec.md` §8 is M5c's cited authority, so a
+"fallback, no replace" M5c against a "replace" authority is a live derivation-drift trap.
+
+Human ruling (capture-point): **install the native wrapper only if `on_*` is not set** — the native
+is the material for the tier-3 **default participant** that would otherwise be a noop. Resolves to a
+**precedence**: explicit `on_*` > captured native > noop; `love.*` read once at load, never
+re-consulted, never overrides an `on_*`. This *aligns* spec.md with the ratified model R7 / design
+§5 — a realignment, not a new design.
+
+Disposition: human **endorsed hardening the already-closed `spec.md`** — §8 R7 reworded to
+precedence + reverse-override foreclosed; §11 #8 updated (drop "assignment-replaces"). M5c AC-31 →
+precedence wording; AC-36 "both populate the same slot" → **mutually-exclusive precedence**, and the
+10(b) escalation converted to a stated precedence assertion. Suite L749 `-- STALE` marker → precision
+line added. **Optional (human add-on):** framework MAY `Log.warn`/error when both a native and an
+`on_*` are defined for a channel — advisory only, pursue iff ~3 lines and no test; marginal case.
+
+### Landed files (working tree — human commits)
+- `design/spec.md` §8 R7 + §11 #8 (hardening (b)).
+- `design/spec/M5c-dispatch-chain.md` — header provenance, AC-31, AC-36, Scope-10 resolution block,
+  out-of-scope + test-strategy notes.
+- `tests/input/input_contracts_spec.lua` — L727 `-- ESCALATED`→RESOLVED retarget note; L749 `-- STALE`
+  precision line. (Test *bodies* are the M5c implementor's to conform — markers only here.)
+
+Gate-3 close still pends the human's remaining asks: (1) explicit review of the full session36
+AC/change inventory; (2) cold revalidation of the M5c slice + sweep-mandate against design/spec.
