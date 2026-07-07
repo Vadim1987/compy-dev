@@ -182,6 +182,20 @@ function F.running_project(name, fn)
   love[name] = fn
 end
 
+-- Take the project route through the REAL activation path
+-- (Controller.set_user_handlers, what a project run calls): the
+-- ProjectInputController becomes the slot occupant and captures
+-- the project's `natives` (its love.* handlers) as tier-3 seeds.
+-- app_state = 'running' so the four-tier chain (not the M4
+-- ruling-1 forward) dispatches. Returns the project-facing
+-- compy.input surface. This is the seam the dispatch-chain rows
+-- drive, in contrast with running_project's raw-slot shortcut.
+function F.activate_project(natives)
+  love.state.app_state = 'running'
+  Controller.set_user_handlers(natives or { }, CC)
+  return F.compy_input()
+end
+
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
 -- singleton disables selection, making pointer delivery a no-op —
@@ -206,6 +220,30 @@ local function restore_native_slots()
   love.mousereleased = Controller._defaults.mousereleased
 end
 
+-- Empty a table in place (used to clear the normalising handler
+-- sub-tables between tests; assigning nil is fine mid-traversal).
+local function wipe(t)
+  for k in pairs(t) do rawset(t, k, nil) end
+end
+
+-- Drop every project-route participant the chain rows install, so
+-- each test starts from framework defaults (the M5c teardown
+-- invariant, exercised at fixture scope): deactivate the route,
+-- clear the framework tier-1 slots and the project's combo tables
+-- and generic callbacks.
+local function reset_chain()
+  Controller.project_input:deactivate()
+  local fw = Controller.project_input.framework_handlers
+  wipe(fw.keypressed); wipe(fw.keyreleased); wipe(fw.textinput)
+  local input = CC:get_project_env().compy.input
+  wipe(input.handlers.keypressed)
+  wipe(input.handlers.keyreleased)
+  wipe(input.handlers.textinput)
+  input.on_key_pressed  = nil
+  input.on_text_input   = nil
+  input.on_key_released = nil
+end
+
 -- Clean slate between tests: no held keys, no widget, console mode,
 -- empty console line, drained click state, cleared click handlers.
 function F.reset()
@@ -214,6 +252,7 @@ function F.reset()
   love.state.app_state          = 'ready'
   love.state.editor             = nil
   restore_native_slots()
+  reset_chain()
   local compy                   = CC:get_project_env().compy
   compy.singleclick             = nil
   compy.doubleclick             = nil

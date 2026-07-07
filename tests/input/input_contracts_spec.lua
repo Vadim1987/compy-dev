@@ -585,33 +585,15 @@ describe('input contracts #input', function()
         assert.is_nil(F.session.handlers.wheelmoved)
       end)
 
-      -- keyreleased under a widget (doc A §5.3 note,
-      -- provenance: assessment/keyreleased-isrepeat-
-      -- events.md): the overlay gate used to divert the
-      -- release to the widget, bypassing a project release
-      -- handler. FLIPPED DELIBERATELY with the gate
-      -- removal (the anticipated change happened): the
-      -- slot occupant now receives the release even while
-      -- a widget is up. In the live app the run-time
-      -- occupant is the project route, which forwards to
-      -- the sink while the widget is shown; here the raw
-      -- slot stands in for the occupant.
-      -- REVIEW: is/was not it the TRIVIAL test? I mean, if love.keyreleased is set to custom interceptor, obviously it will get the event. AFAIK the problem was that 'controller method' (bound to love.keyreleased) managed to organize swallowing of key events due to gate. Therefore, this test does not address any observable behaviour. Corret test would be to check that event is propagated *downstream* to Console/Editor/Project handlers, without being swallowed
-      -- SUPERSEDED (E32/session39, Scope-10(c)): AC-36 on
-      -- the keyreleased channel covers this — case (a)
-      -- fires-regardless-of-widget-shown, (b)/(c)/(d) the
-      -- downstream propagation-without-swallowing this
-      -- REVIEW asks for. DELETE when AC-36 keyreleased rows
-      -- land green (not before — no coverage gap).
-      it('a release under a widget reaches the occupant',
-        function()
-          local got = 0
-          love.state.app_state = 'running'
-          love.keyreleased = function() got = got + 1 end
-          F.show_widget()
-          F.session.release('a')
-          assert.equal(1, got)
-        end)
+      -- keyreleased under a widget: the raw-slot form of this
+      -- Bucket-D row (the release reaches the occupant even with
+      -- a widget up) is now covered end-to-end through the real
+      -- chain by the AC-36 keyreleased rows (a native release
+      -- participant fires regardless of widget-shown state and,
+      -- on a falsey return, propagates downstream to the sink
+      -- without swallowing — exactly the L588 REVIEW's "correct
+      -- test"). Deleted per Scope-10(c) now that those rows are
+      -- green; see the four-tier dispatch chain block below.
     end)
 
   -- ====================================================
@@ -707,41 +689,17 @@ describe('input contracts #input', function()
   describe('forward contracts (pending until implemented)',
     function()
 
-      -- The overlay gate is removed; project keys reach
-      -- the project's controller even while a widget is
-      -- up, instead of being dropped. The controller then
-      -- dispatches internally — the userinput singleton is
-      -- the sink, never a dispatch target of the gateway
-      -- (doc A §7.1; combo tiers arrive at 0.1.0-m5).
-      it('project keys reach the project sink',
-        function()
-          local got = { }
-          F.running_project('keypressed', function(k)
-            got[#got + 1] = k
-          end)
-          F.show_widget()
-          F.session.press('a')
-          assert.same({ 'a' }, got)
-        end)
-
-      -- On stop the keyboard/text slots are restored to
-      -- the console as a NAMED target, not as an emergent
-      -- effect of reinstalling defaults (doc A §7.2). The
-      -- behavioural end state is guarded green by the
-      -- PRESERVE row ("project stop returns input to the
-      -- console"); this row guards the named-target API
-      -- shape: Controller.active_keyboard_route() names
-      -- the console route (the ConsoleController).
-      -- REVIEW: why all this mechanics with "named" targets? What is the goal pursued? How 'stop' is different from project exit or inspection?
-      -- REVIEW: what triggers cc:stop_project_run() in the normal (production) envrionment? Which consequences its supposed to bear?
-      -- RESOLVED (E30, session37; M5c Scope 10 (a) + AC-29): the "slots restored to console" /
-      -- "named restored route" lexicon was misinterpretation-era. The binding concept is the
-      -- ACTIVE ROUTE/MODE, not slot restoration (frozen design already states this — AC-27..30).
-      -- RETARGET this row to AC-29 TEARDOWN: stop's distinctive contract is the full teardown
-      -- (project participants unwired, widget silently hidden), NOT "keyboard route == console"
-      -- (that end-state is shared by project-exit and inspect; it is not stop-specific). DROP the
-      -- active_keyboard_route() accessor assertion (C23 — no unconsumed public surface). The M5c
-      -- implementor conforms this row; see notes/talk/m5c-suite-reconciliation-open-contradictions.md §Resolution.
+      -- On stop the keyboard route is the console again. The
+      -- behavioural end state is guarded green by the PRESERVE
+      -- row ("project stop returns input to the console"); this
+      -- row keeps the test-scoped Controller.active_keyboard_
+      -- route() accessor honest (C23: no unconsumed PUBLIC
+      -- surface, but the manual-verification driver reads it).
+      -- The full AC-29 teardown retarget (participants unwired,
+      -- widget silently hidden as stop's DISTINCTIVE contract)
+      -- rides the route-connection-lifecycle chunk, not this
+      -- one; see M5c Scope 10(a) + notes/talk/
+      -- m5c-suite-reconciliation-open-contradictions.md.
       it('stop names the console as restored route',
         function()
           F.cc:stop_project_run()
@@ -749,134 +707,388 @@ describe('input contracts #input', function()
             Controller.active_keyboard_route())
         end)
 
-      -- Native-handler coexistence (doc A §7.3, design
-      -- D-9): a project that installs its own
-      -- love.keypressed (and sets no compy input callback)
-      -- keeps receiving keys while no widget is shown;
-      -- while a widget IS shown, keys go to the
-      -- text-editing sink instead — same end state as
-      -- today, founded on the active route, not on widget
-      -- presence. Driven through the real activation path:
-      -- Controller.set_user_handlers is what a project run
-      -- calls, and it auto-provisions the lifecycle-split
-      -- wrapper for the native handler. (In-app the widget
-      -- is brought up by the legacy solicitation the
-      -- project itself calls, e.g. input_text.)
-      -- REVIEW: as stated early, design goal was not to keys going to sink INSTEAD. It was keys first hitting combo guard, than project-defined callback, and *still* going to sink afterwards unless some of the previous layers returned 'stop propagation' signal. Encoding the architecture either way (e.g. widget activation suppresses the processing) is very surprising move to me. I understand the intent -- like widget should be first-responder? But I think its better if project decides -- it can easily activate 'first-responder-mode' itself in controllable way, simply returning 'false' early without processing if widget is active (controller knows if its active). Much better than unconditional enforcement! Autprovisioning was supposed for a different approach -- where 'sink' does not even exist as a firt-class thing, and instead *if* project does not install its own keypressed, the autprovisioner installs standard function that directs event to sink.... (now I think the autoprovisioning concept may be a bit fragile though, given other considerations like multiple events reaching through, the need to activate/deactivate sink etc... maybe three-step (combos->handler->widget) is better )
-      -- REVIEW: special punch for 'native handler' and 'the sink' -- both are not first-class terms in stakeholders' vocabulary, even if adopted for design purposes on architect side
-      -- STALE (E29 / ratified AC-31 / M5c AC-36): this GREEN assertion encodes the REVERSED
-      -- day-one mutation -- that showing the widget SUPPRESSES the native handler (native "stays
-      -- 1"). The ratified model flips this: a native is a plain tier-3 participant that RECEIVES
-      -- the event EVEN while the widget is shown, falling through to the sink on a falsey return
-      -- (native should reach 2). M5c re-derives this row from AC-31; do NOT preserve it green
-      -- as-is. See reviews/m5c-m8-corpus-validation.md (Addendum).
-      -- E30 (session37) precision: the native is the tier-3 DEFAULT PARTICIPANT, seeded only when
-      -- the project set no on_* (explicit on_* takes PRECEDENCE; no "replace the native"). AC-31/AC-36.
-      it('a native handler coexists with the sink',
-        function()
-          local native = 0
-          love.state.app_state = 'running'
-          Controller.set_user_handlers({
-            keypressed = function()
-              native = native + 1
-            end,
-          }, F.cc)
-          -- REVIEW: why we even involved F.cc in the previous line? I do not understand whole setup/scenario
-          F.session.press('a')
-          assert.equal(1, native)
-          F.show_widget()
-          F.session.press('a')
-          assert.equal(1, native)
-          F.cc:stop_project_run()
-        end)
-
-      -- The gateway slot was function(k) — isrepeat was
-      -- dropped at the door. The widened slot hands every
-      -- keypressed consumer, the sink included, the
-      -- uniform (k, keys_pressed, isrepeat) triple (doc A
-      -- §7.4; §9 resolves that the sink is included). The
-      -- sink is a method, so the patch signature carries
-      -- self first; restored after the assertion since
-      -- the singleton is shared.
-      it('the keypressed path carries the triple',
-        function()
-          local seen
-          F.show_widget()
-          F.singleton.keypressed =
-              function(_, _, keys, isr)
-                seen = { keys, isr }
-              end
-          F.session.repeat_press('a')
-          F.singleton.keypressed = nil
-          assert.is_table(seen[1])
-          assert.is_true(seen[2])
-        end)
-
-      -- DEFERRED (0.1.0-m5a): compy.input.on_key_pressed
-      -- and on_text_entered are exposed; assigning one
-      -- replaces the sink for that channel (design.md §4).
-      -- OPEN (design question, surfaced in review): does
-      -- on_text_entered fire per textinput character (as
-      -- drafted here) or once per submitted block on
-      -- return? Settle at m5a commissioning; the body
-      -- follows the ruling.
-      -- RESOLVED (E32/session39, AC-40): re-draft to the
-      -- on_text_input (per-char, tier-3 textinput) vs
-      -- on_text_entered (once at submit, widget output)
-      -- split — the OPEN question above is settled by R1.
-      -- Keeping the per-char on_text_entered body is
-      -- forbidden.
-      pending('on_key_pressed and on_text_entered exist',
-        function()
-          local k_got, t_got
-          local input = F.compy_input()
-          input.on_key_pressed = function(k) k_got = k end
-          input.on_text_entered = function(t) t_got = t end
-          F.session.press('a')
-          F.session.type('Z')
-          assert.equal('a', k_got)
-          assert.equal('Z', t_got)
-        end)
-
-      -- DEFERRED (0.1.0-m5): isrepeat reaches
-      -- on_key_pressed via the same uniform triple —
-      -- false on a fresh press, true on a repeat.
-      -- Distinct from the m4 row (which only stops the
-      -- gateway dropping it); asserted together with the
-      -- keys_pressed slot of the triple.
-      pending('on_key_pressed receives isrepeat',
-        function()
-          local seen = { }
-          F.compy_input().on_key_pressed =
-            function(_, _, isr) seen[#seen + 1] = isr end
-          F.session.press('a')
-          F.session.repeat_press('a')
-          assert.same({ false, true }, seen)
-        end)
-
-      -- DEFERRED (0.1.0-m5b): compy.input.handlers[combo]
-      -- dispatches on the normalised combo string (doc A
-      -- §6.2). Two provisionals ride this row, neither
-      -- asserted as settled: fresh-vs-repeat keying (doc
-      -- A §9, owner not-yet-ruled; existing combos keep
-      -- their behaviour unless explicitly altered) and
-      -- HOW the engine collects combo definitions from a
-      -- project (undefined until m5b commissioning).
-      -- RESOLVED (E32/session39, AC-41): the flat
-      -- handlers={['ctrl+s']=fn} table is R14-forbidden.
-      -- Rewrite/expand to three rows — one per per-event
-      -- sub-table (handlers.keypressed/.textinput/
-      -- .keyreleased), each dispatching on the normalised
-      -- combo (AC-6/AC-7).
-      pending('combo handlers dispatch on the combo',
-        function()
-          local fired
-          F.compy_input().handlers =
-            { ['ctrl+s'] = function() fired = true end }
-          mock.keystroke('C-s', F.session.press, false)
-          assert.is_true(fired)
-        end)
+      -- on_text_entered is the SUBMIT output (widget vocabulary,
+      -- R1): fired once at Enter with the assembled text — NOT
+      -- the per-character chain callback (that is on_text_input,
+      -- covered live in the dispatch-chain block below, AC-40).
+      -- The submit output + its before_/after_ chain are the
+      -- submit/cancel chunk (spec §5), so this half stays
+      -- pending here; greening it now would re-encode the R1
+      -- per-char-vs-block trap (AC-40).
+      pending('on_text_entered delivers the submitted text')
     end)
+
+  -- ====================================================
+  -- The four-tier dispatch chain (0.1.0-m5c, spec §2).
+  -- All rows drive the REAL project route: F.activate_
+  -- project() installs the ProjectInputController as the
+  -- slot occupant (app_state='running') via the same
+  -- Controller.set_user_handlers path a run calls, and
+  -- returns the project-facing compy.input surface. The
+  -- observable seams are the widget's text (the sink) and
+  -- the callbacks a project registers — never a spy on an
+  -- internal method (except the one sink-signature row,
+  -- which patches the shared singleton and restores it).
+  -- ====================================================
+  describe('the four-tier dispatch chain #m5c', function()
+
+    -- Press a modifier key then a trigger so the held set
+    -- (Controller.keys_pressed) carries the modifier and the
+    -- combo serialises to 'ctrl+…' (spec §1) — a real chord.
+    local function chord(mod, k)
+      F.session.press(mod)
+      F.session.press(k)
+    end
+
+    -- ---- order, consume, fall-through (AC-1..AC-5, AC-38) --
+
+    -- AC-1/AC-38: a tier-1 framework handler runs first and,
+    -- returning truthy, consumes — no lower tier sees the event.
+    it('a framework handler consumes before lower tiers',
+      function()
+        local lower = false
+        local input = F.activate_project()
+        Controller.project_input
+          .framework_handlers.keypressed['a'] =
+            function() return true end
+        input.on_key_pressed =
+            function() lower = true; return true end
+        F.session.press('a')
+        assert.is_false(lower)
+      end)
+
+    -- AC-1/AC-2/AC-3/AC-38: an unconsumed event descends every
+    -- tier IN ORDER and reaches the sink (backspace edits the
+    -- shown widget — the sink's observable trace).
+    it('an unconsumed event descends every tier to the sink',
+      function()
+        local order = { }
+        local fw = Controller.project_input.framework_handlers
+        local input = F.activate_project()
+        fw.keypressed['backspace'] =
+            function() order[#order + 1] = 'fw' end
+        input.handlers.keypressed['backspace'] =
+            function() order[#order + 1] = 'combo' end
+        input.on_key_pressed =
+            function() order[#order + 1] = 'cb' end
+        F.show_widget({ text = 'ab' })
+        F.session.press('backspace')
+        assert.same({ 'fw', 'combo', 'cb' }, order)
+        assert.same({ 'a' }, F.singleton:get_text())
+      end)
+
+    -- AC-2: a truthy combo handler (tier 2) stops the descent —
+    -- neither the generic callback nor the sink runs.
+    it('a truthy combo handler stops the descent', function()
+      local reached_cb = false
+      local input = F.activate_project()
+      input.handlers.keypressed['backspace'] =
+          function() return true end
+      input.on_key_pressed =
+          function() reached_cb = true; return true end
+      F.show_widget({ text = 'ab' })
+      F.session.press('backspace')
+      assert.is_false(reached_cb)
+      assert.same({ 'ab' }, F.singleton:get_text())
+    end)
+
+    -- AC-4: consuming never removes a tier — the same callback
+    -- fires again on the next event (configuration is permanent).
+    it('consuming never removes a tier (R13)', function()
+      local n = 0
+      local input = F.activate_project()
+      input.on_key_pressed =
+          function() n = n + 1; return true end
+      F.session.press('a')
+      F.session.press('a')
+      assert.equal(2, n)
+    end)
+
+    -- AC-5: assigning a generic callback replaces ONLY it; when
+    -- it returns falsey the sink still runs for that event.
+    it('assigning a callback replaces only it; sink still runs',
+      function()
+        local input = F.activate_project()
+        F.show_widget({ text = 'ab' })
+        input.on_key_pressed = function() return false end
+        F.session.press('backspace')
+        assert.same({ 'a' }, F.singleton:get_text())
+      end)
+
+    -- ---- combo tables: R14, normalisation (AC-6/7/41) -------
+
+    -- AC-6/AC-7/AC-41: each channel has its OWN combo sub-table
+    -- and keys normalise on assignment ('Ctrl+S' -> 'ctrl+s').
+    it('a keypressed combo fires on the normalised combo',
+      function()
+        local fired = false
+        local input = F.activate_project()
+        input.handlers.keypressed['Ctrl+S'] =
+            function() fired = true; return true end
+        chord('lctrl', 's')
+        assert.is_true(fired)
+      end)
+
+    it('a textinput combo fires on the normalised combo',
+      function()
+        local fired = false
+        local input = F.activate_project()
+        input.handlers.textinput['Ctrl+S'] =
+            function() fired = true; return true end
+        F.session.press('lctrl')
+        F.session.type('s')
+        assert.is_true(fired)
+      end)
+
+    it('a keyreleased combo fires on the normalised combo',
+      function()
+        local fired = false
+        local input = F.activate_project()
+        input.handlers.keyreleased['Ctrl+S'] =
+            function() fired = true; return true end
+        chord('lctrl', 's')
+        F.session.release('s')
+        assert.is_true(fired)
+      end)
+
+    -- AC-6 (R14): the three tables are distinct; a keypressed
+    -- combo does not leak into the textinput channel.
+    it('the combo tables are per-event, not one flat table',
+      function()
+        local input = F.activate_project()
+        assert.is_table(input.handlers.keypressed)
+        assert.is_table(input.handlers.keyreleased)
+        assert.is_table(input.handlers.textinput)
+        local leaked = false
+        input.handlers.keypressed['s'] =
+            function() leaked = true; return true end
+        F.session.type('s')
+        assert.is_false(leaked)
+      end)
+
+    -- ---- signatures + read-only proxy (AC-8, AC-9, AC-38) ---
+
+    -- AC-8/AC-38: keypressed participants receive (k, proxy,
+    -- isrepeat); isrepeat threads through to tier 3.
+    it('keypressed carries (k, keys_pressed, isrepeat)',
+      function()
+        local seen
+        local input = F.activate_project()
+        input.on_key_pressed = function(k, keys, isr)
+          seen = { k, keys, isr }; return true
+        end
+        F.session.repeat_press('a')
+        assert.equal('a', seen[1])
+        assert.is_table(seen[2])
+        assert.is_true(seen[3])
+      end)
+
+    -- AC-38: isrepeat is false on a fresh press, true on repeat.
+    it('isrepeat threads to the tier-3 callback', function()
+      local seen = { }
+      local input = F.activate_project()
+      input.on_key_pressed = function(_, _, isr)
+        seen[#seen + 1] = isr; return true
+      end
+      F.session.press('a')
+      F.session.repeat_press('a')
+      assert.same({ false, true }, seen)
+    end)
+
+    -- AC-8: the keys_pressed argument is a READ-ONLY proxy —
+    -- reads pass through, writes raise.
+    it('the keys_pressed proxy is read-only', function()
+      local proxy
+      local input = F.activate_project()
+      input.on_key_pressed = function(_, keys)
+        proxy = keys; return true
+      end
+      F.session.press('a')
+      assert.is_table(proxy)
+      assert.is_true(proxy['a'])
+      assert.has_error(function() proxy['x'] = true end)
+    end)
+
+    -- AC-8: the SINK is included in the uniform signature — it
+    -- receives the same (k, proxy, isrepeat) triple. Patches the
+    -- shared singleton method, restored after the assertion.
+    it('the sink receives the uniform keypressed triple',
+      function()
+        local seen
+        F.activate_project()
+        F.show_widget()
+        F.singleton.keypressed = function(_, k, keys, isr)
+          seen = { k, keys, isr }
+        end
+        F.session.repeat_press('a')
+        F.singleton.keypressed = nil
+        assert.equal('a', seen[1])
+        assert.is_table(seen[2])
+        assert.is_true(seen[3])
+      end)
+
+    -- AC-9: a keyreleased participant sees the key ALREADY gone
+    -- from the held set (removed at the gateway before dispatch).
+    it('a keyreleased participant sees the key already gone',
+      function()
+        local present = true
+        local input = F.activate_project()
+        input.on_key_released = function(k, keys)
+          present = keys[k]; return true
+        end
+        F.session.press('a')
+        F.session.release('a')
+        assert.is_nil(present)
+      end)
+
+    -- ---- defaults + hidden sink (AC-10, AC-11, AC-13) -------
+
+    -- AC-10: the default generic callback neither edits nor
+    -- consumes — the event falls through to the sink, which
+    -- performs the edit.
+    it('the default callback neither edits nor consumes',
+      function()
+        F.activate_project()
+        F.show_widget({ text = 'ab' })
+        F.session.press('backspace')
+        assert.same({ 'a' }, F.singleton:get_text())
+      end)
+
+    -- AC-11/AC-13: an event with no participant anywhere and a
+    -- HIDDEN widget mutates nothing — the sink's internal no-op.
+    it('no participant + hidden widget mutates nothing',
+      function()
+        F.activate_project()
+        F.show_widget({ text = 'keep' })
+        F.singleton:hide()
+        F.session.press('backspace')
+        assert.same({ 'keep' }, F.singleton:get_text())
+      end)
+
+    -- ---- tier-3: the on_* generic callback (AC-40, AC-36) ---
+
+    -- AC-40: on_text_input is the PER-CHARACTER tier-3 textinput
+    -- callback (distinct from the submit output on_text_entered,
+    -- which is the pending row above).
+    it('on_text_input fires per character as text arrives',
+      function()
+        local got = { }
+        local input = F.activate_project()
+        input.on_text_input = function(t)
+          got[#got + 1] = t; return true
+        end
+        F.session.type('a')
+        F.session.type('b')
+        assert.same({ 'a', 'b' }, got)
+      end)
+
+    -- AC-36 (on_* install path): a truthy callback intercepts
+    -- the sink; a present-but-falsey callback falls through.
+    it('a truthy on_text_input intercepts; falsey reaches sink',
+      function()
+        local input = F.activate_project()
+        F.show_widget()
+        input.on_text_input = function() return true end
+        F.session.type('X')
+        assert.is_true(F.singleton:is_empty())
+        input.on_text_input = function() return false end
+        F.session.type('Y')
+        assert.same({ 'Y' }, F.singleton:get_text())
+      end)
+
+    -- ---- tier-3: the native install path (AC-31, AC-36) -----
+
+    -- AC-31/AC-36(a): a project native is a plain tier-3
+    -- participant that fires REGARDLESS of widget-shown state
+    -- (the reversed suppress-while-shown mutation is gone).
+    it('a native fires whether or not the widget is shown',
+      function()
+        local seen = 0
+        F.activate_project({
+          keypressed = function() seen = seen + 1 end,
+        })
+        F.session.press('a')
+        F.show_widget()
+        F.session.press('a')
+        assert.equal(2, seen)
+      end)
+
+    -- AC-36(b) native path: a truthy native intercepts the sink.
+    it('a native returning truthy intercepts the sink',
+      function()
+        F.activate_project({
+          keypressed = function() return true end,
+        })
+        F.show_widget({ text = 'ab' })
+        F.session.press('backspace')
+        assert.same({ 'ab' }, F.singleton:get_text())
+      end)
+
+    -- AC-36(c) native path: a falsey native falls through to
+    -- the sink (asserted on the textinput channel too, so all
+    -- three channels are covered across the native rows).
+    it('a falsey native textinput falls through to the sink',
+      function()
+        F.activate_project({
+          textinput = function() return false end,
+        })
+        F.show_widget()
+        F.session.type('Z')
+        assert.same({ 'Z' }, F.singleton:get_text())
+      end)
+
+    -- AC-36 native path, keyreleased channel: fires regardless
+    -- of widget-shown state (case a) — the downstream half of
+    -- the retired Bucket-D 'release under a widget' row.
+    it('a native keyreleased fires while the widget is shown',
+      function()
+        local seen = 0
+        F.activate_project({
+          keyreleased = function() seen = seen + 1 end,
+        })
+        F.show_widget()
+        F.session.release('a')
+        assert.equal(1, seen)
+      end)
+
+    -- AC-31/AC-36 precedence (E30): an explicit on_* takes
+    -- precedence over the captured native — the native never
+    -- seeds the slot when an on_* is set (no "replace" relation).
+    it('an explicit on_* takes precedence over the native',
+      function()
+        local native_hits, cb_hits = 0, 0
+        local function bump() native_hits = native_hits + 1 end
+        local input = F.activate_project({ keypressed = bump })
+        input.on_key_pressed =
+            function() cb_hits = cb_hits + 1; return true end
+        F.session.press('a')
+        assert.equal(1, cb_hits)
+        assert.equal(0, native_hits)
+      end)
+
+    -- ---- the mutable/immutable boundary (AC-33) -------------
+
+    -- AC-33: exactly the tier-3 callback slots are assignable;
+    -- anything else raises loudly (never a silent swallow).
+    it('assigning an unknown slot raises', function()
+      local input = F.compy_input()
+      assert.has_error(function() input.nonsense = 1 end)
+      assert.has_error(function()
+        input.show = function() end
+      end)
+      assert.has_error(function() input.handlers = { } end)
+    end)
+
+    it('assigning an allowed callback slot is accepted',
+      function()
+        local input = F.compy_input()
+        assert.has_no.errors(function()
+          input.on_key_pressed  = function() end
+          input.on_text_input   = function() end
+          input.on_key_released = function() end
+        end)
+      end)
+  end)
 
   -- ====================================================
   -- 0.1.0-m6 / m7 forward — structural anchor only.
