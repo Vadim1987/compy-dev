@@ -355,7 +355,13 @@ describe('input contracts #input', function()
     -- Fully event-driven: the text arrives through the
     -- real gate (the shown widget is the soliciting
     -- surface), the submit is a real return keypress.
-    it('a submit fills the handle and closes', function()
+    -- DEPRECATED (E32/session39, AC-39): exercises the
+    -- oneshot/push('userinput') machinery AC-25 deletes at
+    -- m5c. Lifecycle: red on AC-25 delete → pending() →
+    -- delete once the submit→on_text_entered→deactivate
+    -- behaviour is green through the new chain. busted has
+    -- no xfail; pending() is the skipped state.
+    it('a submit fills the handle and closes #deprecated', function()
       local env = F.cc:get_project_env()
       local ref = env.user_input()
       env.input_text('prompt?')
@@ -454,7 +460,12 @@ describe('input contracts #input', function()
     -- wiring because that is the only solicitation
     -- surface that exists today; the deactivation
     -- behaviour itself carries into the m6 chains.
-    it('a oneshot submit deactivates the widget',
+    -- DEPRECATED (E32/session39, AC-39): calls
+    -- F.session.handlers.userinput() directly (nil after
+    -- AC-25 ⇒ error). Same lifecycle as the submit row:
+    -- red → pending() → delete when the new chain's
+    -- deactivate step is green.
+    it('a oneshot submit deactivates the widget #deprecated',
       function()
         local env = F.cc:get_project_env()
         env.user_input()
@@ -586,6 +597,12 @@ describe('input contracts #input', function()
       -- the sink while the widget is shown; here the raw
       -- slot stands in for the occupant.
       -- REVIEW: is/was not it the TRIVIAL test? I mean, if love.keyreleased is set to custom interceptor, obviously it will get the event. AFAIK the problem was that 'controller method' (bound to love.keyreleased) managed to organize swallowing of key events due to gate. Therefore, this test does not address any observable behaviour. Corret test would be to check that event is propagated *downstream* to Console/Editor/Project handlers, without being swallowed
+      -- SUPERSEDED (E32/session39, Scope-10(c)): AC-36 on
+      -- the keyreleased channel covers this — case (a)
+      -- fires-regardless-of-widget-shown, (b)/(c)/(d) the
+      -- downstream propagation-without-swallowing this
+      -- REVIEW asks for. DELETE when AC-36 keyreleased rows
+      -- land green (not before — no coverage gap).
       it('a release under a widget reaches the occupant',
         function()
           local got = 0
@@ -803,6 +820,12 @@ describe('input contracts #input', function()
       -- drafted here) or once per submitted block on
       -- return? Settle at m5a commissioning; the body
       -- follows the ruling.
+      -- RESOLVED (E32/session39, AC-40): re-draft to the
+      -- on_text_input (per-char, tier-3 textinput) vs
+      -- on_text_entered (once at submit, widget output)
+      -- split — the OPEN question above is settled by R1.
+      -- Keeping the per-char on_text_entered body is
+      -- forbidden.
       pending('on_key_pressed and on_text_entered exist',
         function()
           local k_got, t_got
@@ -839,6 +862,12 @@ describe('input contracts #input', function()
       -- their behaviour unless explicitly altered) and
       -- HOW the engine collects combo definitions from a
       -- project (undefined until m5b commissioning).
+      -- RESOLVED (E32/session39, AC-41): the flat
+      -- handlers={['ctrl+s']=fn} table is R14-forbidden.
+      -- Rewrite/expand to three rows — one per per-event
+      -- sub-table (handlers.keypressed/.textinput/
+      -- .keyreleased), each dispatching on the normalised
+      -- combo (AC-6/AC-7).
       pending('combo handlers dispatch on the combo',
         function()
           local fired
