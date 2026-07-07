@@ -42,11 +42,11 @@ Rules for commissioning them:
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session01/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session02/prompt.md`
 
-> _Note (session35): the pointer above still names `session01` — Fable's landed **M4** run, now
-> history. The M5c sweep session is authored when M5c is commissioned (after Gate 3 closes); repoint
-> then._
+> _Note (session40, 2026-07-07): Gate 3 is CLOSED — the M5c slice is frozen and commissioned. The
+> pointer now names `session02` (the M5c sweep genesis). `session01` was Fable's landed **M4** run,
+> now history. Boot session02 and carve M5c into human-gated chunks per the mandate._
 
 ## Wrap-up rule (mechanical — no inference)
 

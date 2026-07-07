@@ -14,7 +14,7 @@ frozen design-phase total + the total-estimated log.*
 > or adjust parts without blocking implementation — there is no
 > requirement to freeze the plan before work starts.
 
-> **RE-CUT (E29 Stage 3, 2026-07-06 — Gate 3 in review).** After the M4 architect pushback,
+> **RE-CUT (E29 Stage 3, 2026-07-06 — Gate 3 CLOSED 2026-07-07).** After the M4 architect pushback,
 > the design corpus was re-derived from the Gate-1 **ratified model**
 > ([`notes/ratified-model.md`](notes/ratified-model.md); `design.md`/`spec.md` Gate-2
 > approved 2026-07-06). The remaining plan is re-cut against the new spec:

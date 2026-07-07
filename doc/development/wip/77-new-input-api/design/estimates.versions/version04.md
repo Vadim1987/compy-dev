@@ -1,6 +1,6 @@
 # estimates — version 04 (E29 Stage-3 re-cut: M5c consolidation)
 
-_LLM(Claude Fable 5): 2026-07-06 (E29 Stage 3 / E11 op, session33); Approved by human?: NOT YET (Gate 3 in review);_
+_LLM(Claude Fable 5): 2026-07-06 (E29 Stage 3 / E11 op, session33); Approved by human?: **YES — 2026-07-07** (Gate 3 CLOSED, session40 / E33);_
 
 > **Latest version → references up to canonical.** Per
 > [`doc-format.md`](/var/lib/brainlab/current/rules/doc-format.md) §6/§6.1, the single

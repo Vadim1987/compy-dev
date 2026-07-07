@@ -115,7 +115,7 @@ RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 
 USER root
 # ── Claude Code ─────────────────────
-RUN ACTUALIZE=20260701 npm install -g @anthropic-ai/claude-code
+RUN ACTUALIZE=20260707 npm install -g @anthropic-ai/claude-code
 USER ${USER}
 
 # ── MCP wiring ───────────────────────────────────────────────────────
