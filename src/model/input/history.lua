@@ -3,12 +3,17 @@ require('util.dequeue')
 require('util.string.string')
 require('util.debug')
 
+local DEFAULT_LIMIT = 1000
+
 --- @class History: Dequeue<string[]>
 --- @field index integer
+--- @field limit integer entry cap, 0 for unlimited
 History = class.create()
 
-function History.new()
+--- @param limit integer? entry cap; 0 means unlimited
+function History.new(limit)
   local self = Dequeue.typed('string[]')
+  self.limit = limit or DEFAULT_LIMIT
 
   setmetatable(self, {
     __index = function(t, k)
@@ -25,6 +30,7 @@ function History:remember(input)
   if string.is_non_empty_string_array(input) then
     if not self.index then
       self:append(input)
+      self:_trim()
       return true
     else
       local entry = self:get(self.index)
@@ -33,10 +39,26 @@ function History:remember(input)
       local new_s = string.unlines(new)
       if hist ~= new_s then
         self:append(input)
+        self:_trim()
       end
     end
   end
   return false
+end
+
+--- Evict oldest entries past the limit
+--- @private
+function History:_trim()
+  if self.limit == 0 then return end
+  while #self > self.limit do
+    self:pop_front()
+    if self.index then
+      self.index = self.index - 1
+      if self.index < 1 then
+        self:reset_index()
+      end
+    end
+  end
 end
 
 function History:reset_index()

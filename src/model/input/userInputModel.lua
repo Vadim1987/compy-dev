@@ -48,7 +48,7 @@ function UserInputModel.new(cfg, eval, oneshot, custom_label)
   local self = setmetatable({
     oneshot = oneshot,
     entered = InputText(),
-    history = History(),
+    history = History(cfg.input_history),
     evaluator = eval,
     cursor = Cursor(),
     selection = InputSelection(),
@@ -354,7 +354,7 @@ end
 --- @param history boolean?
 function UserInputModel:reset(history)
   if history and self:keep_history() then
-    self.history = History()
+    self.history = History(self.cfg.input_history)
   end
   self:clear_input()
 end
