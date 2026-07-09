@@ -242,6 +242,10 @@ local function reset_chain()
   input.on_key_pressed  = nil
   input.on_text_input   = nil
   input.on_key_released = nil
+  input.on_text_entered = nil
+  input.on_limit_reached = nil
+  input.validator = nil
+  input.highlighter = nil
 end
 
 -- Clean slate between tests: no held keys, no widget, console mode,

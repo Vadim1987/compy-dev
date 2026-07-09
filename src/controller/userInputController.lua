@@ -65,9 +65,10 @@ function UserInputController:is_empty()
 end
 
 --- @param dir VerticalDir?
+--- @param scope 'input'|'line'?
 --- @return boolean
-function UserInputController:is_at_limit(dir)
-  return self.model:is_at_limit(dir)
+function UserInputController:is_at_limit(dir, scope)
+  return self.model:is_at_limit(dir, scope)
 end
 
 ----------------
@@ -199,6 +200,19 @@ local apply_config = function(self, cfg)
   if cfg.result ~= nil then
     self.result = cfg.result
   end
+  local ev = self.model.evaluator
+  if cfg.highlighter ~= nil and ev then
+    ev.highlighter = cfg.highlighter
+  end
+  if cfg.validator ~= nil then
+    self.validator = cfg.validator
+  end
+  if cfg.on_text_entered ~= nil then
+    self.on_text_entered = cfg.on_text_entered
+  end
+  if cfg.on_limit_reached ~= nil then
+    self.on_limit_reached = cfg.on_limit_reached
+  end
 end
 
 --- Fresh activation of the singleton overlay: clear content when no text is given, apply
@@ -305,6 +319,17 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   end
   local input = self.model
   local ret
+  local on_limit = self.on_limit_reached
+
+  local function emit_limit(dir, scope)
+    if on_limit then on_limit(dir, scope) end
+  end
+
+  local function line_scope(dir)
+    if input:get_n_text_lines() == 1 then return 'input' end
+    if input:is_at_limit(dir, 'input') then return 'input' end
+    return 'line'
+  end
 
   -- (combo serialisation lives in controller.lua; this sink only sees the raw key.)
   if input:has_error() then
@@ -366,10 +391,12 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     if k == "up" then
       local l = input:cursor_vertical_move('up')
       ret = l
+      if l then emit_limit('up', 'input') end
     end
     if k == "down" then
       local l = input:cursor_vertical_move('down')
       ret = l
+      if l then emit_limit('down', 'input') end
     end
     if Key.alt() then
       if k == "up" then
@@ -381,6 +408,12 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     end
   end
   local function horizontal()
+    if k == "left" and input:is_at_limit('left', 'line') then
+      emit_limit('left', line_scope('left'))
+    end
+    if k == "right" and input:is_at_limit('right', 'line') then
+      emit_limit('right', line_scope('right'))
+    end
     if k == "left" then
       input:cursor_left()
     end

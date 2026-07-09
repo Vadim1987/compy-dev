@@ -554,19 +554,30 @@ function UserInputModel:get_cursor_y()
 end
 
 --- @param dir VerticalDir?
+--- @param scope 'input'|'line'?
 --- @return boolean
-function UserInputModel:is_at_limit(dir)
+function UserInputModel:is_at_limit(dir, scope)
   local n = self:get_n_text_lines()
   local cl = self:get_cursor_y()
-  if dir == 'down' then
-    return cl == n
-  elseif dir == 'up' then
-    return cl == 1
-  else
-    if n < 3 then return true end
-    local limit = cl == 1 or cl == n
-    return limit
+  local cc = self:get_cursor_x()
+  local line = self:get_text_line(cl)
+  local line_end = string.ulen(line) + 1
+  if not dir then
+    return cl == 1 or cl == n
   end
+  local req = scope or 'input'
+  if n == 1 then req = 'input' end
+  if dir == 'up' then return cl == 1 end
+  if dir == 'down' then return cl == n end
+  if dir == 'left' then
+    if req == 'line' then return cc == 1 end
+    return cl == 1 and cc == 1
+  end
+  if dir == 'right' then
+    if req == 'line' then return cc == line_end end
+    return cl == n and cc == line_end
+  end
+  return false
 end
 
 --- @return InputDTO

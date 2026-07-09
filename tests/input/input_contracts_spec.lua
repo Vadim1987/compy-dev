@@ -1100,6 +1100,85 @@ describe('input contracts #input', function()
           input.on_key_released = function() end
         end)
       end)
+
+    -- ---- widget outputs (AC-14/15/16/42a, chunk-2) ----------
+
+    -- AC-16: the four widget outputs are project-assignable
+    -- fields on compy.input (same boundary, widened allowlist).
+    it('the four widget output fields are assignable',
+      function()
+        local input = F.compy_input()
+        assert.has_no.errors(function()
+          input.on_text_entered  = function() end
+          input.on_limit_reached = function() end
+          input.validator        = function() end
+          input.highlighter      = function() end
+        end)
+      end)
+
+    -- AC-16 (D-b): show(config) keys and field assignment hit
+    -- the same underlying slots.
+    it('show(config) and fields share one output slot',
+      function()
+        local input = F.compy_input()
+        local cb = function() end
+        input.show({ on_limit_reached = cb })
+        assert.equal(cb, input.on_limit_reached)
+        local hl = function() return { { } } end
+        input.highlighter = hl
+        input.show()
+        assert.equal(hl, input.highlighter)
+      end)
+
+    -- AC-42(a): a custom highlighter transforms live text and
+    -- the queried highlight reflects that transformed output.
+    it('a custom highlighter transforms queried highlight',
+      function()
+        local input = F.activate_project()
+        local marker = { { 'x' } }
+        input.show({
+          highlighter = function()
+            return marker
+          end,
+        })
+        F.session.type('a')
+        local got = F.singleton.model:get_highlight()
+        assert.equal(marker, got.hl)
+      end)
+
+    -- AC-15 + AC-14 boundary half: crossing attempts fire
+    -- on_limit_reached(direction, scope) and its return value
+    -- is ignored (observational only; sink still runs).
+    it('left boundary fires output; return is ignored',
+      function()
+        local seen = { }
+        local input = F.activate_project()
+        input.show({
+          text = 'ab',
+          on_limit_reached = function(dir, scope)
+            seen[#seen + 1] = { dir, scope }
+            return true
+          end,
+        })
+        F.singleton:jump_home()
+        F.session.press('left')
+        assert.same({ { 'left', 'input' } }, seen)
+      end)
+
+    -- AC-15: line-scope boundary in multiline text.
+    it('left line boundary fires scope line', function()
+      local seen = { }
+      local input = F.activate_project()
+      input.show({
+        text = { 'ab', 'cd' },
+        on_limit_reached = function(dir, scope)
+          seen[#seen + 1] = { dir, scope }
+        end,
+      })
+      F.singleton:set_cursor(Cursor(2, 1))
+      F.session.press('left')
+      assert.same({ { 'left', 'line' } }, seen)
+    end)
   end)
 
   -- ====================================================

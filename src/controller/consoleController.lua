@@ -348,12 +348,15 @@ end
 -- R3). Everything else on compy.input is callable API and
 -- raises loudly on assignment (AC-33). Later chunks widen this
 -- allowlist with before_/after_ hooks and the widget-output
--- fields (on_text_entered, on_limit_reached, validator,
--- highlighter) — they are NOT part of chunk 1.
+-- fields; chunk 2 lands those four widget outputs.
 local INPUT_CALLBACKS = {
-  on_key_pressed  = true,
-  on_text_input   = true,
-  on_key_released = true,
+  on_key_pressed    = true,
+  on_text_input     = true,
+  on_key_released   = true,
+  on_text_entered   = true,
+  on_limit_reached  = true,
+  validator         = true,
+  highlighter       = true,
 }
 
 --- Assemble the compy.input surface over its backing `state`
@@ -400,8 +403,20 @@ local get_compy_input = function()
   }
   local methods = {
     show = function(cfg)
+      local next_cfg = cfg or {}
+      local output_keys = {
+        'on_text_entered',
+        'on_limit_reached',
+        'validator',
+        'highlighter',
+      }
+      for _, k in ipairs(output_keys) do
+        local v = next_cfg[k]
+        if v ~= nil then state[k] = v end
+        next_cfg[k] = state[k]
+      end
       local ui = love.state.user_input_controller
-      if ui then ui:show(cfg) end
+      if ui then ui:show(next_cfg) end
     end,
     hide = function()
       local ui = love.state.user_input_controller
