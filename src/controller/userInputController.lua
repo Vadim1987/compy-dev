@@ -319,13 +319,14 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   end
   local input = self.model
   local ret
+  -- REVIEW: 'or noop' would safe if-checks downstream -- and it should be installed as default when applying config -- and then 'emit_limit' becomes redundant or just alias
   local on_limit = self.on_limit_reached
 
   local function emit_limit(dir, scope)
     if on_limit then on_limit(dir, scope) end
   end
 
-  local function line_scope(dir)
+  local function horizontal_limit_scope(dir)
     if input:get_n_text_lines() == 1 then return 'input' end
     if input:is_at_limit(dir, 'input') then return 'input' end
     return 'line'
@@ -409,10 +410,10 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   end
   local function horizontal()
     if k == "left" and input:is_at_limit('left', 'line') then
-      emit_limit('left', line_scope('left'))
+      emit_limit('left', horizontal_limit_scope('left'))
     end
     if k == "right" and input:is_at_limit('right', 'line') then
-      emit_limit('right', line_scope('right'))
+      emit_limit('right', horizontal_limit_scope('right'))
     end
     if k == "left" then
       input:cursor_left()

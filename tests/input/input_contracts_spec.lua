@@ -1149,6 +1149,36 @@ describe('input contracts #input', function()
     -- AC-15 + AC-14 boundary half: crossing attempts fire
     -- on_limit_reached(direction, scope) and its return value
     -- is ignored (observational only; sink still runs).
+    it('up boundary fires direction up with input scope',
+      function()
+        local seen = { }
+        local input = F.activate_project()
+        input.show({
+          text = { 'ab', 'cd' },
+          on_limit_reached = function(dir, scope)
+            seen[#seen + 1] = { dir, scope }
+          end,
+        })
+        F.singleton:set_cursor(Cursor(1, 2))
+        F.session.press('up')
+        assert.same({ { 'up', 'input' } }, seen)
+      end)
+
+    it('down boundary fires direction down with input scope',
+      function()
+        local seen = { }
+        local input = F.activate_project()
+        input.show({
+          text = { 'ab', 'cd' },
+          on_limit_reached = function(dir, scope)
+            seen[#seen + 1] = { dir, scope }
+          end,
+        })
+        F.singleton:set_cursor(Cursor(2, 2))
+        F.session.press('down')
+        assert.same({ { 'down', 'input' } }, seen)
+      end)
+
     it('left boundary fires output; return is ignored',
       function()
         local seen = { }
@@ -1178,6 +1208,52 @@ describe('input contracts #input', function()
       F.singleton:set_cursor(Cursor(2, 1))
       F.session.press('left')
       assert.same({ { 'left', 'line' } }, seen)
+    end)
+
+    it('right line boundary fires scope line', function()
+      local seen = { }
+      local input = F.activate_project()
+      input.show({
+        text = { 'ab', 'cd' },
+        on_limit_reached = function(dir, scope)
+          seen[#seen + 1] = { dir, scope }
+        end,
+      })
+      F.singleton:set_cursor(Cursor(1, 3))
+      F.session.press('right')
+      assert.same({ { 'right', 'line' } }, seen)
+    end)
+
+    -- Edge case: first-line left is a horizontal key that
+    -- maps to whole-input limit scope.
+    it('left at first-line start reports input scope', function()
+      local seen = { }
+      local input = F.activate_project()
+      input.show({
+        text = { 'ab', 'cd' },
+        on_limit_reached = function(dir, scope)
+          seen[#seen + 1] = { dir, scope }
+        end,
+      })
+      F.singleton:set_cursor(Cursor(1, 1))
+      F.session.press('left')
+      assert.same({ { 'left', 'input' } }, seen)
+    end)
+
+    -- Edge case: last-line right is a horizontal key that
+    -- maps to whole-input limit scope.
+    it('right at last-line end reports input scope', function()
+      local seen = { }
+      local input = F.activate_project()
+      input.show({
+        text = { 'ab', 'cd' },
+        on_limit_reached = function(dir, scope)
+          seen[#seen + 1] = { dir, scope }
+        end,
+      })
+      F.singleton:set_cursor(Cursor(2, 3))
+      F.session.press('right')
+      assert.same({ { 'right', 'input' } }, seen)
     end)
   end)
 
