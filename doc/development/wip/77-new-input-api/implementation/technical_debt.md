@@ -43,6 +43,11 @@ feature closes**, not carried into the project at large._
 | M4-0-04 editor keypressed EXCLUSIVE sibling missing | test coverage | **open** | add the missing editor `keypressed` sibling test + retitle the mislabeled one (review `M4-0-04.md` Finding 1) |
 | M4-0-04 `F.reset()` exceeds 14-line body limit | rules (hard limit) | **open** | extract native-slot restore into a helper (review `M4-0-04.md` Finding 2) |
 | `implementation/prompts/M4.md` names the pre-rename suite + superseded Group vocabulary | docs | **open** | reconcile file name (`input_contracts_spec.lua`) + Bucket A-D vocabulary before M4 is commissioned (review `M4-0-04.md`) |
+| M5c-01 `active_keyboard_route()` accessor + `stop names the console` row kept green (E30 Scope-10(a) said drop the C23 assertion + retarget to AC-29) | spec deviation / test scope | **planned** | route-connection-lifecycle chunk (chunk 4, AC-29): drop the accessor + its assertion, retarget the row to the full teardown contract. Behaviour independently covered green by the PRESERVE row `the console receives after stop` |
+| M5c-01 AC-29 full teardown (participants unwired on stop) not implemented | anticipated gap | **planned** | route-connection-lifecycle chunk (chunk 4). `F.reset()`/`reset_chain()` clears the route at fixture scope so tests isolate; production teardown lands with chunk 4 |
+| M5c-01 AC-33 allowlist admits only `handlers.*` + three `on_*` | intentional incremental | **planned** | chunks 2/3 widen the allowlist (`before_*`/`after_*`, `on_text_entered`, `on_limit_reached`, `validator`, `highlighter`) — they raise until then, by design |
+| M5c-01 `keys_pressed` proxy: `pairs()` yields nothing under LuaJIT/5.1 (`__pairs` unsupported) | platform caveat | **accepted** | read-index + write-raise (the load-bearing AC-8 contract) hold; `__pairs` kept for 5.2+. Revisit only if a consumer must iterate the held set on this host |
+| M5c-01 `combo_string` does not lower-case the trigger token | edge | **anticipated** | an upper-case *textinput* combo would not match a normalised lower-case registration; textinput combos are "rarely useful" (spec §2). Revisit if a real consumer appears |
 
 > The **planned** rows have a commissioned closure spec; pick them up with their milestone. The
 > **anticipated** rows are deliberately *not* commissioned — they may never need action; revisit at

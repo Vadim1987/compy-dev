@@ -63,14 +63,19 @@ end
 --- return consumes; falsey falls through to the sink.
 --- @param event string
 --- @return boolean? consumed
+--- REVIEW: its better to install natives as callback once on load than to check every time
 function ProjectInputController:_tier3(event, ...)
   local ci = self.compy_input
   local cb = ci[CHANNELS[event]] or self.natives[event]
+  -- REVIEW: defaulting cb to noop-with-log and calling unconditionally would be nicer
   if cb then return cb(...) end
   log_branch('generic callback noop: ' .. event)
   return false
 end
 
+--- REVIEW: actually should not be invoked if consumed earlier
+--- REVIEW: should not user_input_controller be set as instance property (self.input) on creation? code would be cleaner then
+--- REVIEW: 'if-then' is not recommended (codestyle), UIC (ideally self.input) should be always present (singleton convention) -- can pcall or just raise if unexpected happens...
 --- Tier 4 — the terminal widget sink. Always invoked (never
 --- gated from outside): the hidden-check is INTERNAL to the
 --- sink, which no-ops while the overlay is hidden (AC-11/13).
@@ -89,6 +94,7 @@ end
 --- @param event string
 --- @param trigger string
 --- @return boolean? consumed
+--- REVIEW: stylistically should be rather `return (fw(..) or ph(..) or tier3(..) or sink(..))` with all component being noop when read 
 function ProjectInputController:_dispatch(event, trigger, ...)
   local combo = Controller.combo_string(
     trigger, Controller.keys_pressed)
@@ -108,6 +114,7 @@ end
 --- _tier3). No handler is copied onto compy.input.
 --- @param natives table?
 --- @param compy_input table
+--- REVIEW: that's the proper moment to wrap natives and install as callbacks if natives are present and callbacks are not
 function ProjectInputController:activate(natives, compy_input)
   self.natives = natives or {}
   self.compy_input = compy_input
@@ -131,6 +138,8 @@ end
 --- DEFERRED (0.1.0-m5): whether the combo tiers (1-2) fire on
 --- key-repeat is unruled; isrepeat is threaded to tier 3 only,
 --- combos keep current behaviour. Do not design a mechanism.
+--- REVIEW: what is _defaults and why the check is needed? Is not the whole route disconnected at framework level when app is not running?
+--- TODO: refactor this part, simple aliasing/wrapping should be enough, _defaults should either be not used or handled ONCE inside _dispatch
 function ProjectInputController:keypressed(k, sc, isr)
   if love.state.app_state ~= 'running' then
     return Controller._defaults.keypressed(k, sc, isr)

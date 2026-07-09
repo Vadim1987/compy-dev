@@ -227,6 +227,7 @@ describe('input contracts #input', function()
   -- reaches its route. Carried as-is; whether this is a
   -- mandated invariant or incidental is recorded as open
   -- in doc A §6.3, not re-litigated here.
+  -- REVIEW: both cases need reconsideration/refinement later, they look plausible in spirit but they do not demonstrate which exact production scenario is tested, and mastering framework state via low-level configuration flags is suspicious (if we mock the real production path like project run, it should be explicit, not imitated)
   describe('global shortcuts do not consume the key',
     function()
 
@@ -397,6 +398,7 @@ describe('input contracts #input', function()
   -- editable text); the prompt label is a separate,
   -- untested-here concern (doc A §6.6). The "no cancel
   -- chain" facts are stable-now; they flip at 0.1.0-m6.
+  -- REVIEW: TODO: need to test prompt-labelling and relabelling
   describe('widget activation and reset', function()
 
     it('a fresh activation with no text is empty',
@@ -406,6 +408,13 @@ describe('input contracts #input', function()
         input.hide()
         input.show()
         assert.is_true(F.singleton:is_empty())
+      end)
+    
+    it('a fresh activation with text sets text',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        assert.same({ 'hello' }, F.singleton:get_text())
       end)
 
     it('re-activation without force warns + no-ops',
@@ -483,6 +492,7 @@ describe('input contracts #input', function()
   -- widget is hidden never mutates widget state — it
   -- reaches the active route instead. Intra-route rule;
   -- inter-route dispatch unchanged.
+  -- REVIEW: whenever we migrate console to new API, we may stop silent consuming of input (to be confirmed yet) -- therefore assertions checking the console as hidden sink will break and will have to be updated
   describe('a hidden widget does not consume', function()
 
     it('input while hidden does not mutate it', function()
@@ -523,7 +533,7 @@ describe('input contracts #input', function()
   -- whole-input block nav; disposition (relocate to
   -- tests/editor/, or recut as a boundary-signal
   -- contract) is the human's call — see the punch list.
-  -- REVIEW: this test in thsi form should be relocated under tests/editor. Input contract should test delivery *and only if editor really relies on it* (situation where editor *may* not rely on it: just counting keystrokes itself and translating them into files' coordinates with every move -- therefore block-nav is triggered not by event emitted by input widget, but by the mere fact that internal navigation map says the cursor in 'project space' is no more inside current selection lines)
+  -- REVIEW: this test in this form should be relocated under tests/editor. Input contract should test delivery *and only if editor really relies on it* (situation where editor *may* not rely on it: just counting keystrokes itself and translating them into files' coordinates with every move -- therefore block-nav is triggered not by event emitted by input widget, but by the mere fact that internal navigation map says the cursor in 'project space' is no more inside current selection lines)
   describe('editor block navigation at the limit #editor',
     function()
 
@@ -565,6 +575,7 @@ describe('input contracts #input', function()
       -- dead. Asserted live (not pending) so an ACCIDENTAL
       -- change still fails; revisit when the m4 routing
       -- model lands.
+      -- REVIEW: its no more 'expected to change', going to be correct invariant/contract?
       it('inspect: the console owns the surface', function()
         F.show_widget()
         F.console:add_text('ab')
@@ -700,6 +711,7 @@ describe('input contracts #input', function()
       -- rides the route-connection-lifecycle chunk, not this
       -- one; see M5c Scope 10(a) + notes/talk/
       -- m5c-suite-reconciliation-open-contradictions.md.
+      -- REVIEW: should be removed after recheck -- an artifact of deviated development
       it('stop names the console as restored route',
         function()
           F.cc:stop_project_run()
