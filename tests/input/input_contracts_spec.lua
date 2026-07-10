@@ -1130,6 +1130,43 @@ describe('input contracts #input', function()
         assert.equal(hl, input.highlighter)
       end)
 
+    -- AC-16 (D-b) cont.: on_text_entered and validator also
+    -- reach the same slot via config key and via field write
+    -- (settable-only here; firing/gating is chunk 3).
+    it('show(config) shares on_text_entered slot',
+      function()
+        local input = F.compy_input()
+        local cb = function() end
+        input.show({ on_text_entered = cb })
+        assert.equal(cb, input.on_text_entered)
+      end)
+
+    it('field write shares on_text_entered slot',
+      function()
+        local input = F.compy_input()
+        local cb = function() end
+        input.on_text_entered = cb
+        input.show()
+        assert.equal(cb, input.on_text_entered)
+      end)
+
+    it('show(config) shares validator slot',
+      function()
+        local input = F.compy_input()
+        local vfn = function() return true end
+        input.show({ validator = vfn })
+        assert.equal(vfn, input.validator)
+      end)
+
+    it('field write shares validator slot',
+      function()
+        local input = F.compy_input()
+        local vfn = function() return true end
+        input.validator = vfn
+        input.show()
+        assert.equal(vfn, input.validator)
+      end)
+
     -- AC-42(a): a custom highlighter transforms live text and
     -- the queried highlight reflects that transformed output.
     it('a custom highlighter transforms queried highlight',
@@ -1226,7 +1263,7 @@ describe('input contracts #input', function()
 
     -- Edge case: first-line left is a horizontal key that
     -- maps to whole-input limit scope.
-    it('left at first-line start reports input scope', function()
+    it('left at first-line start has input scope', function()
       local seen = { }
       local input = F.activate_project()
       input.show({
