@@ -45,9 +45,12 @@ feature closes**, not carried into the project at large._
 | `implementation/prompts/M4.md` names the pre-rename suite + superseded Group vocabulary | docs | **open** | reconcile file name (`input_contracts_spec.lua`) + Bucket A-D vocabulary before M4 is commissioned (review `M4-0-04.md`) |
 | M5c-01 `active_keyboard_route()` accessor + `stop names the console` row kept green (E30 Scope-10(a) said drop the C23 assertion + retarget to AC-29) | spec deviation / test scope | **planned** | route-connection-lifecycle chunk (chunk 4, AC-29): drop the accessor + its assertion, retarget the row to the full teardown contract. Behaviour independently covered green by the PRESERVE row `the console receives after stop` |
 | M5c-01 AC-29 full teardown (participants unwired on stop) not implemented | anticipated gap | **planned** | route-connection-lifecycle chunk (chunk 4). `F.reset()`/`reset_chain()` clears the route at fixture scope so tests isolate; production teardown lands with chunk 4 |
-| M5c-01 AC-33 allowlist admits only `handlers.*` + three `on_*` | intentional incremental | **planned** | chunks 2/3 widen the allowlist (`before_*`/`after_*`, `on_text_entered`, `on_limit_reached`, `validator`, `highlighter`) — they raise until then, by design |
+| M5c-01 AC-33 allowlist admits only `handlers.*` + three `on_*` | intentional incremental | **planned** | chunk 3 will widen to include `before_*`/`after_*` submit/cancel callbacks |
 | M5c-01 `keys_pressed` proxy: `pairs()` yields nothing under LuaJIT/5.1 (`__pairs` unsupported) | platform caveat | **accepted** | read-index + write-raise (the load-bearing AC-8 contract) hold; `__pairs` kept for 5.2+. Revisit only if a consumer must iterate the held set on this host |
 | M5c-01 `combo_string` does not lower-case the trigger token | edge | **anticipated** | an upper-case *textinput* combo would not match a normalised lower-case registration; textinput combos are "rarely useful" (spec §2). Revisit if a real consumer appears |
+| M5c-02 `UserInputModel:is_at_limit` exceeds 14-line body limit | rules (hard limit) | **open** | refactor function to comply with the 14-line hard limit (review `M5c-02.md` Finding 2) |
+| M5c-02 `show(config) and fields share one output slot` test is incomplete | test coverage | **open** | assert slot sharing for `on_text_entered` and `validator` (review `M5c-02.md` Finding 1) |
+| M5c-02 line length limit violations in code and comments | rules (hard limit) | **open** | wrap 175-char comment in userInputController.lua and 65-char test declaration in input_contracts_spec.lua (review `M5c-02.md` Finding 3) |
 
 > The **planned** rows have a commissioned closure spec; pick them up with their milestone. The
 > **anticipated** rows are deliberately *not* commissioned — they may never need action; revisit at
@@ -326,4 +329,26 @@ concrete need appears.
   never silent" guarantee is still covered by the kept non-force row.
 - **Revisit:** Restore an explicit force-path no-warn assertion only if the force/reconfigure surface
   evolves (M7 `configure()`) and the boundary needs re-pinning.
+
+### M5c-02 — `UserInputModel:is_at_limit` exceeds the 14-line function-body hard limit — open
+
+- **Where:** `src/model/input/userInputModel.lua:559-583`.
+- **State:** The widened `is_at_limit` signature has a body of 23 lines, which violates the 14-line function-body hard limit.
+- **Why it stands:** Left in place during the implementation chunk.
+- **Revisit:** Refactor `is_at_limit` to be shorter and cleaner (e.g. by extracting or simplifying the logic to fits in 14 lines).
+
+### M5c-02 — `show(config) and fields share one output slot` test is incomplete — open
+
+- **Where:** `tests/input/input_contracts_spec.lua:1118-1129`.
+- **State:** The test only asserts that `on_limit_reached` and `highlighter` share the backing slot. It does not verify the sharing for `on_text_entered` and `validator`.
+- **Why it stands:** The implementer only verified slot-sharing for two of the four output callbacks.
+- **Revisit:** Widen the test to cover `on_text_entered` and `validator`.
+
+### M5c-02 — line length limit violations in code and comments — open
+
+- **Where:** `src/controller/userInputController.lua:322` and `tests/input/input_contracts_spec.lua:1245`.
+- **State:** The comment at `userInputController.lua:322` is 175 characters long, and the test declaration at `input_contracts_spec.lua:1245` is 65 characters long. Both exceed the 64-character limit.
+- **Why it stands:** Missed during code styling pass.
+- **Revisit:** Wrap the long comment and shorten the test description line.
+
 
