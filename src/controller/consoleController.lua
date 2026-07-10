@@ -253,10 +253,12 @@ function ConsoleController:run_project(name)
       love.state.app_state = 'running'
       local rok, run_err = run_user_code(f, self, path)
       if not rok then
+        self.main_ctrl.release_keyboard_route(self)
         love.state.app_state = 'project_open'
         print('Error: ', run_err)
       else
         if not self.main_ctrl.user_is_blocking() then
+          self.main_ctrl.release_keyboard_route(self)
           love.state.app_state = 'project_open'
         end
       end
@@ -433,17 +435,35 @@ local get_compy_input = function()
   return build_input_surface(state, methods)
 end
 
+local function default_before_exit()
+  Log.debug('compy.before_exit noop')
+end
+
 -- Builds the `compy.*` table injected into a project's sandbox env (terminal, audio, graphics,
 -- fonts, input); called while preparing the project environment.
 local get_compy_namespace = function(terminal)
   require("util.namespace.fonts")
-  return {
+  local before_exit_slot = default_before_exit
+  local ns = {
     terminal = get_compy_terminal(terminal),
     audio = compy_audio,
     graphics = compy_graphics,
     fonts = CompyFonts(),
     input = get_compy_input(),
   }
+  return setmetatable(ns, {
+    __index = function(t, k)
+      if k == 'before_exit' then return before_exit_slot end
+      return rawget(t, k)
+    end,
+    __newindex = function(t, k, v)
+      if k == 'before_exit' then
+        before_exit_slot = v
+      else
+        rawset(t, k, v)
+      end
+    end,
+  })
 end
 
 function ConsoleController.prepare_env(cc)
@@ -993,12 +1013,15 @@ end
 
 function ConsoleController:stop_project_run()
   self:evacuate_required()
+  local compy = self:get_project_env().compy
+  compy.before_exit()
   self.main_ctrl.set_default_handlers(self, self.view)
   self.main_ctrl.set_love_update(self)
   love.state.user_input = nil
   View.clear_snapshot()
   self.main_ctrl.set_love_draw(self, self.view)
-  self.main_ctrl.clear_user_handlers()
+  self.main_ctrl.clear_user_handlers(self)
+  compy.before_exit = default_before_exit
   self.main_ctrl.report()
   love.state.app_state = 'project_open'
 end

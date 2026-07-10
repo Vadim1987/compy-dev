@@ -4,6 +4,7 @@ require("controller.projectInputController")
 
 require("util.string.string")
 require("util.key")
+require("util.lua")
 local LANG = require("util.eval")
 
 local messages = {
@@ -254,6 +255,38 @@ local set_handlers = function(userlove, CC)
   hook_pointer(userlove, CC)
   hook_update(userlove)
   hook_draw(userlove)
+end
+
+local INPUT_CALLBACK_SLOTS = {
+  'on_key_pressed', 'on_text_input', 'on_key_released',
+  'on_text_entered', 'on_limit_reached', 'validator',
+  'highlighter', 'before_submit', 'after_submit',
+  'before_cancel', 'after_cancel',
+}
+
+--- @param t table
+local function wipe_table(t)
+  for k in pairs(t) do rawset(t, k, nil) end
+end
+
+--- @param CC ConsoleController
+local function reset_compy_input(CC)
+  local input = CC:get_project_env().compy.input
+  wipe_table(input.handlers.keypressed)
+  wipe_table(input.handlers.keyreleased)
+  wipe_table(input.handlers.textinput)
+  for _, k in ipairs(INPUT_CALLBACK_SLOTS) do
+    input[k] = nil
+  end
+end
+
+local function reset_widget_outputs()
+  local ui = love.state.user_input_controller
+  if not ui then return end
+  ui.validator = nil
+  ui.on_text_entered = nil
+  ui.on_limit_reached = noop
+  ui.result = nil
 end
 
 local click_delay = 0.4
@@ -687,6 +720,17 @@ Controller = {
   ----------------
   ---  public  ---
   ----------------
+  --- Restore console keyboard/text at the 'running' ->
+  --- 'project_open' boundary (AC-27). Pointer slots stay
+  --- hooked until stop (AC-28).
+  --- @param CC ConsoleController
+  release_keyboard_route = function(CC)
+    Controller.project_input:deactivate()
+    Controller.set_love_keypressed(CC)
+    Controller.set_love_keyreleased(CC)
+    Controller.set_love_textinput(CC)
+  end,
+
   --- @param CC ConsoleController
   --- @param CV ConsoleView
   set_default_handlers = function(CC, CV)
@@ -991,15 +1035,6 @@ Controller = {
 
   set_user_handlers = set_handlers,
 
-  --- The route controller currently owning the keyboard
-  --- slots (console by default and after project stop;
-  --- the project route during a run).
-  --- @return table route
-  -- REVIEW: HOW THIS 'active_keyboard_route' is ever used? humans did not request it, if I remember correctly, and it does not seem to be called from anywhere
-  active_keyboard_route = function()
-    return Controller._keyboard_route
-  end,
-
   user_is_blocking = function()
     return (user_update or user_draw)
   end,
@@ -1028,9 +1063,13 @@ Controller = {
     set_handlers(Controller._userhandlers, CC)
   end,
 
-  clear_user_handlers = function()
+  --- @param CC ConsoleController?
+  clear_user_handlers = function(CC)
     Controller._userhandlers = {}
     View.clear_snapshot()
+    if not CC then return end
+    reset_compy_input(CC)
+    reset_widget_outputs()
   end,
 
   oneshot = function()

@@ -192,39 +192,37 @@ function ProjectInputController:activate(natives, compy_input)
   self.compy_input = compy_input
 end
 
---- Release the route. Route-lifecycle teardown of the project's
---- handlers/callbacks is owned elsewhere (a later chunk); this
---- only drops the route's references.
+--- Release the route (AC-27/29). The caller restores the
+--- console/framework slots around this call (controller.lua
+--- release_keyboard_route / set_default_handlers) — deactivate
+--- only drops THIS controller's own references, it never
+--- touches love.* itself.
 function ProjectInputController:deactivate()
   self.compy_input = nil
   self.natives = {}
 end
 
---- Occupancy is the route's for the whole run, but consumption
---- follows the routing model: outside 'running' (e.g. after a
---- non-blocking run returned) the console route consumes, so
---- events forward to the default slot handlers (M4 ruling 1).
+--- Keypressed (AC-27, ratified-model ruling 3). The route is
+--- connected/disconnected at the 'running' <-> 'project_open'
+--- boundary by reinstalling the love.* slots (controller.lua),
+--- not per-event here — once disconnected, love.keypressed no
+--- longer even points at this method, so there is nothing left
+--- to guard. The old per-event `app_state ~= 'running'` forward
+--- (M4 ruling 1) is gone: it compensated for slots that were
+--- never actually restored at the transition; now they are.
 --- @param k string
 --- @param sc string?
 --- @param isr boolean?
 --- DEFERRED (0.1.0-m5): whether the combo tiers (1-2) fire on
 --- key-repeat is unruled; isrepeat is threaded to tier 3 only,
 --- combos keep current behaviour. Do not design a mechanism.
---- REVIEW: what is _defaults and why the check is needed? Is not the whole route disconnected at framework level when app is not running?
---- TODO: refactor this part, simple aliasing/wrapping should be enough, _defaults should either be not used or handled ONCE inside _dispatch
 function ProjectInputController:keypressed(k, sc, isr)
-  if love.state.app_state ~= 'running' then
-    return Controller._defaults.keypressed(k, sc, isr)
-  end
   return self:_dispatch(
     'keypressed', k, k, Controller.held_keys(), isr)
 end
 
 --- @param t string
 function ProjectInputController:textinput(t)
-  if love.state.app_state ~= 'running' then
-    return Controller._defaults.textinput(t)
-  end
   return self:_dispatch(
     'textinput', t, t, Controller.held_keys())
 end
@@ -233,9 +231,6 @@ end
 --- The released key is already gone from the held set (removed
 --- at the gateway before dispatch), so consumers see it absent.
 function ProjectInputController:keyreleased(k)
-  if love.state.app_state ~= 'running' then
-    return Controller._defaults.keyreleased(k)
-  end
   return self:_dispatch(
     'keyreleased', k, k, Controller.held_keys())
 end
