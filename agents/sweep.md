@@ -42,11 +42,13 @@ Rules for commissioning them:
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session02/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session03/prompt.md`
 
-> _Note (session40, 2026-07-07): Gate 3 is CLOSED — the M5c slice is frozen and commissioned. The
-> pointer now names `session02` (the M5c sweep genesis). `session01` was Fable's landed **M4** run,
-> now history. Boot session02 and carve M5c into human-gated chunks per the mandate._
+> _Note (session03 wrap, 2026-07-10): the pointer now names `session03` — the **autonomous** M5c-03→M8
+> sweep. session02 landed chunk 1 (already done pre-battery), chunk 2 + its M5c-02c corrective take
+> (both Opus-APPROVED), then the human lifted the per-chunk gate: session03 runs the remaining chunks
+> autonomously, committing after each, human reviewing post-factum in git. See the successor prompt for
+> the full standing authorization, the sub-agent run mechanism, and the Fable-5 advisory rule._
 
 ## Wrap-up rule (mechanical — no inference)
 
@@ -54,6 +56,6 @@ After writing the successor `sessionNN+1/prompt.md`, repoint CURRENT PROMPT abov
 number changes:
 
 ```sh
-# replace 02 with the new session number
-sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1session02\2#' agents/sweep.md
+# replace NN with the new session number (e.g. session04)
+sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN\2#' agents/sweep.md
 ```

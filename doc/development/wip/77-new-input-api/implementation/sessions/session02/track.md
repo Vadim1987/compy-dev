@@ -75,3 +75,21 @@
   orchestrate M5c-02c → M5c-05 → M7 → M8 **autonomously**, committing after each chunk/corrective take,
   human reviews post-factum in git. Fable-5 advisor reserved for genuinely hard design calls only. PM
   still escalates-by-documentation (surprise-first ledgers) rather than making silent in-slice rulings.
+- [project] **M5c-02c corrective take — landed + Opus-approved (autonomous).** Commissioned to
+  `prompts/M5c-02c-corrective.md`; Sonnet implementor fixed all four verified findings
+  (`b88bbbc` is_at_limit→14-line body · `0186986` seed on_limit_reached noop default + drop REVIEW
+  marker · `c3f3e5c` shorten row + on_text_entered/validator slot-sharing rows · `b8fb8af` debt-close +
+  outcome). Opus reviewer (`reviews/M5c-02c.md`, `392e538`) **APPROVE** — now the standing Opus
+  sign-off on chunk 2 (the landed diff had only ever had the Antigravity review). Suite **759/0/0/6**.
+- [behavioural] Item-2 became a **behaviour change, not a comment fix**: implementor installed the
+  noop-default the marker suggested (seed `on_limit_reached=noop` in the overlay singleton `new()`,
+  drop `emit_limit`'s guard). PM pinned it for the reviewer; Opus traced the singleton/`apply_config`
+  lifecycle and cleared it SAFE — seed runs once pre-write, `apply_config` only assigns on non-nil so a
+  user callback persists across hide→show, no `INPUT_CALLBACKS` widening, internal slot (not public
+  surface). The report-don't-fix fallback (note+debt-log) was available but not needed. Precedent: a
+  "trivial resolution" of a REVIEW marker that touches runtime state gets reviewer lifecycle-tracing,
+  not a rubber stamp.
+- [project] **Session02 wrapped here (2026-07-10)** at the human's instruction: stop after the M5c-02c
+  review, hand the autonomous M5c-03→M8 sweep to session03. Successor prompt written
+  (`sessions/session03/prompt.md`), `agents/sweep.md` CURRENT PROMPT repointed 02→03. All the
+  session-02 autonomy permissions are carried forward to session03 verbatim (see the successor prompt).
