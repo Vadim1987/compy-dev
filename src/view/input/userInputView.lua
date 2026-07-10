@@ -16,7 +16,6 @@ local new = function(cfg, ctrl)
     cfg = cfg,
     controller = ctrl,
     statusline = Statusline(cfg),
-    oneshot = ctrl.model.oneshot,
     start_h = h,
     canvas = gfx.newCanvas(w, h),
   }
@@ -25,7 +24,6 @@ end
 --- @class UserInputView : ViewBase
 --- @field controller UserInputController
 --- @field statusline table
---- @field oneshot boolean
 --- @field canvas love.Canvas
 UserInputView = class.create(new)
 
@@ -285,8 +283,14 @@ function UserInputView:render(input, status, time)
 end
 
 --- Draw the pre-rendered canvas to screen
+-- M6-01: oneshot is gone (AC-25); the published overlay
+-- singleton is the one view that skips this continuous
+-- per-frame update_view() ("a transitional workaround until
+-- rerenders are worked out", commit 7b4422c) — identity now
+-- stands in for what oneshot used to flag, since it was the
+-- only oneshot=true instance in production.
 function UserInputView:draw()
-  if not self.controller:is_oneshot() then
+  if self.controller ~= love.state.user_input_controller then
     self.controller:update_view()
   end
   local b = self.cfg.statusline_border / 2

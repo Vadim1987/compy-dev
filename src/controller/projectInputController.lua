@@ -8,8 +8,8 @@ require("util.key")
 -- three channels:
 --
 --   1. framework_handlers.<event>[combo]  structural keys
---      (return/escape land here in a later chunk; the slot
---       exists now and is non-overridable)
+--      (spec §5: keypressed['return']/['escape'], engaged
+--       only while the widget is shown; non-overridable)
 --   2. compy.input.handlers.<event>[combo]  project combo
 --      handlers (R14 per-event sub-tables; normalising §1)
 --   3. per-event generic callback           on_key_pressed /
@@ -31,8 +31,85 @@ local CHANNELS = {
   textinput   = 'on_text_input',
 }
 
+--- @param branch string
+local function log_branch(branch)
+  if love.DEBUG then
+    Log.debug('project input: ' .. branch)
+  end
+end
+
+--- Run a route-owned before_/after_ hook (spec §5, AC-26): a
+--- project-set function fires; an absent one debug-logs — the
+--- same noop+log default shape as tier 3 (log_branch above).
+--- Hooks live on compy_input (the route), never on the
+--- widget (spec §5 scope note: "the widget never owns
+--- submit").
+--- @param ci table  compy_input surface
+--- @param name string  hook field name
+local function run_hook(ci, name, ...)
+  local hook = ci[name]
+  if hook then
+    hook(...)
+    return
+  end
+  log_branch(name .. ' noop')
+end
+
+--- @return UserInputController? ui  the singleton, only while
+--- shown (AC-20: hidden -> no framework entry engages, so the
+--- combo falls through to lower tiers like any other key).
+local function shown_widget()
+  local ui = love.state.user_input_controller
+  if ui and ui:is_shown() then return ui end
+end
+
+--- Tier-1 submit entry (spec §5, AC-17/20/21): before_submit
+--- always runs; after_submit only on accept (ui:submit()
+--- returns the delivered text, nil on reject/empty).
+--- @param self ProjectInputController
+--- @return fun(k: string, keys_pressed: table)
+local function framework_submit(self)
+  return function(_, keys_pressed)
+    local ui = shown_widget()
+    if not ui then return false end
+    local ci = self.compy_input
+    run_hook(ci, 'before_submit', keys_pressed)
+    local text = ui:submit()
+    if text ~= nil then run_hook(ci, 'after_submit', text) end
+    return true
+  end
+end
+
+--- Tier-1 cancel entry (spec §5, AC-19/20/21): before_/
+--- after_cancel bracket ui:cancel() unconditionally — cancel
+--- always dismisses, unlike submit there is no reject path.
+--- @param self ProjectInputController
+--- @return fun(k: string, keys_pressed: table)
+local function framework_cancel(self)
+  return function(_, keys_pressed)
+    local ui = shown_widget()
+    if not ui then return false end
+    local ci = self.compy_input
+    run_hook(ci, 'before_cancel', keys_pressed)
+    ui:cancel()
+    run_hook(ci, 'after_cancel')
+    return true
+  end
+end
+
+-- Tier-1 return/escape (spec §5): populated once, at
+-- construction, not per-activate() — they are structural/
+-- non-overridable, not project-installed, so they exist
+-- whether or not a project is currently running.
+--- @param self ProjectInputController
+local function install_tier1(self)
+  local kp = self.framework_handlers.keypressed
+  kp['return'] = framework_submit(self)
+  kp['escape'] = framework_cancel(self)
+end
+
 local function new()
-  return {
+  local self = {
     natives = {},
     compy_input = nil,
     framework_handlers = {
@@ -41,6 +118,8 @@ local function new()
       textinput   = {},
     },
   }
+  install_tier1(self)
+  return self
 end
 
 --- @class ProjectInputController
@@ -48,13 +127,6 @@ end
 --- @field compy_input table?
 --- @field framework_handlers table
 ProjectInputController = class.create(new)
-
---- @param branch string
-local function log_branch(branch)
-  if love.DEBUG then
-    Log.debug('project input: ' .. branch)
-  end
-end
 
 --- Tier 3 — the per-event generic callback, resolved by
 --- precedence (spec §8 R7): an explicit compy.input.on_* wins;

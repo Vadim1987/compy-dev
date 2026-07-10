@@ -25,11 +25,6 @@ end
 --- @field disable_selection boolean
 UserInputController = class.create(new)
 
---- @return boolean
-function UserInputController:is_oneshot()
-  return self.model.oneshot
-end
-
 --- @param v UserInputView
 function UserInputController:init_view(v)
   self.view = v
@@ -155,8 +150,14 @@ function UserInputController:evaluate()
   return ok, res
 end
 
+--- Cancel (AC-19): clear + hide unconditionally — Escape now
+--- genuinely dismisses. The framework tier-1 escape entry
+--- (projectInputController.lua) is what calls this for the
+--- project widget; the sink's own escape-clears-only local
+--- below (console/editor's own routes) is unchanged.
 function UserInputController:cancel()
   self.model:cancel()
+  self:hide()
 end
 
 function UserInputController:jump_home()
@@ -277,6 +278,72 @@ function UserInputController:hide()
 end
 
 ----------------------
+--- submit / cancel ---
+----------------------
+
+-- Spec §5 (AC-17/18/42(b)): the framework tier-1 return entry
+-- (projectInputController.lua) calls submit(); before_/
+-- after_submit are route-owned (read off compy_input there,
+-- not stored here) — this is only the widget's own middle
+-- step: validate -> deliver -> deactivate.
+
+--- Validator gate (AC-18/AC-42(b)). No custom validator
+--- accepts unconditionally; a set validator's ok/err_msg
+--- verdict decides, locking the session on reject via the
+--- existing has_error()/clear_error() gate in keypressed().
+--- @param model UserInputModel
+--- @param validator function?
+--- @param text string
+--- @return boolean ok
+local function gate(model, validator, text)
+  if not validator then return true end
+  local ok, err = validator(text)
+  if not ok then model:set_error({ err }) end
+  return ok
+end
+
+--- @param label string
+local function debug_noop(label)
+  if love.DEBUG then
+    Log.debug('input: ' .. label .. ' noop')
+  end
+end
+
+--- Submit delivery (AC-17): fills the legacy poll reftable
+--- (spec §5 mechanism note — the push('userinput') producer
+--- is gone, the synchronous fill survives to M8) and fires
+--- the widget output while the session is still active
+--- (AC-25 observable order).
+--- @param self UserInputController
+--- @param text string
+local function deliver(self, text)
+  local res = self.result
+  if type(res) == 'table' then res(text) end
+  local cb = self.on_text_entered
+  if cb then
+    cb(text)
+  else
+    debug_noop('on_text_entered')
+  end
+end
+
+--- Submit (AC-17/18/42(b)): validate the assembled text,
+--- deliver + deactivate on accept, lock on reject. An empty
+--- input submits nothing (pre-existing solicitation
+--- behaviour, carried unchanged — not an AC-17..26 concern).
+--- @return string? text  delivered text; nil on reject/empty
+function UserInputController:submit()
+  if self.model:get_text():is_empty() then return nil end
+  local text = string.unlines(self.model:get_text())
+  if not gate(self.model, self.validator, text) then
+    return nil
+  end
+  deliver(self, text)
+  self:hide()
+  return text
+end
+
+----------------------
 --- event handlers ---
 ----------------------
 
@@ -293,6 +360,15 @@ end
 function UserInputController:_is_hidden_overlay()
   return self == love.state.user_input_controller
       and not love.state.user_input
+end
+
+--- @return boolean
+--- Mirrors _is_hidden_overlay above rather than duplicating
+--- the sink's check (per the prompt): the framework tier-1
+--- return/escape entries (projectInputController.lua) gate
+--- engagement on this (AC-20/21).
+function UserInputController:is_shown()
+  return not self:_is_hidden_overlay()
 end
 
 ----------------
@@ -335,9 +411,12 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   end
 
   -- (combo serialisation lives in controller.lua; this sink only sees the raw key.)
+  -- AC-18: locked-on-reject unlocks on Enter/Space/arrows.
   if input:has_error() then
     if Key.is_enter(k)
         or k == "up" or k == "down"
+        or k == "left" or k == "right"
+        or k == "space"
     then
       input:clear_error()
     end
@@ -487,28 +566,24 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     end
   end
 
+  -- Console/editor's OWN escape-clears-only behaviour (not
+  -- the project widget's cancel chain, spec §5 AC-19): the
+  -- framework tier-1 escape entry intercepts before this sink
+  -- ever sees the key for the project route's shown widget, so
+  -- this only fires for console/editor's own routes, which
+  -- have no tier-1 layer yet (console/editor migration is a
+  -- later, out-of-slice follow-on).
   local function cancel()
     if not Key.ctrl() and k == "escape" then
       input:cancel()
     end
   end
-  local function submit()
-    if self.model:get_text():is_empty() then return end
-    if not Key.shift() and Key.is_enter(k) and input.oneshot then
-      local ok, evret = input:evaluate()
-      if ok then
-        local text = evret
-        local res = self.result
-        if type(res) == "table" then
-          local t = string.unlines(text)
-          res(t)
-        end
-      else
-        local err = evret
-        input:set_error(err)
-      end
-    end
-  end
+
+  -- AC-25: the old oneshot-gated submit local (fill the legacy
+  -- reftable + push('userinput')) is gone — the project
+  -- widget's submit now runs through the framework tier-1
+  -- return entry (projectInputController.lua ->
+  -- UserInputController:submit()), never through this sink.
 
   if love.state.app_state == 'editor' then
     removers()
@@ -519,8 +594,6 @@ function UserInputController:keypressed(k, keys_pressed, isr)
 
     copypaste()
     selection()
-
-    submit()
   else
     -- normal behavior
     removers()
@@ -532,7 +605,6 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     selection()
 
     cancel()
-    submit()
   end
 
   self:update_view()

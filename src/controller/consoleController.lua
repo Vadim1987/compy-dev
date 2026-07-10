@@ -345,10 +345,13 @@ end
 -- set_cursor/set_text) here as explicit not-implemented no-ops is unsettled — to be resolved in the
 -- m7 design session.
 -- The project-assignable tier-3 generic callbacks (spec §7 /
--- R3). Everything else on compy.input is callable API and
--- raises loudly on assignment (AC-33). Later chunks widen this
--- allowlist with before_/after_ hooks and the widget-output
--- fields; chunk 2 lands those four widget outputs.
+-- R3), the four widget outputs (chunk 2), and the four
+-- submit/cancel hooks (chunk 3, AC-26/33). Everything else on
+-- compy.input is callable API and raises loudly on assignment
+-- (AC-33). The hooks are read directly off this surface by the
+-- framework tier-1 return/escape entries
+-- (projectInputController.lua) — never mirrored onto the
+-- widget, unlike the widget-output slots below.
 local INPUT_CALLBACKS = {
   on_key_pressed    = true,
   on_text_input     = true,
@@ -357,6 +360,10 @@ local INPUT_CALLBACKS = {
   on_limit_reached  = true,
   validator         = true,
   highlighter       = true,
+  before_submit     = true,
+  after_submit      = true,
+  before_cancel     = true,
+  after_cancel      = true,
 }
 
 --- Assemble the compy.input surface over its backing `state`

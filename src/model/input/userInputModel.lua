@@ -12,7 +12,6 @@ require("util.debug")
 require("util.lua")
 
 --- @class UserInputModel
---- @field oneshot boolean
 --- @field entered InputText
 --- @field history History
 --- @field evaluator Evaluator
@@ -42,11 +41,9 @@ UserInputModel = class.create()
 
 --- @param cfg Config
 --- @param eval Evaluator
---- @param oneshot boolean?
 --- @param custom_label string?
-function UserInputModel.new(cfg, eval, oneshot, custom_label)
+function UserInputModel.new(cfg, eval, custom_label)
   local self = setmetatable({
-    oneshot = oneshot,
     entered = InputText(),
     history = History(),
     evaluator = eval,
@@ -408,8 +405,14 @@ end
 ----------------
 
 --- @return boolean
+-- AC-25: oneshot is gone, so nothing distinguishes a
+-- single-use solicitation from any other model anymore.
+-- Only the (never-history-reading) project widget set
+-- oneshot=true, so suppression here was already inert;
+-- the flag's other job (submit-closing) is what moved into
+-- the new submit chain (userInputController.lua).
 function UserInputModel:keep_history()
-  return not self.oneshot
+  return true
 end
 
 --- @private
@@ -801,42 +804,49 @@ function UserInputModel:cancel()
   self:reset()
 end
 
+--- @private
+--- Cursor-to-error-position on an evaluator reject. Split out
+--- of handle() to keep it under the function-body line limit
+--- once the AC-25 push('userinput') block (below it) is gone.
+--- @param result Error[]
+function UserInputModel:_report_parse_error(result)
+  --- @TODO fix
+  local perr = result[1]
+  -- Log.debug(Debug.terse_t(perr, nil, nil, true))
+  if not perr or not perr.c then return end
+  --- @TODO check line len and move to next if at end
+  local c = perr.c
+  if c > 1 then c = c + 1 end
+  self:move_cursor(perr.l, c)
+end
+
+--- @private
+--- @param ent InputText
+--- @return boolean ok
+--- @return string[]|Error[]|InputText result
+function UserInputModel:_apply_eval(ent)
+  local ok, result = self.evaluator:apply(ent)
+  if not ok then
+    self:_report_parse_error(result)
+  end
+  return ok, result
+end
+
 --- @param eval boolean
 --- @return boolean
 --- @return string[]|Error[]
+-- AC-25: the old push('userinput') notification (fired here
+-- under `if self.oneshot`) is gone — on_text_entered
+-- (userInputController.lua submit chain) replaces it as the
+-- "value ready" signal (spec §5 mechanism note).
 function UserInputModel:handle(eval)
   local ent = self:get_text()
   local ok, result
   if ent:non_empty() then
-    local ev = self.evaluator
     self:_remember()
     if eval then
-      ok, result = ev:apply(ent)
-      if ok then
-        if self.oneshot then
-          if love.harmony then
-            if love.harmony.utils then
-              love.harmony.utils.love_event('userinput')
-            end
-          else
-            --- @diagnostic disable-next-line: param-type-mismatch
-            love.event.push('userinput')
-          end
-        end
-      else
-        --- @TODO fix
-        local perr = result[1]
-        -- Log.debug(Debug.terse_t(perr, nil, nil, true))
-        if perr then
-          --- @TODO check line len and move to next if at end
-          if perr.c then
-            local c = perr.c
-            if c > 1 then c = c + 1 end
-            self:move_cursor(perr.l, c)
-          end
-        end
-        return false, result
-      end
+      ok, result = self:_apply_eval(ent)
+      if not ok then return false, result end
     else
       ok = true
     end

@@ -360,7 +360,7 @@ function love.load()
   -- UserInput M/V/C are constructed explicitly here (mirroring the Console M/V/C triple above)
   -- and injected, not self-provisioned by the controller. Whether the controller should own its
   -- model/view construction is the open A5 question — see implementation/reviews/M2-human-review.md.
-  local ui_m = UserInputModel(baseconf, InputEvalText, true)
+  local ui_m = UserInputModel(baseconf, InputEvalText)
   local ui_c = UserInputController(ui_m, nil, true)
   local ui_v = UserInputView(baseconf.view, ui_c)
   -- init_view binds the view to the controller (self.view = v); it is NOT an activation/show.

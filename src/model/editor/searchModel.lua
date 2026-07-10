@@ -28,7 +28,7 @@ require('util.scrollableContent')
 Search = class.create(function(cfg)
   local l = cfg.view.lines
   return {
-    input = UserInputModel(cfg, nil, false, 'search'),
+    input = UserInputModel(cfg, nil, 'search'),
     searchset = {},
     resultset = {},
     visible = ScrollableContent(0, 1, l)
