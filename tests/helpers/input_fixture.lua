@@ -268,6 +268,11 @@ function F.reset()
   love.state.user_input         = nil
   love.state.app_state          = 'ready'
   love.state.editor             = nil
+  -- Otherwise leaks into the next test's suspend(): a
+  -- stale message from an earlier suspend_run() would set
+  -- an unrelated console error (discovered via the route-
+  -- lifecycle inspect row, m5c chunk 4).
+  love.state.suspend_msg        = nil
   restore_native_slots()
   reset_chain()
   local compy                   = CC:get_project_env().compy

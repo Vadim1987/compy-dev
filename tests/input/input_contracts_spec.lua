@@ -680,24 +680,29 @@ describe('input contracts #input', function()
   describe('forward contracts (pending until implemented)',
     function()
 
-      -- On stop the keyboard route is the console again. The
-      -- behavioural end state is guarded green by the PRESERVE
-      -- row ("project stop returns input to the console"); this
-      -- row keeps the test-scoped Controller.active_keyboard_
-      -- route() accessor honest (C23: no unconsumed PUBLIC
-      -- surface, but the manual-verification driver reads it).
-      -- The full AC-29 teardown retarget (participants unwired,
-      -- widget silently hidden as stop's DISTINCTIVE contract)
-      -- rides the route-connection-lifecycle chunk, not this
-      -- one; see M5c Scope 10(a) + notes/talk/
-      -- m5c-suite-reconciliation-open-contradictions.md.
-      -- REVIEW: should be removed after recheck -- an artifact of deviated development
-      it('stop names the console as restored route',
-        function()
-          F.cc:stop_project_run()
-          assert.equal(F.cc,
-            Controller.active_keyboard_route())
-        end)
+      -- Retargeted (E30 Scope-10(a)): stop's DISTINCTIVE
+      -- contract is the full teardown, not "keyboard route
+      -- == console" -- that end state is shared by
+      -- project-exit and inspect too, so it does not by
+      -- itself distinguish stop (see M5c-dispatch-chain.md
+      -- Scope item 10(a)). The Controller.active_keyboard_
+      -- route() accessor this row used is dropped (C23: no
+      -- unconsumed public surface -- its only production-
+      -- code reader was this row; controller.lua:998-999).
+      -- Retargeted to doc A §6.4's literal claim instead:
+      -- after stop no project handler remains wired in ANY
+      -- slot. The wider AC-29 teardown (compy.input
+      -- handlers/hooks, widget silent-hide) is covered by
+      -- the 'route connection lifecycle' block below.
+      it('stop leaves no project handler wired in any ' ..
+          'slot', function()
+        F.activate_project()
+        assert.is_not.equal(
+          Controller._defaults.keypressed, love.keypressed)
+        F.cc:stop_project_run()
+        assert.equal(
+          Controller._defaults.keypressed, love.keypressed)
+      end)
 
       -- on_text_entered is the SUBMIT output (widget vocabulary,
       -- R1): fired once at Enter with the assembled text — NOT
@@ -1514,6 +1519,149 @@ describe('input contracts #input', function()
           F.session.press('escape')
         end)
         assert.is_nil(love.state.user_input)
+      end)
+  end)
+
+  -- ====================================================
+  -- Route connection lifecycle (0.1.0-m5c chunk 4, spec
+  -- §8): connect/disconnect at the 'running' boundary
+  -- (AC-27), pointer excluded from that disconnect
+  -- (AC-28), full teardown at stop (AC-29), inspect
+  -- (AC-30), and the compy.before_exit stop hook
+  -- (M6-02-before-exit.md). All rows drive the REAL
+  -- production functions (Controller.release_keyboard_
+  -- route, ConsoleController:stop_project_run/:suspend),
+  -- not a simulation of them.
+  -- ====================================================
+  describe('route connection lifecycle #m5c', function()
+
+    -- AC-27 (spec §8, ratified-model ruling 3): the route
+    -- owns keyboard/text only while 'running' -- a
+    -- non-blocking run's exit restores console text entry.
+    it('the console regains text entry when a ' ..
+        'non-blocking run exits', function()
+      local input = F.activate_project()
+      local got = 0
+      input.on_text_input = function() got = got + 1 end
+      Controller.release_keyboard_route(F.cc)
+      love.state.app_state = 'project_open'
+      F.session.type('a')
+      assert.equal(0, got)
+      assert.same({ 'a' }, F.console:get_text())
+    end)
+
+    -- AC-28 (spec §8, design.md §4): pointer is explicitly
+    -- NOT part of that disconnect -- a pen-and-paper
+    -- project (sapper-like) stays clickable in
+    -- 'project_open'.
+    it('pointer stays hooked when a non-blocking run ' ..
+        'ends', function()
+      local got = 0
+      F.activate_project({
+        mousepressed = function() got = got + 1 end,
+      })
+      Controller.release_keyboard_route(F.cc)
+      love.state.app_state = 'project_open'
+      F.session.mousepressed(10, 10, 1, false, 1)
+      assert.equal(1, got)
+    end)
+
+    -- AC-29 (spec §8, doc A §6.4): stop clears every
+    -- compy.input participant a project installed --
+    -- combo handlers and every project-mutable field.
+    it('stop clears every project-installed handler ' ..
+        'and hook', function()
+      local input = F.activate_project()
+      input.handlers.keypressed['a'] = function() end
+      input.on_key_pressed = function() end
+      input.before_submit = function() end
+      input.validator = function() return true end
+      F.cc:stop_project_run()
+      assert.same({ }, input.handlers.keypressed)
+      assert.is_nil(input.on_key_pressed)
+      assert.is_nil(input.before_submit)
+      assert.is_nil(input.validator)
+    end)
+
+    -- AC-29 + spec §10 edge case: a widget left shown at
+    -- stop is silently hidden -- teardown is not a cancel,
+    -- so no cancel chain fires (contrast AC-19).
+    it('stop silently hides a shown widget without ' ..
+        'firing the cancel chain', function()
+      local input = F.activate_project()
+      local cancelled = 0
+      input.before_cancel = function()
+        cancelled = cancelled + 1
+      end
+      input.after_cancel = function()
+        cancelled = cancelled + 1
+      end
+      F.show_widget({ text = 'x' })
+      F.cc:stop_project_run()
+      assert.is_nil(love.state.user_input)
+      assert.equal(0, cancelled)
+    end)
+
+    -- AC-29: the widget's OWN mirrored output fields
+    -- (userInputController.apply_config) persist across a
+    -- hide/re-show within one run (AC-24) but must not
+    -- leak into the next project.
+    it('stop resets the widget\'s own output fields',
+      function()
+        F.activate_project()
+        F.show_widget({
+          validator = function() return true end,
+          on_text_entered = function() end,
+        })
+        F.cc:stop_project_run()
+        assert.is_nil(F.singleton.validator)
+        assert.is_nil(F.singleton.on_text_entered)
+        assert.equal(noop, F.singleton.on_limit_reached)
+      end)
+
+    -- AC-30 (ratified-model R11): inspect is the console
+    -- bound over the project env -- the project route
+    -- disconnects and its widget goes unhonoured.
+    it('inspect disconnects the project route and its ' ..
+        'widget goes unhonoured', function()
+      F.activate_project()
+      F.show_widget({ text = 'x' })
+      love.state.app_state = 'snapshot'
+      F.cc:suspend()
+      F.session.type('a')
+      assert.same({ 'a' }, F.console:get_text())
+      assert.same({ 'x' }, F.singleton:get_text())
+    end)
+
+    -- M6-02: compy.before_exit fires once on stop, before
+    -- the framework's own cleanup runs (love.* calls
+    -- inside it are still safe).
+    it('compy.before_exit fires once on stop before ' ..
+        'cleanup', function()
+      local calls = 0
+      local state_at_fire
+      F.activate_project()
+      F.cc:get_project_env().compy.before_exit = function()
+        calls = calls + 1
+        state_at_fire = love.state.app_state
+      end
+      F.cc:stop_project_run()
+      assert.equal(1, calls)
+      assert.equal('running', state_at_fire)
+    end)
+
+    -- M6-02: the hook resets to its noop default on stop
+    -- -- same lifecycle as compy.input's before_/after_
+    -- hooks (AC-29).
+    it('compy.before_exit resets to noop after stop',
+      function()
+        local calls = 0
+        F.activate_project()
+        F.cc:get_project_env().compy.before_exit =
+            function() calls = calls + 1 end
+        F.cc:stop_project_run()
+        F.cc:get_project_env().compy.before_exit()
+        assert.equal(1, calls)
       end)
   end)
 
