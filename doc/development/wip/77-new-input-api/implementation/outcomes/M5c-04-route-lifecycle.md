@@ -46,8 +46,8 @@ committed._
 
 ## Commit refs
 
-- `TBD-test` — `test(input): red rows for route lifecycle (M5c chunk 4)`
-- `TBD-feat` — `feat(input): route connection lifecycle, before_exit (M5c chunk 4)`
+- `072fe6d` — `test(input): red rows for route lifecycle (M5c chunk 4)`
+- `386cfe1` — `feat(input): route connection lifecycle, before_exit (M5c chunk 4)`
 
 Independently revertible; in-repo files only; no push; no `src/examples/*`.
 
