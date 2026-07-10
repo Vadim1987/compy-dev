@@ -36,6 +36,7 @@ services:
       - /tmp
     volumes:
       - compy-agent-home:/home/agent
+      - lua-lsp-cache:/opt/lua-language-server/log/cache
       - ../../../../../../:/repo:rw
       - ../:/impl:rw
       - ../../../../../../../brainlab/sessions/git/doc/development/wip/77-new-input-api/SWEEP:/impl/sessions:rw
@@ -43,3 +44,4 @@ services:
 
 volumes:
   compy-agent-home:
+  lua-lsp-cache:

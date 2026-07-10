@@ -95,17 +95,23 @@ RUN ver=$(curl -fsSL https://api.github.com/repos/LuaLS/lua-language-server/rele
     && tar -xzf /tmp/luals.tar.gz -C /opt/lua-language-server \
     && rm /tmp/luals.tar.gz \
     && ln -s /opt/lua-language-server/bin/lua-language-server \
-        /usr/local/bin/lua-language-server
+        /usr/local/bin/lua-language-server                    
+
 
 # ── unprivileged agent user ──────────────────────────────────────────
 # uid 1000 ships taken by the default `ubuntu` user on 24.04 — remove it first.
 RUN userdel -r ubuntu 2>/dev/null || true \
     && groupadd -g ${GID} ${USER} \
-    && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER}
+    && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER}    \
+    && mkdir -p /opt/lua-language-server/log/cache            \
+    && chown -R :${USER} /opt/lua-language-server/log         \
+    && chmod -R g+w  /opt/lua-language-server/log
+    
 USER ${USER}
 ENV HOME=/home/${USER}
 ENV PATH=/home/${USER}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 VOLUME /home/${USER}
+VOLUME /opt/lua-language/server/log/cache
 
 # ── Cursor CLI (cursor-agent → ~/.local/bin) ────────────────────────
 RUN curl https://cursor.com/install -fsS | bash
