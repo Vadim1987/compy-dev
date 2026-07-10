@@ -48,9 +48,9 @@ feature closes**, not carried into the project at large._
 | M5c-01 AC-33 allowlist admits only `handlers.*` + three `on_*` | intentional incremental | **planned** | chunk 3 will widen to include `before_*`/`after_*` submit/cancel callbacks |
 | M5c-01 `keys_pressed` proxy: `pairs()` yields nothing under LuaJIT/5.1 (`__pairs` unsupported) | platform caveat | **accepted** | read-index + write-raise (the load-bearing AC-8 contract) hold; `__pairs` kept for 5.2+. Revisit only if a consumer must iterate the held set on this host |
 | M5c-01 `combo_string` does not lower-case the trigger token | edge | **anticipated** | an upper-case *textinput* combo would not match a normalised lower-case registration; textinput combos are "rarely useful" (spec §2). Revisit if a real consumer appears |
-| M5c-02 `UserInputModel:is_at_limit` exceeds 14-line body limit | rules (hard limit) | **open** | refactor function to comply with the 14-line hard limit (review `M5c-02.md` Finding 2) |
-| M5c-02 `show(config) and fields share one output slot` test is incomplete | test coverage | **open** | assert slot sharing for `on_text_entered` and `validator` (review `M5c-02.md` Finding 1) |
-| M5c-02 line length limit violations in code and comments | rules (hard limit) | **open** | wrap 175-char comment in userInputController.lua and 65-char test declaration in input_contracts_spec.lua (review `M5c-02.md` Finding 3) |
+| ~~M5c-02 `UserInputModel:is_at_limit` exceeds 14-line body limit~~ | ~~rules (hard limit)~~ | ~~**closed**~~ | ~~M5c-02c-corrective refactored the body to 14 lines, AC-15 matrix kept green~~ |
+| ~~M5c-02 `show(config) and fields share one output slot` test is incomplete~~ | ~~test coverage~~ | ~~**closed**~~ | ~~M5c-02c-corrective added sibling slot-sharing rows for `on_text_entered` and `validator`~~ |
+| ~~M5c-02 line length limit violations in code and comments~~ | ~~rules (hard limit)~~ | ~~**closed**~~ | ~~M5c-02c-corrective: the 322 REVIEW comment was resolved (noop default installed, marker deleted); the 65-char test declaration shortened~~ |
 
 > The **planned** rows have a commissioned closure spec; pick them up with their milestone. The
 > **anticipated** rows are deliberately *not* commissioned — they may never need action; revisit at
@@ -330,25 +330,46 @@ concrete need appears.
 - **Revisit:** Restore an explicit force-path no-warn assertion only if the force/reconfigure surface
   evolves (M7 `configure()`) and the boundary needs re-pinning.
 
-### M5c-02 — `UserInputModel:is_at_limit` exceeds the 14-line function-body hard limit — open
+### ~~M5c-02 — `UserInputModel:is_at_limit` exceeds the 14-line function-body hard limit~~ — **Closed**
 
-- **Where:** `src/model/input/userInputModel.lua:559-583`.
-- **State:** The widened `is_at_limit` signature has a body of 23 lines, which violates the 14-line function-body hard limit.
-- **Why it stands:** Left in place during the implementation chunk.
-- **Revisit:** Refactor `is_at_limit` to be shorter and cleaner (e.g. by extracting or simplifying the logic to fits in 14 lines).
+- **Where:** `src/model/input/userInputModel.lua:559-573`.
+- **State:** Closed by M5c-02c-corrective. `is_at_limit` was refactored to a
+  14-line body (`get_cursor_pos()` replaces the two separate getter calls,
+  the horizontal branches collapsed to `cc == 1 and (req == 'line' or cl ==
+  1)` / the `elseif` mirror). No assertion was added or loosened; the AC-15
+  boundary matrix (`tests/input/input_contracts_spec.lua`) and the full
+  suite stayed green before and after.
 
-### M5c-02 — `show(config) and fields share one output slot` test is incomplete — open
+### ~~M5c-02 — `show(config) and fields share one output slot` test is incomplete~~ — **Closed**
 
-- **Where:** `tests/input/input_contracts_spec.lua:1118-1129`.
-- **State:** The test only asserts that `on_limit_reached` and `highlighter` share the backing slot. It does not verify the sharing for `on_text_entered` and `validator`.
-- **Why it stands:** The implementer only verified slot-sharing for two of the four output callbacks.
-- **Revisit:** Widen the test to cover `on_text_entered` and `validator`.
+- **Where:** `tests/input/input_contracts_spec.lua:1118-1131` (original),
+  extended with four sibling rows.
+- **State:** Closed by M5c-02c-corrective. Added `show(config) shares
+  on_text_entered slot`, `field write shares on_text_entered slot`,
+  `show(config) shares validator slot`, `field write shares validator
+  slot` — each drives `F.compy_input()` (real production ingestion), not a
+  stub, and asserts identity through both the config-key and the direct
+  field-write path, matching the existing `on_limit_reached`/`highlighter`
+  pattern. Both remain settable-only here (no firing/gating assertion) —
+  that is chunk 3.
 
-### M5c-02 — line length limit violations in code and comments — open
+### ~~M5c-02 — line length limit violations in code and comments~~ — **Closed**
 
-- **Where:** `src/controller/userInputController.lua:322` and `tests/input/input_contracts_spec.lua:1245`.
-- **State:** The comment at `userInputController.lua:322` is 175 characters long, and the test declaration at `input_contracts_spec.lua:1245` is 65 characters long. Both exceed the 64-character limit.
-- **Why it stands:** Missed during code styling pass.
-- **Revisit:** Wrap the long comment and shorten the test description line.
+- **Where:** `src/controller/userInputController.lua:322` and
+  `tests/input/input_contracts_spec.lua:1229` (the trap-relevant sibling at
+  `:1245` was already ≤64 chars and untouched).
+- **State:** Closed by M5c-02c-corrective. The test declaration was
+  shortened to `'left at first-line start has input scope'` (61 chars),
+  same assertion, unchanged behaviour under test. The 322 REVIEW comment
+  was resolved rather than just wrapped: `UserInputController`'s
+  constructor now seeds `on_limit_reached = noop` (the existing global
+  `util.lua` noop, `require("util.lua")` added), so `emit_limit` no longer
+  needs the `if on_limit then …` guard and became an unconditional alias —
+  the marker's own suggestion, applied. The default is set once at
+  construction (the overlay controller is a true singleton, `main.lua:364`)
+  so `apply_config`'s existing `if cfg.field ~= nil then self.field =
+  cfg.field end` pattern — which preserves a prior field/config write
+  across a hide()/re-show() cycle — is untouched; only the pre-any-write
+  starting value changed from `nil` to a no-op function.
 
 
