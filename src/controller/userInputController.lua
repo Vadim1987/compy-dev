@@ -2,6 +2,7 @@ local class = require('util.class')
 require("util.key")
 require("util.view")
 require("util.string.string")
+require("util.lua")
 
 --- @param model UserInputModel
 --- @param result table?
@@ -11,6 +12,9 @@ local new = function(model, result, disable_selection)
     model = model,
     result = result,
     disable_selection = disable_selection,
+    -- default keeps emit_limit an unconditional alias below;
+    -- apply_config overwrites it when a widget sets one.
+    on_limit_reached = noop,
   }
 end
 
@@ -319,11 +323,9 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   end
   local input = self.model
   local ret
-  -- REVIEW: 'or noop' would safe if-checks downstream -- and it should be installed as default when applying config -- and then 'emit_limit' becomes redundant or just alias
-  local on_limit = self.on_limit_reached
 
   local function emit_limit(dir, scope)
-    if on_limit then on_limit(dir, scope) end
+    self.on_limit_reached(dir, scope)
   end
 
   local function horizontal_limit_scope(dir)
