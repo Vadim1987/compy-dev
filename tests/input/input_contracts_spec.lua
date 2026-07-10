@@ -353,29 +353,14 @@ describe('input contracts #input', function()
   -- a forward promise.
   describe('legacy text solicitation #legacy', function()
 
-    -- Fully event-driven: the text arrives through the
-    -- real gate (the shown widget is the soliciting
-    -- surface), the submit is a real return keypress.
-    -- DEPRECATED (E32/session39, AC-39): exercises the
-    -- oneshot/push('userinput') machinery AC-25 deletes at
-    -- m5c. Lifecycle: red on AC-25 delete → pending() →
-    -- delete once the submit→on_text_entered→deactivate
-    -- behaviour is green through the new chain. busted has
-    -- no xfail; pending() is the skipped state.
-    it('a submit fills the handle and closes #deprecated', function()
-      local env = F.cc:get_project_env()
-      local ref = env.user_input()
-      env.input_text('prompt?')
-      local closed = false
-      love.event.push = function(ev)
-        if ev == 'userinput' then closed = true end
-      end
-      F.session.type('4')
-      F.session.type('2')
-      F.session.press('return')
-      assert.equal('42', ref())
-      assert.is_true(closed)
-    end)
+    -- AC-39/AC-43 retirement: 'a submit fills the handle and
+    -- closes #deprecated' spied on love.event.push('userinput')
+    -- (AC-25 deletes the producer) — went red on the AC-25
+    -- delete, demoted to pending(), then deleted here: its
+    -- replacement is 'a legacy solicitation still fills the
+    -- reftable on submit' (the '#m5c' submit/cancel block),
+    -- which proves the surviving synchronous reftable-fill
+    -- through the new submit chain (§5 mechanism note).
 
     it('a refused solicitation warns, never silently',
       function()
@@ -465,26 +450,21 @@ describe('input contracts #input', function()
       assert.same({ 'Z' }, F.console:get_text())
     end)
 
-    -- Oneshot submit is exercised through the legacy
-    -- wiring because that is the only solicitation
-    -- surface that exists today; the deactivation
-    -- behaviour itself carries into the m6 chains.
-    -- DEPRECATED (E32/session39, AC-39): calls
-    -- F.session.handlers.userinput() directly (nil after
-    -- AC-25 ⇒ error). Same lifecycle as the submit row:
-    -- red → pending() → delete when the new chain's
-    -- deactivate step is green.
-    it('a oneshot submit deactivates the widget #deprecated',
-      function()
-        local env = F.cc:get_project_env()
-        env.user_input()
-        env.input_text('p')
-        F.singleton:set_text('v')
-        F.singleton.model:handle(true)
-        F.session.handlers.userinput()
-        F.session.type('Z')
-        assert.same({ 'Z' }, F.console:get_text())
-      end)
+    -- AC-39/AC-43 retirement: 'a oneshot submit deactivates
+    -- the widget #deprecated' called F.session.handlers.
+    -- userinput() (the surviving love.handlers.userinput
+    -- POLL CONSUMER, spec §5 mechanism note — deliberately
+    -- untouched, M8 retires it) directly, independent of
+    -- model:handle(true)'s now-deleted push. Deleting the
+    -- producer left it green rather than red (a divergence
+    -- from the AC-39 lifecycle's literal prediction, noted
+    -- in the outcome ledger) — deleted here regardless, on
+    -- explicit disposition, per its own #deprecated tag: its
+    -- replacements are 'Enter runs the full submit call-order
+    -- chain' and 'submit and cancel complete with no hooks
+    -- set' (the '#m5c' submit/cancel block), which prove
+    -- deactivation through the new chain without any of the
+    -- deleted oneshot/push machinery.
   end)
 
   -- Hidden widget does not consume (doc A §3(C),
@@ -723,11 +703,11 @@ describe('input contracts #input', function()
       -- R1): fired once at Enter with the assembled text — NOT
       -- the per-character chain callback (that is on_text_input,
       -- covered live in the dispatch-chain block below, AC-40).
-      -- The submit output + its before_/after_ chain are the
-      -- submit/cancel chunk (spec §5), so this half stays
-      -- pending here; greening it now would re-encode the R1
-      -- per-char-vs-block trap (AC-40).
-      pending('on_text_entered delivers the submitted text')
+      -- Landed live in the 'submit and cancel chain' block
+      -- below ('Enter runs the full submit call-order chain'
+      -- etc.) — not here, since exercising it needs the real
+      -- project route (F.activate_project), not this bucket's
+      -- fixtures.
     end)
 
   -- ====================================================
@@ -1292,6 +1272,249 @@ describe('input contracts #input', function()
       F.session.press('right')
       assert.same({ { 'right', 'input' } }, seen)
     end)
+
+    -- ---- submit and cancel (spec §5, AC-17..26/39) -------
+
+    -- AC-17: the full submit call-order chain on a real Enter
+    -- keypress. on_text_entered receives the FULL ASSEMBLED
+    -- text (R1) — not a per-character capture (AC-40 trap).
+    it('Enter runs the full submit call-order chain',
+      function()
+        local order = { }
+        local input = F.activate_project()
+        input.before_submit = function()
+          order[#order + 1] = 'before'
+        end
+        input.after_submit = function(t)
+          order[#order + 1] = 'after:' .. t
+        end
+        input.show({
+          text = { 'a', 'b' },
+          on_text_entered = function(t)
+            order[#order + 1] = 'entered:' .. t
+          end,
+        })
+        F.session.press('return')
+        assert.same(
+          { 'before', 'entered:a\nb', 'after:a\nb' }, order)
+      end)
+
+    -- AC-25: on_text_entered sees the session still active;
+    -- after_submit sees it deactivated (the observable order
+    -- the mechanism note fixes once push('userinput') is gone).
+    it('on_text_entered sees the session active; ' ..
+      'after_submit sees it deactivated', function()
+      local seen = { }
+      local input = F.activate_project()
+      input.show({
+        text = 'x',
+        on_text_entered = function()
+          seen.entered = love.state.user_input ~= nil
+        end,
+      })
+      input.after_submit = function()
+        seen.after = love.state.user_input ~= nil
+      end
+      F.session.press('return')
+      assert.is_true(seen.entered)
+      assert.is_false(seen.after)
+    end)
+
+    -- AC-42(b): a custom validator is invoked with the live
+    -- assembled text (not stale/empty data).
+    it('a custom validator is invoked with the assembled text',
+      function()
+        local seen
+        local input = F.activate_project()
+        input.show({
+          text = 'ab',
+          validator = function(t) seen = t; return true end,
+        })
+        F.session.press('return')
+        assert.equal('ab', seen)
+      end)
+
+    -- AC-18/AC-42(b): a rejecting validator locks the
+    -- session — no delivery, no deactivation, no
+    -- after_submit.
+    it('a rejecting validator locks input without delivering',
+      function()
+        local entered, after = false, false
+        local input = F.activate_project()
+        input.after_submit = function() after = true end
+        input.show({
+          text = 'bad',
+          validator = function() return false, 'nope' end,
+          on_text_entered = function() entered = true end,
+        })
+        F.session.press('return')
+        assert.is_false(entered)
+        assert.is_false(after)
+        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.singleton:has_error())
+      end)
+
+    -- AC-19: the full cancel call-order chain; Escape genuinely
+    -- dismisses (content cleared AND the widget hidden).
+    it('Escape runs the full cancel call-order chain',
+      function()
+        local order = { }
+        local input = F.activate_project()
+        input.before_cancel = function()
+          order[#order + 1] = 'before'
+        end
+        input.after_cancel = function()
+          order[#order + 1] = 'after'
+        end
+        input.show({ text = 'x' })
+        F.session.press('escape')
+        assert.same({ 'before', 'after' }, order)
+        assert.is_nil(love.state.user_input)
+        assert.is_true(F.singleton:is_empty())
+      end)
+
+    -- AC-20: Enter/Escape are ordinary keys while hidden — no
+    -- framework entry engages, so lower tiers get a chance.
+    it('Enter and Escape are ordinary keys while hidden',
+      function()
+        local seen = { }
+        local input = F.activate_project()
+        input.handlers.keypressed['return'] = function()
+          seen[#seen + 1] = 'return'; return true
+        end
+        input.handlers.keypressed['escape'] = function()
+          seen[#seen + 1] = 'escape'; return true
+        end
+        F.session.press('return')
+        F.session.press('escape')
+        assert.same({ 'return', 'escape' }, seen)
+      end)
+
+    -- AC-21: while shown, the framework entries run first,
+    -- unconditionally — a project combo handler cannot shadow
+    -- them (the submit still ran: the widget deactivated).
+    it('framework Enter cannot be shadowed while shown',
+      function()
+        local shadowed = false
+        local input = F.activate_project()
+        input.handlers.keypressed['return'] = function()
+          shadowed = true; return true
+        end
+        input.show({ text = 'x' })
+        F.session.press('return')
+        assert.is_false(shadowed)
+        assert.is_nil(love.state.user_input)
+      end)
+
+    -- AC-22: Shift+Return is NOT a framework combo — it falls
+    -- to the sink, which still inserts a newline (unchanged
+    -- sink behaviour); the widget stays open (not submitted).
+    -- Drives BOTH modifier tracks the production code reads:
+    -- F.session.press keeps Controller.keys_pressed (combo_
+    -- string) correct, mock.keystroke's 'S' token flips the
+    -- separate love.keyboard.isDown mock the sink's own
+    -- Key.shift() reads (tests/mock.lua — two distinct
+    -- tables).
+    it('Shift+Return is not intercepted; the sink edits',
+      function()
+        F.activate_project()
+        F.show_widget({ text = 'a' })
+        F.session.press('lshift')
+        mock.keystroke('S-return', F.session.press, false)
+        assert.same({ 'a', '' }, F.singleton:get_text())
+        assert.is_not_nil(love.state.user_input)
+      end)
+
+    -- AC-23: hide() and a force=true reconfigure fire no
+    -- cancel chain (the user-facing dismiss is Escape only).
+    it('hide() fires no cancel chain', function()
+      local fired = false
+      local input = F.activate_project()
+      input.before_cancel = function() fired = true end
+      input.show({ text = 'x' })
+      input.hide()
+      assert.is_false(fired)
+    end)
+
+    it('a force=true reconfigure fires no cancel chain',
+      function()
+        local fired = false
+        local input = F.activate_project()
+        input.before_cancel = function() fired = true end
+        input.show({ text = 'first' })
+        input.show({ force = true, text = 'second' })
+        assert.is_false(fired)
+      end)
+
+    -- AC-24: the continuous-session idiom re-activates within
+    -- the same submit sequence, before the frame draws.
+    it('after_submit can re-activate the widget mid-sequence',
+      function()
+        local input = F.activate_project()
+        input.after_submit = function()
+          input.show({ prompt = 'next' })
+        end
+        input.show({ text = 'first' })
+        F.session.press('return')
+        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.singleton:is_empty())
+      end)
+
+    -- AC-24: widget outputs persist across a deactivation —
+    -- only project stop resets them (a later chunk), not
+    -- submit.
+    it('on_text_entered persists across a hide/re-show cycle',
+      function()
+        local hits = 0
+        local input = F.activate_project()
+        input.show({
+          text = 'a',
+          on_text_entered = function() hits = hits + 1 end,
+        })
+        F.session.press('return')
+        input.show({ text = 'b' })
+        F.session.press('return')
+        assert.equal(2, hits)
+      end)
+
+    -- AC-25: a legacy solicitation's reftable fill (the
+    -- surviving synchronous half of the old oneshot submit,
+    -- spec §5 mechanism note) still works through the new
+    -- chain — this is the AC-39 green replacement for the
+    -- retired 'a submit fills the handle and closes' row.
+    it('a legacy solicitation still fills the reftable ' ..
+      'on submit', function()
+      F.activate_project()
+      local env = F.cc:get_project_env()
+      local ref = env.user_input()
+      env.input_text('prompt?')
+      F.session.type('4')
+      F.session.type('2')
+      F.session.press('return')
+      assert.equal('42', ref())
+      assert.is_nil(love.state.user_input)
+    end)
+
+    -- AC-26: absent hooks default to noop — submit and cancel
+    -- both complete without error when no hook is configured
+    -- (the AC-39 green replacement for the retired 'a oneshot
+    -- submit deactivates the widget' row: this proves
+    -- deactivation without any of the deleted oneshot/push
+    -- machinery).
+    it('submit and cancel complete with no hooks set',
+      function()
+        F.activate_project()
+        F.show_widget({ text = 'x' })
+        assert.has_no.errors(function()
+          F.session.press('return')
+        end)
+        assert.is_nil(love.state.user_input)
+        F.show_widget({ text = 'y' })
+        assert.has_no.errors(function()
+          F.session.press('escape')
+        end)
+        assert.is_nil(love.state.user_input)
+      end)
   end)
 
   -- ====================================================
@@ -1302,8 +1525,9 @@ describe('input contracts #input', function()
   -- ====================================================
   describe('later forward contracts — not yet authored',
     function()
-      pending(
-        'submit/cancel chains, on_limit_reached, ' ..
-        'configure/set_text/cursor, force-vs-configure')
+      -- submit/cancel chains landed live (m5c chunk 3, the
+      -- 'submit and cancel' rows above); on_limit_reached
+      -- landed live (m5c chunk 2).
+      pending('configure/set_text/cursor, force-vs-configure')
     end)
 end)

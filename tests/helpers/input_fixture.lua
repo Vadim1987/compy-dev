@@ -114,7 +114,7 @@ end
 -- published to love.state.user_input_controller; the compy.input
 -- wrappers resolve it from there).
 local function build_singleton(cfg)
-  local m = UserInputModel(cfg, InputEvalText, true)
+  local m = UserInputModel(cfg, InputEvalText)
   local c = UserInputController(m, nil, true)
   c:init_view({ render = function() end, draw = function() end })
   love.state.user_input_controller = c
@@ -201,7 +201,7 @@ end
 -- singleton disables selection, making pointer delivery a no-op —
 -- doc A §5.5). Witnesses pointer delivery to the widget half.
 function F.show_selectable_widget(lines)
-  local m = UserInputModel(cfg, InputEvalText, true)
+  local m = UserInputModel(cfg, InputEvalText)
   local w = UserInputController(m, nil, false)
   w:init_view({ render = function() end, draw = function() end })
   w.model:set_text(lines or { 'aa', 'bb', 'cc' })
@@ -220,21 +220,30 @@ local function restore_native_slots()
   love.mousereleased = Controller._defaults.mousereleased
 end
 
--- Empty a table in place (used to clear the normalising handler
--- sub-tables between tests; assigning nil is fine mid-traversal).
-local function wipe(t)
-  for k in pairs(t) do rawset(t, k, nil) end
+-- Empty a table in place (used to clear the normalising
+-- handler sub-tables between tests; assigning nil is fine
+-- mid-traversal), except any key in `keep` (the framework's
+-- OWN structural entries, never project/test-installed —
+-- spec §5 AC-17/19).
+local function wipe(t, keep)
+  for k in pairs(t) do
+    if not (keep and keep[k]) then rawset(t, k, nil) end
+  end
 end
 
--- Drop every project-route participant the chain rows install, so
--- each test starts from framework defaults (the M5c teardown
--- invariant, exercised at fixture scope): deactivate the route,
--- clear the framework tier-1 slots and the project's combo tables
--- and generic callbacks.
+-- Drop every project-route participant the chain rows
+-- install, so each test starts from framework defaults (the
+-- M5c teardown invariant, exercised at fixture scope):
+-- deactivate the route, clear the project-installed
+-- framework/combo tables and generic callbacks/hooks. Tier-1
+-- return/escape (installed once, at ProjectInputController
+-- construction, not per-test) survive the keypressed wipe —
+-- they are structural, not a test artifact.
 local function reset_chain()
   Controller.project_input:deactivate()
   local fw = Controller.project_input.framework_handlers
-  wipe(fw.keypressed); wipe(fw.keyreleased); wipe(fw.textinput)
+  wipe(fw.keypressed, { ['return'] = true, escape = true })
+  wipe(fw.keyreleased); wipe(fw.textinput)
   local input = CC:get_project_env().compy.input
   wipe(input.handlers.keypressed)
   wipe(input.handlers.keyreleased)
@@ -246,6 +255,10 @@ local function reset_chain()
   input.on_limit_reached = nil
   input.validator = nil
   input.highlighter = nil
+  input.before_submit = nil
+  input.after_submit = nil
+  input.before_cancel = nil
+  input.after_cancel = nil
 end
 
 -- Clean slate between tests: no held keys, no widget, console mode,
@@ -264,6 +277,14 @@ function F.reset()
   CC.input:clear()
   CC.editor.input:clear()
   singleton:clear()
+  -- The widget's OWN output/hook fields (apply_config only
+  -- overwrites when a show() config key is given, so a value
+  -- set by one test would otherwise survive into the next —
+  -- production behaviour, AC-24, but wrong at fixture scope).
+  singleton.validator = nil
+  singleton.on_text_entered = nil
+  singleton.on_limit_reached = noop
+  singleton.result = nil
 end
 
 return F
