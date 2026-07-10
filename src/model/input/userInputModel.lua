@@ -558,24 +558,17 @@ end
 --- @return boolean
 function UserInputModel:is_at_limit(dir, scope)
   local n = self:get_n_text_lines()
-  local cl = self:get_cursor_y()
-  local cc = self:get_cursor_x()
-  local line = self:get_text_line(cl)
-  local line_end = string.ulen(line) + 1
-  if not dir then
-    return cl == 1 or cl == n
-  end
-  local req = scope or 'input'
-  if n == 1 then req = 'input' end
+  local cl, cc = self:get_cursor_pos()
+  if not dir then return cl == 1 or cl == n end
+  local req = (n == 1) and 'input' or (scope or 'input')
   if dir == 'up' then return cl == 1 end
   if dir == 'down' then return cl == n end
+  local line = self:get_text_line(cl)
+  local line_end = string.ulen(line) + 1
   if dir == 'left' then
-    if req == 'line' then return cc == 1 end
-    return cl == 1 and cc == 1
-  end
-  if dir == 'right' then
-    if req == 'line' then return cc == line_end end
-    return cl == n and cc == line_end
+    return cc == 1 and (req == 'line' or cl == 1)
+  elseif dir == 'right' then
+    return cc == line_end and (req == 'line' or cl == n)
   end
   return false
 end
