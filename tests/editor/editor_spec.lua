@@ -80,10 +80,9 @@ describe('Editor #editor', function()
 
       local sel = buffer:get_selection()
       local sel_t = buffer:get_selected_text()
-      --- default selection is at the end
-      assert.same(#turtle_doc, sel)
-      --- and it's an empty line, of course
-      assert.same('', sel_t)
+      --- files open at the first line
+      assert.same(1, sel)
+      assert.same(turtle_doc[1], sel_t)
     end)
   end)
 
@@ -109,13 +108,17 @@ describe('Editor #editor', function()
 
         local sel = buffer:get_selection()
         local sel_t = buffer:get_selected_text()
-        --- default selection is at the end
-        assert.same(start_sel, sel)
-        --- and it's an empty line, of course
-        assert.same('', sel_t)
+        --- files open at the first line
+        assert.same(1, sel)
+        assert.same(turtle_doc[1], sel_t)
       end)
 
       it('interacts', function()
+        --- files open at the top; walk to the end first,
+        --- as these interactions historically assume it
+        for _ = 1, start_sel - 1 do
+          mock.keystroke('down', press)
+        end
         --- select middle line
         mock.keystroke('up', press)
         assert.same(start_sel - 1, buffer:get_selection())
@@ -124,15 +127,18 @@ describe('Editor #editor', function()
         local input = function()
           return controller.input:get_text():items()
         end
-        mock.keystroke('escape', press)
+        mock.keystroke('return', press)
         assert.same({ turtle_doc[2] }, input())
+        --- arrows stay in the input while editing
         mock.keystroke('end', press)
         mock.keystroke('down', press)
-        assert.same(start_sel, buffer:get_selection())
-        -- load the empty
-        mock.keystroke('escape', press)
+        assert.same(start_sel - 1, buffer:get_selection())
+        --- drop the edit, walk to the trailing empty
+        mock.keystroke('S-escape', press)
         assert.same({ '' }, input())
-        --- add text
+        mock.keystroke('down', press)
+        assert.same(start_sel, buffer:get_selection())
+        --- compose text (inserted before the empty)
         controller:textinput('-')
         controller:textinput('-')
         controller:textinput(' ')
@@ -157,7 +163,7 @@ describe('Editor #editor', function()
 
         mock.keystroke('up', press)
         assert.same(start_sel, buffer:get_selection())
-        --- replace
+        --- compose over it, then discard and reopen
         controller:textinput('i')
         controller:textinput('n')
         controller:textinput('s')
@@ -165,7 +171,8 @@ describe('Editor #editor', function()
         controller:textinput('r')
         controller:textinput('t')
         assert.same({ 'insert' }, input())
-        mock.keystroke('escape', press)
+        mock.keystroke('S-escape', press)
+        mock.keystroke('return', press)
         assert.same({ '-- test' }, input())
       end)
     end)
@@ -186,12 +193,19 @@ describe('Editor #editor', function()
       local visible = bv.content
       local scroll = bv.SCROLL_BY
 
+      --- files open at the top now; these specs assume
+      --- the historical EOF position, so walk down first
+      for _ = 1, #sierpinski do
+        controller:keypressed('down')
+      end
+
       local off = #sierpinski - l + 1
+      bv:scroll_to(off)
       local start_range = Range(off + 1, #sierpinski + 1)
 
       it('loads', function()
-        --- inital scroll is at EOF, meaning last l lines are visible
-        --- plus the phantom line
+        --- selection is at EOF, view at the historical offset
+        assert.same(#sierpinski + 1, buf:get_selection())
         assert.same(off, bv:get_offset())
         assert.same(start_range, visible.range)
       end)
@@ -245,12 +259,19 @@ describe('Editor #editor', function()
       local visible = bv.content
       local scroll = bv.SCROLL_BY
 
+      --- files open at the top now; these specs assume
+      --- the historical EOF position, so walk down first
+      for _ = 1, #sierpinski do
+        press('down')
+      end
+
       local clen = visible:get_content_length()
       local off = clen - l
+      bv:scroll_to(off)
       local start_range = Range(off + 1, clen)
       it('loads', function()
-        --- inital scroll is at EOF, meaning last l lines are visible
-        --- plus the phantom line
+        --- selection is at EOF, view at the historical offset
+        assert.same(#sierpinski + 1, buffer:get_selection())
         assert.same(off, bv:get_offset())
         assert.same(start_range, visible.range)
       end)
@@ -409,25 +430,20 @@ describe('Editor #editor', function()
       describe('input', function()
         local inter = controller.input
         it('loads', function()
-          inter:add_text('asd')
           local selected = buffer:get_selected_text()
-          mock.keystroke('escape', press)
+          mock.keystroke('return', press)
           assert.same(inter:get_text(), { selected })
         end)
         it("doesn't clear on move", function()
-          mock.keystroke('C-end', press)
-          -- load the empty
-          mock.keystroke('escape', press)
-          assert.same({ '' }, inter:get_text())
+          --- ctrl-moving the selection keeps the input
+          local loaded = inter:get_text()
+          mock.keystroke('C-up', press)
+          assert.same(loaded, inter:get_text())
         end)
-        it('inserts', function()
-          -- mock.keystroke('up', press)
-          local prefix = 'asd '
-          local selected = buffer:get_selected_text()
-          inter:add_text(prefix)
+        it('discards', function()
+          --- Shift+Esc drops the edit and returns to nav
           mock.keystroke('S-escape', press)
-          local res = string.join(inter:get_text())
-          assert.same(prefix .. selected, res)
+          assert.same({ '' }, inter:get_text())
         end)
       end)
     end)
@@ -435,6 +451,35 @@ describe('Editor #editor', function()
   --- end plaintext
 
   describe('structured (lua) works', function()
+    it('Ctrl+Delete drops a block only in nav', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local f1 = mock_func_snippet('one')
+      local f2 = mock_func_snippet('two')
+      local save = TU.get_save_function(
+        f1 .. '\n\n' .. f2 .. '\n')
+      controller:open('del.lua',
+        f1 .. '\n\n' .. f2 .. '\n', save)
+      --- dropping a block copies it to the clipboard
+      love.system = {
+        getClipboardText = function() return '' end,
+        setClipboardText = function() end,
+      }
+      local buffer = controller:get_active_buffer()
+      local n0 = buffer:get_content_length()
+
+      --- editing: the block survives, the key is the
+      --- widget's delete-next-word
+      mock.keystroke('return', press)
+      mock.keystroke('C-delete', press)
+      assert.same(n0, buffer:get_content_length())
+      mock.keystroke('S-escape', press)
+
+      --- navigation: it drops the block
+      mock.keystroke('C-delete', press)
+      assert.same(n0 - 1, buffer:get_content_length())
+    end)
+
     it('changing single line', function()
       local controller, press = wire(TU.mock_view_cfg())
       local save, savefile = TU.get_save_function(sierpinski)
@@ -451,9 +496,11 @@ describe('Editor #editor', function()
       assert.same(4, buffer:get_content_length())
       local modified = table.clone(sierpinski)
       local new_print = 'print(sierpinski(3))'
-      mock.keystroke('up', press)
+      mock.keystroke('down', press)
+      mock.keystroke('down', press)
       assert.same(3, buffer:get_selection())
       assert.same({ print_result }, buffer:get_selected_text())
+      mock.keystroke('return', press)
       input:clear()
       input:add_text(new_print)
       mock.keystroke('return', press)
@@ -683,6 +730,8 @@ describe('Editor #editor', function()
 
         before_each(function()
           input, buffer = session:open(existing_src, n_blocks)
+          --- files open at the top; these insert at the end
+          session:select_block(n_blocks)
         end)
 
         it("single normal block", function()

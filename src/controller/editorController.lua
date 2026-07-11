@@ -17,12 +17,14 @@ local function new(M, CC)
     ),
     console = CC,
     view = nil,
-    mode = 'edit',
+    mode = 'nav',
+    pos_memory = {},
   }
 end
 
 --- @alias EditorMode
 --- | 'edit' --- default
+--- | 'nav' --- navigating between blocks
 --- | 'reorder'
 --- | 'search'
 
@@ -34,6 +36,7 @@ end
 --- @field view EditorView?
 --- @field state EditorState?
 --- @field mode EditorMode
+--- @field pos_memory table<string, {sel:integer, off:integer}>
 EditorController = class.create(new)
 
 --- @param v EditorView
@@ -79,6 +82,10 @@ function EditorController:open(name, content, save)
   local b = BufferModel(name, content, save, ch, hl, pp, tr)
   self.model.buffers:push_front(b)
   self.view:open(b)
+  self:set_mode('nav')
+  if not self:_restore_position(b) then
+    self.view:get_current_buffer():follow_selection()
+  end
   self:update_status()
   self:set_state()
   self.input:update_view()
@@ -104,8 +111,6 @@ function EditorController:follow_require()
   if reqsel then
     local name = reqsel.name
     self.console:edit(name .. '.lua')
-  else
-    self:pop_buffer()
   end
 end
 
@@ -113,13 +118,39 @@ function EditorController:pop_buffer()
   local bs = self.model.buffers
   local n_buffers = bs:length()
   if n_buffers < 2 then return end
+  self:_remember_position()
   bs:pop_front()
   local b = bs:first()
   self.view:get_current_buffer():open(b)
   self:update_status()
 end
 
+--- store the active buffer's position by file name
+function EditorController:_remember_position()
+  local buf = self:get_active_buffer()
+  local bv = self.view:get_current_buffer()
+  self.pos_memory[buf.name] = {
+    sel = buf:get_selection(),
+    off = bv:get_offset(),
+  }
+end
+
+--- restore a remembered position if it is still in range
+--- @param buf BufferModel
+function EditorController:_restore_position(buf)
+  local saved = self.pos_memory[buf.name]
+  if saved
+      and saved.sel >= 1
+      and saved.sel <= buf:get_content_length() then
+    buf:set_selection(saved.sel)
+    self.view:get_current_buffer():scroll_to(saved.off)
+    return true
+  end
+  return false
+end
+
 function EditorController:close_buffer()
+  self:_remember_position()
   local bs = self.model.buffers
   local n_buffers = bs:length()
   if n_buffers < 2 then
@@ -132,8 +163,16 @@ end
 --- @param m EditorMode
 --- @return boolean
 local function is_normal(m)
-  return m == 'edit'
+  return m == 'nav' or m == 'edit'
 end
+
+--- legal mode transitions; anything absent is rejected
+local TRANSITIONS = {
+  nav = { edit = true, reorder = true, search = true },
+  edit = { nav = true },
+  reorder = { nav = true },
+  search = { nav = true },
+}
 
 --- @param mode EditorMode
 function EditorController:set_mode(mode)
@@ -151,7 +190,7 @@ function EditorController:set_mode(mode)
   end
 
   local current = self.mode
-  if is_normal(current) then
+  if current ~= mode and TRANSITIONS[current][mode] then
     if mode == 'reorder' then
       set_reorg()
     end
@@ -159,14 +198,9 @@ function EditorController:set_mode(mode)
       init_search()
     end
     self.mode = mode
-  else
-    --- currently in a special mode, only return is allowed
-    if is_normal(mode) then
-      self.mode = mode
-    end
+    Log.info('-- ' .. string.upper(mode) .. ' --')
+    self:update_status()
   end
-  Log.info('-- ' .. string.upper(mode) .. ' --')
-  self:update_status()
 end
 
 --- @return EditorMode
@@ -177,6 +211,14 @@ end
 --- @return boolean
 function EditorController:is_normal_mode()
   return is_normal(self.mode)
+end
+
+--- drop the loaded block and the input, return to nav
+function EditorController:leave_edit()
+  local buf = self:get_active_buffer()
+  buf:clear_loaded()
+  self.input:clear()
+  self:set_mode('nav')
 end
 
 --- @param clipboard string
@@ -286,7 +328,7 @@ end
 --- @param t string
 function EditorController:textinput(t)
   self.view:update_input()
-  if self.mode == 'edit' then
+  if is_normal(self.mode) then
     local input = self.model.input
     if input:has_error() then
       input:clear_error()
@@ -294,6 +336,10 @@ function EditorController:textinput(t)
       if Key.ctrl() and Key.shift() then
         return
       end
+      --- NB: on device, textinput precedes keypressed
+      --- (see dev/docs/compy-input-quirks.md), so this
+      --- transition lands before the same key's press
+      self:set_mode('edit')
       self.input:textinput(t)
     end
   elseif self.mode == 'search' then
@@ -432,7 +478,7 @@ function EditorController:_reorg(save)
   end
   self.view:refresh()
 
-  self:set_mode('edit')
+  self:set_mode('nav')
 end
 
 --- @private
@@ -484,7 +530,7 @@ end
 
 function EditorController:_search_mode_keys(k)
   if k == 'escape' then
-    self:set_mode('edit')
+    self:set_mode('nav')
     self.search:clear()
     return
   end
@@ -497,7 +543,7 @@ function EditorController:_search_mode_keys(k)
     local ln = jump.line - 1
     buf:set_selection(bn)
     self.view:get_current_buffer():scroll_to_line(ln)
-    self:set_mode('edit')
+    self:set_mode('nav')
     self.search:clear()
   end
 end
@@ -587,21 +633,15 @@ function EditorController:_normal_mode_keys(k)
   paste_k()
 
   --- @param add boolean?
-  local function load_selection(add)
+  local function load_selection()
     local t = buf:get_selected_text()
     if string.is_non_empty(t) then
       buf:set_loaded()
     else
       buf:clear_loaded()
     end
-    if add then
-      local c = input:get_cursor_info().cursor
-      input:add_text(t)
-      input:set_cursor(c)
-    else
-      input:set_text(t)
-      input:jump_home()
-    end
+    input:set_text(t)
+    input:jump_home()
   end
 
 
@@ -666,43 +706,35 @@ function EditorController:_normal_mode_keys(k)
       self:save(buf)
       self.view:refresh()
       self:_move_sel('down', n)
-      buf:clear_loaded()
-      input:clear()
+      self:leave_edit()
+    end
 
-      load_selection()
+    --- @param newtext Block[]
+    local function add(newtext)
+      if not bufv:is_selection_visible() then
+        return bufv:follow_selection()
+      end
 
-      self:update_status()
+      local approved, oversized = analyze_input(newtext)
+      if not approved then
+        if oversized then
+          reject_oversized(newtext, oversized)
+        end
+        return
+      end
+
+      local sel = buf:get_selection()
+      local _, n = buf:insert_content(approved, sel)
+      self:save(buf)
+      self.view:refresh()
+      self:_move_sel('down', n)
+      self:leave_edit()
     end
 
     if Key.ctrl()
         and not Key.shift()
         and not Key.alt()
         and Key.is_enter(k) then
-      --- @param newtext Block[]
-      local function add(newtext)
-        if not bufv:is_selection_visible() then
-          return bufv:follow_selection()
-        end
-
-        local approved, oversized = analyze_input(newtext)
-        if not approved then
-          if oversized then
-            reject_oversized(newtext, oversized)
-          end
-          return
-        end
-
-        local sel = buf:get_selection()
-        local _, n = buf:insert_content(approved, sel)
-        self:save(buf)
-        self.view:refresh()
-        self:_move_sel('down', n)
-        buf:clear_loaded()
-        input:clear()
-
-        self:update_status()
-      end
-
       self:_handle_submit(add)
     end
 
@@ -710,25 +742,41 @@ function EditorController:_normal_mode_keys(k)
         and not Key.shift()
         and not Key.alt()
         and Key.is_enter(k) then
-      self:_handle_submit(replace)
+      --- replace only what was deliberately opened;
+      --- fresh text composed in navigation is inserted
+      if buf.loaded then
+        self:_handle_submit(replace)
+      else
+        self:_handle_submit(add)
+      end
     end
   end
-  local function load()
-    if not Key.ctrl() and
-        not Key.shift()
-        and k == "escape" then
-      load_selection()
-    end
+  --- open the selected block for editing (spec 2.2: Enter)
+  local function open()
+    load_selection()
+    self:set_mode('edit')
+    block_input()
+  end
+  --- spec 2.3: Shift+Esc discards the edit; on an empty
+  --- input it leaves the buffer / editor
+  local function discard()
     if not Key.ctrl() and
         Key.shift() and
         k == "escape" then
-      load_selection(true)
+      if is_empty and self.mode == 'nav' then
+        self:close_buffer()
+      else
+        self:leave_edit()
+      end
+      block_input()
     end
   end
+  --- spec 2.7: Ctrl+Delete drops the block in
+  --- navigation; while editing it is the widget's
+  --- delete-next-word
   local function delete()
-    if Key.ctrl() then
-      if k == "delete"
-          or (k == "y" and is_empty) then
+    if Key.ctrl() and self.mode == 'nav' then
+      if k == "delete" then
         delete_block()
         block_input()
       end
@@ -751,7 +799,7 @@ function EditorController:_normal_mode_keys(k)
       if k == "end" then
         self:_move_sel('down', nil, true)
       end
-    else
+    elseif self.mode == 'nav' then
       if k == "up" and at_limit_start then
         self:_move_sel('up')
         block_input()
@@ -789,13 +837,21 @@ function EditorController:_normal_mode_keys(k)
   end
   local function clear()
     if Key.ctrl() and k == "w" then
-      buf:clear_loaded()
-      input:clear()
+      self:leave_edit()
     end
   end
 
-  submit()
-  load()
+  local plain_enter = Key.is_enter(k)
+      and not Key.ctrl()
+      and not Key.shift()
+      and not Key.alt()
+
+  if is_empty and plain_enter then
+    if self.mode == 'nav' then open() end
+  else
+    submit()
+  end
+  discard()
   delete()
   navigate()
   clear()
