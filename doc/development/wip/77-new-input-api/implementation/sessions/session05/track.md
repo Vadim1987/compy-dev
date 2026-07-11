@@ -55,3 +55,31 @@ conservative-reversible choice); Fable-5 advisor for genuinely hard calls only. 
      plain default eval is NOT equivalent. Flag surprise-first (uses the `eval` mechanism key, sanctioned
      by the spec's de-bound-helper-names note, not the documented highlighter/validator keys). Implementor
      verifies the highlighter renders; reviewer checks.
+
+- [project] **CRASH RECOVERY — predecessor PM died mid-M8-01-implementor-run (new PM boot, 2026-07-11).**
+  Re-entrance guardrail: on this boot `session05/track.md` was PRESENT and HEAD was `b81b116` ("open M8 —
+  revalidation done, carve written, M8-01 commissioned") — so the predecessor got as far as committing the
+  M8-01 commission, then spawned the Sonnet implementor, which **crashed mid-run**. Reconstructed the stop
+  point from the working tree (the implementor's output survives uncommitted, per the session05 prompt's
+  "changes survive on disk" note):
+  - **DONE + green on disk (uncommitted):** the test-first `#m8` continuous-session tests
+    (`tests/input/input_contracts_spec.lua`, 2 rows) + the **tixy** migration
+    (`src/examples/tixy/main.lua`: `write_to_input`→`set_text`, `input_code`/`user_input` poll loop →
+    `show{ eval=InputEvalLua, on_text_entered=submit_body }` + field-write `after_submit` re-show). Suite
+    **808 / 0 / 0 / 4** (baseline 806 + the 2 new rows; the 4 pending unchanged) — verified live at boot.
+  - **NOT done (the crash cut here):** repl / guess / valid migrations (AC-5); `outcomes/M8-01.md` ledger;
+    the chunk commit. No `outcomes/M8-01.md` exists → confirms the implementor never reached its wrap.
+  - **REAL FINDING the crashed implementor surfaced (confirmed live by this PM):** `after_submit` is in
+    `INPUT_CALLBACKS` (field-write-assignable) but **NOT in `OUTPUT_KEYS`** (`consoleController.lua:403-408`,
+    the only keys merged/stickied through `show{}`/`configure{}` = `on_text_entered`/`on_limit_reached`/
+    `validator`/`highlighter`). So `show{ after_submit=… }` is **silently dropped** — the recipe in the
+    commission + `M8-chunk-plan.md` illustrating `after_submit` inside `show{}` is WRONG on that point; the
+    wired form is a direct field-write (`input.after_submit = fn`, same as the existing AC-17 test). This is
+    a genuine surprise-first item (not a design gap — the callback mechanism exists, the recipe just named
+    the wrong delivery for it), applies to **all four** migrations, and MUST be pinned in the M8-01 ledger.
+  - **PM DECISION: keep the surviving work, spawn a FRESH Sonnet implementor to COMPLETE M8-01** (cannot
+    `SendMessage`-resume the dead predecessor's sub-agent — its transcript died with the predecessor PM).
+    Resume commission `prompts/M8-01-resume.md` written: verify-don't-redo tixy + tests, migrate the three
+    remaining examples with the **field-write `after_submit`** form, verify the re-armed tixy still
+    highlights (eval is NOT in OUTPUT_KEYS → confirm stickiness at the model layer or re-pass `eval`),
+    record the ledger surprise-first, commit. Original `prompts/M8-01-in-repo-migrations.md` stays authority.
