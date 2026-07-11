@@ -287,6 +287,9 @@ local function reset_widget_outputs()
   ui.on_text_entered = nil
   ui.on_limit_reached = noop
   ui.result = nil
+  if ui.model and ui.model.evaluator then
+    ui.model.evaluator.highlighter = nil
+  end
 end
 
 local click_delay = 0.4

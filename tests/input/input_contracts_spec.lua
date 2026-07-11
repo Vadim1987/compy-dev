@@ -1612,11 +1612,13 @@ describe('input contracts #input', function()
         F.show_widget({
           validator = function() return true end,
           on_text_entered = function() end,
+          highlighter = function() end,
         })
         F.cc:stop_project_run()
         assert.is_nil(F.singleton.validator)
         assert.is_nil(F.singleton.on_text_entered)
         assert.equal(noop, F.singleton.on_limit_reached)
+        assert.is_nil(F.singleton.model.evaluator.highlighter)
       end)
 
     -- AC-30 (ratified-model R11): inspect is the console

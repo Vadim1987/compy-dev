@@ -127,3 +127,29 @@ above). No `>> REVIEW` markers were introduced.
 - **`src/tests/autotest.lua` breakage from `active_keyboard_route` removal** — untracked,
   human-owned; update required at L133/212.
 - **None otherwise** for in-slice AC coverage.
+
+## Corrective (F1/F2)
+
+_Applied from `../reviews/M5c-04.md` — AC-29 teardown missed the mirrored
+`highlighter` widget output._
+
+- **F2 (test, red first):** extended `stop resets the widget's own output
+  fields` (`tests/input/input_contracts_spec.lua:1609`) to show a widget
+  with `highlighter = function() end` and assert
+  `F.singleton.model.evaluator.highlighter` is nil after
+  `stop_project_run`. Confirmed red for the right reason: 778/1/0/5, the
+  new assertion failing with the highlighter still set (survived stop).
+- **F1 (fix):** `reset_widget_outputs` (`src/controller/controller.lua:283`)
+  now also clears the mirrored copy on the evaluator singleton:
+  `if ui.model and ui.model.evaluator then ui.model.evaluator.highlighter
+  = nil end`. Re-ran; row went green.
+- **Busted counts:** before (chunk-4 baseline) 779/0/0/5 → red at
+  778/1/0/5 (row extended, not added) → after 779/0/0/5. No new rows;
+  one row got a fourth assertion.
+- **LSP diagnostics:** clean on `controller.lua`; `references` confirms
+  `reset_widget_outputs` has exactly one caller (`clear_user_handlers`,
+  the stop path).
+- **Scope fence:** only `src/controller/controller.lua` and
+  `tests/input/input_contracts_spec.lua` touched; route-equivalence
+  REVIEW markers untouched; no `src/examples/*`; untracked
+  `src/tests/autotest.lua` not committed.
