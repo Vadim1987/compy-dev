@@ -52,6 +52,25 @@ feature/example code or `design/`. Verdict: approve / corrective-take / escalate
 8. **Rules limits** on any new/changed example code + the test: line ≤64, fn body ≤14, params ≤4, nesting
    ≤4. Example code is looser historically, but new `on_text_entered`/`after_submit` closures should be
    tidy; flag egregious bodies (report-don't-fix if pre-existing, corrective if newly introduced).
+9. **`after_submit` is a FIELD-WRITE, not a `show{}` key (crash-recovery finding — verify it holds).**
+   The prior implementor + this PM confirmed `after_submit`/`before_submit`/`before_cancel`/`after_cancel`
+   are in `INPUT_CALLBACKS` (field-write-assignable) but NOT in `OUTPUT_KEYS` (the only keys `show{}`
+   merges: `on_text_entered`/`on_limit_reached`/`validator`/`highlighter`) — so `show{ after_submit = fn }`
+   silently no-ops. Confirm **every** migrated example wires the re-prompt as a standalone
+   `compy.input.after_submit = function() … end` statement, NOT inside a `show{}` cfg. A `show{after_submit=…}`
+   that slipped through = a dead re-prompt (the loop never re-arms) = corrective-take. The ledger flags this
+   surprise-first; verify the code matches the claim.
+10. **Prompt/text persistence across the bare re-show (fidelity trap — weigh, don't assume benign).**
+   `prompt`/`text`/`cursor` are `PENDING_KEYS` — **per-show, NOT sticky** (unlike the OUTPUT_KEYS + eval).
+   So a bare `after_submit` re-show (`show{}`) drops the prompt: **guess** re-prompts without
+   "Guess a number:" on rounds 2+, and **tixy**'s re-show (`show{ text = … }`, no `prompt`) loses the
+   "function tixy(t, i, x, y)" label after the first submit. Legacy showed the prompt **every** round
+   (`validated_input(…, "Guess a number:")` / `input_code("function tixy…")` called each empty frame).
+   Decide whether this is an acceptable cosmetic drift (prompt is a label; the widget still works) or an
+   AC-3/AC-5 fidelity miss worth a corrective re-pass (`show{ prompt = P }` in `after_submit`). Check
+   whether the ledger even noticed it — if the drift is real and unflagged, that itself is a finding.
+   `eval` by contrast IS effectively sticky (persistent model singleton — the ledger traces this); confirm
+   that trace rather than taking it on faith.
 
 ## Verification you must do yourself (verify-don't-trust)
 
