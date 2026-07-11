@@ -63,6 +63,32 @@ for genuinely hard calls only._
   against every construction/call site. Completeness-critical refactor sweeps this session lean on grep,
   not the AST — acceptable per `agents/rules.md` LSP-usage guidance ("grep as a backstop"), but worth
   the human knowing. **Instruct remaining sub-agents to expect LSP-down and use the grep backstop.**
+- [project] **Chunk 4 (route-lifecycle, Scope 5) — LANDED + Opus-reviewed + corrective
+  applied (autonomous).** Commission `eed9f5a`; Sonnet implementor `072fe6d`(red rows)/
+  `386cfe1`(feat: route connect/disconnect + teardown + `compy.before_exit`)/`74ab55a`
+  (outcome). Opus reviewer **corrective-take** `fbbef86` (`reviews/M5c-04.md`) — one
+  confirmed AC-29 gap: `reset_widget_outputs` reset 3/4 widget outputs but not the
+  `highlighter`, which mirrors onto the module-global `InputEvalText` evaluator and so
+  survived stop → leaked into the next project's widget (empirically proven by the
+  reviewer). Corrective `d3c2adb` (Sonnet, test-first: row went 778/1 red → green):
+  nil the mirrored `ui.model.evaluator.highlighter` in `reset_widget_outputs` + 4th
+  assertion on the teardown row. **Suite 771 → 779 / 0 / 0 / 5.** AC-27/28/29/30 +
+  M6-02 all met; the M4 ruling-1 `app_state ~= 'running'` forwarding removed (slots
+  restored at the transition via new `Controller.release_keyboard_route`); pointer
+  slots left hooked (AC-28); `active_keyboard_route` dropped (C23), suite row retargeted
+  to AC-29 teardown; `compy.before_exit` on the `compy` namespace, fires once before
+  cleanup, reset on stop. **Scope fence HELD** — route-equivalence REVIEW markers
+  (`controller.lua` occupy/PIC/wrap-vs-assign) left untouched; only the L213-214
+  `_defaults`/TODO dissolved *by* the forwarding removal. **Impact flagged for human:**
+  untracked `src/tests/autotest.lua:133/212` still calls the dropped
+  `active_keyboard_route()` — human-owned, must update.
+- [project] **INFRA RESTORED — lua-lsp MCP server is BACK UP** (commit `08a3d93`
+  `fix MCP-lsp-lua`; the chunk-4 reviewer + corrective implementor both used it live:
+  `references` on `reset_widget_outputs` → exactly one caller, clean `diagnostics`).
+  Supersedes the session's earlier lua-lsp-DOWN note. **All successor sub-agents: USE
+  the LSP for correctness** (definition/references/hover/diagnostics), `sleep 1` after
+  any `.lua` edit before MCP calls (re-index), grep as completeness backstop — per the
+  global CLAUDE.md MCP↔LSP guidance.
 - [project] **Carried tech debt (report-don't-fix, from chunk-3 ledger — none blocking):**
   (a) `multiline` config field accepted but **not gated** anywhere — Shift+Enter inserts a newline
   unconditionally (pre-existing; may home in M7 or a config slice). (b) `emit_limit`'s `dir` typed
