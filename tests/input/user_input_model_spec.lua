@@ -138,6 +138,46 @@ describe("input model spec #input", function()
     end)
   end)
 
+  -------------------------------
+  --  set_text keep_cursor     --
+  -------------------------------
+  -- M7-01 model fix: set_text's tail jump_end() used to run
+  -- unconditionally, making a truthy keep_cursor silently
+  -- ineffective. AC-8: set_text(t) jumps to end; set_text(t,
+  -- true) preserves the cursor, clamped if the new text
+  -- is shorter than the old cursor position.
+  describe('set_text keep_cursor', function()
+    local model = UserInputModel(mockConf, luaEval)
+
+    it('jumps to end when keep_cursor is falsy', function()
+      model:set_text('abcdef')
+      model:move_cursor(1, 2)
+      model:set_text('xyz')
+      local cl, cc = model:get_cursor_pos()
+      assert.same(1, cl)
+      assert.same(4, cc)
+    end)
+
+    it('preserves the cursor when keep_cursor is true',
+      function()
+        model:set_text('abcdef')
+        model:move_cursor(1, 3)
+        model:set_text('xyz', true)
+        local cl, cc = model:get_cursor_pos()
+        assert.same(1, cl)
+        assert.same(3, cc)
+      end)
+
+    it('clamps the preserved cursor when text shrinks',
+      function()
+        model:set_text('abcdef')
+        model:set_text('xy', true)
+        local cl, cc = model:get_cursor_pos()
+        assert.same(1, cl)
+        assert.same(3, cc)
+      end)
+  end)
+
   describe('swaps lines', function()
     local model = UserInputModel(mockConf, luaEval)
     local test_t = {

@@ -431,6 +431,34 @@ local get_compy_input = function()
       local ui = love.state.user_input_controller
       if ui then ui:hide() end
     end,
+    -- AC-6/D-8: 1-based (line, col); nil when hidden — a
+    -- plain read of "nothing to report", not a refused
+    -- mutation, so unlike set_cursor/set_text below it does
+    -- not warn (spec.md §6 phrasing).
+    get_cursor = function()
+      if not love.state.user_input then return nil end
+      local ui = love.state.user_input_controller
+      return ui:get_cursor_pos()
+    end,
+    -- AC-7/AC-9: clamped move; no-op + warn while hidden.
+    set_cursor = function(line, col)
+      if not love.state.user_input then
+        Log.warn('compy.input.set_cursor ignored — hidden')
+        return
+      end
+      love.state.user_input_controller:set_cursor_pos(line, col)
+    end,
+    -- AC-8/AC-9: replace content (cursor to end, or kept +
+    -- clamped); no-op + warn while hidden; view updates via
+    -- the controller's set_text (no re-show, AC-8).
+    set_text = function(text, keep_cursor)
+      if not love.state.user_input then
+        Log.warn('compy.input.set_text ignored — hidden')
+        return
+      end
+      local ui = love.state.user_input_controller
+      ui:set_text(text, keep_cursor)
+    end,
   }
   return build_input_surface(state, methods)
 end

@@ -51,8 +51,9 @@ function UserInputController:get_text()
 end
 
 --- @param t str
-function UserInputController:set_text(t)
-  self.model:set_text(t)
+--- @param keep_cursor boolean?
+function UserInputController:set_text(t, keep_cursor)
+  self.model:set_text(t, keep_cursor)
   self:update_view()
 end
 
@@ -118,6 +119,23 @@ end
 --- @param cursor Cursor
 function UserInputController:set_cursor(cursor)
   return self.model:set_cursor(cursor)
+end
+
+--- Clamped 2D move (compy.input.set_cursor, AC-7). Named
+--- apart from set_cursor(Cursor) above — that raw primitive
+--- already has a different signature/caller (editorController
+--- load_selection); this computes a valid landing itself
+--- (byte length, matching move_cursor's own bound) rather
+--- than relying on move_cursor's fallback-to-previous, which
+--- does not clamp an out-of-range value to the line/text end.
+--- @param line integer
+--- @param col integer
+function UserInputController:set_cursor_pos(line, col)
+  local n = self.model:get_n_text_lines()
+  local l = math.max(1, math.min(line, n))
+  local llen = #(self.model:get_text_line(l))
+  local c = math.max(1, math.min(col, llen + 1))
+  self.model:move_cursor(l, c)
 end
 
 -----------

@@ -1667,6 +1667,153 @@ describe('input contracts #input', function()
       end)
   end)
 
+  -- The cursor + text surface (spec §6, FR-8/9/10; M7-01
+  -- AC-6/7/8/9/10). Driven through the public project
+  -- surface F.compy_input() — exactly what a project sees.
+  -- get_cursor/set_cursor/set_text are non-assignable
+  -- methods (NOT in INPUT_CALLBACKS), so AC-10 rides the
+  -- same __newindex boundary as show/hide.
+  describe('cursor and text surface #m7', function()
+
+    -- AC-6: active → 1-based (line, col); hidden → nil.
+    it('get_cursor reports 1-based line, col when active',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(6, c)
+      end)
+
+    it('get_cursor returns nil when hidden', function()
+      local input = F.compy_input()
+      assert.is_nil(input.get_cursor())
+    end)
+
+    -- AC-7: move; out-of-range clamps to the valid range.
+    it('set_cursor moves the cursor', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello' })
+      input.set_cursor(1, 3)
+      local l, c = input.get_cursor()
+      assert.same(1, l)
+      assert.same(3, c)
+    end)
+
+    -- Discriminating: seat the cursor at col 2 first, so a
+    -- clamp-to-line-end (col 6) is distinguishable from
+    -- move_cursor's fallback-to-previous (would stay col 2).
+    -- Proves set_cursor_pos clamps rather than no-ops.
+    it('set_cursor clamps an over-range column', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello' })
+      input.set_cursor(1, 2)
+      input.set_cursor(1, 999)
+      local _, c = input.get_cursor()
+      assert.same(6, c) -- 'hello' end (len 5 + 1)
+    end)
+
+    it('set_cursor clamps an over-range line', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello' })
+      input.set_cursor(999, 2)
+      local l = input.get_cursor()
+      assert.same(1, l) -- single line: clamps to 1
+    end)
+
+    -- AC-7/AC-9: hidden set_cursor no-ops and warns.
+    it('set_cursor while hidden warns and no-ops', function()
+      local input = F.compy_input()
+      local warned = 0
+      local ow = Log.warn
+      Log.warn = function() warned = warned + 1 end
+      input.set_cursor(1, 2)
+      Log.warn = ow
+      assert.equal(1, warned)
+      assert.is_nil(input.get_cursor())
+    end)
+
+    -- AC-8: replace content, cursor to end.
+    it('set_text replaces content and jumps to the end',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        input.set_text('worldly')
+        assert.same({ 'worldly' }, F.singleton:get_text())
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(8, c) -- 'worldly' end (len 7 + 1)
+      end)
+
+    -- AC-8: keep_cursor preserves position (clamped).
+    it('set_text with keep_cursor preserves the cursor',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        input.set_cursor(1, 3)
+        input.set_text('world', true)
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(3, c)
+      end)
+
+    it('set_text keep_cursor clamps when text shrinks',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        input.set_cursor(1, 5)
+        input.set_text('xy', true)
+        local _, c = input.get_cursor()
+        assert.same(3, c) -- 'xy' end (len 2 + 1)
+      end)
+
+    -- AC-8: the view reflects the change WITHOUT a re-show
+    -- (the overlay handle is not re-published; the widget's
+    -- own view render fires via the controller's update_view).
+    it('set_text updates the view without a re-show',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        local handle = love.state.user_input
+        local renders = 0
+        local orig = F.singleton.view.render
+        F.singleton.view.render =
+            function(...) renders = renders + 1 end
+        input.set_text('again')
+        F.singleton.view.render = orig
+        assert.equal(handle, love.state.user_input)
+        assert.is_true(renders > 0)
+      end)
+
+    -- AC-8/AC-9: hidden set_text no-ops and warns.
+    it('set_text while hidden warns and no-ops', function()
+      local input = F.compy_input()
+      local warned = 0
+      local ow = Log.warn
+      Log.warn = function() warned = warned + 1 end
+      input.set_text('nope')
+      Log.warn = ow
+      assert.equal(1, warned)
+      assert.is_true(F.singleton:is_empty())
+    end)
+
+    -- AC-10: the three callables are non-assignable — the
+    -- mutable boundary raises loudly (never a silent swallow).
+    it('assigning the cursor/text callables raises',
+      function()
+        local input = F.compy_input()
+        assert.has_error(function()
+          input.get_cursor = function() end
+        end)
+        assert.has_error(function()
+          input.set_cursor = function() end
+        end)
+        assert.has_error(function()
+          input.set_text = function() end
+        end)
+      end)
+  end)
+
   -- ====================================================
   -- 0.1.0-m6 / m7 forward — structural anchor only.
   -- Names the not-yet-authored forward contracts so they

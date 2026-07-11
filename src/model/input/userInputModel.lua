@@ -136,9 +136,11 @@ function UserInputModel:set_text(text, keep_cursor)
     self.entered = InputText(text)
   end
   self:text_change()
-  if not keep_cursor then
-    self:init_visible(self.entered)
+  if keep_cursor then
+    self:_clamp_cursor_pos()
+    return
   end
+  self:init_visible(self.entered)
   self:jump_end()
 end
 
@@ -501,6 +503,19 @@ end
 --- @param c Cursor
 function UserInputModel:set_cursor(c)
   self.cursor = c
+end
+
+--- @private
+--- Clamp self.cursor into the current text's valid range
+--- (byte length, matching move_cursor's own bound below) —
+--- set_text(t, true)'s AC-8 landing when the new content is
+--- shorter than the preserved cursor position (M7-01).
+function UserInputModel:_clamp_cursor_pos()
+  local n = self:get_n_text_lines()
+  local l = math.max(1, math.min(self.cursor.l, n))
+  local llen = #(self:get_text_line(l))
+  local c = math.max(1, math.min(self.cursor.c, llen + 1))
+  self:set_cursor(Cursor(l, c))
 end
 
 --- @param y integer?
