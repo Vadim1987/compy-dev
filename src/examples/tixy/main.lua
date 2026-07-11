@@ -36,7 +36,7 @@ function load_example(ex)
     body = ex.code
     setupTixy()
     legend = ex.legend
-    write_to_input(body)
+    compy.input.set_text(body)
   end
 end
 
@@ -168,18 +168,22 @@ function love.draw()
   drawText()
 end
 
-r = user_input()
+-- Continuous-session idiom (M8-01): consume the submitted
+-- code in on_text_entered, re-show (still holding the just-
+-- submitted body, so editing continues in place — NOT the
+-- clear-and-reprompt shape) from after_submit.
+local function submit_body(text)
+  body = string.unlines(text)
+  setupTixy()
+  legend = ""
+end
+
+compy.input.after_submit = function()
+  compy.input.show{ text = string.lines(body) }
+end
 
 function love.update(dt)
   time = time + dt
-  if r:is_empty() then
-    input_code("function tixy(t, i, x, y)", string.lines(body))
-  else
-    local ret = r()
-    body = string.unlines(ret)
-    setupTixy()
-    legend = ""
-  end
 end
 
 function love.mousepressed(_, _, button)
@@ -196,3 +200,10 @@ function love.mousepressed(_, _, button)
 end
 
 advance()
+
+compy.input.show{
+  prompt = "function tixy(t, i, x, y)",
+  text = string.lines(body),
+  eval = InputEvalLua,
+  on_text_entered = submit_body,
+}

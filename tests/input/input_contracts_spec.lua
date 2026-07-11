@@ -2024,4 +2024,69 @@ describe('input contracts #input', function()
       end)
     end)
   end)
+
+  -- ====================================================
+  -- The continuous-session idiom (M8 migration recipe):
+  -- on_text_entered consumes; after_submit re-shows.
+  -- Pins the pattern every M8-01 example migration relies
+  -- on, before any example is touched.
+  --
+  -- SURFACED (surprise-first, see M8-01 ledger):
+  -- before_submit/after_submit/before_cancel/after_cancel
+  -- are NOT among show()'s merged cfg keys (only
+  -- on_text_entered/on_limit_reached/validator/highlighter
+  -- are, per OUTPUT_KEYS in consoleController.lua) — passing
+  -- after_submit inside show{...} is silently dropped (no
+  -- error, no warn). The wired path is a direct field
+  -- write (`input.after_submit = fn`), exactly the pattern
+  -- the existing AC-17 submit-chain test above already
+  -- uses. The commission's illustrative show{after_submit=…}
+  -- sugar does not literally work; this test uses the
+  -- field-write form that does.
+  -- ====================================================
+  describe('continuous-session idiom #m8', function()
+
+    -- The recipe: consume in on_text_entered, re-show
+    -- (bare, no config) in after_submit. Asserts (a) the
+    -- assembled text reaches on_text_entered and (b) the
+    -- widget is active again once after_submit returns.
+    it('re-shows from after_submit with the same callbacks',
+      function()
+        local input = F.activate_project()
+        local seen = { }
+        input.after_submit = function() input.show({}) end
+        input.show({
+          prompt = 'first',
+          on_text_entered = function(t)
+            seen[#seen + 1] = t
+          end,
+        })
+        F.session.type('a')
+        F.session.press('return')
+        assert.same({ 'a' }, seen)
+        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.singleton:is_shown())
+      end)
+
+    -- The re-show re-arms with the STICKY callback — a
+    -- second submit is observed without re-passing
+    -- on_text_entered, proving the loop can repeat (the
+    -- shape every migrated example's re-prompt depends on).
+    it('the re-armed session observes a second submit',
+      function()
+        local input = F.activate_project()
+        local seen = { }
+        input.after_submit = function() input.show({}) end
+        input.show({
+          on_text_entered = function(t)
+            seen[#seen + 1] = t
+          end,
+        })
+        F.session.type('a')
+        F.session.press('return')
+        F.session.type('b')
+        F.session.press('return')
+        assert.same({ 'a', 'b' }, seen)
+      end)
+  end)
 end)

@@ -1,5 +1,4 @@
 math.randomseed(os.time())
-r = user_input()
 N = 100
 -- number_to_guess
 ntg = 0
@@ -47,13 +46,19 @@ function check(n)
   end
 end
 
-function love.update()
-  if r:is_empty() then
-    validated_input({ is_natural }, "Guess a number:")
-  else
-    local n = tonumber(r())
-    check(n)
-  end
+-- Continuous-session idiom (M8-01): consume the guess in
+-- on_text_entered, re-show (bare) from after_submit. eval
+-- reuses the legacy validated_input->ValidatedTextEval path
+-- (least new logic); wires the effective (L26) is_natural —
+-- the L12 duplicate is pre-existing shadowing, not touched.
+compy.input.after_submit = function()
+  compy.input.show{}
 end
 
 init()
+
+compy.input.show{
+  prompt = "Guess a number:",
+  eval = ValidatedTextEval({ is_natural }),
+  on_text_entered = function(t) check(tonumber(t)) end,
+}

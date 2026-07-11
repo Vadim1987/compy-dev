@@ -1,5 +1,3 @@
-r = user_input()
-
 function min_length(n)
   return function(s)
     local l = string.ulen(s)
@@ -72,13 +70,18 @@ function is_natural(s)
   end
 end
 
-function love.update()
-  if r:is_empty() then
-    validated_input({
-      min_length(2),
-      is_lower
-    })
-  else
-    print(r())
-  end
+-- Continuous-session idiom (M8-01): consume the line in
+-- on_text_entered, re-show (bare) from after_submit. eval
+-- reuses the legacy validated_input->ValidatedTextEval path
+-- (least new logic).
+compy.input.after_submit = function()
+  compy.input.show{}
 end
+
+compy.input.show{
+  eval = ValidatedTextEval({
+    min_length(2),
+    is_lower
+  }),
+  on_text_entered = function(t) print(t) end,
+}
