@@ -9,8 +9,6 @@ incr = 10
 tx, ty = midx, midy
 debug = false
 
-local r = user_input()
-
 function eval(input)
   local f = actions[input]
   if f then
@@ -48,7 +46,10 @@ end
 
 function love.keyreleased(key)
   if key == "i" then
-    r = input_text("TURTLE")
+    compy.input.show{
+      prompt = "TURTLE",
+      on_text_entered = eval,
+    }
   end
 
   if love.keyboard.isDown("lctrl", "rctrl") then
@@ -61,8 +62,5 @@ end
 function love.update()
   if ty > midy then
     debug_color = Color.red
-  end
-  if not r:is_empty() then
-    eval(r())
   end
 end
