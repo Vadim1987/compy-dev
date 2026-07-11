@@ -373,3 +373,21 @@ concrete need appears.
   starting value changed from `nil` to a no-op function.
 
 
+
+### `submit()` deliver-then-hide ordering forces example-side deferral of any reshow — API-ergonomics observation (M5c-05 review)
+
+- **Where:** `src/controller/userInputController.lua:341-342` (`submit()` calls
+  `deliver(self, text)` then `self:hide()`); re-entry guard at `:254-259`.
+- **What:** `on_text_entered` fires while the overlay is still active, and
+  `submit()` unconditionally `hide()`s right after. So an example that wants to
+  "reshow with the same text on invalid input" cannot call `compy.input.show{...}`
+  synchronously inside its callback (the re-entry guard suppresses it, then the
+  trailing `hide()` wipes it). maze (M5c-05) had to defer the reshow one frame
+  (`need_reopen`/`reopen_text` picked up by `rearm_input`). Works, but it is a
+  non-obvious trap any project author reshowing on reject will re-hit.
+- **Kind:** API ergonomics — the landed submit sequencing is frozen chunk-3
+  behaviour; **not** a bug and **not** to be changed in M5c.
+- **Disposition:** report-don't-fix. Candidate to address when the M7 live-
+  reconfigure surface lands (a first-class "reject keeps the widget open with
+  the rejected text" path would remove the need for example-side deferral).
+- **State:** open / anticipated (no committed closure yet).
