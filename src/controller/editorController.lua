@@ -104,8 +104,6 @@ function EditorController:follow_require()
   if reqsel then
     local name = reqsel.name
     self.console:edit(name .. '.lua')
-  else
-    self:pop_buffer()
   end
 end
 
@@ -713,22 +711,29 @@ function EditorController:_normal_mode_keys(k)
       self:_handle_submit(replace)
     end
   end
-  local function load()
-    if not Key.ctrl() and
-        not Key.shift()
-        and k == "escape" then
-      load_selection()
-    end
+  --- open the selected block for editing (spec 2.2: Enter)
+  local function open()
+    load_selection()
+    block_input()
+  end
+  --- spec 2.3: Shift+Esc discards the edit; on an empty
+  --- input it leaves the buffer / editor
+  local function discard()
     if not Key.ctrl() and
         Key.shift() and
         k == "escape" then
-      load_selection(true)
+      if is_empty then
+        self:close_buffer()
+      else
+        buf:clear_loaded()
+        input:clear()
+      end
+      block_input()
     end
   end
   local function delete()
     if Key.ctrl() then
-      if k == "delete"
-          or (k == "y" and is_empty) then
+      if k == "delete" then
         delete_block()
         block_input()
       end
@@ -794,8 +799,17 @@ function EditorController:_normal_mode_keys(k)
     end
   end
 
-  submit()
-  load()
+  local plain_enter = Key.is_enter(k)
+      and not Key.ctrl()
+      and not Key.shift()
+      and not Key.alt()
+
+  if is_empty and plain_enter then
+    open()
+  else
+    submit()
+  end
+  discard()
   delete()
   navigate()
   clear()
