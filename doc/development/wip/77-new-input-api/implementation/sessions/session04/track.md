@@ -57,5 +57,26 @@ grep as backstop._
   `show()` persists only the 4 output keys in `state`, so configure-while-hidden needs `prompt`/`text`/
   `cursor` to also persist + apply on next show; the **F-5 strike** both table row + detail section; the
   AC-11 internals-doc line **no milestone ids in prose**; AC-12 retires the m7 anchor → pending **5→4**,
-  four routing-gap pendings survive) + `prompts/M7-02-review.md` (trap note). Committing next, then
-  spawning the Sonnet implementor. **This chunk closes M7.**
+  four routing-gap pendings survive) + `prompts/M7-02-review.md` (trap note); commit `1ed2ef0`.
+- [project] **M7-02 (reconfigure-boundary) — LANDED + Opus-APPROVED (autonomous). ⇒ M7 COMPLETE.**
+  Sonnet implementor feat `efc9b1d` (`configure`/`clear` in the `methods` table; active `configure` feeds
+  a hard-coded 5-key filter to `UserInputController:configure` so text/cursor/eval/result can't reach a
+  mutation path; hidden persist single-sourced through `state` — `merge_output_keys` for the 4 sticky
+  output keys + `state.pending`/`PENDING_KEYS`/`consume_pending` for prompt/text/cursor, consumed **once**
+  then cleared so a later bare `show()` doesn't re-inject a stale draft). Opus reviewer **APPROVE**
+  (`reviews/M7-02.md`, commit `5974bf5`): independent busted, all traps clear, **M7 milestone certified —
+  all 12 ACs green across M7-01+M7-02**. **Suite 794 → 806 / 0 / 0 / 4** (m7 anchor retired 5→4; the four
+  routing-gap pendings @101/153/161/222 survive; legacy globals intact for M8). PM sanity-check (busted +
+  F-5 double-strike + no-milestone-ids-in-prose + zero routing/dispatch diff) passed before the Opus spend.
+  - **AC-11 boundary closed:** F-5 struck in both the summary row + detail section (`~~…~~`/`**closed**`);
+    `configure` semantics + force-vs-configure distinction documented in `internals/user_input.md`
+    (`### compy.input namespace`), no milestone ids in prose.
+  - **Carried debt (report-don't-fix):** `apply_config` ~27-line body (pre-existing, >14 limit) — the
+    implementor routed cursor through `open_fresh` to avoid growing it; reviewer confirmed clean. F-0
+    (submit deliver-then-hide) traced — `configure` does NOT resolve it; stays open. `set_text` 19-line
+    body (M7-01 carry) still open (model file).
+- [reference] **M7 DONE** (cursor/text surface + live reconfigure + boundary close). Next: **M8** — the
+  terminal slice. Per the mandate: **REVALIDATE `spec/M8-02-recut.md` against the M5c+M7 ledgers before
+  carving** (it was authored pre-M5c/M7). M8 deletes the legacy globals + poll idiom and migrates the
+  remaining consumers **tixy + balloons** (balloons = uncommitted nested checkout, guardrail 7). `keyboard`
+  is pure-native, never migrated.
