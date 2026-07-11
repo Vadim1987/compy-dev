@@ -146,3 +146,91 @@ all three — zero hits). Nothing to dispose.
 - No true M7 dependency and no route-model change was needed — the
   callback surface as landed (`prompt`/`text`/`on_text_entered`) was
   sufficient for both examples.
+
+## Corrective (maze cancel-path latch) — M5c-05, applying the Opus review
+
+**Root cause.** `rearm_input`'s guard read a shadow boolean (`input_open`)
+that was set `true` in `open_editor_input` and cleared `false` **only**
+inside `handle_editor_submit`. The framework's tier-1 escape entry
+(`projectInputController.lua:88-98`, `framework_cancel`) dismisses the
+overlay via `UserInputController:cancel()` (`userInputController.lua:
+158-161`) → `self:hide()` — no maze callback fires on cancel (no
+`on_text_entered`, no `before_/after_cancel` hook wired). So after an
+escape, the overlay was gone but `input_open` stayed `true` forever,
+and `rearm_input`'s `if input_open then return end` no-op'd on every
+subsequent frame — the command editor never reopened, bricking the
+level (commands are the only way to win).
+
+**Predicate chosen: `love.state.user_input` (direct, no wrapper).**
+Verified in `userInputController.lua` before choosing it:
+- `UserInputController:hide()` (`:276-278`) unconditionally executes
+  `love.state.user_input = nil` — no branching.
+- `UserInputController:cancel()` (`:158-161`) calls `self.model:cancel()`
+  then `self:hide()`.
+- `UserInputController:submit()` (`:335-344`) calls `deliver(self, text)`
+  (fires `on_text_entered`) then `self:hide()`.
+- `open_fresh` (`:230-247`, the activation path under `show()`) sets
+  `love.state.user_input = { M, C, V }` — truthy — on every fresh show.
+
+So `love.state.user_input` is truthy **exactly** while the overlay is
+shown and `nil` **exactly** while hidden, on **every** dismiss path
+(submit and cancel alike) — not just the submit path the old
+`input_open` boolean tracked. This is the same flag `is_shown()` /
+`_is_hidden_overlay()` (`:360-372`) key off of internally, just read
+directly rather than through a controller-instance method maze has no
+handle to. The reviewer's suggested `love.state.user_input` direct
+check was confirmed correct as-is; the fallback
+`is_shown()`-based predicate was not needed.
+
+**Fix applied (`src/examples/maze/main.lua`, uncommitted, nested
+checkout).** Removed the `input_open` shadow boolean entirely (dead
+once the guard reads the real flag) and changed `rearm_input`'s guard
+from `if input_open then return end` to `if love.state.user_input then
+return end`. `open_editor_input` and `handle_editor_submit` no longer
+touch `input_open` (their `need_reopen`/`reopen_text` deferred-reopen
+logic from chunk 5 is unchanged — it still relies on `hide()` having
+already run by the next tick, which it has). Net effect: after an
+escape/cancel, `love.state.user_input` goes `nil` the same tick `hide()`
+runs; the very next `rearm_input` call sees the guard false and reopens
+the editor (self-healing, matching the old poll's behaviour) — same for
+the submit path, unchanged from chunk 5.
+
+**Busted counts:** before **779 successes / 0 failures / 0 errors / 5
+pending**; after **779 successes / 0 failures / 0 errors / 5 pending**
+(unmoved — examples are not suite-covered).
+
+**lua-lsp / hygiene:** `mcp__lua-lsp__diagnostics` on `main.lua` after
+the edit shows only the pre-existing systemic `lowercase-global` INFO
+noise and the three pre-existing warnings already noted in the prior
+outcome (duplicate `resize` field, a `need-check-nil`, a
+`param-type-mismatch`) — none on the touched lines, no new diagnostics.
+`grep -rn "input_open" src/examples/maze/` → zero hits (fully removed,
+no orphaned references). All touched lines ≤64 chars; the three
+touched functions (`open_editor_input` 6-line body, `handle_editor_submit`
+8-line body, `rearm_input` 8-line body) are all well under the 14-line
+limit.
+
+**Verification ceiling (honest).** No `xdotool`/equivalent is available
+in this container (checked again — `command -v xdotool` fails), so the
+actual escape-key → cancel → reopen cycle was **not** keystroke-driven.
+What was verified: full busted suite unchanged; `mcp__lua-lsp` facts on
+`hide`/`cancel`/`submit`/`open_fresh` confirmed the predicate's
+hidden/shown truth table by direct source inspection (not inference);
+and a ~18s headless run (`xvfb-run -a love src play src/examples/maze`)
+loaded without a Lua traceback and idled in `editor()` mode (so
+`rearm_input` fired every frame via `ctrl_update`) with only ALSA
+device-noise, no warnings. This exercises the guard's steady-state
+branch (same as the original chunk-5 verification) but **not** the
+escape/cancel branch itself. **Human hand-play of show → Escape →
+confirm the command editor reopens is still the final AC-32 gate**,
+same as flagged in the original ledger — this corrective narrows what
+needs checking to exactly that one path (submit-path reshow was already
+plausible from the chunk-5 verification and is untouched by this fix).
+
+**maze changed-file list (re-confirmed after this edit):**
+`git -C src/examples/maze status --short` → exactly `M controls.lua` /
+`M main.lua`, nothing staged/committed; `git -C src/examples/maze log -1`
+still `12f675f` (nested `.git` untouched). Matches the file list in
+"Files changed" above — `controls.lua` was not touched by this
+corrective (only `main.lua`'s `rearm_input`/`open_editor_input`/
+`handle_editor_submit` region changed).
