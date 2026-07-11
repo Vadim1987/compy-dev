@@ -89,8 +89,36 @@ for genuinely hard calls only._
   the LSP for correctness** (definition/references/hover/diagnostics), `sleep 1` after
   any `.lua` edit before MCP calls (re-index), grep as completeness backstop — per the
   global CLAUDE.md MCP↔LSP guidance.
-- [project] **Carried tech debt (report-don't-fix, from chunk-3 ledger — none blocking):**
-  (a) `multiline` config field accepted but **not gated** anywhere — Shift+Enter inserts a newline
+- [project] **Chunk 5 (example-migration, Scope 6) — LANDED + Opus-reviewed + corrective
+  applied (autonomous). ⇒ M5c COMPLETE.** Commission `c2d2ae2`; Sonnet implementor turtle
+  feat `88ab1df` (+ outcome). Opus reviewer **corrective-take** `8cdb876` — real AC-32
+  regression: maze's `input_open` shadow-boolean latch cleared only on submit, so
+  framework escape→cancel (dismiss with no maze callback) left it stuck `true` and
+  `rearm_input` no-op'd forever → command editor permanently dead after any escape (level
+  unsolvable). Old poll was self-healing on cancel; the shadow-boolean desynced. Corrective
+  `d6e8c3d` (Sonnet): removed `input_open` entirely, keyed `rearm_input`'s guard off the
+  real overlay flag `love.state.user_input` (verified: `hide()` unconditionally nils it,
+  called by both `cancel()` and `submit()`; `open_fresh` sets it truthy — truthy iff shown).
+  **turtle** migrated off the poll-a-reftable idiom (`user_input()`/`input_text("TURTLE")`/
+  per-frame `eval(r())`) → `compy.input.show{prompt="TURTLE", on_text_entered=eval}`, fires
+  once per submit (R1); committed in-repo. **maze** migrated (3 `input_text` sites →
+  `show{prompt,text,on_text_entered}` + deferred-reopen for the chunk-3 deliver-then-hide
+  ordering) — delivered **uncommitted** in its nested checkout (guardrail 7 intact: `.git`
+  pristine `12f675f`, `M controls.lua`/`M main.lua`, both ledgered for the human to carry
+  upstream). Legacy globals NOT removed (die in M8). **Suite unchanged 779/0/0/5** (examples
+  aren't in busted). **Honest verification ceiling:** no input-injection tool in-container →
+  only headless smoke-load done; **human hand-play of turtle input + maze show→Escape→reopen
+  is the final AC-32 gate** (flagged, not overclaimed).
+- [reference] **M5c DONE — all 5 chunks (dispatch-chain 1 / widget-outputs 2 / corrective 2c
+  / submit-cancel 3 / route-lifecycle 4 / example-migration 5).** Next per sweep order: **M7**
+  (extended widget-surface API — needs carving from `spec/M7-02-recut.md`), then **M8** (legacy
+  removal + tixy/balloons migration — REVALIDATE-AT-COMMISSIONING first).
+- [project] **Carried tech debt (report-don't-fix — none blocking):**
+  (0) **NEW (M5c-05 review, logged to `technical_debt.md`):** `submit()` deliver-then-hide
+  ordering (`userInputController.lua:341-342`) forces any project to defer an invalid-input
+  reshow one frame — an API-ergonomics wrinkle; **M7 live-reconfigure candidate**, frozen
+  chunk-3 sequencing, rightly not touched in chunk 5.
+  (a-prev) `multiline` config field accepted but **not gated** anywhere — Shift+Enter inserts a newline
   unconditionally (pre-existing; may home in M7 or a config slice). (b) `emit_limit`'s `dir` typed
   `VerticalDir` but called with `'left'`/`'right'` (chunk-2 boundary work — LSP hint). (c) tests-vs-prod
   dual modifier-tracking split (`Controller.keys_pressed` vs `mock.lua` `held`) — test-harness structure.
