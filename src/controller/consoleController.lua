@@ -396,6 +396,63 @@ local function build_input_surface(state, methods)
   })
 end
 
+-- The four widget-output slots (D-b): show()/configure() config
+-- key and direct field-write share one underlying `state` slot,
+-- sticky across shows until overwritten (M5c behaviour; the M7
+-- live-reconfigure surface below leaves this unchanged).
+local OUTPUT_KEYS = {
+  'on_text_entered',
+  'on_limit_reached',
+  'validator',
+  'highlighter',
+}
+
+-- prompt/text/cursor are per-show fields (never sticky at
+-- this layer) — EXCEPT when configure() stashes them while
+-- hidden: then they apply once, on the very next show().
+local PENDING_KEYS = { 'prompt', 'text', 'cursor' }
+
+--- Merge the sticky output-callback state into a show()/
+--- configure() config in place: an explicit value wins and is
+--- written back into `state`; an absent one defaults to the
+--- last-known value.
+--- @param state table
+--- @param cfg table
+local function merge_output_keys(state, cfg)
+  for _, k in ipairs(OUTPUT_KEYS) do
+    if cfg[k] ~= nil then state[k] = cfg[k] end
+    cfg[k] = state[k]
+  end
+end
+
+--- Consume the hidden-configure pending prompt/text/cursor
+--- (AC-3/AC-4): spent on this show() regardless of whether it
+--- ends up used (an explicit cfg value at this same show() call
+--- wins) — a later bare show() must not keep re-injecting a
+--- stale draft.
+--- @param pending table
+--- @param cfg table
+local function consume_pending(pending, cfg)
+  for _, k in ipairs(PENDING_KEYS) do
+    if cfg[k] == nil then cfg[k] = pending[k] end
+    pending[k] = nil
+  end
+end
+
+--- Stash configure()'s provided prompt/text/cursor into the
+--- pending slot for consumption by the next show() (AC-4);
+--- output-callback fields go through the same sticky `state`
+--- slots show() already reads — persisted, never applied
+--- live (there is no active session to apply them to).
+--- @param state table
+--- @param cfg table
+local function stash_hidden_configure(state, cfg)
+  merge_output_keys(state, cfg)
+  for _, k in ipairs(PENDING_KEYS) do
+    if cfg[k] ~= nil then state.pending[k] = cfg[k] end
+  end
+end
+
 -- Builds the compy.input surface: the four-tier dispatch surface
 -- (spec §2) a project registers against. `handlers.<event>` are
 -- the R14 per-event combo sub-tables (normalising, §1); the
@@ -409,21 +466,13 @@ local get_compy_input = function()
       keyreleased = Key.new_handler_table(),
       textinput   = Key.new_handler_table(),
     },
+    pending = { },
   }
   local methods = {
     show = function(cfg)
       local next_cfg = cfg or {}
-      local output_keys = {
-        'on_text_entered',
-        'on_limit_reached',
-        'validator',
-        'highlighter',
-      }
-      for _, k in ipairs(output_keys) do
-        local v = next_cfg[k]
-        if v ~= nil then state[k] = v end
-        next_cfg[k] = state[k]
-      end
+      merge_output_keys(state, next_cfg)
+      consume_pending(state.pending, next_cfg)
       local ui = love.state.user_input_controller
       if ui then ui:show(next_cfg) end
     end,
@@ -458,6 +507,34 @@ local get_compy_input = function()
       end
       local ui = love.state.user_input_controller
       ui:set_text(text, keep_cursor)
+    end,
+    -- AC-1/2/3/4/9/11: live update on an active session (only
+    -- the Contract's live-updatable set — prompt/highlighter/
+    -- validator/widget outputs; text/cursor inert there); safe
+    -- + un-warned while hidden — provided fields persist (via
+    -- state/pending, same slots show() reads) for the very next
+    -- show(). Never a partial/silent apply either way.
+    configure = function(cfg)
+      local next_cfg = cfg or { }
+      if not love.state.user_input then
+        stash_hidden_configure(state, next_cfg)
+        return
+      end
+      merge_output_keys(state, next_cfg)
+      love.state.user_input_controller:configure(next_cfg)
+    end,
+    -- AC-5/AC-9: empty content + cursor to start, no callback;
+    -- no-op + warn while hidden. Refreshes the view directly
+    -- (no re-show) — reuses the controller's existing clear()
+    -- (content + error state).
+    clear = function()
+      if not love.state.user_input then
+        Log.warn('compy.input.clear ignored — hidden')
+        return
+      end
+      local ui = love.state.user_input_controller
+      ui:clear()
+      ui:update_view()
     end,
   }
   return build_input_surface(state, methods)

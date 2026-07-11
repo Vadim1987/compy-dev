@@ -19,7 +19,7 @@ feature closes**, not carried into the project at large._
 | Item | Kind | Disposition | Closure |
 |---|---|---|---|
 | ~~M2-01 approval scope~~ | ~~record accuracy~~ | ~~**closed**~~ | ~~Status line corrected; M2-01 formally signed off~~ |
-| F-5 | open boundary | **planned** | adjacent spec [`../design/spec/M7-01-retarget.md`](../design/spec/M7-01-retarget.md) (decided at M7) |
+| ~~F-5~~ | ~~open boundary~~ | ~~**closed**~~ | ~~`configure()` landed the live-reconfigure surface; `result`/`eval` stay fixed at `show()` by design, documented, no partial/silent path~~ |
 | G-1 | dead code | **planned** | adjacent spec [`../design/spec/M8-01-dead-text-input.md`](../design/spec/M8-01-dead-text-input.md) (M8 legacy removal) |
 | G-2 | dead code | **planned** | adjacent spec [`../design/spec/M6-01-oneshot-snapshot.md`](../design/spec/M6-01-oneshot-snapshot.md) (M6 oneshot removal) |
 | F-4 | spec deviation | **accepted** | none — ships as a documented deviation |
@@ -96,16 +96,21 @@ feature closes**, not carried into the project at large._
   decide whether the editor/oneshot `Esc` behaviours should converge. Commission a spec only if a
   milestone forces the decision.
 
-### F-5 — `force` / `configure()` cannot re-target an active session's `result`/`eval` — **planned → M7-01**
+### ~~F-5 — `force` / `configure()` cannot re-target an active session's `result`/`eval`~~ — **Closed**
 
 - **Where:** `src/controller/userInputController.lua` — `force` re-applies only `text`; a fresh
-  activation runs `apply_config` (eval, prompt, text, result).
-- **State:** A running session's `result` sink and evaluator are fixed at `show()`. `M2.md` frames
-  `force` purely in terms of content, and `M7.md`'s `configure()` no-ops non-`prompt`/highlighter/
-  validator fields while active — so no surface currently re-targets `result`/`eval` mid-session.
-- **Closure:** **commissioned** by [`../design/spec/M7-01-retarget.md`](../design/spec/M7-01-retarget.md) — building
-  M7's `configure()` forces the decision, so M7-01 commands it be made and written down (extend the
-  surface, or document a deliberate fixed-at-`show()` constraint). Strike this entry when M7-01 lands.
+  activation runs `apply_config` (eval, prompt, text, result); the new
+  `UserInputController:configure` feeds `apply_config` a filtered table (`prompt`,
+  `highlighter`, `validator`, `on_text_entered`, `on_limit_reached` only).
+- **State:** Closed. The live-reconfigure surface (`compy.input.configure`/`clear`) landed with the
+  boundary **deliberately not extended**: `result`/`eval` stay fixed at `show()` — `configure()`
+  never reaches them, on an active session or a hidden one. This is the Contract's one-rule
+  reading (live-updatable = prompt/highlighter/validator/widget-output callbacks, full stop), not a
+  special case for `result`/`eval`.
+- **Closure:** Documented in `doc/development/internals/user_input.md` (`### compy.input namespace`
+  → `configure(config)`): the live-updatable set is named explicitly, and "no partial application"
+  is stated as a standing rule — every path either applies a field in full or drops it in full,
+  never a half-applied config. No path re-targets `result`/`eval` mid-session, by design.
 
 ---
 

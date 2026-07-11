@@ -243,6 +243,10 @@ end
 --- inactive->active transition (show() guards against re-entry while active). The
 --- clear-on-no-text lives here, not in apply_config, because it is activation policy
 --- (a re-show with no text starts empty) rather than per-field config.
+--- `cursor` (a `{line, col}` pair) lands here too, applied
+--- after text (spec.md §3) — kept out of apply_config so
+--- the live-reconfigure path (configure() below) can never
+--- reach it.
 --- @param self UserInputController
 --- @param cfg table
 local open_fresh = function(self, cfg)
@@ -250,6 +254,9 @@ local open_fresh = function(self, cfg)
     self.model:clear_input()
   end
   apply_config(self, cfg)
+  if cfg.cursor ~= nil then
+    self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
+  end
   -- love.state.user_input is the overlay CONTRACT: its presence is the flag the draw loop
   -- (controller.lua) checks to paint V:draw() each frame, and it carries the { M, C, V }
   -- handle the legacy poll idiom reads. Drivers change but the flag persists through
@@ -293,6 +300,26 @@ end
 --- controller state is the A5 contract question — see M2-human-review.md.)
 function UserInputController:hide()
   love.state.user_input = nil
+end
+
+--- Live-reconfigure an active session (compy.input.configure,
+--- AC-1/2/11 — the M7-01 boundary decision closed here): only
+--- the Contract's live-updatable set reaches apply_config —
+--- prompt/highlighter/validator/widget-output callbacks. text/
+--- cursor/eval/result never reach it from here — accepted but
+--- inert on an active session (use set_text/set_cursor, or
+--- clear()+show()); no partial/silent path exists because this
+--- filtered table is the only thing configure() ever applies.
+--- @param cfg table
+function UserInputController:configure(cfg)
+  apply_config(self, {
+    prompt           = cfg.prompt,
+    highlighter      = cfg.highlighter,
+    validator        = cfg.validator,
+    on_text_entered  = cfg.on_text_entered,
+    on_limit_reached = cfg.on_limit_reached,
+  })
+  self:update_view()
 end
 
 ----------------------

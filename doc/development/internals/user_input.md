@@ -427,10 +427,55 @@ M4–M6 design vocabulary, not current implementation.
 `get_compy_namespace()` in `consoleController.lua`). It exposes:
 - `compy.input.show(config)` — activates the singleton
 - `compy.input.hide()` — deactivates without firing cancel chain
+- `compy.input.get_cursor()` / `set_cursor(line, col)` /
+  `set_text(text [, keep_cursor])` — the cursor/text surface; see
+  "Cursor manipulation" above for the layering this sits on.
+- `compy.input.configure(config)` — live-reconfigures an active
+  session; `compy.input.clear()` — resets an active session's
+  content.
 
-(Planned for 0.1.0-m7: `configure`, `clear`, `get_cursor`,
-`set_cursor`, `set_text`. The `compy.input` namespace itself is new
-in 0.1.0-m2.)
+Everything on `compy.input` other than the `handlers` container and
+the widget-output/tier-3 callback fields is callable API: assigning
+to any of the names above raises loudly rather than silently
+replacing the function.
+
+#### `configure(config)` — the live-reconfigure surface
+
+On an active session, `configure` takes the same config keys as
+`show()` and applies only the ones given, immediately: `prompt`,
+`highlighter`, `validator`, and the widget-output callbacks
+(`on_text_entered`, `on_limit_reached`) take effect from the very
+next prompt render / keystroke / submit onward. `text` and `cursor`
+are accepted but have **no effect** on an active session —
+`configure` never mutates content or the caret; use
+`set_text`/`set_cursor` for that, or `clear()` followed by a fresh
+`show()`. There is no partial application: each field either
+applies in full or is dropped in full, per the rule above — never a
+half-applied config.
+
+While hidden, `configure` is always safe and never warns (it is not
+a refusal): every provided field — including `prompt`, `text`, and
+`cursor` — is retained and applied on the very next `show()`. That
+application is one-shot: a *later* bare `show()` (no config) does
+not keep re-injecting a stale hidden-configured draft. The
+widget-output callbacks are the one exception — like a value passed
+directly to `show()`, they stay sticky across every future
+show/hide cycle until overwritten, matching `show()`'s own existing
+config persistence.
+
+`force` (a `show(config)` flag, not part of `configure`) is a
+narrower, older mechanism: re-invoking `show` with
+`{force = true}` over an active session replaces only the `text`
+subset in place and ignores every other field. `configure` is the
+documented, general live-reconfigure path; `force` remains solely
+for the content-replacement case it already covered.
+
+#### `clear()`
+
+Empties the active session's content and puts the cursor back at
+the start; no widget-output callback fires. While hidden it is a
+no-op and logs a warning — unlike `configure`, this call *is* a
+refusal (there is no active session to clear).
 
 ---
 

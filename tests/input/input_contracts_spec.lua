@@ -1815,16 +1815,213 @@ describe('input contracts #input', function()
   end)
 
   -- ====================================================
-  -- 0.1.0-m6 / m7 forward — structural anchor only.
-  -- Names the not-yet-authored forward contracts so they
-  -- are not forgotten; deliberately NOT fleshed out
-  -- (scope fence: m4/m5 — doc A §7 scope note).
+  -- Live reconfigure + clear (configure/clear, closing
+  -- the M7-01 re-target boundary — the M7-02-recut spec's
+  -- Contract). The former 'later forward contracts' anchor
+  -- ('configure/set_text/cursor, force-vs-configure') is
+  -- now fully authored: set_text/cursor above, configure/
+  -- clear here; force-vs-configure is documented in
+  -- doc/development/internals/user_input.md.
   -- ====================================================
-  describe('later forward contracts — not yet authored',
-    function()
-      -- submit/cancel chains landed live (m5c chunk 3, the
-      -- 'submit and cancel' rows above); on_limit_reached
-      -- landed live (m5c chunk 2).
-      pending('configure/set_text/cursor, force-vs-configure')
+  describe('live reconfigure and clear #m7', function()
+
+    -- AC-1: prompt updates live on an active session;
+    -- content/cursor/callbacks stay untouched.
+    it('configure updates the prompt on an active session',
+      function()
+        local input = F.compy_input()
+        local cb = function() end
+        input.show({ text = 'hi', on_text_entered = cb })
+        input.configure({ prompt = 'new' })
+        assert.equal('new', F.singleton.model:get_label())
+        assert.same({ 'hi' }, F.singleton:get_text())
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(3, c)
+        assert.equal(cb, input.on_text_entered)
+      end)
+
+    -- AC-2: validator — the NEXT submit uses the new fn,
+    -- not the one set at show() (exercised, not just read).
+    it('configure swaps the live validator', function()
+      local input = F.activate_project()
+      input.show({
+        text      = 'ab',
+        validator = function() return false, 'old' end,
+      })
+      local seen
+      input.configure({
+        validator = function(t)
+          seen = t
+          return true
+        end,
+      })
+      F.session.press('return')
+      assert.equal('ab', seen)
+      assert.is_nil(love.state.user_input)
     end)
+
+    -- AC-2: highlighter — the NEXT keystroke's highlight
+    -- uses the new fn.
+    it('configure swaps the live highlighter', function()
+      local input = F.activate_project()
+      local marker = { { 'x' } }
+      input.show({
+        highlighter = function() return { { 'old' } } end,
+      })
+      input.configure({
+        highlighter = function() return marker end,
+      })
+      F.session.type('a')
+      local got = F.singleton.model:get_highlight()
+      assert.equal(marker, got.hl)
+    end)
+
+    -- AC-2: on_text_entered — the swapped fn fires on the
+    -- next submit; the old one set at show() does not.
+    it('configure swaps the live on_text_entered', function()
+      local old_called, new_text = false, nil
+      local input = F.activate_project()
+      input.show({
+        text            = 'ab',
+        on_text_entered = function() old_called = true end,
+      })
+      input.configure({
+        on_text_entered = function(t) new_text = t end,
+      })
+      F.session.press('return')
+      assert.is_false(old_called)
+      assert.equal('ab', new_text)
+    end)
+
+    -- AC-2: on_limit_reached — the swapped fn fires on the
+    -- next boundary; the old one set at show() does not.
+    it('configure swaps the live on_limit_reached', function()
+      local old_called, new_dir = false, nil
+      local input = F.activate_project()
+      input.show({
+        text             = 'ab',
+        on_limit_reached = function() old_called = true end,
+      })
+      input.configure({
+        on_limit_reached = function(dir) new_dir = dir end,
+      })
+      F.singleton:jump_home()
+      F.session.press('left')
+      assert.is_false(old_called)
+      assert.equal('left', new_dir)
+    end)
+
+    -- AC-3/AC-11: text/cursor are inert on an active session
+    -- — even mixed with a live field, the live one applies
+    -- and the inert ones are untouched (no partial/silent
+    -- application: each field's own rule holds exactly).
+    it('configure leaves text/cursor untouched on an ' ..
+      'active session, even mixed with a live field',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hi' })
+        input.set_cursor(1, 2)
+        input.configure({
+          prompt = 'live',
+          text   = 'ignored',
+          cursor = { 1, 99 },
+        })
+        assert.same({ 'hi' }, F.singleton:get_text())
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(2, c)
+        assert.equal('live', F.singleton.model:get_label())
+      end)
+
+    -- AC-3/AC-4: configure while hidden is safe (no warn —
+    -- it is not a refusal) and text/cursor apply on the
+    -- very next show().
+    it('hidden configure applies text and cursor on the ' ..
+      'next show', function()
+      local input = F.compy_input()
+      local warned = 0
+      local ow = Log.warn
+      Log.warn = function() warned = warned + 1 end
+      input.configure({ text = 'draft', cursor = { 1, 2 } })
+      Log.warn = ow
+      assert.equal(0, warned)
+      input.show({})
+      assert.same({ 'draft' }, F.singleton:get_text())
+      local l, c = input.get_cursor()
+      assert.same(1, l)
+      assert.same(2, c)
+    end)
+
+    -- AC-4: a hidden configure of a live field (prompt,
+    -- validator) applies cleanly on the next show() too.
+    it('hidden configure applies prompt and validator on ' ..
+      'the next show', function()
+      local input = F.compy_input()
+      input.configure({
+        prompt    = 'draft-label',
+        validator = function() return true end,
+      })
+      input.show({})
+      assert.equal(
+        'draft-label', F.singleton.model:get_label())
+      assert.is_function(input.validator)
+    end)
+
+    -- Pending fields are one-shot: a LATER bare show() must
+    -- not keep re-injecting a stale hidden-configured draft
+    -- (distinguishes this from the output-callback slots,
+    -- which stay sticky forever by design).
+    it('hidden-configured text does not leak into a later ' ..
+      'show', function()
+      local input = F.compy_input()
+      input.configure({ text = 'draft' })
+      input.show({})
+      input.hide()
+      input.show({})
+      assert.is_true(F.singleton:is_empty())
+    end)
+
+    -- AC-5: clear() on an active session empties content,
+    -- cursor to start, no callback fires.
+    it('clear empties an active session with no callback',
+      function()
+        local input = F.compy_input()
+        local called = false
+        input.show({
+          text            = 'hi',
+          on_text_entered = function() called = true end,
+        })
+        input.clear()
+        assert.is_true(F.singleton:is_empty())
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(1, c)
+        assert.is_false(called)
+      end)
+
+    -- AC-5/AC-9: clear() while hidden is a no-op + warn —
+    -- unlike configure(), this call IS refused.
+    it('clear while hidden warns and no-ops', function()
+      local input = F.compy_input()
+      local warned = 0
+      local ow = Log.warn
+      Log.warn = function() warned = warned + 1 end
+      input.clear()
+      Log.warn = ow
+      assert.equal(1, warned)
+    end)
+
+    -- AC-10: the mutable boundary is unchanged for the two
+    -- new callables.
+    it('assigning configure/clear raises', function()
+      local input = F.compy_input()
+      assert.has_error(function()
+        input.configure = function() end
+      end)
+      assert.has_error(function()
+        input.clear = function() end
+      end)
+    end)
+  end)
 end)
