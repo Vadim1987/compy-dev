@@ -80,3 +80,47 @@ grep as backstop._
   carving** (it was authored pre-M5c/M7). M8 deletes the legacy globals + poll idiom and migrates the
   remaining consumers **tixy + balloons** (balloons = uncommitted nested checkout, guardrail 7). `keyboard`
   is pure-native, never migrated.
+- [project] **M8 REVALIDATION — STARTED (read-only), then session interrupted by human mid-analysis.**
+  Findings so far (verified live in code — carry these; **finish the two open reads before carving**):
+  1. **FIVE legacy globals confirmed** — `consoleController.lua`: `user_input` (L832, returns the legacy
+     reftable `input_ref`), `input_code` (L839 → `input(InputEvalLua,…)`), `input_text` (L844 →
+     `input(InputEvalText,…)`), `write_to_input` (L851 → `overlay.C:set_text`), `validated_input` (L868 →
+     `input(ValidatedTextEval(filters),…)`). **The spec's "five" is correct**; the mandate/session04-prompt
+     summary's "four" was shorthand that dropped `input_code`. Spec is authority AND matches code — benign
+     drift, no gate.
+  2. **`text_input` dead write (M8-01)** at `consoleController.lua:887` (`compy_namespace.text_input =
+     input_text`) — **grep-confirmed NO reader** (only that one write matches). Removes cleanly per AC-2.
+  3. **Nested checkouts = balloons / keyboard / maze** (`.git` present). tixy is **in-repo** (commits
+     normally); **balloons = uncommitted working-tree patch** (guardrail 7); keyboard pure-native (skip);
+     maze already migrated (M5c). Matches spec census.
+  4. **controller.lua `get_user_input()` returns `love.state.user_input`** — the **overlay handle**
+     (`{M,C,V}`), which **STAYS** (it is driven by compy.input activation = AC-7's "reflects widget
+     activation only"). It is **NOT** the legacy reftable. So **M8's controller.lua footprint is
+     essentially nil**. The L925 `REVIEW: …why interact with user_input here?` marker (mouse dispatch) is
+     **pre-existing, NOT M8's** — leave it.
+  5. **The legacy poll surface to delete = `input_ref` + `create_input_handle()` + the `input()` helper**
+     in `consoleController.lua` (~L790-835 — the `user_input()`/`input_text()`/… bodies all route through
+     it; the reftable `is_empty()`/call idiom). **OPEN READ #1: I was interrupted before reading L790-835
+     in full — the successor MUST read it to scope the machinery removal precisely.**
+  6. **⚠ DRIFT ITEM (real — needs disposition at the carve): `astv_input`.** `consoleController.lua:~873`,
+     under `if love.debug`, is a **SIXTH** input global (`return input(LuaEditorEval)`) using the **same
+     `input()`/reftable machinery** M8 removes. It is **NOT in the spec's five-global removal census**.
+     When M8 deletes `input()`/`input_ref`, `astv_input` **breaks mechanically**. Disposition needed:
+     leading conservative-reversible call = **remove it with the machinery** (debug-only dev tooling, same
+     dead poll idiom; keeping it would require re-plumbing onto `compy.input` for no release value). Flag
+     **surprise-first** in the carve/ledger. Borderline design-y but mechanically forced + debug-only; a
+     Fable consult is *available* but likely overkill — recommend remove-and-flag. **The successor owns
+     this call at the M8 carve.**
+  7. **Evaluators = the "text-eval" mechanism** the migration wires as validator/highlighter (spec
+     de-bound the names): `InputEvalText` (plain text), `InputEvalLua` (Lua), `ValidatedTextEval(filters)`,
+     `LuaEditorEval` (astv). Migration recipe: `input_text→{validator=InputEvalText-equiv}`,
+     `input_code→{highlighter/validator=Lua}`, `validated_input→{validator=filters}`, `write_to_input→
+     set_text`, `user_input→on_text_entered/after_submit`.
+  - **OPEN READ #2:** the **example census** (what each of tixy / balloons / repl / guess / valid actually
+    calls) was **not yet gathered** (interrupted on that grep). The successor MUST gather it before carving
+    — it sizes the tixy chunk, the balloons chunk, and the repl/guess/valid convert-or-exclude call (AC-5).
+- [project] **SESSION INTERRUPTED (human, mid-M8-revalidation).** Tree state at wrap: **M7 fully
+  committed** (HEAD on the `5974bf5` M7-02-review lineage), suite **806 / 0 / 0 / 4**, **no uncommitted
+  feature changes** (M8 revalidation was read-only). Wrote `session05/prompt.md` (carryover + standing
+  authorization verbatim) and repointed `agents/sweep.md` CURRENT PROMPT → session05. **M8 not started
+  beyond the partial revalidation above.**

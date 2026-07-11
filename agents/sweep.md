@@ -42,16 +42,19 @@ Rules for commissioning them:
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session04/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session05/prompt.md`
 
-> _Note (session04 wrap, 2026-07-11): the pointer now names `session04` — the **autonomous** M7→M8
-> sweep. **M5c is COMPLETE**: session03 landed chunks 3/4/5 (submit-cancel, route-lifecycle,
-> example-migration) with two Opus corrective-takes (AC-29 highlighter leak; maze escape-cancel latch),
-> all fully autonomous; suite 779/0/0/5. What remains is M7 (additive widget surface — carve it) then M8
-> (legacy removal + tixy/balloons migration — **revalidate the frozen spec against the M5c+M7 ledgers
-> before carving**). lua-lsp MCP is now **restored** (was down mid-session03). See the successor prompt
-> for the standing authorization, the proposed M7 carve, the sub-agent run mechanism, and the Fable-5
-> advisory rule._
+> _Note (session05 wrap, 2026-07-11): the pointer now names `session05` — the **autonomous** M8 sweep,
+> the **terminal milestone**. **M5c + M7 are COMPLETE**: session04 landed M7-01 (cursor/text surface +
+> `set_text` keep_cursor fix) and M7-02 (`configure`/`clear` + M7-01 boundary close, F-5 struck), both
+> Opus-APPROVED, fully autonomous; suite **806/0/0/4** (the 4 pending are routing-gap cells outside #77's
+> blast radius — not M8's). What remains is **M8 only** (legacy-global + poll-idiom removal + tixy/balloons
+> migration). session04 **started the mandated M8 revalidation** — findings are in `session04/track.md`
+> and folded into the session05 prompt, with **two open reads** (the `input()`/`input_ref` machinery
+> L790-835; the example census) and **one real drift item** (`astv_input`, a sixth debug-gated input global
+> on the same dead machinery) to resolve at the carve. lua-lsp MCP is UP. **When M8 lands green with the
+> globals gone, the whole sweep is COMPLETE.** See the successor prompt for the standing authorization, the
+> proposed 3-chunk M8 carve, the sub-agent mechanism, and the Fable-5 advisory rule._
 
 ## Wrap-up rule (mechanical — no inference)
 
