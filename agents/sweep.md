@@ -42,13 +42,16 @@ Rules for commissioning them:
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session03/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session04/prompt.md`
 
-> _Note (session03 wrap, 2026-07-10): the pointer now names `session03` — the **autonomous** M5c-03→M8
-> sweep. session02 landed chunk 1 (already done pre-battery), chunk 2 + its M5c-02c corrective take
-> (both Opus-APPROVED), then the human lifted the per-chunk gate: session03 runs the remaining chunks
-> autonomously, committing after each, human reviewing post-factum in git. See the successor prompt for
-> the full standing authorization, the sub-agent run mechanism, and the Fable-5 advisory rule._
+> _Note (session04 wrap, 2026-07-11): the pointer now names `session04` — the **autonomous** M7→M8
+> sweep. **M5c is COMPLETE**: session03 landed chunks 3/4/5 (submit-cancel, route-lifecycle,
+> example-migration) with two Opus corrective-takes (AC-29 highlighter leak; maze escape-cancel latch),
+> all fully autonomous; suite 779/0/0/5. What remains is M7 (additive widget surface — carve it) then M8
+> (legacy removal + tixy/balloons migration — **revalidate the frozen spec against the M5c+M7 ledgers
+> before carving**). lua-lsp MCP is now **restored** (was down mid-session03). See the successor prompt
+> for the standing authorization, the proposed M7 carve, the sub-agent run mechanism, and the Fable-5
+> advisory rule._
 
 ## Wrap-up rule (mechanical — no inference)
 
