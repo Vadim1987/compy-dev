@@ -18,11 +18,13 @@ local function new(M, CC)
     console = CC,
     view = nil,
     mode = 'edit',
+    editing = false,
   }
 end
 
 --- @alias EditorMode
 --- | 'edit' --- default
+--- | 'nav' --- display-only, 'edit' with editing off
 --- | 'reorder'
 --- | 'search'
 
@@ -34,6 +36,7 @@ end
 --- @field view EditorView?
 --- @field state EditorState?
 --- @field mode EditorMode
+--- @field editing boolean --- submode of 'edit'
 EditorController = class.create(new)
 
 --- @param v EditorView
@@ -264,6 +267,9 @@ function EditorController:_generate_status(sel)
   local more = bufview.content:get_more()
   local cs
   local m = self.mode
+  if m == 'edit' and not self.editing then
+    m = 'nav'
+  end
   local ct = bufview.content_type
   if ct == 'lua' then
     local range = bufview.content:get_block_app_pos(sel)
@@ -291,6 +297,10 @@ function EditorController:textinput(t)
     else
       if Key.ctrl() and Key.shift() then
         return
+      end
+      if not self.editing then
+        self.editing = true
+        self:update_status()
       end
       self.input:textinput(t)
     end
@@ -666,8 +676,7 @@ function EditorController:_normal_mode_keys(k)
       self:_move_sel('down', n)
       buf:clear_loaded()
       input:clear()
-
-      load_selection()
+      self.editing = false
 
       self:update_status()
     end
@@ -697,6 +706,7 @@ function EditorController:_normal_mode_keys(k)
         self:_move_sel('down', n)
         buf:clear_loaded()
         input:clear()
+        self.editing = false
 
         self:update_status()
       end
@@ -714,6 +724,8 @@ function EditorController:_normal_mode_keys(k)
   --- open the selected block for editing (spec 2.2: Enter)
   local function open()
     load_selection()
+    self.editing = true
+    self:update_status()
     block_input()
   end
   --- spec 2.3: Shift+Esc discards the edit; on an empty
@@ -722,11 +734,13 @@ function EditorController:_normal_mode_keys(k)
     if not Key.ctrl() and
         Key.shift() and
         k == "escape" then
-      if is_empty then
+      if is_empty and not self.editing then
         self:close_buffer()
       else
         buf:clear_loaded()
         input:clear()
+        self.editing = false
+        self:update_status()
       end
       block_input()
     end
@@ -796,6 +810,8 @@ function EditorController:_normal_mode_keys(k)
     if Key.ctrl() and k == "w" then
       buf:clear_loaded()
       input:clear()
+      self.editing = false
+      self:update_status()
     end
   end
 
@@ -805,7 +821,7 @@ function EditorController:_normal_mode_keys(k)
       and not Key.alt()
 
   if is_empty and plain_enter then
-    open()
+    if not self.editing then open() end
   else
     submit()
   end
