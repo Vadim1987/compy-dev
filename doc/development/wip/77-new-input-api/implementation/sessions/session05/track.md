@@ -105,3 +105,28 @@ conservative-reversible choice); Fable-5 advisor for genuinely hard calls only. 
   - **M8-01 CERTIFIED.** Next: **M8-02 balloons** (nested checkout; delivery = uncommitted patch per frozen
     AC-9 unless the human redirects at the gate — see chunk-plan balloons note). Then M8-03 (removal) closes
     the sweep.
+
+- [project] **M8-02 LANDED (balloons migration, fully autonomous). Awaiting review.** Commission
+  `45981a7`. Implementor migrated balloons onto the continuous-session idiom: `terminal_init()` →
+  activate-once `show{ on_text_entered=deliver }` + field-write `after_submit` bare re-arm;
+  `terminal_write(msg)` → `compy.input.configure{prompt=msg}` (live while active / pending-stash while
+  hidden); `terminal_read`/per-frame poll deleted; `deliver` closes over a module `current_handler` slot
+  `game_init` sets via `terminal_set_handler(input_handler)`. **The headline risk resolved CLEAN + proven,
+  not assumed:** configure-while-active writes `custom_label` on the persistent model → survives
+  hide→bare-reshow; pinned by a NEW `#m8` contract row (red→green). **Suite 809 / 0 / 0 / 4** (808 + the
+  row). Headless smoke-load traceback-free, no active-show warn; real submit = human hand-play gate (joins
+  the list). Scope fence held (no global removed; in-repo examples/controllers/evaluator.lua untouched).
+  THIS-repo commit `516ba2b` = ledger + test only.
+- [behavioural] **Human mid-sweep redirect (2026-07-12): _"I allow unpushed commits in detached repos.
+  Also do not forget about MCP-LSP availability, and possibility to use Fable as advanced advisor/analyst."_**
+  This is an explicit reversal of frozen **AC-9** (balloons uncommitted / `.git` untouched). Per the mandate
+  (human reversal of a frozen slice is in-bounds → gate round, not "it's frozen"; `design/` NOT edited),
+  the PM committed the balloons migration **inside its detached repo** as `56347d0` (`feat: migrate off
+  legacy poll idiom …`, authored `Hleb Rubanau <g.rubanau@gmail.com>`), **UNPUSHED** (`[ahead 1]` of
+  origin/main). Committed **only the migration** (main.lua game_init hunk + terminal.lua + ui.lua); the
+  **pre-existing** main.lua `-- test`/`print` cruft was deliberately EXCLUDED and left as an unstaged
+  working-tree mod (not ours). Recorded surprise-first in `outcomes/M8-02.md` (PM ADDENDUM) + the M8-02
+  review note trap 4 rewritten so the reviewer verifies the NEW delivery (commit exists, unpushed, cruft
+  excluded). MCP-LSP: in active use by every sub-agent (correctness). Fable advisor: on standby for a
+  genuinely hard design call — none has arisen (M8-02 risk resolved clean; astv_input already decided
+  conservatively). Both kept in reach for M8-03.

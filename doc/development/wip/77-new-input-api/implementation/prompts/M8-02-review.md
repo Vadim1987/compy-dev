@@ -35,13 +35,19 @@ corrective-take / escalate + busted counts._
 3. **`terminal_write` → `configure{prompt}` (not `input_text`, not a re-show).** Confirm the per-hint path
    uses `compy.input.configure{ prompt = msg }` — live-update while active, pending-stash while hidden — so
    no `show()`-while-active warn is produced. Grep the smoke-load output for warn-spam.
-4. **AC-9 nested-checkout delivery — the big one this chunk.** balloons must be delivered as **uncommitted
-   working-tree changes** with an **untouched `.git`**: (a) the M8-02 commit to THIS repo touches ONLY
-   `outcomes/M8-02.md` (+ an optional `tests/input/*` row) — NOT any `src/examples/balloons/` file; (b)
-   `cd src/examples/balloons && git status && git log --oneline -1` shows **no new commit** (HEAD unchanged
-   from upstream) and the edited files as **unstaged working-tree modifications**; (c) the ledger lists
-   every edited balloons file path-by-path. Any balloons file inside the M8-02 repo commit, or any new
-   commit / staged change inside balloons `.git`, = **corrective-take** (AC-9 breach).
+4. **Nested-checkout delivery — AC-9 SUPERSEDED BY HUMAN REDIRECT (2026-07-12), verify the NEW shape.**
+   Frozen AC-9 originally required balloons uncommitted / `.git` untouched. The human **explicitly
+   redirected mid-sweep**: "I allow unpushed commits in detached repos." Per the mandate (human reversal of
+   a frozen slice is always in-bounds), the PM committed the balloons migration **inside its detached repo,
+   unpushed**. So the delivery to verify is now: (a) the M8-02 commit to **THIS** repo touches ONLY
+   `outcomes/M8-02.md` + the `tests/input/*` row — NOT any `src/examples/balloons/` file (still true);
+   (b) `cd src/examples/balloons && git log --oneline -2 && git status -sb` shows the migration commit
+   `56347d0` (`feat: migrate off legacy poll idiom …`) on top, **`[ahead 1]` of origin/main = UNPUSHED**;
+   (c) that commit contains **only the migration** (main.lua game_init hunk + terminal.lua + ui.lua) and
+   **NOT** the pre-existing `-- test`/`print` cruft — confirm `git show 56347d0 --stat` in balloons is the
+   3-file migration and the cruft remains an **unstaged** working-tree mod in main.lua; (d) the ledger
+   lists the delivery + the AC-9 deviation surprise-first. A **pushed** balloons commit, or the pre-existing
+   cruft bundled into `56347d0`, or a balloons file in the THIS-repo commit = **corrective-take**.
 5. **AC-8 edge cases hold.** stop-while-active (silent hide + full reset), show-while-active (no-op + warn),
    validator-reject lock — confirm the ledger shows these hold for the migrated example (mostly via the
    existing `#input`/`#m7` contract suite, since balloons can't be keystroke-driven headless). Not
@@ -63,8 +69,9 @@ corrective-take / escalate + busted counts._
   compose/submit/re-prompt stays a **human hand-play gate** — confirm the ledger says so, doesn't overclaim.
 - Read the balloons `terminal.lua`/`ui.lua`/`main.lua` **working-tree** files directly (not via parent
   `git diff` — they're untracked in the parent). Confirm the migration matches the ledger's before/after.
-- `cd src/examples/balloons && git status --short && git log --oneline -1 && cd -` → prove `.git` untouched,
-  no new commit, edits are unstaged working-tree changes (AC-9).
+- `cd src/examples/balloons && git log --oneline -2 && git status -sb && git show 56347d0 --stat && cd -`
+  → prove the migration commit `56347d0` is on top, **unpushed** (`[ahead 1]`), contains only the 3-file
+  migration, and the pre-existing cruft is left unstaged (the human-redirected delivery — see trap 4).
 - `grep -rn -E 'user_input|input_text|input_code|validated_input|write_to_input|astv_input'
   src/examples/balloons` → **zero live calls** (comments/README hits OK).
 
