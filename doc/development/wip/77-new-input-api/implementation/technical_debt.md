@@ -396,3 +396,51 @@ concrete need appears.
   reconfigure surface lands (a first-class "reject keeps the widget open with
   the rejected text" path would remove the need for example-side deferral).
 - **State:** open / anticipated (no committed closure yet).
+
+
+
+### Controller-side dead `result`/reftable delivery path — unreachable after M8-03 global removal (M8-03 review, report-don't-fix)
+
+- **Where:** `src/controller/userInputController.lua:223-224`
+  (`apply_config` sets `self.result` from `cfg.result`) and `:364-366`
+  (`deliver()`'s `if type(res) == 'table' then res(text) end`).
+- **What:** The removed `input()` helper in `consoleController.lua` was the
+  ONLY call site tree-wide that ever passed `result = input_ref` into
+  `show()`/`configure()`. With M8-03 deleting it, nothing ever populates
+  `self.result`, so the `type(res) == 'table'` reftable-delivery branch in
+  `deliver()` is now permanently unreachable dead code.
+- **Kind:** dead code (benign) — the removal was designed self-contained in
+  `consoleController.lua`; `userInputController.lua` is `src/controller/*`,
+  outside the M8-03 spec Files scope.
+- **Disposition:** report-don't-fix per the M8-03 commission's scope fence.
+  Confirmed by the reviewer (grep: zero remaining `result =`/`input_ref`
+  producers; the field is write-once-from-config with no config writer left).
+- **State:** open — a natural cleanup for a future controller pass.
+
+### Per-example internals-doc drift — 7 files still describe the retired poll idiom (M8-03 review)
+
+- **Where:** `doc/development/internals/examples/{tixy,balloons,turtle,valid,
+  repl,guess,index}.md`.
+- **What:** M8-03 synced the required surface docs (`internals/user_input.md`,
+  `internals/console.md`) to `compy.input.*` but the per-example internals docs
+  still carry multi-paragraph prose + literal `r = user_input()` poll-loop code
+  blocks. Each is a real per-file rewrite, not a mechanical edit — correctly
+  FLAGGED (not silently skipped) and left out of the bounded terminal chunk.
+  `turtle.md`'s drift predates M8 (turtle migrated in M5c, doc never updated
+  then) — a standing gap, not newly introduced by M8-03.
+- **Kind:** doc drift.
+- **Disposition:** report-don't-fix; a natural follow-up doc pass after #77.
+- **State:** open / flagged.
+
+### `src/vadexamples/` untracked scratch still calls the removed globals (M8-03 review)
+
+- **Where:** `src/vadexamples/{guess,repl,turtle,tixy,valid}/main.lua` (+ their
+  READMEs) — git-untracked scratch, parallel to the shipped `src/examples/` tree.
+- **What:** These still call `user_input()`/`input_text()`/`input_code()`/
+  `write_to_input()`/`validated_input()`; they will nil-crash if ever run now.
+  Not a deliverable, not in the census/spec — correctly LEFT ALONE per the
+  M8-03 scope fence (migrating or deleting untracked scratch is out of scope).
+- **Kind:** untracked scratch (not shipped).
+- **Disposition:** note-don't-touch; the owner can delete or migrate the scratch
+  at will outside the #77 sweep.
+- **State:** open / noted.
