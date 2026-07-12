@@ -40,11 +40,20 @@ Rules for commissioning them:
    **architect / design plane** (the brainlab session that owns the specs), per the mandate. You set
    the schedule and hold the gates; you never re-architect.
 
-## Volatile pointer — SWEEP COMPLETE (no CURRENT PROMPT — nothing to boot)
+## Volatile pointer — the only line that changes between sessions
 
-- **STATUS: ✅ DONE — the #77 new-input-API sweep is COMPLETE (session05, 2026-07-12).**
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session06/prompt.md`
 
-> _There is **no successor prompt** and no session06 — do not boot this charter to "continue" the sweep;
+> _Note (session05→06, 2026-07-12): the CODE sweep is **COMPLETE** (M5c→M8 landed, suite 808/0/0/4,
+> `compy.input.*` is the sole surface). session06 is a **POST-SWEEP phase**: documentation finalization +
+> intent review + prep to delete `wip/77` and open a PR. session05 ran four post-sweep tasks; three landed
+> (tests doc, cleaned synthetic diff, wip index — all committed) and the fourth (Fable intent-alignment
+> review) **died at the session limit but left a complete verdict on disk uncommitted** — the successor
+> validates/commits it (it flags a real doc bug in `input_api.md`'s submit lifecycle), runs the
+> incorporation check (Task 4b, not started), and relays Fable's 8-item "For the owner" list. **Do not
+> re-run the code sweep.** See the session06 prompt for the full task state._
+
+> _[historical] The prior DONE note (superseded 2026-07-12): the CODE sweep completed at session05;
 > there is nothing left to carve. **M5c + M7 + M8 are all COMPLETE, Opus-APPROVED, fully autonomous.**
 > M8 (session05) landed in three chunks: **M8-01** in-repo migrations (tixy/repl/guess/valid → `compy.input.*`,
 > completed after a mid-run implementor crash — tests+tixy survived on disk, a fresh implementor finished
