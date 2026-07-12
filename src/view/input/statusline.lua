@@ -102,13 +102,11 @@ function Statusline:draw(status, start_y)
         end
         local more_b = morelabel(custom.buffer_more) .. ' '
         local more_i = morelabel(status.input_more) .. ' '
-        local tag = ''
-        if custom.mode == 'nav' then
-          tag = '[NAV] '
-        elseif custom.mode == 'edit' then
-          tag = '[EDIT] '
+        local edit_tag = ''
+        if custom.mode == 'edit' then
+          edit_tag = 'E '
         end
-        local name = tag .. custom.name .. ' '
+        local name = edit_tag .. custom.name .. ' '
 
         gfx.setColor(colors.fg)
         local font = gfx.getFont()
@@ -158,8 +156,13 @@ function Statusline:draw(status, start_y)
         gfx.setColor(colors.fg)
         gfx.print(more_b, s_mb, start_text.y)
         -- filename
+        local ew = gfx.getFont():getWidth(edit_tag)
+        if edit_tag ~= '' then
+          gfx.setColor(Color[Color.yellow])
+          gfx.print(edit_tag, s_n, start_text.y)
+        end
         gfx.setColor(Color[Color.white])
-        gfx.print(tag .. custom.name, s_n, start_text.y)
+        gfx.print(custom.name, s_n + ew, start_text.y)
       else
         --- normal statusline
         local pos_c = ':' .. c.c

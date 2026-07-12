@@ -53,7 +53,7 @@ local function new(
     if _content:last() ~= '' then
       _content:push('')
     end
-    sel = #_content
+    sel = 1
   end
   --- only passing this around so the linter shuts up about nil
   --- @param chk function
@@ -61,8 +61,7 @@ local function new(
     ct = 'lua'
     local ok, blocks = chk(lines)
     if ok then
-      local len = #blocks
-      sel = len
+      sel = 1
     else
       readonly = true
       sel = 1

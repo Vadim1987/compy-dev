@@ -770,7 +770,7 @@ function EditorController:_normal_mode_keys(k)
       if k == "end" then
         self:_move_sel('down', nil, true)
       end
-    else
+    elseif not self.editing then
       if k == "up" and at_limit_start then
         self:_move_sel('up')
         block_input()
