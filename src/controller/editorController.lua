@@ -84,7 +84,9 @@ function EditorController:open(name, content, save)
   local b = BufferModel(name, content, save, ch, hl, pp, tr)
   self.model.buffers:push_front(b)
   self.view:open(b)
-  self:_restore_position(b)
+  if not self:_restore_position(b) then
+    self.view:get_current_buffer():follow_selection()
+  end
   self:update_status()
   self:set_state()
   self.input:update_view()
@@ -143,7 +145,9 @@ function EditorController:_restore_position(buf)
       and saved.sel <= buf:get_content_length() then
     buf:set_selection(saved.sel)
     self.view:get_current_buffer():scroll_to(saved.off)
+    return true
   end
+  return false
 end
 
 function EditorController:close_buffer()
