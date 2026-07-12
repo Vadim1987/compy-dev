@@ -40,28 +40,27 @@ Rules for commissioning them:
    **architect / design plane** (the brainlab session that owns the specs), per the mandate. You set
    the schedule and hold the gates; you never re-architect.
 
-## Volatile pointer — the only line that changes between sessions
+## Volatile pointer — SWEEP COMPLETE (no CURRENT PROMPT — nothing to boot)
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session05/prompt.md`
+- **STATUS: ✅ DONE — the #77 new-input-API sweep is COMPLETE (session05, 2026-07-12).**
 
-> _Note (session05 wrap, 2026-07-11): the pointer now names `session05` — the **autonomous** M8 sweep,
-> the **terminal milestone**. **M5c + M7 are COMPLETE**: session04 landed M7-01 (cursor/text surface +
-> `set_text` keep_cursor fix) and M7-02 (`configure`/`clear` + M7-01 boundary close, F-5 struck), both
-> Opus-APPROVED, fully autonomous; suite **806/0/0/4** (the 4 pending are routing-gap cells outside #77's
-> blast radius — not M8's). What remains is **M8 only** (legacy-global + poll-idiom removal + tixy/balloons
-> migration). session04 **started the mandated M8 revalidation** — findings are in `session04/track.md`
-> and folded into the session05 prompt, with **two open reads** (the `input()`/`input_ref` machinery
-> L790-835; the example census) and **one real drift item** (`astv_input`, a sixth debug-gated input global
-> on the same dead machinery) to resolve at the carve. lua-lsp MCP is UP. **When M8 lands green with the
-> globals gone, the whole sweep is COMPLETE.** See the successor prompt for the standing authorization, the
-> proposed 3-chunk M8 carve, the sub-agent mechanism, and the Fable-5 advisory rule._
+> _There is **no successor prompt** and no session06 — do not boot this charter to "continue" the sweep;
+> there is nothing left to carve. **M5c + M7 + M8 are all COMPLETE, Opus-APPROVED, fully autonomous.**
+> M8 (session05) landed in three chunks: **M8-01** in-repo migrations (tixy/repl/guess/valid → `compy.input.*`,
+> completed after a mid-run implementor crash — tests+tixy survived on disk, a fresh implementor finished
+> repl/guess/valid), **M8-02** balloons (continuous-session idiom; delivered as an UNPUSHED commit `56347d0`
+> in its detached repo per the human's 2026-07-12 redirect lifting frozen AC-9), **M8-03** legacy removal
+> (the five globals + `astv_input` + the `input()`/`input_ref`/`create_input_handle()` machinery + the
+> `text_input` dead write — all gone, zero refs). The legacy poll-a-reftable idiom is retired; `compy.input.*`
+> is the sole project input surface. **Final suite 808 / 0 / 0 / 4** (the 4 pending are routing-gap cells
+> outside #77's blast radius). Full close-out + the human's remaining to-dos (open hand-play gates
+> turtle/maze/tixy/balloons; the maze uncommitted patch + the balloons unpushed commit to carry upstream;
+> logged tech debt) are in the **final entry of** `implementation/sessions/session05/track.md`. Reviews +
+> outcome ledgers for every chunk are under `implementation/reviews/` + `implementation/outcomes/`._
 
 ## Wrap-up rule (mechanical — no inference)
 
-After writing the successor `sessionNN+1/prompt.md`, repoint CURRENT PROMPT above. Only the session
-number changes:
-
-```sh
-# replace NN with the new session number (e.g. session04)
-sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN\2#' agents/sweep.md
-```
+The sweep is complete; there is no further wrap. (Historically, after writing a successor
+`sessionNN+1/prompt.md` the PM repointed CURRENT PROMPT above via
+`sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN\2#' agents/sweep.md` — retained
+here only as a record of the prior cycle. Not applicable now: the terminal milestone landed.)

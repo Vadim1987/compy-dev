@@ -141,3 +141,55 @@ conservative-reversible choice); Fable-5 advisor for genuinely hard calls only. 
   git-status block is now stale (describes the pre-redirect uncommitted delivery) but the PM ADDENDUM
   loudly supersedes it. **M8-02 CERTIFIED.** Next: **M8-03 — the TERMINAL chunk** (legacy removal). When
   it lands green with the globals gone, **the sweep is COMPLETE.**
+
+- [project] **M8-03 LANDED + APPROVED — the TERMINAL chunk (fully autonomous).** Commission `9089b9c`.
+  feat/removal `b4d96ec` (`refactor(input)!: remove legacy text-input globals + poll machinery`): deleted
+  from `consoleController.lua` the `input_ref`/`create_input_handle`/`input()` machinery + the five globals
+  (`user_input`/`input_code`/`input_text`/`write_to_input`/`validated_input`) + the pinned-ruling sixth
+  global **`astv_input`** (debug-only, flagged surprise-first) + the `compy_namespace.text_input` dead
+  write (zero readers). `input`/`input_ref`/`create_input_handle` at **zero** lua-lsp refs + grep-clean.
+  Legacy tests resolved: the `#legacy` block → AC-1 nil-call assertions (RED-with-globals → GREEN-after);
+  the reftable-fill row deleted (its deactivation half already covered). Doc-sync: `user_input.md` +
+  `console.md` document `compy.input.*` as the sole surface; the 7 per-example docs' drift explicitly
+  FLAGGED as a follow-up (bounded terminal chunk). **Suite 808 / 0 / 0 / 4** (809 − 1 net; 4 pending
+  unchanged). All five migrated examples (tixy/repl/guess/valid/balloons) + a pure-native (pong) smoke-load
+  traceback-free WITH THE GLOBALS GONE. Scope fence held: only `consoleController.lua` + the spec + 2 docs
+  touched; `evaluator.lua`/controllers/`src/model`/examples/`vadexamples` all zero-diff.
+  - **Review APPROVE `f2470f9`** (Opus, verify-don't-trust: re-ran suite, lua-lsp `references`="No
+    references found" for the machinery, smoke-loaded all five examples + a negative control proving the
+    harness surfaces load errors, verified AC-7 overlay path zero-diff, confirmed the docs). Reviewer
+    promoted three debt items to `technical_debt.md`: the now-dead controller-side `result`/reftable
+    `deliver()` branch in `userInputController.lua`; the per-example doc drift; `src/vadexamples/` scratch.
+
+- [project] **★ THE #77 NEW-INPUT-API SWEEP IS COMPLETE. ★** All milestones landed + Opus-APPROVED, fully
+  autonomous: **M5c** (session03) · **M7** (session04) · **M8** (session05: M8-01 in-repo migrations after a
+  crash recovery, M8-02 balloons, M8-03 legacy removal). The legacy text-input globals + the poll-a-reftable
+  idiom are GONE; every consumer runs on the `compy.input.*` callback surface; the console-equivalence model
+  is the sole project input API. Final suite **808 / 0 / 0 / 4**.
+
+  **WHAT REMAINS FOR THE HUMAN (report — none blocks the sweep):**
+  1. **Open human hand-play gates (interactive keystroke verification — the container has no keystroke
+     injection, so these were smoke-loaded traceback-free only):** turtle input + maze show→Escape→reopen
+     (M5c-05); tixy (compose → submit → re-prompt loop → Escape); balloons (continuous session, command
+     prompt, per-hint relabel). Play each by hand to confirm real composition/submit/re-prompt/dismiss.
+  2. **Nested-checkout deliverables to carry upstream:**
+     - **balloons** (`src/examples/balloons`, repo `compy-balloons`): migration committed **UNPUSHED** as
+       `56347d0` (`main` ahead 1 of origin, authored `Hleb Rubanau`). **Push it** when ready. NOTE its
+       working tree still holds **pre-existing** `main.lua` `-- test`/`print` cruft (NOT ours — deliberately
+       excluded from `56347d0`) + pre-existing untracked files (ISSUES.md, docs/*, implementation.md) —
+       your call whether to clean those.
+     - **maze** (`src/examples/maze`, branch `v3.4`): still an **uncommitted working-tree patch**
+       (controls.lua, main.lua) from M5c-05 — HEAD `12f675f` unchanged. Carry/commit upstream as you see
+       fit (the 2026-07-12 grant permits committing in detached repos if you prefer that over a patch).
+  3. **Tech debt logged (report-don't-fix, `technical_debt.md`):** the dead controller-side
+     `result`/reftable `deliver()` branch in `userInputController.lua` (its only producer, `input()`, is
+     gone → safe to prune in a future cleanup); the 7 per-example internals docs still describing the old
+     poll loop; `src/vadexamples/` untracked scratch still calling the removed globals (would nil-crash if
+     run — migrate or delete at leisure).
+  4. **Carried tech debt from M7 (untouched by M8):** `UserInputModel:set_text` 19-line body; `apply_config`
+     ~27-line body; tech-debt **F-0** (submit deliver-then-hide ordering) still open — no M8 AC forced it.
+  5. **Pre-existing unrelated working-tree diff:** `implementation/docker/compose.yml` (present before this
+     session, excluded from every commit) — not ours; left for you.
+
+  Per the session05 prompt's wrap rule: **no session06** — no successor prompt written; `agents/sweep.md`
+  repointed to a DONE state.
