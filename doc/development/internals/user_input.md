@@ -367,11 +367,16 @@ Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with 
 The same model, controller, and view are reused across every overlay
 session; per-session allocation is eliminated.
 
-Activation: `compy.input.show(config)` (or the legacy wrapper
-`input_code()`/`input_text()`) calls `UserInputController:show(config)`,
-which sets `love.state.user_input = { M = model, C = singleton, V = view }`
+Activation: `compy.input.show(config)` calls
+`UserInputController:show(config)`, which sets
+`love.state.user_input = { M = model, C = singleton, V = view }`
 and runs a view update. Deactivation: `UserInputController:hide()` (or
 `hide()` on the `compy.input` table) sets `love.state.user_input = nil`.
+`compy.input.*` is the sole project-facing input surface as of
+0.1-m8; the five legacy globals (`user_input`, `input_text`,
+`input_code`, `validated_input`, `write_to_input`) and the
+debug-only `astv_input` are gone from the project environment —
+an ordinary `nil` field, no shim.
 
 `show()` on an already-active singleton is a no-op unless
 `{ force = true }` is passed. With `force`, the text is replaced if
@@ -392,10 +397,16 @@ While `love.state.user_input` is set:
 
 > we're going to disable the path "instead of main controller", aren't we? Worth mentioning
 
-The project polls `r:is_empty()` in `love.update`. When the user presses Enter, the evaluator runs, and if it passes, the result is stored in the `reftable` ref. On the next `update()`, `r:is_empty()` returns false, `r()` returns the value and resets to empty.
+There is no per-frame polling. When the user presses Enter, the
+evaluator runs; on accept, `on_text_entered(text)` fires while the
+session is still active, then the widget deactivates
+(`love.state.user_input = nil`), then `after_submit(text)` fires
+as the post-deactivation hook — the continuous-session idiom
+(`compy.input.show{ on_text_entered = ..., }` +
+`compy.input.after_submit = function(text) ... end`). The
+poll-a-reftable idiom this replaced (`user_input()` +
+`r:is_empty()`/`r()` each frame) was removed at 0.1-m8.
 
-> the project can poll r:is_empty() from wherever? love.update is just typical place to do that? 
-> worth mentioning we're going to deprecate this way of polling? (do we?)
 > I am sure that overlay view is not always redrawn -- it was a problem in balloons on the game end? or it was a different problem (model not updated, therefore view reflecting old model)?
 
 ### The `'userinput'` LÖVE event — how the overlay auto-hides after submit

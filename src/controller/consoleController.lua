@@ -785,96 +785,6 @@ function ConsoleController.prepare_project_env(cc)
     close_project(cc)
   end
 
-  -- Per-session reftable handle the project polls (r:is_empty()/r()). Local by design: M2 dropped the
-  -- now-unused ui_model/ui_con companions from this declaration (the singleton is built in main.lua).
-  local input_ref
-  local create_input_handle   = function()
-    input_ref = table.new_reftable()
-  end
-
-  -- Legacy shared entry behind project_env.input_text / input_code / user_input: opens the input
-  -- singleton with the project's evaluator and returns the poll reftable. Removed in 0.1.0-m8
-  -- (projects migrate to the compy.input callback API).
-  --- @param eval Evaluator
-  --- @param prompt string?
-  --- @param init str?
-  --- @return table? input_ref  the poll reftable, or nil if the open was suppressed
-  local input                 = function(eval, prompt, init)
-    -- C2 (warn-don't-swallow): suppressed opens are logged, not silent.
-    if love.state.user_input then
-      Log.warn('input() ignored — an input overlay is already active')
-      return
-    end
-    -- the controller is provisioned once at startup (main.lua); nil only before load / in bare tests.
-    local uic = love.state.user_input_controller
-    if not uic then
-      Log.warn('input() ignored — user_input_controller not initialised')
-      return
-    end
-    if not input_ref then
-      Log.warn('input() ignored — no input handle; call user_input() first')
-      return
-    end
-    -- DEFERRED (0.1.0-m4/m5): force-flag passthrough for this legacy wrapper is unspecified — it
-    -- currently relies on show()'s default (no force). To be resolved in the m4/m5 design session.
-    uic:show({
-      eval = eval,
-      prompt = prompt,
-      text = init,
-      result = input_ref,
-    })
-    -- View init/update are intentionally NOT called here: the singleton owns its view (bound once via
-    -- init_view in main.lua) and show()->open_fresh()->update_view() renders it. (Verified safe — no
-    -- missing init; avoids recreating the M/V/C triade per request.)
-    return input_ref
-  end
-
-  project_env.user_input      = function()
-    create_input_handle()
-    return input_ref
-  end
-
-  --- @param prompt string?
-  --- @param init str?
-  project_env.input_code      = function(prompt, init)
-    return input(InputEvalLua, prompt, init)
-  end
-  --- @param prompt string?
-  --- @param init str?
-  project_env.input_text      = function(prompt, init)
-    return input(InputEvalText, prompt, init)
-  end
-
-  --- Legacy live-write of the input's text content (not the prompt). Replaced by
-  --- compy.input.set_text in 0.1.0-m7 and removed in 0.1.0-m8.
-  --- @param content str
-  project_env.write_to_input  = function(content)
-    -- `overlay` is the published { M, C, V } handle; .C is the controller, whose set_text mutates
-    -- the model's text. (Named `overlay`, not `ui`, to avoid reading as "user interface".)
-    local overlay = love.state.user_input
-    -- C2 (warn-don't-swallow):
-    if not overlay then
-      Log.warn('write_to_input ignored — no active input overlay')
-      return
-    end
-    -- DEFERRED (0.1.0-m7): whether this path refreshes the view correctly (vs. a stale frame when the
-    -- view is redrawn inside the framework draw loop) is the same question as its durable replacement
-    -- compy.input.set_text — to be resolved in the m7 design session.
-    overlay.C:set_text(content)
-  end
-
-  --- @param filters table
-  --- @param prompt string?
-  project_env.validated_input = function(filters, prompt)
-    return input(ValidatedTextEval(filters), prompt)
-  end
-
-  if love.debug then
-    project_env.astv_input = function()
-      return input(LuaEditorEval)
-    end
-  end
-
   --- @param name string
   project_env.edit           = function(name)
     return cc:edit(name)
@@ -884,7 +794,6 @@ function ConsoleController.prepare_project_env(cc)
 
   local terminal             = cc.model.output.terminal
   local compy_namespace      = get_compy_namespace(terminal)
-  compy_namespace.text_input = input_text
   project_env.compy          = compy_namespace
 
   project_env.eval           = LANG.eval

@@ -343,36 +343,23 @@ describe('input contracts #input', function()
       end)
     end)
 
-  -- Legacy text solicitation (doc A §6.5). "Legacy" is
-  -- the WIRING (env.user_input()/input_text(), the poll
-  -- handle), which retires at 0.1.0-m8; the behaviour it
-  -- exercises — oneshot submit fills and closes — persists
-  -- into the new API (0.1.0-m6 chains). Guarded refusals
-  -- warn, never silently drop (the C2 warn-don't-swallow
-  -- convention) — that is current, tested behaviour, not
-  -- a forward promise.
+  -- Legacy text solicitation (doc A §6.5) retired at
+  -- 0.1.0-m8: the five poll-idiom globals + the debug-only
+  -- astv_input (a sixth global on the same machinery) are
+  -- gone from the project environment — an ordinary nil
+  -- field, no shim, no deprecation path (AC-1).
   describe('legacy text solicitation #legacy', function()
 
-    -- AC-39/AC-43 retirement: 'a submit fills the handle and
-    -- closes #deprecated' spied on love.event.push('userinput')
-    -- (AC-25 deletes the producer) — went red on the AC-25
-    -- delete, demoted to pending(), then deleted here: its
-    -- replacement is 'a legacy solicitation still fills the
-    -- reftable on submit' (the '#m5c' submit/cancel block),
-    -- which proves the surviving synchronous reftable-fill
-    -- through the new submit chain (§5 mechanism note).
-
-    it('a refused solicitation warns, never silently',
+    it('the legacy globals are gone — ordinary nil calls',
       function()
-        love.state.user_input = { }
+        F.activate_project()
         local env = F.cc:get_project_env()
-        env.user_input()
-        local warned = 0
-        local ow = Log.warn
-        Log.warn = function() warned = warned + 1 end
-        env.input_text('p')
-        Log.warn = ow
-        assert.equal(1, warned)
+        assert.is_nil(env.user_input)
+        assert.is_nil(env.input_code)
+        assert.is_nil(env.input_text)
+        assert.is_nil(env.write_to_input)
+        assert.is_nil(env.validated_input)
+        assert.is_nil(env.astv_input)
       end)
   end)
 
@@ -1481,24 +1468,6 @@ describe('input contracts #input', function()
         F.session.press('return')
         assert.equal(2, hits)
       end)
-
-    -- AC-25: a legacy solicitation's reftable fill (the
-    -- surviving synchronous half of the old oneshot submit,
-    -- spec §5 mechanism note) still works through the new
-    -- chain — this is the AC-39 green replacement for the
-    -- retired 'a submit fills the handle and closes' row.
-    it('a legacy solicitation still fills the reftable ' ..
-      'on submit', function()
-      F.activate_project()
-      local env = F.cc:get_project_env()
-      local ref = env.user_input()
-      env.input_text('prompt?')
-      F.session.type('4')
-      F.session.type('2')
-      F.session.press('return')
-      assert.equal('42', ref())
-      assert.is_nil(love.state.user_input)
-    end)
 
     -- AC-26: absent hooks default to noop — submit and cancel
     -- both complete without error when no hook is configured

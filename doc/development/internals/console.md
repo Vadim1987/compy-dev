@@ -104,24 +104,27 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
 
 ## The `user_input` Overlay
 
-Projects can request live text input mid-run. This creates a second `UserInputModel` overlaid on top of the console. Three API variants:
+Projects can request live text input mid-run via `compy.input.*`
+(`show`/`hide`/`configure`/`clear`/`set_text`, callback slots
+`on_text_entered`/`after_submit`/etc. — the full surface is in
+[`user_input.md`](user_input.md)). This creates a second
+`UserInputModel` overlaid on top of the console. Calling `show`
+creates/reuses the singleton `UserInputController`/`UserInputView`
+and stores the triplet in `love.state.user_input`. The event
+dispatch in `love.handlers.keypressed` checks this: if set, key
+events go to the overlay controller, not the main console input.
+Only one overlay can exist at a time
+(`if love.state.user_input then return end`).
 
-```lua
-r = user_input()          -- bare reference, project polls r:is_empty() / r()
-r = input_text("prompt")  -- text evaluator
-r = input_code("prompt")  -- Lua evaluator (syntax-highlighted)
-r = validated_input({validators}, "prompt")  -- custom validation
-```
+Source: `prepare_project_env` (`consoleController.lua`),
+`love.state.user_input` handling in `controller.lua` handlers.
 
-Implementation: calling any of these creates a new `UserInputModel` + `UserInputController` + `UserInputView` and stores the triplet in `love.state.user_input`. The event dispatch in `love.handlers.keypressed` checks this: if set, key events go to the overlay controller, not the main console input.
-
-The return handle `r` is a `reftable` — a callable table used as a mutable reference. Call it with a value to store (`ref(val)`), call it without arguments to retrieve (`ref()`). `r:is_empty()` returns true until a value is stored. Once the user submits, `r()` returns the value and `r:is_empty()` becomes true again (oneshot semantics). `write_to_input(content)` lets the project pre-fill the input.
-
-The same `reftable` pattern appears in the test infrastructure (`tests/testutil.lua:get_save_function`) as a general-purpose mutable reference.
-
-This is the standard pattern for interactive games that need live input (guess, turtle, tixy, repl). Only one overlay can exist at a time (`if love.state.user_input then return end`).
-
-Source: `prepare_project_env` (line 555–611), `love.state.user_input` handling in `controller.lua` handlers.
+The five legacy globals this replaced (`user_input()`,
+`input_text()`, `input_code()`, `validated_input()`,
+`write_to_input()` — a bare poll-a-reftable idiom, one call
+returning a callable `reftable` the project polled with
+`r:is_empty()`/`r()` each frame) were removed at 0.1-m8; calling
+any of them now is an ordinary `nil` call, no shim.
 
 ---
 
@@ -135,7 +138,7 @@ Projects receive a `compy` table with:
 | `compy.terminal` | VT-100 terminal control (`gotoxy`, `clear`, `show_cursor`, `hide_cursor`) |
 | `compy.graphics` | Extended graphics (`shape2d`) — `src/util/graphics/shape2d.lua` |
 | `compy.fonts` | Font path constants (`mono`, `sans`, `serif`, etc.) — `src/util/namespace/fonts.lua` |
-| `compy.text_input` | Alias for `input_text` (project env only) |
+| `compy.input` | Text input widget surface (`show`/`hide`/`configure`/`clear`/`set_text`) — see [`user_input.md`](user_input.md) |
 
 `compy.terminal` wraps the VT-100 terminal instance directly (the same terminal that renders the console output). Projects can use it for text-mode output within their run context.
 
