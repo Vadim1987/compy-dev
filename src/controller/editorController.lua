@@ -19,6 +19,7 @@ local function new(M, CC)
     view = nil,
     mode = 'edit',
     editing = false,
+    pos_memory = {},
   }
 end
 
@@ -37,6 +38,7 @@ end
 --- @field state EditorState?
 --- @field mode EditorMode
 --- @field editing boolean --- submode of 'edit'
+--- @field pos_memory table<string, {sel:integer, off:integer}>
 EditorController = class.create(new)
 
 --- @param v EditorView
@@ -82,6 +84,7 @@ function EditorController:open(name, content, save)
   local b = BufferModel(name, content, save, ch, hl, pp, tr)
   self.model.buffers:push_front(b)
   self.view:open(b)
+  self:_restore_position(b)
   self:update_status()
   self:set_state()
   self.input:update_view()
@@ -114,13 +117,37 @@ function EditorController:pop_buffer()
   local bs = self.model.buffers
   local n_buffers = bs:length()
   if n_buffers < 2 then return end
+  self:_remember_position()
   bs:pop_front()
   local b = bs:first()
   self.view:get_current_buffer():open(b)
   self:update_status()
 end
 
+--- store the active buffer's position by file name
+function EditorController:_remember_position()
+  local buf = self:get_active_buffer()
+  local bv = self.view:get_current_buffer()
+  self.pos_memory[buf.name] = {
+    sel = buf:get_selection(),
+    off = bv:get_offset(),
+  }
+end
+
+--- restore a remembered position if it is still in range
+--- @param buf BufferModel
+function EditorController:_restore_position(buf)
+  local saved = self.pos_memory[buf.name]
+  if saved
+      and saved.sel >= 1
+      and saved.sel <= buf:get_content_length() then
+    buf:set_selection(saved.sel)
+    self.view:get_current_buffer():scroll_to(saved.off)
+  end
+end
+
 function EditorController:close_buffer()
+  self:_remember_position()
   local bs = self.model.buffers
   local n_buffers = bs:length()
   if n_buffers < 2 then
