@@ -2088,5 +2088,28 @@ describe('input contracts #input', function()
         F.session.press('return')
         assert.same({ 'a', 'b' }, seen)
       end)
+
+    -- Balloons shape (M8-02): a hint set via configure()
+    -- INSIDE on_text_entered (session still active, AC-25)
+    -- must survive the after_submit bare re-show, not the
+    -- show()-time prompt. Model-sticky per M8-01 surprise #2
+    -- + M7-02's apply_config: custom_label is only overwritten
+    -- when cfg.prompt is given, so a bare show({}) never
+    -- resets what configure() just set.
+    it('a prompt configured inside on_text_entered ' ..
+      'survives the after_submit re-show', function()
+      local input = F.activate_project()
+      input.after_submit = function() input.show({}) end
+      input.show({
+        prompt = 'first',
+        on_text_entered = function()
+          input.configure({ prompt = 'live' })
+        end,
+      })
+      F.session.type('a')
+      F.session.press('return')
+      assert.equal('live', F.singleton.model:get_label())
+      assert.is_not_nil(love.state.user_input)
+    end)
   end)
 end)
