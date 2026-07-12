@@ -130,3 +130,14 @@ conservative-reversible choice); Fable-5 advisor for genuinely hard calls only. 
   excluded). MCP-LSP: in active use by every sub-agent (correctness). Fable advisor: on standby for a
   genuinely hard design call — none has arisen (M8-02 risk resolved clean; astv_input already decided
   conservatively). Both kept in reach for M8-03.
+
+- [project] **M8-02 REVIEW: APPROVE `98195f8`** (Opus, verify-don't-trust: re-ran suite 809/0/0/4,
+  smoke-loaded balloons, traced the configure-survival in production code via lua-lsp, verified the
+  detached-repo delivery). Trap 2 (configure-during-session survival) **PROVEN in code**: `submit()` fires
+  `on_text_entered` before `hide()`; `configure`→`apply_config` writes `custom_label`; `hide()` never
+  touches it; bare `show({})`→`apply_config({})` skips the `if cfg.prompt~=nil` guard → the
+  configured-while-active prompt survives. Trap 4 (detached delivery) PASS — `56347d0` on top, unpushed,
+  migration-only, cruft excluded, THIS-repo commit balloons-free. Non-blocking: the ledger *body*'s
+  git-status block is now stale (describes the pre-redirect uncommitted delivery) but the PM ADDENDUM
+  loudly supersedes it. **M8-02 CERTIFIED.** Next: **M8-03 — the TERMINAL chunk** (legacy removal). When
+  it lands green with the globals gone, **the sweep is COMPLETE.**
