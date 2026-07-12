@@ -6,7 +6,7 @@
 
 ## Architecture
 
-Single-file. Pen-and-paper mode with `love.update` polling. No drawing, no game logic.
+Single-file. No drawing, no game logic, no `love.update`/`love.draw` override — driven entirely by the `compy.input.*` callback API **(supported since 1.0.0-rc20260712)**.
 
 ## Validators defined
 
@@ -24,17 +24,24 @@ Each returns `true` on success or `false, Error("message", column)` on failure. 
 ## Active validators
 
 ```lua
-validated_input({
-  min_length(2),
-  is_lower
-})
+compy.input.after_submit = function()
+  compy.input.show{}
+end
+
+compy.input.show{
+  eval = ValidatedTextEval({
+    min_length(2),
+    is_lower
+  }),
+  on_text_entered = function(t) print(t) end,
+}
 ```
 
-All validators in the list must pass for the input to be accepted. If any fail, the first error's column is highlighted.
+Validation is wired via `eval = ValidatedTextEval({...})` **(supported since 1.0.0-rc20260712)** — the same validator-list shape the old `validated_input` took. All validators in the list must pass for the input to be accepted; if any fail, the first error's column is highlighted. `after_submit` (a **field-write**, not a `show{}` key) re-arms the overlay with a bare `show{}` after each submit — the continuous-session idiom, see [Compy Input API](../../../input_api.md).
 
 ## Purpose
 
-Demonstrates the `validated_input` API and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input.
+Demonstrates the `ValidatedTextEval` API and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input. The old `validated_input(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
 
 ## Files
 

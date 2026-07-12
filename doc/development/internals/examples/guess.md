@@ -6,24 +6,27 @@
 
 ## Architecture
 
-Single-file. Uses pen-and-paper mode with `love.update` polling the `user_input` handle. No `love.draw` override — output goes to the terminal via `print()`.
+Single-file. No `love.update`/`love.draw` override — output goes to the terminal via `print()`; input is driven entirely by the `compy.input.*` callback API **(supported since 1.0.0-rc20260712)**.
 
 ## Input pattern
 
 ```lua
-r = user_input()
-
-function love.update()
-  if r:is_empty() then
-    validated_input({ is_natural }, "Guess a number:")
-  else
-    local n = tonumber(r())
-    check(n)
-  end
+compy.input.after_submit = function()
+  compy.input.show{}
 end
+
+init()
+
+compy.input.show{
+  prompt = "Guess a number:",
+  eval = ValidatedTextEval({ is_natural }),
+  on_text_entered = function(t) check(tonumber(t)) end,
+}
 ```
 
-This is the canonical `validated_input` pattern: poll `r:is_empty()`, show the input overlay when nothing is pending, consume and process when something arrives. The `validated_input` call only fires if there's currently no active overlay (the framework guards against double-activation).
+This is the continuous-session idiom (see [Compy Input API](../../../input_api.md)): `compy.input.show{}` activates the overlay once; `on_text_entered` fires with the submitted guess while the session is still active; `after_submit` — a **field-write**, not a `show{}` key — re-arms the overlay (bare `show{}`) for the next guess. Validation is wired via `eval = ValidatedTextEval({ is_natural })`, reusing the same validator-list shape the old `validated_input` took.
+
+The old `r = user_input()` / `validated_input(...)` polling pattern is **(deprecated, removed in 1.0.0-rc20260712)**.
 
 ## Validator
 

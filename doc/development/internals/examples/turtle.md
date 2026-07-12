@@ -12,21 +12,30 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
 
 ## Input pattern
 
-Dual input: typed commands via `input_text()` overlay, and direct keyboard actions.
+Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc20260712)**, and direct keyboard actions. Unlike the other examples, turtle does **not** use the continuous-session `after_submit` idiom — there is no overlay shown at load; `i` opens it on demand, one shot at a time:
 
 ```lua
-local r = user_input()
+function love.keyreleased(key)
+  if key == "i" then
+    compy.input.show{
+      prompt = "TURTLE",
+      on_text_entered = eval,
+    }
+  end
 
-function love.update()
-  if not r:is_empty() then
-    eval(r())
+  if love.keyboard.isDown("lctrl", "rctrl") then
+    if key == "escape" then
+      love.event.quit()
+    end
   end
 end
 ```
 
-`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher.
+`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; `on_text_entered = eval` wires it directly as the submit callback.
 
-`love.keyreleased`: `i` key opens the input overlay interactively (`r = input_text("TURTLE")`), overwriting the existing `r` reference. `shift+r` resets turtle position.
+`love.keyreleased`: the `i` key opens the input overlay with a fresh `compy.input.show{}` call each time (there is no `after_submit` re-arm, so the overlay does not automatically reopen after a submit — pressing `i` again is required). `shift+r` resets turtle position.
+
+See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `r = user_input()` / `input_text(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
 
 ## Drawing
 
@@ -34,7 +43,7 @@ end
 
 ## Points of attention
 
-- The `r` variable (user_input handle) is reassigned inside `love.keyreleased` (`r = input_text("TURTLE")`). This means after pressing `i`, the old handle is abandoned and a new overlay is created. The polling in `love.update` starts consuming the new handle. This pattern works but relies on the variable being captured by reference in the update closure — which it is, since both closures close over the upvalue `r`.
+- Each press of `i` calls `compy.input.show{}` fresh — there is no `after_submit` re-arm, so the overlay does not reappear automatically after a command is submitted; the player must press `i` again for the next typed command.
 - `debug_color` is set in `love.update` based on turtle position — this modifies a global used by `drawDebuginfo`. The debug overlay is toggled by `space`.
 
 ## Files

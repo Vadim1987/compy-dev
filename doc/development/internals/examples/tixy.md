@@ -30,23 +30,36 @@ end
 
 ## Input pattern
 
-Uses `input_code()` overlay — the input widget has Lua syntax highlighting and validation. The `r = user_input()` / `input_code(...)` polling pattern is identical to other examples, but the prompt is the function signature and the initial content is the current formula body.
+Uses `compy.input.show{}` with `eval = InputEvalLua` **(supported since 1.0.0-rc20260712)** — the input widget has Lua syntax highlighting and validation. `love.update(dt)` now only advances `time`; there is no polling of an input handle. See [Compy Input API](../../../input_api.md) for the full usage guide.
 
 ```lua
-r = user_input()
+local function submit_body(text)
+  body = string.unlines(text)
+  setupTixy()
+  legend = ""
+end
+
+compy.input.after_submit = function()
+  compy.input.show{ text = string.lines(body) }
+end
+
 function love.update(dt)
   time = time + dt
-  if r:is_empty() then
-    input_code("function tixy(t, i, x, y)", string.lines(body))
-  else
-    local ret = r()
-    body = string.unlines(ret)
-    setupTixy()
-  end
 end
+
+compy.input.show{
+  prompt = "function tixy(t, i, x, y)",
+  text = string.lines(body),
+  eval = InputEvalLua,
+  on_text_entered = submit_body,
+}
 ```
 
-`write_to_input(body)` in `load_example()` pre-fills the input with the current formula when loading a preset — the user sees the formula they're about to run before submitting.
+`submit_body` (wired as `on_text_entered`) consumes the submitted formula while the session is still active; `after_submit` — a **field-write**, not a `show{}` key — re-arms the overlay afterwards, seeding `text` with the just-submitted (and possibly example-loaded) `body` so editing continues in place rather than clearing the prompt.
+
+`compy.input.set_text(body)` in `load_example()` pre-fills the live input with the current formula when loading a preset — the user sees the formula they're about to run before submitting. This replaces the old `write_to_input(body)` call.
+
+The old `r = user_input()` / `input_code(...)` polling pattern is **(deprecated, removed in 1.0.0-rc20260712)**.
 
 ## Example cycling
 

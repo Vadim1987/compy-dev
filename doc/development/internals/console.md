@@ -105,9 +105,11 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
 ## The `user_input` Overlay
 
 Projects can request live text input mid-run via `compy.input.*`
+**(supported since 1.0.0-rc20260712)**
 (`show`/`hide`/`configure`/`clear`/`set_text`, callback slots
 `on_text_entered`/`after_submit`/etc. — the full surface is in
-[`user_input.md`](user_input.md)). This creates a second
+[`user_input.md`](user_input.md), and the project-author usage guide
+is [`../../input_api.md`](../../input_api.md)). This creates a second
 `UserInputModel` overlaid on top of the console. Calling `show`
 creates/reuses the singleton `UserInputController`/`UserInputView`
 and stores the triplet in `love.state.user_input`. The event
@@ -123,8 +125,9 @@ The five legacy globals this replaced (`user_input()`,
 `input_text()`, `input_code()`, `validated_input()`,
 `write_to_input()` — a bare poll-a-reftable idiom, one call
 returning a callable `reftable` the project polled with
-`r:is_empty()`/`r()` each frame) were removed at 0.1-m8; calling
-any of them now is an ordinary `nil` call, no shim.
+`r:is_empty()`/`r()` each frame) are **(deprecated, removed in
+1.0.0-rc20260712)**; calling any of them now is an ordinary `nil`
+call, no shim.
 
 ---
 

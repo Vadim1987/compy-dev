@@ -41,7 +41,7 @@ The "keypressed = control channel, textinput = character channel" split used thr
 > project singleton ever see the event. None of them "choose" to ignore repeats — they never get the
 > chance. There is no code anywhere in `src/` today that reads `isrepeat` or `scancode` (confirmed:
 > zero matches). Threading it back through is planned infrastructure (`design/design.md` §3,
-> `keys_pressed`/combo work, 0.1.0-m4/m5) — see
+> `keys_pressed`/combo work) — see
 > [`notes/keyreleased-isrepeat-events.md`](../../wip/77-new-input-api/notes/keyreleased-isrepeat-events.md).
 
 ### Multiline input
@@ -166,7 +166,7 @@ Global shortcuts in `love.handlers.keypressed` (controller.lua:520+) are interce
 >>   also, I do not understant the condition 'when project left "running"' and 'project_open' stuff... its obvious in inspect or when project is open but not run we should not drive events to it. However, wyh is there a special mechanism? should not projectInputController simply be not connected until project is running?
 >> REVIEW END
 
-As of 0.1.0-m4 the gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The slot occupant (the active route's controller) always receives the event. Since 0.1.0-m5 the project route runs the four-tier chain above: the M4 `native_split`/lifecycle-split wrapper is gone (R7 pure wrap), a project native auto-provisions as the tier-3 default participant (seen even while the widget is shown, only when the project set no `on_*` — explicit `on_*` takes precedence), and the widget sink is the terminal tier with its hidden-check now *internal* (it no-ops on the published singleton while `love.state.user_input` is nil, so a hidden widget mutates nothing without any external gate). The console-route default handlers still forward to the widget when `love.state.user_input` is set (except under `inspect`). The widget is never a routing destination of the gateway and never a slot occupant. On project stop the console is the restore target — `Controller.active_keyboard_route()` reports the occupant (the ConsoleController by default, the project route during a run).
+As of 1.0.0-rc20260712 the gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The slot occupant (the active route's controller) always receives the event. Since 1.0.0-rc20260712 the project route runs the four-tier chain above: the M4 `native_split`/lifecycle-split wrapper is gone (R7 pure wrap), a project native auto-provisions as the tier-3 default participant (seen even while the widget is shown, only when the project set no `on_*` — explicit `on_*` takes precedence), and the widget sink is the terminal tier with its hidden-check now *internal* (it no-ops on the published singleton while `love.state.user_input` is nil, so a hidden widget mutates nothing without any external gate). The console-route default handlers still forward to the widget when `love.state.user_input` is set (except under `inspect`). The widget is never a routing destination of the gateway and never a slot occupant. On project stop the console is the restore target — `Controller.active_keyboard_route()` reports the occupant (the ConsoleController by default, the project route during a run).
 
 While a project run occupies the slots but the state has left `'running'` (a non-blocking project that returned: `app_state == 'project_open'`), `ProjectInputController` forwards events to the console default handlers — non-running states route to the console (the REPL stays live after a script finishes).
 
@@ -184,8 +184,6 @@ canonical (`"lctrl"`, `"rshift"`, `"return"`, etc.); left/right
 variants are stored without folding — `lctrl` and `rctrl` are two
 separate entries, not merged into `ctrl`.
 
-> Let's mark "introduced in version..." like Love2D does. Can also include "planned for version" instead of milestone references
-
 `Controller.combo_string(k, keys_pressed)` serialises a key event
 into a canonical combo string. It prepends any held modifiers in
 fixed precedence order — `ctrl`, `alt`, `shift`, `gui` — then
@@ -200,14 +198,14 @@ with no held modifiers serialises to just the key name.
 ```
 
 These two surfaces will be consumed by the `ProjectInputController`
-dispatch table (`compy.input.handlers[combo]`), planned for 0.1.0-m5.
-Since 0.1.0-m4 the gateway no longer drops `isrepeat`/`scancode` at
-the slot signature, and the whole keypressed path hands the widget
-sink the uniform `(k, keys_pressed, isrepeat)` triple — the sink is
-included by design (one signature across the path; see
-`input-contracts.md` §9). The sink's own implementation still binds
-only `k`; it starts consuming the extra arguments when its dispatch
-milestone (0.1.0-m5) lands.
+dispatch table (`compy.input.handlers[combo]`), planned for a later
+milestone. Since 1.0.0-rc20260712 the gateway no longer drops
+`isrepeat`/`scancode` at the slot signature, and the whole keypressed
+path hands the widget sink the uniform `(k, keys_pressed, isrepeat)`
+triple — the sink is included by design (one signature across the
+path; see `input-contracts.md` §9). The sink's own implementation
+still binds only `k`; it starts consuming the extra arguments once
+that dispatch work lands.
 
 ### Console-specific keys
 
@@ -232,7 +230,7 @@ callback to hand it to yet — this is the one point where the signal is genuine
 recomputed elsewhere. Full trace:
 [`notes/fr2-fr6-fr7-provenance-and-gaps.md`](../../wip/77-new-input-api/notes/fr2-fr6-fr7-provenance-and-gaps.md).
 
-**FR-6 (project notification of key events): the keyboard exclusion is resolved as of 0.1.0-m4.**
+**FR-6 (project notification of key events): the keyboard exclusion is resolved as of 1.0.0-rc20260712.**
 Historically, while `love.state.user_input` was set, `controller.lua`'s
 `handlers.keypressed`/`handlers.textinput` called *only* the overlay — the project's own
 `love.keypressed`/`love.textinput` were not called at all (binary, not partial). With the gate
@@ -298,7 +296,7 @@ dispatch-chain diagram above. The note below concerns the **console route**, whi
 deliberately did not touch (its legacy fork stays until the console/editor migration).
 
 `keypressed`/`textinput` get careful three-way routing (console / editor / project); **`keyreleased`
-gets route-level delegation but no editor fork.** Since 0.1.0-m5, `ProjectInputController:keyreleased`
+gets route-level delegation but no editor fork.** Since 1.0.0-rc20260712, `ProjectInputController:keyreleased`
 runs the same four-tier chain as the other channels (combo → `on_key_released` → sink), the released
 key already absent from the held set. On the
 console route the default handler forwards to a shown widget, else falls to `CC:keyreleased`
@@ -359,8 +357,7 @@ Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with 
 
 ## The `user_input` Overlay — Input Perspective
 
-### Singleton lifecycle (since 0.1.0-m2)
-> Milestone identifiers are meaningless in persistent documentation. Let's stick to semantic versioning and speak about current version -- maybe with prefixes like x.y-m2...
+### Singleton lifecycle (introduced in an earlier build)
 
 `UserInputController` is a singleton created once in `love.load()`
 (in `src/main.lua`) and stored in `love.state.user_input_controller`.
@@ -372,11 +369,12 @@ Activation: `compy.input.show(config)` calls
 `love.state.user_input = { M = model, C = singleton, V = view }`
 and runs a view update. Deactivation: `UserInputController:hide()` (or
 `hide()` on the `compy.input` table) sets `love.state.user_input = nil`.
-`compy.input.*` is the sole project-facing input surface as of
-0.1-m8; the five legacy globals (`user_input`, `input_text`,
-`input_code`, `validated_input`, `write_to_input`) and the
-debug-only `astv_input` are gone from the project environment —
-an ordinary `nil` field, no shim.
+`compy.input.*` is the sole project-facing input surface
+**(supported since 1.0.0-rc20260712)**; the five legacy globals
+(`user_input`, `input_text`, `input_code`, `validated_input`,
+`write_to_input`) and the debug-only `astv_input` are
+**(deprecated, removed in 1.0.0-rc20260712)** — gone from the
+project environment, an ordinary `nil` field, no shim.
 
 `show()` on an already-active singleton is a no-op unless
 `{ force = true }` is passed. With `force`, the text is replaced if
@@ -405,7 +403,8 @@ as the post-deactivation hook — the continuous-session idiom
 (`compy.input.show{ on_text_entered = ..., }` +
 `compy.input.after_submit = function(text) ... end`). The
 poll-a-reftable idiom this replaced (`user_input()` +
-`r:is_empty()`/`r()` each frame) was removed at 0.1-m8.
+`r:is_empty()`/`r()` each frame) is **(deprecated, removed in
+1.0.0-rc20260712)**.
 
 > I am sure that overlay view is not always redrawn -- it was a problem in balloons on the game end? or it was a different problem (model not updated, therefore view reflecting old model)?
 
@@ -433,6 +432,9 @@ no other generic event/callback bus in the current input code — `compy.input.o
 M4–M6 design vocabulary, not current implementation.
 
 ### `compy.input` namespace
+
+For a project-author usage guide with examples, see
+[Compy Input API](../../input_api.md).
 
 `compy.input` is a table created once at namespace setup (inside
 `get_compy_namespace()` in `consoleController.lua`). It exposes:

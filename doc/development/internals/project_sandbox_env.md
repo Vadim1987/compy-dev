@@ -29,7 +29,7 @@ are not.
 | Tier | What | Isolated / restored? |
 |---|---|---|
 | **T1 — callbacks** | `love.draw`, `love.update`, `love.keypressed`, `love.textinput`, `love.mouse*`… defined by the project | **Yes — framework-managed.** Set on the project's cloned `love`; harvested by `save_user_handlers(runner_env['love'])` (`consoleController.lua:824`) and wired into the real dispatch; reset to defaults on stop (`set_default_handlers` / `restore_user_handlers`, `controller.lua:826`). No leak. |
-| **T2 — `compy.*`** | `compy.terminal`, `compy.audio`, `compy.graphics`, `compy.input`… injected into the env (`get_compy_namespace`, `consoleController.lua:360`) | **Yes — framework wrappers.** The project calls a controlled surface; the framework owns the underlying object. No leak. |
+| **T2 — `compy.*`** | `compy.terminal`, `compy.audio`, `compy.graphics`, `compy.input` **(supported since 1.0.0-rc20260712)**… injected into the env (`get_compy_namespace`, `consoleController.lua:360`) | **Yes — framework wrappers.** The project calls a controlled surface; the framework owns the underlying object. No leak. |
 | **T3 — raw `love.*` imperative calls** | `love.keyboard.setKeyRepeat`/`setTextInput`, `love.mouse.setRelativeMode`/`setVisible`, raw `love.audio.newSource`/`play`, cursor… called (not defined) by the project | **No.** These invoke the shared C functions → mutate **real global SDL/LÖVE subsystem state**. Nothing snapshots or restores them across run boundaries. **They leak into the IDE/console after the project exits.** |
 
 ## Why this matters
@@ -52,5 +52,6 @@ are not.
 ## Pointers
 
 - Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).
+- Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
 - The analysis that surfaced this model (feature #77, session 18):
   `doc/development/wip/77-new-input-api/notes/stakeholder-3-input/assessment.md` (P4).
