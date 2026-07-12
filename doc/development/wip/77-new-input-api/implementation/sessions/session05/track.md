@@ -83,3 +83,25 @@ conservative-reversible choice); Fable-5 advisor for genuinely hard calls only. 
     remaining examples with the **field-write `after_submit`** form, verify the re-armed tixy still
     highlights (eval is NOT in OUTPUT_KEYS → confirm stickiness at the model layer or re-pass `eval`),
     record the ledger surprise-first, commit. Original `prompts/M8-01-in-repo-migrations.md` stays authority.
+
+- [project] **M8-01 LANDED + APPROVED (fresh implementor completed the crash recovery, fully autonomous).**
+  feat `5966bfe` — repl/guess/valid migrated onto the corrected field-write `after_submit` recipe (tixy +
+  the 2 `#m8` tests verified-not-redone). guess/valid wire validation via `eval = ValidatedTextEval(filters)`
+  (reuses the exact legacy `validated_input`→`ValidatedTextEval` path); repl is a bare `show{}` (default
+  `InputEvalText` = legacy `input_text`). **Suite 808 / 0 / 0 / 4** (unchanged — the `#m8` pair already
+  pins the recipe the three trivial migrations reuse). All four smoke-load traceback-free; real
+  keystroke submit/re-prompt is a human hand-play gate (joins the open list). Scope fence held: no legacy
+  global removed, `evaluator.lua`/`src/controller/*`/balloons untouched.
+  - **PM sharpened the review note** (`4e9361a`) with two crash-recovery traps before spending the reviewer:
+    trap 9 (`after_submit` field-write, not a `show{}` key) + trap 10 (prompt/text persistence across the
+    bare re-show — a *suspected* fidelity regression I flagged: bare `show{}` drops the non-sticky
+    `prompt`).
+  - **Review APPROVE `c12155b`** (Opus, verify-don't-trust: re-ran suite, smoke-loaded all four, traced
+    the sticky-eval + validator-wiring claims via lua-lsp). **Trap 10 DISPROVEN** — `model.custom_label`
+    is written only on `cfg.prompt ~= nil` and nilled nowhere (`clear_input` leaves it intact), so `prompt`
+    is **model-sticky exactly like `eval`**; guess keeps "Guess a number:" and tixy keeps its signature
+    label every round. No corrective needed. Reviewer non-blocking note for M8-02/M8-03 handoff: the M8-01
+    ledger traced eval-stickiness but not prompt/`custom_label`-stickiness (got the right result by omission).
+  - **M8-01 CERTIFIED.** Next: **M8-02 balloons** (nested checkout; delivery = uncommitted patch per frozen
+    AC-9 unless the human redirects at the gate — see chunk-plan balloons note). Then M8-03 (removal) closes
+    the sweep.
