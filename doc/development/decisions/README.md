@@ -16,7 +16,7 @@ This directory is deliberately distinct from its two neighbours:
 Each doc is ADR-flavoured: it states decisions and their rationale, cross-references the
 matching `internals/*` doc for mechanism rather than duplicating it, and lets the code win
 on any point of fact. Open questions and accepted shortcuts live in the technical-debt
-register (`../technical_debt.md`), not here — a decision doc records what was settled.
+register (`../technical_debt/README.md`), not here — a decision doc records what was settled.
 
 ## Docs in this directory
 

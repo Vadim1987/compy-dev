@@ -353,4 +353,4 @@ are captured in the technical-debt register and are noted here only so a reader 
 Separately, config keys that `show{}` does not recognise are silently dropped rather than warned
 about — an inconsistency against the warn-don't-swallow discipline applied elsewhere on this
 surface (the cursor/text calls do warn when refused). These, and the open combo-repeat and
-proxy-iteration items noted above, live in [`../technical_debt.md`](../technical_debt.md).
+proxy-iteration items noted above, live in [`../technical_debt/input.md`](../technical_debt/input.md).
