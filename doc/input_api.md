@@ -80,14 +80,17 @@ To deactivate the widget, call `compy.input.hide()`. No cancel callbacks fire.
 
 When the user presses Enter on an active widget, the steps are, in order:
 
-1. The evaluator/validator **gates** the submit. A rejected validation locks the field and shows
-   the error; nothing below runs.
-2. `before_submit(text)` fires (if set).
+1. `before_submit(keys_pressed)` fires first (if set) — **before** validation, and it runs even
+   on an empty-input Enter. Its argument is the held-key set (`keys_pressed`), **not** the text; a
+   return value is reserved for a future veto and is ignored today (blocking bad input is the
+   `validator`'s job).
+2. The evaluator/validator **gates** the submit. A rejected validation locks the field and shows
+   the error; nothing below runs (`after_submit` does not fire).
 3. `on_text_entered(text)` fires **while the widget is still active** — this is where you consume
    the submitted text.
 4. The widget **hides** (`love.state.user_input` cleared).
-5. `after_submit(text)` fires **after** the hide — this is where you re-prompt for a continuous
-   session.
+5. `after_submit(text)` fires **after** the hide, **only on an accepted submit** — this is where
+   you re-prompt for a continuous session.
 
 Cancel (Escape, in the relevant context) fires `before_cancel` / `after_cancel` analogously.
 
@@ -306,7 +309,7 @@ Assign directly (`compy.input.after_submit = fn`); **silently dropped** if passe
 
 | Callback | Fires |
 |---|---|
-| `before_submit(text)` | Before `on_text_entered`, widget still active. |
+| `before_submit(keys_pressed)` | First — before validation, widget still active; runs even on empty Enter. |
 | `after_submit(text)` | After the widget hides — the re-prompt hook. |
 | `before_cancel(...)` | On cancel, before the widget hides. |
 | `after_cancel(...)` | On cancel, after the widget hides. |
