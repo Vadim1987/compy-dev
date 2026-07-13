@@ -104,7 +104,7 @@ function Statusline:draw(status, start_y)
         local more_i = morelabel(status.input_more) .. ' '
         local edit_tag = ''
         if custom.mode == 'edit' then
-          edit_tag = 'E '
+          edit_tag = ' E '
         end
         local name = edit_tag .. custom.name .. ' '
 

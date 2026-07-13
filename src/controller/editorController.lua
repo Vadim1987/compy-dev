@@ -749,7 +749,13 @@ function EditorController:_normal_mode_keys(k)
         and not Key.shift()
         and not Key.alt()
         and Key.is_enter(k) then
-      self:_handle_submit(replace)
+      --- replace only what was deliberately opened;
+      --- fresh text composed in navigation is inserted
+      if buf.loaded then
+        self:_handle_submit(replace)
+      else
+        self:_handle_submit(add)
+      end
     end
   end
   --- open the selected block for editing (spec 2.2: Enter)
