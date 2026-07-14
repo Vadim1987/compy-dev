@@ -385,6 +385,8 @@ end
 
 --- @private
 --- @param go fun(nt: string[]|Block[])
+--- @param go function
+--- @return boolean accepted --- false on an eval refusal
 function EditorController:_handle_submit(go)
   local inter = self.input
   local raw = inter:get_text()
@@ -395,7 +397,7 @@ function EditorController:_handle_submit(go)
     if not string.is_non_empty_string_array(raw) then
       local sel = buf:get_selection()
       local block = buf:get_content():get(sel)
-      if not block then return end
+      if not block then return true end
     else
       local _, raw_chunks = buf.chunker(raw, true)
       local pretty = buf.printer(raw)
@@ -442,12 +444,21 @@ function EditorController:_handle_submit(go)
         local eval_err = res
         if eval_err then
           inter:set_error(eval_err)
+          --- spec 2.4.3: the cursor moves to the error
+          local first = Error.get_first(eval_err)
+              or eval_err
+          if type(first) == 'table' and first.l then
+            inter.model:move_cursor(first.l, first.c or 1)
+            inter:update_view()
+          end
         end
+        return false
       end
     end
   else
     go(raw)
   end
+  return true
 end
 
 --- @private
@@ -455,6 +466,52 @@ end
 --- @param by integer?
 --- @param warp boolean?
 --- @param moved integer?
+--- Click semantics (spec 2.9): in nav, select the
+--- clicked line's block; while editing, a click inside
+--- the open block places the cursor, a click outside
+--- it leaves when the block is untouched
+--- @param ln integer --- source line
+function EditorController:mouse_select(ln)
+  local buf = self:get_active_buffer()
+  local bi = buf:block_at_line(ln)
+  if not bi then return end
+
+  if self.mode == 'edit' then
+    local span = buf:get_selection_lines()
+    if span:inc(ln) then
+      self.input:set_cursor(Cursor(ln - span.start + 1, 1))
+      return
+    end
+    local clean = string.unlines(self.input:get_text())
+        == string.unlines(buf:get_selected_text())
+    if not clean then
+      self.input:set_error({
+        'accept (Enter) or discard (Shift+Esc) first'
+      })
+      return
+    end
+    self:leave_edit()
+  end
+
+  buf:set_selection(bi)
+  buf:set_active_line(ln)
+  self.view:get_current_buffer():follow_line()
+  self:update_status()
+end
+
+--- @param x number
+--- @param y number
+--- @param btn integer
+function EditorController:mousepressed(x, y, btn, touch, presses)
+  if btn == 1 then
+    local ln = self.view:get_current_buffer():line_at(y)
+    if ln then
+      return self:mouse_select(ln)
+    end
+  end
+  self.input:mousepressed(x, y, btn, touch, presses)
+end
+
 --- Swap the selected block with its neighbor (spec 2.7:
 --- Alt+arrows in navigation), written through like reorder
 --- @param dir VerticalDir
@@ -822,11 +879,13 @@ function EditorController:_normal_mode_keys(k)
           and Key.is_enter(k)) then
       --- replace only what was deliberately opened;
       --- fresh text composed in navigation is inserted
+      local accepted
       if buf.loaded then
-        self:_handle_submit(replace)
+        accepted = self:_handle_submit(replace)
       else
-        self:_handle_submit(add)
+        accepted = self:_handle_submit(add)
       end
+      if not accepted then block_input() end
     end
   end
   --- open the selected block for editing (spec 2.2: Enter)

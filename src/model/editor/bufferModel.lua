@@ -302,6 +302,22 @@ function BufferModel:get_active_line()
   return self.active_line
 end
 
+--- The block owning a source line
+--- @param ln integer
+--- @return integer? block index
+function BufferModel:block_at_line(ln)
+  if self.content_type ~= 'lua' then
+    if ln >= 1 and ln <= self:get_content_length() then
+      return ln
+    end
+    return nil
+  end
+  for i, b in ipairs(self.content) do
+    if b.pos and b.pos:inc(ln) then return i end
+  end
+  return nil
+end
+
 --- @param ln integer
 function BufferModel:set_active_line(ln)
   self.active_line = ln

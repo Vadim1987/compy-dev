@@ -270,6 +270,20 @@ function BufferView:follow_selection()
   end
 end
 
+--- Source line at a vertical pixel position, if any
+--- @param y number
+--- @return integer? ln
+function BufferView:line_at(y)
+  local fh = self.cfg.fh
+  local row = math.floor(y / fh) + 1
+  local wrapped = self.content.offset + row
+  if not self.content.range:inc(wrapped) then
+    return nil
+  end
+  local rev = self.content.wrap_reverse
+  return rev and rev[wrapped]
+end
+
 --- Scroll just enough to keep the active line visible
 function BufferView:follow_line()
   local al = self.buffer:get_active_line()
