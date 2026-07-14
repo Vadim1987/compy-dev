@@ -20,6 +20,7 @@ local function new(M, CC)
     view = nil,
     mode = 'nav',
     pos_memory = {},
+    accepted_n = 1,
   }
 end
 
@@ -38,6 +39,8 @@ end
 --- @field state EditorState?
 --- @field mode EditorMode
 --- @field pos_memory table<string, {sel:integer, off:integer}>
+--- @field accepted_n integer --- blocks the last
+--- acceptance produced; the leave gate steps past them
 EditorController = class.create(new)
 
 --- @param v EditorView
@@ -112,6 +115,8 @@ function EditorController:follow_require()
   if reqsel then
     local name = reqsel.name
     self.console:edit(name .. '.lua')
+  else
+    self:refuse()
   end
 end
 
@@ -217,6 +222,16 @@ end
 --- @return boolean
 function EditorController:is_normal_mode()
   return is_normal(self.mode)
+end
+
+--- One sound for every refused action (spec 2.4.3):
+--- a knock means "no further this way"
+--- @param msg string[]? --- also shown when given
+function EditorController:refuse(msg)
+  --- required here, not at the top: util.audio builds
+  --- its sources on load and needs love.audio ready
+  require("util.audio").knock()
+  if msg then self.input:set_error(msg) end
 end
 
 --- drop the loaded block and the input, return to nav
@@ -355,7 +370,9 @@ function EditorController:textinput(t)
       --- NB: on device, textinput precedes keypressed
       --- (see dev/docs/compy-input-quirks.md), so this
       --- transition lands before the same key's press
-      self:set_mode('edit')
+      if self.mode == 'nav' then
+        self:start_typing()
+      end
       self.input:textinput(t)
     end
   elseif self.mode == 'search' then
@@ -369,9 +386,12 @@ function EditorController:get_input()
 end
 
 --- @param buf BufferModel
+--- @return boolean ok --- the write reached the OS
+--- @return string? err
 function EditorController:save(buf)
   local ok, err = buf:save()
   if not ok then Log.error("can't save: ", err) end
+  return ok, err
 end
 
 ---------------------------
@@ -380,6 +400,9 @@ end
 
 --- @private
 --- @param go fun(nt: string[]|Block[])
+--- @param go fun(newtext: Block[]|string[]): boolean
+--- @return boolean accepted --- go's verdict, or false
+--- when the input does not evaluate
 function EditorController:_handle_submit(go)
   local inter = self.input
   local raw = inter:get_text()
@@ -432,17 +455,195 @@ function EditorController:_handle_submit(go)
             end
           end
         end
-        go(chunks)
+        return go(chunks)
       else
         local eval_err = res
         if eval_err then
+          self:refuse()
           inter:set_error(eval_err)
         end
       end
     end
   else
-    go(raw)
+    return go(raw)
   end
+end
+
+--- Load the selected block into the input and open it
+--- for editing, auto-formatted (9.4), with the cursor
+--- on the active line (2.2)
+function EditorController:open_block()
+  local buf = self:get_active_buffer()
+  local input = self.input
+  local span = buf:get_selection_lines()
+  local row = buf:get_active_line() - span.start + 1
+
+  local t = buf:get_selected_text()
+  if string.is_non_empty(t) then
+    buf:set_loaded()
+  else
+    buf:clear_loaded()
+  end
+  input:set_text(t)
+  input:jump_home()
+
+  if buf.content_type == 'lua' then
+    --- auto-format on opening (spec 9.4); a block the
+    --- formatter changes is dirty from birth (2.4)
+    local raw = input:get_text()
+    if string.is_non_empty_string_array(raw) then
+      local pretty = buf.printer(raw)
+      if pretty then
+        --- the printer may append a trailing empty
+        --- line; that is noise, not formatting
+        while #pretty > 1 and pretty[#pretty] == '' do
+          table.remove(pretty)
+        end
+        input:set_text(pretty)
+      end
+    end
+  end
+  --- the active line can sit outside the block being
+  --- opened (a deletion leaves the selection on the
+  --- trailing gap); row 0 detaches the cursor
+  local n = #input:get_text()
+  if n < 1 then n = 1 end
+  if row < 1 then row = 1 end
+  if row > n then row = n end
+  input:set_cursor(Cursor(row, 1))
+  self:set_mode('edit')
+end
+
+--- Typing in navigation starts editing at the active
+--- line: its block opens and a blank line appears there
+--- to type into, pushing the rest down (spec 2.1). On a
+--- blank line the text becomes a new block instead, so
+--- the input stays empty and acceptance inserts.
+function EditorController:start_typing()
+  local buf = self:get_active_buffer()
+  if buf.content_type ~= 'lua' then
+    self:set_mode('edit')
+    return
+  end
+  local block = buf:_get_selected_block()
+  if not block or block:is_empty() then
+    --- an empty block -- including the gap a deletion
+    --- leaves behind -- still has to be opened. Setting
+    --- the mode alone anchors the input to no block, so
+    --- the typing goes into a detached widget and the
+    --- accept drops it on the floor
+    self:open_block()
+    return
+  end
+
+  local ln = buf:get_active_line()
+  local span = buf:get_selection_lines()
+  local row = ln - span.start + 1
+  self:open_block()
+
+  local t = self.input:get_text()
+  --- the format on opening may have reshaped the block
+  if row < 1 then row = 1 end
+  if row > #t then row = #t + 1 end
+  table.insert(t, row, '')
+  self.input:set_text(t)
+  self.input:set_cursor(Cursor(row, 1))
+end
+
+--- Open a fresh empty block next to the current one
+--- (spec 2.7: Ctrl+Enter below, Ctrl+Shift+Enter
+--- above). The block itself appears on acceptance —
+--- until then the editor simply composes at that spot.
+--- @param below boolean
+function EditorController:new_block(below)
+  local buf = self:get_active_buffer()
+  if buf.readonly then return self:refuse() end
+  if below then
+    buf:set_selection(buf:get_selection() + 1)
+  end
+  buf:clear_loaded()
+  self.input:clear()
+  self:set_mode('edit')
+  self.view:get_current_buffer():follow_selection()
+  self:update_status()
+end
+
+--- @return integer --- the input strip's height (2.7)
+function EditorController:_size_limit()
+  return self.view:get_current_buffer():get_max_size()
+end
+
+--- @param chunks Block[]
+--- @return integer? --- index of the first block over
+--- the limit, nil when all fit
+function EditorController:_first_oversized(chunks)
+  if self.view:get_current_buffer().content_type
+      ~= 'lua' then
+    return
+  end
+  local limit = self:_size_limit()
+  return table.find_by(chunks, function(v)
+    return (v and v.pos and v.pos:len() > limit)
+  end)
+end
+
+--- Refuse an oversized block and point at it (9.6)
+--- @param chunks Block[]
+--- @param idx integer
+function EditorController:_reject_oversized(chunks, idx)
+  local block = chunks[idx]
+  if not block or not block.pos then return end
+  local n = block.pos:len()
+  --- the wording follows 1.4: say what to do, not what
+  --- the machine measured
+  self:refuse({ string.format(
+    'Too many lines in a block. Remove %d to save,'
+    .. ' or press Shift+Esc to cancel',
+    n - self:_size_limit()
+  ) })
+  self.input.model:move_cursor(block.pos.start, 1)
+  self.input:update_view()
+end
+
+--- Accept the open block into the file: validate, size
+--- check, re-chunk, write (spec 2.4.2). Acceptance in
+--- place keeps the block and scrolls back to it.
+--- @return boolean accepted
+function EditorController:accept_block()
+  return self:_handle_submit(function(newtext)
+    local buf = self:get_active_buffer()
+    local bufv = self.view:get_current_buffer()
+    if not bufv:is_selection_visible(true) then
+      bufv:follow_selection()
+      return false
+    end
+    if not buf:loaded_is_sel(true) then
+      buf:select_loaded()
+      bufv:follow_selection()
+      return false
+    end
+    local oversized = self:_first_oversized(newtext)
+    if oversized then
+      self:_reject_oversized(newtext, oversized)
+      return false
+    end
+    local _, n = buf:replace_content(newtext)
+    local ok = self:save(buf)
+    self.accepted_n = n
+    if not ok then
+      --- a failed write must not read as accepted (2.6);
+      --- keep the block open so the edit is not lost
+      self:refuse({
+        'Could not save the file.'
+        .. ' Check the storage and try again.'
+      })
+      return false
+    end
+    self.view:refresh()
+    bufv:follow_selection()
+    self:leave_edit()
+    return true
+  end)
 end
 
 --- Block-wise movement of the active line (spec 2.2)
@@ -453,6 +654,8 @@ function EditorController:_jump_block(dir)
   if buf:jump_block(dir) then
     self.view:get_current_buffer():follow_line()
     self:update_status()
+  else
+    self:refuse()
   end
 end
 
@@ -462,9 +665,12 @@ function EditorController:_move_line_page(dir)
   local buf = self:get_active_buffer()
   if self.input:has_error() then return end
   local bv = self.view:get_current_buffer()
+  local moved = 0
   for _ = 1, bv.LINES do
     if not buf:move_line(dir) then break end
+    moved = moved + 1
   end
+  if moved == 0 then return self:refuse() end
   bv:follow_line()
   self:update_status()
 end
@@ -477,6 +683,9 @@ function EditorController:_move_line(dir)
   if buf:move_line(dir) then
     self.view:get_current_buffer():follow_line()
     self:update_status()
+  else
+    --- nowhere further to go
+    self:refuse()
   end
 end
 
@@ -499,6 +708,8 @@ function EditorController:_move_sel(dir, by, warp, moved)
     if mv then self.view:refresh(moved) end
     self.view:get_current_buffer():follow_selection()
     self:update_status()
+  else
+    self:refuse()
   end
 end
 
@@ -612,20 +823,6 @@ function EditorController:_normal_mode_keys(k)
   --- @type BufferModel
   local buf            = self:get_active_buffer()
 
-  local function newline()
-    if Key.is_enter(k) then
-      --- insert empty block if input is empty
-      if is_empty
-          and (Key.shift() or Key.ctrl())
-          and not Key.alt() then
-        buf:insert_newline()
-        self:save(buf)
-        self.view:refresh()
-        block_input()
-      end
-    end
-  end
-
   local function delete_block()
     local t = string.unlines(buf:get_selected_text())
     buf:delete_selected_text()
@@ -679,138 +876,140 @@ function EditorController:_normal_mode_keys(k)
   if is_empty then
     copycut()
   end
-  newline()
-
   paste_k()
 
-  --- @param add boolean?
-  local function load_selection()
-    local t = buf:get_selected_text()
-    if string.is_non_empty(t) then
-      buf:set_loaded()
-    else
-      buf:clear_loaded()
-    end
-    input:set_text(t)
-    input:jump_home()
-  end
+
 
 
 
   --- handlers
-  local function submit()
+  --- @param force_accept boolean? --- the leave gate
+  local function submit(force_accept)
     local bufv = self.view:get_current_buffer()
-    local is_lua = bufv.content_type == 'lua'
-    local size_limit = bufv:get_max_size()
-    --- @param v Block
-    --- @return boolean
-    local is_oversized_chunk = function(v)
-      return (v and v.pos and v.pos:len() > size_limit)
-    end
-    --- @param chunks Block[]
-    --- @return integer?
-    local first_oversized_chunk = function(chunks)
-      if is_lua then
-        return table.find_by(chunks, is_oversized_chunk)
-      end
-    end
-    --- @param chunks Block[]
-    --- @param idx integer
-    local reject_oversized = function(chunks, idx)
-      local block = chunks[idx]
-      if not block or not block.pos then return end
-      input.model:move_cursor(block.pos.start, 1)
-      input:update_view()
-    end
+
+    --- Insert freshly composed text as new block(s)
     --- @param newtext Block[]
-    --- @return Block[]|false
-    --- @return integer? first oversized chunk index
-    local analyze_input = function(newtext)
-      local oversized = first_oversized_chunk(newtext)
-      if not oversized then
-        return newtext
-      end
-      return false, oversized
-    end
-
-    --- @param newtext Block[]
-    local function replace(newtext)
-      if not bufv:is_selection_visible(true) then
-        return bufv:follow_selection()
-      end
-
-      if not buf:loaded_is_sel(true) then
-        buf:select_loaded()
-        bufv:follow_selection()
-        return
-      end
-
-      local approved, oversized = analyze_input(newtext)
-      if not approved then
-        if oversized then
-          reject_oversized(newtext, oversized)
-        end
-        return
-      end
-
-      local _, n = buf:replace_content(approved)
-      self:save(buf)
-      self.view:refresh()
-      self:_move_sel('down', n)
-      self:leave_edit()
-    end
-
-    --- @param newtext Block[]
+    --- @return boolean accepted
     local function add(newtext)
       if not bufv:is_selection_visible() then
-        return bufv:follow_selection()
+        bufv:follow_selection()
+        return false
       end
 
-      local approved, oversized = analyze_input(newtext)
-      if not approved then
-        if oversized then
-          reject_oversized(newtext, oversized)
-        end
-        return
+      local oversized = self:_first_oversized(newtext)
+      if oversized then
+        self:_reject_oversized(newtext, oversized)
+        return false
       end
 
       local sel = buf:get_selection()
-      local _, n = buf:insert_content(approved, sel)
+      local _, n = buf:insert_content(newtext, sel)
       self:save(buf)
       self.view:refresh()
       self:_move_sel('down', n)
       self:leave_edit()
+      return true
     end
 
-    if Key.ctrl()
-        and not Key.shift()
-        and not Key.alt()
-        and Key.is_enter(k) then
-      self:_handle_submit(add)
+    --- spec 2.7: Ctrl+Enter opens a fresh block below
+    --- in navigation and accepts while editing;
+    --- Ctrl+Shift+Enter opens one above
+    if Key.ctrl() and not Key.alt() and Key.is_enter(k) then
+      block_input()
+      if self.mode == 'nav' then
+        self:new_block(not Key.shift())
+        return
+      end
+      if not Key.shift() then
+        local accepted
+        if buf.loaded then
+          accepted = self:accept_block()
+        else
+          accepted = self:_handle_submit(add)
+        end
+        if not accepted then return end
+      end
+      return
     end
 
-    if not Key.ctrl()
-        and not Key.shift()
-        and not Key.alt()
-        and Key.is_enter(k) then
+    if force_accept
+        or (not Key.ctrl()
+          and not Key.shift()
+          and not Key.alt()
+          and Key.is_enter(k)) then
       --- replace only what was deliberately opened;
       --- fresh text composed in navigation is inserted
+      local accepted
       if buf.loaded then
-        self:_handle_submit(replace)
+        accepted = self:accept_block()
       else
-        self:_handle_submit(add)
+        accepted = self:_handle_submit(add)
       end
+      if not accepted then block_input() end
     end
   end
   --- open the selected block for editing (spec 2.2: Enter)
   local function open()
-    local span = buf:get_selection_lines()
-    local row = buf:get_active_line() - span.start + 1
-    load_selection()
-    self.input:set_cursor(Cursor(row, 1))
-    self:set_mode('edit')
+    self:open_block()
     block_input()
   end
+  --- Leave the open block through the gate (spec 2.4):
+  --- untouched leaves freely, changed is accepted and
+  --- written, invalid refuses and stays
+  --- @param dir VerticalDir
+  local function leave(dir)
+    local orig = buf:get_selected_text()
+    local clean = string.unlines(input:get_text())
+        == string.unlines(orig)
+    local sel0 = buf:get_selection()
+
+    if clean then
+      buf:clear_loaded()
+      input:clear()
+      self:set_mode('nav')
+      --- the cursor crossed the block's edge; sync the
+      --- model's line to it so the step leaves the block
+      local span = buf:get_selection_lines()
+      buf:set_active_line(
+        dir == 'up' and span.start or span.fin)
+      if buf:move_line(dir) then
+        self.view:get_current_buffer():follow_line()
+        open()
+      else
+        self:refuse()
+      end
+      block_input()
+      return
+    end
+
+    submit(true)
+    if self.mode ~= 'nav' then
+      --- refused; the message is set, stay on the block
+      block_input()
+      return
+    end
+    --- accepted: open the neighbor, cursor on the near
+    --- line — downward its first, upward its last
+    --- (2.4.4). Acceptance may have split the block
+    --- into several, so step past all of them.
+    local target = sel0 - 1
+    if dir == 'down' then
+      target = sel0 + self.accepted_n
+    end
+    if target < 1 or target > buf:get_content_length() then
+      self:refuse()
+      block_input()
+      return
+    end
+    buf:set_selection(target)
+    local span = buf:get_selection_lines()
+    buf:set_active_line(
+      dir == 'down' and span.start or span.fin)
+    self.view:get_current_buffer():follow_line()
+    open()
+    block_input()
+  end
+
   --- spec 2.3: Shift+Esc discards the edit; on an empty
   --- input it leaves the buffer / editor
   local function discard()
@@ -874,13 +1073,23 @@ function EditorController:_normal_mode_keys(k)
 
     -- move selection
     if Key.ctrl() then
-      if k == "up" then
-        self:_jump_block('up')
-        block_input()
-      end
-      if k == "down" then
-        self:_jump_block('down')
-        block_input()
+      if self.mode == 'edit' then
+        --- spec 2.7: accept + block-wise move
+        if k == "up" then
+          leave('up')
+        end
+        if k == "down" then
+          leave('down')
+        end
+      else
+        if k == "up" then
+          self:_jump_block('up')
+          block_input()
+        end
+        if k == "down" then
+          self:_jump_block('down')
+          block_input()
+        end
       end
     elseif self.mode == 'nav' then
       --- spec 2.7: bare Home/End reach the file's first
@@ -911,6 +1120,15 @@ function EditorController:_normal_mode_keys(k)
       if k == "pagedown" then
         self:_move_line_page('down')
         block_input()
+      end
+    elseif self.mode == 'edit' then
+      --- crossing the block's edge leaves through the
+      --- gate (2.4); inside, arrows stay in the input
+      if k == "up" and at_limit_start then
+        leave('up')
+      end
+      if k == "down" and at_limit_end then
+        leave('down')
       end
     end
 

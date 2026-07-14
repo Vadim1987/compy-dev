@@ -122,7 +122,9 @@ end
 
 --- @return integer
 function BufferView:get_max_size()
-  return self.LINES
+  --- the block limit is the input view height (spec: 14),
+  --- not the buffer viewport height
+  return self.cfg.input_max
 end
 
 --- @param moved integer?
