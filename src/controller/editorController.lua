@@ -334,8 +334,18 @@ function EditorController:textinput(t)
     if input:has_error() then
       input:clear_error()
     else
-      if Key.ctrl() and Key.shift() then
+      if Key.ctrl() or Key.alt() then
+        --- modifier chords leak glyphs on the device
+        --- (compy-input-quirks, quirk 3); only Shift
+        --- composes real input
         return
+      end
+      --- typing after a peek returns the view (2.2)
+      local bv = self.view:get_current_buffer()
+      if self.mode == 'nav' then
+        bv:follow_line()
+      else
+        bv:follow_selection()
       end
       --- NB: on device, textinput precedes keypressed
       --- (see dev/docs/compy-input-quirks.md), so this
@@ -435,6 +445,19 @@ end
 --- @param by integer?
 --- @param warp boolean?
 --- @param moved integer?
+--- Move the active line by a viewport page
+--- @param dir VerticalDir
+function EditorController:_move_line_page(dir)
+  local buf = self:get_active_buffer()
+  if self.input:has_error() then return end
+  local bv = self.view:get_current_buffer()
+  for _ = 1, bv.LINES do
+    if not buf:move_line(dir) then break end
+  end
+  bv:follow_line()
+  self:update_status()
+end
+
 --- Move the active line, keep it in view
 --- @param dir VerticalDir
 function EditorController:_move_line(dir)
@@ -795,6 +818,27 @@ function EditorController:_normal_mode_keys(k)
     end
   end
   local function navigate()
+    -- peek: the view moves, the selection stays (2.2)
+    if Key.ctrl() and Key.alt() then
+      if k == "up" then
+        self:_scroll('up', false, 1)
+        block_input()
+      end
+      if k == "down" then
+        self:_scroll('down', false, 1)
+        block_input()
+      end
+      if k == "pageup" then
+        self:_scroll('up', false)
+        block_input()
+      end
+      if k == "pagedown" then
+        self:_scroll('down', false)
+        block_input()
+      end
+      return
+    end
+
     -- move selection
     if Key.ctrl() then
       if k == "up" then
@@ -812,8 +856,8 @@ function EditorController:_normal_mode_keys(k)
         self:_move_sel('down', nil, true)
       end
     elseif self.mode == 'nav' then
-      --- spec 2.2: bare arrows move by line,
-      --- Ctrl+arrows (above) by block
+      --- spec 2.2: bare arrows move by line, bare
+      --- pages by a page, Ctrl+arrows (above) by block
       if k == "up" then
         self:_move_line('up')
         block_input()
@@ -822,16 +866,24 @@ function EditorController:_normal_mode_keys(k)
         self:_move_line('down')
         block_input()
       end
+      if k == "pageup" then
+        self:_move_line_page('up')
+        block_input()
+      end
+      if k == "pagedown" then
+        self:_move_line_page('down')
+        block_input()
+      end
     end
 
     -- scroll
-    if not Key.shift()
+    if Key.ctrl() and not Key.shift()
         and k == "pageup" then
-      self:_scroll('up', Key.ctrl())
+      self:_scroll('up', true)
     end
-    if not Key.shift()
+    if Key.ctrl() and not Key.shift()
         and k == "pagedown" then
-      self:_scroll('down', Key.ctrl())
+      self:_scroll('down', true)
     end
     if Key.shift()
         and k == "pageup" then
