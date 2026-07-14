@@ -2,6 +2,7 @@ require("model.interpreter.eval.evaluator")
 require("controller.userInputController")
 require("controller.searchController")
 require("view.input.customStatus")
+require("model.input.cursor")
 
 local class = require('util.class')
 
@@ -434,6 +435,17 @@ end
 --- @param by integer?
 --- @param warp boolean?
 --- @param moved integer?
+--- Move the active line, keep it in view
+--- @param dir VerticalDir
+function EditorController:_move_line(dir)
+  local buf = self:get_active_buffer()
+  if self.input:has_error() then return end
+  if buf:move_line(dir) then
+    self.view:get_current_buffer():follow_line()
+    self:update_status()
+  end
+end
+
 function EditorController:_move_sel(dir, by, warp, moved)
   local buf = self:get_active_buffer()
   if self.input:has_error() then return end
@@ -753,7 +765,10 @@ function EditorController:_normal_mode_keys(k)
   end
   --- open the selected block for editing (spec 2.2: Enter)
   local function open()
+    local span = buf:get_selection_lines()
+    local row = buf:get_active_line() - span.start + 1
     load_selection()
+    self.input:set_cursor(Cursor(row, 1))
     self:set_mode('edit')
     block_input()
   end
@@ -797,12 +812,14 @@ function EditorController:_normal_mode_keys(k)
         self:_move_sel('down', nil, true)
       end
     elseif self.mode == 'nav' then
-      if k == "up" and at_limit_start then
-        self:_move_sel('up')
+      --- spec 2.2: bare arrows move by line,
+      --- Ctrl+arrows (above) by block
+      if k == "up" then
+        self:_move_line('up')
         block_input()
       end
-      if k == "down" and at_limit_end then
-        self:_move_sel('down')
+      if k == "down" then
+        self:_move_line('down')
         block_input()
       end
     end

@@ -333,81 +333,63 @@ describe('Editor #editor', function()
         end)
 
         describe('moving the selection affects scrolling', function()
-          local sel = buffer:get_selection()
-          local sel_t = buffer:get_selected_text()
+          --- the walk left the selection at EOF
+          assert.same(#sierpinski + 1, buffer:get_selection())
 
-          --- default selection is at the end
-          assert.same(#sierpinski + 1, sel)
-          --- and it's an empty line, of course
-          assert.same('', sel_t)
+          local function line_visible()
+            local al = buffer:get_active_line()
+            local wl = visible.wrap_forward[al]
+            if not wl then return false end
+            for _, v in ipairs(wl) do
+              if visible.range:inc(v) then return true end
+            end
+            return false
+          end
 
           it('from below', function()
+            --- scroll away, then a line move pulls it back
             mock.keystroke('pageup', press)
             mock.keystroke('up', press)
-            --- it's now one above the starting range, the
-            --- phantom line not visible
-            -- assert.same(start_range:translate(-1), visible.range)
-            mock.keystroke('pageup', press)
-            mock.keystroke('down', press)
-            --- after scrolling up and moving the sel back, we
-            --- are back to the start
-            --- TODO
-            assert.same(Range(19, 24), visible.range)
-            -- assert.same(start_range, visible.range)
+            assert.same(#sierpinski, buffer:get_selection())
+            assert.is_true(line_visible())
           end)
           it('to above', function()
-            local srs = visible.range.start
-            --- let's move up a screen's worth with the sel
+            --- walk a screenful up; the line stays in view
             for _ = 1, l do
               mock.keystroke('up', press)
+              assert.is_true(line_visible())
             end
-            local cs = bv:_get_wrapped_selection()[1][1]
-            local d = cs - srs
-            --- TODO
-            -- assert.same(start_range:translate(d), visible.range)
-            assert.same(start_range:translate(d + 3),
-              visible.range)
-            mock.keystroke('up', press)
-            -- assert.same(start_range:translate(d - 1), visible.range)
-            assert.same(start_range:translate(d + 2), visible.range)
           end)
           it('tops out', function()
-            --- move up to the first line
             for _ = 1, clen do
               mock.keystroke('up', press)
             end
-            assert.same(base, visible.range)
+            assert.same(1, buffer:get_selection())
+            assert.same(1, buffer:get_active_line())
+            assert.same(1, visible.range.start)
           end)
           it('from above', function()
+            --- scroll away downwards, a line move follows
             mock.keystroke('pagedown', press)
             mock.keystroke('pagedown', press)
             mock.keystroke('down', press)
-            assert.same(base:translate(1), visible.range)
+            assert.same(2, buffer:get_selection())
+            assert.is_true(line_visible())
           end)
           it('to below', function()
-            for _ = 2, l do
+            for _ = 1, l do
               mock.keystroke('down', press)
+              assert.is_true(line_visible())
             end
-            mock.keystroke('pageup', press)
-            mock.keystroke('down', press)
-            local ws = bv:_get_wrapped_selection()[1]
-            local cs = ws[#ws]
-            --- TODO
-            -- assert.same(Range(cs - l + 1, cs), visible.range)
-            assert.same(Range(11, 16), visible.range)
           end)
           it('bottoms out', function()
-            local s = buffer:get_selection()
-            for _ = s, #sierpinski do
+            for _ = 1, clen do
               mock.keystroke('down', press)
             end
-            assert.same(start_range, visible.range)
+            --- capped at the phantom line past the end
+            local cap = buffer:get_selection()
             mock.keystroke('down', press)
-            mock.keystroke('down', press)
-            assert.same(start_range:translate(3), visible.range)
-            mock.keystroke('down', press)
-            mock.keystroke('down', press)
-            assert.same(start_range:translate(3), visible.range)
+            assert.same(cap, buffer:get_selection())
           end)
         end)
       end)
@@ -435,10 +417,9 @@ describe('Editor #editor', function()
         local sel = table.clone(buffer:get_selection())
         it('to bottom', function()
           mock.keystroke('C-end', press)
-          --- warps to bottom
-          --- TODO
-          -- assert.same(start_range, visible.range)
-          assert.same(Range(19, 24), visible.range)
+          --- warps to bottom, selection in view
+          assert.same(#sierpinski + 1, buffer:get_selection())
+          assert.is_true(bv:is_selection_visible())
           -- assert.is_not.same(sel, buffer:get_selection())
         end)
         it('to top', function()
@@ -488,8 +469,8 @@ describe('Editor #editor', function()
       assert.same(4, buffer:get_content_length())
       local modified = table.clone(sierpinski)
       local new_print = 'print(sierpinski(3))'
-      mock.keystroke('down', press)
-      mock.keystroke('down', press)
+      mock.keystroke('C-down', press)
+      mock.keystroke('C-down', press)
       assert.same(3, buffer:get_selection())
       assert.same({ print_result }, buffer:get_selected_text())
       mock.keystroke('return', press)

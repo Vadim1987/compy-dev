@@ -82,8 +82,9 @@ function EditorSession:select_block(n, target_content)
     local jumpkey = dir == "up" and "home" or "end"
     self.mock.keystroke(jumpkey, self.press)
   end
+  --- blocks move with Ctrl (bare arrows are line-wise)
   for i = 1, steps do
-    self.mock.keystroke(dir, self.press)
+    self.mock.keystroke('C-' .. dir, self.press)
   end
 
   assert.same(
