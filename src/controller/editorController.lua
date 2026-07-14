@@ -20,6 +20,7 @@ local function new(M, CC)
     view = nil,
     mode = 'nav',
     pos_memory = {},
+    pending_confirm = nil,
     accepted_n = 1,
   }
 end
@@ -39,6 +40,7 @@ end
 --- @field state EditorState?
 --- @field mode EditorMode
 --- @field pos_memory table<string, {sel:integer, off:integer}>
+--- @field pending_confirm string? --- 'overwrite'|'restore'
 --- @field accepted_n integer --- blocks the last
 --- acceptance produced; the leave gate steps past them
 EditorController = class.create(new)
@@ -158,6 +160,14 @@ function EditorController:_restore_position(buf)
     return true
   end
   return false
+end
+
+--- Replace the active buffer with fresh file content
+--- @param text string
+function EditorController:reload_active(text)
+  local old = self:get_active_buffer()
+  self.model.buffers:pop_front()
+  self:open(old.name, text, old.save_file)
 end
 
 function EditorController:close_buffer()
@@ -1010,6 +1020,62 @@ function EditorController:_normal_mode_keys(k)
     block_input()
   end
 
+  --- Ctrl+K checkpoints, Ctrl+Shift+K restores (2.6);
+  --- a second press confirms, anything else cancels
+  local function checkpoint_key()
+    if not Key.ctrl() or k ~= 'k' then return end
+    local con = self.console
+    if not con then return end
+    block_input()
+
+    if self.mode == 'edit' then
+      --- accept the open block first, so the
+      --- checkpoint reflects the screen
+      submit(true)
+      if self.mode ~= 'nav' then return end
+    end
+
+    local name = buf.name
+    local stamp = function(t)
+      return t and os.date('%Y-%m-%d %H:%M', t) or '?'
+    end
+    local cp_time = con:checkpoint_modtime(name)
+
+    if Key.shift() then
+      if not cp_time then
+        self:refuse({ 'no checkpoint to restore' })
+        return
+      end
+      if self.pending_confirm == 'restore' then
+        self.pending_confirm = nil
+        if con:restore_checkpoint(name) then
+          local text = con:_readfile(name)
+          self:reload_active(text)
+        end
+        return
+      end
+      self.pending_confirm = 'restore'
+      input:set_error({ string.format(
+        'restore from checkpoint %s over file %s?'
+        .. ' Ctrl+Shift+K again restores, Esc cancels',
+        stamp(cp_time), stamp(con:file_modtime(name))
+      ) })
+      return
+    end
+
+    if cp_time and self.pending_confirm ~= 'overwrite' then
+      self.pending_confirm = 'overwrite'
+      input:set_error({ string.format(
+        'checkpoint from %s exists;'
+        .. ' Ctrl+K again overwrites, Esc cancels',
+        stamp(cp_time)
+      ) })
+      return
+    end
+    self.pending_confirm = nil
+    con:write_checkpoint(name)
+  end
+
   --- spec 2.3: Shift+Esc discards the edit; on an empty
   --- input it leaves the buffer / editor
   local function discard()
@@ -1174,6 +1240,7 @@ function EditorController:_normal_mode_keys(k)
   else
     submit()
   end
+  checkpoint_key()
   discard()
   delete()
   navigate()
@@ -1187,6 +1254,12 @@ end
 --- @param k string
 function EditorController:keypressed(k)
   self.input:update_view()
+  if self.pending_confirm
+      and not (Key.ctrl() and k == 'k') then
+    --- anything else cancels the confirmation (Esc
+    --- included); the message clears with the keypress
+    self.pending_confirm = nil
+  end
   local mode = self.mode
 
   if Key.ctrl() then
