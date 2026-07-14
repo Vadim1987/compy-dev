@@ -245,6 +245,64 @@ print(sierpinski(4))]])
         assert.same(68, buffer:get_selection_start_line())
       end)
 
+      describe('line navigation', function()
+        local lnbuf
+        lazy_setup(function()
+          lnbuf = BufferModel('main.lua', turtle,
+            noop, chunker, hl)
+        end)
+
+        it('starts at the top', function()
+          assert.same(1, lnbuf:get_selection())
+          assert.same(1, lnbuf:get_active_line())
+        end)
+
+        it('walks lines within a block', function()
+          local span = lnbuf:get_selection_lines()
+          for _ = span.start, span.fin - 1 do
+            assert.is_true(lnbuf:move_line('down'))
+          end
+          --- still inside block 1, on its last line
+          assert.same(1, lnbuf:get_selection())
+          assert.same(span.fin, lnbuf:get_active_line())
+        end)
+
+        it('crosses the boundary downwards', function()
+          assert.is_true(lnbuf:move_line('down'))
+          assert.same(2, lnbuf:get_selection())
+          local span = lnbuf:get_selection_lines()
+          assert.same(span.start, lnbuf:get_active_line())
+        end)
+
+        it('crosses back upwards', function()
+          assert.is_true(lnbuf:move_line('up'))
+          assert.same(1, lnbuf:get_selection())
+          local span = lnbuf:get_selection_lines()
+          assert.same(span.fin, lnbuf:get_active_line())
+        end)
+
+        it('clamps on block jumps', function()
+          lnbuf:move_selection('down', nil, true)
+          local span = lnbuf:get_selection_lines()
+          assert.same(span.start, lnbuf:get_active_line())
+          lnbuf:set_selection(3)
+          span = lnbuf:get_selection_lines()
+          assert.same(span.start, lnbuf:get_active_line())
+        end)
+
+        it('plaintext follows the selection', function()
+          local pb = BufferModel('notes.txt',
+            { 'one', 'two', 'three' }, noop)
+          assert.same(1, pb:get_active_line())
+          assert.is_true(pb:move_line('down'))
+          assert.same(2, pb:get_selection())
+          assert.same(2, pb:get_active_line())
+          assert.is_true(pb:move_line('up'))
+          assert.same(1, pb:get_selection())
+          assert.same(1, pb:get_active_line())
+        end)
+      end)
+
       it('dropping blocks', function()
         local delbuf = table.clone(buffer)
         delbuf:move_selection('up', nil, true)

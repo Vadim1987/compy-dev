@@ -90,6 +90,7 @@ local function new(
     revmap = {},
     semantic = semantic,
     selection = sel,
+    active_line = 1,
     readonly = readonly
   }
   local id = tostring(self):gsub('table: ', '')
@@ -108,6 +109,7 @@ end
 --- @field content_type ContentType
 --- @field save_file function
 --- @field selection integer
+--- @field active_line integer --- source line inside the selection
 --- @field loaded integer?
 --- @field readonly boolean
 --- @field semantic BufferSemanticInfo?
@@ -213,10 +215,12 @@ function BufferModel:move_selection(dir, by, warp, move)
   if warp then
     if dir == 'up' then
       self.selection = 1
+      self:clamp_active_line()
       return true
     end
     if dir == 'down' then
       self.selection = last
+      self:clamp_active_line()
       return true
     end
     return false
@@ -227,12 +231,14 @@ function BufferModel:move_selection(dir, by, warp, move)
   if dir == 'up' then
     if (cur - by) >= 1 then
       self.selection = cur - by
+      self:clamp_active_line()
       return true
     end
   end
   if dir == 'down' then
     if (cur + by) <= last + 1 then
       self.selection = cur + by
+      self:clamp_active_line()
       return true
     end
   end
@@ -245,6 +251,7 @@ function BufferModel:set_selection(sel)
   if not sel or sel < 1 then sel = 1 end
   if sel > max then sel = max end
   self.selection = sel
+  self:clamp_active_line()
 end
 
 --- Get index of selected line/block
@@ -278,6 +285,59 @@ function BufferModel:get_selection_start_line()
     end
   end
   return self.selection
+end
+
+--- Source-line span of the selected block
+--- @return Range
+function BufferModel:get_selection_lines()
+  if self.content_type == 'lua' then
+    local b = self:_get_selected_block()
+    if b and b.pos then return b.pos end
+  end
+  return Range.singleton(self.selection)
+end
+
+--- @return integer
+function BufferModel:get_active_line()
+  return self.active_line
+end
+
+--- Pull the active line into the selected block
+function BufferModel:clamp_active_line()
+  local span = self:get_selection_lines()
+  local ln = self.active_line
+  if ln < span.start or ln > span.fin then
+    self.active_line = span.start
+  end
+end
+
+--- Move the active line, crossing block boundaries
+--- @param dir VerticalDir
+--- @return boolean moved
+function BufferModel:move_line(dir)
+  local span = self:get_selection_lines()
+  local ln = self.active_line
+  if dir == 'up' then
+    if ln > span.start then
+      self.active_line = ln - 1
+      return true
+    end
+    if self:move_selection('up') then
+      self.active_line = self:get_selection_lines().fin
+      return true
+    end
+  end
+  if dir == 'down' then
+    if ln < span.fin then
+      self.active_line = ln + 1
+      return true
+    end
+    if self:move_selection('down') then
+      self.active_line = self:get_selection_lines().start
+      return true
+    end
+  end
+  return false
 end
 
 --- Return the selection as string array
