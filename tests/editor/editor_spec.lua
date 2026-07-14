@@ -203,35 +203,61 @@ describe('Editor #editor', function()
       bv:scroll_to(off)
       local start_range = Range(off + 1, #sierpinski + 1)
 
+      local function peek(dir)
+        mock.keystroke('C-M-' .. dir, function(kk)
+          controller:keypressed(kk)
+        end)
+      end
       it('loads', function()
         --- selection is at EOF, view at the historical offset
         assert.same(#sierpinski + 1, buf:get_selection())
         assert.same(off, bv:get_offset())
         assert.same(start_range, visible.range)
       end)
+      it('follows the active line', function()
+        --- walk the line up out of the viewport
+        for _ = 1, l + 2 do
+          buf:move_line('up')
+        end
+        local al = buf:get_active_line()
+        assert.is_true(al < visible.range.start)
+        bv:follow_line()
+        assert.is_true(visible.range:inc(al))
+        --- and back down below it
+        for _ = 1, l + 4 do
+          buf:move_line('down')
+        end
+        bv:follow_line()
+        assert.is_true(
+          visible.range:inc(buf:get_active_line()))
+        --- restore the historical position for the
+        --- describes that follow
+        buf:move_selection('down', nil, true)
+        bv:scroll_to(off)
+      end)
       local base = Range(1, l)
       it('scrolls up', function()
-        controller:keypressed('pageup')
+        peek('pageup')
         assert.same(start_range:translate(-scroll), visible.range)
-        controller:keypressed('pageup')
+        peek('pageup')
         assert.same(start_range:translate(-scroll * 2), visible.range)
-        controller:keypressed('pageup')
+        peek('pageup')
         assert.same(start_range:translate(-scroll * 3), visible.range)
-        controller:keypressed('pageup')
+        peek('pageup')
       end)
       it('tops out', function()
         assert.same(base, visible.range)
       end)
       it('scrolls down', function()
-        controller:keypressed('pagedown')
+        peek('pagedown')
         assert.same(base:translate(scroll), visible.range)
-        controller:keypressed('pagedown')
+        peek('pagedown')
         assert.same(base:translate(scroll * 2), visible.range)
-        controller:keypressed('pagedown')
+        peek('pagedown')
         assert.same(base:translate(scroll * 3), visible.range)
-        controller:keypressed('pagedown')
+        peek('pagedown')
         assert.same(base:translate(scroll * 4), visible.range)
-        controller:keypressed('pagedown')
+        peek('pagedown')
       end)
       it('bottoms out', function()
         local limit = #sierpinski + visible.overscroll
@@ -278,116 +304,165 @@ describe('Editor #editor', function()
       local base = Range(1, l)
       describe('scrolls', function()
         it('scrolls up', function()
-          mock.keystroke('pageup', press)
+          mock.keystroke('C-M-pageup', press)
           assert.same(start_range:translate(-scroll), visible.range)
-          mock.keystroke('pageup', press)
+          mock.keystroke('C-M-pageup', press)
           assert.same(start_range:translate(-scroll * 2), visible.range)
-          mock.keystroke('pageup', press)
+          mock.keystroke('C-M-pageup', press)
           assert.same(start_range:translate(-scroll * 3), visible.range)
-          mock.keystroke('pageup', press)
+          mock.keystroke('C-M-pageup', press)
           assert.same(start_range:translate(-scroll * 4), visible.range)
         end)
         it('tops out', function()
-          mock.keystroke('pageup', press)
+          mock.keystroke('C-M-pageup', press)
           assert.same(base, visible.range)
         end)
         it('scrolls down', function()
-          mock.keystroke('pagedown', press)
+          mock.keystroke('C-M-pagedown', press)
           assert.same(base:translate(scroll), visible.range)
-          mock.keystroke('pagedown', press)
+          mock.keystroke('C-M-pagedown', press)
           assert.same(base:translate(scroll * 2), visible.range)
-          mock.keystroke('pagedown', press)
+          mock.keystroke('C-M-pagedown', press)
           assert.same(base:translate(scroll * 3), visible.range)
-          mock.keystroke('pagedown', press)
+          mock.keystroke('C-M-pagedown', press)
           assert.same(base:translate(scroll * 4), visible.range)
-          mock.keystroke('pagedown', press)
+          mock.keystroke('C-M-pagedown', press)
           assert.same(base:translate(scroll * 5), visible.range)
         end)
         it('bottoms out', function()
-          mock.keystroke('pagedown', press)
-          mock.keystroke('pagedown', press)
-          mock.keystroke('pagedown', press)
+          mock.keystroke('C-M-pagedown', press)
+          mock.keystroke('C-M-pagedown', press)
+          mock.keystroke('C-M-pagedown', press)
           local limit = clen + visible.overscroll
           assert.same(Range(limit - l + 1, limit), visible.range)
         end)
 
         describe('moving the selection affects scrolling', function()
-          local sel = buffer:get_selection()
-          local sel_t = buffer:get_selected_text()
+          --- the walk left the selection at EOF
+          assert.same(#sierpinski + 1, buffer:get_selection())
 
-          --- default selection is at the end
-          assert.same(#sierpinski + 1, sel)
-          --- and it's an empty line, of course
-          assert.same('', sel_t)
+          local function line_visible()
+            local al = buffer:get_active_line()
+            local wl = visible.wrap_forward[al]
+            if not wl then return false end
+            for _, v in ipairs(wl) do
+              if visible.range:inc(v) then return true end
+            end
+            return false
+          end
 
           it('from below', function()
-            mock.keystroke('pageup', press)
+            --- scroll away, then a line move pulls it back
+            mock.keystroke('C-M-pageup', press)
             mock.keystroke('up', press)
-            --- it's now one above the starting range, the
-            --- phantom line not visible
-            -- assert.same(start_range:translate(-1), visible.range)
-            mock.keystroke('pageup', press)
-            mock.keystroke('down', press)
-            --- after scrolling up and moving the sel back, we
-            --- are back to the start
-            --- TODO
-            assert.same(Range(19, 24), visible.range)
-            -- assert.same(start_range, visible.range)
+            assert.same(#sierpinski, buffer:get_selection())
+            assert.is_true(line_visible())
           end)
           it('to above', function()
-            local srs = visible.range.start
-            --- let's move up a screen's worth with the sel
+            --- walk a screenful up; the line stays in view
             for _ = 1, l do
               mock.keystroke('up', press)
+              assert.is_true(line_visible())
             end
-            local cs = bv:_get_wrapped_selection()[1][1]
-            local d = cs - srs
-            --- TODO
-            -- assert.same(start_range:translate(d), visible.range)
-            assert.same(start_range:translate(d + 3),
-              visible.range)
-            mock.keystroke('up', press)
-            -- assert.same(start_range:translate(d - 1), visible.range)
-            assert.same(start_range:translate(d + 2), visible.range)
           end)
           it('tops out', function()
-            --- move up to the first line
             for _ = 1, clen do
               mock.keystroke('up', press)
             end
-            assert.same(base, visible.range)
+            assert.same(1, buffer:get_selection())
+            assert.same(1, buffer:get_active_line())
+            assert.same(1, visible.range.start)
           end)
           it('from above', function()
-            mock.keystroke('pagedown', press)
-            mock.keystroke('pagedown', press)
+            --- scroll away downwards, a line move follows
+            mock.keystroke('C-M-pagedown', press)
+            mock.keystroke('C-M-pagedown', press)
             mock.keystroke('down', press)
-            assert.same(base:translate(1), visible.range)
+            assert.same(2, buffer:get_selection())
+            assert.is_true(line_visible())
           end)
           it('to below', function()
-            for _ = 2, l do
+            for _ = 1, l do
               mock.keystroke('down', press)
+              assert.is_true(line_visible())
             end
-            mock.keystroke('pageup', press)
-            mock.keystroke('down', press)
-            local ws = bv:_get_wrapped_selection()[1]
-            local cs = ws[#ws]
-            --- TODO
-            -- assert.same(Range(cs - l + 1, cs), visible.range)
-            assert.same(Range(11, 16), visible.range)
           end)
           it('bottoms out', function()
-            local s = buffer:get_selection()
-            for _ = s, #sierpinski do
+            for _ = 1, clen do
               mock.keystroke('down', press)
             end
-            assert.same(start_range, visible.range)
+            --- capped at the phantom line past the end
+            local cap = buffer:get_selection()
             mock.keystroke('down', press)
-            mock.keystroke('down', press)
-            assert.same(start_range:translate(3), visible.range)
-            mock.keystroke('down', press)
-            mock.keystroke('down', press)
-            assert.same(start_range:translate(3), visible.range)
+            assert.same(cap, buffer:get_selection())
           end)
+        end)
+      end)
+
+      describe('peek and page moves', function()
+        it('peek scrolls, the selection stays', function()
+          mock.keystroke('end', press)
+          local sel = buffer:get_selection()
+          local r0 = visible.range.start
+          mock.keystroke('C-M-pageup', press)
+          assert.same(sel, buffer:get_selection())
+          assert.is_true(visible.range.start < r0)
+          mock.keystroke('C-M-up', press)
+          assert.same(sel, buffer:get_selection())
+          --- left/right double the page peek
+          local r1 = visible.range.start
+          mock.keystroke('C-M-right', press)
+          assert.same(sel, buffer:get_selection())
+          assert.is_true(visible.range.start > r1)
+          mock.keystroke('C-M-left', press)
+          assert.same(r1, visible.range.start)
+        end)
+        it('typing after a peek returns the view', function()
+          controller:textinput('x')
+          local al = buffer:get_active_line()
+          local wl = visible.wrap_forward[al]
+          local seen = false
+          for _, v in ipairs(wl) do
+            if visible.range:inc(v) then seen = true end
+          end
+          assert.is_true(seen)
+          mock.keystroke('S-escape', press)
+        end)
+        it('a held chord glyph is dropped', function()
+          mock.keystroke('C-M-down', press, true)
+          controller:textinput('q')
+          assert.same({ '' }, controller.input:get_text())
+          mock.release_keys()
+        end)
+        it('bare pages move the active line', function()
+          mock.keystroke('home', press)
+          assert.same(1, buffer:get_active_line())
+          mock.keystroke('pagedown', press)
+          assert.same(1 + l, buffer:get_active_line())
+          assert.is_true(bv:is_selection_visible())
+          mock.keystroke('pageup', press)
+          assert.same(1, buffer:get_active_line())
+          --- restore the state the describes below assume
+          mock.keystroke('end', press)
+          mock.keystroke('down', press)
+        end)
+      end)
+
+      describe('Home/End reach the file edges (2.7)', function()
+        it('bare End goes to the last line', function()
+          mock.keystroke('home', press)
+          assert.same(1, buffer:get_selection())
+          mock.keystroke('end', press)
+          assert.same(#sierpinski + 1, buffer:get_selection())
+        end)
+        it('Ctrl+Home/End do not warp in nav', function()
+          mock.keystroke('home', press)
+          local sel = buffer:get_selection()
+          mock.keystroke('C-end', press)
+          assert.same(sel, buffer:get_selection())
+          --- restore what the describes below assume
+          mock.keystroke('end', press)
+          mock.keystroke('down', press)
         end)
       end)
 
@@ -413,15 +488,14 @@ describe('Editor #editor', function()
         mock.keystroke('up', press)
         local sel = table.clone(buffer:get_selection())
         it('to bottom', function()
-          mock.keystroke('C-end', press)
-          --- warps to bottom
-          --- TODO
-          -- assert.same(start_range, visible.range)
-          assert.same(Range(19, 24), visible.range)
+          mock.keystroke('end', press)
+          --- warps to bottom, selection in view
+          assert.same(#sierpinski + 1, buffer:get_selection())
+          assert.is_true(bv:is_selection_visible())
           -- assert.is_not.same(sel, buffer:get_selection())
         end)
         it('to top', function()
-          mock.keystroke('C-home', press)
+          mock.keystroke('home', press)
           --- warps to top
           assert.same(base, visible.range)
           assert.is_not.same(sel, buffer:get_selection())
@@ -480,6 +554,112 @@ describe('Editor #editor', function()
       assert.same(n0 - 1, buffer:get_content_length())
     end)
 
+    it('moves the block through the reorder mode', function()
+      --- Alt+arrows are scrolling now; blocks move on
+      --- Ctrl+M only
+      local controller, press = wire(TU.mock_view_cfg())
+      local save, savefile = TU.get_save_function(sierpinski)
+      controller:open('sierpinski.lua', sierpinski, save)
+      --- entering reorder saves the clipboard state
+      love.system = {
+        getClipboardText = function() return '' end,
+        setClipboardText = function() end,
+      }
+      local buffer = controller:get_active_buffer()
+      local first = buffer:get_selected_text()
+
+      mock.keystroke('C-m', press)
+      mock.keystroke('down', press)
+      mock.keystroke('return', press)
+      --- the block moved down, selection follows it,
+      --- the commit is written through
+      assert.same(2, buffer:get_selection())
+      assert.same(first, buffer:get_selected_text())
+      assert.same('', string.lines(savefile())[1])
+
+      mock.keystroke('C-m', press)
+      mock.keystroke('up', press)
+      mock.keystroke('return', press)
+      assert.same(1, buffer:get_selection())
+      assert.same(first, buffer:get_selected_text())
+    end)
+
+    it('Alt+arrows peek without moving', function()
+      local controller, press = wire(TU.mock_view_cfg())
+      local save = TU.get_save_function(sierpinski)
+      controller:open('sierpinski.lua', sierpinski, save)
+      local buffer = controller:get_active_buffer()
+      local bv = controller.view:get_current_buffer()
+
+      local sel0 = buffer:get_selection()
+      local r0 = bv.content:get_range().start
+      mock.keystroke('M-down', press)
+      assert.same(sel0, buffer:get_selection())
+      assert.is_true(bv.content:get_range().start > r0)
+      mock.keystroke('M-home', press)
+      assert.same(1, bv.content:get_range().start)
+      assert.same(sel0, buffer:get_selection())
+    end)
+
+    it('returning from a require restores the view',
+      function()
+        require("tests.helpers.codesnippets")
+        local controller, press = wire(TU.mock_view_cfg())
+        local blocks = {}
+        for i = 1, 30 do
+          blocks[#blocks + 1] = mock_func_snippet('f' .. i)
+        end
+        blocks[16] = "local m = require('other')"
+        local text = table.concat(blocks, '\n\n')
+        local save = TU.get_save_function(text)
+        controller.console = {
+          edit = function() end,
+        }
+        controller:open('main.lua', text .. '\n', save)
+
+        --- to the middle of the file, into the require
+        mock.keystroke('home', press)
+        for _ = 1, 15 do
+          mock.keystroke('C-down', press)
+        end
+        local line0 = controller:get_active_buffer()
+          :get_active_line()
+        controller:open('other.lua', 'x = 1\n',
+          TU.get_save_function('x = 1\n'))
+
+        --- and back: the stored line is visible again
+        --- (open() alone parks the view at the end)
+        controller:close_buffer()
+        assert.same(line0, controller:get_active_buffer()
+          :get_active_line())
+        local bv = controller.view:get_current_buffer()
+        local r = bv.content:get_range()
+        local wl = bv.content.wrap_forward[line0]
+        assert.is_true(wl[1] >= r.start
+          and wl[#wl] <= r.fin)
+      end)
+
+    it('follows the require on Ctrl+J', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local src = "local m = require('other')"
+      local save = TU.get_save_function(src)
+      local edited = {}
+      controller.console = {
+        edit = function(_, name)
+          table.insert(edited, name)
+        end,
+      }
+      controller:open('main.lua', src, save)
+
+      --- Ctrl+O is free now, it must do nothing
+      mock.keystroke('C-o', press)
+      assert.same({}, edited)
+
+      mock.keystroke('C-j', press)
+      assert.same({ 'other.lua' }, edited)
+    end)
+
     it('changing single line', function()
       local controller, press = wire(TU.mock_view_cfg())
       local save, savefile = TU.get_save_function(sierpinski)
@@ -496,8 +676,8 @@ describe('Editor #editor', function()
       assert.same(4, buffer:get_content_length())
       local modified = table.clone(sierpinski)
       local new_print = 'print(sierpinski(3))'
-      mock.keystroke('down', press)
-      mock.keystroke('down', press)
+      mock.keystroke('C-down', press)
+      mock.keystroke('C-down', press)
       assert.same(3, buffer:get_selection())
       assert.same({ print_result }, buffer:get_selected_text())
       mock.keystroke('return', press)
