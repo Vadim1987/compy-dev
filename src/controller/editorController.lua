@@ -423,7 +423,7 @@ function EditorController:_handle_submit(go)
     if not string.is_non_empty_string_array(raw) then
       local sel = buf:get_selection()
       local block = buf:get_content():get(sel)
-      if not block then return end
+      if not block then return true end
     else
       local _, raw_chunks = buf.chunker(raw, true)
       local pretty = buf.printer(raw)
@@ -471,12 +471,77 @@ function EditorController:_handle_submit(go)
         if eval_err then
           self:refuse()
           inter:set_error(eval_err)
+          --- spec 2.4.3: the cursor moves to the error
+          local first = Error.get_first(eval_err)
+              or eval_err
+          if type(first) == 'table' and first.l then
+            inter.model:move_cursor(first.l, first.c or 1)
+            inter:update_view()
+          end
         end
+        return false
       end
     end
   else
     return go(raw)
   end
+  return true
+end
+
+--- Click semantics (spec 2.9): in nav, select the
+--- clicked line's block; while editing, a click inside
+--- the open block places the cursor, a click outside
+--- it leaves when the block is untouched
+--- @param ln integer --- source line
+function EditorController:mouse_select(ln)
+  local buf = self:get_active_buffer()
+  local bi = buf:block_at_line(ln)
+  if not bi then return end
+
+  if self.mode == 'edit' then
+    local span = buf:get_selection_lines()
+    if span:inc(ln) then
+      self.input:set_cursor(Cursor(ln - span.start + 1, 1))
+      return
+    end
+    --- leaving for another block goes through the gate
+    --- (2.4): untouched leaves, changed is accepted and
+    --- written, invalid refuses and keeps the block
+    local clean = string.unlines(self.input:get_text())
+        == string.unlines(buf:get_selected_text())
+    if clean then
+      self:leave_edit()
+    elseif not self:accept_block() then
+      return
+    end
+  end
+
+  buf:set_selection(bi)
+  buf:set_active_line(ln)
+  self.view:get_current_buffer():follow_line()
+  self:update_status()
+end
+
+--- @param x number
+--- @param y number
+--- @param btn integer
+--- @param touch boolean?
+--- @param presses integer? --- 2 on a double click
+function EditorController:mousepressed(x, y, btn, touch, presses)
+  if btn == 1 then
+    local ln = self.view:get_current_buffer():line_at(y)
+    if ln then
+      self:mouse_select(ln)
+      --- spec 2.9: a double click opens the block the
+      --- first click selected
+      if presses and presses > 1
+          and self.mode == 'nav' then
+        self:open_block()
+      end
+      return
+    end
+  end
+  self.input:mousepressed(x, y, btn, touch, presses)
 end
 
 --- Load the selected block into the input and open it

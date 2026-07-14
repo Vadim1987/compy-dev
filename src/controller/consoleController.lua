@@ -1101,7 +1101,7 @@ function ConsoleController:mousepressed(
     x, y, btn, touch, presses)
   if love.state.app_state == 'editor' then
     if self.cfg.editor.mouse_enabled then
-      self.editor.input:mousepressed(x, y, btn, touch, presses)
+      self.editor:mousepressed(x, y, btn, touch, presses)
     end
   else
     self.input:mousepressed(x, y, btn, touch, presses)

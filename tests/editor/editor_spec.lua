@@ -979,6 +979,93 @@ describe('Editor #editor', function()
       end)
     end)
 
+    describe('mouse (2.9)', function()
+      require("tests.helpers.codesnippets")
+      local controller, press, buffer, inter
+      local f1, f2
+
+      before_each(function()
+        f1 = mock_func_snippet('one')
+        f2 = mock_func_snippet('two')
+        local text = f1 .. '\n\n' .. f2 .. '\n'
+        controller, press = wire(TU.mock_view_cfg())
+        local save = TU.get_save_function(text)
+        controller:open('mouse.lua', text, save)
+        buffer = controller:get_active_buffer()
+        inter = controller.input
+      end)
+
+      it('maps lines to their blocks', function()
+        assert.same(1, buffer:block_at_line(2))
+        assert.same(2, buffer:block_at_line(4))
+        assert.same(3, buffer:block_at_line(6))
+        assert.is_nil(buffer:block_at_line(99))
+      end)
+
+      it('a double click opens the block', function()
+        controller:mousepressed(0, 0, 1, false, 2)
+        assert.same('edit', controller:get_mode())
+        assert.same(1, buffer:get_selection())
+        assert.same(buffer:get_selected_text(),
+          inter:get_text():items())
+      end)
+
+      it('a single click does not open', function()
+        controller:mousepressed(0, 0, 1, false, 1)
+        assert.same('nav', controller:get_mode())
+      end)
+
+      it('a click in nav selects block and line', function()
+        controller:mouse_select(6)
+        assert.same('nav', controller:get_mode())
+        assert.same(3, buffer:get_selection())
+        assert.same(6, buffer:get_active_line())
+      end)
+
+      it('a click inside the open block sets the cursor',
+        function()
+          mock.keystroke('return', press)
+          controller:mouse_select(2)
+          assert.same('edit', controller:get_mode())
+          assert.same(1, buffer:get_selection())
+          assert.same(2,
+            inter.model:get_cursor_info().cursor.l)
+        end)
+
+      it('a clean click outside flows out', function()
+        mock.keystroke('return', press)
+        controller:mouse_select(6)
+        assert.same('nav', controller:get_mode())
+        assert.same(3, buffer:get_selection())
+        assert.same(6, buffer:get_active_line())
+        assert.same({ '' }, inter:get_text())
+      end)
+
+      it('a changed click outside is accepted', function()
+        mock.keystroke('return', press)
+        inter:set_text({ 'function renamed()', 'end' })
+        controller:mouse_select(6)
+        --- 2.4.2 via 2.9: written through, then the
+        --- clicked block takes the selection
+        assert.same('nav', controller:get_mode())
+        assert.same(3, buffer:get_selection())
+        assert.same(6, buffer:get_active_line())
+        assert.truthy(string.find(
+          string.unlines(buffer:get_text_content()),
+          'renamed', 1, true))
+      end)
+
+      it('an invalid click outside refuses', function()
+        mock.keystroke('return', press)
+        inter:set_text({ 'function broken(' })
+        controller:mouse_select(6)
+        --- 2.4.3: the block keeps the editor
+        assert.same('edit', controller:get_mode())
+        assert.same(1, buffer:get_selection())
+        assert.is_true(inter:has_error())
+      end)
+    end)
+
     describe('leave gate (2.4)', function()
       require("tests.helpers.codesnippets")
       local controller, press, buffer, inter, savefile
@@ -1044,11 +1131,16 @@ describe('Editor #editor', function()
 
       it('invalid block refuses to leave', function()
         mock.keystroke('return', press)
-        inter:set_text({ 'function broken(' })
+        inter:set_text({
+          'function broken()', '  x = = 2', 'end'
+        })
         mock.keystroke('C-down', press)
         assert.same('edit', controller:get_mode())
         assert.same(1, buffer:get_selection())
         assert.is_true(inter:has_error())
+        --- and the cursor sits on the error's line
+        assert.same(2,
+          inter.model:get_cursor_info().cursor.l)
         --- Shift+Esc still gets out, writing nothing
         mock.keystroke('S-escape', press)
         assert.same('nav', controller:get_mode())

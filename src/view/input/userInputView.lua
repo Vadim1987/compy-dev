@@ -258,6 +258,12 @@ function UserInputView:render_error(err_text)
   drawBackground()
 
   gfx.setColor(colors.input.error)
+  --- the refusal frame (spec 2.4.3)
+  gfx.rectangle("line",
+    1,
+    fh + 1,
+    drawableWidth - 2,
+    apparentHeight * fh - 2)
 
   for l, str in ipairs(err_text) do
     local breaks = 0 -- starting height is already calculated
