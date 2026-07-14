@@ -445,6 +445,30 @@ end
 --- @param by integer?
 --- @param warp boolean?
 --- @param moved integer?
+--- Swap the selected block with its neighbor (spec 2.7:
+--- Alt+arrows in navigation), written through like reorder
+--- @param dir VerticalDir
+function EditorController:_move_block(dir)
+  local buf = self:get_active_buffer()
+  if self.input:has_error() then return end
+  if buf.readonly then return end
+
+  local sel = buf:get_selection()
+  local last = buf:get_content_length()
+  if sel > last then return end
+  local target = sel - 1
+  if dir == 'down' then target = sel + 1 end
+  if target < 1 or target > last then return end
+
+  buf:move(sel, target)
+  buf:rechunk()
+  self:save(buf)
+  buf:set_selection(target)
+  self.view:refresh()
+  self.view:get_current_buffer():follow_selection()
+  self:update_status()
+end
+
 --- Move the active line by a viewport page
 --- @param dir VerticalDir
 function EditorController:_move_line_page(dir)
@@ -818,6 +842,23 @@ function EditorController:_normal_mode_keys(k)
     end
   end
   local function navigate()
+    -- move the block: Alt+arrows in nav (2.7); in
+    -- editing Alt passes through to the input widget,
+    -- which moves the line
+    if Key.alt() and not Key.ctrl() then
+      if self.mode == 'nav' then
+        if k == "up" then
+          self:_move_block('up')
+          block_input()
+        end
+        if k == "down" then
+          self:_move_block('down')
+          block_input()
+        end
+      end
+      return
+    end
+
     -- peek: the view moves, the selection stays (2.2)
     if Key.ctrl() and Key.alt() then
       if k == "up" then

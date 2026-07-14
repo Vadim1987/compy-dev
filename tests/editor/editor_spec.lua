@@ -500,6 +500,28 @@ describe('Editor #editor', function()
   --- end plaintext
 
   describe('structured (lua) works', function()
+    it('moves the block with Alt+arrows', function()
+      local controller, press = wire(TU.mock_view_cfg())
+      local save, savefile = TU.get_save_function(sierpinski)
+      controller:open('sierpinski.lua', sierpinski, save)
+      local buffer = controller:get_active_buffer()
+      local first = buffer:get_selected_text()
+
+      mock.keystroke('M-down', press)
+      --- the block moved down, selection follows it
+      assert.same(2, buffer:get_selection())
+      assert.same(first, buffer:get_selected_text())
+      --- and the swap is written through
+      assert.same('', string.lines(savefile())[1])
+
+      mock.keystroke('M-up', press)
+      assert.same(1, buffer:get_selection())
+      assert.same(first, buffer:get_selected_text())
+      --- capped at the edge
+      mock.keystroke('M-up', press)
+      assert.same(1, buffer:get_selection())
+    end)
+
     it('changing single line', function()
       local controller, press = wire(TU.mock_view_cfg())
       local save, savefile = TU.get_save_function(sierpinski)
