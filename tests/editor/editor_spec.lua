@@ -826,6 +826,37 @@ describe('Editor #editor', function()
                        "saved file contains updates")
         end)
 
+        it('fourteen lines pass, fifteen are refused', function()
+          local ok14 = mock_func_snippet('ok14', 14)
+          session:submit(ok14, true)
+          assert.is_true(input:is_empty(), '14 lines accepted')
+          assert.same(n_blocks + 1, buffer:get_content_length())
+
+          local over15 = mock_func_snippet('over15', 15)
+          session:submit(over15, true)
+          assert.is_false(input:is_empty(), '15 lines refused')
+          --- with a visible message naming the excess (9.6)
+          assert.is_true(controller.input:has_error())
+          local err = controller.input.model.error
+          assert.truthy(
+            string.find(err[1], '15 lines', 1, true))
+          mock.keystroke('S-escape', press)
+        end)
+
+        it('opening auto-formats a sloppy block', function()
+          local sloppy = 'function fmt()   print( "x" )    end'
+          local _, b2 = session:open(sloppy, 1)
+          mock.keystroke('return', press)
+          --- the formatter reshaped the input on open (9.4)
+          local t = controller.input:get_text()
+          assert.is_true(#t > 1)
+          assert.same('function fmt()', t[1])
+          --- the file is untouched until acceptance
+          assert.same(sloppy, table.concat(
+            b2:get_text_content(), '\n'):gsub('\n+$', ''))
+          mock.keystroke('S-escape', press)
+        end)
+
         it('single oversized block is rejected', function()
           local f_oversized = mock_func_snippet("oversized",20)
           session:submit(f_oversized, true)

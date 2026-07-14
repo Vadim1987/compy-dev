@@ -727,8 +727,15 @@ function EditorController:_normal_mode_keys(k)
     local reject_oversized = function(chunks, idx)
       local block = chunks[idx]
       if not block or not block.pos then return end
+      local n = block.pos:len()
+      input:set_error({ string.format(
+        'block is %d lines, the limit is %d', n, size_limit
+      ) })
       input.model:move_cursor(block.pos.start, 1)
       input:update_view()
+      --- the refusing keypress must not reach the
+      --- widget, or it clears the message it caused
+      block_input()
     end
     --- @param newtext Block[]
     --- @return Block[]|false
@@ -815,6 +822,22 @@ function EditorController:_normal_mode_keys(k)
     local span = buf:get_selection_lines()
     local row = buf:get_active_line() - span.start + 1
     load_selection()
+    if buf.content_type == 'lua' then
+      --- auto-format on opening (spec 9.4); a block the
+      --- formatter changes is dirty from birth (2.4)
+      local t = input:get_text()
+      if string.is_non_empty_string_array(t) then
+        local pretty = buf.printer(t)
+        if pretty then
+          --- the printer may append a trailing empty
+          --- line; that is noise, not formatting
+          while #pretty > 1 and pretty[#pretty] == '' do
+            table.remove(pretty)
+          end
+          input:set_text(pretty)
+        end
+      end
+    end
     self.input:set_cursor(Cursor(row, 1))
     self:set_mode('edit')
     block_input()
