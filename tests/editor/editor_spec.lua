@@ -530,6 +530,88 @@ describe('Editor #editor', function()
       assert.same(1, buffer:get_selection())
     end)
 
+    describe('checkpoints (2.6)', function()
+      require("tests.helpers.codesnippets")
+      local controller, press, buffer, inter
+      local calls, cp_time
+
+      before_each(function()
+        local f1 = mock_func_snippet('one')
+        controller, press = wire(TU.mock_view_cfg())
+        local save = TU.get_save_function(f1)
+        controller:open('main.lua', f1 .. '\n', save)
+        buffer = controller:get_active_buffer()
+        inter = controller.input
+        calls, cp_time = {}, nil
+        controller.console = {
+          checkpoint_modtime = function() return cp_time end,
+          file_modtime = function() return 1752480000 end,
+          write_checkpoint = function(_, name)
+            table.insert(calls, 'write:' .. name)
+            return true
+          end,
+          restore_checkpoint = function(_, name)
+            table.insert(calls, 'restore:' .. name)
+            return true
+          end,
+          _readfile = function() return 'x = 1' end,
+        }
+      end)
+
+      it('first checkpoint writes without asking', function()
+        mock.keystroke('C-k', press)
+        assert.same({ 'write:main.lua' }, calls)
+        assert.is_false(inter:has_error())
+      end)
+
+      it('an existing one asks, second press writes', function()
+        cp_time = 1752400000
+        mock.keystroke('C-k', press)
+        assert.same({}, calls)
+        assert.is_true(inter:has_error())
+        mock.keystroke('C-k', press)
+        assert.same({ 'write:main.lua' }, calls)
+      end)
+
+      it('any other key cancels the confirmation', function()
+        cp_time = 1752400000
+        mock.keystroke('C-k', press)
+        mock.keystroke('escape', press)
+        mock.keystroke('C-k', press)
+        --- back to asking, not writing
+        assert.same({}, calls)
+        assert.is_true(inter:has_error())
+      end)
+
+      it('restore asks and reloads the buffer', function()
+        cp_time = 1752400000
+        mock.keystroke('C-S-k', press)
+        assert.same({}, calls)
+        mock.keystroke('C-S-k', press)
+        assert.same({ 'restore:main.lua' }, calls)
+        --- buffer reloaded from the checkpoint content
+        --- (reload replaces the model; re-fetch it)
+        local fresh = controller:get_active_buffer()
+        assert.same('x = 1',
+          fresh:get_text_content()[1])
+      end)
+
+      it('restore without a checkpoint refuses', function()
+        mock.keystroke('C-S-k', press)
+        assert.same({}, calls)
+        assert.is_true(inter:has_error())
+      end)
+
+      it('in editing, accepts the block first', function()
+        mock.keystroke('return', press)
+        local changed = mock_func_snippet('changed')
+        inter:set_text(string.lines(changed))
+        mock.keystroke('C-k', press)
+        assert.same('nav', controller:get_mode())
+        assert.same({ 'write:main.lua' }, calls)
+      end)
+    end)
+
     describe('leave gate (2.4)', function()
       require("tests.helpers.codesnippets")
       local controller, press, buffer, inter, savefile

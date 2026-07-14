@@ -136,6 +136,52 @@ end
 --- @private
 --- @param name string
 --- @return string?
+--- @param name string
+--- @return string
+local function checkpoint_name(name)
+  return name .. '.~save'
+end
+
+--- Modification time of a project file, nil if absent
+--- @param name string
+--- @return integer? modtime
+function ConsoleController:file_modtime(name)
+  local p = self.model.projects.current
+  if not p then return end
+  local info = FS.getInfo(p:get_path(name))
+  return info and info.modtime
+end
+
+--- @param name string
+--- @return integer? modtime of the checkpoint
+function ConsoleController:checkpoint_modtime(name)
+  return self:file_modtime(checkpoint_name(name))
+end
+
+--- Copy the file to its checkpoint (spec 2.6)
+--- @param name string
+--- @return boolean ok
+function ConsoleController:write_checkpoint(name)
+  local p = self.model.projects.current
+  if not p then return false end
+  local ok = FS.cp(
+    p:get_path(name),
+    p:get_path(checkpoint_name(name)))
+  return ok and true or false
+end
+
+--- Write the checkpoint back over the file (spec 2.6)
+--- @param name string
+--- @return boolean ok
+function ConsoleController:restore_checkpoint(name)
+  local p = self.model.projects.current
+  if not p then return false end
+  local cp = p:get_path(checkpoint_name(name))
+  if not FS.exists(cp) then return false end
+  local ok = FS.cp(cp, p:get_path(name))
+  return ok and true or false
+end
+
 function ConsoleController:_readfile(name)
   local PS              = self.model.projects
   local p               = PS.current
@@ -499,6 +545,14 @@ function ConsoleController.prepare_project_env(cc)
 
   --- @param name string
   --- @return string?
+  --- Restore a file from its checkpoint; no prompt
+  --- @param name string? --- default main.lua
+  --- @return boolean
+  project_env.revert          = function(name)
+    name = name or ProjectService.MAIN
+    return cc:restore_checkpoint(name)
+  end
+
   project_env.readfile        = function(name)
     --- @diagnostic disable-next-line: invisible
     return cc:_readfile(name)
