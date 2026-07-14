@@ -302,6 +302,12 @@ function BufferModel:get_active_line()
   return self.active_line
 end
 
+--- @param ln integer
+function BufferModel:set_active_line(ln)
+  self.active_line = ln
+  self:clamp_active_line()
+end
+
 --- Pull the active line into the selected block
 function BufferModel:clamp_active_line()
   local span = self:get_selection_lines()

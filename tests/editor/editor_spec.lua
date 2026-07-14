@@ -129,15 +129,15 @@ describe('Editor #editor', function()
         end
         mock.keystroke('return', press)
         assert.same({ turtle_doc[2] }, input())
-        --- arrows stay in the input while editing
+        --- crossing the edge leaves through the gate:
+        --- the untouched block flows to the next line
         mock.keystroke('end', press)
         mock.keystroke('down', press)
-        assert.same(start_sel - 1, buffer:get_selection())
-        --- drop the edit, walk to the trailing empty
+        assert.same(start_sel, buffer:get_selection())
+        assert.same({ '' }, input())
+        --- drop it, compose fresh so the text inserts
         mock.keystroke('S-escape', press)
         assert.same({ '' }, input())
-        mock.keystroke('down', press)
-        assert.same(start_sel, buffer:get_selection())
         --- compose text (inserted before the empty)
         controller:textinput('-')
         controller:textinput('-')
@@ -483,11 +483,12 @@ describe('Editor #editor', function()
           mock.keystroke('return', press)
           assert.same(inter:get_text(), { selected })
         end)
-        it("doesn't clear on move", function()
-          --- ctrl-moving the selection keeps the input
-          local loaded = inter:get_text()
-          mock.keystroke('C-up', press)
-          assert.same(loaded, inter:get_text())
+        it('flows to the neighbor on Ctrl+move', function()
+          --- Ctrl+arrow leaves through the gate; the
+          --- untouched block just opens the next one
+          mock.keystroke('C-down', press)
+          local now = buffer:get_selected_text()
+          assert.same({ now }, inter:get_text())
         end)
         it('discards', function()
           --- Shift+Esc drops the edit and returns to nav
@@ -520,6 +521,70 @@ describe('Editor #editor', function()
       --- capped at the edge
       mock.keystroke('M-up', press)
       assert.same(1, buffer:get_selection())
+    end)
+
+    describe('leave gate (2.4)', function()
+      require("tests.helpers.codesnippets")
+      local controller, press, buffer, inter, savefile
+      local f1, f2, text
+
+      before_each(function()
+        f1 = mock_func_snippet('one')
+        f2 = mock_func_snippet('two')
+        text = f1 .. '\n\n' .. f2 .. '\n'
+        local save
+        controller, press = wire(TU.mock_view_cfg())
+        save, savefile = TU.get_save_function(text)
+        controller:open('gate.lua', text, save)
+        buffer = controller:get_active_buffer()
+        inter = controller.input
+      end)
+
+      it('untouched block flows out freely', function()
+        mock.keystroke('return', press)
+        local span = buffer:get_selection_lines()
+        for _ = 1, span:len() do
+          mock.keystroke('down', press)
+        end
+        --- crossed the edge: neighbor open, no write
+        assert.same(2, buffer:get_selection())
+        assert.same('edit', controller:get_mode())
+        local saved = savefile()
+        assert.same(text, saved)
+        --- and upward lands on the previous last line
+        mock.keystroke('up', press)
+        assert.same(1, buffer:get_selection())
+        local sp = buffer:get_selection_lines()
+        assert.same(sp.fin, buffer:get_active_line())
+      end)
+
+      it('changed block is accepted on the way out', function()
+        mock.keystroke('return', press)
+        local changed = mock_func_snippet('changed')
+        inter:set_text(string.lines(changed))
+        mock.keystroke('C-down', press)
+        --- written through, editing flows on
+        assert.same('edit', controller:get_mode())
+        --- NB savefile() reads destructively
+        local saved = savefile()
+        assert.truthy(
+          string.find(saved, 'changed', 1, true))
+        assert.is_nil(
+          string.find(saved, 'one', 1, true))
+      end)
+
+      it('invalid block refuses to leave', function()
+        mock.keystroke('return', press)
+        inter:set_text({ 'function broken(' })
+        mock.keystroke('C-down', press)
+        assert.same('edit', controller:get_mode())
+        assert.same(1, buffer:get_selection())
+        assert.is_true(inter:has_error())
+        --- Shift+Esc still gets out, writing nothing
+        mock.keystroke('S-escape', press)
+        assert.same('nav', controller:get_mode())
+        assert.same(text, savefile())
+      end)
     end)
 
     it('changing single line', function()

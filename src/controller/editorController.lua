@@ -706,7 +706,8 @@ function EditorController:_normal_mode_keys(k)
 
 
   --- handlers
-  local function submit()
+  --- @param force_accept boolean? --- the leave gate
+  local function submit(force_accept)
     local bufv = self.view:get_current_buffer()
     local is_lua = bufv.content_type == 'lua'
     local size_limit = bufv:get_max_size()
@@ -804,10 +805,11 @@ function EditorController:_normal_mode_keys(k)
       self:_handle_submit(add)
     end
 
-    if not Key.ctrl()
-        and not Key.shift()
-        and not Key.alt()
-        and Key.is_enter(k) then
+    if force_accept
+        or (not Key.ctrl()
+          and not Key.shift()
+          and not Key.alt()
+          and Key.is_enter(k)) then
       --- replace only what was deliberately opened;
       --- fresh text composed in navigation is inserted
       if buf.loaded then
@@ -842,6 +844,51 @@ function EditorController:_normal_mode_keys(k)
     self:set_mode('edit')
     block_input()
   end
+  --- Leave the open block through the gate (spec 2.4):
+  --- untouched leaves freely, changed is accepted and
+  --- written, invalid refuses and stays
+  --- @param dir VerticalDir
+  local function leave(dir)
+    local orig = buf:get_selected_text()
+    local clean = string.unlines(input:get_text())
+        == string.unlines(orig)
+    local sel0 = buf:get_selection()
+
+    if clean then
+      buf:clear_loaded()
+      input:clear()
+      self:set_mode('nav')
+      --- the cursor crossed the block's edge; sync the
+      --- model's line to it so the step leaves the block
+      local span = buf:get_selection_lines()
+      buf:set_active_line(
+        dir == 'up' and span.start or span.fin)
+      if buf:move_line(dir) then
+        self.view:get_current_buffer():follow_line()
+        open()
+      end
+      block_input()
+      return
+    end
+
+    submit(true)
+    if self.mode ~= 'nav' then
+      --- refused; the message is set, stay on the block
+      block_input()
+      return
+    end
+    --- accepted: open the neighbor, cursor on the near
+    --- line (2.4.4); downward the pipeline already
+    --- left the selection on it
+    if dir == 'up' then
+      buf:set_selection(sel0 - 1)
+      buf:set_active_line(buf:get_selection_lines().fin)
+    end
+    self.view:get_current_buffer():follow_line()
+    open()
+    block_input()
+  end
+
   --- spec 2.3: Shift+Esc discards the edit; on an empty
   --- input it leaves the buffer / editor
   local function discard()
@@ -905,19 +952,29 @@ function EditorController:_normal_mode_keys(k)
 
     -- move selection
     if Key.ctrl() then
-      if k == "up" then
-        self:_move_sel('up')
-        block_input()
-      end
-      if k == "down" then
-        self:_move_sel('down')
-        block_input()
-      end
-      if k == "home" then
-        self:_move_sel('up', nil, true)
-      end
-      if k == "end" then
-        self:_move_sel('down', nil, true)
+      if self.mode == 'edit' then
+        --- spec 2.7: accept + block-wise move
+        if k == "up" then
+          leave('up')
+        end
+        if k == "down" then
+          leave('down')
+        end
+      else
+        if k == "up" then
+          self:_move_sel('up')
+          block_input()
+        end
+        if k == "down" then
+          self:_move_sel('down')
+          block_input()
+        end
+        if k == "home" then
+          self:_move_sel('up', nil, true)
+        end
+        if k == "end" then
+          self:_move_sel('down', nil, true)
+        end
       end
     elseif self.mode == 'nav' then
       --- spec 2.2: bare arrows move by line, bare
@@ -937,6 +994,15 @@ function EditorController:_normal_mode_keys(k)
       if k == "pagedown" then
         self:_move_line_page('down')
         block_input()
+      end
+    elseif self.mode == 'edit' then
+      --- crossing the block's edge leaves through the
+      --- gate (2.4); inside, arrows stay in the input
+      if k == "up" and at_limit_start then
+        leave('up')
+      end
+      if k == "down" and at_limit_end then
+        leave('down')
       end
     end
 
