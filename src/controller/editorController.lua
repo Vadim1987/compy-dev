@@ -947,6 +947,16 @@ function EditorController:_normal_mode_keys(k)
         self:_scroll('down', false)
         block_input()
       end
+      --- left/right double the page peek: PgUp/PgDn is
+      --- a four-key chord on the device keyboard
+      if k == "left" then
+        self:_scroll('up', false)
+        block_input()
+      end
+      if k == "right" then
+        self:_scroll('down', false)
+        block_input()
+      end
       return
     end
 

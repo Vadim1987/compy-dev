@@ -409,6 +409,13 @@ describe('Editor #editor', function()
           assert.is_true(visible.range.start < r0)
           mock.keystroke('C-M-up', press)
           assert.same(sel, buffer:get_selection())
+          --- left/right double the page peek
+          local r1 = visible.range.start
+          mock.keystroke('C-M-right', press)
+          assert.same(sel, buffer:get_selection())
+          assert.is_true(visible.range.start > r1)
+          mock.keystroke('C-M-left', press)
+          assert.same(r1, visible.range.start)
         end)
         it('typing after a peek returns the view', function()
           controller:textinput('x')
