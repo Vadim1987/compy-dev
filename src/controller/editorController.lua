@@ -166,6 +166,14 @@ local function is_normal(m)
   return m == 'nav' or m == 'edit'
 end
 
+--- legal mode transitions; anything absent is rejected
+local TRANSITIONS = {
+  nav = { edit = true, reorder = true, search = true },
+  edit = { nav = true },
+  reorder = { nav = true },
+  search = { nav = true },
+}
+
 --- @param mode EditorMode
 function EditorController:set_mode(mode)
   local buf = self:get_active_buffer()
@@ -181,15 +189,8 @@ function EditorController:set_mode(mode)
     end
   end
 
-  local ALLOWED = {
-    nav = { edit = true, reorder = true, search = true },
-    edit = { nav = true },
-    reorder = { nav = true },
-    search = { nav = true },
-  }
-
   local current = self.mode
-  if current ~= mode and ALLOWED[current][mode] then
+  if current ~= mode and TRANSITIONS[current][mode] then
     if mode == 'reorder' then
       set_reorg()
     end
@@ -210,6 +211,14 @@ end
 --- @return boolean
 function EditorController:is_normal_mode()
   return is_normal(self.mode)
+end
+
+--- drop the loaded block and the input, return to nav
+function EditorController:leave_edit()
+  local buf = self:get_active_buffer()
+  buf:clear_loaded()
+  self.input:clear()
+  self:set_mode('nav')
 end
 
 --- @param clipboard string
@@ -327,6 +336,9 @@ function EditorController:textinput(t)
       if Key.ctrl() and Key.shift() then
         return
       end
+      --- NB: on device, textinput precedes keypressed
+      --- (see dev/docs/compy-input-quirks.md), so this
+      --- transition lands before the same key's press
       self:set_mode('edit')
       self.input:textinput(t)
     end
@@ -621,21 +633,15 @@ function EditorController:_normal_mode_keys(k)
   paste_k()
 
   --- @param add boolean?
-  local function load_selection(add)
+  local function load_selection()
     local t = buf:get_selected_text()
     if string.is_non_empty(t) then
       buf:set_loaded()
     else
       buf:clear_loaded()
     end
-    if add then
-      local c = input:get_cursor_info().cursor
-      input:add_text(t)
-      input:set_cursor(c)
-    else
-      input:set_text(t)
-      input:jump_home()
-    end
+    input:set_text(t)
+    input:jump_home()
   end
 
 
@@ -700,39 +706,35 @@ function EditorController:_normal_mode_keys(k)
       self:save(buf)
       self.view:refresh()
       self:_move_sel('down', n)
-      buf:clear_loaded()
-      input:clear()
-      self:set_mode('nav')
+      self:leave_edit()
+    end
+
+    --- @param newtext Block[]
+    local function add(newtext)
+      if not bufv:is_selection_visible() then
+        return bufv:follow_selection()
+      end
+
+      local approved, oversized = analyze_input(newtext)
+      if not approved then
+        if oversized then
+          reject_oversized(newtext, oversized)
+        end
+        return
+      end
+
+      local sel = buf:get_selection()
+      local _, n = buf:insert_content(approved, sel)
+      self:save(buf)
+      self.view:refresh()
+      self:_move_sel('down', n)
+      self:leave_edit()
     end
 
     if Key.ctrl()
         and not Key.shift()
         and not Key.alt()
         and Key.is_enter(k) then
-      --- @param newtext Block[]
-      local function add(newtext)
-        if not bufv:is_selection_visible() then
-          return bufv:follow_selection()
-        end
-
-        local approved, oversized = analyze_input(newtext)
-        if not approved then
-          if oversized then
-            reject_oversized(newtext, oversized)
-          end
-          return
-        end
-
-        local sel = buf:get_selection()
-        local _, n = buf:insert_content(approved, sel)
-        self:save(buf)
-        self.view:refresh()
-        self:_move_sel('down', n)
-        buf:clear_loaded()
-        input:clear()
-        self:set_mode('nav')
-      end
-
       self:_handle_submit(add)
     end
 
@@ -764,9 +766,7 @@ function EditorController:_normal_mode_keys(k)
       if is_empty and self.mode == 'nav' then
         self:close_buffer()
       else
-        buf:clear_loaded()
-        input:clear()
-        self:set_mode('nav')
+        self:leave_edit()
       end
       block_input()
     end
@@ -834,9 +834,7 @@ function EditorController:_normal_mode_keys(k)
   end
   local function clear()
     if Key.ctrl() and k == "w" then
-      buf:clear_loaded()
-      input:clear()
-      self:set_mode('nav')
+      self:leave_edit()
     end
   end
 

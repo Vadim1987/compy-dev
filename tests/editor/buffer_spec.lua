@@ -177,6 +177,8 @@ print(sierpinski(4))]])
         ''
       }
       it('insert newline', function()
+        --- buffers open at the top; this test works the end
+        buffer:move_selection('down', nil, true)
         assert.same(#turtle_doc + 1, buffer:get_selection())
         buffer:replace_content({ qed })
         assert.same(#turtle_doc + 1, buffer:get_selection())
@@ -235,9 +237,12 @@ print(sierpinski(4))]])
 
         assert.same(turtle, buffer:get_text_content())
 
-        assert.same(n_blocks, buffer:get_selection())
+        assert.same(1, buffer:get_selection())
         local ln = buffer:get_selection_start_line()
-        assert.same(68, ln)
+        assert.same(1, ln)
+        buffer:move_selection('down', nil, true)
+        assert.same(n_blocks, buffer:get_selection())
+        assert.same(68, buffer:get_selection_start_line())
       end)
 
       it('dropping blocks', function()

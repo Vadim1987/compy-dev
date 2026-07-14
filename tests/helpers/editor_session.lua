@@ -105,7 +105,8 @@ end
 --- @param target_content string?
 function EditorSession:select_and_open_block(n, target_content)
   self:select_block(n, target_content)
-  self.mock.keystroke("escape", self.press)
+  --- Enter on an empty input opens the block (Esc is inert)
+  self.mock.keystroke("return", self.press)
 
   assert.same(n, self.buffer.loaded, fmt("loaded block #%s", n))
   if target_content then
