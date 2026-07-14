@@ -209,6 +209,27 @@ describe('Editor #editor', function()
         assert.same(off, bv:get_offset())
         assert.same(start_range, visible.range)
       end)
+      it('follows the active line', function()
+        --- walk the line up out of the viewport
+        for _ = 1, l + 2 do
+          buf:move_line('up')
+        end
+        local al = buf:get_active_line()
+        assert.is_true(al < visible.range.start)
+        bv:follow_line()
+        assert.is_true(visible.range:inc(al))
+        --- and back down below it
+        for _ = 1, l + 4 do
+          buf:move_line('down')
+        end
+        bv:follow_line()
+        assert.is_true(
+          visible.range:inc(buf:get_active_line()))
+        --- restore the historical position for the
+        --- describes that follow
+        buf:move_selection('down', nil, true)
+        bv:scroll_to(off)
+      end)
       local base = Range(1, l)
       it('scrolls up', function()
         controller:keypressed('pageup')

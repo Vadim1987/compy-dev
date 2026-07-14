@@ -268,6 +268,21 @@ function BufferView:follow_selection()
   end
 end
 
+--- Scroll just enough to keep the active line visible
+function BufferView:follow_line()
+  local al = self.buffer:get_active_line()
+  local wl = self.content.wrap_forward[al]
+  if not wl then return end
+  local r = self.content.range
+  local first = wl[1]
+  local last = wl[#wl]
+  if first < r.start then
+    self:scroll('up', r.start - first)
+  elseif last > r.fin then
+    self:scroll('down', last - r.fin)
+  end
+end
+
 --------------
 ---  draw  ---
 --------------
@@ -326,6 +341,19 @@ function BufferView:draw(special)
           else
             highlight_line(v - off)
           end
+        end
+      end
+    end
+
+    --- the active line, a shade brighter inside the block
+    local al = self.buffer:get_active_line()
+    local wl = self.content.wrap_forward[al]
+    if wl then
+      gfx.setColor(Color.with_alpha(colors.fg, .125))
+      for _, v in ipairs(wl) do
+        if self.content.range:inc(v) then
+          local l_y = (v - off - 1) * fh
+          gfx.rectangle('fill', 0, l_y, width, fh)
         end
       end
     end
