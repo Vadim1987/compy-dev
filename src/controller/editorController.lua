@@ -549,6 +549,24 @@ function EditorController:start_typing()
   self.input:set_cursor(Cursor(row, 1))
 end
 
+--- Open a fresh empty block next to the current one
+--- (spec 2.7: Ctrl+Enter below, Ctrl+Shift+Enter
+--- above). The block itself appears on acceptance —
+--- until then the editor simply composes at that spot.
+--- @param below boolean
+function EditorController:new_block(below)
+  local buf = self:get_active_buffer()
+  if buf.readonly then return self:refuse() end
+  if below then
+    buf:set_selection(buf:get_selection() + 1)
+  end
+  buf:clear_loaded()
+  self.input:clear()
+  self:set_mode('edit')
+  self.view:get_current_buffer():follow_selection()
+  self:update_status()
+end
+
 --- @return integer --- the input strip's height (2.7)
 function EditorController:_size_limit()
   return self.view:get_current_buffer():get_max_size()
@@ -964,15 +982,25 @@ function EditorController:_normal_mode_keys(k)
       return true
     end
 
-    if Key.ctrl()
-        and not Key.shift()
-        and not Key.alt()
-        and Key.is_enter(k) then
-      --- a refusal must not let the key through, or
-      --- the widget clears the message it caused
-      if not self:_handle_submit(add) then
-        block_input()
+    --- spec 2.7: Ctrl+Enter opens a fresh block below
+    --- in navigation and accepts while editing;
+    --- Ctrl+Shift+Enter opens one above
+    if Key.ctrl() and not Key.alt() and Key.is_enter(k) then
+      block_input()
+      if self.mode == 'nav' then
+        self:new_block(not Key.shift())
+        return
       end
+      if not Key.shift() then
+        local accepted
+        if buf.loaded then
+          accepted = self:accept_block()
+        else
+          accepted = self:_handle_submit(add)
+        end
+        if not accepted then return end
+      end
+      return
     end
 
     if force_accept

@@ -640,6 +640,59 @@ describe('Editor #editor', function()
       assert.same('assets/sounds/knock.ogg', played[#played])
     end)
 
+    describe('Ctrl+Enter blocks (2.7)', function()
+      require("tests.helpers.codesnippets")
+      local controller, press, buffer, inter
+
+      before_each(function()
+        local f1 = mock_func_snippet('one')
+        local f2 = mock_func_snippet('two')
+        local text = f1 .. '\n\n' .. f2 .. '\n'
+        controller, press = wire(TU.mock_view_cfg())
+        local save = TU.get_save_function(text)
+        controller:open('ce.lua', text, save)
+        buffer = controller:get_active_buffer()
+        inter = controller.input
+      end)
+
+      it('opens a fresh block below in nav', function()
+        assert.same(1, buffer:get_selection())
+        mock.keystroke('C-return', press)
+        assert.same('edit', controller:get_mode())
+        assert.is_true(inter:is_empty())
+        --- composing lands after the first block
+        assert.same(2, buffer:get_selection())
+        local n = buffer:get_content_length()
+        inter:set_text({ 'x = 1' })
+        mock.keystroke('return', press)
+        assert.same(n + 1, buffer:get_content_length())
+        assert.same({ 'x = 1' },
+          buffer:get_content():get(2):to_lines())
+      end)
+
+      it('opens a fresh block above with Shift', function()
+        mock.keystroke('C-down', press)
+        local sel = buffer:get_selection()
+        mock.keystroke('C-S-return', press)
+        assert.same('edit', controller:get_mode())
+        assert.is_true(inter:is_empty())
+        --- composing lands at the block's own place
+        assert.same(sel, buffer:get_selection())
+      end)
+
+      it('accepts the open block in edit', function()
+        mock.keystroke('return', press)
+        local changed = mock_func_snippet('renamed')
+        inter:set_text(string.lines(changed))
+        mock.keystroke('C-return', press)
+        assert.same('nav', controller:get_mode())
+        assert.same(1, buffer:get_selection())
+        assert.truthy(string.find(
+          string.unlines(buffer:get_text_content()),
+          'renamed', 1, true))
+      end)
+    end)
+
     describe('typing in navigation (2.1)', function()
       require("tests.helpers.codesnippets")
       local controller, press, buffer, inter
