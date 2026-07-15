@@ -21,6 +21,7 @@ local function new(M, CC)
     mode = 'nav',
     pos_memory = {},
     pending_confirm = nil,
+    accepted_n = 1,
   }
 end
 
@@ -40,6 +41,8 @@ end
 --- @field mode EditorMode
 --- @field pos_memory table<string, {sel:integer, off:integer}>
 --- @field pending_confirm string? --- 'overwrite'|'restore'
+--- @field accepted_n integer --- blocks the last
+--- acceptance produced; the leave gate steps past them
 EditorController = class.create(new)
 
 --- @param v EditorView
@@ -397,8 +400,9 @@ end
 
 --- @private
 --- @param go fun(nt: string[]|Block[])
---- @param go function
---- @return boolean accepted --- false on an eval refusal
+--- @param go fun(newtext: Block[]|string[]): boolean
+--- @return boolean accepted --- go's verdict, or false
+--- when the input does not evaluate
 function EditorController:_handle_submit(go)
   local inter = self.input
   local raw = inter:get_text()
@@ -451,7 +455,7 @@ function EditorController:_handle_submit(go)
             end
           end
         end
-        go(chunks)
+        return go(chunks)
       else
         local eval_err = res
         if eval_err then
@@ -469,7 +473,7 @@ function EditorController:_handle_submit(go)
       end
     end
   else
-    go(raw)
+    return go(raw)
   end
   return true
 end
@@ -479,6 +483,72 @@ end
 --- @param by integer?
 --- @param warp boolean?
 --- @param moved integer?
+--- @return integer --- the input strip's height (2.7)
+function EditorController:_size_limit()
+  return self.view:get_current_buffer():get_max_size()
+end
+
+--- @param chunks Block[]
+--- @return integer? --- index of the first block over
+--- the limit, nil when all fit
+function EditorController:_first_oversized(chunks)
+  if self.view:get_current_buffer().content_type
+      ~= 'lua' then
+    return
+  end
+  local limit = self:_size_limit()
+  return table.find_by(chunks, function(v)
+    return (v and v.pos and v.pos:len() > limit)
+  end)
+end
+
+--- Refuse an oversized block and point at it (9.6)
+--- @param chunks Block[]
+--- @param idx integer
+function EditorController:_reject_oversized(chunks, idx)
+  local block = chunks[idx]
+  if not block or not block.pos then return end
+  local n = block.pos:len()
+  self:refuse({ string.format(
+    'block is %d lines, the limit is %d',
+    n, self:_size_limit()
+  ) })
+  self.input.model:move_cursor(block.pos.start, 1)
+  self.input:update_view()
+end
+
+--- Accept the open block into the file: validate, size
+--- check, re-chunk, write (spec 2.4.2). Acceptance in
+--- place keeps the block and scrolls back to it.
+--- @return boolean accepted
+function EditorController:accept_block()
+  return self:_handle_submit(function(newtext)
+    local buf = self:get_active_buffer()
+    local bufv = self.view:get_current_buffer()
+    if not bufv:is_selection_visible(true) then
+      bufv:follow_selection()
+      return false
+    end
+    if not buf:loaded_is_sel(true) then
+      buf:select_loaded()
+      bufv:follow_selection()
+      return false
+    end
+    local oversized = self:_first_oversized(newtext)
+    if oversized then
+      self:_reject_oversized(newtext, oversized)
+      return false
+    end
+    local _, n = buf:replace_content(newtext)
+    self:save(buf)
+    self.view:refresh()
+    self.accepted_n = n
+    bufv:follow_selection()
+    self:leave_edit()
+    return true
+  end)
+end
+
 --- Click semantics (spec 2.9): in nav, select the
 --- clicked line's block; while editing, a click inside
 --- the open block places the cursor, a click outside
@@ -495,15 +565,16 @@ function EditorController:mouse_select(ln)
       self.input:set_cursor(Cursor(ln - span.start + 1, 1))
       return
     end
+    --- leaving for another block goes through the gate
+    --- (2.4): untouched leaves, changed is accepted and
+    --- written, invalid refuses and keeps the block
     local clean = string.unlines(self.input:get_text())
         == string.unlines(buf:get_selected_text())
-    if not clean then
-      self:refuse({
-        'accept (Enter) or discard (Shift+Esc) first'
-      })
+    if clean then
+      self:leave_edit()
+    elseif not self:accept_block() then
       return
     end
-    self:leave_edit()
   end
 
   buf:set_selection(bi)
@@ -808,111 +879,44 @@ function EditorController:_normal_mode_keys(k)
 
 
 
-  --- blocks produced by the last acceptance, read by
-  --- the leave gate to find the neighbor
-  local accepted_n = 1
-
   --- handlers
   --- @param force_accept boolean? --- the leave gate
   local function submit(force_accept)
     local bufv = self.view:get_current_buffer()
-    local is_lua = bufv.content_type == 'lua'
-    local size_limit = bufv:get_max_size()
-    --- @param v Block
-    --- @return boolean
-    local is_oversized_chunk = function(v)
-      return (v and v.pos and v.pos:len() > size_limit)
-    end
-    --- @param chunks Block[]
-    --- @return integer?
-    local first_oversized_chunk = function(chunks)
-      if is_lua then
-        return table.find_by(chunks, is_oversized_chunk)
-      end
-    end
-    --- @param chunks Block[]
-    --- @param idx integer
-    local reject_oversized = function(chunks, idx)
-      local block = chunks[idx]
-      if not block or not block.pos then return end
-      local n = block.pos:len()
-      self:refuse({ string.format(
-        'block is %d lines, the limit is %d', n, size_limit
-      ) })
-      input.model:move_cursor(block.pos.start, 1)
-      input:update_view()
-      --- the refusing keypress must not reach the
-      --- widget, or it clears the message it caused
-      block_input()
-    end
+
+    --- Insert freshly composed text as new block(s)
     --- @param newtext Block[]
-    --- @return Block[]|false
-    --- @return integer? first oversized chunk index
-    local analyze_input = function(newtext)
-      local oversized = first_oversized_chunk(newtext)
-      if not oversized then
-        return newtext
-      end
-      return false, oversized
-    end
-
-    --- @param newtext Block[]
-    local function replace(newtext)
-      if not bufv:is_selection_visible(true) then
-        return bufv:follow_selection()
-      end
-
-      if not buf:loaded_is_sel(true) then
-        buf:select_loaded()
-        bufv:follow_selection()
-        return
-      end
-
-      local approved, oversized = analyze_input(newtext)
-      if not approved then
-        if oversized then
-          reject_oversized(newtext, oversized)
-        end
-        return
-      end
-
-      local _, n = buf:replace_content(approved)
-      self:save(buf)
-      self.view:refresh()
-      accepted_n = n
-      --- acceptance in place keeps the block and
-      --- scrolls back to it (2.4.4)
-      bufv:follow_selection()
-      self:leave_edit()
-    end
-
-    --- @param newtext Block[]
+    --- @return boolean accepted
     local function add(newtext)
       if not bufv:is_selection_visible() then
-        return bufv:follow_selection()
+        bufv:follow_selection()
+        return false
       end
 
-      local approved, oversized = analyze_input(newtext)
-      if not approved then
-        if oversized then
-          reject_oversized(newtext, oversized)
-        end
-        return
+      local oversized = self:_first_oversized(newtext)
+      if oversized then
+        self:_reject_oversized(newtext, oversized)
+        return false
       end
 
       local sel = buf:get_selection()
-      local _, n = buf:insert_content(approved, sel)
+      local _, n = buf:insert_content(newtext, sel)
       self:save(buf)
       self.view:refresh()
       self:_move_sel('down', n)
       self:leave_edit()
+      return true
     end
 
     if Key.ctrl()
         and not Key.shift()
         and not Key.alt()
         and Key.is_enter(k) then
-      self:_handle_submit(add)
+      --- a refusal must not let the key through, or
+      --- the widget clears the message it caused
+      if not self:_handle_submit(add) then
+        block_input()
+      end
     end
 
     if force_accept
@@ -924,7 +928,7 @@ function EditorController:_normal_mode_keys(k)
       --- fresh text composed in navigation is inserted
       local accepted
       if buf.loaded then
-        accepted = self:_handle_submit(replace)
+        accepted = self:accept_block()
       else
         accepted = self:_handle_submit(add)
       end
@@ -996,7 +1000,9 @@ function EditorController:_normal_mode_keys(k)
     --- (2.4.4). Acceptance may have split the block
     --- into several, so step past all of them.
     local target = sel0 - 1
-    if dir == 'down' then target = sel0 + accepted_n end
+    if dir == 'down' then
+      target = sel0 + self.accepted_n
+    end
     if target < 1 or target > buf:get_content_length() then
       self:refuse()
       block_input()

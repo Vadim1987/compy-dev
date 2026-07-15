@@ -823,10 +823,25 @@ describe('Editor #editor', function()
         assert.same({ '' }, inter:get_text())
       end)
 
-      it('a dirty click outside asks to resolve', function()
+      it('a changed click outside is accepted', function()
         mock.keystroke('return', press)
-        inter:set_text({ 'function dirty()', 'end' })
+        inter:set_text({ 'function renamed()', 'end' })
         controller:mouse_select(6)
+        --- 2.4.2 via 2.9: written through, then the
+        --- clicked block takes the selection
+        assert.same('nav', controller:get_mode())
+        assert.same(3, buffer:get_selection())
+        assert.same(6, buffer:get_active_line())
+        assert.truthy(string.find(
+          string.unlines(buffer:get_text_content()),
+          'renamed', 1, true))
+      end)
+
+      it('an invalid click outside refuses', function()
+        mock.keystroke('return', press)
+        inter:set_text({ 'function broken(' })
+        controller:mouse_select(6)
+        --- 2.4.3: the block keeps the editor
         assert.same('edit', controller:get_mode())
         assert.same(1, buffer:get_selection())
         assert.is_true(inter:has_error())
