@@ -1230,14 +1230,19 @@ function EditorController:_normal_mode_keys(k)
           self:_jump_block('down')
           block_input()
         end
-        if k == "home" then
-          self:_move_sel('up', nil, true)
-        end
-        if k == "end" then
-          self:_move_sel('down', nil, true)
-        end
       end
     elseif self.mode == 'nav' then
+      --- spec 2.7: bare Home/End reach the file's first
+      --- and last line; Ctrl+Home/End belong to the
+      --- input widget while editing
+      if k == "home" then
+        self:_move_sel('up', nil, true)
+        block_input()
+      end
+      if k == "end" then
+        self:_move_sel('down', nil, true)
+        block_input()
+      end
       --- spec 2.2: bare arrows move by line, bare
       --- pages by a page, Ctrl+arrows (above) by block
       if k == "up" then

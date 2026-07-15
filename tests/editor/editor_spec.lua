@@ -401,7 +401,7 @@ describe('Editor #editor', function()
 
       describe('peek and page moves', function()
         it('peek scrolls, the selection stays', function()
-          mock.keystroke('C-end', press)
+          mock.keystroke('end', press)
           local sel = buffer:get_selection()
           local r0 = visible.range.start
           mock.keystroke('C-M-pageup', press)
@@ -435,7 +435,7 @@ describe('Editor #editor', function()
           mock.release_keys()
         end)
         it('bare pages move the active line', function()
-          mock.keystroke('C-home', press)
+          mock.keystroke('home', press)
           assert.same(1, buffer:get_active_line())
           mock.keystroke('pagedown', press)
           assert.same(1 + l, buffer:get_active_line())
@@ -443,7 +443,25 @@ describe('Editor #editor', function()
           mock.keystroke('pageup', press)
           assert.same(1, buffer:get_active_line())
           --- restore the state the describes below assume
+          mock.keystroke('end', press)
+          mock.keystroke('down', press)
+        end)
+      end)
+
+      describe('Home/End reach the file edges (2.7)', function()
+        it('bare End goes to the last line', function()
+          mock.keystroke('home', press)
+          assert.same(1, buffer:get_selection())
+          mock.keystroke('end', press)
+          assert.same(#sierpinski + 1, buffer:get_selection())
+        end)
+        it('Ctrl+Home/End do not warp in nav', function()
+          mock.keystroke('home', press)
+          local sel = buffer:get_selection()
           mock.keystroke('C-end', press)
+          assert.same(sel, buffer:get_selection())
+          --- restore what the describes below assume
+          mock.keystroke('end', press)
           mock.keystroke('down', press)
         end)
       end)
@@ -470,14 +488,14 @@ describe('Editor #editor', function()
         mock.keystroke('up', press)
         local sel = table.clone(buffer:get_selection())
         it('to bottom', function()
-          mock.keystroke('C-end', press)
+          mock.keystroke('end', press)
           --- warps to bottom, selection in view
           assert.same(#sierpinski + 1, buffer:get_selection())
           assert.is_true(bv:is_selection_visible())
           -- assert.is_not.same(sel, buffer:get_selection())
         end)
         it('to top', function()
-          mock.keystroke('C-home', press)
+          mock.keystroke('home', press)
           --- warps to top
           assert.same(base, visible.range)
           assert.is_not.same(sel, buffer:get_selection())
@@ -621,7 +639,7 @@ describe('Editor #editor', function()
       local inter = controller.input
 
       --- walking off the end of the file
-      mock.keystroke('C-end', press)
+      mock.keystroke('end', press)
       local n0 = #mock.played_sounds()
       mock.keystroke('down', press)
       mock.keystroke('down', press)
@@ -630,7 +648,7 @@ describe('Editor #editor', function()
       assert.same('assets/sounds/knock.ogg', played[#played])
 
       --- and a refused block
-      mock.keystroke('C-home', press)
+      mock.keystroke('home', press)
       mock.keystroke('return', press)
       inter:set_text({ 'function broken(' })
       local n1 = #mock.played_sounds()
@@ -727,7 +745,7 @@ describe('Editor #editor', function()
 
       it('a blank line becomes a new block', function()
         --- the trailing empty block
-        mock.keystroke('C-end', press)
+        mock.keystroke('end', press)
         assert.is_true(
           buffer:_get_selected_block():is_empty())
 
@@ -802,7 +820,7 @@ describe('Editor #editor', function()
       --- walk down until the file ends: the last real
       --- block, then the phantom line past it, both
       --- legitimate moves
-      mock.keystroke('C-end', press)
+      mock.keystroke('end', press)
       assert.is_false(knocked(function()
         mock.keystroke('down', press)
       end), 'stepping onto the phantom line is a move')
@@ -823,7 +841,7 @@ describe('Editor #editor', function()
       end), 'page move at the end')
 
       --- Alt+arrow moving a block past the edge
-      mock.keystroke('C-home', press)
+      mock.keystroke('home', press)
       assert.is_true(knocked(function()
         mock.keystroke('M-up', press)
       end), 'block move at the edge')
