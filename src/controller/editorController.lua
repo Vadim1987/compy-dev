@@ -375,7 +375,9 @@ function EditorController:textinput(t)
       --- NB: on device, textinput precedes keypressed
       --- (see dev/docs/compy-input-quirks.md), so this
       --- transition lands before the same key's press
-      self:set_mode('edit')
+      if self.mode == 'nav' then
+        self:start_typing()
+      end
       self.input:textinput(t)
     end
   elseif self.mode == 'search' then
@@ -483,6 +485,70 @@ end
 --- @param by integer?
 --- @param warp boolean?
 --- @param moved integer?
+--- Load the selected block into the input and open it
+--- for editing, auto-formatted (9.4), with the cursor
+--- on the active line (2.2)
+function EditorController:open_block()
+  local buf = self:get_active_buffer()
+  local input = self.input
+  local span = buf:get_selection_lines()
+  local row = buf:get_active_line() - span.start + 1
+
+  local t = buf:get_selected_text()
+  if string.is_non_empty(t) then
+    buf:set_loaded()
+  else
+    buf:clear_loaded()
+  end
+  input:set_text(t)
+  input:jump_home()
+
+  if buf.content_type == 'lua' then
+    --- auto-format on opening (spec 9.4); a block the
+    --- formatter changes is dirty from birth (2.4)
+    local raw = input:get_text()
+    if string.is_non_empty_string_array(raw) then
+      local pretty = buf.printer(raw)
+      if pretty then
+        --- the printer may append a trailing empty
+        --- line; that is noise, not formatting
+        while #pretty > 1 and pretty[#pretty] == '' do
+          table.remove(pretty)
+        end
+        input:set_text(pretty)
+      end
+    end
+  end
+  input:set_cursor(Cursor(row, 1))
+  self:set_mode('edit')
+end
+
+--- Typing in navigation starts editing at the active
+--- line: its block opens and a blank line appears there
+--- to type into, pushing the rest down (spec 2.1). On a
+--- blank line the text becomes a new block instead, so
+--- the input stays empty and acceptance inserts.
+function EditorController:start_typing()
+  local buf = self:get_active_buffer()
+  local block = buf:_get_selected_block()
+  if not block or block:is_empty() then
+    self:set_mode('edit')
+    return
+  end
+
+  local ln = buf:get_active_line()
+  local span = buf:get_selection_lines()
+  local row = ln - span.start + 1
+  self:open_block()
+
+  local t = self.input:get_text()
+  --- the format on opening may have reshaped the block
+  if row > #t then row = #t + 1 end
+  table.insert(t, row, '')
+  self.input:set_text(t)
+  self.input:set_cursor(Cursor(row, 1))
+end
+
 --- @return integer --- the input strip's height (2.7)
 function EditorController:_size_limit()
   return self.view:get_current_buffer():get_max_size()
@@ -865,17 +931,7 @@ function EditorController:_normal_mode_keys(k)
 
   paste_k()
 
-  --- @param add boolean?
-  local function load_selection()
-    local t = buf:get_selected_text()
-    if string.is_non_empty(t) then
-      buf:set_loaded()
-    else
-      buf:clear_loaded()
-    end
-    input:set_text(t)
-    input:jump_home()
-  end
+
 
 
 
@@ -937,27 +993,7 @@ function EditorController:_normal_mode_keys(k)
   end
   --- open the selected block for editing (spec 2.2: Enter)
   local function open()
-    local span = buf:get_selection_lines()
-    local row = buf:get_active_line() - span.start + 1
-    load_selection()
-    if buf.content_type == 'lua' then
-      --- auto-format on opening (spec 9.4); a block the
-      --- formatter changes is dirty from birth (2.4)
-      local t = input:get_text()
-      if string.is_non_empty_string_array(t) then
-        local pretty = buf.printer(t)
-        if pretty then
-          --- the printer may append a trailing empty
-          --- line; that is noise, not formatting
-          while #pretty > 1 and pretty[#pretty] == '' do
-            table.remove(pretty)
-          end
-          input:set_text(pretty)
-        end
-      end
-    end
-    self.input:set_cursor(Cursor(row, 1))
-    self:set_mode('edit')
+    self:open_block()
     block_input()
   end
   --- Leave the open block through the gate (spec 2.4):

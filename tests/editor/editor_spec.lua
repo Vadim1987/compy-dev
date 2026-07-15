@@ -640,6 +640,64 @@ describe('Editor #editor', function()
       assert.same('assets/sounds/knock.ogg', played[#played])
     end)
 
+    describe('typing in navigation (2.1)', function()
+      require("tests.helpers.codesnippets")
+      local controller, press, buffer, inter
+
+      before_each(function()
+        local f1 = mock_func_snippet('one')
+        local text = f1 .. '\n\n'
+        controller, press = wire(TU.mock_view_cfg())
+        local save = TU.get_save_function(text)
+        controller:open('typing.lua', text, save)
+        buffer = controller:get_active_buffer()
+        inter = controller.input
+      end)
+
+      it('opens the block and makes room on the line',
+        function()
+          --- stand on the middle line of the function
+          mock.keystroke('down', press)
+          assert.same(2, buffer:get_active_line())
+          local before = buffer:get_selected_text()
+
+          controller:textinput('x')
+          assert.same('edit', controller:get_mode())
+          --- the block is open, one line longer, and the
+          --- character sits on a fresh line 2
+          local t = inter:get_text()
+          assert.same(#before + 1, #t)
+          assert.same('x', t[2])
+          assert.same(before[1], t[1])
+          assert.same(before[2], t[3])
+        end)
+
+      it('a blank line becomes a new block', function()
+        --- the trailing empty block
+        mock.keystroke('C-end', press)
+        assert.is_true(
+          buffer:_get_selected_block():is_empty())
+
+        controller:textinput('y')
+        assert.same('edit', controller:get_mode())
+        --- nothing was loaded: the text composes fresh
+        assert.same({ 'y' }, inter:get_text())
+      end)
+
+      it('never overwrites the block typed on', function()
+        mock.keystroke('down', press)
+        controller:textinput('-')
+        controller:textinput('-')
+        mock.keystroke('return', press)
+        --- the function survives, with the comment in it
+        local all = string.unlines(
+          buffer:get_text_content())
+        assert.truthy(
+          string.find(all, 'function one()', 1, true))
+        assert.truthy(string.find(all, '--', 1, true))
+      end)
+    end)
+
     it('Ctrl+Delete drops a block only in nav', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())
