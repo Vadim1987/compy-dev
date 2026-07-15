@@ -49,63 +49,58 @@ action; revisit at the named point).
 - **Revisit:** Next controller-focused pass; remove the branch and the
   `result` config key together if nothing is expected to resurrect them.
 
+### Input-only / pointer-only projects stay live in `project_open` (RESOLVED, ruling a)
+
+- **Where:** `consoleController.lua` `run_project`
+  (`consoleController.lua:260-269`), `controller.lua`
+  `user_is_interactive` (`controller.lua:1112-1113`),
+  `user_pointer` / `hook_pointer` (`controller.lua:68`,
+  `:238-249`), `set_default_handlers`
+  (`controller.lua:778-824`, resets `user_pointer`), and
+  `love.quit` (`controller.lua:733-758`).
+- **State (old, broken behaviour):** A non-blocking project (no
+  `update`/`draw` hooked) always dropped to `'project_open'` with
+  the project route unconditionally released
+  (`release_keyboard_route`). For a project whose entire UI was
+  the input overlay (`examples/guess`) or a pointer handler
+  (`examples/sapper`), this meant (1) submit was dead — typing
+  still reached the overlay but Enter never fired, because tier-1
+  submit/cancel lives in the *project* route, which
+  `project_open` disconnected — and (2) Ctrl+Esc quit the whole
+  app instead of returning to the console, because `love.quit`
+  only stopped-to-console while `app_state == 'running'`.
+- **Confirmed pre-existing:** this was verified byte-identical on
+  `master` (pre-`0022004`) — not a #77 regression. The
+  `release_keyboard_route` call site is new on the #77 branch
+  (route-lifecycle rework, AC-27/28), but the lifecycle split it
+  slots into predates the feature.
+- **Resolution:** owner ruled (a) — an input-only / pointer-only
+  project is "live" without hooking `update`/`draw`. New
+  predicate `Controller.user_is_interactive()` returns
+  `love.state.user_input ~= nil or user_pointer`, where the
+  module-local `user_pointer` flag is set in `hook_pointer` when
+  a project installs any pointer/click handler and reset in
+  `set_default_handlers`. `run_project` now releases the keyboard
+  route only when `not user_is_interactive()` — an interactive
+  non-blocking project keeps the project route, so submit/cancel
+  keep working (`app_state` still becomes `'project_open'`
+  either way, since quickswitch relies on that). `love.quit` now
+  stops-to-console for `app_state == 'running'` OR
+  (`'project_open'` AND `user_is_interactive()`); an idle console
+  (`'project_open'`, nothing interactive) still lets the app
+  quit.
+- **Carried-forward limitation:** a non-blocking project with
+  *no* interaction surface at all (no overlay shown, no pointer
+  handler, no update/draw) still gets `release_keyboard_route` —
+  the keyboard goes back to the console. This is intended, not a
+  gap: such a project has nothing left to be interactive with.
+
 ---
 
 ## Open decisions
 
 The framework owner has not yet ruled on these; each is recorded as an open
 question, not resolved here.
-
-### Input-only / pointer-only projects are non-interactive in `project_open` (ESCALATED)
-
-- **Where:** `consoleController.lua:260-263` (`run_project`: `if not
-  user_is_blocking() then release_keyboard_route(self); app_state =
-  'project_open'`), `controller.lua:1089` (`user_is_blocking = user_update or
-  user_draw`), `controller.lua` `love.quit` (only `app_state == 'running'`
-  stops-to-console; anything else lets the OS quit proceed).
-- **State:** A project that hooks **neither** `love.update` nor `love.draw` is
-  "non-blocking": after load returns it drops to `'project_open'`, where the
-  **project route is fully disconnected** (keyboard/text slots handed back to
-  the console). Two user-visible consequences for a project whose entire UI is
-  the input overlay (e.g. `examples/guess`) or the pointer (e.g.
-  `examples/sapper`):
-  1. **Submit is dead.** Typing still reaches the overlay (the console route
-     forwards text to a shown widget), but **Enter never submits** — the
-     submit/cancel tier-1 (`framework_submit`/`framework_cancel`) lives in the
-     *project* route (`projectInputController.lua`), which is exactly what
-     `project_open` disconnects. Verified in-process against the real
-     `love.handlers` gate: after typing, `user_input.M:get_text()` is the typed
-     string, but `on_text_entered` never fires and the overlay stays active.
-     This is why `guess` "does nothing beyond the welcome line, no reaction to
-     keyboard."
-  2. **Ctrl+Esc quits the whole app** instead of returning to console, because
-     `love.quit` only aborts-to-console while `'running'`. In `'project_open'`
-     the quit proceeds. (`sapper` works via mouse — pointer slots stay hooked —
-     but its Ctrl+Esc exits the framework, and the console's own input line
-     bleeds through under the board.)
-- **Not a #77 regression:** the `user_is_blocking` → `project_open` split and
-  the `love.quit`-only-stops-when-`running` logic are **byte-identical on
-  `master`** (pre-`0022004`). `release_keyboard_route` is new on the #77 branch
-  (part of the route-lifecycle rework, AC-27/28) but the *lifecycle* it slots
-  into predates the feature. The old input API (`user_input()` /
-  `validated_input()` as blocking/inline calls) sidestepped this by never
-  relying on an async overlay, so there is no prior "working" baseline for the
-  new-API input-only shape to regress from.
-- **Why it stands / owner ruling needed:** should an **active input overlay**
-  (`love.state.user_input`) and/or a **hooked pointer handler** count as "the
-  project is still live" — keeping the project route connected and `running`
-  semantics (submit works, Ctrl+Esc → console) — or is "must hook
-  `update`/`draw` to be interactive" the intended contract, with input-only
-  projects expected to be blocking (as `examples/maze` already is: it hooks
-  `update` and re-arms the overlay by polling `love.state.user_input`)? The
-  examples were adjusted only where safe within the current contract
-  (`after_cancel` re-arm on `tixy`/`balloons`/`guess`); `guess` and `sapper`
-  cannot be made fully functional without either this ruling or a per-example
-  rewrite into blocking projects that draw their own state (console `print`
-  feedback is not visible while `'running'`).
-- **Revisit:** Owner decides the interactivity contract; then either keep the
-  route live while an overlay/pointer handler is set, or document
-  "interactive ⇒ blocking" and rework `guess`/`sapper` accordingly.
 
 ### `compy.keys_pressed` is not exposed to projects
 

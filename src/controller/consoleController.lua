@@ -258,7 +258,14 @@ function ConsoleController:run_project(name)
         print('Error: ', run_err)
       else
         if not self.main_ctrl.user_is_blocking() then
-          self.main_ctrl.release_keyboard_route(self)
+          -- An input-only / pointer-only project stays live
+          -- (ruling a): keep the project route so submit/cancel
+          -- and Ctrl+Esc->console work. Only a project with no
+          -- interaction surface hands the keyboard back to the
+          -- console.
+          if not self.main_ctrl.user_is_interactive() then
+            self.main_ctrl.release_keyboard_route(self)
+          end
           love.state.app_state = 'project_open'
         end
       end

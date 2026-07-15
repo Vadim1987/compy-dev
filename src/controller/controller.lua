@@ -61,6 +61,11 @@ end
 local user_update
 --- @type boolean
 local user_draw
+--- @type boolean
+-- set when a project installs any pointer/click handler; with an
+-- active overlay it marks a non-blocking project as still "live"
+-- (ruling a): keep the project route, Ctrl+Esc -> console.
+local user_pointer
 
 
 -- keyboard/text and pointer are split because they have
@@ -236,7 +241,12 @@ local function hook_pointer(userlove, CC)
     if w then
       --- @type function
       love[k] = w
+      user_pointer = true
     end
+  end
+  if CC:get_compy_handler('singleclick')
+      or CC:get_compy_handler('doubleclick') then
+    user_pointer = true
   end
 end
 
@@ -736,7 +746,12 @@ Controller = {
         love.draw = View.end_draw
         return true
       end
-      if love.state.app_state == 'running' then
+      -- A running project stops to console; so does a still-live
+      -- non-blocking one (overlay/pointer, ruling a). An idle
+      -- console in project_open falls through and the app quits.
+      if love.state.app_state == 'running'
+          or (love.state.app_state == 'project_open'
+              and Controller.user_is_interactive()) then
         CC:stop_project_run()
         return true
       end
@@ -806,6 +821,7 @@ Controller = {
     user_update = false
     Controller.set_love_update(CC)
     user_draw = false
+    user_pointer = false
     Controller.set_love_draw(CC, CV)
     Controller._defaults.draw = View.main_draw
     Controller.set_love_quit(CC)
@@ -1088,6 +1104,13 @@ Controller = {
 
   user_is_blocking = function()
     return (user_update or user_draw)
+  end,
+
+  --- Ruling (a): a non-blocking project is still "live" while it
+  --- has an active input overlay or a pointer/click handler — it
+  --- keeps the project route and Ctrl+Esc returns to the console.
+  user_is_interactive = function()
+    return (love.state.user_input ~= nil) or user_pointer
   end,
 
   --- @param userlove table

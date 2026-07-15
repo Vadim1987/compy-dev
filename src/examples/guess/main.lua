@@ -63,6 +63,9 @@ end
 
 init()
 
+-- TODO: guess is input-only/live now (project_open ruling
+-- a); rework check()'s print() feedback to go through the
+-- on-screen input API / draw instead of the console terminal.
 compy.input.show{
   prompt = "Guess a number:",
   eval = ValidatedTextEval({ is_natural }),
