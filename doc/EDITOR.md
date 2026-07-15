@@ -20,12 +20,13 @@
 | Command                                                           | Keymap                                        |
 | :---------------------------------------------------------------- | :-------------------------------------------- |
 | Clear terminal                                                    | <kbd>Ctrl</kbd>+<kbd>L</kbd>                  |
-| Stop project                                                      | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
-| Quit project (stop and close)                                     | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd> |
+| Stop project                                                      | <kbd>Ctrl</kbd>+<kbd>S</kbd>                  |
+| Quit project (stop and close)                                     | <kbd>Ctrl</kbd>+<kbd>Q</kbd>                  |
 | Reset application to initial state                                | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> |
+| Restart project                                                   | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd>   |
 | Exit application                                                  | <kbd>Ctrl</kbd>+<kbd>Esc</kbd>                |
 | Pause project                                                     | <kbd>Ctrl</kbd>+<kbd>Pause</kbd>              |
-| Toggle edit/run                                                   | <kbd>F9</kbd>                                 |
+| Toggle edit/run                                                   | <kbd>Ctrl</kbd>+<kbd>T</kbd>                  |
 | **Input**                                                         |
 | Move cursor horizontally                                          | <kbd>⇦</kbd>/<kbd>⇨</kbd>                     |
 | Move cursor vertically                                            | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
@@ -38,6 +39,11 @@
 | Jump to line end                                                  | <kbd>Alt</kbd>+<kbd>End</kbd>                 |
 | Insert newline                                                    | <kbd>Shift</kbd>+<kbd>Enter ⏎</kbd>           |
 | Delete current line                                               | <kbd>Ctrl</kbd>+<kbd>Y</kbd>                  |
+| Duplicate current line                                            | <kbd>Ctrl</kbd>+<kbd>D</kbd>                  |
+| Copy                                                              | <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>Insert</kbd> |
+| Cut                                                               | <kbd>Ctrl</kbd>+<kbd>X</kbd> / <kbd>Shift</kbd>+<kbd>Delete</kbd> |
+| Paste                                                             | <kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Shift</kbd>+<kbd>Insert</kbd> |
+| Select text                                                       | <kbd>Shift</kbd>+<kbd>⇦</kbd>/<kbd>⇨</kbd>/<kbd>⇧</kbd>/<kbd>⇩</kbd> |
 | Evaluate input                                                    | <kbd>Enter ⏎</kbd>                            |
 | **Editor**                                                        |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _same as Input, except for:_ |
@@ -47,19 +53,20 @@
 | Move selection                                                    | <kbd>Ctrl</kbd>+<kbd>⇧</kbd>/<kbd>⇩</kbd>     |
 | Replace selection with input                                      | <kbd>Enter ⏎</kbd>                            |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _additionally_               |
+| Open selected block for editing (empty input)                     | <kbd>Enter ⏎</kbd>                            |
 | Delete selected block                                             | <kbd>Ctrl</kbd>+<kbd>Delete</kbd>             |
-| Delete selected block (if input is empty)                         | <kbd>Ctrl</kbd>+<kbd>Y</kbd>                  |
-| Load selected content to input (discards previous content)        | <kbd>Esc</kbd>                                |
-| Insert selected content into input                                | <kbd>Shift</kbd>+<kbd>Esc</kbd>               |
+| Discard edit / back out one level                                 | <kbd>Shift</kbd>+<kbd>Esc</kbd>               |
+| Follow the require under selection                                | <kbd>Ctrl</kbd>+<kbd>O</kbd>                  |
+| Block reorder mode                                                | <kbd>Ctrl</kbd>+<kbd>M</kbd>                  |
+| Search definitions                                                | <kbd>Ctrl</kbd>+<kbd>F</kbd>                  |
 | Scroll to start                                                   | <kbd>Ctrl</kbd>+<kbd>PageUp</kbd>             |
 | Scroll to end                                                     | <kbd>Ctrl</kbd>+<kbd>PageDown</kbd>           |
 | Scroll up by one line                                             | <kbd>Shift</kbd>+<kbd>PageUp</kbd>            |
 | Scroll down by one line                                           | <kbd>Shift</kbd>+<kbd>PageDown</kbd>          |
 | Move selection to start                                           | <kbd>Ctrl</kbd>+<kbd>Home</kbd>               |
-| Move selecion to end                                              | <kbd>Ctrl</kbd>+<kbd>End</kbd>                |
+| Move selection to end                                             | <kbd>Ctrl</kbd>+<kbd>End</kbd>                |
 | Wipe input                                                        | <kbd>Ctrl</kbd>+<kbd>W</kbd>                  |
-| Duplicate current line                                            | <kbd>Ctrl</kbd>+<kbd>D</kbd>                  |
-| Stop editor                                                       | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
+| Leave editor (close all buffers)                                  | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
 
 ### Usage
 
@@ -73,14 +80,14 @@ default, and entered input will be appended to the end.
 
 ![hello](./interface/hello.apng)
 
-To modify an existing line, navigate there with
-<kbd>⇧</kbd>/<kbd>⇩</kbd>. Then load the text by pressing
-<kbd>Esc</kbd>, make the desired changes, then send it back with
-<kbd>Enter ⏎</kbd>
+To modify an existing block, navigate to it with
+<kbd>⇧</kbd>/<kbd>⇩</kbd>. Open it for editing by pressing
+<kbd>Enter ⏎</kbd>, make the desired changes, then send it back
+with <kbd>Enter ⏎</kbd>
 
 ![capitalized](./interface/hello_cap.apng)
 
-Happy with the modifications now, we can quit by pressing
-<kbd>Ctrl-Shift-Q</kbd>
+Happy with the modifications now, we can leave the editor by
+pressing <kbd>Shift-Esc</kbd>
 
 ![quit](./interface/quit_editor.apng)
