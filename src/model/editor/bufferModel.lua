@@ -333,6 +333,23 @@ function BufferModel:clamp_active_line()
   end
 end
 
+--- Block-wise movement of the active line (spec 2.2):
+--- down lands on the next block's first line; up lands
+--- on the current block's first line, or on the
+--- previous block's when already there
+--- @param dir VerticalDir
+--- @return boolean moved
+function BufferModel:jump_block(dir)
+  local span = self:get_selection_lines()
+  if dir == 'up' and self.active_line > span.start then
+    self.active_line = span.start
+    return true
+  end
+  if not self:move_selection(dir) then return false end
+  self.active_line = self:get_selection_lines().start
+  return true
+end
+
 --- Move the active line, crossing block boundaries
 --- @param dir VerticalDir
 --- @return boolean moved

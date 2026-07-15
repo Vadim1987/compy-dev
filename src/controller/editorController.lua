@@ -551,6 +551,19 @@ function EditorController:_move_block(dir)
   self:update_status()
 end
 
+--- Block-wise movement of the active line (spec 2.2)
+--- @param dir VerticalDir
+function EditorController:_jump_block(dir)
+  local buf = self:get_active_buffer()
+  if self.input:has_error() then return end
+  if buf:jump_block(dir) then
+    self.view:get_current_buffer():follow_line()
+    self:update_status()
+  else
+    self:refuse()
+  end
+end
+
 --- Move the active line by a viewport page
 --- @param dir VerticalDir
 function EditorController:_move_line_page(dir)
@@ -1125,11 +1138,11 @@ function EditorController:_normal_mode_keys(k)
         end
       else
         if k == "up" then
-          self:_move_sel('up')
+          self:_jump_block('up')
           block_input()
         end
         if k == "down" then
-          self:_move_sel('down')
+          self:_jump_block('down')
           block_input()
         end
         if k == "home" then

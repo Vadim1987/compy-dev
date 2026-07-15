@@ -290,6 +290,45 @@ print(sierpinski(4))]])
           assert.same(span.start, lnbuf:get_active_line())
         end)
 
+        it('jumps blocks per 2.2', function()
+          local jb = BufferModel('main.lua', turtle,
+            noop, chunker, hl)
+          --- down: the next block's first line
+          assert.is_true(jb:jump_block('down'))
+          assert.same(2, jb:get_selection())
+          local sp = jb:get_selection_lines()
+          assert.same(sp.start, jb:get_active_line())
+
+          --- inside a multi-line block, up returns to
+          --- its first line
+          local multi
+          for i = 1, jb:get_content_length() do
+            jb:set_selection(i)
+            if jb:get_selection_lines():len() > 1 then
+              multi = i
+              break
+            end
+          end
+          assert.truthy(multi, 'fixture has a big block')
+          jb:set_selection(multi)
+          local spm = jb:get_selection_lines()
+          jb:set_active_line(spm.fin)
+          assert.is_true(jb:jump_block('up'))
+          assert.same(multi, jb:get_selection())
+          assert.same(spm.start, jb:get_active_line())
+
+          --- already there: up goes to the block before
+          assert.is_true(jb:jump_block('up'))
+          assert.same(multi - 1, jb:get_selection())
+          assert.same(jb:get_selection_lines().start,
+            jb:get_active_line())
+
+          --- walking up bottoms out at the first block
+          while jb:jump_block('up') do end
+          assert.same(1, jb:get_selection())
+          assert.same(1, jb:get_active_line())
+        end)
+
         it('plaintext follows the selection', function()
           local pb = BufferModel('notes.txt',
             { 'one', 'two', 'three' }, noop)
