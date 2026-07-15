@@ -612,6 +612,27 @@ describe('Editor #editor', function()
       end)
     end)
 
+    it('follows the require on Ctrl+J', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local src = "local m = require('other')"
+      local save = TU.get_save_function(src)
+      local edited = {}
+      controller.console = {
+        edit = function(_, name)
+          table.insert(edited, name)
+        end,
+      }
+      controller:open('main.lua', src, save)
+
+      --- Ctrl+O is free now, it must do nothing
+      mock.keystroke('C-o', press)
+      assert.same({}, edited)
+
+      mock.keystroke('C-j', press)
+      assert.same({ 'other.lua' }, edited)
+    end)
+
     describe('mouse (2.9)', function()
       require("tests.helpers.codesnippets")
       local controller, press, buffer, inter

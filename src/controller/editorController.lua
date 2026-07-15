@@ -1159,9 +1159,10 @@ function EditorController:_normal_mode_keys(k)
       self:_scroll('down', false, 1)
     end
 
-    -- step into
-    if Key.ctrl() then
-      if k == "o" then
+    -- step into (spec 2.7: Ctrl+J "jump"; Ctrl+O is
+    -- left free for a conventional "open file")
+    if Key.ctrl() and not Key.alt() then
+      if k == "j" then
         self:follow_require()
       end
     end

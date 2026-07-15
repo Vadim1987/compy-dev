@@ -67,7 +67,7 @@
 | Restore from checkpoint                                           | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> |
 | Drop the edit, return to navigation                               | <kbd>Ctrl</kbd>+<kbd>W</kbd>                  |
 | Discard the edit (editing) / leave the editor (nav)               | <kbd>Shift</kbd>+<kbd>Esc</kbd>               |
-| Follow the require under selection                                | <kbd>Ctrl</kbd>+<kbd>O</kbd>                  |
+| Follow the require under selection                                | <kbd>Ctrl</kbd>+<kbd>J</kbd>                  |
 | Block reorder mode                                                | <kbd>Ctrl</kbd>+<kbd>M</kbd>                  |
 | Search definitions                                                | <kbd>Ctrl</kbd>+<kbd>F</kbd>                  |
 | Scroll to start                                                   | <kbd>Ctrl</kbd>+<kbd>PageUp</kbd>             |
