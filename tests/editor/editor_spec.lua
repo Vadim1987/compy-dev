@@ -673,6 +673,17 @@ describe('Editor #editor', function()
         inter = controller.input
       end)
 
+      it('does not touch the file in nav', function()
+        local text0 = string.unlines(
+          buffer:get_text_content())
+        local n0 = buffer:get_content_length()
+        mock.keystroke('C-return', press)
+        --- the block appears on acceptance, not now
+        assert.same(n0, buffer:get_content_length())
+        assert.same(text0, string.unlines(
+          buffer:get_text_content()))
+      end)
+
       it('opens a fresh block below in nav', function()
         assert.same(1, buffer:get_selection())
         mock.keystroke('C-return', press)

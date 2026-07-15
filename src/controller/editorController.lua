@@ -890,20 +890,6 @@ function EditorController:_normal_mode_keys(k)
   --- @type BufferModel
   local buf            = self:get_active_buffer()
 
-  local function newline()
-    if Key.is_enter(k) then
-      --- insert empty block if input is empty
-      if is_empty
-          and (Key.shift() or Key.ctrl())
-          and not Key.alt() then
-        buf:insert_newline()
-        self:save(buf)
-        self.view:refresh()
-        block_input()
-      end
-    end
-  end
-
   local function delete_block()
     local t = string.unlines(buf:get_selected_text())
     buf:delete_selected_text()
@@ -957,8 +943,6 @@ function EditorController:_normal_mode_keys(k)
   if is_empty then
     copycut()
   end
-  newline()
-
   paste_k()
 
 
