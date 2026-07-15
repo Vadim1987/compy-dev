@@ -531,14 +531,16 @@ end
 function EditorController:_move_block(dir)
   local buf = self:get_active_buffer()
   if self.input:has_error() then return end
-  if buf.readonly then return end
+  if buf.readonly then return self:refuse() end
 
   local sel = buf:get_selection()
   local last = buf:get_content_length()
-  if sel > last then return end
+  if sel > last then return self:refuse() end
   local target = sel - 1
   if dir == 'down' then target = sel + 1 end
-  if target < 1 or target > last then return end
+  if target < 1 or target > last then
+    return self:refuse()
+  end
 
   buf:move(sel, target)
   buf:rechunk()
@@ -555,9 +557,12 @@ function EditorController:_move_line_page(dir)
   local buf = self:get_active_buffer()
   if self.input:has_error() then return end
   local bv = self.view:get_current_buffer()
+  local moved = 0
   for _ = 1, bv.LINES do
     if not buf:move_line(dir) then break end
+    moved = moved + 1
   end
+  if moved == 0 then return self:refuse() end
   bv:follow_line()
   self:update_status()
 end
@@ -590,6 +595,8 @@ function EditorController:_move_sel(dir, by, warp, moved)
     if mv then self.view:refresh(moved) end
     self.view:get_current_buffer():follow_selection()
     self:update_status()
+  else
+    self:refuse()
   end
 end
 
@@ -951,6 +958,8 @@ function EditorController:_normal_mode_keys(k)
       if buf:move_line(dir) then
         self.view:get_current_buffer():follow_line()
         open()
+      else
+        self:refuse()
       end
       block_input()
       return

@@ -640,6 +640,90 @@ describe('Editor #editor', function()
       assert.same('assets/sounds/knock.ogg', played[#played])
     end)
 
+    it('knocks on every refused action', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local f1 = mock_func_snippet('one')
+      local f2 = mock_func_snippet('two')
+      local text = f1 .. '\n\n' .. f2 .. '\n'
+      local save = TU.get_save_function(text)
+      controller.console = { edit = function() end }
+      controller:open('knock.lua', text, save)
+      local buffer = controller:get_active_buffer()
+
+      local function knocked(fn)
+        local before = #mock.played_sounds()
+        fn()
+        local played = mock.played_sounds()
+        if #played == before then return false end
+        return played[#played] == 'assets/sounds/knock.ogg'
+      end
+
+      --- walk down until the file ends: the last real
+      --- block, then the phantom line past it, both
+      --- legitimate moves
+      mock.keystroke('C-end', press)
+      assert.is_false(knocked(function()
+        mock.keystroke('down', press)
+      end), 'stepping onto the phantom line is a move')
+
+      --- now there is nowhere further
+      assert.is_true(knocked(function()
+        mock.keystroke('down', press)
+      end), 'bare arrow at the end')
+
+      --- Ctrl+arrow past the end
+      assert.is_true(knocked(function()
+        mock.keystroke('C-down', press)
+      end), 'block jump at the end')
+
+      --- PageDown at the end
+      assert.is_true(knocked(function()
+        mock.keystroke('pagedown', press)
+      end), 'page move at the end')
+
+      --- Alt+arrow moving a block past the edge
+      mock.keystroke('C-home', press)
+      assert.is_true(knocked(function()
+        mock.keystroke('M-up', press)
+      end), 'block move at the edge')
+
+      --- Ctrl+J with no require in the block
+      assert.is_true(knocked(function()
+        mock.keystroke('C-j', press)
+      end), 'nothing to follow')
+
+      --- and it stays quiet when the move works
+      assert.is_false(knocked(function()
+        mock.keystroke('down', press)
+      end), 'a working move is silent')
+      assert.same(2, buffer:get_active_line())
+    end)
+
+    it('knocks when the search finds nothing', function()
+      local controller, press = wire(TU.mock_view_cfg())
+      local src = "local function findme() end"
+      local save = TU.get_save_function(src)
+      controller:open('search.lua', src .. '\n', save)
+      --- entering search saves the clipboard state
+      love.system = {
+        getClipboardText = function() return '' end,
+        setClipboardText = function() end,
+      }
+
+      mock.keystroke('C-f', press)
+      assert.same('search', controller:get_mode())
+      local before = #mock.played_sounds()
+      --- a match: quiet
+      controller:textinput('f')
+      assert.same(before, #mock.played_sounds())
+      --- no match: knock
+      controller:textinput('zzz')
+      local played = mock.played_sounds()
+      assert.is_true(#played > before)
+      assert.same('assets/sounds/knock.ogg', played[#played])
+    end)
+
     it('follows the require on Ctrl+J', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())
