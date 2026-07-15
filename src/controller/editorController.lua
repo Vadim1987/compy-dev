@@ -808,6 +808,10 @@ function EditorController:_normal_mode_keys(k)
 
 
 
+  --- blocks produced by the last acceptance, read by
+  --- the leave gate to find the neighbor
+  local accepted_n = 1
+
   --- handlers
   --- @param force_accept boolean? --- the leave gate
   local function submit(force_accept)
@@ -875,7 +879,10 @@ function EditorController:_normal_mode_keys(k)
       local _, n = buf:replace_content(approved)
       self:save(buf)
       self.view:refresh()
-      self:_move_sel('down', n)
+      accepted_n = n
+      --- acceptance in place keeps the block and
+      --- scrolls back to it (2.4.4)
+      bufv:follow_selection()
       self:leave_edit()
     end
 
@@ -985,12 +992,20 @@ function EditorController:_normal_mode_keys(k)
       return
     end
     --- accepted: open the neighbor, cursor on the near
-    --- line (2.4.4); downward the pipeline already
-    --- left the selection on it
-    if dir == 'up' then
-      buf:set_selection(sel0 - 1)
-      buf:set_active_line(buf:get_selection_lines().fin)
+    --- line — downward its first, upward its last
+    --- (2.4.4). Acceptance may have split the block
+    --- into several, so step past all of them.
+    local target = sel0 - 1
+    if dir == 'down' then target = sel0 + accepted_n end
+    if target < 1 or target > buf:get_content_length() then
+      self:refuse()
+      block_input()
+      return
     end
+    buf:set_selection(target)
+    local span = buf:get_selection_lines()
+    buf:set_active_line(
+      dir == 'down' and span.start or span.fin)
     self.view:get_current_buffer():follow_line()
     open()
     block_input()

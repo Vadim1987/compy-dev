@@ -868,6 +868,19 @@ describe('Editor #editor', function()
         assert.same(sp.fin, buffer:get_active_line())
       end)
 
+      it('acceptance in place stays on the block', function()
+        mock.keystroke('return', press)
+        local changed = mock_func_snippet('changed')
+        inter:set_text(string.lines(changed))
+        mock.keystroke('return', press)
+        --- 2.4.4: in place, so the block keeps the
+        --- selection and the editor returns to nav
+        assert.same('nav', controller:get_mode())
+        assert.same(1, buffer:get_selection())
+        assert.truthy(
+          string.find(savefile(), 'changed', 1, true))
+      end)
+
       it('changed block is accepted on the way out', function()
         mock.keystroke('return', press)
         local changed = mock_func_snippet('changed')
@@ -926,7 +939,8 @@ describe('Editor #editor', function()
       input:clear()
       input:add_text(new_print)
       mock.keystroke('return', press)
-      assert.same(4, buffer:get_selection())
+      --- acceptance in place stays on the block (2.4.4)
+      assert.same(3, buffer:get_selection())
       local after = savefile()
       modified[#modified] = new_print
       modified[#modified + 1] = ''
@@ -961,11 +975,9 @@ describe('Editor #editor', function()
           session:submit(f_modified)
 
           assert.is_true(input:is_empty(), "input cleared")
-          assert.same(2, buffer.selection, "selection moved")
-          assert.same({}, buffer:get_selected_text(),
-                      "next (empty) block is selected")
+          --- acceptance in place stays (2.4.4)
+          assert.same(1, buffer.selection, "selection stays")
 
-          session:select_block(1)
           assert.same(string.lines(f_modified),
                       buffer:get_selected_text(),
                       "selection replaced with modified block")
@@ -987,9 +999,8 @@ describe('Editor #editor', function()
           session:submit(new_code)
 
           assert.is_true(input:is_empty(), "input cleared")
-          assert.same(4, buffer.selection, "selection moved")
-          assert.same({}, buffer:get_selected_text(),
-                      "next (empty) block is selected")
+          --- acceptance in place stays (2.4.4)
+          assert.same(1, buffer.selection, "selection stays")
 
           session:select_block(1)
           assert.same( string.lines(f1),
@@ -1035,9 +1046,9 @@ describe('Editor #editor', function()
           session:select_and_open_block(1, f_oversized)
           session:submit(f_simple)
 
-          assert.same(2, buffer.selection, "selection moved")
+          --- acceptance in place stays (2.4.4)
+          assert.same(1, buffer.selection, "selection stays")
           assert.is_true(input:is_empty(), "input cleared")
-          session:select_block(1)
           assert.same(string.lines(f_simple),
                       buffer:get_selected_text(),
                       "previous block content replaced")
