@@ -114,6 +114,8 @@ function EditorController:follow_require()
   if reqsel then
     local name = reqsel.name
     self.console:edit(name .. '.lua')
+  else
+    self:refuse()
   end
 end
 
@@ -222,6 +224,16 @@ end
 --- @return boolean
 function EditorController:is_normal_mode()
   return is_normal(self.mode)
+end
+
+--- One sound for every refused action (spec 2.4.3):
+--- a knock means "no further this way"
+--- @param msg string[]? --- also shown when given
+function EditorController:refuse(msg)
+  --- required here, not at the top: util.audio builds
+  --- its sources on load and needs love.audio ready
+  require("util.audio").knock()
+  if msg then self.input:set_error(msg) end
 end
 
 --- drop the loaded block and the input, return to nav
@@ -443,6 +455,7 @@ function EditorController:_handle_submit(go)
       else
         local eval_err = res
         if eval_err then
+          self:refuse()
           inter:set_error(eval_err)
           --- spec 2.4.3: the cursor moves to the error
           local first = Error.get_first(eval_err)
@@ -485,7 +498,7 @@ function EditorController:mouse_select(ln)
     local clean = string.unlines(self.input:get_text())
         == string.unlines(buf:get_selected_text())
     if not clean then
-      self.input:set_error({
+      self:refuse({
         'accept (Enter) or discard (Shift+Esc) first'
       })
       return
@@ -557,6 +570,9 @@ function EditorController:_move_line(dir)
   if buf:move_line(dir) then
     self.view:get_current_buffer():follow_line()
     self:update_status()
+  else
+    --- nowhere further to go
+    self:refuse()
   end
 end
 
@@ -796,7 +812,7 @@ function EditorController:_normal_mode_keys(k)
       local block = chunks[idx]
       if not block or not block.pos then return end
       local n = block.pos:len()
-      input:set_error({ string.format(
+      self:refuse({ string.format(
         'block is %d lines, the limit is %d', n, size_limit
       ) })
       input.model:move_cursor(block.pos.start, 1)
@@ -981,7 +997,7 @@ function EditorController:_normal_mode_keys(k)
 
     if Key.shift() then
       if not cp_time then
-        input:set_error({ 'no checkpoint to restore' })
+        self:refuse({ 'no checkpoint to restore' })
         return
       end
       if self.pending_confirm == 'restore' then

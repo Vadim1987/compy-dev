@@ -612,6 +612,34 @@ describe('Editor #editor', function()
       end)
     end)
 
+    it('knocks when refused', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local f1 = mock_func_snippet('one')
+      local save = TU.get_save_function(f1)
+      controller:open('knock.lua', f1 .. '\n', save)
+      local inter = controller.input
+
+      --- walking off the end of the file
+      mock.keystroke('C-end', press)
+      local n0 = #mock.played_sounds()
+      mock.keystroke('down', press)
+      mock.keystroke('down', press)
+      local played = mock.played_sounds()
+      assert.is_true(#played > n0)
+      assert.same('assets/sounds/knock.ogg', played[#played])
+
+      --- and a refused block
+      mock.keystroke('C-home', press)
+      mock.keystroke('return', press)
+      inter:set_text({ 'function broken(' })
+      local n1 = #mock.played_sounds()
+      mock.keystroke('C-down', press)
+      played = mock.played_sounds()
+      assert.is_true(#played > n1)
+      assert.same('assets/sounds/knock.ogg', played[#played])
+    end)
+
     it('follows the require on Ctrl+J', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())
