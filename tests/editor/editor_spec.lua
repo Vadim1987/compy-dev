@@ -1387,7 +1387,7 @@ describe('Editor #editor', function()
           assert.is_true(controller.input:has_error())
           local err = controller.input.model.error
           assert.truthy(
-            string.find(err[1], '15 lines', 1, true))
+            string.find(err[1], 'Remove 1', 1, true))
           mock.keystroke('S-escape', press)
         end)
 

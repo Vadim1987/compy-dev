@@ -593,9 +593,12 @@ function EditorController:_reject_oversized(chunks, idx)
   local block = chunks[idx]
   if not block or not block.pos then return end
   local n = block.pos:len()
+  --- the wording follows 1.4: say what to do, not what
+  --- the machine measured
   self:refuse({ string.format(
-    'block is %d lines, the limit is %d',
-    n, self:_size_limit()
+    'Too many lines in a block. Remove %d to save,'
+    .. ' or press Shift+Esc to cancel',
+    n - self:_size_limit()
   ) })
   self.input.model:move_cursor(block.pos.start, 1)
   self.input:update_view()
