@@ -47,15 +47,26 @@
 | Evaluate input                                                    | <kbd>Enter ⏎</kbd>                            |
 | **Editor**                                                        |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _same as Input, except for:_ |
-| Scroll up                                                         | <kbd>PageUp</kbd>                             |
-| Scroll down                                                       | <kbd>PageDown</kbd>                           |
-| Move selection (if in first/last line)                            | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
-| Move selection                                                    | <kbd>Ctrl</kbd>+<kbd>⇧</kbd>/<kbd>⇩</kbd>     |
+| Move the active line by one line (nav)                            | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
+| Move the active line by a page (nav)                              | <kbd>PageUp</kbd>/<kbd>PageDown</kbd>         |
+| Move the cursor through the block (editing)                       | <kbd>⇧</kbd>/<kbd>⇩</kbd>                     |
+| Jump block-wise (nav) / accept and jump (editing)                 | <kbd>Ctrl</kbd>+<kbd>⇧</kbd>/<kbd>⇩</kbd>     |
 | Replace selection with input                                      | <kbd>Enter ⏎</kbd>                            |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _additionally_               |
-| Open selected block for editing (empty input)                     | <kbd>Enter ⏎</kbd>                            |
+| Open selected block for editing (nav, empty input)                | <kbd>Enter ⏎</kbd>                            |
+| Insert input contents before selection                            | <kbd>Ctrl</kbd>+<kbd>Enter ⏎</kbd>            |
+| Insert empty block (if input is empty)                            | <kbd>Shift</kbd>+<kbd>Enter ⏎</kbd>           |
+| Move the block (nav)                                              | <kbd>Alt</kbd>+<kbd>⇧</kbd>/<kbd>⇩</kbd>      |
+| Peek-scroll one line, keep the selection (nav)                    | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>⇧</kbd>/<kbd>⇩</kbd> |
+| Peek-scroll one page (nav)                                        | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PageUp</kbd>/<kbd>PageDown</kbd> or <kbd>⇦</kbd>/<kbd>⇨</kbd> |
+| Copy block                                                        | <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>Insert</kbd> |
+| Cut block                                                         | <kbd>Ctrl</kbd>+<kbd>X</kbd> / <kbd>Shift</kbd>+<kbd>Delete</kbd> |
+| Paste                                                             | <kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Shift</kbd>+<kbd>Insert</kbd> |
 | Delete selected block                                             | <kbd>Ctrl</kbd>+<kbd>Delete</kbd>             |
-| Discard edit / back out one level                                 | <kbd>Shift</kbd>+<kbd>Esc</kbd>               |
+| Checkpoint the file                                               | <kbd>Ctrl</kbd>+<kbd>K</kbd>                  |
+| Restore from checkpoint                                           | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> |
+| Drop the edit, return to navigation                               | <kbd>Ctrl</kbd>+<kbd>W</kbd>                  |
+| Discard the edit (editing) / leave the editor (nav)               | <kbd>Shift</kbd>+<kbd>Esc</kbd>               |
 | Follow the require under selection                                | <kbd>Ctrl</kbd>+<kbd>O</kbd>                  |
 | Block reorder mode                                                | <kbd>Ctrl</kbd>+<kbd>M</kbd>                  |
 | Search definitions                                                | <kbd>Ctrl</kbd>+<kbd>F</kbd>                  |
@@ -65,7 +76,6 @@
 | Scroll down by one line                                           | <kbd>Shift</kbd>+<kbd>PageDown</kbd>          |
 | Move selection to start                                           | <kbd>Ctrl</kbd>+<kbd>Home</kbd>               |
 | Move selection to end                                             | <kbd>Ctrl</kbd>+<kbd>End</kbd>                |
-| Wipe input                                                        | <kbd>Ctrl</kbd>+<kbd>W</kbd>                  |
 | Leave editor (close all buffers)                                  | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
 
 ### Usage
