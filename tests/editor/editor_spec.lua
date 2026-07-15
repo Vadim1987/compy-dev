@@ -640,6 +640,35 @@ describe('Editor #editor', function()
       assert.same('assets/sounds/knock.ogg', played[#played])
     end)
 
+    it('Ctrl+Delete drops a block only in nav', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local f1 = mock_func_snippet('one')
+      local f2 = mock_func_snippet('two')
+      local save = TU.get_save_function(
+        f1 .. '\n\n' .. f2 .. '\n')
+      controller:open('del.lua',
+        f1 .. '\n\n' .. f2 .. '\n', save)
+      --- dropping a block copies it to the clipboard
+      love.system = {
+        getClipboardText = function() return '' end,
+        setClipboardText = function() end,
+      }
+      local buffer = controller:get_active_buffer()
+      local n0 = buffer:get_content_length()
+
+      --- editing: the block survives, the key is the
+      --- widget's delete-next-word
+      mock.keystroke('return', press)
+      mock.keystroke('C-delete', press)
+      assert.same(n0, buffer:get_content_length())
+      mock.keystroke('S-escape', press)
+
+      --- navigation: it drops the block
+      mock.keystroke('C-delete', press)
+      assert.same(n0 - 1, buffer:get_content_length())
+    end)
+
     it('knocks on every refused action', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())

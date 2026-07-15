@@ -1053,8 +1053,11 @@ function EditorController:_normal_mode_keys(k)
       block_input()
     end
   end
+  --- spec 2.7: Ctrl+Delete drops the block in
+  --- navigation; while editing it is the widget's
+  --- delete-next-word
   local function delete()
-    if Key.ctrl() then
+    if Key.ctrl() and self.mode == 'nav' then
       if k == "delete" then
         delete_block()
         block_input()
