@@ -182,6 +182,13 @@ compy.input.after_submit = function()
   compy.input.show{ text = string.lines(body) }
 end
 
+-- ESC cancels the widget; re-arm it (keeping the current body)
+-- so the code strip can't be dismissed into an unrecoverable
+-- state — editing is the whole point of the demo.
+compy.input.after_cancel = function()
+  compy.input.show{ text = string.lines(body) }
+end
+
 function love.update(dt)
   time = time + dt
 end

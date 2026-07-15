@@ -55,6 +55,12 @@ compy.input.after_submit = function()
   compy.input.show{}
 end
 
+-- ESC cancels the widget; re-arm it so the prompt can't be
+-- dismissed with no way to guess again.
+compy.input.after_cancel = function()
+  compy.input.show{}
+end
+
 init()
 
 compy.input.show{
