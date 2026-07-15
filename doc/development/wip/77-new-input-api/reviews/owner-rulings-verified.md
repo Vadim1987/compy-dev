@@ -12,7 +12,8 @@ _PM (Claude Opus 4.8) verification pass, 2026-07-13, over `reviews/intent-alignm
 are **owner design rulings** — this doc establishes the facts, it does not resolve them._
 
 **Result: 7 of 8 confirmed exactly as Fable stated. The one correction is item 8's count (31, not
-45). Item 8's doc-bug half is already FIXED (`input_api.md`, commit `8b9820d`).**
+45). Item 8 is now fully DONE — the annotations were triaged to zero (commit `6b70907`). That
+triage surfaced one NEW owner ruling — item 9, pointer routing — added below.**
 
 | # | Ruling needed | Verdict | Evidence |
 |---|---------------|---------|----------|
@@ -23,7 +24,8 @@ are **owner design rulings** — this doc establishes the facts, it does not res
 | 5 | Silent config-key drop in `show{}` — accept, or mandate a warn (C2) | ✅ **CONFIRMED**, and sharpened | `apply_config` reads only the known keys with no `else`/`Log.warn`; a field-write-only key (`after_submit`, …) or a typo passed to `show{}` is silently ignored. **Sharpening:** `set_cursor`/`set_text` **do** `Log.warn(... ignored — hidden)` (consoleController.lua:495, :505) — so warn-don't-swallow is already applied *selectively*; the silence here is an inconsistency, not a blanket policy. |
 | 6 | Proxy iteration on LuaJIT — accept indexing-only, or add an iteration helper | ✅ **CONFIRMED**, self-admitted | controller.lua:349-352: "under LuaJIT/Lua 5.1 `pairs` ignores `__pairs`, so `pairs(proxy)` yields nothing … `__pairs` is kept for 5.2+ hosts." Read-index + write-raise hold and are tested; iteration is inert on the shipping platform. |
 | 7 | Widget-visibility query — sanction a public `is_active()`-shaped read | ✅ **CONFIRMED** | The `compy.input` surface (`get_compy_input`, consoleController.lua:462) exposes `handlers/show/hide/get_cursor/set_cursor/set_text/configure/clear/…` — **no `is_shown`/`is_active`/`is_visible`**. An internal `UserInputController:is_shown()` exists (userInputController.lua:415) but is not on the project surface, so `maze/main.lua:497` reads `love.state.user_input` directly + keeps a per-tick re-arm poll. |
-| 8 | Sweep in-code `REVIEW:` annotations + fix `input_api.md` doc bug | ⚠ **doc bug FIXED**; count is **31, not 45** | `grep REVIEW: src/` = **31** occurrences (all in `controller.lua` + `projectInputController.lua`); `>> REVIEW` = 0. The substance holds (owner's own open questions shipped inside landed code, to sweep before release). The `input_api.md` lifecycle bug is fixed in commit `8b9820d` (order + `before_submit` arg, verified against spec §5 + the code). |
+| 8 | Sweep in-code `REVIEW:` annotations + fix `input_api.md` doc bug | ✅ **DONE** (was 31, not 45) | **Triaged to zero** (commit `6b70907`): each marker resolved into an in-comment answer or a `TODO(debt)` + ledger entry; `grep REVIEW: src/` = **0**, suite 808/0/0/4, no behavioural change. The `input_api.md` lifecycle bug was fixed earlier (`8b9820d`). Sign-off table: `reviews/review-annotations-triage.md`. |
+| 9 | **Pointer routing — mirror consume-chain?** (NEW — surfaced by the REVIEW triage / Fable pass) — should pointer get a keyboard-style consume-chain, and should a shown widget consume clicks within its bounds? | ✅ **CONFIRMED** open (verified in code) | `handlers.mousepressed`/`-released`/`touch*` (`controller.lua`) deliver to the widget whenever one is present — **no bounds check, no consume, return discarded** — **then unconditionally** forward to the slot occupant. Both fire: a shown widget cannot swallow a click aimed at it, and the project's handler fires even for clicks inside the widget. **No decision ratifies pointer routing**; pointer never had the #77 widget-lockout, so it was deliberately left as pre-existing behaviour. Logged: `technical_debt/input.md` "Pointer delivery is an unstructured broadcast". Kin to ruling 7 (both are the pointer/widget boundary the keyboard side already solved). |
 
 ## Bottom line for the owner
 
@@ -36,6 +38,8 @@ reverses the architecture. They fall into three buckets:
 - **API-surface additions** (small, additive, each needs a yes/no): items 1 (`compy.keys_pressed`),
   7 (`is_active()` predicate), 5 (warn on dropped config keys).
 - **Behaviour ruling shipped open**: item 3 (combo-tier key-repeat).
+- **Architectural follow-on** (like Decision 1's deferred console/editor convergence): item 9
+  (pointer consume-chain) — the one net-new ruling from the REVIEW triage.
 
 ## Related discovered issue — NOT one of Fable's 8
 
