@@ -1,0 +1,373 @@
+diff --git a/src/model/consoleModel.lua b/src/model/consoleModel.lua
+index 2d2897c..455a0d8 100644
+--- a/src/model/consoleModel.lua
++++ b/src/model/consoleModel.lua
+@@ -12,7 +12,7 @@ require("model.project.project")
+ --- @field cfg Config
+ ConsoleModel = class.create(function(cfg)
+   return {
+-    input    = UserInputModel(cfg, LuaEval(), false, 'console'),
++    input    = UserInputModel(cfg, LuaEval(), 'console'),
+     editor   = EditorModel(cfg),
+     output   = CanvasModel(cfg),
+     projects = ProjectService(),
+diff --git a/src/model/editor/searchModel.lua b/src/model/editor/searchModel.lua
+index 38b4962..9b7a410 100644
+--- a/src/model/editor/searchModel.lua
++++ b/src/model/editor/searchModel.lua
+@@ -28,7 +28,7 @@ require('util.scrollableContent')
+ Search = class.create(function(cfg)
+   local l = cfg.view.lines
+   return {
+-    input = UserInputModel(cfg, nil, false, 'search'),
++    input = UserInputModel(cfg, nil, 'search'),
+     searchset = {},
+     resultset = {},
+     visible = ScrollableContent(0, 1, l)
+diff --git a/src/model/input/userInputModel.lua b/src/model/input/userInputModel.lua
+index 4613fee..d9a79e3 100644
+--- a/src/model/input/userInputModel.lua
++++ b/src/model/input/userInputModel.lua
+@@ -12,7 +12,6 @@ require("util.debug")
+ require("util.lua")
+ 
+ --- @class UserInputModel
+---- @field oneshot boolean
+ --- @field entered InputText
+ --- @field history History
+ --- @field evaluator Evaluator
+@@ -42,11 +41,9 @@ UserInputModel = class.create()
+ 
+ --- @param cfg Config
+ --- @param eval Evaluator
+---- @param oneshot boolean?
+ --- @param custom_label string?
+-function UserInputModel.new(cfg, eval, oneshot, custom_label)
++function UserInputModel.new(cfg, eval, custom_label)
+   local self = setmetatable({
+-    oneshot = oneshot,
+     entered = InputText(),
+     history = History(),
+     evaluator = eval,
+@@ -139,9 +136,11 @@ function UserInputModel:set_text(text, keep_cursor)
+     self.entered = InputText(text)
+   end
+   self:text_change()
+-  if not keep_cursor then
+-    self:init_visible(self.entered)
++  if keep_cursor then
++    self:_clamp_cursor_pos()
++    return
+   end
++  self:init_visible(self.entered)
+   self:jump_end()
+ end
+ 
+@@ -386,7 +385,9 @@ function UserInputModel:highlight()
+       hl = ev.highlighter(text)
+     end
+ 
+-    self._memo.highlight = { hl = hl, parse_err = parse_err }
++    -- hl stays indexable even with no highlighter (parser but
++    -- no colouring): the view indexes highlight.hl unconditionally.
++    self._memo.highlight = { hl = hl or {}, parse_err = parse_err }
+   else
+     if ev.highlighter then
+       self._memo.highlight = { hl = ev.highlighter(text) }
+@@ -408,8 +409,14 @@ end
+ ----------------
+ 
+ --- @return boolean
++-- AC-25: oneshot is gone, so nothing distinguishes a
++-- single-use solicitation from any other model anymore.
++-- Only the (never-history-reading) project widget set
++-- oneshot=true, so suppression here was already inert;
++-- the flag's other job (submit-closing) is what moved into
++-- the new submit chain (userInputController.lua).
+ function UserInputModel:keep_history()
+-  return not self.oneshot
++  return true
+ end
+ 
+ --- @private
+@@ -500,6 +507,19 @@ function UserInputModel:set_cursor(c)
+   self.cursor = c
+ end
+ 
++--- @private
++--- Clamp self.cursor into the current text's valid range
++--- (byte length, matching move_cursor's own bound below) —
++--- set_text(t, true)'s AC-8 landing when the new content is
++--- shorter than the preserved cursor position (M7-01).
++function UserInputModel:_clamp_cursor_pos()
++  local n = self:get_n_text_lines()
++  local l = math.max(1, math.min(self.cursor.l, n))
++  local llen = #(self:get_text_line(l))
++  local c = math.max(1, math.min(self.cursor.c, llen + 1))
++  self:set_cursor(Cursor(l, c))
++end
++
+ --- @param y integer?
+ --- @param x integer?
+ --- @param selection 'keep'|'move'?
+@@ -554,19 +574,23 @@ function UserInputModel:get_cursor_y()
+ end
+ 
+ --- @param dir VerticalDir?
++--- @param scope 'input'|'line'?
+ --- @return boolean
+-function UserInputModel:is_at_limit(dir)
++function UserInputModel:is_at_limit(dir, scope)
+   local n = self:get_n_text_lines()
+-  local cl = self:get_cursor_y()
+-  if dir == 'down' then
+-    return cl == n
+-  elseif dir == 'up' then
+-    return cl == 1
+-  else
+-    if n < 3 then return true end
+-    local limit = cl == 1 or cl == n
+-    return limit
++  local cl, cc = self:get_cursor_pos()
++  if not dir then return cl == 1 or cl == n end
++  local req = (n == 1) and 'input' or (scope or 'input')
++  if dir == 'up' then return cl == 1 end
++  if dir == 'down' then return cl == n end
++  local line = self:get_text_line(cl)
++  local line_end = string.ulen(line) + 1
++  if dir == 'left' then
++    return cc == 1 and (req == 'line' or cl == 1)
++  elseif dir == 'right' then
++    return cc == line_end and (req == 'line' or cl == n)
+   end
++  return false
+ end
+ 
+ --- @return InputDTO
+@@ -797,42 +821,49 @@ function UserInputModel:cancel()
+   self:reset()
+ end
+ 
++--- @private
++--- Cursor-to-error-position on an evaluator reject. Split out
++--- of handle() to keep it under the function-body line limit
++--- once the AC-25 push('userinput') block (below it) is gone.
++--- @param result Error[]
++function UserInputModel:_report_parse_error(result)
++  --- @TODO fix
++  local perr = result[1]
++  -- Log.debug(Debug.terse_t(perr, nil, nil, true))
++  if not perr or not perr.c then return end
++  --- @TODO check line len and move to next if at end
++  local c = perr.c
++  if c > 1 then c = c + 1 end
++  self:move_cursor(perr.l, c)
++end
++
++--- @private
++--- @param ent InputText
++--- @return boolean ok
++--- @return string[]|Error[]|InputText result
++function UserInputModel:_apply_eval(ent)
++  local ok, result = self.evaluator:apply(ent)
++  if not ok then
++    self:_report_parse_error(result)
++  end
++  return ok, result
++end
++
+ --- @param eval boolean
+ --- @return boolean
+ --- @return string[]|Error[]
++-- AC-25: the old push('userinput') notification (fired here
++-- under `if self.oneshot`) is gone — on_text_entered
++-- (userInputController.lua submit chain) replaces it as the
++-- "value ready" signal (spec §5 mechanism note).
+ function UserInputModel:handle(eval)
+   local ent = self:get_text()
+   local ok, result
+   if ent:non_empty() then
+-    local ev = self.evaluator
+     self:_remember()
+     if eval then
+-      ok, result = ev:apply(ent)
+-      if ok then
+-        if self.oneshot then
+-          if love.harmony then
+-            if love.harmony.utils then
+-              love.harmony.utils.love_event('userinput')
+-            end
+-          else
+-            --- @diagnostic disable-next-line: param-type-mismatch
+-            love.event.push('userinput')
+-          end
+-        end
+-      else
+-        --- @TODO fix
+-        local perr = result[1]
+-        -- Log.debug(Debug.terse_t(perr, nil, nil, true))
+-        if perr then
+-          --- @TODO check line len and move to next if at end
+-          if perr.c then
+-            local c = perr.c
+-            if c > 1 then c = c + 1 end
+-            self:move_cursor(perr.l, c)
+-          end
+-        end
+-        return false, result
+-      end
++      ok, result = self:_apply_eval(ent)
++      if not ok then return false, result end
+     else
+       ok = true
+     end
+diff --git a/src/util/key.lua b/src/util/key.lua
+index a644716..2011625 100644
+--- a/src/util/key.lua
++++ b/src/util/key.lua
+@@ -5,6 +5,78 @@ local unpack  = unpack or table.unpack
+ local shift_k = { "lshift", "rshift" }
+ local ctrl_k  = { "lctrl", "rctrl" }
+ local alt_k   = { "lalt", "ralt" }
++-- gui = super/cmd/win. Kept in the modifier set for parity with ctrl/alt/shift so
++-- combo_string can serialise gui-combos; no framework handler registers one yet.
++local gui_k   = { "lgui", "rgui" }
++
++-- Single source of truth for left/right modifier folding. Each row is
++-- { left-key, right-key, generic-name }; combo_string folds e.g. lctrl|rctrl -> "ctrl"
++-- (precedence order: ctrl, alt, shift, gui). Centralised here in 0.1.0-m2a — it was
++-- previously a duplicate COMBO_MODS literal in controller.lua.
++local mod_triples = {
++  { ctrl_k[1],  ctrl_k[2],  "ctrl" },
++  { alt_k[1],   alt_k[2],   "alt" },
++  { shift_k[1], shift_k[2], "shift" },
++  { gui_k[1],   gui_k[2],   "gui" },
++}
++
++-- Generic modifier names in combo-string precedence order
++-- (spec §1: ctrl < alt < shift < gui), and the l/r fold that
++-- maps held key-names onto them ('lctrl' -> 'ctrl').
++local mod_rank = {
++  ctrl = 1, alt = 2, shift = 3, gui = 4,
++}
++local mod_order = { 'ctrl', 'alt', 'shift', 'gui' }
++local fold_mod = { }
++for _, row in ipairs(mod_triples) do
++  fold_mod[row[1]] = row[3]
++  fold_mod[row[2]] = row[3]
++end
++
++--- Split a combo string into a generic-modifier set and the
++--- trigger token. Tokens fold l/r to generic names; anything
++--- that is not a modifier is the trigger (last one wins).
++--- @param combo string
++--- @return table mods
++--- @return string? trigger
++local function split_combo(combo)
++  local mods, trigger = { }, nil
++  for tok in combo:lower():gmatch('[^+]+') do
++    local g = fold_mod[tok] or tok
++    if mod_rank[g] then mods[g] = true else trigger = g end
++  end
++  return mods, trigger
++end
++
++--- Canonicalise a combo string (spec §1): lower-cased, l/r
++--- folded, modifiers in fixed precedence, trigger last,
++--- '+'-joined. 'Ctrl+S' -> 'ctrl+s'; bare 'S' -> 's'. Matches
++--- what combo_string() (controller.lua) emits at dispatch.
++--- @param combo string
++--- @return string
++local function normalize_combo(combo)
++  local mods, trigger = split_combo(combo)
++  local parts = { }
++  for _, name in ipairs(mod_order) do
++    if mods[name] then parts[#parts + 1] = name end
++  end
++  if trigger then parts[#parts + 1] = trigger end
++  return table.concat(parts, '+')
++end
++
++--- A project handlers sub-table (spec §1, R14): assigned combo
++--- keys normalise on registration, so handlers.keypressed
++--- ['Ctrl+S'] is stored (and dispatch-matched) as 'ctrl+s'.
++--- The default matcher is exact canonical lookup (O(1)); the
++--- normalising seam is where a future glob matcher would live.
++--- @return table
++local function new_handler_table()
++  return setmetatable({ }, {
++    __newindex = function(t, k, v)
++      rawset(t, normalize_combo(k), v)
++    end,
++  })
++end
+ 
+ --- @param k string
+ --- @return boolean
+@@ -43,11 +115,14 @@ local function alt()
+ end
+ 
+ Key = {
+-  is_enter = is_enter,
+-  shift    = shift,
+-  is_shift = is_shift,
+-  ctrl     = ctrl,
+-  is_ctrl  = is_ctrl,
+-  alt      = alt,
+-  is_alt   = is_alt,
++  mod_triples = mod_triples,
++  normalize_combo = normalize_combo,
++  new_handler_table = new_handler_table,
++  is_enter    = is_enter,
++  shift       = shift,
++  is_shift    = is_shift,
++  ctrl        = ctrl,
++  is_ctrl     = is_ctrl,
++  alt         = alt,
++  is_alt      = is_alt,
+ }
+diff --git a/src/view/input/userInputView.lua b/src/view/input/userInputView.lua
+index 73cbbd8..c552d14 100644
+--- a/src/view/input/userInputView.lua
++++ b/src/view/input/userInputView.lua
+@@ -16,7 +16,6 @@ local new = function(cfg, ctrl)
+     cfg = cfg,
+     controller = ctrl,
+     statusline = Statusline(cfg),
+-    oneshot = ctrl.model.oneshot,
+     start_h = h,
+     canvas = gfx.newCanvas(w, h),
+   }
+@@ -25,7 +24,6 @@ end
+ --- @class UserInputView : ViewBase
+ --- @field controller UserInputController
+ --- @field statusline table
+---- @field oneshot boolean
+ --- @field canvas love.Canvas
+ UserInputView = class.create(new)
+ 
+@@ -171,7 +169,7 @@ function UserInputView:render_input(input, status, time)
+ 
+         if tlc then
+           local ci = (function()
+-            if hl[tlc.l] then
++            if hl and hl[tlc.l] then
+               return hl[tlc.l][tlc.c]
+             end
+           end)()
+@@ -285,8 +283,14 @@ function UserInputView:render(input, status, time)
+ end
+ 
+ --- Draw the pre-rendered canvas to screen
++-- M6-01: oneshot is gone (AC-25); the published overlay
++-- singleton is the one view that skips this continuous
++-- per-frame update_view() ("a transitional workaround until
++-- rerenders are worked out", commit 7b4422c) — identity now
++-- stands in for what oneshot used to flag, since it was the
++-- only oneshot=true instance in production.
+ function UserInputView:draw()
+-  if not self.controller:is_oneshot() then
++  if self.controller ~= love.state.user_input_controller then
+     self.controller:update_view()
+   end
+   local b = self.cfg.statusline_border / 2

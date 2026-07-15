@@ -1,0 +1,891 @@
+diff --git a/src/controller/consoleController.lua b/src/controller/consoleController.lua
+index 37acd4a..11d6b31 100644
+--- a/src/controller/consoleController.lua
++++ b/src/controller/consoleController.lua
+@@ -253,10 +253,19 @@ function ConsoleController:run_project(name)
+       love.state.app_state = 'running'
+       local rok, run_err = run_user_code(f, self, path)
+       if not rok then
++        self.main_ctrl.release_keyboard_route(self)
+         love.state.app_state = 'project_open'
+         print('Error: ', run_err)
+       else
+         if not self.main_ctrl.user_is_blocking() then
++          -- An input-only / pointer-only project stays live
++          -- (ruling a): keep the project route so submit/cancel
++          -- and Ctrl+Esc->console work. Only a project with no
++          -- interaction surface hands the keyboard back to the
++          -- console.
++          if not self.main_ctrl.user_is_interactive() then
++            self.main_ctrl.release_keyboard_route(self)
++          end
+           love.state.app_state = 'project_open'
+         end
+       end
+@@ -309,6 +318,10 @@ local compy_audio = require("util.audio")
+ local compy_graphics = {
+   shape2d = require("util.graphics.shape2d")
+ }
++-- Builds the `compy.terminal` sub-namespace — the console OUTPUT surface. These wrap the live
++-- `terminal` (the REPL/console text grid): position the grid cursor (gotoxy), show/hide it, and
++-- clear the screen. This is where a project WRITES to the console; it is always present while the
++-- project runs. Contrast with `compy.input` below, which is the input-solicitation surface.
+ local get_compy_terminal = function(terminal)
+   return {
+     --- @param x number
+@@ -328,14 +341,241 @@ local get_compy_terminal = function(terminal)
+     end
+   }
+ end
++-- Builds the `compy.input` sub-namespace — the input-SOLICITATION surface, complementary to
++-- compy.terminal (above). Where compy.terminal is the always-present console OUTPUT grid that the
++-- project WRITES to, compy.input is a transient overlay widget the project pops up to ASK the user
++-- for text and get a value back (show/hide the field now; configure/cursor/text planned). The two
++-- "cursor" notions differ: terminal.gotoxy moves the console grid cursor, whereas the planned
++-- input.get_cursor/set_cursor address the caret WITHIN the input field.
++-- By architectural contract these wrappers are the ONLY project-facing surface for the input
++-- singleton: they wrap UserInputController (love.state.user_input_controller); projects never touch
++-- the controller directly. Namespace + lifecycle docs: doc/development/internals/user_input.md.
++-- DEFERRED (0.1.0-m7): whether to pre-stub the planned methods (configure/clear/get_cursor/
++-- set_cursor/set_text) here as explicit not-implemented no-ops is unsettled — to be resolved in the
++-- m7 design session.
++-- The project-assignable tier-3 generic callbacks (spec §7 /
++-- R3), the four widget outputs (chunk 2), and the four
++-- submit/cancel hooks (chunk 3, AC-26/33). Everything else on
++-- compy.input is callable API and raises loudly on assignment
++-- (AC-33). The hooks are read directly off this surface by the
++-- framework tier-1 return/escape entries
++-- (projectInputController.lua) — never mirrored onto the
++-- widget, unlike the widget-output slots below.
++local INPUT_CALLBACKS = {
++  on_key_pressed    = true,
++  on_text_input     = true,
++  on_key_released   = true,
++  on_text_entered   = true,
++  on_limit_reached  = true,
++  validator         = true,
++  highlighter       = true,
++  before_submit     = true,
++  after_submit      = true,
++  before_cancel     = true,
++  after_cancel      = true,
++}
++
++--- Assemble the compy.input surface over its backing `state`
++--- (the three normalising handler sub-tables + the tier-3
++--- callback slots) and the callable `methods`. The R3 boundary
++--- lives in the metatable: reads resolve handlers / callbacks /
++--- methods; writes are refused unless the key is an allowed
++--- tier-3 callback (AC-33 — loud error, never a silent swallow).
++--- The proxy table itself stays empty so __newindex fires for
++--- every assignment (a raw data key would bypass the guard).
++--- @param state table
++--- @param methods table
++--- @return table
++local function build_input_surface(state, methods)
++  return setmetatable({ }, {
++    __index = function(_, k)
++      if k == 'handlers' then return state.handlers end
++      if INPUT_CALLBACKS[k] then return state[k] end
++      return methods[k]
++    end,
++    __newindex = function(_, k, v)
++      if not INPUT_CALLBACKS[k] then
++        error("compy.input: '" .. tostring(k)
++          .. "' is not assignable", 2)
++      end
++      state[k] = v
++    end,
++  })
++end
++
++-- The four widget-output slots (D-b): show()/configure() config
++-- key and direct field-write share one underlying `state` slot,
++-- sticky across shows until overwritten (M5c behaviour; the M7
++-- live-reconfigure surface below leaves this unchanged).
++local OUTPUT_KEYS = {
++  'on_text_entered',
++  'on_limit_reached',
++  'validator',
++  'highlighter',
++}
++
++-- prompt/text/cursor are per-show fields (never sticky at
++-- this layer) — EXCEPT when configure() stashes them while
++-- hidden: then they apply once, on the very next show().
++local PENDING_KEYS = { 'prompt', 'text', 'cursor' }
++
++--- Merge the sticky output-callback state into a show()/
++--- configure() config in place: an explicit value wins and is
++--- written back into `state`; an absent one defaults to the
++--- last-known value.
++--- @param state table
++--- @param cfg table
++local function merge_output_keys(state, cfg)
++  for _, k in ipairs(OUTPUT_KEYS) do
++    if cfg[k] ~= nil then state[k] = cfg[k] end
++    cfg[k] = state[k]
++  end
++end
++
++--- Consume the hidden-configure pending prompt/text/cursor
++--- (AC-3/AC-4): spent on this show() regardless of whether it
++--- ends up used (an explicit cfg value at this same show() call
++--- wins) — a later bare show() must not keep re-injecting a
++--- stale draft.
++--- @param pending table
++--- @param cfg table
++local function consume_pending(pending, cfg)
++  for _, k in ipairs(PENDING_KEYS) do
++    if cfg[k] == nil then cfg[k] = pending[k] end
++    pending[k] = nil
++  end
++end
++
++--- Stash configure()'s provided prompt/text/cursor into the
++--- pending slot for consumption by the next show() (AC-4);
++--- output-callback fields go through the same sticky `state`
++--- slots show() already reads — persisted, never applied
++--- live (there is no active session to apply them to).
++--- @param state table
++--- @param cfg table
++local function stash_hidden_configure(state, cfg)
++  merge_output_keys(state, cfg)
++  for _, k in ipairs(PENDING_KEYS) do
++    if cfg[k] ~= nil then state.pending[k] = cfg[k] end
++  end
++end
++
++-- Builds the compy.input surface: the four-tier dispatch surface
++-- (spec §2) a project registers against. `handlers.<event>` are
++-- the R14 per-event combo sub-tables (normalising, §1); the
++-- on_* slots are the tier-3 generic callbacks. show/hide drive
++-- the singleton overlay (resolved from love.state, never held by
++-- the project).
++local get_compy_input = function()
++  local state = {
++    handlers = {
++      keypressed  = Key.new_handler_table(),
++      keyreleased = Key.new_handler_table(),
++      textinput   = Key.new_handler_table(),
++    },
++    pending = { },
++  }
++  local methods = {
++    show = function(cfg)
++      local next_cfg = cfg or {}
++      merge_output_keys(state, next_cfg)
++      consume_pending(state.pending, next_cfg)
++      local ui = love.state.user_input_controller
++      if ui then ui:show(next_cfg) end
++    end,
++    hide = function()
++      local ui = love.state.user_input_controller
++      if ui then ui:hide() end
++    end,
++    -- AC-6/D-8: 1-based (line, col); nil when hidden — a
++    -- plain read of "nothing to report", not a refused
++    -- mutation, so unlike set_cursor/set_text below it does
++    -- not warn (spec.md §6 phrasing).
++    get_cursor = function()
++      if not love.state.user_input then return nil end
++      local ui = love.state.user_input_controller
++      return ui:get_cursor_pos()
++    end,
++    -- AC-7/AC-9: clamped move; no-op + warn while hidden.
++    set_cursor = function(line, col)
++      if not love.state.user_input then
++        Log.warn('compy.input.set_cursor ignored — hidden')
++        return
++      end
++      love.state.user_input_controller:set_cursor_pos(line, col)
++    end,
++    -- AC-8/AC-9: replace content (cursor to end, or kept +
++    -- clamped); no-op + warn while hidden; view updates via
++    -- the controller's set_text (no re-show, AC-8).
++    set_text = function(text, keep_cursor)
++      if not love.state.user_input then
++        Log.warn('compy.input.set_text ignored — hidden')
++        return
++      end
++      local ui = love.state.user_input_controller
++      ui:set_text(text, keep_cursor)
++    end,
++    -- AC-1/2/3/4/9/11: live update on an active session (only
++    -- the Contract's live-updatable set — prompt/highlighter/
++    -- validator/widget outputs; text/cursor inert there); safe
++    -- + un-warned while hidden — provided fields persist (via
++    -- state/pending, same slots show() reads) for the very next
++    -- show(). Never a partial/silent apply either way.
++    configure = function(cfg)
++      local next_cfg = cfg or { }
++      if not love.state.user_input then
++        stash_hidden_configure(state, next_cfg)
++        return
++      end
++      merge_output_keys(state, next_cfg)
++      love.state.user_input_controller:configure(next_cfg)
++    end,
++    -- AC-5/AC-9: empty content + cursor to start, no callback;
++    -- no-op + warn while hidden. Refreshes the view directly
++    -- (no re-show) — reuses the controller's existing clear()
++    -- (content + error state).
++    clear = function()
++      if not love.state.user_input then
++        Log.warn('compy.input.clear ignored — hidden')
++        return
++      end
++      local ui = love.state.user_input_controller
++      ui:clear()
++      ui:update_view()
++    end,
++  }
++  return build_input_surface(state, methods)
++end
++
++local function default_before_exit()
++  Log.debug('compy.before_exit noop')
++end
++
++-- Builds the `compy.*` table injected into a project's sandbox env (terminal, audio, graphics,
++-- fonts, input); called while preparing the project environment.
+ local get_compy_namespace = function(terminal)
+   require("util.namespace.fonts")
+-  return {
++  local before_exit_slot = default_before_exit
++  local ns = {
+     terminal = get_compy_terminal(terminal),
+     audio = compy_audio,
+     graphics = compy_graphics,
+-    fonts = CompyFonts()
++    fonts = CompyFonts(),
++    input = get_compy_input(),
+   }
++  return setmetatable(ns, {
++    __index = function(t, k)
++      if k == 'before_exit' then return before_exit_slot end
++      return rawget(t, k)
++    end,
++    __newindex = function(t, k, v)
++      if k == 'before_exit' then
++        before_exit_slot = v
++      else
++        rawset(t, k, v)
++      end
++    end,
++  })
+ end
+ 
+ function ConsoleController.prepare_env(cc)
+@@ -552,70 +792,6 @@ function ConsoleController.prepare_project_env(cc)
+     close_project(cc)
+   end
+ 
+-  local ui_model, ui_con, input_ref
+-  local create_input_handle   = function()
+-    input_ref = table.new_reftable()
+-  end
+-
+-  --- @param eval Evaluator
+-  --- @param prompt string?
+-  --- @param init str?
+-  local input                 = function(eval, prompt, init)
+-    if love.state.user_input then
+-      return -- there can be only one
+-    end
+-
+-    if not input_ref then return end
+-    ui_model = UserInputModel(cfg, eval, true, prompt)
+-    ui_model:set_text(init)
+-    ui_con = UserInputController(ui_model, input_ref, true)
+-    local view = UserInputView(cfg.view, ui_con)
+-    ui_con:init_view(view)
+-    ui_con:update_view()
+-
+-    love.state.user_input = {
+-      M = ui_model, C = ui_con, V = view
+-    }
+-    return input_ref
+-  end
+-
+-  project_env.user_input      = function()
+-    create_input_handle()
+-    return input_ref
+-  end
+-
+-  --- @param prompt string?
+-  --- @param init str?
+-  project_env.input_code      = function(prompt, init)
+-    return input(InputEvalLua, prompt, init)
+-  end
+-  --- @param prompt string?
+-  --- @param init str?
+-  project_env.input_text      = function(prompt, init)
+-    return input(InputEvalText, prompt, init)
+-  end
+-
+-  --- @param content str
+-  project_env.write_to_input  = function(content)
+-    if not love.state.user_input then
+-      return
+-    end
+-    ui_model:set_text(content)
+-    ui_con:update_view()
+-  end
+-
+-  --- @param filters table
+-  --- @param prompt string?
+-  project_env.validated_input = function(filters, prompt)
+-    return input(ValidatedTextEval(filters), prompt)
+-  end
+-
+-  if love.debug then
+-    project_env.astv_input = function()
+-      return input(LuaEditorEval)
+-    end
+-  end
+-
+   --- @param name string
+   project_env.edit           = function(name)
+     return cc:edit(name)
+@@ -625,7 +801,6 @@ function ConsoleController.prepare_project_env(cc)
+ 
+   local terminal             = cc.model.output.terminal
+   local compy_namespace      = get_compy_namespace(terminal)
+-  compy_namespace.text_input = input_text
+   project_env.compy          = compy_namespace
+ 
+   project_env.eval           = LANG.eval
+@@ -859,12 +1034,15 @@ end
+ 
+ function ConsoleController:stop_project_run()
+   self:evacuate_required()
++  local compy = self:get_project_env().compy
++  compy.before_exit()
+   self.main_ctrl.set_default_handlers(self, self.view)
+   self.main_ctrl.set_love_update(self)
+   love.state.user_input = nil
+   View.clear_snapshot()
+   self.main_ctrl.set_love_draw(self, self.view)
+-  self.main_ctrl.clear_user_handlers()
++  self.main_ctrl.clear_user_handlers(self)
++  compy.before_exit = default_before_exit
+   self.main_ctrl.report()
+   love.state.app_state = 'project_open'
+ end
+diff --git a/src/controller/userInputController.lua b/src/controller/userInputController.lua
+index ed087f7..ceeb1a2 100644
+--- a/src/controller/userInputController.lua
++++ b/src/controller/userInputController.lua
+@@ -2,6 +2,7 @@ local class = require('util.class')
+ require("util.key")
+ require("util.view")
+ require("util.string.string")
++require("util.lua")
+ 
+ --- @param model UserInputModel
+ --- @param result table?
+@@ -11,6 +12,9 @@ local new = function(model, result, disable_selection)
+     model = model,
+     result = result,
+     disable_selection = disable_selection,
++    -- default keeps emit_limit an unconditional alias below;
++    -- apply_config overwrites it when a widget sets one.
++    on_limit_reached = noop,
+   }
+ end
+ 
+@@ -21,11 +25,6 @@ end
+ --- @field disable_selection boolean
+ UserInputController = class.create(new)
+ 
+---- @return boolean
+-function UserInputController:is_oneshot()
+-  return self.model.oneshot
+-end
+-
+ --- @param v UserInputView
+ function UserInputController:init_view(v)
+   self.view = v
+@@ -52,8 +51,9 @@ function UserInputController:get_text()
+ end
+ 
+ --- @param t str
+-function UserInputController:set_text(t)
+-  self.model:set_text(t)
++--- @param keep_cursor boolean?
++function UserInputController:set_text(t, keep_cursor)
++  self.model:set_text(t, keep_cursor)
+   self:update_view()
+ end
+ 
+@@ -65,9 +65,10 @@ function UserInputController:is_empty()
+ end
+ 
+ --- @param dir VerticalDir?
++--- @param scope 'input'|'line'?
+ --- @return boolean
+-function UserInputController:is_at_limit(dir)
+-  return self.model:is_at_limit(dir)
++function UserInputController:is_at_limit(dir, scope)
++  return self.model:is_at_limit(dir, scope)
+ end
+ 
+ ----------------
+@@ -120,6 +121,23 @@ function UserInputController:set_cursor(cursor)
+   return self.model:set_cursor(cursor)
+ end
+ 
++--- Clamped 2D move (compy.input.set_cursor, AC-7). Named
++--- apart from set_cursor(Cursor) above — that raw primitive
++--- already has a different signature/caller (editorController
++--- load_selection); this computes a valid landing itself
++--- (byte length, matching move_cursor's own bound) rather
++--- than relying on move_cursor's fallback-to-previous, which
++--- does not clamp an out-of-range value to the line/text end.
++--- @param line integer
++--- @param col integer
++function UserInputController:set_cursor_pos(line, col)
++  local n = self.model:get_n_text_lines()
++  local l = math.max(1, math.min(line, n))
++  local llen = #(self.model:get_text_line(l))
++  local c = math.max(1, math.min(col, llen + 1))
++  self.model:move_cursor(l, c)
++end
++
+ -----------
+ -- error --
+ -----------
+@@ -150,8 +168,14 @@ function UserInputController:evaluate()
+   return ok, res
+ end
+ 
++--- Cancel (AC-19): clear + hide unconditionally — Escape now
++--- genuinely dismisses. The framework tier-1 escape entry
++--- (projectInputController.lua) is what calls this for the
++--- project widget; the sink's own escape-clears-only local
++--- below (console/editor's own routes) is unchanged.
+ function UserInputController:cancel()
+   self.model:cancel()
++  self:hide()
+ end
+ 
+ function UserInputController:jump_home()
+@@ -174,27 +198,270 @@ function UserInputController:history_fwd()
+   self.model:history_fwd()
+ end
+ 
++----------------------
++--- singleton API  ---
++----------------------
++
++-- Internal singleton API. Not called by projects directly — only via the compy.input.*
++-- wrappers (consoleController). Free functions rather than class methods because they are
++-- private helpers to show()/hide() below.
++
++--- @param self UserInputController
++--- @param cfg table
++local apply_config = function(self, cfg)
++  if cfg.eval then
++    self.model:set_eval(cfg.eval)
++  end
++  if cfg.prompt ~= nil then
++    self.model.custom_label = cfg.prompt
++  end
++  if cfg.text ~= nil then
++    self.model:set_text(cfg.text)
++  end
++  -- result = the reftable the caller polls (r:is_empty()/r()); the submit path writes the
++  -- evaluated value into it. (Legacy poll idiom; superseded by the callback API in 0.1.0-m5/m6.)
++  if cfg.result ~= nil then
++    self.result = cfg.result
++  end
++  local ev = self.model.evaluator
++  if cfg.highlighter ~= nil and ev then
++    ev.highlighter = cfg.highlighter
++  end
++  if cfg.validator ~= nil then
++    self.validator = cfg.validator
++  end
++  if cfg.on_text_entered ~= nil then
++    self.on_text_entered = cfg.on_text_entered
++  end
++  if cfg.on_limit_reached ~= nil then
++    self.on_limit_reached = cfg.on_limit_reached
++  end
++end
++
++--- Fresh activation of the singleton overlay: clear content when no text is given, apply
++--- config, publish the overlay handle, render once. Called only by show() on the
++--- inactive->active transition (show() guards against re-entry while active). The
++--- clear-on-no-text lives here, not in apply_config, because it is activation policy
++--- (a re-show with no text starts empty) rather than per-field config.
++--- `cursor` (a `{line, col}` pair) lands here too, applied
++--- after text (spec.md §3) — kept out of apply_config so
++--- the live-reconfigure path (configure() below) can never
++--- reach it.
++--- @param self UserInputController
++--- @param cfg table
++local open_fresh = function(self, cfg)
++  if cfg.text == nil then
++    self.model:clear_input()
++  end
++  apply_config(self, cfg)
++  if cfg.cursor ~= nil then
++    self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
++  end
++  -- love.state.user_input is the overlay CONTRACT: its presence is the flag the draw loop
++  -- (controller.lua) checks to paint V:draw() each frame, and it carries the { M, C, V }
++  -- handle the legacy poll idiom reads. Drivers change but the flag persists through
++  -- 0.1.0-m8. NOTE: factoring this into a named setup_legacy_user_input() and the
++  -- open_fresh/init naming are open A5 items (see M2-human-review.md) — deferred to the
++  -- 0.1.0-m4 architect pass, not changed here.
++  love.state.user_input = {
++    M = self.model,
++    C = self,
++    V = self.view,
++  }
++  self:update_view()
++end
++
++--- Activate the singleton.
++--- No-op if already active, unless force=true.
++--- @param config table?
++function UserInputController:show(config)
++  local cfg = config or {}
++  if love.state.user_input then
++    -- C2 (warn-don't-swallow): a plain show() over an active overlay is suppressed; say so.
++    if not cfg.force then
++      Log.warn('UserInputController:show ignored — overlay already active (pass force=true to override)')
++      return
++    end
++    -- force=true intentionally applies only the text subset of cfg on an active overlay;
++    -- a full live reconfigure is the compy.input API arriving in 0.1.0-m7. Other fields
++    -- are ignored here by design.
++    if cfg.text ~= nil then
++      self.model:set_text(cfg.text)
++      self:update_view()
++    end
++    return
++  end
++  open_fresh(self, cfg)
++end
++
++--- Deactivate without firing the cancel chain. Clearing love.state.user_input is what
++--- "hides" the overlay: the draw loop (controller.lua) paints V:draw() only while the flag
++--- is set, so nil-ing it stops the paint on the next frame. (Flag-presence vs. querying
++--- controller state is the A5 contract question — see M2-human-review.md.)
++function UserInputController:hide()
++  love.state.user_input = nil
++end
++
++--- Live-reconfigure an active session (compy.input.configure,
++--- AC-1/2/11 — the M7-01 boundary decision closed here): only
++--- the Contract's live-updatable set reaches apply_config —
++--- prompt/highlighter/validator/widget-output callbacks. text/
++--- cursor/eval/result never reach it from here — accepted but
++--- inert on an active session (use set_text/set_cursor, or
++--- clear()+show()); no partial/silent path exists because this
++--- filtered table is the only thing configure() ever applies.
++--- @param cfg table
++function UserInputController:configure(cfg)
++  apply_config(self, {
++    prompt           = cfg.prompt,
++    highlighter      = cfg.highlighter,
++    validator        = cfg.validator,
++    on_text_entered  = cfg.on_text_entered,
++    on_limit_reached = cfg.on_limit_reached,
++  })
++  self:update_view()
++end
++
++----------------------
++--- submit / cancel ---
++----------------------
++
++-- Spec §5 (AC-17/18/42(b)): the framework tier-1 return entry
++-- (projectInputController.lua) calls submit(); before_/
++-- after_submit are route-owned (read off compy_input there,
++-- not stored here) — this is only the widget's own middle
++-- step: validate -> deliver -> deactivate.
++
++--- Validator gate (AC-18/AC-42(b)). No custom validator
++--- accepts unconditionally; a set validator's ok/err_msg
++--- verdict decides, locking the session on reject via the
++--- existing has_error()/clear_error() gate in keypressed().
++--- @param model UserInputModel
++--- @param validator function?
++--- @param text string
++--- @return boolean ok
++local function gate(model, validator, text)
++  if not validator then return true end
++  local ok, err = validator(text)
++  if not ok then model:set_error({ err }) end
++  return ok
++end
++
++--- @param label string
++local function debug_noop(label)
++  if love.DEBUG then
++    Log.debug('input: ' .. label .. ' noop')
++  end
++end
++
++--- Submit delivery (AC-17): fills the legacy poll reftable
++--- (spec §5 mechanism note — the push('userinput') producer
++--- is gone, the synchronous fill survives to M8) and fires
++--- the widget output while the session is still active
++--- (AC-25 observable order).
++--- @param self UserInputController
++--- @param text string
++local function deliver(self, text)
++  local res = self.result
++  if type(res) == 'table' then res(text) end
++  local cb = self.on_text_entered
++  if cb then
++    cb(text)
++  else
++    debug_noop('on_text_entered')
++  end
++end
++
++--- Submit (AC-17/18/42(b)): validate the assembled text,
++--- deliver + deactivate on accept, lock on reject. An empty
++--- input submits nothing (pre-existing solicitation
++--- behaviour, carried unchanged — not an AC-17..26 concern).
++--- @return string? text  delivered text; nil on reject/empty
++function UserInputController:submit()
++  if self.model:get_text():is_empty() then return nil end
++  local text = string.unlines(self.model:get_text())
++  if not gate(self.model, self.validator, text) then
++    return nil
++  end
++  deliver(self, text)
++  self:hide()
++  return text
++end
++
+ ----------------------
+ --- event handlers ---
+ ----------------------
+ 
++--- The terminal sink of the project route's chain runs on the
++--- ONE published overlay singleton (love.state.user_input_
++--- controller). It is "shown" only while love.state.user_input
++--- is set (show()/hide() toggle it). A keystroke reaching the
++--- sink while the overlay is hidden must mutate nothing (AC-11/
++--- AC-13) — this is the chain's INTERNAL hidden-check, replacing
++--- the old external gating wrapper. The console REPL input is a
++--- DIFFERENT UserInputController instance (never the published
++--- singleton), so this never gates ordinary console typing.
++--- @return boolean
++function UserInputController:_is_hidden_overlay()
++  return self == love.state.user_input_controller
++      and not love.state.user_input
++end
++
++--- @return boolean
++--- Mirrors _is_hidden_overlay above rather than duplicating
++--- the sink's check (per the prompt): the framework tier-1
++--- return/escape entries (projectInputController.lua) gate
++--- engagement on this (AC-20/21).
++function UserInputController:is_shown()
++  return not self:_is_hidden_overlay()
++end
++
+ ----------------
+ --  keyboard  --
+ ----------------
+ 
+ --- @param k string
++--- @param keys_pressed table?  read-only held-key proxy (spec §1)
++--- @param isr boolean?
+ --- @return boolean? limit
+-function UserInputController:keypressed(k)
++-- The sink now receives the uniform (k, keys_pressed, isr)
++-- triple (spec §2 / AC-8; resolves the m4/m5 A2 open note). Its
++-- own editing logic still reads modifiers via Key.* (love.
++-- keyboard) — widening that to the proxy is not required here.
++function UserInputController:keypressed(k, keys_pressed, isr)
++  if self:_is_hidden_overlay() then
++    if love.DEBUG then Log.debug('input sink: hidden no-op') end
++    return
++  end
++  -- Defensive render-on-entry: guarantees the view catches up to the model even if a prior
++  -- branch returned without re-rendering. Mutating branches below re-render at their end,
++  -- so this is belt-and-suspenders, not the primary update.
+   self:update_view()
++  -- _G.web: web/love.js build flag (pre-existing, not part of #77). On web, space may not
++  -- emit textinput, so synthesise it here.
+   if _G.web and k == 'space' then
+     self:textinput(' ')
+   end
+   local input = self.model
+   local ret
+ 
++  local function emit_limit(dir, scope)
++    self.on_limit_reached(dir, scope)
++  end
++
++  local function horizontal_limit_scope(dir)
++    if input:get_n_text_lines() == 1 then return 'input' end
++    if input:is_at_limit(dir, 'input') then return 'input' end
++    return 'line'
++  end
++
++  -- (combo serialisation lives in controller.lua; this sink only sees the raw key.)
++  -- AC-18: locked-on-reject unlocks on Enter/Space/arrows.
+   if input:has_error() then
+     if Key.is_enter(k)
+         or k == "up" or k == "down"
++        or k == "left" or k == "right"
++        or k == "space"
+     then
+       input:clear_error()
+     end
+@@ -251,10 +518,12 @@ function UserInputController:keypressed(k)
+     if k == "up" then
+       local l = input:cursor_vertical_move('up')
+       ret = l
++      if l then emit_limit('up', 'input') end
+     end
+     if k == "down" then
+       local l = input:cursor_vertical_move('down')
+       ret = l
++      if l then emit_limit('down', 'input') end
+     end
+     if Key.alt() then
+       if k == "up" then
+@@ -266,6 +535,12 @@ function UserInputController:keypressed(k)
+     end
+   end
+   local function horizontal()
++    if k == "left" and input:is_at_limit('left', 'line') then
++      emit_limit('left', horizontal_limit_scope('left'))
++    end
++    if k == "right" and input:is_at_limit('right', 'line') then
++      emit_limit('right', horizontal_limit_scope('right'))
++    end
+     if k == "left" then
+       input:cursor_left()
+     end
+@@ -336,28 +611,24 @@ function UserInputController:keypressed(k)
+     end
+   end
+ 
++  -- Console/editor's OWN escape-clears-only behaviour (not
++  -- the project widget's cancel chain, spec §5 AC-19): the
++  -- framework tier-1 escape entry intercepts before this sink
++  -- ever sees the key for the project route's shown widget, so
++  -- this only fires for console/editor's own routes, which
++  -- have no tier-1 layer yet (console/editor migration is a
++  -- later, out-of-slice follow-on).
+   local function cancel()
+     if not Key.ctrl() and k == "escape" then
+       input:cancel()
+     end
+   end
+-  local function submit()
+-    if self.model:get_text():is_empty() then return end
+-    if not Key.shift() and Key.is_enter(k) and input.oneshot then
+-      local ok, evret = input:evaluate()
+-      if ok then
+-        local text = evret
+-        local res = self.result
+-        if type(res) == "table" then
+-          local t = string.unlines(text)
+-          res(t)
+-        end
+-      else
+-        local err = evret
+-        input:set_error(err)
+-      end
+-    end
+-  end
++
++  -- AC-25: the old oneshot-gated submit local (fill the legacy
++  -- reftable + push('userinput')) is gone — the project
++  -- widget's submit now runs through the framework tier-1
++  -- return entry (projectInputController.lua ->
++  -- UserInputController:submit()), never through this sink.
+ 
+   if love.state.app_state == 'editor' then
+     removers()
+@@ -368,8 +639,6 @@ function UserInputController:keypressed(k)
+ 
+     copypaste()
+     selection()
+-
+-    submit()
+   else
+     -- normal behavior
+     removers()
+@@ -381,7 +650,6 @@ function UserInputController:keypressed(k)
+     selection()
+ 
+     cancel()
+-    submit()
+   end
+ 
+   self:update_view()
+@@ -389,12 +657,18 @@ function UserInputController:keypressed(k)
+ end
+ 
+ --- @param t string
+-function UserInputController:textinput(t)
+-  self:update_view()
+-  if self.model:has_error() then
++--- @param keys_pressed table?  read-only held-key proxy (spec §1)
++-- Uniform textinput signature (spec §2 / AC-8). Visibility is
++-- decided by the internal hidden-check (shown -> edit; hidden ->
++-- no-op), which supersedes the old self.result/running gate: a
++-- shown widget edits regardless of the legacy poll reftable.
++function UserInputController:textinput(t, keys_pressed)
++  if self:_is_hidden_overlay() then
++    if love.DEBUG then Log.debug('input sink: hidden no-op') end
+     return
+   end
+-  if not self.result and love.state.app_state == 'running' then
++  self:update_view()
++  if self.model:has_error() then
+     return
+   end
+   self.model:add_text(t)
+@@ -402,7 +676,12 @@ function UserInputController:textinput(t)
+ end
+ 
+ --- @param k string
+-function UserInputController:keyreleased(k)
++--- @param keys_pressed table?  read-only held-key proxy (spec §1)
++function UserInputController:keyreleased(k, keys_pressed)
++  if self:_is_hidden_overlay() then
++    if love.DEBUG then Log.debug('input sink: hidden no-op') end
++    return
++  end
+   local input = self.model
+   self:update_view()
+ 
+diff --git a/src/main.lua b/src/main.lua
+index a0bb4d3..3a29b22 100644
+--- a/src/main.lua
++++ b/src/main.lua
+@@ -357,6 +357,19 @@ function love.load()
+   local CC = ConsoleController(CM, ctrl)
+   local CV = ConsoleView(baseconf, CC)
+ 
++  -- UserInput M/V/C are constructed explicitly here (mirroring the Console M/V/C triple above)
++  -- and injected, not self-provisioned by the controller. Whether the controller should own its
++  -- model/view construction is the open A5 question — see implementation/reviews/M2-human-review.md.
++  local ui_m = UserInputModel(baseconf, InputEvalText)
++  local ui_c = UserInputController(ui_m, nil, true)
++  local ui_v = UserInputView(baseconf.view, ui_c)
++  -- init_view binds the view to the controller (self.view = v); it is NOT an activation/show.
++  ui_c:init_view(ui_v)
++  -- App-wide handle for the singleton: the compy.input wrappers and the overlay draw path resolve
++  -- the controller through love.state (service-locator pattern; the flag/registry shape is part of
++  -- the A5 contract question).
++  love.state.user_input_controller = ui_c
++
+   ctrl.setup_callback_handlers(CC)
+   ctrl.set_default_handlers(CC, CV)
+ 

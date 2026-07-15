@@ -1,0 +1,612 @@
+diff --git a/doc/development/conventions/architecture_principles.md b/doc/development/conventions/architecture_principles.md
+index 29359f5..dc4c570 100644
+--- a/doc/development/conventions/architecture_principles.md
++++ b/doc/development/conventions/architecture_principles.md
+@@ -1,5 +1,7 @@
+ # Architecture Principles
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ Compy is an educational artifact as much as a software project. Its architecture reflects that: the goal is to model good habits for students, not to maximize abstraction or minimize developer friction.
+ 
+ ---
+diff --git a/doc/development/conventions/code.md b/doc/development/conventions/code.md
+index e79ff56..094834f 100644
+--- a/doc/development/conventions/code.md
++++ b/doc/development/conventions/code.md
+@@ -1,5 +1,7 @@
+ # Code Conventions
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ > These conventions are not fully fixed — they evolve with experience. Some are unique to this project by design.
+ > Further discussion: https://github.com/compy-toys/compy/issues/54
+ 
+diff --git a/doc/development/conventions/git.md b/doc/development/conventions/git.md
+index 212baa4..62773a6 100644
+--- a/doc/development/conventions/git.md
++++ b/doc/development/conventions/git.md
+@@ -1,5 +1,7 @@
+ # Commit Message Conventions
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ This project follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). The primary motivation is **automatic semantic versioning** — commit types signal the severity of a change, not just its category.
+ 
+ ## Types
+diff --git a/doc/development/docs.md b/doc/development/docs.md
+index 18dd97f..0653178 100644
+--- a/doc/development/docs.md
++++ b/doc/development/docs.md
+@@ -1,5 +1,7 @@
+ # Project Documentation Review
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ Assessment of `doc/` relative to the codebase and the knowledge base under `doc/development/`. Organised into: relevant (usable as-is), drift (needs attention), gaps.
+ 
+ ---
+diff --git a/doc/development/drawing_system.md b/doc/development/drawing_system.md
+index 4f04465..19bce88 100644
+--- a/doc/development/drawing_system.md
++++ b/doc/development/drawing_system.md
+@@ -1,5 +1,7 @@
+ # Drawing System
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ ## Two Modes
+ 
+ User projects can draw in one of two ways, selected by whether `love.draw` is overridden.
+diff --git a/doc/development/internals/console.md b/doc/development/internals/console.md
+index dacae48..2036004 100644
+--- a/doc/development/internals/console.md
++++ b/doc/development/internals/console.md
+@@ -1,5 +1,7 @@
+ # Console Mode — Implementation Overview
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ Console mode is the default application state — active when no project is running and the editor is not open. It presents the user with a REPL-like interface: type Lua, press Enter, see results. It is also the lifecycle manager for projects: opening, running, suspending, stopping, and closing them.
+ 
+ ---
+@@ -102,24 +104,30 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
+ 
+ ## The `user_input` Overlay
+ 
+-Projects can request live text input mid-run. This creates a second `UserInputModel` overlaid on top of the console. Three API variants:
+-
+-```lua
+-r = user_input()          -- bare reference, project polls r:is_empty() / r()
+-r = input_text("prompt")  -- text evaluator
+-r = input_code("prompt")  -- Lua evaluator (syntax-highlighted)
+-r = validated_input({validators}, "prompt")  -- custom validation
+-```
+-
+-Implementation: calling any of these creates a new `UserInputModel` + `UserInputController` + `UserInputView` and stores the triplet in `love.state.user_input`. The event dispatch in `love.handlers.keypressed` checks this: if set, key events go to the overlay controller, not the main console input.
+-
+-The return handle `r` is a `reftable` — a callable table used as a mutable reference. Call it with a value to store (`ref(val)`), call it without arguments to retrieve (`ref()`). `r:is_empty()` returns true until a value is stored. Once the user submits, `r()` returns the value and `r:is_empty()` becomes true again (oneshot semantics). `write_to_input(content)` lets the project pre-fill the input.
+-
+-The same `reftable` pattern appears in the test infrastructure (`tests/testutil.lua:get_save_function`) as a general-purpose mutable reference.
+-
+-This is the standard pattern for interactive games that need live input (guess, turtle, tixy, repl). Only one overlay can exist at a time (`if love.state.user_input then return end`).
+-
+-Source: `prepare_project_env` (line 555–611), `love.state.user_input` handling in `controller.lua` handlers.
++Projects can request live text input mid-run via `compy.input.*`
++**(supported since 1.0.0-rc20260712)**
++(`show`/`hide`/`configure`/`clear`/`set_text`, callback slots
++`on_text_entered`/`after_submit`/etc. — the full surface is in
++[`user_input.md`](user_input.md), and the project-author usage guide
++is [`../../input_api.md`](../../input_api.md)). This creates a second
++`UserInputModel` overlaid on top of the console. Calling `show`
++creates/reuses the singleton `UserInputController`/`UserInputView`
++and stores the triplet in `love.state.user_input`. The event
++dispatch in `love.handlers.keypressed` checks this: if set, key
++events go to the overlay controller, not the main console input.
++Only one overlay can exist at a time
++(`if love.state.user_input then return end`).
++
++Source: `prepare_project_env` (`consoleController.lua`),
++`love.state.user_input` handling in `controller.lua` handlers.
++
++The five legacy globals this replaced (`user_input()`,
++`input_text()`, `input_code()`, `validated_input()`,
++`write_to_input()` — a bare poll-a-reftable idiom, one call
++returning a callable `reftable` the project polled with
++`r:is_empty()`/`r()` each frame) are **(deprecated, removed in
++1.0.0-rc20260712)**; calling any of them now is an ordinary `nil`
++call, no shim.
+ 
+ ---
+ 
+@@ -133,7 +141,7 @@ Projects receive a `compy` table with:
+ | `compy.terminal` | VT-100 terminal control (`gotoxy`, `clear`, `show_cursor`, `hide_cursor`) |
+ | `compy.graphics` | Extended graphics (`shape2d`) — `src/util/graphics/shape2d.lua` |
+ | `compy.fonts` | Font path constants (`mono`, `sans`, `serif`, etc.) — `src/util/namespace/fonts.lua` |
+-| `compy.text_input` | Alias for `input_text` (project env only) |
++| `compy.input` | Text input widget surface (`show`/`hide`/`configure`/`clear`/`set_text`) — see [`user_input.md`](user_input.md) |
+ 
+ `compy.terminal` wraps the VT-100 terminal instance directly (the same terminal that renders the console output). Projects can use it for text-mode output within their run context.
+ 
+diff --git a/doc/development/internals/editor.md b/doc/development/internals/editor.md
+index b269684..2b2b178 100644
+--- a/doc/development/internals/editor.md
++++ b/doc/development/internals/editor.md
+@@ -1,5 +1,7 @@
+ # Editor — Implementation Overview
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ ## The Core Concept: Block-Centric Editing
+ 
+ The editor does not operate on lines. For Lua files, it operates on **blocks** — top-level syntactic units produced by the metalua chunker. A block is either a `Chunk` (one or more source lines forming a complete top-level statement/expression) or an `Empty` (a blank separator line). The selection highlight, navigation, submit, delete, insert, and move operations all act on blocks, not on individual lines.
+diff --git a/doc/development/internals/examples/balloons.md b/doc/development/internals/examples/balloons.md
+index 7671ba0..6950d48 100644
+--- a/doc/development/internals/examples/balloons.md
++++ b/doc/development/internals/examples/balloons.md
+@@ -1,5 +1,7 @@
+ # balloons
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Real-time typing game.** Balloons carrying words fall from the top of the screen; the player types the words to pop them before they reach the bottom.
+ 
+ ## Architecture
+@@ -16,7 +18,9 @@ The state router pattern (`game_state_router`) dispatches draw/update calls to d
+ 
+ ## Input
+ 
+-Uses `user_input()` overlay. On each `update()`, if no pending input, `ui_read_input(input_handler)` is called which calls `input_text()` to show the overlay. When the user submits, the result is routed to `game_validate_input` which checks it against the active challenge.
++Uses `compy.input.*` **(supported since 1.0.0-rc20260712)**, wrapped by `terminal.lua`'s `terminal_init()` (called once, at `ui.lua` require-time, to build `ui.terminal`). `terminal_init()` activates the continuous-session idiom: `compy.input.after_submit = function() compy.input.show({}) end` (a **field-write**, not a `show{}` key) re-arms the overlay after every submit, and `compy.input.show({ on_text_entered = deliver })` starts the session. `deliver(text)` forwards each submitted line to whatever handler `terminal_set_handler(handler)` last installed — `main.lua`'s `game_init()` wires this to `game_state_router(on_input)`, which dispatches by `game_state` to `game_validate_input` (`"active"`) or `game_command` (`"loaded"`/`"finished"`), the same way `hooks.update`/`hooks.draw` are dispatched. `game_validate_input` checks the submitted text against the active challenge. Live prompt changes go through `ui_draw_hint()` → `ui.terminal.write(hint)` → `terminal_write(msg)` → `compy.input.configure({ prompt = msg })` — a live-reconfigure, not a new `show`.
++
++See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `user_input()`/`input_text()` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
+ 
+ ## Points of attention
+ 
+diff --git a/doc/development/internals/examples/clock.md b/doc/development/internals/examples/clock.md
+index 64c99f1..b5e3771 100644
+--- a/doc/development/internals/examples/clock.md
++++ b/doc/development/internals/examples/clock.md
+@@ -1,5 +1,7 @@
+ # clock
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Animated digital clock** with randomly picked foreground and background colors. Uses a LÖVE stencil for a decorative moving-circle mask effect.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/guess.md b/doc/development/internals/examples/guess.md
+index 06f36ff..52a6276 100644
+--- a/doc/development/internals/examples/guess.md
++++ b/doc/development/internals/examples/guess.md
+@@ -1,27 +1,32 @@
+ # guess
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Number guessing game** with per-character input validation.
+ 
+ ## Architecture
+ 
+-Single-file. Uses pen-and-paper mode with `love.update` polling the `user_input` handle. No `love.draw` override — output goes to the terminal via `print()`.
++Single-file. No `love.update`/`love.draw` override — output goes to the terminal via `print()`; input is driven entirely by the `compy.input.*` callback API **(supported since 1.0.0-rc20260712)**.
+ 
+ ## Input pattern
+ 
+ ```lua
+-r = user_input()
+-
+-function love.update()
+-  if r:is_empty() then
+-    validated_input({ is_natural }, "Guess a number:")
+-  else
+-    local n = tonumber(r())
+-    check(n)
+-  end
++compy.input.after_submit = function()
++  compy.input.show{}
+ end
++
++init()
++
++compy.input.show{
++  prompt = "Guess a number:",
++  eval = ValidatedTextEval({ is_natural }),
++  on_text_entered = function(t) check(tonumber(t)) end,
++}
+ ```
+ 
+-This is the canonical `validated_input` pattern: poll `r:is_empty()`, show the input overlay when nothing is pending, consume and process when something arrives. The `validated_input` call only fires if there's currently no active overlay (the framework guards against double-activation).
++This is the continuous-session idiom (see [Compy Input API](../../../input_api.md)): `compy.input.show{}` activates the overlay once; `on_text_entered` fires with the submitted guess while the session is still active; `after_submit` — a **field-write**, not a `show{}` key — re-arms the overlay (bare `show{}`) for the next guess. Validation is wired via `eval = ValidatedTextEval({ is_natural })`, reusing the same validator-list shape the old `validated_input` took.
++
++The old `r = user_input()` / `validated_input(...)` polling pattern is **(deprecated, removed in 1.0.0-rc20260712)**.
+ 
+ ## Validator
+ 
+diff --git a/doc/development/internals/examples/index.md b/doc/development/internals/examples/index.md
+index e38bb66..0938d63 100644
+--- a/doc/development/internals/examples/index.md
++++ b/doc/development/internals/examples/index.md
+@@ -1,20 +1,24 @@
+ # Examples — Index
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ All examples live under `src/examples/`. Each is a self-contained project with a `main.lua`. They demonstrate different combinations of framework capabilities.
+ 
+-Detailed docs for each are in this directory.
++Detailed docs for each are in this directory. For the project-author usage guide to the input API used throughout this table, see [Compy Input API](../../../input_api.md).
++
++Input mode column uses `compy.input.*` **(supported since 1.0.0-rc20260712)** throughout; the legacy `user_input()`/`input_text()`/`input_code()`/`validated_input()`/`write_to_input()` poll-a-reftable API is **(deprecated, removed in 1.0.0-rc20260712)**.
+ 
+ | Example | One-line description | Draw mode | Input mode |
+ |---|---|---|---|
+-| [balloons](balloons.md) | Real-time typing game — pop balloons before they fill the screen | real-time `love.draw` | `user_input()` overlay |
++| [balloons](balloons.md) | Real-time typing game — pop balloons before they fill the screen | real-time `love.draw` | `compy.input.show{}` continuous session |
+ | [clock](clock.md) | Animated digital clock with randomised color cycling | real-time `love.draw` + `love.update` | keyboard (`love.keyreleased`) |
+-| [guess](guess.md) | Number guessing game with per-character validation | pen-and-paper (`love.update` polling) | `validated_input()` overlay |
++| [guess](guess.md) | Number guessing game with per-character validation | pen-and-paper (no `love.update`) | `compy.input.show{ eval = ValidatedTextEval{...} }` continuous session |
+ | [life](life.md) | Conway's Game of Life with mouse and keyboard controls | real-time `love.draw` + `love.update` | `love.keypressed`, `love.mousepressed` |
+ | [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.singleclick`, `love.mousemoved`, `love.keypressed` |
+ | [pong](pong.md) | Full Pong game with AI opponent and fixed-timestep physics | real-time `love.draw` + `love.update` | keyboard + mouse; selectable AI strategy |
+-| [repl](repl.md) | Minimal REPL — echoes whatever text the user types | pen-and-paper (`love.update` polling) | `input_text()` overlay |
++| [repl](repl.md) | Minimal REPL — echoes whatever text the user types | pen-and-paper (no `love.update`) | `compy.input.show{}` continuous session |
+ | [sapper](sapper.md) | Minesweeper (pen-and-paper) with click-driven board | pen-and-paper | `compy.singleclick`, `compy.doubleclick`, `love.mousepressed` |
+ | [sine](sine.md) | One-shot sine wave plot drawn at init, no update loop | pen-and-paper (init only) | none |
+-| [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `input_code()` overlay (live Lua) |
+-| [turtle](turtle.md) | Turtle-graphics interpreter driven by typed commands | real-time `love.draw`, draws trails | `input_text()` + `love.keypressed` |
+-| [valid](valid.md) | Validator showcase — collects user input with custom rules | pen-and-paper (`love.update` polling) | `validated_input()` overlay |
++| [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `compy.input.show{ eval = InputEvalLua }` continuous session (live Lua) |
++| [turtle](turtle.md) | Turtle-graphics interpreter driven by typed commands | real-time `love.draw`, draws trails | `compy.input.show{}` one-shot (on `i`) + `love.keypressed` |
++| [valid](valid.md) | Validator showcase — collects user input with custom rules | pen-and-paper (no `love.update`) | `compy.input.show{ eval = ValidatedTextEval{...} }` continuous session |
+diff --git a/doc/development/internals/examples/life.md b/doc/development/internals/examples/life.md
+index 7bfc748..b29e16a 100644
+--- a/doc/development/internals/examples/life.md
++++ b/doc/development/internals/examples/life.md
+@@ -1,5 +1,7 @@
+ # life
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Conway's Game of Life.** Full real-time simulation with keyboard and mouse controls, speed adjustment, and random initialization.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/paint.md b/doc/development/internals/examples/paint.md
+index d21fd2b..e025366 100644
+--- a/doc/development/internals/examples/paint.md
++++ b/doc/development/internals/examples/paint.md
+@@ -1,5 +1,7 @@
+ # paint
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Pixel paint application** with a color palette, brush/eraser tools, and line weight selector.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/pong.md b/doc/development/internals/examples/pong.md
+index bbf566a..ece1dca 100644
+--- a/doc/development/internals/examples/pong.md
++++ b/doc/development/internals/examples/pong.md
+@@ -1,5 +1,7 @@
+ # pong
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Full Pong game** with two AI difficulty levels, two-player keyboard mode, fixed-timestep physics, and mouse control for the player paddle.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/repl.md b/doc/development/internals/examples/repl.md
+index 8f71ee0..4af8a8c 100644
+--- a/doc/development/internals/examples/repl.md
++++ b/doc/development/internals/examples/repl.md
+@@ -1,28 +1,34 @@
+ # repl
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Minimal REPL.** Accepts text input from the user and echoes it to the terminal.
+ 
++For the full project-author usage guide, see [Compy Input API](../../../input_api.md).
++
+ ## Code
+ 
+ ```lua
+-r = user_input()
+-
+-function love.update()
+-  if r:is_empty() then
+-    input_text()
+-  else
+-    print(r())
+-  end
++-- Continuous-session idiom (M8-01): consume the line in
++-- on_text_entered, re-show (bare) from after_submit.
++compy.input.after_submit = function()
++  compy.input.show{}
+ end
++
++compy.input.show{
++  on_text_entered = function(text) print(text) end,
++}
+ ```
+ 
+ ## Purpose
+ 
+-The smallest possible demonstration of the `user_input` / `input_text` polling pattern. No game logic, no drawing, no state. Useful as a reference skeleton for any project that needs live text input in an `update()` loop.
++The smallest possible demonstration of the `compy.input.show`/`after_submit` continuous-session idiom **(supported since 1.0.0-rc20260712)**. No game logic, no drawing, no state. Useful as a reference skeleton for any project that needs live text input.
+ 
+ ## Notes
+ 
+-`input_text()` is called with no arguments — no prompt, no initial text. The overlay appears with an empty input field. On submit, `r()` returns the entered string and the cycle begins again.
++`compy.input.show{}` is called with no config — no prompt, no initial text. The overlay appears with an empty input field. `on_text_entered` fires with the submitted text while the session is still active; `after_submit` is a **field-write** (not a `show{}` key) that fires after the widget deactivates, and re-arms the overlay for the next line by calling `compy.input.show{}` again.
++
++The old `user_input()`/`input_text()` poll-a-reftable pattern (`r = user_input()`, `r:is_empty()`, `r()` each `love.update()` tick) is **(deprecated, removed in 1.0.0-rc20260712)**.
+ 
+ ## Files
+ 
+diff --git a/doc/development/internals/examples/sapper.md b/doc/development/internals/examples/sapper.md
+index 3e6e9d7..68bee8d 100644
+--- a/doc/development/internals/examples/sapper.md
++++ b/doc/development/internals/examples/sapper.md
+@@ -1,5 +1,7 @@
+ # sapper
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Minesweeper** implemented entirely in pen-and-paper mode. The board is drawn once at init and updated incrementally on each user action.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/sine.md b/doc/development/internals/examples/sine.md
+index c8f1368..ea85cc3 100644
+--- a/doc/development/internals/examples/sine.md
++++ b/doc/development/internals/examples/sine.md
+@@ -1,5 +1,7 @@
+ # sine
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **One-shot sine wave plot.** Draws axes and a sine curve at startup using `gfx.points`. No update loop, no input.
+ 
+ ## Code pattern
+diff --git a/doc/development/internals/examples/tixy.md b/doc/development/internals/examples/tixy.md
+index 61ef8bb..2a0cf29 100644
+--- a/doc/development/internals/examples/tixy.md
++++ b/doc/development/internals/examples/tixy.md
+@@ -1,5 +1,7 @@
+ # tixy
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Live-coded pixel grid** inspired by tixy.land. A 16×16 grid of circles whose radii and colors are driven by a user-editable formula `tixy(t, i, x, y)`.
+ 
+ ## Architecture
+@@ -28,23 +30,36 @@ end
+ 
+ ## Input pattern
+ 
+-Uses `input_code()` overlay — the input widget has Lua syntax highlighting and validation. The `r = user_input()` / `input_code(...)` polling pattern is identical to other examples, but the prompt is the function signature and the initial content is the current formula body.
++Uses `compy.input.show{}` with `eval = InputEvalLua` **(supported since 1.0.0-rc20260712)** — the input widget has Lua syntax highlighting and validation. `love.update(dt)` now only advances `time`; there is no polling of an input handle. See [Compy Input API](../../../input_api.md) for the full usage guide.
+ 
+ ```lua
+-r = user_input()
++local function submit_body(text)
++  body = string.unlines(text)
++  setupTixy()
++  legend = ""
++end
++
++compy.input.after_submit = function()
++  compy.input.show{ text = string.lines(body) }
++end
++
+ function love.update(dt)
+   time = time + dt
+-  if r:is_empty() then
+-    input_code("function tixy(t, i, x, y)", string.lines(body))
+-  else
+-    local ret = r()
+-    body = string.unlines(ret)
+-    setupTixy()
+-  end
+ end
++
++compy.input.show{
++  prompt = "function tixy(t, i, x, y)",
++  text = string.lines(body),
++  eval = InputEvalLua,
++  on_text_entered = submit_body,
++}
+ ```
+ 
+-`write_to_input(body)` in `load_example()` pre-fills the input with the current formula when loading a preset — the user sees the formula they're about to run before submitting.
++`submit_body` (wired as `on_text_entered`) consumes the submitted formula while the session is still active; `after_submit` — a **field-write**, not a `show{}` key — re-arms the overlay afterwards, seeding `text` with the just-submitted (and possibly example-loaded) `body` so editing continues in place rather than clearing the prompt.
++
++`compy.input.set_text(body)` in `load_example()` pre-fills the live input with the current formula when loading a preset — the user sees the formula they're about to run before submitting. This replaces the old `write_to_input(body)` call.
++
++The old `r = user_input()` / `input_code(...)` polling pattern is **(deprecated, removed in 1.0.0-rc20260712)**.
+ 
+ ## Example cycling
+ 
+diff --git a/doc/development/internals/examples/turtle.md b/doc/development/internals/examples/turtle.md
+index 60f8696..afb1b09 100644
+--- a/doc/development/internals/examples/turtle.md
++++ b/doc/development/internals/examples/turtle.md
+@@ -1,5 +1,7 @@
+ # turtle
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Turtle graphics interpreter** driven by typed commands and keyboard input.
+ 
+ ## Architecture
+@@ -10,21 +12,30 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
+ 
+ ## Input pattern
+ 
+-Dual input: typed commands via `input_text()` overlay, and direct keyboard actions.
++Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc20260712)**, and direct keyboard actions. Unlike the other examples, turtle does **not** use the continuous-session `after_submit` idiom — there is no overlay shown at load; `i` opens it on demand, one shot at a time:
+ 
+ ```lua
+-local r = user_input()
++function love.keyreleased(key)
++  if key == "i" then
++    compy.input.show{
++      prompt = "TURTLE",
++      on_text_entered = eval,
++    }
++  end
+ 
+-function love.update()
+-  if not r:is_empty() then
+-    eval(r())
++  if love.keyboard.isDown("lctrl", "rctrl") then
++    if key == "escape" then
++      love.event.quit()
++    end
+   end
+ end
+ ```
+ 
+-`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher.
++`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; `on_text_entered = eval` wires it directly as the submit callback.
++
++`love.keyreleased`: the `i` key opens the input overlay with a fresh `compy.input.show{}` call each time (there is no `after_submit` re-arm, so the overlay does not automatically reopen after a submit — pressing `i` again is required). `shift+r` resets turtle position.
+ 
+-`love.keyreleased`: `i` key opens the input overlay interactively (`r = input_text("TURTLE")`), overwriting the existing `r` reference. `shift+r` resets turtle position.
++See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `r = user_input()` / `input_text(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
+ 
+ ## Drawing
+ 
+@@ -32,7 +43,7 @@ end
+ 
+ ## Points of attention
+ 
+-- The `r` variable (user_input handle) is reassigned inside `love.keyreleased` (`r = input_text("TURTLE")`). This means after pressing `i`, the old handle is abandoned and a new overlay is created. The polling in `love.update` starts consuming the new handle. This pattern works but relies on the variable being captured by reference in the update closure — which it is, since both closures close over the upvalue `r`.
++- Each press of `i` calls `compy.input.show{}` fresh — there is no `after_submit` re-arm, so the overlay does not reappear automatically after a command is submitted; the player must press `i` again for the next typed command.
+ - `debug_color` is set in `love.update` based on turtle position — this modifies a global used by `drawDebuginfo`. The debug overlay is toggled by `space`.
+ 
+ ## Files
+diff --git a/doc/development/internals/examples/valid.md b/doc/development/internals/examples/valid.md
+index b76ab03..35727f8 100644
+--- a/doc/development/internals/examples/valid.md
++++ b/doc/development/internals/examples/valid.md
+@@ -1,10 +1,12 @@
+ # valid
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Validator showcase.** Collects user input with a combination of custom validators and prints the result.
+ 
+ ## Architecture
+ 
+-Single-file. Pen-and-paper mode with `love.update` polling. No drawing, no game logic.
++Single-file. No drawing, no game logic, no `love.update`/`love.draw` override — driven entirely by the `compy.input.*` callback API **(supported since 1.0.0-rc20260712)**.
+ 
+ ## Validators defined
+ 
+@@ -22,17 +24,24 @@ Each returns `true` on success or `false, Error("message", column)` on failure.
+ ## Active validators
+ 
+ ```lua
+-validated_input({
+-  min_length(2),
+-  is_lower
+-})
++compy.input.after_submit = function()
++  compy.input.show{}
++end
++
++compy.input.show{
++  eval = ValidatedTextEval({
++    min_length(2),
++    is_lower
++  }),
++  on_text_entered = function(t) print(t) end,
++}
+ ```
+ 
+-All validators in the list must pass for the input to be accepted. If any fail, the first error's column is highlighted.
++Validation is wired via `eval = ValidatedTextEval({...})` **(supported since 1.0.0-rc20260712)** — the same validator-list shape the old `validated_input` took. All validators in the list must pass for the input to be accepted; if any fail, the first error's column is highlighted. `after_submit` (a **field-write**, not a `show{}` key) re-arms the overlay with a bare `show{}` after each submit — the continuous-session idiom, see [Compy Input API](../../../input_api.md).
+ 
+ ## Purpose
+ 
+-Demonstrates the `validated_input` API and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input.
++Demonstrates the `ValidatedTextEval` API and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input. The old `validated_input(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
+ 
+ ## Files
+ 
+diff --git a/doc/development/internals/project_sandbox_env.md b/doc/development/internals/project_sandbox_env.md
+new file mode 100644
+index 0000000..68a22c1
+--- /dev/null
++++ b/doc/development/internals/project_sandbox_env.md
+@@ -0,0 +1,57 @@
++---
++description: How a running project's Lua environment is sandboxed — the deep-cloned env, the shared-leaf-function consequence, and the three tiers of state (managed callbacks, compy.* wrappers, leaky raw love.* globals)
++status: active
++audience: developer
++---
++# Project sandbox environment
++
++A project does **not** run in the raw global environment. The console controller builds a per-project
++env and `setfenv`'s the project's chunks into it. Understanding *what is and isn't isolated* by that env
++is load-bearing for any feature touching project lifecycle, global state, or teardown.
++
++## How the env is built
++
++- `ConsoleController.new` captures the file env: `local env = getfenv()` (`consoleController.lua:40`),
++  and clones it: `pre_env = table.clone(env)` (`:41`).
++- The project env descends from that clone (`get_pre_env_c` → `prepare_project_env`, `:514–520`); the
++  project's files are loaded via `project_dofile` which does `setfenv(chunk, env)` (`:297`).
++- `table.clone` (`util/table.lua:48`) is **recursive** (deep) and copies metatables, with a `seen` set
++  for cycles.
++
++**The crucial consequence.** A deep clone gives the env a `love` table with a **fresh identity**, but
++its **leaf values are shared by reference** — `table.clone` returns non-tables as-is (`table.lua:50`).
++So every *function* on `love` (and `love.mouse`, `love.keyboard`, `love.audio`, …) is the **same C
++function** the global `love` holds. The *table* is sandboxed; the *functions and their side effects*
++are not.
++
++## Three tiers of project state
++
++| Tier | What | Isolated / restored? |
++|---|---|---|
++| **T1 — callbacks** | `love.draw`, `love.update`, `love.keypressed`, `love.textinput`, `love.mouse*`… defined by the project | **Yes — framework-managed.** Set on the project's cloned `love`; harvested by `save_user_handlers(runner_env['love'])` (`consoleController.lua:824`) and wired into the real dispatch; reset to defaults on stop (`set_default_handlers` / `restore_user_handlers`, `controller.lua:826`). No leak. |
++| **T2 — `compy.*`** | `compy.terminal`, `compy.audio`, `compy.graphics`, `compy.input` **(supported since 1.0.0-rc20260712)**… injected into the env (`get_compy_namespace`, `consoleController.lua:360`) | **Yes — framework wrappers.** The project calls a controlled surface; the framework owns the underlying object. No leak. |
++| **T3 — raw `love.*` imperative calls** | `love.keyboard.setKeyRepeat`/`setTextInput`, `love.mouse.setRelativeMode`/`setVisible`, raw `love.audio.newSource`/`play`, cursor… called (not defined) by the project | **No.** These invoke the shared C functions → mutate **real global SDL/LÖVE subsystem state**. Nothing snapshots or restores them across run boundaries. **They leak into the IDE/console after the project exits.** |
++
++## Why this matters
++
++- **T1 isolation is what makes the IDE survive a project** — a project that defines `love.draw` doesn't
++  permanently hijack the console, because the framework swaps handlers in/out. Any input feature that
++  reroutes callbacks (e.g. #77's `ProjectInputController`) lives in this T1 machinery.
++- **T3 is the real leak surface.** A project that sets relative-mouse mode, hides the cursor, disables
++  key-repeat, or leaves a sound playing leaves that state changed after exit — including after the
++  `Ctrl+Esc` force-exit path (`controller.lua:672`, `love.event.quit()`), which today runs no project
++  code. Example: `src/examples/keyboard/input.lua` *wants* to disable key-repeat for clean input but
++  deliberately doesn't, **because it cannot restore it on exit** — and hand-rolls edge-tracking instead.
++- **The robust fix for T3 is framework snapshot/restore across run boundaries** — extend the T1
++  save/restore discipline to imperative subsystem state. This is sandbox-safe (doesn't trust the
++  project to clean up), survives crash/force-exit, and is strictly better than a project teardown hook.
++  A project `before_exit` hook (which *can* be framework-invoked at the quit sites, including
++  `Ctrl+Esc`) is then needed only for **project-internal** teardown (save/memoize), not for restoring
++  global state.
++
++## Pointers
++
++- Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).
++- Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
++- The analysis that surfaced this model (feature #77, session 18):
++  `doc/development/wip/77-new-input-api/notes/stakeholder-3-input/assessment.md` (P4).
+diff --git a/doc/development/overview.md b/doc/development/overview.md
+index 05028b6..ceae0b8 100644
+--- a/doc/development/overview.md
++++ b/doc/development/overview.md
+@@ -1,5 +1,7 @@
+ # Implementation Overview
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ High-level implementation details for Compy. Load this when you need architecture context beyond what CLAUDE.md provides.
+ 
+ ## Hardware and Platform Context

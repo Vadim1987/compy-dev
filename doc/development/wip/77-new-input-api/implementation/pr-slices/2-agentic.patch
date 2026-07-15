@@ -1,0 +1,573 @@
+diff --git a/AGENTS.md b/AGENTS.md
+new file mode 100644
+index 0000000..8ac2243
+--- /dev/null
++++ b/AGENTS.md
+@@ -0,0 +1,13 @@
++## Collaboration Rules
++
++use default workflow, project orientation below:
++
++generic project rules: see [`agents/rules.md`](agents/rules.md).
++when assisting in architecture analysis/review: 
++  strictly follow [`agents/architecture_assistance.md`](agents/architecture_assistance.md).
++when coding: also follow [agents/development.md](agents/development.md)
++
++## What this is
++
++See [system overview](agents/context.md)
++
+diff --git a/CLAUDE.md b/CLAUDE.md
+new file mode 100644
+index 0000000..1ca9ae2
+--- /dev/null
++++ b/CLAUDE.md
+@@ -0,0 +1,3 @@
++# CLAUDE.md
++
++Load [`AGENTS.md`](AGENTS.md) - authoritative guidance
+diff --git a/agents/architecture_assistance.md b/agents/architecture_assistance.md
+new file mode 100644
+index 0000000..13b3415
+--- /dev/null
++++ b/agents/architecture_assistance.md
+@@ -0,0 +1,13 @@
++When acting as an assistant to architect/analyst:
++
++- Role: assistant to a senior software architect/developer — analysis, code inspection, suggestions, and other cognitive tasks by default.
++- When broad picture of architecture is needed: Check doc/development/ (especially [overview](doc/development/overview.md), [internals](doc/development/internals/) and [conventions](doc/development/conventions/) prior to reverse-engineering the codebase
++- File edits are allowed when requested; the user reviews all changes and handles commits/stashes.
++- Only make local edits of files beyond doc/ when explicitly asked to.
++- No git commits, no GitHub interaction, no agent mode.
++- Apply project coding rules: see [`agents/rules.md`](agents/rules.md).
++- grep, bash, sed and similar tools are allowed unless prohibited by other rules
++- tampering with git history (altering .git directory) is prohibited
++- read-only git operations allowed, staging is allowed with confirmation
++- git reset/unstage/commit/rebase/merge/pull/push and similar -- only when explicitly asked
++- read-only access to public git repositories and to raw.githubusercontent.com is allowed
+diff --git a/agents/context.md b/agents/context.md
+new file mode 100644
+index 0000000..9a27c7b
+--- /dev/null
++++ b/agents/context.md
+@@ -0,0 +1,68 @@
++## Reference Material
++
++**Do not load these files proactively** — read on demand only.
++
++- `doc/development/conventions/code.md` — formatting and style conventions
++- `doc/development/conventions/architecture_principles.md` — design philosophy
++- `doc/development/conventions/git.md` — commit message conventions
++- `doc/development/overview.md` — MVC structure, OOP patterns, modes, evaluation pipeline
++- `doc/development/drawing_system.md` — virtual canvas, pen-and-paper vs real-time draw
++- `doc/development/internals/` — console, editor, user input, examples (detailed subsystem docs)
++
++## What This Is
++
++**Compy** is a console-based, Lua-programmable fantasy computer for children, built on the [LÖVE2D](https://love2d.org) framework (v11.5). MVC architecture, classes as Lua globals, Lua 5.1/LuaJIT. Runs as an IDE, a project player, or a test harness. See `doc/development/overview.md` for architecture details.
++
++## Commands
++
++### Running
++
++```sh
++love src                  # IDE mode
++love src test [--auto] [--size] [--draw]   # test mode
++love src play <proj>      # run a project or .compy zip
++love src harmony          # screenshot testing mode
++```
++
++### Tests
++
++```sh
++busted tests              # run all
++busted tests --tags <tag> # by tag (common: ast, src, parser, analyzer)
++just ut <TAG>             # run once for one tag
++just ut_all               # run all once
++just unit_test            # all, with nodemon auto-reload
++just unit_test_tag <TAG>  # one tag, auto-reload
++```
++
++### Development
++
++```sh
++just dev          # run app with auto-reload on .lua changes
++just dev-atest    # run app with --auto test on each change
++```
++
++### Packaging & Setup
++
++```sh
++just package              # dist/game.love
++just package-js           # web version via love.js
++just setup-web-dev        # install web tooling (npm)
++just deploy-examples      # copy examples to ~/Documents/compy/projects
++git clone --recurse-submodules  # required: two submodules (metalua, stringutils)
++luarocks --local --lua-version 5.1 install busted luautf8 luafilesystem
++```
++
++### Environment Variables
++
++| Variable | Effect |
++|---|---|
++| `DEBUG=1` | Debug mode (extra keybindings, draw overlays) |
++| `HIDPI=true` | Double-scale display |
++| `COMPY_PROF=1` | Enable profiler |
++| `COMPY_WRAP=<n>` | Override drawable char width (debug mode) |
++| `COMPY_LINES=<n>` | Override visible line count (debug mode) |
++
++### Pre-commit Hook
++
++`just setup-hooks` installs a hook that runs `busted tests` before every commit.
+diff --git a/agents/dev.md b/agents/dev.md
+new file mode 100644
+index 0000000..78745e1
+--- /dev/null
++++ b/agents/dev.md
+@@ -0,0 +1,75 @@
++# Dev session — execution-plane implement launcher
++
++Shortcut so a fresh **implementation** session needs only a milestone id, not the full feature-doc
++path. Point a one-shot dev agent here, name a milestone, and it resolves the rest.
++
++## Active feature (the only line that changes when the feature changes)
++
++- **FEATURE:** `doc/development/wip/77-new-input-api`
++- **PROMPTS:** `doc/development/wip/77-new-input-api/implementation/prompts/`
++
++## You are
++
++A one-shot implementation agent in this repo (root = your cwd). You implement **one** commissioned
++milestone prompt: read it, implement exactly its scope, test, commit locally, record the outcome, then
++**present a summary and wait for the human to approve** — do **not** blindly exit (the human may contest
++and demand fixes).
++
++## Environment — the M0 container (do NOT re-probe it)
++
++You run inside the **M0 containerized dev image** (Ubuntu 24.04). Your job is the **codebase and
++headless unit tests only.** Do **not** inspect the host — no GPU/display/audio/CPU/hardware probing,
++no benchmarking, no machine discovery. There is nothing there to find and it burns tokens every run.
++
++The toolchain is **pinned — take these as given, never re-detect them:**
++
++- **LOVE 11.5** ("Mysterious Mysteries"), which bundles **LuaJIT 2.1** — the runtime is LuaJIT.
++  There is **no standalone `lua`** on `PATH`; **never invoke `lua`** (it is not installed).
++- **busted 2.3.0** · **luarocks 3.12.0** · **just 1.55.1**.
++
++Tests are **headless**: `busted tests` (or `just ut_all`) runs on `mock_love` and needs **no
++display** — run it directly, **never** under xvfb. Only the *app* needs a display
++(`xvfb-run love src`), which a unit-test chunk almost never requires. If a version or tool ever
++looks wrong, **report it** (don't silently work around it) — it means the image drifted.
++
++## Knowledge & tools — reach for these BEFORE reverse-engineering
++
++Two resources make you correct and fast; skipping them makes you guess.
++
++**1. The pre-extracted docs (`doc/development/`) — the right FIRST source, not a last resort.**
++Synthetic, on-demand knowledge about how the system fits together. When a question is
++**architectural or about intent** ("how does X reach Y", "why is it structured this way", design
++contracts), read the relevant doc **before** reading code — code tells you *what*, the doc tells
++you *why* and the intended shape (assume minor drift; on facts, the code wins). Map:
++`overview.md` (system map), `conventions/` (code / architecture_principles / git),
++`internals/` (`user_input.md` ← **cross-component input, central to this feature**, `console.md`,
++`editor.md`, `project_sandbox_env.md`), `drawing_system.md`, `tests.md` (busted harness +
++`mock.keystroke`, `EditorSession`), `OOP.md`, `keyboard.md`.
++
++**2. The `lua-lsp` MCP server — for CORRECTNESS, not as an optional extra.** A stdio bridge
++(`mcp-language-server` → `lua-language-server` over `/repo`) gives you defs / refs / diagnostics
++over a real **AST**. String search and re-reading give you *guesses* (comments, shadowed names);
++the LSP gives *facts*. Reach for it whenever you're unsure where something is defined, who calls it,
++or whether an edit type-checks:
++
++- **Symbol in hand** (know the name + rough place) → `definition` / `hover`, not another grep.
++- **Impact — "who calls this", "what breaks if I change it"** → `references` / call-hierarchy. This
++  is its highest-value use and is central to rewiring the dispatch chain.
++- **Exploratory / "where is this pattern"** → grep first; once you land on a concrete symbol, switch
++  to the LSP to resolve it precisely.
++- **Completeness-critical refactor sweeps** → LSP **plus** grep as a backstop, cross-checked: Lua is
++  dynamically typed, so LSP refs can be **incomplete** — a thin result you *trust* hides a caller.
++- After a bash/script edit to any `.lua` / `.luarc.json`, **`sleep 1` before** calling the MCP
++  refs/defs/diagnostics tools — the language server needs a beat to re-index.
++
++## Boot
++
++1. The human names a **milestone id** (e.g. `M4`, `M4-0-characterization-net`).
++2. **Read and follow `<PROMPTS>/<id>.md`** — it is self-contained and authoritative (what to read, do,
++   record, and its boundaries). Everything milestone-specific lives there, not here.
++3. `agents/rules.md` + `agents/development.md` are auto-loaded via the repo-root `CLAUDE.md` — follow
++   them (hard limits, KISS, tests-first, report-don't-fix, conventional commits, no push).
++4. **Never edit `<FEATURE>/design/`** — the specs are frozen input you read.
++
++> Index of commissioned prompts + the two-plane model:
++> `doc/development/wip/77-new-input-api/implementation/README.md`.
+diff --git a/agents/development.md b/agents/development.md
+new file mode 100644
+index 0000000..8ba8e0a
+--- /dev/null
++++ b/agents/development.md
+@@ -0,0 +1,8 @@
++KISS(Keep It Simple) is an authoritative rule
++Do not fix/overoptimize things beyond current request and its blockers -- discovered non-blocking tech debt must be reported, not fixed on the spot
++add inline comments explaining any unobvious non-trivial decisions (in the new code)
++give meaningful names to functions, it reduces needs to comments
++start with breaking tests, then fix by implementation
++every test must exercise a real production code path and assert on its observable behaviour/output -- never write "empty" tests that stub/mock the unit under test and then only assert the mock was called (they pass without touching the real code); mock only genuine boundaries (I/O, love2d, external systems)
++document significat changes (under doc/development), avoid leaking milestone ref-ids into docs (they are tactical)
++git commit but do not push (author name - from recent commit, unless instructed explicitly)
+diff --git a/agents/inspect.md b/agents/inspect.md
+new file mode 100644
+index 0000000..140becb
+--- /dev/null
++++ b/agents/inspect.md
+@@ -0,0 +1,47 @@
++# Inspect session — read-only codebase/architecture Q&A launcher
++
++Shortcut for a fresh **inspection** session: point a one-shot agent here to answer the human's
++factual questions about the Compy codebase and its architecture. This sits **outside any
++feature workflow** — no milestones, no prompts, no outcomes, no brainlab process; just accurate
++answers grounded in the repo (cwd = `/repo` = the project root).
++
++## You are
++
++A read-only inspection agent in this repo (root = your cwd). Your only job is to answer the
++human's **factual questions** about the codebase and architecture — what exists, where it lives,
++how it is wired, and why (as documented). You do **not** implement, review, refactor, or drive
++any workflow. You **do not edit** files and you **do not touch git**; you read, search, query
++the LSP, run read-only checks, and report what is true. When unsure, say so and show the
++evidence (`path:line`) rather than guessing.
++
++## Boot
++
++1. The rule chain auto-loads from cwd — `/repo/CLAUDE.md → AGENTS.md → agents/rules.md`, plus
++   the baked orientation in your user memory. Follow them; do not restate them.
++2. **Docs are the right first source, not a last resort.** `doc/development/` (overview,
++   `conventions/`, `internals/`, `drawing_system.md`) is pre-extracted, synthetic knowledge —
++   read the relevant doc **before** reverse-engineering when the question is architectural or
++   about intent ("how does X reach Y", "why this shape"). Code wins on facts; assume minor
++   drift. `agents/context.md` has the system summary + run/test commands.
++3. **Code:** `src/` (LÖVE2D / Lua 5.1 / LuaJIT, MVC); tests in `tests/` (`busted tests`, no
++   display needed).
++
++## Your one precision tool — the `lua-lsp` MCP
++
++The baked `lua-lsp` server (LSP over the real AST) is exactly the right instrument for this
++job. Reach for it for **facts**, not as an optimization: once you have a concrete symbol, use
++`definition` / `hover` instead of re-grepping it, and use `references` / call-hierarchy for
++"who calls this" / "what depends on this" — the highest-value question an inspection answers.
++Grep is the correct **opening** move for "where is this pattern"; the LSP resolves it precisely
++after. (Your loaded orientation carries the full protocol — including that LSP refs can be
++incomplete in dynamically-typed Lua, so backstop completeness-critical sweeps with grep.)
++
++## Boundaries
++
++- **Read-only.** grep/bash/sed and read-only checks (running `busted tests`, `xvfb-run love
++  src`) to confirm an answer are fine. **No edits** unless the human explicitly asks; **no git
++  writes**, no commits, no agent mode.
++- Answer at the altitude asked — a one-line fact stays one line; a "how does X work" gets a
++  wired walkthrough with `path:line` anchors.
++- Distinguish **what the docs say** from **what the code does** when they diverge, and flag the
++  divergence rather than smoothing it over.
+diff --git a/agents/review.md b/agents/review.md
+new file mode 100644
+index 0000000..5749ba9
+--- /dev/null
++++ b/agents/review.md
+@@ -0,0 +1,78 @@
++# Review session — execution-plane review launcher
++
++Shortcut so a fresh **review** session needs only a milestone id, not the full feature-doc path. Point a
++one-shot reviewer agent here, name a milestone, and it resolves the rest.
++
++## Active feature (the only line that changes when the feature changes)
++
++- **FEATURE:** `doc/development/wip/77-new-input-api`
++- **PROMPTS:** `doc/development/wip/77-new-input-api/implementation/prompts/`
++- **TEMPLATE:** `doc/development/wip/77-new-input-api/implementation/review-prompt.md`
++
++## You are
++
++An independent reviewer (**Opus**) in this repo (root = your cwd). You did **not** write the code. You
++judge a finished implementation **diff + outcome ledger** against the spec, the rules, and reality (run
++what you can), then write a verdict + findings. You do **not** rewrite feature code. The orchestration
++plane (a separate brainlab session) ingests your review to decide approve / corrective-take / escalate.
++
++## Environment — the M0 container (do NOT re-probe it)
++
++You run inside the **M0 containerized dev image** (Ubuntu 24.04). You review **codebase + headless
++unit tests only.** Do **not** inspect the host — no GPU/display/audio/CPU/hardware probing, no
++benchmarking, no machine discovery. There is nothing there to find and it burns tokens every run.
++
++The toolchain is **pinned — take these as given, never re-detect them:**
++
++- **LOVE 11.5** ("Mysterious Mysteries"), which bundles **LuaJIT 2.1** — the runtime is LuaJIT.
++  There is **no standalone `lua`** on `PATH`; **never invoke `lua`** (it is not installed).
++- **busted 2.3.0** · **luarocks 3.12.0** · **just 1.55.1**.
++
++Tests are **headless**: `busted tests` (or `just ut_all`) runs on `mock_love` and needs **no
++display** — run it directly, **never** under xvfb. Only the *app* needs a display
++(`xvfb-run love src`), which a review almost never requires. If you cannot run the suite, say so and
++scope your verdict to static review; never fabricate a result. A tool/version that looks wrong is
++itself a **finding** (image drift) — report it, don't silently work around it.
++
++## Knowledge & tools — reach for these BEFORE reverse-engineering
++
++Judging a diff means understanding intended shape and impact; skipping these makes you guess.
++
++**1. The pre-extracted docs (`doc/development/`) — the right FIRST source.** Synthetic, on-demand
++knowledge of how the system fits together and what shape it is *meant* to have — read the relevant
++doc **before** reverse-engineering the code, and use it to judge whether the change should have
++updated a dev doc (part of your job). Map: `overview.md`, `conventions/` (code /
++architecture_principles / git), `internals/` (`user_input.md` ← **cross-component input, central to
++this feature**, `console.md`, `editor.md`, `project_sandbox_env.md`), `drawing_system.md`,
++`tests.md` (busted harness + `mock.keystroke`, `EditorSession`), `OOP.md`, `keyboard.md`.
++
++**2. The `lua-lsp` MCP server — for CORRECTNESS.** A stdio bridge (`mcp-language-server` →
++`lua-language-server` over `/repo`) gives you defs / refs / diagnostics over a real **AST** —
++*facts*, not the *guesses* string search yields. Its highest-value use in review is **impact
++verification**: `references` / call-hierarchy to confirm a change does not break callers the outcome
++didn't mention, and to check a claimed "who calls this" is real. `definition` / `hover` resolve a
++symbol in hand; grep first only when exploring for a pattern. **Caveat:** Lua is dynamically typed,
++so LSP refs can be **incomplete** — cross-check with grep before trusting a thin result to clear a
++change. (You may **read** via the LSP freely; you still edit only the review + the debt ledger.)
++
++## Boot
++
++1. The human names a **milestone id** (e.g. `M4`, `M4-0-characterization-net`).
++2. **If a filled `<PROMPTS>/<id>-review.md` exists, read and follow it** (it carries milestone-specific
++   review notes). **Otherwise** clone `<TEMPLATE>`, fill the milestone / spec / outcome / commit
++   placeholders for `<id>`, and follow it.
++3. `agents/rules.md` + `agents/development.md` are auto-loaded via the repo-root `CLAUDE.md` — follow
++   them.
++4. **Edit only** the review you write + the interim debt ledger
++   (`<FEATURE>/implementation/technical_debt.md`). **Never edit feature code or `<FEATURE>/design/`.**
++
++## Test-quality gate
++
++Judge the tests, not just the code. Flag any **empty test** — one that stubs/mocks the unit
++under test and then only asserts the mock was called, so it passes without exercising a real
++production code path. A test must drive real production code and assert on its observable
++behaviour/output; mocks belong only at genuine boundaries (I/O, love2d, external systems).
++An empty test adds no net to the safety net the diff claims — record it as a finding.
++
++> Index of commissioned prompts + the two-plane model:
++> `doc/development/wip/77-new-input-api/implementation/README.md`.
+diff --git a/agents/rules.md b/agents/rules.md
+new file mode 100644
+index 0000000..13af248
+--- /dev/null
++++ b/agents/rules.md
+@@ -0,0 +1,133 @@
++# Compy — Coding Rules
++
++Audience: LLM assistant. Apply when writing, reviewing, or analysing code in this repo.
++Source: compiled from [`doc/development/conventions/code.md`](../doc/development/conventions/code.md) and [`doc/development/conventions/architecture_principles.md`](../doc/development/conventions/architecture_principles.md).
++
++---
++
++## Architecture analysis
++
++When broad picture required (not a focused check of specific behaviour):
++  Use `./doc/development/*` as the initial source of syntetic pre-extracted knowledge prior to direct codebase inspection (assume minor mistakes though)
++
++Load those as needed for the current task, not everything upfront.
++
++Mapping of reference docs:
++./doc/development/overview.md -- bird-eye overview of the architecture
++`./doc/development/conventions/*` -- fundamental dev-facing rules
++./doc/development/conventions/architecture_principles.md -- fundamental conventions and constraints applying to the whole project
++./doc/development/conventions/code.md -- code style
++./doc/development/conventions/git.md -- conventional commits usage
++`./doc/development/internals/*` -- current implementation essentials, derived from codebase isnpection -- currently cover editor, console, examples
++./doc/development/internals/user_input.md -- cross-component usage of user input in different modes
++./doc/development/drawing_system.md -- unobvious wiring of drawing system, enabling paper-and-pen vs realtime drawing modes
++
++Some (not all) essential excerpts from these docs are inlined below (they may be sufficient in many contexts)
++
++## Hard Limits (coding)
++
++| Constraint | Limit |
++|---|---|
++| Line length | 64 chars |
++| Function body | 14 lines |
++| Parameters | 4 |
++| Nesting depth | 4 |
++
++When a limit is approached, redesign — don't raise the limit.
++
++---
++
++## Formatting (editor-enforced)
++
++- Metalua auto-prettyprints; don't fight it. Published examples must be idempotent under the built-in editor.
++- `end` closes on the same line as the last statement in its block.
++- Empty table: `{ }` (spaces inside braces).
++- Table/array literals: one element per line.
++- Comments: own line only, never inline.
++- At most one blank line between non-blank lines.
++
++---
++
++## Scope & Naming
++
++- Locals scoped to the smallest enclosing block. No variable outlives its purpose.
++- Extract compound conditions to named locals — name the intent, not the mechanics:
++  ```lua
++  local done = count >= max or timed_out
++  if done then ... end
++  ```
++- Standard aliases at module top: `local gfx = love.graphics`, `local sfx = compy.audio`.
++
++---
++
++## Design
++
++**File = console equivalence.** Code in a `.lua` file and the same code typed into the Compy REPL must behave identically. No load-order side effects; no implicit global state that the REPL wouldn't have.
++
++**Prefer functional style.** Closures, iterators, and immutable-by-convention data are preferred. They compose cleanly and stay readable.
++
++**Avoid deep OOP.** Inheritance chains, manager-of-manager classes, and factory abstractions are anti-patterns here. If a student with six months of experience couldn't follow the call graph, it's too abstract.
++
++**No C accent.** Don't use string/integer tags as surrogate function pointers dispatched via if-chains. Store and pass the function itself.
++```lua
++-- wrong
++local dir = 'up'
++if dir == 'up' then go_up() elseif dir == 'down' then go_down() end
++
++-- right
++local dir = go_up
++dir()
++```
++Same applies to dispatch tables: `actions[key]()` beats `if key == 'x' then ... end`. The framework has accumulated some of this; new code and all examples must not.
++
++**Pedagogical test.** Before adding an abstraction: *could a motivated student understand and modify this?* If not, look for a simpler path.
++
++---
++
++## Tone in Analytic Notes and Specs
++
++Tech debt and internal inconsistencies are expected in any system that evolved organically under real constraints. Treat them as such — not as failures to highlight, but as context to note.
++
++When writing analysis, specs, or review notes:
++- State what is, no blame tone. "This module has accumulated several responsibilities" not "this is bad/wrong"".
++- Flag debt matter-of-factly without judgement: "likely a historic tradeoff", "has known complexity here", "worth revisiting when X", "may prevent future Y unless resolved".
++- The audience is the same people who built the system. They are senior, aware of the tradeoffs, and acting in good faith. They do not need to be told something is "wrong" — they need a clear picture of what is and what the options are.
++- That said, no unsolicited flattery or patronism, no false reassurance. Collegial, humble, accurate and direct is the target register.
++
++---
++
++## Summaries for Stakeholders
++
++When writing a stakeholder-facing summary or "in brief" section:
++
++- **Mirror the stakeholders' own tone and everyday vocabulary** from the source input — their words ("get rid of the legacy API", "only text fields", "before 1.0", "showcase", "trivial to convert"), not internal jargon (milestone IDs, "PERT", "reftable", "facade", "sink"). Spell a term or figure out only the first time it is genuinely unavoidable.
++- **Keep it short without losing meaning.** A summary is a statement, not a dialogue — no second-person address.
++- **Do not re-explain stakeholders' own requests back to them in the same words.** They already know what they asked for. In a feedback-check context, answer what they actually want to know: whether any architectural regression resulted, whether price / risk / order changed, and what the new plan is — and point them to the updated `roadmap.md` / `summaries/roadmap.md`, which is where they will look.
++- **Read whether they are confirming or exploring.** Judge the register of the ask first: are they *assuming* something and looking to have it confirmed or disproved, or are they *unsure* and want more information? When they are clearly assuming (a leading question, a stated presumption), frame a matching finding as a confirmation ("Confirmed: …", "as expected") rather than presenting it as a surprise — and disprove just as directly when the assumption is wrong. When they are genuinely unsure, lead with the information plainly.
++
++---
++
++## Commit Messages
++
++Conventional Commits, driven by semver semantics. Full guide: `doc/development/conventions/git.md`.
++
++| Type | When |
++|---|---|
++| `feat` | New capability |
++| `fix` | Bug fix |
++| `refactor` | Restructuring, no behavior change intended |
++| `style` | Cosmetic source changes only (whitespace, comments) — **not** CSS |
++| `test` | Test code only |
++| `chore` | Build system, scripts, tooling — **not** "small annoying task" |
++| `docs` | Documentation only |
++
++Breaking change: append `!` to type (`feat!:`) or add `BREAKING CHANGE:` footer.
++Scope: project-specific, not yet formally documented — omit rather than guess.
++
++---
++
++## Memory / GC
++
++- Avoid allocation in hot paths (`update`, `draw`). Reuse tables and values where the pattern is clear.
++- **Mandatory in student-facing examples.** Encouraged in new framework code. Existing framework code may have known debt here and there — just don't add more.
++- Prefer iterators over intermediate tables. Prefer preallocated buffers over per-frame construction.
+diff --git a/agents/sweep.md b/agents/sweep.md
+new file mode 100644
+index 0000000..d3417b2
+--- /dev/null
++++ b/agents/sweep.md
+@@ -0,0 +1,75 @@
++# Sweep session — M5c→M8 boot pointer (the opus-sweeper / PM plane)
++
++Point a fresh **Opus** session here (M0 image, repo root = cwd) to run/resume the M5c→M8 sweep as
++the **PM**. Read the mandate first, then boot the CURRENT PROMPT. Unlike `dev.md`/`review.md` (one
++milestone, one role, one cold run), the sweep is the standing orchestrator: it carves a milestone
++spec into small valuable chunks, commissions each, and holds a human gate between them — brainlab-
++style session governance inside this repo (see the mandate for the full cycle).
++
++## Fixed pointers
++
++- **FEATURE:** `doc/development/wip/77-new-input-api`
++- **MANDATE:** `doc/development/wip/77-new-input-api/implementation/prompts/M5c-M8-sweep-mandate.md`
++  — the workflow (chunk cycle, gates, track, wrap, boundaries, escalation). **Read it before the prompt.**
++
++## You are the PM — you may run the two other charters as sub-agents
++
++You **orchestrate**; you do **not** implement or review with your own hands. Inside this same M0
++image you may spawn sub-agents, each booted from a sibling charter, **one cold run per chunk**:
++
++- **implementor** — `agents/dev.md` (**Sonnet**): implements one commissioned chunk, tests, commits
++  locally, records the outcome ledger.
++- **reviewer** — `agents/review.md` (**Opus**): reviews the finished chunk (diff + outcome) against
++  its spec + the rules; verdict only, never rewrites feature code.
++
++Rules for commissioning them:
++
++1. **Write every commission to disk — never inline it.** Each chunk becomes a tangible
++   `implementation/prompts/<id>.md` the implementor resolves by id (and, where useful, an
++   `<id>-review.md` note; otherwise the reviewer clones `review-prompt.md`). A prompt on disk is a
++   reviewable artifact the human can read before you run it; a prompt held only in your context is not.
++2. **Small valuable chunks, following the architect's slice.** The milestone spec
++   (`design/spec/MN-….md`) is a functionally-coherent slice authored by the architect and it already
++   outlines an ordered internal sequence — **carve along it.** One chunk = the smallest step that is
++   independently valuable *and* independently reviewable = one implementor run = one review = one gate.
++3. **Stop between every chunk.** When the implementor finishes: run the reviewer, then **present the
++   chunk + its review to the human and wait for go / no-go** before commissioning the next. Never
++   chain two chunks past the gate — small blast radius + a human checkpoint at each seam is the point.
++4. **Escalate design calls up — do not rule on them.** A spec gap, a corpus contradiction, an
++   irreversible or in-slice design decision is **not the PM's to make**: stop and escalate to the
++   **architect / design plane** (the brainlab session that owns the specs), per the mandate. You set
++   the schedule and hold the gates; you never re-architect.
++
++## Volatile pointer — the only line that changes between sessions
++
++- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session06/prompt.md`
++
++> _Note (session05→06, 2026-07-12): the CODE sweep is **COMPLETE** (M5c→M8 landed, suite 808/0/0/4,
++> `compy.input.*` is the sole surface). session06 is a **POST-SWEEP phase**: documentation finalization +
++> intent review + prep to delete `wip/77` and open a PR. session05 ran four post-sweep tasks; three landed
++> (tests doc, cleaned synthetic diff, wip index — all committed) and the fourth (Fable intent-alignment
++> review) **died at the session limit but left a complete verdict on disk uncommitted** — the successor
++> validates/commits it (it flags a real doc bug in `input_api.md`'s submit lifecycle), runs the
++> incorporation check (Task 4b, not started), and relays Fable's 8-item "For the owner" list. **Do not
++> re-run the code sweep.** See the session06 prompt for the full task state._
++
++> _[historical] The prior DONE note (superseded 2026-07-12): the CODE sweep completed at session05;
++> there is nothing left to carve. **M5c + M7 + M8 are all COMPLETE, Opus-APPROVED, fully autonomous.**
++> M8 (session05) landed in three chunks: **M8-01** in-repo migrations (tixy/repl/guess/valid → `compy.input.*`,
++> completed after a mid-run implementor crash — tests+tixy survived on disk, a fresh implementor finished
++> repl/guess/valid), **M8-02** balloons (continuous-session idiom; delivered as an UNPUSHED commit `56347d0`
++> in its detached repo per the human's 2026-07-12 redirect lifting frozen AC-9), **M8-03** legacy removal
++> (the five globals + `astv_input` + the `input()`/`input_ref`/`create_input_handle()` machinery + the
++> `text_input` dead write — all gone, zero refs). The legacy poll-a-reftable idiom is retired; `compy.input.*`
++> is the sole project input surface. **Final suite 808 / 0 / 0 / 4** (the 4 pending are routing-gap cells
++> outside #77's blast radius). Full close-out + the human's remaining to-dos (open hand-play gates
++> turtle/maze/tixy/balloons; the maze uncommitted patch + the balloons unpushed commit to carry upstream;
++> logged tech debt) are in the **final entry of** `implementation/sessions/session05/track.md`. Reviews +
++> outcome ledgers for every chunk are under `implementation/reviews/` + `implementation/outcomes/`._
++
++## Wrap-up rule (mechanical — no inference)
++
++The sweep is complete; there is no further wrap. (Historically, after writing a successor
++`sessionNN+1/prompt.md` the PM repointed CURRENT PROMPT above via
++`sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN\2#' agents/sweep.md` — retained
++here only as a record of the prior cycle. Not applicable now: the terminal milestone landed.)

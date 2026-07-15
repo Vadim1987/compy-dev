@@ -1,0 +1,56 @@
+diff --git a/main.lua b/main.lua
+index 0cd4dd5..bdd36b9 100644
+--- a/main.lua
++++ b/main.lua
+@@ -105,3 +105,35 @@ function game_init()
+ end
+ 
+ game_init()
++-- test
++-- test
++print("ok")
++-- test
++-- test
++-- test 2
++
++-- test
++-- test2
++-- test 3
++print("ok")
++-- test
++-- test
++
++-- kutest
++-- kutest
++print("ku")
++-- kutest
++
++-- kutest spaced
++
++-- kkktest
++
++print("ok")
++
++-- commentookok
++
++function okok()
++  print("kuku")
++end
++
++-- zumzum
+diff --git a/terminal.lua b/terminal.lua
+index 163da52..fd34779 100644
+--- a/terminal.lua
++++ b/terminal.lua
+@@ -24,6 +24,11 @@ function terminal_init()
+   compy.input.after_submit = function()
+     compy.input.show({})
+   end
++  -- ESC cancels the widget; re-arm it (prompt stays sticky) so
++  -- the command line can't be dismissed with no way back.
++  compy.input.after_cancel = function()
++    compy.input.show({})
++  end
+   compy.input.show({ on_text_entered = deliver })
+   return {
+     write = terminal_write,
