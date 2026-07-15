@@ -670,11 +670,20 @@ end
 --- @param x number
 --- @param y number
 --- @param btn integer
+--- @param touch boolean?
+--- @param presses integer? --- 2 on a double click
 function EditorController:mousepressed(x, y, btn, touch, presses)
   if btn == 1 then
     local ln = self.view:get_current_buffer():line_at(y)
     if ln then
-      return self:mouse_select(ln)
+      self:mouse_select(ln)
+      --- spec 2.9: a double click opens the block the
+      --- first click selected
+      if presses and presses > 1
+          and self.mode == 'nav' then
+        self:open_block()
+      end
+      return
     end
   end
   self.input:mousepressed(x, y, btn, touch, presses)

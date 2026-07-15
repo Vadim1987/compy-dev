@@ -926,6 +926,19 @@ describe('Editor #editor', function()
         assert.is_nil(buffer:block_at_line(99))
       end)
 
+      it('a double click opens the block', function()
+        controller:mousepressed(0, 0, 1, false, 2)
+        assert.same('edit', controller:get_mode())
+        assert.same(1, buffer:get_selection())
+        assert.same(buffer:get_selected_text(),
+          inter:get_text():items())
+      end)
+
+      it('a single click does not open', function()
+        controller:mousepressed(0, 0, 1, false, 1)
+        assert.same('nav', controller:get_mode())
+      end)
+
       it('a click in nav selects block and line', function()
         controller:mouse_select(6)
         assert.same('nav', controller:get_mode())
