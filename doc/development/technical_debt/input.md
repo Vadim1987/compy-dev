@@ -145,19 +145,6 @@ question, not resolved here.
   this today.
 - **Revisit:** Decide when another project author hits the same need.
 
-### In-code `REVIEW:` annotations awaiting triage
-
-- **Where:** `src/controller/controller.lua` and
-  `src/controller/projectInputController.lua` — 31 `REVIEW:` markers between
-  the two files (grep-verified).
-- **State:** Each marker is the original author's own open question,
-  written inline and shipped as part of the landed code rather than
-  resolved or filed separately.
-- **Why it stands:** Open — each marker needs a read-through to decide
-  keep/resolve/discard; none has been triaged yet.
-- **Revisit:** A dedicated pass reading each marker in place and either
-  resolving it or promoting it to its own recorded item.
-
 ---
 
 ## Anticipated — revisit at the named point, close only if warranted
@@ -377,3 +364,107 @@ Not commissioned for closure; each may never need action.
   reach the current singleton regardless of when the table was built —
   arguably more resilient than a build-once table would be, since it holds
   up if the singleton is ever reassigned.
+
+### Console debug hotkeys are ad-hoc `if`-navigation
+
+- **Where:** `src/controller/controller.lua`, `set_love_keypressed` — the
+  `Ctrl+Shift+<n>` / `Ctrl+Alt+d` debug toggles are a nest of `if k == …`
+  branches ahead of the route forward.
+- **State:** These branches are exactly the shape combos exist to replace —
+  falsey-return, fall-through participants keyed on a serialised combo. They
+  predate the combo mechanism and were left in place.
+- **Why it stands:** Cosmetic; the branches work and run only under
+  `love.DEBUG`. Not worth a behavioural change on its own.
+- **Revisit:** When this handler is next touched — lift the debug toggles
+  onto the combo-table mechanism (Decision 8), or a `toggle_debug(k)` helper.
+
+### `forward_*` / `userlove` names do not convey their semantics
+
+- **Where:** `src/controller/controller.lua` — `forward_keypressed` /
+  `forward_keyreleased` / `forward_textinput`, and the `userlove` parameter
+  threaded through `occupy_keyboard` / `set_handlers`.
+- **State:** `forward_*` reads as "forward where/why?" (it routes to the
+  currently-active keyboard route and returns whether that route consumed);
+  `userlove` is the project's sandboxed `love` table. Both are correct but
+  under-named — the reason they carried inline `REVIEW:` markers.
+- **Why it stands:** Pure rename; no behavioural content. Deferred to avoid
+  churn on a landing branch.
+- **Revisit:** Next time this file is edited — rename to intent-revealing
+  names (e.g. `route_keypressed`, `project_love`) in one sweep.
+
+### Per-event `set_love_*` installers are lexically isomorphic
+
+- **Where:** `src/controller/controller.lua`, `set_default_handlers` — ten
+  near-identical `Controller.set_love_<event>(CC)` calls, each backed by an
+  equally near-identical `set_love_<event>` installer.
+- **State:** The installers differ only by event name; the repetition invites
+  a table of per-event entries driven by one iterator. Flagged inline as a
+  code-hygiene concern, not a correctness one.
+- **Why it stands:** The explicit form is readable and predates this note;
+  collapsing it is a refactor with no behavioural payoff.
+- **Revisit:** If the installer set grows or is next restructured — drive it
+  from a `{ event → installer }` table.
+
+### `_tier3` re-resolves the callback precedence on every event
+
+- **Where:** `src/controller/projectInputController.lua`, `_tier3` — computes
+  `compy_input[chan] or natives[event]` per dispatched event, then branches
+  on whether a callback exists.
+- **State:** The precedence (explicit `on_*` wins, else captured native, else
+  noop) is fixed at `activate` and does not change per event, so the
+  resolution could be memoised once. A default noop-that-logs would also let
+  the call site drop its `if cb` guard.
+- **Why it stands:** The per-event cost is negligible on the keystroke path;
+  purely a tidiness item.
+- **Revisit:** If tier-3 resolution is ever measured on a hot path, or the
+  dispatch is next refactored — resolve once at `activate`.
+
+### `Controller._keyboard_route` is a write-only field
+
+- **Where:** `src/controller/controller.lua` — assigned in `occupy_keyboard`
+  and `set_love_keypressed` (the active-route install sites), read nowhere
+  (grep-verified: two writes, zero reads).
+- **State:** The field looks like an authoritative "which route owns the
+  keyboard" registry but nothing consults it — the live answer is the global
+  `love.keypressed` slot itself. A field that appears authoritative but is
+  never read is exactly what made the gateway `love.keypressed` forward
+  (around line 899) read as confusing.
+- **Why it stands:** Harmless dead write; costs nothing at runtime.
+- **Revisit:** Either make it the queried route registry (and forward through
+  it instead of the raw slot) or delete both writes.
+
+### Pointer delivery is an unstructured broadcast, not a chain
+
+- **Where:** `src/controller/controller.lua` — the gateway `handlers.mouse*`
+  / `handlers.touch*` handlers (e.g. `handlers.mousepressed`).
+- **State:** Each pointer handler delivers to the input widget whenever one is
+  present — no bounds check, no consume semantics, the widget's return
+  discarded — and *then* forwards unconditionally to the slot occupant (the
+  project's native handler). Both fire: a shown widget cannot swallow a click
+  aimed at it, and a project's click handler fires even for clicks inside the
+  widget. The keyboard four-tier chain (Decision 2) has **no pointer mirror**.
+  Pointer never had the #77 widget-lockout, so its delivery was left as
+  pre-existing behaviour, deliberately out of #77 scope.
+- **Why it stands:** Works for today's consumers; building a pointer chain was
+  explicitly not in #77 scope.
+- **Owner ruling needed:** should pointer get a mirrored consume-chain (the
+  "two symmetrically mirrored chains" idea, analogous to Decision 1's deferred
+  console/editor convergence), and should a shown widget consume pointer
+  events within its bounds? Until ruled, the broadcast stands.
+- **Revisit:** When pointer routing gets a real second consumer, or the
+  owner rules on the mirror-chain question.
+
+### Widget sink reaches the singleton via `love.state` global + nil-guard
+
+- **Where:** `src/controller/projectInputController.lua`, `_sink` — reads
+  `love.state.user_input_controller` on each call and guards it with
+  `if ui then …`.
+- **State:** The sink reaches the widget through a global rather than an
+  injected instance field (`self.input`), and defends with a nil-check
+  against a value the singleton convention says is always present. Both were
+  flagged inline: inject the controller at construction, and assert the
+  invariant rather than silently no-op if it is ever absent.
+- **Why it stands:** Works today; the singleton is provisioned at boot, so
+  the guard never trips in practice.
+- **Revisit:** When the controller wiring is next touched — inject
+  `self.input` at construction and turn the silent guard into an assertion.

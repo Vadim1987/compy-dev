@@ -135,19 +135,25 @@ ProjectInputController = class.create(new)
 --- return consumes; falsey falls through to the sink.
 --- @param event string
 --- @return boolean? consumed
---- REVIEW: its better to install natives as callback once on load than to check every time
+--- TODO(debt): tier-3 precedence is fixed at activate but
+--- re-resolved per event; a default noop-that-logs would also
+--- drop the `if cb` guard. See technical_debt/input.md
+--- "`_tier3` re-resolves the callback precedence on every event".
 function ProjectInputController:_tier3(event, ...)
   local ci = self.compy_input
   local cb = ci[CHANNELS[event]] or self.natives[event]
-  -- REVIEW: defaulting cb to noop-with-log and calling unconditionally would be nicer
   if cb then return cb(...) end
   log_branch('generic callback noop: ' .. event)
   return false
 end
 
---- REVIEW: actually should not be invoked if consumed earlier
---- REVIEW: should not user_input_controller be set as instance property (self.input) on creation? code would be cleaner then
---- REVIEW: 'if-then' is not recommended (codestyle), UIC (ideally self.input) should be always present (singleton convention) -- can pcall or just raise if unexpected happens...
+--- (Not reached when a prior tier consumed: `_dispatch` short-
+--- circuits with `return true` at each tier, so `_sink` runs
+--- only on full fall-through.)
+--- TODO(debt): reaches the widget via the `love.state` global +
+--- nil-guards it; inject `self.input` and assert the singleton.
+--- See technical_debt/input.md "Widget sink reaches the
+--- singleton via `love.state` global".
 --- Tier 4 — the terminal widget sink. Always invoked (never
 --- gated from outside): the hidden-check is INTERNAL to the
 --- sink, which no-ops while the overlay is hidden (AC-11/13).
@@ -166,7 +172,10 @@ end
 --- @param event string
 --- @param trigger string
 --- @return boolean? consumed
---- REVIEW: stylistically should be rather `return (fw(..) or ph(..) or tier3(..) or sink(..))` with all component being noop when read 
+--- The staged form (not one `or` chain) guards nil per-tier
+--- handlers: `fw`/`ph` come from sparse combo tables and are
+--- often nil, so each is `x and x(...)`. A single `or` chain
+--- would need every tier guaranteed-callable.
 function ProjectInputController:_dispatch(event, trigger, ...)
   local combo = Controller.combo_string(
     trigger, Controller.keys_pressed)
@@ -186,7 +195,9 @@ end
 --- _tier3). No handler is copied onto compy.input.
 --- @param natives table?
 --- @param compy_input table
---- REVIEW: that's the proper moment to wrap natives and install as callbacks if natives are present and callbacks are not
+--- (Natives are seeded by precedence, never copied onto
+--- compy.input — see decisions/input.md #10 "legacy natives
+--- pure-wrapped as tier-3".)
 function ProjectInputController:activate(natives, compy_input)
   self.natives = natives or {}
   self.compy_input = compy_input

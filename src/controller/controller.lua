@@ -63,7 +63,17 @@ local user_update
 local user_draw
 
 
---- REVIEW: recheck if the purpose of spitting events in two classes is justified. I see that its used in separate pointer routing -- but my question is WHY we drive pointer events separately?
+-- keyboard/text and pointer are split because they have
+-- different install paths AND different lifecycles: the
+-- keyboard/text slots route through the four-tier chain and
+-- are released at running->project_open, while pointer natives
+-- are pure-wrapped straight into love.* and stay hooked until
+-- the project stops. The #77 widget-lockout problem only ever
+-- existed on keyboard/text; pointer never had the gate and was
+-- deliberately out of scope. See decisions/input.md #11
+-- "route connects only while running" (which forbids unifying
+-- the two lifecycles). Pointer delivery itself: see the debt
+-- note referenced at handlers.mousepressed below.
 local _keyboard = {
   'keypressed',
   'keyreleased',
@@ -188,14 +198,21 @@ end
 --- delegation (never slot occupants themselves).
 --- @param userlove table
 --- @param CC ConsoleController
--- REVIEW: purpose of the function is unclear. Design assumed little structural difference between console controller, editor controller and projecinputcontroller -- considering them equivalent swappable routes. Having a separate function that treats PIC specifically contradicts this logic. It may be justified -- but I want to know WHY.
--- REVIEW: we do not have concept of "occupying" in original design or stakeholder communication
--- REVIEW: what is userlove, project_natives, why 'occupy' activates? STRONGEST SEMANTICAL CONFUSION -- whoever reads this piece won't be abe to understasnd WHAT AND WHY is going on there. Name 'occupy' also does not help to undertand the context -- WHAT AND WHY triggers 'occupation', which purpose it serves?
+-- `userlove`: the project's sandboxed `love` table. `occupy`:
+-- take over the keyboard/text slots for the project route's
+-- run (Decision 11 uses this verb). Giving the project route
+-- its own connect path — not a generic route swap — is
+-- deliberate: the three routes are not yet fully symmetric
+-- (the editor is still reached via the console fork), so PIC
+-- is wired explicitly here. See decisions/input.md #1
+-- "route-centric routing" + #11 "route connects only while
+-- running". (`userlove`/`forward_*` renames: technical_debt.)
 local function occupy_keyboard(userlove, CC)
   local pic = Controller.project_input
   local compy = CC:get_project_env().compy
   pic:activate(project_natives(userlove, CC), compy.input)
-  -- REVIEW: why WRAP functions instead of just *assigning* them? Looks redundant
+  -- wrapped (not assigned) to bind `pic` as method receiver:
+  -- `love.keypressed = pic.keypressed` would drop `self`.
   love.keypressed = function(k, sc, isr)
     return pic:keypressed(k, sc, isr)
   end
@@ -205,7 +222,9 @@ local function occupy_keyboard(userlove, CC)
   love.keyreleased = function(k)
     return pic:keyreleased(k)
   end
-  -- REVIEW: not immediately clear WHEN AND WHY its used -- worth justification and a comment when justified
+  -- TODO(debt): `_keyboard_route` is written here (and in
+  -- set_love_keypressed) but read nowhere — a write-only field.
+  -- See technical_debt/input.md "`_keyboard_route` is write-only".
   Controller._keyboard_route = pic
 end
 
@@ -245,9 +264,8 @@ local function hook_draw(userlove)
   end
 end
 
--- REVIEW: why this section was refactored? Is it functional rebuild or purely cosmetic (TODO: check for report)
--- REVIEW: are we sure this section was covered by any tests BEFORE refactoring?
--- REVIEW: WHAT IS USERLOVE? not clear absolutely. need better name
+-- `userlove` = the project's sandboxed `love` table (see
+-- occupy_keyboard above; rename tracked in technical_debt).
 --- @param userlove table
 --- @param CC ConsoleController
 local set_handlers = function(userlove, CC)
@@ -397,9 +415,9 @@ Controller = {
   --- @param CC ConsoleController
   set_love_keypressed = function(CC)
     local function keypressed(k, _, isr)
-      -- REVIEW: both these if-blocks are perfect examples of future 'combos' (returning falsey therefore not stopping processing) -- worse refactoring into separate function or at least marking here
-      -- REVIEW: if-navigation is smelly; while code was there before, this is exactly moment where it deserves a) refactoring into 'toggle_debug_handlers(k) b) reorganizing into table-driven map' 
-      -- REVIEW: why refactor now? to improve readability of the code piece we already are touching
+      -- TODO(debt): these debug-hotkey if-blocks predate combos;
+      -- migrate onto the combo-table mechanism (Decision 8). See
+      -- technical_debt/input.md "Console debug hotkeys are ad-hoc".
       if Key.ctrl() and Key.shift() then
         if love.DEBUG then
           if k == "1" then
@@ -424,9 +442,12 @@ Controller = {
           end
         end
       end
-      -- REVIEW: if-navigation (should better be `forward_keypressed() or CC:keypressed()` ?
-      -- REVIEW: forward-keypressed is a strange name, not explaining semantics. Forward WHERE? Forward WHY? Why would it return true or false?
-      -- REVIEW: why suppress return value, instead of returning it up?
+      -- `forward_keypressed` routes to the active keyboard route
+      -- (e.g. the editor fork) and returns whether it consumed;
+      -- on consume we stop. Two-statement (not `or`-chained) form
+      -- is deliberate: this is the terminal love-boundary, so the
+      -- return is not propagated (LÖVE ignores handler returns).
+      -- `forward_*` rename tracked in technical_debt/input.md.
       if forward_keypressed(k, isr) then return end
       CC:keypressed(k)
     end
@@ -438,9 +459,11 @@ Controller = {
   --- @private
   --- @param CC ConsoleController
   set_love_keyreleased = function(CC)
-    -- REVIEW: same problem -- useless wrapper, silent drop, strange name, why not just 'forward_keyreleased or CC:keyreleased'
-    -- REVIEW: separate question -- why dedicated function for each event instead of name-based-routing?
-    -- REVIEW: why CC has special meaning instead of being just equal 'first-class citizen' alongside with predecessor routing variants
+    -- Same wrapper shape as keypressed above (terminal love-
+    -- boundary, return not propagated). CC is the console — the
+    -- named default/restore route (decisions/input.md #1); not
+    -- "special", just the default occupant. Per-event installer
+    -- repetition + `forward_*` naming logged in technical_debt.
     --- @diagnostic disable-next-line: duplicate-set-field
     local function keyreleased(k)
       if forward_keyreleased(k) then return end
@@ -453,7 +476,8 @@ Controller = {
   --- @private
   --- @param CC ConsoleController
   set_love_textinput = function(CC)
-    -- REVIEW: same problems: silent drop, weird naming, unnecessary code wrapping, why not dispatch/setup by event name?
+    -- Same wrapper shape (see keypressed/keyreleased above);
+    -- naming + table-driven install logged in technical_debt.
     local function textinput(t)
       if forward_textinput(t) then return end
       CC:textinput(t)
@@ -738,11 +762,15 @@ Controller = {
   --- @param CV ConsoleView
   set_default_handlers = function(CC, CV)
     -- the console is the NAMED restore target: releasing
-    -- the project route precedes reinstalling the console
-    -- REVIEW: I understand console and project input have ties (console suppresses project input when inspect mode is entered) -- but beyond that I see no reason to treat them as pets not cattle
+    -- the project route precedes reinstalling the console.
+    -- The only console/PIC tie is this restore ordering +
+    -- inspect suppression (decisions/input.md #11/#12) — not
+    -- a special-case beyond that.
     Controller.project_input:deactivate()
 
-    -- REVIEW: it was in place before? let it be then. But I'd inject at least TODO marker, as 10 lexically isomoprhic function calls suggest we may need table of 10 functions named per event, and one iterator activating them (its mostly about code hygiene)
+    -- TODO(debt): these ten near-identical set_love_* installers
+    -- could be driven from a { event -> installer } table. See
+    -- technical_debt/input.md "Per-event set_love_* installers".
     Controller.set_love_keypressed(CC)
     Controller.set_love_keyreleased(CC)
     Controller.set_love_textinput(CC)
@@ -773,7 +801,8 @@ Controller = {
     --- SKIPPED threaderror
     --- SKIPPED lowmemory
 
-    -- REVIEW: unrelated remark -- this piece is hard to read. dropping some comment nearby would be nice-to-have (without heavy refactoring though)
+    -- reset the user-handler presence flags, then (re)install
+    -- the console's update/draw/quit as the love defaults.
     user_update = false
     Controller.set_love_update(CC)
     user_draw = false
@@ -895,7 +924,15 @@ Controller = {
       -- no overlay gate: the slot occupant (the active
       -- route's controller) always receives; widgets are
       -- reached intra-route, never by dispatch here
-      -- REVIEW: this is the CORE CHANGE OF THE DIFF AND IT LANDS AS EXPECTED. HOWEVER: I am not confused why we are checking love.keypressed. Was not love.keypressed installed unambiguously to drive events into current controller's handler? why are we quering it here? how current code is triggered if not from there? if we're speaking about custom 'keypressed' handlers (e.g. installed into projects own 'sandbox-imitation-of-love', why would we mount it into love? If we are *routing* event somewhere, the routing function can be stored in ANY table? GENERAL CONFUSION
+      -- this is `love.handlers.keypressed` (the raw event-pump
+      -- entry), one level above the slot. `love.keypressed` IS
+      -- the route slot: set_love_keypressed installs the console
+      -- route's handler into it, occupy_keyboard installs the
+      -- project route's — so forwarding here = "invoke whoever
+      -- currently occupies the slot". (Mirrors stock LÖVE's own
+      -- love.handlers[name] -> love[name].) See decisions/input.md
+      -- #1 "route-centric routing" + #11 "route occupies the
+      -- keyboard/text slots".
       if love.keypressed then
         return love.keypressed(k, sc, isr)
       end
@@ -924,7 +961,18 @@ Controller = {
     --- @param btn integer
     --- @param touch boolean
     --- @param presses number
-    -- REVIEW: now I have design question. Why not unify event delivery? Why use gateway-style? If its because we need to *invert* the routing (such as 'key is bubbling down from framework to project to widget' vs 'mouse click bubble up from narrowest widget to screen' -- we can just have two symmetrically mirrored generic chains of routing. I DO NOT UNDERSTAND WHY WE EVER NEED TO INTERACT WITH USER_INPUT here? I do not see any reason to interact with it directly.
+    -- Honest answer: pointer has NO four-tier chain to mirror
+    -- the keyboard's. This is an unstructured broadcast — deliver
+    -- to the widget whenever one is present (no bounds/consume
+    -- check, return ignored), then unconditionally to the slot
+    -- occupant (the project's native). We touch `user_input`
+    -- directly because the widget needs pointer events (click-to-
+    -- cursor / drag-select) and there is no chain to carry them.
+    -- Pointer never had the #77 widget-lockout, so its delivery
+    -- was left as pre-existing behaviour, deliberately out of
+    -- scope. Whether pointer should get a mirrored consume-chain
+    -- is an OPEN owner ruling — see technical_debt/input.md
+    -- "Pointer delivery is an unstructured broadcast".
     handlers.mousepressed = function(x, y, btn, touch, presses)
       local user_input = get_user_input()
       if user_input then
