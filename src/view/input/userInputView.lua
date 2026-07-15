@@ -169,7 +169,7 @@ function UserInputView:render_input(input, status, time)
 
         if tlc then
           local ci = (function()
-            if hl[tlc.l] then
+            if hl and hl[tlc.l] then
               return hl[tlc.l][tlc.c]
             end
           end)()
