@@ -46,9 +46,15 @@ UserInputModel = class.create()
 --- @param eval Evaluator
 --- @param oneshot boolean?
 --- @param custom_label string?
-function UserInputModel.new(cfg, eval, oneshot, custom_label)
+--- @param editing boolean? --- the editor's rich input:
+--- word deletion (2.7) and the text-level undo (1.1).
+--- Off everywhere else — the console, project inputs and
+--- search keep the plain widget.
+function UserInputModel.new(cfg, eval, oneshot, custom_label,
+                            editing)
   local self = setmetatable({
     oneshot = oneshot,
+    editing = editing or false,
     entered = InputText(),
     history = History(cfg.input_history),
     edit_history = EditHistory(32),
@@ -118,6 +124,7 @@ end
 --- @param kind string
 --- @param boundary boolean?
 function UserInputModel:_record_edit(kind, boundary)
+  if not self.editing then return end
   self.edit_history:record(
     self:_edit_snapshot(), kind, boundary or false)
 end
@@ -125,6 +132,7 @@ end
 --- @private
 --- Remember where the mutation left the cursor
 function UserInputModel:_note_edit()
+  if not self.editing then return end
   local cl, cc = self:get_cursor_pos()
   self.edit_history:note_cursor(cl, cc)
 end
@@ -405,6 +413,43 @@ function UserInputModel:backspace()
     self:_set_text_line(nval, cl, true)
     self:cursor_left()
   end
+  self:text_change()
+  self:_note_edit()
+end
+
+--- Start of the word ending at column cc (spec 2.7:
+--- Ctrl+Backspace / Ctrl+W). Whitespace before the
+--- cursor is eaten with the word, as readline does.
+--- @param line string
+--- @param cc integer --- cursor column
+--- @return integer --- the column the word starts at
+local function word_start(line, cc)
+  local i = cc - 1
+  while i > 1 and string.usub(line, i - 1, i - 1) == ' ' do
+    i = i - 1
+  end
+  while i > 1 do
+    local ch = string.usub(line, i - 1, i - 1)
+    if ch == ' ' then break end
+    i = i - 1
+  end
+  return i
+end
+
+--- Delete the word before the cursor; at the line's
+--- start it falls back to joining lines
+function UserInputModel:backspace_word()
+  self:_record_edit('remove_word', true)
+  self:pop_selected_text()
+  local line = self:get_current_line()
+  local cl, cc = self:get_cursor_pos()
+  if cc == 1 then return self:backspace() end
+
+  local ws = word_start(line, cc)
+  local pre = string.usub(line, 1, ws - 1)
+  local post = string.usub(line, cc)
+  self:_set_text_line(pre .. post, cl, true)
+  self:move_cursor(cl, ws)
   self:text_change()
   self:_note_edit()
 end

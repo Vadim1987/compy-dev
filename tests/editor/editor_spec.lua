@@ -962,6 +962,56 @@ describe('Editor #editor', function()
       assert.same('edit', controller:get_mode())
     end)
 
+    it('the console widget keeps plain keys', function()
+      --- a console-style input: no editing flag
+      local model = UserInputModel(
+        TU.mock_view_cfg(), LuaEval(), false, 'console')
+      local con = UserInputController(model)
+      --- keypressed refreshes the view first; a stub
+      --- is enough, the spec is about the keys
+      con.view = { refresh = function() end }
+      con.update_view = function() end
+      local press = function(k) con:keypressed(k) end
+
+      model:add_text('one two')
+      mock.keystroke('C-backspace', press)
+      --- plain backspace, one character, not a word
+      assert.same({ 'one tw' }, model:get_text():items())
+
+      mock.keystroke('C-w', press)
+      assert.same({ 'one tw' }, model:get_text():items())
+
+      mock.keystroke('C-y', press)
+      --- delete-line is still the console's Ctrl+Y
+      assert.same({ '' }, model:get_text():items())
+    end)
+
+    it('Ctrl+W and Ctrl+Backspace eat a word', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local src = 'x = 1'
+      local save = TU.get_save_function(src)
+      controller:open('w.lua', src .. '\n', save)
+      local inter = controller.input
+
+      mock.keystroke('return', press)
+      inter:set_text({ 'local one two three' })
+      inter.model:move_cursor(1, 20)
+
+      mock.keystroke('C-w', press)
+      assert.same({ 'local one two ' }, inter:get_text())
+      --- still editing: the key must not leave the block
+      assert.same('edit', controller:get_mode())
+
+      mock.keystroke('C-backspace', press)
+      assert.same({ 'local one ' }, inter:get_text())
+
+      --- trailing spaces go with the word
+      mock.keystroke('C-w', press)
+      assert.same({ 'local ' }, inter:get_text())
+    end)
+
+
     it('Ctrl+Delete drops a block only in nav', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())

@@ -1462,12 +1462,6 @@ function EditorController:_normal_mode_keys(k)
       end
     end
   end
-  local function clear()
-    if Key.ctrl() and k == "w" then
-      self:leave_edit()
-    end
-  end
-
   local plain_enter = Key.is_enter(k)
       and not Key.ctrl()
       and not Key.shift()
@@ -1482,7 +1476,6 @@ function EditorController:_normal_mode_keys(k)
   discard()
   delete()
   navigate()
-  clear()
 
   if passthrough then
     input:keypressed(k)

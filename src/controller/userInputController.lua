@@ -235,15 +235,28 @@ function UserInputController:keypressed(k)
 
   -- action categories
   local function removers()
+    local editing = input.editing
     if k == "backspace" then
-      input:backspace()
+      --- word-wise deletion is the editor's 2.7; the
+      --- plain widget keeps the plain backspace
+      if Key.ctrl() and editing then
+        input:backspace_word()
+      else
+        input:backspace()
+      end
     end
     if k == "delete" then
       input:delete()
     end
     if Key.ctrl() then
       if k == "y" then
+        --- unreachable in the editor: its controller
+        --- takes Ctrl+Y for redo before the widget
         input:delete_line()
+      end
+      if k == "w" and editing then
+        --- readline's synonym, per the editor spec 2.7
+        input:backspace_word()
       end
     end
   end
