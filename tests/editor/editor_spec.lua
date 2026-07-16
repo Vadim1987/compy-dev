@@ -780,6 +780,31 @@ describe('Editor #editor', function()
       end)
     end)
 
+    it('Ctrl+W and Ctrl+Backspace eat a word', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local src = 'x = 1'
+      local save = TU.get_save_function(src)
+      controller:open('w.lua', src .. '\n', save)
+      local inter = controller.input
+
+      mock.keystroke('return', press)
+      inter:set_text({ 'local one two three' })
+      inter.model:move_cursor(1, 20)
+
+      mock.keystroke('C-w', press)
+      assert.same({ 'local one two ' }, inter:get_text())
+      --- still editing: the key must not leave the block
+      assert.same('edit', controller:get_mode())
+
+      mock.keystroke('C-backspace', press)
+      assert.same({ 'local one ' }, inter:get_text())
+
+      --- trailing spaces go with the word
+      mock.keystroke('C-w', press)
+      assert.same({ 'local ' }, inter:get_text())
+    end)
+
     it('Ctrl+Delete drops a block only in nav', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())

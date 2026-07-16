@@ -236,7 +236,11 @@ function UserInputController:keypressed(k)
   -- action categories
   local function removers()
     if k == "backspace" then
-      input:backspace()
+      if Key.ctrl() then
+        input:backspace_word()
+      else
+        input:backspace()
+      end
     end
     if k == "delete" then
       input:delete()
@@ -244,6 +248,10 @@ function UserInputController:keypressed(k)
     if Key.ctrl() then
       if k == "y" then
         input:delete_line()
+      end
+      --- readline's synonym, per the editor spec 2.7
+      if k == "w" then
+        input:backspace_word()
       end
     end
   end

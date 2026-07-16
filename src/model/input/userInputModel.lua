@@ -334,6 +334,41 @@ function UserInputModel:backspace()
   self:text_change()
 end
 
+--- Start of the word ending at column cc (spec 2.7:
+--- Ctrl+Backspace / Ctrl+W). Whitespace before the
+--- cursor is eaten with the word, as readline does.
+--- @param line string
+--- @param cc integer --- cursor column
+--- @return integer --- the column the word starts at
+local function word_start(line, cc)
+  local i = cc - 1
+  while i > 1 and string.usub(line, i - 1, i - 1) == ' ' do
+    i = i - 1
+  end
+  while i > 1 do
+    local ch = string.usub(line, i - 1, i - 1)
+    if ch == ' ' then break end
+    i = i - 1
+  end
+  return i
+end
+
+--- Delete the word before the cursor; at the line's
+--- start it falls back to joining lines
+function UserInputModel:backspace_word()
+  self:pop_selected_text()
+  local line = self:get_current_line()
+  local cl, cc = self:get_cursor_pos()
+  if cc == 1 then return self:backspace() end
+
+  local ws = word_start(line, cc)
+  local pre = string.usub(line, 1, ws - 1)
+  local post = string.usub(line, cc)
+  self:_set_text_line(pre .. post, cl, true)
+  self:move_cursor(cl, ws)
+  self:text_change()
+end
+
 function UserInputModel:delete()
   self:pop_selected_text()
   local line = self:get_current_line()
