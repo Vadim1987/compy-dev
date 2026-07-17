@@ -780,6 +780,91 @@ describe('Editor #editor', function()
       end)
     end)
 
+    describe('block undo (1.1)', function()
+      require("tests.helpers.codesnippets")
+      local controller, press, buffer, savefile
+
+      before_each(function()
+        local f1 = mock_func_snippet('one')
+        local f2 = mock_func_snippet('two')
+        local text = f1 .. '\n\n' .. f2 .. '\n'
+        controller, press = wire(TU.mock_view_cfg())
+        local save
+        save, savefile = TU.get_save_function(text)
+        controller:open('bu.lua', text, save)
+        love.system = {
+          getClipboardText = function() return '' end,
+          setClipboardText = function() end,
+        }
+        buffer = controller:get_active_buffer()
+      end)
+
+      it('undoes an acceptance, file steps back', function()
+        local orig = string.unlines(
+          buffer:get_text_content())
+        mock.keystroke('return', press)
+        controller.input:set_text(
+          string.lines(mock_func_snippet('renamed')))
+        mock.keystroke('return', press)
+        assert.truthy(string.find(savefile(), 'renamed',
+          1, true))
+
+        mock.keystroke('C-z', press)
+        --- back in the file, block not reopened
+        assert.same('nav', controller:get_mode())
+        assert.same(orig, string.unlines(
+          buffer:get_text_content()))
+        assert.same(orig, savefile())
+        --- redo returns the accepted state
+        mock.keystroke('C-y', press)
+        assert.truthy(string.find(
+          string.unlines(buffer:get_text_content()),
+          'renamed', 1, true))
+      end)
+
+      it('undoes a block deletion', function()
+        local orig = string.unlines(
+          buffer:get_text_content())
+        mock.keystroke('C-delete', press)
+        assert.falsy(string.find(
+          string.unlines(buffer:get_text_content()),
+          'function one()', 1, true))
+        mock.keystroke('C-z', press)
+        assert.same(orig, string.unlines(
+          buffer:get_text_content()))
+      end)
+
+      it('undoes an Alt block move', function()
+        local orig = string.unlines(
+          buffer:get_text_content())
+        mock.keystroke('M-down', press)
+        assert.is_not.same(orig, string.unlines(
+          buffer:get_text_content()))
+        mock.keystroke('C-z', press)
+        assert.same(orig, string.unlines(
+          buffer:get_text_content()))
+      end)
+
+      it('knocks on empty history', function()
+        local n0 = #mock.played_sounds()
+        mock.keystroke('C-z', press)
+        assert.is_true(#mock.played_sounds() > n0)
+      end)
+
+      it('a new write kills the redo tail', function()
+        mock.keystroke('M-down', press)
+        mock.keystroke('C-z', press)
+        mock.keystroke('M-down', press)
+        local n0 = #mock.played_sounds()
+        mock.keystroke('C-z', press)
+        assert.same(n0, #mock.played_sounds())
+        mock.keystroke('C-y', press)
+        mock.keystroke('C-y', press)
+        --- the second redo has nothing: the tail died
+        assert.is_true(#mock.played_sounds() > n0)
+      end)
+    end)
+
     it('Ctrl+Z undoes typing word by word', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())

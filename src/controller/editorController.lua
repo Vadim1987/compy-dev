@@ -567,6 +567,51 @@ function EditorController:new_block(below)
   self:update_status()
 end
 
+--- Run a file-writing operation and record it in the
+--- block history (1.1): the file before and after, the
+--- diff trimmed inside push_history
+--- @param buf BufferModel
+--- @param fn function --- mutates the buffer and saves
+--- @return any --- fn's return
+function EditorController:record_write(buf, fn)
+  local before = table.clone(buf:get_text_content())
+  local sel_b = buf:get_selection()
+  local ret = fn()
+  buf:push_history(
+    before,
+    table.clone(buf:get_text_content()),
+    sel_b,
+    buf:get_selection())
+  return ret
+end
+
+--- @private
+--- Apply one block-history step (spec 1.1: navigation
+--- undo). The file is written through the same save
+--- path every operation uses.
+--- @param redo boolean?
+function EditorController:_step_history(redo)
+  local buf = self:get_active_buffer()
+  if buf.readonly then return self:refuse() end
+  --- no and/or chain here: redo() legitimately
+  --- returns nil, which must not fall through to undo
+  local step
+  if redo then
+    step = buf:redo()
+  else
+    step = buf:undo()
+  end
+  if not step then return self:refuse() end
+  self:save(buf)
+  local sel = redo and step.sel_after or step.sel_before
+  local last = buf:get_content_length()
+  if sel > last then sel = last end
+  buf:set_selection(sel)
+  self.view:refresh()
+  self.view:get_current_buffer():follow_selection()
+  self:update_status()
+end
+
 --- @return integer --- the input strip's height (2.7)
 function EditorController:_size_limit()
   return self.view:get_current_buffer():get_max_size()
@@ -626,10 +671,12 @@ function EditorController:accept_block()
       self:_reject_oversized(newtext, oversized)
       return false
     end
-    local _, n = buf:replace_content(newtext)
-    self:save(buf)
+    self:record_write(buf, function()
+      local _, n = buf:replace_content(newtext)
+      self:save(buf)
+      self.accepted_n = n
+    end)
     self.view:refresh()
-    self.accepted_n = n
     bufv:follow_selection()
     self:leave_edit()
     return true
@@ -709,9 +756,11 @@ function EditorController:_move_block(dir)
     return self:refuse()
   end
 
-  buf:move(sel, target)
-  buf:rechunk()
-  self:save(buf)
+  self:record_write(buf, function()
+    buf:move(sel, target)
+    buf:rechunk()
+    self:save(buf)
+  end)
   buf:set_selection(target)
   self.view:refresh()
   self.view:get_current_buffer():follow_selection()
@@ -798,9 +847,11 @@ function EditorController:_reorg(save)
   local buf = self:get_active_buffer()
   if save then
     local target = buf:get_selection()
-    buf:move(moved, target)
-    buf:rechunk()
-    self:save(buf)
+    self:record_write(buf, function()
+      buf:move(moved, target)
+      buf:rechunk()
+      self:save(buf)
+    end)
   else
     buf:set_selection(moved)
     self:restore_state(self:get_state())
@@ -892,9 +943,11 @@ function EditorController:_normal_mode_keys(k)
 
   local function delete_block()
     local t = string.unlines(buf:get_selected_text())
-    buf:delete_selected_text()
-    love.system.setClipboardText(t)
-    self:save(buf)
+    self:record_write(buf, function()
+      buf:delete_selected_text()
+      love.system.setClipboardText(t)
+      self:save(buf)
+    end)
     self.view:refresh()
   end
 
@@ -969,9 +1022,12 @@ function EditorController:_normal_mode_keys(k)
         return false
       end
 
-      local sel = buf:get_selection()
-      local _, n = buf:insert_content(newtext, sel)
-      self:save(buf)
+      local n = self:record_write(buf, function()
+        local sel = buf:get_selection()
+        local _, added = buf:insert_content(newtext, sel)
+        self:save(buf)
+        return added
+      end)
       self.view:refresh()
       self:_move_sel('down', n)
       self:leave_edit()
@@ -980,22 +1036,27 @@ function EditorController:_normal_mode_keys(k)
 
     --- undo/redo (1.1): the mode picks the level —
     --- editing works the text history of the open
-    --- block, navigation (below) works the file
+    --- block, navigation works the file history
     if Key.ctrl() and not Key.alt() and not Key.shift()
         and (k == 'z' or k == 'y') then
       block_input()
       if self.mode == 'edit' then
         local im = self.input.model
-        local done = (k == 'z')
-            and im:undo_edit() or (k == 'y')
-            and im:redo_edit()
+        local done
+        if k == 'z' then
+          done = im:undo_edit()
+        else
+          done = im:redo_edit()
+        end
         if done then
           self.input:update_view()
         else
           self:refuse()
         end
-        return
+      else
+        self:_step_history(k == 'y')
       end
+      return
     end
 
     --- spec 2.7: Ctrl+Enter opens a fresh block below
