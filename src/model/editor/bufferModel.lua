@@ -91,7 +91,9 @@ local function new(
     semantic = semantic,
     selection = sel,
     active_line = 1,
-    readonly = readonly
+    readonly = readonly,
+    history = {},
+    redo_history = {}
   }
   local id = tostring(self):gsub('table: ', '')
   self.id = id
@@ -129,6 +131,108 @@ BufferModel = class.create(new, lateinit)
 
 function BufferModel:get_id()
   return self.id
+end
+
+--- The block-level undo (1.1): a 32-step ring of file
+--- operations. A step is a trimmed diff — the common
+--- prefix and suffix of the file before/after are cut,
+--- so what remains is exactly the affected line range,
+--- whatever the operation was (accept, move, delete,
+--- insert, discard pair). Applying a step is a splice;
+--- the caller re-chunks and saves, the same path every
+--- write takes.
+BLOCK_HISTORY_CAP = 32
+
+--- @param before string[] --- file lines pre-operation
+--- @param after string[] --- file lines post-operation
+--- @param sel_b integer --- selection before
+--- @param sel_a integer --- selection after
+--- @return table? --- nil when nothing changed
+local function make_step(before, after, sel_b, sel_a)
+  local nb, na = #before, #after
+  local head = 0
+  while head < nb and head < na
+      and before[head + 1] == after[head + 1] do
+    head = head + 1
+  end
+  local tail = 0
+  while tail < nb - head and tail < na - head
+      and before[nb - tail] == after[na - tail] do
+    tail = tail + 1
+  end
+  if head + tail == nb and nb == na then return end
+  local removed, inserted = {}, {}
+  for i = head + 1, nb - tail do
+    table.insert(removed, before[i])
+  end
+  for i = head + 1, na - tail do
+    table.insert(inserted, after[i])
+  end
+  return {
+    start = head + 1,
+    removed = removed,
+    inserted = inserted,
+    sel_before = sel_b,
+    sel_after = sel_a,
+  }
+end
+
+--- @param before string[]
+--- @param after string[]
+--- @param sel_b integer
+--- @param sel_a integer
+function BufferModel:push_history(before, after, sel_b, sel_a)
+  local step = make_step(before, after, sel_b, sel_a)
+  if not step then return end
+  table.insert(self.history, step)
+  if #self.history > BLOCK_HISTORY_CAP then
+    table.remove(self.history, 1)
+  end
+  self.redo_history = {}
+end
+
+--- @private
+--- Splice a step's lines into the content and re-chunk
+--- @param start integer
+--- @param n_out integer --- lines to remove
+--- @param lines_in string[]
+function BufferModel:_splice(start, n_out, lines_in)
+  local lines = string.lines(
+    string.unlines(self:get_text_content()))
+  for _ = 1, n_out do
+    table.remove(lines, start)
+  end
+  for i = #lines_in, 1, -1 do
+    table.insert(lines, start, lines_in[i])
+  end
+  if self.content_type == 'lua' then
+    local _, blocks = self.chunker(lines)
+    self.content = blocks
+  else
+    self.content = Dequeue(lines)
+  end
+end
+
+--- @return table? --- the applied step, nil when empty
+function BufferModel:undo()
+  local n = #self.history
+  if n == 0 then return end
+  local step = self.history[n]
+  table.remove(self.history, n)
+  self:_splice(step.start, #step.inserted, step.removed)
+  table.insert(self.redo_history, step)
+  return step
+end
+
+--- @return table? --- the applied step, nil when empty
+function BufferModel:redo()
+  local n = #self.redo_history
+  if n == 0 then return end
+  local step = self.redo_history[n]
+  table.remove(self.redo_history, n)
+  self:_splice(step.start, #step.removed, step.inserted)
+  table.insert(self.history, step)
+  return step
 end
 
 function BufferModel:analyze()

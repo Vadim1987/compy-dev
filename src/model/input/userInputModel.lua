@@ -1,6 +1,7 @@
 require("model.input.inputText")
 require("model.input.selection")
 require("model.input.history")
+require("model.input.editHistory")
 require("model.lang.lua.error")
 require("view.editor.visibleContent")
 
@@ -15,6 +16,7 @@ require("util.lua")
 --- @field oneshot boolean
 --- @field entered InputText
 --- @field history History
+--- @field edit_history EditHistory
 --- @field evaluator Evaluator
 --- @field cursor Cursor
 --- @field error string[]?
@@ -49,6 +51,7 @@ function UserInputModel.new(cfg, eval, oneshot, custom_label)
     oneshot = oneshot,
     entered = InputText(),
     history = History(cfg.input_history),
+    edit_history = EditHistory(32),
     evaluator = eval,
     cursor = Cursor(),
     selection = InputSelection(),
@@ -100,9 +103,71 @@ end
 ----------------
 
 --- @param text string
+--- @private
+--- @return table --- {text, cursor} for the edit history
+function UserInputModel:_edit_snapshot()
+  local cl, cc = self:get_cursor_pos()
+  return {
+    text = table.clone(self:get_text()),
+    cursor = { l = cl, c = cc },
+  }
+end
+
+--- @private
+--- Record the pre-mutation state in the edit history
+--- @param kind string
+--- @param boundary boolean?
+function UserInputModel:_record_edit(kind, boundary)
+  self.edit_history:record(
+    self:_edit_snapshot(), kind, boundary or false)
+end
+
+--- @private
+--- Remember where the mutation left the cursor
+function UserInputModel:_note_edit()
+  local cl, cc = self:get_cursor_pos()
+  self.edit_history:note_cursor(cl, cc)
+end
+
+--- Undo one edit step inside the open block (1.1)
+--- @return boolean --- false when there is nothing to undo
+function UserInputModel:undo_edit()
+  local snap = self.edit_history:undo(self:_edit_snapshot())
+  if not snap then return false end
+  self:_apply_edit_snapshot(snap)
+  return true
+end
+
+--- Redo one edit step
+--- @return boolean --- false when there is nothing to redo
+function UserInputModel:redo_edit()
+  local snap = self.edit_history:redo(self:_edit_snapshot())
+  if not snap then return false end
+  self:_apply_edit_snapshot(snap)
+  return true
+end
+
+--- @private
+--- @param snap table
+function UserInputModel:_apply_edit_snapshot(snap)
+  self.entered = InputText(table.clone(snap.text))
+  self:text_change()
+  self:move_cursor(snap.cursor.l, snap.cursor.c)
+  self:clear_selection()
+end
+
 function UserInputModel:add_text(text)
   if type(text) == 'string' then
     text = sanitize_utf8(text)
+    local single = string.ulen(text) == 1
+    if single then
+      --- a whitespace starts a new step, so undo eats
+      --- word by word, not letter by letter
+      self:_record_edit('insert',
+        string.match(text, '^%s$') ~= nil)
+    else
+      self:_record_edit('paste', true)
+    end
     self:pop_selected_text()
     local sl, cc    = self:get_cursor_pos()
     local cur_line  = self:get_text_line(sl)
@@ -134,12 +199,16 @@ function UserInputModel:add_text(text)
       self:move_cursor(last_line_i, string.ulen(ll) + 1)
     end
     self:text_change()
+    self:_note_edit()
   end
 end
 
 --- @param text str
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)
+  --- programmatic content is a new baseline: the text
+  --- level lives only inside one open block (1.1)
+  self.edit_history:reset()
   if type(text) == 'string' then
     text = sanitize_utf8(text)
     local lines = string.lines(text)
@@ -196,6 +265,7 @@ end
 
 --- @param ln integer?
 function UserInputModel:delete_line(ln)
+  self:_record_edit('remove_line', true)
   local n = self:get_n_text_lines()
   if n == 1 then
     self:clear_input()
@@ -203,6 +273,7 @@ function UserInputModel:delete_line(ln)
     local l = ln or self:get_cursor_y()
     self:_drop_text_line(l)
   end
+  self:_note_edit()
 end
 
 --- @param text string
@@ -244,6 +315,7 @@ function UserInputModel:swap_lines(ln_that, ln_this)
 end
 
 function UserInputModel:line_feed()
+  self:_record_edit('newline', true)
   local cl, cc = self:get_cursor_pos()
   local cur_line = self:get_text_line(cl)
   local pre, post = string.split_at(cur_line, cc)
@@ -251,6 +323,7 @@ function UserInputModel:line_feed()
   self:insert_text_line(post, cl + 1)
   self:move_cursor(cl + 1, 1)
   self:text_change()
+  self:_note_edit()
 end
 
 --- @return InputText
@@ -305,6 +378,7 @@ function UserInputModel:paste(text)
 end
 
 function UserInputModel:backspace()
+  self:_record_edit('remove')
   self:pop_selected_text()
   local line = self:get_current_line()
   local cl, cc = self:get_cursor_pos()
@@ -332,9 +406,11 @@ function UserInputModel:backspace()
     self:cursor_left()
   end
   self:text_change()
+  self:_note_edit()
 end
 
 function UserInputModel:delete()
+  self:_record_edit('remove')
   self:pop_selected_text()
   local line = self:get_current_line()
   local cl, cc = self:get_cursor_pos()
@@ -359,6 +435,7 @@ function UserInputModel:delete()
   local nval = (pre or '') .. (post or '')
   self:_set_text_line(nval, cl, true)
   self:text_change()
+  self:_note_edit()
 end
 
 function UserInputModel:clear_input()

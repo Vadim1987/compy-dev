@@ -359,6 +359,7 @@ end
 --- @param t string
 function EditorController:textinput(t)
   self.view:update_input()
+  if self:_dialog_textinput(t) then return end
   if is_normal(self.mode) then
     local input = self.model.input
     if input:has_error() then
@@ -544,6 +545,100 @@ function EditorController:mousepressed(x, y, btn, touch, presses)
   self.input:mousepressed(x, y, btn, touch, presses)
 end
 
+--- Shift+Esc out of an open block (1.1). A changed
+--- block asks for confirmation through the shared
+--- dialog scheme (Enter or Space confirms, anything
+--- else cancels). A parseable draft leaves a
+--- recoverable pair in the block history: one Ctrl+Z
+--- puts the discarded text into the file, another
+--- takes it back out.
+function EditorController:discard_edit()
+  if self.mode ~= 'edit' then
+    return self:leave_edit()
+  end
+  local buf = self:get_active_buffer()
+  local draft = self.input:get_text():items()
+  local orig = buf:get_selected_text()
+  local clean = string.unlines(draft)
+      == string.unlines(orig)
+
+  if clean then return self:leave_edit() end
+
+  self.pending_confirm = 'discard'
+  self.input:set_error({
+    'discard the changes? Confirm [Enter] / Cancel [Esc]'
+  })
+end
+
+--- Execute a confirmed dialog action (the dispatch in
+--- keypressed/textinput confirms on Enter or Space and
+--- cancels on everything else, so key repeat of the
+--- invoking chord lands on the idempotent cancel)
+--- @param act string --- 'discard'|'overwrite'|'restore'
+function EditorController:_confirm(act)
+  local con = self.console
+  if act == 'overwrite' then
+    return con:write_checkpoint(
+      self:get_active_buffer().name)
+  end
+  if act == 'restore' then
+    local name = self:get_active_buffer().name
+    if con:restore_checkpoint(name) then
+      local text = con:_readfile(name)
+      self:reload_active(text)
+    end
+    return
+  end
+  local buf = self:get_active_buffer()
+  local draft = self.input:get_text():items()
+
+  --- an unparseable draft cannot go into the file
+  --- (it would turn the buffer read-only), so only a
+  --- valid one is recoverable — as agreed
+  local parses = buf.chunker == nil
+      or (buf.chunker(draft, true))
+  if parses then
+    local span = buf:get_selection_lines()
+    local before = table.clone(buf:get_text_content())
+    local after = {}
+    local drafted = {}
+    for i, l in ipairs(before) do after[i] = l end
+    for i, l in ipairs(draft) do drafted[i] = l end
+    local head = span.start - 1
+    local removed = span:len()
+    for _ = 1, removed do
+      table.remove(after, head + 1)
+    end
+    for i = #drafted, 1, -1 do
+      table.insert(after, head + 1, drafted[i])
+    end
+    local sel = buf:get_selection()
+    --- the pair: undo #1 puts the draft in, undo #2
+    --- takes it back out (net zero, like the discard)
+    buf:push_history(before, after, sel, sel)
+    buf:push_history(after, before, sel, sel)
+  end
+  self:leave_edit()
+end
+
+--- @param t string
+--- @return boolean handled --- the glyph fed a dialog
+function EditorController:_dialog_textinput(t)
+  if self._swallow_glyph then
+    self._swallow_glyph = nil
+    if t == ' ' then return true end
+  end
+  if not self.pending_confirm then return false end
+  local act = self.pending_confirm
+  self.pending_confirm = nil
+  self.input:clear_error()
+  if t == ' ' then
+    self._swallow_glyph = true
+    self:_confirm(act)
+  end
+  return true
+end
+
 --- Load the selected block into the input and open it
 --- for editing, auto-formatted (9.4), with the cursor
 --- on the active line (2.2)
@@ -643,6 +738,51 @@ function EditorController:new_block(below)
   self:update_status()
 end
 
+--- Run a file-writing operation and record it in the
+--- block history (1.1): the file before and after, the
+--- diff trimmed inside push_history
+--- @param buf BufferModel
+--- @param fn function --- mutates the buffer and saves
+--- @return any --- fn's return
+function EditorController:record_write(buf, fn)
+  local before = table.clone(buf:get_text_content())
+  local sel_b = buf:get_selection()
+  local ret = fn()
+  buf:push_history(
+    before,
+    table.clone(buf:get_text_content()),
+    sel_b,
+    buf:get_selection())
+  return ret
+end
+
+--- @private
+--- Apply one block-history step (spec 1.1: navigation
+--- undo). The file is written through the same save
+--- path every operation uses.
+--- @param redo boolean?
+function EditorController:_step_history(redo)
+  local buf = self:get_active_buffer()
+  if buf.readonly then return self:refuse() end
+  --- no and/or chain here: redo() legitimately
+  --- returns nil, which must not fall through to undo
+  local step
+  if redo then
+    step = buf:redo()
+  else
+    step = buf:undo()
+  end
+  if not step then return self:refuse() end
+  self:save(buf)
+  local sel = redo and step.sel_after or step.sel_before
+  local last = buf:get_content_length()
+  if sel > last then sel = last end
+  buf:set_selection(sel)
+  self.view:refresh()
+  self.view:get_current_buffer():follow_selection()
+  self:update_status()
+end
+
 --- @return integer --- the input strip's height (2.7)
 function EditorController:_size_limit()
   return self.view:get_current_buffer():get_max_size()
@@ -702,10 +842,13 @@ function EditorController:accept_block()
       self:_reject_oversized(newtext, oversized)
       return false
     end
-    local _, n = buf:replace_content(newtext)
-    local ok = self:save(buf)
-    self.accepted_n = n
-    if not ok then
+    local saved = self:record_write(buf, function()
+      local _, n = buf:replace_content(newtext)
+      local ok = self:save(buf)
+      self.accepted_n = n
+      return ok
+    end)
+    if not saved then
       --- a failed write must not read as accepted (2.6);
       --- keep the block open so the edit is not lost
       self:refuse({
@@ -806,9 +949,11 @@ function EditorController:_reorg(save)
   local buf = self:get_active_buffer()
   if save then
     local target = buf:get_selection()
-    buf:move(moved, target)
-    buf:rechunk()
-    self:save(buf)
+    self:record_write(buf, function()
+      buf:move(moved, target)
+      buf:rechunk()
+      self:save(buf)
+    end)
   else
     buf:set_selection(moved)
     self:restore_state(self:get_state())
@@ -898,11 +1043,16 @@ function EditorController:_normal_mode_keys(k)
   --- @type BufferModel
   local buf            = self:get_active_buffer()
 
+  --- Delete removes the block without touching the
+  --- clipboard: on the device every clipboard write
+  --- pops the system share overlay, and a deletion
+  --- clobbering the copied text surprised everyone.
+  --- Cutting is Ctrl+X alone (copy + delete).
   local function delete_block()
-    local t = string.unlines(buf:get_selected_text())
-    buf:delete_selected_text()
-    love.system.setClipboardText(t)
-    self:save(buf)
+    self:record_write(buf, function()
+      buf:delete_selected_text()
+      self:save(buf)
+    end)
     self.view:refresh()
   end
 
@@ -977,13 +1127,41 @@ function EditorController:_normal_mode_keys(k)
         return false
       end
 
-      local sel = buf:get_selection()
-      local _, n = buf:insert_content(newtext, sel)
-      self:save(buf)
+      local n = self:record_write(buf, function()
+        local sel = buf:get_selection()
+        local _, added = buf:insert_content(newtext, sel)
+        self:save(buf)
+        return added
+      end)
       self.view:refresh()
       self:_move_sel('down', n)
       self:leave_edit()
       return true
+    end
+
+    --- undo/redo (1.1): the mode picks the level —
+    --- editing works the text history of the open
+    --- block, navigation works the file history
+    if Key.ctrl() and not Key.alt() and not Key.shift()
+        and (k == 'z' or k == 'y') then
+      block_input()
+      if self.mode == 'edit' then
+        local im = self.input.model
+        local done
+        if k == 'z' then
+          done = im:undo_edit()
+        else
+          done = im:redo_edit()
+        end
+        if done then
+          self.input:update_view()
+        else
+          self:refuse()
+        end
+      else
+        self:_step_history(k == 'y')
+      end
+      return
     end
 
     --- spec 2.7: Ctrl+Enter opens a fresh block below
@@ -1086,7 +1264,9 @@ function EditorController:_normal_mode_keys(k)
   end
 
   --- Ctrl+K checkpoints, Ctrl+Shift+K restores (2.6);
-  --- a second press confirms, anything else cancels
+  --- both raise a dialog when there is something to
+  --- lose — Enter or Space confirms, anything else
+  --- cancels
   local function checkpoint_key()
     if not Key.ctrl() or k ~= 'k' then return end
     local con = self.console
@@ -1111,33 +1291,24 @@ function EditorController:_normal_mode_keys(k)
         self:refuse({ 'no checkpoint to restore' })
         return
       end
-      if self.pending_confirm == 'restore' then
-        self.pending_confirm = nil
-        if con:restore_checkpoint(name) then
-          local text = con:_readfile(name)
-          self:reload_active(text)
-        end
-        return
-      end
       self.pending_confirm = 'restore'
       input:set_error({ string.format(
         'restore from checkpoint %s over file %s?'
-        .. ' Ctrl+Shift+K again restores, Esc cancels',
+        .. ' Confirm [Enter] / Cancel [Esc]',
         stamp(cp_time), stamp(con:file_modtime(name))
       ) })
       return
     end
 
-    if cp_time and self.pending_confirm ~= 'overwrite' then
+    if cp_time then
       self.pending_confirm = 'overwrite'
       input:set_error({ string.format(
-        'checkpoint from %s exists;'
-        .. ' Ctrl+K again overwrites, Esc cancels',
+        'checkpoint from %s exists.'
+        .. ' Confirm [Enter] / Cancel [Esc]',
         stamp(cp_time)
       ) })
       return
     end
-    self.pending_confirm = nil
     con:write_checkpoint(name)
   end
 
@@ -1149,9 +1320,10 @@ function EditorController:_normal_mode_keys(k)
         k == "escape" then
       if is_empty and self.mode == 'nav' then
         self:close_buffer()
-      else
-        self:leave_edit()
+        block_input()
+        return
       end
+      self:discard_edit()
       block_input()
     end
   end
@@ -1159,11 +1331,12 @@ function EditorController:_normal_mode_keys(k)
   --- navigation; while editing it is the widget's
   --- delete-next-word
   local function delete()
-    if Key.ctrl() and self.mode == 'nav' then
-      if k == "delete" then
-        delete_block()
-        block_input()
-      end
+    if self.mode ~= 'nav' then return end
+    --- bare Delete joins in with 1.1: the deletion is
+    --- undoable now, which is what gated it (2.7)
+    if k == "delete" then
+      delete_block()
+      block_input()
     end
   end
   local function navigate()
@@ -1319,11 +1492,30 @@ end
 --- @param k string
 function EditorController:keypressed(k)
   self.input:update_view()
-  if self.pending_confirm
-      and not (Key.ctrl() and k == 'k') then
-    --- anything else cancels the confirmation (Esc
-    --- included); the message clears with the keypress
+  if self.pending_confirm then
+    --- dialogs are repeat-proof by construction: the
+    --- confirming key differs from the invoking one, so
+    --- key repeat lands on the idempotent cancel.
+    --- Enter or Space confirms, everything else cancels
+    if Key.is_enter(k) or k == 'space' then
+      local act = self.pending_confirm
+      self.pending_confirm = nil
+      self.input:clear_error()
+      self._swallow_glyph = true
+      return self:_confirm(act)
+    end
     self.pending_confirm = nil
+    self.input:clear_error()
+    return
+  end
+  --- a plain error message closes on Enter, Esc or
+  --- Shift+Esc without re-submitting or leaving; any
+  --- printable closes it via textinput and types
+  if self.input:has_error() and is_normal(self.mode) then
+    if Key.is_enter(k) or k == 'escape' then
+      self.input:clear_error()
+      return
+    end
   end
   local mode = self.mode
 
