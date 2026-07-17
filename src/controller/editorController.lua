@@ -978,6 +978,26 @@ function EditorController:_normal_mode_keys(k)
       return true
     end
 
+    --- undo/redo (1.1): the mode picks the level —
+    --- editing works the text history of the open
+    --- block, navigation (below) works the file
+    if Key.ctrl() and not Key.alt() and not Key.shift()
+        and (k == 'z' or k == 'y') then
+      block_input()
+      if self.mode == 'edit' then
+        local im = self.input.model
+        local done = (k == 'z')
+            and im:undo_edit() or (k == 'y')
+            and im:redo_edit()
+        if done then
+          self.input:update_view()
+        else
+          self:refuse()
+        end
+        return
+      end
+    end
+
     --- spec 2.7: Ctrl+Enter opens a fresh block below
     --- in navigation and accepts while editing;
     --- Ctrl+Shift+Enter opens one above

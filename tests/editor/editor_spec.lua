@@ -780,6 +780,44 @@ describe('Editor #editor', function()
       end)
     end)
 
+    it('Ctrl+Z undoes typing word by word', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local src = 'x = 1'
+      local save = TU.get_save_function(src)
+      controller:open('undo.lua', src .. '\n', save)
+      local inter = controller.input
+
+      mock.keystroke('return', press)
+      local base = table.clone(inter:get_text():items())
+      for ch in string.gmatch('ab cd', '.') do
+        controller:textinput(ch)
+      end
+      local typed = table.clone(inter:get_text():items())
+      assert.same('ab cd' .. base[1], typed[1])
+
+      --- first undo eats the last word (with the space
+      --- that started it), not one letter
+      mock.keystroke('C-z', press)
+      assert.same('ab' .. base[1],
+        inter:get_text():items()[1])
+      --- and again, back to the baseline
+      mock.keystroke('C-z', press)
+      assert.same(base, inter:get_text():items())
+      --- empty history knocks
+      local n0 = #mock.played_sounds()
+      mock.keystroke('C-z', press)
+      assert.is_true(#mock.played_sounds() > n0)
+
+      --- redo returns everything
+      mock.keystroke('C-y', press)
+      mock.keystroke('C-y', press)
+      assert.same(typed, inter:get_text():items())
+
+      --- still in edit: the keys never left the block
+      assert.same('edit', controller:get_mode())
+    end)
+
     it('Ctrl+W and Ctrl+Backspace eat a word', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())
