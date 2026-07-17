@@ -191,13 +191,6 @@ function BufferModel:push_history(before, after, sel_b, sel_a)
   self.redo_history = {}
 end
 
---- A checkpoint restore or any rewrite from outside the
---- editor is a new baseline (1.1)
-function BufferModel:clear_history()
-  self.history = {}
-  self.redo_history = {}
-end
-
 --- @private
 --- Splice a step's lines into the content and re-chunk
 --- @param start integer
