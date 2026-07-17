@@ -1291,11 +1291,12 @@ function EditorController:_normal_mode_keys(k)
   --- navigation; while editing it is the widget's
   --- delete-next-word
   local function delete()
-    if Key.ctrl() and self.mode == 'nav' then
-      if k == "delete" then
-        delete_block()
-        block_input()
-      end
+    if self.mode ~= 'nav' then return end
+    --- bare Delete joins in with 1.1: the deletion is
+    --- undoable now, which is what gated it (2.7)
+    if k == "delete" then
+      delete_block()
+      block_input()
     end
   end
   local function navigate()

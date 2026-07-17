@@ -246,9 +246,9 @@ function UserInputController:keypressed(k)
       input:delete()
     end
     if Key.ctrl() then
-      if k == "y" then
-        input:delete_line()
-      end
+      --- Ctrl+Y is redo since 1.1; delete-line lost
+      --- its key (reachable via Home, Shift+End,
+      --- Backspace) until a new one is picked
       --- readline's synonym, per the editor spec 2.7
       if k == "w" then
         input:backspace_word()

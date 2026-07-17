@@ -907,6 +907,30 @@ describe('Editor #editor', function()
             buffer:get_text_content()))
         end)
 
+      it('bare Delete drops the block, undoably',
+        function()
+          local orig = string.unlines(
+            buffer:get_text_content())
+          local n0 = buffer:get_content_length()
+          mock.keystroke('delete', press)
+          assert.same(n0 - 1,
+            buffer:get_content_length())
+          mock.keystroke('C-z', press)
+          assert.same(orig, string.unlines(
+            buffer:get_text_content()))
+        end)
+
+      it('checkpoint restore clears the history',
+        function()
+          mock.keystroke('M-down', press)
+          assert.is_true(#buffer.history > 0)
+          --- a restore rebuilds the buffer: reload
+          controller:reload_active(string.unlines(
+            buffer:get_text_content()))
+          local fresh = controller:get_active_buffer()
+          assert.same(0, #fresh.history)
+        end)
+
       it('knocks on empty history', function()
         local n0 = #mock.played_sounds()
         mock.keystroke('C-z', press)
