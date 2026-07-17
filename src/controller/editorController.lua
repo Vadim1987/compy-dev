@@ -485,6 +485,64 @@ end
 --- @param by integer?
 --- @param warp boolean?
 --- @param moved integer?
+--- Shift+Esc out of an open block (1.1). A changed
+--- block asks for confirmation — the only irreversible
+--- action in the editor gets the same repeated-press
+--- guard the checkpoints use. A parseable draft leaves
+--- a recoverable pair in the block history: one Ctrl+Z
+--- puts the discarded text into the file, another
+--- takes it back out.
+function EditorController:discard_edit()
+  if self.mode ~= 'edit' then
+    return self:leave_edit()
+  end
+  local buf = self:get_active_buffer()
+  local draft = self.input:get_text():items()
+  local orig = buf:get_selected_text()
+  local clean = string.unlines(draft)
+      == string.unlines(orig)
+
+  if clean then return self:leave_edit() end
+
+  if self.pending_confirm ~= 'discard' then
+    self.pending_confirm = 'discard'
+    self.input:set_error({
+      'discard the changes?'
+      .. ' Shift+Esc again to confirm'
+    })
+    return
+  end
+  self.pending_confirm = nil
+
+  --- an unparseable draft cannot go into the file
+  --- (it would turn the buffer read-only), so only a
+  --- valid one is recoverable — as agreed
+  local parses = buf.chunker == nil
+      or (buf.chunker(draft, true))
+  if parses then
+    local span = buf:get_selection_lines()
+    local before = table.clone(buf:get_text_content())
+    local after = {}
+    local drafted = {}
+    for i, l in ipairs(before) do after[i] = l end
+    for i, l in ipairs(draft) do drafted[i] = l end
+    local head = span.start - 1
+    local removed = span:len()
+    for _ = 1, removed do
+      table.remove(after, head + 1)
+    end
+    for i = #drafted, 1, -1 do
+      table.insert(after, head + 1, drafted[i])
+    end
+    local sel = buf:get_selection()
+    --- the pair: undo #1 puts the draft in, undo #2
+    --- takes it back out (net zero, like the discard)
+    buf:push_history(before, after, sel, sel)
+    buf:push_history(after, before, sel, sel)
+  end
+  self:leave_edit()
+end
+
 --- Load the selected block into the input and open it
 --- for editing, auto-formatted (9.4), with the cursor
 --- on the active line (2.2)
@@ -1222,9 +1280,10 @@ function EditorController:_normal_mode_keys(k)
         k == "escape" then
       if is_empty and self.mode == 'nav' then
         self:close_buffer()
-      else
-        self:leave_edit()
+        block_input()
+        return
       end
+      self:discard_edit()
       block_input()
     end
   end
@@ -1399,7 +1458,10 @@ end
 function EditorController:keypressed(k)
   self.input:update_view()
   if self.pending_confirm
-      and not (Key.ctrl() and k == 'k') then
+      and not (Key.ctrl() and k == 'k')
+      and not (self.pending_confirm == 'discard'
+        and Key.shift() and not Key.ctrl()
+        and k == 'escape') then
     --- anything else cancels the confirmation (Esc
     --- included); the message clears with the keypress
     self.pending_confirm = nil

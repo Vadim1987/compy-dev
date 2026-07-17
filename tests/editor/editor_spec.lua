@@ -171,6 +171,8 @@ describe('Editor #editor', function()
         controller:textinput('r')
         controller:textinput('t')
         assert.same({ 'insert' }, input())
+        --- the compose is dirty: the discard asks
+        mock.keystroke('S-escape', press)
         mock.keystroke('S-escape', press)
         mock.keystroke('return', press)
         assert.same({ '-- test' }, input())
@@ -426,6 +428,8 @@ describe('Editor #editor', function()
             if visible.range:inc(v) then seen = true end
           end
           assert.is_true(seen)
+          --- the typed draft asks; confirm to discard
+          mock.keystroke('S-escape', press)
           mock.keystroke('S-escape', press)
         end)
         it('a held chord glyph is dropped', function()
@@ -516,7 +520,7 @@ describe('Editor #editor', function()
           assert.same({ now }, inter:get_text())
         end)
         it('discards', function()
-          --- Shift+Esc drops the edit and returns to nav
+          --- the loaded text is unchanged, so no ask
           mock.keystroke('S-escape', press)
           assert.same({ '' }, inter:get_text())
         end)
@@ -845,6 +849,64 @@ describe('Editor #editor', function()
           buffer:get_text_content()))
       end)
 
+      it('discard asks, and undo brings the draft back',
+        function()
+          local orig = string.unlines(
+            buffer:get_text_content())
+          mock.keystroke('return', press)
+          controller.input:set_text(
+            string.lines(mock_func_snippet('draft')))
+
+          --- first press asks, still editing
+          mock.keystroke('S-escape', press)
+          assert.same('edit', controller:get_mode())
+          assert.is_true(controller.input:has_error())
+
+          --- second press discards; the file untouched
+          mock.keystroke('S-escape', press)
+          assert.same('nav', controller:get_mode())
+          assert.same(orig, string.unlines(
+            buffer:get_text_content()))
+
+          --- one undo: the parseable draft lands in
+          --- the file; another: gone again (the pair)
+          mock.keystroke('C-z', press)
+          assert.truthy(string.find(
+            string.unlines(buffer:get_text_content()),
+            'draft', 1, true))
+          mock.keystroke('C-z', press)
+          assert.same(orig, string.unlines(
+            buffer:get_text_content()))
+        end)
+
+      it('any other key cancels the discard ask',
+        function()
+          mock.keystroke('return', press)
+          controller.input:set_text({ 'x = 1' })
+          mock.keystroke('S-escape', press)
+          mock.keystroke('down', press)
+          --- still editing, the ask is gone
+          assert.same('edit', controller:get_mode())
+          assert.is_nil(controller.pending_confirm)
+        end)
+
+      it('a broken draft discards without the pair',
+        function()
+          local orig = string.unlines(
+            buffer:get_text_content())
+          local n0 = #buffer.history
+          mock.keystroke('return', press)
+          controller.input:set_text(
+            { 'function broken(' })
+          mock.keystroke('S-escape', press)
+          mock.keystroke('S-escape', press)
+          assert.same('nav', controller:get_mode())
+          --- nothing recoverable was recorded
+          assert.same(n0, #buffer.history)
+          assert.same(orig, string.unlines(
+            buffer:get_text_content()))
+        end)
+
       it('knocks on empty history', function()
         local n0 = #mock.played_sounds()
         mock.keystroke('C-z', press)
@@ -950,6 +1012,8 @@ describe('Editor #editor', function()
       mock.keystroke('return', press)
       mock.keystroke('C-delete', press)
       assert.same(n0, buffer:get_content_length())
+      --- the word deletion made the draft dirty
+      mock.keystroke('S-escape', press)
       mock.keystroke('S-escape', press)
 
       --- navigation: it drops the block
@@ -1224,7 +1288,9 @@ describe('Editor #editor', function()
         --- and the cursor sits on the error's line
         assert.same(2,
           inter.model:get_cursor_info().cursor.l)
-        --- Shift+Esc still gets out, writing nothing
+        --- Shift+Esc still gets out (after the ask),
+        --- writing nothing
+        mock.keystroke('S-escape', press)
         mock.keystroke('S-escape', press)
         assert.same('nav', controller:get_mode())
         assert.same(text, savefile())
