@@ -410,7 +410,8 @@ end
 
 --- REVIEW: when widget is re-armed, or cancelled or closed-on-submit, history is dropped? what about when its reconfigured? when one project launches input, than is torn down and new project launches input
 --- @return boolean
--- {badspecref: AC-25}: oneshot is gone, so nothing
+-- internals/user_input.md, "Submit and cancel — the
+-- framework tier-1 chains": oneshot is gone, so nothing
 -- distinguishes a single-use solicitation from any other
 -- model anymore. Only the (never-history-reading) project
 -- widget set oneshot=true, so suppression here was already
@@ -511,9 +512,10 @@ end
 --- @private
 --- Clamp self.cursor into the current text's valid range
 --- (byte length, matching move_cursor's own bound below) —
---- set_text(t, true)'s {badspecref: AC-8} landing when the
+--- set_text(t, true)'s landing when the
 --- new content is shorter than the preserved cursor
---- position ({badspecref: M7-01}).
+--- position (doc/input_api.md, "Live reconfigure:
+--- `configure`, `set_text`, `clear`, cursor").
 function UserInputModel:_clamp_cursor_pos()
   local n = self:get_n_text_lines()
   local l = math.max(1, math.min(self.cursor.l, n))
@@ -840,8 +842,9 @@ end
 --- @private
 --- Cursor-to-error-position on an evaluator reject. Split out
 --- of handle() to keep it under the function-body line limit
---- once the {badspecref: AC-25} push('userinput') block
---- (below it) is gone.
+--- once the push('userinput') block (below it) is gone
+--- (internals/user_input.md, "Submit and cancel — the
+--- framework tier-1 chains").
 --- @param result Error[]
 function UserInputModel:_report_parse_error(result)
   --- @TODO fix
@@ -869,11 +872,11 @@ end
 --- @param eval boolean
 --- @return boolean
 --- @return string[]|Error[]
--- {badspecref: AC-25}: the old push('userinput')
+-- internals/user_input.md, "Submit and cancel — the
+-- framework tier-1 chains": the old push('userinput')
 -- notification (fired here under `if self.oneshot`) is gone
 -- — on_text_entered (userInputController.lua submit chain)
--- replaces it as the "value ready" signal
--- ({badspecref: spec §5} mechanism note).
+-- replaces it as the "value ready" signal.
 function UserInputModel:handle(eval)
   local ent = self:get_text()
   local ok, result

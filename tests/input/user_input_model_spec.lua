@@ -141,10 +141,11 @@ describe("input model spec #input", function()
   -------------------------------
   --  set_text keep_cursor     --
   -------------------------------
-  -- {badspecref: M7-01} model fix: set_text's tail
+  -- Model fix: set_text's tail
   -- jump_end() used to run unconditionally, making a
   -- truthy keep_cursor silently ineffective.
-  -- {badspecref: AC-8}: set_text(t) jumps to end;
+  -- doc/input_api.md, "Live reconfigure: `configure`,
+  -- `set_text`, `clear`, cursor": set_text(t) jumps to end;
   -- set_text(t, true) preserves the cursor, clamped if
   -- the new text is shorter than the old cursor position.
   describe('set_text keep_cursor', function()

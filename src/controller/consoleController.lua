@@ -259,8 +259,10 @@ function ConsoleController:run_project(name)
       else
         if not self.main_ctrl.user_is_blocking() then
           -- An input-only / pointer-only project stays live
-          -- ({badspecref: ruling a}): keep the project route
-          -- so submit/cancel
+          -- (technical_debt/input.md, "Input-only /
+          -- pointer-only projects stay live in
+          -- `project_open` (RESOLVED, ruling a)"): keep the
+          -- project route so submit/cancel
           -- and Ctrl+Esc->console work. Only a project with no
           -- interaction surface hands the keyboard back to the
           -- console.
@@ -365,12 +367,13 @@ end
 -- not-implemented no-ops is unsettled — to be resolved in
 -- the {badspecref: m7 design session}.
 -- The project-assignable tier-3 generic callbacks
--- ({badspecref: spec §7 / R3}), the four widget outputs
--- ({badspecref: chunk 2}), and the four submit/cancel hooks
--- ({badspecref: chunk 3, AC-26/33}). Everything else on
+-- (decisions/input.md, Decision 7), the four widget
+-- outputs (decisions/input.md, Decision 5), and the four
+-- submit/cancel hooks (decisions/input.md, Decision 6).
+-- Everything else on
 -- compy.input is callable API and raises loudly on
--- assignment ({badspecref: AC-33}). The hooks are read
--- directly off this surface by the framework tier-1
+-- assignment (decisions/input.md, Decision 7). The hooks
+-- are read directly off this surface by the framework tier-1
 -- return/escape entries (projectInputController.lua) —
 -- never mirrored onto the widget, unlike the widget-output
 -- fields below.
@@ -391,10 +394,10 @@ local INPUT_CALLBACKS = {
 --- Assemble the compy.input surface over its backing `state`
 --- (the three normalising handler sub-tables + the tier-3
 --- callback slots) and the callable `methods`. The
---- {badspecref: R3} boundary
+--- decisions/input.md, Decision 7 boundary
 --- lives in the metatable: reads resolve handlers / callbacks /
 --- methods; writes are refused unless the key is an allowed
---- tier-3 callback ({badspecref: AC-33} — loud error, never
+--- tier-3 callback (same decision — loud error, never
 --- a silent swallow).
 --- The proxy table itself stays empty so __newindex fires for
 --- every assignment (a raw data key would bypass the guard).
@@ -418,12 +421,13 @@ local function build_input_surface(state, methods)
   })
 end
 
--- The four widget-output entries ({badspecref: D-b}):
+-- The four widget-output entries (decisions/input.md,
+-- Decision 5):
 -- show()/configure() config key and direct field-write
 -- share one underlying `state` entry, sticky across shows
--- until overwritten ({badspecref: M5c} behaviour; the
--- {badspecref: M7} live-reconfigure surface below leaves
--- this unchanged).
+-- until overwritten (doc/input_api.md, "Sticky callbacks";
+-- the internals/user_input.md, "configure(config)" live
+-- reconfigure surface below leaves this unchanged).
 local OUTPUT_KEYS = {
   'on_text_entered',
   'on_limit_reached',
@@ -450,8 +454,8 @@ local function merge_output_keys(state, cfg)
 end
 
 --- Consume the hidden-configure pending prompt/text/cursor
---- ({badspecref: AC-3/AC-4}): spent on this show()
---- regardless of whether it
+--- (internals/user_input.md, "configure(config)"): spent
+--- on this show() regardless of whether it
 --- ends up used (an explicit cfg value at this same show() call
 --- wins) — a later bare show() must not keep re-injecting a
 --- stale draft.
@@ -466,7 +470,7 @@ end
 
 --- Stash configure()'s provided prompt/text/cursor into the
 --- pending store for consumption by the next show()
---- ({badspecref: AC-4});
+--- (internals/user_input.md, "configure(config)");
 --- output-callback fields go through the same sticky `state`
 --- slots show() already reads — persisted, never applied
 --- live (there is no active session to apply them to).
@@ -480,10 +484,10 @@ local function stash_hidden_configure(state, cfg)
 end
 
 -- Builds the compy.input surface: the four-tier dispatch
--- surface ({badspecref: spec §2}) a project registers
--- against. `handlers.<event>` are the {badspecref: R14}
--- per-event combo sub-tables (normalising,
--- {badspecref: §1}); the
+-- surface (decisions/input.md, Decision 2) a project
+-- registers against. `handlers.<event>` are the
+-- decisions/input.md, Decision 8 per-event combo
+-- sub-tables (normalising); the
 -- on_* slots are the tier-3 generic callbacks. show/hide drive
 -- the singleton overlay (resolved from love.state, never held by
 -- the project).
@@ -508,17 +512,18 @@ local get_compy_input = function()
       local ui = love.state.user_input_controller
       if ui then ui:hide() end
     end,
-    -- {badspecref: AC-6/D-8}: 1-based (line, col); nil when
+    -- internals/user_input.md, "Cursor manipulation and
+    -- 'reset'": 1-based (line, col); nil when
     -- hidden — a plain read of "nothing to report", not a
     -- refused mutation, so unlike set_cursor/set_text below
-    -- it does not warn ({badspecref: spec.md §6} phrasing).
+    -- it does not warn (same section).
     get_cursor = function()
       if not love.state.user_input then return nil end
       local ui = love.state.user_input_controller
       return ui:get_cursor_pos()
     end,
-    -- {badspecref: AC-7/AC-9}: clamped move; no-op + warn
-    -- while hidden.
+    -- internals/user_input.md, "Cursor manipulation and
+    -- 'reset'": clamped move; no-op + warn while hidden.
     set_cursor = function(line, col)
       if not love.state.user_input then
         Log.warn('compy.input.set_cursor ignored — hidden')
@@ -526,10 +531,11 @@ local get_compy_input = function()
       end
       love.state.user_input_controller:set_cursor_pos(line, col)
     end,
-    -- {badspecref: AC-8/AC-9}: replace content (cursor to
-    -- end, or kept + clamped); no-op + warn while hidden;
+    -- doc/input_api.md, "Live reconfigure: `configure`,
+    -- `set_text`, `clear`, cursor": replace content (cursor
+    -- to end, or kept + clamped); no-op + warn while hidden;
     -- view updates via the controller's set_text (no
-    -- re-show, {badspecref: AC-8}).
+    -- re-show).
     set_text = function(text, keep_cursor)
       if not love.state.user_input then
         Log.warn('compy.input.set_text ignored — hidden')
@@ -538,8 +544,8 @@ local get_compy_input = function()
       local ui = love.state.user_input_controller
       ui:set_text(text, keep_cursor)
     end,
-    -- {badspecref: AC-1/2/3/4/9/11}: live update on an
-    -- active session (only
+    -- internals/user_input.md, "configure(config)": live
+    -- update on an active session (only
     -- the Contract's live-updatable set — prompt/highlighter/
     -- validator/widget outputs; text/cursor inert there); safe
     -- + un-warned while hidden — provided fields persist (via
@@ -554,8 +560,8 @@ local get_compy_input = function()
       merge_output_keys(state, next_cfg)
       love.state.user_input_controller:configure(next_cfg)
     end,
-    -- {badspecref: AC-5/AC-9}: empty content + cursor to
-    -- start, no callback;
+    -- internals/user_input.md, "clear()": empty content +
+    -- cursor to start, no callback;
     -- no-op + warn while hidden. Refreshes the view directly
     -- (no re-show) — reuses the controller's existing clear()
     -- (content + error state).

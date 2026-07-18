@@ -283,8 +283,9 @@ function UserInputView:render(input, status, time)
 end
 
 --- Draw the pre-rendered canvas to screen
--- {badspecref: M6-01}: oneshot is gone
--- ({badspecref: AC-25}); the published input widget
+-- internals/user_input.md, "Submit and cancel — the
+-- framework tier-1 chains": oneshot is gone; the published
+-- input widget
 -- singleton is the one view that skips this continuous
 -- per-frame update_view() ("a transitional workaround until
 -- rerenders are worked out",

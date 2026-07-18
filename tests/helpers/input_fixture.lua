@@ -307,8 +307,8 @@ function F.reset()
   -- The widget's OWN output/hook fields (apply_config only
   -- overwrites when a show() config key is given, so a value
   -- set by one test would otherwise survive into the next —
-  -- production behaviour, {badspecref: AC-24}, but wrong at
-  -- fixture scope).
+  -- production behaviour, doc/input_api.md "Sticky
+  -- callbacks", but wrong at fixture scope).
   -- REVIEW: would real project suffer similar config leaks? if not, why not call whatever clears/resets them?
   singleton.validator = nil
   singleton.on_text_entered = nil

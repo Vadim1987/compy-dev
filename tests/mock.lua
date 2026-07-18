@@ -76,8 +76,9 @@ end
 
 --- Emit a textinput(t) event through the installed handler.
 --- Independently orderable relative to keypressed
---- ({badspecref: P1}: no ordering guarantee between
---- keypressed and textinput on real devices).
+--- (internals/user_input.md, "Data flow": no ordering
+--- guarantee between keypressed and textinput on real
+--- devices).
 --- @param t string
 --- @param press function?  defaults to love.handlers.textinput
 local function textinput(t, press)

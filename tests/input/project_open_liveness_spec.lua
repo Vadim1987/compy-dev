@@ -1,4 +1,4 @@
--- {badspecref: Ruling (a)}: an input-only / pointer-only
+-- An input-only / pointer-only
 -- project is "live" without hooking love.update/draw.
 -- In project_open such a project keeps the project route
 -- (so submit works) and Ctrl+Esc returns to the console
@@ -6,9 +6,9 @@
 -- (project_open, nothing interactive) still quits on
 -- Ctrl+Esc.
 --
--- See doc/development/technical_debt/input.md, the (now
--- resolved) "Input-only / pointer-only projects are
--- non-interactive in project_open" entry.
+-- See doc/development/technical_debt/input.md, the
+-- "Input-only / pointer-only projects stay live in
+-- `project_open` (RESOLVED, ruling a)" entry.
 
 local F = require('tests.helpers.input_fixture')
 

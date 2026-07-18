@@ -5,29 +5,29 @@ require("util.key")
 -- The project route: occupant of the keyboard/text slots while
 -- a project run owns the screen — a sibling to ConsoleController
 -- / EditorController. Inside the route every keyboard/text event
--- runs ONE four-tier chain ({badspecref: spec §2}), the same
--- shape on all three channels:
+-- runs ONE four-tier chain (decisions/input.md, Decision 2),
+-- the same shape on all three channels:
 --
 --   1. framework_handlers.<event>[combo]  structural keys
---      ({badspecref: spec §5}:
+--      (decisions/input.md, Decision 6:
 --       keypressed['return']/['escape'], engaged
 --       only while the widget is shown; non-overridable)
 --   2. compy.input.handlers.<event>[combo]  project combo
---      handlers ({badspecref: R14} per-event sub-tables;
---      normalising {badspecref: §1})
+--      handlers (decisions/input.md, Decision 8:
+--      per-event sub-tables, normalising)
 --   3. per-event generic callback           on_key_pressed /
 --      on_text_input / on_key_released — precedence
---      ({badspecref: R7}): an explicit on_* wins over the
---      project's own love.* handler captured at activate(),
---      which wins over noop+log
+--      (decisions/input.md, Decision 10): an explicit
+--      on_* wins over the project's own love.* handler
+--      captured at activate(), which wins over noop+log
 --   4. sink                                  the singleton
 --      widget; terminal, with an INTERNAL hidden-check
 --      (userInputController) — no external gating wrapper
 --
 -- Truthy return at any tier consumes the event (stop, sink
 -- included); falsey falls through. Consuming never removes a
--- tier ({badspecref: R13}); the sink's return carries no
--- chain meaning ({badspecref: R12}).
+-- tier (decisions/input.md, Decision 2); the sink's return
+-- carries no chain meaning (decisions/input.md, Decision 5).
 -- Routing contract: doc/development/internals/user_input.md
 
 -- Event type -> its tier-3 generic-callback field on compy.input.
@@ -46,11 +46,11 @@ end
 
 --- REVIEW: why if-dispatching instead of returning noop+log as default index value from hooks table? (do not fix; either rationalize or mark as refactoring opportunity)
 --- Run a route-owned before_/after_ hook
---- ({badspecref: spec §5, AC-26}): a
+--- (decisions/input.md, Decision 6): a
 --- project-set function fires; an absent one debug-logs — the
 --- same noop+log default shape as tier 3 (log_branch above).
 --- Hooks live on compy_input (the route), never on the
---- widget ({badspecref: spec §5 scope note}: "the widget
+--- widget (decisions/input.md, Decision 6: "the widget
 --- never owns submit").
 --- @param ci table  compy_input surface
 --- @param name string  hook field name
@@ -64,16 +64,17 @@ local function run_hook(ci, name, ...)
 end
 
 --- @return UserInputController? ui  the singleton, only while
---- shown ({badspecref: AC-20}: hidden -> no framework entry
---- engages, so the
---- combo falls through to lower tiers like any other key).
+--- shown (internals/user_input.md, "Submit and cancel —
+--- the framework tier-1 chains": hidden -> no framework
+--- entry engages, so the combo falls through to lower
+--- tiers like any other key).
 local function shown_widget()
   local ui = love.state.user_input_controller
   if ui and ui:is_shown() then return ui end
 end
 
---- Tier-1 submit entry
---- ({badspecref: spec §5, AC-17/20/21}): before_submit
+--- Tier-1 submit entry (internals/user_input.md, "Submit
+--- and cancel — the framework tier-1 chains"): before_submit
 --- always runs; after_submit only on accept (ui:submit()
 --- returns the delivered text, nil on reject/empty).
 --- @param self ProjectInputController
@@ -90,8 +91,8 @@ local function framework_submit(self)
   end
 end
 
---- Tier-1 cancel entry
---- ({badspecref: spec §5, AC-19/20/21}): before_/
+--- Tier-1 cancel entry (internals/user_input.md, "Submit
+--- and cancel — the framework tier-1 chains"): before_/
 --- after_cancel bracket ui:cancel() unconditionally — cancel
 --- always dismisses, unlike submit there is no reject path.
 --- @param self ProjectInputController
@@ -108,7 +109,8 @@ local function framework_cancel(self)
   end
 end
 
--- Tier-1 return/escape ({badspecref: spec §5}): populated
+-- Tier-1 return/escape (internals/user_input.md, "Submit
+-- and cancel — the framework tier-1 chains"): populated
 -- once, at
 -- construction, not per-activate() — they are structural/
 -- non-overridable, not project-installed, so they exist
@@ -141,11 +143,11 @@ end
 ProjectInputController = class.create(new)
 
 --- Tier 3 — the per-event generic callback, resolved by
---- precedence ({badspecref: spec §8 R7}): an explicit
---- compy.input.on_* wins; else the project's own love.*
---- handler captured at activate; else a noop that only
---- debug-logs and never consumes ({badspecref: AC-10}).
---- A truthy
+--- precedence (decisions/input.md, Decision 10): an
+--- explicit compy.input.on_* wins; else the project's own
+--- love.* handler captured at activate; else a noop that
+--- only debug-logs and never consumes (decisions/input.md,
+--- Decision 10). A truthy
 --- return consumes; falsey falls through to the sink.
 --- @param event string
 --- @return boolean? consumed
@@ -171,10 +173,10 @@ end
 --- Tier 4 — the terminal widget sink. Always invoked (never
 --- gated from outside): the hidden-check is INTERNAL to the
 --- sink, which no-ops while the overlay is hidden
---- ({badspecref: AC-11/13}).
+--- (decisions/input.md, Decision 2).
 --- The sink's return is discarded — it carries no chain
---- meaning ({badspecref: R12}); the chain ends here
---- regardless.
+--- meaning (decisions/input.md, Decision 5); the chain
+--- ends here regardless.
 --- @param event string
 function ProjectInputController:_sink(event, ...)
   local ui = love.state.user_input_controller
@@ -207,8 +209,8 @@ end
 --- Take the keyboard route for a project run. `natives` holds
 --- the project's own error-wrapped love.* keyboard handlers
 --- (from the caller); they seed tier 3 as default participants
---- ({badspecref: R7} pure wrap) — read once here, never
---- re-consulted, and
+--- (decisions/input.md, Decision 10: pure wrap) — read
+--- once here, never re-consulted, and
 --- only used when the project sets no on_* (precedence in
 --- _generic_callback). No handler is copied onto compy.input.
 --- @param natives table?
@@ -221,7 +223,8 @@ function ProjectInputController:activate(natives, compy_input)
   self.compy_input = compy_input
 end
 
---- Forget the project's handlers ({badspecref: AC-27/29}).
+--- Forget the project's handlers (decisions/input.md,
+--- Decision 11).
 --- Nulling compy_input/natives does not itself disconnect
 --- anything: the caller (controller.lua
 --- release_keyboard_route / set_default_handlers) re-points
@@ -235,8 +238,8 @@ function ProjectInputController:deactivate()
   self.natives = {}
 end
 
---- Keypressed ({badspecref: AC-27, ratified-model ruling
---- 3}). The route is connected/disconnected at the
+--- Keypressed (decisions/input.md, Decision 11). The
+--- route is connected/disconnected at the
 --- 'running' <-> 'project_open' boundary by reinstalling
 --- the love.* callbacks (controller.lua), not per-event
 --- here — once disconnected, love.keypressed no longer even
@@ -244,8 +247,9 @@ end
 --- @param k string
 --- @param sc string?
 --- @param isr boolean?
---- DEFERRED ({badspecref: 0.1.0-m5}): whether the combo
---- tiers (1-2) fire on
+--- DEFERRED (technical_debt/input.md, "Combo-tier
+--- key-repeat semantics are shipped unsettled"): whether
+--- the combo tiers (1-2) fire on
 --- key-repeat is unruled; isrepeat is threaded to tier 3 only,
 --- combos keep current behaviour. Do not design a mechanism.
 --- REVIEW: what is 'sc' and why its not used?

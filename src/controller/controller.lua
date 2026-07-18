@@ -31,8 +31,8 @@ end
 --- to the widget it activated (nil under 'inspect' — the
 --- console owns that surface itself). The sink receives the
 --- uniform per-channel signature with the read-only
---- keys_pressed proxy ({badspecref: spec §2},
---- {badspecref: AC-8}). Returns whether the
+--- keys_pressed proxy (decisions/input.md, Decision 9 and
+--- Decision 13). Returns whether the
 --- widget was the surface (true = forwarded), so the caller
 --- falls back to the console line only when no widget is up.
 --- @param k string
@@ -71,8 +71,9 @@ local user_draw
 -- Together with a shown input widget it marks a non-blocking
 -- project (one that overrides no update/draw, e.g. a
 -- pen-and-paper game) as still "live"
--- ({badspecref: ruling a}): keep the project route,
--- Ctrl+Esc -> console.
+-- (technical_debt/input.md, "Input-only / pointer-only
+-- projects stay live in `project_open` (RESOLVED, ruling
+-- a)"): keep the project route, Ctrl+Esc -> console.
 local user_pointer
 
 
@@ -166,7 +167,7 @@ end
 --- the project's canvas (CC:use_canvas — the offscreen
 --- surface project draws land on), AND propagate its return
 --- value — the chain's truthy=consume contract depends on it
---- (resolves {badspecref: C3/C14} return-propagation).
+--- (decisions/input.md, Decision 2: return-propagation).
 --- A raised error routes to user_error_handler and the call
 --- reports non-consuming (nil).
 --- @param CC ConsoleController
@@ -197,8 +198,8 @@ local function keyboard_native(userlove, CC, key)
 end
 
 --- The project's own keyboard/text handlers, error-wrapped as
---- tier-3 chain participants ({badspecref: R7} pure wrap)
---- — return values
+--- tier-3 chain participants (decisions/input.md,
+--- Decision 10: pure wrap) — return values
 --- preserved so a native can consume like any participant.
 --- @param userlove table
 --- @param CC ConsoleController
@@ -372,9 +373,8 @@ local COMBO_MODS = Key.mod_triples
 --- NOTE: the per-keypress table allocation here, and
 --- whether dispatch should match on keys_pressed directly
 --- instead of serialising, is an open design question
---- deferred to {badspecref: 0.1.0-m5 (three-level
---- dispatch)} — see {badspecref:
---- implementation/reviews/M2-human-review.md (A6)}.
+--- (technical_debt/input.md, "Combo-string dispatch
+--- allocates a table per call").
 --- @param k string            triggering key (raw LÖVE name)
 --- @param keys_pressed table  { keyname -> true } live held-key set
 --- @return string             canonical combo string
@@ -390,8 +390,8 @@ local function combo_string(k, keys_pressed)
 end
 
 -- Memoised read-only view over Controller.keys_pressed handed to
--- every chain consumer ({badspecref: spec §1},
--- {badspecref: AC-8}): reads pass through to the
+-- every chain consumer (decisions/input.md, Decision 13):
+-- reads pass through to the
 -- live held set; assignment raises. Rebuilt only when the backing
 -- identity changes (tests swap the table wholesale), so dispatch
 -- allocates nothing per event. NOTE: under LuaJIT/Lua 5.1 `pairs`
@@ -450,7 +450,7 @@ Controller = {
       --- checkers)
       -- TODO(debt): these debug-hotkey if-blocks predate combos;
       -- migrate onto the combo-table mechanism
-      -- ({badspecref: Decision 8}). See
+      -- (decisions/input.md, Decision 8). See
       -- technical_debt/input.md "Console debug hotkeys are ad-hoc".
       if Key.ctrl() and Key.shift() then
         if love.DEBUG then
@@ -772,7 +772,9 @@ Controller = {
       -- A running project stops to the console. So does the
       -- corner case: a paper-and-pen style project that is
       -- still interactive (input widget shown or pointer
-      -- handlers installed, {badspecref: ruling a}). An idle
+      -- handlers installed — technical_debt/input.md,
+      -- "Input-only / pointer-only projects stay live in
+      -- `project_open` (RESOLVED, ruling a)"). An idle
       -- console in project_open falls through: the app quits.
       if love.state.app_state == 'running'
           or (love.state.app_state == 'project_open'
@@ -789,9 +791,9 @@ Controller = {
   ----------------
   --- Hand keyboard/text back to the console at the moment a
   --- project's code finishes running but the project stays
-  --- open (the 'running' -> 'project_open' state change)
-  --- ({badspecref: AC-27}). Pointer handlers stay hooked
-  --- until the project stops ({badspecref: AC-28}).
+  --- open (the 'running' -> 'project_open' state change —
+  --- decisions/input.md, Decision 11). Pointer handlers
+  --- stay hooked until the project stops (same decision).
   --- @param CC ConsoleController
   release_keyboard_route = function(CC)
     Controller.project_input:deactivate()

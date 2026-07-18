@@ -121,8 +121,9 @@ function UserInputController:set_cursor(cursor)
   return self.model:set_cursor(cursor)
 end
 
---- Clamped 2D move (compy.input.set_cursor,
---- {badspecref: AC-7}). Named
+--- Clamped 2D move (compy.input.set_cursor;
+--- internals/user_input.md, "Cursor manipulation and
+--- 'reset'"). Named
 --- apart from set_cursor(Cursor) above — that simple function
 --- already has a different signature/caller (editorController
 --- load_selection); this computes a valid landing itself
@@ -169,7 +170,7 @@ function UserInputController:evaluate()
   return ok, res
 end
 
---- Cancel ({badspecref: AC-19}): clear + hide
+--- Cancel (decisions/input.md, Decision 6): clear + hide
 --- unconditionally — Escape now
 --- genuinely dismisses. The framework tier-1 escape entry
 --- (projectInputController.lua) is what calls this for the
@@ -223,7 +224,7 @@ local apply_config = function(self, cfg)
   -- result = the reftable the caller polls
   -- (r:is_empty()/r()); the submit path writes the
   -- evaluated value into it. (Legacy poll idiom; superseded
-  -- by the callback API in {badspecref: 0.1.0-m5/m6}.)
+  -- by the callback API — decisions/input.md, Decision 4.)
   if cfg.result ~= nil then
     self.result = cfg.result
   end
@@ -249,8 +250,8 @@ end
 --- clear-on-no-text lives here, not in apply_config, because it is activation policy
 --- (a re-show with no text starts empty) rather than per-field config.
 --- `cursor` (a `{line, col}` pair) lands here too, applied
---- after text ({badspecref: spec.md §3}) — kept out of
---- apply_config so
+--- after text (internals/user_input.md, "Cursor
+--- manipulation and 'reset'") — kept out of apply_config so
 --- the live-reconfigure path (configure() below) can never
 --- reach it.
 --- @param self UserInputController
@@ -267,8 +268,8 @@ local open_fresh = function(self, cfg)
   -- presence is the flag the draw loop (controller.lua)
   -- checks to paint V:draw() each frame, and it carries the
   -- { M, C, V } handle the legacy poll idiom reads. Drivers
-  -- change but the flag persists through
-  -- {badspecref: 0.1.0-m8}. NOTE: factoring this into a
+  -- change but the flag persists (internals/user_input.md,
+  -- "Singleton lifecycle"). NOTE: factoring this into a
   -- named setup_legacy_user_input() and the open_fresh/init
   -- naming are open {badspecref: A5} items (see
   -- {badspecref: M2-human-review.md}) — deferred to the
@@ -287,17 +288,18 @@ end
 function UserInputController:show(config)
   local cfg = config or {}
   if love.state.user_input then
-    -- {badspecref: C2} (warn-don't-swallow): a plain show()
-    -- over an active overlay is suppressed; say so.
+    -- decisions/input.md, Decision 3 (warn-don't-swallow):
+    -- a plain show() over an active overlay is suppressed;
+    -- say so.
     if not cfg.force then
       Log.warn('UserInputController:show ignored — overlay already active (pass force=true to override)')
       return
     end
     -- force=true intentionally applies only the text subset
     -- of cfg on an active overlay; a full live reconfigure
-    -- is the compy.input API arriving in
-    -- {badspecref: 0.1.0-m7}. Other fields are ignored here
-    -- by design.
+    -- is the compy.input API's configure() (internals/
+    -- user_input.md, "configure(config)"). Other fields
+    -- are ignored here by design.
     if cfg.text ~= nil then
       self.model:set_text(cfg.text)
       self:update_view()
@@ -319,8 +321,8 @@ function UserInputController:hide()
 end
 
 --- Live-reconfigure an active session (compy.input.
---- configure, {badspecref: AC-1/2/11} — the
---- {badspecref: M7-01} boundary decision closed here): only
+--- configure; internals/user_input.md, "configure(config)"
+--- — the boundary decision closed here): only
 --- the Contract's live-updatable set reaches apply_config —
 --- prompt/highlighter/validator/widget-output callbacks. text/
 --- cursor/eval/result never reach it from here — accepted but
@@ -343,14 +345,15 @@ end
 --- submit / cancel ---
 ----------------------
 
--- {badspecref: Spec §5 (AC-17/18/42(b))}: the framework
+-- decisions/input.md, Decision 6: the framework
 -- tier-1 return entry
 -- (projectInputController.lua) calls submit(); before_/
 -- after_submit are route-owned (read off compy_input there,
 -- not stored here) — this is only the widget's own middle
 -- step: validate -> deliver -> deactivate.
 
---- Validator gate ({badspecref: AC-18/AC-42(b)}).
+--- Validator gate (internals/user_input.md, "Submit and
+--- cancel — the framework tier-1 chains").
 --- No custom validator
 --- accepts unconditionally; a set validator's ok/err_msg
 --- verdict decides, locking the session on reject via the
@@ -375,12 +378,12 @@ local function debug_noop(label)
   end
 end
 
---- Submit delivery ({badspecref: AC-17}): fills the legacy
---- poll reftable ({badspecref: spec §5 mechanism note} —
---- the push('userinput') producer is gone, the synchronous
---- fill survives to {badspecref: M8}) and fires the widget
---- output while the session is still active
---- ({badspecref: AC-25} observable order).
+--- Submit delivery (internals/user_input.md, "Submit and
+--- cancel — the framework tier-1 chains"): fills the legacy
+--- poll reftable — the push('userinput') producer is gone,
+--- the synchronous fill survives — and fires the widget
+--- output while the session is still active (observable
+--- order, same section).
 --- REVIEW: is this legacy reftable even read anywhere now?
 --- REVIEW: if 'noop_debug' would be a factory, we could just install its result (with label enclosed) as default value for self.on_text_entered (unless overwritten) therefore collapsing all this wrapper, wiring on_text_entered directly without 'deliver' wrapper
 --- REVIEW: `deliver` is vague name -- must be deliver_text_entered or something like that ? (one more symptom of it being redundant wrapper)
@@ -397,7 +400,7 @@ local function deliver(self, text)
   end
 end
 
---- Submit ({badspecref: AC-17/18/42(b)}): validate the
+--- Submit (decisions/input.md, Decision 6): validate the
 --- assembled text, deliver + deactivate on accept, lock on
 --- reject. An empty input submits nothing (pre-existing
 --- solicitation behaviour, carried unchanged — not an
@@ -428,7 +431,7 @@ end
 --- controller). It is "shown" only while love.state.user_input
 --- is set (show()/hide() toggle it). A keystroke reaching the
 --- sink while the overlay is hidden must mutate nothing
---- ({badspecref: AC-11/AC-13}) — this is the chain's
+--- (decisions/input.md, Decision 2) — this is the chain's
 --- INTERNAL hidden-check, replacing
 --- the old external gating wrapper. The console REPL input is a
 --- DIFFERENT UserInputController instance (never the published
@@ -443,7 +446,8 @@ end
 --- Mirrors _is_hidden_overlay above rather than duplicating
 --- the sink's check (per the prompt): the framework tier-1
 --- return/escape entries (projectInputController.lua) gate
---- engagement on this ({badspecref: AC-20/21}).
+--- engagement on this (internals/user_input.md, "Submit
+--- and cancel — the framework tier-1 chains").
 function UserInputController:is_shown()
   return not self:_is_hidden_overlay()
 end
@@ -454,12 +458,13 @@ end
 
 --- @param k string
 --- @param keys_pressed table?  read-only held-key proxy
---- ({badspecref: spec §1})
+--- (decisions/input.md, Decision 13)
 --- @param isr boolean?
 --- @return boolean? limit
 -- This handler now receives the uniform
--- (k, keys_pressed, isr) triple ({badspecref: spec §2 /
--- AC-8}; resolves the {badspecref: m4/m5 A2} open note).
+-- (k, keys_pressed, isr) triple (decisions/input.md,
+-- Decision 9; resolves the {badspecref: m4/m5 A2} open
+-- note).
 -- Its own editing logic still reads modifiers via Key.*
 -- (love.keyboard) — widening that to the keys_pressed
 -- proxy is not required here, but recommended in the
@@ -498,8 +503,8 @@ function UserInputController:keypressed(k, keys_pressed, isr)
 
   -- (combo serialisation lives in controller.lua; this
   -- handler only sees the raw key.)
-  -- {badspecref: AC-18}: locked-on-reject unlocks on
-  -- Enter/Space/arrows.
+  -- internals/user_input.md, "Error state": locked-on-reject
+  -- unlocks on Enter/Space/arrows.
   if input:has_error() then
     if Key.is_enter(k)
         or k == "up" or k == "down"
@@ -656,8 +661,8 @@ function UserInputController:keypressed(k, keys_pressed, isr)
 
   -- REVIEW: and here I have a serious question: why would we need to duplicate the cancellation logic in the project route with its 'framework_handlers' early-interceptors while we could simply let it work in exactly the same way like in editor and console? Instead we introduced one moving part which was not originally planned or requested explicitly by stakeholders (and it was only because LLM *insisted* we need to use framework hooks before the chain).
   -- Console/editor's OWN escape-clears-only behaviour (not
-  -- the project widget's cancel chain,
-  -- {badspecref: spec §5 AC-19}): the
+  -- the project widget's cancel chain — internals/
+  -- user_input.md, "Editor-specific keys"): the
   -- framework tier-1 escape entry intercepts before this sink
   -- ever sees the key for the project route's shown widget, so
   -- this only fires for console/editor's own routes, which
@@ -674,7 +679,8 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   -- REVIEW: how submit in editor/console are working now, if they cannot expect UIC to submit? (or they used their own handling?)
   -- REVIEW: if the only reason for moving submit/cancel *out* of UIC was to support '{before,after}_{cancel,submit}' hooks, I do not see how they could not be managed *inside* UIC. If we simply want to guarantee them non-blocking... well, still no justification for *separate* mechanism -- project may simply *not* intercept these keys (or its return vaue could be specifically ignored)...
   -- REVIEW: looking forward, UIC should not be aware if application is in 'editor or non-editor' mode -- it should be editor that configures it accordingly (via hooks). I see only two differences: a) vert/horiz order (purposeful or coincidence?) and editor having 'modify' block. But in fact (for the future?) -- its all *combos* which editor can set itself -- moreover we could think of combos mechanism *inside* UIC, and editor or project simply registering extra combos in front of them (or even as parameters to be passed to UIC)
-  -- {badspecref: AC-25}: the old oneshot-gated submit local
+  -- internals/user_input.md, "UserInputController
+  -- keypressed (shared)": the old oneshot-gated submit local
   -- (fill the legacy reftable + push('userinput')) is gone —
   -- the project widget's submit now runs through the
   -- framework tier-1 return entry
@@ -712,9 +718,9 @@ end
 
 --- @param t string
 --- @param keys_pressed table?  read-only held-key proxy
---- ({badspecref: spec §1})
+--- (decisions/input.md, Decision 13)
 -- Uniform textinput signature
--- ({badspecref: spec §2 / AC-8}). Visibility is
+-- (decisions/input.md, Decision 9). Visibility is
 -- decided by the internal hidden-check (shown -> edit; hidden ->
 -- no-op), which supersedes the old self.result/running gate: a
 -- shown widget edits regardless of the legacy poll reftable.
@@ -733,7 +739,7 @@ end
 
 --- @param k string
 --- @param keys_pressed table?  read-only held-key proxy
---- ({badspecref: spec §1})
+--- (decisions/input.md, Decision 13)
 function UserInputController:keyreleased(k, keys_pressed)
   if self:_is_hidden_overlay() then
     if love.DEBUG then Log.debug('input sink: hidden no-op') end

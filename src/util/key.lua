@@ -22,9 +22,9 @@ local mod_triples = {
 }
 
 -- Generic modifier names in combo-string precedence order
--- ({badspecref: spec §1}: ctrl < alt < shift < gui), and
--- the l/r fold that maps held key-names onto them
--- ('lctrl' -> 'ctrl').
+-- (decisions/input.md, Decision 8: ctrl < alt < shift <
+-- gui), and the l/r fold that maps held key-names onto
+-- them ('lctrl' -> 'ctrl').
 local mod_rank = {
   ctrl = 1, alt = 2, shift = 3, gui = 4,
 }
@@ -50,11 +50,11 @@ local function split_combo(combo)
   return mods, trigger
 end
 
---- Canonicalise a combo string ({badspecref: spec §1}):
---- lower-cased, l/r folded, modifiers in fixed precedence,
---- trigger last, '+'-joined. 'Ctrl+S' -> 'ctrl+s'; bare 'S'
---- -> 's'. Matches what combo_string() (controller.lua)
---- emits at dispatch.
+--- Canonicalise a combo string (decisions/input.md,
+--- Decision 8): lower-cased, l/r folded, modifiers in
+--- fixed precedence, trigger last, '+'-joined. 'Ctrl+S' ->
+--- 'ctrl+s'; bare 'S' -> 's'. Matches what combo_string()
+--- (controller.lua) emits at dispatch.
 --- @param combo string
 --- @return string
 local function normalize_combo(combo)
@@ -68,11 +68,10 @@ local function normalize_combo(combo)
 end
 
 --- REVIEW: can we think of building set of validators instead? it may be interesting because we'd only have to check for combos that are defined, not convert every typed combo into string on every keystroke. So that our table would *speak* the language of serialized combos but *act* as fast 'decision-tree' (and could return noop if nothing found, as a bonus -- saving the nil check upstream and allowing unconditional execution of returned handler)
---- A project handlers sub-table
---- ({badspecref: spec §1}, {badspecref: R14}): assigned
---- combo keys normalise on registration, so
---- handlers.keypressed['Ctrl+S'] is stored (and
---- dispatch-matched) as 'ctrl+s'.
+--- A project handlers sub-table (decisions/input.md,
+--- Decision 8): assigned combo keys normalise on
+--- registration, so handlers.keypressed['Ctrl+S'] is
+--- stored (and dispatch-matched) as 'ctrl+s'.
 --- The default matcher is exact canonical lookup (O(1)); the
 --- normalising seam is where a future glob matcher would live.
 --- @return table
