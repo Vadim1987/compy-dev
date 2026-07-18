@@ -168,7 +168,8 @@ function love.draw()
   drawText()
 end
 
--- Continuous-session idiom (M8-01): consume the submitted
+-- Continuous-session idiom ({badspecref: M8-01}):
+-- consume the submitted
 -- code in on_text_entered, re-show (still holding the just-
 -- submitted body, so editing continues in place — NOT the
 -- clear-and-reprompt shape) from after_submit.

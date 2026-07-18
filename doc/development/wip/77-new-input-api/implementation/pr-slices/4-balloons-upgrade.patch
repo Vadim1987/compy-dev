@@ -42,7 +42,7 @@ diff --git a/terminal.lua b/terminal.lua
 index 5e0368a..163da52 100644
 --- a/terminal.lua
 +++ b/terminal.lua
-@@ -1,25 +1,31 @@
+@@ -1,25 +1,36 @@
  require("helpers")
  require("debugfunc")
  
@@ -77,6 +77,11 @@ index 5e0368a..163da52 100644
  function terminal_init()
 -  terminal = user_input()
 +  compy.input.after_submit = function()
++    compy.input.show({})
++  end
++  -- ESC cancels the widget; re-arm it (prompt stays sticky) so
++  -- the command line can't be dismissed with no way back.
++  compy.input.after_cancel = function()
 +    compy.input.show({})
 +  end
 +  compy.input.show({ on_text_entered = deliver })

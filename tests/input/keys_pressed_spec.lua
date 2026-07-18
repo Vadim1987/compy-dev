@@ -1,7 +1,9 @@
 -- Stub view.view before anything requires it: the real module (src/view/view.lua) calls
 -- gfx.newFont() at load time (gfx = love.graphics), which needs a graphics context absent in
 -- tests. This minimal stub mirrors the fields the controller path touches.
--- (Dedup of this stub across the input specs is an open A8 test-infra item — see M2-human-review.md.)
+-- (Dedup of this stub across the input specs is an open
+-- {badspecref: A8} test-infra item — see
+-- {badspecref: M2-human-review.md}.)
 package.preload['view.view'] = function()
   View = {
     prev_draw = nil,
@@ -41,7 +43,8 @@ Controller.setup_callback_handlers({
 })
 
 -- Save handler refs now: other spec files replace _G.love during collection, which would
--- otherwise clobber these. (Shared cross-spec love mutation is an open A8 isolation item.)
+-- otherwise clobber these. (Shared cross-spec love
+-- mutation is an open {badspecref: A8} isolation item.)
 local kp_handler = love.handlers.keypressed
 local kr_handler = love.handlers.keyreleased
 
@@ -55,8 +58,11 @@ describe('keys_pressed table #input', function()
     assert.truthy(Controller.keys_pressed['s'])
   end)
 
-  -- A8 (test the contract): single press->release flow + behaviour-vs-internals restructure
-  -- is deferred to the 0.1.0-m4 test-strategy pass — see M2-human-review.md.
+  -- {badspecref: A8} (test the contract): single
+  -- press->release flow + behaviour-vs-internals
+  -- restructure is deferred to the
+  -- {badspecref: 0.1.0-m4} test-strategy pass — see
+  -- {badspecref: M2-human-review.md}.
   it('removes key on keyreleased', function()
     Controller.keys_pressed['s'] = true
     kr_handler('s')
@@ -87,8 +93,11 @@ describe('keys_pressed table #input', function()
 end)
 
 
--- A6 (serialize-vs-match): proposal to replace per-keypress combo_string serialisation with
--- registration-time dispatcher closures is deferred to the 0.1.0-m5 design — see M2-human-review.md.
+-- {badspecref: A6} (serialize-vs-match): proposal to
+-- replace per-keypress combo_string serialisation with
+-- registration-time dispatcher closures is deferred to
+-- the {badspecref: 0.1.0-m5} design — see
+-- {badspecref: M2-human-review.md}.
 describe('combo_string #input', function()
   local cs = Controller.combo_string
 

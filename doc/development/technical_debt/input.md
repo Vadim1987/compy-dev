@@ -465,20 +465,6 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** If tier-3 resolution is ever measured on a hot path, or the
   dispatch is next refactored — resolve once at `activate`.
 
-### `Controller._keyboard_route` is a write-only field
-
-- **Where:** `src/controller/controller.lua` — assigned in `occupy_keyboard`
-  and `set_love_keypressed` (the active-route install sites), read nowhere
-  (grep-verified: two writes, zero reads).
-- **State:** The field looks like an authoritative "which route owns the
-  keyboard" registry but nothing consults it — the live answer is the global
-  `love.keypressed` slot itself. A field that appears authoritative but is
-  never read is exactly what made the gateway `love.keypressed` forward
-  (around line 899) read as confusing.
-- **Why it stands:** Harmless dead write; costs nothing at runtime.
-- **Revisit:** Either make it the queried route registry (and forward through
-  it instead of the raw slot) or delete both writes.
-
 ### Pointer delivery is an unstructured broadcast, not a chain
 
 - **Where:** `src/controller/controller.lua` — the gateway `handlers.mouse*`

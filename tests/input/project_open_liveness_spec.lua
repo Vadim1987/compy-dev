@@ -1,9 +1,10 @@
--- Ruling (a): an input-only / pointer-only project is "live"
--- without hooking love.update/draw. In project_open such a
--- project keeps the project route (so submit works) and
--- Ctrl+Esc returns to the console (not quit the app), while a
--- truly idle console (project_open, nothing interactive) still
--- quits on Ctrl+Esc.
+-- {badspecref: Ruling (a)}: an input-only / pointer-only
+-- project is "live" without hooking love.update/draw.
+-- In project_open such a project keeps the project route
+-- (so submit works) and Ctrl+Esc returns to the console
+-- (not quit the app), while a truly idle console
+-- (project_open, nothing interactive) still quits on
+-- Ctrl+Esc.
 --
 -- See doc/development/technical_debt/input.md, the (now
 -- resolved) "Input-only / pointer-only projects are

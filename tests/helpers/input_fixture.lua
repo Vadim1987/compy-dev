@@ -1,12 +1,14 @@
--- Full input standup for the contract suite. Stands up the REAL
--- love.handlers gate over a REAL ConsoleController, the singleton
--- input widget (mirroring main.lua), the click/update path and a
--- keypress-level driver — so a contract test reads as a one-line
--- statement (see tests/helpers/input_session). The ~175 ln of
--- MVC/gfx/font boilerplate that used to sit inline in
--- input_contracts_spec lives here; consumed, never copied.
--- "doc A" = the contract record:
--- doc/development/wip/77-new-input-api/notes/input-contracts.md
+-- Shared fixture for the input contract suite. Builds the
+-- real love.handlers wiring over a real ConsoleController,
+-- the singleton input widget (mirroring main.lua), the
+-- click/update path and a keypress-level driver — so a
+-- contract test reads as a one-line statement (see
+-- tests/helpers/input_session). All MVC/gfx/font
+-- boilerplate the suite needs lives here; consumed, never
+-- copied.
+-- "doc A" = the contract record: {badspecref:
+-- doc/development/wip/77-new-input-api/notes/
+-- input-contracts.md}
 
 -- view.view stub: the real module calls gfx.newFont at load and
 -- needs a graphics context absent here. Set BEFORE any view
@@ -121,14 +123,18 @@ local function build_singleton(cfg)
   return c
 end
 
+--- REVIEW: is it safe to call functions here, instead of wrapping them into something like 'init' (callable from 'before_suite' or before_each). I am not sure what is the norm -- therefore asking
+
 mock_runtime()
 enrich_gfx()
 local cfg = build_cfg()
 require_modules()
 
 local CC = build_console(cfg)
--- Native slots: the gate's last-resort route when no widget is up,
--- and the route half of pointer delivery (doc A §5.5).
+--- REVIEW/DOC: 'slots', 'gate last-resort route' sound exotic and cannot be understood without context -- dependence on 'when no widget is up' looks like abstraction leak; if its just the way framework sets the controllers when launched -- tell exactly that
+-- Native slots: the gate's last-resort route when no widget
+-- is up, and the route half of pointer delivery
+-- ({badspecref: doc A §5.5}).
 Controller.set_love_keypressed(CC)
 Controller.set_love_keyreleased(CC)
 Controller.set_love_textinput(CC)
@@ -136,8 +142,10 @@ Controller.set_love_mousepressed(CC)
 Controller.set_love_mousereleased(CC)
 Controller.set_love_update(CC)
 local singleton = build_singleton(cfg)
+-- REVIEW/DOC: explain what the line before does and why its needed
 local session   = require('tests.helpers.input_session').new(CC)
 
+-- F for Fixture
 local F = {
   cc        = CC,
   console   = CC.input,
@@ -148,13 +156,16 @@ local F = {
 }
 
 -- The project-facing public surface (compy.input.show/hide); it
--- resolves the singleton from love.state, exactly as a project does.
+-- resolves the singleton exactly as a project does.
 function F.compy_input()
   return CC:get_project_env().compy.input
 end
 
--- Register a project click handler (compy.singleclick/doubleclick),
--- the target the framework click path invokes (doc A §6.7).
+-- REVIEW/DOC: we have 'native' handlers, and we have 'compy' handlers, and then we have compy input handlers... there could be a confusion. Can we find a better name explaining this setter unambiguously? Maybe "project_set_compy"? (it will also exactly match what it does.  
+-- REVIEW: maybe we should instead use common method 'project_compy_namespace' (which encapsulates CC:get_project_env().compy), and let calling code work from there? (explicirly setting and getting .input, or other attributes)
+-- Register a project click handler
+-- (compy.singleclick/doubleclick), the target the framework
+-- click path invokes ({badspecref: doc A §6.7}).
 function F.set_compy_handler(name, fn)
   CC:get_project_env().compy[name] = fn
 end
@@ -163,39 +174,47 @@ function F.set_mouse_pos(x, y)
   mx, my = x, y
 end
 
+-- REVIEW: is it used? Maybe name it 'love_update' for better grepability and transparency?
 function F.update(dt)
   love.update(dt)
 end
 
--- Activate the singleton widget (publishes love.state.user_input).
+-- Activate the singleton widget 
+-- REVIEW: why not via compy.input.show ? 
 function F.show_widget(opts)
   singleton:show(opts)
   return singleton
 end
 
--- Stand a running project on screen whose native LÖVE callback
--- is fn. With no widget up the gateway routes the event to
--- love[name], so the project's own callback is the public seam
--- witnessing delivery to the project route (doc A §5.1-5.3).
+-- REVIEW: is it adequate mocking? When project sets up 'love' its actually sets up project_env.love -- sandboxed table what is passed as 'userlove' in a container. Here' instead it sets up direct love callback?
+-- Simulate a running project whose callback for `name` is
+-- fn: set app_state = 'running' and assign fn directly to
+-- the top-level love[name] the dispatcher invokes.
 function F.running_project(name, fn)
   love.state.app_state = 'running'
   love[name] = fn
 end
 
+--- REVIEW/DOC: 'slot' and 'tier-3' language should rather not be there. instead I'd pferer to see specific pointer to the code/function which is mocked (and why is it mocked, not called?) 
+--- REVIEW: I am not sure the level of mocking is correct there. I would rather expect setting 'natives' as project environment (like userlove) and calling the normal framework operation that runs project
+--- REVIEW/DOC: 'REAL activation path' is claimed, not proved (at least via reference to source code, better by calling real code)
+--- REVIEW/DOC: 'M4 ruling-1' is emphemeral dev-time reference, and I suspect the whole comment may reflect outdated logic/architecture
 -- Take the project route through the REAL activation path
 -- (Controller.set_user_handlers, what a project run calls): the
 -- ProjectInputController becomes the slot occupant and captures
 -- the project's `natives` (its love.* handlers) as tier-3 seeds.
 -- app_state = 'running' so the four-tier chain (not the M4
 -- ruling-1 forward) dispatches. Returns the project-facing
--- compy.input surface. This is the seam the dispatch-chain rows
--- drive, in contrast with running_project's raw-slot shortcut.
+-- compy.input surface. Unlike running_project (which
+-- assigns love[name] directly), this goes through the
+-- production Controller.set_user_handlers call.
 function F.activate_project(natives)
   love.state.app_state = 'running'
   Controller.set_user_handlers(natives or { }, CC)
   return F.compy_input()
 end
 
+--- REVIEW: why this low-level machinery and not a call of some existing function? the intent is plausible, the implementation is suspicious
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
 -- singleton disables selection, making pointer delivery a no-op —
@@ -209,9 +228,11 @@ function F.show_selectable_widget(lines)
   return w
 end
 
--- Undo any project-native slot a test installed via
--- running_project, so the next test starts on the framework
--- route.
+--- REVIEW: do not we have framework/consolecontroller method for that? Why not call it? Otherwise its not clear which part of the real lifecycle we're mimicking there (if any)
+--- REVIEW: in general, I'd prefer helper/fixture functions to call real framework's code with some test-specific parameters/configuration -- not implement its own 'provision/deprovision' algorithms which will inevitably deviate from what real framework is doing
+-- Restore the love.* callbacks a test replaced via
+-- running_project, so the next test starts on the
+-- framework defaults.
 local function restore_native_slots()
   love.keypressed    = Controller._defaults.keypressed
   love.textinput     = Controller._defaults.textinput
@@ -220,25 +241,25 @@ local function restore_native_slots()
   love.mousereleased = Controller._defaults.mousereleased
 end
 
--- Empty a table in place (used to clear the normalising
--- handler sub-tables between tests; assigning nil is fine
--- mid-traversal), except any key in `keep` (the framework's
--- OWN structural entries, never project/test-installed —
--- spec §5 AC-17/19).
+-- Empty a table in place, except any key in `keep`
+-- (entries the framework itself installs, never
+-- project/test-installed). Assigning nil mid-traversal
+-- is fine.
 local function wipe(t, keep)
   for k in pairs(t) do
     if not (keep and keep[k]) then rawset(t, k, nil) end
   end
 end
 
+--- REVIEW: is not there a framework/controller method doing this? why replicate instead of calling it?
 -- Drop every project-route participant the chain rows
--- install, so each test starts from framework defaults (the
--- M5c teardown invariant, exercised at fixture scope):
+-- install, so each test starts from framework defaults:
 -- deactivate the route, clear the project-installed
--- framework/combo tables and generic callbacks/hooks. Tier-1
--- return/escape (installed once, at ProjectInputController
--- construction, not per-test) survive the keypressed wipe —
--- they are structural, not a test artifact.
+-- framework/combo tables and generic callbacks/hooks.
+-- The return/escape entries survive the keypressed wipe:
+-- they are installed once, at ProjectInputController
+-- construction (not per-test) — structural, not a test
+-- artifact.
 local function reset_chain()
   Controller.project_input:deactivate()
   local fw = Controller.project_input.framework_handlers
@@ -263,6 +284,7 @@ end
 
 -- Clean slate between tests: no held keys, no widget, console mode,
 -- empty console line, drained click state, cleared click handlers.
+-- REVIEW: good intent but why not framework method? I am sure it has methods for exiting the project and doing big cleanup
 function F.reset()
   Controller.keys_pressed       = { }
   love.state.user_input         = nil
@@ -285,7 +307,9 @@ function F.reset()
   -- The widget's OWN output/hook fields (apply_config only
   -- overwrites when a show() config key is given, so a value
   -- set by one test would otherwise survive into the next —
-  -- production behaviour, AC-24, but wrong at fixture scope).
+  -- production behaviour, {badspecref: AC-24}, but wrong at
+  -- fixture scope).
+  -- REVIEW: would real project suffer similar config leaks? if not, why not call whatever clears/resets them?
   singleton.validator = nil
   singleton.on_text_entered = nil
   singleton.on_limit_reached = noop

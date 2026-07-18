@@ -408,13 +408,14 @@ end
 --  history   --
 ----------------
 
+--- REVIEW: when widget is re-armed, or cancelled or closed-on-submit, history is dropped? what about when its reconfigured? when one project launches input, than is torn down and new project launches input
 --- @return boolean
--- AC-25: oneshot is gone, so nothing distinguishes a
--- single-use solicitation from any other model anymore.
--- Only the (never-history-reading) project widget set
--- oneshot=true, so suppression here was already inert;
--- the flag's other job (submit-closing) is what moved into
--- the new submit chain (userInputController.lua).
+-- {badspecref: AC-25}: oneshot is gone, so nothing
+-- distinguishes a single-use solicitation from any other
+-- model anymore. Only the (never-history-reading) project
+-- widget set oneshot=true, so suppression here was already
+-- inert; the flag's other job (submit-closing) is what
+-- moved into the new submit chain (userInputController.lua).
 function UserInputModel:keep_history()
   return true
 end
@@ -510,8 +511,9 @@ end
 --- @private
 --- Clamp self.cursor into the current text's valid range
 --- (byte length, matching move_cursor's own bound below) —
---- set_text(t, true)'s AC-8 landing when the new content is
---- shorter than the preserved cursor position (M7-01).
+--- set_text(t, true)'s {badspecref: AC-8} landing when the
+--- new content is shorter than the preserved cursor
+--- position ({badspecref: M7-01}).
 function UserInputModel:_clamp_cursor_pos()
   local n = self:get_n_text_lines()
   local l = math.max(1, math.min(self.cursor.l, n))
@@ -573,18 +575,30 @@ function UserInputModel:get_cursor_y()
   return self.cursor.l
 end
 
+--- Whether the cursor sits on a text boundary.
+--- 'up'/'down' (and nil, meaning either) compare the line
+--- only. 'left'/'right' are two-dimensional: with scope
+--- 'line' the column edge alone is the limit; with scope
+--- 'input' (the default, forced for single-line text) the
+--- line must be an edge too, so left at the very start
+--- doubles as the 'up' limit and right at the very end as
+--- the 'down' limit.
 --- @param dir VerticalDir?
 --- @param scope 'input'|'line'?
 --- @return boolean
 function UserInputModel:is_at_limit(dir, scope)
   local n = self:get_n_text_lines()
   local cl, cc = self:get_cursor_pos()
-  if not dir then return cl == 1 or cl == n end
-  local req = (n == 1) and 'input' or (scope or 'input')
+  
   if dir == 'up' then return cl == 1 end
   if dir == 'down' then return cl == n end
+  if not dir then return cl == 1 or cl == n end
+  
   local line = self:get_text_line(cl)
   local line_end = string.ulen(line) + 1
+  -- REVIEW: 'req' name does not reflect semantics -- what is it at all?
+  local req = (n == 1) and 'input' or (scope or 'input')
+
   if dir == 'left' then
     return cc == 1 and (req == 'line' or cl == 1)
   elseif dir == 'right' then
@@ -821,10 +835,13 @@ function UserInputModel:cancel()
   self:reset()
 end
 
+--- REVIEW: previous one-shot logic also involved love.harmony.utils interaction -- what is it for and is it ok that its gone?
+--- REVIEW: report_parse_error is misleading name, should not be _move_cursor_to_err_pos ?
 --- @private
 --- Cursor-to-error-position on an evaluator reject. Split out
 --- of handle() to keep it under the function-body line limit
---- once the AC-25 push('userinput') block (below it) is gone.
+--- once the {badspecref: AC-25} push('userinput') block
+--- (below it) is gone.
 --- @param result Error[]
 function UserInputModel:_report_parse_error(result)
   --- @TODO fix
@@ -852,10 +869,11 @@ end
 --- @param eval boolean
 --- @return boolean
 --- @return string[]|Error[]
--- AC-25: the old push('userinput') notification (fired here
--- under `if self.oneshot`) is gone — on_text_entered
--- (userInputController.lua submit chain) replaces it as the
--- "value ready" signal (spec §5 mechanism note).
+-- {badspecref: AC-25}: the old push('userinput')
+-- notification (fired here under `if self.oneshot`) is gone
+-- — on_text_entered (userInputController.lua submit chain)
+-- replaces it as the "value ready" signal
+-- ({badspecref: spec §5} mechanism note).
 function UserInputModel:handle(eval)
   local ent = self:get_text()
   local ok, result
@@ -871,6 +889,8 @@ function UserInputModel:handle(eval)
 
   return ok, (result or ent)
 end
+
+--- REVIEW: regarding all files(!) -> should comments vs annotations order be the same everywhere? I see comments between annotations, before, after... need normalization for readablitity as also because at least some type parsers may break?(not sure which ones we are using though)
 
 ----------------
 --   error    --

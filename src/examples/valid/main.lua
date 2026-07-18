@@ -70,7 +70,8 @@ function is_natural(s)
   end
 end
 
--- Continuous-session idiom (M8-01): consume the line in
+-- Continuous-session idiom ({badspecref: M8-01}):
+-- consume the line in
 -- on_text_entered, re-show (bare) from after_submit. eval
 -- reuses the legacy validated_input->ValidatedTextEval path
 -- (least new logic).

@@ -357,17 +357,23 @@ function love.load()
   local CC = ConsoleController(CM, ctrl)
   local CV = ConsoleView(baseconf, CC)
 
-  -- UserInput M/V/C are constructed explicitly here (mirroring the Console M/V/C triple above)
-  -- and injected, not self-provisioned by the controller. Whether the controller should own its
-  -- model/view construction is the open A5 question — see implementation/reviews/M2-human-review.md.
+  -- REVIEW: why could not (or should not) Concols/Editor be rewired to use the same singleton? is it because we have to maintain Concole's UIC state in parallel to project/editor's one(s)?
+  -- UserInput M/V/C are constructed explicitly here
+  -- (mirroring the Console M/V/C triple above) and injected,
+  -- not self-provisioned by the controller. Whether the
+  -- controller should own its model/view construction is the
+  -- open {badspecref: A5} question — see {badspecref:
+  -- implementation/reviews/M2-human-review.md}.
   local ui_m = UserInputModel(baseconf, InputEvalText)
   local ui_c = UserInputController(ui_m, nil, true)
   local ui_v = UserInputView(baseconf.view, ui_c)
   -- init_view binds the view to the controller (self.view = v); it is NOT an activation/show.
   ui_c:init_view(ui_v)
-  -- App-wide handle for the singleton: the compy.input wrappers and the overlay draw path resolve
-  -- the controller through love.state (service-locator pattern; the flag/registry shape is part of
-  -- the A5 contract question).
+  -- App-wide handle for the singleton: the compy.input
+  -- wrappers and the overlay draw path resolve the
+  -- controller through love.state (service-locator pattern;
+  -- the flag/registry shape is part of the
+  -- {badspecref: A5} contract question).
   love.state.user_input_controller = ui_c
 
   ctrl.setup_callback_handlers(CC)

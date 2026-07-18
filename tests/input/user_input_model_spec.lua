@@ -141,11 +141,12 @@ describe("input model spec #input", function()
   -------------------------------
   --  set_text keep_cursor     --
   -------------------------------
-  -- M7-01 model fix: set_text's tail jump_end() used to run
-  -- unconditionally, making a truthy keep_cursor silently
-  -- ineffective. AC-8: set_text(t) jumps to end; set_text(t,
-  -- true) preserves the cursor, clamped if the new text
-  -- is shorter than the old cursor position.
+  -- {badspecref: M7-01} model fix: set_text's tail
+  -- jump_end() used to run unconditionally, making a
+  -- truthy keep_cursor silently ineffective.
+  -- {badspecref: AC-8}: set_text(t) jumps to end;
+  -- set_text(t, true) preserves the cursor, clamped if
+  -- the new text is shorter than the old cursor position.
   describe('set_text keep_cursor', function()
     local model = UserInputModel(mockConf, luaEval)
 
