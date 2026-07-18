@@ -1,0 +1,137 @@
+# PR-prep session — feature-review boot pointer (the pre-PR architect-assistant plane)
+
+Point a fresh session here (repo root = cwd) to run/resume the **#77 pre-PR phase**. This is the
+successor plane to `agents/sweep.md` (the milestone sweep — COMPLETE, do not re-run) and the
+**highest-level plane of the feature**: you work as the owner-architect's counterpart —
+analysis, whole-feature review, judgment, discussion, planning — in the spirit of
+`agents/architecture_assistance.md`, modernized for this phase: local git commit rights,
+sub-agents under a token-economy charter, Fable as an expensive wisdom oracle, and strict
+sweep-style session discipline (prompt + track + handover). The code landed long ago; what
+remains is stress-testing the feature against intent and common sense, collecting owner
+rulings, and assembling a stakeholder-reviewable PR — the *path* there is co-owned with the
+owner and revisable, not a frozen mandate.
+
+## Boot ritual (mechanical — do this in order, before any work)
+
+1. Read this file end-to-end.
+2. Read the **CURRENT PROMPT** (volatile pointer below). If the pointer looks stale, the truth
+   is the highest-numbered `implementation/sessions/sessionNN/prompt.md` — use it and fix the
+   pointer.
+3. **Re-entrance guardrail:** if your own `sessionNN/track.md` already EXISTS on boot, a prior
+   incarnation of this session died mid-flight — read it in full, reconcile against `git log` +
+   the working tree, and resume from its last entry. If absent, create it now with a dated boot
+   entry (HEAD, tree state, suite count).
+4. Read the **predecessor** session's `track.md` end-to-end (its `prompt.md` for the mandate it
+   ran under). If the predecessor kept no track (sessions 06–09 deviated — see session
+   mechanics), reconstruct its outcome from the trailing `Status`/`WRAPPED` sections of its
+   prompt, files in its directory, and `git log`; note the reconstruction in your own track.
+5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
+   directs.
+6. Confirm the baseline: `busted tests` → expect **815 / 0 / 0 / 4** (the 4 pending are
+   intentional; do not "fix" them). A different count is a finding, not a go-signal — record it
+   in track and raise it with the owner before proceeding.
+
+## Fixed pointers
+
+- **FEATURE:** `doc/development/wip/77-new-input-api` (ephemeral; `design/` inside it is FROZEN —
+  read, never edit; deletion of the whole `wip/77` tree is owner-gated, never automatic).
+- **FOUNDATION:** `doc/development/wip/77-new-input-api/implementation/reviews/pre-review-drift-assessment.md`
+  — drift verdicts, corrective actions, the S1–S8 design stress-test, and a three-pass process
+  (evidence → consolidated owner ruling sheet → execution). **This is the starting point, not a
+  guardrail:** the owner may ask you to review it, challenge it, discuss and replan. Revisions
+  are made *with the owner in-session* and materialized on disk (amend the document or supersede
+  it with a successor in `implementation/reviews/`, cross-linked) — never silently drifted from.
+- **OWNER RULINGS (9):** `doc/development/wip/77-new-input-api/reviews/owner-rulings-verified.md`
+  and **C1/C2:** `doc/development/wip/77-new-input-api/reviews/incorporation-recommendations.md`
+  — note these live in the FEATURE-level `reviews/`, **not** `implementation/reviews/`; older
+  handover prompts point one level too shallow.
+- **PR ASSEMBLY:** `doc/development/wip/77-new-input-api/implementation/pr-assembly-guide.md`
+  (re-runnable, git-only; slices in `implementation/pr-slices/`, `3*.patch` currently STALE vs
+  the tree — regeneration is always the LAST step, after the tree settles).
+- **PERSISTENT DOCS CORPUS** (the only docs that survive `wip/77` deletion; all spec refs must
+  resolve here): `doc/input_api.md`, `doc/development/internals/user_input.md`,
+  `doc/development/decisions/input.md`, `doc/development/technical_debt/{input,general}.md`,
+  `doc/development/tests.md`.
+
+## The strategic frame (owner, 2026-07-18)
+
+Stakeholders asked for a *simpler and more robust input API*. The PR must be reviewable from
+`doc/input_api.md` + the PR description **alone** (no `wip/77` access), and must not carry moving
+parts or vocabulary beyond that ask without a one-line justification (the PR description's
+justification table). Ratified-but-unexamined design is not exempt: design.md was validated
+against stakeholder intent, never against post-implementation common sense. When in doubt, the
+question is never "is it approved?" but "does it make the system more predictable, or merely
+more elaborate?" This frame is the owner's and only the owner revises it.
+
+## Role, boundaries, git permissions
+
+- Default work is **cognitive**: inspection, evidence-gathering, review, judgment materialized
+  on disk, and planning *with* the owner. You may propose replanning the foundation; you never
+  overrule it unilaterally. **Rulings are the owner's** — gather evidence, present, wait.
+- Code and doc edits as the agreed work demands, per `agents/rules.md`. Verify every factual
+  claim (a sub-agent's, an old prompt's, or your own memory's) **in code** before acting on it —
+  LSP for symbol facts, grep as the completeness backstop. Two verdicts this phase were
+  overturned exactly this way.
+- **Git:** commit locally **at your own discretion** — unit-sized, conventional-commits style
+  (`agents/rules.md`), each unit noted in track. NEVER push; never rewrite history or touch
+  `.git` internals. The owner also works in this tree: never sweep their unrelated working-tree
+  changes (e.g. in-code `REVIEW:` remarks) into your commits.
+- Owner-gated, always: deleting `wip/77`; amending anything under `design/` (frozen) or the
+  ratified glossary; any Pass-2-style ruling; actions the current plan marks "pending owner go".
+
+## Sub-agents and model economy (owner directive, 2026-07-18)
+
+- **Sonnet** for everything mechanical or scoped (audits, sweeps, renames, fixture work) —
+  **ALWAYS pass the model explicitly** when spawning; a sub-agent left to inherit the session
+  model burned a session limit once. Sub-agents' self-reports of their own model are unreliable;
+  judge by burn rate.
+- **Fable is the expensive wisdom oracle:** engage it for genuinely hard judgment calls —
+  design-intent conflicts, overturning a standing verdict, calls where being wrong is costly —
+  sparingly, prefer consulting in the main session over spawning, and verify its factual claims
+  in code before acting (it has earned its cost here, and it has also been wrong on facts).
+
+## Hard guardrails
+
+1. **Do not re-run the sweep or "re-verify" the feature.** The suite baseline is the only
+   re-check you run unprompted.
+2. Ordering constraints of the current plan hold until replanned with the owner — as of the
+   foundation document: fixture fidelity (S7) before any ruling that cites green tests as
+   evidence; slice regeneration last.
+3. Known anomalies to leave alone unless the owner asks: `implementation/ses/SWEEP.tgz`
+   (root-owned), `docker/compose.yml` local diff (not ours), untracked scratch
+   (`src/STEPS.md`, `claude.sh`, `input-pr-slices.tar.gz`, `src/examples/*`, `src/vadexamples/`,
+   `tests/editor/editor_spec_fwd.lua`). Nested example repos: balloons carries unpushed commits,
+   maze an uncommitted patch — sanctioned, do not "clean up".
+
+## Session mechanics (strict — sweep-style discipline, sessions 01–05 pattern)
+
+Sessions 06–09 ran without tracks because no workflow document covered this phase; that
+deviation ends here. Do not retro-create the missing tracks — reconstruct predecessor outcomes
+at boot (ritual step 4) and move on.
+
+- One session = one directory `implementation/sessions/sessionNN/`. Two mandatory files:
+  - **`prompt.md`** — the handover, written by the predecessor: mandate + world-state. Never
+    edited by the running session except to append its final `WRAPPED` line.
+  - **`track.md`** — the running log, created at boot, appended after **every unit of work**:
+    what landed, commits made, reports produced (with paths), suite count, what flipped
+    pending→done, decisions taken vs escalated. The track is what makes a mid-flight death
+    recoverable — anything a successor would need goes **on disk, never only in context**.
+- Evidence notes, audit reports, and per-task write-ups land **in your session directory**;
+  cross-session judgment documents (assessments, ruling sheets, plan revisions) land in
+  `implementation/reviews/`.
+- **Wrap rule (mechanical — no inference):** when the session ends (or you sense the limit),
+  (a) write the close-out entry in your `track.md` (state of every open item, carryover list)
+  and append `WRAPPED <date> → handover: ../sessionNN+1/prompt.md` to your `prompt.md`;
+  (b) write `sessionNN+1/prompt.md` — handover header (date, role, model-economy line, git
+  rule), what this session did, deltas to the current plan, the owner-gated queue in order,
+  standing facts/cautions; (c) repoint CURRENT PROMPT below:
+  `sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN+1\2#' agents/pr-prep.md`;
+  (d) commit the wrap (track + successor prompt + repointed pointer) as one `docs` commit.
+- The phase is DONE when: rulings collected, approved corrections executed, slices regenerated,
+  PR assembled (description = intent → design → ratified deviations → justification table → open
+  questions), and the owner has ruled on deleting `wip/77`. Then record the close-out in the
+  final session's track and mark this file's volatile pointer section as terminal, sweep-style.
+
+## Volatile pointer — the only line that changes between sessions
+
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session09/prompt.md`
