@@ -1,6 +1,8 @@
 ## Collaboration Rules
 
-use default workflow, project orientation below:
+use workflow [`agents/validation.md`](agents/validation.md), 
+
+project orientation below:
 
 generic project rules: see [`agents/rules.md`](agents/rules.md).
 when assisting in architecture analysis/review: 

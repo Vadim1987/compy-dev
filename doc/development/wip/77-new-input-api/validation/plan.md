@@ -13,12 +13,12 @@ So, my suggestion is
 2) temporary mitigate 'jargon' problem by explaining all jargon in the top of the file -- literally introducing terminology in the opening comments section
 3) Ensure that tests are testing what they claim -- eliminate any 'step-by-step reproducing of framework methods' instead of using real methods, etc. Ensure tests still hold together
 4) Ensure that solution delivered (tests and docs) still holds against design and original stakeholder intent -- i.e. satisfies the requirements and does not violate them
-5) critically reassess the implementation -- were the best (most simple/clear/robust) solutions chosen? do they increase system stability/clarity or decrease it? are there better variants? could this better variants be applied as focused fixes/refactoring over existing prototype implementation?
+5) critically reassess the implementation -- were the best (most simple/clear/robust) solutions chosen? do they increase system stability/clarity or decrease it? are there better variants? could this better variants be applied as focused fixes/refactoring over existing prototype implementation? NOTE: consider persistent docs as the part of the feature outcome, and intermittent docs (doc/development/wip/77-new-input-api/), in particular, its './design' subdirectory as the *source* of information regarding stakeholder intents, decision-making and implementation history. The directory with 'wip' will *not* be part of the final PR, it will be gone as intermittent/ephemeral.
 6) discuss any 'architecture strengthening/clarifying' rulings -- in informed, step-by-step interaction, with ability to ask extra questions. no rubber-stamping, no jargon smuggled.
 7) plan final brush-up steps and spec
 8) run through this plan
 9) reevaluate solution once again against both original stakeholder intent and meta-requirements (clarity, stability, robustness, minimalism)
-10) greenlight the PR
+10) greenlight the PR, assemble it according to ../implementatio/prompts/pr-assembly-guide.md
 
 
 Why this way?
