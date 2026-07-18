@@ -107,3 +107,5 @@ you or escalate to the owner.
   (root-owned), untracked scratch, nested example repos (balloons unpushed commits, maze
   uncommitted patch) — `agents/pr-prep.md` guardrail 3.
 - `design/` is FROZEN (read, never edit); `wip/77` deletion is owner-gated, never automatic.
+
+WRAPPED 2026-07-18 → handover: ../session11/prompt.md (mandate superseded in-session by owner pivot → validation/plan.md)

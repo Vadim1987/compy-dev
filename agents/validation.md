@@ -148,7 +148,8 @@ at boot (ritual step 4) and move on.
   (b) write `sessionNN+1/prompt.md` — handover header (date, role, model-economy line, git
   rule), what this session did, deltas to the current plan, the owner-gated queue in order,
   standing facts/cautions; (c) repoint CURRENT PROMPT below:
-  `sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN+1\2#' agents/pr-prep.md`;
+  `sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN+1\2#' agents/validation.md`
+  (this file — formerly `agents/pr-prep.md`; older prompts reference it by the old name);
   (d) commit the wrap (track + successor prompt + repointed pointer) as one `docs` commit.
 - The phase is DONE when: rulings collected, approved corrections executed, slices regenerated,
   PR assembled (description = intent → design → ratified deviations → justification table → open
@@ -157,4 +158,12 @@ at boot (ritual step 4) and move on.
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session10/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session11/prompt.md`
+
+## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
+
+The owner explicitly grants this session **and all successors** authority to **commit
+locally at their own discretion** — the session10-era "do not commit unless told" rule is
+discarded. The standing rules above still hold: unit-sized, conventional-commits style,
+each unit noted in track, NEVER push, never sweep the owner's unrelated working-tree
+changes into your commits.
