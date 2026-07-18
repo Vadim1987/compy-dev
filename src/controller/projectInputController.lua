@@ -152,8 +152,8 @@ ProjectInputController = class.create(new)
 --- TODO(debt): tier-3 precedence is fixed at activate but
 --- re-resolved per event; a default noop-that-logs would also
 --- drop the `if cb` guard. See technical_debt/input.md
---- "`_tier3` re-resolves the callback precedence on every event".
-function ProjectInputController:_tier3(event, ...)
+--- "`_generic_callback` re-resolves the callback precedence on every event".
+function ProjectInputController:_generic_callback(event, ...)
   local ci = self.compy_input
   local cb = ci[CHANNELS[event]] or self.natives[event]
   if cb then return cb(...) end
@@ -192,8 +192,7 @@ end
 --- handlers: `fw`/`ph` come from sparse combo tables and are
 --- often nil, so each is `x and x(...)`. A single `or` chain
 --- would need every tier guaranteed-callable.
---- REVIEW: it was told multiple times that more tier-agnostic chain is to run 'OR' combination, while nill-able elements are secured by default noop (configured via metaindex on relevant tables). Let it be for now, but mark potential improvement as a tech debt or just `TODO:consider` note. 
---- REVIEW: 'tier3' is weird name -- we agreed on 'generic_callback' but it was ignored. Whole semantic construct is 'framework handlers, project handlers/combos, project generic callback, input widget. Nothing to be redone right now unless fix is straightforward-- but mark for refactoring. I do not want chain participants to be named by their place in chain (tier3 or sink), they should be named per *role* they play 
+--- REVIEW: it was told multiple times that more tier-agnostic chain is to run 'OR' combination, while nill-able elements are secured by default noop (configured via metaindex on relevant tables). Let it be for now, but mark potential improvement as a tech debt or just `TODO:consider` note.
 function ProjectInputController:_dispatch(event, trigger, ...)
   local combo = Controller.combo_string(
     trigger, Controller.keys_pressed)
@@ -201,7 +200,7 @@ function ProjectInputController:_dispatch(event, trigger, ...)
   if fw and fw(...) then return true end
   local ph = self.compy_input.handlers[event][combo]
   if ph and ph(...) then return true end
-  if self:_tier3(event, ...) then return true end
+  if self:_generic_callback(event, ...) then return true end
   return self:_sink(event, ...)
 end
 
@@ -211,7 +210,7 @@ end
 --- ({badspecref: R7} pure wrap) — read once here, never
 --- re-consulted, and
 --- only used when the project sets no on_* (precedence in
---- _tier3). No handler is copied onto compy.input.
+--- _generic_callback). No handler is copied onto compy.input.
 --- @param natives table?
 --- @param compy_input table
 --- (Natives are seeded by precedence, never copied onto

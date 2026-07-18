@@ -18,7 +18,7 @@ global is an ordinary nil call. See [Migration from the legacy globals](#migrati
 
 `compy.input` is a table on your project's `compy` namespace. It holds **methods** (call them —
 assigning over a method name raises loudly) and **callback slots** (assign to them — that is how
-you wire the tier-3 callbacks such as `after_submit`). The input widget itself is a single shared
+you wire callbacks such as `after_submit`). The input widget itself is a single shared
 overlay: there is one active input session at a time, and your project drives it through this
 table. **There is no per-frame polling** — submitted text is delivered to your callbacks.
 

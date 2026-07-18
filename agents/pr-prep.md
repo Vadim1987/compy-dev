@@ -90,6 +90,29 @@ more elaborate?" This frame is the owner's and only the owner revises it.
   sparingly, prefer consulting in the main session over spawning, and verify its factual claims
   in code before acting (it has earned its cost here, and it has also been wrong on facts).
 
+### Standing sub-agent hygiene (owner directive, 2026-07-18) — applies to every spawn
+
+These three rules are non-optional and must be carried into **every** sub-agent prompt (a spawned
+agent does not inherit this repo's CLAUDE.md or your context — state them explicitly each time):
+
+- **(a) MCP-LSP is available — tell the agent.** The `lua-lsp` MCP server (defs / refs /
+  diagnostics / rename over a real AST of the `/repo` workspace) is the correctness tool for Lua:
+  grep to find candidates, then LSP to resolve a symbol, prove "who calls this", and check an edit
+  type-checks. Every agent that touches or inspects `.lua` must be told it exists and when to reach
+  for it (and to `sleep 1` after a `.lua` edit before querying refs/diagnostics — the server
+  re-indexes). This applies to the parent (you) too.
+- **(b) Delegate down by default.** If a unit of work *can* be done by a cheaper model, it should
+  be — either spawn a **Sonnet** worker (explicit `model`, always) or, when you are the expensive
+  model and the sub-task is mechanical, hand it off rather than doing it yourself. Reserve the
+  parent/oracle tier for judgment: ruling-sheet drafting, design-intent calls, verdicts. Mechanical
+  lookups, sweeps, renames, fixture surgery, fact-verification against code → Sonnet.
+- **(c) Materialize prompts *and* results on disk, never only in chat.** Every sub-agent's
+  prompt and its returned output are recorded in the workspace (session directory for per-task
+  work; `implementation/reviews/` for cross-session judgment) — an agent's final message is lost
+  when the context rolls, so the durable artifact is the file, and the chat digest is secondary.
+  Instruct each worker to write its deliverable to a named path; capture oracle/consult outputs
+  (e.g. Fable) verbatim on disk as well.
+
 ## Hard guardrails
 
 1. **Do not re-run the sweep or "re-verify" the feature.** The suite baseline is the only
@@ -134,4 +157,4 @@ at boot (ritual step 4) and move on.
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session09/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session10/prompt.md`

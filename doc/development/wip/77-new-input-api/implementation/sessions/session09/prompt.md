@@ -55,3 +55,5 @@ sheet (folding in the 9 owner rulings + C1/C2) → focused execution.
 - Subagent self-reports of their own model are unreliable (they echo the session's environment
   text); judge by burn rate, and report a harness bug if an explicit `model: sonnet` override
   ever burns Fable-like.
+
+## WRAPPED 2026-07-18 → handover: `../session10/prompt.md`

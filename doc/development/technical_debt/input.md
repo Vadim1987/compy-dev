@@ -451,9 +451,9 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** If the installer set grows or is next restructured — drive it
   from a `{ event → installer }` table.
 
-### `_tier3` re-resolves the callback precedence on every event
+### `_generic_callback` re-resolves the callback precedence on every event
 
-- **Where:** `src/controller/projectInputController.lua`, `_tier3` — computes
+- **Where:** `src/controller/projectInputController.lua`, `_generic_callback` — computes
   `compy_input[chan] or natives[event]` per dispatched event, then branches
   on whether a callback exists.
 - **State:** The precedence (explicit `on_*` wins, else captured native, else

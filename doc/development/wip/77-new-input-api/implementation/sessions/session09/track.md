@@ -127,3 +127,44 @@ paths :971/1060/1075), D5 (DONE + corrected census). Sheet is ready for the owne
 **Open / next:** (1) present the hardened sheet to the owner for the Layer-2 ruling sitting;
 (2) on rulings → Layer-3 execution in documented order (fixtures first, slices last). Uncommitted
 tree change from the rename (3 files) — commits are the owner's on this side.
+
+## CLOSE-OUT 2026-07-18 (session09 wrapped)
+
+Owner directive on wrap: **do NOT batch-rubber-stamp the ruling sheet.** Batch approval is how the
+invented concepts/jargon (`native`/`overlay`/`tier3`-as-identifier) got smuggled into the ratified
+corpus. Successor is **Fable**, mandate = **assisted one-by-one walkthrough** of the ruling sheet,
+discussion-ready per row, owner revises each decision explicitly before it's recorded. Successor
+prompt written: `../session10/prompt.md` (walkthrough method spelled out; translate-don't-dump the
+sheet; record each ruling immediately on disk; verify oracle claims in code).
+
+**State of every open item at wrap:**
+- **Pass-2 ruling sheet** (`../reviews/pass2-consolidated-ruling-sheet.md`): drafted + hardened,
+  code-verified, READY. Status = awaiting the owner sitting (Layer 2). This is session10's input.
+- **tier3 rename (D5):** DONE, suite 815/0/0/4. Uncommitted (3 files) — owner to commit.
+- **Fable sequencing consult:** materialized (`fable-sequencing-consultation.md`); 4-layer
+  restructure adopted by owner.
+- **Standing sub-agent rules (a/b/c):** encoded in `agents/pr-prep.md`.
+- **Two oracle-claim corrections** (tier3 census 21→6; input_api.md jargon 1→≥3) captured in the
+  sheet + factcheck report.
+- **Everything else** (S-items, R1–R9, C1–C6, A-doc/B-doc, D1–D8) = pending the sitting.
+
+**Commits this session (by the OWNER, out-of-band):** HEAD advanced `f819415` → **`b14ca06`
+"pass2: in progress"** (author Hleb Rubanau, 2026-07-18 19:55) — the owner snapshotted the
+ruling-sheet trio mid-session: `pass2-consolidated-ruling-sheet.md` (hardened version),
+`fable-sequencing-consultation.md`, `factcheck-fable-claims.md`, and a `track.md` snapshot. I made
+NO commits (standing rule: commits are the owner's here). This confirms the owner is capturing
+their own side — do not sweep it.
+
+**Still uncommitted at wrap (the owner may want to capture these into the wrap commit):**
+- the tier3 rename — `src/controller/projectInputController.lua`, `doc/input_api.md`,
+  `doc/development/technical_debt/input.md`;
+- `agents/pr-prep.md` — the standing sub-agent-hygiene rules + the repointed CURRENT PROMPT;
+- `session09/track.md` (this close-out, post-dating the owner's snapshot) + `session09/prompt.md`
+  (the WRAPPED line);
+- `session10/prompt.md` — **untracked** (the successor handover). Reads fine from disk regardless.
+- Pre-existing anomalies (`docker/compose.yml`, `claude.sh`, scratch, nested example repos) are
+  NOT this session's — leave for the owner.
+
+**Suite at wrap:** 815/0/0/4.
+
+WRAPPED → handover: `../session10/prompt.md`.
