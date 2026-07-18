@@ -112,6 +112,16 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
   when the context rolls, so the durable artifact is the file, and the chat digest is secondary.
   Instruct each worker to write its deliverable to a named path; capture oracle/consult outputs
   (e.g. Fable) verbatim on disk as well.
+- **(d) Sequence sub-agents; do NOT parallelize via worktree isolation (owner directive,
+  2026-07-18).** When two units touch the same files, run them **one after another in the shared
+  `/repo` tree** (order by dependency), not concurrently in isolated worktrees. Parallel worktrees
+  have proven to cost more than the speed they buy: they land **nested under `/repo`**, so the
+  `lua-lsp` workspace indexes duplicate copies of the whole source tree (duplicate defs/refs —
+  degraded LSP correctness for workers *and* parent), and a fresh worktree cwd lacks the project's
+  rock/`busted` environment, prompting workers to bootstrap their own `luarocks` ecosystem. **Keep
+  the toolchain footprint minimal** — no per-agent environment setup; clarity and stability
+  outrank speed. Serial-in-shared-tree also means the parent reconciles nothing: each unit lands,
+  suite is confirmed green, it is committed, then the next unit starts from that clean base.
 
 ## Hard guardrails
 
