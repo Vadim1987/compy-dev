@@ -46,7 +46,8 @@ function check(n)
   end
 end
 
--- Continuous-session idiom ({badspecref: M8-01}):
+-- Continuous-session idiom ({badspecref: M8-01} —
+-- implementation/outcomes/M8-01.md, example migrations):
 -- consume the guess in
 -- on_text_entered, re-show (bare) from after_submit. eval
 -- reuses the legacy validated_input->ValidatedTextEval path
