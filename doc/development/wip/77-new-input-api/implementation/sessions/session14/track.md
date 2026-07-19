@@ -56,3 +56,20 @@ Verdict: DI1 stands. No corrections needed. Awaiting owner approval before DI2.
 - Survivors: §9-3 sink silent-disable → technical_debt/input.md; §9-2 'starting' one-liner → internals "Dispatch chain".
 - DI3 next: Sonnet, mechanical — merge 2 facts, retarget ~30 doc-A refs per index, refresh tests.md (808→815, pendings→118/172/185/246). Non-doc-A refs untouched.
 - Owner feedback: keep track raw/telegraphic (agents/sessions.md §3) — adopted here.
+
+## DI3 done — 2026-07-19
+- Spawned Sonnet (explicit model) vs DI3-prompt.md; serial shared tree; not-committed (I review+commit).
+- Result reviewed: doc A untouched, design/ frozen, non-doc-A refs preserved, suite 815/0/0/4 (pendings 124/186/199/265).
+- 2 Sonnet judgment calls, both accepted: dropped "doc A" definition comments (no sibling cites shorthand); dropped redundant design.md §4 ref (Decision 11 adjacent already states fact).
+- pending line numbers came out 124/186/199/265 (not the prompt's stale 118/172/185/246 — Sonnet derived from live run, correct).
+- Committed unit-sized: 62022fe (merges) / a89fbf4 (retargets) / a54558c (tests.md) / 7b7f2f2 (validation bookkeeping).
+- DI track (DI1 reval + DI2 + DI3) COMPLETE. Next per plan: TF (test fidelity, other half of DI/TF gate) then Phase B convergence. Not this session's mandate — await owner.
+
+## Ref stabilization (Phase-A tactical amendment) — 2026-07-19
+- Owner review of DI3 → 2 asks: (1) paths ambiguous (bare `decisions/input.md` unresolvable from tests); (2) resolve/annotate remaining interim refs before TF. Owner: no TF yet, stabilize comment refs first.
+- Owner rulings: root-relative ALL refs; interim refs KEPT as evidence (plan-consistent) but ANNOTATED (not resolved); {jargon} untouched (TF task); marker convention = badspecref is owner's ad-hoc bad-ref flag.
+- Amendment recorded: `validation/reviews/ref-stabilization-2026-07-19.md` (tactical Phase-A, not strategic).
+- RS1 (Sonnet): normalized 210 bare corpus refs → `doc/development/...` across 11 files. Reviewed clean (comment-only, LSP identical, suite green). Committed 47d92f0.
+- RS2 (Sonnet): annotated ~20 opaque interim refs w/ meaning gloss + source-quote decode-map; kept every badspecref wrapper (25↔25 preserved); {jargon} untouched. Spot-checked A5/E30/C23/ratified-model/M8-01 glosses vs source — accurate. Suite 815/0/0/4.
+- **2 items for owner:** (a) RS2 also edited 4 TRACKED example files (tixy/guess/valid/repl M8-01 refs) — OUTSIDE my inventory (I scoped to input suite); HELD aside pending scope ruling. (b) FLAGGED refs (empty badspecref = owner meta-comment; #77/'this feature' self-refs; 'm7 design session' unpinnable) — left for owner.
+- Committing: core 5 files + bookkeeping. Examples held.
