@@ -410,7 +410,7 @@ end
 
 --- REVIEW: when widget is re-armed, or cancelled or closed-on-submit, history is dropped? what about when its reconfigured? when one project launches input, than is torn down and new project launches input
 --- @return boolean
--- internals/user_input.md, "Submit and cancel — the
+-- doc/development/internals/user_input.md, "Submit and cancel — the
 -- framework tier-1 chains": oneshot is gone, so nothing
 -- distinguishes a single-use solicitation from any other
 -- model anymore. Only the (never-history-reading) project
@@ -843,7 +843,7 @@ end
 --- Cursor-to-error-position on an evaluator reject. Split out
 --- of handle() to keep it under the function-body line limit
 --- once the push('userinput') block (below it) is gone
---- (internals/user_input.md, "Submit and cancel — the
+--- (doc/development/internals/user_input.md, "Submit and cancel — the
 --- framework tier-1 chains").
 --- @param result Error[]
 function UserInputModel:_report_parse_error(result)
@@ -872,7 +872,7 @@ end
 --- @param eval boolean
 --- @return boolean
 --- @return string[]|Error[]
--- internals/user_input.md, "Submit and cancel — the
+-- doc/development/internals/user_input.md, "Submit and cancel — the
 -- framework tier-1 chains": the old push('userinput')
 -- notification (fired here under `if self.oneshot`) is gone
 -- — on_text_entered (userInputController.lua submit chain)

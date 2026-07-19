@@ -131,7 +131,7 @@ local CC = build_console(cfg)
 --- REVIEW/DOC: 'slots', 'gate last-resort route' sound exotic and cannot be understood without context -- dependence on 'when no widget is up' looks like abstraction leak; if its just the way framework sets the controllers when launched -- tell exactly that
 -- Native slots: the gate's last-resort route when no widget
 -- is up, and the route half of pointer delivery
--- (internals/user_input.md, "Direct mouse events").
+-- (doc/development/internals/user_input.md, "Direct mouse events").
 Controller.set_love_keypressed(CC)
 Controller.set_love_keyreleased(CC)
 Controller.set_love_textinput(CC)
@@ -162,7 +162,7 @@ end
 -- REVIEW: maybe we should instead use common method 'project_compy_namespace' (which encapsulates CC:get_project_env().compy), and let calling code work from there? (explicirly setting and getting .input, or other attributes)
 -- Register a project click handler
 -- (compy.singleclick/doubleclick), the target the framework
--- click path invokes (internals/user_input.md,
+-- click path invokes (doc/development/internals/user_input.md,
 -- "Framework-level click handling").
 function F.set_compy_handler(name, fn)
   CC:get_project_env().compy[name] = fn
@@ -216,7 +216,7 @@ end
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
 -- singleton disables selection, making pointer delivery a no-op —
--- internals/user_input.md, "Input widget mouse"). Witnesses
+-- doc/development/internals/user_input.md, "Input widget mouse"). Witnesses
 -- pointer delivery to the widget half.
 function F.show_selectable_widget(lines)
   local m = UserInputModel(cfg, InputEvalText)

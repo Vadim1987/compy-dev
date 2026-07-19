@@ -259,7 +259,7 @@ function ConsoleController:run_project(name)
       else
         if not self.main_ctrl.user_is_blocking() then
           -- An input-only / pointer-only project stays live
-          -- (technical_debt/input.md, "Input-only /
+          -- (doc/development/technical_debt/input.md, "Input-only /
           -- pointer-only projects stay live in
           -- `project_open` (RESOLVED, ruling a)"): keep the
           -- project route so submit/cancel
@@ -367,12 +367,12 @@ end
 -- not-implemented no-ops is unsettled — to be resolved in
 -- the {badspecref: m7 design session}.
 -- The project-assignable tier-3 generic callbacks
--- (decisions/input.md, Decision 7), the four widget
--- outputs (decisions/input.md, Decision 5), and the four
--- submit/cancel hooks (decisions/input.md, Decision 6).
+-- (doc/development/decisions/input.md, Decision 7), the four widget
+-- outputs (doc/development/decisions/input.md, Decision 5), and the four
+-- submit/cancel hooks (doc/development/decisions/input.md, Decision 6).
 -- Everything else on
 -- compy.input is callable API and raises loudly on
--- assignment (decisions/input.md, Decision 7). The hooks
+-- assignment (doc/development/decisions/input.md, Decision 7). The hooks
 -- are read directly off this surface by the framework tier-1
 -- return/escape entries (projectInputController.lua) —
 -- never mirrored onto the widget, unlike the widget-output
@@ -394,7 +394,7 @@ local INPUT_CALLBACKS = {
 --- Assemble the compy.input surface over its backing `state`
 --- (the three normalising handler sub-tables + the tier-3
 --- callback slots) and the callable `methods`. The
---- decisions/input.md, Decision 7 boundary
+--- doc/development/decisions/input.md, Decision 7 boundary
 --- lives in the metatable: reads resolve handlers / callbacks /
 --- methods; writes are refused unless the key is an allowed
 --- tier-3 callback (same decision — loud error, never
@@ -421,12 +421,12 @@ local function build_input_surface(state, methods)
   })
 end
 
--- The four widget-output entries (decisions/input.md,
+-- The four widget-output entries (doc/development/decisions/input.md,
 -- Decision 5):
 -- show()/configure() config key and direct field-write
 -- share one underlying `state` entry, sticky across shows
 -- until overwritten (doc/input_api.md, "Sticky callbacks";
--- the internals/user_input.md, "configure(config)" live
+-- the doc/development/internals/user_input.md, "configure(config)" live
 -- reconfigure surface below leaves this unchanged).
 local OUTPUT_KEYS = {
   'on_text_entered',
@@ -454,7 +454,7 @@ local function merge_output_keys(state, cfg)
 end
 
 --- Consume the hidden-configure pending prompt/text/cursor
---- (internals/user_input.md, "configure(config)"): spent
+--- (doc/development/internals/user_input.md, "configure(config)"): spent
 --- on this show() regardless of whether it
 --- ends up used (an explicit cfg value at this same show() call
 --- wins) — a later bare show() must not keep re-injecting a
@@ -470,7 +470,7 @@ end
 
 --- Stash configure()'s provided prompt/text/cursor into the
 --- pending store for consumption by the next show()
---- (internals/user_input.md, "configure(config)");
+--- (doc/development/internals/user_input.md, "configure(config)");
 --- output-callback fields go through the same sticky `state`
 --- slots show() already reads — persisted, never applied
 --- live (there is no active session to apply them to).
@@ -484,9 +484,9 @@ local function stash_hidden_configure(state, cfg)
 end
 
 -- Builds the compy.input surface: the four-tier dispatch
--- surface (decisions/input.md, Decision 2) a project
+-- surface (doc/development/decisions/input.md, Decision 2) a project
 -- registers against. `handlers.<event>` are the
--- decisions/input.md, Decision 8 per-event combo
+-- doc/development/decisions/input.md, Decision 8 per-event combo
 -- sub-tables (normalising); the
 -- on_* slots are the tier-3 generic callbacks. show/hide drive
 -- the singleton overlay (resolved from love.state, never held by
@@ -512,7 +512,7 @@ local get_compy_input = function()
       local ui = love.state.user_input_controller
       if ui then ui:hide() end
     end,
-    -- internals/user_input.md, "Cursor manipulation and
+    -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": 1-based (line, col); nil when
     -- hidden — a plain read of "nothing to report", not a
     -- refused mutation, so unlike set_cursor/set_text below
@@ -522,7 +522,7 @@ local get_compy_input = function()
       local ui = love.state.user_input_controller
       return ui:get_cursor_pos()
     end,
-    -- internals/user_input.md, "Cursor manipulation and
+    -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": clamped move; no-op + warn while hidden.
     set_cursor = function(line, col)
       if not love.state.user_input then
@@ -544,7 +544,7 @@ local get_compy_input = function()
       local ui = love.state.user_input_controller
       ui:set_text(text, keep_cursor)
     end,
-    -- internals/user_input.md, "configure(config)": live
+    -- doc/development/internals/user_input.md, "configure(config)": live
     -- update on an active session (only
     -- the Contract's live-updatable set — prompt/highlighter/
     -- validator/widget outputs; text/cursor inert there); safe
@@ -560,7 +560,7 @@ local get_compy_input = function()
       merge_output_keys(state, next_cfg)
       love.state.user_input_controller:configure(next_cfg)
     end,
-    -- internals/user_input.md, "clear()": empty content +
+    -- doc/development/internals/user_input.md, "clear()": empty content +
     -- cursor to start, no callback;
     -- no-op + warn while hidden. Refreshes the view directly
     -- (no re-show) — reuses the controller's existing clear()

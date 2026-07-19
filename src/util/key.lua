@@ -22,7 +22,7 @@ local mod_triples = {
 }
 
 -- Generic modifier names in combo-string precedence order
--- (decisions/input.md, Decision 8: ctrl < alt < shift <
+-- (doc/development/decisions/input.md, Decision 8: ctrl < alt < shift <
 -- gui), and the l/r fold that maps held key-names onto
 -- them ('lctrl' -> 'ctrl').
 local mod_rank = {
@@ -50,7 +50,7 @@ local function split_combo(combo)
   return mods, trigger
 end
 
---- Canonicalise a combo string (decisions/input.md,
+--- Canonicalise a combo string (doc/development/decisions/input.md,
 --- Decision 8): lower-cased, l/r folded, modifiers in
 --- fixed precedence, trigger last, '+'-joined. 'Ctrl+S' ->
 --- 'ctrl+s'; bare 'S' -> 's'. Matches what combo_string()
@@ -68,7 +68,7 @@ local function normalize_combo(combo)
 end
 
 --- REVIEW: can we think of building set of validators instead? it may be interesting because we'd only have to check for combos that are defined, not convert every typed combo into string on every keystroke. So that our table would *speak* the language of serialized combos but *act* as fast 'decision-tree' (and could return noop if nothing found, as a bonus -- saving the nil check upstream and allowing unconditional execution of returned handler)
---- A project handlers sub-table (decisions/input.md,
+--- A project handlers sub-table (doc/development/decisions/input.md,
 --- Decision 8): assigned combo keys normalise on
 --- registration, so handlers.keypressed['Ctrl+S'] is
 --- stored (and dispatch-matched) as 'ctrl+s'.

@@ -5,19 +5,19 @@ require("util.key")
 -- The project route: occupant of the keyboard/text slots while
 -- a project run owns the screen — a sibling to ConsoleController
 -- / EditorController. Inside the route every keyboard/text event
--- runs ONE four-tier chain (decisions/input.md, Decision 2),
+-- runs ONE four-tier chain (doc/development/decisions/input.md, Decision 2),
 -- the same shape on all three channels:
 --
 --   1. framework_handlers.<event>[combo]  structural keys
---      (decisions/input.md, Decision 6:
+--      (doc/development/decisions/input.md, Decision 6:
 --       keypressed['return']/['escape'], engaged
 --       only while the widget is shown; non-overridable)
 --   2. compy.input.handlers.<event>[combo]  project combo
---      handlers (decisions/input.md, Decision 8:
+--      handlers (doc/development/decisions/input.md, Decision 8:
 --      per-event sub-tables, normalising)
 --   3. per-event generic callback           on_key_pressed /
 --      on_text_input / on_key_released — precedence
---      (decisions/input.md, Decision 10): an explicit
+--      (doc/development/decisions/input.md, Decision 10): an explicit
 --      on_* wins over the project's own love.* handler
 --      captured at activate(), which wins over noop+log
 --   4. sink                                  the singleton
@@ -26,8 +26,8 @@ require("util.key")
 --
 -- Truthy return at any tier consumes the event (stop, sink
 -- included); falsey falls through. Consuming never removes a
--- tier (decisions/input.md, Decision 2); the sink's return
--- carries no chain meaning (decisions/input.md, Decision 5).
+-- tier (doc/development/decisions/input.md, Decision 2); the sink's return
+-- carries no chain meaning (doc/development/decisions/input.md, Decision 5).
 -- Routing contract: doc/development/internals/user_input.md
 
 -- Event type -> its tier-3 generic-callback field on compy.input.
@@ -46,11 +46,11 @@ end
 
 --- REVIEW: why if-dispatching instead of returning noop+log as default index value from hooks table? (do not fix; either rationalize or mark as refactoring opportunity)
 --- Run a route-owned before_/after_ hook
---- (decisions/input.md, Decision 6): a
+--- (doc/development/decisions/input.md, Decision 6): a
 --- project-set function fires; an absent one debug-logs — the
 --- same noop+log default shape as tier 3 (log_branch above).
 --- Hooks live on compy_input (the route), never on the
---- widget (decisions/input.md, Decision 6: "the widget
+--- widget (doc/development/decisions/input.md, Decision 6: "the widget
 --- never owns submit").
 --- @param ci table  compy_input surface
 --- @param name string  hook field name
@@ -64,7 +64,7 @@ local function run_hook(ci, name, ...)
 end
 
 --- @return UserInputController? ui  the singleton, only while
---- shown (internals/user_input.md, "Submit and cancel —
+--- shown (doc/development/internals/user_input.md, "Submit and cancel —
 --- the framework tier-1 chains": hidden -> no framework
 --- entry engages, so the combo falls through to lower
 --- tiers like any other key).
@@ -73,7 +73,7 @@ local function shown_widget()
   if ui and ui:is_shown() then return ui end
 end
 
---- Tier-1 submit entry (internals/user_input.md, "Submit
+--- Tier-1 submit entry (doc/development/internals/user_input.md, "Submit
 --- and cancel — the framework tier-1 chains"): before_submit
 --- always runs; after_submit only on accept (ui:submit()
 --- returns the delivered text, nil on reject/empty).
@@ -91,7 +91,7 @@ local function framework_submit(self)
   end
 end
 
---- Tier-1 cancel entry (internals/user_input.md, "Submit
+--- Tier-1 cancel entry (doc/development/internals/user_input.md, "Submit
 --- and cancel — the framework tier-1 chains"): before_/
 --- after_cancel bracket ui:cancel() unconditionally — cancel
 --- always dismisses, unlike submit there is no reject path.
@@ -109,7 +109,7 @@ local function framework_cancel(self)
   end
 end
 
--- Tier-1 return/escape (internals/user_input.md, "Submit
+-- Tier-1 return/escape (doc/development/internals/user_input.md, "Submit
 -- and cancel — the framework tier-1 chains"): populated
 -- once, at
 -- construction, not per-activate() — they are structural/
@@ -143,17 +143,17 @@ end
 ProjectInputController = class.create(new)
 
 --- Tier 3 — the per-event generic callback, resolved by
---- precedence (decisions/input.md, Decision 10): an
+--- precedence (doc/development/decisions/input.md, Decision 10): an
 --- explicit compy.input.on_* wins; else the project's own
 --- love.* handler captured at activate; else a noop that
---- only debug-logs and never consumes (decisions/input.md,
+--- only debug-logs and never consumes (doc/development/decisions/input.md,
 --- Decision 10). A truthy
 --- return consumes; falsey falls through to the sink.
 --- @param event string
 --- @return boolean? consumed
 --- TODO(debt): tier-3 precedence is fixed at activate but
 --- re-resolved per event; a default noop-that-logs would also
---- drop the `if cb` guard. See technical_debt/input.md
+--- drop the `if cb` guard. See doc/development/technical_debt/input.md
 --- "`_generic_callback` re-resolves the callback precedence on every event".
 function ProjectInputController:_generic_callback(event, ...)
   local ci = self.compy_input
@@ -168,14 +168,14 @@ end
 --- only on full fall-through.)
 --- TODO(debt): reaches the widget via the `love.state` global +
 --- nil-guards it; inject `self.input` and assert the singleton.
---- See technical_debt/input.md "Widget sink reaches the
+--- See doc/development/technical_debt/input.md "Widget sink reaches the
 --- singleton via `love.state` global".
 --- Tier 4 — the terminal widget sink. Always invoked (never
 --- gated from outside): the hidden-check is INTERNAL to the
 --- sink, which no-ops while the overlay is hidden
---- (decisions/input.md, Decision 2).
+--- (doc/development/decisions/input.md, Decision 2).
 --- The sink's return is discarded — it carries no chain
---- meaning (decisions/input.md, Decision 5); the chain
+--- meaning (doc/development/decisions/input.md, Decision 5); the chain
 --- ends here regardless.
 --- @param event string
 function ProjectInputController:_sink(event, ...)
@@ -209,21 +209,21 @@ end
 --- Take the keyboard route for a project run. `natives` holds
 --- the project's own error-wrapped love.* keyboard handlers
 --- (from the caller); they seed tier 3 as default participants
---- (decisions/input.md, Decision 10: pure wrap) — read
+--- (doc/development/decisions/input.md, Decision 10: pure wrap) — read
 --- once here, never re-consulted, and
 --- only used when the project sets no on_* (precedence in
 --- _generic_callback). No handler is copied onto compy.input.
 --- @param natives table?
 --- @param compy_input table
 --- (Natives are seeded by precedence, never copied onto
---- compy.input — see decisions/input.md #10 "legacy natives
+--- compy.input — see doc/development/decisions/input.md #10 "legacy natives
 --- pure-wrapped as tier-3".)
 function ProjectInputController:activate(natives, compy_input)
   self.natives = natives or {}
   self.compy_input = compy_input
 end
 
---- Forget the project's handlers (decisions/input.md,
+--- Forget the project's handlers (doc/development/decisions/input.md,
 --- Decision 11).
 --- Nulling compy_input/natives does not itself disconnect
 --- anything: the caller (controller.lua
@@ -238,7 +238,7 @@ function ProjectInputController:deactivate()
   self.natives = {}
 end
 
---- Keypressed (decisions/input.md, Decision 11). The
+--- Keypressed (doc/development/decisions/input.md, Decision 11). The
 --- route is connected/disconnected at the
 --- 'running' <-> 'project_open' boundary by reinstalling
 --- the love.* callbacks (controller.lua), not per-event
@@ -247,7 +247,7 @@ end
 --- @param k string
 --- @param sc string?
 --- @param isr boolean?
---- DEFERRED (technical_debt/input.md, "Combo-tier
+--- DEFERRED (doc/development/technical_debt/input.md, "Combo-tier
 --- key-repeat semantics are shipped unsettled"): whether
 --- the combo tiers (1-2) fire on
 --- key-repeat is unruled; isrepeat is threaded to tier 3 only,

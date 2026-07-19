@@ -76,7 +76,7 @@ end
 
 --- Emit a textinput(t) event through the installed handler.
 --- Independently orderable relative to keypressed
---- (internals/user_input.md, "Data flow": no ordering
+--- (doc/development/internals/user_input.md, "Data flow": no ordering
 --- guarantee between keypressed and textinput on real
 --- devices).
 --- @param t string

@@ -4,10 +4,10 @@
 -- REVIEW/DOC: no comment should point to wip/77 -- only to canonical docs
 -- REVIEW/DOC: referencing items as 'paragraph X' is insufficient and unreadable -- should reference specific named sections so they are discoverable/greppable in their doc
 -- Every test below traces to a named section of the input
--- corpus (decisions/input.md, internals/user_input.md); the
+-- corpus (doc/development/decisions/input.md, doc/development/internals/user_input.md); the
 -- citation lives in a comment, never in the test description.
 --
--- The one routing invariant (decisions/input.md, Decision 1):
+-- The one routing invariant (doc/development/decisions/input.md, Decision 1):
 -- inter-route dispatch is EXCLUSIVE for every event type. Each
 -- event reaches exactly ONE route — the one fixed by the
 -- active screen mode — never zero, never two. Intra-route
@@ -15,8 +15,8 @@
 -- the route's private affair and is never asserted as a
 -- second delivery.
 --
--- Vocabulary (decisions/input.md, Decision 1;
--- internals/user_input.md, "Dispatch chain"): ROUTE = the
+-- Vocabulary (doc/development/decisions/input.md, Decision 1;
+-- doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the
 -- consumer(controller)
 -- an event is dispatched to; WIDGET = a route-managed
 -- input surface; SINK = the last consumer in the dispatch
@@ -29,7 +29,7 @@
 -- Never a method-name spy, never love.state internals as
 -- behaviour.
 --
--- Key events vs text events (internals/user_input.md, "Data
+-- Key events vs text events (doc/development/internals/user_input.md, "Data
 -- flow"): LÖVE fires
 -- keypressed for EVERY physical key and textinput only for
 -- OS-processed character-producing keys — pressing 'q'
@@ -79,11 +79,11 @@ describe('input contracts #input', function()
   -- Bucket A — PRESERVE (stable-now contracts; green now)
   --
   -- Keyboard, text and pointer are EXCLUSIVE on the
-  -- active route (decisions/input.md, Decision 1 and Decision 2;
-  -- internals/user_input.md, "Dispatch chain"): the mode-fixed route
+  -- active route (doc/development/decisions/input.md, Decision 1 and Decision 2;
+  -- doc/development/internals/user_input.md, "Dispatch chain"): the mode-fixed route
   -- receives, the others do not. One subgroup per mode
   -- below, so a missing mode x channel cell is visible on
-  -- sight (the routing invariant, decisions/input.md
+  -- sight (the routing invariant, doc/development/decisions/input.md
   -- Decision 1, applied per mode x channel). Every
   -- test in this group fires its events through the
   -- installed love.handlers entries — the same dispatch
@@ -96,8 +96,8 @@ describe('input contracts #input', function()
     
     -- Setup seeds text via the model; the assertion path
     -- (backspace) travels love.handlers -> {jargon:gate} -> console,
-    -- so routing itself is what is witnessed (decisions/input.md,
-    -- Decision 1 and Decision 2; internals/user_input.md,
+    -- so routing itself is what is witnessed (doc/development/decisions/input.md,
+    -- Decision 1 and Decision 2; doc/development/internals/user_input.md,
     -- "Dispatch chain").
     it('routes keys to the console', function()
       -- REVIEW/nitpick: we can have function kind of F.console_with('ab') to distinguish between test context setup (tests-specific method, explicitly aliased in fixture) and actions under test (called as in real code)
@@ -107,15 +107,15 @@ describe('input contracts #input', function()
       assert.is_true(F.cc.editor.input:is_empty())
     end)
 
-    -- (decisions/input.md, Decision 1 and Decision 2;
-    -- internals/user_input.md, "Data flow").
+    -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
+    -- doc/development/internals/user_input.md, "Data flow").
     it('routes text to the console', function()
       F.session.type('Z')
       assert.same({ 'Z' }, F.console:get_text())
       assert.is_true(F.cc.editor.input:is_empty())
     end)
 
-    -- SURFACED GAP (internals/user_input.md, "Key
+    -- SURFACED GAP (doc/development/internals/user_input.md, "Key
     -- release"): console delivery of a
     -- release has no observable mutation today (a release
     -- carries no text), so only the project route is
@@ -127,7 +127,7 @@ describe('input contracts #input', function()
     -- observable selection on the console route witnesses
     -- active-route pointer delivery. The precondition
     -- assert pins causality: no selection existed before
-    -- the pointer events. (internals/user_input.md,
+    -- the pointer events. (doc/development/internals/user_input.md,
     -- "Input widget mouse").
     it('routes the pointer to the console', function()
       F.console:set_text({ 'aa', 'bb', 'cc' })
@@ -150,8 +150,8 @@ describe('input contracts #input', function()
     -- The key channel witnessed on its own: text arrives
     -- via textinput, then a KEY event (backspace) mutates
     -- the editor buffer — travelling the same gate.
-    -- (decisions/input.md, Decision 1 and Decision 2;
-    -- internals/user_input.md, "Dispatch chain";
+    -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
+    -- doc/development/internals/user_input.md, "Dispatch chain";
     -- {badspecref: reviews/M4-0-04.md finding 1})
     it('routes keys to the editor', function()
       F.session.type('q')
@@ -160,8 +160,8 @@ describe('input contracts #input', function()
       assert.is_true(F.console:is_empty())
     end)
 
-    -- (decisions/input.md, Decision 1 and Decision 2;
-    -- internals/user_input.md, "Data flow").
+    -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
+    -- doc/development/internals/user_input.md, "Data flow").
     it('routes text to the editor', function()
       F.session.type('q')
       assert.same({ 'q' }, F.cc.editor.input:get_text())
@@ -170,14 +170,14 @@ describe('input contracts #input', function()
 
     -- keyreleased under editor: the console/editor fork is
     -- CC-internal and out of {badspecref: #77's blast radius}
-    -- (internals/user_input.md, "Key release" for the
+    -- (doc/development/internals/user_input.md, "Key release" for the
     -- release-channel gap; "Dispatch chain" for the future
     -- console/editor migration note) — foundation for the future
     -- console/editor migration; no suite row is owed under
     -- {badspecref: this feature}.
     -- REVIEW: why not add the test then?
 
-    -- SURFACED GAP (internals/user_input.md, "Input widget
+    -- SURFACED GAP (doc/development/internals/user_input.md, "Input widget
     -- mouse"): the production editor
     -- widget disables selection, so pointer delivery to
     -- the editor route has no observable outcome without
@@ -187,7 +187,7 @@ describe('input contracts #input', function()
   end)
 
   -- REVIEW: and why not test it, is it complex? Spec is not called 'feature_77_spec.lua' so not being included in blast radius is a weak excuse for incompleteness (if test could be filled easily)
-  -- Search (internals/user_input.md, "Search — a third
+  -- Search (doc/development/internals/user_input.md, "Search — a third
   -- widget instance, live only in editor/search mode"): a
   -- {jargon: third full MVC input triad
   -- under the editor}, absent from the design corpus —
@@ -203,8 +203,8 @@ describe('input contracts #input', function()
 
     -- The project's {jargon: own love.* callback}{better: 'own (sandboxed) love.* callback' or simply "project's callback"?} is the {jargon: public seam}
     -- witnessing delivery to the project route.
-    -- (decisions/input.md, Decision 1 and Decision 2;
-    -- internals/user_input.md, "Dispatch chain").
+    -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
+    -- doc/development/internals/user_input.md, "Dispatch chain").
     it('routes keys to the project', function()
       local got = { }
       F.running_project('keypressed', function(k)
@@ -215,8 +215,8 @@ describe('input contracts #input', function()
       assert.is_true(F.console:is_empty())
     end)
 
-    -- (decisions/input.md, Decision 1 and Decision 2;
-    -- internals/user_input.md, "Data flow").
+    -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
+    -- doc/development/internals/user_input.md, "Data flow").
     it('routes text to the project', function()
       local got = { }
       F.running_project('textinput', function(t)
@@ -229,7 +229,7 @@ describe('input contracts #input', function()
 
     -- A release carries no text mutation, so exclusivity
     -- is observed at the project's release callback: the
-    -- active route receives exactly once. (internals/user_input.md,
+    -- active route receives exactly once. (doc/development/internals/user_input.md,
     -- "Key release").
     it('routes the key release to the project', function()
       local got = 0
@@ -244,7 +244,7 @@ describe('input contracts #input', function()
     -- SAME text and coordinates that produce a selection
     -- in the console-mode test above; with the project
     -- route active no selection may appear — the pointer
-    -- went to exactly one route. (internals/user_input.md,
+    -- went to exactly one route. (doc/development/internals/user_input.md,
     -- "Direct mouse events").
     it('routes the pointer to the project', function()
       local got = 0
@@ -257,7 +257,7 @@ describe('input contracts #input', function()
       assert.is_false(F.console.model:has_selection())
     end)
 
-    -- SURFACED GAP (internals/user_input.md, "Touch"):
+    -- SURFACED GAP (doc/development/internals/user_input.md, "Touch"):
     -- touch has no gateway
     -- entry today and both the widget and route touch
     -- handlers are no-ops, so delivery is not black-box
@@ -266,7 +266,7 @@ describe('input contracts #input', function()
   end)
 
   -- Global shortcuts are non-consuming
-  -- (internals/user_input.md, "Dispatch chain": "None of
+  -- (doc/development/internals/user_input.md, "Dispatch chain": "None of
   -- these consume the key: it still reaches the active
   -- route afterward"): a
   -- framework shortcut fires its effect AND the key still
@@ -294,8 +294,8 @@ describe('input contracts #input', function()
       -- 'dev' that a developer runs it to work on it.
       -- 'play' narrows the shortcut set so a player cannot
       -- manage projects: restart/profile stay live,
-      -- quit/stop/quickswitch do not (decisions/input.md,
-      -- Decision 1; internals/user_input.md, "Dispatch
+      -- quit/stop/quickswitch do not (doc/development/decisions/input.md,
+      -- Decision 1; doc/development/internals/user_input.md, "Dispatch
       -- chain"). The shared fixture is built in dev mode, so
       -- this test wires a private play-mode stub controller
       -- and saves/restores the shared love.handlers around
@@ -325,7 +325,7 @@ describe('input contracts #input', function()
         end)
     end)
 
-  -- Framework click detection (internals/user_input.md,
+  -- Framework click detection (doc/development/internals/user_input.md,
   -- "Framework-level click handling"): a derived
   -- path over raw pointer delivery, asserted on outcomes
   -- against the project-defined handlers (default no-ops).
@@ -373,7 +373,7 @@ describe('input contracts #input', function()
   end)
 
   -- Project stop returns input to the console
-  -- (decisions/input.md, Decision 11): a project's
+  -- (doc/development/decisions/input.md, Decision 11): a project's
   -- {jargon: native handler} {jargon: is installed} while
   -- it runs; after stop it receives nothing and typing
   -- lands in the console again. Asserted end-to-end on
@@ -495,7 +495,7 @@ describe('input contracts #input', function()
 
   end)
 
-  -- Hidden widget does not consume (decisions/input.md,
+  -- Hidden widget does not consume (doc/development/decisions/input.md,
   -- Decision 2: "its hidden-check is internal"),
   -- {jargon: owner-minted PRESERVE}): an event arriving while the
   -- widget is hidden never mutates widget state — it
@@ -537,7 +537,7 @@ describe('input contracts #input', function()
   -- OPEN (owner call, carried from the review passes):
   -- this row tests editor-INTERNAL block navigation at
   -- the buffer limit, not a routing contract of the kind
-  -- decisions/input.md, Decision 1, asserts. It
+  -- doc/development/decisions/input.md, Decision 1, asserts. It
   -- drives EditorController directly (editor_session),
   -- below the gate. Kept because it guards the later
   -- is_at_limit line-scope rewrite from regressing
@@ -582,8 +582,8 @@ describe('input contracts #input', function()
   describe('provisional — expected to change, no mandate',
     function()
 
-      -- inspect (decisions/input.md, Decision 12), OWNER
-      -- RULING PENDING (see internals/user_input.md,
+      -- inspect (doc/development/decisions/input.md, Decision 12), OWNER
+      -- RULING PENDING (see doc/development/internals/user_input.md,
       -- "Dispatch chain"): under
       -- inspect the console REPL owns the input surface; a
       -- shown project widget is not honoured; input is not
@@ -600,7 +600,7 @@ describe('input contracts #input', function()
         assert.is_true(F.singleton:is_empty())
       end)
 
-      -- wheel (internals/user_input.md, "Direct mouse
+      -- wheel (doc/development/internals/user_input.md, "Direct mouse
       -- events"): {jargon: the gateway has no wheel
       -- entry, so the framework forwards nothing; only a
       -- project's own love.wheelmoved consumes it}. No
@@ -627,7 +627,7 @@ describe('input contracts #input', function()
   describe('mechanism / NFR guards — not behaviour',
     function()
 
-      -- Held-key set lifecycle (internals/user_input.md,
+      -- Held-key set lifecycle (doc/development/internals/user_input.md,
       -- "Key state: `Controller.keys_pressed` and
       -- `combo_string`", mechanism):
       -- a key is added on press and removed on release
@@ -668,7 +668,7 @@ describe('input contracts #input', function()
         end)
 
       -- Folding lctrl/rctrl to 'ctrl' is combo_string's
-      -- job (decisions/input.md, Decision 8, covered in
+      -- job (doc/development/decisions/input.md, Decision 8, covered in
       -- keys_pressed_spec),
       -- not the held set's.
       -- REVIEW: why not set 'ctrl' as pressed too? Much cheaper, no?
@@ -683,7 +683,7 @@ describe('input contracts #input', function()
       -- only the overlay singleton is wired; wiring the
       -- console/editor/search widgets to it is a future
       -- consideration, out of #77 blast radius (see
-      -- internals/user_input.md: "Key release", "Dispatch
+      -- doc/development/internals/user_input.md: "Key release", "Dispatch
       -- chain", "Search — a third widget instance, live only
       -- in editor/search mode", "Cursor manipulation and
       -- 'reset'" for the related surfaces), not asserted
@@ -699,7 +699,7 @@ describe('input contracts #input', function()
         end)
 
       -- No reallocation per input session
-      -- (decisions/input.md, Decision 3): the
+      -- (doc/development/decisions/input.md, Decision 3): the
       -- backing model is reused across activations.
       it('no widget model is reallocated', function()
         local m1 = F.singleton.model
@@ -737,7 +737,7 @@ describe('input contracts #input', function()
       -- C23}: no
       -- unconsumed public surface -- its only production-
       -- code reader was this row; controller.lua:998-999).
-      -- Retargeted to decisions/input.md, Decision 11's
+      -- Retargeted to doc/development/decisions/input.md, Decision 11's
       -- literal claim
       -- instead:
       -- after stop no project handler remains wired in ANY
@@ -756,7 +756,7 @@ describe('input contracts #input', function()
       end)
 
       -- on_text_entered is the SUBMIT output (widget
-      -- vocabulary, decisions/input.md, Decision 5): fired
+      -- vocabulary, doc/development/decisions/input.md, Decision 5): fired
       -- once at Enter with the
       -- assembled text — NOT
       -- the per-character chain callback (that is on_text_input,
@@ -771,7 +771,7 @@ describe('input contracts #input', function()
 
   -- ====================================================
   -- The {jargon: four-tier dispatch chain} ({badspecref:
-  -- 0.1.0-m5c}, decisions/input.md, Decision 2).
+  -- 0.1.0-m5c}, doc/development/decisions/input.md, Decision 2).
   -- All rows drive the REAL project route: F.activate_
   -- project() installs the ProjectInputController as the
   -- {jargon: slot occupant} (app_state='running') via the same
@@ -787,7 +787,7 @@ describe('input contracts #input', function()
 
     -- Press a modifier key then a trigger so the held set
     -- (Controller.keys_pressed) carries the modifier and the
-    -- combo serialises to 'ctrl+…' (decisions/input.md,
+    -- combo serialises to 'ctrl+…' (doc/development/decisions/input.md,
     -- Decision 8) — a real chord.
     local function chord(mod, k)
       F.session.press(mod)
@@ -795,9 +795,9 @@ describe('input contracts #input', function()
     end
 
     -- ---- order, consume, fall-through
-    -- (decisions/input.md, Decision 2) --
+    -- (doc/development/decisions/input.md, Decision 2) --
 
-    -- decisions/input.md, Decision 2: a {jargon: tier-1}
+    -- doc/development/decisions/input.md, Decision 2: a {jargon: tier-1}
     -- framework handler runs first and,
     -- returning truthy, consumes — no lower {jargon: tier} sees
     -- the event.
@@ -814,7 +814,7 @@ describe('input contracts #input', function()
         assert.is_false(lower)
       end)
 
-    -- decisions/input.md, Decision 2: an unconsumed event
+    -- doc/development/decisions/input.md, Decision 2: an unconsumed event
     -- descends every
     -- {jargon: tier} IN ORDER and reaches the sink (backspace
     -- edits the
@@ -836,7 +836,7 @@ describe('input contracts #input', function()
         assert.same({ 'a' }, F.singleton:get_text())
       end)
 
-    -- decisions/input.md, Decision 2: a truthy combo
+    -- doc/development/decisions/input.md, Decision 2: a truthy combo
     -- handler ({jargon: tier 2}) stops the descent —
     -- neither the generic callback nor the sink runs.
     it('a truthy combo handler stops the descent', function()
@@ -852,7 +852,7 @@ describe('input contracts #input', function()
       assert.same({ 'ab' }, F.singleton:get_text())
     end)
 
-    -- decisions/input.md, Decision 2: consuming never
+    -- doc/development/decisions/input.md, Decision 2: consuming never
     -- removes a {jargon:
     -- tier} — the same callback
     -- fires again on the next event (configuration is permanent).
@@ -866,7 +866,7 @@ describe('input contracts #input', function()
       assert.equal(2, n)
     end)
 
-    -- decisions/input.md, Decision 2: assigning a generic
+    -- doc/development/decisions/input.md, Decision 2: assigning a generic
     -- callback replaces
     -- ONLY it; when
     -- it returns falsey the sink still runs for that event.
@@ -880,9 +880,9 @@ describe('input contracts #input', function()
       end)
 
     -- ---- combo tables and normalisation
-    -- (decisions/input.md, Decision 8) -------
+    -- (doc/development/decisions/input.md, Decision 8) -------
 
-    -- decisions/input.md, Decision 8: each channel has its
+    -- doc/development/decisions/input.md, Decision 8: each channel has its
     -- OWN combo sub-table
     -- and keys normalise on assignment ('Ctrl+S' -> 'ctrl+s').
     it('a keypressed combo fires on the normalised combo',
@@ -917,7 +917,7 @@ describe('input contracts #input', function()
         assert.is_true(fired)
       end)
 
-    -- decisions/input.md, Decision 8: the three tables
+    -- doc/development/decisions/input.md, Decision 8: the three tables
     -- are distinct; a keypressed
     -- combo does not leak into the textinput channel.
     it('the combo tables are per-event, not one flat table',
@@ -934,9 +934,9 @@ describe('input contracts #input', function()
       end)
 
     -- ---- signatures + read-only proxy
-    -- (decisions/input.md, Decision 9 and Decision 13) ---
+    -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 
-    -- decisions/input.md, Decision 9: keypressed
+    -- doc/development/decisions/input.md, Decision 9: keypressed
     -- participants receive
     -- (k, proxy,
     -- isrepeat); isrepeat threads through to {jargon: tier 3}.
@@ -953,7 +953,7 @@ describe('input contracts #input', function()
         assert.is_true(seen[3])
       end)
 
-    -- decisions/input.md, Decision 9: isrepeat is false on
+    -- doc/development/decisions/input.md, Decision 9: isrepeat is false on
     -- a fresh press, true on repeat.
     it('isrepeat threads to the tier-3 callback', function()
       local seen = { }
@@ -966,7 +966,7 @@ describe('input contracts #input', function()
       assert.same({ false, true }, seen)
     end)
 
-    -- decisions/input.md, Decision 13: the keys_pressed
+    -- doc/development/decisions/input.md, Decision 13: the keys_pressed
     -- argument is a
     -- READ-ONLY proxy —
     -- reads pass through, writes raise.
@@ -982,7 +982,7 @@ describe('input contracts #input', function()
       assert.has_error(function() proxy['x'] = true end)
     end)
 
-    -- decisions/input.md, Decision 9: the SINK is included
+    -- doc/development/decisions/input.md, Decision 9: the SINK is included
     -- in the uniform
     -- signature — it
     -- receives the same (k, proxy, isrepeat) triple. Patches the
@@ -1002,7 +1002,7 @@ describe('input contracts #input', function()
         assert.is_true(seen[3])
       end)
 
-    -- internals/user_input.md, "Key release": a keyreleased
+    -- doc/development/internals/user_input.md, "Key release": a keyreleased
     -- participant sees the
     -- key ALREADY gone
     -- from the held set (removed at the {jargon: gateway}
@@ -1019,10 +1019,10 @@ describe('input contracts #input', function()
         assert.is_nil(present)
       end)
 
-    -- ---- defaults + hidden sink (decisions/input.md,
+    -- ---- defaults + hidden sink (doc/development/decisions/input.md,
     -- Decision 10 and Decision 2) -------
 
-    -- decisions/input.md, Decision 10: the default generic
+    -- doc/development/decisions/input.md, Decision 10: the default generic
     -- callback neither
     -- edits nor
     -- consumes — the event falls through to the sink, which
@@ -1035,7 +1035,7 @@ describe('input contracts #input', function()
         assert.same({ 'a' }, F.singleton:get_text())
       end)
 
-    -- decisions/input.md, Decision 2: an event with no
+    -- doc/development/decisions/input.md, Decision 2: an event with no
     -- participant anywhere and a
     -- HIDDEN widget mutates nothing — the sink's internal no-op.
     it('no participant + hidden widget mutates nothing',
@@ -1048,9 +1048,9 @@ describe('input contracts #input', function()
       end)
 
     -- ---- {jargon: tier-3}: the on_* generic callback
-    -- (decisions/input.md, Decision 5 and Decision 10) ---
+    -- (doc/development/decisions/input.md, Decision 5 and Decision 10) ---
 
-    -- decisions/input.md, Decision 5: on_text_input is the
+    -- doc/development/decisions/input.md, Decision 5: on_text_input is the
     -- PER-CHARACTER
     -- {jargon: tier-3} textinput
     -- callback (distinct from the submit output on_text_entered,
@@ -1067,7 +1067,7 @@ describe('input contracts #input', function()
         assert.same({ 'a', 'b' }, got)
       end)
 
-    -- decisions/input.md, Decision 10 (on_* install path):
+    -- doc/development/decisions/input.md, Decision 10 (on_* install path):
     -- a truthy callback intercepts
     -- the sink; a present-but-falsey callback falls through.
     it('a truthy on_text_input intercepts; falsey reaches sink',
@@ -1083,9 +1083,9 @@ describe('input contracts #input', function()
       end)
 
     -- ---- {jargon: tier-3}: the {jargon: native} install path
-    -- (decisions/input.md, Decision 10) -----
+    -- (doc/development/decisions/input.md, Decision 10) -----
 
-    -- decisions/input.md, Decision 10: a project
+    -- doc/development/decisions/input.md, Decision 10: a project
     -- {jargon: native} is a plain {jargon: tier-3}
     -- participant that fires REGARDLESS of widget-shown state
     -- (the reversed suppress-while-shown mutation is gone).
@@ -1101,7 +1101,7 @@ describe('input contracts #input', function()
         assert.equal(2, seen)
       end)
 
-    -- decisions/input.md, Decision 10, {jargon: native}
+    -- doc/development/decisions/input.md, Decision 10, {jargon: native}
     -- path: a truthy {jargon: native} intercepts the sink.
     it('a native returning truthy intercepts the sink',
       function()
@@ -1113,7 +1113,7 @@ describe('input contracts #input', function()
         assert.same({ 'ab' }, F.singleton:get_text())
       end)
 
-    -- decisions/input.md, Decision 10, {jargon: native}
+    -- doc/development/decisions/input.md, Decision 10, {jargon: native}
     -- path: a falsey {jargon: native} falls through to
     -- the sink (asserted on the textinput channel too, so all
     -- three channels are covered across the {jargon: native}
@@ -1128,7 +1128,7 @@ describe('input contracts #input', function()
         assert.same({ 'Z' }, F.singleton:get_text())
       end)
 
-    -- decisions/input.md, Decision 10, {jargon: native}
+    -- doc/development/decisions/input.md, Decision 10, {jargon: native}
     -- path, keyreleased
     -- channel: fires regardless
     -- of widget-shown state (case a) — the downstream half of
@@ -1146,7 +1146,7 @@ describe('input contracts #input', function()
         assert.equal(1, seen)
       end)
 
-    -- decisions/input.md, Decision 10 precedence
+    -- doc/development/decisions/input.md, Decision 10 precedence
     -- ({badspecref: E30}): an explicit on_* takes
     -- precedence over the captured {jargon: native} — the
     -- {jargon: native} never
@@ -1165,10 +1165,10 @@ describe('input contracts #input', function()
       end)
 
     -- ---- the mutable/immutable boundary
-    -- (decisions/input.md, Decision 7)
+    -- (doc/development/decisions/input.md, Decision 7)
     -- -------------
 
-    -- decisions/input.md, Decision 7: exactly the
+    -- doc/development/decisions/input.md, Decision 7: exactly the
     -- {jargon: tier-3} callback {jargon: slots} are assignable;
     -- anything else raises loudly (never a silent swallow).
     it('assigning an unknown slot raises', function()
@@ -1190,10 +1190,10 @@ describe('input contracts #input', function()
         end)
       end)
 
-    -- ---- widget outputs (decisions/input.md, Decision 5)
+    -- ---- widget outputs (doc/development/decisions/input.md, Decision 5)
     -- ----------
 
-    -- decisions/input.md, Decision 5: the four widget
+    -- doc/development/decisions/input.md, Decision 5: the four widget
     -- outputs are project-assignable
     -- fields on compy.input (same boundary, widened allowlist).
     it('the four widget output fields are assignable',
@@ -1207,7 +1207,7 @@ describe('input contracts #input', function()
         end)
       end)
 
-    -- decisions/input.md, Decision 5: show(config) keys and
+    -- doc/development/decisions/input.md, Decision 5: show(config) keys and
     -- field assignment hit
     -- the same underlying {jargon: slots}.
     it('show(config) and fields share one output slot',
@@ -1222,7 +1222,7 @@ describe('input contracts #input', function()
         assert.equal(hl, input.highlighter)
       end)
 
-    -- decisions/input.md, Decision 5 cont.: on_text_entered
+    -- doc/development/decisions/input.md, Decision 5 cont.: on_text_entered
     -- and validator also
     -- reach the same {jargon: slot} via config key and via
     -- field write
@@ -1262,7 +1262,7 @@ describe('input contracts #input', function()
         assert.equal(vfn, input.validator)
       end)
 
-    -- decisions/input.md, Decision 5: a custom highlighter
+    -- doc/development/decisions/input.md, Decision 5: a custom highlighter
     -- transforms live text and
     -- the queried highlight reflects that transformed output.
     it('a custom highlighter transforms queried highlight',
@@ -1279,7 +1279,7 @@ describe('input contracts #input', function()
         assert.equal(marker, got.hl)
       end)
 
-    -- decisions/input.md, Decision 5, boundary half:
+    -- doc/development/decisions/input.md, Decision 5, boundary half:
     -- crossing attempts fire
     -- on_limit_reached(direction, scope) and its return value
     -- is ignored (observational only; sink still runs).
@@ -1329,7 +1329,7 @@ describe('input contracts #input', function()
         assert.same({ { 'left', 'input' } }, seen)
       end)
 
-    -- decisions/input.md, Decision 5: line-scope boundary
+    -- doc/development/decisions/input.md, Decision 5: line-scope boundary
     -- in multiline text.
     it('left line boundary fires scope line', function()
       local seen = { }
@@ -1391,10 +1391,10 @@ describe('input contracts #input', function()
       assert.same({ { 'right', 'input' } }, seen)
     end)
 
-    -- ---- submit and cancel (decisions/input.md,
+    -- ---- submit and cancel (doc/development/decisions/input.md,
     -- Decision 6) -------
 
-    -- decisions/input.md, Decision 6: the full submit
+    -- doc/development/decisions/input.md, Decision 6: the full submit
     -- call-order chain on a real Enter
     -- keypress. on_text_entered receives the FULL ASSEMBLED
     -- text (Decision 5) — not a per-character capture
@@ -1420,7 +1420,7 @@ describe('input contracts #input', function()
           { 'before', 'entered:a\nb', 'after:a\nb' }, order)
       end)
 
-    -- internals/user_input.md, "Submit and cancel — the
+    -- doc/development/internals/user_input.md, "Submit and cancel — the
     -- framework tier-1 chains": on_text_entered sees the
     -- session still active;
     -- after_submit sees it deactivated (the observable order
@@ -1443,7 +1443,7 @@ describe('input contracts #input', function()
       assert.is_false(seen.after)
     end)
 
-    -- internals/user_input.md, "Submit and cancel — the
+    -- doc/development/internals/user_input.md, "Submit and cancel — the
     -- framework tier-1 chains": a custom validator is invoked
     -- with the live
     -- assembled text (not stale/empty data).
@@ -1459,7 +1459,7 @@ describe('input contracts #input', function()
         assert.equal('ab', seen)
       end)
 
-    -- internals/user_input.md, "Submit and cancel — the
+    -- doc/development/internals/user_input.md, "Submit and cancel — the
     -- framework tier-1 chains": a rejecting validator locks
     -- the
     -- session — no delivery, no deactivation, no
@@ -1481,7 +1481,7 @@ describe('input contracts #input', function()
         assert.is_true(F.singleton:has_error())
       end)
 
-    -- decisions/input.md, Decision 6: the full cancel
+    -- doc/development/decisions/input.md, Decision 6: the full cancel
     -- call-order chain;
     -- Escape genuinely
     -- dismisses (content cleared AND the widget hidden).
@@ -1502,7 +1502,7 @@ describe('input contracts #input', function()
         assert.is_true(F.singleton:is_empty())
       end)
 
-    -- internals/user_input.md, "Submit and cancel — the
+    -- doc/development/internals/user_input.md, "Submit and cancel — the
     -- framework tier-1 chains": Enter/Escape are ordinary
     -- keys while
     -- hidden — no
@@ -1523,7 +1523,7 @@ describe('input contracts #input', function()
         assert.same({ 'return', 'escape' }, seen)
       end)
 
-    -- internals/user_input.md, "Submit and cancel — the
+    -- doc/development/internals/user_input.md, "Submit and cancel — the
     -- framework tier-1 chains": while shown, the framework
     -- entries run first,
     -- unconditionally — a project combo handler cannot shadow
@@ -1541,7 +1541,7 @@ describe('input contracts #input', function()
         assert.is_nil(love.state.user_input)
       end)
 
-    -- internals/user_input.md, "Multiline input": Shift+Return
+    -- doc/development/internals/user_input.md, "Multiline input": Shift+Return
     -- is NOT a framework
     -- combo — it falls
     -- to the sink, which still inserts a newline (unchanged
@@ -1562,7 +1562,7 @@ describe('input contracts #input', function()
         assert.is_not_nil(love.state.user_input)
       end)
 
-    -- decisions/input.md, Decision 6 ("hide() ... fires no
+    -- doc/development/decisions/input.md, Decision 6 ("hide() ... fires no
     -- cancel chain"): hide() and a force=true reconfigure
     -- fire no
     -- cancel chain (the user-facing dismiss is Escape only).
@@ -1618,7 +1618,7 @@ describe('input contracts #input', function()
         assert.equal(2, hits)
       end)
 
-    -- decisions/input.md, Decision 6: absent hooks default
+    -- doc/development/decisions/input.md, Decision 6: absent hooks default
     -- to noop —
     -- submit and cancel
     -- both complete without error when no hook is configured
@@ -1647,14 +1647,14 @@ describe('input contracts #input', function()
 
   -- ====================================================
   -- Route connection lifecycle ({badspecref: 0.1.0-m5c}
-  -- {badspecref: chunk 4}, decisions/input.md,
+  -- {badspecref: chunk 4}, doc/development/decisions/input.md,
   -- Decision 11): connect/disconnect at the 'running'
   -- boundary
   -- (same decision), pointer excluded from that
   -- disconnect
   -- (same decision), full teardown at stop (same
   -- decision), inspect
-  -- (decisions/input.md, Decision 12), and the
+  -- (doc/development/decisions/input.md, Decision 12), and the
   -- compy.before_exit stop hook
   -- ({badspecref: M6-02-before-exit.md}). All rows drive the
   -- REAL
@@ -1664,7 +1664,7 @@ describe('input contracts #input', function()
   -- ====================================================
   describe('route connection lifecycle #m5c', function()
 
-    -- decisions/input.md, Decision 11 ({badspecref:
+    -- doc/development/decisions/input.md, Decision 11 ({badspecref:
     -- ratified-model ruling 3}): the route
     -- owns keyboard/text only while 'running' -- a
     -- non-blocking run's exit restores console text entry.
@@ -1680,7 +1680,7 @@ describe('input contracts #input', function()
       assert.same({ 'a' }, F.console:get_text())
     end)
 
-    -- decisions/input.md, Decision 11: pointer is explicitly
+    -- doc/development/decisions/input.md, Decision 11: pointer is explicitly
     -- NOT part of that disconnect -- a pen-and-paper
     -- project (sapper-like) stays clickable in
     -- 'project_open'.
@@ -1696,7 +1696,7 @@ describe('input contracts #input', function()
       assert.equal(1, got)
     end)
 
-    -- decisions/input.md, Decision 11 (teardown
+    -- doc/development/decisions/input.md, Decision 11 (teardown
     -- invariant): stop clears every
     -- compy.input participant a project installed --
     -- combo handlers and every project-mutable field.
@@ -1714,7 +1714,7 @@ describe('input contracts #input', function()
       assert.is_nil(input.validator)
     end)
 
-    -- decisions/input.md, Decision 11 + {badspecref: spec
+    -- doc/development/decisions/input.md, Decision 11 + {badspecref: spec
     -- §10} edge case: a
     -- widget left shown at
     -- stop is silently hidden -- teardown is not a cancel,
@@ -1735,7 +1735,7 @@ describe('input contracts #input', function()
       assert.equal(0, cancelled)
     end)
 
-    -- decisions/input.md, Decision 11: the widget's OWN
+    -- doc/development/decisions/input.md, Decision 11: the widget's OWN
     -- mirrored output fields
     -- (userInputController.apply_config) persist across a
     -- hide/re-show within one run (doc/input_api.md,
@@ -1756,7 +1756,7 @@ describe('input contracts #input', function()
         assert.is_nil(F.singleton.model.evaluator.highlighter)
       end)
 
-    -- decisions/input.md, Decision 12 ({badspecref:
+    -- doc/development/decisions/input.md, Decision 12 ({badspecref:
     -- ratified-model R11}): inspect is the console
     -- bound over the project env -- the project route
     -- disconnects and its widget goes unhonoured.
@@ -1792,7 +1792,7 @@ describe('input contracts #input', function()
     -- {badspecref: M6-02}: the hook resets to its noop default
     -- on stop
     -- -- same lifecycle as compy.input's before_/after_
-    -- hooks (decisions/input.md, Decision 11).
+    -- hooks (doc/development/decisions/input.md, Decision 11).
     it('compy.before_exit resets to noop after stop',
       function()
         local calls = 0
@@ -1811,12 +1811,12 @@ describe('input contracts #input', function()
   -- project
   -- surface F.compy_input() — exactly what a project sees.
   -- get_cursor/set_cursor/set_text are non-assignable
-  -- methods (NOT in INPUT_CALLBACKS), so decisions/input.md,
+  -- methods (NOT in INPUT_CALLBACKS), so doc/development/decisions/input.md,
   -- Decision 7 rides the
   -- same __newindex boundary as show/hide.
   describe('cursor and text surface #m7', function()
 
-    -- internals/user_input.md, "Cursor manipulation and
+    -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": active → 1-based (line, col); hidden
     -- → nil.
     it('get_cursor reports 1-based line, col when active',
@@ -1833,7 +1833,7 @@ describe('input contracts #input', function()
       assert.is_nil(input.get_cursor())
     end)
 
-    -- internals/user_input.md, "Cursor manipulation and
+    -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": move; out-of-range clamps to the
     -- valid range.
     it('set_cursor moves the cursor', function()
@@ -1915,7 +1915,7 @@ describe('input contracts #input', function()
         assert.same(3, c) -- 'xy' end (len 2 + 1)
       end)
 
-    -- internals/user_input.md, "Cursor manipulation and
+    -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": the view reflects the change WITHOUT
     -- a re-show
     -- (the overlay handle is not re-published; the widget's
@@ -1948,7 +1948,7 @@ describe('input contracts #input', function()
       assert.is_true(F.singleton:is_empty())
     end)
 
-    -- decisions/input.md, Decision 7: the three callables are
+    -- doc/development/decisions/input.md, Decision 7: the three callables are
     -- non-assignable — the
     -- mutable boundary raises loudly (never a silent swallow).
     it('assigning the cursor/text callables raises',
@@ -1978,7 +1978,7 @@ describe('input contracts #input', function()
   -- ====================================================
   describe('live reconfigure and clear #m7', function()
 
-    -- internals/user_input.md, "configure(config)": prompt
+    -- doc/development/internals/user_input.md, "configure(config)": prompt
     -- updates live on an active session;
     -- content/cursor/callbacks stay untouched.
     it('configure updates the prompt on an active session',
@@ -1995,7 +1995,7 @@ describe('input contracts #input', function()
         assert.equal(cb, input.on_text_entered)
       end)
 
-    -- internals/user_input.md, "configure(config)":
+    -- doc/development/internals/user_input.md, "configure(config)":
     -- validator — the NEXT submit uses the new fn,
     -- not the one set at show() (exercised, not just read).
     it('configure swaps the live validator', function()
@@ -2016,7 +2016,7 @@ describe('input contracts #input', function()
       assert.is_nil(love.state.user_input)
     end)
 
-    -- internals/user_input.md, "configure(config)":
+    -- doc/development/internals/user_input.md, "configure(config)":
     -- highlighter — the NEXT keystroke's highlight
     -- uses the new fn.
     it('configure swaps the live highlighter', function()
@@ -2033,7 +2033,7 @@ describe('input contracts #input', function()
       assert.equal(marker, got.hl)
     end)
 
-    -- internals/user_input.md, "configure(config)":
+    -- doc/development/internals/user_input.md, "configure(config)":
     -- on_text_entered — the swapped fn fires on the
     -- next submit; the old one set at show() does not.
     it('configure swaps the live on_text_entered', function()
@@ -2051,7 +2051,7 @@ describe('input contracts #input', function()
       assert.equal('ab', new_text)
     end)
 
-    -- internals/user_input.md, "configure(config)":
+    -- doc/development/internals/user_input.md, "configure(config)":
     -- on_limit_reached — the swapped fn fires on the
     -- next boundary; the old one set at show() does not.
     it('configure swaps the live on_limit_reached', function()
@@ -2070,7 +2070,7 @@ describe('input contracts #input', function()
       assert.equal('left', new_dir)
     end)
 
-    -- internals/user_input.md, "configure(config)":
+    -- doc/development/internals/user_input.md, "configure(config)":
     -- text/cursor are inert on an active session
     -- — even mixed with a live field, the live one applies
     -- and the inert ones are untouched (no partial/silent
@@ -2093,7 +2093,7 @@ describe('input contracts #input', function()
         assert.equal('live', F.singleton.model:get_label())
       end)
 
-    -- internals/user_input.md, "configure(config)":
+    -- doc/development/internals/user_input.md, "configure(config)":
     -- configure while hidden is safe
     -- (no warn —
     -- it is not a refusal) and text/cursor apply on the
@@ -2114,7 +2114,7 @@ describe('input contracts #input', function()
       assert.same(2, c)
     end)
 
-    -- internals/user_input.md, "configure(config)": a
+    -- doc/development/internals/user_input.md, "configure(config)": a
     -- hidden configure of a live field
     -- (prompt,
     -- validator) applies cleanly on the next show() too.
@@ -2146,7 +2146,7 @@ describe('input contracts #input', function()
       assert.is_true(F.singleton:is_empty())
     end)
 
-    -- internals/user_input.md, "clear()": on an active
+    -- doc/development/internals/user_input.md, "clear()": on an active
     -- session empties content,
     -- cursor to start, no callback fires.
     it('clear empties an active session with no callback',
@@ -2165,7 +2165,7 @@ describe('input contracts #input', function()
         assert.is_false(called)
       end)
 
-    -- internals/user_input.md, "clear()": while hidden is
+    -- doc/development/internals/user_input.md, "clear()": while hidden is
     -- a no-op + warn —
     -- unlike configure(), this call IS refused.
     it('clear while hidden warns and no-ops', function()
@@ -2178,7 +2178,7 @@ describe('input contracts #input', function()
       assert.equal(1, warned)
     end)
 
-    -- decisions/input.md, Decision 7: the mutable boundary
+    -- doc/development/decisions/input.md, Decision 7: the mutable boundary
     -- is unchanged for the two
     -- new callables.
     it('assigning configure/clear raises', function()
@@ -2209,7 +2209,7 @@ describe('input contracts #input', function()
   -- after_submit inside show{...} is silently dropped (no
   -- error, no warn). The wired path is a direct field
   -- write (`input.after_submit = fn`), exactly the pattern
-  -- the existing decisions/input.md, Decision 6
+  -- the existing doc/development/decisions/input.md, Decision 6
   -- submit-chain test above
   -- already
   -- uses. The commission's illustrative show{after_submit=…}
@@ -2265,7 +2265,7 @@ describe('input contracts #input', function()
     -- "A continuous session with a changing prompt"): a
     -- hint set via configure()
     -- INSIDE on_text_entered (session still active,
-    -- internals/user_input.md, "Submit and cancel — the
+    -- doc/development/internals/user_input.md, "Submit and cancel — the
     -- framework tier-1 chains")
     -- must survive the after_submit bare re-show, not the
     -- show()-time prompt. Model-sticky per {badspecref: M8-01}

@@ -122,7 +122,7 @@ function UserInputController:set_cursor(cursor)
 end
 
 --- Clamped 2D move (compy.input.set_cursor;
---- internals/user_input.md, "Cursor manipulation and
+--- doc/development/internals/user_input.md, "Cursor manipulation and
 --- 'reset'"). Named
 --- apart from set_cursor(Cursor) above — that simple function
 --- already has a different signature/caller (editorController
@@ -170,7 +170,7 @@ function UserInputController:evaluate()
   return ok, res
 end
 
---- Cancel (decisions/input.md, Decision 6): clear + hide
+--- Cancel (doc/development/decisions/input.md, Decision 6): clear + hide
 --- unconditionally — Escape now
 --- genuinely dismisses. The framework tier-1 escape entry
 --- (projectInputController.lua) is what calls this for the
@@ -224,7 +224,7 @@ local apply_config = function(self, cfg)
   -- result = the reftable the caller polls
   -- (r:is_empty()/r()); the submit path writes the
   -- evaluated value into it. (Legacy poll idiom; superseded
-  -- by the callback API — decisions/input.md, Decision 4.)
+  -- by the callback API — doc/development/decisions/input.md, Decision 4.)
   if cfg.result ~= nil then
     self.result = cfg.result
   end
@@ -250,7 +250,7 @@ end
 --- clear-on-no-text lives here, not in apply_config, because it is activation policy
 --- (a re-show with no text starts empty) rather than per-field config.
 --- `cursor` (a `{line, col}` pair) lands here too, applied
---- after text (internals/user_input.md, "Cursor
+--- after text (doc/development/internals/user_input.md, "Cursor
 --- manipulation and 'reset'") — kept out of apply_config so
 --- the live-reconfigure path (configure() below) can never
 --- reach it.
@@ -268,7 +268,7 @@ local open_fresh = function(self, cfg)
   -- presence is the flag the draw loop (controller.lua)
   -- checks to paint V:draw() each frame, and it carries the
   -- { M, C, V } handle the legacy poll idiom reads. Drivers
-  -- change but the flag persists (internals/user_input.md,
+  -- change but the flag persists (doc/development/internals/user_input.md,
   -- "Singleton lifecycle"). NOTE: factoring this into a
   -- named setup_legacy_user_input() and the open_fresh/init
   -- naming are open {badspecref: A5} items (see
@@ -288,7 +288,7 @@ end
 function UserInputController:show(config)
   local cfg = config or {}
   if love.state.user_input then
-    -- decisions/input.md, Decision 3 (warn-don't-swallow):
+    -- doc/development/decisions/input.md, Decision 3 (warn-don't-swallow):
     -- a plain show() over an active overlay is suppressed;
     -- say so.
     if not cfg.force then
@@ -321,7 +321,7 @@ function UserInputController:hide()
 end
 
 --- Live-reconfigure an active session (compy.input.
---- configure; internals/user_input.md, "configure(config)"
+--- configure; doc/development/internals/user_input.md, "configure(config)"
 --- — the boundary decision closed here): only
 --- the Contract's live-updatable set reaches apply_config —
 --- prompt/highlighter/validator/widget-output callbacks. text/
@@ -345,14 +345,14 @@ end
 --- submit / cancel ---
 ----------------------
 
--- decisions/input.md, Decision 6: the framework
+-- doc/development/decisions/input.md, Decision 6: the framework
 -- tier-1 return entry
 -- (projectInputController.lua) calls submit(); before_/
 -- after_submit are route-owned (read off compy_input there,
 -- not stored here) — this is only the widget's own middle
 -- step: validate -> deliver -> deactivate.
 
---- Validator gate (internals/user_input.md, "Submit and
+--- Validator gate (doc/development/internals/user_input.md, "Submit and
 --- cancel — the framework tier-1 chains").
 --- No custom validator
 --- accepts unconditionally; a set validator's ok/err_msg
@@ -378,7 +378,7 @@ local function debug_noop(label)
   end
 end
 
---- Submit delivery (internals/user_input.md, "Submit and
+--- Submit delivery (doc/development/internals/user_input.md, "Submit and
 --- cancel — the framework tier-1 chains"): fills the legacy
 --- poll reftable — the push('userinput') producer is gone,
 --- the synchronous fill survives — and fires the widget
@@ -400,7 +400,7 @@ local function deliver(self, text)
   end
 end
 
---- Submit (decisions/input.md, Decision 6): validate the
+--- Submit (doc/development/decisions/input.md, Decision 6): validate the
 --- assembled text, deliver + deactivate on accept, lock on
 --- reject. An empty input submits nothing (pre-existing
 --- solicitation behaviour, carried unchanged — not an
@@ -431,7 +431,7 @@ end
 --- controller). It is "shown" only while love.state.user_input
 --- is set (show()/hide() toggle it). A keystroke reaching the
 --- sink while the overlay is hidden must mutate nothing
---- (decisions/input.md, Decision 2) — this is the chain's
+--- (doc/development/decisions/input.md, Decision 2) — this is the chain's
 --- INTERNAL hidden-check, replacing
 --- the old external gating wrapper. The console REPL input is a
 --- DIFFERENT UserInputController instance (never the published
@@ -446,7 +446,7 @@ end
 --- Mirrors _is_hidden_overlay above rather than duplicating
 --- the sink's check (per the prompt): the framework tier-1
 --- return/escape entries (projectInputController.lua) gate
---- engagement on this (internals/user_input.md, "Submit
+--- engagement on this (doc/development/internals/user_input.md, "Submit
 --- and cancel — the framework tier-1 chains").
 function UserInputController:is_shown()
   return not self:_is_hidden_overlay()
@@ -458,11 +458,11 @@ end
 
 --- @param k string
 --- @param keys_pressed table?  read-only held-key proxy
---- (decisions/input.md, Decision 13)
+--- (doc/development/decisions/input.md, Decision 13)
 --- @param isr boolean?
 --- @return boolean? limit
 -- This handler now receives the uniform
--- (k, keys_pressed, isr) triple (decisions/input.md,
+-- (k, keys_pressed, isr) triple (doc/development/decisions/input.md,
 -- Decision 9; resolves the {badspecref: m4/m5 A2} open
 -- note).
 -- Its own editing logic still reads modifiers via Key.*
@@ -503,7 +503,7 @@ function UserInputController:keypressed(k, keys_pressed, isr)
 
   -- (combo serialisation lives in controller.lua; this
   -- handler only sees the raw key.)
-  -- internals/user_input.md, "Error state": locked-on-reject
+  -- doc/development/internals/user_input.md, "Error state": locked-on-reject
   -- unlocks on Enter/Space/arrows.
   if input:has_error() then
     if Key.is_enter(k)
@@ -679,7 +679,7 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   -- REVIEW: how submit in editor/console are working now, if they cannot expect UIC to submit? (or they used their own handling?)
   -- REVIEW: if the only reason for moving submit/cancel *out* of UIC was to support '{before,after}_{cancel,submit}' hooks, I do not see how they could not be managed *inside* UIC. If we simply want to guarantee them non-blocking... well, still no justification for *separate* mechanism -- project may simply *not* intercept these keys (or its return vaue could be specifically ignored)...
   -- REVIEW: looking forward, UIC should not be aware if application is in 'editor or non-editor' mode -- it should be editor that configures it accordingly (via hooks). I see only two differences: a) vert/horiz order (purposeful or coincidence?) and editor having 'modify' block. But in fact (for the future?) -- its all *combos* which editor can set itself -- moreover we could think of combos mechanism *inside* UIC, and editor or project simply registering extra combos in front of them (or even as parameters to be passed to UIC)
-  -- internals/user_input.md, "UserInputController
+  -- doc/development/internals/user_input.md, "UserInputController
   -- keypressed (shared)": the old oneshot-gated submit local
   -- (fill the legacy reftable + push('userinput')) is gone —
   -- the project widget's submit now runs through the
@@ -718,9 +718,9 @@ end
 
 --- @param t string
 --- @param keys_pressed table?  read-only held-key proxy
---- (decisions/input.md, Decision 13)
+--- (doc/development/decisions/input.md, Decision 13)
 -- Uniform textinput signature
--- (decisions/input.md, Decision 9). Visibility is
+-- (doc/development/decisions/input.md, Decision 9). Visibility is
 -- decided by the internal hidden-check (shown -> edit; hidden ->
 -- no-op), which supersedes the old self.result/running gate: a
 -- shown widget edits regardless of the legacy poll reftable.
@@ -739,7 +739,7 @@ end
 
 --- @param k string
 --- @param keys_pressed table?  read-only held-key proxy
---- (decisions/input.md, Decision 13)
+--- (doc/development/decisions/input.md, Decision 13)
 function UserInputController:keyreleased(k, keys_pressed)
   if self:_is_hidden_overlay() then
     if love.DEBUG then Log.debug('input sink: hidden no-op') end

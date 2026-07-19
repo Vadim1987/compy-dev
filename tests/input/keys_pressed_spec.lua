@@ -96,7 +96,7 @@ end)
 -- (serialize-vs-match): proposal to
 -- replace per-keypress combo_string serialisation with
 -- registration-time dispatcher closures — same open item
--- as technical_debt/input.md, "Combo-string dispatch
+-- as doc/development/technical_debt/input.md, "Combo-string dispatch
 -- allocates a table per call".
 describe('combo_string #input', function()
   local cs = Controller.combo_string

@@ -283,7 +283,7 @@ function UserInputView:render(input, status, time)
 end
 
 --- Draw the pre-rendered canvas to screen
--- internals/user_input.md, "Submit and cancel — the
+-- doc/development/internals/user_input.md, "Submit and cancel — the
 -- framework tier-1 chains": oneshot is gone; the published
 -- input widget
 -- singleton is the one view that skips this continuous
