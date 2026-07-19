@@ -1,50 +1,63 @@
--- dispatch chain: tier mechanics — split from input_contracts_spec.lua
--- (TF1). Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
+-- dispatch chain: tier mechanics 
+-- {historical: split from input_contracts_spec.lua (TF1)}.
+--
+-- REVIEW/clarity: prose below calls both ROUTE and SINK 'consumers' which may lead to confusion: afaik 'route' is in fact controller, while 'sink' is the name for the last item in the processing chain the route enforces
+-- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 -- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
 -- chain"): ROUTE = consumer an event is dispatched to; WIDGET = a
--- route-managed input surface; SINK = last consumer. Tests assert
+-- route-managed input surface; SINK = last consumer. 
+-- 
+-- Tests assert
 -- observable outcomes at public seams, never method-name spies.
+--
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
+--
+-- REVIEW/clarity: language of the prose below is broken -- it tries to say that this test covers only half of the activities but fails to say so (and its alwo not clear why we have 9 input files not just 2 spolier: because its not 'half-this/half-that' split)
 -- Mechanics half of the four-tier dispatch chain (order/consume/
 -- fall-through, combo tables, signatures, defaults, tier-3 callbacks and
 -- native install, the mutable/immutable boundary) — doc/development/decisions/input.md,
 -- Decision 2. The outputs half (widget outputs, submit/cancel) is
--- input_widget_io_spec.lua.
+-- input_widget_callbacks_spec.lua.
 
 local F = require('tests.helpers.input_fixture')
 
+--- REVIEW/clarity: need to cleanup jargon, also the prose below partialy duplicates opening prose
+--- REVIEW/clarity: prose below speaks of callbacks but we have also output callbacks -- maybe we should instead use term 'hooks' to describe what is installed by project into dispatch chain
 -- ====================================================
--- The {jargon: four-tier dispatch chain} ({badspecref:
--- 0.1.0-m5c}, doc/development/decisions/input.md, Decision 2).
+-- The four-tier dispatch chain 
+-- (doc/development/decisions/input.md, Decision 2).
 -- All rows drive the REAL project route: F.activate_
 -- project() installs the ProjectInputController as the
 -- {jargon: slot occupant} (app_state='running') via the same
--- Controller.set_user_handlers path a run calls, and
+-- Controller.set_user_handlers path {clarity: a run calls}, and
 -- returns the project-facing compy.input surface. The
--- observable {jargon: seams} are the widget's text (the sink)
+-- observable {jargon: seams} are the widget's text ({jargon: the sink})
 -- and
 -- the callbacks a project registers — never a spy on an
 -- internal method (except the one sink-signature row,
 -- which patches the shared singleton and restores it).
 -- ====================================================
 
-describe('dispatch chain: tier mechanics #m5c #input', function()
+describe('#input events dispatch chain', function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
 
 
+  -- REVIEW/fidelity: comment overexplains mechanics that helper does not control; first line would be enough
   -- Press a modifier key then a trigger so the held set
   -- (Controller.keys_pressed) carries the modifier and the
   -- combo serialises to 'ctrl+…' (doc/development/decisions/input.md,
   -- Decision 8) — a real chord.
+  -- REVIEW/quality: better allow random chords -- (...) and iterating over it? cheap and more flexible
   local function chord(mod, k)
     F.session.press(mod)
     F.session.press(k)
   end
 
+  -- REVIEW/clarity: the prose below is correct but uncomprehensible, looks like noise
   -- ---- order, consume, fall-through
   -- (doc/development/decisions/input.md, Decision 2) --
 
@@ -52,7 +65,11 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
   -- framework handler runs first and,
   -- returning truthy, consumes — no lower {jargon: tier} sees
   -- the event.
+  -- REVIEW/clarity: internal jargon in it description -- i'd rather "framework hooks intercepts before project handlers, hooks, and widget"
+  -- REVIEW/clarity: my suggested alternative vocabulary -- dispatch chain consists of 'handlers'(event-bound x combo-bound) and 'hooks'(event-bound -- act if handlers did not intercept), with framework, project and widget, installing their own hooks, widget hooks always being the last in current architecture
+  -- REVIEW/architecture: the very need of framewrk hooks is disputable and should be reviewed after tests stabilization -- maybe they should be demoted to intra-widget logic
   it('a framework handler consumes before lower tiers',
+    -- REVIEW/fidelity/clarity: a) 'lower' is confusing, use 'canary' or just 'x' -- set to nil initially, check if it was true or false b) mark framework handler as 'test-specific patching' while `input.on_key_pressed = ` as official way of configuring project hook c) why not test on real-life 'enter' and 'cancel' -- demonstrating they do not reach proect hook IF the whole 'do not reach' decision would be confirmed in architectural review?
     function()
       local lower = false
       local input = F.activate_project()
@@ -67,7 +84,7 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
 
   -- doc/development/decisions/input.md, Decision 2: an unconsumed event
   -- descends every
-  -- {jargon: tier} IN ORDER and reaches the sink (backspace
+  -- {jargon: tier} IN ORDER and reaches the {jargon: sink} (backspace
   -- edits the
   -- shown widget — the sink's observable trace).
   it('an unconsumed event descends every tier to the sink',
@@ -76,20 +93,21 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
       local fw = Controller.project_input.framework_handlers
       local input = F.activate_project()
       fw.keypressed['backspace'] =
-          function() order[#order + 1] = 'fw' end
+          function() order[#order + 1] = 'framework_handler' end
       input.handlers.keypressed['backspace'] =
-          function() order[#order + 1] = 'combo' end
+          function() order[#order + 1] = 'project_handler' end
       input.on_key_pressed =
-          function() order[#order + 1] = 'cb' end
+          function() order[#order + 1] = 'project_hook' end
       F.show_widget({ text = 'ab' })
       F.session.press('backspace')
-      assert.same({ 'fw', 'combo', 'cb' }, order)
+      assert.same({ 'framework_handler', 'project_handler', 'project_hook' }, order)
       assert.same({ 'a' }, F.singleton:get_text())
     end)
 
   -- doc/development/decisions/input.md, Decision 2: a truthy combo
   -- handler ({jargon: tier 2}) stops the descent —
   -- neither the generic callback nor the sink runs.
+  -- REVIEW/clarity: I would use same chain with mnemonic flags as in previous case -- and probably matrix test to show interception on every step, and also that lack of step (no combo defined, no hook defined) does not prevent other parts from working
   it('a truthy combo handler stops the descent', function()
     local reached_cb = false
     local input = F.activate_project()
@@ -107,7 +125,8 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
   -- removes a {jargon:
   -- tier} — the same callback
   -- fires again on the next event (configuration is permanent).
-  it('consuming never removes a tier (R13)', function()
+  -- REVIEW/clarity/sanity:
+  it('is a permanent configuration', function()
     local n = 0
     local input = F.activate_project()
     input.on_key_pressed =
@@ -121,6 +140,7 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
   -- callback replaces
   -- ONLY it; when
   -- it returns falsey the sink still runs for that event.
+  -- REVIEW/clarity/consistence: this test is redundant -- the whole need raised from reversing misinterpreted requirements -- test can safely go, it repeats one particular configuration tested above
   it('assigning a callback replaces only it; sink still runs',
     function()
       local input = F.activate_project()
@@ -130,6 +150,8 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
       assert.same({ 'a' }, F.singleton:get_text())
     end)
 
+  -- REVIEW/clarity: cleanup prose below and reformulate 'it' in more human-friendly way
+  -- REVIEW/clarity: maybe wrap three cases below into sub-describe
   -- ---- combo tables and normalisation
   -- (doc/development/decisions/input.md, Decision 8) -------
 
@@ -168,6 +190,7 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
       assert.is_true(fired)
     end)
 
+  -- REVIEW/fidelity: we'd rather should test that setting combo on one event does not alter propagation of other events, and same with hooks. on the other hand, this test does smoke-check in most economic way
   -- doc/development/decisions/input.md, Decision 8: the three tables
   -- are distinct; a keypressed
   -- combo does not leak into the textinput channel.
@@ -184,6 +207,8 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
       assert.is_false(leaked)
     end)
 
+  -- REVIEW/clarity: I'd rather wrap in 'describe'
+  -- REVIEW/clarity: cleanup prose below and get rid of jargon ('tier-3' is 'project hook' in newly suggested vocabulary)
   -- ---- signatures + read-only proxy
   -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 
@@ -199,6 +224,7 @@ describe('dispatch chain: tier mechanics #m5c #input', function()
         seen = { k, keys, isr }; return true
       end
       F.session.repeat_press('a')
+      -- REVIEW/fidelity: only type signature is tested but not what is really delivered -- so its not a test of contract, only of its type-compliance
       assert.equal('a', seen[1])
       assert.is_table(seen[2])
       assert.is_true(seen[3])

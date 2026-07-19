@@ -1,3 +1,5 @@
+--- REVIEW/clarity: 'shape contract' is jargonic. The purpose of this test is simply to isolate already-fixed regression (input blowing up in some configurations when highlighter is not set but accessed by index)
+--- REVIEW/clarity: test purpose (regression catch) should be clearly communicated both in file name, suite name, opening comments
 -- Highlight shape contract.
 --
 -- The view (userInputView.render_input) reads
@@ -18,6 +20,7 @@ require("model.input.userInputModel")
 require("model.interpreter.eval.evaluator")
 require("util.string.string")
 
+--- REVIEW/coherence: does it interfere with other tests?
 if not orig_print then
   _G.orig_print = function() end
 end
@@ -30,19 +33,24 @@ describe("highlight shape contract #input", function()
 
   -- Emulates the view's exact access on the first visible
   -- char: highlight.hl[line][col]. Must not throw.
+  -- REVIEW/clarity: function name does not communicate the purpose of check unambiguously
   local function view_access_ok(model)
     local h = model:get_input().highlight
+    --- REVIEW/fidelity: does this guard betray the purpose of test?
     if h == nil then return true end
     -- the view's own access: `hl[tlc.l]` with NO `hl and`
     -- guard (userInputView.lua render_input). Replicate it
     -- unguarded so a nil `.hl` throws exactly as it does live.
+    -- REVIEW/fidelity: why check test symptom instead of bug path? (i.e. calling the function which internally could've blow up?)
     return pcall(function()
       local hl = h.hl
       return hl[1] and hl[1][1]
     end)
   end
 
+  -- REVIEW/clarity: what's the difference between three modes not explained? (especially not clear how LuaEval() is different from InputEvalLua. Maybe wrap them into aliases semantically meaningful in test context? (e.g. `ev = evaluator_without_highlighter()`, `input_with_lua_evaluator', 'input_with_text_evaluator'). Or even table (ev = evaluators['text_no_hl']; m=evaluators['lua_normal']; m=evaluators['lua_with_dummy_hl'])
   it('parser present, highlighter returns nil -> hl still indexable', function()
+    --- REVIEW/clarity/fidelity:  how LuaEval() with nil-returning highlighter is different from case#2 and case#3? it seems to be a mix of both, but not sure which production scenarios are mapped. And maybe there shold be 4 cases? ( [lua || text] x [ missing hl || returning empty ])
     local ev = LuaEval()
     ev.highlighter = function() return nil end -- parser-bearing, no colouring
     local m = UserInputModel(mockConf, ev)
@@ -50,6 +58,7 @@ describe("highlight shape contract #input", function()
     assert.is_true(view_access_ok(m))
   end)
 
+  -- REVIEW/fidelity: claims 'empty and non-empty' but its not clear what both mean and how *both* are tested
   it('standard lua eval -> hl indexable (empty and non-empty)', function()
     local m = UserInputModel(mockConf, InputEvalLua)
     assert.is_true(view_access_ok(m))

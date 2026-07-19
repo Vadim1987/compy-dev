@@ -1,22 +1,27 @@
--- cursor and text surface — split from input_contracts_spec.lua (TF1).
+-- cursor and text surface — {temporal/REVIEW: split from input_contracts_spec.lua (TF1)}.
+-- REVIEW/clarity: why the prose below describes event dispatching if the suite references active API? (getting,setting text/cursor?)
 -- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
--- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
+-- the active screen mode. Vocabulary (doc/development/internals/user_input.md, 
+--- REVIEW/clarity: route(controller) and sink(chain element in the controller) are both called 'consumer' below
+-- "Dispatch
 -- chain"): ROUTE = consumer an event is dispatched to; WIDGET = a
 -- route-managed input surface; SINK = last consumer. Tests assert
 -- observable outcomes at public seams, never method-name spies.
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
+--- REVIEW/clarity: phrase below has no verb so reads awkwardly ('"x on y (...)" -- does or means what?')
 -- get_cursor/set_cursor/set_text on the public project surface
 -- (doc/input_api.md, "API reference"; doc/development/internals/user_input.md, "Cursor
 -- manipulation and 'reset'").
 
 local F = require('tests.helpers.input_fixture')
 
-describe('input contracts: cursor and text surface #input', function()
+describe('input API: cursor and text surface', function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
+
 
   -- The cursor + text surface (doc/input_api.md, "Live
   -- reconfigure: `configure`, `set_text`, `clear`, cursor",
@@ -28,13 +33,14 @@ describe('input contracts: cursor and text surface #input', function()
   -- Decision 7 rides the
   -- same __newindex boundary as show/hide.
 
-  describe('cursor and text surface #m7', function()
 
+  describe("get_cursor", function()
     -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": active → 1-based (line, col); hidden
     -- → nil.
-    it('get_cursor reports 1-based line, col when active',
+    it('reports 1-based line, col when active',
       function()
+	--- REVIEW/fidelity: only one case is checked -- 'when active' proven, but whether this line/col really always match cursor? not clear (otoh we're against testing all corner cases). Maybe its not worth separate case -- but running few modifications and rechecking assertions would be practical?
         local input = F.compy_input()
         input.show({ text = 'hello' })
         local l, c = input.get_cursor()
@@ -42,15 +48,20 @@ describe('input contracts: cursor and text surface #input', function()
         assert.same(6, c)
       end)
 
-    it('get_cursor returns nil when hidden', function()
+    it('returns nil when hidden', function()
+      --- REVIEW/fidelity: no explicit 'hide()', no text filled -- nil could be returned just by default because input is *empty* not because its hidden
       local input = F.compy_input()
       assert.is_nil(input.get_cursor())
     end)
+ end)
+
+ describe("set_cursor", function()
 
     -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": move; out-of-range clamps to the
     -- valid range.
-    it('set_cursor moves the cursor', function()
+    
+    it('moves the cursor', function()
       local input = F.compy_input()
       input.show({ text = 'hello' })
       input.set_cursor(1, 3)
@@ -63,7 +74,7 @@ describe('input contracts: cursor and text surface #input', function()
     -- clamp-to-line-end (col 6) is distinguishable from
     -- move_cursor's fallback-to-previous (would stay col 2).
     -- Proves set_cursor_pos clamps rather than no-ops.
-    it('set_cursor clamps an over-range column', function()
+    it('clamps an over-range column', function()
       local input = F.compy_input()
       input.show({ text = 'hello' })
       input.set_cursor(1, 2)
@@ -72,7 +83,7 @@ describe('input contracts: cursor and text surface #input', function()
       assert.same(6, c) -- 'hello' end (len 5 + 1)
     end)
 
-    it('set_cursor clamps an over-range line', function()
+    it('clamps an over-range line', function()
       local input = F.compy_input()
       input.show({ text = 'hello' })
       input.set_cursor(999, 2)
@@ -82,7 +93,7 @@ describe('input contracts: cursor and text surface #input', function()
 
     -- doc/input_api.md, "API reference": hidden set_cursor
     -- no-ops and warns.
-    it('set_cursor while hidden warns and no-ops', function()
+    it('while hidden warns and no-ops', function()
       local input = F.compy_input()
       local warned = 0
       local ow = Log.warn
@@ -92,10 +103,12 @@ describe('input contracts: cursor and text surface #input', function()
       assert.equal(1, warned)
       assert.is_nil(input.get_cursor())
     end)
+ end)
 
+ describe("set_text", function()
     -- doc/input_api.md, "Live reconfigure": replace
     -- content, cursor to end.
-    it('set_text replaces content and jumps to the end',
+    it('replaces content and jumps to the end',
       function()
         local input = F.compy_input()
         input.show({ text = 'hello' })
@@ -106,35 +119,37 @@ describe('input contracts: cursor and text surface #input', function()
         assert.same(8, c) -- 'worldly' end (len 7 + 1)
       end)
 
+    describe("with keep_cursor", function()
     -- doc/input_api.md, "Live reconfigure": keep_cursor
     -- preserves position (clamped).
-    it('set_text with keep_cursor preserves the cursor',
-      function()
-        local input = F.compy_input()
-        input.show({ text = 'hello' })
-        input.set_cursor(1, 3)
-        input.set_text('world', true)
-        local l, c = input.get_cursor()
-        assert.same(1, l)
-        assert.same(3, c)
-      end)
+      it('preserves the cursor',
+        function()
+          local input = F.compy_input()
+          input.show({ text = 'hello' })
+          input.set_cursor(1, 3)
+          input.set_text('world', true)
+          local l, c = input.get_cursor()
+          assert.same(1, l)
+          assert.same(3, c)
+        end)
 
-    it('set_text keep_cursor clamps when text shrinks',
-      function()
-        local input = F.compy_input()
-        input.show({ text = 'hello' })
-        input.set_cursor(1, 5)
-        input.set_text('xy', true)
-        local _, c = input.get_cursor()
-        assert.same(3, c) -- 'xy' end (len 2 + 1)
+      it('clamps when text shrinks',
+        function()
+          local input = F.compy_input()
+          input.show({ text = 'hello' })
+          input.set_cursor(1, 5)
+          input.set_text('xy', true)
+          local _, c = input.get_cursor()
+          assert.same(3, c) -- 'xy' end (len 2 + 1)
       end)
+    end) 
 
     -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": the view reflects the change WITHOUT
     -- a re-show
     -- (the overlay handle is not re-published; the widget's
     -- own view render fires via the controller's update_view).
-    it('set_text updates the view without a re-show',
+    it('updates the view without a re-show',
       function()
         local input = F.compy_input()
         input.show({ text = 'hello' })
@@ -151,7 +166,7 @@ describe('input contracts: cursor and text surface #input', function()
 
     -- doc/input_api.md, "API reference": hidden set_text
     -- no-ops and warns.
-    it('set_text while hidden warns and no-ops', function()
+    it('while hidden warns and no-ops', function()
       local input = F.compy_input()
       local warned = 0
       local ow = Log.warn
@@ -161,6 +176,7 @@ describe('input contracts: cursor and text surface #input', function()
       assert.equal(1, warned)
       assert.is_true(F.singleton:is_empty())
     end)
+  end)
 
     -- doc/development/decisions/input.md, Decision 7: the three callables are
     -- non-assignable — the
@@ -178,5 +194,4 @@ describe('input contracts: cursor and text surface #input', function()
           input.set_text = function() end
         end)
       end)
-  end)
 end)
