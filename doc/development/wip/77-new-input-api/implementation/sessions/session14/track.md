@@ -73,3 +73,10 @@ Verdict: DI1 stands. No corrections needed. Awaiting owner approval before DI2.
 - RS2 (Sonnet): annotated ~20 opaque interim refs w/ meaning gloss + source-quote decode-map; kept every badspecref wrapper (25↔25 preserved); {jargon} untouched. Spot-checked A5/E30/C23/ratified-model/M8-01 glosses vs source — accurate. Suite 815/0/0/4.
 - **2 items for owner:** (a) RS2 also edited 4 TRACKED example files (tixy/guess/valid/repl M8-01 refs) — OUTSIDE my inventory (I scoped to input suite); HELD aside pending scope ruling. (b) FLAGGED refs (empty badspecref = owner meta-comment; #77/'this feature' self-refs; 'm7 design session' unpinnable) — left for owner.
 - Committing: core 5 files + bookkeeping. Examples held.
+
+## Wrap — 2026-07-19
+- Owner agreed both recommendations: include example glosses; leave the 4 FLAGGED refs as-is (none decodable; empty one is owner's own meta-comment; #77/'this feature' are wording nits for TF {jargon} pass).
+- Owner committed the 4 example files himself (`e868457`). Tree clean modulo known scratch.
+- Commits this session: a89fbf4/a54558c/62022fe/7b7f2f2 (DI3+DI paper trail) · 47d92f0 (RS1 paths) · 2fac6f3 (RS2 glosses) · bf135ed (RS bookkeeping) · e868457 (owner: examples).
+- Session mandate COMPLETE: DI1 revalidated clean, DI2 ruled (b), DI3 executed, + RS1/RS2 reference stabilization (Phase-A tactical amendment, owner-directed mid-session).
+- Successor S15 = **Phase TF** (test-fidelity, other half of DI/TF gate) — owner-gated start. Report + successor prompt written; pointer repointed.
