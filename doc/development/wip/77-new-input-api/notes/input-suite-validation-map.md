@@ -9,6 +9,21 @@ so the suite cleanup that follows this pass is mechanical. One row
 per doc-(A) contract. This note does not edit the suite — mapping
 only.
 
+> **DI1 refresh (session13, 2026-07-19).** This map was leveraged as
+> Axis-2 evidence by the DI1 doc-A fidelity audit
+> (`validation/outcomes/DI1-docA-fidelity.md`). DI1 verified doc A
+> against **code, not the suite** (circularity guard), and found most
+> doc-A clauses this map bridges are now either `already-covered` by
+> the persistent corpus (dominantly `internals/user_input.md`) or
+> `superseded-by-shipped` (the `[forward]` contracts landed). The
+> present-status column below (present/add/pending/…) is **left
+> untouched** — re-deriving suite rows is Phase TF's scope, not DI1's.
+> This map's three open findings are carried forward to **Phase TF**:
+> (1) the editor "routes keys" test drives `textinput`, not
+> `keypressed` (Bucket A, §5.1 editor row); (2) the §5.8 search-widget
+> gap wants a `pending(...)` row; (3) `F.reset()` exceeds the 14-line
+> function-body limit (Suite-mechanics row).
+
 Status:
 - **present** — the suite already asserts this; cited by line.
 - **add** — no coverage yet; a test (or a `pending` naming the
