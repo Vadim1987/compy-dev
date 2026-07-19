@@ -13,7 +13,13 @@
 local F = require('tests.helpers.input_fixture')
 
 describe('project_open liveness #input', function()
-  local saved_stop = F.cc.stop_project_run
+  -- Fixture is built in setup (not at module load); busted 2 insulates
+  -- _G/package.loaded per file, so this file runs standalone too.
+  setup(function() F.setup() end)
+  teardown(function() F.teardown() end)
+
+  -- Captured after the fixture is built (F.cc is nil before setup).
+  local saved_stop
 
   local function stub_stop()
     local calls = { n = 0 }
@@ -22,6 +28,7 @@ describe('project_open liveness #input', function()
   end
 
   before_each(function()
+    saved_stop = F.cc.stop_project_run
     love.state.user_input = nil
     love.state.app_state = 'ready'
     Controller.set_love_quit(F.cc)

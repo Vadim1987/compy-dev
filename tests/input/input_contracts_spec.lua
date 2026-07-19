@@ -71,6 +71,11 @@ local function make_editor_session()
 end
 
 describe('input contracts #input', function()
+  -- setup/teardown build and tear down the fixture per spec file (see
+  -- input_fixture.lua). busted 2 insulates _G/package.loaded per file,
+  -- so this pattern also makes each split file runnable standalone.
+  setup(function() F.setup() end)
+  teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
 
   -- REVIEW/DOC: fix spec references EVERYWHERE IN THE FILE (I will wrap them into {badspecref:} wherever I see them

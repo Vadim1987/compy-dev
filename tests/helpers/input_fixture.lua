@@ -120,37 +120,63 @@ local function build_singleton(cfg)
   return c
 end
 
---- REVIEW: is it safe to call functions here, instead of wrapping them into something like 'init' (callable from 'before_suite' or before_each). I am not sure what is the norm -- therefore asking
+-- The world below is built from each spec file's busted `setup()`
+-- (via F.setup), NOT at module-load time. NOTE: busted 2 already
+-- insulates _G and package.loaded per spec file (envmode='insulate'),
+-- so this is not guarding a live cross-file collision — it makes the
+-- fixture explicit and every (split) spec file runnable standalone.
+-- The line-123 REVIEW that used to sit here ("is it safe to call these
+-- at load time?") is resolved by exactly this move. F.reset (below)
+-- still runs per-test; setup/teardown bracket the whole file.
+local cfg, CC, singleton, session
 
-mock_runtime()
-enrich_gfx()
-local cfg = build_cfg()
-require_modules()
+-- F for Fixture. Fields (F.cc/console/editor/singleton/session/cfg) are
+-- nil until F.setup runs; reading them at describe-body scope is a bug.
+local F = {}
 
-local CC = build_console(cfg)
---- REVIEW/DOC: 'slots', 'gate last-resort route' sound exotic and cannot be understood without context -- dependence on 'when no widget is up' looks like abstraction leak; if its just the way framework sets the controllers when launched -- tell exactly that
--- Native slots: the gate's last-resort route when no widget
--- is up, and the route half of pointer delivery
--- (doc/development/internals/user_input.md, "Direct mouse events").
-Controller.set_love_keypressed(CC)
-Controller.set_love_keyreleased(CC)
-Controller.set_love_textinput(CC)
-Controller.set_love_mousepressed(CC)
-Controller.set_love_mousereleased(CC)
-Controller.set_love_update(CC)
-local singleton = build_singleton(cfg)
--- REVIEW/DOC: explain what the line before does and why its needed
-local session   = require('tests.helpers.input_session').new(CC)
+function F.setup()
+  if CC then return end -- already built for this spec file
+  mock_runtime()
+  enrich_gfx()
+  cfg = build_cfg()
+  require_modules()
 
--- F for Fixture
-local F = {
-  cc        = CC,
-  console   = CC.input,
-  editor    = CC.editor,
-  singleton = singleton,
-  session   = session,
-  cfg       = cfg,
-}
+  CC = build_console(cfg)
+  --- REVIEW/DOC: 'slots', 'gate last-resort route' sound exotic and cannot be understood without context -- dependence on 'when no widget is up' looks like abstraction leak; if its just the way framework sets the controllers when launched -- tell exactly that
+  -- Native slots: the gate's last-resort route when no widget
+  -- is up, and the route half of pointer delivery
+  -- (doc/development/internals/user_input.md, "Direct mouse events").
+  Controller.set_love_keypressed(CC)
+  Controller.set_love_keyreleased(CC)
+  Controller.set_love_textinput(CC)
+  Controller.set_love_mousepressed(CC)
+  Controller.set_love_mousereleased(CC)
+  Controller.set_love_update(CC)
+  singleton = build_singleton(cfg)
+  -- REVIEW/DOC: explain what the line before does and why its needed
+  session = require('tests.helpers.input_session').new(CC)
+
+  F.cc        = CC
+  F.console   = CC.input
+  F.editor    = CC.editor
+  F.singleton = singleton
+  F.session   = session
+  F.cfg       = cfg
+end
+
+-- Symmetric partner to F.setup, deliberately shallow: require-cached
+-- class globals cannot be un-required, and busted 2's per-file
+-- insulation reverts _G/package.loaded anyway — so we only undo the
+-- fixture's own semantic state and the two globals mock_love writes.
+function F.teardown()
+  if Controller and Controller.project_input then
+    Controller.project_input:deactivate()
+  end
+  _G.love, _G.TESTING = nil, nil
+  cfg, CC, singleton, session = nil, nil, nil, nil
+  F.cc, F.console, F.editor   = nil, nil, nil
+  F.singleton, F.session, F.cfg = nil, nil, nil
+end
 
 -- The project-facing public surface (compy.input.show/hide); it
 -- resolves the singleton exactly as a project does.
