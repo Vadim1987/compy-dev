@@ -149,9 +149,16 @@ at boot (ritual step 4) and move on.
     what landed, commits made, reports produced (with paths), suite count, what flipped
     pending→done, decisions taken vs escalated. The track is what makes a mid-flight death
     recoverable — anything a successor would need goes **on disk, never only in context**.
-- Evidence notes, audit reports, and per-task write-ups land **in your session directory**;
-  cross-session judgment documents (assessments, ruling sheets, plan revisions) land in
-  `implementation/reviews/`.
+- **Artifact locations (owner directive, 2026-07-19).** The session directory holds **only**
+  the session's own `prompt.md`, `track.md`, and its session `report`. Everything else this
+  phase produces lands under **`doc/development/wip/77-new-input-api/validation/`**, by kind:
+  - `validation/notes/` — evidence notes, owner attestations, per-task observations;
+  - `validation/prompts/` — sub-agent prompts of record (hygiene c);
+  - `validation/outcomes/` — sub-agent deliverables / audit reports.
+  Cross-session **judgment** documents (assessments, ruling sheets, plan revisions,
+  convergence/final-revalidation reports) continue to land in `implementation/reviews/` — that
+  convention is unchanged. Historical session dirs (01–10, and any pre-2026-07-19 artifacts)
+  are **frozen records**: do not retro-move them; the new layout applies going forward.
 - **Wrap rule (mechanical — no inference):** when the session ends (or you sense the limit),
   (a) write the close-out entry in your `track.md` (state of every open item, carryover list)
   and append `WRAPPED <date> → handover: ../sessionNN+1/prompt.md` to your `prompt.md`;
