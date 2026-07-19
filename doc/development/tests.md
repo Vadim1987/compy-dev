@@ -66,14 +66,14 @@ Tags beyond the file-level `#input`, matching implementation milestones:
 - `#m8` — the continuous-session idiom (`on_text_entered` consumes, `after_submit` re-shows), the recipe every migrated example project (tixy, repl, guess, valid) relies on.
 - `#editor` — one row testing editor-internal block navigation at the buffer limit; flagged in-file as owner-call territory for relocation to `tests/editor/`, kept for now as a regression guard.
 
-**The 4 pending tests are named gaps, not failures.** `busted tests` reports `808 successes / 0 failures / 0 errors / 4 pending` (confirmed by a live run). Each pending row documents a cell in the mode × channel routing grid that is either out of #77's scope or not black-box observable today:
+**The 4 pending tests are named gaps, not failures.** `busted tests` reports `815 successes / 0 failures / 0 errors / 4 pending` (confirmed by a live run). Each pending row documents a cell in the mode × channel routing grid that is either out of #77's scope or not black-box observable today:
 
 | Location | Row | Why it's pending, not red |
 |---|---|---|
-| `input_contracts_spec.lua:101` | `routes the key release to the console` | A key release carries no text, so console delivery has no observable mutation to assert on — only the project-route release is directly witnessed |
-| `input_contracts_spec.lua:153` | `routes the pointer to the editor` | The production editor widget disables selection, so pointer delivery has no observable outcome without extra scaffolding |
-| `input_contracts_spec.lua:161` | `routes keys and text to the search widget` | The editor search widget is a third full MVC input triad absent from the design corpus — out of #77's blast radius |
-| `input_contracts_spec.lua:222` | `touch reaches the active route` | Touch has no gateway entry yet; both the widget and route touch handlers are no-ops, so delivery isn't black-box observable. Greens when a touch consumer lands |
+| `input_contracts_spec.lua:124` | `routes the key release to the console` | A key release carries no text, so console delivery has no observable mutation to assert on — only the project-route release is directly witnessed |
+| `input_contracts_spec.lua:186` | `routes the pointer to the editor` | The production editor widget disables selection, so pointer delivery has no observable outcome without extra scaffolding |
+| `input_contracts_spec.lua:199` | `routes keys and text to the search widget` | The editor search widget is a third full MVC input triad absent from the design corpus — out of #77's blast radius |
+| `input_contracts_spec.lua:265` | `touch reaches the active route` | Touch has no gateway entry yet; both the widget and route touch handlers are no-ops, so delivery isn't black-box observable. Greens when a touch consumer lands |
 
 ---
 
