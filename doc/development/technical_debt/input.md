@@ -49,6 +49,24 @@ action; revisit at the named point).
 - **Revisit:** Next controller-focused pass; remove the branch and the
   `result` config key together if nothing is expected to resurrect them.
 
+### A truthy tier-3 return silently disables `on_limit_reached`
+
+- **Where:** `src/controller/projectInputController.lua:198-207`
+  (`_dispatch`) — tier 3 (`_generic_callback`, which calls
+  `on_key_pressed`/`on_text_input`/`on_key_released`) runs at `:205`,
+  before the tier-4 sink at `:206`; `userInputController.lua:495`
+  fires `on_limit_reached` only from inside that sink.
+- **State:** A project that overrides `on_key_pressed` (or the
+  text/release siblings) and returns truthy consumes the event at
+  tier 3, so `_dispatch` never reaches the sink and the widget's
+  `on_limit_reached` callback never fires for that keystroke — no
+  error, warning, or other signal marks the drop.
+- **Why it stands:** The truthy-consume shape (decisions/input.md,
+  Decision 2) is working as designed; it just wasn't checked against
+  this specific tier-3/tier-4 interaction. No dedicated guard exists.
+- **Revisit:** Note the coupling wherever `on_limit_reached` is
+  documented for project authors, or decide it needs a guard.
+
 ### Input-only / pointer-only projects stay live in `project_open` (RESOLVED, ruling a)
 
 - **Where:** `consoleController.lua` `run_project`
