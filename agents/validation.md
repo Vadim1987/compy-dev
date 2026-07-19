@@ -138,17 +138,9 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
 
 ## Session mechanics (strict — sweep-style discipline, sessions 01–05 pattern)
 
-Sessions 06–09 ran without tracks because no workflow document covered this phase; that
-deviation ends here. Do not retro-create the missing tracks — reconstruct predecessor outcomes
-at boot (ritual step 4) and move on.
+Sessions 06–09 ran without tracks because no workflow document covered this phase; 
 
-- One session = one directory `implementation/sessions/sessionNN/`. Two mandatory files:
-  - **`prompt.md`** — the handover, written by the predecessor: mandate + world-state. Never
-    edited by the running session except to append its final `WRAPPED` line.
-  - **`track.md`** — the running log, created at boot, appended after **every unit of work**:
-    what landed, commits made, reports produced (with paths), suite count, what flipped
-    pending→done, decisions taken vs escalated. The track is what makes a mid-flight death
-    recoverable — anything a successor would need goes **on disk, never only in context**.
+- One session = one directory `implementation/sessions/sessionNN/`. Sessions workflow: `agents/sessions.md`
 - **Artifact locations (owner directive, 2026-07-19).** The session directory holds **only**
   the session's own `prompt.md`, `track.md`, and its session `report`. Everything else this
   phase produces lands under **`doc/development/wip/77-new-input-api/validation/`**, by kind:
@@ -164,14 +156,11 @@ at boot (ritual step 4) and move on.
   and any pre-2026-07-19 artifacts) are likewise **frozen records**: do not retro-move them; the
   new layout applies going forward.
 - **Wrap rule (mechanical — no inference):** when the session ends (or you sense the limit),
-  (a) write the close-out entry in your `track.md` (state of every open item, carryover list)
-  and append `WRAPPED <date> → handover: ../sessionNN+1/prompt.md` to your `prompt.md`;
-  (b) write `sessionNN+1/prompt.md` — handover header (date, role, model-economy line, git
-  rule), what this session did, deltas to the current plan, the owner-gated queue in order,
-  standing facts/cautions; (c) repoint CURRENT PROMPT below:
+  (a) perform wrap-up per sessions workflow
+  (b) repoint CURRENT PROMPT below:
   `sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN+1\2#' agents/validation.md`
   (this file — formerly `agents/pr-prep.md`; older prompts reference it by the old name);
-  (d) commit the wrap (track + successor prompt + repointed pointer) as one `docs` commit.
+  (c) commit the wrap (track + successor prompt + repointed pointer) as one `docs` commit.
 - The phase is DONE when: rulings collected, approved corrections executed, slices regenerated,
   PR assembled (description = intent → design → ratified deviations → justification table → open
   questions), and the owner has ruled on deleting `wip/77`. Then record the close-out in the
@@ -179,7 +168,7 @@ at boot (ritual step 4) and move on.
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session12/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session13/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
