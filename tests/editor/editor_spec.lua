@@ -989,6 +989,30 @@ describe('Editor #editor', function()
       assert.same('edit', controller:get_mode())
     end)
 
+    it('the console widget keeps plain keys', function()
+      --- a console-style input: no editing flag
+      local model = UserInputModel(
+        TU.mock_view_cfg(), LuaEval(), false, 'console')
+      local con = UserInputController(model)
+      --- keypressed refreshes the view first; a stub
+      --- is enough, the spec is about the keys
+      con.view = { refresh = function() end }
+      con.update_view = function() end
+      local press = function(k) con:keypressed(k) end
+
+      model:add_text('one two')
+      mock.keystroke('C-backspace', press)
+      --- plain backspace, one character, not a word
+      assert.same({ 'one tw' }, model:get_text():items())
+
+      mock.keystroke('C-w', press)
+      assert.same({ 'one tw' }, model:get_text():items())
+
+      mock.keystroke('C-y', press)
+      --- delete-line is still the console's Ctrl+Y
+      assert.same({ '' }, model:get_text():items())
+    end)
+
     it('Ctrl+W and Ctrl+Backspace eat a word', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())

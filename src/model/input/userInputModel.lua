@@ -46,9 +46,15 @@ UserInputModel = class.create()
 --- @param eval Evaluator
 --- @param oneshot boolean?
 --- @param custom_label string?
-function UserInputModel.new(cfg, eval, oneshot, custom_label)
+--- @param editing boolean? --- the editor's rich input:
+--- word deletion (2.7) and the text-level undo (1.1).
+--- Off everywhere else — the console, project inputs and
+--- search keep the plain widget.
+function UserInputModel.new(cfg, eval, oneshot, custom_label,
+                            editing)
   local self = setmetatable({
     oneshot = oneshot,
+    editing = editing or false,
     entered = InputText(),
     history = History(cfg.input_history),
     edit_history = EditHistory(32),
@@ -118,6 +124,7 @@ end
 --- @param kind string
 --- @param boundary boolean?
 function UserInputModel:_record_edit(kind, boundary)
+  if not self.editing then return end
   self.edit_history:record(
     self:_edit_snapshot(), kind, boundary or false)
 end
@@ -125,6 +132,7 @@ end
 --- @private
 --- Remember where the mutation left the cursor
 function UserInputModel:_note_edit()
+  if not self.editing then return end
   local cl, cc = self:get_cursor_pos()
   self.edit_history:note_cursor(cl, cc)
 end
