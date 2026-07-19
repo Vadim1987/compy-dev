@@ -140,7 +140,7 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
 
 Sessions 06–09 ran without tracks because no workflow document covered this phase; 
 
-- One session = one directory `implementation/sessions/sessionNN/`. Sessions workflow: `agents/sessions.md`
+- One session = one directory `implementation/sessions/sessionNN/`. Sessions workflow (mandatory read, governs the process!): `agents/sessions.md`
 - **Artifact locations (owner directive, 2026-07-19).** The session directory holds **only**
   the session's own `prompt.md`, `track.md`, and its session `report`. Everything else this
   phase produces lands under **`doc/development/wip/77-new-input-api/validation/`**, by kind:
