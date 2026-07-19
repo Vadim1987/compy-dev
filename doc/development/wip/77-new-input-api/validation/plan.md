@@ -34,13 +34,24 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
    locally at their own discretion (2026-07-18 grant, recorded at the bottom of
    `agents/validation.md`). Unit-sized, noted in track. Never push.
 
-> **Revision 2026-07-19 (session12, Fable) — PROPOSED, owner ratification pending.** Phases
-> DI and TF below are inserted between A and B as a gate, per the owner's post-Phase-A
-> direction (`../validation/notes/2026-07-19-owner-post-phaseA.md`). Reasoning of record:
+> **Revision 2026-07-19 (session12, Fable) — RATIFIED by the owner in-session (2026-07-19),
+> with one owner amendment: per-step model recommendations injected (the bracketed
+> `[model: …]` tags below).** Model plan in one line: **Fable is required nowhere before the
+> Phase D sitting** — DI/TF and B/C are Opus-managed with Sonnet workers; Fable-consult
+> triggers are marked inline (DI2, TF3) and stay consult-in-main-session, not spawns.
+> Phases DI and TF are inserted between A and B as a gate, per the owner's post-Phase-A
+> direction (`notes/2026-07-19-owner-post-phaseA.md`). Reasoning + ratification of record:
 > [`reviews/plan-revision-2026-07-19-doc-test-gate.md`](reviews/plan-revision-2026-07-19-doc-test-gate.md).
 > Existing phase letters B–G are deliberately untouched (labels are load-bearing across frozen
-> prompts/tracks). Until the owner ratifies, the DI/TF text is a proposal; everything else in
-> this plan remains the ratified mandate.
+> prompts/tracks).
+>
+> **Recommended session layout** (session12, contesting the owner's "each step = one cold
+> session" default; owner may adjust at any wrap): session boundaries belong at owner-gates
+> and context boundaries, not per step — a ruling and its execution share fresh context, and
+> every cold boot re-pays the ritual + evidence re-read. **S13 = DI1** (big evidence job,
+> cold session earned); **S14 = DI2 sitting + DI3 execution** (+ TF1 if capacity allows —
+> DI3 and TF1 are two serial Sonnet units under one Opus); **S15 = TF1** only if spilled;
+> **S16 = TF2 + TF3** (one sitting, per TF3's own text).
 
 ## Phases
 
