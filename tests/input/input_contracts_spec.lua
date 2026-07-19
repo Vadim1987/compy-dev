@@ -3,22 +3,21 @@
 --
 -- REVIEW/DOC: no comment should point to wip/77 -- only to canonical docs
 -- REVIEW/DOC: referencing items as 'paragraph X' is insufficient and unreadable -- should reference specific named sections so they are discoverable/greppable in their doc
--- Doc A (the contract record this suite enforces):
---   doc/development/wip/77-new-input-api/notes/
---   input-contracts.md
--- Cited below as "doc A §N". Every test traces to a doc A
--- clause; the citation lives in a comment, never in the
--- test description.
+-- Every test below traces to a named section of the input
+-- corpus (decisions/input.md, internals/user_input.md); the
+-- citation lives in a comment, never in the test description.
 --
--- The one routing invariant (doc A §5.9): inter-route
--- dispatch is EXCLUSIVE for every event type. Each event
--- reaches exactly ONE route — the one fixed by the active
--- screen mode — never zero, never two. Intra-route
+-- The one routing invariant (decisions/input.md, Decision 1):
+-- inter-route dispatch is EXCLUSIVE for every event type. Each
+-- event reaches exactly ONE route — the one fixed by the
+-- active screen mode — never zero, never two. Intra-route
 -- forwarding (a route driving a surface it activated) is
 -- the route's private affair and is never asserted as a
 -- second delivery.
 --
--- Vocabulary (doc A §3): ROUTE = the consumer(controller)
+-- Vocabulary (decisions/input.md, Decision 1;
+-- internals/user_input.md, "Dispatch chain"): ROUTE = the
+-- consumer(controller)
 -- an event is dispatched to; WIDGET = a route-managed
 -- input surface; SINK = the last consumer in the dispatch
 -- chain. Tests assert observable outcomes (state or text
@@ -30,7 +29,8 @@
 -- Never a method-name spy, never love.state internals as
 -- behaviour.
 --
--- Key events vs text events (doc A §2): LÖVE fires
+-- Key events vs text events (internals/user_input.md, "Data
+-- flow"): LÖVE fires
 -- keypressed for EVERY physical key and textinput only for
 -- OS-processed character-producing keys — pressing 'q'
 -- fires both. The "keypressed = control, textinput =
@@ -79,10 +79,12 @@ describe('input contracts #input', function()
   -- Bucket A — PRESERVE (stable-now contracts; green now)
   --
   -- Keyboard, text and pointer are EXCLUSIVE on the
-  -- active route ({badspecref:doc A §5.1-5.5}): the mode-fixed route
+  -- active route (decisions/input.md, Decision 1 and Decision 2;
+  -- internals/user_input.md, "Dispatch chain"): the mode-fixed route
   -- receives, the others do not. One subgroup per mode
   -- below, so a missing mode x channel cell is visible on
-  -- sight ({badspecref: doc A §4} completeness table). Every
+  -- sight (the routing invariant, decisions/input.md
+  -- Decision 1, applied per mode x channel). Every
   -- test in this group fires its events through the
   -- installed love.handlers entries — the same dispatch
   -- path a real keystroke takes — via the driver in
@@ -94,7 +96,9 @@ describe('input contracts #input', function()
     
     -- Setup seeds text via the model; the assertion path
     -- (backspace) travels love.handlers -> {jargon:gate} -> console,
-    -- so routing itself is what is witnessed. ({badspecref: doc A §5.1}) 
+    -- so routing itself is what is witnessed (decisions/input.md,
+    -- Decision 1 and Decision 2; internals/user_input.md,
+    -- "Dispatch chain").
     it('routes keys to the console', function()
       -- REVIEW/nitpick: we can have function kind of F.console_with('ab') to distinguish between test context setup (tests-specific method, explicitly aliased in fixture) and actions under test (called as in real code)
       F.console:add_text('ab')
@@ -103,14 +107,16 @@ describe('input contracts #input', function()
       assert.is_true(F.cc.editor.input:is_empty())
     end)
 
-    -- ({badspecref:doc A §5.2}) 
+    -- (decisions/input.md, Decision 1 and Decision 2;
+    -- internals/user_input.md, "Data flow").
     it('routes text to the console', function()
       F.session.type('Z')
       assert.same({ 'Z' }, F.console:get_text())
       assert.is_true(F.cc.editor.input:is_empty())
     end)
 
-    -- SURFACED GAP ({badspecref: doc A §5.3}): console delivery of a
+    -- SURFACED GAP (internals/user_input.md, "Key
+    -- release"): console delivery of a
     -- release has no observable mutation today (a release
     -- carries no text), so only the project route is
     -- directly witnessed. Named here so the cell is
@@ -121,7 +127,8 @@ describe('input contracts #input', function()
     -- observable selection on the console route witnesses
     -- active-route pointer delivery. The precondition
     -- assert pins causality: no selection existed before
-    -- the pointer events. ({badspecref: doc A §5.5})
+    -- the pointer events. (internals/user_input.md,
+    -- "Input widget mouse").
     it('routes the pointer to the console', function()
       F.console:set_text({ 'aa', 'bb', 'cc' })
       assert.is_false(F.console.model:has_selection())
@@ -143,7 +150,9 @@ describe('input contracts #input', function()
     -- The key channel witnessed on its own: text arrives
     -- via textinput, then a KEY event (backspace) mutates
     -- the editor buffer — travelling the same gate.
-    -- ({badspecref: doc A §5.1; reviews/M4-0-04.md finding 1})
+    -- (decisions/input.md, Decision 1 and Decision 2;
+    -- internals/user_input.md, "Dispatch chain";
+    -- {badspecref: reviews/M4-0-04.md finding 1})
     it('routes keys to the editor', function()
       F.session.type('q')
       F.session.press('backspace')
@@ -151,7 +160,8 @@ describe('input contracts #input', function()
       assert.is_true(F.console:is_empty())
     end)
 
-    -- ({badspecref:doc A §5.2})
+    -- (decisions/input.md, Decision 1 and Decision 2;
+    -- internals/user_input.md, "Data flow").
     it('routes text to the editor', function()
       F.session.type('q')
       assert.same({ 'q' }, F.cc.editor.input:get_text())
@@ -159,12 +169,16 @@ describe('input contracts #input', function()
     end)
 
     -- keyreleased under editor: the console/editor fork is
-    -- CC-internal and out of {badspecref: #77's blast radius} ({badspecref:doc A
-    -- §5.3, §8}) — foundation for the future console/editor
-    -- migration; no suite row is owed under {badspecref: this feature}.
+    -- CC-internal and out of {badspecref: #77's blast radius}
+    -- (internals/user_input.md, "Key release" for the
+    -- release-channel gap; "Dispatch chain" for the future
+    -- console/editor migration note) — foundation for the future
+    -- console/editor migration; no suite row is owed under
+    -- {badspecref: this feature}.
     -- REVIEW: why not add the test then?
 
-    -- SURFACED GAP ({badspecref: doc A §5.5}): the production editor
+    -- SURFACED GAP (internals/user_input.md, "Input widget
+    -- mouse"): the production editor
     -- widget disables selection, so pointer delivery to
     -- the editor route has no observable outcome without
     -- extra scaffolding. Named, not silently absent.
@@ -188,8 +202,9 @@ describe('input contracts #input', function()
   describe('routing: project run', function()
 
     -- The project's {jargon: own love.* callback}{better: 'own (sandboxed) love.* callback' or simply "project's callback"?} is the {jargon: public seam}
-    -- witnessing delivery to the project route. ({badspecref: doc A
-    -- §5.1})
+    -- witnessing delivery to the project route.
+    -- (decisions/input.md, Decision 1 and Decision 2;
+    -- internals/user_input.md, "Dispatch chain").
     it('routes keys to the project', function()
       local got = { }
       F.running_project('keypressed', function(k)
@@ -200,7 +215,8 @@ describe('input contracts #input', function()
       assert.is_true(F.console:is_empty())
     end)
 
-    -- ({badspecref: doc A §5.2})
+    -- (decisions/input.md, Decision 1 and Decision 2;
+    -- internals/user_input.md, "Data flow").
     it('routes text to the project', function()
       local got = { }
       F.running_project('textinput', function(t)
@@ -213,7 +229,8 @@ describe('input contracts #input', function()
 
     -- A release carries no text mutation, so exclusivity
     -- is observed at the project's release callback: the
-    -- active route receives exactly once. ({badspecref: doc A §5.3})
+    -- active route receives exactly once. (internals/user_input.md,
+    -- "Key release").
     it('routes the key release to the project', function()
       local got = 0
       F.running_project('keyreleased', function()
@@ -227,7 +244,8 @@ describe('input contracts #input', function()
     -- SAME text and coordinates that produce a selection
     -- in the console-mode test above; with the project
     -- route active no selection may appear — the pointer
-    -- went to exactly one route. ({badspecref: doc A §5.5})
+    -- went to exactly one route. (internals/user_input.md,
+    -- "Direct mouse events").
     it('routes the pointer to the project', function()
       local got = 0
       F.running_project('mousepressed', function()
@@ -239,7 +257,8 @@ describe('input contracts #input', function()
       assert.is_false(F.console.model:has_selection())
     end)
 
-    -- SURFACED GAP ({badspecref: doc A §5.6}): touch has no gateway
+    -- SURFACED GAP (internals/user_input.md, "Touch"):
+    -- touch has no gateway
     -- entry today and both the widget and route touch
     -- handlers are no-ops, so delivery is not black-box
     -- observable. Greens when a touch consumer lands.
@@ -275,8 +294,9 @@ describe('input contracts #input', function()
       -- 'dev' that a developer runs it to work on it.
       -- 'play' narrows the shortcut set so a player cannot
       -- manage projects: restart/profile stay live,
-      -- quit/stop/quickswitch do not ({badspecref: doc A
-      -- §6.3)}. The shared fixture is built in dev mode, so
+      -- quit/stop/quickswitch do not (decisions/input.md,
+      -- Decision 1; internals/user_input.md, "Dispatch
+      -- chain"). The shared fixture is built in dev mode, so
       -- this test wires a private play-mode stub controller
       -- and saves/restores the shared love.handlers around
       -- it.
@@ -516,7 +536,8 @@ describe('input contracts #input', function()
   -- REVIEW: this test in this form should be relocated under tests/editor. Input contract should test delivery *and only if editor really relies on it* (situation where editor *may* not rely on it: just counting keystrokes itself and translating them into files' coordinates with every move -- therefore block-nav is triggered not by event emitted by input widget, but by the mere fact that internal navigation map says the cursor in 'project space' is no more inside current selection lines)
   -- OPEN (owner call, carried from the review passes):
   -- this row tests editor-INTERNAL block navigation at
-  -- the buffer limit, not a doc A routing contract. It
+  -- the buffer limit, not a routing contract of the kind
+  -- decisions/input.md, Decision 1, asserts. It
   -- drives EditorController directly (editor_session),
   -- below the gate. Kept because it guards the later
   -- is_at_limit line-scope rewrite from regressing
@@ -579,7 +600,8 @@ describe('input contracts #input', function()
         assert.is_true(F.singleton:is_empty())
       end)
 
-      -- wheel ({badspecref: doc A §5.7}): {jargon: the gateway has no wheel
+      -- wheel (internals/user_input.md, "Direct mouse
+      -- events"): {jargon: the gateway has no wheel
       -- entry, so the framework forwards nothing; only a
       -- project's own love.wheelmoved consumes it}. No
       -- example project consumes it today. Mechanism-by-
@@ -660,7 +682,11 @@ describe('input contracts #input', function()
       -- Singleton identity across show/hide (NFR): today
       -- only the overlay singleton is wired; wiring the
       -- console/editor/search widgets to it is a future
-      -- consideration ({badspecref: doc A §8}), not asserted
+      -- consideration, out of #77 blast radius (see
+      -- internals/user_input.md: "Key release", "Dispatch
+      -- chain", "Search — a third widget instance, live only
+      -- in editor/search mode", "Cursor manipulation and
+      -- 'reset'" for the related surfaces), not asserted
       -- here.
       -- REVIEW: do we have pending tests outlined for future consideration?
       it('the widget keeps identity across cycles',
@@ -1654,8 +1680,7 @@ describe('input contracts #input', function()
       assert.same({ 'a' }, F.console:get_text())
     end)
 
-    -- decisions/input.md, Decision 11
-    -- ({badspecref: design.md §4}): pointer is explicitly
+    -- decisions/input.md, Decision 11: pointer is explicitly
     -- NOT part of that disconnect -- a pen-and-paper
     -- project (sapper-like) stays clickable in
     -- 'project_open'.

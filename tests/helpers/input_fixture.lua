@@ -6,9 +6,6 @@
 -- tests/helpers/input_session). All MVC/gfx/font
 -- boilerplate the suite needs lives here; consumed, never
 -- copied.
--- "doc A" = the contract record: {badspecref:
--- doc/development/wip/77-new-input-api/notes/
--- input-contracts.md}
 
 -- view.view stub: the real module calls gfx.newFont at load and
 -- needs a graphics context absent here. Set BEFORE any view
@@ -134,7 +131,7 @@ local CC = build_console(cfg)
 --- REVIEW/DOC: 'slots', 'gate last-resort route' sound exotic and cannot be understood without context -- dependence on 'when no widget is up' looks like abstraction leak; if its just the way framework sets the controllers when launched -- tell exactly that
 -- Native slots: the gate's last-resort route when no widget
 -- is up, and the route half of pointer delivery
--- ({badspecref: doc A §5.5}).
+-- (internals/user_input.md, "Direct mouse events").
 Controller.set_love_keypressed(CC)
 Controller.set_love_keyreleased(CC)
 Controller.set_love_textinput(CC)
@@ -165,7 +162,8 @@ end
 -- REVIEW: maybe we should instead use common method 'project_compy_namespace' (which encapsulates CC:get_project_env().compy), and let calling code work from there? (explicirly setting and getting .input, or other attributes)
 -- Register a project click handler
 -- (compy.singleclick/doubleclick), the target the framework
--- click path invokes ({badspecref: doc A §6.7}).
+-- click path invokes (internals/user_input.md,
+-- "Framework-level click handling").
 function F.set_compy_handler(name, fn)
   CC:get_project_env().compy[name] = fn
 end
@@ -218,7 +216,8 @@ end
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
 -- singleton disables selection, making pointer delivery a no-op —
--- doc A §5.5). Witnesses pointer delivery to the widget half.
+-- internals/user_input.md, "Input widget mouse"). Witnesses
+-- pointer delivery to the widget half.
 function F.show_selectable_widget(lines)
   local m = UserInputModel(cfg, InputEvalText)
   local w = UserInputController(m, nil, false)
