@@ -34,10 +34,20 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
    locally at their own discretion (2026-07-18 grant, recorded at the bottom of
    `agents/validation.md`). Unit-sized, noted in track. Never push.
 
+> **Revision 2026-07-19 (session12, Fable) — PROPOSED, owner ratification pending.** Phases
+> DI and TF below are inserted between A and B as a gate, per the owner's post-Phase-A
+> direction (`../validation/notes/2026-07-19-owner-post-phaseA.md`). Reasoning of record:
+> [`reviews/plan-revision-2026-07-19-doc-test-gate.md`](reviews/plan-revision-2026-07-19-doc-test-gate.md).
+> Existing phase letters B–G are deliberately untouched (labels are load-bearing across frozen
+> prompts/tracks). Until the owner ratifies, the DI/TF text is a proposal; everything else in
+> this plan remains the ratified mandate.
+
 ## Phases
 
 Ordering is load-bearing: A3 (test fidelity) precedes any ruling that cites green tests
-(standing constraint); slice regeneration is always LAST.
+(standing constraint); slice regeneration is always LAST. [PROPOSED 2026-07-19: Phase B is
+additionally gated on DI + TF below — doc-integrity and test-fidelity first, and B *consumes*
+DI1's verdict table instead of re-deriving it.]
 
 ### Phase A — Mechanical integrity (Sonnet workers, Opus orchestrates; no owner gate)
 
@@ -56,7 +66,65 @@ Ordering is load-bearing: A3 (test fidelity) precedes any ruling that cites gree
 - Sub-agent hygiene rules (a) LSP told, (b) delegate down, (c) prompts+results on disk —
   per `agents/validation.md`, every spawn.
 
+### Phase DI — Doc integrity: doc A disposition (PROPOSED 2026-07-19; gate, part 1)
+
+"Doc A" = `wip/77-new-input-api/notes/input-contracts.md` — the pre-implementation contract
+record ~30 test/fixture comments still cite (A1 inventory's dominant family), slated for
+deletion with `wip/77`. Verified this session: its temporal frame is inverted by the shipped
+code (its "forward" §7 largely landed — `ProjectInputController` is real; its "today"
+mechanism notes describe the pre-rewrite world, though `get_user_input` survives
+reinterpreted as the console route's intra-route forward), and it names its own unmet
+promotion preconditions ("human-approved: NOT YET"; m6/m7 outcomes absent from §7).
+
+- **DI1. Doc-A fidelity audit** (Sonnet evidence, orchestrator consolidates; hygiene a/b/c).
+  Per-section verdict table: still-true / stale-mechanism / superseded-by-shipped /
+  already-covered-in-corpus (cite where) / unique-no-home. **Verify against code (LSP +
+  grep), never against the suite** — the suite's own fidelity is Phase TF's question; using
+  it as witness is circular. Leverage + refresh `notes/input-suite-validation-map.md` (the
+  clause→test bridge; carries one open coverage-gap finding already). Fold in known corpus
+  drift: `doc/development/tests.md` suite section says 808 and cites stale pending line
+  numbers (real: 815/0/0/4; pendings 118/172/185/246).
+  Output: `validation/outcomes/DI1-docA-fidelity.md`.
+- **DI2. Owner ruling — promotion form (OWNER-GATED).** Options with DI1 evidence attached:
+  (a) promote a re-baselined doc A as a new corpus doc; (b) merge surviving unique content
+  into existing corpus homes (`internals/user_input.md`, `decisions/input.md`,
+  `technical_debt/input.md`), doc A stays a frozen wip record; (c) no promotion — reword the
+  ~30 clause refs to cite behaviour/corpus. Session12 prior (to be tested by DI1): (b).
+- **DI3. Execute the ruling** (Sonnet mechanical): content moves/merges; re-run the A1
+  retarget over the doc-A family (incl. `input_fixture.lua`'s "doc A" definition and the
+  `design.md §4` sibling); refresh `tests.md` facts. The ~25 non-doc-A inventory refs
+  (milestone marks, review-doc citations, process artifacts) are **NOT absorbed** — they
+  need rulings, not homes: they remain Phase C evidence. Doc A itself stays unedited in
+  place regardless of outcome; `design/` stays frozen.
+
+### Phase TF — Test-fidelity deepening, owner-in-the-loop (PROPOSED 2026-07-19; gate, part 2)
+
+Runs after DI (owner's coupling: split only once comments are final; deeper reason: the
+owner reviews the suite *against* the validated doc via the refreshed validation map —
+DI is what makes TF2 cheap).
+
+- **TF1. Split `tests/input/input_contracts_spec.lua`** (Sonnet mechanical) into
+  human-reviewable files along its describe/bucket boundaries (19 inner describes, clean
+  thematic seams). **Behaviour-preservation contract: suite count identical 815/0/0/4, same
+  tags, same four pendings.** The one real risk: the shared fixture builds at file-require
+  time — any cross-describe state coupling riding file-scope ordering must be found and
+  surfaced, not papered over. Update `tests.md` (its "comment header, not a file split"
+  sentence is superseded by the owner's direction).
+- **TF2. Owner human review of the split suite (OWNER-GATED, interactive — never started
+  unprompted).** Hints recorded to `validation/notes/`.
+- **TF3. Evaluate hints + triage** — hint-scoped fidelity re-check (NOT a re-audit;
+  guardrail 1 stands): mechanical fixes land per hint; judgment items are **pooled with
+  A2's two standing fixture-architecture questions** (wrap-native helper; play-mode
+  fixture) into one triage list, ruled in the same sitting as TF2 where possible.
+  Principle-shaped leftovers roll to Phase C/D; nothing dropped.
+
+**Gate:** Phase B starts only when the owner declares DI + TF accepted.
+
 ### Phase B — Convergence check (Opus; judgment-lite; NO code edits)
+
+[PROPOSED 2026-07-19 addendum: B consumes DI1's verdict table as its evidence base for the
+input-routing domain — it does not re-derive code-vs-contract facts. B keeps its own
+altitude: intent-level deviation judgment and scaffolding-suspect hunting.]
 
 Check the delivered solution (code + persistent docs) against `design/` and original
 stakeholder intent ("simpler and more robust input API"; PR reviewable from
