@@ -289,7 +289,9 @@ end
 -- singleton is the one view that skips this continuous
 -- per-frame update_view() ("a transitional workaround until
 -- rerenders are worked out",
--- {badspecref: commit 7b4422c}) — identity now stands in
+-- {badspecref: commit 7b4422c} — "feat(uiv): render
+-- before draw on non-oneshot inputs") — identity now
+-- stands in
 -- for what oneshot used to flag, since it was the only
 -- oneshot=true instance in production.
 -- REVIEW: need better explanation of the logic and justification for the decision -- why exactly redraw is skipped when controller is active? why singleton identity is used as a check? will this check survive when/if we replug Console/Editor to the same singleton?

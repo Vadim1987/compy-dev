@@ -271,8 +271,10 @@ local open_fresh = function(self, cfg)
   -- change but the flag persists (doc/development/internals/user_input.md,
   -- "Singleton lifecycle"). NOTE: factoring this into a
   -- named setup_legacy_user_input() and the open_fresh/init
-  -- naming are open {badspecref: A5} items (see
-  -- {badspecref: M2-human-review.md}) — deferred to the
+  -- naming are open {badspecref: A5} items (M2 agenda A5,
+  -- singleton lifecycle contract; see
+  -- {badspecref: M2-human-review.md} implementation/
+  -- reviews/M2-human-review.md) — deferred to the
   -- {badspecref: 0.1.0-m4} architect pass, not changed here.
   love.state.user_input = {
     M = self.model,
@@ -314,8 +316,10 @@ end
 --- draw loop (controller.lua) paints V:draw() only while
 --- the flag is set, so nil-ing it stops the paint on the
 --- next frame. (Flag-presence vs. querying controller state
---- is the {badspecref: A5} contract question — see
---- {badspecref: M2-human-review.md}.)
+--- is the {badspecref: A5} contract question (M2 agenda
+--- A5) — see
+--- {badspecref: M2-human-review.md} (implementation/
+--- reviews/M2-human-review.md).)
 function UserInputController:hide()
   love.state.user_input = nil
 end
@@ -404,7 +408,9 @@ end
 --- assembled text, deliver + deactivate on accept, lock on
 --- reject. An empty input submits nothing (pre-existing
 --- solicitation behaviour, carried unchanged — not an
---- {badspecref: AC-17..26} concern).
+--- {badspecref: AC-17..26} concern — design/spec/
+--- M5c-dispatch-chain.md, submit/cancel acceptance
+--- criteria).
 --- @return string? text  delivered text; nil on reject/empty
 function UserInputController:submit()
   if self.model:get_text():is_empty() then return nil end
@@ -464,7 +470,8 @@ end
 -- This handler now receives the uniform
 -- (k, keys_pressed, isr) triple (doc/development/decisions/input.md,
 -- Decision 9; resolves the {badspecref: m4/m5 A2} open
--- note).
+-- note — M2 agenda A2, keys_pressed-as-2nd-arg to text
+-- handlers, closed by M4/M5 dispatch design).
 -- Its own editing logic still reads modifiers via Key.*
 -- (love.keyboard) — widening that to the keys_pressed
 -- proxy is not required here, but recommended in the

@@ -362,8 +362,12 @@ function love.load()
   -- (mirroring the Console M/V/C triple above) and injected,
   -- not self-provisioned by the controller. Whether the
   -- controller should own its model/view construction is the
-  -- open {badspecref: A5} question — see {badspecref:
-  -- implementation/reviews/M2-human-review.md}.
+  -- open {badspecref: A5} question (M2 agenda A5,
+  -- singleton lifecycle / overlay-draw-flag contract) —
+  -- see {badspecref:
+  -- implementation/reviews/M2-human-review.md} (doc/
+  -- development/wip/77-new-input-api/implementation/
+  -- reviews/M2-human-review.md).
   local ui_m = UserInputModel(baseconf, InputEvalText)
   local ui_c = UserInputController(ui_m, nil, true)
   local ui_v = UserInputView(baseconf.view, ui_c)
@@ -373,7 +377,7 @@ function love.load()
   -- wrappers and the overlay draw path resolve the
   -- controller through love.state (service-locator pattern;
   -- the flag/registry shape is part of the
-  -- {badspecref: A5} contract question).
+  -- {badspecref: A5} contract question — M2 agenda A5).
   love.state.user_input_controller = ui_c
 
   ctrl.setup_callback_handlers(CC)

@@ -152,7 +152,10 @@ describe('input contracts #input', function()
     -- the editor buffer — travelling the same gate.
     -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
     -- doc/development/internals/user_input.md, "Dispatch chain";
-    -- {badspecref: reviews/M4-0-04.md finding 1})
+    -- {badspecref: reviews/M4-0-04.md finding 1} — editor
+    -- keypressed-EXCLUSIVE had zero regression coverage;
+    -- see doc/development/wip/77-new-input-api/
+    -- implementation/reviews/M4-0-04.md, "Finding 1")
     it('routes keys to the editor', function()
       F.session.type('q')
       F.session.press('backspace')
@@ -725,16 +728,21 @@ describe('input contracts #input', function()
     function()
 
       -- Retargeted ({badspecref: E30} {badspecref:
-      -- Scope-10(a)}): stop's DISTINCTIVE
+      -- Scope-10(a)} — cold session, route-restoration =
+      -- active route/mode, not slot restore; design/spec/
+      -- M5c-dispatch-chain.md "Resolved (E30..."): stop's
+      -- DISTINCTIVE
       -- contract is the full teardown, not "keyboard route
       -- == console" -- that end state is shared by
       -- project-exit and inspect too, so it does not by
       -- itself distinguish stop (see {badspecref:
       -- M5c-dispatch-chain.md}
-      -- {badspecref: Scope item 10(a)}). The
+      -- {badspecref: Scope item 10(a)} — same doc, same
+      -- "Resolved (E30..." section). The
       -- Controller.active_keyboard_
       -- route() accessor this row used is dropped ({badspecref:
-      -- C23}: no
+      -- C23} — QUALITY item, reviews/
+      -- m4-architect-pushback.md: no
       -- unconsumed public surface -- its only production-
       -- code reader was this row; controller.lua:998-999).
       -- Retargeted to doc/development/decisions/input.md, Decision 11's
@@ -1147,7 +1155,9 @@ describe('input contracts #input', function()
       end)
 
     -- doc/development/decisions/input.md, Decision 10 precedence
-    -- ({badspecref: E30}): an explicit on_* takes
+    -- ({badspecref: E30} — cold session resolving
+    -- assign-replaces-capture to precedence-not-replace):
+    -- an explicit on_* takes
     -- precedence over the captured {jargon: native} — the
     -- {jargon: native} never
     -- seeds the {jargon: slot} when an on_* is set (no
@@ -1656,7 +1666,9 @@ describe('input contracts #input', function()
   -- decision), inspect
   -- (doc/development/decisions/input.md, Decision 12), and the
   -- compy.before_exit stop hook
-  -- ({badspecref: M6-02-before-exit.md}). All rows drive the
+  -- ({badspecref: M6-02-before-exit.md} — Layer-1 T3-leak
+  -- restore hook spec, design/spec/M6-02-before-exit.md).
+  -- All rows drive the
   -- REAL
   -- production functions (Controller.release_keyboard_
   -- route, ConsoleController:stop_project_run/:suspend),
@@ -1665,7 +1677,9 @@ describe('input contracts #input', function()
   describe('route connection lifecycle #m5c', function()
 
     -- doc/development/decisions/input.md, Decision 11 ({badspecref:
-    -- ratified-model ruling 3}): the route
+    -- ratified-model ruling 3} — Gate-1 ratified-model.md:
+    -- project route connects only while 'running'): the
+    -- route
     -- owns keyboard/text only while 'running' -- a
     -- non-blocking run's exit restores console text entry.
     it('the console regains text entry when a ' ..
@@ -1715,7 +1729,8 @@ describe('input contracts #input', function()
     end)
 
     -- doc/development/decisions/input.md, Decision 11 + {badspecref: spec
-    -- §10} edge case: a
+    -- §10} edge case (design/spec.md §10 "Project stops
+    -- while widget shown" row): a
     -- widget left shown at
     -- stop is silently hidden -- teardown is not a cancel,
     -- so no cancel chain fires (contrast Decision 6).
@@ -1757,7 +1772,9 @@ describe('input contracts #input', function()
       end)
 
     -- doc/development/decisions/input.md, Decision 12 ({badspecref:
-    -- ratified-model R11}): inspect is the console
+    -- ratified-model R11} — design/notes/
+    -- ratified-model.md, "inspect is a mode→route
+    -- line, nothing more"): inspect is the console
     -- bound over the project env -- the project route
     -- disconnects and its widget goes unhonoured.
     it('inspect disconnects the project route and its ' ..
@@ -1771,7 +1788,9 @@ describe('input contracts #input', function()
       assert.same({ 'x' }, F.singleton:get_text())
     end)
 
-    -- {badspecref: M6-02}: compy.before_exit fires once on
+    -- {badspecref: M6-02} (design/spec/
+    -- M6-02-before-exit.md): compy.before_exit fires once
+    -- on
     -- stop, before
     -- the framework's own cleanup runs (love.* calls
     -- inside it are still safe).
@@ -1789,7 +1808,8 @@ describe('input contracts #input', function()
       assert.equal('running', state_at_fire)
     end)
 
-    -- {badspecref: M6-02}: the hook resets to its noop default
+    -- {badspecref: M6-02} (design/spec/
+    -- M6-02-before-exit.md): the hook resets to noop default
     -- on stop
     -- -- same lifecycle as compy.input's before_/after_
     -- hooks (doc/development/decisions/input.md, Decision 11).
@@ -1968,8 +1988,11 @@ describe('input contracts #input', function()
 
   -- ====================================================
   -- Live reconfigure + clear (configure/clear, closing
-  -- the {badspecref: M7-01} re-target boundary — the
-  -- {badspecref: M7-02-recut} spec's
+  -- the {badspecref: M7-01} re-target boundary (design/
+  -- spec/M7-01-retarget.md: can an active session's
+  -- result sink / evaluator be re-targeted?) — the
+  -- {badspecref: M7-02-recut} spec's (design/spec/
+  -- M7-02-recut.md, extended widget-surface API)
   -- Contract). The former 'later forward contracts' anchor
   -- ('configure/set_text/cursor, force-vs-configure') is
   -- now fully authored: set_text/cursor above, configure/
@@ -2201,7 +2224,7 @@ describe('input contracts #input', function()
   -- on, before any example is touched.
   --
   -- SURFACED ({jargon: surprise-first}, see {badspecref: M8-01}
-  -- ledger):
+  -- ledger, implementation/outcomes/M8-01.md, surprise #1):
   -- before_submit/after_submit/before_cancel/after_cancel
   -- are NOT among show()'s merged cfg keys (only
   -- on_text_entered/on_limit_reached/validator/highlighter
@@ -2269,7 +2292,7 @@ describe('input contracts #input', function()
     -- framework tier-1 chains")
     -- must survive the after_submit bare re-show, not the
     -- show()-time prompt. Model-sticky per {badspecref: M8-01}
-    -- surprise #2
+    -- surprise #2 (implementation/outcomes/M8-01.md)
     -- + doc/input_api.md, "The continuous-session idiom"'s
     -- apply_config: custom_label is
     -- only overwritten
