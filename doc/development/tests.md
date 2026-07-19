@@ -30,7 +30,7 @@ Assessment of `tests/` relative to the codebase and the knowledge base under `do
 | Interpreter pipeline | `parser_spec`, `chunker_spec`, `analyzer_spec` (incl. `ast_to_src`), `ast_spec`, `eval_spec`, `error_spec`, `markdown_spec` |
 | Editor model + view | `buffer_spec`, `chunker_spec`, `editor_spec`, `visible_content_spec`, `visible_structured_content_spec` |
 | Input widget | `input_text_spec`, `cursor_spec`, `history_spec`, `input_spec`, `user_input_model_spec`, `user_input_view_spec` |
-| Input routing / dispatch contracts (feature #77) | `input_contracts_spec` (`#input`), `keys_pressed_spec` |
+| Input routing / dispatch contracts (feature #77) | the `input_*_spec.lua` contract suite (`#input`; see Input Contract Suite below), `keys_pressed_spec` |
 
 `analyzer_spec.lua` tests `parser.ast_to_src` — the pretty-printer central to the editor submit pipeline. It is the primary executable specification for that function's formatting behaviour.
 
@@ -38,10 +38,10 @@ Assessment of `tests/` relative to the codebase and the knowledge base under `do
 
 | Area | Notes |
 |---|---|
-| `ConsoleController` | Deeply coupled to LÖVE2D runtime state; exercised by harmony integration tests instead. `input_contracts_spec` now stands up a REAL instance (gfx/font stubbed) as the input suite's routing target, but only its input-routing role is exercised — its own save/restore/snapshot behaviour is not |
-| `Controller.lua` | Draw override detection. Click detection timer + handler registration are now covered by `input_contracts_spec`'s "framework click detection" and dispatch-chain rows |
+| `ConsoleController` | Deeply coupled to LÖVE2D runtime state; exercised by harmony integration tests instead. The input contract suite now stands up a REAL instance (gfx/font stubbed) as its routing target, but only its input-routing role is exercised — its own save/restore/snapshot behaviour is not |
+| `Controller.lua` | Draw override detection. Click detection timer + handler registration are now covered by `input_shortcuts_click_spec`'s "framework click detection" and the `input_dispatch_chain_spec` rows |
 | `ProjectService` | File I/O, project open/create, filesystem mount |
-| `SearchModel` / `SearchController` | No tests. The editor search widget is likewise untested — see `input_contracts_spec`'s named pending gap below |
+| `SearchModel` / `SearchController` | No tests. The editor search widget is likewise untested — see `input_routing_spec`'s named pending gap below |
 | Drawing system | Depends on LÖVE2D graphics context |
 | Views (rendering) | Expected; view testing requires LÖVE2D |
 
@@ -49,9 +49,9 @@ Assessment of `tests/` relative to the codebase and the knowledge base under `do
 
 ## Input Contract Suite (feature #77)
 
-`tests/input/input_contracts_spec.lua` is the large `#input` suite added for the new input API. It enforces "doc A" — the contract record at `doc/development/wip/77-new-input-api/notes/input-contracts.md` — with every test tracing to a doc A clause cited in a comment (never in the test description). It drives the real production path throughout: the REAL `love.handlers` gate, a REAL `ConsoleController`, and the real project-activation call (`Controller.set_user_handlers`) via the `input_fixture`/`input_session` helpers described above — never a spy on an internal method except one deliberately-noted sink-signature row.
+The `#input` contract suite for the new input API originally lived in one large file (`input_contracts_spec.lua`); in feature-#77 validation (TF1) it was split along cognitive seams into nine `input_*_spec.lua` files under `tests/input/`: `input_routing_spec`, `input_shortcuts_click_spec`, `input_widget_lifecycle_spec`, `input_nfr_forward_spec`, `input_dispatch_chain_spec`, `input_widget_io_spec`, `input_route_lifecycle_spec`, `input_cursor_text_spec`, and `input_reconfigure_spec`. Each carries the file-level `#input` tag and builds the shared `input_fixture` from a `setup()` hook (torn down in `teardown()`, reset per test in `before_each`) — so every file is runnable standalone. The suite enforces the input contract — every test tracing to a corpus clause cited in a comment (never in the test description). It drives the real production path throughout: the REAL `love.handlers` gate, a REAL `ConsoleController`, and the real project-activation call (`Controller.set_user_handlers`) via the `input_fixture`/`input_session` helpers described above — never a spy on an internal method except one deliberately-noted sink-signature row.
 
-Tests are organised into four labelled buckets (a comment header, not a file split), so a reader can tell a stable guarantee from a forward-looking one at a glance:
+Tests carry four labelled organising buckets (in-comment labels; the file split largely follows them), so a reader can tell a stable guarantee from a forward-looking one at a glance:
 
 - **A PRESERVE** — stable-now contracts, green today (e.g. routing exclusivity, widget activation/reset, hidden-widget non-consumption).
 - **B IMPLEMENT** — forward contracts, carried `pending` until the named milestone lands.
@@ -70,10 +70,10 @@ Tags beyond the file-level `#input`, matching implementation milestones:
 
 | Location | Row | Why it's pending, not red |
 |---|---|---|
-| `input_contracts_spec.lua:124` | `routes the key release to the console` | A key release carries no text, so console delivery has no observable mutation to assert on — only the project-route release is directly witnessed |
-| `input_contracts_spec.lua:186` | `routes the pointer to the editor` | The production editor widget disables selection, so pointer delivery has no observable outcome without extra scaffolding |
-| `input_contracts_spec.lua:199` | `routes keys and text to the search widget` | The editor search widget is a third full MVC input triad absent from the design corpus — out of #77's blast radius |
-| `input_contracts_spec.lua:265` | `touch reaches the active route` | Touch has no gateway entry yet; both the widget and route touch handlers are no-ops, so delivery isn't black-box observable. Greens when a touch consumer lands |
+| `input_routing_spec.lua:80` | `routes the key release to the console` | A key release carries no text, so console delivery has no observable mutation to assert on — only the project-route release is directly witnessed |
+| `input_routing_spec.lua:145` | `routes the pointer to the editor` | The production editor widget disables selection, so pointer delivery has no observable outcome without extra scaffolding |
+| `input_routing_spec.lua:158` | `routes keys and text to the search widget` | The editor search widget is a third full MVC input triad absent from the design corpus — out of #77's blast radius |
+| `input_routing_spec.lua:224` | `touch reaches the active route` | Touch has no gateway entry yet; both the widget and route touch handlers are no-ops, so delivery isn't black-box observable. Greens when a touch consumer lands |
 
 ---
 
@@ -81,4 +81,4 @@ Tags beyond the file-level `#input`, matching implementation milestones:
 
 **SearchModel** is the one covered subsystem without tests that doesn't require a graphics context. The narrowing logic (`Search:narrow` with case-insensitive substring match) and selection scroll could be unit-tested similarly to `history_spec`.
 
-**Tag organisation** — `.busted` excludes `delay`-tagged tests by default. Tags in active use: `#parser`, `#chunk`, `#analyzer`, `#ast`, `#src`, `#editor`, `#input`, `#markdown`, `#visible`, plus the feature #77 milestone tags `#legacy`, `#m5c`, `#m7`, `#m8` (all within `input_contracts_spec.lua`; see the Input Contract Suite section above). No tests currently use the `delay` tag, so the exclude is defensive rather than active.
+**Tag organisation** — `.busted` excludes `delay`-tagged tests by default. Tags in active use: `#parser`, `#chunk`, `#analyzer`, `#ast`, `#src`, `#editor`, `#input`, `#markdown`, `#visible`, plus the feature #77 milestone tags `#legacy`, `#m5c`, `#m7`, `#m8` (across the `input_*_spec.lua` contract files; see the Input Contract Suite section above). No tests currently use the `delay` tag, so the exclude is defensive rather than active.

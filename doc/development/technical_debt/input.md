@@ -303,7 +303,7 @@ Not commissioned for closure; each may never need action.
 
 ### Touch delivery is not black-box expressible today
 
-- **Where:** `tests/input/input_contracts_spec.lua` — the pointer
+- **Where:** `tests/input/input_routing_spec.lua` — the pointer
   exclusivity block carries `pending('touch reaches the active route')`.
 - **State:** Both the widget's and the route's touch handlers are no-op
   TODO stubs, so touch delivery mutates no observable state anywhere; a
@@ -353,7 +353,7 @@ Not commissioned for closure; each may never need action.
 ### Force-path "does not warn" coverage gap
 
 - **Where:** the config-suppression warning test coverage
-  (`tests/input/input_contracts_spec.lua`).
+  (`tests/input/input_widget_lifecycle_spec.lua`, the widget activation/reset block).
 - **State:** The suite covers "a non-forced re-show while active warns
   once", but there is no explicit assertion that the sanctioned `force`
   override path warns zero times. That guarantee is the inverse of the
