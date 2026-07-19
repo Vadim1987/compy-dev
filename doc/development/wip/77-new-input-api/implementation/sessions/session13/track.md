@@ -113,3 +113,19 @@ Pivotal mechanism reality, so workers don't recontest and I have ground truth to
   into (b) since content is already homed. **DI2 is owner-gated — presented, not ruled.**
 - Gate status: DI1 (my task) complete; awaiting owner review before wrap. DI2/DI3 = next session
   per recommended layout (S14).
+
+## Wrap — 2026-07-19
+
+- Owner accepted DI1 and ruled: **go with the ratified recommended layout** (DI2 sitting + DI3
+  execution → S14); **wrap S13 now**. No changes requested to the audit — DI1 stands as approved.
+- DI1 unit committed `0628087` (docs, local). Wrap artifacts: `session13/report.md` (distilled
+  outcome + non-obvious points), `session14/prompt.md` (successor). DI1 was cognitive-heavy →
+  successor framed as **revalidate DI1** (per `agents/rules/revalidation.md`) **then** DI2+DI3,
+  reconciling the sessions.md revalidation rule with the plan's S14=DI2+DI3 layout (revalidation
+  is the natural first step before ruling on DI1's evidence).
+- Created session14/ as `agent` (not root) to avoid the boot chown repeat. Repointed CURRENT
+  PROMPT → session14. Wrap committed as one docs commit.
+- Handover essentials for S14: DI1 confirms DI2 option **(b) merge**; the four FALSE doc-A claims
+  and the `unique-no-home` residue (§9-item-3 → technical_debt; §9-item-2 one-liner → internals)
+  are what DI3 acts on; `tests.md` 808→815 drift fix is a DI3 action; doc A stays unedited in
+  place; design/ frozen.
