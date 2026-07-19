@@ -45,3 +45,5 @@ sitting — do not start it unprompted; tell the owner when C is ready.**
 - Known anomalies to leave alone: `agents/validation.md` guardrail 3. `design/` files
   stay unedited (history); challenges to design go through Phase C/D as proposals.
 - `wip/77` deletion is owner-gated, never automatic.
+
+WRAPPED 2026-07-19 → handover: ../session12/prompt.md
