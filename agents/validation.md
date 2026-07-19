@@ -1,5 +1,6 @@
 # PR-prep session — feature-review boot pointer (the pre-PR architect-assistant plane)
 
+
 Point a fresh session here (repo root = cwd) to run/resume the **#77 pre-PR phase**. This is the
 successor plane to `agents/sweep.md` (the milestone sweep — COMPLETE, do not re-run) and the
 **highest-level plane of the feature**: you work as the owner-architect's counterpart —
@@ -13,6 +14,7 @@ owner and revisable, not a frozen mandate.
 
 ## Boot ritual (mechanical — do this in order, before any work)
 
+0. Read agents/sessions.md first to understand the rules for session mechanics (mandatory reading!)
 1. Read this file end-to-end.
 2. Read the **CURRENT PROMPT** (volatile pointer below). If the pointer looks stale, the truth
    is the highest-numbered `implementation/sessions/sessionNN/prompt.md` — use it and fix the
