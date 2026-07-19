@@ -56,7 +56,9 @@ Where does doc-A validation actually belong relative to the existing Phase B con
 
 A **plan-revision proposal** materialized on disk: either amend `validation/plan.md` in place
 (preferred if the change is clean) or write a superseding revision under
-`implementation/reviews/` cross-linked from `plan.md` (per the FOUNDATION convention). Present
+`validation/reviews/` cross-linked from `plan.md` (validation-phase judgment docs live in
+`validation/reviews/`; `implementation/reviews/` is the frozen implementation-phase archive).
+Present
 it to the owner as a proposal — **the owner ratifies plan changes** (design/plan revisions are
 owner-gated). Record your reasoning; capture any Fable-consult verbatim on disk if you spawn one.
 
@@ -69,7 +71,8 @@ owner-gated). Record your reasoning; capture any Fable-consult verbatim on disk 
   unrelated working-tree changes (e.g. `compose.yml`, in-code `REVIEW:` remarks) into commits.
 - **Artifact locations (new rule, `agents/validation.md`):** session dir = prompt/track/report
   only; notes → `validation/notes/`, sub-agent prompts → `validation/prompts/`, sub-agent
-  outcomes → `validation/outcomes/`; cross-session judgement docs → `implementation/reviews/`.
+  outcomes → `validation/outcomes/`; validation-phase judgement/review docs → `validation/reviews/`
+  (implementation-phase reviews stay in the frozen `implementation/reviews/` archive).
 - **Sequence sub-agents; no parallel worktree isolation** (rule d, `agents/validation.md`) — it
   polluted the lua-lsp workspace and triggered luarocks self-provisioning. Serial in `/repo`.
 - Verify factual claims (any oracle's, any sheet cell's, doc A's) **in code** before relying:

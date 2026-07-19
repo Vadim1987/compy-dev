@@ -70,13 +70,13 @@ stakeholder intent ("simpler and more robust input API"; PR reviewable from
 - **scaffolding-suspect** — design decisions that served construction but now reduce
   clarity/stability, candidates for retrospective straightening (owner decision 2 above).
 
-Output: `implementation/reviews/convergence-check.md`.
+Output: `validation/reviews/convergence-check.md`.
 
 ### Phase C — Reassessment + sitting prep (Opus; Fable consult ONLY if a call is genuinely
 hard and being wrong is costly)
 
 Merge Phase A leftovers + Phase B findings + the Pass-2 sheet + `technical_debt` notes
-into **two artifacts**, both in `implementation/reviews/`:
+into **two artifacts**, both in `validation/reviews/`:
 
 - **C1. Principle sheet** (`principle-sheet.md`): the *small* set of high-level questions
   for the owner — expected ≲8. Known members: jargon policy (the postponed S2 cluster:
@@ -110,7 +110,7 @@ unit in track; suite green after every unit.
 Delta check of the post-execution tree against stakeholder intent AND the
 meta-requirements (clarity, stability, robustness, minimalism). Anything failed →
 back to Phase D as a named question, not silently patched.
-Output: `implementation/reviews/final-revalidation.md`.
+Output: `validation/reviews/final-revalidation.md`.
 
 ### Phase G — PR assembly (per `implementation/pr-assembly-guide.md`)
 
