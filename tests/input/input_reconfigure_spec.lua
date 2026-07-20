@@ -51,7 +51,7 @@ describe('input contracts: live reconfigure #input', function()
           local l, c = input.get_cursor()
           assert.same(1, l)
           assert.same(3, c)
-          assert.equal(cb, input.on_text_entered)
+          assert.equal(cb, input.callbacks.on_text_entered)
         end)
 
       -- doc/development/internals/user_input.md, "configure(config)":
@@ -189,7 +189,7 @@ describe('input contracts: live reconfigure #input', function()
         input.show({})
         assert.equal(
           'draft-label', F.singleton.model:get_label())
-        assert.is_function(input.validator)
+        assert.is_function(input.callbacks.validator)
       end)
 
       -- Pending fields are one-shot: a LATER bare show() must
@@ -293,7 +293,7 @@ describe('input contracts: live reconfigure #input', function()
       function()
         local input = F.activate_project()
         local seen = { }
-        input.after_submit = function() input.show({}) end
+        input.callbacks.after_submit = function() input.show({}) end
         input.show({
           prompt = 'first',
           on_text_entered = function(t)
@@ -315,7 +315,7 @@ describe('input contracts: live reconfigure #input', function()
       function()
         local input = F.activate_project()
         local seen = { }
-        input.after_submit = function() input.show({}) end
+        input.callbacks.after_submit = function() input.show({}) end
         input.show({
           on_text_entered = function(t)
             seen[#seen + 1] = t
@@ -345,7 +345,7 @@ describe('input contracts: live reconfigure #input', function()
     it('a prompt configured inside on_text_entered ' ..
       'survives the after_submit re-show', function()
       local input = F.activate_project()
-      input.after_submit = function() input.show({}) end
+      input.callbacks.after_submit = function() input.show({}) end
       input.show({
         prompt = 'first',
         on_text_entered = function()

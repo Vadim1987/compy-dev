@@ -366,58 +366,66 @@ end
 -- not-yet-implemented methods here as explicit
 -- not-implemented no-ops is unsettled — to be resolved in
 -- the {badspecref: m7 design session}.
--- The project-assignable tier-3 generic callbacks
--- (doc/development/decisions/input.md, Decision 7), the four widget
--- outputs (doc/development/decisions/input.md, Decision 5), and the four
--- submit/cancel hooks (doc/development/decisions/input.md, Decision 6).
--- Everything else on
--- compy.input is callable API and raises loudly on
--- assignment (doc/development/decisions/input.md, Decision 7). The hooks
--- are read directly off this surface by the framework tier-1
--- return/escape entries (projectInputController.lua) —
--- never mirrored onto the widget, unlike the widget-output
--- fields below.
-local INPUT_CALLBACKS = {
-  on_key_pressed    = true,
-  on_text_input     = true,
-  on_key_released   = true,
-  on_text_entered   = true,
-  on_limit_reached  = true,
-  validator         = true,
-  highlighter       = true,
-  before_submit     = true,
-  after_submit      = true,
-  before_cancel     = true,
-  after_cancel      = true,
-}
+-- compy.input's write boundary (doc/development/decisions/input.md,
+-- Decision 7, revised — .../validation/reviews/
+-- delta-design-input-api.md): the container and the IDENTITY of its
+-- three sub-tables (shortcuts / hooks / callbacks) are frozen — a
+-- project cannot replace them (compy.input.shortcuts = {} raises).
+-- Every LEAF inside is freely writable: shortcuts[event][combo] = fn
+-- (through the combo table's own normalising __newindex, Decision 8),
+-- hooks[event] = fn, callbacks[name] = fn. One structural rule
+-- replaces the old enumerated 11-name allowlist — nothing to keep in
+-- sync with the API surface.
 
---- Assemble the compy.input surface over its backing `state`
---- (the three normalising handler sub-tables + the tier-3
---- callback slots) and the callable `methods`. The
---- doc/development/decisions/input.md, Decision 7 boundary
---- lives in the metatable: reads resolve handlers / callbacks /
---- methods; writes are refused unless the key is an allowed
---- tier-3 callback (same decision — loud error, never
---- a silent swallow).
---- The proxy table itself stays empty so __newindex fires for
---- every assignment (a raw data key would bypass the guard).
+--- @param k any
+local function frozen_error(k)
+  error("compy.input: '" .. tostring(k)
+    .. "' is not assignable", 2)
+end
+
+--- shortcuts sub-table: per-event combo tables whose identities are
+--- frozen (shortcuts.keypressed = {} raises); leaf combo writes reach
+--- the combo table's own normalising __newindex (Decision 8).
+--- @param shortcuts table
+local function build_shortcuts_surface(shortcuts)
+  return setmetatable({ }, {
+    __index = function(_, event) return shortcuts[event] end,
+    __newindex = function(_, event)
+      frozen_error('shortcuts.' .. tostring(event))
+    end,
+  })
+end
+
+--- hooks / callbacks sub-table: flat leaf writes are allowed (nothing
+--- nested to protect); only the sub-table's own identity is frozen, at
+--- the compy.input container level above.
+--- @param store table
+local function build_leaf_surface(store)
+  return setmetatable({ }, {
+    __index = function(_, k) return store[k] end,
+    __newindex = function(_, k, v) store[k] = v end,
+  })
+end
+
+--- Assemble the compy.input surface: reads resolve the three frozen
+--- sub-tables (shortcuts / hooks / callbacks) or a callable method;
+--- every write to the container itself is refused loudly (Decision 7
+--- revised — frozen container, writable leaves).
 --- @param state table
 --- @param methods table
 --- @return table
 local function build_input_surface(state, methods)
+  local shortcuts = build_shortcuts_surface(state.shortcuts)
+  local hooks = build_leaf_surface(state.hooks)
+  local callbacks = build_leaf_surface(state.callbacks)
   return setmetatable({ }, {
     __index = function(_, k)
-      if k == 'handlers' then return state.handlers end
-      if INPUT_CALLBACKS[k] then return state[k] end
+      if k == 'shortcuts' then return shortcuts end
+      if k == 'hooks' then return hooks end
+      if k == 'callbacks' then return callbacks end
       return methods[k]
     end,
-    __newindex = function(_, k, v)
-      if not INPUT_CALLBACKS[k] then
-        error("compy.input: '" .. tostring(k)
-          .. "' is not assignable", 2)
-      end
-      state[k] = v
-    end,
+    __newindex = function(_, k) frozen_error(k) end,
   })
 end
 
@@ -448,8 +456,8 @@ local PENDING_KEYS = { 'prompt', 'text', 'cursor' }
 --- @param cfg table
 local function merge_output_keys(state, cfg)
   for _, k in ipairs(OUTPUT_KEYS) do
-    if cfg[k] ~= nil then state[k] = cfg[k] end
-    cfg[k] = state[k]
+    if cfg[k] ~= nil then state.callbacks[k] = cfg[k] end
+    cfg[k] = state.callbacks[k]
   end
 end
 
@@ -584,11 +592,18 @@ end
 
 local get_compy_input = function()
   local state = {
-    handlers = {
+    -- shortcuts: per-event combo tables (Decision 8, normalising).
+    -- hooks: one fn per event, seeded once at activation (Decision 10
+    -- revised). callbacks: the widget-invoked fns (outputs + submit/
+    -- cancel lifecycle), Decision 7 revised. All three start empty
+    -- except shortcuts' combo tables; leaves fill on project write.
+    shortcuts = {
       keypressed  = Key.new_handler_table(),
       keyreleased = Key.new_handler_table(),
       textinput   = Key.new_handler_table(),
     },
+    hooks = { },
+    callbacks = { },
     pending = { },
   }
   local methods = build_widget_api(

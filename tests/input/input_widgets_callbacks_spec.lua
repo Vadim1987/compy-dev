@@ -48,10 +48,10 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       function()
         local input = F.compy_input()
         assert.has_no.errors(function()
-          input.on_text_entered  = function() end
-          input.on_limit_reached = function() end
-          input.validator        = function() end
-          input.highlighter      = function() end
+          input.callbacks.on_text_entered  = function() end
+          input.callbacks.on_limit_reached = function() end
+          input.callbacks.validator        = function() end
+          input.callbacks.highlighter      = function() end
         end)
       end)
 
@@ -63,11 +63,11 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         local input = F.compy_input()
         local cb = function() end
         input.show({ on_limit_reached = cb })
-        assert.equal(cb, input.on_limit_reached)
+        assert.equal(cb, input.callbacks.on_limit_reached)
         local hl = function() return { { } } end
-        input.highlighter = hl
+        input.callbacks.highlighter = hl
         input.show()
-        assert.equal(hl, input.highlighter)
+        assert.equal(hl, input.callbacks.highlighter)
       end)
 
     -- doc/development/decisions/input.md, Decision 5 cont.: on_text_entered
@@ -81,16 +81,16 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         local input = F.compy_input()
         local cb = function() end
         input.show({ on_text_entered = cb })
-        assert.equal(cb, input.on_text_entered)
+        assert.equal(cb, input.callbacks.on_text_entered)
       end)
 
     it('field write shares on_text_entered slot',
       function()
         local input = F.compy_input()
         local cb = function() end
-        input.on_text_entered = cb
+        input.callbacks.on_text_entered = cb
         input.show()
-        assert.equal(cb, input.on_text_entered)
+        assert.equal(cb, input.callbacks.on_text_entered)
       end)
 
     it('show(config) shares validator slot',
@@ -98,16 +98,16 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         local input = F.compy_input()
         local vfn = function() return true end
         input.show({ validator = vfn })
-        assert.equal(vfn, input.validator)
+        assert.equal(vfn, input.callbacks.validator)
       end)
 
     it('field write shares validator slot',
       function()
         local input = F.compy_input()
         local vfn = function() return true end
-        input.validator = vfn
+        input.callbacks.validator = vfn
         input.show()
-        assert.equal(vfn, input.validator)
+        assert.equal(vfn, input.callbacks.validator)
       end)
   end)
 
@@ -257,10 +257,10 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       function()
         local order = { }
         local input = F.activate_project()
-        input.before_submit = function()
+        input.callbacks.before_submit = function()
           order[#order + 1] = 'before'
         end
-        input.after_submit = function(t)
+        input.callbacks.after_submit = function(t)
           order[#order + 1] = 'after:' .. t
         end
         input.show({
@@ -289,7 +289,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           seen.entered = love.state.user_input ~= nil
         end,
       })
-      input.after_submit = function()
+      input.callbacks.after_submit = function()
         seen.after = love.state.user_input ~= nil
       end
       F.session.press('return')
@@ -322,7 +322,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       function()
         local entered, after = false, false
         local input = F.activate_project()
-        input.after_submit = function() after = true end
+        input.callbacks.after_submit = function() after = true end
         input.show({
           text = 'bad',
           validator = function() return false, 'nope' end,
@@ -345,10 +345,10 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       function()
         local order = { }
         local input = F.activate_project()
-        input.before_cancel = function()
+        input.callbacks.before_cancel = function()
           order[#order + 1] = 'before'
         end
-        input.after_cancel = function()
+        input.callbacks.after_cancel = function()
           order[#order + 1] = 'after'
         end
         input.show({ text = 'x' })
@@ -370,10 +370,10 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       function()
         local seen = { }
         local input = F.activate_project()
-        input.handlers.keypressed['return'] = function()
+        input.shortcuts.keypressed['return'] = function()
           seen[#seen + 1] = 'return'; return true
         end
-        input.handlers.keypressed['escape'] = function()
+        input.shortcuts.keypressed['escape'] = function()
           seen[#seen + 1] = 'escape'; return true
         end
         F.session.press('return')
@@ -390,7 +390,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       function()
         local shadowed = false
         local input = F.activate_project()
-        input.handlers.keypressed['return'] = function()
+        input.shortcuts.keypressed['return'] = function()
           shadowed = true; return true
         end
         input.show({ text = 'x' })
@@ -429,7 +429,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
     it('hide() fires no cancel chain', function()
       local fired = false
       local input = F.activate_project()
-      input.before_cancel = function() fired = true end
+      input.callbacks.before_cancel = function() fired = true end
       input.show({ text = 'x' })
       input.hide()
       assert.is_false(fired)
@@ -439,7 +439,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       function()
         local fired = false
         local input = F.activate_project()
-        input.before_cancel = function() fired = true end
+        input.callbacks.before_cancel = function() fired = true end
         input.show({ text = 'first' })
         input.show({ force = true, text = 'second' })
         assert.is_false(fired)
@@ -453,7 +453,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
     it('after_submit can re-activate the widget mid-sequence',
       function()
         local input = F.activate_project()
-        input.after_submit = function()
+        input.callbacks.after_submit = function()
           input.show({ prompt = 'next' })
         end
         input.show({ text = 'first' })

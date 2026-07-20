@@ -51,7 +51,7 @@ describe('input contracts: route connection lifecycle #input', function()
           'non-blocking run exits', function()
         local input = F.activate_project()
         local got = 0
-        input.on_text_input = function() got = got + 1 end
+        input.hooks.textinput = function() got = got + 1 end
         Controller.release_keyboard_route(F.cc)
         love.state.app_state = 'project_open'
         F.session.type('a')
@@ -84,15 +84,15 @@ describe('input contracts: route connection lifecycle #input', function()
       it('clears every project-installed handler ' ..
           'and hook', function()
         local input = F.activate_project()
-        input.handlers.keypressed['a'] = function() end
-        input.on_key_pressed = function() end
-        input.before_submit = function() end
-        input.validator = function() return true end
+        input.shortcuts.keypressed['a'] = function() end
+        input.hooks.keypressed = function() end
+        input.callbacks.before_submit = function() end
+        input.callbacks.validator = function() return true end
         F.cc:stop_project_run()
-        assert.same({ }, input.handlers.keypressed)
-        assert.is_nil(input.on_key_pressed)
-        assert.is_nil(input.before_submit)
-        assert.is_nil(input.validator)
+        assert.same({ }, input.shortcuts.keypressed)
+        assert.is_nil(input.hooks.keypressed)
+        assert.is_nil(input.callbacks.before_submit)
+        assert.is_nil(input.callbacks.validator)
       end)
 
       -- doc/development/decisions/input.md, Decision 11 + {badspecref: spec
@@ -105,10 +105,10 @@ describe('input contracts: route connection lifecycle #input', function()
           'firing the cancel chain', function()
         local input = F.activate_project()
         local cancelled = 0
-        input.before_cancel = function()
+        input.callbacks.before_cancel = function()
           cancelled = cancelled + 1
         end
-        input.after_cancel = function()
+        input.callbacks.after_cancel = function()
           cancelled = cancelled + 1
         end
         F.show_widget({ text = 'x' })

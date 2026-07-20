@@ -12,14 +12,14 @@ require("util.key")
 --      (doc/development/decisions/input.md, Decision 6:
 --       keypressed['return']/['escape'], engaged
 --       only while the widget is shown; non-overridable)
---   2. compy.input.handlers.<event>[combo]  project combo
---      handlers (doc/development/decisions/input.md, Decision 8:
+--   2. compy.input.shortcuts.<event>[combo]  project shortcut
+--      combos (doc/development/decisions/input.md, Decision 8:
 --      per-event sub-tables, normalising)
---   3. per-event generic callback           on_key_pressed /
---      on_text_input / on_key_released — precedence
---      (doc/development/decisions/input.md, Decision 10): an explicit
---      on_* wins over the project's own love.* handler
---      captured at activate(), which wins over noop+log
+--   3. compy.input.hooks[event]              one hook per event
+--      (doc/development/decisions/input.md, Decision 10 revised): the
+--      single source of truth, seeded once at activate() with the
+--      project's captured love.* handler where unset; a nil clears
+--      with no resurrection
 --   4. sink                                  the singleton
 --      widget; terminal, with an INTERNAL hidden-check
 --      (userInputController) — no external gating wrapper
@@ -30,12 +30,25 @@ require("util.key")
 -- carries no chain meaning (doc/development/decisions/input.md, Decision 5).
 -- Routing contract: doc/development/internals/user_input.md
 
--- Event type -> its tier-3 generic-callback field on compy.input.
-local CHANNELS = {
-  keypressed  = 'on_key_pressed',
-  keyreleased = 'on_key_released',
-  textinput   = 'on_text_input',
-}
+-- The three uniform event channels the chain dispatches on.
+local EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
+
+--- Seed the project's hooks table (doc/development/decisions/input.md,
+--- Decision 10 revised): each event with no explicit project hook gets
+--- its captured native love.* handler, once, at activation. After this
+--- the hooks table is the single source of truth — a nil'd hook clears,
+--- with no resurrection (validation/reviews/delta-spec-input-api.md §5).
+--- Runs after the project's top-level code, so an explicit hooks[event]
+--- set there is already present and correctly preserved.
+--- @param hooks table  compy_input.hooks
+--- @param natives table  { event -> fn? }
+local function seed_hooks(hooks, natives)
+  for _, event in ipairs(EVENTS) do
+    if hooks[event] == nil then
+      hooks[event] = natives[event]
+    end
+  end
+end
 
 --- @param branch string
 local function log_branch(branch)
@@ -53,9 +66,9 @@ end
 --- widget (doc/development/decisions/input.md, Decision 6: "the widget
 --- never owns submit").
 --- @param ci table  compy_input surface
---- @param name string  hook field name
+--- @param name string  callback field name (callbacks.<name>)
 local function run_hook(ci, name, ...)
-  local hook = ci[name]
+  local hook = ci.callbacks[name]
   if hook then
     hook(...)
     return
@@ -124,7 +137,6 @@ end
 
 local function new()
   local self = {
-    natives = {},
     compy_input = nil,
     framework_handlers = {
       keypressed  = {},
@@ -137,29 +149,22 @@ local function new()
 end
 
 --- @class ProjectInputController
---- @field natives table
 --- @field compy_input table?
 --- @field framework_handlers table
 ProjectInputController = class.create(new)
 
---- Tier 3 — the per-event generic callback, resolved by
---- precedence (doc/development/decisions/input.md, Decision 10): an
---- explicit compy.input.on_* wins; else the project's own
---- love.* handler captured at activate; else a noop that
---- only debug-logs and never consumes (doc/development/decisions/input.md,
---- Decision 10). A truthy
---- return consumes; falsey falls through to the sink.
+--- The hook tier (doc/development/decisions/input.md, Decision 10
+--- revised): one fn per event on compy.input.hooks, the single source
+--- of truth. Seeded once at activation with the project's captured
+--- native love.* handler (seed_hooks); thereafter a nil clears with no
+--- resurrection. A truthy return consumes; absent or falsey falls
+--- through to the widget.
 --- @param event string
 --- @return boolean? consumed
---- TODO(debt): tier-3 precedence is fixed at activate but
---- re-resolved per event; a default noop-that-logs would also
---- drop the `if cb` guard. See doc/development/technical_debt/input.md
---- "`_generic_callback` re-resolves the callback precedence on every event".
 function ProjectInputController:_generic_callback(event, ...)
-  local ci = self.compy_input
-  local cb = ci[CHANNELS[event]] or self.natives[event]
+  local cb = self.compy_input.hooks[event]
   if cb then return cb(...) end
-  log_branch('generic callback noop: ' .. event)
+  log_branch('hook noop: ' .. event)
   return false
 end
 
@@ -200,42 +205,36 @@ function ProjectInputController:_dispatch(event, trigger, ...)
     trigger, Controller.keys_pressed)
   local fw = self.framework_handlers[event][combo]
   if fw and fw(...) then return true end
-  local ph = self.compy_input.handlers[event][combo]
+  local ph = self.compy_input.shortcuts[event][combo]
   if ph and ph(...) then return true end
   if self:_generic_callback(event, ...) then return true end
   return self:_sink(event, ...)
 end
 
---- Take the keyboard route for a project run. `natives` holds
---- the project's own error-wrapped love.* keyboard handlers
---- (from the caller); they seed tier 3 as default participants
---- (doc/development/decisions/input.md, Decision 10: pure wrap) — read
---- once here, never re-consulted, and
---- only used when the project sets no on_* (precedence in
---- _generic_callback). No handler is copied onto compy.input.
+--- Take the keyboard route for a project run. `natives` holds the
+--- project's own error-wrapped love.* keyboard handlers (from the
+--- caller); they seed the hooks table once here (seed_hooks;
+--- doc/development/decisions/input.md, Decision 10 revised) — only where
+--- the project set no explicit hook. After seeding, hooks is read
+--- directly on each event; there is no separate natives store.
 --- @param natives table?
 --- @param compy_input table
---- (Natives are seeded by precedence, never copied onto
---- compy.input — see doc/development/decisions/input.md #10 "legacy natives
---- pure-wrapped as tier-3".)
 function ProjectInputController:activate(natives, compy_input)
-  self.natives = natives or {}
   self.compy_input = compy_input
+  seed_hooks(compy_input.hooks, natives or {})
 end
 
 --- Forget the project's handlers (doc/development/decisions/input.md,
 --- Decision 11).
---- Nulling compy_input/natives does not itself disconnect
---- anything: the caller (controller.lua
---- release_keyboard_route / set_default_handlers) re-points
---- the love.* callbacks at the console, after which
---- _dispatch is unreachable. Dropping the references here
---- lets the stopped project's handlers be collected and
---- guarantees the next activate() starts from a clean
---- state instead of a stale project's callbacks.
+--- Nulling compy_input does not itself disconnect anything: the
+--- caller (controller.lua release_keyboard_route /
+--- set_default_handlers) re-points the love.* callbacks at the
+--- console, after which _dispatch is unreachable. Dropping the
+--- reference here lets the stopped project's handlers be collected
+--- and guarantees the next activate() starts from a clean state
+--- instead of a stale project's callbacks.
 function ProjectInputController:deactivate()
   self.compy_input = nil
-  self.natives = {}
 end
 
 --- Keypressed (doc/development/decisions/input.md, Decision 11). The

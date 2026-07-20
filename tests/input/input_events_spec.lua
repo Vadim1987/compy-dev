@@ -84,7 +84,7 @@ describe('#input events dispatching', function()
         Controller.project_input
           .framework_handlers.keypressed['a'] =
             function() return true end
-        input.on_key_pressed =
+        input.hooks.keypressed =
             function() lower = true; return true end
         F.session.press('a')
         assert.is_false(lower)
@@ -102,9 +102,9 @@ describe('#input events dispatching', function()
         local input = F.activate_project()
         fw.keypressed['backspace'] =
             function() order[#order + 1] = 'framework_handler' end
-        input.handlers.keypressed['backspace'] =
+        input.shortcuts.keypressed['backspace'] =
             function() order[#order + 1] = 'project_handler' end
-        input.on_key_pressed =
+        input.hooks.keypressed =
             function() order[#order + 1] = 'project_hook' end
         F.show_widget({ text = 'ab' })
         F.session.press('backspace')
@@ -121,9 +121,9 @@ describe('#input events dispatching', function()
     it('a truthy combo handler stops the descent', function()
       local reached_cb = false
       local input = F.activate_project()
-      input.handlers.keypressed['backspace'] =
+      input.shortcuts.keypressed['backspace'] =
           function() return true end
-      input.on_key_pressed =
+      input.hooks.keypressed =
           function() reached_cb = true; return true end
       F.show_widget({ text = 'ab' })
       F.session.press('backspace')
@@ -139,7 +139,7 @@ describe('#input events dispatching', function()
     it('is a permanent configuration', function()
       local n = 0
       local input = F.activate_project()
-      input.on_key_pressed =
+      input.hooks.keypressed =
           function() n = n + 1; return true end
       F.session.press('a')
       F.session.press('a')
@@ -155,7 +155,7 @@ describe('#input events dispatching', function()
       function()
         local input = F.activate_project()
         F.show_widget({ text = 'ab' })
-        input.on_key_pressed = function() return false end
+        input.hooks.keypressed = function() return false end
         F.session.press('backspace')
         assert.same({ 'a' }, F.singleton:get_text())
       end)
@@ -174,7 +174,7 @@ describe('#input events dispatching', function()
       function()
         local fired = false
         local input = F.activate_project()
-        input.handlers.keypressed['Ctrl+S'] =
+        input.shortcuts.keypressed['Ctrl+S'] =
             function() fired = true; return true end
         chord('lctrl', 's')
         assert.is_true(fired)
@@ -184,7 +184,7 @@ describe('#input events dispatching', function()
       function()
         local fired = false
         local input = F.activate_project()
-        input.handlers.textinput['Ctrl+S'] =
+        input.shortcuts.textinput['Ctrl+S'] =
             function() fired = true; return true end
         F.session.press('lctrl')
         F.session.type('s')
@@ -195,7 +195,7 @@ describe('#input events dispatching', function()
       function()
         local fired = false
         local input = F.activate_project()
-        input.handlers.keyreleased['Ctrl+S'] =
+        input.shortcuts.keyreleased['Ctrl+S'] =
             function() fired = true; return true end
         chord('lctrl', 's')
         F.session.release('s')
@@ -209,11 +209,11 @@ describe('#input events dispatching', function()
     it('the combo tables are per-event, not one flat table',
       function()
         local input = F.activate_project()
-        assert.is_table(input.handlers.keypressed)
-        assert.is_table(input.handlers.keyreleased)
-        assert.is_table(input.handlers.textinput)
+        assert.is_table(input.shortcuts.keypressed)
+        assert.is_table(input.shortcuts.keyreleased)
+        assert.is_table(input.shortcuts.textinput)
         local leaked = false
-        input.handlers.keypressed['s'] =
+        input.shortcuts.keypressed['s'] =
             function() leaked = true; return true end
         F.session.type('s')
         assert.is_false(leaked)
@@ -236,7 +236,7 @@ describe('#input events dispatching', function()
       function()
         local seen
         local input = F.activate_project()
-        input.on_key_pressed = function(k, keys, isr)
+        input.hooks.keypressed = function(k, keys, isr)
           seen = { k, keys, isr }; return true
         end
         F.session.repeat_press('a')
@@ -252,7 +252,7 @@ describe('#input events dispatching', function()
     it('isrepeat threads to the tier-3 callback', function()
       local seen = { }
       local input = F.activate_project()
-      input.on_key_pressed = function(_, _, isr)
+      input.hooks.keypressed = function(_, _, isr)
         seen[#seen + 1] = isr; return true
       end
       F.session.press('a')
@@ -269,7 +269,7 @@ describe('#input events dispatching', function()
     it('the keys_pressed proxy is read-only', function()
       local proxy
       local input = F.activate_project()
-      input.on_key_pressed = function(_, keys)
+      input.hooks.keypressed = function(_, keys)
         proxy = keys; return true
       end
       F.session.press('a')
@@ -311,7 +311,7 @@ describe('#input events dispatching', function()
       function()
         local present = true
         local input = F.activate_project()
-        input.on_key_released = function(k, keys)
+        input.hooks.keyreleased = function(k, keys)
           present = keys[k]; return true
         end
         F.session.press('a')
@@ -373,7 +373,7 @@ describe('#input events dispatching', function()
       function()
         local got = { }
         local input = F.activate_project()
-        input.on_text_input = function(t)
+        input.hooks.textinput = function(t)
           got[#got + 1] = t; return true
         end
         F.session.type('a')
@@ -389,11 +389,11 @@ describe('#input events dispatching', function()
         local input = F.activate_project()
         F.show_widget()
 	-- REVIEW/clarity/suggestion: what if we redesign API syntax in this part and decide its not 'input.on_*' but input.hooks.{textinput,keypressed,keyreleased,mousewheel} -- with same logic just different configuration syntax/arch
-        input.on_text_input = function() return true end
+        input.hooks.textinput = function() return true end
         F.session.type('X')
 	-- REVIEW/fidelity: why would we check sigleton internals instead of compy.input. method ? (official behaviour)
         assert.is_true(F.singleton:is_empty())
-        input.on_text_input = function() return false end
+        input.hooks.textinput = function() return false end
         F.session.type('Y')
         assert.same({ 'Y' }, F.singleton:get_text())
       end)
@@ -481,7 +481,7 @@ describe('#input events dispatching', function()
         local function bump() native_hits = native_hits + 1 end
 	-- REVIEW/fidelity/consistency: is 'activate_project' installing hooks via legacy path? (as love.*) are other tests (in the beginning of this suite) also testing this path and theerfore NOT testing input.on_ path (explicit hook configuration). What do we do with it?
         local input = F.activate_project({ keypressed = bump })
-        input.on_key_pressed =
+        input.hooks.keypressed =
             function() cb_hits = cb_hits + 1; return true end
         F.session.press('a')
         assert.equal(1, cb_hits)
@@ -504,16 +504,16 @@ describe('#input events dispatching', function()
       assert.has_error(function()
         input.show = function() end
       end)
-      assert.has_error(function() input.handlers = { } end)
+      assert.has_error(function() input.shortcuts = { } end)
     end)
 
     it('assigning an allowed callback slot is accepted',
       function()
         local input = F.compy_input()
         assert.has_no.errors(function()
-          input.on_key_pressed  = function() end
-          input.on_text_input   = function() end
-          input.on_key_released = function() end
+          input.hooks.keypressed  = function() end
+          input.hooks.textinput   = function() end
+          input.hooks.keyreleased = function() end
         end)
       end)
   end)

@@ -291,20 +291,18 @@ local function reset_chain()
   wipe(fw.keypressed, { ['return'] = true, escape = true })
   wipe(fw.keyreleased); wipe(fw.textinput)
   local input = CC:get_project_env().compy.input
-  wipe(input.handlers.keypressed)
-  wipe(input.handlers.keyreleased)
-  wipe(input.handlers.textinput)
-  input.on_key_pressed  = nil
-  input.on_text_input   = nil
-  input.on_key_released = nil
-  input.on_text_entered = nil
-  input.on_limit_reached = nil
-  input.validator = nil
-  input.highlighter = nil
-  input.before_submit = nil
-  input.after_submit = nil
-  input.before_cancel = nil
-  input.after_cancel = nil
+  wipe(input.shortcuts.keypressed)
+  wipe(input.shortcuts.keyreleased)
+  wipe(input.shortcuts.textinput)
+  for _, ev in ipairs({ 'keypressed', 'keyreleased', 'textinput' }) do
+    input.hooks[ev] = nil
+  end
+  for _, k in ipairs({
+    'on_text_entered', 'on_limit_reached', 'validator', 'highlighter',
+    'before_submit', 'after_submit', 'before_cancel', 'after_cancel',
+  }) do
+    input.callbacks[k] = nil
+  end
 end
 
 -- Clean slate between tests: no held keys, no widget, console mode,
