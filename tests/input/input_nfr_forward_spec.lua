@@ -1,18 +1,28 @@
+-- REVIEW/clarity: remove historical reference to once-monolithic spec.
+--
 -- NFR guards and forward contracts — split from input_contracts_spec.lua
 -- (TF1). Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
--- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
+-- the active screen mode. 
+--
+-- REVIEW/clarity/vocabulary: see alternative suggestion in input_events_spec.lua
+--
+-- Vocabulary (doc/development/internals/user_input.md, "Dispatch
 -- chain"): ROUTE = consumer an event is dispatched to; WIDGET = a
 -- route-managed input surface; SINK = last consumer. Tests assert
 -- observable outcomes at public seams, never method-name spies.
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
+
+-- REVIEW/clarity: the prose below is a bit mumbling, needs rewrite into more consistent human language
 -- Provisional today-facts expected to change, mechanism/NFR guards not
 -- behaviour, and forward contracts pending the named milestone
 -- (doc/development/tests.md, "Input Contract Suite (this feature)").
 
 local F = require('tests.helpers.input_fixture')
 
+-- REVIEW/clarity: 'forward' means what? lots of prose in this group are outdated (including REVIEW remarks)
+-- REVIEW/consistence: group 'expected to change' actually describes *behaviour* that precedes the tests (so is taken as de-facto standard to keep -- probably could be referenced from decision docs), and should be renamed accordingly
 describe('input contracts: NFR and forward #input', function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
@@ -57,6 +67,7 @@ describe('input contracts: NFR and forward #input', function()
       -- omission, not a designed asymmetry; intended
       -- forward shape (not asserted): project
       -- pass-through, opt-in consume.
+      -- REVIEW/fidelity: why check session.handlers? any other space?
       it('wheel has no framework gateway entry', function()
         assert.is_nil(F.session.handlers.wheelmoved)
       end)

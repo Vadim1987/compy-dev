@@ -38,7 +38,7 @@ describe('input API: cursor and text surface', function()
     -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": active → 1-based (line, col); hidden
     -- → nil.
-    it('reports 1-based line, col when active',
+    it('reports 1-based (line, col) when active',
       function()
 	--- REVIEW/fidelity: only one case is checked -- 'when active' proven, but whether this line/col really always match cursor? not clear (otoh we're against testing all corner cases). Maybe its not worth separate case -- but running few modifications and rechecking assertions would be practical?
         local input = F.compy_input()
