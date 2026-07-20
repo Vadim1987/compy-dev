@@ -181,3 +181,39 @@
 - Awaiting: owner sign-off on delta-design/delta-spec content + the plan.md
   Phase-R insertion (R3 gate). Once confirmed: kick off R4 execution
   (Sonnet REVIEW-remarks sweep first, per model economy — explicit model tag).
+
+## Owner addendums round (3 items, post-draft review)
+- 1. Rename `handlers`→`shortcuts` (compy.input's project combo table) — LÖVE
+  itself uses "handlers" (verified: controller.lua:871 `local handlers =
+  love.handlers`, literal collision in the exact function we've been
+  discussing). Chain restated "shortcuts → hooks → widget."
+  Side-effect I caught: this collides with MY OWN earlier "global shortcuts"
+  label for the gateway pre-tap keys — renamed those to "power keys" in prose
+  (in-code comment `controller.lua:876` "Power shortcuts" left untouched,
+  cited as historical fact only) to keep the taxonomy's own "one word one
+  role" rule intact. Flagged explicitly in both docs' vocabulary sections.
+- 2. Owner's OR-chain alternative (`shortcuts[event](...) or hooks[event](...)
+  or widget:dispatch(event,...)`, default-noop slots, widget's OWN internal
+  shown-check) — recorded as a marked, DEFERRED "Considered alternative" under
+  delta-spec §2, not adopted. Found it echoes projectInputController.lua:197's
+  standing REVIEW note almost verbatim (owner's own prior wish, resurfacing).
+  Also more faithful to original Decision 2's "sink's hidden-check is
+  internal" clause than my §2's external-check approach. Non-adoption reason:
+  shortcuts[event] is a per-combo TABLE, so the default-noop stand-in would
+  need to be combo-aware, not flat — the exact "elegance-for-itself" cost
+  owner themselves flagged.
+- 3. Owner asks why not unify methods + shortcuts/hooks/callbacks into ONE
+  class/instance (dispatch becomes a method). Recorded as inline comment +
+  prose note in delta-spec §4 (per owner's explicit request: "in comment
+  within example template"), not adopted. Reasoning given: (a) repo's stated
+  functional-over-class preference (agents/rules.md:67, verified); (b) D7's
+  guard is an untrusted-PROJECT-only concern — console/editor already bypass
+  compy.input entirely (iteration 3 finding) — unifying would drag the guard
+  into the reusable core or make it conditional, re-coupling what the 6a/6b
+  split deliberately kept apart. Left as executor's future call.
+- Both docs fully rewritten (Write, not patch-edit, given breadth of the
+  rename); every "Was:"/historical description of shipped code left as
+  `handlers` (accurate to current code); only "Now:"/proposed-shape
+  references renamed. plan.md checked — Phase R text had no stray "handlers"
+  refs needing update.
+- Suite reconfirmed 815/0/0/4 (docs-only turn).

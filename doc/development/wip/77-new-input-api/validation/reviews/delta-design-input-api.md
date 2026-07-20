@@ -4,17 +4,18 @@
 [`../../decisions/input.md`](../../decisions/input.md) (the 13 ratified decisions,
 unedited and still authoritative until this addendum is ratified). Frozen `design/`
 untouched — this is a post-implementation refinement, not a rewrite of intent.
-Produced by S16 (Fable), synthesising the pressure-test verdict and three rounds of
-owner iteration:
+Produced by S16 (Fable), synthesising the pressure-test verdict and owner iteration:
 [`S16-fable-redesign-pressure-test.md`](../outcomes/S16-fable-redesign-pressure-test.md)
 (all code citations verified there; not re-derived here). Written in `decisions/
 input.md`'s own voice (Decision / Why / Consequence) so it can be folded in verbatim
-once ratified.
+once ratified. **Revision note (this pass):** the project's own combo table is
+renamed `handlers` → `shortcuts` (owner amendment, below) to stop colliding with
+LÖVE's own `love.handlers`.
 
-Scope discipline: this changes **D2, D6, D7, D10** and touches **D5** (relocates one
-clause, doesn't alter its substance). **D1, D3, D4, D8, D9, D11, D12, D13 are
-unaffected** — restated as a checklist at the end so a reviewer can confirm nothing
-else moved.
+Scope discipline: this changes **D2, D6, D7, D10** and touches **D5, D8** (D8's
+substance is unaffected; only its container's name changes). **D1, D3, D4, D9, D11,
+D12, D13 are unaffected** — restated as a checklist at the end so a reviewer can
+confirm nothing else moved.
 
 ---
 
@@ -26,8 +27,9 @@ generic callback, the sink.
 **Now:** three components, same truthy-consume convention, same uniform shape across
 `keypressed`/`textinput`/`keyreleased`:
 
-1. `handlers[event][combo](...)` — project combo handlers (unchanged from today,
-   Decision 8's per-event keying and normalisation survive intact).
+1. `shortcuts[event][combo](...)` — project shortcuts (unchanged from today's
+   mechanics, renamed from `handlers`; Decision 8's per-event keying and
+   normalisation survive intact).
 2. `hooks[event](...)` — project hooks. Absorbs today's tier-3 generic callback
    *and* the legacy native-`love.*` seeding path into one slot (see Decision 10,
    revised, below).
@@ -41,8 +43,8 @@ generic callback, the sink.
 non-overridable while shown) is deleted outright — code and tests. It existed
 solely to give Enter/Escape special handling *inside the route*; that job is now
 done by the widget's own default behaviour (Decision 6, revised) plus the
-gateway-level global shortcuts, which were never part of this chain and are
-unaffected (see "What stays the same," below).
+gateway's **power keys**, which were never part of this chain and are unaffected
+(see "What stays the same," below).
 
 **Why.** The four-tier shape special-cased exactly two keys (Enter, Escape) at a
 tier that existed for no other purpose — verified in code: `install_tier1`
@@ -50,15 +52,17 @@ populated nothing but `keypressed['return']` and `keypressed['escape']`, once, a
 construction. Removing it doesn't lose capability; it removes a tier that was
 purpose-built for a job the widget can now do itself, uniformly, like any other
 chain participant. This is chain-uniformity taken to its conclusion: a project
-handler can now register on Enter/Escape and win, exactly as it can on any other
-combo — the DOM-style "handled stops propagation" convention Decision 2 already
-established now applies without a carve-out.
+shortcut can now be registered on Enter/Escape and win, exactly as it can on any
+other combo — the DOM-style "handled stops propagation" convention Decision 2
+already established now applies without a carve-out.
 
 **Consequence.** The 3-tier `_dispatch` becomes eligible for the uniform
 short-circuit shape the codebase's own standing REVIEW note asked for (`return
-handlers(...) or hooks(...) or widget(...)`), because the widget's participation
+shortcuts(...) or hooks(...) or widget(...)`), because the widget's participation
 now derives from a boolean (shown?) rather than needing a special nil-guard the way
-a sparse combo table does.
+a sparse combo table does. See the delta-spec §2 for a considered — but deferred —
+alternative dispatch shape along these exact lines (owner's own further suggestion,
+recorded there rather than adopted, per the tradeoff noted).
 
 ---
 
@@ -121,7 +125,7 @@ Three substantive changes from the old shape, each deliberate:
   into `UIC:submit()`. A project wanting the old "prompt once, then close"
   behaviour opts in with one line: `after_submit = function() compy.input.hide()
   end`.
-- **Enter/Escape are shadowable.** A project handler registered on `'return'` or
+- **Enter/Escape are shadowable.** A project shortcut registered on `'return'` or
   `'escape'` now wins over the widget's default, same as any other combo. This is
   a named, deliberate withdrawal of a guarantee — see "Withdrawn guarantee," below.
 
@@ -136,14 +140,14 @@ callback's job, not the framework's.
 
 **Withdrawn guarantee — recorded explicitly, not left implicit.** Today, nothing
 can prevent Enter from submitting or Escape from dismissing while the widget is
-shown. After this change, a project handler can shadow both, and a project
+shown. After this change, a project shortcut can shadow both, and a project
 overriding `after_submit`/`after_cancel` owns the lifecycle act itself. **This was
 never a stakeholder requirement** — `design/requirements.md` records the
 cancel/dismiss notification as explicitly left unresolved by stakeholders ("may be
 expected — to be confirmed"); the non-overridable shape was a design-team fix
 for the `oneshot` two-role problem, not an external mandate. Withdrawing it is
-acceptable specifically because it is not the only safety net: the gateway-level
-global shortcuts (Ctrl+Q, Ctrl+Break, etc. — `controller.lua`, pre-dating this
+acceptable specifically because it is not the only safety net: the gateway's
+**power keys** (Ctrl+Q, Ctrl+Break, etc. — `controller.lua`, pre-dating this
 feature) remain unconditional and unshadowable, running before any route dispatch,
 chain included. That is the actual, permanent escape hatch; the framework tier was
 never it.
@@ -162,9 +166,9 @@ free the day they adopt this shape, rather than needing to fight a hardcoded hid
 else on `compy.input` errors loudly on assignment.
 
 **Now:** `compy.input` itself, and the *identity* of each of its three sub-tables
-(`handlers`, `hooks`, `callbacks`), are frozen — a project cannot do
-`compy.input.handlers = {}` or replace the container. Every **leaf** inside those
-sub-tables is freely writable: `handlers[event][combo] = fn`, `hooks[event] = fn`,
+(`shortcuts`, `hooks`, `callbacks`), are frozen — a project cannot do
+`compy.input.shortcuts = {}` or replace the container. Every **leaf** inside those
+sub-tables is freely writable: `shortcuts[event][combo] = fn`, `hooks[event] = fn`,
 `callbacks[name] = fn`.
 
 `callbacks` carries **eight** members — the original five lifecycle fields
@@ -179,7 +183,7 @@ all direct-container writes; nothing to enumerate). The guard's *purpose* —
 tamper-resistance against a project replacing callable API — is undiminished; it
 just moves from a flat allowlist to a shape rule.
 
-**Consequence.** `handlers.keypressed`'s normalising behaviour (Decision 8) must
+**Consequence.** `shortcuts.keypressed`'s normalising behaviour (Decision 8) must
 stay reachable only through its combo-keyed leaves, never through wholesale
 sub-table replacement — the frozen-identities clause exists specifically to
 protect that invariant.
@@ -222,7 +226,7 @@ standing gap between the original design's stated intent and what shipped:
 own `self.compy_input`/`self.natives`, not actually reusable. Neither extraction
 changes project-facing behaviour — both are pure refactors:
 
-- **Dispatch as a free function.** `dispatch(handlers, hooks, widget, event,
+- **Dispatch as a free function.** `dispatch(shortcuts, hooks, widget, event,
   trigger, ...)` over plain tables and a widget reference; `compy.input`'s guarded
   surface becomes a thin project-facing wrapper *over* it, not the mechanism
   itself.
@@ -240,7 +244,12 @@ This resolves a standing in-tree question (`main.lua:360`'s own REVIEW note aski
 almost this exact thing) without committing to when — or whether — console/editor
 actually migrate. That migration remains deliberately deferred per Decision 1's
 original consequence text; this addendum only ensures the seam exists when it's
-picked up.
+picked up. Whether to unify this further — one instance-record class holding
+`shortcuts`/`hooks`/`callbacks`/methods together, with `dispatch` as a method
+rather than a free function — was raised and deliberately left open; see the
+delta-spec §4's inline note for the tradeoff (this codebase's stated preference
+for functional style, `agents/rules.md:67`, versus the ergonomic appeal of one
+cohesive object) rather than resolved here.
 
 ---
 
@@ -250,7 +259,8 @@ picked up.
 |---|---|---|
 | `singleton` | **widget** | one shared instance is an implementation fact, not the name of its role |
 | `sink` (tier 4) | **widget** | the terminal chain component *is* the widget; one thing, one name |
-| `on_key_pressed`/`on_text_input`/`on_key_released` (tier-3 field names) | **`hooks[event]`** | one table, symmetric with `handlers[event]`, replacing three ad-hoc names |
+| `handlers` (compy.input's own project-combo table) | **`shortcuts`** | **owner amendment:** `handlers` collides with LÖVE's own vocabulary — verified in code, `controller.lua:871`: `local handlers = love.handlers`, a literal local variable bound to LÖVE's real event-dispatch table, sitting in the very same gateway function this redesign discusses. Renaming ours removes the ambiguity outright; the combos are, in effect, project-registered shortcuts (`ctrl+s` etc.), so the new name reads naturally. |
+| `on_key_pressed`/`on_text_input`/`on_key_released` (tier-3 field names) | **`hooks[event]`** | one table, symmetric with `shortcuts[event]`, replacing three ad-hoc names |
 | `native` (legacy `love.*` seeding) | **hook** (seeded, per Decision 10 revised) | it behaves exactly like a hook once seeded; "native" named the install path, not the role |
 | `framework handlers` (old tier 1) | **(retired — no replacement; the tier is gone)** | Decision 2, revised |
 | the four `before_*`/`after_*` fields, `on_text_entered`, `on_limit_reached`, `validator`, `highlighter` | **`callbacks[name]`** | "a function the widget itself invokes," one table |
@@ -264,6 +274,16 @@ than either endpoint alone.
 
 `routing` is unchanged and correct as-is.
 
+**A second, adjacent naming collision, resolved:** the gateway's unconditional,
+pre-route keys (Ctrl+Q, Ctrl+Break, etc. — already named "Power shortcuts" in an
+existing in-code comment, `controller.lua:876`) are called **power keys** in this
+addendum's own prose, deliberately avoiding the bare word "shortcuts" for them —
+reusing "shortcuts" for both the gateway's unconditional keys and `compy.input`'s
+project-registered, fully-overridable table would violate this same taxonomy's own
+"reserve each word for one role" principle. The in-code comment is unchanged
+(out of scope, low-value to touch); "power keys" is this document's label for
+discussing the same concept without the collision.
+
 ---
 
 ## What stays the same (checklist, for a reviewer to confirm nothing else moved)
@@ -273,8 +293,11 @@ than either endpoint alone.
 - **Decision 3** — one boot-provisioned shared widget (the project's). Untouched in
   substance; renamed `singleton` → `widget` per the vocabulary table.
 - **Decision 4** — callbacks replace polling. Untouched.
-- **Decision 8** — per-event combo tables, canonical serialisation. Untouched;
-  `hooks[event]` (revised Decision 10) is now symmetric with `handlers[event]`.
+- **Decision 8** — per-event combo tables, canonical serialisation. Untouched in
+  substance; its container renamed `handlers` → `shortcuts` (vocabulary table,
+  above) to remove the `love.handlers` collision — the per-event keying,
+  normalisation-on-assignment, and matcher seam are all unchanged mechanics.
+  `hooks[event]` (revised Decision 10) is now symmetric with `shortcuts[event]`.
 - **Decision 9** — uniform signatures, `isrepeat` threading. Untouched.
 - **Decision 11** — route connects only while running; teardown invariant. Untouched
   in substance. One implementation obligation: teardown must **re-seed** framework
@@ -287,8 +310,8 @@ than either endpoint alone.
 - **Decision 13** — held-key set, read-only. Untouched; `proxy` retired from prose
   only, per the vocabulary table.
 
-**Also unaffected — the gateway.** Global shortcuts (Ctrl+Q, Ctrl+Break, Ctrl+S,
-Ctrl+Shift+R) live in `love.handlers.keypressed` (`controller.lua`), run
+**Also unaffected — the gateway.** The gateway's power keys (Ctrl+Q, Ctrl+Break,
+Ctrl+S, Ctrl+Shift+R) live in `love.handlers.keypressed` (`controller.lua`), run
 unconditionally before any route dispatch, and predate this feature entirely
 (verified identical in shape in the pre-feature `devupstream` history). Nothing in
 this addendum touches them; they are the permanent recovery path the withdrawn

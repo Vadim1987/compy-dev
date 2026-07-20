@@ -7,7 +7,10 @@ criteria). Written at the altitude of `design/spec.md`'s existing style so it ca
 drive tests-first execution directly. All facts below are grounded in the verified
 code citations in
 [`S16-fable-redesign-pressure-test.md`](../outcomes/S16-fable-redesign-pressure-test.md);
-this document adds no new claims, only executable shape.
+this document adds no new claims, only executable shape. **Revision note (this
+pass):** the project's own combo table is `shortcuts`, not `handlers` — see the
+delta-design's vocabulary table for why (a verified collision with LÖVE's own
+`love.handlers`, `controller.lua:871`).
 
 ---
 
@@ -15,7 +18,7 @@ this document adds no new claims, only executable shape.
 
 ```
 compy.input = {
-  handlers = {
+  shortcuts = {
     keypressed  = { [combo] = fn },   -- Key.new_handler_table(), unchanged (D8)
     keyreleased = { [combo] = fn },
     textinput   = { [combo] = fn },
@@ -44,17 +47,17 @@ compy.input = {
 
 ```
 __newindex(t, k, v):
-  if k == 'handlers' or k == 'hooks' or k == 'callbacks' then
+  if k == 'shortcuts' or k == 'hooks' or k == 'callbacks' then
     error("compy.input: '" .. k .. "' is not assignable", 2)
   end
   -- k is a leaf write inside one of the three sub-tables; sub-tables get
   -- their OWN __newindex enforcing the same container-frozen rule one
-  -- level down (handlers.keypressed = {} must also refuse).
+  -- level down (shortcuts.keypressed = {} must also refuse).
 ```
 
-Each of `handlers.<event>`, `hooks`, `callbacks` needs a `__newindex` refusing
-identity replacement of *their own* nested tables (`handlers.keypressed = {}` must
-still error) while allowing leaf writes (`handlers.keypressed['ctrl+s'] = fn`
+Each of `shortcuts.<event>`, `hooks`, `callbacks` needs a `__newindex` refusing
+identity replacement of *their own* nested tables (`shortcuts.keypressed = {}` must
+still error) while allowing leaf writes (`shortcuts.keypressed['ctrl+s'] = fn`
 succeeds, going through `Key.new_handler_table`'s existing normalisation,
 unchanged). `hooks[event] = fn` and `callbacks[name] = fn` are flat leaf writes,
 no nesting to protect.
@@ -64,12 +67,12 @@ no nesting to protect.
 ## §2 Dispatch (obligation 6a — extracted as a free function)
 
 ```
--- handlers, hooks: the two compy.input sub-tables (or console/editor's own,
+-- shortcuts, hooks: the two compy.input sub-tables (or console/editor's own,
 -- future use). widget: an object responding to widget[event](widget, ...)
 -- and widget:is_shown(). Returns: consumed:boolean.
-function dispatch(handlers, hooks, widget, event, trigger, ...)
+function dispatch(shortcuts, hooks, widget, event, trigger, ...)
   local combo = Controller.combo_string(trigger, Controller.keys_pressed)
-  local h = handlers[event][combo]
+  local h = shortcuts[event][combo]
   if h and h(...) then return true end
   local hk = hooks[event]
   if hk and hk(...) then return true end
@@ -82,7 +85,7 @@ end
 ```
 
 `ProjectInputController:_dispatch` becomes a thin caller: `return dispatch(self.
-compy_input.handlers, self.compy_input.hooks, love.state.user_input_controller,
+compy_input.shortcuts, self.compy_input.hooks, love.state.user_input_controller,
 event, trigger, ...)`. No `framework_handlers` tier; no `_generic_callback`;
 no `_sink`. `_generic_callback`, `_sink`, `framework_handlers`, `install_tier1`,
 `shown_widget`, `run_hook`, `framework_submit`, `framework_cancel` are **deleted**.
@@ -93,12 +96,47 @@ terminal-sink semantics (always invoked, internal no-op when nothing to do).
 "Only true when it acted" is explicitly rejected (would require per-branch
 bookkeeping the widget doesn't have today).
 
+### Considered alternative (deferred, not adopted) — an OR-chain with default-noop
+### slots and an internal widget shown-check
+
+Owner-proposed, marked here for future consideration rather than built:
+
+```
+return shortcuts[event](...) or hooks[event](...) or widget:dispatch(event, ...)
+```
+
+with `shortcuts[event]`/`hooks[event]` never nil (defaulted to a noop-returning-
+`false` stand-in, installed via metatable `__index`) and `widget:dispatch` deciding
+its own truthy/falsy return internally from its own shown/hidden state, rather than
+the caller checking `widget:is_shown()` externally as §2 does above.
+
+**Worth noting, not just filing away:** this echoes an existing standing REVIEW
+note almost verbatim — `projectInputController.lua:197`: *"it was told multiple
+times that more tier-agnostic chain is to run 'OR' combination, while nillable
+elements are secured by default noop… mark potential improvement as a tech debt or
+just TODO:consider note."* It is also, arguably, a **more faithful** reading of
+original Decision 2's own clause ("a load-bearing decision about the sink: its
+hidden-check is internal") than §2's approach above, which moves the shown-check
+*out* to the caller.
+
+**Why not adopted here (the owner's own caveat, confirmed on inspection):**
+`shortcuts[event]` is a **table** keyed by combo, not a single function — so
+`shortcuts[event](...)` only works if the default-noop stand-in is itself smart
+enough to resolve the current combo internally (compute `combo_string`, look up
+the matching entry, call it or fall through) rather than being a flat "always
+returns false" default. That is meaningfully more machinery than a plain
+default-noop, for a debugging-elegance payoff — exactly the "elegance-for-itself"
+risk flagged when this was raised. §2's explicit-caller-checks-shownness shape
+stays the spec's baseline; this is recorded as a marked, deliberately-deferred
+alternative for whoever next touches this chain, cross-referenced against the
+in-code REVIEW it independently reproduces.
+
 ---
 
 ## §3 Submit / cancel sequence (widget-owned default, callback-driven)
 
 Lives on the widget (today's `UserInputController`), invoked as the terminal chain
-step (§2) when the trigger combo is `'return'`/`'escape'` and no `handlers`/`hooks`
+step (§2) when the trigger combo is `'return'`/`'escape'` and no `shortcuts`/`hooks`
 entry consumed first:
 
 ```
@@ -172,6 +210,26 @@ function build_widget_api(get_widget, get_active_flag)
     configure = function(cfg) ... end,
     clear = function() ... end,
   }
+  -- CONSIDERED, DEFERRED (owner, S16): unify further — one instance-record
+  -- holding shortcuts/hooks/callbacks/widget-ref TOGETHER with these methods,
+  -- so `dispatch` (§2) becomes a method on this same object instead of a free
+  -- function taking three separate arguments. Appealing: matches how
+  -- compy.input already looks from a project's side (one object, everything
+  -- hanging off it) — a console/editor adopter would build "the same kind of
+  -- thing" for itself, not a different shape.
+  -- Two reasons this spec keeps them separate instead: (1) this codebase
+  -- states a preference for functional style over classes (`agents/
+  -- rules.md:67`, "closures, iterators, and immutable-by-convention data are
+  -- preferred") — a plain dispatch(shortcuts, hooks, widget, ...) function
+  -- fits that better than a dispatch method on a fatter class; (2) the D7
+  -- guard is specifically an untrusted-PROJECT-code concern — console/editor
+  -- are trusted host code and need none of it (confirmed: they already call
+  -- UIC's raw methods directly, bypassing compy.input entirely). Folding
+  -- methods + mechanism into one reusable class would either drag the guard
+  -- into console/editor's path or make it conditional inside the shared
+  -- class — re-coupling a concern this split deliberately kept out of the
+  -- reusable core. Left as the executor's call if/when console/editor
+  -- migration is actually picked up, not decided here.
 end
 ```
 
@@ -249,10 +307,10 @@ touching implementation, per house convention.
 4. **Opt-in auto-close.** `after_submit = function() compy.input.hide() end`
    configured → identical externally-observable behaviour to today's shipped
    auto-close.
-5. **Enter/Escape shadowable.** `handlers.keypressed['return'] = function() return
-   true end` configured, widget shown, text present, Enter pressed → no submit
-   occurs (handler wins). Ctrl+Q pressed in the same state → the project still
-   quits (gateway pre-tap unaffected by any handler).
+5. **Enter/Escape shadowable.** `shortcuts.keypressed['return'] = function()
+   return true end` configured, widget shown, text present, Enter pressed → no
+   submit occurs (shortcut wins). Ctrl+Q pressed in the same state → the project
+   still quits (gateway pre-tap unaffected by any shortcut).
 6. **Consumption via shownness.** Widget hidden, arbitrary key → chain reports
    not-consumed (falls through past the widget). Widget shown, arbitrary key
    (including ones the widget does nothing with) → chain reports consumed.
@@ -263,11 +321,11 @@ touching implementation, per house convention.
    `compy.input.hooks.keypressed` → native fires via the seeded hook. Explicit hook
    set, then set to `nil` → **no** native resurrection (differs from today —
    this is the deliberate semantic change, must be asserted, not merely allowed).
-9. **D7 guard, frozen identities.** `compy.input.handlers = {}`,
+9. **D7 guard, frozen identities.** `compy.input.shortcuts = {}`,
    `compy.input.hooks = {}`, `compy.input.callbacks = {}`,
-   `compy.input.handlers.keypressed = {}` each raise loudly. `compy.input.hooks.
+   `compy.input.shortcuts.keypressed = {}` each raise loudly. `compy.input.hooks.
    keypressed = fn`, `compy.input.callbacks.validator = fn`,
-   `compy.input.handlers.keypressed['ctrl+s'] = fn` each succeed.
+   `compy.input.shortcuts.keypressed['ctrl+s'] = fn` each succeed.
 10. **Teardown re-seeds, doesn't wipe.** Project A sets `after_cancel = fn`,
     stops. Project B activates, never touches `after_cancel`. Escape in project B
     → default no-op behaviour (stays open), not project A's leftover `fn`, and not
