@@ -283,10 +283,10 @@ function UserInputView:render(input, status, time)
 end
 
 --- Draw the pre-rendered canvas to screen
--- doc/development/internals/user_input.md, "Submit and cancel — the
--- framework tier-1 chains": oneshot is gone; the published
+-- doc/development/internals/user_input.md, "Submit and cancel —
+-- widget-owned callback sequences": oneshot is gone; the published
 -- input widget
--- singleton is the one view that skips this continuous
+-- instance is the one view that skips this continuous
 -- per-frame update_view() ("a transitional workaround until
 -- rerenders are worked out",
 -- {badspecref: commit 7b4422c} — "feat(uiv): render
@@ -294,7 +294,7 @@ end
 -- stands in
 -- for what oneshot used to flag, since it was the only
 -- oneshot=true instance in production.
--- REVIEW: need better explanation of the logic and justification for the decision -- why exactly redraw is skipped when controller is active? why singleton identity is used as a check? will this check survive when/if we replug Console/Editor to the same singleton?
+-- REVIEW: need better explanation of the logic and justification for the decision -- why exactly redraw is skipped when controller is active? why widget identity is used as a check? will this check survive when/if we replug Console/Editor to the same widget?
 function UserInputView:draw()
   if self.controller ~= love.state.user_input_controller then
     self.controller:update_view()

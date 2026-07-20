@@ -29,9 +29,9 @@ end
 --- REVIEW: why returning strict 'true' instead of returning whatever handler returns?
 --- Intra-route forward: the console route hands the event
 --- to the widget it activated (nil under 'inspect' — the
---- console owns that surface itself). The sink receives the
+--- console owns that surface itself). The widget receives the
 --- uniform per-channel signature with the read-only
---- keys_pressed proxy (doc/development/decisions/input.md, Decision 9 and
+--- pressed-keys view (doc/development/decisions/input.md, Decision 9 and
 --- Decision 13). Returns whether the
 --- widget was the surface (true = forwarded), so the caller
 --- falls back to the console line only when no widget is up.
@@ -79,8 +79,9 @@ local user_pointer
 
 -- keyboard/text and pointer are split: different install
 -- paths AND lifecycles. Keyboard/text events run the
--- four-tier chain and return to the console at
--- running->project_open; pointer handlers are error-wrapped
+-- three-consumer chain (shortcuts -> hooks -> widget) and
+-- return to the console at running->project_open; pointer
+-- handlers are error-wrapped
 -- straight into love.* and stay hooked until the project
 -- stops. The widget-lockout problem only ever existed on
 -- keyboard/text; pointer was deliberately left as-is. See
@@ -197,10 +198,10 @@ local function keyboard_native(userlove, CC, key)
   end
 end
 
---- The project's own keyboard/text handlers, error-wrapped as
---- tier-3 chain participants (doc/development/decisions/input.md,
---- Decision 10: pure wrap) — return values
---- preserved so a native can consume like any participant.
+--- The project's own keyboard/text handlers, error-wrapped for
+--- seeding as hooks[event] (doc/development/decisions/input.md,
+--- Decision 10 revised: pure wrap) — return values
+--- preserved so a seeded hook can consume like any participant.
 --- @param userlove table
 --- @param CC ConsoleController
 --- @return table natives
@@ -396,7 +397,7 @@ end
 -- live held set; assignment raises. Rebuilt only when the backing
 -- identity changes (tests swap the table wholesale), so dispatch
 -- allocates nothing per event. NOTE: under LuaJIT/Lua 5.1 `pairs`
--- ignores __pairs, so pairs(proxy) yields nothing on this
+-- ignores __pairs, so iterating this view yields nothing on this
 -- platform; the load-bearing contract (read-through + write-raise)
 -- holds, and __pairs is kept for 5.2+ hosts.
 local held_backing, held_proxy
@@ -1007,7 +1008,7 @@ Controller = {
     --- @param btn integer
     --- @param touch boolean
     --- @param presses number
-    -- Pointer has NO four-tier chain: this is an
+    -- Pointer has NO three-consumer chain: this is an
     -- unstructured broadcast. The widget gets the event
     -- whenever present (no bounds/consume check, return
     -- ignored), then the project's own handler gets it

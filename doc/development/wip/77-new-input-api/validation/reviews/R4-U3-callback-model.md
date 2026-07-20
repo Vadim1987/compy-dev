@@ -44,26 +44,38 @@ rather than via Fable).
   overlay widget's callbacks (via the proxy) — a nil'd `after_cancel` must not silently mean
   "stays open forever" for the next project.
 
-## Overlay scoping of submit/cancel (Q2 resolved — Opus decision)
-Console/editor call their own `IC:keypressed` DIRECTLY (verified: ConsoleController →
-`input:keypressed` + own `evaluate_input`; editor → own `submit()` + conditional
-`input:keypressed`). The old submit/cancel lived at the ROUTE's tier-1, never touching them.
-`Widget:keypressed` will handle `return`/`escape` → `_submit_default`/`_cancel_default`
-**gated on `self:_is_overlay()`** (`self == love.state.user_input_controller`) — reusing the
-existing overlay-identity predicate already in `_is_hidden_overlay`/`is_shown` (adds NO new
-leak — that global reference already exists and cleaning it is an out-of-scope still-open
-REVIEW; adds no constructor flag). Console/editor widgets are never the published overlay, so
-they never trigger submit/cancel-default — their behavior is provably unchanged. `shift+return`
-falls through to the editing branch (line_feed); `ctrl+escape` is not a cancel.
+## Overlay scoping of submit/cancel (Q2) — SHIPPED: no identity gate at all
+**Superseding note (owner steer, 2026-07-20, after this doc's first draft):** the owner
+rejected *any* `self == love.state.user_input_controller` check — "the route is dumb; submit/
+cancel is the widget's own business; is_shown is a strictly internal flag; propagation is the
+callback's business." So the earlier `_is_overlay()`-gate idea below was **not built.** The
+shipped mechanism (code wins on facts — `userInputController:keypressed`):
+- `Widget:keypressed` handles plain `return`/`escape` → `_submit_default`/`_cancel_default`
+  **inside its NON-EDITOR branch** (the pre-existing `if love.state.app_state == 'editor'`
+  fork). No per-instance overlay-identity check exists.
+- Editor mode (`app_state == 'editor'`) keeps its own Enter/Escape handling
+  (EditorController) — the editor branch does not run submit/cancel-default.
+- **Console's own always-shown widget DOES run `_submit_default`/`_cancel_default`** on its own
+  Enter/Escape (it is in the non-editor branch). This is harmless: console sets no
+  before/after callbacks, so `_submit_default` is a no-op delivery and console's own
+  `evaluate_input` does the real work; `_cancel_default`'s clear matches console's prior
+  Escape-clears behaviour. Verified by the green suite. This is consistent with the owner's
+  "widget owns it; unconfigured callbacks are inert" framing.
+- `shift+return` falls through to the editing branch (line_feed); `ctrl+escape` is not a
+  cancel.
+`doc/development/internals/user_input.md` documents this actual mechanism (with a Note
+callout), per code-wins-on-facts (R4/U4).
 
 ## Blast radius (U3)
 - `projectInputController.lua`: free-function `dispatch`; delete framework_handlers/
   install_tier1/framework_submit/framework_cancel/shown_widget/run_hook/_generic_callback/
   _sink/log_branch; thin `_dispatch`.
-- `userInputController.lua`: `self.callbacks` + DEFAULT_CALLBACKS at new(); `_is_overlay`;
-  `_submit_default`/`_cancel_default`/`run_callback`; keypressed return/escape gate; deliver/
-  gate/emit_limit read self.callbacks; apply_config writes self.callbacks (+ highlighter→ev);
-  remove flat output fields.
+- `userInputController.lua`: internal `shown` flag + `is_shown()`/`always_shown()`;
+  `self.callbacks` + DEFAULT_CALLBACKS at new() + `reset_callbacks()`;
+  `_submit_default`/`_cancel_default`/`run_callback`; keypressed return/escape handled in the
+  non-editor branch (no `_is_overlay` — see Q2 above); deliver/gate/emit_limit read
+  self.callbacks; apply_config writes self.callbacks (+ highlighter→ev); remove flat output
+  fields; `_is_hidden_overlay` removed.
 - `consoleController.lua`: callbacks leaf-proxy → live overlay widget; remove
   merge_output_keys/OUTPUT_KEYS sticky-for-callbacks; §6 console on_limit_reached patch,
   dropping the `local limit = input:keypressed(k)` return-channel branch.

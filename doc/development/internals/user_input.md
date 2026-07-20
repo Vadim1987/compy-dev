@@ -26,25 +26,25 @@ LÖVE2D textinput event
                 → view re-renders
     → project route (while a project is 'running'):
         ProjectInputController:textinput
-          → the four-tier chain ("Keyboard Handling" below);
-            the terminal tier is the same
+          → the three-consumer walk ("Keyboard Handling" below);
+            the terminal consumer is the same
             UserInputController:textinput/add_text path
 ```
 
-A project hooks `textinput` either via `compy.input.handlers.textinput[combo]` /
-`compy.input.on_text_input` (tiers 2-3 of the chain) or by defining its own
-`love.textinput`, which auto-provisions as the tier-3 default when no `on_text_input`
-is set (see "Keyboard Handling" below) — draining down into the widget sink is what
-happens only when nothing upstream consumes the event.
+A project hooks `textinput` either via `compy.input.shortcuts.textinput[combo]` /
+`compy.input.hooks.textinput` (the shortcuts/hooks consumers of the chain) or by
+defining its own `love.textinput`, which auto-provisions as the seeded hook when
+no explicit `hooks.textinput` is set (see "Keyboard Handling" below) — reaching
+the widget is what happens only when nothing upstream consumes the event.
 
 Text characters arrive via `love.textinput` (OS-processed, handles IME and layout, fires only for character-producing keys). Raw key events arrive via `love.keypressed` — but `keypressed` is **not** restricted to non-character keys: LÖVE2D fires it for every physical key, textual or not. Pressing `q` fires both `keypressed('q')` and `textinput('q')`. (LÖVE2D does not guarantee the relative *order* the two arrive in for the same physical key.)
 
 The "keypressed = control channel, textinput = character channel" split used throughout this doc is therefore **compy's own convention, not a LÖVE2D guarantee**. Nowhere does compy's `keypressed` code filter out or ignore textual keycodes — it simply never gives `k` a match that means "insert this character" (see `UserInputController:keypressed` below: every branch checks `k` against a fixed set of named control keys, or a modifier + letter combo used as a *shortcut*, e.g. Ctrl+C). A bare `keypressed('q')` with no modifier held matches nothing and falls through untouched. All literal character insertion (`UserInputModel:add_text`) is reachable only from `textinput` handlers, plus two `keypressed`-triggered paths that move **existing** text (not the pressed key) into the model — clipboard paste (Ctrl+V) and `load_selection` (Escape, editor mode, loads buffer text into the input).
 
 `isrepeat` is threaded through the gateway and the project route, but not uniformly all the way to every consumer. LÖVE calls `love.handlers.keypressed` with `(key, scancode, isrepeat)`; the gateway (`controller.lua:797`) keeps all three and calls `love.keypressed(k, sc, isr)` unconditionally (`controller.lua:899-900`). From there:
-- while a project runs, the project route's `love.keypressed` is `ProjectInputController:keypressed(k, sc, isr)` (`controller.lua:199-201`), which threads `isr` through all four dispatch tiers, sink included (`projectInputController.lua:219-222`) — both `compy.input.on_key_pressed` and the sink receive the uniform `(k, keys_pressed, isrepeat)` triple;
-- in console/editor mode the slot function keeps `isr` only to forward it to a shown widget (`forward_keypressed`, `controller.lua:36-41`, called from the console-route default keypressed at `controller.lua:398-436`) — a widget being edited sees repeats; but the fallback call `CC:keypressed(k)` (and, from there, `EditorController:keypressed(k)`) drops it, so console/editor's own mode dispatch never sees `isrepeat`.
-Combo-tier dispatch (tiers 1-2 of the project chain) does not gate on `isrepeat` either — see "Key state" below.
+- while a project runs, the project route's `love.keypressed` is `ProjectInputController:keypressed(k, sc, isr)` (`controller.lua:141-144`), which threads `isr` through the dispatch walk, widget included (`projectInputController.lua:74-86`) — both `compy.input.hooks.keypressed` and the widget receive the uniform `(k, keys_pressed, isrepeat)` triple;
+- in console/editor mode the slot function keeps `isr` only to forward it to a shown widget (`forward_keypressed`, `controller.lua:41-46`, called from the console-route default keypressed at `controller.lua:447-491`) — a widget being edited sees repeats; but the fallback call `CC:keypressed(k)` (and, from there, `EditorController:keypressed(k)`) drops it, so console/editor's own mode dispatch never sees `isrepeat`.
+Shortcuts dispatch (the `compy.input.shortcuts` combo tables) does not gate on `isrepeat` either — see "Key state" below.
 
 ### Multiline input
 
@@ -83,7 +83,7 @@ arrow/Home/End. **Controller** (`UserInputController`) exposes a narrower passth
 clamped 2D mover: `get_cursor_info`/`get_cursor_pos`/`set_cursor(Cursor)`/`jump_home`/
 `set_cursor_pos(line, col)` — the last one (`userInputController.lua:124-139`) computes its own
 clamp against line/text length rather than relying on `move_cursor`'s fallback-to-previous-position
-behaviour. **`compy` (project-facing)** now has its own surface on the singleton overlay:
+behaviour. **`compy` (project-facing)** now has its own surface on the overlay widget:
 `compy.input.get_cursor()` / `set_cursor(line, col)` / `set_text(text[, keep_cursor])`
 (`consoleController.lua:487-510`) — `get_cursor` returns `nil` while hidden (a plain "nothing to
 report" read, not a refusal); `set_cursor`/`set_text` no-op **and warn** while hidden.
@@ -121,11 +121,14 @@ touched by this pass.
 
 ## Keyboard Handling
 
-The project route runs a per-event chain, tier by tier, each tier
-consuming only if it returns truthy — combo handler → project
-generic callback → widget-if-shown — with no `if`-governed
-native/widget split at the dispatch site and the hidden-check
-moved *inside* the sink itself.
+The project route runs a per-event chain, a dumb three-consumer walk,
+each consumer tried only if the previous one returns falsey —
+`shortcuts[event][combo]` → `hooks[event]` → the widget — stopping at
+the first that consumes. There is no framework tier any more: the old
+non-overridable Enter/Escape special-case is gone (see "Submit and
+cancel" below); the widget's own participation is decided by its
+*shownness*, not a return value, with the hidden-check *internal* to
+the widget itself.
 
 ### Dispatch chain
 
@@ -143,27 +146,31 @@ love.handlers.keypressed (k, scancode, isrepeat)
       │          → history navigation (PageUp/Down)
       │          → UserInputController:keypressed
       │          → Enter → ConsoleController:evaluate_input
-      └─ project run: ProjectInputController — ONE four-tier
-           chain, same shape on keypressed/keyreleased/textinput:
-           1. framework_handlers.<event>[combo]  (structural
-                keys; return/escape land in a later slice)
-           2. compy.input.handlers.<event>[combo]  (project
-                combo handlers; per-event tables, normalising)
-           3. per-event generic callback  (on_key_pressed /
-                on_text_input / on_key_released) — precedence:
-                explicit on_* > project native captured at
-                activate > noop+log
-           4. the sink (UserInputController) — terminal; edits
-                when shown, INTERNAL no-op when hidden
-         Truthy at any tier consumes (stop, sink included);
-         falsey falls through. Consuming never removes a tier.
+      └─ project run: ProjectInputController — the free function
+           `dispatch(shortcuts, hooks, widget, event, trigger, ...)`
+           (projectInputController.lua), same shape on
+           keypressed/keyreleased/textinput:
+           1. compy.input.shortcuts[event][combo]  (project
+                shortcuts; per-event tables, normalising —
+                Decision 8)
+           2. compy.input.hooks[event]  (one hook per event,
+                seeded once at activation with the project's
+                captured native love.* handler where unset — no
+                per-event precedence re-resolution — Decision 10
+                revised)
+           3. the widget (UserInputController) — terminal;
+                consumes whenever it is shown (its own internal
+                `self.shown` flag via `is_shown()`), skipped
+                (and reports not-consumed) when hidden
+         Truthy at shortcuts/hooks, or shown at the widget,
+         consumes (stop); falsey/hidden falls through.
 ```
 
 `app_state == 'starting'` is never observed by any input path: `main.lua`'s `love.load()` sets it, then flips it to `'ready'` a few lines later — both synchronously, before LÖVE's event pump runs, so no `love.handlers.*` entry point can ever see the `'starting'` value.
 
 Global shortcuts intercepted in `love.handlers.keypressed` (`controller.lua:797+`) before anything reaches the active route's controller: Ctrl+Pause suspends, Ctrl+Q quits project, Ctrl+S stops run or closes buffer, Ctrl+Shift+R resets application, Ctrl+Alt+R restarts project, Ctrl+T quick-switches between run and edit. Ctrl+Esc (quit) is the one exception living on the release side — `love.handlers.keyreleased` (`controller.lua:910-920`), not keypressed. None of these consume the key: it still reaches the active route afterward (§6.3 non-consuming shortcuts).
 
-The gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The slot occupant (the active route's controller) always receives the event. The project route runs the four-tier chain above: a project native auto-provisions as the tier-3 default participant (seen even while the widget is shown, only when the project set no `on_*` — explicit `on_*` takes precedence), and the widget sink is the terminal tier with its hidden-check now *internal* (it no-ops on the published singleton while `love.state.user_input` is nil, so a hidden widget mutates nothing without any external gate). The console-route default handlers still forward to the widget when `love.state.user_input` is set (except under `inspect`). The widget is never a routing destination of the gateway and never a slot occupant. `Controller._keyboard_route` records which controller currently occupies the slot (the `ConsoleController` by default, the `ProjectInputController` during a run) — bookkeeping with no reader beyond its own two assignment sites (`controller.lua:209`, `:434`) today.
+The gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The slot occupant (the active route's controller) always receives the event. The project route runs the three-consumer walk above: the project's captured native `love.*` handler auto-provisions as the seeded hook (once, at activation — seen even while the widget is shown, only when the project set no explicit `hooks[event]`; an explicit hook always wins), and the widget is the terminal consumer with its hidden-check *internal* (`is_shown()` reads a strictly-internal `self.shown` flag; the widget no-ops while hidden, so a hidden widget mutates nothing without any external gate). The console-route default handlers still forward to the widget when `love.state.user_input` is set (except under `inspect`). The widget is never a routing destination of the gateway and never a slot occupant. `Controller._keyboard_route` records which controller currently occupies the slot (the `ConsoleController` by default, the `ProjectInputController` during a run) — bookkeeping with no reader beyond its own two assignment sites (`controller.lua:209`, `:434`) today.
 
 **On the `'running'` → `'project_open'` boundary, the project route is disconnected only when the project has no interaction surface left — an interactive non-blocking project keeps it.** A non-blocking project that returns (no `update`/`draw` hooked) drops `app_state` to `'project_open'`; `ConsoleController:run_project` then checks `Controller.user_is_interactive()` (`controller.lua:1112-1113`: `love.state.user_input ~= nil or user_pointer`, the latter set in `hook_pointer` when the project installs any pointer/click handler and reset in `set_default_handlers`). Only when that predicate is false does `run_project` call `Controller.release_keyboard_route(CC)` (`controller.lua:730-735`, `consoleController.lua:266-267`), which calls `Controller.project_input:deactivate()` and **reinstalls the console's own `love.keypressed`/`keyreleased`/`textinput`** — the same slot-reassignment `set_default_handlers` does on project stop, just scoped to the keyboard/text slots (pointer slots stay hooked either way, so pen-and-paper projects remain clickable while `'project_open'`). A project with an active input overlay or a hooked pointer handler instead keeps the project route live: `ProjectInputController` stays the keyboard/text occupant, so the overlay's submit/cancel keep working and `love.quit` (`controller.lua:752-754`) treats `'project_open'` + `user_is_interactive()` the same as `'running'`, stopping to console on Ctrl+Esc rather than letting the app quit. `ProjectInputController` itself has no per-event "am I still running?" forward any more — its own `:keypressed` doc comment (`projectInputController.lua:205-213`) is explicit that this older guard is gone precisely *because* the slots are only ever restored when the route is actually released, so there is nothing left to guard against.
 
@@ -192,33 +199,34 @@ with no held modifiers serialises to just the key name.
 -- escape with nothing held   → "escape"
 ```
 
-Both surfaces are consumed by `ProjectInputController:_dispatch`
-(`projectInputController.lua:170-179`), which serialises every
+Both surfaces are consumed by the free-function `dispatch`
+(`projectInputController.lua:74-86`, called from
+`ProjectInputController:_dispatch`), which serialises every
 project-route keyboard/text event with `Controller.combo_string`
-and looks the result up first against `framework_handlers.<event>`
-(tier 1), then `compy.input.handlers.<event>` (tier 2). Downstream
-consumers (tiers 2-4, project code included) never see the raw
+and looks the result up first against `compy.input.shortcuts.<event>`,
+then `compy.input.hooks[event]`. Downstream consumers (shortcuts,
+hooks, and the widget, project code included) never see the raw
 `Controller.keys_pressed` table directly — they receive a read-only
-proxy (`Controller.held_keys()`, `controller.lua:345-367`):
+pressed-keys view (`Controller.held_keys()`, `controller.lua:345-367`):
 reads pass through to the live set, writes raise. On the shipping
 LuaJIT/Lua 5.1 runtime `pairs()` ignores a table's `__pairs`
-metamethod, so `pairs(proxy)` silently yields nothing — the proxy
-is index-only in practice (`proxy['lctrl']` works, iterating over
+metamethod, so iterating this view silently yields nothing — it
+is index-only in practice (`view['lctrl']` works, iterating over
 it does not); `__pairs` is kept for a future 5.2+ host. There is
 no project-facing way to *poll* held keys outside a callback
 either — `compy`'s namespace (`get_compy_namespace`,
 `consoleController.lua:549-558`) has no `keys_pressed` field; the
-proxy only ever arrives as a callback argument.
+read-only view only ever arrives as a callback argument.
 
-The whole keypressed path hands the widget sink the uniform
-`(k, keys_pressed, isrepeat)` triple — the sink is included by
+The whole keypressed path hands the widget the uniform
+`(k, keys_pressed, isrepeat)` triple — the widget is included by
 design (one signature across the path) — but only on the project
 route; see "Data flow" above for exactly where `isrepeat` does and
-does not reach. Combo dispatch itself does not gate on `isrepeat`:
-tiers 1-2 fire on **every** repeat, not just fresh presses — an
+does not reach. Shortcuts dispatch itself does not gate on `isrepeat`:
+shortcuts fire on **every** repeat, not just fresh presses — an
 in-code `DEFERRED` marker above `ProjectInputController:keypressed`
-(`projectInputController.lua:216-218`) records this as an unruled,
-provisional leaning (fresh-only at tiers 1-2 was considered, never
+(`projectInputController.lua:134-138`) records this as an unruled,
+provisional leaning (fresh-only for shortcuts was considered, never
 adopted) rather than a settled design.
 
 ### Console-specific keys
@@ -233,31 +241,29 @@ These are interpreted by `ConsoleController` itself (console-mode-specific dispa
 generic controller — see the dispatch chain above: the console/editor route forks in
 `ConsoleController:keypressed` before any of this runs.
 
-**The "limit reached" boundary signal has two independent paths today, and the project-facing one
-is now a widget output, not a lost return value.** `cursor_vertical_move`/`is_at_limit` return
-`true` at a boundary; `UserInputController:keypressed` threads that out as its own return value
-(`return ret`, `userInputController.lua:656`) from both branches of its internal `app_state` fork.
-Console captures it (`consoleController.lua:1171`, `local limit = input:keypressed(k)`) and uses it
-for history nav — this return-value path is **console-only** plumbing, unrelated to the project
-surface. Editor discards it (`editorController.lua:803-804`, a bare `input:keypressed(k)` call, no
-`local`) — it doesn't need it, since it independently computes boundary state via
-`inputView:is_at_limit(...)` at the view layer. For the **project widget**, the same boundary check
-additionally calls `self.on_limit_reached(dir, scope)` directly from inside the sink itself
-(`emit_limit`, `userInputController.lua:448-449`, called from both `vertical()` and `horizontal()`)
-— this is the `compy.input.on_limit_reached(direction, scope)` widget output a project sets via
-`show()`/`configure()` or a direct field assignment; it fires regardless of what the chain's return
-value does, because widget outputs are explicitly **not** chain-return-value plumbing (the sink is
-terminal; nothing above it inspects its return for this purpose). The return-value route and the
-`on_limit_reached` route are two separate, independent notification paths that happen to share one
-boundary check.
+**The "limit reached" boundary signal used to travel two independent paths; the return-value one is
+retired (Decision 5 revised).** `cursor_vertical_move`/`is_at_limit` return `true` at a boundary, but
+`UserInputController:keypressed` no longer threads that out as its own return value at all — the
+method returns nothing now. The sole notification path, for every consumer, is the widget output:
+the same boundary check calls `self.callbacks.on_limit_reached(dir, scope)` directly from inside the
+widget itself (`emit_limit`, `userInputController.lua:554-557`, called from both `vertical()` and
+`horizontal()`) — this is the `compy.input.callbacks.on_limit_reached(direction, scope)` widget
+output a project sets via `show()`/`configure()` or a direct field assignment (a leaf-write on
+`callbacks`, same as console/editor's own instances). **Console's history navigation** now goes
+through this same callback: `ConsoleController.new` wires `console_widget.callbacks.on_limit_reached`
+directly on its own `UserInputController` instance (`consoleController.lua:49-52`) to call
+`history_back()`/`history_fwd()`, replacing the old `local limit = input:keypressed(k)` return-value
+capture (`ConsoleController:keypressed` now calls `input:keypressed(k)` purely for its editing side
+effects, return value unused — delta-spec §6). Editor never needed the signal at all, since it
+independently computes boundary state via `inputView:is_at_limit(...)` at the view layer.
 
 **FR-6 (project notification of key events): the keyboard exclusion is resolved as of 1.0.0-rc20260712.**
 Historically, while `love.state.user_input` was set, `controller.lua`'s
 `handlers.keypressed`/`handlers.textinput` called *only* the overlay — the project's own
 `love.keypressed`/`love.textinput` were not called at all (binary, not partial). With the gate
 removed, project key/text events always reach the project route (`ProjectInputController`); which
-surface consumes them (the overlay sink while shown, the project's native handler while hidden) is
-the route's internal delegation, no longer a gateway drop. Mouse never had this problem:
+surface consumes them (the overlay widget while shown, the project's native handler — seeded as a
+hook — while hidden) is the route's internal delegation, no longer a gateway drop. Mouse never had this problem:
 `handlers.mousepressed`/`mousereleased` call the overlay conditionally but call the project's own
 handler **unconditionally**, regardless of overlay state. This is why touch/mouse needed no
 separate #77 scope item: only keyboard was ever exclusively gated.
@@ -275,31 +281,45 @@ split already covered above (console handles escape/history/Ctrl+L itself; edito
 `EditorController:keypressed`'s own `edit`/`reorder`/`search` mode dispatch instead). There is also
 a **second, inner** fork worth knowing about: the *shared* `UserInputController:keypressed` is not
 fully context-blind either — its own body branches on `love.state.app_state == 'editor'`
-(`userInputController.lua:633-653`) to decide whether to call its own `cancel()` local at all
-(Escape → `model:cancel()`, content reset — only reachable in the non-editor branch, and, for the
-project widget, only when the project route's own tier-1 escape entry hasn't already intercepted
-the key first, see "UserInputController keypressed" below). That inner branch is **why** editor's
+(`userInputController.lua:724-755`) to decide whether to run `_submit_default`/`_cancel_default` at
+all (Enter/Escape → the widget's own callback-driven submit/cancel sequences — see "Submit and
+cancel" below — only reachable in the non-editor branch). That inner branch is **why** editor's
 Escape→`load_selection()` (which just populated the input) isn't immediately wiped by the shared
-sink's own Escape-cancels-content behavior on the same keypress — the sink skips `cancel()` entirely
-when `app_state == 'editor'`. So "which hooks are redefined" isn't just outer-controller dispatch;
-the shared sink also self-selects behavior by mode for at least this one case.
+widget's own Escape-cancels-content behavior on the same keypress — the editor branch skips
+`_cancel_default` entirely when `app_state == 'editor'`. So "which hooks are redefined" isn't just
+outer-controller dispatch; the shared widget also self-selects behavior by mode for at least this
+one case. **Note:** this `app_state == 'editor'` fork is the *only* gate — there is no separate
+per-instance "am I the project overlay?" check, so console's own always-shown
+`UserInputController` instance runs `_submit_default`/`_cancel_default` on its own Enter/Escape too
+(harmlessly: console sets no `before_submit`/`after_submit`/`before_cancel`/`after_cancel` callbacks,
+so these are no-ops alongside console's own `evaluate_input`/history handling, described above).
 
 ### UserInputController keypressed (shared)
 
 `UserInputController:keypressed` handles the low-level input operations that apply regardless of which route is driving it (console, editor, or the project widget): removers (backspace, delete, Ctrl+Y delete line), vertical cursor movement, horizontal movement (Left/Right, Home/End, Alt+Home/End for line vs field boundaries), Shift+Enter newline (unconditional — see "Multiline input" above), Ctrl+D duplicate line, copy/cut/paste (Ctrl+C/X/V and Shift+Insert/Delete), selection management. It never inserts literal characters — see "Text Input Widget" above for why `keypressed` and `textinput` divide the work this way.
 
-There is no `oneshot` flag any more, and no submit path inside this method at all — `UserInputModel.new(cfg, eval, custom_label)` (`userInputModel.lua:45`) takes no such parameter. For the **project widget**, Enter and Escape are intercepted at the project route's tier 1 (`framework_handlers.keypressed['return']`/`['escape']`, installed once at construction in `projectInputController.lua:105-109`) *before* this sink ever sees them: `framework_submit`/`framework_cancel` (`projectInputController.lua:71-98`) call `UserInputController:submit()`/`:cancel()` directly and, whenever a widget is shown, always consume — so this sink's own `cancel()` local (Escape → `model:cancel()`, `userInputController.lua:621-625`) is unreachable for the project widget; it only fires for **console/editor's own routes**, which have no tier-1 layer of their own. Console's own Enter handling stays in `ConsoleController:evaluate_input`; the editor's is `EditorController:_handle_submit` — both unrelated to this shared sink, unchanged from before.
+There is no `oneshot` flag any more, and no separate framework-owned submit path — there is no
+framework tier at all (Decision 2 revised). Enter and Escape are ordinary keys handled **inside**
+this same shared method's non-editor branch (`userInputController.lua:750-754`): `Key.is_enter(k)`
+calls `self:_submit_default(keys_pressed)`, `k == 'escape'` calls `self:_cancel_default(keys_pressed)`
+— see "Submit and cancel" below for what those do. There is no separate route-level interception
+above this any more; the widget's own Enter/Escape handling IS the submit/cancel mechanism, for
+every `UserInputController` instance that reaches the non-editor branch (project overlay and
+console's own instance alike — see the "Note" in "Editor-specific keys" above). Console's own Enter
+handling additionally runs `ConsoleController:evaluate_input` afterward (unrelated to this shared
+widget's own submit); the editor's is `EditorController:_handle_submit`, reached only through the
+editor branch, which never calls `_submit_default`/`_cancel_default` at all.
 
 ### Key release
 
-On the **project route** keyreleased runs the same unified chain as keypressed/textinput
-(combos → generic callback → widget-if-shown, DOM-style truthy-stops-propagation) — see the
+On the **project route** keyreleased runs the same unified walk as keypressed/textinput
+(shortcuts → hooks → widget-if-shown, DOM-style truthy-stops-propagation) — see the
 dispatch-chain diagram above. The rest of this section concerns the **console route**, which this
 pass deliberately did not touch (its legacy fork stays until the console/editor migration).
 
 `keypressed`/`textinput` get careful three-way routing (console / editor / project); **`keyreleased`
 gets route-level delegation but no editor fork.** Since 1.0.0-rc20260712, `ProjectInputController:keyreleased`
-runs the same four-tier chain as the other channels (combo → `on_key_released` → sink), the released
+runs the same three-consumer walk as the other channels (shortcuts → `hooks.keyreleased` → widget), the released
 key already absent from the held set. On the
 console route the default handler forwards to a shown widget, else falls to `CC:keyreleased`
 = `ConsoleController:keyreleased` (`consoleController.lua:1203-1206`), which **unconditionally** calls
@@ -377,16 +397,16 @@ Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with 
 
 ## The `user_input` Overlay — Input Perspective
 
-### Singleton lifecycle (introduced in an earlier build)
+### Widget lifecycle (introduced in an earlier build)
 
-`UserInputController` is a singleton created once in `love.load()`
+`UserInputController` for the project overlay is a single instance created once in `love.load()`
 (in `src/main.lua`) and stored in `love.state.user_input_controller`.
 The same model, controller, and view are reused across every overlay
 session; per-session allocation is eliminated.
 
 Activation: `compy.input.show(config)` calls
 `UserInputController:show(config)`, which sets
-`love.state.user_input = { M = model, C = singleton, V = view }`
+`love.state.user_input = { M = model, C = widget, V = view }`
 and runs a view update. Deactivation: `UserInputController:hide()` (or
 `hide()` on the `compy.input` table) sets `love.state.user_input = nil`.
 `compy.input.*` is the sole project-facing input surface
@@ -396,114 +416,138 @@ and runs a view update. Deactivation: `UserInputController:hide()` (or
 **(deprecated, removed in 1.0.0-rc20260712)** — gone from the
 project environment, an ordinary `nil` field, no shim.
 
-`show()` on an already-active singleton is a no-op unless
+`show()` on an already-active widget is a no-op unless
 `{ force = true }` is passed — and the suppression **warns**
 (`Log.warn('UserInputController:show ignored — overlay already
-active...')`, `userInputController.lua:282`), matching the
+active...')`, `userInputController.lua:319-320`), matching the
 framework's warn-don't-swallow convention. With `force`, the text
 is replaced if a `text` field is in the config; otherwise the
-existing text is preserved. No cancel chain fires in either case.
+existing text is preserved. No cancel sequence fires in either case.
 
 ### Dispatch while active
 
-While a project runs, `compy.input.show(config)`/etc. drive the *same* singleton and the *same*
-routing already described under "Keyboard Handling" above — there is no separate "instead of the
-main controller" special case any more. In short: the gateway always calls the active route's
-slot occupant; the console/editor route's default handler additionally forwards to the widget
-(`forward_keypressed`/`forward_textinput`/`forward_keyreleased`) whenever `love.state.user_input`
-is set (except under `inspect`); the project route always reaches the widget as its chain's
-terminal tier. The overlay view is drawn via `user_input.V:draw()` inside the framework's
-`love.update` wrapping of the project draw function (`controller.lua`, `set_love_update`,
-`:589-668`).
+While a project runs, `compy.input.show(config)`/etc. drive the *same* widget instance and the
+*same* routing already described under "Keyboard Handling" above — there is no separate "instead
+of the main controller" special case any more. In short: the gateway always calls the active
+route's slot occupant; the console/editor route's default handler additionally forwards to the
+widget (`forward_keypressed`/`forward_textinput`/`forward_keyreleased`) whenever
+`love.state.user_input` is set (except under `inspect`); the project route always reaches the
+widget as its walk's terminal consumer. The overlay view is drawn via `user_input.V:draw()` inside
+the framework's `love.update` wrapping of the project draw function (`controller.lua`,
+`set_love_update`).
 
 There is no per-frame polling. When the user presses Enter, submit runs synchronously within that
-one keypress — see "Submit and cancel chains" below for the exact order.
+one keypress — see "Submit and cancel" below for the exact order.
 
-### Submit and cancel — the framework tier-1 chains
+### Submit and cancel — widget-owned callback sequences
 
-Enter/Escape on the project widget are framework-level, non-overridable tier-1 participants
-(`framework_handlers.keypressed['return']`/`['escape']`, installed once at construction —
-`projectInputController.lua:105-109`), engaged only while the widget is shown (`shown_widget()`,
-`:61-64`) — hidden, the combo falls through to lower tiers like any other key.
+Enter and Escape are **ordinary keys handled by the widget itself** (Decision 6 revised) — there is
+no framework tier any more, and no non-overridable interception above the widget: a project
+shortcut registered on `'return'`/`'escape'` (`compy.input.shortcuts.keypressed['return']`, etc.)
+wins over the widget's default, same as any other combo (**withdrawn guarantee**, deliberate — see
+the delta-design's "Withdrawn guarantee" note; the gateway's unconditional power keys, Ctrl+Q etc.,
+remain the real, permanent escape hatch, unaffected by any shortcut). Only once no shortcut/hook
+consumes the key does the widget's own `UserInputController:keypressed` reach its Enter/Escape
+branch (`userInputController.lua:750-754`), and only while the widget is shown — hidden, the widget
+is skipped entirely by the dispatch walk.
 
-**Submit** (`framework_submit`, `projectInputController.lua:71-81`):
-
-```
-before_submit(keys_pressed)
-→ UserInputController:submit() (userInputController.lua:380-389):
-    validator(text) rejects → error display, input locked until
-      acknowledged (Enter/Space/arrows clear it); nothing below fires
-    accepts → deliver(text): fills the legacy poll reftable (if a
-      project still uses one) and calls on_text_entered(text) while
-      the session is still active → hide() (love.state.user_input = nil)
-→ after_submit(text) — fires only once ui:submit() returned
-    non-nil, i.e. after the widget has already hidden
-```
-
-This is what "auto-close on submit" means today: a successful submit synchronously validates,
-delivers, and hides within the one Enter keypress — no queued event, no next-tick delay, no
-`oneshot` flag gating any of it (the `oneshot`/`love.event.push('userinput')` mechanism this
-replaced is gone entirely — see "UserInputController keypressed" above). `before_submit`/
-`after_submit` are read directly off the `compy.input` surface by `projectInputController.lua`'s
-`run_hook` helper (`:41-56`, `run_hook`/`log_branch`): an unset hook silently debug-logs and the
-framework step it brackets still runs regardless; there is no way to veto the framework step from
-a hook today — `before_submit`'s return value is ignored (a reserved future extension).
-
-**Cancel** (`framework_cancel`, `projectInputController.lua:88-98`) has no reject path — Escape
-always dismisses:
+**Submit** (`UserInputController:_submit_default`, `userInputController.lua:451-460`):
 
 ```
-before_cancel(keys_pressed)
-→ UserInputController:cancel() (userInputController.lua:176-179):
-    model:cancel() (content cleared) → hide()
-→ after_cancel()
+run_callback(self, 'before_submit', keys_pressed)   -- veto reserved, unbuilt (R9)
+if self.model:get_text():is_empty() then return end
+local text = string.unlines(self.model:get_text())
+if not gate(self.model, self.callbacks.validator, text) then return end   -- reject: error shown, stop
+deliver(self, text)                                  -- fires callbacks.on_text_entered
+run_callback(self, 'after_submit', text)              -- DEFAULT: no-op — widget stays open
 ```
 
-`compy.input.hide()` (the programmatic path) fires **no** cancel chain — cancel is the user-facing
-Escape path only.
+`on_text_entered` fires **while the widget is still active** — there is no implicit hide any more.
+`after_submit` DEFAULTS to a no-op, so **a successful submit no longer auto-closes the widget** —
+this is the flipped default (Decision 6 revised): the widget stays open unless a project's own
+`after_submit` calls `compy.input.hide()`. `before_submit`'s return value is reserved for a future
+veto and is ignored today (R9, unbuilt); rejecting bad input is the `validator`'s job.
+
+**Cancel** (`UserInputController:_cancel_default`, `userInputController.lua:468-474`):
+
+```
+if run_callback(self, 'before_cancel', keys_pressed) then return end  -- truthy = veto, skip clear
+self.model:cancel()                                   -- clear, hardwired
+run_callback(self, 'after_cancel')                     -- DEFAULT: no-op — widget stays open
+```
+
+Unlike submit, `before_cancel`'s return value **is honoured**: a truthy return vetoes the clear
+step entirely (content and widget state untouched, `after_cancel` does not fire) — the one
+asymmetry between the two default sequences. `after_cancel` DEFAULTS to a no-op, so Escape clears
+the field but the widget stays open, same flipped default as submit.
+
+`run_callback(self, name, ...)` (`userInputController.lua:438-442`) looks up `self.callbacks[name]`;
+absent → no-op + debug-log. `self.callbacks` is the widget's own table, seeded at construction with
+`DEFAULT_CALLBACKS` (`after_submit`/`after_cancel`/`on_limit_reached` = stay-open no-ops) and
+re-seeded — never wiped to `nil` — on project teardown (Decision 11; a nil'd `after_cancel` must
+not silently mean "stays open forever" for the next project). For the **project overlay**,
+`compy.input.callbacks` **is this exact same table** (owner ruling 2026-07-20; captured once in
+`get_compy_input`, `consoleController.lua:601-635`) — a project's `compy.input.callbacks.after_submit
+= fn` write lands directly on `self.callbacks.after_submit`, no copy, no bridging. Console/editor set
+their own instance's `self.callbacks.X` directly (they are trusted host code, not routed through
+`compy.input` at all — see `consoleController.lua:49-52` for console's own `on_limit_reached` wiring).
+
+A project wanting the pre-redesign "prompt once, then close" behaviour opts in with one line:
+`compy.input.callbacks.after_submit = function() compy.input.hide() end` (and the `after_cancel`
+equivalent for Escape).
+
+`compy.input.hide()` (the programmatic path) fires **no** cancel sequence — cancel is the
+user-facing Escape path only.
 
 One vestige of the old mechanism remains in the gateway: `love.handlers.userinput`
-(`controller.lua:976-981`) still exists and would null `love.state.user_input` if a queued
+(`controller.lua`) still exists and would null `love.state.user_input` if a queued
 `'userinput'` LÖVE event ever arrived, but nothing in `src/` pushes that event any more — the old
 `oneshot`-gated `love.event.push('userinput')` was removed along with `oneshot` itself. This handler
-is unreachable today, not a live part of submit/cancel.
+is unreachable today, not a live part of submit/cancel. (`doc/development/technical_debt/input.md`
+tracks it as dead code.)
 
 This whole `before_*`/`after_*` + widget-output surface (`on_text_entered`, `on_limit_reached`,
-`on_key_pressed`, `on_text_input`, `on_key_released`, `handlers.*`) is now live in `src/` — see
-"Keyboard Handling" above for the four-tier dispatch chain these callbacks hang off of.
+`validator`, `highlighter`) — collectively `self.callbacks`/`compy.input.callbacks` — is now live in
+`src/` — see "Keyboard Handling" above for the three-consumer dispatch walk these hang off of.
 
 ### `compy.input` namespace
 
 For a project-author usage guide with examples, see
 [Compy Input API](../../input_api.md).
 
-`compy.input` is a table created once at namespace setup (`get_compy_input()`,
-`consoleController.lua:462-541`, wrapped into the project's `compy` table by
-`get_compy_namespace()`, `:549-558`). It exposes:
-- `compy.input.show(config)` — activates the singleton
-- `compy.input.hide()` — deactivates without firing cancel chain
+`compy.input` is a table created once per project environment (`get_compy_input()`,
+`consoleController.lua:601-635`, wrapped into the project's `compy` table by
+`get_compy_namespace()`). Its container and the identity of its three sub-tables
+(`shortcuts`/`hooks`/`callbacks`) are frozen — Decision 7 revised, see the
+"compy.input's write boundary" comment in `consoleController.lua` — but every leaf inside them is
+freely writable. It exposes:
+- `compy.input.show(config)` — activates the widget
+- `compy.input.hide()` — deactivates without firing the cancel sequence
 - `compy.input.get_cursor()` / `set_cursor(line, col)` /
   `set_text(text [, keep_cursor])` — the cursor/text surface; see
   "Cursor manipulation" above for the layering this sits on.
 - `compy.input.configure(config)` — live-reconfigures an active
   session; `compy.input.clear()` — resets an active session's
   content.
-- `compy.input.handlers.keypressed/keyreleased/textinput` (tier 2)
-  and `on_key_pressed`/`on_text_input`/`on_key_released` (tier 3),
-  plus `before_submit`/`after_submit`/`before_cancel`/`after_cancel`
-  — the dispatch-chain and submit/cancel surfaces described above.
+- `compy.input.shortcuts.keypressed/keyreleased/textinput[combo]` — the per-event combo tables
+  (Decision 8), and `compy.input.hooks.keypressed/keyreleased/textinput` — the one seeded hook per
+  event (Decision 10 revised).
+- `compy.input.callbacks.{on_text_entered, on_limit_reached, validator, highlighter, before_submit,
+  after_submit, before_cancel, after_cancel}` — the widget's own `self.callbacks` table (same
+  object, not a copy — see "Submit and cancel" above); every member is a plain leaf-write, uniform
+  with `shortcuts`/`hooks`.
 
-Everything on `compy.input` other than the `handlers` container and
-the widget-output/tier-3/submit-cancel callback fields is callable
-API: assigning to any of the names above raises loudly rather than
-silently replacing the function (`build_input_surface`,
-`consoleController.lua:382-397`).
+Everything on `compy.input` other than the `shortcuts`/`hooks`/`callbacks` sub-table identities is
+callable API: assigning to any of the method names raises loudly rather than silently replacing the
+function (`build_input_surface`, `consoleController.lua:425-438`); assigning to
+`compy.input.shortcuts`/`hooks`/`callbacks` themselves (replacing the sub-table) also raises —
+only their leaves are writable.
 
 There is no project-facing `is_active()`/`is_shown()` predicate: an
 internal `UserInputController:is_shown()` exists
-(`userInputController.lua:415-417`) but is not exposed on this
-surface — a project that needs to know whether the widget is
-currently up reads `love.state.user_input` directly (as
+(`userInputController.lua:487-489`), reading a strictly-internal `self.shown` flag with no
+`love.state` reach, but is not exposed on this surface — a project that needs to know whether the
+widget is currently up reads `love.state.user_input` directly (as
 `examples/maze/main.lua` does, with its own per-tick re-arm poll)
 rather than calling a `compy.input` method.
 
@@ -580,16 +624,16 @@ refusal (there is no active session to clear).
 | `src/model/input/selection.lua` | Selection range model |
 | `src/model/input/history.lua` | Command history (console) |
 | `src/view/input/userInputView.lua` | Renders the input strip and status line |
-| `src/controller/controller.lua` | Gateway (`love.handlers.*`), global shortcuts, `keys_pressed`/`combo_string`/held-key proxy, route slot management |
-| `src/controller/projectInputController.lua` | The project route: the four-tier dispatch chain, tier-1 submit/cancel |
+| `src/controller/controller.lua` | Gateway (`love.handlers.*`), global shortcuts, `keys_pressed`/`combo_string`/pressed-keys view, route slot management |
+| `src/controller/projectInputController.lua` | The project route: the three-consumer dispatch walk (`shortcuts` → `hooks` → widget), hook seeding |
 | `src/controller/consoleController.lua` | Console/editor route dispatch, `compy` namespace + `compy.input` surface construction |
 
-`controller.lua` is consumed from `main.lua` (constructs the singleton, wires
+`controller.lua` is consumed from `main.lua` (constructs the widget instance, wires
 `set_default_handlers`) and `consoleController.lua` (calls into it on every mode
 transition — run, stop, suspend, inspect). `projectInputController.lua` is used
 only by `controller.lua` (the single `Controller.project_input` instance) and is
 never referenced by console/editor code directly. `userInputController.lua`
-instances are constructed by `main.lua` (the project singleton),
+instances are constructed by `main.lua` (the project overlay's widget),
 `editorController.lua` (its own main input and its `search` sub-widget), and
 implicitly by console (`consoleModel`/`consoleController`) — see "Search" above
 for the third, less obvious instance.

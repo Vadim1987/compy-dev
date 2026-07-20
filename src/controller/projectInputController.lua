@@ -131,10 +131,10 @@ end
 --- @param k string
 --- @param sc string?
 --- @param isr boolean?
---- DEFERRED (doc/development/technical_debt/input.md, "Combo-tier
+--- DEFERRED (doc/development/technical_debt/input.md, "Shortcuts
 --- key-repeat semantics are shipped unsettled"): whether
---- the combo tiers (1-2) fire on
---- key-repeat is unruled; isrepeat is threaded to tier 3 only,
+--- shortcuts fire on
+--- key-repeat is unruled; isrepeat is threaded to hooks only,
 --- combos keep current behaviour. Do not design a mechanism.
 --- REVIEW: what is 'sc' and why its not used?
 --- REVIEW: duplicaion of 'k,k' and 't,t' looks smelly -- why is it needed. in additon, _dispatch grabs keys_pressed itself(should not) and how other arguments are consumed its not very easy to understand.

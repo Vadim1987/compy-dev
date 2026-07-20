@@ -46,21 +46,16 @@ function check(n)
   end
 end
 
--- Continuous-session idiom ({badspecref: M8-01} —
--- implementation/outcomes/M8-01.md, example migrations):
--- consume the guess in
--- on_text_entered, re-show (bare) from after_submit. eval
--- reuses the legacy validated_input->ValidatedTextEval path
--- (least new logic); wires the effective (L26) is_natural —
--- the L12 duplicate is pre-existing shadowing, not touched.
-compy.input.after_submit = function()
-  compy.input.show{}
-end
-
--- ESC cancels the widget; re-arm it so the prompt can't be
--- dismissed with no way to guess again.
-compy.input.after_cancel = function()
-  compy.input.show{}
+-- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
+-- §3, R4-U4 example migration): the widget stays open by default now
+-- (no auto-close), so there is nothing to re-show after submit — just
+-- clear the field for the next guess. eval reuses the legacy
+-- validated_input->ValidatedTextEval path (least new logic); wires
+-- the effective (L26) is_natural — the L12 duplicate is pre-existing
+-- shadowing, not touched. Cancel's own default (clear + stay shown)
+-- already re-arms the prompt, so no after_cancel callback is needed.
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
 end
 
 init()

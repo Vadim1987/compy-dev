@@ -8,7 +8,7 @@ This guide is for people writing compy projects — games and apps that run insi
 covers `compy.input`, the sole project-facing input surface. For how the machinery works under
 the hood, see the internals doc linked at the bottom.
 
-**Current version: `1.0.0-rc20260712`.**
+**Current version: `1.0.0-rc20260712`, input-API redesign (Phase R4).**
 
 The callback API described here is the whole story: the entire `compy.input.*` surface is
 **(supported since 1.0.0-rc20260712)**, and the legacy polling globals it replaced
@@ -16,19 +16,24 @@ The callback API described here is the whole story: the entire `compy.input.*` s
 **(deprecated, removed in 1.0.0-rc20260712)**. There is no compatibility shim: calling a removed
 global is an ordinary nil call. See [Migration from the legacy globals](#migration-from-the-legacy-globals).
 
-`compy.input` is a table on your project's `compy` namespace. It holds **methods** (call them —
-assigning over a method name raises loudly) and **callback slots** (assign to them — that is how
-you wire callbacks such as `after_submit`). The input widget itself is a single shared
-overlay: there is one active input session at a time, and your project drives it through this
-table. **There is no per-frame polling** — submitted text is delivered to your callbacks.
+`compy.input` is a table on your project's `compy` namespace, holding three writable sub-tables —
+`shortcuts`, `hooks`, `callbacks` — plus **methods** (call them; assigning over a method name
+raises loudly). The container itself, and the identity of each of the three sub-tables, is
+frozen: a project cannot do `compy.input.shortcuts = {}` or `compy.input.callbacks = {}`. Every
+**leaf** inside those sub-tables is freely writable — that's how you wire a callback such as
+`after_submit`: `compy.input.callbacks.after_submit = fn`. The input widget itself is a single
+shared overlay: there is one active input session at a time, and your project drives it through
+this table. **There is no per-frame polling** — submitted text is delivered to your callbacks.
+**The widget stays open by default** — nothing auto-closes it any more; see
+[The submit lifecycle](#the-submit-lifecycle) below.
 
 ## Quick start
 
 The smallest useful program — an echo loop (this is `src/examples/repl`, verbatim):
 
 ```lua
-compy.input.after_submit = function()
-  compy.input.show{}
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
 end
 
 compy.input.show{
@@ -38,17 +43,18 @@ compy.input.show{
 
 Line by line:
 
-- `compy.input.after_submit = function() ... end` — `after_submit` is a **field-write-only**
-  callback (see [the callout below](#the-submit-lifecycle)): you assign it directly, you do not
-  pass it inside `show{}`. It fires after each submit, once the widget has already hidden — the
-  right moment to re-open the widget for the next round.
-- `compy.input.show{}` — the bare re-show. Prompt, evaluator, validator and the sticky callbacks
-  all persist from the first `show`, so re-arming needs no arguments.
+- `compy.input.callbacks.after_submit = function() ... end` — `after_submit` is a **field-write-only**
+  callback (see [the callout below](#the-submit-lifecycle)): you assign it directly on `callbacks`,
+  you do not pass it inside `show{}`. It fires after each successful submit, **while the widget is
+  still shown** (the widget no longer auto-closes on submit) — the right moment to clear the field
+  for the next round.
+- `compy.input.clear()` — empties the content and puts the cursor back at the start; the widget
+  itself never needs to be re-shown, because it never hid.
 - `compy.input.show{ on_text_entered = ... }` — activates the widget. `on_text_entered` receives
   the submitted text while the widget is still active; here it just prints it.
 
-Run it, type something, press Enter: the line is printed and the widget immediately reopens for
-the next line.
+Run it, type something, press Enter: the line is printed and the field is immediately cleared for
+the next line — the widget was never hidden.
 
 ## Activating the widget: `show`
 
@@ -65,14 +71,14 @@ Activates the input overlay. `config` is a table with the following keys (all op
 | `eval` | evaluator | Runs on submit; drives highlighting/validation. `InputEvalText` (plain text, the default), `InputEvalLua` (Lua syntax highlighting), or `ValidatedTextEval(filters)` (plain text gated by a list of validator functions). Omit for plain text. |
 | `validator` | `function(text) -> true \| false, err` | Gates submit (alternative to a `ValidatedTextEval`). Sticky. |
 | `highlighter` | function | Colorizes the field. Sticky. |
-| `on_text_entered` | `function(text)` | Fires on submit, while the widget is still active. Sticky — also assignable as a field. |
-| `on_limit_reached` | callback | Fires when cursor movement hits a boundary. Sticky — also assignable as a field. |
+| `on_text_entered` | `function(text)` | Fires on submit, while the widget is still active. Sticky — also assignable as a `callbacks` field. |
+| `on_limit_reached` | callback | Fires when cursor movement hits a boundary. Sticky — also assignable as a `callbacks` field. |
 | `force` | boolean | See below. |
 
 If the widget is **already active**, `show` is a no-op **and warns** — unless `config.force = true`,
 which replaces only the `text` and ignores every other key. `force` is not how you re-prompt:
-normal round-after-round re-prompting is done from `after_submit`
-(see [The continuous-session idiom](#the-continuous-session-idiom)).
+because the widget stays open by default, there is usually nothing to re-show at all — see
+[The continuous-session idiom](#the-continuous-session-idiom).
 
 To deactivate the widget, call `compy.input.hide()`. No cancel callbacks fire.
 
@@ -88,44 +94,59 @@ When the user presses Enter on an active widget, the steps are, in order:
    the error; nothing below runs (`after_submit` does not fire).
 3. `on_text_entered(text)` fires **while the widget is still active** — this is where you consume
    the submitted text.
-4. The widget **hides** (`love.state.user_input` cleared).
-5. `after_submit(text)` fires **after** the hide, **only on an accepted submit** — this is where
-   you re-prompt for a continuous session.
+4. `after_submit(text)` fires — **the widget is still shown at this point.** `after_submit`
+   DEFAULTS to a no-op, so **a plain Enter no longer closes the widget.** If you want the
+   pre-redesign "prompt once, then close" behaviour, opt in explicitly:
+   `compy.input.callbacks.after_submit = function() compy.input.hide() end`.
 
-Cancel (Escape, in the relevant context) fires `before_cancel` / `after_cancel` analogously.
+Cancel (Escape, in the relevant context) is similar but with one asymmetry: `before_cancel`'s
+return value **is honoured** — a truthy return **vetoes** the clear step entirely (content
+untouched, `after_cancel` does not fire). Otherwise: content clears (hardwired) → `after_cancel`
+fires, and — same flipped default as submit — `after_cancel` DEFAULTS to a no-op, so **Escape
+clears the field but does not close the widget** either, unless your own `after_cancel` calls
+`compy.input.hide()`.
+
+**Enter and Escape are shadowable.** Both are now ordinary keys the widget handles itself, not a
+non-overridable framework layer — a project shortcut registered on `'return'` or `'escape'`
+(`compy.input.shortcuts.keypressed['return'] = fn`) wins over the widget's default submit/cancel,
+same as any other combo. This is a deliberate, named withdrawal of the old
+"nothing can stop Enter/Escape while the widget is shown" guarantee — it was never a stakeholder
+requirement, and the gateway's power keys (Ctrl+Q, Ctrl+Break, etc.) remain the real, unshadowable
+escape hatch regardless of what a project registers here.
 
 ### Two callback families
 
-The callbacks split into two families, and the distinction matters:
+The callbacks split into two families, and the distinction matters. **All of them live in
+`compy.input.callbacks`** (a plain leaf-write table — literally the widget's own internal callback
+table, so there is nothing to synchronise):
 
-- **Sticky / config-mergeable** — pass them in `show{}`/`configure{}` *or* assign them as fields;
-  they persist across show/hide until overwritten: `on_text_entered`, `on_limit_reached`,
-  `validator`, `highlighter`.
+- **Sticky / config-mergeable** — pass them in `show{}`/`configure{}` *or* assign them as
+  `callbacks` fields; they persist across show/hide until overwritten: `on_text_entered`,
+  `on_limit_reached`, `validator`, `highlighter`.
 - **Field-write only** — these are **not** merged by `show{}`; you must assign them directly on
-  `compy.input`: `before_submit`, `after_submit`, `before_cancel`, `after_cancel`,
-  `on_key_pressed`, `on_text_input`, `on_key_released`.
+  `compy.input.callbacks`: `before_submit`, `after_submit`, `before_cancel`, `after_cancel`.
 
 > **Warning — the `after_submit` footgun.** `after_submit` (and the rest of the field-write-only
 > family) is **not a `show{}` config key**. Passing it inside `show{...}` is **silently dropped** —
-> no error, no warning, your callback just never fires and the widget never reopens. Always assign
-> it directly:
+> no error, no warning, your callback just never fires. Always assign it directly:
 >
 > ```lua
 > -- WRONG: silently ignored
-> compy.input.show{ after_submit = function() compy.input.show{} end }
+> compy.input.show{ after_submit = function() compy.input.clear() end }
 >
-> -- RIGHT: field write
-> compy.input.after_submit = function() compy.input.show{} end
+> -- RIGHT: field write, on callbacks
+> compy.input.callbacks.after_submit = function() compy.input.clear() end
 > ```
 
 ## The continuous-session idiom
 
-This is the headline pattern. The widget delivers via callbacks and there is no polling, so to
-keep accepting input round after round you activate **once** and re-arm from `after_submit`:
+This is the headline pattern. The widget delivers via callbacks, there is no polling, and — since
+the redesign — **the widget stays open by default**, so keeping a session going round after round
+usually needs nothing more than clearing the field after each submit:
 
 ```lua
-compy.input.after_submit = function()
-  compy.input.show{}          -- bare re-show; callbacks/validator/eval/prompt stay sticky
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()          -- fresh empty field; the widget was never hidden
 end
 
 compy.input.show{
@@ -134,10 +155,20 @@ compy.input.show{
 }
 ```
 
-Because `on_text_entered`, `validator`, `highlighter`, `eval` and the `prompt` all persist across
-a bare `show{}`, the re-arm needs no arguments. `after_submit` runs after the widget has hidden
-(step 5 of the lifecycle), so the `show{}` inside it is a fresh activation, not a
-warned-about double `show`.
+Because the widget never closes, `after_submit` only has to reset the *content* — there is no
+re-`show()` involved at all (a `show()` call over an already-active widget is a suppressed,
+warned-about no-op). This replaces the old "prompt-once, re-show from `after_submit`" idiom, which
+this redesign retires: under the old auto-close default, `after_submit` had to re-open the widget;
+under the new stays-open default, a bare re-show is both unnecessary and actively suppressed.
+
+Three shapes cover most cases:
+
+- **Fresh empty field per submit** (the pattern above) — `after_submit = function()
+  compy.input.clear() end`.
+- **Re-show only to change the prompt** — don't re-show at all; call
+  `compy.input.configure{ prompt = "..." }` live, from `on_text_entered` or `after_submit`.
+- **Re-show was purely to "stay open"** — remove the callback entirely; staying open is now the
+  default.
 
 To **change** the prompt mid-session, call `compy.input.configure{ prompt = "..." }` — e.g. from
 inside `on_text_entered`, or between rounds
@@ -159,8 +190,8 @@ rejected: the field locks and the error is shown; `on_text_entered` never fires 
 **Validated input** (from `src/examples/guess` — reject anything that isn't a natural number):
 
 ```lua
-compy.input.after_submit = function()
-  compy.input.show{}
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
 end
 
 compy.input.show{
@@ -169,6 +200,9 @@ compy.input.show{
   on_text_entered = function(t) check(tonumber(t)) end,
 }
 ```
+
+`guess`'s cancel path needs no callback at all: Escape's own default (clear + stay open) already
+re-arms the prompt for the next guess, with nothing left for `after_cancel` to do.
 
 Filters compose as a list — `src/examples/valid` uses the same shape with multiple filters:
 
@@ -188,8 +222,12 @@ local function submit_body(text)
   setupTixy()
 end
 
-compy.input.after_submit = function()
-  compy.input.show{ text = string.lines(body) }
+-- No after_submit needed: the widget stays open with the just-submitted
+-- body already in the field — nothing to re-inject.
+compy.input.callbacks.after_cancel = function()
+  -- Cancel's own default DOES clear the field (hardwired), so restore
+  -- the last-good body live rather than leaving the strip empty.
+  compy.input.set_text(string.lines(body))
 end
 
 compy.input.show{
@@ -200,8 +238,9 @@ compy.input.show{
 }
 ```
 
-Here the re-show is *not* bare: it re-injects the just-submitted body so the user keeps editing
-in place instead of starting from an empty field.
+Here submit and cancel diverge: submit leaves the field untouched (so editing continues in
+place for free), while cancel's hardwired clear needs an explicit `after_cancel` to restore the
+body — otherwise Escape would leave the code strip empty, defeating the point of the demo.
 
 ## Live reconfigure: `configure`, `set_text`, `clear`, cursor
 
@@ -226,15 +265,19 @@ no callback fires. No-ops **and warns** if hidden.
 **`compy.input.get_cursor()`** returns `line, col`; **`compy.input.set_cursor(line, col)`** moves
 the caret. Both act on the active session.
 
-**A continuous session with a changing prompt** (from `src/examples/balloons`):
+**A continuous session with a changing prompt** (the shape `src/examples/balloons`' own
+`terminal_init` illustrates the intent of — note `src/examples/balloons` is untracked,
+sanctioned scratch and has **not** been migrated onto this redesign's API, so its actual code
+still uses the retired auto-close idiom; the snippet below is the *migrated* shape, not a verbatim
+quote):
 
 ```lua
 -- deliver submitted text to whatever handler the app currently wants
 local current_handler = function(_) end
 local function deliver(text) current_handler(text) end
 
-compy.input.after_submit = function()
-  compy.input.show{}
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
 end
 compy.input.show{ on_text_entered = deliver }
 
@@ -251,16 +294,29 @@ compy.input.set_text(body)
 ## Combo key handlers
 
 Advanced: to grab a specific chord rather than a stream of events, register it in
-`compy.input.handlers`:
+`compy.input.shortcuts`:
 
 ```lua
-compy.input.handlers.keypressed["ctrl+s"] = function() save() end
+compy.input.shortcuts.keypressed["ctrl+s"] = function() save() end
 ```
 
-`handlers.keypressed`, `handlers.keyreleased` and `handlers.textinput` each map a canonical combo
+`shortcuts.keypressed`, `shortcuts.keyreleased` and `shortcuts.textinput` each map a canonical combo
 string to a handler. Combo strings list modifiers in the fixed order ctrl, alt, shift, gui, then
-the key — e.g. `"ctrl+s"`, `"alt+shift+f4"`, `"escape"`. For general per-key handling, the
-field-write callbacks (`on_key_pressed`, `on_text_input`, `on_key_released`) are the common path.
+the key — e.g. `"ctrl+s"`, `"alt+shift+f4"`, `"escape"`. A shortcut registered here always wins
+over the widget's own default handling for that combo — including `'return'`/`'escape'`, see
+[The submit lifecycle](#the-submit-lifecycle) above. For per-event handling that isn't
+combo-specific, register a single fallback in `compy.input.hooks` (below).
+
+## The `hooks` table
+
+`compy.input.hooks.keypressed` / `hooks.keyreleased` / `hooks.textinput` are each a single
+function slot per event — the fallback consumer that runs after `shortcuts` and before the widget.
+At project activation, any event for which you have not already set an explicit hook is seeded
+once with your project's own captured `love.keypressed`/`love.textinput`/`love.keyreleased`
+handler (if you defined one) — so defining a plain `love.keypressed` in your project "just works"
+without touching `compy.input` at all. Once seeded, `hooks[event]` is the single source of truth:
+setting it to `nil` clears it for good — there is no fallback resurrection of your original
+`love.*` handler.
 
 ## API reference
 
@@ -277,7 +333,17 @@ Call these; assigning over a method name raises.
 | `clear()` | Empty the active content, caret to start, no callback. No-op + warn if hidden. |
 | `get_cursor()` | Returns `line, col` of the active session. |
 | `set_cursor(line, col)` | Move the caret in the active session. |
-| `handlers` | Container for combo key handlers: `handlers.keypressed[combo]`, `handlers.keyreleased[combo]`, `handlers.textinput[combo]`. |
+
+### Sub-tables (supported since 1.0.0-rc20260712)
+
+The container and each sub-table's identity are frozen; every leaf inside is a plain writable
+assignment.
+
+| Sub-table | Description |
+|---|---|
+| `shortcuts` | Combo key handlers: `shortcuts.keypressed[combo]`, `shortcuts.keyreleased[combo]`, `shortcuts.textinput[combo]`. Always win over the widget's own default handling, Enter/Escape included. |
+| `hooks` | One fallback handler per event: `hooks.keypressed`, `hooks.keyreleased`, `hooks.textinput`. Seeded once from your project's own `love.*` handlers at activation; a `nil` write clears for good. |
+| `callbacks` | The widget's own invoked-callback table — see below. |
 
 ### `show` / `configure` config keys (supported since 1.0.0-rc20260712)
 
@@ -292,9 +358,10 @@ Call these; assigning over a method name raises.
 | `on_limit_reached` | Fires when cursor movement hits a boundary. Sticky. |
 | `force` | `show` only: replace `text` on an already-active widget instead of warning. |
 
-### Sticky callbacks (supported since 1.0.0-rc20260712)
+### Sticky `callbacks` (supported since 1.0.0-rc20260712)
 
-Config-mergeable *or* field-writable; persist across show/hide until overwritten.
+Config-mergeable *or* field-writable on `compy.input.callbacks`; persist across show/hide until
+overwritten.
 
 | Callback | Fires |
 |---|---|
@@ -303,19 +370,17 @@ Config-mergeable *or* field-writable; persist across show/hide until overwritten
 | `validator(text)` | On submit, to gate it. |
 | `highlighter(...)` | To colorize the field. |
 
-### Field-write-only callbacks (supported since 1.0.0-rc20260712)
+### Field-write-only `callbacks` (supported since 1.0.0-rc20260712)
 
-Assign directly (`compy.input.after_submit = fn`); **silently dropped** if passed inside `show{}`.
+Assign directly (`compy.input.callbacks.after_submit = fn`); **silently dropped** if passed inside
+`show{}`.
 
 | Callback | Fires |
 |---|---|
-| `before_submit(keys_pressed)` | First — before validation, widget still active; runs even on empty Enter. |
-| `after_submit(text)` | After the widget hides — the re-prompt hook. |
-| `before_cancel(...)` | On cancel, before the widget hides. |
-| `after_cancel(...)` | On cancel, after the widget hides. |
-| `on_key_pressed(...)` | Key press events. |
-| `on_text_input(...)` | Text input events. |
-| `on_key_released(...)` | Key release events. |
+| `before_submit(keys_pressed)` | First — before validation, widget still active; runs even on empty Enter. Return value reserved for a future veto (ignored today). |
+| `after_submit(text)` | After a successful submit — **widget still shown** (no auto-close). |
+| `before_cancel(keys_pressed)` | Before the clear step; a **truthy return vetoes** the clear (and `after_cancel` does not fire). |
+| `after_cancel()` | After a non-vetoed cancel's clear — **widget still shown** (no auto-close). |
 
 ## Migration from the legacy globals
 
@@ -325,7 +390,7 @@ calling one now is an ordinary nil call. The whole poll idiom — grab a handle,
 
 | Legacy (deprecated, removed in 1.0.0-rc20260712) | Replacement |
 |---|---|
-| `user_input()` + per-frame `r:is_empty()` / `r()` poll | `on_text_entered` consumes each submit; `after_submit` re-shows for the next round. |
+| `user_input()` + per-frame `r:is_empty()` / `r()` poll | `on_text_entered` consumes each submit; the widget stays open for the next round by default. |
 | `input_text(prompt, init)` | `compy.input.show{ prompt = prompt, text = init, on_text_entered = fn }` |
 | `input_code(prompt, init)` | `compy.input.show{ prompt = prompt, text = init, eval = InputEvalLua, on_text_entered = fn }` |
 | `validated_input(filters, prompt)` | `compy.input.show{ prompt = prompt, eval = ValidatedTextEval(filters), on_text_entered = fn }` |
@@ -341,8 +406,8 @@ function love.update()
 end
 
 -- AFTER (supported since 1.0.0-rc20260712)
-compy.input.after_submit = function()
-  compy.input.show{}
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
 end
 compy.input.show{
   prompt          = "Guess a number:",

@@ -352,22 +352,31 @@ function love.load()
   end
   local ctrl = Controller
   --- MVC wiring
-  -- REVIEW: why could not (or should not) Concols/Editor be rewired to use the same singleton? is it because we have to maintain Concole's UIC state in parallel to project/editor's one(s)?
+  -- RESOLVED-BY-REDESIGN (R4-1 inventory; validation/reviews/
+  -- R4-U3-callback-model.md, delta-design "Implementation note"):
+  -- the reusable seam now exists (free-function `dispatch` +
+  -- the `build_widget_api` factory in consoleController.lua), so
+  -- console/editor COULD rewire onto it. They stay on their own
+  -- separate `UserInputController` instances anyway, because
+  -- console's `inspect`-mode REPL state must persist independently
+  -- of the project's (Decision 12) — a single shared instance
+  -- would be clobbered across that boundary. Migration is
+  -- therefore deliberately deferred (Decision 1), not blocked.
   -- UserInput M/V/C are provisioned FIRST — before the console —
   -- so the project env's compy.input (built during
   -- ConsoleController construction) can bind to the widget's OWN
   -- callbacks table at that moment (owner ruling 2026-07-20:
   -- compy.input.callbacks IS the widget's self.callbacks). The
-  -- widget is a boot singleton; provisioning it early has no
-  -- dependency on the console. (Whether the controller should own
-  -- its model/view construction is the open {badspecref: A5}
-  -- question — M2 agenda A5.)
+  -- widget is a boot-provisioned instance; provisioning it early
+  -- has no dependency on the console. (Whether the controller
+  -- should own its model/view construction is the open
+  -- {badspecref: A5} question — M2 agenda A5.)
   local ui_m = UserInputModel(baseconf, InputEvalText)
   local ui_c = UserInputController(ui_m, nil, true)
   local ui_v = UserInputView(baseconf.view, ui_c)
   -- init_view binds the view to the controller (self.view = v); it is NOT an activation/show.
   ui_c:init_view(ui_v)
-  -- App-wide handle for the singleton: the compy.input
+  -- App-wide handle for the widget: the compy.input
   -- wrappers and the overlay draw path resolve the
   -- controller through love.state (service-locator pattern).
   love.state.user_input_controller = ui_c

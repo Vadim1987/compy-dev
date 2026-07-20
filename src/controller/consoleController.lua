@@ -366,7 +366,7 @@ end
 -- cursor, input.get_cursor/set_cursor address the caret
 -- WITHIN the input field.
 -- By architectural contract these wrappers are the ONLY
--- project-facing surface for the input singleton: they wrap
+-- project-facing surface for the input widget: they wrap
 -- UserInputController (love.state.user_input_controller);
 -- projects never touch the controller directly. Namespace +
 -- lifecycle docs: doc/development/internals/user_input.md.
@@ -499,14 +499,13 @@ local function stash_hidden_configure(state, cfg)
   end
 end
 
--- Builds the compy.input surface: the four-tier dispatch
--- surface (doc/development/decisions/input.md, Decision 2) a project
--- registers against. `handlers.<event>` are the
+-- Builds the compy.input surface: the three-consumer dispatch
+-- surface (doc/development/decisions/input.md, Decision 2 revised) a
+-- project registers against. `shortcuts[event]` are the
 -- doc/development/decisions/input.md, Decision 8 per-event combo
--- sub-tables (normalising); the
--- on_* slots are the tier-3 generic callbacks. show/hide drive
--- the singleton overlay (resolved from love.state, never held by
--- the project).
+-- sub-tables (normalising); `hooks[event]` is the one seeded hook
+-- per event (Decision 10 revised). show/hide drive the widget
+-- (resolved from love.state, never held by the project).
 -- The widget-method surface a project drives (show/hide/
 -- configure/set_text/set_cursor/get_cursor/clear), parameterized
 -- by instance (doc/development/wip/77-new-input-api/validation/

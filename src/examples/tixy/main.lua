@@ -168,27 +168,24 @@ function love.draw()
   drawText()
 end
 
--- Continuous-session idiom ({badspecref: M8-01} —
--- implementation/outcomes/M8-01.md, example migrations):
--- consume the submitted
--- code in on_text_entered, re-show (still holding the just-
--- submitted body, so editing continues in place — NOT the
--- clear-and-reprompt shape) from after_submit.
+-- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
+-- §3, R4-U4 example migration): consume the submitted code in
+-- on_text_entered; the widget stays open by default now and submit
+-- no longer clears the field, so the just-submitted body is already
+-- sitting in the field with nothing to re-inject — after_submit is
+-- removed entirely (editing continues in place for free).
 local function submit_body(text)
   body = string.unlines(text)
   setupTixy()
   legend = ""
 end
 
-compy.input.after_submit = function()
-  compy.input.show{ text = string.lines(body) }
-end
-
--- ESC cancels the widget; re-arm it (keeping the current body)
--- so the code strip can't be dismissed into an unrecoverable
--- state — editing is the whole point of the demo.
-compy.input.after_cancel = function()
-  compy.input.show{ text = string.lines(body) }
+-- Cancel's own default DOES clear the field (hardwired), unlike
+-- submit; after_cancel restores the last-good body live via
+-- set_text so Escape can't leave the code strip empty — editing is
+-- the whole point of the demo.
+compy.input.callbacks.after_cancel = function()
+  compy.input.set_text(string.lines(body))
 end
 
 function love.update(dt)

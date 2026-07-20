@@ -6,7 +6,7 @@ local shift_k = { "lshift", "rshift" }
 local ctrl_k  = { "lctrl", "rctrl" }
 local alt_k   = { "lalt", "ralt" }
 -- gui = super/cmd/win. Kept in the modifier set for parity with ctrl/alt/shift so
--- combo_string can serialise gui-combos; no framework handler registers one yet.
+-- combo_string can serialise gui-combos; no shortcut registers one yet.
 local gui_k   = { "lgui", "rgui" }
 
 -- Single source of truth for left/right modifier folding. Each row is

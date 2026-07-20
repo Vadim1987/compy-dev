@@ -192,12 +192,11 @@ function UserInputController:evaluate()
   return ok, res
 end
 
---- Cancel (doc/development/decisions/input.md, Decision 6): clear + hide
---- unconditionally — Escape now
---- genuinely dismisses. The framework tier-1 escape entry
---- (projectInputController.lua) is what calls this for the
---- project widget; the sink's own escape-clears-only local
---- below (console/editor's own routes) is unchanged.
+--- Unconditional clear + hide. NOT the project widget's Escape path
+--- any more (that is `_cancel_default`, below, callback-driven and
+--- stay-open by default) — this method survives only as
+--- console's own debug/test-mode cancel
+--- (`consoleController.lua`'s `terminal_test`).
 function UserInputController:cancel()
   self.model:cancel()
   self:hide()
@@ -224,10 +223,10 @@ function UserInputController:history_fwd()
 end
 
 ----------------------
---- singleton API  ---
+---   widget API    ---
 ----------------------
 
--- Internal singleton API. Not called by projects directly — only via the compy.input.*
+-- Internal widget API. Not called by projects directly — only via the compy.input.*
 -- wrappers (consoleController). Free functions rather than class methods because they are
 -- private helpers to show()/hide() below.
 
@@ -266,7 +265,7 @@ local apply_config = function(self, cfg)
 end
 
 
---- Fresh activation of the singleton overlay: clear content when no text is given, apply
+--- Fresh activation of the overlay widget: clear content when no text is given, apply
 --- config, publish the overlay handle, render once. Called only by show() on the
 --- inactive->active transition (show() guards against re-entry while active). The
 --- clear-on-no-text lives here, not in apply_config, because it is activation policy
@@ -291,10 +290,10 @@ local open_fresh = function(self, cfg)
   -- checks to paint V:draw() each frame, and it carries the
   -- { M, C, V } handle the legacy poll idiom reads. Drivers
   -- change but the flag persists (doc/development/internals/user_input.md,
-  -- "Singleton lifecycle"). NOTE: factoring this into a
+  -- "Widget lifecycle"). NOTE: factoring this into a
   -- named setup_legacy_user_input() and the open_fresh/init
   -- naming are open {badspecref: A5} items (M2 agenda A5,
-  -- singleton lifecycle contract; see
+  -- widget lifecycle contract; see
   -- {badspecref: M2-human-review.md} implementation/
   -- reviews/M2-human-review.md) — deferred to the
   -- {badspecref: 0.1.0-m4} architect pass, not changed here.
@@ -307,7 +306,7 @@ local open_fresh = function(self, cfg)
   self:update_view()
 end
 
---- Activate the singleton.
+--- Activate the widget.
 --- No-op if already active, unless force=true.
 --- @param config table?
 function UserInputController:show(config)
@@ -382,7 +381,7 @@ end
 -- table a project populates via compy.input.callbacks.
 
 --- Validator gate (doc/development/internals/user_input.md, "Submit and
---- cancel — the framework tier-1 chains").
+--- cancel — widget-owned callback sequences").
 --- No custom validator
 --- accepts unconditionally; a set validator's ok/err_msg
 --- verdict decides, locking the session on reject via the
@@ -408,7 +407,7 @@ local function debug_noop(label)
 end
 
 --- Submit delivery (doc/development/internals/user_input.md, "Submit and
---- cancel — the framework tier-1 chains"): fills the legacy
+--- cancel — widget-owned callback sequences"): fills the legacy
 --- poll reftable — the push('userinput') producer is gone,
 --- the synchronous fill survives — and fires the widget
 --- output while the session is still active (observable
@@ -516,10 +515,12 @@ end
 ----------------
 
 --- @param k string
---- @param keys_pressed table?  read-only held-key proxy
+--- @param keys_pressed table?  read-only pressed-keys view
 --- (doc/development/decisions/input.md, Decision 13)
 --- @param isr boolean?
---- @return boolean? limit
+-- No return value: the old limit-flag return channel is retired
+-- (Decision 5 revised) — on_limit_reached is the sole notification
+-- path now (see "emit_limit" below).
 -- This handler now receives the uniform
 -- (k, keys_pressed, isr) triple (doc/development/decisions/input.md,
 -- Decision 9; resolves the {badspecref: m4/m5 A2} open
@@ -527,8 +528,8 @@ end
 -- handlers, closed by M4/M5 dispatch design).
 -- Its own editing logic still reads modifiers via Key.*
 -- (love.keyboard) — widening that to the keys_pressed
--- proxy is not required here, but recommended in the
--- future.
+-- read-only view is not required here, but recommended in
+-- the future.
 function UserInputController:keypressed(k, keys_pressed, isr)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end
@@ -758,7 +759,7 @@ function UserInputController:keypressed(k, keys_pressed, isr)
 end
 
 --- @param t string
---- @param keys_pressed table?  read-only held-key proxy
+--- @param keys_pressed table?  read-only pressed-keys view
 --- (doc/development/decisions/input.md, Decision 13)
 -- Uniform textinput signature
 -- (doc/development/decisions/input.md, Decision 9). Visibility is
@@ -779,7 +780,7 @@ function UserInputController:textinput(t, keys_pressed)
 end
 
 --- @param k string
---- @param keys_pressed table?  read-only held-key proxy
+--- @param keys_pressed table?  read-only pressed-keys view
 --- (doc/development/decisions/input.md, Decision 13)
 function UserInputController:keyreleased(k, keys_pressed)
   if not self.shown then

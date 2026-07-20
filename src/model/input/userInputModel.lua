@@ -410,8 +410,8 @@ end
 
 --- REVIEW: when widget is re-armed, or cancelled or closed-on-submit, history is dropped? what about when its reconfigured? when one project launches input, than is torn down and new project launches input
 --- @return boolean
--- doc/development/internals/user_input.md, "Submit and cancel — the
--- framework tier-1 chains": oneshot is gone, so nothing
+-- doc/development/internals/user_input.md, "Submit and cancel —
+-- widget-owned callback sequences": oneshot is gone, so nothing
 -- distinguishes a single-use solicitation from any other
 -- model anymore. Only the (never-history-reading) project
 -- widget set oneshot=true, so suppression here was already
@@ -843,8 +843,8 @@ end
 --- Cursor-to-error-position on an evaluator reject. Split out
 --- of handle() to keep it under the function-body line limit
 --- once the push('userinput') block (below it) is gone
---- (doc/development/internals/user_input.md, "Submit and cancel — the
---- framework tier-1 chains").
+--- (doc/development/internals/user_input.md, "Submit and cancel —
+--- widget-owned callback sequences").
 --- @param result Error[]
 function UserInputModel:_report_parse_error(result)
   --- @TODO fix
@@ -872,8 +872,8 @@ end
 --- @param eval boolean
 --- @return boolean
 --- @return string[]|Error[]
--- doc/development/internals/user_input.md, "Submit and cancel — the
--- framework tier-1 chains": the old push('userinput')
+-- doc/development/internals/user_input.md, "Submit and cancel —
+-- widget-owned callback sequences": the old push('userinput')
 -- notification (fired here under `if self.oneshot`) is gone
 -- — on_text_entered (userInputController.lua submit chain)
 -- replaces it as the "value ready" signal.

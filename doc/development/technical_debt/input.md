@@ -24,7 +24,7 @@ action; revisit at the named point).
 - **Why it stands:** No cheap, fully-correct fix; the consumer can defend
   against it.
 - **Revisit:** Any consumer of `keys_pressed` (directly or via the
-  `held_keys()` read-only proxy) must not assume the set is leak-free across
+  `held_keys()` read-only pressed-keys view) must not assume the set is leak-free across
   focus changes; if it matters, clear the set on `love.focus(false)`.
 
 ### `love.handlers.userinput` is dead code
@@ -49,21 +49,21 @@ action; revisit at the named point).
 - **Revisit:** Next controller-focused pass; remove the branch and the
   `result` config key together if nothing is expected to resurrect them.
 
-### A truthy tier-3 return silently disables `on_limit_reached`
+### A truthy `hooks[event]` return silently disables `on_limit_reached`
 
-- **Where:** `src/controller/projectInputController.lua:198-207`
-  (`_dispatch`) — tier 3 (`_generic_callback`, which calls
-  `on_key_pressed`/`on_text_input`/`on_key_released`) runs at `:205`,
-  before the tier-4 sink at `:206`; `userInputController.lua:495`
-  fires `on_limit_reached` only from inside that sink.
-- **State:** A project that overrides `on_key_pressed` (or the
-  text/release siblings) and returns truthy consumes the event at
-  tier 3, so `_dispatch` never reaches the sink and the widget's
+- **Where:** `src/controller/projectInputController.lua` (the free-function
+  `dispatch`) — `hooks[event]` runs before the widget; `userInputController.lua`
+  (`emit_limit`) fires `on_limit_reached` only from inside the widget itself.
+- **State:** A project that sets `compy.input.hooks.keypressed` (or the
+  text/release siblings) and returns truthy consumes the event at the
+  hooks step, so `dispatch` never reaches the widget and the widget's
   `on_limit_reached` callback never fires for that keystroke — no
-  error, warning, or other signal marks the drop.
+  error, warning, or other signal marks the drop. Carried through the
+  Phase R redesign unchanged — renamed from tier-3/tier-4 to
+  hooks/widget, but the underlying coupling is the same.
 - **Why it stands:** The truthy-consume shape (decisions/input.md,
-  Decision 2) is working as designed; it just wasn't checked against
-  this specific tier-3/tier-4 interaction. No dedicated guard exists.
+  Decision 2 revised) is working as designed; it just wasn't checked against
+  this specific hooks/widget interaction. No dedicated guard exists.
 - **Revisit:** Note the coupling wherever `on_limit_reached` is
   documented for project authors, or decide it needs a guard.
 
@@ -82,9 +82,10 @@ action; revisit at the named point).
   (`release_keyboard_route`). For a project whose entire UI was
   the input overlay (`examples/guess`) or a pointer handler
   (`examples/sapper`), this meant (1) submit was dead — typing
-  still reached the overlay but Enter never fired, because tier-1
-  submit/cancel lives in the *project* route, which
-  `project_open` disconnected — and (2) Ctrl+Esc quit the whole
+  still reached the overlay but Enter never fired, because
+  submit/cancel (then a non-overridable framework tier, since
+  retired by Phase R4 — Decision 2 revised) lives in the *project*
+  route, which `project_open` disconnected — and (2) Ctrl+Esc quit the whole
   app instead of returning to the console, because `love.quit`
   only stopped-to-console while `app_state == 'running'`.
 - **Confirmed pre-existing:** this was verified byte-identical on
@@ -126,7 +127,7 @@ question, not resolved here.
   the function that assembles it) exposes `terminal`, `audio`, `graphics`,
   `fonts`, `input`, and a `before_exit` slot — no `keys_pressed`. Held-key
   access exists framework-side (`Controller.keys_pressed`, the `held_keys()`
-  proxy) and via the per-event callback argument, but a project cannot poll
+  read-only pressed-keys view) and via the per-event callback argument, but a project cannot poll
   currently-held keys from inside its own `update()`.
 - **Why it stands:** Open design question — expose a read-only held-key view
   to projects, or treat callback-arg access as the sanctioned shape and amend
@@ -146,15 +147,15 @@ question, not resolved here.
 - **Revisit:** Decide when the public config-key set is next reconciled with
   actual usage.
 
-### Combo-tier key-repeat semantics are shipped unsettled
+### Shortcuts key-repeat semantics are shipped unsettled
 
 - **Where:** `src/controller/projectInputController.lua`, `:keypressed` —
-  `isrepeat` is threaded through to tier-3 dispatch only; the combo tiers
-  (below tier 3) fire on every OS key-repeat with no `isrepeat` gate.
-- **Why it stands:** Whether combo dispatch should also gate on
+  `isrepeat` is threaded through to `hooks[event]` dispatch only; `shortcuts`
+  fire on every OS key-repeat with no `isrepeat` gate.
+- **Why it stands:** Whether shortcuts dispatch should also gate on
   `isrepeat` (fire once per physical press) or intentionally fire on every
   repeat is an open behavioural call, shipped open by design.
-- **Revisit:** Rule one way or the other when combo dispatch gets its next
+- **Revisit:** Rule one way or the other when shortcuts dispatch gets its next
   real consumer or complaint.
 
 ### `multiline` is unimplemented
@@ -181,13 +182,13 @@ question, not resolved here.
   warn-on-unrecognised-key path to match the sibling functions.
 - **Revisit:** Decide alongside any future audit of the config-key surface.
 
-### Held-key proxy iteration is index-only on the shipping runtime
+### Held-key pressed-keys view iteration is index-only on the shipping runtime
 
 - **Where:** `src/controller/controller.lua`, the `held_keys()` read-only
-  proxy over `Controller.keys_pressed`.
+  pressed-keys view over `Controller.keys_pressed`.
 - **State:** Under LuaJIT (the shipping Lua runtime), `pairs()` ignores
-  `__pairs`, so `pairs(proxy)` yields nothing; only indexed reads
-  (`proxy['a']`) work. The read-through/write-raise contract holds; only
+  `__pairs`, so `pairs()` over this view yields nothing; only indexed reads
+  (`view['a']`) work. The read-through/write-raise contract holds; only
   iteration is inert. `__pairs` is kept for a 5.2+ host, which this project
   does not currently run on.
 - **Why it stands:** Open — accept indexing-only access as the permanent
@@ -253,7 +254,7 @@ Not commissioned for closure; each may never need action.
   an ad-hoc controller with a `draw`-only stub view and asserts
   `love.state.user_input` is truthy and callable.
 - **State:** Guards against the handle being re-narrowed, but does not
-  exercise the app's startup-singleton wiring or the real
+  exercise the app's startup widget-instance wiring or the real
   `set_love_draw` overlay wrapper in `controller.lua` — the exact path a
   past regression faulted at. Runtime spot-checks have covered that path
   manually; the automated suite has not.
@@ -261,7 +262,7 @@ Not commissioned for closure; each may never need action.
   test needs app-bootstrap wiring the input suite does not currently stand
   up.
 - **Revisit:** When a change next touches the overlay/dispatch wiring — add
-  a test that drives the actual draw wrapper against the singleton.
+  a test that drives the actual draw wrapper against the widget instance.
 
 ### `Esc` clears the input in place without hiding the terminal (turtle)
 
@@ -376,23 +377,23 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When the cursor API surface is next touched — decide
   consolidate-vs-separate and record it.
 
-### `submit()`'s deliver-then-hide ordering forces example-side deferral of any reshow
+### `submit()`'s deliver-then-hide ordering forced example-side deferral of any reshow (RESOLVED by Phase R4)
 
-- **Where:** `src/controller/userInputController.lua`, `submit()` — calls
-  `deliver(self, text)` then unconditionally `hide()`s; a re-entry guard
-  suppresses any synchronous re-show from inside the delivery callback.
-- **State:** `on_text_entered` fires while the overlay is still active, and
-  the trailing `hide()` runs right after. A project wanting to "reshow with
-  the same text on invalid input" cannot call `compy.input.show{...}`
-  synchronously from inside its own callback — the re-entry guard
-  suppresses it, then `hide()` wipes it. One example project works around
-  this by deferring the reshow a frame. It works, but is a non-obvious trap
-  any author reshowing on rejection will hit.
-- **Why it stands:** API ergonomics on frozen sequencing behaviour; not a
-  bug.
-- **Revisit:** A first-class "reject keeps the widget open with the
-  rejected text" path would remove the need for the one-frame deferral
-  workaround, if the live-reconfigure surface is extended further.
+- **Where:** `src/controller/userInputController.lua` — was `submit()` (calls
+  `deliver(self, text)` then unconditionally `hide()`s); now
+  `_submit_default` (`:451-460`).
+- **Old state:** `on_text_entered` fired while the overlay was still active, and
+  a trailing `hide()` ran right after (auto-close). A project wanting to "reshow with
+  the same text on invalid input" could not call `compy.input.show{...}`
+  synchronously from inside its own callback — a re-entry guard
+  suppressed it, then `hide()` wiped it. One example project worked around
+  this by deferring the reshow a frame.
+- **Resolution:** Auto-close on submit is gone (Decision 6 revised,
+  validation/reviews/delta-spec-input-api.md §3): `after_submit` DEFAULTS to a
+  no-op and the widget stays open. A rejected validator locks the field with the
+  rejected text still showing — there is nothing to reshow, so the one-frame
+  deferral workaround this entry described no longer has a reason to exist.
+- **Revisit:** None needed; carried here as resolved history, not deleted.
 
 ### Per-example internals docs still describe a retired polling idiom
 
@@ -424,10 +425,10 @@ Not commissioned for closure; each may never need action.
   builds `compy.input` is called every time a project environment is
   prepared, so the table is reconstructed each time rather than built once.
 - **Disposition:** Accepted, no action expected. The `show`/`hide` closures
-  resolve the live controller singleton dynamically at call time, so they
-  reach the current singleton regardless of when the table was built —
+  resolve the live widget instance dynamically at call time, so they
+  reach the current widget regardless of when the table was built —
   arguably more resilient than a build-once table would be, since it holds
-  up if the singleton is ever reassigned.
+  up if the widget instance is ever reassigned.
 
 ### Console debug hotkeys are ad-hoc `if`-navigation
 
@@ -469,19 +470,21 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** If the installer set grows or is next restructured — drive it
   from a `{ event → installer }` table.
 
-### `_generic_callback` re-resolves the callback precedence on every event
+### `_generic_callback` re-resolves the callback precedence on every event (RESOLVED by Phase R4)
 
-- **Where:** `src/controller/projectInputController.lua`, `_generic_callback` — computes
-  `compy_input[chan] or natives[event]` per dispatched event, then branches
-  on whether a callback exists.
-- **State:** The precedence (explicit `on_*` wins, else captured native, else
-  noop) is fixed at `activate` and does not change per event, so the
-  resolution could be memoised once. A default noop-that-logs would also let
-  the call site drop its `if cb` guard.
-- **Why it stands:** The per-event cost is negligible on the keystroke path;
-  purely a tidiness item.
-- **Revisit:** If tier-3 resolution is ever measured on a hot path, or the
-  dispatch is next refactored — resolve once at `activate`.
+- **Where:** was `src/controller/projectInputController.lua`, `_generic_callback` — computed
+  `compy_input[chan] or natives[event]` per dispatched event, then branched
+  on whether a callback existed.
+- **Old state:** The precedence (explicit `on_*` wins, else captured native, else
+  noop) was fixed at `activate` but re-resolved on every dispatched event
+  instead of once.
+- **Resolution:** `_generic_callback` is gone. Decision 10 revised
+  (validation/reviews/delta-spec-input-api.md §5) replaced the two-store
+  precedence rule with one table (`hooks[event]`), seeded once at
+  `activate` (`seed_hooks`, `projectInputController.lua:43-49`) — there is
+  no per-event resolution left to memoise; `dispatch` (`:74-86`) just reads
+  `hooks[event]` directly.
+- **Revisit:** None needed; carried here as resolved history, not deleted.
 
 ### Pointer delivery is an unstructured broadcast, not a chain
 
@@ -492,7 +495,7 @@ Not commissioned for closure; each may never need action.
   discarded — and *then* forwards unconditionally to the slot occupant (the
   project's native handler). Both fire: a shown widget cannot swallow a click
   aimed at it, and a project's click handler fires even for clicks inside the
-  widget. The keyboard four-tier chain (Decision 2) has **no pointer mirror**.
+  widget. The keyboard three-consumer chain (Decision 2 revised) has **no pointer mirror**.
   Pointer never had the #77 widget-lockout, so its delivery was left as
   pre-existing behaviour, deliberately out of #77 scope.
 - **Why it stands:** Works for today's consumers; building a pointer chain was
@@ -504,17 +507,24 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When pointer routing gets a real second consumer, or the
   owner rules on the mirror-chain question.
 
-### Widget sink reaches the singleton via `love.state` global + nil-guard
+### Widget sink reaches the singleton via `love.state` global + nil-guard (RESOLVED-IN-PART by Phase R4)
 
-- **Where:** `src/controller/projectInputController.lua`, `_sink` — reads
-  `love.state.user_input_controller` on each call and guards it with
+- **Where:** was `src/controller/projectInputController.lua`, `_sink` — read
+  `love.state.user_input_controller` on each call and guarded it with
   `if ui then …`.
-- **State:** The sink reaches the widget through a global rather than an
-  injected instance field (`self.input`), and defends with a nil-check
-  against a value the singleton convention says is always present. Both were
-  flagged inline: inject the controller at construction, and assert the
-  invariant rather than silently no-op if it is ever absent.
-- **Why it stands:** Works today; the singleton is provisioned at boot, so
-  the guard never trips in practice.
-- **Revisit:** When the controller wiring is next touched — inject
-  `self.input` at construction and turn the silent guard into an assertion.
+- **Old state:** The old tier-4 `_sink` reached the widget through a global
+  rather than an injected instance field (`self.input`), and defended with
+  a nil-check against a value the singleton convention said was always
+  present.
+- **Resolution:** The sink is gone. `dispatch` (obligation 6a,
+  validation/reviews/delta-spec-input-api.md §2,
+  `projectInputController.lua:74-86`) is now a free function that takes the
+  widget **as a parameter** rather than reaching for a global itself — the
+  concern moves one level up, to `ProjectInputController:_dispatch`
+  (`:93-97`), which is the one remaining place that resolves
+  `love.state.user_input_controller`. The nil-guard (`if widget and
+  widget:is_shown()`) is carried at that boundary, not inside the reusable
+  mechanism.
+- **Revisit:** Whether `_dispatch` itself should inject `self.input` at
+  construction instead of reading the global, and turn its nil-guard into
+  an assertion, remains open — the same question, one layer up.
