@@ -83,5 +83,27 @@ Gate: suite green, 10 ACs pass as tests, rename sweep LSP-verified zero hits, RE
 - Tests: input_redesign_ac_spec += AC1-7,AC10; rewrote old-behavior tests in input_events_spec (framework→3-consumer), input_widgets_callbacks_spec (auto-close→stays-open, shadowable), input_reconfigure_spec (stays-open + clear-in-after_submit idiom), input_route_lifecycle_spec (callbacks.* fields).
 - OPEN for U4/owner: view:draw() overlay-identity check (is_shown mismatch — flagged); vocab/prose sweep (sink/singleton/handlers in comments); example migration (guess/tixy/valid/repl); docs (user_input.md, input_api.md, technical_debt/input.md); final R gate.
 
+## U4 DONE — commit 6157222 (Sonnet worker, model:sonnet). Suite 827/0/0/4.
+- Vocab sweep complete (retired sink/singleton/tier/framework-handler/generic-callback/proxy → 0 in input files; native disambiguated; in-code citations updated). Examples migrated (guess/valid/repl clear-in-after_submit; tixy set_text-on-cancel). main.lua REVIEW dispositioned. Docs: user_input.md, input_api.md, technical_debt/input.md resynced.
+- Independently VERIFIED (charter): suite green; grep zero-hits on 9 deleted symbols; retired prose zero in input files; NON-comment src code lines changed = ZERO (comments/citations only); examples correct + parse; LSP diagnostics clean on all touched files (worker's LSP-refs flakiness was transient index lag).
+- Fixed my stale R4-U3-callback-model.md: shipped code has NO _is_overlay gate (owner's dumb-route steer superseded it); submit/cancel scoped by the existing non-editor branch; console widget also runs _submit/_cancel_default (harmless, no callbacks) — documented code-wins-on-facts.
+
+## ===== PHASE R GATE: MET (pending owner approval) =====
+- suite green 827/0/0/4 ✓ | ten ACs pass as tests (input_redesign_ac_spec, AC1-10 / 12 cases) ✓ | rename sweep complete (grep zero-hits deleted-symbols + retired-prose; LSP now clean) ✓ | REVIEW inventory no un-dispositioned "resolved" left ✓
+- R4/R5 (obligations 6a dispatch + 6b factory) DONE. Commits: e856760(U1) 41cbe87(U2) f1050d8(U3) 3c7d6ef(docs) 6157222(U4).
+- TWO FLAGS surfaced to owner (non-blocking): (1) balloons (untracked nested-repo example) will now throw at runtime (top-level field-write vs frozen container) — sanctioned scratch, needs migration if revived; (2) console widget runs _submit/_cancel_default on its own Enter/Escape (non-editor branch, no identity gate) — harmless (no callbacks; evaluate_input does the work; escape-clear matches prior), consistent with owner's "widget owns it" model, but confirm acceptable.
+- NEXT (not this session unless redirected): TF2 resumes (owner-paced). Gate discipline: await explicit owner approval of R-closed before wrap.
+
+## OWNER FEEDBACK ROUND (2026-07-20, post-U4):
+1. Docs vocab: "Combo key handlers" etc. → shortcuts everywhere (owner: pre-vocab-upgrade remarks not authoritative; love2d has own handlers → for THIS feature say shortcuts/hooks/widget). DONE input_api.md (commit 55135b4).
+2. balloons: fix to new API. DONE in balloons' nested working tree (terminal.lua after_submit→callbacks.after_submit+clear; after_cancel removed). Owner commits in balloons' own repo.
+3. "non-editor branch" = unratified imparity / abstraction leak. Owner: UIC reading app_state to alter behavior is a mode-concern leak (feature-flag-by-parent, or code belongs elsewhere). Owner will inspect + reevaluate in a NEW session. Gave exact line map. Logged as OPEN ISSUE: validation/reviews/R4-open-issue-uic-mode-leak.md.
+   - Blast radius (owner asked): NOTHING functionally broken — suite green 827/0/0/4; overlay/console/editor all correct; only cosmetic console no-op _submit_default on Enter. Latent architectural debt (global app_state read + unratified scoping rule I added in U3), not a live bug.
+
+## ===== WRAP (2026-07-20) — Phase R NOT closed (owner hold on #3) =====
+- Owner directive: commit current state, document #3 as separate note, wrap; new session reevaluates R4 outcomes + #3 + status, decides next.
+- Wrapped: report.md (session17), session18/prompt.md (revalidation + #3 analysis; R not closed), pointer repointed to session18, this track distilled.
+- R4/R5 CODE done + green (U1 e856760, U2 41cbe87, U3 f1050d8, U4 6157222, vocab 55135b4). R gate CRITERIA met but R held OPEN on the #3 architectural judgment.
+
 ## OLD U3 notes (superseded):
 - U3 impl started (tree RED mid-unit, expected): widget new() → self.callbacks = default_callbacks() {on_limit_reached, after_submit, after_cancel = noop}; removed flat on_limit_reached default (emit_limit rewire pending). Next: rewire deliver/gate/emit_limit → self.callbacks; apply_config → self.callbacks (highlighter→ev kept); add _submit_default/_cancel_default/run_callback; keep UIC:cancel (console terminal_test uses it) + UIC:submit removal (only framework_submit called it); dispatch free-fn + tier-1 deletion; get_compy_input callbacks=widget.callbacks + boot reorder; console §6 patch; reset re-seed default_callbacks; rewrite old-behavior tests + add AC1-7,10.
