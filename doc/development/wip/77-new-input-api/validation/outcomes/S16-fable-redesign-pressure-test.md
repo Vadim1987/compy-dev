@@ -395,3 +395,52 @@ itself. This costs nothing extra now (PIC still calls it with its own tables) an
 what actually keeps the "possible, not forced" promise honest for whenever console/
 editor migration is picked up. Added as an implementation obligation, not a new
 phase — folds into Phase E's existing execution units (E-r1/E-r2).
+
+---
+
+## Iteration 3 (owner clarifying question, 2026-07-20) — obligation 6 was too narrow
+
+Owner asked whether "thin wrapper over shared dispatch" means console/editor lose
+`compy.input` access, or gain a similarly-shaped surface differently, or (the gap to
+watch for) only the dispatch flow becomes reusable while the rest of the API stays
+project-only. Verified all three branches in code:
+
+- **`compy` is project-sandbox-scoped, confirmed.** `get_compy_namespace` is only
+  called at `consoleController.lua:732`/`:834`, both project-environment-preparation
+  sites. Console/editor's own controller code never touches `compy`.
+- **Console/editor already bypass it entirely** — they hold direct references to
+  their own `UserInputController` instances and call class methods directly
+  (`consoleController.lua` self.input:set_error/reset/keyreleased/...;
+  `editorController.lua` self.input:set_eval/clear/set_custom_status/...). `compy.input`
+  was never the gate to capability, only a guarded lens for *untrusted* project code.
+- **Obligation 6 as originally scoped covers ONLY the dispatch mechanism** — confirmed
+  gap. The full method surface (`show`/`hide`/`get_cursor`/`set_cursor`/`set_text`/
+  `configure`/`clear`, `get_compy_input`'s `methods` table, `consoleController.lua:
+  503-577`) is a **separate** table, and every method in it is hardwired to the one
+  global `love.state.user_input_controller` (set once, `main.lua:381`). Confirmed
+  exactly 4 `UserInputController` instances exist total (project overlay [published],
+  editor input, editor search input, console REPL input) — only the project one is
+  reachable through that table today, same blind spot obligation 6 fixed for dispatch.
+- **Corroboration found in-tree:** `main.lua:360`'s own standing REVIEW note asks
+  almost this exact question ("why could not Console/Editor be rewired to use the
+  same singleton?"). Resolved: they **can't share one literal instance** — console's
+  REPL text/history must persist independently while a project runs or is paused
+  (`inspect` = console route over the project's env, Decision 12); one shared object
+  would clobber console's buffer the moment the project overlay showed. Multiple
+  instances is architecturally required; what should be shared is the *wrapper shape*
+  around each instance, not the instance itself.
+
+**Resolution — obligation 6 split:**
+- **6a** (dispatch mechanism, as before) — `dispatch(handlers, hooks, widget, event,
+  trigger, ...)` extracted as a plain function.
+- **6b (NEW)** — `get_compy_input()`'s `methods` table becomes a factory parameterized
+  by instance (`build_widget_api(widget)`) instead of closing over the
+  `love.state.user_input_controller` global. Mechanical, behavior-preserving for the
+  project case (identical call sites, same one global passed in). `show`/`hide` are
+  overlay-specific and may not port 1:1 to console/editor's always-mounted widgets —
+  left as a call for whoever actually migrates them; `configure`/`set_cursor`/
+  `set_text`/`get_cursor`/`clear` are the pieces the "similarly shaped API" framing
+  most cleanly gives them.
+- Both fold into the same Phase-E units as before (E-r1/E-r2), zero new phase, zero
+  behavior change to the shipped PR — this only concerns whether the *seam* exists
+  for a future, still-deferred console/editor migration.

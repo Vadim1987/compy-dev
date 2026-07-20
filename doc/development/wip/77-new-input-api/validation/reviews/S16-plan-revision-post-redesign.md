@@ -127,14 +127,29 @@ waiting for.
    `on_limit_reached`, `validator`, `highlighter`), defined as "any function the
    widget itself invokes"; D7 guard = container + sub-table identities frozen,
    leaves writable.
-6. **(New, from the migratability question) Implement the chain as a genuinely
-   shared function, not a `ProjectInputController` method.** The original design
-   promised a shared `dispatch()` reusable by console/editor
-   (`design/roadmap.md:330`) but the shipped `_dispatch` reads PIC's own
-   `self.compy_input`/`self.natives` — not actually reusable. Recommend
-   `dispatch(handlers, hooks, widget, event, trigger, ...)` taking plain
-   tables, with `compy.input`'s guarded metatable as a thin project-facing
-   wrapper *over* it — console/editor, when they eventually migrate, use the
-   plain function directly with their own tables, no sandboxed-guard ceremony
-   needed. Zero cost now; keeps the "possible, not forced" promise honest
-   instead of aspirational. Folds into E-r1/E-r2, no new phase or unit.
+6. **(New, from the migratability question) Extract BOTH reusable seams — dispatch
+   AND the widget-method surface — not just dispatch.** The original design
+   promised a shared `dispatch()` reusable by console/editor (`design/
+   roadmap.md:330`), and `main.lua:360` carries a standing owner REVIEW asking
+   the same question about the singleton. Two sub-obligations:
+   - **6a — dispatch.** Shipped `_dispatch` reads PIC's own `self.compy_input`/
+     `self.natives` — not reusable as-is. Extract `dispatch(handlers, hooks,
+     widget, event, trigger, ...)` over plain tables; `compy.input`'s guarded
+     metatable becomes a thin project-facing wrapper *over* it.
+   - **6b — the widget-method surface.** `get_compy_input()`'s `methods` table
+     (`show`/`hide`/`get_cursor`/`set_cursor`/`set_text`/`configure`/`clear`) is
+     hardwired to the ONE global `love.state.user_input_controller`
+     (`main.lua:381`) — confirmed all 4 UIC instances in the tree (project
+     overlay, editor input, editor search, console REPL) except the project one
+     are unreachable through it. Parameterize it into `build_widget_api(widget)`
+     instead. Behavior-preserving for the project case (same call sites, same
+     one instance passed in).
+   - **Resolved in passing:** why not literally ONE shared singleton for
+     everyone (the `main.lua:360` REVIEW's own question) — console's REPL
+     state must persist independently through `inspect` mode (console route
+     over a paused project's env, Decision 12); one shared instance would
+     clobber it. Multiple instances stays required; only the wrapper *shape*
+     should be shared, not the instance.
+   Both sub-obligations are mechanical, zero cost, zero behavior change to this
+   PR — they only concern whether the seam exists for a still-deferred future
+   migration. Folds into E-r1/E-r2, no new phase or unit.

@@ -107,3 +107,33 @@
   E-r1..E-r4 ordering accepted. S16's core mandate (pressure-test + plan review)
   is substantively complete; remaining open thread is drafting the actual
   delta-spec document (next concrete step) then resuming TF2.
+
+## Iteration 3 (owner clarifying question on obligation 6) — gap found + closed
+- Owner asks: does "thin wrapper over shared dispatch" mean console/editor lose
+  compy.input, get similarly-shaped access differently, or (risk to flag) ONLY
+  dispatch becomes reusable while show/hide/configure/cursor/eval stay
+  project-only? Verified: obligation 6 AS WRITTEN was the narrow/risk case —
+  only dispatch was covered.
+- Verified: compy is project-sandbox-scoped only (get_compy_namespace called
+  solely at project-env-prep sites, consoleController.lua:732/834);
+  console/editor already bypass compy entirely, hold direct UIC refs, call
+  class methods directly (set_eval/clear/set_custom_status/etc) — capability
+  was never gated by compy, only guarded FOR untrusted project code.
+  get_compy_input's methods table (show/hide/get_cursor/set_cursor/set_text/
+  configure/clear) hardwired to ONE global love.state.user_input_controller
+  (main.lua:381) — confirmed exactly 4 UIC instances total (project overlay
+  [published], editor input, editor search, console REPL), only project one
+  reachable through that table.
+- **Corroboration found:** main.lua:360 owner's OWN standing REVIEW note asks
+  nearly the identical question ("why not rewire Console/Editor to use the
+  same singleton?"). Resolved it: can't share ONE instance — console REPL
+  state must persist independently through inspect mode (console route over
+  paused project env, D12); one shared instance would clobber console's
+  buffer. Multiple instances required; only the WRAPPER SHAPE should be
+  shared, not the instance.
+- Obligation 6 split: 6a = dispatch (as before), 6b (NEW) = parameterize
+  get_compy_input's methods table into build_widget_api(widget) instead of
+  reading the global. Both mechanical/zero-cost/zero-behavior-change, fold
+  into E-r1/E-r2, no new phase.
+- Materialized: outcomes file "Iteration 3" section; plan-revision doc
+  obligation 6 rewritten as 6a/6b split.
