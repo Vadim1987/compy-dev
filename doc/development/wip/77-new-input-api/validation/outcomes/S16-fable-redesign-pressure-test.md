@@ -321,3 +321,77 @@ not shownness-at-dispatch-step; D5 amended as above. New sub-obligations: teardo
 re-seeding (F2-a), default-after_cancel = dismiss-only (F1), the widened F4 wording
 (F2-c), and the console `on_limit_reached` tweak rides in the same execution unit as
 the return-channel retirement.
+
+---
+
+## Iteration 2 (owner clarifying round, 2026-07-20) — Q&A, code-verified
+
+Owner posed numbered sub-questions (1.a–6.b) against the five obligations; answers
+verified in code/design docs, not asserted from memory. Full detail in chat; key
+verified facts recorded here for the record:
+
+- **1.a/1.b** — gateway pre-tap confirmed pre-feature too (`devupstream:src/
+  controller/controller.lua:528-622`, same shape); today at `controller.lua:862`
+  (`setup_callback_handlers`) / `:874` (`handlers.keypressed` gateway). Shortcuts run
+  unconditionally before route forwarding; their own bodies read `app_state` for
+  their own branching, which is not a routing gate.
+- **2.a** — approved: extend Decision 6's already-reserved `before_submit` veto
+  convention to `before_cancel` symmetrically; no new mechanism.
+- **2.b** — owner proposes flipping the shared auto-close default to OFF (stay
+  open unless `after_submit`/`after_cancel` explicitly hides), mirroring the
+  pre-feature `oneshot` flag verified in `devupstream:src/model/input/
+  userInputModel.lua` (`oneshot=false` REPL/editor stayed open; `oneshot=true`
+  project overlay auto-closed; deleted outright by #77, replaced with a hardcoded
+  unconditional hide in `UIC:submit()`). Feasible and zero-cost to console: console
+  never calls `UIC:submit()`/`cancel()` (has its own `evaluate_input()`), so the
+  flip only changes the project widget's behaviour. Folded into obligation 2.
+- **3.a** — confirmed: exactly one function patched, `ConsoleController:keypressed`
+  around `consoleController.lua:1209`.
+- **4.a** — verified NOT stakeholder-mandated: `design/requirements.md:201-205`
+  records the cancel/dismiss notification as explicitly **unresolved** by
+  stakeholders ("to be confirmed"); the non-overridable framework-tier shape was a
+  design-team fix (`design/notes/enter_escape_routing.md:10-58`) for a
+  self-inflicted structural problem (`oneshot` two-role widget, no shared dispatch
+  layer) — not an external ask. Withdrawing it contradicts no stakeholder ruling.
+- **6.a/6.b** — confirmed via a pass over every obligation against console/editor
+  code: only obligation 3's console patch touches them; items 1/2/5 are scoped to
+  the project widget / `compy.input` surface, which console/editor never call into.
+  The Decision-1 "console/editor migration deliberately deferred" consequence is
+  undisturbed.
+
+### New finding (owner's final question): migratability of console/editor onto
+### handlers/hooks/callbacks — YES, and the redesign fixes a broken promise
+
+Owner's framing: original requirement was "API should make migration of console/
+editor possible without forcing it now." Verified this was explicit design intent —
+`design/roadmap.md:330` (M5c spec): "the shared `dispatch()` function is written and
+used by ProjectInputController… ConsoleController and EditorController will migrate
+to it later"; `design/status.md:126` names console/editor migration as "the
+designated venue for the next round" (Gate-2 closing ruling), a scheduled venue, not
+a forced task; Decision 6's consequence text (`decisions/input.md:183-185`)
+anticipates it minting its own middle-step policy.
+
+**But the shipped code does not deliver on "shared":** `ProjectInputController:
+_dispatch` (`projectInputController.lua:198-207`) is a PIC **method**, reading
+`self.compy_input`, `self.framework_handlers`, `self.natives` — entirely
+project-sandbox-specific state. It is not callable by console/editor today despite
+the roadmap's stated intent; the "later migration" promise is currently aspirational,
+not actually enabled.
+
+**The redesign is an opportunity to actually deliver it, and arguably makes it
+easier than today's shape**, for two reasons: (1) obligation 2's default-flip (stay
+open unless a callback hides) means console/editor's eventual migration inherits the
+correct behaviour for free — no override needed, whereas under today's hardcoded
+auto-close, migrating onto `UIC:submit()` as-is would immediately break their
+required "stay open" behaviour; (2) the `handlers`/`hooks` tables and the guarded
+`compy.input` metatable (D7) are conflated today — console/editor don't need the
+project-facing sandboxed-guard ceremony, only the plain 3-step mechanism.
+
+**Recommendation for the delta-spec / Phase E:** extract the chain as a genuinely
+shared function — `dispatch(handlers, hooks, widget, event, trigger, ...)` — taking
+plain tables/instance, not reading PIC's `self.*`. `compy.input`'s guarded surface
+becomes a thin project-facing wrapper *over* that shared function, not the function
+itself. This costs nothing extra now (PIC still calls it with its own tables) and is
+what actually keeps the "possible, not forced" promise honest for whenever console/
+editor migration is picked up. Added as an implementation obligation, not a new
+phase — folds into Phase E's existing execution units (E-r1/E-r2).

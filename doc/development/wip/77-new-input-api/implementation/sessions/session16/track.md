@@ -76,3 +76,34 @@
 - Behavioral note (owner): thinks in default-value terms — guarantees
   become overridable defaults, uniformly; prefers deletion over parallel
   channels; asks for cross-surface impact before accepting.
+
+## Iteration 2 (owner clarifying Q&A, 1.a-6.b) — all verified in code/design docs
+- 1.a/1.b: gateway pre-tap confirmed pre-feature too (devupstream controller.lua
+  ~528-622, same shape); today controller.lua:862/874.
+- 2.a: before_cancel veto approved, mirrors already-reserved before_submit veto.
+- 2.b: owner proposes flipping shared auto-close default OFF (stay open unless
+  after_* explicitly hides) — verified as restoring pre-feature `oneshot` flag
+  (devupstream userInputModel.lua), deleted outright by #77. Zero cost to
+  console (never calls UIC:submit/cancel). Folded into obligation 2.
+- 3.a: confirmed single-function console patch (consoleController.lua:1209).
+- 4.a: verified NOT stakeholder-mandated — requirements.md:201-205 leaves
+  cancel/dismiss notification explicitly unresolved by stakeholders;
+  non-overridable shape was a design-team fix for the oneshot two-role problem
+  (notes/enter_escape_routing.md:10-58), not external ask.
+- 6.a/6.b: confirmed via full obligation-by-obligation pass — only obligation 3
+  touches console/editor code; Decision-1 deferral undisturbed.
+- **NEW finding (owner's migratability question):** roadmap.md:330 promised a
+  SHARED dispatch() reusable by console/editor "later" — shipped `_dispatch` is
+  actually a PIC method reading self.compy_input/self.natives, NOT reusable;
+  promise is aspirational today. Redesign is a chance to deliver it for real:
+  obligation 6 added — extract dispatch(handlers,hooks,widget,event,...) as a
+  plain-table function, compy.input's guard becomes a thin wrapper over it.
+  Zero cost now, folds into E-r1/E-r2.
+- Materialized: outcomes file "Iteration 2" section; plan-revision doc's owner-
+  rulings section now ALL CHECKED with final 6-obligation wording (supersedes
+  original 5-item F-summary).
+- **Owner ruling: ALL FOUR plan-revision gates now closed** — TF2/TF3 accepted,
+  redesign pre-PR confirmed, 6 obligations accepted as delta-spec skeleton,
+  E-r1..E-r4 ordering accepted. S16's core mandate (pressure-test + plan review)
+  is substantively complete; remaining open thread is drafting the actual
+  delta-spec document (next concrete step) then resuming TF2.

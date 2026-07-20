@@ -82,9 +82,59 @@ waiting for.
 - Phase letters, artifact locations, sub-agent hygiene, model economy.
 - The frozen status of `design/` and the ratified-glossary owner-gate.
 
-## Owner rulings pending (the gate for this document)
+## Owner rulings (2026-07-20, iteration 1–2)
 
-- [ ] TF2/TF3 amendments (§1–§2) — accept / amend
-- [ ] Redesign in-scope pre-PR vs fast-follow (§3 header call)
-- [ ] The five delta-spec obligations (F-summary) — accept as the delta-spec skeleton
-- [ ] E-r1..E-r4 ordering — accept / reorder
+- [x] TF2/TF3 amendments (§1–§2) — **accepted as proposed**
+- [x] Redesign in-scope pre-PR vs fast-follow — **pre-PR, confirmed**
+- [x] The five delta-spec obligations — **accepted, final wording below** (supersedes
+      the original F-summary; see `../outcomes/S16-fable-redesign-pressure-test.md`
+      iterations 1–2 for the verified reasoning behind each)
+- [x] E-r1..E-r4 ordering — **accepted**
+
+### Final obligation wording (post-iteration, ready for the delta-spec)
+
+1. **Tier-1 deleted; gateway pre-tap is the only survivor.** `framework_handlers`
+   + its install code + its tests removed. `compy.input.callbacks` = direct view
+   onto the widget's own callback table, pre-populated with framework defaults.
+   Global shortcuts stay in the gateway (`controller.lua:874`), unconditional,
+   out-of-chain, verified pre-existing pre-feature too. Teardown (D11) must
+   **re-seed** defaults, not wipe to nil.
+2. **Submit/cancel = fixed before→middle→after sequence through the widget's own
+   callbacks, default auto-close FLIPPED TO OFF.** `before_cancel` (vetoable, F2.a
+   — mirrors the already-reserved `before_submit` veto) → clear (hardwired) →
+   `after_cancel` (default: no-op, i.e. **stays open** — restores the pre-feature
+   `oneshot=false` default, verified in `devupstream`). Submit: `before_submit` →
+   validate → deliver → `after_submit` (default: no-op / stays open). A project
+   that wants auto-close sets `after_submit = function() compy.input.hide() end`
+   — the `oneshot=true` project-overlay behaviour survives as an opt-in default
+   override, not a hardcoded platform behaviour. Zero cost to console (never
+   calls `UIC:submit()`/`cancel()`).
+3. **Widget return = consumed, universally; `on_limit_reached` fully replaces the
+   return-based limit signal.** True whenever shown, false when hidden. Console's
+   history-nav patched in `ConsoleController:keypressed`
+   (`consoleController.lua:1209`) — the ONLY console/editor code touched by this
+   whole obligation set (confirmed by an obligation-by-obligation code pass).
+4. **Named ruling: the old non-overridable Enter/Esc + auto-close guarantees are
+   withdrawn, deliberately.** Verified NOT a stakeholder mandate — cancel/dismiss
+   notification was explicitly left unresolved by stakeholders
+   (`design/requirements.md:201-205`); the non-overridable shape was a
+   design-team fix for the `oneshot` two-role-widget problem
+   (`design/notes/enter_escape_routing.md:10-58`), not an external ask.
+   Acceptable because the gateway pre-tap remains the non-negotiable recovery
+   path.
+5. **`hooks[event]` = seed-by-copy-at-activation (single source of truth,
+   confirmed "always the intent"); `callbacks` = 8 leaves** (5 lifecycle +
+   `on_limit_reached`, `validator`, `highlighter`), defined as "any function the
+   widget itself invokes"; D7 guard = container + sub-table identities frozen,
+   leaves writable.
+6. **(New, from the migratability question) Implement the chain as a genuinely
+   shared function, not a `ProjectInputController` method.** The original design
+   promised a shared `dispatch()` reusable by console/editor
+   (`design/roadmap.md:330`) but the shipped `_dispatch` reads PIC's own
+   `self.compy_input`/`self.natives` — not actually reusable. Recommend
+   `dispatch(handlers, hooks, widget, event, trigger, ...)` taking plain
+   tables, with `compy.input`'s guarded metatable as a thin project-facing
+   wrapper *over* it — console/editor, when they eventually migrate, use the
+   plain function directly with their own tables, no sandboxed-guard ceremony
+   needed. Zero cost now; keeps the "possible, not forced" promise honest
+   instead of aspirational. Folds into E-r1/E-r2, no new phase or unit.
