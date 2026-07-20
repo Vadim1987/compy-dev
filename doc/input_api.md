@@ -291,7 +291,7 @@ And tixy's preset loader live-fills the field while it is active:
 compy.input.set_text(body)
 ```
 
-## Combo key handlers
+## Combo shortcuts
 
 Advanced: to grab a specific chord rather than a stream of events, register it in
 `compy.input.shortcuts`:
@@ -301,11 +301,11 @@ compy.input.shortcuts.keypressed["ctrl+s"] = function() save() end
 ```
 
 `shortcuts.keypressed`, `shortcuts.keyreleased` and `shortcuts.textinput` each map a canonical combo
-string to a handler. Combo strings list modifiers in the fixed order ctrl, alt, shift, gui, then
+string to a function. Combo strings list modifiers in the fixed order ctrl, alt, shift, gui, then
 the key — e.g. `"ctrl+s"`, `"alt+shift+f4"`, `"escape"`. A shortcut registered here always wins
-over the widget's own default handling for that combo — including `'return'`/`'escape'`, see
-[The submit lifecycle](#the-submit-lifecycle) above. For per-event handling that isn't
-combo-specific, register a single fallback in `compy.input.hooks` (below).
+over the widget's own default behaviour for that combo — including `'return'`/`'escape'`, see
+[The submit lifecycle](#the-submit-lifecycle) above. For a per-event fallback that isn't
+combo-specific, register a single function in `compy.input.hooks` (below).
 
 ## The `hooks` table
 
@@ -313,10 +313,10 @@ combo-specific, register a single fallback in `compy.input.hooks` (below).
 function slot per event — the fallback consumer that runs after `shortcuts` and before the widget.
 At project activation, any event for which you have not already set an explicit hook is seeded
 once with your project's own captured `love.keypressed`/`love.textinput`/`love.keyreleased`
-handler (if you defined one) — so defining a plain `love.keypressed` in your project "just works"
+function (if you defined one) — so defining a plain `love.keypressed` in your project "just works"
 without touching `compy.input` at all. Once seeded, `hooks[event]` is the single source of truth:
 setting it to `nil` clears it for good — there is no fallback resurrection of your original
-`love.*` handler.
+`love.*` function.
 
 ## API reference
 
@@ -341,8 +341,8 @@ assignment.
 
 | Sub-table | Description |
 |---|---|
-| `shortcuts` | Combo key handlers: `shortcuts.keypressed[combo]`, `shortcuts.keyreleased[combo]`, `shortcuts.textinput[combo]`. Always win over the widget's own default handling, Enter/Escape included. |
-| `hooks` | One fallback handler per event: `hooks.keypressed`, `hooks.keyreleased`, `hooks.textinput`. Seeded once from your project's own `love.*` handlers at activation; a `nil` write clears for good. |
+| `shortcuts` | Combo shortcuts: `shortcuts.keypressed[combo]`, `shortcuts.keyreleased[combo]`, `shortcuts.textinput[combo]`. Always win over the widget's own default behaviour, Enter/Escape included. |
+| `hooks` | One fallback function per event: `hooks.keypressed`, `hooks.keyreleased`, `hooks.textinput`. Seeded once from your project's own `love.*` functions at activation; a `nil` write clears for good. |
 | `callbacks` | The widget's own invoked-callback table — see below. |
 
 ### `show` / `configure` config keys (supported since 1.0.0-rc20260712)
