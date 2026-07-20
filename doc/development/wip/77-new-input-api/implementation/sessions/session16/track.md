@@ -217,3 +217,28 @@
   references renamed. plan.md checked — Phase R text had no stray "handlers"
   refs needing update.
 - Suite reconfirmed 815/0/0/4 (docs-only turn).
+
+## WRAP (2026-07-20) — owner-requested handoff to a cold Opus session
+- Owner: both docs APPROVED (R3 confirm-gate closed). Asks to delegate R4/R5
+  execution to a fresh Opus-orchestrated session (token economy), with Fable
+  summonable as an on-call subagent oracle for genuinely hard calls only.
+- Light self-revalidation before handoff (not a full separate session — folded
+  into this wrap, per rules/revalidation.md's spirit for judgment-heavy output
+  a downstream session will trust without re-reading): grepped delta-design +
+  delta-spec + plan.md for stray "handler" references post-rewrite — clean,
+  only legitimate hits (rename call-outs, the real `Key.new_handler_table`
+  function name, `love.handlers` citations).
+- This session (Fable-in-main-seat) was the deviation per owner's own 2026-07-20
+  process-pivot direction (session16/prompt.md); session17 reverts to the
+  standard Opus-orchestrator + on-call-Fable shape agents/validation.md was
+  built around — noted explicitly in both report.md and session17/prompt.md so
+  the reversion isn't mistaken for a new pattern.
+- Materialized: session16/report.md (distilled outcome, non-obvious points,
+  verification of record); session17/prompt.md (R4/R5 execution task, explicit
+  Fable-summon-as-subagent instruction since Opus≠Fable means consult is
+  necessarily a spawn here — the standing "prefer main-session consult" caveat
+  doesn't apply to this handoff direction).
+- Repointed agents/validation.md's CURRENT PROMPT → session17/prompt.md via the
+  exact mandated sed command.
+- Status: TERMINAL for this session. Suite 815/0/0/4, unchanged throughout
+  (docs-only session — no src/tests edits; execution is session17's job).
