@@ -48,3 +48,26 @@ no un-dispositioned "resolved" REVIEWs — all MET. The reason R stays open is t
 architectural concern above, which is a *judgment* hold, not a gate-criterion miss. Reconcile
 the plan's R-gate wording with this reality as part of your revalidation (amend it with the
 owner if warranted, following its dated-append convention).
+
+## Standing carryover — do not drop until it fires (owner + Fable, 2026-07-20)
+There is an unresolved replan trigger from outside this session's task chain:
+`../../../validation/notes/post-R-replan-hypothesis.md` — an unrated note
+proposing that Phase B/C/D can collapse to a short pass once R is genuinely closed, written
+*before* the UIC `app_state` issue above surfaced. **It is stale as written** — it doesn't
+account for that issue, which is itself a new scaffolding-suspect the note's own falsification
+condition anticipates.
+
+**Rule: if Phase R closes in this session** (the open issue above gets an owner-approved
+disposition), **read that note before taking any step toward TF2.** Reconcile it against
+however the issue was resolved — fold it in as a cheap fifth known-item if the fix was small
+and mechanical (in the shape of R2/R4/R5), or treat it as a real Phase-B-shaped question if
+not — then decide with the owner whether to run the collapsed B→C→D pass the note proposes or
+the plan as originally written. This is a decision for the owner to make with fresh eyes on
+the actual closed-R state, not something to pre-empt here.
+
+**Rule: if this session wraps without Phase R closing** (the open issue is still unresolved),
+copy this entire "Standing carryover" section, verbatim, into the successor session's
+`prompt.md`. Do not paraphrase, shorten, or drop it "since nothing happened yet" — repeat this
+same block in every successor prompt until the trigger condition above actually fires in some
+session. Once it fires (R closes, note gets read and reconciled), retire this section from
+that point's successor prompt — it has done its job.
