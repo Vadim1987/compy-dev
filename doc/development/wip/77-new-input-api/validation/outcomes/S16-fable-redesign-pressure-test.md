@@ -220,6 +220,15 @@ callbacks-membership spelled out. All five belong in the delta-spec (addendum to
 `decisions/input.md`; frozen `design/` untouched).
 
 **Tests-first anchors** (the breaking tests that pin the risky seams):
+
+> **CORRECTION (iteration 1, owner ⇄ Fable, same day):** F3 overstated the collision's
+> blast radius. `editorController.lua:493` is a **SearchController**, not a UIC — its
+> `jump`-table return is a different class's own contract, unaffected. The **only live
+> consumer** of `UIC:keypressed`'s return is console history navigation
+> (`consoleController.lua:1209-1217`); editor input (`editorController.lua:804`) and
+> the editor-input forward (`controller.lua:44`) already ignore it. See the
+> iteration-1 section below for the owner's superseding resolution.
+
 1. Escape on shown widget with default config → content cleared **and hidden**
    (kills the F1 regression — the single highest-value test);
 2. Ctrl+Q reaches the gateway with a shown widget and a greedy project handler
@@ -228,3 +237,87 @@ callbacks-membership spelled out. All five belong in the delta-spec (addendum to
    plain key → consumed, and console/editor limit-flag callers still see their
    flag (pins F3);
 4. hook nil-ing after explicit assignment behaves per the F5 choice.
+
+---
+
+## Iteration 1 (owner ⇄ Fable, 2026-07-20) — owner refinements + Fable verification
+
+### F2 refined — CONFIRMED: tier-1 was invented solely for Enter/Esc-in-route
+
+Owner's reading verified in code: `install_tier1` (`projectInputController.lua:119-123`)
+populates exactly `kp['return']` and `kp['escape']`, once, at construction; nothing else
+ever writes `framework_handlers`. With the gateway pre-tap handling recovery
+unconditionally *before* routing, tier-1 has no other purpose — the reshape removes it
+and its tests outright. Owner's shape: `compy.input.callbacks` = **direct exposure of
+the widget instance's callbacks table, pre-populated with framework defaults** (e.g.
+after_cancel default performs the dismissal); projects control the lifecycle through
+callbacks only, never reaching the controller/model. Fable caveats accepted into the
+obligations:
+- **(a) D11 teardown must RE-SEED defaults, not wipe to nil** — `reset_compy_input`
+  currently wipes surface state; a nil'd after_cancel would silently lose dismissal.
+- **(b)** "5 callbacks" — the lifecycle five; `on_limit_reached`/`validator`/
+  `highlighter` (writable today) still need their F6 membership ruling (8 leaves, or a
+  deliberate narrowing).
+- **(c)** The dropped guarantee widens slightly: not only can a project handler shadow
+  Enter/Esc (F4), a project overriding `after_submit`/`after_cancel` now *owns* the
+  lifecycle act itself (keep-open becomes "don't hide" instead of "re-show") — same
+  named ruling, stated fully.
+
+### F1 refined — pre-feature canon verified in `devupstream`
+
+`devupstream:src/controller/userInputController.lua:153-154` — pre-feature
+`UIC:cancel()` is `model:cancel()` **only** (model = `handle(false)` + `reset`,
+`userInputModel.lua:795-798`). **No hide existed anywhere: clear-only IS the
+pre-feature canon, and that was precisely the recorded limitation.** The `+hide()` in
+today's `UIC:cancel()` is feature #77's addition (the D6 fix), currently reachable only
+through tier-1. So neither current shape is "the old canonical dismiss" — dismissal has
+no pre-feature precedent and must be preserved deliberately.
+
+Owner's proposed sequence — `keypressed('esc') → callbacks.before_cancel() →
+input:cancel() (clear) → callbacks.after_cancel()` with the default after_cancel
+performing dismissal — **matches Fable's interpretation**, with one correction:
+- the default `after_cancel` should be **hide/dismiss only**, NOT `UIC:cancel()` —
+  the middle step already cleared; calling `UIC:cancel()` there re-runs
+  `model:cancel()` (double `handle(false)` + `reset`, observable via history/error
+  state) and muddles the before→middle→after reading.
+- ordering is right for §4's capture-and-restore: before_cancel fires **before** the
+  clear, so the context can capture text; hardwired middle = clear; overridable
+  after = dismiss-by-default. Submit mirrors it: before_submit → validate → deliver
+  (`on_text_entered`) → after_submit (default: hide; reject path still skips after,
+  as today).
+
+### F3 refined — owner's redefinition SUPERSEDES Fable's F3(a); verified cleaner
+
+Owner: let the widget's return **universally mean consumed**; the limit signal moves
+to `on_limit_reached` (already exists as a D5 widget output — the return flag was a
+*parallel* channel all along). Verified consequences:
+- The dual channel is redundant today: `vertical()` **both** sets the returned flag
+  **and** fires `emit_limit` (`userInputController.lua:572-581`). Retiring the return
+  channel is a deletion, not a migration.
+- **This is D5-purifying:** the limit *result* was leaking upward through a return
+  value — the exact thing D5 forbids for results. After the change, results travel
+  only via widget outputs; the return carries the consumption signal (a chain concern,
+  not a result). D5's supersede-entry writes itself.
+- Blast radius (verified, post-correction): **console history nav only**
+  (`consoleController.lua:1209-1217`). Tweak: configure the console instance's
+  `on_limit_reached = function(dir) …history_back/fwd… end`, filtered to vertical
+  dirs (emit_limit also fires left/right). Synchronous (fires during keypressed) —
+  same-keystroke semantics preserved.
+- Per-surface: **editor input strip** — return already ignored, no tweak;
+  **editor search** — SearchController, own class/contract, unaffected (its own
+  jump-via-return is the same *pattern*, optional later cleanup, out of scope);
+  **inspect mode** — D12: console route over project env, same console instance →
+  covered by the console tweak automatically; **project route** — widget returns
+  shown→truthy / hidden→falsy, enabling the uniform OR-chain dispatch the owner's
+  in-code REVIEW (`projectInputController.lua:197`) already asks for.
+- One rule to pin in the delta-spec: **shown → consumed for EVERY key** (even keys
+  the widget did nothing with), matching today's terminal-sink semantics; "true only
+  when it acted" would invite per-branch bookkeeping and observable flakiness.
+
+### Obligations delta after iteration 1
+
+Obligation (3) is superseded: consumption = **widget return value** (owner's rule),
+not shownness-at-dispatch-step; D5 amended as above. New sub-obligations: teardown
+re-seeding (F2-a), default-after_cancel = dismiss-only (F1), the widened F4 wording
+(F2-c), and the console `on_limit_reached` tweak rides in the same execution unit as
+the return-channel retirement.

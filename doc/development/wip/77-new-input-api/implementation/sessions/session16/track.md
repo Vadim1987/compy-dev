@@ -50,3 +50,29 @@
 - Verdict headline: SOUND, do pre-PR, under F2 modest reading + 5 obligations.
 - Awaiting owner iteration (gate open; 4 pending rulings listed in the
   plan-revision draft).
+
+## Iteration 1 (owner ⇄ Fable)
+- Owner engages on F1/F2/F3 directly, with concrete counter-shapes —
+  materialized as "Iteration 1" section appended to the outcomes file.
+- **F2 confirmed:** tier-1 verified Enter/Esc-only (install_tier1) →
+  invented solely for in-route Enter/Esc; remove code+tests; callbacks =
+  direct exposure of widget's table with pre-populated defaults. Caveats
+  accepted: teardown must RE-SEED defaults (reset_compy_input wipes today);
+  "5 callbacks" leaves on_limit_reached/validator/highlighter membership
+  open (F6); F4 ruling widens (overriding after_* = owning lifecycle).
+- **F1 verified in devupstream:** pre-feature UIC:cancel = model-only
+  (clear, no hide) — clear-only IS the old canon and the old bug; +hide is
+  #77's addition. Owner sequence (before_cancel → clear → after_cancel
+  w/ dismiss default) matches my read; correction: default after_cancel =
+  hide only, NOT UIC:cancel() (double model:cancel otherwise).
+- **F3: my blast-radius claim CORRECTED** — editorController:493 is
+  SearchController (own jump contract), NOT a UIC consumer. Only live
+  consumer = console history nav (:1209). Owner's redefinition (return =
+  consumed universally; limit via on_limit_reached) SUPERSEDES my F3(a) —
+  and is D5-purifying (limit result stops leaking via return). Dual
+  channel verified redundant (vertical() sets flag AND fires emit_limit).
+  Console tweak: instance on_limit_reached filtered to vertical dirs.
+  Rule to pin: shown → consumed for EVERY key.
+- Behavioral note (owner): thinks in default-value terms — guarantees
+  become overridable defaults, uniformly; prefers deletion over parallel
+  channels; asks for cross-surface impact before accepting.
