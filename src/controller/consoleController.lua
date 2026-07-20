@@ -491,25 +491,32 @@ end
 -- on_* slots are the tier-3 generic callbacks. show/hide drive
 -- the singleton overlay (resolved from love.state, never held by
 -- the project).
-local get_compy_input = function()
-  local state = {
-    handlers = {
-      keypressed  = Key.new_handler_table(),
-      keyreleased = Key.new_handler_table(),
-      textinput   = Key.new_handler_table(),
-    },
-    pending = { },
-  }
-  local methods = {
+-- The widget-method surface a project drives (show/hide/
+-- configure/set_text/set_cursor/get_cursor/clear), parameterized
+-- by instance (doc/development/wip/77-new-input-api/validation/
+-- reviews/delta-spec-input-api.md, §4 / obligation 6b): any
+-- adopter — not only the project overlay — gets the same
+-- ergonomics over ITS OWN widget by supplying its own resolvers.
+-- `get_widget` resolves the UserInputController; `get_active_flag`
+-- reports shown-ness (truthy = shown); `state` is the sticky
+-- output/pending store show()/configure() read. The project
+-- overlay closes the two resolvers over the love.state globals —
+-- behaviour-identical to the pre-factory inline shape.
+--- @param get_widget fun(): UserInputController?
+--- @param get_active_flag fun(): table?
+--- @param state table
+--- @return table
+local function build_widget_api(get_widget, get_active_flag, state)
+  return {
     show = function(cfg)
       local next_cfg = cfg or {}
       merge_output_keys(state, next_cfg)
       consume_pending(state.pending, next_cfg)
-      local ui = love.state.user_input_controller
+      local ui = get_widget()
       if ui then ui:show(next_cfg) end
     end,
     hide = function()
-      local ui = love.state.user_input_controller
+      local ui = get_widget()
       if ui then ui:hide() end
     end,
     -- doc/development/internals/user_input.md, "Cursor manipulation and
@@ -518,18 +525,17 @@ local get_compy_input = function()
     -- refused mutation, so unlike set_cursor/set_text below
     -- it does not warn (same section).
     get_cursor = function()
-      if not love.state.user_input then return nil end
-      local ui = love.state.user_input_controller
-      return ui:get_cursor_pos()
+      if not get_active_flag() then return nil end
+      return get_widget():get_cursor_pos()
     end,
     -- doc/development/internals/user_input.md, "Cursor manipulation and
     -- 'reset'": clamped move; no-op + warn while hidden.
     set_cursor = function(line, col)
-      if not love.state.user_input then
+      if not get_active_flag() then
         Log.warn('compy.input.set_cursor ignored — hidden')
         return
       end
-      love.state.user_input_controller:set_cursor_pos(line, col)
+      get_widget():set_cursor_pos(line, col)
     end,
     -- doc/input_api.md, "Live reconfigure: `configure`,
     -- `set_text`, `clear`, cursor": replace content (cursor
@@ -537,12 +543,11 @@ local get_compy_input = function()
     -- view updates via the controller's set_text (no
     -- re-show).
     set_text = function(text, keep_cursor)
-      if not love.state.user_input then
+      if not get_active_flag() then
         Log.warn('compy.input.set_text ignored — hidden')
         return
       end
-      local ui = love.state.user_input_controller
-      ui:set_text(text, keep_cursor)
+      get_widget():set_text(text, keep_cursor)
     end,
     -- doc/development/internals/user_input.md, "configure(config)": live
     -- update on an active session (only
@@ -553,12 +558,12 @@ local get_compy_input = function()
     -- show(). Never a partial/silent apply either way.
     configure = function(cfg)
       local next_cfg = cfg or { }
-      if not love.state.user_input then
+      if not get_active_flag() then
         stash_hidden_configure(state, next_cfg)
         return
       end
       merge_output_keys(state, next_cfg)
-      love.state.user_input_controller:configure(next_cfg)
+      get_widget():configure(next_cfg)
     end,
     -- doc/development/internals/user_input.md, "clear()": empty content +
     -- cursor to start, no callback;
@@ -566,15 +571,30 @@ local get_compy_input = function()
     -- (no re-show) — reuses the controller's existing clear()
     -- (content + error state).
     clear = function()
-      if not love.state.user_input then
+      if not get_active_flag() then
         Log.warn('compy.input.clear ignored — hidden')
         return
       end
-      local ui = love.state.user_input_controller
+      local ui = get_widget()
       ui:clear()
       ui:update_view()
     end,
   }
+end
+
+local get_compy_input = function()
+  local state = {
+    handlers = {
+      keypressed  = Key.new_handler_table(),
+      keyreleased = Key.new_handler_table(),
+      textinput   = Key.new_handler_table(),
+    },
+    pending = { },
+  }
+  local methods = build_widget_api(
+    function() return love.state.user_input_controller end,
+    function() return love.state.user_input end,
+    state)
   return build_input_surface(state, methods)
 end
 
