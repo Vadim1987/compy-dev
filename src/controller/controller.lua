@@ -299,14 +299,6 @@ local set_handlers = function(userlove, CC)
   hook_draw(userlove)
 end
 
--- The eight callback slots (widget outputs + submit/cancel lifecycle)
--- teardown clears on project stop (doc/development/decisions/input.md,
--- Decision 7 revised / 11).
-local CALLBACK_SLOTS = {
-  'on_text_entered', 'on_limit_reached', 'validator',
-  'highlighter', 'before_submit', 'after_submit',
-  'before_cancel', 'after_cancel',
-}
 local HOOK_EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
 
 --- @param t table
@@ -315,9 +307,12 @@ local function wipe_table(t)
 end
 
 --- Teardown of the project's compy.input registrations
---- (doc/development/decisions/input.md, Decision 11). Reaches through
---- the frozen container's sub-tables — the container itself refuses
---- direct writes (Decision 7 revised).
+--- (doc/development/decisions/input.md, Decision 11): clears the
+--- project's shortcuts and hooks. The callbacks table lives on the
+--- widget and is re-seeded by reset_widget_outputs (below), so it
+--- is not touched here. Reaches through the frozen container's
+--- sub-tables — the container itself refuses direct writes
+--- (Decision 7 revised).
 --- @param CC ConsoleController
 local function reset_compy_input(CC)
   local input = CC:get_project_env().compy.input
@@ -325,16 +320,16 @@ local function reset_compy_input(CC)
   wipe_table(input.shortcuts.keyreleased)
   wipe_table(input.shortcuts.textinput)
   for _, ev in ipairs(HOOK_EVENTS) do input.hooks[ev] = nil end
-  for _, k in ipairs(CALLBACK_SLOTS) do input.callbacks[k] = nil end
 end
 
---- REVIEW: why not use noop more universally? (including returning it via metaindex) using nil generates lots of if-checks; maybe not for immediate fix, but mark as todo/debt if concern is valid 
+--- Teardown of the widget's own output/callback state on project
+--- stop (Decision 11): re-seed the callbacks to their stay-open
+--- defaults (AC10 — not a wipe-to-nil), and clear the legacy poll
+--- reftable and the evaluator's highlighter.
 local function reset_widget_outputs()
   local ui = love.state.user_input_controller
   if not ui then return end
-  ui.validator = nil
-  ui.on_text_entered = nil
-  ui.on_limit_reached = noop
+  ui:reset_callbacks()
   ui.result = nil
   if ui.model and ui.model.evaluator then
     ui.model.evaluator.highlighter = nil

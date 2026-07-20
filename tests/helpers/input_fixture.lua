@@ -141,6 +141,11 @@ function F.setup()
   cfg = build_cfg()
   require_modules()
 
+  -- Provision the singleton widget BEFORE the console (mirrors
+  -- main.lua's reorder): ConsoleController construction builds
+  -- the project env's compy.input, which binds to the widget's
+  -- own callbacks table — so the widget must exist first.
+  singleton = build_singleton(cfg)
   CC = build_console(cfg)
   --- REVIEW/DOC: 'slots', 'gate last-resort route' sound exotic and cannot be understood without context -- dependence on 'when no widget is up' looks like abstraction leak; if its just the way framework sets the controllers when launched -- tell exactly that
   -- Native slots: the gate's last-resort route when no widget
@@ -152,7 +157,6 @@ function F.setup()
   Controller.set_love_mousepressed(CC)
   Controller.set_love_mousereleased(CC)
   Controller.set_love_update(CC)
-  singleton = build_singleton(cfg)
   -- REVIEW/DOC: explain what the line before does and why its needed
   session = require('tests.helpers.input_session').new(CC)
 
@@ -279,29 +283,18 @@ end
 --- REVIEW: is not there a framework/controller method doing this? why replicate instead of calling it?
 -- Drop every project-route participant the chain rows
 -- install, so each test starts from framework defaults:
--- deactivate the route, clear the project-installed
--- framework/combo tables and generic callbacks/hooks.
--- The return/escape entries survive the keypressed wipe:
--- they are installed once, at ProjectInputController
--- construction (not per-test) — structural, not a test
--- artifact.
+-- deactivate the route and clear the project-installed
+-- shortcut/combo tables and hooks. The widget's callbacks are
+-- re-seeded separately (F.reset -> singleton:reset_callbacks),
+-- since compy.input.callbacks IS the widget's own table.
 local function reset_chain()
   Controller.project_input:deactivate()
-  local fw = Controller.project_input.framework_handlers
-  wipe(fw.keypressed, { ['return'] = true, escape = true })
-  wipe(fw.keyreleased); wipe(fw.textinput)
   local input = CC:get_project_env().compy.input
   wipe(input.shortcuts.keypressed)
   wipe(input.shortcuts.keyreleased)
   wipe(input.shortcuts.textinput)
   for _, ev in ipairs({ 'keypressed', 'keyreleased', 'textinput' }) do
     input.hooks[ev] = nil
-  end
-  for _, k in ipairs({
-    'on_text_entered', 'on_limit_reached', 'validator', 'highlighter',
-    'before_submit', 'after_submit', 'before_cancel', 'after_cancel',
-  }) do
-    input.callbacks[k] = nil
   end
 end
 
@@ -327,15 +320,12 @@ function F.reset()
   CC.input:clear()
   CC.editor.input:clear()
   singleton:clear()
-  -- The widget's OWN output/hook fields (apply_config only
-  -- overwrites when a show() config key is given, so a value
-  -- set by one test would otherwise survive into the next —
-  -- production behaviour, doc/input_api.md "Sticky
-  -- callbacks", but wrong at fixture scope).
-  -- REVIEW: would real project suffer similar config leaks? if not, why not call whatever clears/resets them?
-  singleton.validator = nil
-  singleton.on_text_entered = nil
-  singleton.on_limit_reached = noop
+  singleton.shown = false
+  -- The widget's OWN callbacks table (which IS compy.input.
+  -- callbacks): re-seed the stay-open defaults between tests, the
+  -- same reset production teardown runs (reset_widget_outputs).
+  -- A value set by one test would otherwise leak into the next.
+  singleton:reset_callbacks()
   singleton.result = nil
 end
 

@@ -41,7 +41,15 @@ function ConsoleController.new(M, main_ctrl)
   local pre_env = table.clone(env)
   local config = M.cfg
   pre_env.font = config.view.font
-  local IC = UserInputController(M.input)
+  local IC = UserInputController(M.input):always_shown()
+  -- Console history navigation: at the vertical boundary the
+  -- widget fires on_limit_reached; the console maps up/down to
+  -- history back/forward (validation/reviews/delta-spec-input-api.md
+  -- §6), retiring the old keypressed return-value channel.
+  IC.callbacks.on_limit_reached = function(dir)
+    if dir == 'up' then IC:history_back() end
+    if dir == 'down' then IC:history_fwd() end
+  end
   local self = setmetatable({
     time        = 0,
     model       = M,
@@ -591,24 +599,37 @@ local function build_widget_api(get_widget, get_active_flag, state)
 end
 
 local get_compy_input = function()
+  -- callbacks IS the overlay widget's OWN table (owner ruling
+  -- 2026-07-20: compy.input.callbacks === the widget's
+  -- self.callbacks). The widget is provisioned before the console
+  -- (main.lua reorder), so it exists here. NEVER reassign this
+  -- table — only mutate it — since the surface holds this exact
+  -- reference (teardown re-seeds in place).
+  local widget = love.state.user_input_controller
   local state = {
     -- shortcuts: per-event combo tables (Decision 8, normalising).
-    -- hooks: one fn per event, seeded once at activation (Decision 10
-    -- revised). callbacks: the widget-invoked fns (outputs + submit/
-    -- cancel lifecycle), Decision 7 revised. All three start empty
-    -- except shortcuts' combo tables; leaves fill on project write.
+    -- hooks: one fn per event, seeded once at activation (Decision
+    -- 10 revised). callbacks: the widget's own table (Decision 7
+    -- revised). shortcuts/hooks start empty (leaves fill on project
+    -- write); callbacks carries the widget's stay-open defaults.
     shortcuts = {
       keypressed  = Key.new_handler_table(),
       keyreleased = Key.new_handler_table(),
       textinput   = Key.new_handler_table(),
     },
     hooks = { },
-    callbacks = { },
+    callbacks = widget.callbacks,
     pending = { },
   }
+  -- get_active resolves the overlay's OWN shown flag (is_shown),
+  -- never love.state directly.
+  local function get_active()
+    local w = love.state.user_input_controller
+    return w and w:is_shown()
+  end
   local methods = build_widget_api(
     function() return love.state.user_input_controller end,
-    function() return love.state.user_input end,
+    get_active,
     state)
   return build_input_surface(state, methods)
 end
@@ -1241,15 +1262,12 @@ function ConsoleController:keypressed(k)
     if k == "pagedown" then
       input:history_fwd()
     end
-    local limit = input:keypressed(k)
-    if limit then
-      if k == "up" then
-        input:history_back()
-      end
-      if k == "down" then
-        input:history_fwd()
-      end
-    end
+    -- History navigation at the vertical boundary is driven by
+    -- the widget's on_limit_reached callback (set at construction),
+    -- not by keypressed's return value (retired, Decision 5
+    -- revised / delta-spec §6). keypressed still runs for its
+    -- editing side effects; its return is unused.
+    input:keypressed(k)
     if not Key.shift() and Key.is_enter(k) then
       if not input:has_error() then
         self:evaluate_input()

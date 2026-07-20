@@ -352,22 +352,16 @@ function love.load()
   end
   local ctrl = Controller
   --- MVC wiring
-  local CM = ConsoleModel(baseconf)
-  redirect_to(CM)
-  local CC = ConsoleController(CM, ctrl)
-  local CV = ConsoleView(baseconf, CC)
-
   -- REVIEW: why could not (or should not) Concols/Editor be rewired to use the same singleton? is it because we have to maintain Concole's UIC state in parallel to project/editor's one(s)?
-  -- UserInput M/V/C are constructed explicitly here
-  -- (mirroring the Console M/V/C triple above) and injected,
-  -- not self-provisioned by the controller. Whether the
-  -- controller should own its model/view construction is the
-  -- open {badspecref: A5} question (M2 agenda A5,
-  -- singleton lifecycle / overlay-draw-flag contract) —
-  -- see {badspecref:
-  -- implementation/reviews/M2-human-review.md} (doc/
-  -- development/wip/77-new-input-api/implementation/
-  -- reviews/M2-human-review.md).
+  -- UserInput M/V/C are provisioned FIRST — before the console —
+  -- so the project env's compy.input (built during
+  -- ConsoleController construction) can bind to the widget's OWN
+  -- callbacks table at that moment (owner ruling 2026-07-20:
+  -- compy.input.callbacks IS the widget's self.callbacks). The
+  -- widget is a boot singleton; provisioning it early has no
+  -- dependency on the console. (Whether the controller should own
+  -- its model/view construction is the open {badspecref: A5}
+  -- question — M2 agenda A5.)
   local ui_m = UserInputModel(baseconf, InputEvalText)
   local ui_c = UserInputController(ui_m, nil, true)
   local ui_v = UserInputView(baseconf.view, ui_c)
@@ -375,10 +369,13 @@ function love.load()
   ui_c:init_view(ui_v)
   -- App-wide handle for the singleton: the compy.input
   -- wrappers and the overlay draw path resolve the
-  -- controller through love.state (service-locator pattern;
-  -- the flag/registry shape is part of the
-  -- {badspecref: A5} contract question — M2 agenda A5).
+  -- controller through love.state (service-locator pattern).
   love.state.user_input_controller = ui_c
+
+  local CM = ConsoleModel(baseconf)
+  redirect_to(CM)
+  local CC = ConsoleController(CM, ctrl)
+  local CV = ConsoleView(baseconf, CC)
 
   ctrl.setup_callback_handlers(CC)
   ctrl.set_default_handlers(CC, CV)

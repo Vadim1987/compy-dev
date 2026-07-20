@@ -72,7 +72,7 @@ describe('input contracts: live reconfigure #input', function()
         })
         F.session.press('return')
         assert.equal('ab', seen)
-        assert.is_nil(love.state.user_input)
+        assert.is_not_nil(love.state.user_input)
       end)
 
       -- doc/development/internals/user_input.md, "configure(config)":
@@ -315,7 +315,9 @@ describe('input contracts: live reconfigure #input', function()
       function()
         local input = F.activate_project()
         local seen = { }
-        input.callbacks.after_submit = function() input.show({}) end
+        -- New idiom (Decision 6 revised): the widget stays open;
+        -- the project clears between prompts from after_submit.
+        input.callbacks.after_submit = function() input.clear() end
         input.show({
           on_text_entered = function(t)
             seen[#seen + 1] = t

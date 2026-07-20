@@ -4,6 +4,20 @@ require("util.view")
 require("util.string.string")
 require("util.lua")
 
+-- Stay-open defaults for the submit/cancel lifecycle
+-- (doc/development/wip/77-new-input-api/validation/reviews/
+-- delta-spec-input-api.md §3): after_submit/after_cancel default to
+-- no-ops, so a widget stays open unless a callback hides it. on_limit_
+-- reached defaults to a no-op so the navigation-boundary emit is an
+-- unconditional call. Re-seeded (not wiped) on teardown (AC10).
+local function default_callbacks()
+  return {
+    on_limit_reached = noop,
+    after_submit = noop,
+    after_cancel = noop,
+  }
+end
+
 --- @param model UserInputModel
 --- @param result table?
 --- @param disable_selection boolean?
@@ -12,9 +26,17 @@ local new = function(model, result, disable_selection)
     model = model,
     result = result,
     disable_selection = disable_selection,
-    -- default keeps emit_limit an unconditional alias below;
-    -- apply_config overwrites it when a widget sets one.
-    on_limit_reached = noop,
+    -- Strictly internal shown/hidden flag (owner ruling
+    -- 2026-07-20): is_shown() reads this, never love.state. The
+    -- overlay starts hidden and is toggled by show()/hide();
+    -- always-active widgets (console/editor) set it true at
+    -- construction.
+    shown = false,
+    -- The widget-invoked callbacks (outputs + submit/cancel
+    -- lifecycle). For the project overlay this table IS
+    -- compy.input.callbacks (same table, owner ruling 2026-07-20);
+    -- console/editor set their own directly.
+    callbacks = default_callbacks(),
   }
 end
 
@@ -233,13 +255,13 @@ local apply_config = function(self, cfg)
     ev.highlighter = cfg.highlighter
   end
   if cfg.validator ~= nil then
-    self.validator = cfg.validator
+    self.callbacks.validator = cfg.validator
   end
   if cfg.on_text_entered ~= nil then
-    self.on_text_entered = cfg.on_text_entered
+    self.callbacks.on_text_entered = cfg.on_text_entered
   end
   if cfg.on_limit_reached ~= nil then
-    self.on_limit_reached = cfg.on_limit_reached
+    self.callbacks.on_limit_reached = cfg.on_limit_reached
   end
 end
 
@@ -281,6 +303,7 @@ local open_fresh = function(self, cfg)
     C = self,
     V = self.view,
   }
+  self.shown = true
   self:update_view()
 end
 
@@ -289,7 +312,7 @@ end
 --- @param config table?
 function UserInputController:show(config)
   local cfg = config or {}
-  if love.state.user_input then
+  if self.shown then
     -- doc/development/decisions/input.md, Decision 3 (warn-don't-swallow):
     -- a plain show() over an active overlay is suppressed;
     -- say so.
@@ -321,6 +344,7 @@ end
 --- {badspecref: M2-human-review.md} (implementation/
 --- reviews/M2-human-review.md).)
 function UserInputController:hide()
+  self.shown = false
   love.state.user_input = nil
 end
 
@@ -349,12 +373,13 @@ end
 --- submit / cancel ---
 ----------------------
 
--- doc/development/decisions/input.md, Decision 6: the framework
--- tier-1 return entry
--- (projectInputController.lua) calls submit(); before_/
--- after_submit are route-owned (read off compy_input there,
--- not stored here) — this is only the widget's own middle
--- step: validate -> deliver -> deactivate.
+-- Submit/cancel are the widget's OWN default behaviour
+-- (doc/development/decisions/input.md, Decision 6 revised; validation/
+-- reviews/delta-spec-input-api.md §3): the widget runs them on
+-- Enter/Escape as an ordinary consumer (never a routing concern)
+-- and signals out through its callbacks. before_/after_submit and
+-- before_/after_cancel are read off self.callbacks — the same
+-- table a project populates via compy.input.callbacks.
 
 --- Validator gate (doc/development/internals/user_input.md, "Submit and
 --- cancel — the framework tier-1 chains").
@@ -396,7 +421,7 @@ end
 local function deliver(self, text)
   local res = self.result
   if type(res) == 'table' then res(text) end
-  local cb = self.on_text_entered
+  local cb = self.callbacks.on_text_entered
   if cb then
     cb(text)
   else
@@ -404,58 +429,86 @@ local function deliver(self, text)
   end
 end
 
---- Submit (doc/development/decisions/input.md, Decision 6): validate the
---- assembled text, deliver + deactivate on accept, lock on
---- reject. An empty input submits nothing (pre-existing
---- solicitation behaviour, carried unchanged — not an
---- {badspecref: AC-17..26} concern — design/spec/
---- M5c-dispatch-chain.md, submit/cancel acceptance
---- criteria).
---- @return string? text  delivered text; nil on reject/empty
-function UserInputController:submit()
-  if self.model:get_text():is_empty() then return nil end
+--- Invoke a widget callback by name (self.callbacks[name]);
+--- absent → no-op + debug-log. The return value is honoured by
+--- the caller only where noted (before_cancel veto).
+--- @param self UserInputController
+--- @param name string
+--- @return any
+local function run_callback(self, name, ...)
+  local cb = self.callbacks[name]
+  if cb then return cb(...) end
+  debug_noop(name)
+end
+
+--- Submit default (doc/development/decisions/input.md, Decision 6
+--- revised; validation/reviews/delta-spec-input-api.md §3): the
+--- widget's own Enter behaviour. before_submit (veto reserved,
+--- unbuilt) → empty guard → validate → deliver (fires
+--- on_text_entered) → after_submit. after_submit DEFAULTS to a
+--- no-op, so the widget stays open unless a callback hides it.
+--- @param keys_pressed table?
+function UserInputController:_submit_default(keys_pressed)
+  run_callback(self, 'before_submit', keys_pressed)
+  if self.model:get_text():is_empty() then return end
   local text = string.unlines(self.model:get_text())
-  if not gate(self.model, self.validator, text) then
-    return nil
+  if not gate(self.model, self.callbacks.validator, text) then
+    return
   end
   deliver(self, text)
-  self:hide()
-  return text
+  run_callback(self, 'after_submit', text)
+end
+
+--- Cancel default (Decision 6 revised; delta-spec §3): the
+--- widget's own Escape behaviour. A truthy before_cancel VETOES
+--- (skips the clear); otherwise clear (hardwired) → after_cancel.
+--- after_cancel DEFAULTS to a no-op — Escape clears but the widget
+--- stays open unless a callback hides it.
+--- @param keys_pressed table?
+function UserInputController:_cancel_default(keys_pressed)
+  if run_callback(self, 'before_cancel', keys_pressed) then
+    return
+  end
+  self.model:cancel()
+  run_callback(self, 'after_cancel')
 end
 
 ----------------------
 --- event handlers ---
 ----------------------
 
---- REVIEW: why would we ever need this logic? 
---- REVIEW: why should UIC be aware of its placement in the global context? (incapsulation breaking, abstraction leak)
---- REVIEW: why should not it simply be *internal* flag, reset on show/hide so that relevant code can check the state (shown/hidden)
---- REVIEW: WHY we have two mount points and what exactly this condition means?
---- REVIEW: I do not like the 'terminal sink' terminology used to justify behavior at all ; it was said many times that 'sink' is just the alias for 'last element of dispatching chain', with no special meaning or role
---- The terminal sink of the project route's chain runs on the
---- ONE published overlay singleton (love.state.user_input_
---- controller). It is "shown" only while love.state.user_input
---- is set (show()/hide() toggle it). A keystroke reaching the
---- sink while the overlay is hidden must mutate nothing
---- (doc/development/decisions/input.md, Decision 2) — this is the chain's
---- INTERNAL hidden-check, replacing
---- the old external gating wrapper. The console REPL input is a
---- DIFFERENT UserInputController instance (never the published
---- singleton), so this never gates ordinary console typing.
+--- Whether this widget is currently shown — a strictly INTERNAL
+--- flag (owner ruling 2026-07-20; no love.state reach). Toggled
+--- by show()/hide(); always-active widgets (console/editor) set
+--- it true at construction. The project route consumes an event
+--- at the widget only while shown; the view skips its per-frame
+--- redraw only while shown.
 --- @return boolean
-function UserInputController:_is_hidden_overlay()
-  return self == love.state.user_input_controller
-      and not love.state.user_input
+function UserInputController:is_shown()
+  return self.shown
 end
 
---- @return boolean
---- Mirrors _is_hidden_overlay above rather than duplicating
---- the sink's check (per the prompt): the framework tier-1
---- return/escape entries (projectInputController.lua) gate
---- engagement on this (doc/development/internals/user_input.md, "Submit
---- and cancel — the framework tier-1 chains").
-function UserInputController:is_shown()
-  return not self:_is_hidden_overlay()
+--- Mark this widget as an always-active surface (console/editor
+--- input, never toggled like the transient overlay) and return
+--- self, for inline construction. The overlay leaves shown=false
+--- and toggles it via show()/hide().
+--- @return UserInputController self
+function UserInputController:always_shown()
+  self.shown = true
+  return self
+end
+
+--- Re-seed the callbacks to the stay-open DEFAULT_CALLBACKS, IN
+--- PLACE — never reassign the table, the compy.input surface
+--- holds this exact reference. Teardown between project runs
+--- (doc/development/decisions/input.md, Decision 11; delta-spec §3
+--- "re-seed, don't wipe" / AC10): clears a stopped project's
+--- callbacks and restores defaults, so a nil'd after_cancel never
+--- silently means "stays open forever" for the next project.
+function UserInputController:reset_callbacks()
+  local c = self.callbacks
+  for k in pairs(c) do c[k] = nil end
+  for k, v in pairs(default_callbacks()) do c[k] = v end
 end
 
 ----------------
@@ -477,12 +530,8 @@ end
 -- proxy is not required here, but recommended in the
 -- future.
 function UserInputController:keypressed(k, keys_pressed, isr)
-  -- REVIEW: UIC should not care about 'overlays' (internal jargon) -- it should simply skip processing if UIC is hidden (internal flag)
-  -- REVIEW: should not it be even better and simply replace this handler with noop_debug when input is hidden?
-  -- REVIEW: and so maybe make 'keyreleased,keypressed,textinput' thin wrappers around .dispatch(event,...) which on the firy first step would check if UIC is hidden and run noop-debug as a shortcut then?
-  -- REVIEW: while real methods could be named _keyreleased, _keypressed, _textinput and called via event table (but maybe its overengineering)
-  if self:_is_hidden_overlay() then
-    if love.DEBUG then Log.debug('input sink: hidden no-op') end
+  if not self.shown then
+    if love.DEBUG then Log.debug('input: hidden no-op') end
     return
   end
   -- Defensive render-on-entry: guarantees the view catches up to the model even if a prior
@@ -496,10 +545,15 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     self:textinput(' ')
   end
   local input = self.model
-  local ret
 
+  -- Navigation-boundary output (doc/development/decisions/input.md,
+  -- Decision 5 revised): the widget signals a hit limit ONLY
+  -- through on_limit_reached — the keypressed return value no
+  -- longer carries a limit flag (retired; console reads history
+  -- via its own on_limit_reached callback, delta-spec §6).
   local function emit_limit(dir, scope)
-    self.on_limit_reached(dir, scope)
+    local cb = self.callbacks.on_limit_reached
+    if cb then cb(dir, scope) end
   end
 
   local function horizontal_limit_scope(dir)
@@ -571,14 +625,14 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   end
   local function vertical()
     if k == "up" then
-      local l = input:cursor_vertical_move('up')
-      ret = l
-      if l then emit_limit('up', 'input') end
+      if input:cursor_vertical_move('up') then
+        emit_limit('up', 'input')
+      end
     end
     if k == "down" then
-      local l = input:cursor_vertical_move('down')
-      ret = l
-      if l then emit_limit('down', 'input') end
+      if input:cursor_vertical_move('down') then
+        emit_limit('down', 'input')
+      end
     end
     if Key.alt() then
       if k == "up" then
@@ -666,40 +720,10 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     end
   end
 
-  -- REVIEW: and here I have a serious question: why would we need to duplicate the cancellation logic in the project route with its 'framework_handlers' early-interceptors while we could simply let it work in exactly the same way like in editor and console? Instead we introduced one moving part which was not originally planned or requested explicitly by stakeholders (and it was only because LLM *insisted* we need to use framework hooks before the chain).
-  -- Console/editor's OWN escape-clears-only behaviour (not
-  -- the project widget's cancel chain — internals/
-  -- user_input.md, "Editor-specific keys"): the
-  -- framework tier-1 escape entry intercepts before this sink
-  -- ever sees the key for the project route's shown widget, so
-  -- this only fires for console/editor's own routes, which
-  -- have no tier-1 layer yet (console/editor migration is a
-  -- later, out-of-slice follow-on).
-  local function cancel()
-    if not Key.ctrl() and k == "escape" then
-      input:cancel()
-    end
-  end
-
-  
-  -- REVIEW: so we had normal cancel and submit chains *inside* the UIC, but for some reason decided to reimplement them exlusively for ProjectInputController and remove from here, therefore *complicating* the architecture instead of *simplifying* it. WHY? 
-  -- REVIEW: how submit in editor/console are working now, if they cannot expect UIC to submit? (or they used their own handling?)
-  -- REVIEW: if the only reason for moving submit/cancel *out* of UIC was to support '{before,after}_{cancel,submit}' hooks, I do not see how they could not be managed *inside* UIC. If we simply want to guarantee them non-blocking... well, still no justification for *separate* mechanism -- project may simply *not* intercept these keys (or its return vaue could be specifically ignored)...
   -- REVIEW: looking forward, UIC should not be aware if application is in 'editor or non-editor' mode -- it should be editor that configures it accordingly (via hooks). I see only two differences: a) vert/horiz order (purposeful or coincidence?) and editor having 'modify' block. But in fact (for the future?) -- its all *combos* which editor can set itself -- moreover we could think of combos mechanism *inside* UIC, and editor or project simply registering extra combos in front of them (or even as parameters to be passed to UIC)
-  -- doc/development/internals/user_input.md, "UserInputController
-  -- keypressed (shared)": the old oneshot-gated submit local
-  -- (fill the legacy reftable + push('userinput')) is gone —
-  -- the project widget's submit now runs through the
-  -- framework tier-1 return entry
-  -- (projectInputController.lua ->
-  -- UserInputController:submit()), never through this
-  -- handler.
-
   if love.state.app_state == 'editor' then
     removers()
     horizontal()
-    -- vertical() assigns `ret` (the limit flag this
-    -- method returns)
     vertical()
     newline()
     modify()
@@ -716,11 +740,21 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     copypaste()
     selection()
 
-    cancel()
+    -- The widget's own submit/cancel defaults
+    -- (doc/development/decisions/input.md, Decision 6 revised): plain
+    -- Enter submits, plain Escape cancels — ordinary widget
+    -- behaviour, signalled out through callbacks (never a routing
+    -- concern). Shift+Enter is a newline (newline() above);
+    -- Ctrl+Escape is not a cancel. The editor branch above keeps
+    -- its own Enter/Escape handling (EditorController).
+    if Key.is_enter(k) and not Key.shift() then
+      self:_submit_default(keys_pressed)
+    elseif k == 'escape' and not Key.ctrl() then
+      self:_cancel_default(keys_pressed)
+    end
   end
 
   self:update_view()
-  return ret
 end
 
 --- @param t string
@@ -732,8 +766,8 @@ end
 -- no-op), which supersedes the old self.result/running gate: a
 -- shown widget edits regardless of the legacy poll reftable.
 function UserInputController:textinput(t, keys_pressed)
-  if self:_is_hidden_overlay() then
-    if love.DEBUG then Log.debug('input sink: hidden no-op') end
+  if not self.shown then
+    if love.DEBUG then Log.debug('input: hidden no-op') end
     return
   end
   self:update_view()
@@ -748,8 +782,8 @@ end
 --- @param keys_pressed table?  read-only held-key proxy
 --- (doc/development/decisions/input.md, Decision 13)
 function UserInputController:keyreleased(k, keys_pressed)
-  if self:_is_hidden_overlay() then
-    if love.DEBUG then Log.debug('input sink: hidden no-op') end
+  if not self.shown then
+    if love.DEBUG then Log.debug('input: hidden no-op') end
     return
   end
   local input = self.model

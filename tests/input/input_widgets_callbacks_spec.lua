@@ -274,13 +274,12 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           { 'before', 'entered:a\nb', 'after:a\nb' }, order)
       end)
 
-    -- doc/development/internals/user_input.md, "Submit and cancel — the
-    -- framework tier-1 chains": on_text_entered sees the
-    -- session still active;
-    -- after_submit sees it deactivated (the observable order
-    -- the mechanism note fixes once push('userinput') is gone).
-    it('on_text_entered sees the session active; ' ..
-      'after_submit sees it deactivated', function()
+    -- Decision 6 revised: submit no longer auto-closes. The
+    -- default after_submit is a no-op, so BOTH on_text_entered and
+    -- after_submit see the session still active — the widget stays
+    -- open unless a callback hides it (delta-spec §3 / AC3).
+    it('on_text_entered and after_submit both see the ' ..
+      'session still active (stays open)', function()
       local seen = { }
       local input = F.activate_project()
       input.show({
@@ -294,7 +293,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       end
       F.session.press('return')
       assert.is_true(seen.entered)
-      assert.is_false(seen.after)
+      assert.is_true(seen.after)
     end)
 
     -- doc/development/internals/user_input.md, "Submit and cancel — the
@@ -337,11 +336,11 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
   end)
 
   describe('cancel — the Escape chain', function()
-    -- doc/development/decisions/input.md, Decision 6: the full cancel
-    -- call-order chain;
-    -- Escape genuinely
-    -- dismisses (content cleared AND the widget hidden).
-    it('Escape runs the full cancel call-order chain',
+    -- Decision 6 revised (delta-spec §3 / AC1): Escape runs the
+    -- cancel call-order chain (before_cancel → clear → after_cancel)
+    -- and CLEARS content, but the default after_cancel is a no-op —
+    -- the widget stays shown unless a callback hides it.
+    it('Escape runs the cancel chain, clears, and stays shown',
       function()
         local order = { }
         local input = F.activate_project()
@@ -354,7 +353,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         input.show({ text = 'x' })
         F.session.press('escape')
         assert.same({ 'before', 'after' }, order)
-        assert.is_nil(love.state.user_input)
+        assert.is_not_nil(love.state.user_input)
         assert.is_true(F.singleton:is_empty())
       end)
   end)
@@ -381,22 +380,27 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.same({ 'return', 'escape' }, seen)
       end)
 
-    -- doc/development/internals/user_input.md, "Submit and cancel — the
-    -- framework tier-1 chains": while shown, the framework
-    -- entries run first,
-    -- unconditionally — a project combo handler cannot shadow
-    -- them (the submit still ran: the widget deactivated).
-    it('framework Enter cannot be shadowed while shown',
+    -- Decision 6 revised (delta-spec §5 / AC5): Enter/Escape are
+    -- ordinary chain participants — a project shortcut on 'return'
+    -- runs first and consumes, so the widget's submit never fires
+    -- (the withdrawn non-overridable guarantee; the gateway power
+    -- keys remain the unshadowable safety net, not this).
+    it('a shortcut on return shadows the widget submit',
       function()
         local shadowed = false
+        local submitted = false
         local input = F.activate_project()
         input.shortcuts.keypressed['return'] = function()
           shadowed = true; return true
         end
-        input.show({ text = 'x' })
+        input.show({
+          text = 'x',
+          on_text_entered = function() submitted = true end,
+        })
         F.session.press('return')
-        assert.is_false(shadowed)
-        assert.is_nil(love.state.user_input)
+        assert.is_true(shadowed)
+        assert.is_false(submitted)
+        assert.is_not_nil(love.state.user_input)
       end)
 
     -- doc/development/internals/user_input.md, "Multiline input": Shift+Return
@@ -447,14 +451,15 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
   end)
 
   describe('continuity across submit', function()
-    -- doc/input_api.md, "The continuous-session idiom":
-    -- re-activates within
-    -- the same submit sequence, before the frame draws.
-    it('after_submit can re-activate the widget mid-sequence',
+    -- Decision 6 revised (delta-spec §3 / AC3): the widget stays
+    -- open after submit by default. A project wanting
+    -- clear-and-continue does so from its own after_submit
+    -- (continuity is now the default, not a re-activation trick).
+    it('stays open after submit; a project clears in after_submit',
       function()
         local input = F.activate_project()
         input.callbacks.after_submit = function()
-          input.show({ prompt = 'next' })
+          input.clear()
         end
         input.show({ text = 'first' })
         F.session.press('return')
@@ -480,30 +485,24 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.equal(2, hits)
       end)
 
-    -- doc/development/decisions/input.md, Decision 6: absent hooks default
-    -- to noop —
-    -- submit and cancel
-    -- both complete without error when no hook is configured
-    -- (the green replacement for the
-    -- retired 'a oneshot
-    -- submit deactivates the widget' row — internals/
-    -- user_input.md, "Submit and cancel — the framework
-    -- tier-1 chains": this proves
-    -- deactivation without any of the deleted oneshot/push
-    -- machinery).
-    it('submit and cancel complete with no hooks set',
-      function()
+    -- Decision 6 revised (delta-spec §3 / AC1,3): absent callbacks
+    -- default to no-ops — submit and cancel both complete without
+    -- error and the widget STAYS OPEN. Submit preserves content
+    -- (no auto-clear); cancel clears it.
+    it('submit and cancel complete with no callbacks set ' ..
+      '(stays open)', function()
         F.activate_project()
         F.show_widget({ text = 'x' })
         assert.has_no.errors(function()
           F.session.press('return')
         end)
-        assert.is_nil(love.state.user_input)
-        F.show_widget({ text = 'y' })
+        assert.is_not_nil(love.state.user_input)
+        assert.is_false(F.singleton:is_empty())
         assert.has_no.errors(function()
           F.session.press('escape')
         end)
-        assert.is_nil(love.state.user_input)
+        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.singleton:is_empty())
       end)
   end)
 end)

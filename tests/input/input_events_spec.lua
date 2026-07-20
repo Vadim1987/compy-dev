@@ -69,46 +69,37 @@ describe('#input events dispatching', function()
   describe('order, consume, fall-through', function()
     -- REVIEW/fidelity/consistence: group tests only against specific event type -- keypressed. Should rather be generalized (dynamically constructed) to test against all relevant even types (keyreleased, textinput)?
 
-    -- doc/development/decisions/input.md, Decision 2: a {jargon: tier-1}
-    -- framework handler runs first and,
-    -- returning truthy, consumes — no lower {jargon: tier} sees
-    -- the event.
-    -- REVIEW/clarity: internal jargon in it description -- i'd rather "framework hooks intercepts before project handlers, hooks, and widget"
-    -- REVIEW/clarity: my suggested alternative vocabulary -- dispatch chain consists of 'handlers'(event-bound x combo-bound) and 'hooks'(event-bound -- act if handlers did not intercept), with framework, project and widget, installing their own hooks, widget hooks always being the last in current architecture
-    -- REVIEW/architecture: the very need of framewrk hooks is disputable and should be reviewed after tests stabilization -- maybe they should be demoted to intra-widget logic
-    it('a framework handler consumes before lower tiers',
-      -- REVIEW/fidelity/clarity: a) 'lower' is confusing, use 'canary' or just 'x' -- set to nil initially, check if it was true or false b) mark framework handler as 'test-specific patching' while `input.on_key_pressed = ` as official way of configuring project hook c) why not test on real-life 'enter' and 'cancel' -- demonstrating they do not reach proect hook IF the whole 'do not reach' decision would be confirmed in architectural review?
+    -- doc/development/decisions/input.md, Decision 2 revised: the dumb
+    -- walk stops at the first consumer. A shortcut returning
+    -- truthy consumes — the hook and widget below never run.
+    it('a shortcut consumes before the hook and widget',
       function()
-        local lower = false
+        local reached_hook = false
         local input = F.activate_project()
-        Controller.project_input
-          .framework_handlers.keypressed['a'] =
+        input.shortcuts.keypressed['a'] =
             function() return true end
         input.hooks.keypressed =
-            function() lower = true; return true end
+            function() reached_hook = true; return true end
+        F.show_widget({ text = 'b' })
         F.session.press('a')
-        assert.is_false(lower)
+        assert.is_false(reached_hook)
       end)
 
-    -- doc/development/decisions/input.md, Decision 2: an unconsumed event
-    -- descends every
-    -- {jargon: tier} IN ORDER and reaches the {jargon: sink} (backspace
-    -- edits the
-    -- shown widget — the sink's observable trace).
-    it('an unconsumed event descends every tier to the sink',
+    -- doc/development/decisions/input.md, Decision 2 revised: an
+    -- unconsumed event walks shortcut → hook → widget in order;
+    -- falsy consumers fall through, and the shown widget is the
+    -- terminal consumer (backspace edits it — the observable trace).
+    it('an unconsumed event walks shortcut, hook, then widget',
       function()
         local order = { }
-        local fw = Controller.project_input.framework_handlers
         local input = F.activate_project()
-        fw.keypressed['backspace'] =
-            function() order[#order + 1] = 'framework_handler' end
         input.shortcuts.keypressed['backspace'] =
-            function() order[#order + 1] = 'project_handler' end
+            function() order[#order + 1] = 'shortcut' end
         input.hooks.keypressed =
-            function() order[#order + 1] = 'project_hook' end
+            function() order[#order + 1] = 'hook' end
         F.show_widget({ text = 'ab' })
         F.session.press('backspace')
-        assert.same({ 'framework_handler', 'project_handler', 'project_hook' }, order)
+        assert.same({ 'shortcut', 'hook' }, order)
         assert.same({ 'a' }, F.singleton:get_text())
       end)
 
