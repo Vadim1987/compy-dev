@@ -51,7 +51,31 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 > every cold boot re-pays the ritual + evidence re-read. **S13 = DI1** (big evidence job,
 > cold session earned); **S14 = DI2 sitting + DI3 execution** (+ TF1 if capacity allows —
 > DI3 and TF1 are two serial Sonnet units under one Opus); **S15 = TF1** only if spilled;
-> **S16 = TF2 + TF3** (one sitting, per TF3's own text).
+> **S16 = TF2 + TF3** (one sitting, per TF3's own text). — **Superseded by the 2026-07-20
+> revision below**; S16 instead ran a Fable-led redesign pressure-test that grew into a full
+> ruling and became **Phase R**, inserted ahead of TF2's completion.
+>
+> **Revision 2026-07-20 (session16, Fable) — PROPOSED, pending owner confirmation of the
+> writeup (substance already ruled on in-session across three iterations).** TF2's human
+> review of the split suite surfaced the same tensions repeatedly; the owner sketched a
+> reshaping, Fable pressure-tested it against code (verified against `devupstream` pre-feature
+> history too), and eight obligations were ratified through iterative Q&A — see
+> [`reviews/delta-design-input-api.md`](reviews/delta-design-input-api.md) +
+> [`reviews/delta-spec-input-api.md`](reviews/delta-spec-input-api.md) (the ratified content)
+> and [`../outcomes/S16-fable-redesign-pressure-test.md`](../outcomes/S16-fable-redesign-pressure-test.md)
+> (the reasoning trail, all code-verified). Rather than defer this into the generic Phase
+> B → C → D pipeline (which would dilute a cluster already ruled with more rigor than a
+> typical Phase-D row gets), it becomes its own inserted phase — **Phase R**, between TF and
+> B — executed now, ahead of TF2's remaining files, because the reshape changes the very test
+> files TF2 hasn't reviewed yet (tier-1 tests deleted, hooks/callbacks tests added); reviewing
+> them before the reshape risks reviewing code about to change shape underneath the reviewer.
+> **Revised session layout: S16 continues into Phase R execution** (R1/R2 docs done this
+> session; R3 confirm-gate; R4 tests-first execution, Sonnet workers per model economy,
+> starting with a Sonnet sweep of the 33 in-tree `REVIEW:` remarks in `src/controller/*.lua`
+> — tag each resolved-by-redesign vs. still-open — as reconnaissance before R4 touches code).
+> **TF2 resumes after R4**, over the settled post-redesign suite (reviewed once, not twice);
+> **TF3** follows with a much smaller absorbed-by-redesign bucket, since most of what would
+> have landed there is executed rather than parked. Phase B's gate condition (below) gains R.
 
 ## Phases
 
@@ -122,14 +146,64 @@ DI is what makes TF2 cheap).
   surfaced, not papered over. Update `tests.md` (its "comment header, not a file split"
   sentence is superseded by the owner's direction).
 - **TF2. Owner human review of the split suite (OWNER-GATED, interactive — never started
-  unprompted).** Hints recorded to `validation/notes/`.
+  unprompted).** Hints recorded to `validation/notes/`. **Reordered 2026-07-20:** resumes
+  *after* Phase R executes (see revision note above) — the reshape changes the files TF2
+  hasn't reviewed yet; reviewing before Phase R risks reviewing soon-to-be-renamed code twice.
 - **TF3. Evaluate hints + triage** — hint-scoped fidelity re-check (NOT a re-audit;
   guardrail 1 stands): mechanical fixes land per hint; judgment items are **pooled with
   A2's two standing fixture-architecture questions** (wrap-native helper; play-mode
   fixture) into one triage list, ruled in the same sitting as TF2 where possible.
-  Principle-shaped leftovers roll to Phase C/D; nothing dropped.
+  Principle-shaped leftovers roll to Phase C/D; nothing dropped. Post-2026-07-20: the
+  absorbed-by-redesign bucket (S16 plan-revision) shrinks to near-empty since Phase R
+  executes ahead of TF2/TF3 rather than merely parking hints against it.
 
-**Gate:** Phase B starts only when the owner declares DI + TF accepted.
+**Gate:** Phase B starts only when the owner declares DI + TF + **R** (below) accepted.
+
+### Phase R — Redesign (PROPOSED 2026-07-20; gate, part 3, inserted between TF and B)
+
+A scoped, tests-first execution of the input-API reshape that emerged from TF2's human
+review (S15 side-product, S16 pressure-test + ratification). Unlike Phase A/DI/TF's
+mechanical-then-owner-gated shape, this phase's *ruling* already happened (S16, in-session,
+code-verified, iterated three times) — R is about writing it down precisely and executing it,
+not re-litigating it. Ordering rationale: executing before TF2 finishes means the owner
+reviews the suite's final shape once; executing after would mean reviewing soon-to-be-renamed
+code twice.
+
+- **R1/R2. Delta-design + delta-spec** (Fable; DONE session16): `reviews/
+  delta-design-input-api.md` (decision-level, mirrors `decisions/input.md`'s voice — what
+  changes and why) and `reviews/delta-spec-input-api.md` (mechanism-level — table shapes,
+  signatures, call order, ten tests-first acceptance criteria).
+- **R3. Confirm-gate (owner, lightweight).** Not a fresh Phase-D-style sitting — the
+  substance is already ratified; this checks the written spec matches what was actually
+  agreed, since prose can reveal ambiguities free-form chat didn't. Record the confirmation
+  (or corrections) directly in the delta-design/spec docs' status line.
+- **R4. Execution (Sonnet under Fable/Opus; tests-first, unit-sized, suite green after
+  every unit).** Recommended order (matches the delta-spec's obligations):
+  1. **REVIEW-remarks reconnaissance** (Sonnet, LSP+grep-backstopped per standing hygiene):
+     inventory every `REVIEW:`/`REVIEW/` remark in `src/` (33+ counted in `src/controller/`
+     alone), tag resolved-by-redesign / still-open / out-of-scope against the delta-design's
+     obligations. Feeds both R4's own execution (resolved ones get removed as their code
+     changes) and Phase C's disposition table (still-open ones carry forward).
+  2. Tier-1 removal + gateway-pretap-unaffected proof (delta-spec §2; AC 5, 6, 9 middle).
+  3. Submit/cancel default-flip + veto (delta-spec §3; AC 1-4).
+  4. `hooks[event]` unification + seeding (delta-spec §5; AC 8).
+  5. `callbacks` membership + D7 guard simplification (delta-spec §1; AC 9, 10) — guard
+     change LAST, after the leaves it protects already exist.
+  6. Console patch (delta-spec §6; AC 7) — the only console-facing change, confirmed scoped
+     to one function.
+  7. Vocabulary/rename sweep (delta-design's table) — LSP `rename_symbol` + grep backstop,
+     complete or not at all (a half-migrated "hook" is worse than either endpoint).
+  8. `internals/user_input.md` + `doc/input_api.md` + `technical_debt/input.md` updated to
+     match (this partially pre-empts Phase E's later doc-rewrite step for the input domain
+     specifically — noted so Phase E doesn't redo it).
+- **R5. Obligation 6a/6b (dispatch + widget-method-surface extraction)** — mechanical,
+  zero project-facing behaviour change; can ride inside R4's units 2-3 or land as a
+  dedicated Sonnet unit; either way, suite-green-per-unit discipline applies.
+
+**Gate:** R is accepted when suite is green, all ten delta-spec acceptance criteria pass as
+tests, the rename sweep is verified complete (LSP references return zero hits on retired
+terms), and the REVIEW-remarks inventory has no un-dispositioned "resolved" items left in
+code. Then TF2 resumes.
 
 ### Phase B — Convergence check (Opus; judgment-lite; NO code edits)
 

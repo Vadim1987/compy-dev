@@ -137,3 +137,47 @@
   into E-r1/E-r2, no new phase.
 - Materialized: outcomes file "Iteration 3" section; plan-revision doc
   obligation 6 rewritten as 6a/6b split.
+
+## Deliverables round (owner request: delta-design, delta-spec, plan correction)
+- Owner asks for 3 things + 2 meta-questions: (1) delta-design doc (decision-
+  level, mirrors decisions/input.md voice), (2) delta-spec doc (mechanism-
+  level, signatures/tables/acceptance criteria), (3) correct validation/
+  plan.md — insert an iteration/execution phase before current Phase B (owner's
+  framing: ran an informal "Phase B" in their head during TF2, found gaps,
+  worked them out with me, now wants formal re-entry). Meta: (a) finish TF2/
+  TF3 as-is, or redirect to an Opus markup sweep instead? (b) should this
+  planning conversation happen in a cold session instead?
+- Verified before answering: Phase A (A1/A2) + DI (DI1/DI2/DI3) both already
+  COMPLETE (outcome files exist); TF1 done, TF2 mid-flight, TF3/B/C/D/E/F/G
+  not started. 33 REVIEW: remarks counted in src/controller/*.lua alone.
+- My answers: (meta-b) stay in this session — shared context, same open gate,
+  sessions.md favors it. (meta-a) split the jobs — TF2 is owner JUDGMENT
+  (test-quality smells, coverage gaps), not renaming; an Opus/Sonnet sweep is
+  good for the MECHANICAL question (impact inventory of REVIEW remarks +
+  rename targets) but shouldn't replace TF2. Recommend: run redesign
+  EXECUTION first (new Phase R), THEN resume TF2 over the settled suite once
+  (not twice), THEN TF3 with a near-empty absorbed-by-redesign bucket.
+  (plan structure) insert Phase R between TF and B (same insertion pattern as
+  DI/TF's own 2026-07-19 precedent) rather than deferring into generic B/C/D —
+  reasoning: what happened in S16 already WAS a rigorously-ruled Phase-D-style
+  sitting on one cluster, more thorough than a typical Phase-D row; deferring
+  it would dilute rather than protect against smuggling.
+- Delivered: reviews/delta-design-input-api.md (D2/D6/D7/D10 revised, D5
+  touched, vocabulary table, "what stays the same" checklist, implementation-
+  note appendix for 6a/6b, withdrawn-guarantee stakeholder-origin note).
+  reviews/delta-spec-input-api.md (compy.input table shapes, dispatch()
+  pseudocode, submit/cancel sequence w/ veto+default-flip, widget-api factory,
+  hooks seeding algorithm, console patch, 10 tests-first acceptance criteria).
+  Both marked PROPOSED pending R3 confirm-gate (substance already ratified
+  in-session across iterations 1-3; this catches chat-to-prose wording slips).
+- plan.md corrected: appended 2026-07-20 revision blockquote (PROPOSED,
+  superseding the "S16=TF2+TF3" 07-19 layout note in place, not rewritten);
+  new "### Phase R — Redesign" section inserted between TF and B (R1/R2 done,
+  R3 confirm-gate, R4 execution w/ 8 sub-steps starting with the REVIEW-remarks
+  Sonnet reconnaissance sweep, R5 = obligation 6a/6b extraction); Phase B's
+  gate line amended to require R; TF2/TF3 bullets amended in place noting the
+  reorder + shrunk absorbed-by-redesign bucket.
+- Suite reconfirmed 815/0/0/4 (docs-only turn).
+- Awaiting: owner sign-off on delta-design/delta-spec content + the plan.md
+  Phase-R insertion (R3 gate). Once confirmed: kick off R4 execution
+  (Sonnet REVIEW-remarks sweep first, per model economy — explicit model tag).
