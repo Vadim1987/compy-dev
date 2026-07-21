@@ -36,21 +36,40 @@ RVW-033 proposes a whole rename table: `singleton→widget`, `sink→widget/text
 `handlers` reserved for combo-bound, `callbacks` for trigger-called, `hooks` for
 mid-chain-injected. **Governs:** RVW-028, 034 (route/sink both called "consumer"), 037, 052,
 056, 059, 063, 066, 069, 073, 077, 081.
-- **Recommendation — split the decision:**
-  - **D1a (safe now):** rule the vocabulary for **test prose / describe-strings / local vars
-    only** — no behaviour change. Once ruled, all governed markers become a mechanical RENAME
-    sweep (delegate to Sonnet). Recommend accept-with-owner-final-wording.
-  - **D1b (defer):** any rename that mirrors a **production symbol** (`singleton`, `sink`,
-    `tier-3`, `native`, `.on_*` in `src/`) is a code rename — tie it to the `src/` sweep + D2,
-    not this test pass. Mark governed markers "prose renamed (D1a); code rename tracked (D1b)".
+- **RULED 2026-07-21 (owner) — accept, implement now.** Ground-truth check reframed the split:
+  the feared "production symbols" **do not exist in `src/` anymore** — `sink` and `tier-3` are
+  gone entirely from production; `singleton` in `src/` is only the unrelated `Range.singleton`
+  data API; production already calls the input widget `widget`. So there is **no `src/`-coupled
+  rename to defer** for this vocab.
+  - **D1a — apply now (prose + test-local symbol).** `singleton→widget`, `sink→widget`,
+    `tier-3→[per-event] hook`, stale `on_*` narration → `hooks`, across test prose /
+    describe-strings / comments. Rewrite the ROUTE/WIDGET/SINK definition block (RVW-034 overload).
+  - **D1b — the ONE real code item is test-local:** the fixture symbol `F.singleton` /
+    `build_singleton` / local `singleton` → `widget`. Coupled to **nothing** in `src/`
+    (production is already `widget`; `F.singleton` mirrors main.lua's widget under a legacy name).
+    Mechanical rename, tests-only — **not** gated on the `src/` sweep.
+  - **`native` / `handlers` vocab is D4** — deliberately NOT touched in this sweep.
+- **Implementation:** Pass A = `singleton→widget` code-symbol rename (delegated, mechanical).
+  Pass B = vocab prose + DROP the 15 D1/D2 markers (RVW-033/028/034/037/052/056/059/063/066/069/
+  073/077/081 + D2's 071/079). Both suite-green.
 
 ### D2 — Public-API shape `.on_*` → `.hooks[event]` (master **RVW-071**)
 Whether the project-hook API is `input.on_textinput` or `input.hooks.textinput`.
 **Governs:** RVW-079 (whole test unneeded if pivoted), RVW-069 (shares the rename).
-- **Recommendation — DECIDE/DEFER:** this is a real `input_api.md` design change, out of scope
-  for a marker cleanup. Recommend **DEFER**: record as an open design-question (proposal note),
-  drop/annotate 071/079/069 with the pointer. Only promote to real work if the owner wants it —
-  it is a mini-design-project, not a triage item.
+- **RULED 2026-07-21 (owner) — ALREADY DONE; wipe + reword.** Evidence: the redesign RVW-071
+  proposes is *already ratified, implemented, tested, documented*:
+  - `decisions/input.md` ratifies the three-participant chain: `shortcuts[event][combo]` ·
+    `hooks[event]` ("one per-event hook slot, absorbing the old per-event generic callback") ·
+    the widget.
+  - `src/` implements it: `HOOK_EVENTS = {keypressed,keyreleased,textinput}`, `input.hooks[ev]`,
+    `compy.input.hooks[event]`. **No `input.on_*` public surface** anywhere.
+  - The specs already drive it: `input.hooks.keypressed = …`, `input.hooks.textinput = …`.
+  - The lingering `.callbacks.on_text_entered`/`on_limit_reached` are the widget's *trigger
+    callbacks* — a different layer, already matching the ratified principle (`callbacks` =
+    trigger-called). Not part of this rename.
+- So RVW-071 is a **stale marker on already-shipped work** (+ its `it`-string still narrates the
+  old name). Disposition: **DROP RVW-071/079/069** and REWORD the stale `on_text_input`/`sink`/
+  `tier-3` describe/it strings to the ratified vocab. No design work, no deferral.
 
 ### D3 — Console-as-hidden-sink safety (master **RVW-111**)
 The substantive question: when a project runs and the input widget is hidden, does the console

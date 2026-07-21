@@ -80,7 +80,7 @@ describe('input contracts: routing #input', function()
     -- visible, not silent.
     pending('routes the key release to the console')
 
-    -- The production singleton disables selection, so an
+    -- The production widget disables selection, so an
     -- observable selection on the console route witnesses
     -- active-route pointer delivery. The precondition
     -- assert pins causality: no selection existed before

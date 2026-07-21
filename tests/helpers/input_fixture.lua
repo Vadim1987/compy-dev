@@ -1,6 +1,6 @@
 -- Shared fixture for the input contract suite. Builds the
 -- real love.handlers wiring over a real ConsoleController,
--- the singleton input widget (mirroring main.lua), the
+-- the input widget (mirroring main.lua), the
 -- click/update path and a keypress-level driver — so a
 -- contract test reads as a one-line statement (see
 -- tests/helpers/input_session). All MVC/gfx/font
@@ -109,7 +109,7 @@ local function build_console(cfg)
   return CC
 end
 
--- The persistent singleton widget (main.lua: one instance,
+-- The persistent widget (main.lua: one instance,
 -- published to love.state.user_input_controller; the compy.input
 -- wrappers resolve it from there).
 local function build_widget(cfg)
@@ -130,7 +130,7 @@ end
 -- still runs per-test; setup/teardown bracket the whole file.
 local cfg, CC, widget, session
 
--- F for Fixture. Fields (F.cc/console/editor/singleton/session/cfg) are
+-- F for Fixture. Fields (F.cc/console/editor/widget/session/cfg) are
 -- nil until F.setup runs; reading them at describe-body scope is a bug.
 local F = {}
 
@@ -141,7 +141,7 @@ function F.setup()
   cfg = build_cfg()
   require_modules()
 
-  -- Provision the singleton widget BEFORE the console (mirrors
+  -- Provision the widget BEFORE the console (mirrors
   -- main.lua's reorder): ConsoleController construction builds
   -- the project env's compy.input, which binds to the widget's
   -- own callbacks table — so the widget must exist first.
@@ -163,7 +163,7 @@ function F.setup()
   F.cc        = CC
   F.console   = CC.input
   F.editor    = CC.editor
-  F.widget = widget
+  F.widget    = widget
   F.session   = session
   F.cfg       = cfg
 end
@@ -183,7 +183,7 @@ function F.teardown()
 end
 
 -- The project-facing public surface (compy.input.show/hide); it
--- resolves the singleton exactly as a project does.
+-- resolves the widget exactly as a project does.
 function F.compy_input()
   return CC:get_project_env().compy.input
 end
@@ -207,7 +207,7 @@ function F.update(dt)
   love.update(dt)
 end
 
--- Activate the singleton widget 
+-- Activate the widget 
 -- REVIEW: why not via compy.input.show ? 
 function F.show_widget(opts)
   widget:show(opts)
@@ -246,7 +246,7 @@ end
 --- REVIEW: why this low-level machinery and not a call of some existing function? the intent is plausible, the implementation is suspicious
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
--- singleton disables selection, making pointer delivery a no-op —
+-- the widget disables selection, making pointer delivery a no-op —
 -- doc/development/internals/user_input.md, "Input widget mouse"). Witnesses
 -- pointer delivery to the widget half.
 function F.show_selectable_widget(lines)
@@ -286,7 +286,7 @@ end
 -- install, so each test starts from framework defaults:
 -- deactivate the route and clear the project-installed
 -- shortcut/combo tables and hooks. The widget's callbacks are
--- re-seeded separately (F.reset -> singleton:reset_callbacks),
+-- re-seeded separately (F.reset -> widget:reset_callbacks),
 -- since compy.input.callbacks IS the widget's own table.
 local function reset_chain()
   Controller.project_input:deactivate()

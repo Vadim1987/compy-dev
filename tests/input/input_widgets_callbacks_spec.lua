@@ -25,11 +25,11 @@ local mock = require('tests.mock')
 -- {jargon: slot occupant} (app_state='running') via the same
 -- Controller.set_user_handlers path a run calls, and
 -- returns the project-facing compy.input surface. The
--- observable {jargon: seams} are the widget's text (the sink)
+-- observable {jargon: seams} are the widget's text
 -- and
 -- the callbacks a project registers — never a spy on an
--- internal method (except the one sink-signature row,
--- which patches the shared singleton and restores it).
+-- internal method (except the one widget-signature row,
+-- which patches the shared widget and restores it).
 -- ====================================================
 
 describe('dispatch chain: widget outputs and submit/cancel #m5c #input', function()
@@ -134,7 +134,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
     -- doc/development/decisions/input.md, Decision 5, boundary half:
     -- crossing attempts fire
     -- on_limit_reached(direction, scope) and its return value
-    -- is ignored (observational only; sink still runs).
+    -- is ignored (observational only; widget still runs).
     it('up boundary fires direction up with input scope',
       function()
         local seen = { }
@@ -406,15 +406,15 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
     -- doc/development/internals/user_input.md, "Multiline input": Shift+Return
     -- is NOT a framework
     -- combo — it falls
-    -- to the sink, which still inserts a newline (unchanged
-    -- sink behaviour); the widget stays open (not submitted).
+    -- to the widget, which still inserts a newline (unchanged
+    -- widget behaviour); the widget stays open (not submitted).
     -- Drives BOTH modifier tracks the production code reads:
     -- F.session.press keeps Controller.keys_pressed (combo_
     -- string) correct, mock.keystroke's 'S' token flips the
-    -- separate love.keyboard.isDown mock the sink's own
+    -- separate love.keyboard.isDown mock the widget's own
     -- Key.shift() reads (tests/mock.lua — two distinct
     -- tables).
-    it('Shift+Return is not intercepted; the sink edits',
+    it('Shift+Return is not intercepted; the widget edits',
       function()
         F.activate_project()
         F.show_widget({ text = 'a' })

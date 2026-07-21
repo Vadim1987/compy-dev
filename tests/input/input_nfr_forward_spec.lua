@@ -5,11 +5,10 @@
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 -- the active screen mode. 
 --
--- REVIEW/clarity/vocabulary: see alternative suggestion in input_events_spec.lua
 --
 -- Vocabulary (doc/development/internals/user_input.md, "Dispatch
--- chain"): ROUTE = consumer an event is dispatched to; WIDGET = a
--- route-managed input surface; SINK = last consumer. Tests assert
+-- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
+-- the route-managed input surface and terminal of the chain. Tests assert
 -- observable outcomes at public seams, never method-name spies.
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
@@ -140,7 +139,7 @@ describe('input contracts: NFR and forward #input', function()
         end)
 
       -- Singleton identity across show/hide (NFR): today
-      -- only the overlay singleton is wired; wiring the
+      -- only the overlay widget is wired; wiring the
       -- console/editor/search widgets to it is a future
       -- consideration, out of #77 blast radius (see
       -- doc/development/internals/user_input.md: "Key release", "Dispatch

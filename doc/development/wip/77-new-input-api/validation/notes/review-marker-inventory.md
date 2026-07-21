@@ -262,12 +262,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: scope-mismatch question between boilerplate header prose and this file's actual (cursor/text API) subject → TRIAGE
 - Disposition: —
 
-**RVW-028** `tests/input/input_cursor_text_spec.lua:6` — Kind: `clarity`
+~~**RVW-028**~~ `tests/input/input_cursor_text_spec.lua:6` — Kind: `clarity`
 > "REVIEW/clarity: route(controller) and sink(chain element in the controller) are both called 'consumer' below"
 - Comments-on: the shared vocabulary paragraph (ROUTE/WIDGET/SINK), duplicated across split files
 - Bucket: **TRIAGE**
 - Rationale: same vocabulary-overload concern raised independently at RVW-... in `input_events_spec.lua:7` and `input_routing_spec.lua` header — terminology call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-029** `tests/input/input_cursor_text_spec.lua:13` — Kind: `clarity`
 > "REVIEW/clarity: phrase below has no verb so reads awkwardly ('\"x on y (...)\" -- does or means what?')"
@@ -301,19 +301,19 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: proposes a blanket `F.mock_widget` wrapper; suite-wide refactor, owner call → TRIAGE
 - Disposition: —
 
-**RVW-033** `tests/input/input_events_spec.lua:2` — Kind: `clarity/design/terminology`
+~~**RVW-033**~~ `tests/input/input_events_spec.lua:2` — Kind: `clarity/design/terminology`
 > "REVIEW/clarity/design/terminology: I suggest following global renaming: 'singleton'->'widget', 'sink' -> 'widget', 'tier-3/tier3' -> '[project] hook[s]', 'framework handlers' -> 'global/framework handlers' (if they capture combo) or 'framework/global] shortcuts' ( if they always address only two specific keys ESC/Enter and are not configurable for generic combos handling ) , 'handlers'->'[project] handler[s]' (those which bind to key combos), '.on_{eventname}' -> 'hooks[eventname]', 'generic callbacks' -> '[project] hook[s]', How to name the 'love' hooks that project installs (legacy) as love.handlers and which are converted to 'hooks' -- its an open question. Maybe literally \"project's [sandboxed] love.* hook(s)'? suggestions are welcome. PRINCIPLE: I'd reserve word 'handlers' for combo-bound things, 'callbacks' -- for something that is called by trigger, 'hooks' -- to something that is injected in the middle of event processing and can intercept/modify it. 'routing' may remain 'routing' and rely strictly to selection of dispatcher(controller)."
 - Comments-on: file-wide vocabulary (whole dispatch-chain terminology)
 - Bucket: **TRIAGE**
 - Rationale: the single largest, most consequential vocabulary proposal in the corpus — governs many other `clarity`/`terminology` markers below (e.g. RVW-052, 062, 070, 072, 077, 088); owner must rule on it first → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
-**RVW-034** `tests/input/input_events_spec.lua:7` — Kind: `clarity`
+~~**RVW-034**~~ `tests/input/input_events_spec.lua:7` — Kind: `clarity`
 > "REVIEW/clarity: prose below calls both ROUTE and SINK 'consumers' which may lead to confusion: afaik 'route' is in fact controller, while 'sink' is the name for the last item in the processing chain the route enforces"
 - Comments-on: file header vocabulary paragraph (lines 8-18)
 - Bucket: **TRIAGE**
 - Rationale: same overload noted at RVW-028; terminology call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-035** `tests/input/input_events_spec.lua:20` — Kind: `clarity`
 > "REVIEW/clarity: language of the prose below is broken -- it tries to say that this test covers only half of the activities but fails to say so (and its alwo not clear why we have 9 input files not just 2 spolier: because its not 'half-this/half-that' split)"
@@ -329,12 +329,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: cleanup/de-dup ask, same theme as RVW-035 → TRIAGE
 - Disposition: —
 
-**RVW-037** `tests/input/input_events_spec.lua:30` — Kind: `clarity`
+~~**RVW-037**~~ `tests/input/input_events_spec.lua:30` — Kind: `clarity`
 > "REVIEW/clarity: prose below speaks of callbacks but we have also output callbacks -- maybe we should instead use term 'hooks' to describe what is installed by project into dispatch chain"
 - Comments-on: same section banner as RVW-036
 - Bucket: **TRIAGE**
 - Rationale: vocabulary call, subordinate to the master proposal RVW-033 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-038** `tests/input/input_events_spec.lua:54` — Kind: `fidelity`
 > "REVIEW/fidelity: comment overexplains mechanics that helper does not control; first line would be enough"
@@ -434,12 +434,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: structural grouping suggestion, same family as RVW-048 → TRIAGE
 - Disposition: —
 
-**RVW-052** `tests/input/input_events_spec.lua:215` — Kind: `clarity`
+~~**RVW-052**~~ `tests/input/input_events_spec.lua:215` — Kind: `clarity`
 > "REVIEW/clarity: cleanup prose below and get rid of jargon ('tier-3' is 'project hook' in newly suggested vocabulary)"
 - Comments-on: same banner as RVW-051
 - Bucket: **TRIAGE**
 - Rationale: subordinate to master vocabulary proposal RVW-033 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-053** `tests/input/input_events_spec.lua:220` — Kind: `fidelity`
 > "REVIEW/fidelity: no test in the group checks the contents of keypressed table (if its checked in another suit, maybe replace this comment with reference)"
@@ -462,12 +462,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: test-depth gap — plausible, not independently re-verified → TRIAGE
 - Disposition: —
 
-**RVW-056** `tests/input/input_events_spec.lua:240` — Kind: `clarity`
+~~**RVW-056**~~ `tests/input/input_events_spec.lua:240` — Kind: `clarity`
 > "REVIEW/clarity: fix jargon ('tier-3' -> 'hook'?)"
 - Comments-on: `it('isrepeat threads to the tier-3 callback', ...)` doc
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-057** `tests/input/input_events_spec.lua:254` — Kind: `clarity`
 > "REVIEW/clarity: this test IS testing both reading from proxy (i.e. proxy contents) and prohibited writing. But its not stated in the 'it' (definition focused only on write-prohibition). Also, word 'proxy' is not well-undertandable without details and describes implementation, not behaviour."
@@ -483,12 +483,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: concrete restructure proposal, structural change → TRIAGE
 - Disposition: —
 
-**RVW-059** `tests/input/input_events_spec.lua:272` — Kind: `clarity`
+~~**RVW-059**~~ `tests/input/input_events_spec.lua:272` — Kind: `clarity`
 > "REVIEW/clarity: jargon ('sink' -> 'widget hook', 'widget'?)"
 - Comments-on: `it('the sink receives the uniform keypressed triple', ...)` doc
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-060** `tests/input/input_events_spec.lua:283` — Kind: `fidelity`
 > "REVIEW/fidelity: are we testing internals there instead of behavior? in this case its justified if we cannot configure widget from the outside but need to ensure it received keypress -- but then maybe explicitly admit that this is test-specific patching. Maybe expose method like F.mock_widget_with(...) so that purpose will be clear, especially given the fact same mechanics is used in few other places. Right now it looks like legit configuration, which it is not (or is it?)"
@@ -511,12 +511,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: reorganization/grouping proposal → TRIAGE
 - Disposition: —
 
-**RVW-063** `tests/input/input_events_spec.lua:314` — Kind: `clarity/consistency`
+~~**RVW-063**~~ `tests/input/input_events_spec.lua:314` — Kind: `clarity/consistency`
 > "REVIEW/clarity/consistency: 'avoid *sink*, use *text widget* instead'?"
 - Comments-on: "defaults + hidden sink" section banner (lines 316-317)
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 ~~**RVW-064**~~ `tests/input/input_events_spec.lua:315` — Kind: `cosmetic`
 > "REVIEW/cosmetic: extra '---' right below this line and after"
@@ -532,12 +532,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: coverage-matrix question, self-admittedly uncertain ("I think already described somewhere above") → TRIAGE
 - Disposition: —
 
-**RVW-066** `tests/input/input_events_spec.lua:322` — Kind: `clarity/terminology`
+~~**RVW-066**~~ `tests/input/input_events_spec.lua:322` — Kind: `clarity/terminology`
 > "REVIEW/clarity/terminology: current suggested alternative to 'generic callback' is 'hook'/'project hook'"
 - Comments-on: `it('the default callback neither edits nor consumes', ...)` doc
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-067** `tests/input/input_events_spec.lua:328` — Kind: `clarity`
 > "REVIEW/clarity: 'default callback(hook) does (not) smth' is implementation details, behavioural manifestation is 'when no hook configured...'"
@@ -553,12 +553,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: grammar fix ask; content is agreed fine per the marker itself, so this is close to trivial, but rewriting prose is still an edit an owner should confirm the phrasing of → TRIAGE
 - Disposition: —
 
-**RVW-069** `tests/input/input_events_spec.lua:354` — Kind: `terminology`
+~~**RVW-069**~~ `tests/input/input_events_spec.lua:354` — Kind: `terminology`
 > "REVIEW/terminology: now we can simply call it 'hooks' (\"describe: hook\" -> describe(\"on_text_input\") -> it(\"fires per character\"))"
 - Comments-on: `describe('tier-3: the on_* generic callback', ...)`
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033, with a concrete rename proposal → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-070** `tests/input/input_events_spec.lua:357` — Kind: `fidelity/consistency`
 > "REVIEW/fidelity/consistency: only 'on_text_input' hook is tested, what about 'on_key_pressed'?"
@@ -567,12 +567,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: coverage-gap question re symmetric `on_key_pressed` case → TRIAGE
 - Disposition: —
 
-**RVW-071** `tests/input/input_events_spec.lua:382` — Kind: `clarity/suggestion`
+~~**RVW-071**~~ `tests/input/input_events_spec.lua:382` — Kind: `clarity/suggestion`
 > "REVIEW/clarity/suggestion: what if we redesign API syntax in this part and decide its not 'input.on_*' but input.hooks.{textinput,keypressed,keyreleased,mousewheel} -- with same logic just different configuration syntax/arch"
 - Comments-on: `it('a truthy on_text_input intercepts; falsey reaches sink', ...)`
 - Bucket: **TRIAGE**
 - Rationale: public-API redesign proposal — significant architecture call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-072** `tests/input/input_events_spec.lua:385` — Kind: `fidelity`
 > "REVIEW/fidelity: why would we check sigleton internals instead of compy.input. method ? (official behaviour)"
@@ -586,7 +586,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('tier-3: the native install path', ...)`
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033, with a concrete rename ("native" -> ...) → TRIAGE
-- Disposition: —
+- Disposition: **DEFERRED -> D4** — native / on_*-install-path entangled; held for the D4 pass (owner: D4 later). Marker retained.
 
 **RVW-074** `tests/input/input_events_spec.lua:402` — Kind: `consistency`
 > "REVIEW/consistency: any hook not only promoted 'native' should fire regardless of widget status (and widget absence can have two forms: never was 'shown', or was 'shown than hidden')"
@@ -614,7 +614,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('an explicit on_* takes precedence over the native', ...)` doc (lines 463-468)
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033 → TRIAGE
-- Disposition: —
+- Disposition: **DEFERRED -> D4** — native / on_*-install-path entangled; held for the D4 pass (owner: D4 later). Marker retained.
 
 **RVW-078** `tests/input/input_events_spec.lua:473` — Kind: `fidelity/consistency`
 > "REVIEW/fidelity/consistency: is 'activate_project' installing hooks via legacy path? (as love.*) are other tests (in the beginning of this suite) also testing this path and theerfore NOT testing input.on_ path (explicit hook configuration). What do we do with it?"
@@ -628,7 +628,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('the mutable/immutable boundary', ...)`
 - Bucket: **TRIAGE**
 - Rationale: contingent on the API-redesign proposal at RVW-071 — architecture call → TRIAGE
-- Disposition: —
+- Disposition: **DEFERRED -> D4** — native / on_*-install-path entangled; held for the D4 pass (owner: D4 later). Marker retained.
 
 ---
 
@@ -641,12 +641,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: cosmetic-leaning but a content edit (removing a provenance note) — same family as RVW-026; owner call whether provenance notes stay → TRIAGE
 - Disposition: —
 
-**RVW-081** `tests/input/input_nfr_forward_spec.lua:8` — Kind: `clarity/vocabulary`
+~~**RVW-081**~~ `tests/input/input_nfr_forward_spec.lua:8` — Kind: `clarity/vocabulary`
 > "REVIEW/clarity/vocabulary: see alternative suggestion in input_events_spec.lua"
 - Comments-on: file header vocabulary paragraph (lines 10-15)
 - Bucket: **TRIAGE**
 - Rationale: explicitly points at RVW-033 (the master vocabulary proposal) → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (D1/D2, S19)** — owner ratified D1/D2 (API shape already shipped; vocab). Marker removed; prose reworded singleton/sink->widget, tier-3/generic-callback->hook. Suite 841/0/0/4.
 
 **RVW-082** `tests/input/input_nfr_forward_spec.lua:17` — Kind: `clarity`
 > "REVIEW/clarity: the prose below is a bit mumbling, needs rewrite into more consistent human language"
@@ -1099,6 +1099,14 @@ DISSOLVE? markers: RVW-010, RVW-045, RVW-064, RVW-121, RVW-123, RVW-127.
 
 **Progress:** 3 resolved so far.
 - **Batch 1 (S19, tests/ dissolvables):** RVW-010 ✓, RVW-045 ✓, RVW-064 ✓ — all RESOLVED (see rows).
+- **D1/D2 vocab sweep (S19, owner-ratified):** RESOLVED — RVW-033/028/034/037/052/056/059/063/066/069/071/081
+  (12). Ground truth: the new API shape (`input.hooks[event]`, `shortcuts`, `widget`) is already
+  ratified in `decisions/input.md`, implemented in `src/`, and driven by the specs — the markers were
+  stale/prose-only. Pass A renamed the `F.singleton`→`F.widget` symbol (commit `46595d2`); Pass B
+  reworded prose (`sink`→widget, `tier-3`/`generic callback`→hook) + removed the 12 markers.
+- **DEFERRED → D4:** RVW-073/077/079 — filed under D1/D2 by the carve but entangled with `native` /
+  the on_*-install path; held for the D4 pass (owner: D4 later). Native-group prose (events ≥ the
+  `native install path` describe) left untouched.
 - Remaining DISSOLVE?: RVW-121, RVW-123, RVW-127 — all `src/`, PARKED (src/ sweep deferred; owner confirms after tests/ swept).
 
 ### By file

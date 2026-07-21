@@ -3,10 +3,9 @@
 -- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 -- the active screen mode. Vocabulary (doc/development/internals/user_input.md, 
---- REVIEW/clarity: route(controller) and sink(chain element in the controller) are both called 'consumer' below
 -- "Dispatch
--- chain"): ROUTE = consumer an event is dispatched to; WIDGET = a
--- route-managed input surface; SINK = last consumer. Tests assert
+-- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
+-- the route-managed input surface and terminal of the chain. Tests assert
 -- observable outcomes at public seams, never method-name spies.
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").

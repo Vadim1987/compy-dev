@@ -1,15 +1,13 @@
 -- REVIEW/fidelity: any occurence of 'singleton' in any file triggers fidelity check on the appropriate case -- is there alternative 'official' method of configuration/invocation? if access to singleton happens because we need to mock or trigger its internal methods which normally would not be accessible (boundary tests), can we wrap it into clearly test-specific function (i.e. F.mock_widget). 
--- REVIEW/clarity/design/terminology: I suggest following global renaming: 'singleton'->'widget', 'sink' -> 'widget', 'tier-3/tier3' -> '[project] hook[s]', 'framework handlers' -> 'global/framework handlers' (if they capture combo) or 'framework/global] shortcuts' ( if they always address only two specific keys ESC/Enter and are not configurable for generic combos handling ) , 'handlers'->'[project] handler[s]' (those which bind to key combos), '.on_{eventname}' -> 'hooks[eventname]', 'generic callbacks' -> '[project] hook[s]', How to name the 'love' hooks that project installs (legacy) as love.handlers and which are converted to 'hooks' -- its an open question. Maybe literally "project's [sandboxed] love.* hook(s)'? suggestions are welcome. PRINCIPLE: I'd reserve word 'handlers' for combo-bound things, 'callbacks' -- for something that is called by trigger, 'hooks' -- to something that is injected in the middle of event processing and can intercept/modify it. 'routing' may remain 'routing' and rely strictly to selection of dispatcher(controller).
 
 -- dispatch chain: tier mechanics 
 -- {historical: split from input_contracts_spec.lua (TF1)}.
 --
--- REVIEW/clarity: prose below calls both ROUTE and SINK 'consumers' which may lead to confusion: afaik 'route' is in fact controller, while 'sink' is the name for the last item in the processing chain the route enforces
 -- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 -- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
--- chain"): ROUTE = consumer an event is dispatched to; WIDGET = a
--- route-managed input surface; SINK = last consumer. 
+-- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
+-- the route-managed input surface and terminal of the chain. 
 -- 
 -- Tests assert
 -- observable outcomes at public seams, never method-name spies.
@@ -19,7 +17,7 @@
 --
 -- REVIEW/clarity: language of the prose below is broken -- it tries to say that this test covers only half of the activities but fails to say so (and its alwo not clear why we have 9 input files not just 2 spolier: because its not 'half-this/half-that' split)
 -- Mechanics half of the four-tier dispatch chain (order/consume/
--- fall-through, combo tables, signatures, defaults, tier-3 callbacks and
+-- fall-through, combo tables, signatures, defaults, hooks and
 -- native install, the mutable/immutable boundary) — doc/development/decisions/input.md,
 -- Decision 2. The outputs half (widget outputs, submit/cancel) is
 -- input_widget_callbacks_spec.lua.
@@ -27,7 +25,6 @@
 local F = require('tests.helpers.input_fixture')
 
 --- REVIEW/clarity: need to cleanup jargon, also the prose below partialy duplicates opening prose
---- REVIEW/clarity: prose below speaks of callbacks but we have also output callbacks -- maybe we should instead use term 'hooks' to describe what is installed by project into dispatch chain
 -- ====================================================
 -- The four-tier dispatch chain 
 -- (doc/development/decisions/input.md, Decision 2).
@@ -36,11 +33,11 @@ local F = require('tests.helpers.input_fixture')
 -- {jargon: slot occupant} (app_state='running') via the same
 -- Controller.set_user_handlers path {clarity: a run calls}, and
 -- returns the project-facing compy.input surface. The
--- observable {jargon: seams} are the widget's text ({jargon: the sink})
+-- observable {jargon: seams} are the widget's text
 -- and
 -- the callbacks a project registers — never a spy on an
--- internal method (except the one sink-signature row,
--- which patches the shared singleton and restores it).
+-- internal method (except the one widget-signature row,
+-- which patches the shared widget and restores it).
 -- ====================================================
 
 describe('#input events dispatching', function()
@@ -105,7 +102,7 @@ describe('#input events dispatching', function()
 
     -- doc/development/decisions/input.md, Decision 2: a truthy combo
     -- handler ({jargon: tier 2}) stops the descent —
-    -- neither the generic callback nor the sink runs.
+    -- neither the hook nor the widget runs.
     -- REVIEW/clarity: I would use same chain with mnemonic flags as in previous case -- and probably matrix test to show interception on every step, and also that lack of step (no combo defined, no hook defined) does not prevent other parts from working
     -- REVIEW/clarity: I'd double-check the 'it' description -- 'truthy handler' means handler is truthy when its function (not false or nil value). we're speaking about *return value* instead. also 'decent' describes mechanics maybe and instead we should use 'stops processing', or 'prevents reaching hook' (and testboth). 
     -- REVIEW/clarity: do we have the symmetric test 'truthy hook return value prevents reaching widget'? and symmetric tests for '*missing* handler does not prevent reaching hook, missing hook does not prevent reaching widget'?
@@ -139,9 +136,9 @@ describe('#input events dispatching', function()
     -- doc/development/decisions/input.md, Decision 2: assigning a generic
     -- callback replaces
     -- ONLY it; when
-    -- it returns falsey the sink still runs for that event.
+    -- it returns falsey the widget still runs for that event.
     -- REVIEW/clarity/consistence: this test is redundant -- the whole need raised from reversing misinterpreted requirements -- test can safely go, it repeats one particular configuration tested above
-    it('assigning a callback replaces only it; sink still runs',
+    it('assigning a callback replaces only it; widget still runs',
       function()
         local input = F.activate_project()
         F.show_widget({ text = 'ab' })
@@ -211,7 +208,6 @@ describe('#input events dispatching', function()
   end)
 
   -- REVIEW/clarity: I'd rather wrap in 'describe'
-  -- REVIEW/clarity: cleanup prose below and get rid of jargon ('tier-3' is 'project hook' in newly suggested vocabulary)
   -- ---- signatures + read-only proxy
   -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 
@@ -236,10 +232,9 @@ describe('#input events dispatching', function()
         assert.is_true(seen[3])
       end)
 
-    -- REVIEW/clarity: fix jargon ('tier-3' -> 'hook'?)
     -- doc/development/decisions/input.md, Decision 9: isrepeat is false on
     -- a fresh press, true on repeat.
-    it('isrepeat threads to the tier-3 callback', function()
+    it('isrepeat threads to the hook', function()
       local seen = { }
       local input = F.activate_project()
       input.hooks.keypressed = function(_, _, isr)
@@ -268,13 +263,12 @@ describe('#input events dispatching', function()
       assert.has_error(function() proxy['x'] = true end)
     end)
 
-    -- REVIEW/clarity: jargon ('sink' -> 'widget hook', 'widget'?)
-    -- doc/development/decisions/input.md, Decision 9: the SINK is included
+    -- doc/development/decisions/input.md, Decision 9: the WIDGET is included
     -- in the uniform
     -- signature — it
     -- receives the same (k, proxy, isrepeat) triple. Patches the
-    -- shared singleton method, restored after the assertion.
-    it('the sink receives the uniform keypressed triple',
+    -- shared widget method, restored after the assertion.
+    it('the widget receives the uniform keypressed triple',
       function()
         local seen
         F.activate_project()
@@ -310,21 +304,18 @@ describe('#input events dispatching', function()
       end)
   end)
 
-  -- REVIEW/clarity/consistency: 'avoid *sink*, use *text widget* instead'?
-  -- defaults + hidden sink (doc/development/decisions/input.md,
+  -- defaults + hidden widget (doc/development/decisions/input.md,
   -- Decision 10 and Decision 2)
 
-  describe('defaults and the hidden sink', function()
+  describe('defaults and the hidden widget', function()
     -- REVIEW/fidelity/consistency: test against all non-defined participants? (both handler and hook -- disabled altogether or one-by-one -- I think already described somewhere above... symmetry feels off there
 
-    -- REVIEW/clarity/terminology: current suggested alternative to 'generic callback' is 'hook'/'project hook'
-    -- doc/development/decisions/input.md, Decision 10: the default generic
-    -- callback neither
+    -- doc/development/decisions/input.md, Decision 10: the default hook neither
     -- edits nor
-    -- consumes — the event falls through to the sink, which
+    -- consumes — the event falls through to the widget, which
     -- performs the edit.
     -- REVIEW/clarity: 'default callback(hook) does (not) smth' is implementation details, behavioural manifestation is 'when no hook configured...'
-    it('the default callback neither edits nor consumes',
+    it('the default hook neither edits nor consumes',
       function()
         F.activate_project()
         F.show_widget({ text = 'ab' })
@@ -335,7 +326,7 @@ describe('#input events dispatching', function()
     -- REVIEW/cosmetic: prose below is a bit unnatural (content fine, grammar crippled) 
     -- doc/development/decisions/input.md, Decision 2: an event with no
     -- participant anywhere and a
-    -- HIDDEN widget mutates nothing — the sink's internal no-op.
+    -- HIDDEN widget mutates nothing — its own internal no-op.
     it('no participant + hidden widget mutates nothing',
       function()
         F.activate_project()
@@ -346,19 +337,16 @@ describe('#input events dispatching', function()
       end)
   end)
 
-  -- ---- {jargon: tier-3}: the on_* generic callback
+  -- ---- the per-event hook
   -- (doc/development/decisions/input.md, Decision 5 and Decision 10) ---
 
-  -- REVIEW/terminology: now we can simply call it 'hooks' ("describe: hook" -> describe("on_text_input") -> it("fires per character"))
-  describe('tier-3: the on_* generic callback', function()
+  describe('the per-event hook', function()
 
     -- REVIEW/fidelity/consistency: only 'on_text_input' hook is tested, what about 'on_key_pressed'?
-    -- doc/development/decisions/input.md, Decision 5: on_text_input is the
-    -- PER-CHARACTER
-    -- {jargon: tier-3} textinput
-    -- callback (distinct from the submit output on_text_entered,
+    -- doc/development/decisions/input.md, Decision 5: the textinput hook
+    -- fires PER-CHARACTER (distinct from the submit output on_text_entered,
     -- which is the pending row above).
-    it('on_text_input fires per character as text arrives',
+    it('the textinput hook fires per character as text arrives',
       function()
         local got = { }
         local input = F.activate_project()
@@ -372,12 +360,11 @@ describe('#input events dispatching', function()
 
     -- doc/development/decisions/input.md, Decision 10 (on_* install path):
     -- a truthy callback intercepts
-    -- the sink; a present-but-falsey callback falls through.
-    it('a truthy on_text_input intercepts; falsey reaches sink',
+    -- the widget; a present-but-falsey callback falls through.
+    it('a truthy textinput hook intercepts; falsey reaches the widget',
       function()
         local input = F.activate_project()
         F.show_widget()
-	-- REVIEW/clarity/suggestion: what if we redesign API syntax in this part and decide its not 'input.on_*' but input.hooks.{textinput,keypressed,keyreleased,mousewheel} -- with same logic just different configuration syntax/arch
         input.hooks.textinput = function() return true end
         F.session.type('X')
 	-- REVIEW/fidelity: why would we check sigleton internals instead of compy.input. method ? (official behaviour)

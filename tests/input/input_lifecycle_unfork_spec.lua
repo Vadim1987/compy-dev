@@ -8,7 +8,7 @@
 -- of narrow method-patch spies where the seam IS the call itself
 -- (evaluate_input call count, model:cancel not running) — the same
 -- technique input_widgets_callbacks_spec.lua uses for its one
--- sink-signature row.
+-- widget-signature row.
 
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
@@ -20,7 +20,7 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
     teardown(function() F.teardown() end)
     before_each(function() F.reset() end)
 
-    -- A standalone widget, NOT the singleton/overlay — direct
+    -- A standalone widget, NOT the persistent/overlay — direct
     -- construction, like user_input_view_spec.lua.
     local function bare_uic()
       local m = UserInputModel(F.cfg, InputEvalText)
