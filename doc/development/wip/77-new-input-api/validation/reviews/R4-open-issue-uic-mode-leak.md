@@ -4,6 +4,13 @@
 Phase R is NOT closed pending this.** Logged so the R4 gate is not declared clean while a
 known architectural concern stands.
 
+## Sharpened concern (owner, 2026-07-20 session18) — see `../notes/S18-owner-concern-uic-context-behaviour.md`
+The state read is a **symptom**; the real smell is the **context-dependent behaviour fork inside
+UIC**, which may block *conceptual* unification of input management and future editor adoption of
+the new API (a feature requirement: editor migration not demanded, but must be *made possible*).
+Any option is judged on "does UIC become concept-uniform?", not "is the global read gone?" — R must
+not close by rubber-stamping the fork as debt.
+
 ## The concern (owner, 2026-07-20)
 `UserInputController:keypressed` decides *its own behaviour* by reading the global
 `love.state.app_state`. The owner's read: *"a clear abstraction leak which mixes concerns —

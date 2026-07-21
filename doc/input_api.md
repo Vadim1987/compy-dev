@@ -8,7 +8,7 @@ This guide is for people writing compy projects — games and apps that run insi
 covers `compy.input`, the sole project-facing input surface. For how the machinery works under
 the hood, see the internals doc linked at the bottom.
 
-**Current version: `1.0.0-rc20260712`, input-API redesign (Phase R4).**
+**Current version: `1.0.0-rc20260712`, the input-API redesign.**
 
 The callback API described here is the whole story: the entire `compy.input.*` surface is
 **(supported since 1.0.0-rc20260712)**, and the legacy polling globals it replaced
@@ -84,7 +84,11 @@ To deactivate the widget, call `compy.input.hide()`. No cancel callbacks fire.
 
 ## The submit lifecycle
 
-When the user presses Enter on an active widget, the steps are, in order:
+**Which keys:** submit fires on Enter **without Shift** — Ctrl+Enter and Alt+Enter submit too;
+only **Shift+Enter is a newline**, not a submit. Cancel fires on Escape **without Ctrl**. (These
+are the widget's defaults; a shortcut on `'return'`/`'escape'` can shadow them — see below.)
+
+When the user presses a submitting Enter on an active widget, the steps are, in order:
 
 1. `before_submit(keys_pressed)` fires first (if set) — **before** validation, and it runs even
    on an empty-input Enter. Its argument is the held-key set (`keys_pressed`), **not** the text; a

@@ -1,10 +1,7 @@
--- Phase R4 acceptance criteria (validation/reviews/
--- delta-spec-input-api.md §7) as durable, tests-first anchors. This
--- file grows one AC at a time as the redesign lands:
---   U2 (surface reshape): AC8 (hook seeding, one-shot, no
---       resurrection) + AC9 (D7 guard — frozen container, writable
---       leaves).
---   U3 (dispatch + submit/cancel) will add AC1-7 and AC10.
+-- The input-API redesign's acceptance criteria, pinned here as
+-- durable, tests-first anchors — these tests ARE the ACs. Rationale
+-- for each behaviour lives in doc/development/decisions/input.md;
+-- the mechanism is in doc/development/internals/user_input.md.
 -- Assertions are on observable seams (the surface, the widget's text,
 -- project-registered callbacks) — never internal method spies.
 
@@ -15,7 +12,7 @@ describe('#input #r4 input-API redesign acceptance', function()
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
 
-  -- AC8 (delta-spec §5 / Decision 10 revised): hooks[event] is one
+  -- AC8 (Decision 10 revised): hooks[event] is one
   -- table, seeded ONCE at activation with the project's captured
   -- native love.* handler; thereafter a nil clears it with no
   -- resurrection — the deliberate semantic change from the old
@@ -44,7 +41,7 @@ describe('#input #r4 input-API redesign acceptance', function()
       end)
   end)
 
-  -- AC9 (delta-spec §1 / Decision 7 revised): the container and the
+  -- AC9 (Decision 7 revised): the container and the
   -- IDENTITY of its three sub-tables are frozen; every leaf inside is
   -- freely writable.
   describe('AC9 — D7 guard: frozen container, writable leaves',
@@ -68,7 +65,7 @@ describe('#input #r4 input-API redesign acceptance', function()
       end)
     end)
 
-  -- AC1 (delta-spec §3): Escape clears content; the default
+  -- AC1 (Decision 6): Escape clears content; the default
   -- after_cancel is a no-op, so the widget STAYS shown.
   it('AC1 — Escape clears and leaves the widget shown', function()
     local input = F.activate_project()
@@ -79,7 +76,7 @@ describe('#input #r4 input-API redesign acceptance', function()
     assert.is_not_nil(love.state.user_input)
   end)
 
-  -- AC2 (delta-spec §3): a truthy before_cancel VETOES — content
+  -- AC2 (Decision 6): a truthy before_cancel VETOES — content
   -- is not cleared, after_cancel does not fire, widget unchanged.
   it('AC2 — before_cancel veto keeps content, skips after_cancel',
     function()
@@ -94,7 +91,7 @@ describe('#input #r4 input-API redesign acceptance', function()
       assert.is_false(after)
     end)
 
-  -- AC3 (delta-spec §3): submit fires on_text_entered, stays open,
+  -- AC3 (Decision 6): submit fires on_text_entered, stays open,
   -- and does NOT auto-clear content (that is the project's job).
   it('AC3 — submit stays open with no auto-clear', function()
     local input = F.activate_project()
@@ -109,7 +106,7 @@ describe('#input #r4 input-API redesign acceptance', function()
     assert.is_false(F.singleton:is_empty())
   end)
 
-  -- AC4 (delta-spec §3): opt-in auto-close reproduces the old
+  -- AC4 (Decision 6): opt-in auto-close reproduces the old
   -- prompt-once behaviour with one line.
   it('AC4 — after_submit = hide reproduces auto-close', function()
     local input = F.activate_project()
@@ -119,7 +116,7 @@ describe('#input #r4 input-API redesign acceptance', function()
     assert.is_nil(love.state.user_input)
   end)
 
-  -- AC5 (delta-spec §5): Enter is shadowable — a shortcut on
+  -- AC5 (Decision 6): Enter is shadowable — a shortcut on
   -- 'return' runs first and consumes, so no submit occurs.
   it('AC5 — a shortcut on return shadows the submit', function()
     local input = F.activate_project()
@@ -134,7 +131,7 @@ describe('#input #r4 input-API redesign acceptance', function()
     assert.is_not_nil(love.state.user_input)
   end)
 
-  -- AC6 (delta-spec §2): the widget consumes iff shown — a hidden
+  -- AC6 (Decision 2): the widget consumes iff shown — a hidden
   -- widget falls through (not consumed); a shown widget consumes
   -- any key, including ones it does nothing with.
   it('AC6 — consumption derives from shownness', function()
@@ -145,7 +142,7 @@ describe('#input #r4 input-API redesign acceptance', function()
     assert.is_true(pic:keypressed('x'))
   end)
 
-  -- AC10 (delta-spec §3): teardown re-seeds DEFAULT_CALLBACKS — a
+  -- AC10 (Decision 11): teardown re-seeds DEFAULT_CALLBACKS — a
   -- stopped project's after_cancel does not leak into the next,
   -- which sees the stay-open default (not a nil-call error).
   it('AC10 — teardown re-seeds, no cross-project callback leak',
@@ -162,7 +159,7 @@ describe('#input #r4 input-API redesign acceptance', function()
       assert.is_true(F.singleton:is_empty())
     end)
 
-  -- AC7 (delta-spec §6): the console's history navigation is
+  -- AC7 (Decision 5): the console's history navigation is
   -- driven by its widget's on_limit_reached callback (wired at
   -- construction), NOT by keypressed's return value (retired).
   -- Up on the single-line console input hits the vertical limit →

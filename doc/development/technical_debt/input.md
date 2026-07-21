@@ -59,8 +59,8 @@ action; revisit at the named point).
   hooks step, so `dispatch` never reaches the widget and the widget's
   `on_limit_reached` callback never fires for that keystroke — no
   error, warning, or other signal marks the drop. Carried through the
-  Phase R redesign unchanged — renamed from tier-3/tier-4 to
-  hooks/widget, but the underlying coupling is the same.
+  input-API redesign unchanged — renamed from the old tier-3/tier-4
+  vocabulary to hooks/widget, but the underlying coupling is the same.
 - **Why it stands:** The truthy-consume shape (decisions/input.md,
   Decision 2 revised) is working as designed; it just wasn't checked against
   this specific hooks/widget interaction. No dedicated guard exists.
@@ -84,7 +84,7 @@ action; revisit at the named point).
   (`examples/sapper`), this meant (1) submit was dead — typing
   still reached the overlay but Enter never fired, because
   submit/cancel (then a non-overridable framework tier, since
-  retired by Phase R4 — Decision 2 revised) lives in the *project*
+  retired — Decision 2 revised) lives in the *project*
   route, which `project_open` disconnected — and (2) Ctrl+Esc quit the whole
   app instead of returning to the console, because `love.quit`
   only stopped-to-console while `app_state == 'running'`.
@@ -377,19 +377,18 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When the cursor API surface is next touched — decide
   consolidate-vs-separate and record it.
 
-### `submit()`'s deliver-then-hide ordering forced example-side deferral of any reshow (RESOLVED by Phase R4)
+### `submit()`'s deliver-then-hide ordering forced example-side deferral of any reshow (RESOLVED by the input-API redesign)
 
 - **Where:** `src/controller/userInputController.lua` — was `submit()` (calls
-  `deliver(self, text)` then unconditionally `hide()`s); now
-  `_submit_default` (`:451-460`).
+  `deliver(self, text)` then unconditionally `hide()`s); now `submit_flow`.
 - **Old state:** `on_text_entered` fired while the overlay was still active, and
   a trailing `hide()` ran right after (auto-close). A project wanting to "reshow with
   the same text on invalid input" could not call `compy.input.show{...}`
   synchronously from inside its own callback — a re-entry guard
   suppressed it, then `hide()` wiped it. One example project worked around
   this by deferring the reshow a frame.
-- **Resolution:** Auto-close on submit is gone (Decision 6 revised,
-  validation/reviews/delta-spec-input-api.md §3): `after_submit` DEFAULTS to a
+- **Resolution:** Auto-close on submit is gone (Decision 6 revised):
+  `after_submit` DEFAULTS to a
   no-op and the widget stays open. A rejected validator locks the field with the
   rejected text still showing — there is nothing to reshow, so the one-frame
   deferral workaround this entry described no longer has a reason to exist.
@@ -470,7 +469,7 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** If the installer set grows or is next restructured — drive it
   from a `{ event → installer }` table.
 
-### `_generic_callback` re-resolves the callback precedence on every event (RESOLVED by Phase R4)
+### `_generic_callback` re-resolves the callback precedence on every event (RESOLVED by the input-API redesign)
 
 - **Where:** was `src/controller/projectInputController.lua`, `_generic_callback` — computed
   `compy_input[chan] or natives[event]` per dispatched event, then branched
@@ -479,8 +478,7 @@ Not commissioned for closure; each may never need action.
   noop) was fixed at `activate` but re-resolved on every dispatched event
   instead of once.
 - **Resolution:** `_generic_callback` is gone. Decision 10 revised
-  (validation/reviews/delta-spec-input-api.md §5) replaced the two-store
-  precedence rule with one table (`hooks[event]`), seeded once at
+  replaced the two-store precedence rule with one table (`hooks[event]`), seeded once at
   `activate` (`seed_hooks`, `projectInputController.lua:43-49`) — there is
   no per-event resolution left to memoise; `dispatch` (`:74-86`) just reads
   `hooks[event]` directly.
@@ -507,7 +505,7 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When pointer routing gets a real second consumer, or the
   owner rules on the mirror-chain question.
 
-### Widget sink reaches the singleton via `love.state` global + nil-guard (RESOLVED-IN-PART by Phase R4)
+### Widget sink reaches the singleton via `love.state` global + nil-guard (RESOLVED-IN-PART by the input-API redesign)
 
 - **Where:** was `src/controller/projectInputController.lua`, `_sink` — read
   `love.state.user_input_controller` on each call and guarded it with
@@ -516,8 +514,8 @@ Not commissioned for closure; each may never need action.
   rather than an injected instance field (`self.input`), and defended with
   a nil-check against a value the singleton convention said was always
   present.
-- **Resolution:** The sink is gone. `dispatch` (obligation 6a,
-  validation/reviews/delta-spec-input-api.md §2,
+- **Resolution:** The sink is gone. `dispatch` (the free-function extraction
+  recorded as an implementation note in `decisions/input.md`,
   `projectInputController.lua:74-86`) is now a free function that takes the
   widget **as a parameter** rather than reaching for a global itself — the
   concern moves one level up, to `ProjectInputController:_dispatch`
@@ -528,3 +526,48 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** Whether `_dispatch` itself should inject `self.input` at
   construction instead of reading the global, and turn its nil-guard into
   an assertion, remains open — the same question, one layer up.
+
+### `UserInputController:keypressed` forked on `love.state.app_state == 'editor'` (RESOLVED — the `app_state` fork was removed, 2026-07-21)
+
+- **Where:** was `src/controller/userInputController.lua:keypressed`, an
+  `if love.state.app_state == 'editor' then … else … end` branch.
+- **Old state:** A reusable input widget read global app-mode to change its own
+  behaviour — both the editing keymap (order + Ctrl+D `modify`) and whether its
+  Enter/Escape submit/cancel ran. Flagged by the owner (2026-07-20) as an
+  abstraction leak: the widget could not be reasoned about — or migrated onto the
+  new API by the editor later — without knowing it was "the editor." See
+  `doc/development/decisions/input.md` Decision 6.
+- **Resolution:** The branch is deleted; `keypressed` runs one uniform path. The
+  two real differences moved to honest homes: (1) `modify` (Ctrl+D) is a
+  per-instance `allow_modify` constructor flag, set only by the editor's input,
+  mirroring `disable_selection`; (2) the editor consumes Enter/Escape **upstream**
+  (`block_input()` in `EditorController:_normal_mode_keys`' `submit()`/`load()`),
+  so the widget's uniform `submit_flow`/`cancel_flow` never runs for the keys the
+  editor owns. No instance reads global mode. Suite green
+  (`tests/input/input_lifecycle_unfork_spec.lua`).
+- **Revisit:** `allow_modify` is a one-off flag; the widget owning its own
+  **combo table** (Ctrl+D and the lifecycle keys as registered combos an editor or
+  project extends) is the better end-state the owner named — deferred with the
+  console/editor migration (Decision 1), not this pass. The old `REVIEW:` at the
+  former `:724` that asked for exactly this is retired (its concern is resolved
+  in shape; the combo-table refinement is what remains).
+
+### Discovered, de-facto behaviours pinned during the un-fork (rationale note)
+
+The un-fork's preservation tests froze several behaviours that are **not designed
+contracts** but were **discovered as existing behaviour with no mandate to alter**
+— treated as de-facto standards per the implementation and pinned so they can't
+be silently narrowed later (any change is a separate, owner-gated decision):
+
+- **Non-shift Enter submits** — Ctrl+Enter and Alt+Enter submit, not only bare
+  Enter (guard is `is_enter and not shift`; also consistent with
+  `doc/development/decisions/input.md` Decision 6). Pinned for overlay + console.
+- **`SearchController:keypressed` returns a jump target** (`{block, line}`) up its
+  caller on Enter — the same "keypress return carries a domain result" shape the
+  shared widget's limit-flag return was retired for (Decision 5 revised). Left as
+  is because `SearchController` is a different class, out of #77 scope.
+- **The overlay's input view skips the per-frame `update_view()` workaround by
+  widget *identity*** (`userInputView.lua:draw`, `self.controller ~=
+  love.state.user_input_controller`) — an identity check standing in for the old
+  `oneshot` flag. Its own in-code `REVIEW:` asks whether it survives a
+  console/editor re-plug; carried, out of #77 scope.

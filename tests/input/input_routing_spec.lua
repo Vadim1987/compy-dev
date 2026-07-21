@@ -15,7 +15,8 @@
 -- whole input contract suite, not this file alone; kept here in the first
 -- split file so they stay greppable in-tree for the jargon / spec-ref /
 -- Phase-C passes):
--- REVIEW/DOC: no comment should point to wip/77 -- only to canonical docs
+-- REVIEW/DOC: all comments point to canonical docs, never the
+-- feature's ephemeral working tree
 -- REVIEW/DOC: referencing items as 'paragraph X' is insufficient and unreadable -- should reference specific named sections so they are discoverable/greppable in their doc
 -- REVIEW/DOC: fix spec references EVERYWHERE IN THE FILE (I will wrap them into {badspecref:} wherever I see them
 -- REVIEW/DOC: also I will wrap with {jargon:...} the words or phrases which seem invented
@@ -109,9 +110,8 @@ describe('input contracts: routing #input', function()
     -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
     -- doc/development/internals/user_input.md, "Dispatch chain";
     -- {badspecref: reviews/M4-0-04.md finding 1} — editor
-    -- keypressed-EXCLUSIVE had zero regression coverage;
-    -- see doc/development/wip/77-new-input-api/
-    -- implementation/reviews/M4-0-04.md, "Finding 1")
+    -- keypressed-EXCLUSIVE had zero regression coverage before this
+    -- test was added)
     it('routes keys to the editor', function()
       F.session.type('q')
       F.session.press('backspace')

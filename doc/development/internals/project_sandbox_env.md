@@ -53,5 +53,5 @@ are not.
 
 - Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).
 - Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
-- The analysis that surfaced this model (feature #77, session 18):
-  `doc/development/wip/77-new-input-api/notes/stakeholder-3-input/assessment.md` (P4).
+- This model was surfaced by input-subsystem analysis during feature #77 (the project-exit-cleanup
+  pain point, P4).

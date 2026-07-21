@@ -254,7 +254,7 @@ through this same callback: `ConsoleController.new` wires `console_widget.callba
 directly on its own `UserInputController` instance (`consoleController.lua:49-52`) to call
 `history_back()`/`history_fwd()`, replacing the old `local limit = input:keypressed(k)` return-value
 capture (`ConsoleController:keypressed` now calls `input:keypressed(k)` purely for its editing side
-effects, return value unused — delta-spec §6). Editor never needed the signal at all, since it
+effects, return value unused — Decision 5 revised). Editor never needed the signal at all, since it
 independently computes boundary state via `inputView:is_at_limit(...)` at the view layer.
 
 **FR-6 (project notification of key events): the keyboard exclusion is resolved as of 1.0.0-rc20260712.**
@@ -276,39 +276,61 @@ See `editor.md` for full detail. Key differences from console mode:
 - Escape loads selected block text into input
 - Ctrl+M / Ctrl+F switch modes
 
-The difference is two forks, not one. The **outer** fork is the ConsoleController/EditorController
-split already covered above (console handles escape/history/Ctrl+L itself; editor delegates to
-`EditorController:keypressed`'s own `edit`/`reorder`/`search` mode dispatch instead). There is also
-a **second, inner** fork worth knowing about: the *shared* `UserInputController:keypressed` is not
-fully context-blind either — its own body branches on `love.state.app_state == 'editor'`
-(`userInputController.lua:724-755`) to decide whether to run `_submit_default`/`_cancel_default` at
-all (Enter/Escape → the widget's own callback-driven submit/cancel sequences — see "Submit and
-cancel" below — only reachable in the non-editor branch). That inner branch is **why** editor's
-Escape→`load_selection()` (which just populated the input) isn't immediately wiped by the shared
-widget's own Escape-cancels-content behavior on the same keypress — the editor branch skips
-`_cancel_default` entirely when `app_state == 'editor'`. So "which hooks are redefined" isn't just
-outer-controller dispatch; the shared widget also self-selects behavior by mode for at least this
-one case. **Note:** this `app_state == 'editor'` fork is the *only* gate — there is no separate
-per-instance "am I the project overlay?" check, so console's own always-shown
-`UserInputController` instance runs `_submit_default`/`_cancel_default` on its own Enter/Escape too
-(harmlessly: console sets no `before_submit`/`after_submit`/`before_cancel`/`after_cancel` callbacks,
-so these are no-ops alongside console's own `evaluate_input`/history handling, described above).
+The difference is now **one** fork, not two. The **outer** fork is the ConsoleController/
+EditorController split already covered above (console handles escape/history/Ctrl+L itself; editor
+delegates to `EditorController:keypressed`'s own `edit`/`reorder`/`search` mode dispatch instead).
+
+There used to be a **second, inner** fork: the shared `UserInputController:keypressed` branched on
+`love.state.app_state == 'editor'` to decide whether to run its own Enter/Escape submit/cancel at
+all. That fork was **removed** (2026-07-21) — a reusable input widget reaching up into global
+app-mode to change its own behaviour was an abstraction leak (the widget could not be reasoned about,
+or migrated, without knowing it was "the editor"). It is gone; `UserInputController:keypressed` now
+runs **one uniform path** for every instance (see the shared-keypressed section below).
+
+The editor's Escape→`load_selection()` (which just repopulated the input) is no longer protected by
+a mode-gate inside the widget. Instead the editor **consumes Enter/Escape upstream**: each handled
+branch of `EditorController:_normal_mode_keys`' `submit()` (plain Enter, Ctrl+Enter) and `load()`
+(plain/Shift Escape) now calls `block_input()`, so `passthrough` is false and the shared widget never
+receives that key — its uniform `submit_flow`/`cancel_flow` simply never runs for the keys the editor
+owns. The one Enter variant the editor does *not* handle (Alt+Enter) does fall through to the widget's
+`submit_flow`, harmlessly: the editor's own input instance sets no submit callbacks, so it is a no-op
+(the same no-op console relies on). Search and reorg modes never reach `UserInputController:keypressed`
+at all (see "Search" below and reorg's own `_reorg_mode_keys`), so they need no blocking.
+
+Console's own always-shown instance is not blocked and does run the uniform `submit_flow`/`cancel_flow`
+on its own Enter/Escape — harmlessly, since console sets no `before_submit`/`after_submit`/
+`before_cancel`/`after_cancel` callbacks, so they are no-ops alongside console's own `evaluate_input`/
+history handling. The project overlay runs the flows for real (that IS its submit/cancel). So the
+per-context behaviour that the old `app_state` fork encoded is now expressed honestly: the editor
+consumes upstream, console/overlay set (or don't set) callbacks — no instance interrogates global state.
 
 ### UserInputController keypressed (shared)
 
 `UserInputController:keypressed` handles the low-level input operations that apply regardless of which route is driving it (console, editor, or the project widget): removers (backspace, delete, Ctrl+Y delete line), vertical cursor movement, horizontal movement (Left/Right, Home/End, Alt+Home/End for line vs field boundaries), Shift+Enter newline (unconditional — see "Multiline input" above), Ctrl+D duplicate line, copy/cut/paste (Ctrl+C/X/V and Shift+Insert/Delete), selection management. It never inserts literal characters — see "Text Input Widget" above for why `keypressed` and `textinput` divide the work this way.
 
+The body is a **single uniform sequence** (no `love.state.app_state` branch since 2026-07-21):
+`removers → vertical → horizontal → newline → (modify if enabled) → copypaste → selection`, then
+the lifecycle keys. **`modify` (Ctrl+D duplicate-line) is gated on a per-instance `allow_modify`
+flag**, a constructor parameter (`UserInputController(model, result, disable_selection, allow_modify)`),
+set only by the editor's main input; console and the overlay leave it off. This is the honest
+replacement for the old "editor branch runs `modify`" gate — a widget capability the owner enables at
+construction, like `disable_selection`, not something the widget reads from global mode. (A future
+combo-table owned by the widget would supersede the one-off flag — see `technical_debt/input.md`.)
+
 There is no `oneshot` flag any more, and no separate framework-owned submit path — there is no
-framework tier at all (Decision 2 revised). Enter and Escape are ordinary keys handled **inside**
-this same shared method's non-editor branch (`userInputController.lua:750-754`): `Key.is_enter(k)`
-calls `self:_submit_default(keys_pressed)`, `k == 'escape'` calls `self:_cancel_default(keys_pressed)`
-— see "Submit and cancel" below for what those do. There is no separate route-level interception
-above this any more; the widget's own Enter/Escape handling IS the submit/cancel mechanism, for
-every `UserInputController` instance that reaches the non-editor branch (project overlay and
-console's own instance alike — see the "Note" in "Editor-specific keys" above). Console's own Enter
-handling additionally runs `ConsoleController:evaluate_input` afterward (unrelated to this shared
-widget's own submit); the editor's is `EditorController:_handle_submit`, reached only through the
-editor branch, which never calls `_submit_default`/`_cancel_default` at all.
+framework tier at all (Decision 2 revised). Enter and Escape are ordinary keys handled at the end of
+this same shared method, **uniformly for every instance**: `Key.is_enter(k) and not Key.shift()`
+calls `self:submit_flow(keys_pressed)`; `k == 'escape' and not Key.ctrl()` calls
+`self:cancel_flow(keys_pressed)` — see "Submit and cancel" below. **The guard is "Enter without
+Shift", not "bare Enter": Ctrl+Enter and Alt+Enter submit too** (only Shift+Enter is carved out, as
+the newline); likewise Escape-without-Ctrl cancels. This is a de-facto contract (Decision 14,
+guard shape `return and not shift_held`), pinned by `tests/input/input_lifecycle_unfork_spec.lua`.
+The widget's own
+Enter/Escape handling IS the submit/cancel mechanism; there is no route-level interception above it.
+Contexts that must NOT run the flows arrange it themselves: the editor consumes the key upstream
+(`block_input()` in its own `submit()`/`load()`); console sets no callbacks so its run is a no-op and
+its real work is `ConsoleController:evaluate_input` afterward; the editor's real submit is
+`EditorController:_handle_submit`. No instance branches on global state to decide.
 
 ### Key release
 
@@ -346,9 +368,16 @@ widget primitive, alongside console's own and the editor's main input. It is liv
 `app_state == 'editor'` and `EditorController.mode == 'search'` (entered via Ctrl+F, see
 "Editor-specific keys" above). `keypressed` forwards through `EditorController:_search_mode_keys`
 (`:485-503`) to `SearchController:keypressed`; `textinput` forwards through `EditorController:textinput`
-(`:287-302`) when in search mode. There is no evaluator (search input is free text with no
-validation) and Enter jumps to the currently-selected result rather than submitting the typed
-query. `SearchController` defines no `:keyreleased` method at all — combined with the missing
+(`:287-302`) when in search mode. **`SearchController:keypressed` fully owns its key handling and
+never delegates to its wrapped `UserInputController:keypressed`** — it drives navigate/removers/Enter
+itself and only ever calls its instance's `textinput`/`update_view`, never its `keypressed`. So the
+search widget's instance never runs the shared submit/cancel flow at all, and needed no change when
+the `app_state` fork was removed. There is no evaluator (search input is free text with no
+validation) and **Enter returns the currently-selected result** (a jump target `{block, line}`) up to
+`_search_mode_keys` rather than submitting the typed query — the same "keypress return value carries a
+domain result" shape the shared widget's own limit-flag return was retired for (Decision 5 revised);
+left in place here because `SearchController` is a different class, out of feature #77's scope
+(`technical_debt/input.md`). `SearchController` defines no `:keyreleased` method at all — combined with the missing
 editor fork above, search's `UserInputController` instance never receives a release under any
 circumstance. `SearchController:clear()` (`searchController.lua:44-47`) reaches past its own
 controller straight into `self.model.input:clear_input()`, skipping `clear_error()` — currently
@@ -445,13 +474,14 @@ Enter and Escape are **ordinary keys handled by the widget itself** (Decision 6 
 no framework tier any more, and no non-overridable interception above the widget: a project
 shortcut registered on `'return'`/`'escape'` (`compy.input.shortcuts.keypressed['return']`, etc.)
 wins over the widget's default, same as any other combo (**withdrawn guarantee**, deliberate — see
-the delta-design's "Withdrawn guarantee" note; the gateway's unconditional power keys, Ctrl+Q etc.,
+Decision 6's "Withdrawn guarantee" note in `decisions/input.md`; the gateway's unconditional power keys, Ctrl+Q etc.,
 remain the real, permanent escape hatch, unaffected by any shortcut). Only once no shortcut/hook
-consumes the key does the widget's own `UserInputController:keypressed` reach its Enter/Escape
-branch (`userInputController.lua:750-754`), and only while the widget is shown — hidden, the widget
-is skipped entirely by the dispatch walk.
+consumes the key does the widget's own `UserInputController:keypressed` reach its lifecycle guard
+(`Key.is_enter(k) and not Key.shift()` → submit; `k == 'escape' and not Key.ctrl()` → cancel — so
+Ctrl+Enter and Alt+Enter submit too, only Shift+Enter is the newline), and only while the widget is
+shown — hidden, the widget is skipped entirely by the dispatch walk.
 
-**Submit** (`UserInputController:_submit_default`, `userInputController.lua:451-460`):
+**Submit** (`UserInputController:submit_flow`):
 
 ```
 run_callback(self, 'before_submit', keys_pressed)   -- veto reserved, unbuilt (R9)
@@ -468,7 +498,7 @@ this is the flipped default (Decision 6 revised): the widget stays open unless a
 `after_submit` calls `compy.input.hide()`. `before_submit`'s return value is reserved for a future
 veto and is ignored today (R9, unbuilt); rejecting bad input is the `validator`'s job.
 
-**Cancel** (`UserInputController:_cancel_default`, `userInputController.lua:468-474`):
+**Cancel** (`UserInputController:cancel_flow`):
 
 ```
 if run_callback(self, 'before_cancel', keys_pressed) then return end  -- truthy = veto, skip clear

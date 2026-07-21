@@ -277,7 +277,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
     -- Decision 6 revised: submit no longer auto-closes. The
     -- default after_submit is a no-op, so BOTH on_text_entered and
     -- after_submit see the session still active — the widget stays
-    -- open unless a callback hides it (delta-spec §3 / AC3).
+    -- open unless a callback hides it (AC3).
     it('on_text_entered and after_submit both see the ' ..
       'session still active (stays open)', function()
       local seen = { }
@@ -336,7 +336,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
   end)
 
   describe('cancel — the Escape chain', function()
-    -- Decision 6 revised (delta-spec §3 / AC1): Escape runs the
+    -- Decision 6 revised (AC1): Escape runs the
     -- cancel call-order chain (before_cancel → clear → after_cancel)
     -- and CLEARS content, but the default after_cancel is a no-op —
     -- the widget stays shown unless a callback hides it.
@@ -380,7 +380,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.same({ 'return', 'escape' }, seen)
       end)
 
-    -- Decision 6 revised (delta-spec §5 / AC5): Enter/Escape are
+    -- Decision 6 revised (AC5): Enter/Escape are
     -- ordinary chain participants — a project shortcut on 'return'
     -- runs first and consumes, so the widget's submit never fires
     -- (the withdrawn non-overridable guarantee; the gateway power
@@ -451,7 +451,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
   end)
 
   describe('continuity across submit', function()
-    -- Decision 6 revised (delta-spec §3 / AC3): the widget stays
+    -- Decision 6 revised (AC3): the widget stays
     -- open after submit by default. A project wanting
     -- clear-and-continue does so from its own after_submit
     -- (continuity is now the default, not a re-activation trick).
@@ -485,7 +485,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.equal(2, hits)
       end)
 
-    -- Decision 6 revised (delta-spec §3 / AC1,3): absent callbacks
+    -- Decision 6 revised (AC1,3): absent callbacks
     -- default to no-ops — submit and cancel both complete without
     -- error and the widget STAYS OPEN. Submit preserves content
     -- (no auto-clear); cancel clears it.

@@ -9,7 +9,7 @@ local class = require('util.class')
 --- @oaram CC ConsoleController
 local function new(M, CC)
   return {
-    input = UserInputController(M.input, nil, true):always_shown(),
+    input = UserInputController(M.input, nil, true, true):always_shown(),
     model = M,
     search = SearchController(
       M.search,
@@ -704,6 +704,7 @@ function EditorController:_normal_mode_keys(k)
       end
 
       self:_handle_submit(add)
+      block_input()
     end
 
     if not Key.ctrl()
@@ -711,6 +712,7 @@ function EditorController:_normal_mode_keys(k)
         and not Key.alt()
         and Key.is_enter(k) then
       self:_handle_submit(replace)
+      block_input()
     end
   end
   local function load()
@@ -718,11 +720,13 @@ function EditorController:_normal_mode_keys(k)
         not Key.shift()
         and k == "escape" then
       load_selection()
+      block_input()
     end
     if not Key.ctrl() and
         Key.shift() and
         k == "escape" then
       load_selection(true)
+      block_input()
     end
   end
   local function delete()

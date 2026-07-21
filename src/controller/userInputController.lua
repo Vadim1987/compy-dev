@@ -21,11 +21,17 @@ end
 --- @param model UserInputModel
 --- @param result table?
 --- @param disable_selection boolean?
-local new = function(model, result, disable_selection)
+--- @param allow_modify boolean?  enable the Ctrl+D duplicate-line
+--- combo (editor-only today). Known at construction; the overlay
+--- and console never opt in.
+local new = function(model, result, disable_selection, allow_modify)
   return {
     model = model,
     result = result,
     disable_selection = disable_selection,
+    -- Ctrl+D duplicate-line gate (editor-only today; a future
+    -- combo-table would supersede this per-action flag).
+    allow_modify = allow_modify,
     -- Strictly internal shown/hidden flag (owner ruling
     -- 2026-07-20): is_shown() reads this, never love.state. The
     -- overlay starts hidden and is toggled by show()/hide();
@@ -193,7 +199,7 @@ function UserInputController:evaluate()
 end
 
 --- Unconditional clear + hide. NOT the project widget's Escape path
---- any more (that is `_cancel_default`, below, callback-driven and
+--- any more (that is `cancel_flow`, below, callback-driven and
 --- stay-open by default) — this method survives only as
 --- console's own debug/test-mode cancel
 --- (`consoleController.lua`'s `terminal_test`).
@@ -440,14 +446,14 @@ local function run_callback(self, name, ...)
   debug_noop(name)
 end
 
---- Submit default (doc/development/decisions/input.md, Decision 6
+--- Submit flow (doc/development/decisions/input.md, Decision 6
 --- revised; validation/reviews/delta-spec-input-api.md §3): the
 --- widget's own Enter behaviour. before_submit (veto reserved,
 --- unbuilt) → empty guard → validate → deliver (fires
---- on_text_entered) → after_submit. after_submit DEFAULTS to a
+--- on_text_entered) → after_submit. after_submit defaults to a
 --- no-op, so the widget stays open unless a callback hides it.
 --- @param keys_pressed table?
-function UserInputController:_submit_default(keys_pressed)
+function UserInputController:submit_flow(keys_pressed)
   run_callback(self, 'before_submit', keys_pressed)
   if self.model:get_text():is_empty() then return end
   local text = string.unlines(self.model:get_text())
@@ -458,13 +464,13 @@ function UserInputController:_submit_default(keys_pressed)
   run_callback(self, 'after_submit', text)
 end
 
---- Cancel default (Decision 6 revised; delta-spec §3): the
+--- Cancel flow (Decision 6 revised; delta-spec §3): the
 --- widget's own Escape behaviour. A truthy before_cancel VETOES
 --- (skips the clear); otherwise clear (hardwired) → after_cancel.
---- after_cancel DEFAULTS to a no-op — Escape clears but the widget
+--- after_cancel defaults to a no-op — Escape clears but the widget
 --- stays open unless a callback hides it.
 --- @param keys_pressed table?
-function UserInputController:_cancel_default(keys_pressed)
+function UserInputController:cancel_flow(keys_pressed)
   if run_callback(self, 'before_cancel', keys_pressed) then
     return
   end
@@ -721,38 +727,23 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     end
   end
 
-  -- REVIEW: looking forward, UIC should not be aware if application is in 'editor or non-editor' mode -- it should be editor that configures it accordingly (via hooks). I see only two differences: a) vert/horiz order (purposeful or coincidence?) and editor having 'modify' block. But in fact (for the future?) -- its all *combos* which editor can set itself -- moreover we could think of combos mechanism *inside* UIC, and editor or project simply registering extra combos in front of them (or even as parameters to be passed to UIC)
-  if love.state.app_state == 'editor' then
-    removers()
-    horizontal()
-    vertical()
-    newline()
-    modify()
+  removers()
+  vertical()
+  horizontal()
+  newline()
+  if self.allow_modify then modify() end
+  copypaste()
+  selection()
 
-    copypaste()
-    selection()
-  else
-    -- normal behavior
-    removers()
-    vertical()
-    horizontal()
-    newline()
-
-    copypaste()
-    selection()
-
-    -- The widget's own submit/cancel defaults
-    -- (doc/development/decisions/input.md, Decision 6 revised): plain
-    -- Enter submits, plain Escape cancels — ordinary widget
-    -- behaviour, signalled out through callbacks (never a routing
-    -- concern). Shift+Enter is a newline (newline() above);
-    -- Ctrl+Escape is not a cancel. The editor branch above keeps
-    -- its own Enter/Escape handling (EditorController).
-    if Key.is_enter(k) and not Key.shift() then
-      self:_submit_default(keys_pressed)
-    elseif k == 'escape' and not Key.ctrl() then
-      self:_cancel_default(keys_pressed)
-    end
+  -- The widget's own submit/cancel flow (Decision 6 revised): plain Enter
+  -- submits, plain Escape cancels — ordinary widget behaviour, out through
+  -- callbacks. Shift+Enter is a newline (newline() above); Ctrl+Escape is not a
+  -- cancel. Editor/console callers that must not run these consume the key
+  -- upstream (editor) or set no callbacks (console no-op).
+  if Key.is_enter(k) and not Key.shift() then
+    self:submit_flow(keys_pressed)
+  elseif k == 'escape' and not Key.ctrl() then
+    self:cancel_flow(keys_pressed)
   end
 
   self:update_view()
