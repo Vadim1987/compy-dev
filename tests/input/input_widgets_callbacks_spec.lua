@@ -125,7 +125,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           end,
         })
         F.session.type('a')
-        local got = F.singleton.model:get_highlight()
+        local got = F.widget.model:get_highlight()
         assert.equal(marker, got.hl)
       end)
   end)
@@ -145,7 +145,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
             seen[#seen + 1] = { dir, scope }
           end,
         })
-        F.singleton:set_cursor(Cursor(1, 2))
+        F.widget:set_cursor(Cursor(1, 2))
         F.session.press('up')
         assert.same({ { 'up', 'input' } }, seen)
       end)
@@ -160,7 +160,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
             seen[#seen + 1] = { dir, scope }
           end,
         })
-        F.singleton:set_cursor(Cursor(2, 2))
+        F.widget:set_cursor(Cursor(2, 2))
         F.session.press('down')
         assert.same({ { 'down', 'input' } }, seen)
       end)
@@ -176,7 +176,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
             return true
           end,
         })
-        F.singleton:jump_home()
+        F.widget:jump_home()
         F.session.press('left')
         assert.same({ { 'left', 'input' } }, seen)
       end)
@@ -192,7 +192,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           seen[#seen + 1] = { dir, scope }
         end,
       })
-      F.singleton:set_cursor(Cursor(2, 1))
+      F.widget:set_cursor(Cursor(2, 1))
       F.session.press('left')
       assert.same({ { 'left', 'line' } }, seen)
     end)
@@ -206,7 +206,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           seen[#seen + 1] = { dir, scope }
         end,
       })
-      F.singleton:set_cursor(Cursor(1, 3))
+      F.widget:set_cursor(Cursor(1, 3))
       F.session.press('right')
       assert.same({ { 'right', 'line' } }, seen)
     end)
@@ -222,7 +222,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           seen[#seen + 1] = { dir, scope }
         end,
       })
-      F.singleton:set_cursor(Cursor(1, 1))
+      F.widget:set_cursor(Cursor(1, 1))
       F.session.press('left')
       assert.same({ { 'left', 'input' } }, seen)
     end)
@@ -238,7 +238,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           seen[#seen + 1] = { dir, scope }
         end,
       })
-      F.singleton:set_cursor(Cursor(2, 3))
+      F.widget:set_cursor(Cursor(2, 3))
       F.session.press('right')
       assert.same({ { 'right', 'input' } }, seen)
     end)
@@ -331,7 +331,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.is_false(entered)
         assert.is_false(after)
         assert.is_not_nil(love.state.user_input)
-        assert.is_true(F.singleton:has_error())
+        assert.is_true(F.widget:has_error())
       end)
   end)
 
@@ -354,7 +354,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         F.session.press('escape')
         assert.same({ 'before', 'after' }, order)
         assert.is_not_nil(love.state.user_input)
-        assert.is_true(F.singleton:is_empty())
+        assert.is_true(F.widget:is_empty())
       end)
   end)
 
@@ -420,7 +420,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         F.show_widget({ text = 'a' })
         F.session.press('lshift')
         mock.keystroke('S-return', F.session.press, false)
-        assert.same({ 'a', '' }, F.singleton:get_text())
+        assert.same({ 'a', '' }, F.widget:get_text())
         assert.is_not_nil(love.state.user_input)
       end)
   end)
@@ -464,7 +464,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         input.show({ text = 'first' })
         F.session.press('return')
         assert.is_not_nil(love.state.user_input)
-        assert.is_true(F.singleton:is_empty())
+        assert.is_true(F.widget:is_empty())
       end)
 
     -- doc/input_api.md, "Sticky callbacks": widget outputs
@@ -497,12 +497,12 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           F.session.press('return')
         end)
         assert.is_not_nil(love.state.user_input)
-        assert.is_false(F.singleton:is_empty())
+        assert.is_false(F.widget:is_empty())
         assert.has_no.errors(function()
           F.session.press('escape')
         end)
         assert.is_not_nil(love.state.user_input)
-        assert.is_true(F.singleton:is_empty())
+        assert.is_true(F.widget:is_empty())
       end)
   end)
 end)

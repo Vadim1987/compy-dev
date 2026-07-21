@@ -56,7 +56,7 @@ describe('input contracts: NFR and forward #input', function()
         love.state.app_state = 'inspect'
         F.session.type('Z')
         assert.same({ 'abZ' }, F.console:get_text())
-        assert.is_true(F.singleton:is_empty())
+        assert.is_true(F.widget:is_empty())
       end)
 
       -- wheel (doc/development/internals/user_input.md, "Direct mouse
@@ -153,7 +153,7 @@ describe('input contracts: NFR and forward #input', function()
         function()
           F.show_widget()
           local first = love.state.user_input.C
-          F.singleton:hide()
+          F.widget:hide()
           F.show_widget()
           assert.equal(first, love.state.user_input.C)
         end)
@@ -162,11 +162,11 @@ describe('input contracts: NFR and forward #input', function()
       -- (doc/development/decisions/input.md, Decision 3): the
       -- backing model is reused across activations.
       it('no widget model is reallocated', function()
-        local m1 = F.singleton.model
+        local m1 = F.widget.model
         F.show_widget()
-        F.singleton:hide()
+        F.widget:hide()
         F.show_widget()
-        assert.equal(m1, F.singleton.model)
+        assert.equal(m1, F.widget.model)
       end)
     end)
 

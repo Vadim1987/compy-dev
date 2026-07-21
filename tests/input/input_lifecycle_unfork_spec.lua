@@ -210,7 +210,7 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
 
         input.show({ text = 'bye', force = true })
         F.session.press('escape')
-        assert.is_true(F.singleton:is_empty())
+        assert.is_true(F.widget:is_empty())
       end)
     end)
 

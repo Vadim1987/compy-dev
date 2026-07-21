@@ -113,7 +113,7 @@ describe('input API: cursor and text surface', function()
         local input = F.compy_input()
         input.show({ text = 'hello' })
         input.set_text('worldly')
-        assert.same({ 'worldly' }, F.singleton:get_text())
+        assert.same({ 'worldly' }, F.widget:get_text())
         local l, c = input.get_cursor()
         assert.same(1, l)
         assert.same(8, c) -- 'worldly' end (len 7 + 1)
@@ -155,11 +155,11 @@ describe('input API: cursor and text surface', function()
         input.show({ text = 'hello' })
         local handle = love.state.user_input
         local renders = 0
-        local orig = F.singleton.view.render
-        F.singleton.view.render =
+        local orig = F.widget.view.render
+        F.widget.view.render =
             function(...) renders = renders + 1 end
         input.set_text('again')
-        F.singleton.view.render = orig
+        F.widget.view.render = orig
         assert.equal(handle, love.state.user_input)
         assert.is_true(renders > 0)
       end)
@@ -174,7 +174,7 @@ describe('input API: cursor and text surface', function()
       input.set_text('nope')
       Log.warn = ow
       assert.equal(1, warned)
-      assert.is_true(F.singleton:is_empty())
+      assert.is_true(F.widget:is_empty())
     end)
   end)
 

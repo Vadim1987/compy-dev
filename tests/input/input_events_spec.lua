@@ -100,7 +100,7 @@ describe('#input events dispatching', function()
         F.show_widget({ text = 'ab' })
         F.session.press('backspace')
         assert.same({ 'shortcut', 'hook' }, order)
-        assert.same({ 'a' }, F.singleton:get_text())
+        assert.same({ 'a' }, F.widget:get_text())
       end)
 
     -- doc/development/decisions/input.md, Decision 2: a truthy combo
@@ -119,7 +119,7 @@ describe('#input events dispatching', function()
       F.show_widget({ text = 'ab' })
       F.session.press('backspace')
       assert.is_false(reached_cb)
-      assert.same({ 'ab' }, F.singleton:get_text())
+      assert.same({ 'ab' }, F.widget:get_text())
     end)
 
     -- doc/development/decisions/input.md, Decision 2: consuming never
@@ -147,7 +147,7 @@ describe('#input events dispatching', function()
         F.show_widget({ text = 'ab' })
         input.hooks.keypressed = function() return false end
         F.session.press('backspace')
-        assert.same({ 'a' }, F.singleton:get_text())
+        assert.same({ 'a' }, F.widget:get_text())
       end)
   end)
 
@@ -280,12 +280,12 @@ describe('#input events dispatching', function()
         F.activate_project()
         F.show_widget()
 	-- REVIEW/fidelity: are we testing internals there instead of behavior? in this case its justified if we cannot configure widget from the outside but need to ensure it received keypress -- but then maybe explicitly admit that this is test-specific patching. Maybe expose method like F.mock_widget_with(...) so that purpose will be clear, especially given the fact same mechanics is used in few other places. Right now it looks like legit configuration, which it is not (or is it?)
-        F.singleton.keypressed = function(_, k, keys, isr)
+        F.widget.keypressed = function(_, k, keys, isr)
           seen = { k, keys, isr }
         end
         F.session.repeat_press('a')
 	-- REVIEW: why set to nil here?
-        F.singleton.keypressed = nil
+        F.widget.keypressed = nil
         assert.equal('a', seen[1])
         assert.is_table(seen[2])
         assert.is_true(seen[3])
@@ -329,7 +329,7 @@ describe('#input events dispatching', function()
         F.activate_project()
         F.show_widget({ text = 'ab' })
         F.session.press('backspace')
-        assert.same({ 'a' }, F.singleton:get_text())
+        assert.same({ 'a' }, F.widget:get_text())
       end)
 
     -- REVIEW/cosmetic: prose below is a bit unnatural (content fine, grammar crippled) 
@@ -340,9 +340,9 @@ describe('#input events dispatching', function()
       function()
         F.activate_project()
         F.show_widget({ text = 'keep' })
-        F.singleton:hide()
+        F.widget:hide()
         F.session.press('backspace')
-        assert.same({ 'keep' }, F.singleton:get_text())
+        assert.same({ 'keep' }, F.widget:get_text())
       end)
   end)
 
@@ -381,10 +381,10 @@ describe('#input events dispatching', function()
         input.hooks.textinput = function() return true end
         F.session.type('X')
 	-- REVIEW/fidelity: why would we check sigleton internals instead of compy.input. method ? (official behaviour)
-        assert.is_true(F.singleton:is_empty())
+        assert.is_true(F.widget:is_empty())
         input.hooks.textinput = function() return false end
         F.session.type('Y')
-        assert.same({ 'Y' }, F.singleton:get_text())
+        assert.same({ 'Y' }, F.widget:get_text())
       end)
   end)
 
@@ -420,7 +420,7 @@ describe('#input events dispatching', function()
         })
         F.show_widget({ text = 'ab' })
         F.session.press('backspace')
-        assert.same({ 'ab' }, F.singleton:get_text())
+        assert.same({ 'ab' }, F.widget:get_text())
       end)
 
     -- doc/development/decisions/input.md, Decision 10, {jargon: native}
@@ -435,7 +435,7 @@ describe('#input events dispatching', function()
         })
         F.show_widget()
         F.session.type('Z')
-        assert.same({ 'Z' }, F.singleton:get_text())
+        assert.same({ 'Z' }, F.widget:get_text())
       end)
 
     -- REVIEW/clarity: unite with the first test in this group, and remove references from 'downstream bucket D' from the prose. We simply test that hook fires whether widget is shown or hidden or never shown. Its a wortful test which would normally belong to both variants (hook installed via input API, and hook installed from legacy sandboxed love.* equivalent). See remark abouve about reusing tests group. Amd once again -- the test itself is worthful, and belongs to dispatching chain. The reason: it checks that downstream dispatching chain members (or just last one -- widget) do not block upstream consumption

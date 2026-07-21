@@ -112,7 +112,7 @@ end
 -- The persistent singleton widget (main.lua: one instance,
 -- published to love.state.user_input_controller; the compy.input
 -- wrappers resolve it from there).
-local function build_singleton(cfg)
+local function build_widget(cfg)
   local m = UserInputModel(cfg, InputEvalText)
   local c = UserInputController(m, nil, true)
   c:init_view({ render = function() end, draw = function() end })
@@ -128,7 +128,7 @@ end
 -- The line-123 REVIEW that used to sit here ("is it safe to call these
 -- at load time?") is resolved by exactly this move. F.reset (below)
 -- still runs per-test; setup/teardown bracket the whole file.
-local cfg, CC, singleton, session
+local cfg, CC, widget, session
 
 -- F for Fixture. Fields (F.cc/console/editor/singleton/session/cfg) are
 -- nil until F.setup runs; reading them at describe-body scope is a bug.
@@ -145,7 +145,7 @@ function F.setup()
   -- main.lua's reorder): ConsoleController construction builds
   -- the project env's compy.input, which binds to the widget's
   -- own callbacks table — so the widget must exist first.
-  singleton = build_singleton(cfg)
+  widget = build_widget(cfg)
   CC = build_console(cfg)
   --- REVIEW/DOC: 'slots', 'gate last-resort route' sound exotic and cannot be understood without context -- dependence on 'when no widget is up' looks like abstraction leak; if its just the way framework sets the controllers when launched -- tell exactly that
   -- Native slots: the gate's last-resort route when no widget
@@ -163,7 +163,7 @@ function F.setup()
   F.cc        = CC
   F.console   = CC.input
   F.editor    = CC.editor
-  F.singleton = singleton
+  F.widget = widget
   F.session   = session
   F.cfg       = cfg
 end
@@ -177,9 +177,9 @@ function F.teardown()
     Controller.project_input:deactivate()
   end
   _G.love, _G.TESTING = nil, nil
-  cfg, CC, singleton, session = nil, nil, nil, nil
+  cfg, CC, widget, session = nil, nil, nil, nil
   F.cc, F.console, F.editor   = nil, nil, nil
-  F.singleton, F.session, F.cfg = nil, nil, nil
+  F.widget, F.session, F.cfg = nil, nil, nil
 end
 
 -- The project-facing public surface (compy.input.show/hide); it
@@ -210,8 +210,8 @@ end
 -- Activate the singleton widget 
 -- REVIEW: why not via compy.input.show ? 
 function F.show_widget(opts)
-  singleton:show(opts)
-  return singleton
+  widget:show(opts)
+  return widget
 end
 
 -- REVIEW: is it adequate mocking? When project sets up 'love' its actually sets up project_env.love -- sandboxed table what is passed as 'userlove' in a container. Here' instead it sets up direct love callback?
@@ -320,14 +320,14 @@ function F.reset()
   love.update(1.0)
   CC.input:clear()
   CC.editor.input:clear()
-  singleton:clear()
-  singleton.shown = false
+  widget:clear()
+  widget.shown = false
   -- The widget's OWN callbacks table (which IS compy.input.
   -- callbacks): re-seed the stay-open defaults between tests, the
   -- same reset production teardown runs (reset_widget_outputs).
   -- A value set by one test would otherwise leak into the next.
-  singleton:reset_callbacks()
-  singleton.result = nil
+  widget:reset_callbacks()
+  widget.result = nil
 end
 
 return F
