@@ -126,7 +126,6 @@ describe('#input events dispatching', function()
     -- removes a {jargon:
     -- tier} — the same callback
     -- fires again on the next event (configuration is permanent).
-    -- REVIEW/clarity/sanity:
     it('is a permanent configuration', function()
       local n = 0
       local input = F.activate_project()
@@ -312,9 +311,8 @@ describe('#input events dispatching', function()
   end)
 
   -- REVIEW/clarity/consistency: 'avoid *sink*, use *text widget* instead'?
-  -- REVIEW/cosmetic: extra '---' right below this line and after
-  -- ---- defaults + hidden sink (doc/development/decisions/input.md,
-  -- Decision 10 and Decision 2) -------
+  -- defaults + hidden sink (doc/development/decisions/input.md,
+  -- Decision 10 and Decision 2)
 
   describe('defaults and the hidden sink', function()
     -- REVIEW/fidelity/consistency: test against all non-defined participants? (both handler and hook -- disabled altogether or one-by-one -- I think already described somewhere above... symmetry feels off there

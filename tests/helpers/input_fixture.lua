@@ -225,7 +225,8 @@ end
 
 --- REVIEW/DOC: 'slot' and 'tier-3' language should rather not be there. instead I'd pferer to see specific pointer to the code/function which is mocked (and why is it mocked, not called?) 
 --- REVIEW: I am not sure the level of mocking is correct there. I would rather expect setting 'natives' as project environment (like userlove) and calling the normal framework operation that runs project
---- REVIEW/DOC: 'REAL activation path' is claimed, not proved (at least via reference to source code, better by calling real code)
+--- The "REAL activation path" is consoleController.lua `run_user_code`,
+--- the real project-run entry that calls Controller.set_user_handlers.
 --- REVIEW/DOC: 'M4 ruling-1' is emphemeral dev-time reference, and I suspect the whole comment may reflect outdated logic/architecture
 -- Take the project route through the REAL activation path
 -- (Controller.set_user_handlers, what a project run calls): the

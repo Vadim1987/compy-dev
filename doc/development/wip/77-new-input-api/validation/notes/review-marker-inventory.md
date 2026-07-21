@@ -128,12 +128,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: test-fidelity design concern re mocking depth; same theme as RVW-006/008/010 → TRIAGE
 - Disposition: —
 
-**RVW-010** `tests/helpers/input_fixture.lua:228` — Kind: `DOC`
+~~**RVW-010**~~ `tests/helpers/input_fixture.lua:228` — Kind: `DOC`
 > "REVIEW/DOC: 'REAL activation path' is claimed, not proved (at least via reference to source code, better by calling real code)"
 - Comments-on: `F.activate_project`'s doc claim "the REAL activation path"
 - Bucket: **DISSOLVE?**
 - Rationale: claim checked and substantiated — `F.activate_project` (line 241) calls `Controller.set_user_handlers(natives or {}, CC)`, the exact function `src/controller/consoleController.lua:123` calls (`cc.main_ctrl.set_user_handlers(env['love'], cc)`) when a real project run starts; the "proof" the marker asks for exists in-code, just add the cross-reference → DISSOLVE?
-- Disposition: —
+- Disposition: **RESOLVED (Batch 1, S19)** — owner ruled: replace marker with a supporting reference. Marker replaced by a 2-line comment naming `consoleController.lua` `run_user_code` as the real project-run entry that calls `Controller.set_user_handlers`. Suite 841/0/0/4.
 
 **RVW-011** `tests/helpers/input_fixture.lua:229` — Kind: `DOC`
 > "REVIEW/DOC: 'M4 ruling-1' is emphemeral dev-time reference, and I suspect the whole comment may reflect outdated logic/architecture"
@@ -385,12 +385,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: coverage-gap question (symmetric cases); needs a coverage audit to answer, not done here → TRIAGE
 - Disposition: —
 
-**RVW-045** `tests/input/input_events_spec.lua:129` — Kind: `clarity/sanity`
+~~**RVW-045**~~ `tests/input/input_events_spec.lua:129` — Kind: `clarity/sanity`
 > "REVIEW/clarity/sanity:"
 - Comments-on: `it('is a permanent configuration', ...)`
 - Bucket: **DISSOLVE?**
 - Rationale: marker body is empty — no concern recorded (confirmed by direct read of the line, nothing follows the colon) — safe to drop, nothing to triage → DISSOLVE?
-- Disposition: —
+- Disposition: **RESOLVED (Batch 1, S19)** — owner ruled: remove. Empty marker line deleted. Suite 841/0/0/4.
 
 **RVW-046** `tests/input/input_events_spec.lua:144` — Kind: `clarity/consistence`
 > "REVIEW/clarity/consistence: this test is redundant -- the whole need raised from reversing misinterpreted requirements -- test can safely go, it repeats one particular configuration tested above"
@@ -518,12 +518,12 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: subordinate to RVW-033 → TRIAGE
 - Disposition: —
 
-**RVW-064** `tests/input/input_events_spec.lua:315` — Kind: `cosmetic`
+~~**RVW-064**~~ `tests/input/input_events_spec.lua:315` — Kind: `cosmetic`
 > "REVIEW/cosmetic: extra '---' right below this line and after"
 - Comments-on: same banner as RVW-063 (the `---- … -------` decoration on lines 316-317)
 - Bucket: **DISSOLVE?**
 - Rationale: checked — this dash-bracketed section-divider style is used consistently throughout the file for every subsection banner (compare lines 66, 157-158, 216-217, 351-352, 394-395, 484-486); it is the file's deliberate house style, not a stray/accidental artifact → DISSOLVE?
-- Disposition: —
+- Disposition: **RESOLVED (Batch 1, S19)** — owner ruled: remove remark + the extra dividers on the two banner lines below. Marker deleted; `---- ` prefix and ` -------` suffix stripped from the banner, keeping the label + doc-ref. NB: leaves this banner lighter than the file's other `-- ----` banners (owner-directed). Suite 841/0/0/4.
 
 **RVW-065** `tests/input/input_events_spec.lua:320` — Kind: `fidelity/consistency`
 > "REVIEW/fidelity/consistency: test against all non-defined participants? (both handler and hook -- disabled altogether or one-by-one -- I think already described somewhere above... symmetry feels off there"
@@ -1096,6 +1096,10 @@ empty **Disposition** (`—`, filled during sweeps).
 | **Total** | **138** |
 
 DISSOLVE? markers: RVW-010, RVW-045, RVW-064, RVW-121, RVW-123, RVW-127.
+
+**Progress:** 3 resolved so far.
+- **Batch 1 (S19, tests/ dissolvables):** RVW-010 ✓, RVW-045 ✓, RVW-064 ✓ — all RESOLVED (see rows).
+- Remaining DISSOLVE?: RVW-121, RVW-123, RVW-127 — all `src/`, PARKED (src/ sweep deferred; owner confirms after tests/ swept).
 
 ### By file
 
