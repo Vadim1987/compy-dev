@@ -11,8 +11,11 @@ decisions first — they collapse ~1/3 of the markers).
 `src/` expansion after `tests/` is swept.
 
 ## How to use this
-1. **Rule the four governing decisions first (§Governing).** Each disposes a whole cluster,
-   so the walkthrough then only mops up what a governing ruling didn't settle.
+1. **Rule the governing decisions first (§Governing).** Each disposes a whole cluster,
+   so the walkthrough then only mops up what a governing ruling didn't settle. **Status
+   (2026-07-21): the governing tier is CLEARED from this lane** — D1/D2/D5/D6 ruled+applied;
+   **D4 deferred into TF2/TF3**; **D3 relocated to the collapse-gate ledger**
+   (`../notes/collapsed-gate-ledger.md`). Next in-lane work is the mop-up batches (§Batches).
 2. **Then walk the mop-up batches (§Batches), ≤10 markers each.** Each row carries a
    recommended disposition; the owner confirms/overrides; the runner applies (edit + inventory
    disposition + suite + commit) per batch.
@@ -71,7 +74,14 @@ Whether the project-hook API is `input.on_textinput` or `input.hooks.textinput`.
   old name). Disposition: **DROP RVW-071/079/069** and REWORD the stale `on_text_input`/`sink`/
   `tier-3` describe/it strings to the ratified vocab. No design work, no deferral.
 
-### D3 — Console-as-hidden-sink safety (master **RVW-111**)
+### D3 — Console-as-hidden-sink safety (master **RVW-111**) — RELOCATED to the collapse-gate ledger
+> **RELOCATED (owner, 2026-07-21).** D3 is not marker vocabulary — it's a genuine runtime
+> **design-safety** ambiguity, surfaced *during* this pre-TF2 noise-cleanup. Thrown forward to
+> the pre-B/C/D collapse-gate ledger (`../notes/collapsed-gate-ledger.md`, row **G-1**, category
+> (b), OPEN) to be ruled in the collapsed sitting after TF2/TF3 — **not** ruled in the marker
+> lane. Markers RVW-107..112 stay in-tree, un-dropped, pointing there. Section kept below for the
+> charter text.
+
 The substantive question: when a project runs and the input widget is hidden, does the console
 **silently consume / evaluate** keystrokes? RVW-111 argues that's dangerous-or-pointless and
 that an active *route* should own the fall-through, not a hidden console. **Governs:** RVW-107,
@@ -82,7 +92,15 @@ that an active *route* should own the fall-through, not a hidden console. **Gove
   design gap** the owner rules (and may feed a decision/tech-debt entry). Highest-value cluster;
   do not delegate the ruling.
 
-### D4 — Testing philosophy: drive real framework code / public surface vs. internal mocks
+### D4 — Testing philosophy: drive real framework code / public surface vs. internal mocks — DEFERRED into TF2/TF3
+> **DEFERRED (owner, 2026-07-21).** D4 *is* the Test-Fidelity investigation; ruling it in the
+> marker lane would rule it twice and risk divergence. Deferred **as a unit into TF2/TF3** — the
+> ~13 non-fidelity markers ride along with the three fidelity items already stamped `→TF2`
+> (below). Item 3 (the `setup_callback_handlers`/`set_default_handlers` naming collision) is
+> **not heavy** (owner): the collision is documented in
+> `../../../internals/event_dispatch_layers.md`; its in-tree remark is left in place for the
+> owner's own eyes during the TF2 manual recheck — **not** promoted to the collapse-gate ledger.
+
 Recurring across the fixture and several specs: should fixtures/tests call **real framework
 entrypoints + the public `compy.input` surface** instead of hand-rolled provision/deprovision
 algorithms and `F.singleton.*` monkeypatches? **Governs:** RVW-006, 007, 009, 012, 013, 014
@@ -283,8 +301,10 @@ Owner's own in-progress, self-assigned tagging actions — leave until the owner
 **111 open `tests/` markers** (RVW-001..114 minus the 3 Batch-1 done). Groups below **cross-list**
 a few markers (e.g. 069 in D1+D2, 049 in D1+B-E, 072 in D4), so the counts are approximate, not a
 clean partition — each marker's final single home is fixed when its batch runs.
-- **Governing (rule first):** D1 (vocab, ~13), D2 (API-shape, ~2), D3 (hidden-sink safety, ~6),
-  D4 (testing-philosophy + A2, ~16). ≈ 35 distinct markers.
+- **Governing (all disposed as of 2026-07-21):** D1 (vocab, ~13) ✅ · D2 (API-shape, ~2) ✅ ·
+  D5 (native rename) ✅ · D6 (slot) ✅ — all ruled+applied. **D3 (hidden-sink safety, ~6) →
+  relocated to collapse-gate ledger** (markers stay in-tree, un-dropped). **D4 (testing-philosophy
+  + A2, ~16) → deferred into TF2/TF3.** ≈ 35 distinct markers, none now ruled in this lane.
 - **Mop-up:** B-E prose (~18, split E1/E2) · B-F structural (~14, split F1/F2) · B-COV coverage
   (~22, split COV1/COV2/COV3) · B-I doc-hygiene (~14). ≈ 68 markers.
 - **Parked:** RVW-092/093/095 (owner-tracked).
