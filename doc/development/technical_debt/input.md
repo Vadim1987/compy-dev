@@ -14,6 +14,32 @@ action; revisit at the named point).
 
 ## Standing
 
+### Project-handler wrapping: dedup the guard, drop the misleading `keyboard_` name
+`controller.lua:146-217` builds the wrappers that adapt a project's own `love.*`
+handlers (its `userlove` table) for the input chain. Two builders — `wrapped_native`
+(`:158`, via `CC:wrap_handler`, **return discarded** — fire-and-forget pointer
+handlers, assigned straight onto `love.*` in `hook_pointer`) and `keyboard_native`
+(`:193`, via `chain_native` `:177`, **return propagated** — chain participants seeded
+as `pic.hooks[event]` in `occupy_keyboard`) — carry the **identical guard**
+(`orig and new and orig ~= new`: "project set its own handler, differing from the
+framework default") and differ only in the wrapper they call. The guard is
+load-bearing, **not** removable: skip it and `keyboard_native` returns
+`chain_native(CC, nil)`, a non-nil wrapper that on every keypress does `xpcall(nil,…)`
+and routes the resulting error to the project error handler — error-handler spam per
+keystroke for any event the project didn't override.
+- **Two problems.** (1) `keyboard_native` is misnamed — nothing keyboard-specific;
+  it is *the return-propagating variant of the guarded wrapper*, only ever called with
+  keyboard keys. (2) The guard is duplicated across the two builders.
+- **Shape.** One guarded-wrapper helper parametrized by return-policy (keep vs
+  discard); honest names (e.g. `chain_project_handler` / `wrap_project_handler`), no
+  `native`/`keyboard_` label. Behaviour-preserving.
+- **Why deferred (not folded into D5 vocabulary rename, 2026-07-21):** renaming these
+  under a mechanical sweep would either bless the smell with fresh names or smuggle a
+  behaviour-touching refactor into a rename commit. D5 renamed everything else
+  (`natives`→`handlers`, docs, tests); this region + its defining comment (`:146-153`)
+  were carved out for this dedicated pass. Related breadcrumb: the `userlove`/`forward_*`
+  rename note at `controller.lua:233`.
+
 ### `keys_pressed` can go stale on focus loss
 
 - **Where:** `src/controller/controller.lua` — `keys_pressed` is maintained

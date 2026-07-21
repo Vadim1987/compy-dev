@@ -61,7 +61,7 @@ components, in order:
 1. **`shortcuts[event][combo]`** — per-combo functions the project registered (Decision 8's
    per-event keying and canonical-combo normalisation apply unchanged).
 2. **`hooks[event]`** — one per-event hook slot, absorbing both the old per-event generic
-   callback and the legacy native-`love.*` seeding path into one slot (Decision 10 revised).
+   callback and the legacy project `love.*` handler seeding path into one slot (Decision 10 revised).
 3. **the widget** — terminal, always invoked while the route is active. Its *shownness*, not its
    return value, decides whether it consumed the event: shown → the widget runs and the chain
    reports consumed; hidden → the widget is skipped and the chain reports not-consumed (Decision
@@ -148,7 +148,7 @@ keyboard lockout that made polling-plus-hotkeys impossible in the first place. T
 (rather than wrapping the old functions) was a deliberate stakeholder call: this is pre-1.0, the
 full set of callers is known and small, the examples exist to demonstrate good code, and a
 legacy shim left in a release would teach the pattern the feature exists to retire. The break is
-bounded to text fields; native keyboard handling keeps working (Decision 10).
+bounded to text fields; the project's keyboard handling keeps working (Decision 10).
 
 **Consequence.** The old globals (`input_text`, `input_code`, `validated_input`, `user_input`,
 `write_to_input`) are gone from the project environment as ordinary `nil` fields. Their examples
@@ -367,32 +367,32 @@ code carries this as a deferred marker. See the technical-debt register for the 
 auto-provision into `hooks[event]` (Decision 2's second chain component) — no widget-aware
 gating, no lifecycle split, no custom logic. `hooks[event]` is a single table and the single
 source of truth: at project activation, any event for which the project has not already set an
-explicit hook gets seeded once with its captured native handler (if any); after that moment the
+explicit hook gets seeded once with its captured project handler (if any); after that moment the
 table **is** the whole story — nil-ing a hook clears it, full stop, with no fallback
 resurrection.
 
 **Substance changed from the original pure-wrap.** The original decision resolved the hook slot
 by precedence on **every event**: an explicit `compy.input.on_*` assignment won; otherwise the
-captured native seeded the slot; otherwise a no-op — nil-ing the explicit assignment resurrected
-the native. That two-store precedence rule, re-resolved live, is gone. "Read the native once at
+captured handler seeded the slot; otherwise a no-op — nil-ing the explicit assignment resurrected
+the handler. That two-store precedence rule, re-resolved live, is gone. "Read the handler once at
 activation, never re-consult" — the part that matters for correctness — is unchanged; only the
 fallback mechanics moved from per-event resolution to a one-time seed, and this is recorded as a
 genuine semantic change, not a pure rename.
 
-**Why.** Treating natives as ordinary chain participants keeps the model uniform (they consume on
+**Why.** Treating project handlers as ordinary chain participants keeps the model uniform (they consume on
 truthy, fall through on falsey, like anything else) and is what makes the keyboard-lockout fix
-(Decision 1) reach legacy code too: a native handler now sees events even while the widget is
+(Decision 1) reach legacy code too: a project handler now sees events even while the widget is
 shown. The alternative — a widget-aware wrapper that gated the native on visibility — would
 reintroduce the exact special-case the subsystem exists to remove. "One table, one truth" is also
 a strictly more predictable contract than a precedence rule invisible from the table's own
 contents — a project (or a debugger) inspecting `hooks.keypressed` could not otherwise tell
-whether a native was silently active underneath a `nil`. The resurrection-on-nil behaviour was
+whether a handler was silently active underneath a `nil`. The resurrection-on-nil behaviour was
 never asked for; it was an artifact of two separate storage locations being resolved late.
 
-**Consequence, accepted.** Because natives fire while the widget is shown, the two examples that
-combined a native handler with widget solicitation changed behaviour and were migrated alongside
+**Consequence, accepted.** Because project handlers fire while the widget is shown, the two examples that
+combined a project handler with widget solicitation changed behaviour and were migrated alongside
 the change. Breaking-and-fixing the affected examples was the explicit expectation, not a
-regression to avoid; pure-native projects (no widget) are unaffected.
+regression to avoid; handler-only projects (no widget) are unaffected.
 
 ## Decision 11 — the route connects only while the project is actively running
 
@@ -404,7 +404,7 @@ project participant — handler tables, callbacks, widget configuration — rese
 
 **Why.** This is the established platform behaviour, adopted as a design constraint because no
 product ruling motivated changing it. The precise scope matters and is binding: the disconnect
-covers **keyboard/text slots only** — pointer natives stay hooked until the project actually
+covers **keyboard/text slots only** — pointer handlers stay hooked until the project actually
 stops, so pen-and-paper projects (which draw on click while otherwise idle) remain interactive in
 `'project_open'`. An implementer must **not** "tidy up" by unifying pointer disconnection into
 this boundary; the asymmetry is intentional and load-bearing for those projects.

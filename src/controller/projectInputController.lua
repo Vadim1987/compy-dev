@@ -33,17 +33,17 @@ local EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
 
 --- Seed the project's hooks table (doc/development/decisions/input.md,
 --- Decision 10 revised): each event with no explicit project hook gets
---- its captured native love.* handler, once, at activation. After this
+--- the project's own love.* handler, once, at activation. After this
 --- the hooks table is the single source of truth — a nil'd hook clears,
 --- with no resurrection (validation/reviews/delta-spec-input-api.md §5).
 --- Runs after the project's top-level code, so an explicit hooks[event]
 --- set there is already present and correctly preserved.
 --- @param hooks table  compy_input.hooks
---- @param natives table  { event -> fn? }
-local function seed_hooks(hooks, natives)
+--- @param handlers table  { event -> fn? }
+local function seed_hooks(hooks, handlers)
   for _, event in ipairs(EVENTS) do
     if hooks[event] == nil then
-      hooks[event] = natives[event]
+      hooks[event] = handlers[event]
     end
   end
 end
@@ -96,17 +96,17 @@ function ProjectInputController:_dispatch(event, trigger, ...)
     love.state.user_input_controller, event, trigger, ...)
 end
 
---- Take the keyboard route for a project run. `natives` holds the
+--- Take the keyboard route for a project run. `handlers` holds the
 --- project's own error-wrapped love.* keyboard handlers (from the
 --- caller); they seed the hooks table once here (seed_hooks;
 --- doc/development/decisions/input.md, Decision 10 revised) — only where
 --- the project set no explicit hook. After seeding, hooks is read
---- directly on each event; there is no separate natives store.
---- @param natives table?
+--- directly on each event; there is no separate handlers store.
+--- @param handlers table?
 --- @param compy_input table
-function ProjectInputController:activate(natives, compy_input)
+function ProjectInputController:activate(handlers, compy_input)
   self.compy_input = compy_input
-  seed_hooks(compy_input.hooks, natives or {})
+  seed_hooks(compy_input.hooks, handlers or {})
 end
 
 --- Forget the project's handlers (doc/development/decisions/input.md,

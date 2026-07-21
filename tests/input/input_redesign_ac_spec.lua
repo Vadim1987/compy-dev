@@ -14,11 +14,11 @@ describe('#input #r4 input-API redesign acceptance', function()
 
   -- AC8 (Decision 10 revised): hooks[event] is one
   -- table, seeded ONCE at activation with the project's captured
-  -- native love.* handler; thereafter a nil clears it with no
+  -- love.* handler; thereafter a nil clears it with no
   -- resurrection — the deliberate semantic change from the old
-  -- per-event `explicit or native` re-resolution.
+  -- per-event `explicit or handler` re-resolution.
   describe('AC8 — hook seeding, one-shot', function()
-    it('a captured native fires via the seeded hook', function()
+    it('a captured handler fires via the seeded hook', function()
       local seen = 0
       F.activate_project({
         keypressed = function() seen = seen + 1 end,
@@ -27,7 +27,7 @@ describe('#input #r4 input-API redesign acceptance', function()
       assert.equal(1, seen)
     end)
 
-    it('nil-ing a seeded hook does not resurrect the native',
+    it('nil-ing a seeded hook does not resurrect the handler',
       function()
         local seen = 0
         local input = F.activate_project({

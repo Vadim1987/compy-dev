@@ -94,6 +94,51 @@ questions** (wrap-native helper; play-mode fixture) per the TF3 plan.
   tech-debt/refactor task, annotate markers as tracked). If "mocks acceptable here" → REWORD the
   markers to a one-line justification + DROP. Either way one ruling disposes the cluster.
 
+### D5 — `native`/`natives` vocabulary rename (owner, 2026-07-21)
+**Baseline-confirmed feature-invented term.** `git grep native updev -- src` = **0** in the input
+sense (all baseline hits are the vendored `nativefs` filesystem lib). So `native`/`natives` was
+born inside feat/77 and self-ratified by its own design docs — NOT pre-existing project vocabulary.
+Not a public contract: the public surface is `compy.input.hooks[event]`; `natives` leaked only into
+**private** identifiers (`project_natives`, `wrapped_native`, `chain_native`, `keyboard_native`,
+`seed_hooks(hooks, natives)` param) + comments + ratified prose. The code already sources these from
+a param named `userlove`.
+- **RULED (owner): variant B — `handler`.** Prose → "the project's own love.\* handler(s)" (zero
+  jargon); identifiers → `project_natives`→`project_handlers`, `*_native`→`*_handler`,
+  `natives` param→`handlers`; tests `it('a native …')`→`it('a project handler …')`. Keep `userlove`
+  as-is (it's accurate provenance).
+- **Blast radius (grep census, real, minus `alter`***`native`*** false positives + vendored):**
+  src ≈ 21 (controller ~12 + projectInputController 9), tests ≈ 37 (input_events 24, fixture 7,
+  redesign_ac 4, shortcuts_click 1, widget_lifecycle 1), ratified docs ≈ 16 (decisions 13 +
+  internals 3; input_api hits are `alternative` FPs). **~74 lines.**
+- **Re-homes the parked markers:** RVW-073/077 (native-install-path describe/vars, was "→D4") are
+  **D5 work**. Also folds the fixture native-naming markers (input_fixture:191/227) + the
+  input_events native-group markers (378/387/388).
+- **Run SOON — before D4/D3** (owner: high cognitive noise fogs the remaining review). Reorders the
+  earlier D1,D2,D4,D3 → …D5,D6,D4,D3.
+
+### D6 — dissolve `slot` contextually (owner, 2026-07-21)
+**Baseline-confirmed feature-invented + vague-because-overloaded.** `git grep slot updev -- src`
+= **0**. `slot` is doing **two jobs**, which is exactly why it needs context: (a) **gateway
+occupancy** ("keyboard/text slots", "slot occupant", "route slot management") = *which controller
+owns `love.handlers.keypressed`* — the code already names this `_keyboard_route`; (b) **assignable
+position** ("hook slot", "on_text_entered slot", "validator slot", "output slot") = *a function
+field* — the real name is **hook** (`hooks[event]`) or **callback field** (widget).
+- **RULED (owner): dissolve `slot`, contextually.** Occupancy sense → **route** vocabulary;
+  assignable sense → **hook** / **callback field**. Retire the umbrella word. Existing src marker
+  `projectInputController.lua:4` (RVW range) is resolved by this. `before_exit_slot` private local
+  may stay or →`before_exit_field` (discretion).
+- **Blast radius (grep census):** src 10 (consoleController 5, controller 3, projectInputController
+  2 incl. the marker line), tests 28 (widgets_callbacks 9, fixture 6, input_events 6, nfr 3,
+  shortcuts 2, session 1, reconfigure 1), ratified docs 19 (decisions 10, internals 8, input_api 1).
+  **~57 lines.**
+- **Run alongside/after D5**, before D4/D3.
+
+**D5/D6 note:** these touch **src + ratified docs + tests together** (unlike tests-only D1/D2) — a
+tests-only reword would re-drift tests from docs/src. Sweep all three areas per cluster. LSP
+re-verified 2026-07-21: OK for `definition`/`diagnostics`/local-fn refs, **BROKEN on cross-file
+method refs** (missed `pic:activate` call site) — **grep is the completeness authority** for these
+renames; LSP is a second opinion only.
+
 **Governing decisions dispose ≈ 37 markers.** The ~74 below are the mop-up.
 
 ---

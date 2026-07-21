@@ -204,8 +204,8 @@ end
 --- preserved so a seeded hook can consume like any participant.
 --- @param userlove table
 --- @param CC ConsoleController
---- @return table natives
-local function project_natives(userlove, CC)
+--- @return table handlers
+local function project_handlers(userlove, CC)
   return {
     keypressed =
         keyboard_native(userlove, CC, 'keypressed'),
@@ -234,7 +234,7 @@ end
 local function occupy_keyboard(userlove, CC)
   local pic = Controller.project_input
   local compy = CC:get_project_env().compy
-  pic:activate(project_natives(userlove, CC), compy.input)
+  pic:activate(project_handlers(userlove, CC), compy.input)
   -- wrapped (not assigned) to bind `pic` as method receiver:
   -- `love.keypressed = pic.keypressed` would drop `self`.
   love.keypressed = function(k, sc, isr)

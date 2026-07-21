@@ -18,7 +18,7 @@
 -- REVIEW/clarity: language of the prose below is broken -- it tries to say that this test covers only half of the activities but fails to say so (and its alwo not clear why we have 9 input files not just 2 spolier: because its not 'half-this/half-that' split)
 -- Mechanics half of the four-tier dispatch chain (order/consume/
 -- fall-through, combo tables, signatures, defaults, hooks and
--- native install, the mutable/immutable boundary) — doc/development/decisions/input.md,
+-- handler install, the mutable/immutable boundary) — doc/development/decisions/input.md,
 -- Decision 2. The outputs half (widget outputs, submit/cancel) is
 -- input_widget_callbacks_spec.lua.
 
@@ -375,18 +375,17 @@ describe('#input events dispatching', function()
       end)
   end)
 
-  -- REVIEW/clarity/jargon: rename? (according to new vocabulary the describe below would be something like "hooks: installation via sandboxed love.* handlers/slots" (in this context 'slots' may be tolerable?) suggestions are welcome. Word 'native' is certainly misleading and should be removed from all declarations in the group.
-  -- ---- {jargon: tier-3}: the {jargon: native} install path
+  -- ---- the project-handler install path
   -- (doc/development/decisions/input.md, Decision 10) -----
 
-  describe('tier-3: the native install path', function()
+  describe('the project-handler install path', function()
     -- doc/development/decisions/input.md, Decision 10: a project
-    -- {jargon: native} is a plain {jargon: tier-3}
+    -- handler is a plain hook
     -- participant that fires REGARDLESS of widget-shown state
     -- (the reversed suppress-while-shown mutation is gone).
-    -- REVIEW/consistency: any hook not only promoted 'native' should fire regardless of widget status (and widget absence can have two forms: never was 'shown', or was 'shown than hidden')
-    -- REVIEW/clarity: make it clear that 'native' always behaves like hook -- so the match in behaviour is not occasional. Maybe reuse shared tests suite (if busted supports it)
-    it('a native fires whether or not the widget is shown',
+    -- REVIEW/consistency: any hook not only a promoted project handler should fire regardless of widget status (and widget absence can have two forms: never was 'shown', or was 'shown than hidden')
+    -- REVIEW/clarity: make it clear that a project handler always behaves like a hook -- so the match in behaviour is not occasional. Maybe reuse shared tests suite (if busted supports it)
+    it('a project handler fires whether or not the widget is shown',
       function()
         local seen = 0
         F.activate_project({
@@ -398,9 +397,9 @@ describe('#input events dispatching', function()
         assert.equal(2, seen)
       end)
 
-    -- doc/development/decisions/input.md, Decision 10, {jargon: native}
-    -- path: a truthy {jargon: native} intercepts the sink.
-    it('a native returning truthy intercepts the sink',
+    -- doc/development/decisions/input.md, Decision 10, project-handler
+    -- path: a truthy handler intercepts the widget.
+    it('a handler returning truthy intercepts the widget',
       function()
         F.activate_project({
           keypressed = function() return true end,
@@ -410,12 +409,12 @@ describe('#input events dispatching', function()
         assert.same({ 'ab' }, F.widget:get_text())
       end)
 
-    -- doc/development/decisions/input.md, Decision 10, {jargon: native}
-    -- path: a falsey {jargon: native} falls through to
-    -- the sink (asserted on the textinput channel too, so all
-    -- three channels are covered across the {jargon: native}
+    -- doc/development/decisions/input.md, Decision 10, project-handler
+    -- path: a falsey handler falls through to
+    -- the widget (asserted on the textinput channel too, so all
+    -- three channels are covered across the handler
     -- rows).
-    it('a falsey native textinput falls through to the sink',
+    it('a falsey handler textinput falls through to the widget',
       function()
         F.activate_project({
           textinput = function() return false end,
@@ -426,14 +425,14 @@ describe('#input events dispatching', function()
       end)
 
     -- REVIEW/clarity: unite with the first test in this group, and remove references from 'downstream bucket D' from the prose. We simply test that hook fires whether widget is shown or hidden or never shown. Its a wortful test which would normally belong to both variants (hook installed via input API, and hook installed from legacy sandboxed love.* equivalent). See remark abouve about reusing tests group. Amd once again -- the test itself is worthful, and belongs to dispatching chain. The reason: it checks that downstream dispatching chain members (or just last one -- widget) do not block upstream consumption
-    -- doc/development/decisions/input.md, Decision 10, {jargon: native}
+    -- doc/development/decisions/input.md, Decision 10, project-handler
     -- path, keyreleased
     -- channel: fires regardless
     -- of widget-shown state (case a) — the downstream half of
     -- the retired Bucket-D (doc/development/tests.md,
     -- "Input Contract Suite (feature #77)") 'release under a
     -- widget' row.
-    it('a native keyreleased fires while the widget is shown',
+    it('a handler keyreleased fires while the widget is shown',
       function()
         local seen = 0
         F.activate_project({
@@ -444,28 +443,27 @@ describe('#input events dispatching', function()
         assert.equal(1, seen)
       end)
 
-    -- REVIEW/clarity: update prose and declaration and variable names to new vocabulary
     -- doc/development/decisions/input.md, Decision 10 precedence:
-    -- an explicit on_* takes
-    -- precedence over the captured {jargon: native} — the
-    -- {jargon: native} never
-    -- seeds the {jargon: slot} when an on_* is set (no
+    -- an explicit hook takes
+    -- precedence over the captured handler — the
+    -- handler never
+    -- seeds the hook when an explicit hook is set (no
     -- "replace" relation).
-    it('an explicit on_* takes precedence over the native',
+    it('an explicit hook takes precedence over the handler',
       function()
-        local native_hits, cb_hits = 0, 0
-        local function bump() native_hits = native_hits + 1 end
+        local handler_hits, cb_hits = 0, 0
+        local function bump() handler_hits = handler_hits + 1 end
 	-- REVIEW/fidelity/consistency: is 'activate_project' installing hooks via legacy path? (as love.*) are other tests (in the beginning of this suite) also testing this path and theerfore NOT testing input.on_ path (explicit hook configuration). What do we do with it?
         local input = F.activate_project({ keypressed = bump })
         input.hooks.keypressed =
             function() cb_hits = cb_hits + 1; return true end
         F.session.press('a')
         assert.equal(1, cb_hits)
-        assert.equal(0, native_hits)
+        assert.equal(0, handler_hits)
       end)
   end)
 
-  -- REVIEW/consistency/architecture: if we decide to pivot from .on_{event} to .hooks[event] the whole test should not be needed at all
+  -- REVIEW/consistency/architecture: after we pivoted to .hooks[event] (from .on_{event}), is this whole test still needed at all? (resolve in D4)
   -- ---- the mutable/immutable boundary
   -- (doc/development/decisions/input.md, Decision 7)
   -- -------------

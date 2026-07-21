@@ -129,7 +129,7 @@ describe('input contracts: shortcuts and click #input', function()
 
   -- Project stop returns input to the console
   -- (doc/development/decisions/input.md, Decision 11): a project's
-  -- {jargon: native handler} {jargon: is installed} while
+  -- the project handler is installed while
   -- it runs; after stop it receives nothing and typing
   -- lands in the console again. Asserted end-to-end on
   -- behaviour — who receives — not on slot identity.

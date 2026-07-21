@@ -581,54 +581,54 @@ empty **Disposition** (`—`, filled during sweeps).
 - Rationale: same "test the public surface, not internals" family as RVW-060/072 → TRIAGE
 - Disposition: —
 
-**RVW-073** `tests/input/input_events_spec.lua:393` — Kind: `clarity/jargon`
+~~**RVW-073**~~ `tests/input/input_events_spec.lua:393` — Kind: `clarity/jargon`
 > "REVIEW/clarity/jargon: rename? (according to new vocabulary the describe below would be something like \"hooks: installation via sandboxed love.* handlers/slots\" (in this context 'slots' may be tolerable?) suggestions are welcome. Word 'native' is certainly misleading and should be removed from all declarations in the group."
 - Comments-on: `describe('tier-3: the native install path', ...)`
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033, with a concrete rename ("native" -> ...) → TRIAGE
-- Disposition: **DEFERRED -> D4** — native / on_*-install-path entangled; held for the D4 pass (owner: D4 later). Marker retained.
+- Disposition: **RESOLVED (D5, S19)** — the "native"->"handler" rename this marker requested is done (group describe/it/vars renamed; residual sink->widget + tier-3/on_*->hook folded in). Marker removed. Suite 841/0/0/4.
 
 **RVW-074** `tests/input/input_events_spec.lua:402` — Kind: `consistency`
 > "REVIEW/consistency: any hook not only promoted 'native' should fire regardless of widget status (and widget absence can have two forms: never was 'shown', or was 'shown than hidden')"
 - Comments-on: `it('a native fires whether or not the widget is shown', ...)`
 - Bucket: **TRIAGE**
 - Rationale: behavioural-symmetry/coverage question across hook kinds and widget states → TRIAGE
-- Disposition: —
+- Disposition: **SURVIVES -> D4** (substantive coverage: hook/widget-state symmetry). D5 dejargoned 'native'->'a project handler'; marker retained.
 
 **RVW-075** `tests/input/input_events_spec.lua:403` — Kind: `clarity`
 > "REVIEW/clarity: make it clear that 'native' always behaves like hook -- so the match in behaviour is not occasional. Maybe reuse shared tests suite (if busted supports it)"
 - Comments-on: same test as RVW-074
 - Bucket: **TRIAGE**
 - Rationale: proposes shared-suite reuse across "native" and "hook" tests — structural change → TRIAGE
-- Disposition: —
+- Disposition: **SURVIVES -> D4** (shared-suite reuse proposal). D5 dejargoned 'native'->'a project handler'; marker retained.
 
 **RVW-076** `tests/input/input_events_spec.lua:443` — Kind: `clarity`
 > "REVIEW/clarity: unite with the first test in this group, and remove references from 'downstream bucket D' from the prose. We simply test that hook fires whether widget is shown or hidden or never shown. Its a wortful test which would normally belong to both variants (hook installed via input API, and hook installed from legacy sandboxed love.* equivalent). See remark abouve about reusing tests group. Amd once again -- the test itself is worthful, and belongs to dispatching chain. The reason: it checks that downstream dispatching chain members (or just last one -- widget) do not block upstream consumption"
 - Comments-on: `it('a native keyreleased fires while the widget is shown', ...)`
 - Bucket: **TRIAGE**
 - Rationale: merge/restructure proposal, references RVW-075's shared-suite idea → TRIAGE
-- Disposition: —
+- Disposition: **-> D4** (merge/restructure; no vocab change needed — group vocab cleaned in D5). Marker retained.
 
-**RVW-077** `tests/input/input_events_spec.lua:462` — Kind: `clarity`
+~~**RVW-077**~~ `tests/input/input_events_spec.lua:462` — Kind: `clarity`
 > "REVIEW/clarity: update prose and declaration and variable names to new vocabulary"
 - Comments-on: `it('an explicit on_* takes precedence over the native', ...)` doc (lines 463-468)
 - Bucket: **TRIAGE**
 - Rationale: subordinate to RVW-033 → TRIAGE
-- Disposition: **DEFERRED -> D4** — native / on_*-install-path entangled; held for the D4 pass (owner: D4 later). Marker retained.
+- Disposition: **RESOLVED (D5, S19)** — vocabulary update done (prose/declaration/vars renamed native->handler). Marker removed. Suite 841/0/0/4.
 
 **RVW-078** `tests/input/input_events_spec.lua:473` — Kind: `fidelity/consistency`
 > "REVIEW/fidelity/consistency: is 'activate_project' installing hooks via legacy path? (as love.*) are other tests (in the beginning of this suite) also testing this path and theerfore NOT testing input.on_ path (explicit hook configuration). What do we do with it?"
 - Comments-on: `local input = F.activate_project({ keypressed = bump })`, same test as RVW-077
 - Bucket: **TRIAGE**
 - Rationale: raises a genuine potential coverage confound (legacy-path vs `on_*`-path tests) that needs an actual suite-wide audit → TRIAGE
-- Disposition: —
+- Disposition: **-> D4** (legacy-path vs on_*-path coverage audit; no vocab change). Marker retained.
 
 **RVW-079** `tests/input/input_events_spec.lua:483` — Kind: `consistency/architecture`
 > "REVIEW/consistency/architecture: if we decide to pivot from .on_{event} to .hooks[event] the whole test should not be needed at all"
 - Comments-on: `describe('the mutable/immutable boundary', ...)`
 - Bucket: **TRIAGE**
 - Rationale: contingent on the API-redesign proposal at RVW-071 — architecture call → TRIAGE
-- Disposition: **DEFERRED -> D4** — native / on_*-install-path entangled; held for the D4 pass (owner: D4 later). Marker retained.
+- Disposition: **-> D4** — D5 actualized the prose ("after we pivoted to .hooks[event]") and cleaned the group's vocab; the substantive "is this whole test still needed" call remains for D4. Marker retained.
 
 ---
 
@@ -1104,9 +1104,12 @@ DISSOLVE? markers: RVW-010, RVW-045, RVW-064, RVW-121, RVW-123, RVW-127.
   ratified in `decisions/input.md`, implemented in `src/`, and driven by the specs — the markers were
   stale/prose-only. Pass A renamed the `F.singleton`→`F.widget` symbol (commit `46595d2`); Pass B
   reworded prose (`sink`→widget, `tier-3`/`generic callback`→hook) + removed the 12 markers.
-- **DEFERRED → D4:** RVW-073/077/079 — filed under D1/D2 by the carve but entangled with `native` /
-  the on_*-install path; held for the D4 pass (owner: D4 later). Native-group prose (events ≥ the
-  `native install path` describe) left untouched.
+- **D5 (native→handler, S19):** the `native install path` group's vocabulary is now resolved.
+  RVW-073/077 (the two "do the rename" markers) **RESOLVED/removed**; RVW-074/075/076/078/079 are
+  **substantive** (coverage/restructure/fidelity/architecture) and **survive → D4** (074/075
+  dejargoned 'native'→'a project handler'; 079 prose actualized to "after we pivoted"). The
+  `wrapped_native`/`chain_native`/`keyboard_native` src family was carved OUT of D5 to a
+  behaviour-preserving refactor (`technical_debt/input.md` §"Project-handler wrapping").
 - Remaining DISSOLVE?: RVW-121, RVW-123, RVW-127 — all `src/`, PARKED (src/ sweep deferred; owner confirms after tests/ swept).
 
 ### By file

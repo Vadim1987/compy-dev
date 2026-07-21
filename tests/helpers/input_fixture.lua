@@ -231,15 +231,15 @@ end
 -- Take the project route through the REAL activation path
 -- (Controller.set_user_handlers, what a project run calls): the
 -- ProjectInputController becomes the slot occupant and captures
--- the project's `natives` (its love.* handlers) as tier-3 seeds.
+-- the project's `handlers` (its love.* handlers) as hook seeds.
 -- app_state = 'running' so the four-tier chain (not the M4
 -- ruling-1 forward) dispatches. Returns the project-facing
 -- compy.input surface. Unlike running_project (which
 -- assigns love[name] directly), this goes through the
 -- production Controller.set_user_handlers call.
-function F.activate_project(natives)
+function F.activate_project(handlers)
   love.state.app_state = 'running'
-  Controller.set_user_handlers(natives or { }, CC)
+  Controller.set_user_handlers(handlers or { }, CC)
   return F.compy_input()
 end
 
