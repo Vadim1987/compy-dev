@@ -22,7 +22,7 @@ local mock = require('tests.mock')
 -- 0.1.0-m5c}, doc/development/decisions/input.md, Decision 2).
 -- All rows drive the REAL project route: F.activate_
 -- project() installs the ProjectInputController as the
--- {jargon: slot occupant} (app_state='running') via the same
+-- the active route (app_state='running') via the same
 -- Controller.set_user_handlers path a run calls, and
 -- returns the project-facing compy.input surface. The
 -- observable {jargon: seams} are the widget's text
@@ -40,7 +40,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
   -- ---- widget outputs (doc/development/decisions/input.md, Decision 5)
   -- ----------
 
-  describe('output field slots and sharing', function()
+  describe('output fields and sharing', function()
     -- doc/development/decisions/input.md, Decision 5: the four widget
     -- outputs are project-assignable
     -- fields on compy.input (same boundary, widened allowlist).
@@ -57,8 +57,8 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
 
     -- doc/development/decisions/input.md, Decision 5: show(config) keys and
     -- field assignment hit
-    -- the same underlying {jargon: slots}.
-    it('show(config) and fields share one output slot',
+    -- the same underlying callbacks.
+    it('show(config) and fields share one output field',
       function()
         local input = F.compy_input()
         local cb = function() end
@@ -72,11 +72,11 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
 
     -- doc/development/decisions/input.md, Decision 5 cont.: on_text_entered
     -- and validator also
-    -- reach the same {jargon: slot} via config key and via
+    -- reach the same callback via config key and via
     -- field write
     -- (settable-only here; firing/gating is decisions/
     -- input.md, Decision 6).
-    it('show(config) shares on_text_entered slot',
+    it('show(config) shares on_text_entered callback',
       function()
         local input = F.compy_input()
         local cb = function() end
@@ -84,7 +84,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.equal(cb, input.callbacks.on_text_entered)
       end)
 
-    it('field write shares on_text_entered slot',
+    it('field write shares on_text_entered callback',
       function()
         local input = F.compy_input()
         local cb = function() end
@@ -93,7 +93,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.equal(cb, input.callbacks.on_text_entered)
       end)
 
-    it('show(config) shares validator slot',
+    it('show(config) shares validator callback',
       function()
         local input = F.compy_input()
         local vfn = function() return true end
@@ -101,7 +101,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.equal(vfn, input.callbacks.validator)
       end)
 
-    it('field write shares validator slot',
+    it('field write shares validator callback',
       function()
         local input = F.compy_input()
         local vfn = function() return true end

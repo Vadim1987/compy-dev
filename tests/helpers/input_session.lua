@@ -4,7 +4,7 @@
 -- test exercises the same path a keystroke takes from LÖVE.
 -- Built on the keys_pressed_spec raw-handler pattern; NOT an
 -- EditorSession generalisation (that helper bypasses the love
--- slots and drives EditorController directly).
+-- handlers and drives EditorController directly).
 
 require('controller.controller')
 

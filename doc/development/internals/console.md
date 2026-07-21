@@ -106,7 +106,7 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
 
 Projects can request live text input mid-run via `compy.input.*`
 **(supported since 1.0.0-rc20260712)**
-(`show`/`hide`/`configure`/`clear`/`set_text`, callback slots
+(`show`/`hide`/`configure`/`clear`/`set_text`, callback fields
 `on_text_entered`/`after_submit`/etc. — the full surface is in
 [`user_input.md`](user_input.md), and the project-author usage guide
 is [`../../input_api.md`](../../input_api.md)). This creates a second

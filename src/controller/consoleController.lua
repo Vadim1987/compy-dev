@@ -488,7 +488,7 @@ end
 --- pending store for consumption by the next show()
 --- (doc/development/internals/user_input.md, "configure(config)");
 --- output-callback fields go through the same sticky `state`
---- slots show() already reads — persisted, never applied
+--- fields show() already reads — persisted, never applied
 --- live (there is no active session to apply them to).
 --- @param state table
 --- @param cfg table
@@ -569,7 +569,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
     -- the Contract's live-updatable set — prompt/highlighter/
     -- validator/widget outputs; text/cursor inert there); safe
     -- + un-warned while hidden — provided fields persist (via
-    -- state/pending, same slots show() reads) for the very next
+    -- state/pending, same fields show() reads) for the very next
     -- show(). Never a partial/silent apply either way.
     configure = function(cfg)
       local next_cfg = cfg or { }
@@ -633,6 +633,11 @@ local get_compy_input = function()
   return build_input_surface(state, methods)
 end
 
+--- REVIEW/provenance: is `compy.before_exit` a requested+ratified feature, or an interim
+--- bridge born from a misinterpreted spec? Born on this branch in 386cfe1 (M5c chunk 4);
+--- absent in updev. It is a project *lifecycle* callback, not input dispatch — verify it
+--- against design/spec/M6-02-before-exit.md before we treat it as load-bearing. (D6 leaves
+--- `before_exit_slot` untouched: outside the input-slot vocabulary.)
 local function default_before_exit()
   Log.debug('compy.before_exit noop')
 end

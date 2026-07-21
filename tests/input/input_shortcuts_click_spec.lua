@@ -85,7 +85,7 @@ describe('input contracts: shortcuts and click #input', function()
   -- path over raw pointer delivery, asserted on outcomes
   -- against the project-defined handlers (default no-ops).
   -- The 0.4s / 2.5px constants are mechanism. In scope
-  -- because {badspecref: M4} {jargon: rewires the handler slots} this path hangs
+  -- because {badspecref: M4} rewires the handlers this path hangs
   -- off — it is a regression surface, not a routing rule.
   describe('framework click detection', function()
 
@@ -132,7 +132,7 @@ describe('input contracts: shortcuts and click #input', function()
   -- the project handler is installed while
   -- it runs; after stop it receives nothing and typing
   -- lands in the console again. Asserted end-to-end on
-  -- behaviour — who receives — not on slot identity.
+  -- behaviour — who receives — not on handler identity.
   describe('project stop returns input to the console',
     function()
 

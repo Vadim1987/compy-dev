@@ -194,8 +194,8 @@ describe('input contracts: live reconfigure #input', function()
 
       -- Pending fields are one-shot: a LATER bare show() must
       -- not keep re-injecting a stale hidden-configured draft
-      -- (distinguishes this from the output-callback {jargon:
-      -- slots},
+      -- (distinguishes this from the output-callback
+      -- fields,
       -- which stay sticky forever by design).
       it('hidden-configured text does not leak into a later ' ..
         'show', function()

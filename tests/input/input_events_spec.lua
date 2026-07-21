@@ -30,7 +30,7 @@ local F = require('tests.helpers.input_fixture')
 -- (doc/development/decisions/input.md, Decision 2).
 -- All rows drive the REAL project route: F.activate_
 -- project() installs the ProjectInputController as the
--- {jargon: slot occupant} (app_state='running') via the same
+-- the active route (app_state='running') via the same
 -- Controller.set_user_handlers path {clarity: a run calls}, and
 -- returns the project-facing compy.input surface. The
 -- observable {jargon: seams} are the widget's text
@@ -470,9 +470,9 @@ describe('#input events dispatching', function()
 
   describe('the mutable/immutable boundary', function()
     -- doc/development/decisions/input.md, Decision 7: exactly the
-    -- {jargon: tier-3} callback {jargon: slots} are assignable;
+    -- the hook fields are assignable;
     -- anything else raises loudly (never a silent swallow).
-    it('assigning an unknown slot raises', function()
+    it('assigning an unknown key raises', function()
       local input = F.compy_input()
       assert.has_error(function() input.nonsense = 1 end)
       assert.has_error(function()
@@ -481,7 +481,7 @@ describe('#input events dispatching', function()
       assert.has_error(function() input.shortcuts = { } end)
     end)
 
-    it('assigning an allowed callback slot is accepted',
+    it('assigning an allowed hook is accepted',
       function()
         local input = F.compy_input()
         assert.has_no.errors(function()

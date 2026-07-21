@@ -93,6 +93,21 @@ questions** (wrap-native helper; play-mode fixture) per the TF3 plan.
   it spawns a **fixture-refactor work item** (bigger than marker-drop; record as a decision +
   tech-debt/refactor task, annotate markers as tracked). If "mocks acceptable here" → REWORD the
   markers to a one-line justification + DROP. Either way one ruling disposes the cluster.
+- **Handed off from D6 (owner, 2026-07-21) — three concrete fidelity items for the TF review:**
+  1. **`fixture:150` `REVIEW/fidelity (→TF2)`** — the `F.new` `set_love_*` block hand-rolls a
+     **partial** equivalent of `Controller.set_default_handlers()` (skips its View ops +
+     `project_input:deactivate()`, installs a hand-picked event subset). *Why not just call
+     `set_default_handlers()`?*
+  2. **`fixture:226` `REVIEW/fidelity (→TF2)`** — does `F.activate_project` match the **actual**
+     activation path (`consoleController.run_user_code` → `Controller.set_user_handlers`) instead
+     of mocking it? (Same question `:245` raises for the next helper.)
+  3. **Architecture-naming question (owner spotted):** `Controller.setup_callback_handlers`
+     installs `love.handlers.*` (the master dispatch table, w/ shortcut logic), while
+     `set_default_handlers`/`set_love_*` install the individual `love.<event>` callbacks — **two
+     layers both named "handlers", plus a "callback" in the name.** After D6 settled hook /
+     callback / handler for the *input-API* vocabulary, the *Controller/framework* layer still
+     carries its own "callbacks" alongside "handlers"; clarify what each means there (or escalate).
+     Not a D6 rename — a conceptual/architecture item TF should resolve or escalate.
 
 ### D5 — `native`/`natives` vocabulary rename (owner, 2026-07-21)
 **Baseline-confirmed feature-invented term.** `git grep native updev -- src` = **0** in the input
@@ -140,6 +155,28 @@ method refs** (missed `pic:activate` call site) — **grep is the completeness a
 renames; LSP is a second opinion only.
 
 **Governing decisions dispose ≈ 37 markers.** The ~74 below are the mop-up.
+
+---
+
+## Deferred phases (owner, 2026-07-21) — completeness residue from D5/D6
+
+The D5/D6 census scoped only `decisions/` + `internals/`; it under-scoped three reference docs.
+Owner ruling: don't hold the D6 commit for these; handle in upcoming commits.
+
+- **Phase TD-actualize — `doc/development/technical_debt/input.md`.** This doc is actualized
+  regularly, so its vocabulary refresh gets **its own phase**, not a D6 sub-sweep. Deferred D5/D6
+  residue to fold in there: `:360`/`:365` `native-slot restores` → `default-handler restores`;
+  `:519-520` `slot occupant (the project's native handler)` → `active route (the project's
+  handler)`. **Prose left intact for now** (owner) — incl. the `:501/:503` "Old state" historical
+  description (`compy_input[chan] or natives[event]`, "captured native"): leave as historical.
+  **Keep (not residue):** the carve-out item `:19-39` deliberately names the *current* code
+  (`wrapped_native`/`keyboard_native`/`chain_native`/`natives`) its future refactor renames;
+  `:121` "slots into" (English verb); `:154` "before_exit slot" (excluded lifecycle sense).
+- **Reference-doc vocab completeness (small, upcoming commit)** — ratified/guide docs the census
+  missed: `tests.md:17` `F.activate_project(natives)`→`(handlers)` + `raw-slot`→`raw handler`;
+  `tests.md:19` `bypasses the \`love\` slots`→`\`love\` handlers`; `input_api.md:317` `a single
+  function slot per event`→`a single function per event`. (`input_api.md:72/217` = "alternative"
+  false positives.)
 
 ---
 

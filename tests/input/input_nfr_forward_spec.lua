@@ -185,7 +185,7 @@ describe('input contracts: NFR and forward #input', function()
 
       -- Retargeted ({badspecref: E30} {badspecref:
       -- Scope-10(a)} — cold session, route-restoration =
-      -- active route/mode, not slot restore; design/spec/
+      -- active route/mode, not handler restore; design/spec/
       -- M5c-dispatch-chain.md "Resolved (E30..."): stop's
       -- DISTINCTIVE
       -- contract is the full teardown, not "keyboard route
@@ -205,12 +205,12 @@ describe('input contracts: NFR and forward #input', function()
       -- literal claim
       -- instead:
       -- after stop no project handler remains wired in ANY
-      -- {jargon: slot}. The wider Decision 11 teardown
+      -- love.* callback. The wider Decision 11 teardown
       -- (compy.input
       -- handlers/hooks, widget silent-hide) is covered by
       -- the 'route connection lifecycle' block below.
       it('stop leaves no project handler wired in any ' ..
-          'slot', function()
+          'love.* callback', function()
         F.activate_project()
         assert.is_not.equal(
           Controller._defaults.keypressed, love.keypressed)

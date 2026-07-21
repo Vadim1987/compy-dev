@@ -216,13 +216,13 @@ local function project_handlers(userlove, CC)
   }
 end
 
---- The project route occupies the keyboard/text slots for
+--- The project route occupies the keyboard/text handlers for
 --- the run; the project's own handlers ride along for
---- delegation (never slot occupants themselves).
+--- delegation (never route owners themselves).
 --- @param userlove table
 --- @param CC ConsoleController
 -- `userlove`: the project's sandboxed `love` table. `occupy`:
--- take over the keyboard/text slots for the project route's
+-- take over the keyboard/text handlers for the project route's
 -- run (doc/development/decisions/input.md Decision 11 uses
 -- this verb). Giving the project route
 -- its own connect path — not a generic route swap — is

@@ -1,8 +1,7 @@
 local class = require('util.class')
 require("util.key")
 
---- REVIEW/DOC: can we reconsider 'slots' as a primary term? Could it be 'event slot' or 'event handler slot' or something similar? Ideally I want a concise and unambiguous term. "Slot" is a bit vague as it requires understanding the context
--- The project route: occupant of the keyboard/text slots while
+-- The project route: owner of the keyboard/text handlers while
 -- a project run owns the screen — a sibling to ConsoleController
 -- / EditorController. The route is DUMB: it navigates each
 -- keyboard/text event through THREE consumers in order, stopping

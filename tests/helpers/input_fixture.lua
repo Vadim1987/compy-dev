@@ -147,10 +147,11 @@ function F.setup()
   -- own callbacks table — so the widget must exist first.
   widget = build_widget(cfg)
   CC = build_console(cfg)
-  --- REVIEW/DOC: 'slots', 'gate last-resort route' sound exotic and cannot be understood without context -- dependence on 'when no widget is up' looks like abstraction leak; if its just the way framework sets the controllers when launched -- tell exactly that
-  -- Native slots: the gate's last-resort route when no widget
-  -- is up, and the route half of pointer delivery
-  -- (doc/development/internals/user_input.md, "Direct mouse events").
+  --- REVIEW/fidelity (→TF2): this hand-rolls a partial equivalent of
+  --- Controller.set_default_handlers(), except it does not do that function's
+  --- View operations or set other controller flags (project_input:deactivate())
+  --- and installs a hand-picked event subset. Why not just call
+  --- Controller.set_default_handlers()? (Postponed to Test-Fidelity review.)
   Controller.set_love_keypressed(CC)
   Controller.set_love_keyreleased(CC)
   Controller.set_love_textinput(CC)
@@ -223,20 +224,9 @@ function F.running_project(name, fn)
   love[name] = fn
 end
 
---- REVIEW/DOC: 'slot' and 'tier-3' language should rather not be there. instead I'd pferer to see specific pointer to the code/function which is mocked (and why is it mocked, not called?) 
---- REVIEW: I am not sure the level of mocking is correct there. I would rather expect setting 'natives' as project environment (like userlove) and calling the normal framework operation that runs project
---- The "REAL activation path" is consoleController.lua `run_user_code`,
---- the real project-run entry that calls Controller.set_user_handlers.
---- REVIEW/DOC: 'M4 ruling-1' is emphemeral dev-time reference, and I suspect the whole comment may reflect outdated logic/architecture
--- Take the project route through the REAL activation path
--- (Controller.set_user_handlers, what a project run calls): the
--- ProjectInputController becomes the slot occupant and captures
--- the project's `handlers` (its love.* handlers) as hook seeds.
--- app_state = 'running' so the four-tier chain (not the M4
--- ruling-1 forward) dispatches. Returns the project-facing
--- compy.input surface. Unlike running_project (which
--- assigns love[name] directly), this goes through the
--- production Controller.set_user_handlers call.
+--- REVIEW/fidelity (→TF2): does this match the actual project activation path
+--- (consoleController `run_user_code` → Controller.set_user_handlers) instead of
+--- mocking it? (Postponed to Test-Fidelity review.)
 function F.activate_project(handlers)
   love.state.app_state = 'running'
   Controller.set_user_handlers(handlers or { }, CC)
@@ -263,7 +253,7 @@ end
 -- Restore the love.* callbacks a test replaced via
 -- running_project, so the next test starts on the
 -- framework defaults.
-local function restore_native_slots()
+local function restore_default_handlers()
   love.keypressed    = Controller._defaults.keypressed
   love.textinput     = Controller._defaults.textinput
   love.keyreleased   = Controller._defaults.keyreleased
@@ -312,7 +302,7 @@ function F.reset()
   -- an unrelated console error (discovered via the route-
   -- lifecycle inspect row, m5c chunk 4).
   love.state.suspend_msg        = nil
-  restore_native_slots()
+  restore_default_handlers()
   reset_chain()
   local compy                   = CC:get_project_env().compy
   compy.singleclick             = nil

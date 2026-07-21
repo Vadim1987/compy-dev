@@ -13,6 +13,37 @@ appears throughout.
 
 ---
 
+## Vocabulary — hook, callback, handler (and why there is no "slot")
+
+Three words name assignable functions in this subsystem; they are kept distinct on purpose,
+and an earlier interim word — *slot* — is deliberately retired.
+
+- **hook** — a function keyed by a **LÖVE event name** (`hooks[event]`: `keypressed`,
+  `textinput`, `keyreleased`). The namespace is **closed and externally defined**: it can only
+  ever hold names LÖVE itself emits. You never invent a hook name.
+- **callback** — a function keyed by a **Compy-chosen name** (`callbacks.on_text_entered`,
+  `validator`, `highlighter`, `on_limit_reached`). The namespace is **open and Compy-defined**:
+  the names are ours to extend, and none of them is a LÖVE event.
+
+Both are mount points for a function, so it is tempting to collapse them into one concept. We
+do **not** — the split records *which authority owns the name*. A closed, LÖVE-dictated event
+set and an open, self-authored callback set are different contracts even where the assignment
+mechanics coincide; merging the vocabularies would erase that boundary just where a reader most
+needs it.
+
+- **handler** — the project's captured `love.*` function (Decision 10). A handler is simply a
+  **callback whose mount point is never empty**: the route always owns a `love.keypressed`
+  etc., so "handler" earns its own word for the always-present occupant a route installs, as
+  distinct from the sometimes-unset `hooks`/`callbacks` a project assigns.
+
+There is **no "slot".** "Install a hook/callback into slot *X*" says exactly what "define
+hook/callback *X*" already says — the mount point is implied by the definition, so naming it
+separately only added a vague third noun that drifted across all three senses above. The word
+is dissolved: occupancy → **route**/**handlers**, the assignable event position → **hook**, the
+assignable widget position → **callback**.
+
+---
+
 ## The problem this shape solves
 
 The previous input API had three structural faults that projects tripped over:
@@ -60,8 +91,8 @@ components, in order:
 
 1. **`shortcuts[event][combo]`** — per-combo functions the project registered (Decision 8's
    per-event keying and canonical-combo normalisation apply unchanged).
-2. **`hooks[event]`** — one per-event hook slot, absorbing both the old per-event generic
-   callback and the legacy project `love.*` handler seeding path into one slot (Decision 10 revised).
+2. **`hooks[event]`** — one per-event hook, absorbing both the old per-event generic
+   callback and the legacy project `love.*` handler seeding path into one hook (Decision 10 revised).
 3. **the widget** — terminal, always invoked while the route is active. Its *shownness*, not its
    return value, decides whether it consumed the event: shown → the widget runs and the chain
    reports consumed; hidden → the widget is skipped and the chain reports not-consumed (Decision
@@ -165,7 +196,7 @@ through its own configured **widget outputs**, which are **not** chain component
 - `validator(text)` and `highlighter(text)` — behaviour configured on the widget.
 
 These are set at `show()` / `configure()`, or assigned as `compy.input` fields — one underlying
-slot, two ergonomics.
+callback, two ergonomics.
 
 **Why.** Routing has two genuinely different directions and conflating them is the trap this
 subsystem was explicitly designed around. Events arriving are a chain concern; a *result* is the
@@ -371,9 +402,9 @@ explicit hook gets seeded once with its captured project handler (if any); after
 table **is** the whole story — nil-ing a hook clears it, full stop, with no fallback
 resurrection.
 
-**Substance changed from the original pure-wrap.** The original decision resolved the hook slot
+**Substance changed from the original pure-wrap.** The original decision resolved the hook
 by precedence on **every event**: an explicit `compy.input.on_*` assignment won; otherwise the
-captured handler seeded the slot; otherwise a no-op — nil-ing the explicit assignment resurrected
+captured handler seeded the hook; otherwise a no-op — nil-ing the explicit assignment resurrected
 the handler. That two-store precedence rule, re-resolved live, is gone. "Read the handler once at
 activation, never re-consult" — the part that matters for correctness — is unchanged; only the
 fallback mechanics moved from per-event resolution to a one-time seed, and this is recorded as a
@@ -396,15 +427,15 @@ regression to avoid; handler-only projects (no widget) are unaffected.
 
 ## Decision 11 — the route connects only while the project is actively running
 
-**Decision.** The project route occupies the **keyboard/text** slots only while the application
+**Decision.** The project route occupies the **keyboard/text** handlers only while the application
 is in the `'running'` state. When a non-blocking project's `main.lua` returns (nothing hooked
-into update/draw), the state drops to `'project_open'` and the keyboard/text slots are restored
-to the console route. On project stop, every slot restores to framework defaults and every
+into update/draw), the state drops to `'project_open'` and the keyboard/text handlers are restored
+to the console route. On project stop, every handler restores to framework defaults and every
 project participant — handler tables, callbacks, widget configuration — resets.
 
 **Why.** This is the established platform behaviour, adopted as a design constraint because no
 product ruling motivated changing it. The precise scope matters and is binding: the disconnect
-covers **keyboard/text slots only** — pointer handlers stay hooked until the project actually
+covers **keyboard/text handlers only** — pointer handlers stay hooked until the project actually
 stops, so pen-and-paper projects (which draw on click while otherwise idle) remain interactive in
 `'project_open'`. An implementer must **not** "tidy up" by unifying pointer disconnection into
 this boundary; the asymmetry is intentional and load-bearing for those projects.
@@ -424,7 +455,7 @@ owning route is inactive.
 
 **Why.** Framing inspect as a routing state rather than a bespoke mode means it needs zero special
 rules — it is the console route plus a choice of environment, and it matches the implementation
-exactly (suspending a project restores all slots to the console). The console running the paused
+exactly (suspending a project restores all handlers to the console). The console running the paused
 project's environment makes it a live debugger console rather than a separate idle one.
 
 ## Decision 13 — the held-key set is exposed read-only, callback-only
