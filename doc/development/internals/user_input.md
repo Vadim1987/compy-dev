@@ -4,7 +4,7 @@
 
 Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget shared across console, editor, and project overlays) and **mouse/pointer input** (handled partly by the framework, partly delegated to projects). This doc covers both, with mode-specific notes where the behavior differs.
 
-For the project-facing usage guide (examples, the `show()` config table, the submit lifecycle from a project author's point of view), see [Compy Input API](../../input_api.md). This doc is the "how it works under the hood" narrative — routing, the dispatch chain, and the mechanism behind each guarantee.
+For the project-facing usage guide (examples, the `show()` config table, the submit lifecycle from a project author's point of view), see [Compy Input API](../../input_api.md). This doc is the "how it works under the hood" narrative — routing, the dispatch chain, and the mechanism behind each guarantee. For the two-layer `love.handlers.*` vs `love.<event>` wiring underneath the gateway (§"Dispatch chain" below), see [Event Dispatch Layers](event_dispatch_layers.md).
 
 ---
 
