@@ -205,6 +205,17 @@ tests, the rename sweep is verified complete (LSP references return zero hits on
 terms), and the REVIEW-remarks inventory has no un-dispositioned "resolved" items left in
 code. Then TF2 resumes.
 
+> **[ACCEPTED 2026-07-21, owner — session18]** Phase R is **CLOSED and accepted** (commit
+> `affc932`, suite 841/0/0/4). The one held-open architectural issue (input widget reading
+> `love.state.app_state`) was resolved via **option E** (editor consumes Enter/Escape upstream;
+> `allow_modify` constructor flag; uniform `keypressed`), and the ratified redesign was folded into
+> `decisions/input.md` (R3). Gate met by **grep** (the `LSP references return zero hits` criterion
+> could not be taken literally — `lua-lsp` returned phantom refs all session; grep is the ground-truth
+> backstop and is clean). The post-R replan hypothesis was reconciled
+> (`reviews/S18-post-R-replan-reconciliation.md`): it survives *amended*; its B/C/D-collapse is gated
+> on TF2/TF3. **Owner ruling: run TF2 next as planned** (DI + TF + R must all be owner-accepted before
+> Phase B — TF still pending).
+
 ### Phase B — Convergence check (Opus; judgment-lite; NO code edits)
 
 [PROPOSED 2026-07-19 addendum: B consumes DI1's verdict table as its evidence base for the

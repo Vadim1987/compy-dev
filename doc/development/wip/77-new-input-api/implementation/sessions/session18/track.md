@@ -194,3 +194,24 @@ UIC reads `love.state.app_state` to scope submit/cancel (abstraction leak). Deci
     and avoids later ceremony. Framed as a **recognized external constraint (not a decision)**, grounded
     in LÖVE/SDL documenting no order, added as a bolded remark inside **Decision 2** (which I cited; it
     establishes the independent-channel shape that implies the constraint). Suite still 841/0/0/4.
+- **COMMITTED `affc932`** (refactor(input): un-fork + fold-in, R-close). Staged 22 files by explicit
+  path; owner's dirs + guardrail-3 scratch left untouched. **PHASE R IS CLOSED.**
+- **Standing carryover FIRED** (R closed this session). Read sealed `post-R-replan-hypothesis.md`,
+  reconciled vs actual state → `validation/reviews/S18-post-R-replan-reconciliation.md`. Verdict:
+  hypothesis SURVIVES amended — the app_state fork was a genuine Phase-B-shaped scaffolding-suspect
+  (NOT small like R5) but is now RESOLVED+EXECUTED, so it strengthens category (b) (2nd heavy closed
+  member) rather than falsifying the note. Four category-(a) rows (R2/R4/R5/C1) still hold; R2
+  partially advanced (eval now documented in input_api.md; result + PR-line remain). Genuine
+  unknowns: TF2+TF3 not run (B gated on owner accepting DI+TF+R; TF2 resumes next, owner-paced,
+  prompt bars me starting it) + Phase A's ~55 no-home process labels (minor, Phase C evidence).
+  R-gate met by grep (LSP unreliable all session — phantom refs; grep is ground truth).
+- Recommendation to owner: (1) formally accept R; (2) run TF2 next (owner-paced); (3) after TF2/TF3
+  adopt the note's collapsed B→C→D over the known short list. Decision is owner's. Do NOT start TF2.
+- Presenting to owner; awaiting the accept-R + next-step ruling before any wrap.
+- **OWNER RULING (2026-07-21): Accept R; TF2 next as planned.** Phase R formally accepted. Standing
+  carryover FIRED + discharged → retired from successor prompt.
+- **WRAP:** wrote `session18/report.md`; successor `session19/prompt.md` (task = TF2, owner-paced,
+  interactive; carryover retired; grep>LSP caveat carried; references report + reconciliation).
+  Dated R-ACCEPTED note appended to plan.md Phase R gate. CURRENT PROMPT repointed → session19.
+  Wrap commit = track + report + session19 prompt + plan note + reconciliation doc + repointed pointer.
+- session18 DONE. Next: session19 runs TF2.
