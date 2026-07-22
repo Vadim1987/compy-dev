@@ -70,35 +70,35 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: the native-slot wiring block (`Controller.set_love_keypressed(CC)` … `set_love_update(CC)`, F.setup)
 - Bucket: **TRIAGE**
 - Rationale: mixes a wording ask with a suspected abstraction leak; owner call on both → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-moot (B-I/1, S19)** — the flagged jargon ("slots"/"gate last-resort route") was removed by D5's native-rename rewrite of that block; the abstraction-leak/fidelity half is absorbed by the `REVIEW/fidelity (→TF2)` marker now at `input_fixture.lua:150`. No marker remains.
 
 **RVW-002** `tests/helpers/input_fixture.lua:160` — Kind: `DOC`
 > "REVIEW/DOC: explain what the line before does and why its needed"
 - Comments-on: line 159, `Controller.set_love_update(CC)` in `F.setup`
 - Bucket: **TRIAGE**
 - Rationale: asks for content to be written, not a factual question → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-I/1, S19)** — reworded to explain `set_love_update` wires `love.update` for the click-timer (single- vs double-click, `controller.lua`); tests advance it via `F.love_update`.
 
 **RVW-003** `tests/helpers/input_fixture.lua:191` — Kind: `DOC`
 > "REVIEW/DOC: we have 'native' handlers, and we have 'compy' handlers, and then we have compy input handlers... there could be a confusion. Can we find a better name explaining this setter unambiguously? Maybe \"project_set_compy\"? (it will also exactly match what it does."
 - Comments-on: `F.set_compy_handler(name, fn)` (line 197)
 - Bucket: **TRIAGE**
 - Rationale: naming suggestion — owner call, same pattern as the `gate`/`deliver` naming markers elsewhere → TRIAGE
-- Disposition: —
+- Disposition: **ESCALATED (B-I/1, S19) → collapse-gate ledger G-2.** The rename ask exposed a genuine public-API coherence gap (`compy.<event>` mouse callback vs `compy.input.hooks[event]` keyboard hook, seeded from `love.<event>`). Rename deferred until the gate rules the API shape; marker reworded in-tree to point at G-2.
 
 **RVW-004** `tests/helpers/input_fixture.lua:192` — Kind: `plain`
 > "REVIEW: maybe we should instead use common method 'project_compy_namespace' (which encapsulates CC:get_project_env().compy), and let calling code work from there? (explicirly setting and getting .input, or other attributes)"
 - Comments-on: `F.set_compy_handler` / the `CC:get_project_env().compy...` access pattern repeated across the fixture
 - Bucket: **TRIAGE**
 - Rationale: refactor-extraction proposal; design call → TRIAGE
-- Disposition: —
+- Disposition: **DROPPED (B-I/1, S19)** — speculative fixture-refactor musing (`project_compy_namespace` helper); overlaps the deferred D4 "prefer real framework code" question. Not pursued now; marker removed.
 
 **RVW-005** `tests/helpers/input_fixture.lua:205` — Kind: `plain`
 > "REVIEW: is it used? Maybe name it 'love_update' for better grepability and transparency?"
 - Comments-on: `F.update(dt)`
 - Bucket: **TRIAGE**
 - Rationale: "is it used?" half is answered — yes, 4 call sites in `tests/input/input_shortcuts_click_spec.lua:100,102,113,125`; the rename ask still stands → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-I/1, S19)** — renamed `F.update` → `F.love_update` (fixture def + the 4 call sites in `input_shortcuts_click_spec.lua`).
 
 **RVW-006** `tests/helpers/input_fixture.lua:211` — Kind: `plain`
 > "REVIEW: why not via compy.input.show ?"
@@ -140,7 +140,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `F.activate_project` doc block, "the four-tier chain (not the M4 ruling-1 forward)" (lines 234-235)
 - Bucket: **TRIAGE**
 - Rationale: checked — the M4 ruling-1 forwarding WAS removed (per `doc/development/wip/77-new-input-api/implementation/outcomes/M5c-04-route-lifecycle.md`), and the comment correctly describes current dispatch as the four-tier chain, only naming the old mechanism parenthetically to disambiguate; not outdated, but the ephemeral dev-session jargon ("M4 ruling-1") is real and worth a rewrite — clarity call, not accuracy → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-moot (B-I/1, S19)** — the flagged comment ("the four-tier chain (not the M4 ruling-1 forward)") was removed when `F.activate_project`'s doc block became the `REVIEW/fidelity (→TF2)` marker; the ephemeral ref no longer exists in-tree.
 
 **RVW-012** `tests/helpers/input_fixture.lua:245` — Kind: `plain`
 > "REVIEW: why this low-level machinery and not a call of some existing function? the intent is plausible, the implementation is suspicious"

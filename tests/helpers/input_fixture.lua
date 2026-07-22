@@ -158,7 +158,10 @@ function F.setup()
   Controller.set_love_mousepressed(CC)
   Controller.set_love_mousereleased(CC)
   Controller.set_love_update(CC)
-  -- REVIEW/DOC: explain what the line before does and why its needed
+  -- set_love_update (above) wires love.update, which drives the
+  -- click-timer distinguishing single- from double-click
+  -- (controller.lua set_love_update); tests advance it with
+  -- F.love_update(dt).
   session = require('tests.helpers.input_session').new(CC)
 
   F.cc        = CC
@@ -189,8 +192,11 @@ function F.compy_input()
   return CC:get_project_env().compy.input
 end
 
--- REVIEW/DOC: we have 'native' handlers, and we have 'compy' handlers, and then we have compy input handlers... there could be a confusion. Can we find a better name explaining this setter unambiguously? Maybe "project_set_compy"? (it will also exactly match what it does.  
--- REVIEW: maybe we should instead use common method 'project_compy_namespace' (which encapsulates CC:get_project_env().compy), and let calling code work from there? (explicirly setting and getting .input, or other attributes)
+-- REVIEW/gate (collapse-gate ledger G-2): project-handler API
+-- is incoherent — mouse handlers are bare callbacks on
+-- compy.<event> (compy.singleclick); keyboard/text handlers are
+-- hooks under compy.input.hooks[event] seeded from love.<event>.
+-- Renaming this setter waits on that gate ruling.
 -- Register a project click handler
 -- (compy.singleclick/doubleclick), the target the framework
 -- click path invokes (doc/development/internals/user_input.md,
@@ -203,8 +209,7 @@ function F.set_mouse_pos(x, y)
   mx, my = x, y
 end
 
--- REVIEW: is it used? Maybe name it 'love_update' for better grepability and transparency?
-function F.update(dt)
+function F.love_update(dt)
   love.update(dt)
 end
 
