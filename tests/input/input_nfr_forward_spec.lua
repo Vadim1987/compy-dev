@@ -13,10 +13,12 @@
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
 
--- REVIEW/clarity: the prose below is a bit mumbling, needs rewrite into more consistent human language
--- Provisional today-facts expected to change, mechanism/NFR guards not
--- behaviour, and forward contracts pending the named milestone
--- (doc/development/tests.md, "Input Contract Suite (this feature)").
+-- REVIEW/recheck: the "named milestone" ref is fragile — milestones
+-- are ephemeral and won't survive release; reword to not depend on it.
+-- This file's assertions are deliberately non-final: provisional facts
+-- about today's implementation (expected to change), guards on mechanism
+-- and NFRs rather than behaviour, and forward contracts pending the named
+-- milestone (doc/development/tests.md, "Input Contract Suite (this feature)").
 
 local F = require('tests.helpers.input_fixture')
 

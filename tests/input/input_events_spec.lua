@@ -47,9 +47,7 @@ describe('#input events dispatching', function()
     F.session.press(k)
   end
 
-  -- REVIEW/clarity: the prose below is correct but uncomprehensible, looks like noise
-  -- ---- order, consume, fall-through
-  -- (doc/development/decisions/input.md, Decision 2) --
+  -- doc/development/decisions/input.md, Decision 2.
 
   describe('order, consume, fall-through', function()
     -- REVIEW/fidelity/consistence: group tests only against specific event type -- keypressed. Should rather be generalized (dynamically constructed) to test against all relevant even types (keyreleased, textinput)?
@@ -92,9 +90,8 @@ describe('#input events dispatching', function()
     -- handler ({jargon: tier 2}) stops the descent —
     -- neither the hook nor the widget runs.
     -- REVIEW/clarity: I would use same chain with mnemonic flags as in previous case -- and probably matrix test to show interception on every step, and also that lack of step (no combo defined, no hook defined) does not prevent other parts from working
-    -- REVIEW/clarity: I'd double-check the 'it' description -- 'truthy handler' means handler is truthy when its function (not false or nil value). we're speaking about *return value* instead. also 'decent' describes mechanics maybe and instead we should use 'stops processing', or 'prevents reaching hook' (and testboth). 
     -- REVIEW/clarity: do we have the symmetric test 'truthy hook return value prevents reaching widget'? and symmetric tests for '*missing* handler does not prevent reaching hook, missing hook does not prevent reaching widget'?
-    it('a truthy combo handler stops the descent', function()
+    it('a shortcut returning truthy stops the chain (hook not reached)', function()
       local reached_cb = false
       local input = F.activate_project()
       input.shortcuts.keypressed['backspace'] =
@@ -136,12 +133,9 @@ describe('#input events dispatching', function()
       end)
   end)
 
-  -- REVIEW/clarity: cleanup prose below and reformulate 'it' in more human-friendly way
   -- REVIEW/clarity: maybe wrap three cases below into sub-describe
-  -- ---- combo tables and normalisation
-  -- (doc/development/decisions/input.md, Decision 8) -------
-  -- REVIEW/clarity: mention handlers there ('tables and normalization' are characteristics of internals, not observable behaviour)
-  describe('combo tables and normalisation', function()
+  -- doc/development/decisions/input.md, Decision 8.
+  describe('shortcuts fire on the normalised combo', function()
     -- doc/development/decisions/input.md, Decision 8: each channel has its
     -- OWN combo sub-table
     -- and keys normalise on assignment ('Ctrl+S' -> 'ctrl+s').
@@ -233,13 +227,10 @@ describe('#input events dispatching', function()
       assert.same({ false, true }, seen)
     end)
 
-    -- REVIEW/clarity: this test IS testing both reading from proxy (i.e. proxy contents) and prohibited writing. But its not stated in the 'it' (definition focused only on write-prohibition). Also, word 'proxy' is not well-undertandable without details and describes implementation, not behaviour. 
     -- REVIEW/clarity/consistency/fidelity: Should instead be something like "describe('pressed keys table') -> it('contains pressed keys') , it('does not contain released keys'), it('can not be modified from hook or handler'))" and multiply it by evet type?
     -- doc/development/decisions/input.md, Decision 13: the keys_pressed
-    -- argument is a
-    -- READ-ONLY proxy —
-    -- reads pass through, writes raise.
-    it('the keys_pressed proxy is read-only', function()
+    -- argument is read-only — reads pass through, writes raise.
+    it('keys_pressed can be read but not modified', function()
       local proxy
       local input = F.activate_project()
       input.hooks.keypressed = function(_, keys)
@@ -302,8 +293,7 @@ describe('#input events dispatching', function()
     -- edits nor
     -- consumes — the event falls through to the widget, which
     -- performs the edit.
-    -- REVIEW/clarity: 'default callback(hook) does (not) smth' is implementation details, behavioural manifestation is 'when no hook configured...'
-    it('the default hook neither edits nor consumes',
+    it('with no project hook set, the event passes through to the widget',
       function()
         F.activate_project()
         F.show_widget({ text = 'ab' })
@@ -311,10 +301,12 @@ describe('#input events dispatching', function()
         assert.same({ 'a' }, F.widget:get_text())
       end)
 
-    -- REVIEW/cosmetic: prose below is a bit unnatural (content fine, grammar crippled) 
+    -- REVIEW/concern: "mutates nothing" may conflict with the
+    -- postponed console-hidden-sink decision (collapse-gate ledger
+    -- G-1 / D3) — if the console is ruled to listen to all or to
+    -- unconsumed events, this expectation changes. Revalidate at G-1.
     -- doc/development/decisions/input.md, Decision 2: an event with no
-    -- participant anywhere and a
-    -- HIDDEN widget mutates nothing — its own internal no-op.
+    -- participant anywhere, and a hidden widget, mutates nothing — a no-op.
     it('no participant + hidden widget mutates nothing',
       function()
         F.activate_project()

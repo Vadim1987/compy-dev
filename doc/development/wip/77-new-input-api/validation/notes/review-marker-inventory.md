@@ -356,7 +356,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: "---- order, consume, fall-through" section banner (line 66)
 - Bucket: **TRIAGE**
 - Rationale: rewrite/removal call on the section banner → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E2, S19)** — dropped the decorative `---- order, consume, fall-through` banner; kept the Decision 2 reference (owner: clean decoration, keep precise reference). Suite 841/0/0/4.
 
 **RVW-041** `tests/input/input_events_spec.lua:70` — Kind: `fidelity/consistence`
 > "REVIEW/fidelity/consistence: group tests only against specific event type -- keypressed. Should rather be generalized (dynamically constructed) to test against all relevant even types (keyreleased, textinput)?"
@@ -377,7 +377,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same test as RVW-042
 - Bucket: **TRIAGE**
 - Rationale: wording-precision call (truthy value vs return value) → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E2, S19)** — it renamed → `a shortcut returning truthy stops the chain (hook not reached)` (owner: "shortcut"; it's the *return value* that's truthy; dropped "descent"). Suite 841/0/0/4.
 
 **RVW-044** `tests/input/input_events_spec.lua:111` — Kind: `clarity`
 > "REVIEW/clarity: do we have the symmetric test 'truthy hook return value prevents reaching widget'? and symmetric tests for '*missing* handler does not prevent reaching hook, missing hook does not prevent reaching widget'?"
@@ -405,7 +405,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: "combo tables and normalisation" section banner (lines 157-158)
 - Bucket: **TRIAGE**
 - Rationale: rewrite ask → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E2, S19)** — dropped the decorative `---- combo tables and normalisation` banner, kept the Decision 8 reference (owner: keep precise reference). The `it`-wording ask is subsumed by the RVW-049 describe rename. Suite 841/0/0/4.
 
 **RVW-048** `tests/input/input_events_spec.lua:156` — Kind: `clarity`
 > "REVIEW/clarity: maybe wrap three cases below into sub-describe"
@@ -419,7 +419,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('combo tables and normalisation', ...)`
 - Bucket: **TRIAGE**
 - Rationale: naming/framing call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E2, S19)** — describe renamed `combo tables and normalisation` → `shortcuts fire on the normalised combo` (owner: "shortcuts fire"; behavioural, not internals). Suite 841/0/0/4.
 
 **RVW-050** `tests/input/input_events_spec.lua:196` — Kind: `fidelity`
 > "REVIEW/fidelity: we'd rather should test that setting combo on one event does not alter propagation of other events, and same with hooks. on the other hand, this test does smoke-check in most economic way. but still testing internals is smelly!"
@@ -475,7 +475,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('the keys_pressed proxy is read-only', ...)`
 - Bucket: **TRIAGE**
 - Rationale: `it`-description accuracy + naming call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E2, S19)** — it renamed → `keys_pressed can be read but not modified` (covers both read-through and write-rejection); "proxy" fully removed from the it AND the doc comment (owner), Decision 13 reference kept. Suite 841/0/0/4.
 
 **RVW-058** `tests/input/input_events_spec.lua:255` — Kind: `clarity/consistency/fidelity`
 > "REVIEW/clarity/consistency/fidelity: Should instead be something like \"describe('pressed keys table') -> it('contains pressed keys') , it('does not contain released keys'), it('can not be modified from hook or handler'))\" and multiply it by evet type?"
@@ -545,14 +545,14 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same test as RVW-066
 - Bucket: **TRIAGE**
 - Rationale: `it`-description framing call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E2, S19)** — it reframed `the default hook neither edits nor consumes` → `with no project hook set, the event passes through to the widget` (owner: "...to widget"). Suite 841/0/0/4.
 
 **RVW-068** `tests/input/input_events_spec.lua:337` — Kind: `cosmetic`
 > "REVIEW/cosmetic: prose below is a bit unnatural (content fine, grammar crippled)"
 - Comments-on: `it('no participant + hidden widget mutates nothing', ...)` doc (lines 338-340)
 - Bucket: **TRIAGE**
 - Rationale: grammar fix ask; content is agreed fine per the marker itself, so this is close to trivial, but rewriting prose is still an edit an owner should confirm the phrasing of → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-with-followup (B-E/E2, S19)** — grammar fixed (`its own internal no-op` → `a no-op`). Owner added a cross-check: **ADDED a `REVIEW/concern`** flagging that "mutates nothing" may conflict with the postponed console-hidden-sink decision (collapse-gate ledger **G-1 / D3**); revalidate at G-1. Ledger G-1 now lists this test as a revalidation touchpoint. Suite 841/0/0/4.
 
 ~~**RVW-069**~~ `tests/input/input_events_spec.lua:354` — Kind: `terminology`
 > "REVIEW/terminology: now we can simply call it 'hooks' (\"describe: hook\" -> describe(\"on_text_input\") -> it(\"fires per character\"))"
@@ -601,7 +601,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same test as RVW-074
 - Bucket: **TRIAGE**
 - Rationale: proposes shared-suite reuse across "native" and "hook" tests — structural change → TRIAGE
-- Disposition: **SURVIVES -> D4** (shared-suite reuse proposal). D5 dejargoned 'native'->'a project handler'; marker retained.
+- Disposition: **KEPT for owner TF2 manual review (B-E/E2, S19)** — the shared-suite-reuse proposal is structural; with D4 deferred into TF2 it rides there. Prose already dejargoned by D5 ('native'→'a project handler'). Marker left in place.
 
 **RVW-076** `tests/input/input_events_spec.lua:443` — Kind: `clarity`
 > "REVIEW/clarity: unite with the first test in this group, and remove references from 'downstream bucket D' from the prose. We simply test that hook fires whether widget is shown or hidden or never shown. Its a wortful test which would normally belong to both variants (hook installed via input API, and hook installed from legacy sandboxed love.* equivalent). See remark abouve about reusing tests group. Amd once again -- the test itself is worthful, and belongs to dispatching chain. The reason: it checks that downstream dispatching chain members (or just last one -- widget) do not block upstream consumption"
@@ -654,7 +654,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: "Provisional today-facts expected to change…" paragraph (lines 18-20)
 - Bucket: **TRIAGE**
 - Rationale: rewrite ask → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-with-followup (B-E/E2, S19)** — paragraph de-mumbled (owner: liked the shape). Owner flagged the content: **ADDED a `REVIEW/recheck`** noting the "named milestone" reference is fragile (milestones are ephemeral, won't survive release) — reword later to not depend on milestone naming. Suite 841/0/0/4.
 
 **RVW-083** `tests/input/input_nfr_forward_spec.lua:24` — Kind: `clarity`
 > "REVIEW/clarity: 'forward' means what? lots of prose in this group are outdated (including REVIEW remarks)"

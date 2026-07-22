@@ -42,6 +42,14 @@ triage the owner commissioned at TF2's opening to reduce review noise). The mark
 |---|---|---|---|---|---|
 | **G-1** | Console-as-hidden-sink safety (S19 **D3**) | (b) design-safety | Master **RVW-111** + governed RVW-107/108/109/110/112. When a project runs and the input widget is hidden, does the **console silently consume/evaluate keystrokes**? RVW-111 argues that's dangerous-or-pointless and that an **active route** should own the fall-through, not a hidden console. | **OPEN** | Doc-first: cross-check `decisions/input.md` + `internals/user_input.md` for whether hidden-console consumption is intended. If settled → reword markers to a doc-reference + drop. If not → real design gap the owner rules (may feed a decision/tech-debt entry). Do **not** rule in the marker lane. |
 
+**Revalidation touchpoints when G-1 is ruled** — tests that currently encode the
+"a no-participant / hidden-widget event mutates nothing" assumption and must be
+rechecked if the ruling changes it (e.g. if the console is ruled to listen to all
+or to unconsumed events):
+- `tests/input/input_events_spec.lua` — `it('with no participant + hidden widget
+  mutates nothing')` asserts "mutates nothing"; a `REVIEW/concern` marker sits at
+  the test pointing back here (added B-E/E2, S19).
+
 ---
 
 ## Explicitly NOT on this ledger
