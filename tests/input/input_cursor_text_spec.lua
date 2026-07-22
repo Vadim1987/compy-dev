@@ -1,18 +1,8 @@
 -- cursor and text surface — {temporal/REVIEW: split from input_contracts_spec.lua (TF1)}.
--- REVIEW/clarity: why the prose below describes event dispatching if the suite references active API? (getting,setting text/cursor?)
--- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
--- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
--- the active screen mode. Vocabulary (doc/development/internals/user_input.md, 
--- "Dispatch
--- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
--- the route-managed input surface and terminal of the chain. Tests assert
--- observable outcomes at public seams, never method-name spies.
--- keypressed fires for every physical key, textinput only for
--- character-producing keys (doc/development/internals/user_input.md, "Data flow").
---- REVIEW/clarity: phrase below has no verb so reads awkwardly ('"x on y (...)" -- does or means what?')
--- get_cursor/set_cursor/set_text on the public project surface
--- (doc/input_api.md, "API reference"; doc/development/internals/user_input.md, "Cursor
--- manipulation and 'reset'").
+-- Covers get_cursor / set_cursor / set_text on the public project surface
+-- (doc/input_api.md, "API reference"; doc/development/internals/user_input.md,
+-- "Cursor manipulation and 'reset'"). Implementation:
+-- model/input/userInputModel.lua, controller/userInputController.lua.
 
 local F = require('tests.helpers.input_fixture')
 

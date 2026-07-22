@@ -179,65 +179,65 @@ empty **Disposition** (`—`, filled during sweeps).
 
 ---
 
-## `tests/input/highlight_shape_spec.lua` (9)
+## `tests/input/highlight_regression_spec.lua` (9)
 
-**RVW-017** `tests/input/highlight_shape_spec.lua:1` — Kind: `clarity`
+**RVW-017** `tests/input/highlight_regression_spec.lua:1` — Kind: `clarity`
 > "REVIEW/clarity: 'shape contract' is jargonic. The purpose of this test is simply to isolate already-fixed regression (input blowing up in some configurations when highlighter is not set but accessed by index)"
 - Comments-on: file title / describe('highlight shape contract #input')
 - Bucket: **TRIAGE**
 - Rationale: naming/framing call (regression test vs "contract") → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E1, S19)** — opener reframed `Highlight shape contract.` → `Regression guard: highlight \`.hl\` must stay indexable.`; suite name → `highlight nil-index regression #input`. Suite 841/0/0/4.
 
-**RVW-018** `tests/input/highlight_shape_spec.lua:2` — Kind: `clarity`
+**RVW-018** `tests/input/highlight_regression_spec.lua:2` — Kind: `clarity`
 > "REVIEW/clarity: test purpose (regression catch) should be clearly communicated both in file name, suite name, opening comments"
 - Comments-on: same file header as RVW-017
 - Bucket: **TRIAGE**
 - Rationale: companion ask to RVW-017 — same rename/rewrite call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E1, S19)** — file renamed `highlight_shape_spec.lua` → `highlight_regression_spec.lua` (git mv); suite name + opening reframed to regression (see RVW-017). Suite 841/0/0/4.
 
-**RVW-019** `tests/input/highlight_shape_spec.lua:23` — Kind: `coherence`
+**RVW-019** `tests/input/highlight_regression_spec.lua:23` — Kind: `coherence`
 > "REVIEW/coherence: does it interfere with other tests?"
 - Comments-on: `if not orig_print then _G.orig_print = function() end end` (global stub install)
 - Bucket: **TRIAGE**
 - Rationale: cross-file/global-state interaction question — needs checking test run order and other specs' use of `orig_print`, not verified here → TRIAGE
 - Disposition: —
 
-**RVW-020** `tests/input/highlight_shape_spec.lua:36` — Kind: `clarity`
+**RVW-020** `tests/input/highlight_regression_spec.lua:36` — Kind: `clarity`
 > "REVIEW/clarity: function name does not communicate the purpose of check unambiguously"
 - Comments-on: `local function view_access_ok(model)`
 - Bucket: **TRIAGE**
 - Rationale: naming call → TRIAGE
 - Disposition: —
 
-**RVW-021** `tests/input/highlight_shape_spec.lua:39` — Kind: `fidelity`
+**RVW-021** `tests/input/highlight_regression_spec.lua:39` — Kind: `fidelity`
 > "REVIEW/fidelity: does this guard betray the purpose of test?"
 - Comments-on: `if h == nil then return true end` inside `view_access_ok`
 - Bucket: **TRIAGE**
 - Rationale: test-fidelity question re whether the early-return masks the regression path → TRIAGE
 - Disposition: —
 
-**RVW-022** `tests/input/highlight_shape_spec.lua:44` — Kind: `fidelity`
+**RVW-022** `tests/input/highlight_regression_spec.lua:44` — Kind: `fidelity`
 > "REVIEW/fidelity: why check test symptom instead of bug path? (i.e. calling the function which internally could've blow up?)"
 - Comments-on: `return pcall(function() ... end)` in `view_access_ok`
 - Bucket: **TRIAGE**
 - Rationale: same test-fidelity family as RVW-021 → TRIAGE
 - Disposition: —
 
-**RVW-023** `tests/input/highlight_shape_spec.lua:51` — Kind: `clarity`
+**RVW-023** `tests/input/highlight_regression_spec.lua:51` — Kind: `clarity`
 > "REVIEW/clarity: what's the difference between three modes not explained? (especially not clear how LuaEval() is different from InputEvalLua. Maybe wrap them into aliases semantically meaningful in test context? (e.g. `ev = evaluator_without_highlighter()`, `input_with_lua_evaluator', 'input_with_text_evaluator'). Or even table (ev = evaluators['text_no_hl']; m=evaluators['lua_normal']; m=evaluators['lua_with_dummy_hl'])"
 - Comments-on: `it('parser present, highlighter returns nil -> hl still indexable', ...)`
 - Bucket: **TRIAGE**
 - Rationale: naming/structure proposal for the three evaluator variants → TRIAGE
 - Disposition: —
 
-**RVW-024** `tests/input/highlight_shape_spec.lua:53` — Kind: `clarity/fidelity`
+**RVW-024** `tests/input/highlight_regression_spec.lua:53` — Kind: `clarity/fidelity`
 > "REVIEW/clarity/fidelity:  how LuaEval() with nil-returning highlighter is different from case#2 and case#3? it seems to be a mix of both, but not sure which production scenarios are mapped. And maybe there shold be 4 cases? ( [lua || text] x [ missing hl || returning empty ])"
 - Comments-on: `local ev = LuaEval()` inside the same `it` as RVW-023
 - Bucket: **TRIAGE**
 - Rationale: coverage-matrix proposal (2x2 of lua/text x missing/empty hl) — needs owner call on whether worth the added cases → TRIAGE
 - Disposition: —
 
-**RVW-025** `tests/input/highlight_shape_spec.lua:61` — Kind: `fidelity`
+**RVW-025** `tests/input/highlight_regression_spec.lua:61` — Kind: `fidelity`
 > "REVIEW/fidelity: claims 'empty and non-empty' but its not clear what both mean and how *both* are tested"
 - Comments-on: `it('standard lua eval -> hl indexable (empty and non-empty)', ...)`
 - Bucket: **TRIAGE**
@@ -260,7 +260,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: file header prose (routing invariant / dispatch-chain vocabulary block, lines 3-12)
 - Bucket: **TRIAGE**
 - Rationale: scope-mismatch question between boilerplate header prose and this file's actual (cursor/text API) subject → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E1, S19)** — dropped the dispatch/routing-invariant boilerplate entirely (owner: zero lines for irrelevant boilerplate); header now states the cursor/text subject + points to the API impl (`userInputModel.lua`, `userInputController.lua`). Suite 841/0/0/4.
 
 ~~**RVW-028**~~ `tests/input/input_cursor_text_spec.lua:6` — Kind: `clarity`
 > "REVIEW/clarity: route(controller) and sink(chain element in the controller) are both called 'consumer' below"
@@ -274,7 +274,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: "get_cursor/set_cursor/set_text on the public project surface" (line 14)
 - Bucket: **TRIAGE**
 - Rationale: pure grammar/rewrite ask — but still a rewrite the owner should confirm the intended meaning of before editing → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E1, S19)** — verb added: `get_cursor/... on the public project surface` → `Covers get_cursor / set_cursor / set_text on the public project surface`. Suite 841/0/0/4.
 
 **RVW-030** `tests/input/input_cursor_text_spec.lua:43` — Kind: `fidelity`
 > "REVIEW/fidelity: only one case is checked -- 'when active' proven, but whether this line/col really always match cursor? not clear (otoh we're against testing all corner cases). Maybe its not worth separate case -- but running few modifications and rechecking assertions would be practical?"
@@ -320,14 +320,14 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: file header scope note (lines 21-25, "Mechanics half of the four-tier dispatch chain…")
 - Bucket: **TRIAGE**
 - Rationale: rewrite ask on the file-split rationale — content call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E1, S19)** — scope note rewritten: states this file = dispatch MECHANICS, outputs live in the sibling, and the split is nine thematic files (not a two-way mechanics/outputs cut). Suite 841/0/0/4.
 
 **RVW-036** `tests/input/input_events_spec.lua:29` — Kind: `clarity`
 > "REVIEW/clarity: need to cleanup jargon, also the prose below partialy duplicates opening prose"
 - Comments-on: "The four-tier dispatch chain" section banner (lines 31-44)
 - Bucket: **TRIAGE**
 - Rationale: cleanup/de-dup ask, same theme as RVW-035 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-E/E1, S19)** — banner de-duped against the opening (dropped the repeated "never a spy" line + the redundant Decision-2 heading) and stripped the inline `{clarity:}` / `{jargon:}` annotation tags. Suite 841/0/0/4.
 
 ~~**RVW-037**~~ `tests/input/input_events_spec.lua:30` — Kind: `clarity`
 > "REVIEW/clarity: prose below speaks of callbacks but we have also output callbacks -- maybe we should instead use term 'hooks' to describe what is installed by project into dispatch chain"
@@ -341,6 +341,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: doc block above `local function chord(mod, k)` (lines 55-58)
 - Bucket: **TRIAGE**
 - Rationale: trim-the-comment ask — plausible but a content-editing call, not verified as trivial → TRIAGE
+- Disposition: **RESOLVED (B-E/E1, S19)** — trimmed the `chord()` doc block to one line (kept the 'ctrl+…' serialisation point + Decision 8 ref, dropped the keys_pressed mechanics the helper doesn't control). Suite 841/0/0/4.
 - Disposition: —
 
 **RVW-039** `tests/input/input_events_spec.lua:59` — Kind: `quality`
@@ -1117,7 +1118,7 @@ DISSOLVE? markers: RVW-010, RVW-045, RVW-064, RVW-121, RVW-123, RVW-127.
 | File | Count | RVW range |
 |---|---|---|
 | `tests/helpers/input_fixture.lua` | 16 | RVW-001 – RVW-016 |
-| `tests/input/highlight_shape_spec.lua` | 9 | RVW-017 – RVW-025 |
+| `tests/input/highlight_regression_spec.lua` | 9 | RVW-017 – RVW-025 |
 | `tests/input/input_cursor_text_spec.lua` | 6 | RVW-026 – RVW-031 |
 | `tests/input/input_events_spec.lua` | 48 | RVW-032 – RVW-079 |
 | `tests/input/input_nfr_forward_spec.lua` | 10 | RVW-080 – RVW-089 |

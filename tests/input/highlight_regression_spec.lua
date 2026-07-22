@@ -1,6 +1,4 @@
---- REVIEW/clarity: 'shape contract' is jargonic. The purpose of this test is simply to isolate already-fixed regression (input blowing up in some configurations when highlighter is not set but accessed by index)
---- REVIEW/clarity: test purpose (regression catch) should be clearly communicated both in file name, suite name, opening comments
--- Highlight shape contract.
+-- Regression guard: highlight `.hl` must stay indexable.
 --
 -- The view (userInputView.render_input) reads
 -- `highlight.hl` and immediately indexes it
@@ -25,7 +23,7 @@ if not orig_print then
   _G.orig_print = function() end
 end
 
-describe("highlight shape contract #input", function()
+describe("highlight nil-index regression #input", function()
   local w        = 64
   local mockConf = { view = { drawableChars = w, lines = 16, input_max = 14 } }
   mock           = require("tests.mock")

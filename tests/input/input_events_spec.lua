@@ -15,30 +15,21 @@
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
 --
--- REVIEW/clarity: language of the prose below is broken -- it tries to say that this test covers only half of the activities but fails to say so (and its alwo not clear why we have 9 input files not just 2 spolier: because its not 'half-this/half-that' split)
--- Mechanics half of the four-tier dispatch chain (order/consume/
--- fall-through, combo tables, signatures, defaults, hooks and
--- handler install, the mutable/immutable boundary) — doc/development/decisions/input.md,
--- Decision 2. The outputs half (widget outputs, submit/cancel) is
--- input_widget_callbacks_spec.lua.
+-- This file covers the dispatch-chain MECHANICS: order/consume/fall-through,
+-- combo tables, signatures, defaults, hook and handler install, the
+-- mutable/immutable boundary (doc/development/decisions/input.md, Decision 2).
+-- Widget OUTPUTS (submit/cancel) live in input_widget_callbacks_spec.lua. These
+-- are two of the suite's nine thematic files (TF1 split by topic — not a
+-- two-way mechanics/outputs cut).
 
 local F = require('tests.helpers.input_fixture')
 
---- REVIEW/clarity: need to cleanup jargon, also the prose below partialy duplicates opening prose
--- ====================================================
--- The four-tier dispatch chain 
--- (doc/development/decisions/input.md, Decision 2).
--- All rows drive the REAL project route: F.activate_
--- project() installs the ProjectInputController as the
--- the active route (app_state='running') via the same
--- Controller.set_user_handlers path {clarity: a run calls}, and
--- returns the project-facing compy.input surface. The
--- observable {jargon: seams} are the widget's text
--- and
--- the callbacks a project registers — never a spy on an
--- internal method (except the one widget-signature row,
--- which patches the shared widget and restores it).
--- ====================================================
+-- All rows drive the REAL project route: F.activate_project() installs the
+-- ProjectInputController as the active route (app_state='running') via the
+-- production Controller.set_user_handlers path, and returns the project-facing
+-- compy.input surface. Assertions read the widget's text and the callbacks a
+-- project registers — except the one widget-signature row, which patches the
+-- shared widget and restores it.
 
 describe('#input events dispatching', function()
 
@@ -48,11 +39,8 @@ describe('#input events dispatching', function()
   before_each(function() F.reset() end)
 
 
-  -- REVIEW/fidelity: comment overexplains mechanics that helper does not control; first line would be enough
-  -- Press a modifier key then a trigger so the held set
-  -- (Controller.keys_pressed) carries the modifier and the
-  -- combo serialises to 'ctrl+…' (doc/development/decisions/input.md,
-  -- Decision 8) — a real chord.
+  -- Press a modifier then a trigger so the combo serialises to 'ctrl+…' — a real chord
+  -- (doc/development/decisions/input.md, Decision 8).
   -- REVIEW/quality: better allow random chords -- (...) and iterating over it? cheap and more flexible
   local function chord(mod, k)
     F.session.press(mod)
