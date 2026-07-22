@@ -269,6 +269,18 @@ Split E1/E2 (≤10). Recommend REWORD unless noted; several are "your discretion
 | 106 | lifecycle:50 | COV | TODO: prompt-labelling/relabelling test |
 
 ### B-I — Doc-citation hygiene & conventions
+**B-I/1 (fixture: RVW-001/002/003/004/005/011) DONE — commit `8bc066f`** (2 moot, 1 reworded,
+1 rename `F.update`→`F.love_update`, 1 dropped; **RVW-003 escalated → collapse-gate ledger
+G-2**, the compy/hooks API-coherence gap). **B-I/2 REMAINS:** RVW-026/080/083/084/085/090/091/094
+(cursor + nfr + routing headers) — **plus the D1 leftover below, folded into this batch.**
+
+> **D1 completeness leftover (recorded here so it is not lost) — `input_routing_spec.lua:4-5`**
+> still reads `ROUTE = consumer … WIDGET … SINK = last consumer`, the exact ROUTE/WIDGET/SINK
+> definition block D1 Pass B was meant to rewrite (RVW-034 overload). `nfr_forward_spec` received
+> the rewrite; `routing_spec` was missed. B-I/2 already edits this same header (RVW-090/091/094),
+> so **fix it there**: rewrite to the ratified vocab (route / widget; drop `sink` and the
+> "consumer" gloss), matching the `nfr_forward_spec` head.
+
 | RVW | loc | rec | note |
 |---|---|---|---|
 | 001 | fixture:150 | REWORD | de-jargon "slots/gate last-resort route" + leak concern |
