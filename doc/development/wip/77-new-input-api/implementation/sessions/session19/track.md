@@ -167,4 +167,65 @@ shape / vocab unification — so why do these markers still stand?" Ground-truth
 - **src/ sweep = deferred expansion**, owner CONFIRMS after tests/ swept (same-shape efficiency +
   pre-inspection codebase knowledge). Do not start src/ sweep unprompted.
 
+### D6 IMPLEMENTED — dissolve `slot` (owner, 2026-07-21)
+- **`dbeb491`**: `slot` dissolved contextually — occupancy sense → route vocab, assignable sense →
+  hook/callback field. Ratified the hook/callback/handler taxonomy across src + docs + tests.
+  Resolves src marker projectInputController:4. Suite 841/0/0/4.
+- **`95e775f`**: new `internals/event_dispatch_layers.md` documenting the `love.handlers.*` (master
+  dispatch table, shortcut logic) vs `love.<event>` (individual callbacks) two-layer split — the home
+  for the D4 item-3 naming-collision (`setup_callback_handlers` vs `set_default_handlers`).
+- **Governing tier now fully ruled+applied** (D1/D2/D5/D6). Only D3/D4 remain, both relocated (below).
+
+## CONTEXT COMPACTED (2026-07-21→22) — big-plan reconcile
+- Owner asked to reconcile (not review) validation/plan.md's four big phases [A/R, B, C, D] against
+  current position. **Verdict: we are at the *beginning of TF2*.** R CLOSED+accepted (`affc932`); the
+  S19 marker triage is an **improvised pre-TF2 noise-cleanup sub-step** the owner commissioned at TF2's
+  opening to cut review noise — NOT standalone. Owner: "what we do *is* real work, in a different mode."
+- **Owner mental model:** [A/R gate]=A+DI+TF+R (integrity+redesign), B=convergence, C=principle sheet,
+  D=owner sitting. Collapse hypothesis: B/C/D collapse into one sitting IF the whole gate-ledger rules
+  out with low residual risk — **gated on TF2/TF3**.
+
+### D3 + D4 disposed (owner rulings, 2026-07-21) — `591b941`
+- **D3 (console-hidden-sink safety) → RELOCATED to a new collapse-gate ledger**
+  (`validation/notes/collapsed-gate-ledger.md`, row **G-1**, category (b), OPEN). It's a runtime
+  design-safety ambiguity, not marker vocab — ruled in the collapsed sitting, NOT the marker lane.
+  Markers RVW-107..112 stay in-tree pointing there.
+- **D4 (testing-philosophy) → DEFERRED as a unit into TF2/TF3** — it IS the Test-Fidelity
+  investigation; ruling it in the marker lane would rule it twice. The 3 fidelity items (fixture:150/
+  :227 →TF2; naming-collision item 3) ride along. **Naming-collision left in-tree for the owner's own
+  eyes during TF2 manual recheck** (owner: "not heavy") — explicitly NOT promoted to the ledger.
+- Owner chose **Variant 1**: keep grinding mop-up batches; resort to manual check when they feel like it.
+
+### B-E DONE — prose/clarity (owner-gated, one batch at a time)
+- **E1 `c141d2b`** (7 markers) + **`b3bd3f9`** (RVW-023 evaluator-variant explanation): split-file
+  header prose cleanup; renamed highlight_shape_spec → highlight_regression_spec. RVW-020/023 KEPT for
+  TF2 eyeball.
+- **E2 `aba6dad`** (8 markers): events + nfr it-desc/prose. RVW-075 KEPT for TF2. Two forward-flags
+  planted: `REVIEW/concern` on "mutates nothing" ↔ ledger G-1 revalidation touchpoint; `REVIEW/recheck`
+  on the fragile milestone ref. B-E fully processed (15 resolved, 3 kept for TF2).
+
+### B-I/1 DONE — fixture doc-hygiene — `8bc066f`
+- 6 markers: RVW-001/011 RESOLVED-moot (target prose already removed by D5's rewrite — verified gone);
+  RVW-002 reworded (explain set_love_update / click-timer); RVW-005 `F.update`→`F.love_update` (def +
+  4 call sites); RVW-004 dropped (speculative refactor, overlaps D4).
+- **RVW-003 ESCALATED → collapse-gate ledger G-2** (category (b), OPEN). It exposed a real public-API
+  coherence gap: **mouse** handlers are bare callbacks on `compy.<event>` (`compy.singleclick`, pulled
+  via `get_compy_handler`, controller.lua:262/659/671); **keyboard/text** handlers are hooks under
+  `compy.input.hooks[event]` seeded from `love.<event>` (seed_hooks, projectInputController.lua:42/108).
+  Same act, two shapes — user confusion. Unifying seam (owner): make `compy.{single,double}click` a hook
+  source too; caveat: mouse-side API unexamined in #77. In-tree echo: shortcuts_click:96 (RVW-101).
+  Rename deferred until the gate rules the API shape. **G-2 = second category-(b) find from the sweep**
+  (after G-1) — mild signal the collapsed sitting has real content.
+
+### D1 leftover recorded (so it isn't lost)
+- `input_routing_spec.lua:4-5` still carries the old `ROUTE=consumer … SINK=last consumer` block D1
+  Pass B was meant to rewrite (RVW-034 overload); nfr_forward got it, routing was missed. **Folded into
+  the B-I/2 batch note** in the triage plan (B-I/2 already edits that header via RVW-090/091/094).
+
+## WRAP (2026-07-22)
+- Owner directed a session wrap (session length), NOT task-complete: TF2 proper + remaining mop-up
+  (B-I/2, B-F, B-COV) still pending. Successor = **continuation**, resume at B-I/2.
+- My first wrap attempt (`086a66d`) mislabeled a lone triage-plan commit as "the wrap" — owner
+  corrected: track not updated, no report, no successor prompt. This is the real wrap ritual.
+
 
