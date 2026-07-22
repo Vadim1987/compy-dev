@@ -129,7 +129,12 @@ function EditorController:pop_buffer()
   self:_remember_position()
   bs:pop_front()
   local b = bs:first()
-  self.view:get_current_buffer():open(b)
+  local bv = self.view:get_current_buffer()
+  bv:open(b)
+  --- the buffer keeps its position; the view must
+  --- follow it, exactly as opening a file does —
+  --- open() alone parks the view at the end
+  bv:follow_line()
   self:update_status()
 end
 

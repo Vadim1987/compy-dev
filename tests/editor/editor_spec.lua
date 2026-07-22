@@ -1030,6 +1030,44 @@ describe('Editor #editor', function()
       assert.same('edit', controller:get_mode())
     end)
 
+    it('returning from a require restores the view',
+      function()
+        require("tests.helpers.codesnippets")
+        local controller, press = wire(TU.mock_view_cfg())
+        local blocks = {}
+        for i = 1, 30 do
+          blocks[#blocks + 1] = mock_func_snippet('f' .. i)
+        end
+        blocks[16] = "local m = require('other')"
+        local text = table.concat(blocks, '\n\n')
+        local save = TU.get_save_function(text)
+        controller.console = {
+          edit = function() end,
+        }
+        controller:open('main.lua', text .. '\n', save)
+
+        --- to the middle of the file, into the require
+        mock.keystroke('home', press)
+        for _ = 1, 15 do
+          mock.keystroke('C-down', press)
+        end
+        local line0 = controller:get_active_buffer()
+          :get_active_line()
+        controller:open('other.lua', 'x = 1\n',
+          TU.get_save_function('x = 1\n'))
+
+        --- and back: the stored line is visible again
+        --- (open() alone parks the view at the end)
+        controller:close_buffer()
+        assert.same(line0, controller:get_active_buffer()
+          :get_active_line())
+        local bv = controller.view:get_current_buffer()
+        local r = bv.content:get_range()
+        local wl = bv.content.wrap_forward[line0]
+        assert.is_true(wl[1] >= r.start
+          and wl[#wl] <= r.fin)
+      end)
+
     it('dialogs confirm on Enter or Space only', function()
       require("tests.helpers.codesnippets")
       local controller, press = wire(TU.mock_view_cfg())
