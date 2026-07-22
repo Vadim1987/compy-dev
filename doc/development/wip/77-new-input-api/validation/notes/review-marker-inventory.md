@@ -207,7 +207,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `local function view_access_ok(model)`
 - Bucket: **TRIAGE**
 - Rationale: naming call → TRIAGE
-- Disposition: —
+- Disposition: **KEPT for owner TF2 manual review (B-E/E1, S19)** — rename not applied; proposed `view_index_access_survives`. Marker left in place.
 
 **RVW-021** `tests/input/highlight_regression_spec.lua:39` — Kind: `fidelity`
 > "REVIEW/fidelity: does this guard betray the purpose of test?"
@@ -228,7 +228,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('parser present, highlighter returns nil -> hl still indexable', ...)`
 - Bucket: **TRIAGE**
 - Rationale: naming/structure proposal for the three evaluator variants → TRIAGE
-- Disposition: —
+- Disposition: **KEPT for owner TF2 manual review (B-E/E1, S19)** — aliasing/table restructure not applied. Added an explanatory comment above the three `it`s: one case per highlighter condition, and why case 1 uses the `LuaEval()` **factory** (fresh mutable instance, override `.highlighter`→nil) vs cases 2/3 using the unmutated `InputEvalLua` singleton / text eval. Marker left in place.
 
 **RVW-024** `tests/input/highlight_regression_spec.lua:53` — Kind: `clarity/fidelity`
 > "REVIEW/clarity/fidelity:  how LuaEval() with nil-returning highlighter is different from case#2 and case#3? it seems to be a mix of both, but not sure which production scenarios are mapped. And maybe there shold be 4 cases? ( [lua || text] x [ missing hl || returning empty ])"

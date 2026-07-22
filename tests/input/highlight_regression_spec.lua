@@ -47,6 +47,16 @@ describe("highlight nil-index regression #input", function()
   end
 
   -- REVIEW/clarity: what's the difference between three modes not explained? (especially not clear how LuaEval() is different from InputEvalLua. Maybe wrap them into aliases semantically meaningful in test context? (e.g. `ev = evaluator_without_highlighter()`, `input_with_lua_evaluator', 'input_with_text_evaluator'). Or even table (ev = evaluators['text_no_hl']; m=evaluators['lua_normal']; m=evaluators['lua_with_dummy_hl'])
+  -- Three cases, one per highlighter condition that decides
+  -- whether `.hl` is a crash-prone plain literal or indexable:
+  --   1. Lua parser present, highlighter returns nil — the exact
+  --      regression path. Uses the LuaEval() FACTORY (a fresh
+  --      instance) so it can override .highlighter to nil without
+  --      mutating the shared InputEvalLua singleton.
+  --   2. Standard Lua eval (InputEvalLua singleton, real
+  --      highlighter) — normal colouring, empty + non-empty text.
+  --   3. Validated text eval — no parser, takes the non-parser
+  --      branch; a different production scenario (text, not Lua).
   it('parser present, highlighter returns nil -> hl still indexable', function()
     --- REVIEW/clarity/fidelity:  how LuaEval() with nil-returning highlighter is different from case#2 and case#3? it seems to be a mix of both, but not sure which production scenarios are mapped. And maybe there shold be 4 cases? ( [lua || text] x [ missing hl || returning empty ])
     local ev = LuaEval()
