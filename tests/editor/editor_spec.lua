@@ -1030,6 +1030,33 @@ describe('Editor #editor', function()
       assert.same('edit', controller:get_mode())
     end)
 
+    it('Delete leaves the clipboard alone, Ctrl+X cuts',
+      function()
+        require("tests.helpers.codesnippets")
+        local controller, press = wire(TU.mock_view_cfg())
+        local f1 = mock_func_snippet('one')
+        local f2 = mock_func_snippet('two')
+        local text = f1 .. '\n\n' .. f2 .. '\n'
+        local save = TU.get_save_function(text)
+        controller:open('clip.lua', text, save)
+        local clip = 'precious'
+        love.system = {
+          getClipboardText = function() return clip end,
+          setClipboardText = function(t) clip = t end,
+        }
+        local buffer = controller:get_active_buffer()
+        local n0 = buffer:get_content_length()
+
+        mock.keystroke('delete', press)
+        assert.same(n0 - 1, buffer:get_content_length())
+        --- the copied text survived the deletion
+        assert.same('precious', clip)
+
+        mock.keystroke('C-x', press)
+        assert.same(n0 - 2, buffer:get_content_length())
+        assert.is_not.same('precious', clip)
+      end)
+
     it('returning from a require restores the view',
       function()
         require("tests.helpers.codesnippets")

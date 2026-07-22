@@ -1043,11 +1043,14 @@ function EditorController:_normal_mode_keys(k)
   --- @type BufferModel
   local buf            = self:get_active_buffer()
 
+  --- Delete removes the block without touching the
+  --- clipboard: on the device every clipboard write
+  --- pops the system share overlay, and a deletion
+  --- clobbering the copied text surprised everyone.
+  --- Cutting is Ctrl+X alone (copy + delete).
   local function delete_block()
-    local t = string.unlines(buf:get_selected_text())
     self:record_write(buf, function()
       buf:delete_selected_text()
-      love.system.setClipboardText(t)
       self:save(buf)
     end)
     self.view:refresh()
