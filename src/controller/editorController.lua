@@ -515,7 +515,7 @@ function EditorController:discard_edit()
 
   self.pending_confirm = 'discard'
   self.input:set_error({
-    'discard the changes? Enter confirms, Esc cancels'
+    'discard the changes? Confirm [Enter] / Cancel [Esc]'
   })
 end
 
@@ -1292,7 +1292,7 @@ function EditorController:_normal_mode_keys(k)
       self.pending_confirm = 'restore'
       input:set_error({ string.format(
         'restore from checkpoint %s over file %s?'
-        .. ' Enter confirms, Esc cancels',
+        .. ' Confirm [Enter] / Cancel [Esc]',
         stamp(cp_time), stamp(con:file_modtime(name))
       ) })
       return
@@ -1301,8 +1301,8 @@ function EditorController:_normal_mode_keys(k)
     if cp_time then
       self.pending_confirm = 'overwrite'
       input:set_error({ string.format(
-        'checkpoint from %s exists;'
-        .. ' Enter confirms, Esc cancels',
+        'checkpoint from %s exists.'
+        .. ' Confirm [Enter] / Cancel [Esc]',
         stamp(cp_time)
       ) })
       return
