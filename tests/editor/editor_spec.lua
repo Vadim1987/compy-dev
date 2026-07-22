@@ -532,26 +532,51 @@ describe('Editor #editor', function()
   --- end plaintext
 
   describe('structured (lua) works', function()
-    it('moves the block with Alt+arrows', function()
+    it('moves the block through the reorder mode', function()
+      --- Alt+arrows are scrolling now; blocks move on
+      --- Ctrl+M only
       local controller, press = wire(TU.mock_view_cfg())
       local save, savefile = TU.get_save_function(sierpinski)
       controller:open('sierpinski.lua', sierpinski, save)
+      --- entering reorder saves the clipboard state
+      love.system = {
+        getClipboardText = function() return '' end,
+        setClipboardText = function() end,
+      }
       local buffer = controller:get_active_buffer()
       local first = buffer:get_selected_text()
 
-      mock.keystroke('M-down', press)
-      --- the block moved down, selection follows it
+      mock.keystroke('C-m', press)
+      mock.keystroke('down', press)
+      mock.keystroke('return', press)
+      --- the block moved down, selection follows it,
+      --- the commit is written through
       assert.same(2, buffer:get_selection())
       assert.same(first, buffer:get_selected_text())
-      --- and the swap is written through
       assert.same('', string.lines(savefile())[1])
 
-      mock.keystroke('M-up', press)
+      mock.keystroke('C-m', press)
+      mock.keystroke('up', press)
+      mock.keystroke('return', press)
       assert.same(1, buffer:get_selection())
       assert.same(first, buffer:get_selected_text())
-      --- capped at the edge
-      mock.keystroke('M-up', press)
-      assert.same(1, buffer:get_selection())
+    end)
+
+    it('Alt+arrows peek without moving', function()
+      local controller, press = wire(TU.mock_view_cfg())
+      local save = TU.get_save_function(sierpinski)
+      controller:open('sierpinski.lua', sierpinski, save)
+      local buffer = controller:get_active_buffer()
+      local bv = controller.view:get_current_buffer()
+
+      local sel0 = buffer:get_selection()
+      local r0 = bv.content:get_range().start
+      mock.keystroke('M-down', press)
+      assert.same(sel0, buffer:get_selection())
+      assert.is_true(bv.content:get_range().start > r0)
+      mock.keystroke('M-home', press)
+      assert.same(1, bv.content:get_range().start)
+      assert.same(sel0, buffer:get_selection())
     end)
 
     describe('checkpoints (2.6)', function()
@@ -845,10 +870,12 @@ describe('Editor #editor', function()
           buffer:get_text_content()))
       end)
 
-      it('undoes an Alt block move', function()
+      it('undoes a reorder block move', function()
         local orig = string.unlines(
           buffer:get_text_content())
-        mock.keystroke('M-down', press)
+        mock.keystroke('C-m', press)
+        mock.keystroke('down', press)
+        mock.keystroke('return', press)
         assert.is_not.same(orig, string.unlines(
           buffer:get_text_content()))
         mock.keystroke('C-z', press)
@@ -930,7 +957,9 @@ describe('Editor #editor', function()
 
       it('checkpoint restore clears the history',
         function()
-          mock.keystroke('M-down', press)
+          mock.keystroke('C-m', press)
+          mock.keystroke('down', press)
+          mock.keystroke('return', press)
           assert.is_true(#buffer.history > 0)
           --- a restore rebuilds the buffer: reload
           controller:reload_active(string.unlines(
@@ -946,9 +975,13 @@ describe('Editor #editor', function()
       end)
 
       it('a new write kills the redo tail', function()
-        mock.keystroke('M-down', press)
+        mock.keystroke('C-m', press)
+        mock.keystroke('down', press)
+        mock.keystroke('return', press)
         mock.keystroke('C-z', press)
-        mock.keystroke('M-down', press)
+        mock.keystroke('C-m', press)
+        mock.keystroke('down', press)
+        mock.keystroke('return', press)
         local n0 = #mock.played_sounds()
         mock.keystroke('C-z', press)
         assert.same(n0, #mock.played_sounds())
@@ -1187,11 +1220,13 @@ describe('Editor #editor', function()
         mock.keystroke('pagedown', press)
       end), 'page move at the end')
 
-      --- Alt+arrow moving a block past the edge
+      --- reorder move past the edge
       mock.keystroke('home', press)
+      mock.keystroke('C-m', press)
       assert.is_true(knocked(function()
-        mock.keystroke('M-up', press)
+        mock.keystroke('up', press)
       end), 'block move at the edge')
+      mock.keystroke('escape', press)
 
       --- Ctrl+J with no require in the block
       assert.is_true(knocked(function()
