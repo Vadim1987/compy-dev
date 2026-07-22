@@ -173,7 +173,8 @@ describe('Editor #editor', function()
         assert.same({ 'insert' }, input())
         --- the compose is dirty: the discard asks
         mock.keystroke('S-escape', press)
-        mock.keystroke('S-escape', press)
+        --- Enter confirms (repeat-proof dialogs)
+        mock.keystroke('return', press)
         mock.keystroke('return', press)
         assert.same({ '-- test' }, input())
       end)
@@ -430,7 +431,8 @@ describe('Editor #editor', function()
           assert.is_true(seen)
           --- the typed draft asks; confirm to discard
           mock.keystroke('S-escape', press)
-          mock.keystroke('S-escape', press)
+          --- Enter confirms (repeat-proof dialogs)
+          mock.keystroke('return', press)
         end)
         it('a held chord glyph is dropped', function()
           mock.keystroke('C-M-down', press, true)
@@ -586,12 +588,17 @@ describe('Editor #editor', function()
         assert.is_false(inter:has_error())
       end)
 
-      it('an existing one asks, second press writes', function()
+      it('an existing one asks, Enter confirms', function()
         cp_time = 1752400000
         mock.keystroke('C-k', press)
         assert.same({}, calls)
         assert.is_true(inter:has_error())
+        --- the invoking chord cancels (repeat-proof);
+        --- Enter confirms
         mock.keystroke('C-k', press)
+        assert.same({}, calls)
+        mock.keystroke('C-k', press)
+        mock.keystroke('return', press)
         assert.same({ 'write:main.lua' }, calls)
       end)
 
@@ -609,7 +616,7 @@ describe('Editor #editor', function()
         cp_time = 1752400000
         mock.keystroke('C-S-k', press)
         assert.same({}, calls)
-        mock.keystroke('C-S-k', press)
+        mock.keystroke('return', press)
         assert.same({ 'restore:main.lua' }, calls)
         --- buffer reloaded from the checkpoint content
         --- (reload replaces the model; re-fetch it)
@@ -862,8 +869,8 @@ describe('Editor #editor', function()
           assert.same('edit', controller:get_mode())
           assert.is_true(controller.input:has_error())
 
-          --- second press discards; the file untouched
-          mock.keystroke('S-escape', press)
+          --- Enter confirms; the file untouched
+          mock.keystroke('return', press)
           assert.same('nav', controller:get_mode())
           assert.same(orig, string.unlines(
             buffer:get_text_content()))
@@ -899,7 +906,8 @@ describe('Editor #editor', function()
           controller.input:set_text(
             { 'function broken(' })
           mock.keystroke('S-escape', press)
-          mock.keystroke('S-escape', press)
+          --- Enter confirms (repeat-proof dialogs)
+          mock.keystroke('return', press)
           assert.same('nav', controller:get_mode())
           --- nothing recoverable was recorded
           assert.same(n0, #buffer.history)
@@ -989,6 +997,73 @@ describe('Editor #editor', function()
       assert.same('edit', controller:get_mode())
     end)
 
+    it('dialogs confirm on Enter or Space only', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local f1 = mock_func_snippet('one')
+      local save, savefile =
+        TU.get_save_function(f1 .. '\n')
+      controller:open('dlg.lua', f1 .. '\n', save)
+      local inter = controller.input
+
+      --- a held Shift+Esc: every repeat lands on the
+      --- idempotent cancel, nothing is lost
+      mock.keystroke('return', press)
+      inter:set_text({ 'x = 9' })
+      mock.keystroke('S-escape', press)
+      assert.is_true(inter:has_error())
+      --- repeat cancels; the next press asks again —
+      --- held, it oscillates and never discards
+      mock.keystroke('S-escape', press)
+      assert.is_false(inter:has_error())
+      mock.keystroke('S-escape', press)
+      assert.is_true(inter:has_error())
+      assert.same('edit', controller:get_mode())
+      assert.same({ 'x = 9' }, inter:get_text():items())
+
+      --- Space confirms, via textinput as the device
+      --- delivers it, and the glyph is swallowed
+      controller:textinput(' ')
+      controller:keypressed('space')
+      assert.same('nav', controller:get_mode())
+
+      --- a printable cancels without typing
+      mock.keystroke('return', press)
+      inter:set_text({ 'y = 1' })
+      mock.keystroke('S-escape', press)
+      controller:textinput('q')
+      assert.same('edit', controller:get_mode())
+      assert.same({ 'y = 1' }, inter:get_text():items())
+      mock.keystroke('S-escape', press)
+      mock.keystroke('return', press)
+      assert.same('nav', controller:get_mode())
+    end)
+
+    it('an error message closes on Enter or Esc', function()
+      require("tests.helpers.codesnippets")
+      local controller, press = wire(TU.mock_view_cfg())
+      local f1 = mock_func_snippet('one')
+      local save = TU.get_save_function(f1 .. '\n')
+      controller:open('err.lua', f1 .. '\n', save)
+      local inter = controller.input
+
+      mock.keystroke('return', press)
+      inter:set_text({ 'function broken(' })
+      mock.keystroke('return', press)
+      assert.is_true(inter:has_error())
+      --- Enter closes the message without re-submitting
+      mock.keystroke('return', press)
+      assert.is_false(inter:has_error())
+      assert.same('edit', controller:get_mode())
+
+      mock.keystroke('return', press)
+      assert.is_true(inter:has_error())
+      --- Esc closes it too, staying in the block
+      mock.keystroke('escape', press)
+      assert.is_false(inter:has_error())
+      assert.same('edit', controller:get_mode())
+    end)
+
     it('the console widget keeps plain keys', function()
       --- a console-style input: no editing flag
       local model = UserInputModel(
@@ -1062,7 +1137,8 @@ describe('Editor #editor', function()
       assert.same(n0, buffer:get_content_length())
       --- the word deletion made the draft dirty
       mock.keystroke('S-escape', press)
-      mock.keystroke('S-escape', press)
+      --- Enter confirms (repeat-proof dialogs)
+      mock.keystroke('return', press)
 
       --- navigation: it drops the block
       mock.keystroke('C-delete', press)
@@ -1336,10 +1412,13 @@ describe('Editor #editor', function()
         --- and the cursor sits on the error's line
         assert.same(2,
           inter.model:get_cursor_info().cursor.l)
-        --- Shift+Esc still gets out (after the ask),
-        --- writing nothing
+        --- Shift+Esc still gets out, writing nothing:
+        --- one press closes the message, the next asks,
+        --- Enter confirms
         mock.keystroke('S-escape', press)
+        assert.is_false(inter:has_error())
         mock.keystroke('S-escape', press)
+        mock.keystroke('return', press)
         assert.same('nav', controller:get_mode())
         assert.same(text, savefile())
       end)

@@ -354,6 +354,7 @@ end
 --- @param t string
 function EditorController:textinput(t)
   self.view:update_input()
+  if self:_dialog_textinput(t) then return end
   if is_normal(self.mode) then
     local input = self.model.input
     if input:has_error() then
@@ -507,15 +508,33 @@ function EditorController:discard_edit()
 
   if clean then return self:leave_edit() end
 
-  if self.pending_confirm ~= 'discard' then
-    self.pending_confirm = 'discard'
-    self.input:set_error({
-      'discard the changes?'
-      .. ' Shift+Esc again to confirm'
-    })
+  self.pending_confirm = 'discard'
+  self.input:set_error({
+    'discard the changes? Enter confirms, Esc cancels'
+  })
+end
+
+--- Execute a confirmed dialog action (the dispatch in
+--- keypressed/textinput confirms on Enter or Space and
+--- cancels on everything else, so key repeat of the
+--- invoking chord lands on the idempotent cancel)
+--- @param act string --- 'discard'|'overwrite'|'restore'
+function EditorController:_confirm(act)
+  local con = self.console
+  if act == 'overwrite' then
+    return con:write_checkpoint(
+      self:get_active_buffer().name)
+  end
+  if act == 'restore' then
+    local name = self:get_active_buffer().name
+    if con:restore_checkpoint(name) then
+      local text = con:_readfile(name)
+      self:reload_active(text)
+    end
     return
   end
-  self.pending_confirm = nil
+  local buf = self:get_active_buffer()
+  local draft = self.input:get_text():items()
 
   --- an unparseable draft cannot go into the file
   --- (it would turn the buffer read-only), so only a
@@ -544,6 +563,24 @@ function EditorController:discard_edit()
     buf:push_history(after, before, sel, sel)
   end
   self:leave_edit()
+end
+
+--- @param t string
+--- @return boolean handled --- the glyph fed a dialog
+function EditorController:_dialog_textinput(t)
+  if self._swallow_glyph then
+    self._swallow_glyph = nil
+    if t == ' ' then return true end
+  end
+  if not self.pending_confirm then return false end
+  local act = self.pending_confirm
+  self.pending_confirm = nil
+  self.input:clear_error()
+  if t == ' ' then
+    self._swallow_glyph = true
+    self:_confirm(act)
+  end
+  return true
 end
 
 --- Load the selected block into the input and open it
@@ -1272,33 +1309,24 @@ function EditorController:_normal_mode_keys(k)
         self:refuse({ 'no checkpoint to restore' })
         return
       end
-      if self.pending_confirm == 'restore' then
-        self.pending_confirm = nil
-        if con:restore_checkpoint(name) then
-          local text = con:_readfile(name)
-          self:reload_active(text)
-        end
-        return
-      end
       self.pending_confirm = 'restore'
       input:set_error({ string.format(
         'restore from checkpoint %s over file %s?'
-        .. ' Ctrl+Shift+K again restores, Esc cancels',
+        .. ' Enter confirms, Esc cancels',
         stamp(cp_time), stamp(con:file_modtime(name))
       ) })
       return
     end
 
-    if cp_time and self.pending_confirm ~= 'overwrite' then
+    if cp_time then
       self.pending_confirm = 'overwrite'
       input:set_error({ string.format(
         'checkpoint from %s exists;'
-        .. ' Ctrl+K again overwrites, Esc cancels',
+        .. ' Enter confirms, Esc cancels',
         stamp(cp_time)
       ) })
       return
     end
-    self.pending_confirm = nil
     con:write_checkpoint(name)
   end
 
@@ -1488,14 +1516,30 @@ end
 --- @param k string
 function EditorController:keypressed(k)
   self.input:update_view()
-  if self.pending_confirm
-      and not (Key.ctrl() and k == 'k')
-      and not (self.pending_confirm == 'discard'
-        and Key.shift() and not Key.ctrl()
-        and k == 'escape') then
-    --- anything else cancels the confirmation (Esc
-    --- included); the message clears with the keypress
+  if self.pending_confirm then
+    --- dialogs are repeat-proof by construction: the
+    --- confirming key differs from the invoking one, so
+    --- key repeat lands on the idempotent cancel.
+    --- Enter or Space confirms, everything else cancels
+    if Key.is_enter(k) or k == 'space' then
+      local act = self.pending_confirm
+      self.pending_confirm = nil
+      self.input:clear_error()
+      self._swallow_glyph = true
+      return self:_confirm(act)
+    end
     self.pending_confirm = nil
+    self.input:clear_error()
+    return
+  end
+  --- a plain error message closes on Enter, Esc or
+  --- Shift+Esc without re-submitting or leaving; any
+  --- printable closes it via textinput and types
+  if self.input:has_error() and is_normal(self.mode) then
+    if Key.is_enter(k) or k == 'escape' then
+      self.input:clear_error()
+      return
+    end
   end
   local mode = self.mode
 
