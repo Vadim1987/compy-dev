@@ -78,3 +78,11 @@ if cond then end
 local gfx = love.graphics
 local sfx = compy.audio
 ```
+
+## Comment References
+
+Comments cite **canonical docs** (`doc/…`), never a feature's ephemeral working tree
+(`doc/development/wip/…`). A wip path rots when the feature's scratch is deleted; cite the
+persistent doc — and a **named section**, not "paragraph N" — so the reference stays
+discoverable and greppable. (Live debt: two `src/controller/` comments still carry wip
+citations — see `doc/development/technical_debt/input.md`.)

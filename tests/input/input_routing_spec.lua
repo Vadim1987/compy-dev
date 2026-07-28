@@ -16,11 +16,8 @@
 -- whole input contract suite, not this file alone; kept here in the first
 -- split file so they stay greppable in-tree for the jargon / spec-ref /
 -- Phase-C passes):
--- REVIEW/DOC: all comments point to canonical docs, never the
--- feature's ephemeral working tree
 -- REVIEW/DOC: fix spec references EVERYWHERE IN THE FILE (I will wrap them into {badspecref:} wherever I see them
 -- REVIEW/DOC: also I will wrap with {jargon:...} the words or phrases which seem invented
--- REVIEW: maybe A/B/C/D buckets can be dissolved today as they are less important today when feature is supposedly implemented. Simply marking tests as 'since 1.0.0...' (or 'changed in 1.0.0...') for new/altered behaviour would be enough.
 -- REVIEW: using tags in groups would also be great but I will inject some myself
 -- REVIEW: would it be worth splitting the 2K+ LoC into several test suites, for easier inspection?
 -- ----------------------------------------------------------------------
@@ -33,7 +30,8 @@ describe('input contracts: routing #input', function()
   before_each(function() F.reset() end)
 
   -- ====================================================
-  -- Bucket A — PRESERVE (stable-now contracts; green now)
+  -- Preserved routing invariant (pre-1.0.0 baseline behaviour, kept — no
+  -- version tag: not introduced by this feature).
   --
   -- Keyboard, text and pointer are EXCLUSIVE on the
   -- active route (doc/development/decisions/input.md, Decision 1 and Decision 2;

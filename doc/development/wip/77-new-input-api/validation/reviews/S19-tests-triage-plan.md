@@ -274,9 +274,14 @@ Split E1/E2 (≤10). Recommend REWORD unless noted; several are "your discretion
 G-2**, the compy/hooks API-coherence gap). **B-I/2 IN PROGRESS (S20):** clear-apply half DONE —
 RVW-026/080 (DROP provenance), RVW-091 (DROP moot: no `paragraph X` refs remain), **+ the D1
 leftover below (RENAME, done)**; consistency-stripped the unmarked routing:1 provenance too.
-Suite 841/0/0/4. **Still pending owner rulings:** RVW-083/084/085/090/094 (decision-heavy —
-083 'forward' def, 084/085 promote-provisional→invariant [tie to G-1], 090 canonical-docs rule
-[2 live src violations], 094 dissolve A/B/C/D buckets [cross-file]).
+Suite 841/0/0/4. **B-I/2 COMPLETE (S20)** — RVW-083/084/085/090/094 all ruled+applied via the
+**version-tag migration** (owner decision (a), 2026-07-28): dissolved the A/B/C/D bucket taxonomy
+across routing+nfr(+events dangling ref) in favour of LÖVE-style per-version availability tags
+(`since 1.0.0-rc20260712` = feature-new; pre-existing = untagged; forward→"planned change";
+NFR→guard label). 083 (drop 'forward' jargon), 084 (rename provisional group), 094 (dissolve
+buckets) done; 090 (ruling 8) → conventions doc + tech-debt follow-up; **085 → contested carve-out**
+(inspect-console-owns-surface kept as-is, tech-debt entry, ties G-1). Migration key:
+`S20-version-tag-migration-key.md`. Suite 841/0/0/4.
 
 > **D1 completeness leftover — `input_routing_spec.lua:4-5` — DONE (S20, B-I/2).** Rewrote the
 > ROUTE/WIDGET/SINK block to the ratified `route / widget` vocab (dropped `SINK = last consumer`

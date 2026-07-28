@@ -409,9 +409,8 @@ describe('#input events dispatching', function()
     -- path, keyreleased
     -- channel: fires regardless
     -- of widget-shown state (case a) — the downstream half of
-    -- the retired Bucket-D (doc/development/tests.md,
-    -- "Input Contract Suite (feature #77)") 'release under a
-    -- widget' row.
+    -- the 'release under a widget' case
+    -- (doc/development/tests.md, "Input Contract Suite (feature #77)").
     it('a handler keyreleased fires while the widget is shown',
       function()
         local seen = 0

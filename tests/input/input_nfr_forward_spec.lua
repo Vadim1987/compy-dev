@@ -20,35 +20,30 @@
 
 local F = require('tests.helpers.input_fixture')
 
--- REVIEW/clarity: 'forward' means what? lots of prose in this group are outdated (including REVIEW remarks)
--- REVIEW/consistence: group 'expected to change' actually describes *behaviour* that precedes the tests (so is taken as de-facto standard to keep -- probably could be referenced from decision docs), and should be renamed accordingly
-describe('input contracts: NFR and forward #input', function()
+describe('input contracts: NFR and planned changes #input', function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
 
   -- ====================================================
-  -- Bucket D — CHARACTERIZE-PROVISIONAL (factual today;
-  -- doc/development/tests.md, "Input Contract Suite
-  -- (feature #77)")
-  -- Current behaviour {oudated: EXPECTED TO CHANGE}, {jargon: no stakeholder
-  -- mandate — NOT preserve-contracts}. Each asserts only
-  -- verifiable present behaviour, so a deliberate change
-  -- reads as expected while an accidental one still
-  -- fails the build.
+  -- Current characterized behaviour (no stakeholder mandate).
+  -- Pre-1.0.0 de-facto behaviour, reverse-engineered and canonicalized
+  -- here — no version tag: the behaviour is not new to this feature. Each
+  -- asserts only verifiable present behaviour, so a deliberate change reads
+  -- as expected while an accidental one still fails the build.
+  -- (doc/development/tests.md, "Input Contract Suite (feature #77)")
   -- ====================================================
-  describe('provisional — expected to change, no mandate',
+  describe('current behaviour — characterized, no mandate',
     function()
 
-      -- inspect (doc/development/decisions/input.md, Decision 12), OWNER
-      -- RULING PENDING (see doc/development/internals/user_input.md,
-      -- "Dispatch chain"): under
-      -- inspect the console REPL owns the input surface; a
-      -- shown project widget is not honoured; input is not
-      -- dead. Asserted live (not pending) so an ACCIDENTAL
-      -- change still fails; revisit when the m4 routing
-      -- model lands.
-      -- REVIEW/DOC: its no more 'expected to change', going to be correct invariant/contract? maybe moved out of 'provisional'?
+      -- inspect (doc/development/decisions/input.md, Decision 12): under
+      -- inspect the console REPL owns the input surface; a shown project
+      -- widget is not honoured; input is not dead. CONTESTED status-quo —
+      -- not a ratified contract: whether a hidden/paused console should own
+      -- the fall-through is questioned (doc/development/technical_debt/input.md,
+      -- "Inspect-mode console-owns-surface"). Kept as-is (not a stakeholder
+      -- ask; changing it reworks the suspend/inspect spine). Asserted live so
+      -- an ACCIDENTAL change still fails.
       it('inspect: the console owns the surface', function()
         F.show_widget()
         F.console:add_text('ab')
@@ -74,14 +69,11 @@ describe('input contracts: NFR and forward #input', function()
     end)
 
   -- ====================================================
-  -- Bucket C — MECHANISM-GUARD (NFR; not
-  -- behaviour; doc/development/tests.md, "Input Contract
-  -- Suite (feature #77)")
-  -- Genuine mechanism guards, labelled so no reader
-  -- mistakes them for behaviour contracts. These
-  -- intentionally poke internals (identity, allocation,
-  -- the held-key table), which is exactly what an NFR
-  -- guard is for.
+  -- Mechanism / NFR guards — not behaviour contracts.
+  -- Labelled so no reader mistakes them for behaviour contracts. These
+  -- intentionally poke internals (identity, allocation, the held-key
+  -- table), which is exactly what an NFR guard is for.
+  -- (doc/development/tests.md, "Input Contract Suite (feature #77)")
   -- ====================================================
   describe('mechanism / NFR guards — not behaviour',
     function()
@@ -93,12 +85,9 @@ describe('input contracts: NFR and forward #input', function()
       -- BEFORE dispatch, so the set already reflects the
       -- event when a consumer runs. The route-observable
       -- form — the set handed along as a read-only proxy
-      -- in the keypressed triple — is the Bucket B
-      -- (doc/development/tests.md, "Input Contract Suite
-      -- (feature #77)")
-      -- forward; until it lands, the
-      -- guard
-      -- necessarily reads Controller.keys_pressed.
+      -- in the keypressed triple — is a planned change (not yet
+      -- landed); until it lands, the guard necessarily reads
+      -- Controller.keys_pressed.
       -- REVIEW: when we come to testing *propagation* of keypressed into consumers, we will need to ensure its the same table -- OR replace this implementation test with end-to-end test ensuring that what was pressed (all keys held) is what is received at consumer
       it('the pressed key is in the held set', function()
         local seen
@@ -170,17 +159,13 @@ describe('input contracts: NFR and forward #input', function()
     end)
 
   -- ====================================================
-  -- Bucket B — IMPLEMENT (forward contracts;
-  -- doc/development/tests.md, "Input Contract Suite
-  -- (feature #77)"; pending →
-  -- green at the named milestone). Greppable DEFERRED
-  -- ({badspecref: 0.1.0-mN}) markers; bodies document the
-  -- target
-  -- assertion on the PUBLIC API — none of it exists in
-  -- src/ yet, and the implementer adapts a body to the
-  -- landed API shape when greening it.
+  -- Planned changes — not yet shipped (pending until implemented).
+  -- Greppable DEFERRED ({badspecref: 0.1.0-mN}) markers; bodies document
+  -- the target assertion on the PUBLIC API — none of it exists in src/ yet,
+  -- and the implementer adapts a body to the landed API shape when greening
+  -- it. (doc/development/tests.md, "Input Contract Suite (feature #77)")
   -- ====================================================
-  describe('forward contracts (pending until implemented)',
+  describe('planned changes (pending until implemented)',
     function()
 
       -- Retargeted ({badspecref: E30} {badspecref:

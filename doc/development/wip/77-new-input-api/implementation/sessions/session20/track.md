@@ -34,3 +34,41 @@
 - Dispositions recorded in inventory (026/080/091) + triage plan (D1 leftover + B-I/2 status).
 - Suite 841/0/0/4. Committing this unit.
 - **STILL OPEN (owner to revisit):** RVW-083/084/085/090/094 — presented, awaiting rulings.
+
+## Owner rulings on the version-tag convention (2026-07-28)
+- **Fork settled: behaviour-availability.** Feature-new behaviour (absent from updev baseline) →
+  `since 1.0.0-rc20260712`. Pre-existing behaviour → documented, NO tag attribution.
+- **Decision (a) accepted** — fold 094 in: full cross-file bucket→version-tag migration.
+- **Console handling (G-1/RVW-085) — owner ruling:** do NOT change it (no stakeholder request).
+  If we judge it wrong → track as tech-debt + optionally a pending test for *proper* behaviour +
+  mark existing behaviour contested/disputable. Deprecation would need a stakeholder round; owner
+  won't open one on a tangential issue unless it changes architecture dramatically. Owner asked:
+  does it?
+- **4 pending cases (answer):** all in input_routing_spec — :81 keyrelease→console, :145
+  pointer→editor, :158 keys→search widget, :224 touch→active route. All un-observable grid cells
+  (release carries no text; editor disables selection; search absent from design corpus; touch has
+  no consumer), NOT shipped-but-broken features. (search-widget is the one genuine design gap.)
+- **Architecture-blast verdict (verified in code):** inspect-console-ownership lives in the
+  suspend()/set_default_handlers/get_user_input/evaluate_input spine — changing it IS
+  architecturally significant, not a routing tweak. So keep it; the doc already calls it
+  "characterized status quo, not a ratified contract." RVW-111's "silent sink" fear is narrower
+  than stated: during a real RUN a hidden widget already falls through (no console consumption);
+  the contested behaviour is only inspect-mode debugger ownership (REPL in paused project's env) —
+  arguably correct-by-design.
+- **NEXT:** write tag-key doc (mapping + RVW-085 carve-out + tech-debt entry) → owner OK → execute
+  (a) migration + fold in ruling 8.
+
+## B-I/2 version-tag migration EXECUTED (2026-07-28)
+- Owner: docs/comments only, no code, no intermediate approval needed ("if messy I'll tell you").
+- Judged this a readability/design-intent pass (contested carve-out, prose quality owner flagged)
+  → did it in-session rather than delegating; key doc materialized for the record.
+- Wrote key: `validation/reviews/S20-version-tag-migration-key.md`.
+- Applied: routing Bucket A dissolved; nfr Bucket B/C/D dissolved + top describe renamed; events
+  dangling "retired Bucket-D" ref stripped (RVW-076 marker itself left for B-F). RVW-085 → contested
+  status-quo header + `technical_debt/input.md` "Inspect-mode console-owns-surface (CONTESTED)".
+  Ruling 8 → `conventions/code.md` "Comment References" + tech-debt wip-citation-cleanup follow-up.
+- **grep confirms zero `Bucket` refs remain in tests/input.** Suite 841/0/0/4.
+- Dispositions recorded: inventory (083/084/085/090/094) + triage plan (B-I/2 COMPLETE).
+- IMPORTANT: kept persistent docs free of wip/ citations (the very rule ruling 8 enforces) —
+  tech-debt/conventions entries cite internals/decisions, not the wip ledger.
+- **Remaining mop-up (owner picks order):** B-F (structural, decision-heavy), B-COV (~22 coverage).

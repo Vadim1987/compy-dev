@@ -661,21 +661,21 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('input contracts: NFR and forward #input', ...)`
 - Bucket: **TRIAGE**
 - Rationale: terminology question plus a claim that some REVIEW remarks in-group are themselves outdated — needs a targeted pass to identify which, not done here → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-I/2 version-tag migration, S20)** — "forward" jargon dropped with the bucket dissolution; top-level describe renamed `NFR and forward`→`NFR and planned changes`. Marker dropped. Suite 841/0/0/4.
 
 **RVW-084** `tests/input/input_nfr_forward_spec.lua:25` — Kind: `consistence`
 > "REVIEW/consistence: group 'expected to change' actually describes *behaviour* that precedes the tests (so is taken as de-facto standard to keep -- probably could be referenced from decision docs), and should be renamed accordingly"
 - Comments-on: same `describe` as RVW-083
 - Bucket: **TRIAGE**
 - Rationale: rename + potential promotion of "provisional" facts into `decisions/input.md` — real design call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-I/2 version-tag migration, S20)** — owner ruled the version-availability convention (behaviour-availability): the "provisional/expected-to-change" group is pre-baseline de-facto behaviour → renamed `describe` to `current behaviour — characterized, no mandate`, Bucket D banner dissolved, no `since` tag (behaviour not new to the feature). Key: `../reviews/S20-version-tag-migration-key.md`. Marker dropped. Suite 841/0/0/4.
 
 **RVW-085** `tests/input/input_nfr_forward_spec.lua:52` — Kind: `DOC`
 > "REVIEW/DOC: its no more 'expected to change', going to be correct invariant/contract? maybe moved out of 'provisional'?"
 - Comments-on: `it('inspect: the console owns the surface', ...)`
 - Bucket: **TRIAGE**
 - Rationale: same "promote to a stable contract" question as RVW-084, applied to a specific test — needs an owner ruling per the doc's own "OWNER RULING PENDING" note at lines 44-45 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-carve-out (B-I/2, S20)** — owner ruled the console-owns-surface behaviour is CONTESTED status-quo, kept as-is (not a stakeholder ask; changing it reworks the suspend/inspect spine — see architecture assessment). NOT promoted to a clean invariant. Header reworded to a contested/status-quo note pointing at the new `technical_debt/input.md` "Inspect-mode console-owns-surface (CONTESTED)" entry; ties to gate-ledger G-1. Marker dropped. Suite 841/0/0/4.
 
 **RVW-086** `tests/input/input_nfr_forward_spec.lua:70` — Kind: `fidelity`
 > "REVIEW/fidelity: why check session.handlers? any other space?"
@@ -714,7 +714,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: "SUITE-LEVEL REVIEW NOTES" preamble (carried from the pre-split `input_contracts_spec.lua`, lines 13-17)
 - Bucket: **TRIAGE**
 - Rationale: checked — the rule is NOT universally honored: `src/controller/consoleController.lua:511` and `src/controller/userInputController.lua:8` both cite `doc/development/wip/77-new-input-api/validation/...` (ephemeral wip paths) in comments, so the concern is live, not moot → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (ruling 8, S20)** — rule promoted into `doc/development/conventions/code.md` ("Comment References"); the 2 live src violations logged as a comment-cleanup follow-up in `technical_debt/input.md`. Marker (suite-note lines) dropped. Suite 841/0/0/4.
 
 **RVW-091** `tests/input/input_routing_spec.lua:20` — Kind: `DOC`
 > "REVIEW/DOC: referencing items as 'paragraph X' is insufficient and unreadable -- should reference specific named sections so they are discoverable/greppable in their doc"
@@ -742,7 +742,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same preamble; the A/B/C/D bucket convention used across `input_routing_spec.lua`, `input_nfr_forward_spec.lua`, `input_events_spec.lua`
 - Bucket: **TRIAGE**
 - Rationale: suite-wide organizational-scheme change — significant, cross-file → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-I/2 version-tag migration, S20)** — owner ruled decision (a): dissolve the A/B/C/D buckets, adopt LÖVE-style per-version availability tags (`since 1.0.0-rc20260712` for feature-new behaviour; pre-existing behaviour documented untagged; forward→"planned change"; NFR→guard label). Executed across routing (Bucket A) + nfr (Bucket B/C/D) + the dangling events reference; `input_events_spec` had no banners. Key: `../reviews/S20-version-tag-migration-key.md`. Marker dropped. Suite 841/0/0/4.
 
 **RVW-095** `tests/input/input_routing_spec.lua:24` — Kind: `plain`
 > "REVIEW: using tags in groups would also be great but I will inject some myself"
