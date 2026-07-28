@@ -1,4 +1,4 @@
--- cursor and text surface — {temporal/REVIEW: split from input_contracts_spec.lua (TF1)}.
+-- cursor and text surface.
 -- Covers get_cursor / set_cursor / set_text on the public project surface
 -- (doc/input_api.md, "API reference"; doc/development/internals/user_input.md,
 -- "Cursor manipulation and 'reset'"). Implementation:

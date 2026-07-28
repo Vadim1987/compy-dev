@@ -1,8 +1,9 @@
--- routing — split from input_contracts_spec.lua (TF1). Routing invariant
+-- routing. Routing invariant
 -- (doc/development/decisions/input.md, Decision 1): inter-route dispatch is EXCLUSIVE —
 -- each event reaches exactly ONE route, fixed by the active screen mode. Vocabulary
--- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = consumer an event
--- is dispatched to; WIDGET = a route-managed input surface; SINK = last consumer. Tests
+-- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
+-- an event is dispatched to; WIDGET = the route-managed input surface and terminal of
+-- the chain. Tests
 -- assert observable outcomes at public seams, never method-name spies. keypressed fires
 -- for every physical key, textinput only for character-producing keys
 -- (doc/development/internals/user_input.md, "Data flow").
@@ -17,7 +18,6 @@
 -- Phase-C passes):
 -- REVIEW/DOC: all comments point to canonical docs, never the
 -- feature's ephemeral working tree
--- REVIEW/DOC: referencing items as 'paragraph X' is insufficient and unreadable -- should reference specific named sections so they are discoverable/greppable in their doc
 -- REVIEW/DOC: fix spec references EVERYWHERE IN THE FILE (I will wrap them into {badspecref:} wherever I see them
 -- REVIEW/DOC: also I will wrap with {jargon:...} the words or phrases which seem invented
 -- REVIEW: maybe A/B/C/D buckets can be dissolved today as they are less important today when feature is supposedly implemented. Simply marking tests as 'since 1.0.0...' (or 'changed in 1.0.0...') for new/altered behaviour would be enough.

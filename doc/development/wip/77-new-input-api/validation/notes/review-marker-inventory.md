@@ -253,7 +253,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: file title / provenance note (this file is a TF1 split of the former `input_contracts_spec.lua`)
 - Bucket: **TRIAGE**
 - Rationale: a "temporal" self-tag flagging the note itself as possibly stale once the split settles; owner call on whether the provenance note is still wanted → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-I/2, S20)** — owner ruled DROP the provenance/temporal tag; header now reads `-- cursor and text surface.` Suite 841/0/0/4.
 
 **RVW-027** `tests/input/input_cursor_text_spec.lua:2` — Kind: `clarity`
 > "REVIEW/clarity: why the prose below describes event dispatching if the suite references active API? (getting,setting text/cursor?)"
@@ -640,7 +640,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: file header ("NFR guards and forward contracts — split from input_contracts_spec.lua (TF1)", lines 3-4)
 - Bucket: **TRIAGE**
 - Rationale: cosmetic-leaning but a content edit (removing a provenance note) — same family as RVW-026; owner call whether provenance notes stay → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-I/2, S20)** — owner ruled apply the marker's own instruction: dropped the "split from input_contracts_spec.lua (TF1)" provenance clause + the marker. For consistency the unmarked routing head provenance was stripped the same way. Suite 841/0/0/4.
 
 ~~**RVW-081**~~ `tests/input/input_nfr_forward_spec.lua:8` — Kind: `clarity/vocabulary`
 > "REVIEW/clarity/vocabulary: see alternative suggestion in input_events_spec.lua"
@@ -721,7 +721,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same suite-level preamble as RVW-090
 - Bucket: **TRIAGE**
 - Rationale: doc-citation-style rule; owner call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-moot (B-I/2, S20)** — verified no `paragraph X` citations remain anywhere in `tests/input/`; the split-file headers already cite named sections ("Dispatch chain", "Data flow"). Rule already satisfied → marker DROPPED. Suite 841/0/0/4.
 
 **RVW-092** `tests/input/input_routing_spec.lua:21` — Kind: `DOC`
 > "REVIEW/DOC: fix spec references EVERYWHERE IN THE FILE (I will wrap them into {badspecref:} wherever I see them"

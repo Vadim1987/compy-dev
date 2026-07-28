@@ -271,15 +271,17 @@ Split E1/E2 (≤10). Recommend REWORD unless noted; several are "your discretion
 ### B-I — Doc-citation hygiene & conventions
 **B-I/1 (fixture: RVW-001/002/003/004/005/011) DONE — commit `8bc066f`** (2 moot, 1 reworded,
 1 rename `F.update`→`F.love_update`, 1 dropped; **RVW-003 escalated → collapse-gate ledger
-G-2**, the compy/hooks API-coherence gap). **B-I/2 REMAINS:** RVW-026/080/083/084/085/090/091/094
-(cursor + nfr + routing headers) — **plus the D1 leftover below, folded into this batch.**
+G-2**, the compy/hooks API-coherence gap). **B-I/2 IN PROGRESS (S20):** clear-apply half DONE —
+RVW-026/080 (DROP provenance), RVW-091 (DROP moot: no `paragraph X` refs remain), **+ the D1
+leftover below (RENAME, done)**; consistency-stripped the unmarked routing:1 provenance too.
+Suite 841/0/0/4. **Still pending owner rulings:** RVW-083/084/085/090/094 (decision-heavy —
+083 'forward' def, 084/085 promote-provisional→invariant [tie to G-1], 090 canonical-docs rule
+[2 live src violations], 094 dissolve A/B/C/D buckets [cross-file]).
 
-> **D1 completeness leftover (recorded here so it is not lost) — `input_routing_spec.lua:4-5`**
-> still reads `ROUTE = consumer … WIDGET … SINK = last consumer`, the exact ROUTE/WIDGET/SINK
-> definition block D1 Pass B was meant to rewrite (RVW-034 overload). `nfr_forward_spec` received
-> the rewrite; `routing_spec` was missed. B-I/2 already edits this same header (RVW-090/091/094),
-> so **fix it there**: rewrite to the ratified vocab (route / widget; drop `sink` and the
-> "consumer" gloss), matching the `nfr_forward_spec` head.
+> **D1 completeness leftover — `input_routing_spec.lua:4-5` — DONE (S20, B-I/2).** Rewrote the
+> ROUTE/WIDGET/SINK block to the ratified `route / widget` vocab (dropped `SINK = last consumer`
+> and the `consumer` gloss on ROUTE), matching the `nfr_forward_spec` head. Was the block D1 Pass
+> B missed (RVW-034 overload).
 
 | RVW | loc | rec | note |
 |---|---|---|---|

@@ -1,7 +1,5 @@
--- REVIEW/clarity: remove historical reference to once-monolithic spec.
---
--- NFR guards and forward contracts — split from input_contracts_spec.lua
--- (TF1). Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
+-- NFR guards and forward contracts. Routing invariant
+-- (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 -- the active screen mode. 
 --
