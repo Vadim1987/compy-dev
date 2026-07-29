@@ -29,9 +29,12 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **815 / 0 / 0 / 4** (the 4 pending are
-   intentional; do not "fix" them). A different count is a finding, not a go-signal — record it
-   in track and raise it with the owner before proceeding.
+6. Confirm the baseline: `busted tests` → expect **854 / 0 / 0 / 4** (the 4 pending are
+   intentional; do not "fix" them, and do not add a fifth without saying so). A different count is
+   a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
+   (The count moves as batches land — it was 815 through session ~15, 841 after Phase R, 854 after
+   the session21 mop-up; **the current session's `prompt.md` carries the authoritative number**,
+   this line is the fallback.)
 
 ## Fixed pointers
 
@@ -185,7 +188,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session21/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session22/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 

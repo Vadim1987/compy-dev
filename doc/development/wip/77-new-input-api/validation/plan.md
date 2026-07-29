@@ -286,7 +286,9 @@ description must be able to review it. `wip/77` deletion: owner-gated, after PR 
 
 ## Standing constraints (inherited, listed for the orchestrator's convenience)
 
-- Suite baseline **815/0/0/4**; the only unprompted re-check. No sweep re-runs.
+- Suite baseline **854/0/0/4** as of session21 (was 815 when this plan was written, 841 after
+  Phase R); the only unprompted re-check. No sweep re-runs. The live number is the one in the
+  current `sessionNN/prompt.md`.
 - Anomalies to leave alone: `agents/validation.md` guardrail 3 list.
 - Verify factual claims (any oracle's, any sheet cell's) in code before acting: LSP for
   symbols, grep as completeness backstop; two verdicts were overturned this way already.

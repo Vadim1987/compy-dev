@@ -150,3 +150,27 @@
   ceased to exist when 021/022 replaced the helper's semantics; renamed `assert_indexable_hl` and
   marker dropped as a consequence. Recorded in the inventory as RESOLVED-early.
 - New tests negative-checked where they assert new behaviour (matrix cell, exclusivity row).
+
+## 2026-07-29 — WRAP
+
+- Full ritual: report (`session21/report.md`) → successor prompt (`session22/prompt.md`) →
+  pointer repointed in `agents/validation.md` → this commit.
+- **Owner's instruction carried into session22 as PART 1 (before any review):** ask the owner
+  whether any decisions accumulated for the collapsed sitting can be ruled UP-FRONT — "I would
+  hate to do the code review twice if it can be done once." Filter is not importance but *would
+  deferring it force a second pass over the same files*. Candidate set named in the prompt
+  (G-1, G-2, category-(a) rows, jargon cluster, **D4** — the likeliest genuine candidate since it
+  governs how the very tests the owner is about to read are written — plus KEPT-for-TF2/OWED
+  markers incl. the RVW-020 deviation).
+- **PART 2, only once Part 1 is settled:** TF2 starts by generating a fresh PR batch as review
+  navigation, per `implementation/pr-assembly-guide.md` §1 (owner says "PR batch", the guide says
+  "slices" — same artifact; `BASE=3256aac` fixed, `TIP` current, existing `3*.patch` STALE).
+  Flagged in the prompt: this does NOT contradict "slice regeneration is LAST" — a navigation
+  batch is not the assembled PR, and the successor must say so when delivering it.
+- Housekeeping at wrap: stale **815/0/0/4** baselines corrected to 854 in `agents/validation.md`
+  (boot step 6, now with the count's history + a pointer to the session prompt as authoritative)
+  and `validation/plan.md`'s standing-constraints line. Left alone deliberately: plan.md lines
+  99/121/143, which record what A2/DI1/TF1 were run against historically — frozen context, not
+  live constraints.
+- Session totals: 7 commits, suite 841 → **854/0/0/4**, pendings unchanged at 4; mop-up CLOSED
+  (`tests/` swept, every marker dispositioned); one production bug found and fixed.
