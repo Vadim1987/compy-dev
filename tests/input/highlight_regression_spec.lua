@@ -78,6 +78,25 @@ describe("highlight nil-index regression #input", function()
     assert.is_true(view_access_ok(m))
   end)
 
+  -- The non-parser branch's own nil-highlighter cell — the missing
+  -- square of [lua || text] x [highlighter absent || returning nil].
+  -- Reachable from the public API: the project widget is built on a
+  -- parser-less evaluator (`UserInputModel(baseconf, InputEvalText)`,
+  -- src/main.lua) and `show({ highlighter = f })` assigns f straight
+  -- onto that evaluator (src/controller/userInputController.lua), so a
+  -- highlighter returning nil for some input — e.g. one that returns
+  -- nothing for empty text — lands here. A fresh ValidatedTextEval
+  -- stands in for it so the shared InputEvalText singleton is not
+  -- mutated.
+  it('text eval, highlighter returns nil -> hl still indexable',
+    function()
+      local ev = ValidatedTextEval({ function() return true end })
+      ev.highlighter = function() return nil end
+      local m = UserInputModel(mockConf, ev)
+      m:set_text({ '42' })
+      assert.is_true(view_access_ok(m))
+    end)
+
   it('validated text eval (no parser) -> hl indexable', function()
     local m = UserInputModel(mockConf, ValidatedTextEval({ function() return true end }))
     assert.is_true(view_access_ok(m))

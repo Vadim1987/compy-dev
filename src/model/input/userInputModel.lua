@@ -390,7 +390,9 @@ function UserInputModel:highlight()
     self._memo.highlight = { hl = hl or {}, parse_err = parse_err }
   else
     if ev.highlighter then
-      self._memo.highlight = { hl = ev.highlighter(text) }
+      -- same invariant as the parser branch above: a highlighter that
+      -- returns nil must not leave `.hl` nil for the view to index
+      self._memo.highlight = { hl = ev.highlighter(text) or {} }
     else
       self._memo.highlight = ev:validation_hl(text)
     end
