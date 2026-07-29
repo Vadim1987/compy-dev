@@ -70,3 +70,20 @@
   `show{multiline}` switch, default-false policy, or Shift+Enter gating.
   The switch is a design-spec promise over pre-existing unconditional
   Shift+Enter newlines. No R4 ruling yet; awaiting the owner's choice.
+
+## 2026-07-29 — R4 ruled and execution started
+
+- Owner ruled the public `multiline` switch an unauthorised design-detail
+  extrapolation: do not implement or plan it. The established contract is
+  unconditional Shift+Enter newline insertion; remove the stale promise,
+  debt entry, and code marker while retaining direct regression coverage.
+
+## 2026-07-29 — R4 complete
+
+- Removed the stale flag promise from persistent decisions/internals,
+  removed its technical-debt row and the no-longer-meaningful model TODO,
+  and clarified the direct project-widget regression narrative. Existing
+  editor coverage independently pins the same behaviour.
+- Persistent-reference sweep found no remaining unimplemented-flag/TODO
+  wording. `busted tests` → **854 / 0 / 0 / 4**. R4 is **3 of 12** visible
+  pre-TF2 items dispositioned; next is RVW-100 (Search routing scope).

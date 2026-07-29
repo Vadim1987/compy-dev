@@ -26,8 +26,10 @@ decided until the owner rules it in the collapsed sitting.
   `../reviews/S18-post-R-replan-reconciliation.md` §"Category (a)". **C1 is CLOSED (S22):**
   persistent docs are the authoritative #77 contract; `wip/77` is non-shipping working evidence.
   Before TF2, a cold provenance inventory and owning-session canonical-doc pass will retrospectively
-  mark decision authority/status where useful and ensure the shipping docs stand alone. R2/R4/R5
-  remain open. The rows are otherwise not restated here.
+  mark decision authority/status where useful and ensure the shipping docs stand alone. **R4 is
+  CLOSED (S22):** unconditional Shift+Enter newline insertion is the retained established
+  contract; the unrequested public toggle and its stale debt/marker were removed. R2/R5 remain
+  open. The rows are otherwise not restated here.
 - **Category (b) — scaffolding-suspects, CLOSED:** the dispatch/vocab cluster and the
   `app_state` fork — both dispositioned **and executed** by Phase R (`affc932`). Recorded in
   the reconciliation §"Category (b)"; they add no *open* work.

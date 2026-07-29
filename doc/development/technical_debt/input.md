@@ -184,16 +184,6 @@ question, not resolved here.
 - **Revisit:** Rule one way or the other when shortcuts dispatch gets its next
   real consumer or complaint.
 
-### `multiline` is unimplemented
-
-- **Where:** `src/model/input/userInputModel.lua` carries a `-- TODO
-  multiline` marker; there is no `multiline` config key anywhere in the
-  input path. Shift+Enter newline insertion is unconditionally on.
-- **Why it stands:** Open — implement a `multiline` toggle as originally
-  intended, or strike the promise and document that newline insertion is
-  always available.
-- **Revisit:** Decide the next time the input config surface is revisited.
-
 ### Silent config-key drop in `show{}`
 
 - **Where:** `apply_config` (`userInputController.lua`) reads only the keys

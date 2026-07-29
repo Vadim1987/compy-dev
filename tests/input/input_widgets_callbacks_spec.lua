@@ -409,17 +409,15 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       end)
 
     -- doc/development/internals/user_input.md, "Multiline input": Shift+Return
-    -- is NOT a framework
-    -- combo — it falls
-    -- to the widget, which still inserts a newline (unchanged
-    -- widget behaviour); the widget stays open (not submitted).
+    -- is never intercepted by the route and unconditionally inserts a newline.
+    -- The widget stays open; it does not submit.
     -- Drives BOTH modifier tracks the production code reads:
     -- F.session.press keeps Controller.keys_pressed (combo_
     -- string) correct, mock.keystroke's 'S' token flips the
     -- separate love.keyboard.isDown mock the widget's own
     -- Key.shift() reads (tests/mock.lua — two distinct
     -- tables).
-    it('Shift+Return is not intercepted; the widget edits',
+    it('Shift+Return unconditionally adds a line without submitting',
       function()
         F.activate_project()
         F.show_widget({ text = 'a' })

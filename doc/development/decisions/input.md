@@ -568,12 +568,9 @@ internals.
 
 ## Where the shipped system differs from the design intent
 
-A design corpus preceded the implementation. Two of its stated intents did not fully land; both
-are captured in the technical-debt register and are noted here only so a reader is not misled:
+A design corpus preceded the implementation. One of its stated intents did not fully land and is
+captured in the technical-debt register so a reader is not misled:
 
-- A `multiline` configuration flag was specified to gate Shift+Enter newline insertion. It was
-  **not implemented** — Shift+Enter inserts a newline unconditionally, and the widget carries a
-  standing to-do for the flag.
 - The design's config table lists `validator` / `highlighter` as the behaviour keys; the shipped
   `show()` additionally accepts `eval` and `result` keys (an evaluator object and a legacy result
   reference), which are real and working but unrecorded in the design contract.

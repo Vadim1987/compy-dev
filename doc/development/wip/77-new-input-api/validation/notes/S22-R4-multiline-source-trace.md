@@ -36,3 +36,11 @@ its default-false semantics, and Shift+Enter gating are a design-stage
 promise, not a verbatim stakeholder request. R4 remains an owner choice:
 implement that additional public policy or deliberately replace it with
 the established always-multiline contract.
+
+## Owner ruling — 2026-07-29
+
+Do not implement or plan the public switch. It was an unauthorised
+spec-detail extrapolation with no useful default policy. Shift+Enter
+unconditionally inserts a newline across the shared input behaviour; this
+established contract is retained, documented, and test-pinned. Remove the
+unfulfilled-promise/debt language and stale code marker.

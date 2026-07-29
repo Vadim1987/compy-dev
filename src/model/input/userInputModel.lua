@@ -502,7 +502,6 @@ function UserInputModel:_advance_cursor(x, y)
     self.cursor.c = next
   else
     self.cursor.l = cur_l + move_y
-    -- TODO multiline
   end
 end
 
