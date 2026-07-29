@@ -149,6 +149,16 @@ DI is what makes TF2 cheap).
   unprompted).** Hints recorded to `validation/notes/`. **Reordered 2026-07-20:** resumes
   *after* Phase R executes (see revision note above) — the reshape changes the files TF2
   hasn't reviewed yet; reviewing before Phase R risks reviewing soon-to-be-renamed code twice.
+  **Added 2026-07-29 (C1, owner-ratified):** before opening TF2, run a documentation
+  authority/provenance sweep once the pre-TF2 ruling ledger and its executions are settled.
+  A cold Terra pass inventories the persistent #77 docs against the working rulings,
+  classifying each decision as stakeholder-approved, owner-ratified in validation,
+  implementation-derived, or unresolved. The owning session then makes the persistent
+  docs stand alone: concise status/provenance where useful, no required `wip/` history,
+  and no unresolved statement presented as settled. Record the sweep under
+  `validation/`; it is a PR-candidate shaping gate, not a second feature review. Only
+  then regenerate the navigation batch and begin TF2, so the owner reviews the docs
+  surface that will actually ship.
 - **TF3. Evaluate hints + triage** — hint-scoped fidelity re-check (NOT a re-audit;
   guardrail 1 stands): mechanical fixes land per hint; judgment items are **pooled with
   A2's two standing fixture-architecture questions** (wrap-native helper; play-mode

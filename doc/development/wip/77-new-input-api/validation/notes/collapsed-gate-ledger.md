@@ -23,7 +23,11 @@ decided until the owner rules it in the collapsed sitting.
 
 - **Category (a) — code-vs-spec deviations:** the four rows **R2 / R4 / R5 / C1**, each with a
   drafted disposition and post-R re-verification in
-  `../reviews/S18-post-R-replan-reconciliation.md` §"Category (a)". Not restated here.
+  `../reviews/S18-post-R-replan-reconciliation.md` §"Category (a)". **C1 is CLOSED (S22):**
+  persistent docs are the authoritative #77 contract; `wip/77` is non-shipping working evidence.
+  Before TF2, a cold provenance inventory and owning-session canonical-doc pass will retrospectively
+  mark decision authority/status where useful and ensure the shipping docs stand alone. R2/R4/R5
+  remain open. The rows are otherwise not restated here.
 - **Category (b) — scaffolding-suspects, CLOSED:** the dispatch/vocab cluster and the
   `app_state` fork — both dispositioned **and executed** by Phase R (`affc932`). Recorded in
   the reconciliation §"Category (b)"; they add no *open* work.

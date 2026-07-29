@@ -46,3 +46,17 @@
   there before restoration.
 - `busted tests`: 854 / 0 / 0 / 4. G-1 is **1 of 12** visible
   pre-TF2 items dispositioned. Next batch remains C1, R4, RVW-100.
+
+## 2026-07-29 — C1 ruled; documentation gate scheduled
+
+- Owner ruled that the persistent documentation corpus is the authoritative
+  #77 contract now and after release; `wip/77` remains detailed, non-shipping
+  working evidence. New rulings need a concise canonical form as they are
+  made, while the working record preserves rationale and reversals.
+- A retrospective authority/provenance sweep is now an explicit pre-TF2 gate:
+  after all pre-TF2 items are ruled and executed, a cold Terra inventories
+  persistent claims against the working record; the owning session integrates
+  concise status/provenance into persistent docs and verifies they stand alone.
+  Navigation-batch generation and the owner's TF2 begin only afterward.
+- C1 is **2 of 12** visible pre-TF2 items dispositioned. Its planned sweep is
+  an execution gate, not a remaining authority question.
