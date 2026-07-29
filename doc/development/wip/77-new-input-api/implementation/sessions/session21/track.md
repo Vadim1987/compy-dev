@@ -57,3 +57,19 @@
   **F6** 2 dangling spec cross-refs (pre-existing → B-F).
 - Awaiting owner: F4 ruling ((i) record the scope limit vs (ii) one availability line per input
   spec head — recommended (ii)); go-ahead to apply F1/F2/F3 (+F5).
+- **Owner ruled: apply F1/F2/F3/F5.** Done + committed `96d1c78`, suite 841/0/0/4, grep confirms
+  zero `bucket` (bar the RVW-076 marker text) and zero `SINK` in tests/. F2 kept the "named
+  milestone" phrasing deliberately so its REVIEW/recheck marker stays live for B-F.
+- **F4 still open** — owner asked for it re-explained in plain language before ruling. Behavioural
+  note: owner consistently pushes back on jargon-shaped explanations and on unbounded process
+  nesting; wants the *decision*, plainly, not the taxonomy around it.
+- **Owner RULED F4 = (ii)** after the plain-language re-explanation. Executed: one
+  `-- Availability:` line at the head of all **20** files in `tests/input/`. Classified by
+  BEHAVIOUR, not file age — verified against `devupstream` (`compy.input`/`keys_pressed`/
+  `combo_string`/legacy `solicit*` = 0 hits pre-feature; `singleclick`/`project_open` present
+  pre-feature; `highlight.hl` fix landed in-feature at `1a2a9a3`). Non-obvious calls: new-to-repo
+  files asserting pre-baseline behaviour (`input_routing`) stay untagged; the pre-existing
+  `user_input_model_spec` gained one feature-new group; `input_shortcuts_click` is genuinely mixed
+  (incl. legacy globals **removed in** the anchor version). Rule + full table recorded as the S21
+  amendment in `S20-version-tag-migration-key.md`; per-group/per-test tags stay prohibited.
+  Suite 841/0/0/4. Commit below.

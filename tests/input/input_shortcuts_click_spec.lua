@@ -1,3 +1,8 @@
+-- Availability: mixed — global shortcuts and click detection are
+-- pre-baseline (untagged); the combo normalisation they read is
+-- feature-new (since 1.0.0-rc20260712), and the legacy text
+-- solicitation globals are removed in 1.0.0-rc20260712.
+
 -- shortcuts and click detection — split from input_contracts_spec.lua
 -- (TF1). Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by

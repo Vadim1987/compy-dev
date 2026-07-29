@@ -1,3 +1,7 @@
+-- Availability: mostly pre-baseline — the input model predates this
+-- feature and carries no version tag; the set_text keep_cursor group
+-- is the one addition (since 1.0.0-rc20260712).
+
 require("model.input.userInputModel")
 require("model.interpreter.eval.evaluator")
 require("util.string.string")

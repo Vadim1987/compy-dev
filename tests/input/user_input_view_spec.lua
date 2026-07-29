@@ -1,3 +1,6 @@
+-- Availability: pre-baseline — behaviour asserted here predates
+-- this feature; no version tag.
+
 require("model.interpreter.eval.evaluator")
 require("model.input.userInputModel")
 require("controller.userInputController")

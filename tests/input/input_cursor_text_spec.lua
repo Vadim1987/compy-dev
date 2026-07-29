@@ -1,3 +1,6 @@
+-- Availability: feature-new — covers the compy.input surface
+-- introduced by this feature (since 1.0.0-rc20260712).
+
 -- cursor and text surface.
 -- Covers get_cursor / set_cursor / set_text on the public project surface
 -- (doc/input_api.md, "API reference"; doc/development/internals/user_input.md,

@@ -146,3 +146,16 @@ truncated.
 | F4 | Rule the convention's scope: (i) record the limit, or (ii) one availability line per input spec file head | **owner ruling** | (ii) |
 | F5 | Sweep `SINK = last consumer` out of the five remaining vocabulary blocks | mechanical | apply, or fold into B-F |
 | F6 | Two dangling spec cross-refs | park | B-F |
+
+---
+
+## Disposition (owner, 2026-07-29)
+
+- **F1/F2/F3/F5 — APPLIED**, commit `96d1c78`, suite 841/0/0/4. `SINK` and stray `bucket`
+  vocabulary now return zero hits in `tests/` (bar the RVW-076 marker's own text). F2 deliberately
+  keeps the "named milestone" phrasing so its `REVIEW/recheck` marker stays live for B-F.
+- **F4 — RULED (ii)**: one `-- Availability:` line per file in `tests/input/`, all 20 files,
+  classified by *behaviour* against the `devupstream` baseline. Rule + classification table
+  recorded as the S21 amendment in `S20-version-tag-migration-key.md`. Per-group / per-test tags
+  stay prohibited.
+- **F6 — parked for B-F** as proposed.

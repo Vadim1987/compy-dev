@@ -1,3 +1,7 @@
+-- Availability: feature-new — these are the redesign acceptance
+-- criteria: behaviour introduced or altered by this feature
+-- (since / changed in 1.0.0-rc20260712).
+
 -- The input-API redesign's acceptance criteria, pinned here as
 -- durable, tests-first anchors — these tests ARE the ACs. Rationale
 -- for each behaviour lives in doc/development/decisions/input.md;

@@ -1,3 +1,6 @@
+-- Availability: feature-new — covers the compy.input surface
+-- introduced by this feature (since 1.0.0-rc20260712).
+
 -- live reconfigure and the continuous-session idiom — split from
 -- input_contracts_spec.lua (TF1). Routing invariant (doc/development/decisions/input.md,
 -- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches

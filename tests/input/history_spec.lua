@@ -1,3 +1,6 @@
+-- Availability: pre-baseline — behaviour asserted here predates
+-- this feature; no version tag.
+
 --- @diagnostic disable: invisible
 require("model.input.history")
 

@@ -69,6 +69,35 @@ carries **no bucket banners** (already behaviour-named) and needs no migration.
   `src/controller/consoleController.lua:511`, `src/controller/userInputController.lua:8`. Logged in
   `technical_debt/input.md`, not fixed in this comments pass.
 
+## S21 amendment — per-file availability lines (owner ruling, 2026-07-29)
+
+**Why.** S20 applied the convention only where A/B/C/D banners happened to exist (routing, nfr).
+Everywhere else in `tests/input/` nothing was said — so "untagged" meant *"verified pre-baseline"*
+in two files and *"nobody looked"* in the other eighteen, indistinguishable to a reader. The
+owner ruled option **(ii)**: make silence mean something.
+
+**Rule.** **Every** file in `tests/input/` opens with a one-line `-- Availability:` note stating
+which side of the baseline its behaviour sits on. Grep-anchored on `^-- Availability:`. Per-group
+and per-test tags remain **prohibited** — that is the elaboration this convention exists to avoid.
+
+**Classification is by behaviour, not by file age** — several files are new to the repo yet assert
+pre-baseline behaviour (`input_routing_spec`), and one pre-existing file gained feature-new
+coverage (`user_input_model_spec`). Verified against the `devupstream` baseline
+(`git grep -l <symbol> devupstream -- src/`), S21:
+
+| Availability | Files |
+|---|---|
+| **feature-new** (`since 1.0.0-rc20260712`) | `input_cursor_text`, `input_reconfigure`, `input_widget_lifecycle`, `input_events`, `input_lifecycle_unfork`, `input_route_lifecycle`, `keys_pressed` (mechanism) |
+| **since / changed in** | `input_redesign_ac` (the ACs), `input_widgets_callbacks` (outputs new, submit/cancel defaults altered) |
+| **changed in** | `project_open_liveness` (input-only projects stay live — ruling a) |
+| **pre-baseline, untagged** | `input_routing`, `input_nfr_forward`, `cursor`, `history`, `input`, `input_text`, `user_input_view` |
+| **mixed / qualified** | `user_input_model` (pre-baseline + the `set_text keep_cursor` addition), `input_shortcuts_click` (pre-baseline shortcuts/click, feature-new combo normalisation, legacy globals **removed in** 1.0.0-rc20260712), `highlight_regression` (pre-baseline machinery, guards a crash fixed in this feature) |
+
+Baseline evidence for the non-obvious calls: `compy.input`, `keys_pressed`, `combo_string` and the
+legacy `solicit*` surface return **zero** hits in `devupstream -- src/`; `singleclick` and
+`project_open` are present pre-feature; the `highlight.hl` indexability fix landed in-feature
+(`1a2a9a3`).
+
 ## RVW-085 tech-debt entry (technical_debt/input.md)
 
 *Inspect-mode console-owns-surface is characterized status quo, not a ratified contract.* Under

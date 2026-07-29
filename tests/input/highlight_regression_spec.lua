@@ -1,3 +1,7 @@
+-- Availability: pre-baseline machinery — the highlighter predates
+-- this feature; this guards a render crash fixed in it (changed in
+-- 1.0.0-rc20260712).
+
 -- Regression guard: highlight `.hl` must stay indexable.
 --
 -- The view (userInputView.render_input) reads

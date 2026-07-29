@@ -1,3 +1,6 @@
+-- Availability: pre-baseline — behaviour asserted here predates
+-- this feature; no version tag.
+
 -- routing. Routing invariant
 -- (doc/development/decisions/input.md, Decision 1): inter-route dispatch is EXCLUSIVE —
 -- each event reaches exactly ONE route, fixed by the active screen mode. Vocabulary

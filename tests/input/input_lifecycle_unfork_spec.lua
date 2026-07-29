@@ -1,3 +1,6 @@
+-- Availability: feature-new — the un-forked widget lifecycle is
+-- introduced by this feature (since 1.0.0-rc20260712).
+
 -- Pins the behaviour of the UserInputController:keypressed
 -- `app_state`-fork removal: deleting the `love.state.app_state ==
 -- 'editor'` branch so `keypressed` runs one uniform path. See

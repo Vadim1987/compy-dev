@@ -1,3 +1,7 @@
+-- Availability: feature-new — the dispatch chain, the per-event
+-- hooks and the project-handler install path are introduced by this
+-- feature (since 1.0.0-rc20260712); none exist in the baseline.
+
 -- REVIEW/fidelity: any occurence of 'singleton' in any file triggers fidelity check on the appropriate case -- is there alternative 'official' method of configuration/invocation? if access to singleton happens because we need to mock or trigger its internal methods which normally would not be accessible (boundary tests), can we wrap it into clearly test-specific function (i.e. F.mock_widget). 
 
 -- dispatch chain: tier mechanics 

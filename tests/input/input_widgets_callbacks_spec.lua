@@ -1,3 +1,7 @@
+-- Availability: feature-new — the widget output fields are
+-- introduced by this feature, and the submit/cancel defaults were
+-- altered by it (since / changed in 1.0.0-rc20260712).
+
 -- dispatch chain: widget outputs and submit/cancel — split from
 -- input_contracts_spec.lua (TF1). Routing invariant (doc/development/decisions/input.md,
 -- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches

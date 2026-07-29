@@ -1,3 +1,7 @@
+-- Availability: feature-new — route connect/disconnect, stop
+-- teardown and the compy.before_exit hook are introduced by this
+-- feature (since 1.0.0-rc20260712).
+
 -- route connection lifecycle — split from input_contracts_spec.lua (TF1).
 -- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by

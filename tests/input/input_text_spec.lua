@@ -1,3 +1,6 @@
+-- Availability: pre-baseline — behaviour asserted here predates
+-- this feature; no version tag.
+
 require("model.input.inputText")
 require("model.input.cursor")
 
