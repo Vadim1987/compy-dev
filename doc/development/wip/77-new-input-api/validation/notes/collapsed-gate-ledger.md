@@ -41,8 +41,30 @@ triage the owner commissioned at TF2's opening to reduce review noise). The mark
 
 | # | Item | Category | Charter / question | Status | Proposed disposition |
 |---|---|---|---|---|---|
-| **G-1** | Console-as-hidden-sink safety (S19 **D3**) | (b) design-safety | Master **RVW-111** + governed RVW-107/108/109/110/112. When a project runs and the input widget is hidden, does the **console silently consume/evaluate keystrokes**? RVW-111 argues that's dangerous-or-pointless and that an **active route** should own the fall-through, not a hidden console. | **OPEN** | Doc-first: cross-check `decisions/input.md` + `internals/user_input.md` for whether hidden-console consumption is intended. If settled → reword markers to a doc-reference + drop. If not → real design gap the owner rules (may feed a decision/tech-debt entry). Do **not** rule in the marker lane. |
+| **G-1** | Console-as-hidden-sink safety (S19 **D3**) | (b) design-safety | Master **RVW-111** + governed RVW-107/108/109/110/112. When a project runs and the input widget is hidden, does the **console silently consume/evaluate keystrokes**? RVW-111 argues that's dangerous-or-pointless and that an **active route** should own the fall-through, not a hidden console. **Scope NARROWED (S20, code-verified — see below).** | **OPEN (narrowed)** | The doc-first cross-check is **DONE** (S20): outcome recorded as a CONTESTED tech-debt entry, so what remains for the sitting is the narrower question below, not the original open-ended one. |
 | **G-2** | Project-handler API asymmetry: `compy.<event>` callback vs `compy.input.hooks[event]` hook (S19 **RVW-003**) | (b) API-coherence | Surfaced during B-I/1. **Mouse** handlers are bare callbacks the project sets directly on the compy namespace (`compy.singleclick`/`doubleclick`), pulled at click time via `get_compy_handler` (`controller.lua:262/659/671`). **Keyboard/text** handlers are hooks under `compy.input.hooks[event]`, *seeded* from the project's sandboxed `love.<event>` (`seed_hooks`, `projectInputController.lua:42/108`; `HOOK_EVENTS`, `controller.lua:303`). Same conceptual act ("project reacts to input"), **two public shapes + two sourcing paths** — a user who sets `compy.singleclick` then `compy.input.hooks.keypressed` reasonably asks why one is a callback and the other a hook. Delivery works; **coherence doesn't.** In-tree echo: `input_shortcuts_click_spec.lua:96` (RVW-101) already asks "why not set up via `running_project`? … or does it not work with mouse events?". | **OPEN** | Design review at the collapsed sitting. Unifying seam the owner named: make `compy.{singleclick,doubleclick}` a **hook source** too (fold mouse into the hooks model). Caveat (owner): the mouse-side API was **not** examined during #77 and the keyboard path is more granular — needs real judgement, not a mechanical merge. Decide **unify vs document the intentional split**; may feed a `decisions/`+tech-debt entry. Do **not** rename the fixture `set_compy_handler` (RVW-003) until ruled — its name/role depends on the outcome; marker reworded in-tree to point here. |
+
+**G-1 evidence added S20 (B-I/2 version-tag migration; re-verified in code S21).** The
+doc-first cross-check the proposed disposition asked for was performed:
+
+- **Two cases, not one.** During a real *run* with a hidden widget, the event already falls
+  through with **no** silent console consumption (the widget no-ops via its internal
+  `is_shown()`). The contested behaviour is **only the inspect-mode debugger**, where the
+  console REPL owns every channel and a shown project widget is not honoured. RVW-111's
+  question therefore narrows to inspect mode.
+- **Mechanism (verified in code, S20 and again S21):** `get_user_input()` returns `nil` while
+  `app_state == 'inspect'` (`src/controller/controller.lua:21`); `ConsoleController:suspend()`
+  sets `app_state='inspect'`, saves the project's handlers, then reinstalls the console's own
+  via `set_default_handlers` (`src/controller/consoleController.lua:1017`); the REPL evaluates
+  in the paused project's env. So the behaviour is **architecturally load-bearing** — changing
+  it reworks the suspend/inspect spine.
+- **Disposition taken (owner, 2026-07-28):** kept as-is and recorded as **CONTESTED status
+  quo**, not a ratified contract — `doc/development/technical_debt/input.md`, "Inspect-mode
+  console-owns-surface (CONTESTED)". Not a stakeholder ask; no deprecation round. Judgment
+  record: `../reviews/S20-version-tag-migration-key.md`.
+- **What is left for the sitting:** only whether to schedule the inspect-mode rework (a future
+  console/editor migration) or let the CONTESTED entry stand. A "proper" replacement behaviour
+  is undefined until that migration exists.
 
 **Revalidation touchpoints when G-1 is ruled** — tests that currently encode the
 "a no-participant / hidden-widget event mutates nothing" assumption and must be

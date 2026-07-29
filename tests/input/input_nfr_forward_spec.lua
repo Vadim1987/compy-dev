@@ -1,4 +1,4 @@
--- NFR guards and forward contracts. Routing invariant
+-- NFR guards and planned changes. Routing invariant
 -- (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 -- the active screen mode. 
@@ -13,10 +13,11 @@
 
 -- REVIEW/recheck: the "named milestone" ref is fragile — milestones
 -- are ephemeral and won't survive release; reword to not depend on it.
--- This file's assertions are deliberately non-final: provisional facts
--- about today's implementation (expected to change), guards on mechanism
--- and NFRs rather than behaviour, and forward contracts pending the named
--- milestone (doc/development/tests.md, "Input Contract Suite (this feature)").
+-- This file's assertions are deliberately non-final: current behaviour
+-- characterized as it stands today (pre-baseline de-facto, untagged),
+-- guards on mechanism and NFRs rather than behaviour, and planned changes
+-- pending the named milestone
+-- (doc/development/tests.md, "Input Contract Suite (this feature)").
 
 local F = require('tests.helpers.input_fixture')
 
@@ -214,7 +215,7 @@ describe('input contracts: NFR and planned changes #input', function()
       -- Landed live in the 'submit and cancel chain' block
       -- below ('Enter runs the full submit call-order chain'
       -- etc.) — not here, since exercising it needs the real
-      -- project route (F.activate_project), not this bucket's
+      -- project route (F.activate_project), not this group's
       -- fixtures.
     end)
 end)
