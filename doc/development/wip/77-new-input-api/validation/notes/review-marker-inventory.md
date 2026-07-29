@@ -214,14 +214,14 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `if h == nil then return true end` inside `view_access_ok`
 - Bucket: **TRIAGE**
 - Rationale: test-fidelity question re whether the early-return masks the regression path → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-early (B-COV, S21)** — was KEPT for TF2, but resolving RVW-021/022 replaced the helper's semantics (view-replica → direct model assertion), so the old name ceased to exist. Renamed `view_access_ok` → `assert_indexable_hl`, which names what it asserts. Marker dropped as a consequence, not as a fresh decision — flagged to the owner.
 
 **RVW-022** `tests/input/highlight_regression_spec.lua:44` — Kind: `fidelity`
 > "REVIEW/fidelity: why check test symptom instead of bug path? (i.e. calling the function which internally could've blow up?)"
 - Comments-on: `return pcall(function() ... end)` in `view_access_ok`
 - Bucket: **TRIAGE**
 - Rationale: same test-fidelity family as RVW-021 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-COV, S21)** — the guard did mask: `if h == nil then return true end` made a missing highlight pass silently. Replaced with `assert.is_not_nil(h)` + `assert.is_table(h.hl)` inside `assert_indexable_hl`, so an absent highlight now fails outright instead of scoring a pass.
 
 **RVW-023** `tests/input/highlight_regression_spec.lua:51` — Kind: `clarity`
 > "REVIEW/clarity: what's the difference between three modes not explained? (especially not clear how LuaEval() is different from InputEvalLua. Maybe wrap them into aliases semantically meaningful in test context? (e.g. `ev = evaluator_without_highlighter()`, `input_with_lua_evaluator', 'input_with_text_evaluator'). Or even table (ev = evaluators['text_no_hl']; m=evaluators['lua_normal']; m=evaluators['lua_with_dummy_hl'])"
@@ -235,14 +235,14 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `local ev = LuaEval()` inside the same `it` as RVW-023
 - Bucket: **TRIAGE**
 - Rationale: coverage-matrix proposal (2x2 of lua/text x missing/empty hl) — needs owner call on whether worth the added cases → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-COV, S21)** — well-founded, and stronger than written: the replica's own rationale ('the view's access with NO `hl and` guard') became FALSE at `1a2a9a3`, which added exactly that guard to `userInputView.lua`. The test now asserts the MODEL contract directly (no pcall, no view replica) and the comment says why. See also the production bug this line of questioning uncovered (`5ad2ce2`).
 
 **RVW-025** `tests/input/highlight_regression_spec.lua:61` — Kind: `fidelity`
 > "REVIEW/fidelity: claims 'empty and non-empty' but its not clear what both mean and how *both* are tested"
 - Comments-on: `it('standard lua eval -> hl indexable (empty and non-empty)', ...)`
 - Bucket: **TRIAGE**
 - Rationale: test-description/coverage clarity question → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED — and it found a real bug (B-COV, S21).** The missing square of the requested [lua || text] x [hl absent || returning nil] matrix was the failing one: the non-parser branch of `UserInputModel:highlight()` never got `1a2a9a3`'s `or {}`, so a parser-less evaluator with a nil-returning highlighter produced `{ hl = nil }` — reachable from `show({ highlighter = f })` since the project widget is built on InputEvalText. Breaking test first, then fix, own commit `5ad2ce2`. All four cells now exist.
 
 ---
 
@@ -281,14 +281,14 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: test body around `local input = F.compy_input()` (cursor-get case)
 - Bucket: **TRIAGE**
 - Rationale: coverage-adequacy judgment call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-COV, S21)** — 'empty and non-empty' referred to the model's TEXT, which the single row never said. Split into `lua eval, empty text` and `lua eval, non-empty text`, one claim each.
 
 **RVW-031** `tests/input/input_cursor_text_spec.lua:52` — Kind: `fidelity`
 > "REVIEW/fidelity: no explicit 'hide()', no text filled -- nil could be returned just by default because input is *empty* not because its hidden"
 - Comments-on: test body around `local input = F.compy_input()` (cursor default-nil case)
 - Bucket: **TRIAGE**
 - Rationale: raises a genuine test-fidelity gap (confound between "empty" and "hidden") — plausible but not verified against the actual assertions here → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-adding (B-COV, S21)** — the single row proved '1-based' once but not that the report TRACKS. Added `keeps reporting the cursor as the text is edited` (type + backspace, position follows) and `reports the line on multiline text` (so the line half moves too — a single-line-only report would have passed every prior row).
 
 ---
 
@@ -299,7 +299,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: file-wide convention: every `F.singleton.*` access in this suite
 - Bucket: **TRIAGE**
 - Rationale: proposes a blanket `F.mock_widget` wrapper; suite-wide refactor, owner call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-COV, S21)** — the confound was real: with no show() and no text, `nil` could mean 'empty' rather than 'hidden'. The row now shows text, asserts a cursor IS reported, hides, and only then asserts nil.
 
 ~~**RVW-033**~~ `tests/input/input_events_spec.lua:2` — Kind: `clarity/design/terminology`
 > "REVIEW/clarity/design/terminology: I suggest following global renaming: 'singleton'->'widget', 'sink' -> 'widget', 'tier-3/tier3' -> '[project] hook[s]', 'framework handlers' -> 'global/framework handlers' (if they capture combo) or 'framework/global] shortcuts' ( if they always address only two specific keys ESC/Enter and are not configurable for generic combos handling ) , 'handlers'->'[project] handler[s]' (those which bind to key combos), '.on_{eventname}' -> 'hooks[eventname]', 'generic callbacks' -> '[project] hook[s]', How to name the 'love' hooks that project installs (legacy) as love.handlers and which are converted to 'hooks' -- its an open question. Maybe literally \"project's [sandboxed] love.* hook(s)'? suggestions are welcome. PRINCIPLE: I'd reserve word 'handlers' for combo-bound things, 'callbacks' -- for something that is called by trigger, 'hooks' -- to something that is injected in the middle of event processing and can intercept/modify it. 'routing' may remain 'routing' and rely strictly to selection of dispatcher(controller)."
@@ -363,7 +363,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('order, consume, fall-through', ...)` group
 - Bucket: **TRIAGE**
 - Rationale: coverage-generalization proposal (parametrize across event types) — real structural change → TRIAGE
-- Disposition: —
+- Disposition: **ACCEPTED-with-reason (B-COV, S21)** — not parametrized, and the reason is in-tree now: the walk is ONE channel-agnostic function in production (`dispatch(shortcuts, hooks, widget, event, trigger, ...)` indexes `shortcuts[event]`/`hooks[event]` and is otherwise identical), so re-running the order/consume rows per channel would re-prove the same function three times. That each channel REACHES the walk is proven per channel in the combo group.
 
 **RVW-042** `tests/input/input_events_spec.lua:109` — Kind: `clarity`
 > "REVIEW/clarity: I would use same chain with mnemonic flags as in previous case -- and probably matrix test to show interception on every step, and also that lack of step (no combo defined, no hook defined) does not prevent other parts from working"
@@ -384,7 +384,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same test as RVW-042/043
 - Bucket: **TRIAGE**
 - Rationale: coverage-gap question (symmetric cases); needs a coverage audit to answer, not done here → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-absorption (B-F, S21)** — the symmetric truthy-hook and missing-participant cases the marker asks for are rows of the new `describe('the interception matrix')`.
 
 ~~**RVW-045**~~ `tests/input/input_events_spec.lua:129` — Kind: `clarity/sanity`
 > "REVIEW/clarity/sanity:"
@@ -426,7 +426,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('the combo tables are per-event, not one flat table', ...)`
 - Bucket: **TRIAGE**
 - Rationale: test-design tradeoff (internals smoke check vs behavioural test) — self-acknowledged tension in the marker itself, owner call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-COV, S21)** — the smell was fair: the row read table structure (`is_table(shortcuts.keypressed)` x3). Rewritten as pure behaviour (`a keypressed combo does not fire on textinput`) and the hook half the marker also asked for was added (`a keypressed hook does not fire on textinput`).
 
 **RVW-051** `tests/input/input_events_spec.lua:214` — Kind: `clarity`
 > "REVIEW/clarity: I'd rather wrap in 'describe'"
@@ -447,7 +447,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('signatures and the read-only proxy', ...)` group
 - Bucket: **TRIAGE**
 - Rationale: coverage-location question — needs a cross-suite grep to answer definitively, not done here → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-reference (B-COV, S21)** — the marker's own escape clause applies: the contents ARE now checked, in this file's `the pressed-keys table` group (added B-F from RVW-058/062). Comment replaced with that reference.
 
 **RVW-054** `tests/input/input_events_spec.lua:221` — Kind: `plain`
 > "REVIEW: why not test whole chain instead? configure all parts to be passthrough/nonconsuming (registering args and returning false), than check that every step registered the triade?"
@@ -461,7 +461,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('keypressed carries (k, keys_pressed, isrepeat)', ...)` assertions
 - Bucket: **TRIAGE**
 - Rationale: test-depth gap — plausible, not independently re-verified → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-absorption (B-F, S21)** — the type-signature-only complaint was answered by replacing that row with `every step of the chain receives the same delivered triple`, which asserts delivered VALUES across shortcut and hook.
 
 ~~**RVW-056**~~ `tests/input/input_events_spec.lua:240` — Kind: `clarity`
 > "REVIEW/clarity: fix jargon ('tier-3' -> 'hook'?)"
@@ -531,7 +531,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('defaults and the hidden sink', ...)` group
 - Bucket: **TRIAGE**
 - Rationale: coverage-matrix question, self-admittedly uncertain ("I think already described somewhere above") → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-absorption (B-COV, S21)** — the non-defined-participant permutations (none / shortcut missing / hook missing, one-by-one and together) are the missing-participant rows of the interception matrix; the group comment now points there and states what this group covers instead (what the DEFAULTS do once the event arrives).
 
 ~~**RVW-066**~~ `tests/input/input_events_spec.lua:322` — Kind: `clarity/terminology`
 > "REVIEW/clarity/terminology: current suggested alternative to 'generic callback' is 'hook'/'project hook'"
@@ -566,7 +566,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('on_text_input fires per character as text arrives', ...)`
 - Bucket: **TRIAGE**
 - Rationale: coverage-gap question re symmetric `on_key_pressed` case → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-reference (B-COV, S21)** — the keypressed counterpart is not missing but upstream: the interception matrix and the delivered-triple row both drive `hooks.keypressed`. What is textinput-specific, and why the row exists, is the PER-CHARACTER cadence — now said in the comment.
 
 ~~**RVW-071**~~ `tests/input/input_events_spec.lua:382` — Kind: `clarity/suggestion`
 > "REVIEW/clarity/suggestion: what if we redesign API syntax in this part and decide its not 'input.on_*' but input.hooks.{textinput,keypressed,keyreleased,mousewheel} -- with same logic just different configuration syntax/arch"
@@ -689,21 +689,21 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('the pressed key is in the held set', ...)`
 - Bucket: **TRIAGE**
 - Rationale: forward-looking test-design note, explicitly deferred by the marker itself to a future propagation-testing pass → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-adding (B-COV, S21)** — the marker named two forms of widget absence; only 'never shown' was covered. The merged row now walks all three states (never shown → shown → shown-then-hidden) on both channels, and the comment states that a handler IS a hook (seeded into `hooks[event]`), so the match is contractual rather than coincidental.
 
 **RVW-088** `tests/input/input_nfr_forward_spec.lua:134` — Kind: `plain`
 > "REVIEW: why not set 'ctrl' as pressed too? Much cheaper, no?"
 - Comments-on: `it('left/right names stay raw in the held set', ...)`
 - Bucket: **TRIAGE**
 - Rationale: test-cost/design tradeoff question → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-audit (B-COV, S21)** — audited and answered in-tree: BOTH paths are exercised. `F.activate_project({ keypressed = f })` is the legacy path (f is the project's sandboxed `love.keypressed`, seeded once via `seed_hooks`); every row assigning `input.hooks.<event>` directly drives the explicit path. This row is the one pinning how they interact. Comment replaced with that audit result.
 
 **RVW-089** `tests/input/input_nfr_forward_spec.lua:151` — Kind: `plain`
 > "REVIEW: do we have pending tests outlined for future consideration?"
 - Comments-on: `it('the widget keeps identity across cycles', ...)`
 - Bucket: **TRIAGE**
 - Rationale: checked — `tests/input/input_routing_spec.lua` has four `pending(...)` rows (lines 81, 145, 158, 224) that plausibly answer "yes"; not cross-confirmed as the specific set the marker means, so left for owner to point to → TRIAGE
-- Disposition: —
+- Disposition: **ANSWERED (B-COV, S21)** — 'any other space?': no. `F.session.handlers` IS the live `love.handlers` table (tests/helpers/input_session.lua), i.e. the production gateway LOVE dispatches through, not a fixture mirror — so the missing `wheelmoved` entry is the real absence, asserted at the same seam every routing row uses. Recorded in the comment.
 
 ---
 
@@ -728,14 +728,14 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same preamble; explains the `{badspecref: ...}` tags seen elsewhere in the suite (e.g. `input_routing_spec.lua:88,131,151`)
 - Bucket: **TRIAGE**
 - Rationale: an in-progress self-assigned action, not yet complete across the corpus — owner-tracked, not dissolvable by inspection → TRIAGE
-- Disposition: —
+- Disposition: **OWED-with-reason (B-COV, S21)** — self-deferred by the marker and kept deferred, but written down instead of left as a question: the row reads `Controller.keys_pressed` (an implementation seam); the end-to-end form belongs with the propagation tests, and the delivered-triple row now covers the delivery half, leaving only table IDENTITY un-asserted. Marker reworded to an OWED note, dropped as a question.
 
 **RVW-093** `tests/input/input_routing_spec.lua:22` — Kind: `DOC`
 > "REVIEW/DOC: also I will wrap with {jargon:...} the words or phrases which seem invented"
 - Comments-on: same preamble; explains the `{jargon: ...}` tags seen elsewhere (e.g. `input_events_spec.lua:36,39,107`)
 - Bucket: **TRIAGE**
 - Rationale: same self-assigned, in-progress tagging convention as RVW-092 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-strengthening (B-COV, S21)** — the suggestion was right for a better reason than cheapness: asserting only `is_nil(keys_pressed['ctrl'])` would also hold if the set were empty. Both sides are now pressed, so the claim rests on what the set CONTAINS (two raw names) as well as what it lacks.
 
 **RVW-094** `tests/input/input_routing_spec.lua:23` — Kind: `plain`
 > "REVIEW: maybe A/B/C/D buckets can be dissolved today as they are less important today when feature is supposedly implemented. Simply marking tests as 'since 1.0.0...' (or 'changed in 1.0.0...') for new/altered behaviour would be enough."
@@ -770,21 +770,21 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: the "keyreleased under editor" gap note (lines 130-136, "no suite row is owed under {badspecref: this feature}")
 - Bucket: **TRIAGE**
 - Rationale: coverage-gap question, contests the adjacent "no row owed" rationale → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-adding (B-COV, S21)** — 'why not add the test then?' answered by adding one. `EditorController` defines NO keyreleased entry (only ConsoleController does), so there is nothing observable on the editor side — but EXCLUSIVITY is assertable and is the claim this grid cell exists for: `a key release under editor does not reach the console`. Negative-checked. The 'out of blast radius' excuse is gone.
 
 **RVW-099** `tests/input/input_routing_spec.lua:144` — Kind: `plain`
 > "REVIEW: why not implement?"
 - Comments-on: `pending('routes the pointer to the editor')` (line 145)
 - Bucket: **TRIAGE**
 - Rationale: same "why pending, not implemented" question as RVW-098, applied to a `pending()` row — coverage-gap call → TRIAGE
-- Disposition: —
+- Disposition: **ACCEPTED-with-reason (B-COV, S21)** — stays `pending`, but the stated reason was wrong and is corrected: pointer under editor IS routed (`ConsoleController:mousepressed` → `self.editor.input`), gated on `cfg.editor.mouse_enabled`, which production ships **false** (src/main.lua). So the cell is not untested behaviour but behaviour switched off by default; a test would have to flip the flag and assert what the shipped config never does. To be filled if editor mouse is enabled by default.
 
 **RVW-100** `tests/input/input_routing_spec.lua:148` — Kind: `plain`
 > "REVIEW: and why not test it, is it complex? Spec is not called 'feature_77_spec.lua' so not being included in blast radius is a weak excuse for incompleteness (if test could be filled easily)"
 - Comments-on: the Search-widget gap note (lines 149-159, "absent from the design corpus")
 - Bucket: **TRIAGE**
 - Rationale: coverage-gap question, same family as RVW-098/099 → TRIAGE
-- Disposition: —
+- Disposition: **OWED-with-reason (B-COV, S21)** — stays `pending` and is the ONE genuinely un-designed cell. The search widget is a real third MVC triad in production (`searchModel.lua` builds its own UserInputModel), so a row COULD be written — but no design document for this feature mentions the surface, so any assertion would invent the contract it claims to verify. Filling it is a design task first, a test second. The 'blast radius' phrasing the marker objected to is replaced by that reason.
 
 ---
 
@@ -834,7 +834,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('widget activation and reset', ...)` group
 - Bucket: **TRIAGE**
 - Rationale: explicit coverage-gap TODO → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-adding (B-COV, S21)** — TODO discharged: added `a fresh activation applies the prompt label` for the show() half; RE-labelling on an active session was already covered in `input_reconfigure_spec.lua` ('updates the prompt on an active session'), now referenced from the new row. The group comment that called the prompt 'a separate, untested-here concern' was stale and is corrected.
 
 **RVW-107** `tests/input/input_widget_lifecycle_spec.lua:106` — Kind: `DOC`
 > "REVIEW/DOC: I believe that design rule is that after hide widget stops consuming whatever comes to it -- concern-under-test is valid, prose description is misorienting. MAYBE (check towards design) deactivated widget simply means if events fall through they are ignored. I am not sure that console consuming typed characters while not being shown is the valid or desired scenario!"

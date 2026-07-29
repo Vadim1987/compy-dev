@@ -256,6 +256,20 @@ Split E1/E2 (≤10). Recommend REWORD unless noted; several are "your discretion
 | 096 | routing:25 | DROP | split already done (TF1); confirm sufficient → drop |
 
 ### B-COV — Coverage gaps / matrix / symmetry (owner: add / accept-gap / mark pending)
+
+> **B-COV COMPLETE (S21, 2026-07-29).** All 22 dispositioned; suite **854/0/0/4**, pendings still
+> 4. Owner's framing for this batch: resolve each marker myself into *add a test* / *accept the
+> gap with a reason* / *owe it with a reason*, so TF2 reads a settled picture instead of making 22
+> micro-decisions. Outcome: **7 markers gained tests** (021/022 helper hardening, 024, 025, 030,
+> 031, 050, 074, 098, 106), **5 were already answered by B-F's new tests** (044, 053, 055, 065,
+> 070), **6 were answered with a reason grounded in production code** (041, 078, 086, 087, 099,
+> 100), and **1 (024) uncovered a live bug** — the non-parser branch of `UserInputModel:highlight()`
+> never received `1a2a9a3`'s `or {}` fix; breaking test first, fixed in its own commit `5ad2ce2`.
+> Two pendings keep better reasons than before: the editor-pointer cell is **config-gated off in
+> production** (`cfg.editor.mouse_enabled = false`), not merely unobservable; the search cell is the
+> one genuinely **un-designed** cell, where a test would invent the contract it verifies. Per-marker
+> detail in `../notes/review-marker-inventory.md`.
+
 | RVW | loc | rec | note |
 |---|---|---|---|
 | 021 | highlight:39 | COV | does early-return guard mask the regression path? |

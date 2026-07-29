@@ -65,7 +65,11 @@ describe('input contracts: NFR and planned changes #input', function()
       -- omission, not a designed asymmetry; intended
       -- forward shape (not asserted): project
       -- pass-through, opt-in consume.
-      -- REVIEW/fidelity: why check session.handlers? any other space?
+      -- `F.session.handlers` IS the live `love.handlers` table (see
+      -- tests/helpers/input_session.lua) — the production gateway
+      -- LOVE itself dispatches through, not a fixture mirror — so its
+      -- missing `wheelmoved` entry is the real absence, asserted at
+      -- the same seam every other routing row uses.
       it('wheel has no framework gateway entry', function()
         assert.is_nil(F.session.handlers.wheelmoved)
       end)
@@ -92,7 +96,13 @@ describe('input contracts: NFR and planned changes #input', function()
       -- in the keypressed triple — is a planned change (not yet
       -- landed); until it lands, the guard necessarily reads
       -- Controller.keys_pressed.
-      -- REVIEW: when we come to testing *propagation* of keypressed into consumers, we will need to ensure its the same table -- OR replace this implementation test with end-to-end test ensuring that what was pressed (all keys held) is what is received at consumer
+      -- OWED (deferred, not forgotten): this row reads
+      -- Controller.keys_pressed directly — an implementation seam.
+      -- The end-to-end form (what was pressed is what the consumer
+      -- receives, and it is the SAME table) belongs with the
+      -- propagation tests; the delivered-triple row in
+      -- input_events_spec now covers the delivery half, leaving only
+      -- table identity un-asserted.
       it('the pressed key is in the held set', function()
         local seen
         local orig = love.keypressed
@@ -123,11 +133,16 @@ describe('input contracts: NFR and planned changes #input', function()
       -- job (doc/development/decisions/input.md, Decision 8, covered in
       -- keys_pressed_spec),
       -- not the held set's.
-      -- REVIEW: why not set 'ctrl' as pressed too? Much cheaper, no?
+      -- Both sides pressed, so the claim rests on what the set
+      -- CONTAINS (two raw names) and not only on what it lacks: a
+      -- bare absence of 'ctrl' would also hold if the set were
+      -- simply empty.
       it('left/right names stay raw in the held set',
         function()
           F.session.press('lctrl')
+          F.session.press('rctrl')
           assert.is_true(Controller.keys_pressed['lctrl'])
+          assert.is_true(Controller.keys_pressed['rctrl'])
           assert.is_nil(Controller.keys_pressed['ctrl'])
         end)
 

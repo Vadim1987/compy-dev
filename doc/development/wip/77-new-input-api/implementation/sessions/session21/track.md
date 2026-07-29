@@ -129,3 +129,24 @@
   seam, one concern per commit, production fixes always their own commit, a batch is not a commit
   unit, suite green + count stated at every commit. Added to `agents/validation.md` (no such rule
   existed in `rules.md`/`development.md`/`conventions/git.md` — checked).
+
+## 2026-07-29 — B-COV complete
+
+- 22 markers, owner's framing (resolve myself into add-test / accept-with-reason /
+  owe-with-reason). Suite **854/0/0/4**; pendings still 4 (none added, none "fixed").
+- Tests ADDED (7 sites): highlight helper hardened (021/022) + 4-cell matrix (024) + empty/
+  non-empty split (025); cursor tracking + multiline (030), hidden-vs-empty confound fixed (031);
+  per-event hook leak row (050); third widget state shown-then-hidden (074); editor keyrelease
+  EXCLUSIVITY row (098) — the "why not add the test then?" answered by adding it; prompt-label
+  row (106).
+- ABSORBED by B-F's new tests: 044, 053, 055, 065, 070 — verified in tree, not assumed.
+- ANSWERED with a code-grounded reason (no test): 041 (dispatch is one channel-agnostic fn),
+  078 (both install paths ARE exercised — audited), 086 (session.handlers IS live love.handlers),
+  087 (owed: only table identity left), 099, 100.
+- Two pendings kept but with corrected reasons: editor pointer is **config-gated off**
+  (`cfg.editor.mouse_enabled=false`, main.lua) not unobservable — the old comment was wrong;
+  search is the one genuinely un-designed cell (a test would invent its own contract).
+- **Deviation to flag:** RVW-020 was KEPT-for-TF2 (B-E/E1) but its subject (`view_access_ok`)
+  ceased to exist when 021/022 replaced the helper's semantics; renamed `assert_indexable_hl` and
+  marker dropped as a consequence. Recorded in the inventory as RESOLVED-early.
+- New tests negative-checked where they assert new behaviour (matrix cell, exclusivity row).

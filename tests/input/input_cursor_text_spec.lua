@@ -32,7 +32,6 @@ describe('input API: cursor and text surface', function()
     -- → nil.
     it('reports 1-based (line, col) when active',
       function()
-	--- REVIEW/fidelity: only one case is checked -- 'when active' proven, but whether this line/col really always match cursor? not clear (otoh we're against testing all corner cases). Maybe its not worth separate case -- but running few modifications and rechecking assertions would be practical?
         local input = F.compy_input()
         input.show({ text = 'hello' })
         local l, c = input.get_cursor()
@@ -40,9 +39,39 @@ describe('input API: cursor and text surface', function()
         assert.same(6, c)
       end)
 
-    it('returns nil when hidden', function()
-      --- REVIEW/fidelity: no explicit 'hide()', no text filled -- nil could be returned just by default because input is *empty* not because its hidden
+    -- The pair above proves the report is 1-based ONCE. This row
+    -- proves it keeps TRACKING: the reported position follows real
+    -- edits (a typed character, a deletion) rather than being a
+    -- constant that happens to match the opening state.
+    it('keeps reporting the cursor as the text is edited',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hi' })
+        assert.same({ 1, 3 }, { input.get_cursor() })
+        F.session.type('!')
+        assert.same({ 1, 4 }, { input.get_cursor() })
+        F.session.press('backspace')
+        assert.same({ 1, 3 }, { input.get_cursor() })
+      end)
+
+    -- Multiline: the LINE half of the pair has to move too, or a
+    -- single-line-only report would pass every row above.
+    it('reports the line on multiline text', function()
       local input = F.compy_input()
+      input.show({ text = { 'ab', 'cd' } })
+      local l, c = input.get_cursor()
+      assert.same(2, l)
+      assert.same(3, c)
+    end)
+
+    -- Shown-with-text first, THEN hidden: without that setup a nil
+    -- return would be indistinguishable from "the widget was empty
+    -- and never active", which is not the claim being made.
+    it('returns nil when hidden', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello' })
+      assert.is_not_nil(input.get_cursor())
+      input.hide()
       assert.is_nil(input.get_cursor())
     end)
  end)

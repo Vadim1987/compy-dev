@@ -127,25 +127,47 @@ describe('input contracts: routing #input', function()
       assert.is_true(F.console:is_empty())
     end)
 
-    -- keyreleased under editor: the console/editor fork is
-    -- CC-internal and out of {badspecref: #77's blast radius}
-    -- (doc/development/internals/user_input.md, "Key release" for the
-    -- release-channel gap; "Dispatch chain" for the future
-    -- console/editor migration note) — foundation for the future
-    -- console/editor migration; no suite row is owed under
-    -- {badspecref: this feature}.
-    -- REVIEW: why not add the test then?
+    -- keyreleased under editor: the editor route defines NO
+    -- keyreleased entry at all (EditorController has none — only
+    -- ConsoleController does, consoleController.lua
+    -- "ConsoleController:keyreleased"), so there is nothing
+    -- observable on the editor side to assert. Mechanism-by-omission,
+    -- the same shape as the wheel gap in input_nfr_forward_spec.
+    -- What IS assertable, and is the routing claim this grid cell
+    -- exists for, is EXCLUSIVITY — the release does not leak to the
+    -- console (doc/development/decisions/input.md, Decision 1;
+    -- doc/development/internals/user_input.md, "Key release").
+    it('a key release under editor does not reach the console',
+      function()
+        F.console:add_text('ab')
+        F.session.press('backspace')
+        F.session.release('backspace')
+        assert.same({ 'ab' }, F.console:get_text())
+        assert.is_true(F.cc.editor.input:is_empty())
+      end)
 
-    -- SURFACED GAP (doc/development/internals/user_input.md, "Input widget
-    -- mouse"): the production editor
-    -- widget disables selection, so pointer delivery to
-    -- the editor route has no observable outcome without
-    -- extra scaffolding. Named, not silently absent.
-    -- REVIEW: why not implement?
+    -- Pointer under editor is routed
+    -- (ConsoleController:mousepressed forwards to
+    -- self.editor.input when app_state == 'editor') but the forward
+    -- is CONFIG-GATED on cfg.editor.mouse_enabled, which production
+    -- ships as FALSE (src/main.lua, the editor config block). So the
+    -- cell is not an untested behaviour — it is a behaviour switched
+    -- off by default. A test would have to flip the flag and would
+    -- then assert something the shipped configuration never does;
+    -- left pending deliberately, to be filled if/when editor mouse is
+    -- enabled by default (doc/development/internals/user_input.md,
+    -- "Input widget mouse").
     pending('routes the pointer to the editor')
   end)
 
-  -- REVIEW: and why not test it, is it complex? Spec is not called 'feature_77_spec.lua' so not being included in blast radius is a weak excuse for incompleteness (if test could be filled easily)
+  -- Owed, not excused: this is the ONE genuinely un-designed cell of
+  -- the grid. The search widget is a real third MVC triad in
+  -- production (src/model/editor/searchModel.lua builds its own
+  -- UserInputModel), so a routing row could be written — but there is
+  -- no ratified contract to write it against: no design document for
+  -- this feature mentions the surface, so any assertion would invent
+  -- the contract it claims to verify. Filling it is a design task
+  -- first, a test second.
   -- Search (doc/development/internals/user_input.md, "Search — a third
   -- widget instance, live only in editor/search mode"): a
   -- {jargon: third full MVC input triad

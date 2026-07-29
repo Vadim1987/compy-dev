@@ -53,7 +53,15 @@ describe('#input events dispatching', function()
   -- doc/development/decisions/input.md, Decision 2.
 
   describe('order, consume, fall-through', function()
-    -- REVIEW/fidelity/consistence: group tests only against specific event type -- keypressed. Should rather be generalized (dynamically constructed) to test against all relevant even types (keyreleased, textinput)?
+    -- Walked on the keypressed channel only, deliberately. The walk
+    -- is ONE channel-agnostic function in production —
+    -- `dispatch(shortcuts, hooks, widget, event, trigger, ...)` in
+    -- projectInputController.lua indexes `shortcuts[event]` and
+    -- `hooks[event]` and is otherwise identical per channel — so
+    -- re-running the order/consume rows for keyreleased and textinput
+    -- would re-prove the same function three times. That the three
+    -- channels each REACH the walk is proven separately, per channel,
+    -- in the combo group below.
 
     -- doc/development/decisions/input.md, Decision 2 revised: the dumb
     -- walk stops at the first consumer. A shortcut returning
@@ -225,29 +233,41 @@ describe('#input events dispatching', function()
         assert.is_true(fired)
       end)
 
-    -- REVIEW/fidelity: we'd rather should test that setting combo on one event does not alter propagation of other events, and same with hooks. on the other hand, this test does smoke-check in most economic way. but still testing internals is smelly!
-    -- doc/development/decisions/input.md, Decision 8: the three tables
-    -- are distinct; a keypressed
-    -- combo does not leak into the textinput channel.
-    it('the combo tables are per-event, not one flat table',
+    -- doc/development/decisions/input.md, Decision 8: the per-event
+    -- tables are distinct — asserted by BEHAVIOUR (a registration on
+    -- one channel does not fire on another) rather than by reading
+    -- the table structure, which was the smell the previous form had.
+    it('a keypressed combo does not fire on textinput',
       function()
-        local input = F.activate_project()
-        assert.is_table(input.shortcuts.keypressed)
-        assert.is_table(input.shortcuts.keyreleased)
-        assert.is_table(input.shortcuts.textinput)
         local leaked = false
+        local input = F.activate_project()
         input.shortcuts.keypressed['s'] =
             function() leaked = true; return true end
         F.session.type('s')
         assert.is_false(leaked)
       end)
+
+    -- The hook half of the same claim: hooks are per-event too, so a
+    -- keypressed hook must not see a textinput event.
+    it('a keypressed hook does not fire on textinput', function()
+      local leaked = false
+      local input = F.activate_project()
+      input.hooks.keypressed =
+          function() leaked = true; return true end
+      F.session.type('s')
+      assert.is_false(leaked)
+    end)
   end)
 
   -- ---- signatures + read-only proxy
   -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 
   describe('signatures and the read-only proxy', function()
-    -- REVIEW/fidelity: no test in the group checks the contents of keypressed table (if its checked in another suit, maybe replace this comment with reference)
+    -- The table's CONTENTS are asserted in this file's
+    -- 'the pressed-keys table' group below (what it holds after a
+    -- press, what it no longer holds after a release, and that a
+    -- participant cannot write to it); this group covers the
+    -- signature the participants are called with.
     -- doc/development/decisions/input.md, Decision 9: keypressed
     -- participants receive (k, proxy, isrepeat). Asserted over the
     -- WHOLE chain, not one participant: every step is configured
@@ -354,7 +374,10 @@ describe('#input events dispatching', function()
   -- Decision 10 and Decision 2)
 
   describe('defaults and the hidden widget', function()
-    -- REVIEW/fidelity/consistency: test against all non-defined participants? (both handler and hook -- disabled altogether or one-by-one -- I think already described somewhere above... symmetry feels off there
+    -- The non-defined-participant permutations the symmetry calls
+    -- for (none defined, shortcut missing, hook missing) are the
+    -- missing-participant rows of the interception matrix above; this
+    -- group covers what the DEFAULTS do once the event arrives.
 
     -- doc/development/decisions/input.md, Decision 10: the default hook neither
     -- edits nor
@@ -389,7 +412,10 @@ describe('#input events dispatching', function()
 
   describe('the per-event hook', function()
 
-    -- REVIEW/fidelity/consistency: only 'on_text_input' hook is tested, what about 'on_key_pressed'?
+    -- The keypressed counterpart is not missing, it is upstream: the
+    -- interception matrix and the delivered-triple row both drive
+    -- hooks.keypressed. What is specific to textinput, and is why
+    -- this row exists, is the PER-CHARACTER cadence.
     -- doc/development/decisions/input.md, Decision 5: the textinput hook
     -- fires PER-CHARACTER (distinct from the submit output on_text_entered,
     -- which is the pending row above).
@@ -430,11 +456,13 @@ describe('#input events dispatching', function()
     -- handler is a plain hook
     -- participant that fires REGARDLESS of widget-shown state
     -- (the reversed suppress-while-shown mutation is gone).
-    -- REVIEW/consistency: any hook not only a promoted project handler should fire regardless of widget status (and widget absence can have two forms: never was 'shown', or was 'shown than hidden')
     -- REVIEW/clarity: make it clear that a project handler always behaves like a hook -- so the match in behaviour is not occasional. Maybe reuse shared tests suite (if busted supports it)
-    -- Fires whether the widget was never shown or is shown, on both
-    -- the keypressed and keyreleased channels: a downstream chain
-    -- member never blocks upstream consumption.
+    -- Fires in all THREE widget states — never shown, shown, and
+    -- shown-then-hidden (widget absence has two distinct forms) — on
+    -- both the keypressed and keyreleased channels: a downstream
+    -- chain member never blocks upstream consumption. A handler is
+    -- seeded into hooks[event], so this is the hook contract, not a
+    -- handler-only one (seed_hooks, projectInputController.lua).
     it('a project handler fires whether or not the widget is shown',
       function()
         local seen = { pressed = 0, released = 0 }
@@ -451,7 +479,10 @@ describe('#input events dispatching', function()
         F.show_widget()
         F.session.press('a')
         F.session.release('a')
-        assert.same({ pressed = 2, released = 2 }, seen)
+        F.widget:hide()
+        F.session.press('a')
+        F.session.release('a')
+        assert.same({ pressed = 3, released = 3 }, seen)
       end)
 
     -- doc/development/decisions/input.md, Decision 10, project-handler
@@ -491,7 +522,14 @@ describe('#input events dispatching', function()
       function()
         local handler_hits, cb_hits = 0, 0
         local function bump() handler_hits = handler_hits + 1 end
-	-- REVIEW/fidelity/consistency: is 'activate_project' installing hooks via legacy path? (as love.*) are other tests (in the beginning of this suite) also testing this path and theerfore NOT testing input.on_ path (explicit hook configuration). What do we do with it?
+    -- Audited: BOTH paths are exercised in this file, not one.
+    -- F.activate_project({ keypressed = f }) is the legacy path — f
+    -- is the project's sandboxed love.keypressed, seeded into
+    -- hooks[event] once at activation (seed_hooks,
+    -- projectInputController.lua) — while every row that assigns
+    -- input.hooks.<event> directly (the interception matrix, the
+    -- delivered-triple row, the textinput rows) drives the explicit
+    -- path. This row is the one that pins how they INTERACT.
         local input = F.activate_project({ keypressed = bump })
         input.hooks.keypressed =
             function() cb_hits = cb_hits + 1; return true end

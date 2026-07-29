@@ -4,19 +4,19 @@
 
 -- Regression guard: highlight `.hl` must stay indexable.
 --
--- The view (userInputView.render_input) reads
--- `highlight.hl` and immediately indexes it
--- (`hl[tlc.l][tlc.c]`). Regression guard for the
--- "attempt to index upvalue hl (a nil value)" crash:
--- UserInputModel:get_highlight(), when it returns a
--- non-nil highlight, must always expose an INDEXABLE
--- `.hl` — never a plain-table field left nil.
+-- The invariant: UserInputModel:get_highlight(), whenever it returns a
+-- highlight at all, exposes an INDEXABLE `.hl` — never a plain-table
+-- field left nil. Consumers index it straight away (the view reads
+-- `highlight.hl` then `hl[l][c]`), and the original
+-- "attempt to index upvalue hl (a nil value)" crash was exactly that
+-- field arriving nil.
 --
--- The crash path is the parser-bearing evaluator whose
--- highlighter is absent (or returns nil): highlight()'s
--- parser branch used to store `{ hl = nil, parse_err }`,
--- a plain literal with no auto-vivifying metatable, so
--- `hl[l]` blew up.
+-- `highlight()` has TWO branches and each had to be taught the
+-- invariant separately — the parser branch (`{ hl = hl or {}, … }`)
+-- and the parser-less one (`{ hl = ev.highlighter(text) or {} }`). The
+-- rows below are the resulting matrix: [lua parser || plain text] x
+-- [highlighter returning nil || highlighter absent], plus the
+-- empty/non-empty text split on the standard lua evaluator.
 
 require("model.input.userInputModel")
 require("model.interpreter.eval.evaluator")
@@ -33,49 +33,60 @@ describe("highlight nil-index regression #input", function()
   mock           = require("tests.mock")
   mock.mock_love({ state = { app_state = 'ready' } })
 
-  -- Emulates the view's exact access on the first visible
-  -- char: highlight.hl[line][col]. Must not throw.
-  -- REVIEW/clarity: function name does not communicate the purpose of check unambiguously
-  local function view_access_ok(model)
+  -- The contract guarded here is the MODEL's: whenever get_highlight()
+  -- returns a highlight at all, its `.hl` must be indexable.
+  --
+  -- Asserted on the model directly, not through a replica of the view's
+  -- access. The view carries its own `if hl and hl[tlc.l]` guard since
+  -- the same fix that made `.hl` indexable (1a2a9a3,
+  -- src/view/input/userInputView.lua), so a view-shaped replica would
+  -- assert a symptom the live view no longer shows — while the model
+  -- contract, which every other consumer of `.hl` depends on, is the
+  -- thing that actually has to hold. Nothing is swallowed by pcall
+  -- either: a nil `.hl` fails the assertion outright instead of
+  -- collapsing into a boolean.
+  local function assert_indexable_hl(model)
     local h = model:get_input().highlight
-    --- REVIEW/fidelity: does this guard betray the purpose of test?
-    if h == nil then return true end
-    -- the view's own access: `hl[tlc.l]` with NO `hl and`
-    -- guard (userInputView.lua render_input). Replicate it
-    -- unguarded so a nil `.hl` throws exactly as it does live.
-    -- REVIEW/fidelity: why check test symptom instead of bug path? (i.e. calling the function which internally could've blow up?)
-    return pcall(function()
-      local hl = h.hl
-      return hl[1] and hl[1][1]
-    end)
+    assert.is_not_nil(h, 'a highlight is memoised for this evaluator')
+    assert.is_table(h.hl, '.hl is a table, never nil')
+    assert.has_no.errors(function() return h.hl[1] and h.hl[1][1] end)
   end
 
   -- REVIEW/clarity: what's the difference between three modes not explained? (especially not clear how LuaEval() is different from InputEvalLua. Maybe wrap them into aliases semantically meaningful in test context? (e.g. `ev = evaluator_without_highlighter()`, `input_with_lua_evaluator', 'input_with_text_evaluator'). Or even table (ev = evaluators['text_no_hl']; m=evaluators['lua_normal']; m=evaluators['lua_with_dummy_hl'])
-  -- Three cases, one per highlighter condition that decides
-  -- whether `.hl` is a crash-prone plain literal or indexable:
-  --   1. Lua parser present, highlighter returns nil — the exact
+  -- One row per highlighter condition that decides whether `.hl` is a
+  -- crash-prone plain literal or indexable:
+  --   1. Lua parser present, highlighter returns nil — the original
   --      regression path. Uses the LuaEval() FACTORY (a fresh
   --      instance) so it can override .highlighter to nil without
   --      mutating the shared InputEvalLua singleton.
   --   2. Standard Lua eval (InputEvalLua singleton, real
-  --      highlighter) — normal colouring, empty + non-empty text.
-  --   3. Validated text eval — no parser, takes the non-parser
-  --      branch; a different production scenario (text, not Lua).
-  it('parser present, highlighter returns nil -> hl still indexable', function()
-    --- REVIEW/clarity/fidelity:  how LuaEval() with nil-returning highlighter is different from case#2 and case#3? it seems to be a mix of both, but not sure which production scenarios are mapped. And maybe there shold be 4 cases? ( [lua || text] x [ missing hl || returning empty ])
-    local ev = LuaEval()
-    ev.highlighter = function() return nil end -- parser-bearing, no colouring
-    local m = UserInputModel(mockConf, ev)
-    m:set_text({ 'return 1' })
-    assert.is_true(view_access_ok(m))
+  --      highlighter) — normal colouring, one row for empty text and
+  --      one for non-empty.
+  --   3. Text eval (no parser), highlighter returns nil — the same
+  --      hole on the other branch, and the one a project actually
+  --      reaches through show({ highlighter = … }).
+  --   4. Text eval, no highlighter at all — the validation-highlight
+  --      path, a different production scenario (text, not Lua).
+  it('lua eval, highlighter returns nil -> hl still indexable',
+    function()
+      local ev = LuaEval()
+      ev.highlighter = function() return nil end -- parser, no colouring
+      local m = UserInputModel(mockConf, ev)
+      m:set_text({ 'return 1' })
+      assert_indexable_hl(m)
+    end)
+
+  -- "empty" and "non-empty" are the model's TEXT, split into their own
+  -- rows so each states which one it covers: a freshly built model
+  -- holds no text, and the highlight is memoised on first query.
+  it('lua eval, empty text -> hl indexable', function()
+    assert_indexable_hl(UserInputModel(mockConf, InputEvalLua))
   end)
 
-  -- REVIEW/fidelity: claims 'empty and non-empty' but its not clear what both mean and how *both* are tested
-  it('standard lua eval -> hl indexable (empty and non-empty)', function()
+  it('lua eval, non-empty text -> hl indexable', function()
     local m = UserInputModel(mockConf, InputEvalLua)
-    assert.is_true(view_access_ok(m))
     m:set_text({ 'return 1' })
-    assert.is_true(view_access_ok(m))
+    assert_indexable_hl(m)
   end)
 
   -- The non-parser branch's own nil-highlighter cell — the missing
@@ -94,13 +105,14 @@ describe("highlight nil-index regression #input", function()
       ev.highlighter = function() return nil end
       local m = UserInputModel(mockConf, ev)
       m:set_text({ '42' })
-      assert.is_true(view_access_ok(m))
+      assert_indexable_hl(m)
     end)
 
-  it('validated text eval (no parser) -> hl indexable', function()
-    local m = UserInputModel(mockConf, ValidatedTextEval({ function() return true end }))
-    assert.is_true(view_access_ok(m))
+  it('text eval, no highlighter -> hl indexable', function()
+    local m = UserInputModel(mockConf,
+      ValidatedTextEval({ function() return true end }))
+    assert_indexable_hl(m)
     m:set_text({ '42' })
-    assert.is_true(view_access_ok(m))
+    assert_indexable_hl(m)
   end)
 end)

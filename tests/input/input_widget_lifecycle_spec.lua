@@ -27,11 +27,20 @@ describe('input contracts: widget lifecycle #input', function()
   -- the public project surface. F.compy_input() resolves
   -- project_env.compy.input — exactly what a project sees.
   -- show({ text = ... }) seeds the widget's CONTENT (the
-  -- editable text); the prompt label is a separate,
-  -- untested-here concern (same section). The
+  -- editable text) and show({ prompt = ... }) its label — a separate
+  -- config key, one row each (same section). The
   -- "no cancel chain" facts are stable-now.
-  -- REVIEW: TODO: need to test prompt-labelling and relabelling
   describe('widget activation and reset', function()
+
+    -- Prompt LABELLING at activation. Re-labelling on an already
+    -- active session is the reconfigure concern and is covered there
+    -- (input_reconfigure_spec.lua, 'updates the prompt on an active
+    -- session'), so this row only pins the show() half.
+    it('a fresh activation applies the prompt label', function()
+      local input = F.compy_input()
+      input.show({ text = 'hi', prompt = 'name?' })
+      assert.equal('name?', F.widget.model:get_label())
+    end)
 
     it('a fresh activation with no text is empty',
       function()
