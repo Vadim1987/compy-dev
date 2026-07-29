@@ -87,3 +87,19 @@
 - Persistent-reference sweep found no remaining unimplemented-flag/TODO
   wording. `busted tests` → **854 / 0 / 0 / 4**. R4 is **3 of 12** visible
   pre-TF2 items dispositioned; next is RVW-100 (Search routing scope).
+
+## 2026-07-29 — RVW-100 topology correction and reframing
+
+- There is no third editor-local `UserInputController`: the four live
+  instances are project overlay, console REPL, editor main input, and
+  editor Search. The remembered menu-like path is editor `reorder` mode;
+  it owns keys directly and never calls `UserInputController:keypressed`.
+- Search is nonetheless a distinct migration concern: it owns keys through
+  `SearchController:keypressed` (navigation/removers and Enter → jump
+  target) and delegates only text insertion to its wrapped widget. Search
+  and reorder are intentionally outside the R-phase un-fork.
+- Owner is considering a real-keystroke characterization test as the
+  #77 migration-readiness evidence, rather than treating Search as a new
+  project-facing API contract. Proposed future work: a separate analytical
+  migration-path document, not speculative code comments; no ruling or
+  execution yet.
