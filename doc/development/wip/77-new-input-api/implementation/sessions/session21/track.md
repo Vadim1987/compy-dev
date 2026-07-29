@@ -108,3 +108,24 @@
   RESTRUCT recommendation was stale; worth expecting more of these in B-COV.
 - Suite **847/0/0/4** (841 −1 redundant +7 matrix +1 split −1 merge; relocation is net zero).
   Inventory dispositions filled for all 14; triage plan marks B-F COMPLETE.
+
+## 2026-07-29 — B-COV opened; production bug found + fixed (owner ruled (a))
+
+- **Bug (found via RVW-024's 2x2 matrix question, owner's own marker):** `1a2a9a3` fixed only the
+  parser branch of `UserInputModel:highlight()`; the non-parser branch still built
+  `{ hl = ev.highlighter(text) }` with no `or {}`. Reachable from the public API — the project
+  widget is parser-less (`main.lua:374`, InputEvalText) and `show({ highlighter = f })` assigns f
+  onto that evaluator (`userInputController.lua:259`), so a highlighter returning nil for some
+  input yields `{ hl = nil }`. Masked in production only by the view guard `if hl and hl[tlc.l]`
+  (`userInputView.lua:171`) that the SAME commit added — the model contract was not held.
+- Probed empirically before claiming (scratch spec), not reasoned about. Owner ruled **(a) fix
+  now, breaking test first, separate commit**.
+- Breaking test confirmed failing with the original crash class ("attempt to index local 'hl'
+  (a nil value)"), then one-line fix; suite 848/0/0/4. Commit `5ad2ce2` (production only).
+- Second finding recorded for the B-COV pass: the test file's rationale comment claims it
+  replicates "the view's own access ... with NO `hl and` guard" — true pre-`1a2a9a3`, **false now**.
+  Exactly what RVW-022 suspected. To be corrected when the highlight markers are dispositioned.
+- **New standing rule written (owner directive):** commit granularity — commit at the natural
+  seam, one concern per commit, production fixes always their own commit, a batch is not a commit
+  unit, suite green + count stated at every commit. Added to `agents/validation.md` (no such rule
+  existed in `rules.md`/`development.md`/`conventions/git.md` — checked).

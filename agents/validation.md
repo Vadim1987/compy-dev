@@ -81,6 +81,21 @@ more elaborate?" This frame is the owner's and only the owner revises it.
 - Owner-gated, always: deleting `wip/77`; amending anything under `design/` (frozen) or the
   ratified glossary; any Pass-2-style ruling; actions the current plan marks "pending owner go".
 
+### Commit granularity (owner directive, 2026-07-29) — commit often, one concern per commit
+
+Commit at the **natural seam**, not at the end of a session or a batch. A commit holds **one
+concern**; when a unit of work contains two, it is two commits, and the smaller one goes first.
+
+- **A production fix is always its own commit**, never folded into the docs/tests/marker work that
+  surfaced it. Its message carries the evidence: what was broken, how it is reachable, and why the
+  breaking test proves it (`agents/development.md`: start with a breaking test, then implement).
+- **A batch is not a commit unit.** A mop-up batch of N markers may land as several commits if it
+  contains separable concerns; one commit per batch is a coincidence, not the rule.
+- **Suite green at every commit** — the count is stated in the message, and any change to it is
+  explained there (added/removed/split tests reconcile arithmetically).
+- Same standing limits as before: unit-sized, conventional-commits style (`agents/rules.md`), each
+  unit noted in track, **NEVER push**, never sweep the owner's unrelated working-tree changes in.
+
 ## Sub-agents and model economy (owner directive, 2026-07-18)
 
 - **Sonnet** for everything mechanical or scoped (audits, sweeps, renames, fixture work) —
