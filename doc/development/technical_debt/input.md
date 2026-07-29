@@ -598,24 +598,6 @@ be silently narrowed later (any change is a separate, owner-gated decision):
   `oneshot` flag. Its own in-code `REVIEW:` asks whether it survives a
   console/editor re-plug; carried, out of #77 scope.
 
-### Inspect-mode console-owns-surface (CONTESTED)
-
-Under `inspect` the console REPL owns every input channel and a shown project widget is
-**not** honoured; the REPL evaluates in the paused project's own env (a live debugger, not an
-idle console). Mechanism: `get_user_input()` returns `nil` while `app_state == 'inspect'`
-(`src/controller/controller.lua`); `ConsoleController:suspend()` reinstalls the console's own
-`love.keypressed/textinput/…` via `set_default_handlers` (`src/controller/consoleController.lua`);
-`evaluate_input()` selects the project env under inspect. See
-`doc/development/internals/user_input.md`, "Dispatch chain" (which already flags this as
-characterized status quo) and `doc/development/decisions/input.md`, Decision 12.
-
-**Contested (RVW-111):** whether a hidden/paused console should own the fall-through, rather
-than an active route, is questioned. **Kept as-is** — not a stakeholder ask, and changing it
-reworks the suspend/inspect spine (architecturally significant). Note a real *run* with a hidden
-widget already falls through with no silent console consumption (the widget no-ops via its
-internal `is_shown()`); the contested behaviour is only the inspect-mode debugger. Revisit under
-a future console/editor migration; a "proper" replacement behaviour is undefined until then.
-
 ### Comment wip-citation cleanup (from the canonical-docs comment rule)
 
 Two `src/controller/` comments cite the feature's ephemeral wip tree instead of a canonical

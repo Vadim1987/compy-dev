@@ -40,14 +40,11 @@ describe('input contracts: NFR and planned changes #input', function()
   describe('current behaviour — characterized, no mandate',
     function()
 
-      -- inspect (doc/development/decisions/input.md, Decision 12): under
-      -- inspect the console REPL owns the input surface; a shown project
-      -- widget is not honoured; input is not dead. CONTESTED status-quo —
-      -- not a ratified contract: whether a hidden/paused console should own
-      -- the fall-through is questioned (doc/development/technical_debt/input.md,
-      -- "Inspect-mode console-owns-surface"). Kept as-is (not a stakeholder
-      -- ask; changing it reworks the suspend/inspect spine). Asserted live so
-      -- an ACCIDENTAL change still fails.
+      -- inspect (doc/development/decisions/input.md, Decision 12): the
+      -- pre-feature debugger keeps the console REPL bound to the paused
+      -- project's environment. A shown project widget is unhonoured.
+      -- This is distinct from the former running-project console fallback,
+      -- which #77 removes through the project route.
       it('inspect: the console owns the surface', function()
         F.show_widget()
         F.console:add_text('ab')

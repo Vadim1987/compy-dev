@@ -230,7 +230,9 @@ end
 -- (the editor is still reached via the console fork), so PIC
 -- is wired explicitly here. See doc/development/decisions/input.md #1
 -- "route-centric routing" + #11 "route connects only while
--- running". (`userlove`/`forward_*` renames: technical_debt.)
+-- running". It installs even with no project handlers: an
+-- unhandled event must stop in the project route, never reach the
+-- hidden console. (`userlove`/`forward_*` renames: technical_debt.)
 local function occupy_keyboard(userlove, CC)
   local pic = Controller.project_input
   local compy = CC:get_project_env().compy

@@ -440,6 +440,13 @@ stops, so pen-and-paper projects (which draw on click while otherwise idle) rema
 `'project_open'`. An implementer must **not** "tidy up" by unifying pointer disconnection into
 this boundary; the asymmetry is intentional and load-bearing for those projects.
 
+**Changed baseline behaviour.** Before #77, a running project without its own keyboard/text
+handler left the console callback installed. With no shown project widget, unhandled input could
+therefore accumulate in the hidden console and Enter could evaluate it. The project route now
+occupies keyboard/text handlers for every running project: an event reaches a shortcut, hook, or
+shown widget, otherwise it has no effect. A future fallback would need to be an explicit route
+participant with its own contract; it must not return by omission.
+
 **Consequence — a teardown invariant.** No callback, combo entry, or widget configuration
 survives the project that installed it. Combined with the connection rule, stale configuration can
 never act outside its creator's window: a disconnected route's participants receive nothing, and

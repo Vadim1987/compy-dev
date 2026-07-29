@@ -391,19 +391,19 @@ describe('#input events dispatching', function()
         assert.same({ 'a' }, F.widget:get_text())
       end)
 
-    -- REVIEW/concern: "mutates nothing" may conflict with the
-    -- postponed console-hidden-sink decision (collapse-gate ledger
-    -- G-1 / D3) — if the console is ruled to listen to all or to
-    -- unconsumed events, this expectation changes. Revalidate at G-1.
-    -- doc/development/decisions/input.md, Decision 2: an event with no
-    -- participant anywhere, and a hidden widget, mutates nothing — a no-op.
+    -- Availability: since 1.0.0-rc20260712 — pre-feature, a project
+    -- with no keyboard handler left the console callback installed.
+    -- An unhandled event therefore reached the hidden console. The
+    -- project route now owns all running-project keyboard/text input.
     it('no participant + hidden widget mutates nothing',
       function()
         F.activate_project()
         F.show_widget({ text = 'keep' })
         F.widget:hide()
+        F.console:add_text('ab')
         F.session.press('backspace')
         assert.same({ 'keep' }, F.widget:get_text())
+        assert.same({ 'ab' }, F.console:get_text())
       end)
   end)
 
