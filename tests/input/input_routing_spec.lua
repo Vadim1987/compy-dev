@@ -22,7 +22,6 @@
 -- REVIEW/DOC: fix spec references EVERYWHERE IN THE FILE (I will wrap them into {badspecref:} wherever I see them
 -- REVIEW/DOC: also I will wrap with {jargon:...} the words or phrases which seem invented
 -- REVIEW: using tags in groups would also be great but I will inject some myself
--- REVIEW: would it be worth splitting the 2K+ LoC into several test suites, for easier inspection?
 -- ----------------------------------------------------------------------
 
 local F = require('tests.helpers.input_fixture')

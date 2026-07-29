@@ -45,7 +45,6 @@ describe('#input events dispatching', function()
 
   -- Press a modifier then a trigger so the combo serialises to 'ctrl+…' — a real chord
   -- (doc/development/decisions/input.md, Decision 8).
-  -- REVIEW/quality: better allow random chords -- (...) and iterating over it? cheap and more flexible
   local function chord(mod, k)
     F.session.press(mod)
     F.session.press(k)
@@ -93,8 +92,6 @@ describe('#input events dispatching', function()
     -- doc/development/decisions/input.md, Decision 2: a truthy combo
     -- handler ({jargon: tier 2}) stops the descent —
     -- neither the hook nor the widget runs.
-    -- REVIEW/clarity: I would use same chain with mnemonic flags as in previous case -- and probably matrix test to show interception on every step, and also that lack of step (no combo defined, no hook defined) does not prevent other parts from working
-    -- REVIEW/clarity: do we have the symmetric test 'truthy hook return value prevents reaching widget'? and symmetric tests for '*missing* handler does not prevent reaching hook, missing hook does not prevent reaching widget'?
     it('a shortcut returning truthy stops the chain (hook not reached)', function()
       local reached_cb = false
       local input = F.activate_project()
@@ -122,22 +119,75 @@ describe('#input events dispatching', function()
       assert.equal(2, n)
     end)
 
-    -- doc/development/decisions/input.md, Decision 2: assigning a generic
-    -- callback replaces
-    -- ONLY it; when
-    -- it returns falsey the widget still runs for that event.
-    -- REVIEW/clarity/consistence: this test is redundant -- the whole need raised from reversing misinterpreted requirements -- test can safely go, it repeats one particular configuration tested above
-    it('assigning a callback replaces only it; widget still runs',
-      function()
-        local input = F.activate_project()
-        F.show_widget({ text = 'ab' })
-        input.hooks.keypressed = function() return false end
-        F.session.press('backspace')
-        assert.same({ 'a' }, F.widget:get_text())
-      end)
   end)
 
-  -- REVIEW/clarity: maybe wrap three cases below into sub-describe
+  -- doc/development/decisions/input.md, Decision 2: the interception
+  -- matrix. Two things at once — each participant intercepts for
+  -- itself only (a consumer stops the walk exactly where it sits), and
+  -- a MISSING participant is not a barrier: the walk skips it and the
+  -- ones below still run. Rows configure (shortcut, hook) as
+  -- pass-through or consuming, or leave them undefined; `seen` is the
+  -- mnemonic trace and the widget's text is the observable terminal
+  -- (backspace edits 'ab' -> 'a' exactly when the widget runs).
+  describe('the interception matrix', function()
+
+    local CONSUME, PASS = 'consume', 'pass'
+
+    local rows = {
+      { name = 'no participant defined: the widget still runs',
+        widget_runs = true, expect = { } },
+      { name = 'both pass through: shortcut, hook, then the widget',
+        shortcut = PASS, hook = PASS,
+        widget_runs = true, expect = { 'shortcut', 'hook' } },
+      { name = 'a consuming shortcut stops the walk at itself',
+        shortcut = CONSUME, hook = PASS,
+        widget_runs = false, expect = { 'shortcut' } },
+      { name = 'a consuming hook stops the walk before the widget',
+        shortcut = PASS, hook = CONSUME,
+        widget_runs = false, expect = { 'shortcut', 'hook' } },
+      { name = 'a missing shortcut does not stop a consuming hook',
+        hook = CONSUME,
+        widget_runs = false, expect = { 'hook' } },
+      { name = 'a missing shortcut does not stop the widget',
+        hook = PASS,
+        widget_runs = true, expect = { 'hook' } },
+      { name = 'a missing hook does not stop the widget',
+        shortcut = PASS,
+        widget_runs = true, expect = { 'shortcut' } },
+    }
+
+    -- records itself in `seen`, then consumes iff mode is CONSUME
+    local function participant(seen, who, mode)
+      return function()
+        seen[#seen + 1] = who
+        return mode == CONSUME
+      end
+    end
+
+    local function configure(input, row, seen)
+      if row.shortcut then
+        input.shortcuts.keypressed['backspace'] =
+            participant(seen, 'shortcut', row.shortcut)
+      end
+      if row.hook then
+        input.hooks.keypressed =
+            participant(seen, 'hook', row.hook)
+      end
+    end
+
+    for _, row in ipairs(rows) do
+      it(row.name, function()
+        local seen = { }
+        configure(F.activate_project(), row, seen)
+        F.show_widget({ text = 'ab' })
+        F.session.press('backspace')
+        assert.same(row.expect, seen)
+        assert.same({ row.widget_runs and 'a' or 'ab' },
+          F.widget:get_text())
+      end)
+    end
+  end)
+
   -- doc/development/decisions/input.md, Decision 8.
   describe('shortcuts fire on the normalised combo', function()
     -- doc/development/decisions/input.md, Decision 8: each channel has its
@@ -193,29 +243,33 @@ describe('#input events dispatching', function()
       end)
   end)
 
-  -- REVIEW/clarity: I'd rather wrap in 'describe'
   -- ---- signatures + read-only proxy
   -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 
   describe('signatures and the read-only proxy', function()
     -- REVIEW/fidelity: no test in the group checks the contents of keypressed table (if its checked in another suit, maybe replace this comment with reference)
-    -- REVIEW: why not test whole chain instead? configure all parts to be passthrough/nonconsuming (registering args and returning false), than check that every step registered the triade? 
     -- doc/development/decisions/input.md, Decision 9: keypressed
-    -- participants receive
-    -- (k, proxy,
-    -- isrepeat); isrepeat threads through to {jargon: tier 3}.
-    it('keypressed carries (k, keys_pressed, isrepeat)',
+    -- participants receive (k, proxy, isrepeat). Asserted over the
+    -- WHOLE chain, not one participant: every step is configured
+    -- pass-through (records its triple, returns false), so the event
+    -- walks shortcut -> hook -> widget and each step is checked for
+    -- what was actually DELIVERED — the key itself, a proxy that
+    -- really reports the held key, and the true isrepeat flag — not
+    -- merely for type compliance.
+    it('every step of the chain receives the same delivered triple',
       function()
-        local seen
+        local seen  = { }
         local input = F.activate_project()
-        input.hooks.keypressed = function(k, keys, isr)
-          seen = { k, keys, isr }; return true
+        local step  = function(who)
+          return function(k, keys, isr)
+            seen[who] = { k, keys['a'], isr }
+          end
         end
+        input.shortcuts.keypressed['a'] = step('shortcut')
+        input.hooks.keypressed         = step('hook')
         F.session.repeat_press('a')
-        -- REVIEW/fidelity: only type signature is tested but not what is really delivered -- so its not a test of contract, only of its type-compliance
-        assert.equal('a', seen[1])
-        assert.is_table(seen[2])
-        assert.is_true(seen[3])
+        assert.same({ 'a', true, true }, seen.shortcut)
+        assert.same({ 'a', true, true }, seen.hook)
       end)
 
     -- doc/development/decisions/input.md, Decision 9: isrepeat is false on
@@ -231,19 +285,45 @@ describe('#input events dispatching', function()
       assert.same({ false, true }, seen)
     end)
 
-    -- REVIEW/clarity/consistency/fidelity: Should instead be something like "describe('pressed keys table') -> it('contains pressed keys') , it('does not contain released keys'), it('can not be modified from hook or handler'))" and multiply it by evet type?
-    -- doc/development/decisions/input.md, Decision 13: the keys_pressed
-    -- argument is read-only — reads pass through, writes raise.
-    it('keys_pressed can be read but not modified', function()
-      local proxy
-      local input = F.activate_project()
-      input.hooks.keypressed = function(_, keys)
-        proxy = keys; return true
-      end
-      F.session.press('a')
-      assert.is_table(proxy)
-      assert.is_true(proxy['a'])
-      assert.has_error(function() proxy['x'] = true end)
+    -- The held-key table as a participant sees it: what it contains,
+    -- what it no longer contains, and that it cannot be written to
+    -- (doc/development/decisions/input.md, Decision 13;
+    -- doc/development/internals/user_input.md, "Key release").
+    describe('the pressed-keys table', function()
+
+      it('contains the pressed key', function()
+        local proxy
+        local input = F.activate_project()
+        input.hooks.keypressed = function(_, keys)
+          proxy = keys; return true
+        end
+        F.session.press('a')
+        assert.is_table(proxy)
+        assert.is_true(proxy['a'])
+      end)
+
+      -- the key is removed at the gateway BEFORE dispatch, so a
+      -- keyreleased participant never sees it still held.
+      it('no longer contains a released key', function()
+        local present = true
+        local input = F.activate_project()
+        input.hooks.keyreleased = function(k, keys)
+          present = keys[k]; return true
+        end
+        F.session.press('a')
+        F.session.release('a')
+        assert.is_nil(present)
+      end)
+
+      it('cannot be modified from a hook', function()
+        local proxy
+        local input = F.activate_project()
+        input.hooks.keypressed = function(_, keys)
+          proxy = keys; return true
+        end
+        F.session.press('a')
+        assert.has_error(function() proxy['x'] = true end)
+      end)
     end)
 
     -- doc/development/decisions/input.md, Decision 9: the WIDGET is included
@@ -268,23 +348,6 @@ describe('#input events dispatching', function()
         assert.is_true(seen[3])
       end)
 
-    -- REVIEW/consistency: this test checks the delivery of keys_pressed table -- should not it live alongside the test which checks the contents of passed table (symmetry: key present on keypressed (and tetnput ?), released on keyreleased)
-    -- doc/development/internals/user_input.md, "Key release": a keyreleased
-    -- participant sees the
-    -- key ALREADY gone
-    -- from the held set (removed at the {jargon: gateway}
-    -- before dispatch).
-    it('a keyreleased participant sees the key already gone',
-      function()
-        local present = true
-        local input = F.activate_project()
-        input.hooks.keyreleased = function(k, keys)
-          present = keys[k]; return true
-        end
-        F.session.press('a')
-        F.session.release('a')
-        assert.is_nil(present)
-      end)
   end)
 
   -- defaults + hidden widget (doc/development/decisions/input.md,
@@ -369,16 +432,26 @@ describe('#input events dispatching', function()
     -- (the reversed suppress-while-shown mutation is gone).
     -- REVIEW/consistency: any hook not only a promoted project handler should fire regardless of widget status (and widget absence can have two forms: never was 'shown', or was 'shown than hidden')
     -- REVIEW/clarity: make it clear that a project handler always behaves like a hook -- so the match in behaviour is not occasional. Maybe reuse shared tests suite (if busted supports it)
+    -- Fires whether the widget was never shown or is shown, on both
+    -- the keypressed and keyreleased channels: a downstream chain
+    -- member never blocks upstream consumption.
     it('a project handler fires whether or not the widget is shown',
       function()
-        local seen = 0
+        local seen = { pressed = 0, released = 0 }
         F.activate_project({
-          keypressed = function() seen = seen + 1 end,
+          keypressed  = function()
+            seen.pressed = seen.pressed + 1
+          end,
+          keyreleased = function()
+            seen.released = seen.released + 1
+          end,
         })
         F.session.press('a')
+        F.session.release('a')
         F.show_widget()
         F.session.press('a')
-        assert.equal(2, seen)
+        F.session.release('a')
+        assert.same({ pressed = 2, released = 2 }, seen)
       end)
 
     -- doc/development/decisions/input.md, Decision 10, project-handler
@@ -406,24 +479,6 @@ describe('#input events dispatching', function()
         F.show_widget()
         F.session.type('Z')
         assert.same({ 'Z' }, F.widget:get_text())
-      end)
-
-    -- REVIEW/clarity: unite with the first test in this group, and remove references from 'downstream bucket D' from the prose. We simply test that hook fires whether widget is shown or hidden or never shown. Its a wortful test which would normally belong to both variants (hook installed via input API, and hook installed from legacy sandboxed love.* equivalent). See remark abouve about reusing tests group. Amd once again -- the test itself is worthful, and belongs to dispatching chain. The reason: it checks that downstream dispatching chain members (or just last one -- widget) do not block upstream consumption
-    -- doc/development/decisions/input.md, Decision 10, project-handler
-    -- path, keyreleased
-    -- channel: fires regardless
-    -- of widget-shown state (case a) — the downstream half of
-    -- the 'release under a widget' case
-    -- (doc/development/tests.md, "Input Contract Suite (feature #77)").
-    it('a handler keyreleased fires while the widget is shown',
-      function()
-        local seen = 0
-        F.activate_project({
-          keyreleased = function() seen = seen + 1 end,
-        })
-        F.show_widget()
-        F.session.release('a')
-        assert.equal(1, seen)
       end)
 
     -- doc/development/decisions/input.md, Decision 10 precedence:

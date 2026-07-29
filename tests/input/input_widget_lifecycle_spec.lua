@@ -11,32 +11,11 @@
 -- at public seams, never method-name spies. keypressed fires for every
 -- physical key, textinput only for character-producing keys
 -- (doc/development/internals/user_input.md, "Data flow").
--- Widget activation/reset via the public compy.input surface, the
--- hidden-widget non-consumption rule, and editor-internal block
--- navigation at the buffer limit (doc/input_api.md, "Activating the
+-- Widget activation/reset via the public compy.input surface and the
+-- hidden-widget non-consumption rule (doc/input_api.md, "Activating the
 -- widget: `show`"; doc/development/decisions/input.md, Decision 2).
 
 local F  = require('tests.helpers.input_fixture')
-local TU = require('tests.testutil')
-local mock = require('tests.mock')
-
-require('tests.helpers.codesnippets')
-require('tests.helpers.editor_session')
-
--- A standalone editor session, used ONLY by the block-nav
--- row at the bottom (an editor-internal behaviour, not a
--- routing contract — see the OPEN marker there). It drives
--- EditorController directly, below the love.handlers gate,
--- which is why no routing row may use it.
--- REVIEW: this helper serves one case which must be displaced
-local function make_editor_session()
-  local model = EditorModel(F.cfg)
-  local ec    = EditorController(model)
-  EditorView(F.cfg.view, ec)
-  local press = function(k) ec:keypressed(k) end
-  local save  = TU.get_save_function({ })
-  return EditorSession(ec, press, save, mock)
-end
 
 describe('input contracts: widget lifecycle #input', function()
   setup(function() F.setup() end)
@@ -130,10 +109,12 @@ describe('input contracts: widget lifecycle #input', function()
   -- {jargon: reaches the active route instead. Intra-route rule;
   -- inter-route dispatch unchanged}.
   -- REVIEW: whenever we migrate console to new API, we may stop silent consuming of input (to be confirmed yet) -- therefore assertions checking the console as hidden sink will break and will have to be updated (see also one of previous remarks not so far before)
-  -- REVIEW: this test case is literally a sibling of previous one, the only difference is that two modes are preserved ('keep' vs no-keep). So the two should be better named/grouped. Not sure if we can just test the widget state (e.g. typing+enter do *not* delivering on_text_entered while widget is hidden; and the re-delegation to console is a separate *disputable* concern that should be asserted separately (if not discarded)
+  -- One row per channel: the pair differs only in which channel the
+  -- event arrives on (textinput vs keypressed), so they are named for
+  -- that and nothing else.
   describe('a hidden widget does not consume', function()
 
-    it('input while hidden does not mutate it', function()
+    it('a typed character while hidden does not mutate it', function()
       local input = F.compy_input()
       input.show({ text = 'keep' })
       input.hide()
@@ -146,11 +127,11 @@ describe('input contracts: widget lifecycle #input', function()
     -- REVIEW: remark below is historical (from previous passes, it addresses same problem as substantial remarks on two previous cases)
     -- REVIEW: now I am concerned about the very concept. Was it in place before? (that console absorbs any interaction when project is active but widget is hidden) How it correlates with common logic? Will it mean somewhere in the console random keystrokes are accumulating? What for? User even does not see the console if project is running -- will it see a garbage on 'inspect'? what is user occasionally types some destructive or ambiguous command while project is running -- will console evaluate/execute it? if so, its dangerous and strange; if not, there's no point in routing input to console. MY UNDERSTANDING IS: if "project/editor" is active -- its an active route -- events travel down through it. Whether they end up in user_widget (shown) or in noop (if widget is hidden), or intercepted by project combos/handlers and interpreted other way -- is totally the responsibility of the route (e.g. project input controller or editor controlle or console controller). Is this logic reasonable?
     -- REVIEW: once again -- the very concept of console secretly and meaningfully processing user input while not being on the screen looks weird to me.
-    -- The keypressed sibling: a key arriving while the
-    -- widget is hidden goes to the console and mutates the
+    -- The keypressed sibling of the row above: a key arriving while
+    -- the widget is hidden goes to the console and mutates the
     -- console line, {disputable: and the hidden widget's
     -- content, history and cursor stay untouched}.
-    it('a key while hidden does not mutate it', function()
+    it('a pressed key while hidden does not mutate it', function()
       local input = F.compy_input()
       input.show({ text = 'keep' })
       input.hide()
@@ -161,39 +142,11 @@ describe('input contracts: widget lifecycle #input', function()
     end)
   end)
 
-  -- REVIEW: this test in this form should be relocated under tests/editor. Input contract should test delivery *and only if editor really relies on it* (situation where editor *may* not rely on it: just counting keystrokes itself and translating them into files' coordinates with every move -- therefore block-nav is triggered not by event emitted by input widget, but by the mere fact that internal navigation map says the cursor in 'project space' is no more inside current selection lines)
-  -- OPEN (owner call, carried from the review passes):
-  -- this row tests editor-INTERNAL block navigation at
-  -- the buffer limit, not a routing contract of the kind
-  -- doc/development/decisions/input.md, Decision 1, asserts. It
-  -- drives EditorController directly (editor_session),
-  -- below the gate. Kept because it guards the later
-  -- is_at_limit line-scope rewrite from regressing
-  -- whole-input block nav; disposition (relocate to
-  -- tests/editor/, or recut as a boundary-signal
-  -- contract) is the human's call — see the punch list.
-  -- REVIEW/RESPONSE: (check preceding REVIEW/OPEN lines) editor behaviour test clearly does not belong here. here we should just check that the relevant behavior is triggered by native keys events (and for key-level tests we have separate editor helper -- half of editor suite uses it and we should too. Here we can just reference new test disposition in the COMMENT. Or test at boundary (keystroke/invokation)
-  describe('#editor block navigation at the limit',
-    function()
-
-      before_each(function()
-        love.state.app_state = 'editor'
-      end)
-
-      it('up at the top limit navigates blocks', function()
-        local es  = make_editor_session()
-        local f1  = mock_func_snippet("one")
-        local f2  = mock_func_snippet("two")
-        local src = (snippets_to_code(f1, '', f2))
-        es:open(src, 3)
-        local buf = es.controller:get_active_buffer()
-        es:select_and_open_block(3)
-        es.mock.keystroke('down', es.press)
-        assert.equal(3, buf.selection)
-        es.mock.keystroke('up', es.press)
-        assert.equal(3, buf.selection)
-        es.mock.keystroke('up', es.press)
-        assert.is_true(buf.selection < 3)
-      end)
-    end)
+  -- Editor block navigation at the buffer limit lives in
+  -- tests/editor/editor_spec.lua ("with blocks:" → "navigation at the
+  -- block limit"): it is editor-INTERNAL behaviour driven below the
+  -- gate, not a routing contract of the kind
+  -- doc/development/decisions/input.md, Decision 1, asserts. This suite
+  -- asserts only that the keystrokes reach the editor route
+  -- (input_routing_spec.lua, "routing: editor mode").
 end)

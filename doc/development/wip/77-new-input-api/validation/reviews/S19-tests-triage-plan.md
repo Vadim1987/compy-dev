@@ -225,6 +225,19 @@ Split E1/E2 (≤10). Recommend REWORD unless noted; several are "your discretion
 | 049 | events:159 | REWORD | "tables and normalization" are internals; name behaviourally |
 
 ### B-F — Structural / grouping / relocate
+
+> **B-F COMPLETE (S21, 2026-07-29).** All 14 markers dispositioned and dropped; suite
+> **847/0/0/4** (841 − 1 redundant test + 7 matrix rows + 1 read/write split − 1 merge, editor
+> +1 / input −1 from the relocation). Owner rulings: **relocate** the editor block-nav cluster
+> (105/113/114 → `tests/editor/editor_spec.lua`); **drop** the redundant test (046) once the new
+> matrix covered it; **accept** 042 (interception matrix) and 054 (whole-chain delivered triple),
+> **decline** 039 (random chords); **confirm** the TF1 split sufficient (096); apply the
+> mechanical bundle (048/051/058/062/076/109). Two findings against this plan: **048 and 051 were
+> already satisfied in-tree** — the `describe` wraps they ask for exist, so their RESTRUCT
+> recommendation here was stale, and they were dropped as moot rather than acted on. Both new
+> tests were negative-checked (deliberately flipped assertions fail) rather than trusted green.
+> Per-marker detail in `../notes/review-marker-inventory.md`.
+
 | RVW | loc | rec | note |
 |---|---|---|---|
 | 105 | lifecycle:27 | RELOC | `make_editor_session` (1 caller) — editor-reloc cluster |

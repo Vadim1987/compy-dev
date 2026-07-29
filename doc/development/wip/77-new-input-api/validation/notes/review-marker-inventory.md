@@ -349,7 +349,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `local function chord(mod, k)`
 - Bucket: **TRIAGE**
 - Rationale: test-helper generalization proposal → TRIAGE
-- Disposition: —
+- Disposition: **DECLINED (B-F, S21)** — owner ruled: randomised chords buy flexibility the suite has no use for and cost reproducibility; the combos under test are fixed by `decisions/input.md` Decision 8 and the helper is two lines. Marker dropped, helper unchanged. Suite 847/0/0/4.
 
 **RVW-040** `tests/input/input_events_spec.lua:65` — Kind: `clarity`
 > "REVIEW/clarity: the prose below is correct but uncomprehensible, looks like noise"
@@ -370,7 +370,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('a truthy combo handler stops the descent', ...)`
 - Bucket: **TRIAGE**
 - Rationale: proposes a coverage matrix; structural test-design call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-F, S21)** — owner accepted: added `describe('the interception matrix')` in `input_events_spec.lua`, a 7-row table-driven group covering interception at each step AND the missing-participant rows the marker asked for (no shortcut defined / no hook defined do not block the participants below). Absorbs **RVW-044**'s symmetric-cases request. Negative-checked (a flipped row fails). Marker dropped.
 
 **RVW-043** `tests/input/input_events_spec.lua:110` — Kind: `clarity`
 > "REVIEW/clarity: I'd double-check the 'it' description -- 'truthy handler' means handler is truthy when its function (not false or nil value). we're speaking about *return value* instead. also 'decent' describes mechanics maybe and instead we should use 'stops processing', or 'prevents reaching hook' (and testboth)."
@@ -398,7 +398,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('assigning a callback replaces only it; sink still runs', ...)`
 - Bucket: **TRIAGE**
 - Rationale: the marker itself claims the test is safely removable, but confirming "repeats one particular configuration tested above" requires comparing against the two prior `it`s in the same `describe` — not independently re-verified here, and deleting a test is an owner call regardless → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-by-absorption (B-F, S21)** — owner ruled: retitle *unless* covered by the new decision-3 tests, then drop. The interception matrix's row `a missing shortcut does not stop the widget` is exactly this configuration (falsey hook, no shortcut, widget still runs), and row `both pass through` covers the 'replaces ONLY it' half. Test DELETED, marker dropped. Its title also overclaimed ('replaces only it' was never asserted).
 
 **RVW-047** `tests/input/input_events_spec.lua:155` — Kind: `clarity`
 > "REVIEW/clarity: cleanup prose below and reformulate 'it' in more human-friendly way"
@@ -412,7 +412,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same banner as RVW-047, the three combo-normalisation `it`s below (lines 164-194)
 - Bucket: **TRIAGE**
 - Rationale: structural grouping suggestion → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-moot (B-F, S21)** — verified in-tree: the three combo cases are ALREADY wrapped in `describe('shortcuts fire on the normalised combo')`; the wrap the marker asks for exists (landed with TF1/B-E). Marker dropped, no restructure. NOTE: the triage plan's RESTRUCT recommendation was stale here.
 
 **RVW-049** `tests/input/input_events_spec.lua:159` — Kind: `clarity`
 > "REVIEW/clarity: mention handlers there ('tables and normalization' are characteristics of internals, not observable behaviour)"
@@ -433,7 +433,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: "signatures + read-only proxy" section banner (lines 216-217)
 - Bucket: **TRIAGE**
 - Rationale: structural grouping suggestion, same family as RVW-048 → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-moot (B-F, S21)** — verified in-tree: the signatures group is ALREADY `describe('signatures and the read-only proxy')`. Marker dropped, no restructure. Triage plan's RESTRUCT recommendation stale here too.
 
 ~~**RVW-052**~~ `tests/input/input_events_spec.lua:215` — Kind: `clarity`
 > "REVIEW/clarity: cleanup prose below and get rid of jargon ('tier-3' is 'project hook' in newly suggested vocabulary)"
@@ -454,7 +454,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same group as RVW-053, adjacent
 - Bucket: **TRIAGE**
 - Rationale: alternative test-design proposal → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-F, S21)** — owner accepted: replaced the type-signature-only test with `it('every step of the chain receives the same delivered triple')` — shortcut and hook both configured pass-through, each recording its triple, asserted on DELIVERED values (`'a'`, the proxy really reporting the held key, the true isrepeat) rather than types. Also answers the adjacent RVW-055 fidelity complaint. Negative-checked. Marker dropped.
 
 **RVW-055** `tests/input/input_events_spec.lua:234` — Kind: `fidelity`
 > "REVIEW/fidelity: only type signature is tested but not what is really delivered -- so its not a test of contract, only of its type-compliance"
@@ -482,7 +482,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same test as RVW-057
 - Bucket: **TRIAGE**
 - Rationale: concrete restructure proposal, structural change → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-F, S21)** — restructured into `describe('the pressed-keys table')` with the three rows the marker specified: `contains the pressed key` / `no longer contains a released key` / `cannot be modified from a hook` (the old single test did read+write at once; split). The marker's 'multiply by event type' half is a coverage call, left to B-COV. Marker dropped.
 
 ~~**RVW-059**~~ `tests/input/input_events_spec.lua:272` — Kind: `clarity`
 > "REVIEW/clarity: jargon ('sink' -> 'widget hook', 'widget'?)"
@@ -510,7 +510,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('a keyreleased participant sees the key already gone', ...)`
 - Bucket: **TRIAGE**
 - Rationale: reorganization/grouping proposal → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-F, S21)** — the keyreleased-delivery test now lives inside the new `describe('the pressed-keys table')` group as `no longer contains a released key`, i.e. alongside the contents test exactly as the marker asked. Resolved jointly with RVW-058. Marker dropped.
 
 ~~**RVW-063**~~ `tests/input/input_events_spec.lua:314` — Kind: `clarity/consistency`
 > "REVIEW/clarity/consistency: 'avoid *sink*, use *text widget* instead'?"
@@ -682,7 +682,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('wheel has no framework gateway entry', ...)`
 - Bucket: **TRIAGE**
 - Rationale: test-fidelity question re what surface is being asserted on → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-F, S21)** — merged into the group's first test as the marker asked: `a project handler fires whether or not the widget is shown` now asserts BOTH channels (keypressed + keyreleased) across never-shown and shown states, so the separate keyreleased row is gone. The 'downstream bucket D' prose it also complained about had already been stripped in S20. Marker dropped.
 
 **RVW-087** `tests/input/input_nfr_forward_spec.lua:103` — Kind: `plain`
 > "REVIEW: when we come to testing *propagation* of keypressed into consumers, we will need to ensure its the same table -- OR replace this implementation test with end-to-end test ensuring that what was pressed (all keys held) is what is received at consumer"
@@ -756,7 +756,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same preamble
 - Bucket: **TRIAGE**
 - Rationale: checked — this already happened for `input_events_spec.lua`/`input_cursor_text_spec.lua`/`input_routing_spec.lua`/`input_widget_lifecycle_spec.lua` (all four carry "split from input_contracts_spec.lua (TF1)" notes), so the split IS underway; whether it's complete/sufficient is still an owner call → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED-confirmed (B-F, S21)** — owner confirmed the TF1 split is sufficient: the 2K+ LoC monolith is now nine thematic files. Marker dropped; if reading the split suite in TF2 changes the verdict it reopens there naturally.
 
 **RVW-097** `tests/input/input_routing_spec.lua:60` — Kind: `nitpick`
 > "REVIEW/nitpick: we can have function kind of F.console_with('ab') to distinguish between test context setup (tests-specific method, explicitly aliased in fixture) and actions under test (called as in real code)"
@@ -827,7 +827,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `local function make_editor_session()`
 - Bucket: **TRIAGE**
 - Rationale: checked — `make_editor_session` is indeed called from exactly one place (line 180, the block-nav test) confirming the "one case" claim; but *where* to relocate it is a structural call the owner listed explicitly as pending at lines 160-170 ("relocate to tests/editor/... is the human's call") → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-F, S21)** — resolved for free by the RVW-113/114 relocation: `make_editor_session` had exactly one caller (the block-nav row), which moved to `tests/editor/editor_spec.lua` where the suite's own `EditorSession` idiom already exists. Helper DELETED along with the now-unused `TU`/`mock`/codesnippets/editor_session requires in this file. Marker dropped.
 
 **RVW-106** `tests/input/input_widget_lifecycle_spec.lua:50` — Kind: `plain`
 > "REVIEW: TODO: need to test prompt-labelling and relabelling"
@@ -855,7 +855,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: same `describe` as RVW-108
 - Bucket: **TRIAGE**
 - Rationale: restructure/rename proposal for the two sibling tests → TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-F, S21)** — the two sibling rows are renamed for the only thing that actually differs, the channel: `a typed character while hidden does not mutate it` (textinput) and `a pressed key while hidden does not mutate it` (keypressed), with a one-line group note saying so. The design concern the marker also raises (console as hidden sink) is NOT dispositioned here — it is gate-ledger **G-1**. Marker dropped.
 
 **RVW-110** `tests/input/input_widget_lifecycle_spec.lua:142` — Kind: `plain`
 > "REVIEW: remark below is historical (from previous passes, it addresses same problem as substantial remarks on two previous cases)"
@@ -883,14 +883,14 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `describe('#editor block navigation at the limit', ...)` group
 - Bucket: **TRIAGE**
 - Rationale: relocate suggestion — the file's own adjacent "OPEN" note (lines 161-170) explicitly says disposition "is the human's call" → TRIAGE (textbook relocate-suggestion example)
-- Disposition: —
+- Disposition: **RESOLVED-relocated (B-F, S21)** — owner ruled RELOCATE. The block-nav test moved to `tests/editor/editor_spec.lua` (`'with blocks:'` → `describe('navigation at the block limit')`), rewritten in that suite's existing idiom (`session`/`press`/`mock` from its `before_each`, `select_and_open_block` already used six times there). Verified it still bites (flipping the final assertion fails). A pointer comment remains at the old site. Markers 105/113/114 all dropped. Suite total unchanged (841): input -1, editor +1.
 
 **RVW-114** `tests/input/input_widget_lifecycle_spec.lua:171` — Kind: `RESPONSE`
 > "REVIEW/RESPONSE: (check preceding REVIEW/OPEN lines) editor behaviour test clearly does not belong here. here we should just check that the relevant behavior is triggered by native keys events (and for key-level tests we have separate editor helper -- half of editor suite uses it and we should too. Here we can just reference new test disposition in the COMMENT. Or test at boundary (keystroke/invokation)"
 - Comments-on: same OPEN note / group as RVW-113 — this is the owner's own follow-up answer to it
 - Bucket: **TRIAGE**
 - Rationale: reads as the owner's provisional resolution of RVW-113, but is itself phrased as still-open ("we should just check…", "Or test at boundary…" — two options offered, no final pick) → not dissolvable without the owner picking one; TRIAGE
-- Disposition: —
+- Disposition: **RESOLVED (B-F, S21)** — the owner's own two options were put back to them and they picked **relocate** (not the boundary recut: routing already asserts that keys reach the editor route, so a boundary test here would duplicate it). Executed as described under RVW-113. Marker dropped.
 
 ---
 

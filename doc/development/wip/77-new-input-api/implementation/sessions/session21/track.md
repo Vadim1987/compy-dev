@@ -87,3 +87,24 @@
   sentence was wrong. Fixed there; the commit message of `c23fa82` retains the error (history).
 - Lesson carried: a bare symbol grep across branches proves *word presence*, not API availability —
   check where the hits are before citing them as baseline evidence.
+
+## 2026-07-29 — B-F executed (owner ruled all 4 decisions + mechanical bundle)
+
+- Ruling order chosen by me (owner delegated): **B-F before B-COV** — B-F merges/moves/regroups
+  tests, so coverage commentary written first would land on tests that then move.
+- Owner rulings: (1) RELOCATE block-nav cluster; (2) retitle RVW-046's test **unless** covered by
+  the decision-3 tests → it WAS covered by the new matrix row, so dropped instead; (3) accept
+  042 + 054, decline 039; (4) close 096. Mechanical bundle: yes.
+- Executed: block-nav → `tests/editor/editor_spec.lua` (suite's own EditorSession idiom;
+  `make_editor_session` + 5 now-dead requires deleted from the input spec, pointer comment left);
+  interception matrix (7 table-driven rows, absorbs B-COV **RVW-044**); whole-chain delivered-triple
+  test replacing the type-signature-only one (answers B-COV **RVW-055** too); pressed-keys table
+  regrouped (058+062 jointly); 076 merged into the group's first test across both channels;
+  109 renamed by channel; 039/096 markers dropped.
+- **Both new tests negative-checked** (flipped assertion → 1 failure, then restored) — green alone
+  does not prove a test bites.
+- **Finding against the triage plan: RVW-048 and RVW-051 were already satisfied in-tree** — the
+  `describe` wraps they request exist (landed TF1/B-E). Dropped as moot, no restructure. The plan's
+  RESTRUCT recommendation was stale; worth expecting more of these in B-COV.
+- Suite **847/0/0/4** (841 −1 redundant +7 matrix +1 split −1 merge; relocation is net zero).
+  Inventory dispositions filled for all 14; triage plan marks B-F COMPLETE.
