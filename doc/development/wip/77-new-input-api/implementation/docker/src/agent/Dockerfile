@@ -121,7 +121,8 @@ RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 
 USER root
 # ── Claude Code ─────────────────────
-RUN ACTUALIZE=20260707 npm install -g @anthropic-ai/claude-code
+RUN ACTUALIZE=20260729 npm install -g @anthropic-ai/claude-code
+RUN ACTUALIZE=20260729 npm install -g @openai/codex
 USER ${USER}
 
 # ── MCP wiring ───────────────────────────────────────────────────────
@@ -132,6 +133,7 @@ USER ${USER}
 COPY --chown=${USER}:${USER} mcp.json /home/${USER}/.cursor/mcp.json
 COPY --chown=${USER}:${USER} mcp.json /home/${USER}/.gemini/antigravity-cli/mcp_config.json
 COPY --chown=${USER}:${USER} mcp.json /home/${USER}/.claude.json
+COPY --chown=${USER}:${USER} mcp.toml /home/${USER}/.codex/config.toml
 
 # ── orientation pointer (no rule duplication — points at /repo's own
 #    rule chain + the LSP re-index protocol). claude/cursor auto-load
@@ -140,5 +142,7 @@ COPY --chown=${USER}:${USER} mcp.json /home/${USER}/.claude.json
 #    rule, so seed both. ──────────────────────────────────────────────
 COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.gemini/GEMINI.md
 COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.claude/CLAUDE.md
+COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.cursor/AGENTS.md
+COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.codex/AGENTS.md
 
 WORKDIR /repo

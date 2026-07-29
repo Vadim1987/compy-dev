@@ -84,9 +84,7 @@ docker compose exec codeinspect cat /tmp/lua-ls-log   # LuaLS activity
 
 ## Notes / assumptions to verify
 
-- **API keys** come from the host env: `ANTHROPIC_API_KEY` (claude),
-  `CURSOR_API_KEY` (cursor). agy auths interactively; its token persists
-  in the `agy-config` volume.
+- all agents authenticate interactively via Oauth2, no API keys stored anywhere
 - **Config persistence**: `~/.claude`, `~/.cursor`, `~/.gemini` are named
   volumes — image seeds (MCP wiring, orientation) land on first `up`,
   edits persist. claude's MCP entry (`~/.claude.json`) is re-seeded on
