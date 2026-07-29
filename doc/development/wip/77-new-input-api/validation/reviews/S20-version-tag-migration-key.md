@@ -93,10 +93,15 @@ coverage (`user_input_model_spec`). Verified against the `devupstream` baseline
 | **pre-baseline, untagged** | `input_routing`, `input_nfr_forward`, `cursor`, `history`, `input`, `input_text`, `user_input_view` |
 | **mixed / qualified** | `user_input_model` (pre-baseline + the `set_text keep_cursor` addition), `input_shortcuts_click` (pre-baseline shortcuts/click, feature-new combo normalisation, legacy globals **removed in** 1.0.0-rc20260712), `highlight_regression` (pre-baseline machinery, guards a crash fixed in this feature) |
 
-Baseline evidence for the non-obvious calls: `compy.input`, `keys_pressed`, `combo_string` and the
-legacy `solicit*` surface return **zero** hits in `devupstream -- src/`; `singleclick` and
-`project_open` are present pre-feature; the `highlight.hl` indexability fix landed in-feature
-(`1a2a9a3`).
+Baseline evidence for the non-obvious calls: `compy.input`, `keys_pressed` and `combo_string`
+return **zero** hits in `devupstream -- src/` (feature-new); `singleclick` and `project_open` are
+present pre-feature (pre-baseline); the `highlight.hl` indexability fix landed in-feature
+(`1a2a9a3`, "changed in"). The legacy text-solicitation globals are the **opposite** case — they
+exist in the baseline and are **gone** in HEAD, which is what makes them *removed in*
+`1.0.0-rc20260712`: `write_to_input` (`devupstream:src/controller/consoleController.lua:597`) and
+`astv_input` (`:612`) plus `user_input` / `input_code` / `input_text` / `validated_input`. There is
+no `solicit*` global — "solicitation" is only the surface's descriptive name in three HEAD
+comments and the test group's own title.
 
 ## RVW-085 tech-debt entry (technical_debt/input.md)
 

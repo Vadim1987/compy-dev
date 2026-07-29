@@ -73,3 +73,17 @@
   (incl. legacy globals **removed in** the anchor version). Rule + full table recorded as the S21
   amendment in `S20-version-tag-migration-key.md`; per-group/per-test tags stay prohibited.
   Suite 841/0/0/4. Commit below.
+
+## 2026-07-29 — correction (owner spotted it)
+
+- Owner queried "legacy `solicit*` globals" — **my error, corrected on disk.** There is no
+  `solicit*` global family; "solicitation" is only descriptive prose (3 HEAD comments + the test
+  group's title). I had misread a `grep solicit` result (0 in devupstream / 2 in HEAD — those 2
+  are *comments*) as evidence about the legacy globals, and stated the availability backwards.
+  Truth: the legacy globals (`write_to_input` `consoleController.lua:597`, `astv_input` `:612`,
+  plus `user_input`/`input_code`/`input_text`/`validated_input`) **exist in devupstream and are
+  gone in HEAD** — which is exactly why "removed in 1.0.0-rc20260712" is right. The availability
+  line in `input_shortcuts_click_spec.lua` was already correct; only the migration key's evidence
+  sentence was wrong. Fixed there; the commit message of `c23fa82` retains the error (history).
+- Lesson carried: a bare symbol grep across branches proves *word presence*, not API availability —
+  check where the hits are before citing them as baseline evidence.
