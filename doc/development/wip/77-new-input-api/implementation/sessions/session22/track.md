@@ -60,3 +60,13 @@
   Navigation-batch generation and the owner's TF2 begin only afterward.
 - C1 is **2 of 12** visible pre-TF2 items dispositioned. Its planned sweep is
   an execution gate, not a remaining authority question.
+
+## 2026-07-29 — R4 source trace
+
+- Verified `multiline` against the verbatim round-two stakeholder record,
+  frozen design history, and `updev`; durable evidence:
+  `validation/notes/S22-R4-multiline-source-trace.md`.
+- Stakeholders requested editor-like multiline *boundary* semantics, not a
+  `show{multiline}` switch, default-false policy, or Shift+Enter gating.
+  The switch is a design-spec promise over pre-existing unconditional
+  Shift+Enter newlines. No R4 ruling yet; awaiting the owner's choice.
