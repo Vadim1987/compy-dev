@@ -72,3 +72,13 @@
 - IMPORTANT: kept persistent docs free of wip/ citations (the very rule ruling 8 enforces) —
   tech-debt/conventions entries cite internals/decisions, not the wip ledger.
 - **Remaining mop-up (owner picks order):** B-F (structural, decision-heavy), B-COV (~22 coverage).
+
+## WRAP (2026-07-29, owner-directed)
+- Session judged **cognitive-heavy** (version-tag convention design + architecture assessment +
+  contested carve-out) → successor framed as a **revalidation task** per `rules/revalidation.md`,
+  with the pending mop-up (B-F/B-COV) handed over as Part 2.
+- Distilled report → `session20/report.md`. Successor → `session21/prompt.md`.
+- Pointer repointed session20→session21 (the session19 wrap left the 19→20 repoint uncommitted in
+  the tree; advanced + committed here — cleans that loose end; it's the wrap-owned line, not owner
+  content).
+- Wrap committed as one `docs` commit (track + report + successor prompt + pointer).
