@@ -37,3 +37,12 @@
 - Required disclosure: Decision 11, code rationale, regression test,
   ledger closure, and initial `CHANGELOG.md` entry. Suite + commit
   pending.
+
+## 2026-07-29 — G-1 complete
+
+- Applied and committed `93330dc` (`fix(input): close hidden-console
+  fallback`). The test now proves both the hidden widget and console
+  line remain unchanged; a temporary inverted assertion failed exactly
+  there before restoration.
+- `busted tests`: 854 / 0 / 0 / 4. G-1 is **1 of 12** visible
+  pre-TF2 items dispositioned. Next batch remains C1, R4, RVW-100.
