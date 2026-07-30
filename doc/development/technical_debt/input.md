@@ -172,20 +172,6 @@ question, not resolved here.
 - **Revisit:** Rule one way or the other when shortcuts dispatch gets its next
   real consumer or complaint.
 
-### Silent config-key drop in `show{}`
-
-- **Where:** `apply_config` (`userInputController.lua`) reads only the keys
-  it knows; an unrecognised key (a typo, or a field-write-only key passed
-  through `show{}`) is silently ignored — no error, no warning.
-- **State:** Inconsistent with the rest of the surface: `set_cursor` /
-  `set_text` in `consoleController.lua` do log a warning when a call is
-  ignored because the widget is hidden. The silent-drop behaviour here is an
-  inconsistency in an otherwise warn-don't-swallow surface, not a blanket
-  policy.
-- **Why it stands:** Open — accept silent drops, or add a
-  warn-on-unrecognised-key path to match the sibling functions.
-- **Revisit:** Decide alongside any future audit of the config-key surface.
-
 ### Held-key pressed-keys view iteration is index-only on the shipping runtime
 
 - **Where:** `src/controller/controller.lua`, the `held_keys()` read-only

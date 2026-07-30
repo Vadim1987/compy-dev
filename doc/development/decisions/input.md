@@ -279,7 +279,7 @@ interrogating global state:
 - the **project overlay** sets callbacks for real — that *is* its submit/cancel.
 
 The editor-only Ctrl+D duplicate-line (`modify`) follows the same principle: it is a per-instance
-**`allow_modify`** constructor flag (`UserInputController(model, result, disable_selection,
+**`allow_modify`** constructor flag (`UserInputController(model, disable_selection,
 allow_modify)`), set only by the editor's own input and mirroring `disable_selection` — a widget
 capability the owner enables at construction, not something the widget reads from global mode.
 
@@ -564,7 +564,7 @@ define raw versus synthetic timing and preserve drag, selection, and touch.
 
 ## Decision 17 — behavioural evidence is the default test evidence
 
-**Status: owner-ratified in validation; targeted execution pending.**
+**Status: implemented.**
 
 **Decision.** Tests for the project input API prove observable project and
 framework behaviour through real entry points and public surfaces. Do not add
@@ -581,9 +581,9 @@ fixture instead of the product. A behavioural default keeps the #77 suite
 credible without demanding disproportionate coverage of rare, exotic, or
 non-critical internals.
 
-**Execution.** Review D4's concrete fixture markers under this rule. Replace
-only unjustified hand-rolled public-path simulations; retain justified unit
-seams with a concise rationale. Do not begin a general fixture rewrite.
+**Execution.** The bounded fixture pass uses real default installation and
+project-stop teardown. It retains the narrow activation seam where a full
+runner is inappropriate for an isolated handler test, with that reason stated.
 
 ---
 
@@ -627,7 +627,7 @@ the callbacks inline:
 ```lua
 compy.input.show{
   prompt = 'name?',
-  on_text_entered = function(text) greet(text) end,
+  on_text_entered = function(lines) greet(string.unlines(lines)) end,
 }
 ```
 
