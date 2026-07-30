@@ -73,16 +73,16 @@ end
 -- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
 -- §3, R4-U4 example migration): consume the line in on_text_entered;
 -- the widget stays open by default now, so after_submit just clears
--- the field for the next line instead of re-showing. eval reuses the
--- legacy validated_input->ValidatedTextEval path (least new logic).
+-- the field for the next line instead of re-showing. The line validator
+-- prevents invalid lines from reaching the submit callback.
 compy.input.callbacks.after_submit = function()
   compy.input.clear()
 end
 
 compy.input.show{
-  eval = ValidatedTextEval({
+  validator = LineValidators({
     min_length(2),
     is_lower
   }),
-  on_text_entered = function(t) print(t) end,
+  on_text_entered = function(lines) print(lines[1]) end,
 }

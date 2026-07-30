@@ -210,6 +210,7 @@ advance()
 compy.input.show{
   prompt = "function tixy(t, i, x, y)",
   text = string.lines(body),
-  eval = InputEvalLua,
+  highlighter = LuaHighlighter,
+  validator = LuaSyntaxValidator,
   on_text_entered = submit_body,
 }

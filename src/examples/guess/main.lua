@@ -49,11 +49,10 @@ end
 -- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
 -- §3, R4-U4 example migration): the widget stays open by default now
 -- (no auto-close), so there is nothing to re-show after submit — just
--- clear the field for the next guess. eval reuses the legacy
--- validated_input->ValidatedTextEval path (least new logic); wires
--- the effective (L26) is_natural — the L12 duplicate is pre-existing
--- shadowing, not touched. Cancel's own default (clear + stay shown)
--- already re-arms the prompt, so no after_cancel callback is needed.
+-- clear the field for the next guess. The line validator keeps invalid
+-- guesses out of the submit callback. Cancel's own default (clear +
+-- stay shown) already re-arms the prompt, so no after_cancel callback
+-- is needed.
 compy.input.callbacks.after_submit = function()
   compy.input.clear()
 end
@@ -65,6 +64,6 @@ init()
 -- on-screen input API / draw instead of the console terminal.
 compy.input.show{
   prompt = "Guess a number:",
-  eval = ValidatedTextEval({ is_natural }),
-  on_text_entered = function(t) check(tonumber(t)) end,
+  validator = LineValidators({ is_natural }),
+  on_text_entered = function(lines) check(tonumber(lines[1])) end,
 }
