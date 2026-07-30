@@ -456,6 +456,30 @@ local OUTPUT_KEYS = {
 -- hidden: then they apply once, on the very next show().
 local PENDING_KEYS = { 'prompt', 'text', 'cursor' }
 
+-- show() has a deliberately small config table.  Callback
+-- lifecycle hooks remain explicit compy.input.callbacks writes.
+local SHOW_KEYS = {
+  prompt = true,
+  text = true,
+  cursor = true,
+  force = true,
+  highlighter = true,
+  validator = true,
+  on_text_entered = true,
+  on_limit_reached = true,
+}
+
+local function reject_unknown_show_keys(cfg)
+  for key in pairs(cfg) do
+    if not SHOW_KEYS[key] then
+      local name = tostring(key)
+      Log.warn('compy.input.show ignored key ' .. name ..
+        '; use its config table or compy.input.callbacks')
+      cfg[key] = nil
+    end
+  end
+end
+
 --- Merge the sticky output-callback state into a show()/
 --- configure() config in place: an explicit value wins and is
 --- written back into `state`; an absent one defaults to the
@@ -525,6 +549,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
   return {
     show = function(cfg)
       local next_cfg = cfg or {}
+      reject_unknown_show_keys(next_cfg)
       merge_output_keys(state, next_cfg)
       consume_pending(state.pending, next_cfg)
       local ui = get_widget()

@@ -71,6 +71,35 @@ describe('input contracts: widget lifecycle #input', function()
         assert.same({ 'first' }, F.widget:get_text())
       end)
 
+    it('show warns and ignores keys outside its config table',
+      function()
+        local input = F.compy_input()
+        local submitted = 0
+        local warnings = { }
+        local original_warn = Log.warn
+        input.callbacks.after_submit = function()
+          submitted = submitted + 1
+        end
+        Log.warn = function(message)
+          warnings[#warnings + 1] = message
+        end
+        input.show({
+          text = 'ok',
+          eval = InputEvalLua,
+          result = { },
+          after_submit = function()
+            submitted = submitted + 10
+          end,
+        })
+        Log.warn = original_warn
+        F.session.press('return')
+        local all_warnings = table.concat(warnings, ' ')
+        assert.equal(1, submitted)
+        assert.matches('eval', all_warnings)
+        assert.matches('result', all_warnings)
+        assert.matches('after_submit', all_warnings)
+      end)
+
     -- force = live reconfiguration of an ACTIVE widget;
     -- today only the text subset takes effect
     -- (doc/input_api.md, "Activating the widget: `show`").
