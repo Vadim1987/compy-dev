@@ -6,11 +6,6 @@
 -- Stub view.view before anything requires it: the real module (src/view/view.lua) calls
 -- gfx.newFont() at load time (gfx = love.graphics), which needs a graphics context absent in
 -- tests. This minimal stub mirrors the fields the controller path touches.
--- (Dedup of this stub across the input specs is an open
--- {badspecref: A8} test-infra item (M2 agenda A8, "test
--- the contract": behaviour vs. internals) — see
--- {badspecref: M2-human-review.md} (implementation/
--- reviews/M2-human-review.md).)
 package.preload['view.view'] = function()
   View = {
     prev_draw = nil,
@@ -50,9 +45,7 @@ Controller.setup_callback_handlers({
 })
 
 -- Save handler refs now: other spec files replace _G.love during collection, which would
--- otherwise clobber these. (Shared cross-spec love
--- mutation is an open {badspecref: A8} isolation item —
--- M2 agenda A8, test-the-contract theme.)
+-- otherwise clobber these.
 local kp_handler = love.handlers.keypressed
 local kr_handler = love.handlers.keyreleased
 
@@ -66,12 +59,6 @@ describe('keys_pressed table #input', function()
     assert.truthy(Controller.keys_pressed['s'])
   end)
 
-  -- {badspecref: A8} (test the contract): single
-  -- press->release flow + behaviour-vs-internals
-  -- restructure is deferred to the
-  -- {badspecref: 0.1.0-m4} test-strategy pass — see
-  -- {badspecref: M2-human-review.md} (implementation/
-  -- reviews/M2-human-review.md, agenda item A8).
   it('removes key on keyreleased', function()
     Controller.keys_pressed['s'] = true
     kr_handler('s')

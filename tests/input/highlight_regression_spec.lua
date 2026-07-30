@@ -22,7 +22,6 @@ require("model.input.userInputModel")
 require("model.interpreter.eval.evaluator")
 require("util.string.string")
 
---- REVIEW/coherence: does it interfere with other tests?
 if not orig_print then
   _G.orig_print = function() end
 end
@@ -52,7 +51,6 @@ describe("highlight nil-index regression #input", function()
     assert.has_no.errors(function() return h.hl[1] and h.hl[1][1] end)
   end
 
-  -- REVIEW/clarity: what's the difference between three modes not explained? (especially not clear how LuaEval() is different from InputEvalLua. Maybe wrap them into aliases semantically meaningful in test context? (e.g. `ev = evaluator_without_highlighter()`, `input_with_lua_evaluator', 'input_with_text_evaluator'). Or even table (ev = evaluators['text_no_hl']; m=evaluators['lua_normal']; m=evaluators['lua_with_dummy_hl'])
   -- One row per highlighter condition that decides whether `.hl` is a
   -- crash-prone plain literal or indexable:
   --   1. Lua parser present, highlighter returns nil — the original

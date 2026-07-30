@@ -13,17 +13,6 @@
 -- Mode x channel routing grid: console, editor, editor search, project run
 -- (doc/development/internals/user_input.md, "Dispatch chain").
 
--- ----------------------------------------------------------------------
--- SUITE-LEVEL REVIEW NOTES (owner's, carried verbatim from the file head
--- of input_contracts_spec.lua when it was split in TF1 — they concern the
--- whole input contract suite, not this file alone; kept here in the first
--- split file so they stay greppable in-tree for the jargon / spec-ref /
--- Phase-C passes):
--- REVIEW/DOC: fix spec references EVERYWHERE IN THE FILE (I will wrap them into {badspecref:} wherever I see them
--- REVIEW/DOC: also I will wrap with {jargon:...} the words or phrases which seem invented
--- REVIEW: using tags in groups would also be great but I will inject some myself
--- ----------------------------------------------------------------------
-
 local F = require('tests.helpers.input_fixture')
 
 describe('input contracts: routing #input', function()
@@ -52,12 +41,11 @@ describe('input contracts: routing #input', function()
 
     
     -- Setup seeds text via the model; the assertion path
-    -- (backspace) travels love.handlers -> {jargon:gate} -> console,
+    -- (backspace) travels love.handlers to the console,
     -- so routing itself is what is witnessed (doc/development/decisions/input.md,
     -- Decision 1 and Decision 2; doc/development/internals/user_input.md,
     -- "Dispatch chain").
     it('routes keys to the console', function()
-      -- REVIEW/nitpick: we can have function kind of F.console_with('ab') to distinguish between test context setup (tests-specific method, explicitly aliased in fixture) and actions under test (called as in real code)
       F.console:add_text('ab')
       F.session.press('backspace')
       assert.same({ 'a' }, F.console:get_text())
@@ -108,10 +96,7 @@ describe('input contracts: routing #input', function()
     -- via textinput, then a KEY event (backspace) mutates
     -- the editor buffer — travelling the same gate.
     -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
-    -- doc/development/internals/user_input.md, "Dispatch chain";
-    -- {badspecref: reviews/M4-0-04.md finding 1} — editor
-    -- keypressed-EXCLUSIVE had zero regression coverage before this
-    -- test was added)
+    -- doc/development/internals/user_input.md, "Dispatch chain").
     it('routes keys to the editor', function()
       F.session.type('q')
       F.session.press('backspace')
@@ -166,7 +151,7 @@ describe('input contracts: routing #input', function()
 
   describe('routing: project run', function()
 
-    -- The project's {jargon: own love.* callback}{better: 'own (sandboxed) love.* callback' or simply "project's callback"?} is the {jargon: public seam}
+    -- The project's sandboxed love.* callback witnesses
     -- witnessing delivery to the project route.
     -- (doc/development/decisions/input.md, Decision 1 and Decision 2;
     -- doc/development/internals/user_input.md, "Dispatch chain").

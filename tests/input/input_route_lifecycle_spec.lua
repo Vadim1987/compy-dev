@@ -23,8 +23,7 @@ describe('input contracts: route connection lifecycle #input', function()
   before_each(function() F.reset() end)
 
   -- ====================================================
-  -- Route connection lifecycle ({badspecref: 0.1.0-m5c}
-  -- {badspecref: chunk 4}, doc/development/decisions/input.md,
+  -- Route connection lifecycle (doc/development/decisions/input.md,
   -- Decision 11): connect/disconnect at the 'running'
   -- boundary
   -- (same decision), pointer excluded from that
@@ -32,9 +31,7 @@ describe('input contracts: route connection lifecycle #input', function()
   -- (same decision), full teardown at stop (same
   -- decision), inspect
   -- (doc/development/decisions/input.md, Decision 12), and the
-  -- compy.before_exit stop hook
-  -- ({badspecref: M6-02-before-exit.md} — Layer-1 T3-leak
-  -- restore hook spec, design/spec/M6-02-before-exit.md).
+  -- compy.before_exit stop hook.
   -- All rows drive the
   -- REAL
   -- production functions (Controller.release_keyboard_
@@ -45,10 +42,7 @@ describe('input contracts: route connection lifecycle #input', function()
   describe('route connection lifecycle #m5c', function()
 
     describe('connection at the running boundary', function()
-      -- doc/development/decisions/input.md, Decision 11 ({badspecref:
-      -- ratified-model ruling 3} — Gate-1 ratified-model.md:
-      -- project route connects only while 'running'): the
-      -- route
+      -- doc/development/decisions/input.md, Decision 11: the route
       -- owns keyboard/text only while 'running' -- a
       -- non-blocking run's exit restores console text entry.
       it('the console regains text entry when a ' ..
@@ -99,9 +93,7 @@ describe('input contracts: route connection lifecycle #input', function()
         assert.is_nil(input.callbacks.validator)
       end)
 
-      -- doc/development/decisions/input.md, Decision 11 + {badspecref: spec
-      -- §10} edge case (design/spec.md §10 "Project stops
-      -- while widget shown" row): a
+      -- doc/development/decisions/input.md, Decision 11: a
       -- widget left shown at
       -- stop is silently hidden -- teardown is not a cancel,
       -- so no cancel chain fires (contrast Decision 6).
@@ -144,10 +136,7 @@ describe('input contracts: route connection lifecycle #input', function()
     end)
 
     describe('inspect', function()
-      -- doc/development/decisions/input.md, Decision 12 ({badspecref:
-      -- ratified-model R11} — design/notes/
-      -- ratified-model.md, "inspect is a mode→route
-      -- line, nothing more"): inspect is the console
+      -- doc/development/decisions/input.md, Decision 12: inspect is the console
       -- bound over the project env -- the project route
       -- disconnects and its widget goes unhonoured.
       it('disconnects the project route and its ' ..
@@ -163,9 +152,7 @@ describe('input contracts: route connection lifecycle #input', function()
     end)
 
     describe('compy.before_exit', function()
-      -- {badspecref: M6-02} (design/spec/
-      -- M6-02-before-exit.md): compy.before_exit fires once
-      -- on
+      -- compy.before_exit fires once on
       -- stop, before
       -- the framework's own cleanup runs (love.* calls
       -- inside it are still safe).
@@ -183,9 +170,7 @@ describe('input contracts: route connection lifecycle #input', function()
         assert.equal('running', state_at_fire)
       end)
 
-      -- {badspecref: M6-02} (design/spec/
-      -- M6-02-before-exit.md): the hook resets to noop default
-      -- on stop
+      -- The hook resets to its noop default on stop
       -- -- same lifecycle as compy.input's before_/after_
       -- hooks (doc/development/decisions/input.md, Decision 11).
       it('resets to noop after stop',

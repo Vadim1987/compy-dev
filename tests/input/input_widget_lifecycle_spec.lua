@@ -124,7 +124,6 @@ describe('input contracts: widget lifecycle #input', function()
         assert.same({ 'keep' }, F.widget:get_text())
       end)
 
-    -- REVIEW/DOC: I believe that design rule is that after hide widget stops consuming whatever comes to it -- concern-under-test is valid, prose description is misorienting. MAYBE (check towards design) deactivated widget simply means if events fall through they are ignored. I am not sure that console consuming typed characters while not being shown is the valid or desired scenario!
     -- After hide the widget stops being the surface the
     -- route forwards to: typed text lands in the console,
     -- not the widget (whose non-mutation is asserted in
@@ -141,12 +140,9 @@ describe('input contracts: widget lifecycle #input', function()
   end)
 
   -- Hidden widget does not consume (doc/development/decisions/input.md,
-  -- Decision 2: "its hidden-check is internal"),
-  -- {jargon: owner-minted PRESERVE}): an event arriving while the
+  -- Decision 2: "its hidden-check is internal"): an event arriving while the
   -- widget is hidden never mutates widget state — it
-  -- {jargon: reaches the active route instead. Intra-route rule;
-  -- inter-route dispatch unchanged}.
-  -- REVIEW: whenever we migrate console to new API, we may stop silent consuming of input (to be confirmed yet) -- therefore assertions checking the console as hidden sink will break and will have to be updated (see also one of previous remarks not so far before)
+  -- reaches the active route instead. Inter-route dispatch is unchanged.
   -- One row per channel: the pair differs only in which channel the
   -- event arrives on (textinput vs keypressed), so they are named for
   -- that and nothing else.
@@ -161,14 +157,9 @@ describe('input contracts: widget lifecycle #input', function()
       assert.same({ 'Z' }, F.console:get_text())
     end)
 
-
-    -- REVIEW: remark below is historical (from previous passes, it addresses same problem as substantial remarks on two previous cases)
-    -- REVIEW: now I am concerned about the very concept. Was it in place before? (that console absorbs any interaction when project is active but widget is hidden) How it correlates with common logic? Will it mean somewhere in the console random keystrokes are accumulating? What for? User even does not see the console if project is running -- will it see a garbage on 'inspect'? what is user occasionally types some destructive or ambiguous command while project is running -- will console evaluate/execute it? if so, its dangerous and strange; if not, there's no point in routing input to console. MY UNDERSTANDING IS: if "project/editor" is active -- its an active route -- events travel down through it. Whether they end up in user_widget (shown) or in noop (if widget is hidden), or intercepted by project combos/handlers and interpreted other way -- is totally the responsibility of the route (e.g. project input controller or editor controlle or console controller). Is this logic reasonable?
-    -- REVIEW: once again -- the very concept of console secretly and meaningfully processing user input while not being on the screen looks weird to me.
     -- The keypressed sibling of the row above: a key arriving while
     -- the widget is hidden goes to the console and mutates the
-    -- console line, {disputable: and the hidden widget's
-    -- content, history and cursor stay untouched}.
+    -- console line while the hidden widget remains unchanged.
     it('a pressed key while hidden does not mutate it', function()
       local input = F.compy_input()
       input.show({ text = 'keep' })

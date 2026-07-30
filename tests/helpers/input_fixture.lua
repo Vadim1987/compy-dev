@@ -125,9 +125,7 @@ end
 -- insulates _G and package.loaded per spec file (envmode='insulate'),
 -- so this is not guarding a live cross-file collision — it makes the
 -- fixture explicit and every (split) spec file runnable standalone.
--- The line-123 REVIEW that used to sit here ("is it safe to call these
--- at load time?") is resolved by exactly this move. F.reset (below)
--- still runs per-test; setup/teardown bracket the whole file.
+-- F.reset still runs per-test; setup/teardown bracket the whole file.
 local cfg, CC, widget, session
 
 -- F for Fixture. Fields (F.cc/console/editor/widget/session/cfg) are
@@ -182,11 +180,6 @@ function F.compy_input()
   return CC:get_project_env().compy.input
 end
 
--- REVIEW/gate (collapse-gate ledger G-2): project-handler API
--- is incoherent — mouse handlers are bare callbacks on
--- compy.<event> (compy.singleclick); keyboard/text handlers are
--- hooks under compy.input.hooks[event] seeded from love.<event>.
--- Renaming this setter waits on that gate ruling.
 -- Register a project click handler
 -- (compy.singleclick/doubleclick), the target the framework
 -- click path invokes (doc/development/internals/user_input.md,
@@ -203,8 +196,7 @@ function F.love_update(dt)
   love.update(dt)
 end
 
--- Activate the widget 
--- REVIEW: why not via compy.input.show ? 
+-- Activate the test fixture widget directly.
 function F.show_widget(opts)
   widget:show(opts)
   return widget
@@ -219,7 +211,6 @@ function F.activate_project(handlers)
   return F.compy_input()
 end
 
---- REVIEW: why this low-level machinery and not a call of some existing function? the intent is plausible, the implementation is suspicious
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
 -- the widget disables selection, making pointer delivery a no-op —

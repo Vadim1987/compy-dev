@@ -2,8 +2,6 @@
 -- hooks and the project-handler install path are introduced by this
 -- feature (since 1.0.0-rc20260712); none exist in the baseline.
 
--- REVIEW/fidelity: any occurence of 'singleton' in any file triggers fidelity check on the appropriate case -- is there alternative 'official' method of configuration/invocation? if access to singleton happens because we need to mock or trigger its internal methods which normally would not be accessible (boundary tests), can we wrap it into clearly test-specific function (i.e. F.mock_widget). 
-
 -- dispatch chain: tier mechanics 
 -- {historical: split from input_contracts_spec.lua (TF1)}.
 --
@@ -98,7 +96,7 @@ describe('#input events dispatching', function()
       end)
 
     -- doc/development/decisions/input.md, Decision 2: a truthy combo
-    -- handler ({jargon: tier 2}) stops the descent —
+    -- handler stops the descent —
     -- neither the hook nor the widget runs.
     it('a shortcut returning truthy stops the chain (hook not reached)', function()
       local reached_cb = false
@@ -114,8 +112,7 @@ describe('#input events dispatching', function()
     end)
 
     -- doc/development/decisions/input.md, Decision 2: consuming never
-    -- removes a {jargon:
-    -- tier} — the same callback
+    -- removes a configured callback — the same callback
     -- fires again on the next event (configuration is permanent).
     it('is a permanent configuration', function()
       local n = 0
@@ -356,12 +353,12 @@ describe('#input events dispatching', function()
         local seen
         F.activate_project()
         F.show_widget()
-	-- REVIEW/fidelity: are we testing internals there instead of behavior? in this case its justified if we cannot configure widget from the outside but need to ensure it received keypress -- but then maybe explicitly admit that this is test-specific patching. Maybe expose method like F.mock_widget_with(...) so that purpose will be clear, especially given the fact same mechanics is used in few other places. Right now it looks like legit configuration, which it is not (or is it?)
+        -- This direct replacement observes the widget's documented key
+        -- signature; restore the shared method after the event.
         F.widget.keypressed = function(_, k, keys, isr)
           seen = { k, keys, isr }
         end
         F.session.repeat_press('a')
-	-- REVIEW: why set to nil here?
         F.widget.keypressed = nil
         assert.equal('a', seen[1])
         assert.is_table(seen[2])
@@ -440,7 +437,6 @@ describe('#input events dispatching', function()
         F.show_widget()
         input.hooks.textinput = function() return true end
         F.session.type('X')
-	-- REVIEW/fidelity: why would we check sigleton internals instead of compy.input. method ? (official behaviour)
         assert.is_true(F.widget:is_empty())
         input.hooks.textinput = function() return false end
         F.session.type('Y')
@@ -456,7 +452,6 @@ describe('#input events dispatching', function()
     -- handler is a plain hook
     -- participant that fires REGARDLESS of widget-shown state
     -- (the reversed suppress-while-shown mutation is gone).
-    -- REVIEW/clarity: make it clear that a project handler always behaves like a hook -- so the match in behaviour is not occasional. Maybe reuse shared tests suite (if busted supports it)
     -- Fires in all THREE widget states — never shown, shown, and
     -- shown-then-hidden (widget absence has two distinct forms) — on
     -- both the keypressed and keyreleased channels: a downstream
@@ -539,7 +534,6 @@ describe('#input events dispatching', function()
       end)
   end)
 
-  -- REVIEW/consistency/architecture: after we pivoted to .hooks[event] (from .on_{event}), is this whole test still needed at all? (resolve in D4)
   -- ---- the mutable/immutable boundary
   -- (doc/development/decisions/input.md, Decision 7)
   -- -------------

@@ -14,13 +14,10 @@
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
 
--- REVIEW/recheck: the "named milestone" ref is fragile — milestones
--- are ephemeral and won't survive release; reword to not depend on it.
 -- This file's assertions are deliberately non-final: current behaviour
 -- characterized as it stands today (pre-baseline de-facto, untagged),
 -- guards on mechanism and NFRs rather than behaviour, and planned changes
--- pending the named milestone
--- (doc/development/tests.md, "Input Contract Suite (this feature)").
+-- pending implementation.
 
 local F = require('tests.helpers.input_fixture')
 
@@ -55,7 +52,7 @@ describe('input contracts: NFR and planned changes #input', function()
       end)
 
       -- wheel (doc/development/internals/user_input.md, "Direct mouse
-      -- events"): {jargon: the gateway has no wheel
+      -- events"): the gateway has no wheel
       -- entry, so the framework forwards nothing; only a
       -- project's own love.wheelmoved consumes it}. No
       -- example project consumes it today. Mechanism-by-
@@ -151,7 +148,6 @@ describe('input contracts: NFR and planned changes #input', function()
       -- in editor/search mode", "Cursor manipulation and
       -- 'reset'" for the related surfaces), not asserted
       -- here.
-      -- REVIEW: do we have pending tests outlined for future consideration?
       it('the widget keeps identity across cycles',
         function()
           F.show_widget()
@@ -174,41 +170,14 @@ describe('input contracts: NFR and planned changes #input', function()
     end)
 
   -- ====================================================
-  -- Planned changes — not yet shipped (pending until implemented).
-  -- Greppable DEFERRED ({badspecref: 0.1.0-mN}) markers; bodies document
-  -- the target assertion on the PUBLIC API — none of it exists in src/ yet,
-  -- and the implementer adapts a body to the landed API shape when greening
-  -- it. (doc/development/tests.md, "Input Contract Suite (feature #77)")
+  -- Planned changes — not yet shipped. Bodies document the
+  -- target public assertion; implementers adapt them to the landed API.
   -- ====================================================
   describe('planned changes (pending until implemented)',
     function()
 
-      -- Retargeted ({badspecref: E30} {badspecref:
-      -- Scope-10(a)} — cold session, route-restoration =
-      -- active route/mode, not handler restore; design/spec/
-      -- M5c-dispatch-chain.md "Resolved (E30..."): stop's
-      -- DISTINCTIVE
-      -- contract is the full teardown, not "keyboard route
-      -- == console" -- that end state is shared by
-      -- project-exit and inspect too, so it does not by
-      -- itself distinguish stop (see {badspecref:
-      -- M5c-dispatch-chain.md}
-      -- {badspecref: Scope item 10(a)} — same doc, same
-      -- "Resolved (E30..." section). The
-      -- Controller.active_keyboard_
-      -- route() accessor this row used is dropped ({badspecref:
-      -- C23} — QUALITY item, reviews/
-      -- m4-architect-pushback.md: no
-      -- unconsumed public surface -- its only production-
-      -- code reader was this row; controller.lua:998-999).
-      -- Retargeted to doc/development/decisions/input.md, Decision 11's
-      -- literal claim
-      -- instead:
-      -- after stop no project handler remains wired in ANY
-      -- love.* callback. The wider Decision 11 teardown
-      -- (compy.input
-      -- handlers/hooks, widget silent-hide) is covered by
-      -- the 'route connection lifecycle' block below.
+      -- Decision 11 requires full teardown: after stop no
+      -- project handler remains wired in any love.* callback.
       it('stop leaves no project handler wired in any ' ..
           'love.* callback', function()
         F.activate_project()

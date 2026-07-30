@@ -28,12 +28,8 @@ describe('input contracts: shortcuts and click #input', function()
   -- Global shortcuts are non-consuming
   -- (doc/development/internals/user_input.md, "Dispatch chain": "None of
   -- these consume the key: it still reaches the active
-  -- route afterward"): a
-  -- framework shortcut fires its effect AND the key still
-  -- reaches its route. Carried as-is; whether this is a
-  -- mandated invariant or incidental is recorded as open
-  -- there, not re-litigated here.
-  -- REVIEW: both cases need reconsideration/refinement later, they look plausible in spirit but they do not demonstrate which exact production scenario is tested, and mastering framework state via low-level configuration flags is suspicious (if we mock the real production path like project run, it should be explicit, not imitated)
+  -- route afterward"): a framework shortcut fires its effect
+  -- and the key still reaches its route.
   describe('global shortcuts do not consume the key (#disputable))',
     function()
 
@@ -41,7 +37,6 @@ describe('input contracts: shortcuts and click #input', function()
         love.state.app_state = 'running'
         local n = 0
         local orig = love.keypressed
-	-- REVIEW: is it how in real scenarios handlers are altered? 
         love.keypressed = function(k) n = n + 1; orig(k) end
         mock.keystroke('C-pause', F.session.press, false)
         love.keypressed = orig
@@ -60,9 +55,7 @@ describe('input contracts: shortcuts and click #input', function()
       -- this test wires a private play-mode stub controller
       -- and saves/restores the shared love.handlers around
       -- it.
-      it('#play mode narrows the active shortcut set',
-      	-- REVIEW: suspiciously big amount of lower-level 'magic' manipulations -- should not test execute a few real framework methods instead and check their results?
-        function()
+      it('#play mode narrows the active shortcut set', function()
           local calls = { }
           local stub = {
             cfg = { mode = 'play' },
@@ -89,16 +82,14 @@ describe('input contracts: shortcuts and click #input', function()
   -- "Framework-level click handling"): a derived
   -- path over raw pointer delivery, asserted on outcomes
   -- against the project-defined handlers (default no-ops).
-  -- The 0.4s / 2.5px constants are mechanism. In scope
-  -- because {badspecref: M4} rewires the handlers this path hangs
-  -- off — it is a regression surface, not a routing rule.
+  -- The 0.4s / 2.5px constants are mechanism; this is a
+  -- regression surface, not a routing rule.
   describe('framework click detection', function()
 
     it('a single click confirms after the window',
       function()
         local hit = 0
         local bump = function() hit = hit + 1 end
-	-- REVIEW: why not setup via 'running_project'? unification is good. or it does not work with mouse events?
         F.set_compy_handler('singleclick', bump)
         F.set_mouse_pos(10, 540)
         F.session.mousereleased(10, 540, 1, false, 1)

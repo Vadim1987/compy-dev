@@ -13,7 +13,7 @@
 -- method-name spies. keypressed fires for every physical key, textinput
 -- only for character-producing keys (doc/development/internals/user_input.md, "Data
 -- flow").
--- Outputs half of the four-tier dispatch chain (Decision 5's four widget
+-- Outputs half of the dispatch chain (Decision 5's four widget
 -- output fields, the highlighter/on_limit_reached boundary, and the full
 -- submit/cancel call-order chains of Decision 6). The mechanics half
 -- (order/consume/fall-through, combo tables, signatures) is
@@ -23,14 +23,13 @@ local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
 
 -- ====================================================
--- The {jargon: four-tier dispatch chain} ({badspecref:
--- 0.1.0-m5c}, doc/development/decisions/input.md, Decision 2).
+-- The dispatch chain (doc/development/decisions/input.md, Decision 2).
 -- All rows drive the REAL project route: F.activate_
 -- project() installs the ProjectInputController as the
 -- the active route (app_state='running') via the same
 -- Controller.set_user_handlers path a run calls, and
 -- returns the project-facing compy.input surface. The
--- observable {jargon: seams} are the widget's text
+-- observable results are the widget's text
 -- and
 -- the callbacks a project registers — never a spy on an
 -- internal method (except the one widget-signature row,
@@ -423,8 +422,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
     -- framework tier-1 chains": Enter/Escape are ordinary
     -- keys while
     -- hidden — no
-    -- framework entry engages, so lower {jargon: tiers} get a
-    -- chance.
+    -- framework entry engages, so project handlers can run.
     it('Enter and Escape are ordinary keys while hidden',
       function()
         local seen = { }

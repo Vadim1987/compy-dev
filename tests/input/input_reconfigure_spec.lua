@@ -25,17 +25,9 @@ describe('input contracts: live reconfigure #input', function()
   before_each(function() F.reset() end)
 
   -- ====================================================
-  -- Live reconfigure + clear (configure/clear, closing
-  -- the {badspecref: M7-01} re-target boundary (design/
-  -- spec/M7-01-retarget.md: can an active session's
-  -- result sink / evaluator be re-targeted?) — the
-  -- {badspecref: M7-02-recut} spec's (design/spec/
-  -- M7-02-recut.md, extended widget-surface API)
-  -- Contract). The former 'later forward contracts' anchor
-  -- ('configure/set_text/cursor, force-vs-configure') is
-  -- now fully authored: set_text/cursor above, configure/
-  -- clear here; force-vs-configure is documented in
-  -- doc/development/internals/user_input.md.
+  -- Live reconfigure + clear. Configure changes live
+  -- callback fields; clear resets an active session as
+  -- documented in doc/development/internals/user_input.md.
   -- ====================================================
 
   describe('live reconfigure and clear #m7', function()
@@ -270,21 +262,8 @@ describe('input contracts: live reconfigure #input', function()
   -- migration relies
   -- on, before any example is touched.
   --
-  -- SURFACED ({jargon: surprise-first}, see {badspecref: M8-01}
-  -- ledger, implementation/outcomes/M8-01.md, surprise #1):
-  -- before_submit/after_submit/before_cancel/after_cancel
-  -- are NOT among show()'s merged cfg keys (only
-  -- on_text_entered/on_limit_reached/validator/highlighter
-  -- are, per OUTPUT_KEYS in consoleController.lua) — passing
-  -- after_submit inside show{...} is silently dropped (no
-  -- error, no warn). The wired path is a direct field
-  -- write (`input.after_submit = fn`), exactly the pattern
-  -- the existing doc/development/decisions/input.md, Decision 6
-  -- submit-chain test above
-  -- already
-  -- uses. The commission's illustrative show{after_submit=…}
-  -- sugar does not literally work; this test uses the
-  -- field-write form that does.
+  -- Lifecycle callbacks are direct fields, not show() options.
+  -- The project assigns after_submit before starting this loop.
   -- ====================================================
 
   describe('continuous-session idiom #m8', function()
@@ -339,11 +318,9 @@ describe('input contracts: live reconfigure #input', function()
     -- hint set via configure()
     -- INSIDE on_text_entered (session still active,
     -- doc/development/internals/user_input.md, "Submit and cancel — the
-    -- framework tier-1 chains")
+    -- framework submit chain")
     -- must survive the after_submit bare re-show, not the
-    -- show()-time prompt. Model-sticky per {badspecref: M8-01}
-    -- surprise #2 (implementation/outcomes/M8-01.md)
-    -- + doc/input_api.md, "The continuous-session idiom"'s
+    -- show()-time prompt. doc/input_api.md, "The continuous-session idiom"'s
     -- apply_config: custom_label is
     -- only overwritten
     -- when cfg.prompt is given, so a bare show({}) never
