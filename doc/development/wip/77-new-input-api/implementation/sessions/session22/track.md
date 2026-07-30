@@ -103,3 +103,15 @@
   project-facing API contract. Proposed future work: a separate analytical
   migration-path document, not speculative code comments; no ruling or
   execution yet.
+
+## 2026-07-30 — RVW-100 characterization executed
+
+- Owner approved a real-entry characterization test and a brief persistent
+  migration analysis before PR. `editor_spec` now drives Ctrl+F, typed text,
+  Enter jump, and Escape through `EditorController`'s real key/text entry
+  points; its only fixture addition is the clipboard boundary required by
+  Ctrl+F's existing state snapshot.
+- The obsolete input-routing pending is removed and coverage docs/marker
+  inventory now classify Search as editor-owned preserved behaviour, not a
+  project-facing #77 contract. Full-suite verification and commit pending;
+  migration analysis remains the next serial unit.

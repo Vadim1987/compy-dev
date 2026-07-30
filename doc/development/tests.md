@@ -41,7 +41,8 @@ Assessment of `tests/` relative to the codebase and the knowledge base under `do
 | `ConsoleController` | Deeply coupled to LÖVE2D runtime state; exercised by harmony integration tests instead. The input contract suite now stands up a REAL instance (gfx/font stubbed) as its routing target, but only its input-routing role is exercised — its own save/restore/snapshot behaviour is not |
 | `Controller.lua` | Draw override detection. Click detection timer + handler registration are now covered by `input_shortcuts_click_spec`'s "framework click detection" and the `input_dispatch_chain_spec` rows |
 | `ProjectService` | File I/O, project open/create, filesystem mount |
-| `SearchModel` / `SearchController` | No tests. The editor search widget is likewise untested — see `input_routing_spec`'s named pending gap below |
+| `SearchController` | Editor Search is characterized through Ctrl+F, typed text, Enter jump, and Escape in `editor_spec`; it is an editor contract, not project input API |
+| `SearchModel` | Narrowing and selection scroll have no direct unit tests |
 | Drawing system | Depends on LÖVE2D graphics context |
 | Views (rendering) | Expected; view testing requires LÖVE2D |
 
@@ -66,19 +67,18 @@ Tags beyond the file-level `#input`, matching implementation milestones:
 - `#m8` — the continuous-session idiom (`on_text_entered` consumes, `after_submit` re-shows), the recipe every migrated example project (tixy, repl, guess, valid) relies on.
 - `#editor` — one row testing editor-internal block navigation at the buffer limit; flagged in-file as owner-call territory for relocation to `tests/editor/`, kept for now as a regression guard.
 
-**The 4 pending tests are named gaps, not failures.** `busted tests` reports `815 successes / 0 failures / 0 errors / 4 pending` (confirmed by a live run). Each pending row documents a cell in the mode × channel routing grid that is either out of #77's scope or not black-box observable today:
+**The 3 pending tests are named gaps, not failures.** `busted tests` reports `856 successes / 0 failures / 0 errors / 3 pending` (confirmed by a live run). Each pending row documents a cell in the mode × channel routing grid that is either out of #77's scope or not black-box observable today:
 
 | Location | Row | Why it's pending, not red |
 |---|---|---|
 | `input_routing_spec.lua:80` | `routes the key release to the console` | A key release carries no text, so console delivery has no observable mutation to assert on — only the project-route release is directly witnessed |
 | `input_routing_spec.lua:145` | `routes the pointer to the editor` | The production editor widget disables selection, so pointer delivery has no observable outcome without extra scaffolding |
-| `input_routing_spec.lua:158` | `routes keys and text to the search widget` | The editor search widget is a third full MVC input triad absent from the design corpus — out of #77's blast radius |
 | `input_routing_spec.lua:224` | `touch reaches the active route` | Touch has no gateway entry yet; both the widget and route touch handlers are no-ops, so delivery isn't black-box observable. Greens when a touch consumer lands |
 
 ---
 
 ## Gaps — Areas Worth Filling
 
-**SearchModel** is the one covered subsystem without tests that doesn't require a graphics context. The narrowing logic (`Search:narrow` with case-insensitive substring match) and selection scroll could be unit-tested similarly to `history_spec`.
+**SearchModel** narrowing (`Search:narrow` with case-insensitive substring match) and selection scroll could be unit-tested similarly to `history_spec`.
 
 **Tag organisation** — `.busted` excludes `delay`-tagged tests by default. Tags in active use: `#parser`, `#chunk`, `#analyzer`, `#ast`, `#src`, `#editor`, `#input`, `#markdown`, `#visible`, plus the feature #77 milestone tags `#legacy`, `#m5c`, `#m7`, `#m8` (across the `input_*_spec.lua` contract files; see the Input Contract Suite section above). No tests currently use the `delay` tag, so the exclude is defensive rather than active.

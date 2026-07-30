@@ -160,25 +160,9 @@ describe('input contracts: routing #input', function()
     pending('routes the pointer to the editor')
   end)
 
-  -- Owed, not excused: this is the ONE genuinely un-designed cell of
-  -- the grid. The search widget is a real third MVC triad in
-  -- production (src/model/editor/searchModel.lua builds its own
-  -- UserInputModel), so a routing row could be written — but there is
-  -- no ratified contract to write it against: no design document for
-  -- this feature mentions the surface, so any assertion would invent
-  -- the contract it claims to verify. Filling it is a design task
-  -- first, a test second.
-  -- Search (doc/development/internals/user_input.md, "Search — a third
-  -- widget instance, live only in editor/search mode"): a
-  -- {jargon: third full MVC input triad
-  -- under the editor}, absent from the design corpus —
-  -- see same section ("None of the design documents for
-  -- feature #77 mention this surface") — but part of the
-  -- {jargon: mode
-  -- x channel grid}, so the gap is named, not silent.
-  describe('routing: editor search', function()
-    pending('routes keys and text to the search widget')
-  end)
+  -- Editor Search is characterized with real key/text entry in
+  -- tests/editor/editor_spec.lua. It remains editor-owned behaviour,
+  -- not a project-facing #77 input-API contract.
 
   describe('routing: project run', function()
 

@@ -784,7 +784,7 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: the Search-widget gap note (lines 149-159, "absent from the design corpus")
 - Bucket: **TRIAGE**
 - Rationale: coverage-gap question, same family as RVW-098/099 → TRIAGE
-- Disposition: **OWED-with-reason (B-COV, S21)** — stays `pending` and is the ONE genuinely un-designed cell. The search widget is a real third MVC triad in production (`searchModel.lua` builds its own UserInputModel), so a row COULD be written — but no design document for this feature mentions the surface, so any assertion would invent the contract it claims to verify. Filling it is a design task first, a test second. The 'blast radius' phrasing the marker objected to is replaced by that reason.
+- Disposition: **RESOLVED-by-characterization (S22)** — a real editor-entry test now drives Ctrl+F, text input, Enter's selected-definition jump, and Escape cancellation in `tests/editor/editor_spec.lua`. It protects editor Search behaviour needed by a future input-route migration without representing that behaviour as a project-facing #77 API contract. The input-routing pending is removed.
 
 ---
 

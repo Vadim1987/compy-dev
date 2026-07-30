@@ -478,6 +478,47 @@ describe('Editor #editor', function()
         session = EditorSession(controller, press, save, mock)
       end)
 
+      describe('search mode', function()
+        before_each(function()
+          love.system = {
+            getClipboardText = function() return '' end,
+          }
+        end)
+
+        local function type_search(text)
+          mock.textinput(text, function(t) controller:textinput(t) end)
+        end
+
+        it('types a query and Enter jumps to its definition', function()
+          local alpha = mock_func_snippet('alpha')
+          local beta = mock_func_snippet('beta')
+          session:open(src(alpha, '', beta), 3)
+
+          mock.keystroke('C-f', press)
+          type_search('beta')
+          mock.keystroke('return', press)
+
+          assert.same('edit', controller:get_mode())
+          assert.same(3, session.buffer:get_selection())
+          assert.is_true(controller.search.input:is_empty())
+        end)
+
+        it('Escape leaves search without moving the selection', function()
+          local alpha = mock_func_snippet('alpha')
+          local beta = mock_func_snippet('beta')
+          session:open(src(alpha, '', beta), 3)
+          session:select_block(1)
+
+          mock.keystroke('C-f', press)
+          type_search('beta')
+          mock.keystroke('escape', press)
+
+          assert.same('edit', controller:get_mode())
+          assert.same(1, session.buffer:get_selection())
+          assert.is_true(controller.search.input:is_empty())
+        end)
+      end)
+
       describe("replacement with", function()
         it('single normal block', function()
           local f_orig = mock_func_snippet("orig")
