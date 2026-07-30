@@ -386,6 +386,32 @@ every other reset path described above. None of the design documents for feature
 surface — it is real, live code with no corresponding entry in the design corpus, carried here as
 the first record of it in the permanent doc corpus.
 
+### Future editor migration path (analysis, not scheduled)
+
+Feature #77 makes a later editor migration possible; it does not migrate the editor. The reusable
+seam is the three-consumer dispatch shape — shortcuts, hook, widget — over plain tables and a widget
+instance. It must not be mistaken for an instruction to share the project widget: console, editor,
+and Search keep independent text, cursor, history, and view state.
+
+A future migration should proceed by mode, preserving the controller that owns each mode's meaning:
+
+1. Keep normal editor commands upstream. Enter/Escape and Ctrl+D already demonstrate this split:
+   the editor consumes its own commands, while ordinary editing can reach its widget. Introduce an
+   editor-local adapter to the shared dispatch shape only after naming the editor's shortcut and hook
+   tables; do not expose the project `compy.input` table to editor internals.
+2. Keep Search's controller-owned policy explicit. Its arrows, removers, Enter-to-jump, and Escape
+   are search operations, not widget submit/cancel. A migration may use its widget for text editing,
+   but must preserve that priority and the selected-definition jump. `tests/editor/editor_spec.lua`
+   characterizes Ctrl+F, typing, Enter, and Escape through real editor entry points for this reason.
+3. Keep reorder as an editor-owned, widget-free mode until it has an actual text-input requirement.
+   It is not a missing widget route.
+4. Do not add editor/Search `keyreleased` forwarding merely for symmetry. It is inert today; first
+   identify a release-time consumer and specify its mode semantics.
+
+This is implementation-derived migration guidance, not a new project-facing input API or a scheduled
+refactor. Any migration must retain the editor-level characterization tests and add tests for each
+newly adopted mode before replacing its current handler.
+
 ---
 
 ## Mouse Input

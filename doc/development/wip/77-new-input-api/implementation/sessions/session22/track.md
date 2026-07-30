@@ -115,3 +115,14 @@
   inventory now classify Search as editor-owned preserved behaviour, not a
   project-facing #77 contract. Full-suite verification and commit pending;
   migration analysis remains the next serial unit.
+
+## 2026-07-30 — editor migration analysis complete
+
+- Added a brief persistent, explicitly non-scheduled migration path in
+  `internals/user_input.md`: preserve separate instances, move by editor
+  mode, preserve Search's controller-owned policy and reorder's widget-free
+  policy, and do not add release routing absent a consumer.
+- RVW-100 is **4 of 12** visible pre-TF2 items dispositioned: its
+  real-entry characterization protects future rewiring, while the analysis
+  makes #77's migration-readiness boundary reviewable without a speculative
+  editor rewrite.
