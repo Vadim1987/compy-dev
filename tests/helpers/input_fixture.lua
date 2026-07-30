@@ -147,17 +147,7 @@ function F.setup()
   -- own callbacks table — so the widget must exist first.
   widget = build_widget(cfg)
   CC = build_console(cfg)
-  --- REVIEW/fidelity (→TF2): this hand-rolls a partial equivalent of
-  --- Controller.set_default_handlers(), except it does not do that function's
-  --- View operations or set other controller flags (project_input:deactivate())
-  --- and installs a hand-picked event subset. Why not just call
-  --- Controller.set_default_handlers()? (Postponed to Test-Fidelity review.)
-  Controller.set_love_keypressed(CC)
-  Controller.set_love_keyreleased(CC)
-  Controller.set_love_textinput(CC)
-  Controller.set_love_mousepressed(CC)
-  Controller.set_love_mousereleased(CC)
-  Controller.set_love_update(CC)
+  Controller.set_default_handlers(CC, CC.view)
   -- set_love_update (above) wires love.update, which drives the
   -- click-timer distinguishing single- from double-click
   -- (controller.lua set_love_update); tests advance it with
@@ -220,18 +210,9 @@ function F.show_widget(opts)
   return widget
 end
 
--- REVIEW: is it adequate mocking? When project sets up 'love' its actually sets up project_env.love -- sandboxed table what is passed as 'userlove' in a container. Here' instead it sets up direct love callback?
--- Simulate a running project whose callback for `name` is
--- fn: set app_state = 'running' and assign fn directly to
--- the top-level love[name] the dispatcher invokes.
-function F.running_project(name, fn)
-  love.state.app_state = 'running'
-  love[name] = fn
-end
-
---- REVIEW/fidelity (→TF2): does this match the actual project activation path
---- (consoleController `run_user_code` → Controller.set_user_handlers) instead of
---- mocking it? (Postponed to Test-Fidelity review.)
+-- This is the narrow activation seam: the full runner also loads and
+-- executes a project file, but these rows need controlled handlers. It
+-- invokes the real route installer; events still use love.handlers.
 function F.activate_project(handlers)
   love.state.app_state = 'running'
   Controller.set_user_handlers(handlers or { }, CC)
@@ -253,53 +234,11 @@ function F.show_selectable_widget(lines)
   return w
 end
 
---- REVIEW: do not we have framework/consolecontroller method for that? Why not call it? Otherwise its not clear which part of the real lifecycle we're mimicking there (if any)
---- REVIEW: in general, I'd prefer helper/fixture functions to call real framework's code with some test-specific parameters/configuration -- not implement its own 'provision/deprovision' algorithms which will inevitably deviate from what real framework is doing
--- Restore the love.* callbacks a test replaced via
--- running_project, so the next test starts on the
--- framework defaults.
-local function restore_default_handlers()
-  love.keypressed    = Controller._defaults.keypressed
-  love.textinput     = Controller._defaults.textinput
-  love.keyreleased   = Controller._defaults.keyreleased
-  love.mousepressed  = Controller._defaults.mousepressed
-  love.mousereleased = Controller._defaults.mousereleased
-end
-
--- Empty a table in place, except any key in `keep`
--- (entries the framework itself installs, never
--- project/test-installed). Assigning nil mid-traversal
--- is fine.
-local function wipe(t, keep)
-  for k in pairs(t) do
-    if not (keep and keep[k]) then rawset(t, k, nil) end
-  end
-end
-
---- REVIEW: is not there a framework/controller method doing this? why replicate instead of calling it?
--- Drop every project-route participant the chain rows
--- install, so each test starts from framework defaults:
--- deactivate the route and clear the project-installed
--- shortcut/combo tables and hooks. The widget's callbacks are
--- re-seeded separately (F.reset -> widget:reset_callbacks),
--- since compy.input.callbacks IS the widget's own table.
-local function reset_chain()
-  Controller.project_input:deactivate()
-  local input = CC:get_project_env().compy.input
-  wipe(input.shortcuts.keypressed)
-  wipe(input.shortcuts.keyreleased)
-  wipe(input.shortcuts.textinput)
-  for _, ev in ipairs({ 'keypressed', 'keyreleased', 'textinput' }) do
-    input.hooks[ev] = nil
-  end
-end
-
--- Clean slate between tests: no held keys, no widget, console mode,
--- empty console line, drained click state, cleared click handlers.
--- REVIEW: good intent but why not framework method? I am sure it has methods for exiting the project and doing big cleanup
+-- Production stop owns route/output teardown. The remaining cleanup is
+-- fixture-owned state that production neither creates nor observes.
 function F.reset()
+  CC:stop_project_run()
   Controller.keys_pressed       = { }
-  love.state.user_input         = nil
   love.state.app_state          = 'ready'
   love.state.editor             = nil
   -- Otherwise leaks into the next test's suspend(): a
@@ -307,22 +246,11 @@ function F.reset()
   -- an unrelated console error (discovered via the route-
   -- lifecycle inspect row, m5c chunk 4).
   love.state.suspend_msg        = nil
-  restore_default_handlers()
-  reset_chain()
-  local compy                   = CC:get_project_env().compy
-  compy.singleclick             = nil
-  compy.doubleclick             = nil
   love.update(1.0)
   CC.input:clear()
   CC.editor.input:clear()
   widget:clear()
   widget.shown = false
-  -- The widget's OWN callbacks table (which IS compy.input.
-  -- callbacks): re-seed the stay-open defaults between tests, the
-  -- same reset production teardown runs (reset_widget_outputs).
-  -- A value set by one test would otherwise leak into the next.
-  widget:reset_callbacks()
-  widget.result = nil
 end
 
 return F

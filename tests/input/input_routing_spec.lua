@@ -172,9 +172,9 @@ describe('input contracts: routing #input', function()
     -- doc/development/internals/user_input.md, "Dispatch chain").
     it('routes keys to the project', function()
       local got = { }
-      F.running_project('keypressed', function(k)
+      F.activate_project({ keypressed = function(k)
         got[#got + 1] = k
-      end)
+      end })
       F.session.press('a')
       assert.same({ 'a' }, got)
       assert.is_true(F.console:is_empty())
@@ -184,9 +184,9 @@ describe('input contracts: routing #input', function()
     -- doc/development/internals/user_input.md, "Data flow").
     it('routes text to the project', function()
       local got = { }
-      F.running_project('textinput', function(t)
+      F.activate_project({ textinput = function(t)
         got[#got + 1] = t
-      end)
+      end })
       F.session.type('Z')
       assert.same({ 'Z' }, got)
       assert.is_true(F.console:is_empty())
@@ -198,9 +198,9 @@ describe('input contracts: routing #input', function()
     -- "Key release").
     it('routes the key release to the project', function()
       local got = 0
-      F.running_project('keyreleased', function()
+      F.activate_project({ keyreleased = function()
         got = got + 1
-      end)
+      end })
       F.session.release('a')
       assert.equal(1, got)
     end)
@@ -213,9 +213,9 @@ describe('input contracts: routing #input', function()
     -- "Direct mouse events").
     it('routes the pointer to the project', function()
       local got = 0
-      F.running_project('mousepressed', function()
+      F.activate_project({ mousepressed = function()
         got = got + 1
-      end)
+      end })
       F.console:set_text({ 'aa', 'bb', 'cc' })
       F.session.mousepressed(10, 540, 1, false, 1)
       assert.equal(1, got)

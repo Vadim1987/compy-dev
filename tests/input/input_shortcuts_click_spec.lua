@@ -143,9 +143,9 @@ describe('input contracts: shortcuts and click #input', function()
 
       it('the console receives after stop', function()
         local got = 0
-        F.running_project('keypressed', function()
+        F.activate_project({ keypressed = function()
           got = got + 1
-        end)
+        end })
         F.cc:stop_project_run()
         F.console:add_text('ab')
         F.session.press('backspace')
