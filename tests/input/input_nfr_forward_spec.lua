@@ -88,18 +88,12 @@ describe('input contracts: NFR and planned changes #input', function()
       -- `combo_string`", mechanism):
       -- a key is added on press and removed on release
       -- BEFORE dispatch, so the set already reflects the
-      -- event when a consumer runs. The route-observable
-      -- form — the set handed along as a read-only proxy
-      -- in the keypressed triple — is a planned change (not yet
-      -- landed); until it lands, the guard necessarily reads
-      -- Controller.keys_pressed.
-      -- OWED (deferred, not forgotten): this row reads
-      -- Controller.keys_pressed directly — an implementation seam.
-      -- The end-to-end form (what was pressed is what the consumer
-      -- receives, and it is the SAME table) belongs with the
-      -- propagation tests; the delivered-triple row in
-      -- input_events_spec now covers the delivery half, leaving only
-      -- table identity un-asserted.
+      -- event when a consumer runs. The route-observable form is the
+      -- read-only view delivered in the keypressed triple; delivery and
+      -- contents are covered in input_events_spec. These direct checks
+      -- remain mechanism/NFR guards because they protect the live backing
+      -- set and avoid an allocation on each dispatch, not a project
+      -- identity contract.
       it('the pressed key is in the held set', function()
         local seen
         local orig = love.keypressed
@@ -125,6 +119,11 @@ describe('input contracts: NFR and planned changes #input', function()
           love.keyreleased = orig
           assert.is_nil(seen)
         end)
+
+      it('reuses the held-key view for one backing table', function()
+        local first = Controller.held_keys()
+        assert.equal(first, Controller.held_keys())
+      end)
 
       -- Folding lctrl/rctrl to 'ctrl' is combo_string's
       -- job (doc/development/decisions/input.md, Decision 8, covered in
