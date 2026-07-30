@@ -230,3 +230,30 @@
 - The S22 RVW-087 NFR plan and Decision 13 allocation note record this work.
   All **12 of 12** visible pre-TF2 items are now dispositioned. Remaining work
   is the queued execution, authority sweep, navigation regeneration, and TF2.
+
+## 2026-07-30 — re-entrance and execution authorization
+
+- Context compaction resumed against the session rules, current prompt,
+  predecessor track, working tree, and the full running track. The 12/12
+  disposition is confirmed; user now authorizes mechanical sweep and planned
+  execution through PR-assembly readiness, with independent green commits.
+- Serial Terra evidence runs opened for the bounded D4 fixture audit and the
+  R2 helper-surface naming/impact audit. Their prompts and outcomes are
+  materialized under validation; no shared-tree edits are delegated.
+
+## 2026-07-30 — baseline and first execution units
+
+- Fresh baseline after the decision-record commit: `busted tests` =
+  **856 / 0 / 0 / 3**, a previously recorded count change from the new
+  Search characterization. The three routing pendings remain intentional.
+- RVW-087 executed and committed `57129a2`: a labelled mechanism/NFR row
+  verifies held-key-view reuse for one backing table. It guards allocation
+  only; no project identity promise. Full suite: **857 / 0 / 0 / 3**.
+- D4 Terra audit found only bounded fixture drift. Executed the real default
+  setup and stop teardown, moved five routing rows through the real project
+  activation installer, and retained that narrow seam with its reason.
+  Committed `8dbe702`; full suite remains **857 / 0 / 0 / 3**.
+- R2 helper audit recommends the minimal explicit project convenience set:
+  LuaHighlighter, LuaSyntaxValidator, and LineValidators. A serial Terra
+  test-first worker is now adding the public-route acceptance rows; production
+  code is still unchanged.
