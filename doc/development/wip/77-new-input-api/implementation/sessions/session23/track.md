@@ -86,3 +86,51 @@
   `validation/reviews/S23-revalidation-pre-TF2-gates.md`: verdict NOT CLEAN
   (accept with corrections), 5 findings, 4 ordered dispositions, none
   executed. Awaiting owner acceptance — TF2 not opened.
+
+## 2026-07-30 — owner accepted all findings; new ruling on strictness
+
+- Owner agreed with every disposition and authorized execution. **New owner
+  ruling:** warning (or staying silent) about bad show/configure options is
+  pointless — raise loudly instead. Their criterion: warn-and-ignore would be
+  justified only if these functions took a general-purpose structured
+  document and applied a subset of its fields; they do not. Recorded as
+  Decision 15 **revised**, in-flight, rationale "DevX: strict contract
+  enforcement, explicit failure mode".
+- I did not contest — it is right, and it also resolves the configure
+  asymmetry I had flagged as an open question. Added two refinements the
+  owner's framing implied but did not state: **(1) scope is contract
+  violations, not runtime states** — `show` on an active overlay and
+  mutations while hidden must keep warning, or "be strict" creeps; **(2)**
+  verified the error path first, since raising is only good DevX if it
+  surfaces well.
+- Error-path verification (the precondition): project top-level code runs
+  under `pcall` in `run_user_code` (aborts the run, reports); project `love.*`
+  handlers run under `xpcall` → `user_error_handler` → `suspend_run` (project
+  suspends with the message). No framework takedown either way. Precedent
+  found: `frozen_error` already raises with `error(msg, 2)` for the sibling
+  violation `compy.input.shortcuts = {}` (Decision 7 revised) — so raising
+  here makes the surface uniform rather than introducing a new mode.
+
+## 2026-07-30 — execution complete; 7 commits, suite 867
+
+- Order, each its own green commit: `e3af2a1` untrack the swap artifact
+  (unblocked slice 3d) · `4c42f68` rehome 31 dead contract citations (Sonnet
+  worker, comment-only) · `adbe98c` rehome 13 wip-tree comments + last two
+  construction markers · `14fb73c` corpus reference repair · `c8c4204` the
+  strict-key production change · `e57a481` its contract docs · `550bf1e`
+  regenerated navigation slices.
+- Test-first held: the 5 new contract tests failed against warn-and-ignore
+  before implementation. Suite 862 → **867 / 0 / 0 / 3** (−1 replaced warn
+  test, +6 new). Checked before committing that no tracked example and no
+  internal caller passes an unrecognised key, so nothing shipped breaks.
+- Slices: partition came up **88 of 89** — `.gitignore` was covered by no
+  pathspec. Added it to 3d and to the guide (the re-runnable source of
+  truth). Now complete, disjoint, and **all 8 apply cleanly against BASE**,
+  which the previous batch did not.
+- **Own error, recorded:** twice used `git add -A src tests` / `git add src
+  tests`, which swept the owner's untracked scratch (`src/STEPS.md`, gitlinks
+  for balloons/keyboard/maze). Caught the second one only after committing;
+  soft-reset and recommitted clean. The standing rule is explicit about never
+  sweeping the owner's working-tree changes — stage explicit paths, never a
+  directory, in this tree.
+- Not wrapped: awaiting owner acceptance before report + successor prompt.
