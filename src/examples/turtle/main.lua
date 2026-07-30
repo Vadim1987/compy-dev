@@ -48,7 +48,9 @@ function love.keyreleased(key)
   if key == "i" then
     compy.input.show{
       prompt = "TURTLE",
-      on_text_entered = eval,
+      on_text_entered = function(lines)
+        eval(lines[1])
+      end,
     }
   end
 

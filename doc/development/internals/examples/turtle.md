@@ -19,7 +19,9 @@ function love.keyreleased(key)
   if key == "i" then
     compy.input.show{
       prompt = "TURTLE",
-      on_text_entered = eval,
+      on_text_entered = function(lines)
+        eval(lines[1])
+      end,
     }
   end
 
@@ -31,7 +33,7 @@ function love.keyreleased(key)
 end
 ```
 
-`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; `on_text_entered = eval` wires it directly as the submit callback.
+`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; the submit callback passes it the first submitted line.
 
 `love.keyreleased`: the `i` key opens the input overlay with a fresh `compy.input.show{}` call each time (there is no `after_submit` re-arm, so the overlay does not automatically reopen after a submit — pressing `i` again is required). `shift+r` resets turtle position.
 
