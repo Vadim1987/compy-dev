@@ -84,5 +84,10 @@ local sfx = compy.audio
 Comments cite **canonical docs** (`doc/…`), never a feature's ephemeral working tree
 (`doc/development/wip/…`). A wip path rots when the feature's scratch is deleted; cite the
 persistent doc — and a **named section**, not "paragraph N" — so the reference stays
-discoverable and greppable. (Live debt: two `src/controller/` comments still carry wip
-citations — see `doc/development/technical_debt/input.md`.)
+discoverable and greppable.
+
+A named section is only useful while it exists. When you rename or remove a heading, grep
+`src/` and `tests/` for comments citing the old name — a citation that no longer resolves is
+worse than none, because it reads as authoritative. Renaming the input guide's headings once
+left 31 citations pointing at sections that were gone, two of them naming a design model the
+feature had already retired.

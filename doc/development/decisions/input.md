@@ -255,10 +255,10 @@ Three substantive changes from the original framework-tier shape:
 **Withdrawn guarantee — recorded explicitly, not left implicit.** Nothing any longer prevents a
 project shortcut from shadowing Enter's submit or Escape's cancel while the widget is shown, and
 a project overriding `after_submit`/`after_cancel` owns the lifecycle act itself. This was never
-a stakeholder requirement — `design/requirements.md` records the cancel/dismiss notification as
-explicitly left unresolved by stakeholders ("may be expected — to be confirmed"); the
-non-overridable shape was a design-team fix for an earlier `oneshot` two-role problem (below), not
-an external mandate. Withdrawing it is acceptable specifically because it is not the only safety
+a stakeholder requirement: the round of requirements gathering that preceded this feature left
+the cancel/dismiss notification explicitly unresolved, recorded verbatim as *"may be expected —
+to be confirmed"*, and it was never confirmed. The non-overridable shape was a design-team fix
+for an earlier `oneshot` two-role problem (below), not an external mandate. Withdrawing it is acceptable specifically because it is not the only safety
 net: the gateway's **power keys** (Ctrl+Q, Ctrl+Break, etc. — `controller.lua`, pre-dating this
 feature) remain unconditional and unshadowable, running before any route dispatch, chain
 included. That is the actual, permanent escape hatch; the framework tier was never it.

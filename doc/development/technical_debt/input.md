@@ -240,9 +240,12 @@ Not commissioned for closure; each may never need action.
 
 ### Overlay-shape test exercises a stub, not the real draw wiring
 
-- **Where:** `tests/input/overlay_spec.lua` — the overlay-shape test builds
-  an ad-hoc controller with a `draw`-only stub view and asserts
-  `love.state.user_input` is truthy and callable.
+- **Where:** the overlay handle is asserted only for shape — that
+  `love.state.user_input` is set and callable while the widget is shown
+  (e.g. `tests/input/input_redesign_ac_spec.lua`). The dedicated
+  `overlay_spec.lua` that built an ad-hoc controller over a `draw`-only
+  stub view was removed when the suite was re-authored; the gap below is
+  what survived it, not the file.
 - **State:** Guards against the handle being re-narrowed, but does not
   exercise the app's startup widget-instance wiring or the real
   `set_love_draw` overlay wrapper in `controller.lua` — the exact path a
@@ -562,11 +565,15 @@ be silently narrowed later (any change is a separate, owner-gated decision):
   `oneshot` flag. Its survival under a console/editor re-plug remains a
   tracked future concern, out of #77 scope.
 
-### Comment wip-citation cleanup (from the canonical-docs comment rule)
+### Comment wip-citation cleanup (RESOLVED, 2026-07-30)
 
-Two `src/controller/` comments cite the feature's ephemeral wip tree instead of a canonical
-doc, violating the `doc/development/conventions/code.md` "Comment References" rule:
-`src/controller/consoleController.lua` (~L511) and `src/controller/userInputController.lua`
-(~L8) both cite `doc/development/wip/77-new-input-api/validation/…`. Rehome to the persistent
-doc each summarizes (`internals/user_input.md` / `decisions/input.md`) when next editing those
-files. Low priority; comment-only.
+Comments citing the feature's ephemeral wip tree instead of a canonical doc, in violation of
+the `doc/development/conventions/code.md` "Comment References" rule. This entry recorded the
+residue as two `src/controller/` comments; a pre-PR revalidation found **thirteen** comment
+blocks across seven tracked files, four of them shipped examples under `src/examples/`.
+
+All are rehomed: the controller comments to the `decisions/input.md` decisions they already
+cited alongside the wip path, the examples to `doc/input_api.md`, "Submit lifecycle". Kept as
+a resolved entry rather than deleted, because the undercount is the lesson — a debt row's
+stated scope is a claim like any other, and this one was never re-measured after the tree
+moved under it.

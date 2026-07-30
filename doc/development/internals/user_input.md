@@ -607,9 +607,9 @@ There is no project-facing `is_active()`/`is_shown()` predicate: an
 internal `UserInputController:is_shown()` exists
 (`userInputController.lua:487-489`), reading a strictly-internal `self.shown` flag with no
 `love.state` reach, but is not exposed on this surface — a project that needs to know whether the
-widget is currently up reads `love.state.user_input` directly (as
-`examples/maze/main.lua` does, with its own per-tick re-arm poll)
-rather than calling a `compy.input` method.
+widget is currently up reads `love.state.user_input` directly, with its own per-tick re-arm
+poll, rather than calling a `compy.input` method. (The worked example of this shape lives in an
+untracked scratch project, so it is described here rather than cited.)
 
 #### `show(config)` — activate
 
