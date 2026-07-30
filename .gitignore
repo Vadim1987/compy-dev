@@ -20,3 +20,6 @@ src/ver.txt
 tests/autotest.lua
 host.lua
 local.just
+*.swp
+*.swo
+*~
