@@ -1,8 +1,8 @@
 diff --git a/src/controller/consoleController.lua b/src/controller/consoleController.lua
-index 37acd4a..d0aa444 100644
+index 37acd4a..00f69e1 100644
 --- a/src/controller/consoleController.lua
 +++ b/src/controller/consoleController.lua
-@@ -41,7 +41,15 @@ function ConsoleController.new(M, main_ctrl)
+@@ -41,7 +41,16 @@ function ConsoleController.new(M, main_ctrl)
    local pre_env = table.clone(env)
    local config = M.cfg
    pre_env.font = config.view.font
@@ -10,8 +10,9 @@ index 37acd4a..d0aa444 100644
 +  local IC = UserInputController(M.input):always_shown()
 +  -- Console history navigation: at the vertical boundary the
 +  -- widget fires on_limit_reached; the console maps up/down to
-+  -- history back/forward (validation/reviews/delta-spec-input-api.md
-+  -- §6), retiring the old keypressed return-value channel.
++  -- history back/forward (doc/development/decisions/input.md,
++  -- Decision 5 revised), retiring the old keypressed
++  -- return-value channel.
 +  IC.callbacks.on_limit_reached = function(dir)
 +    if dir == 'up' then IC:history_back() end
 +    if dir == 'down' then IC:history_fwd() end
@@ -19,7 +20,7 @@ index 37acd4a..d0aa444 100644
    local self = setmetatable({
      time        = 0,
      model       = M,
-@@ -253,10 +261,22 @@ function ConsoleController:run_project(name)
+@@ -253,10 +262,22 @@ function ConsoleController:run_project(name)
        love.state.app_state = 'running'
        local rok, run_err = run_user_code(f, self, path)
        if not rok then
@@ -42,7 +43,7 @@ index 37acd4a..d0aa444 100644
            love.state.app_state = 'project_open'
          end
        end
-@@ -309,6 +329,13 @@ local compy_audio = require("util.audio")
+@@ -309,6 +330,13 @@ local compy_audio = require("util.audio")
  local compy_graphics = {
    shape2d = require("util.graphics.shape2d")
  }
@@ -56,7 +57,7 @@ index 37acd4a..d0aa444 100644
  local get_compy_terminal = function(terminal)
    return {
      --- @param x number
-@@ -328,14 +355,335 @@ local get_compy_terminal = function(terminal)
+@@ -328,14 +356,373 @@ local get_compy_terminal = function(terminal)
      end
    }
  end
@@ -76,8 +77,7 @@ index 37acd4a..d0aa444 100644
 +-- projects never touch the controller directly. Namespace +
 +-- lifecycle docs: doc/development/internals/user_input.md.
 +-- compy.input's write boundary (doc/development/decisions/input.md,
-+-- Decision 7, revised — .../validation/reviews/
-+-- delta-design-input-api.md): the container and the IDENTITY of its
++-- Decision 7 revised): the container and the IDENTITY of its
 +-- three sub-tables (shortcuts / hooks / callbacks) are frozen — a
 +-- project cannot replace them (compy.input.shortcuts = {} raises).
 +-- Every LEAF inside is freely writable: shortcuts[event][combo] = fn
@@ -142,9 +142,10 @@ index 37acd4a..d0aa444 100644
 +-- Decision 5):
 +-- show()/configure() config key and direct field-write
 +-- share one underlying `state` entry, sticky across shows
-+-- until overwritten (doc/input_api.md, "Sticky callbacks";
-+-- the doc/development/internals/user_input.md, "configure(config)" live
-+-- reconfigure surface below leaves this unchanged).
++-- until overwritten (doc/input_api.md, "Callback
++-- assignments"; the doc/development/internals/user_input.md,
++-- "configure(config)" live reconfigure surface below
++-- leaves this unchanged).
 +local OUTPUT_KEYS = {
 +  'on_text_entered',
 +  'on_limit_reached',
@@ -170,13 +171,49 @@ index 37acd4a..d0aa444 100644
 +  on_limit_reached = true,
 +}
 +
-+local function reject_unknown_show_keys(cfg)
++-- configure() takes the same table minus force: force answers
++-- "replace the text of an ALREADY-active overlay", which is
++-- the only state configure() ever runs in.
++local CONFIGURE_KEYS = { }
++for k in pairs(SHOW_KEYS) do CONFIGURE_KEYS[k] = true end
++CONFIGURE_KEYS.force = nil
++
++-- Lifecycle callbacks are compy.input.callbacks assignments,
++-- never config-table keys. Naming one here is the likeliest
++-- mistake, so it earns a message that says where it belongs.
++local LIFECYCLE_KEYS = {
++  before_submit = true, after_submit = true,
++  before_cancel = true, after_cancel = true,
++}
++
++--- @param fname string
++--- @param key any
++--- @return string
++local function bad_key_message(fname, key)
++  local name = tostring(key)
++  if LIFECYCLE_KEYS[name] then
++    return fname .. ": assign '" .. name ..
++      "' on compy.input.callbacks, do not pass it here"
++  end
++  return fname .. ": unknown config key '" .. name .. "'"
++end
++
++--- Strict contract enforcement
++--- (doc/development/decisions/input.md, Decision 15 revised):
++--- the config table is CLOSED, so a key
++--- outside it can only be an authoring error — raise, and let
++--- the project stop at the typo instead of running on in a
++--- shape nobody asked for. Level 3 puts the trace on the
++--- project's own show()/configure() line.
++--- Runtime STATE no-ops (an active overlay, a hidden widget)
++--- are NOT this: they keep warning, per Decision 3.
++--- @param cfg table
++--- @param fname string
++--- @param allowed table
++local function check_keys(cfg, fname, allowed)
 +  for key in pairs(cfg) do
-+    if not SHOW_KEYS[key] then
-+      local name = tostring(key)
-+      Log.warn('compy.input.show ignored key ' .. name ..
-+        '; use its config table or compy.input.callbacks')
-+      cfg[key] = nil
++    if not allowed[key] then
++      error(bad_key_message(fname, key), 3)
 +    end
 +  end
 +end
@@ -249,7 +286,7 @@ index 37acd4a..d0aa444 100644
 +  return {
 +    show = function(cfg)
 +      local next_cfg = cfg or {}
-+      reject_unknown_show_keys(next_cfg)
++      check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
 +      merge_output_keys(state, next_cfg)
 +      consume_pending(state.pending, next_cfg)
 +      local ui = get_widget()
@@ -259,17 +296,18 @@ index 37acd4a..d0aa444 100644
 +      local ui = get_widget()
 +      if ui then ui:hide() end
 +    end,
-+    -- doc/development/internals/user_input.md, "Cursor manipulation and
-+    -- 'reset'": 1-based (line, col); nil when
-+    -- hidden — a plain read of "nothing to report", not a
-+    -- refused mutation, so unlike set_cursor/set_text below
-+    -- it does not warn (same section).
++    -- doc/development/internals/user_input.md, "Cursor
++    -- manipulation and \"reset\"": 1-based (line, col); nil
++    -- when hidden — a plain read of "nothing to report", not
++    -- a refused mutation, so unlike set_cursor/set_text
++    -- below it does not warn (same section).
 +    get_cursor = function()
 +      if not get_active_flag() then return nil end
 +      return get_widget():get_cursor_pos()
 +    end,
-+    -- doc/development/internals/user_input.md, "Cursor manipulation and
-+    -- 'reset'": clamped move; no-op + warn while hidden.
++    -- doc/development/internals/user_input.md, "Cursor
++    -- manipulation and \"reset\"": clamped move; no-op +
++    -- warn while hidden.
 +    set_cursor = function(line, col)
 +      if not get_active_flag() then
 +        Log.warn('compy.input.set_cursor ignored — hidden')
@@ -277,11 +315,10 @@ index 37acd4a..d0aa444 100644
 +      end
 +      get_widget():set_cursor_pos(line, col)
 +    end,
-+    -- doc/input_api.md, "Live reconfigure: `configure`,
-+    -- `set_text`, `clear`, cursor": replace content (cursor
-+    -- to end, or kept + clamped); no-op + warn while hidden;
-+    -- view updates via the controller's set_text (no
-+    -- re-show).
++    -- doc/input_api.md, "Live changes": replace content
++    -- (cursor to end, or kept + clamped); no-op + warn
++    -- while hidden; view updates via the controller's
++    -- set_text (no re-show).
 +    set_text = function(text, keep_cursor)
 +      if not get_active_flag() then
 +        Log.warn('compy.input.set_text ignored — hidden')
@@ -298,6 +335,8 @@ index 37acd4a..d0aa444 100644
 +    -- show(). Never a partial/silent apply either way.
 +    configure = function(cfg)
 +      local next_cfg = cfg or { }
++      check_keys(next_cfg, 'compy.input.configure',
++        CONFIGURE_KEYS)
 +      if not get_active_flag() then
 +        stash_hidden_configure(state, next_cfg)
 +        return
@@ -394,7 +433,7 @@ index 37acd4a..d0aa444 100644
  end
  
  function ConsoleController.prepare_env(cc)
-@@ -552,70 +900,6 @@ function ConsoleController.prepare_project_env(cc)
+@@ -552,70 +939,6 @@ function ConsoleController.prepare_project_env(cc)
      close_project(cc)
    end
  
@@ -465,7 +504,7 @@ index 37acd4a..d0aa444 100644
    --- @param name string
    project_env.edit           = function(name)
      return cc:edit(name)
-@@ -625,9 +909,16 @@ function ConsoleController.prepare_project_env(cc)
+@@ -625,9 +948,16 @@ function ConsoleController.prepare_project_env(cc)
  
    local terminal             = cc.model.output.terminal
    local compy_namespace      = get_compy_namespace(terminal)
@@ -483,7 +522,7 @@ index 37acd4a..d0aa444 100644
    project_env.eval           = LANG.eval
    project_env.print_eval     = LANG.print_eval
  
-@@ -859,12 +1150,15 @@ end
+@@ -859,12 +1189,15 @@ end
  
  function ConsoleController:stop_project_run()
    self:evacuate_required()
@@ -500,7 +539,7 @@ index 37acd4a..d0aa444 100644
    self.main_ctrl.report()
    love.state.app_state = 'project_open'
  end
-@@ -997,15 +1291,12 @@ function ConsoleController:keypressed(k)
+@@ -997,15 +1330,13 @@ function ConsoleController:keypressed(k)
      if k == "pagedown" then
        input:history_fwd()
      end
@@ -515,15 +554,16 @@ index 37acd4a..d0aa444 100644
 -    end
 +    -- History navigation at the vertical boundary is driven by
 +    -- the widget's on_limit_reached callback (set at construction),
-+    -- not by keypressed's return value (retired, Decision 5
-+    -- revised / delta-spec §6). keypressed still runs for its
-+    -- editing side effects; its return is unused.
++    -- not by keypressed's return value (retired,
++    -- doc/development/decisions/input.md, Decision 5 revised).
++    -- keypressed still runs for its editing side effects; its
++    -- return is unused.
 +    input:keypressed(k)
      if not Key.shift() and Key.is_enter(k) then
        if not input:has_error() then
          self:evaluate_input()
 diff --git a/src/controller/userInputController.lua b/src/controller/userInputController.lua
-index ed087f7..ceb6bc6 100644
+index ed087f7..96bc6e5 100644
 --- a/src/controller/userInputController.lua
 +++ b/src/controller/userInputController.lua
 @@ -2,30 +2,53 @@ local class = require('util.class')
@@ -619,9 +659,9 @@ index ed087f7..ceb6bc6 100644
  end
  
 +--- Clamped 2D move (compy.input.set_cursor;
-+--- doc/development/internals/user_input.md, "Cursor manipulation and
-+--- 'reset'"). Named
-+--- apart from set_cursor(Cursor) above — that simple function
++--- doc/development/internals/user_input.md, "Cursor
++--- manipulation and \"reset\""). Named apart from
++--- set_cursor(Cursor) above — that simple function
 +--- already has a different signature/caller (editorController
 +--- load_selection); this computes a valid landing itself
 +--- (byte length, matching move_cursor's own bound) rather
@@ -655,7 +695,7 @@ index ed087f7..ceb6bc6 100644
  end
  
  function UserInputController:jump_home()
-@@ -174,27 +224,309 @@ function UserInputController:history_fwd()
+@@ -174,27 +224,310 @@ function UserInputController:history_fwd()
    self.model:history_fwd()
  end
  
@@ -698,8 +738,9 @@ index ed087f7..ceb6bc6 100644
 +--- clear-on-no-text lives here, not in apply_config, because it is activation policy
 +--- (a re-show with no text starts empty) rather than per-field config.
 +--- `cursor` (a `{line, col}` pair) lands here too, applied
-+--- after text (doc/development/internals/user_input.md, "Cursor
-+--- manipulation and 'reset'") — kept out of apply_config so
++--- after text (doc/development/internals/user_input.md,
++--- "Cursor manipulation and \"reset\"") — kept out of
++--- apply_config so
 +--- the live-reconfigure path (configure() below) can never
 +--- reach it.
 +--- @param self UserInputController
@@ -790,9 +831,9 @@ index ed087f7..ceb6bc6 100644
 +----------------------
 +
 +-- Submit/cancel are the widget's OWN default behaviour
-+-- (doc/development/decisions/input.md, Decision 6 revised; validation/
-+-- reviews/delta-spec-input-api.md §3): the widget runs them on
-+-- Enter/Escape as an ordinary consumer (never a routing concern)
++-- (doc/development/decisions/input.md, Decision 6 revised): the
++-- widget runs them on Enter/Escape as an ordinary consumer
++-- (never a routing concern)
 +-- and signals out through its callbacks. before_/after_submit and
 +-- before_/after_cancel are read off self.callbacks — the same
 +-- table a project populates via compy.input.callbacks.
@@ -834,7 +875,7 @@ index ed087f7..ceb6bc6 100644
 +end
 +
 +--- Submit flow (doc/development/decisions/input.md, Decision 6
-+--- revised; validation/reviews/delta-spec-input-api.md §3): the
++--- revised): the
 +--- widget's own Enter behaviour. before_submit (veto reserved,
 +--- unbuilt) → empty guard → validate → deliver (fires
 +--- on_text_entered) → after_submit. after_submit defaults to a
@@ -851,7 +892,7 @@ index ed087f7..ceb6bc6 100644
 +  run_callback(self, 'after_submit', lines)
 +end
 +
-+--- Cancel flow (Decision 6 revised; delta-spec §3): the
++--- Cancel flow (Decision 6 revised): the
 +--- widget's own Escape behaviour. A truthy before_cancel VETOES
 +--- (skips the clear); otherwise clear (hardwired) → after_cancel.
 +--- after_cancel defaults to a no-op — Escape clears but the widget
@@ -893,8 +934,8 @@ index ed087f7..ceb6bc6 100644
 +--- Re-seed the callbacks to the stay-open DEFAULT_CALLBACKS, IN
 +--- PLACE — never reassign the table, the compy.input surface
 +--- holds this exact reference. Teardown between project runs
-+--- (doc/development/decisions/input.md, Decision 11; delta-spec §3
-+--- "re-seed, don't wipe" / AC10): clears a stopped project's
++--- (doc/development/decisions/input.md, Decision 11 — "re-seed,
++--- don't wipe"): clears a stopped project's
 +--- callbacks and restores defaults, so a nil'd after_cancel never
 +--- silently means "stays open forever" for the next project.
 +function UserInputController:reset_callbacks()
@@ -944,7 +985,7 @@ index ed087f7..ceb6bc6 100644
 +  -- Decision 5 revised): the widget signals a hit limit ONLY
 +  -- through on_limit_reached — the keypressed return value no
 +  -- longer carries a limit flag (retired; console reads history
-+  -- via its own on_limit_reached callback, delta-spec §6).
++  -- via its own on_limit_reached callback).
 +  local function emit_limit(dir, scope)
 +    local cb = self.callbacks.on_limit_reached
 +    if cb then cb(dir, scope) end
@@ -968,7 +1009,7 @@ index ed087f7..ceb6bc6 100644
      then
        input:clear_error()
      end
-@@ -249,12 +581,14 @@ function UserInputController:keypressed(k)
+@@ -249,12 +582,14 @@ function UserInputController:keypressed(k)
    end
    local function vertical()
      if k == "up" then
@@ -987,7 +1028,7 @@ index ed087f7..ceb6bc6 100644
      end
      if Key.alt() then
        if k == "up" then
-@@ -266,6 +600,12 @@ function UserInputController:keypressed(k)
+@@ -266,6 +601,12 @@ function UserInputController:keypressed(k)
      end
    end
    local function horizontal()
@@ -1000,7 +1041,7 @@ index ed087f7..ceb6bc6 100644
      if k == "left" then
        input:cursor_left()
      end
-@@ -336,65 +676,42 @@ function UserInputController:keypressed(k)
+@@ -336,65 +677,42 @@ function UserInputController:keypressed(k)
      end
    end
  
@@ -1093,7 +1134,7 @@ index ed087f7..ceb6bc6 100644
      return
    end
    self.model:add_text(t)
-@@ -402,7 +719,13 @@ function UserInputController:textinput(t)
+@@ -402,7 +720,13 @@ function UserInputController:textinput(t)
  end
  
  --- @param k string
@@ -1109,16 +1150,14 @@ index ed087f7..ceb6bc6 100644
    self:update_view()
  
 diff --git a/src/main.lua b/src/main.lua
-index a0bb4d3..077a0ca 100644
+index a0bb4d3..bc61e28 100644
 --- a/src/main.lua
 +++ b/src/main.lua
-@@ -352,6 +352,33 @@ function love.load()
+@@ -352,6 +352,31 @@ function love.load()
    end
    local ctrl = Controller
    --- MVC wiring
-+  -- RESOLVED-BY-REDESIGN (R4-1 inventory; validation/reviews/
-+  -- R4-U3-callback-model.md, delta-design "Implementation note"):
-+  -- the reusable seam now exists (free-function `dispatch` +
++  -- The reusable seam now exists (free-function `dispatch` +
 +  -- the `build_widget_api` factory in consoleController.lua), so
 +  -- console/editor COULD rewire onto it. They stay on their own
 +  -- separate `UserInputController` instances anyway, because

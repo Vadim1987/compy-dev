@@ -25,7 +25,7 @@ index 38b4962..9b7a410 100644
      resultset = {},
      visible = ScrollableContent(0, 1, l)
 diff --git a/src/model/input/userInputModel.lua b/src/model/input/userInputModel.lua
-index 4613fee..edcba47 100644
+index 4613fee..60daa51 100644
 --- a/src/model/input/userInputModel.lua
 +++ b/src/model/input/userInputModel.lua
 @@ -12,7 +12,6 @@ require("util.debug")
@@ -105,7 +105,7 @@ index 4613fee..edcba47 100644
    end
  end
  
-@@ -500,6 +509,21 @@ function UserInputModel:set_cursor(c)
+@@ -500,6 +509,20 @@ function UserInputModel:set_cursor(c)
    self.cursor = c
  end
  
@@ -114,8 +114,7 @@ index 4613fee..edcba47 100644
 +--- (byte length, matching move_cursor's own bound below) —
 +--- set_text(t, true)'s landing when the
 +--- new content is shorter than the preserved cursor
-+--- position (doc/input_api.md, "Live reconfigure:
-+--- `configure`, `set_text`, `clear`, cursor").
++--- position (doc/input_api.md, "Live changes").
 +function UserInputModel:_clamp_cursor_pos()
 +  local n = self:get_n_text_lines()
 +  local l = math.max(1, math.min(self.cursor.l, n))
@@ -127,7 +126,7 @@ index 4613fee..edcba47 100644
  --- @param y integer?
  --- @param x integer?
  --- @param selection 'keep'|'move'?
-@@ -553,20 +577,35 @@ function UserInputModel:get_cursor_y()
+@@ -553,20 +576,35 @@ function UserInputModel:get_cursor_y()
    return self.cursor.l
  end
  
@@ -173,7 +172,7 @@ index 4613fee..edcba47 100644
  end
  
  --- @return InputDTO
-@@ -797,42 +836,52 @@ function UserInputModel:cancel()
+@@ -797,42 +835,52 @@ function UserInputModel:cancel()
    self:reset()
  end
  

@@ -1,5 +1,16 @@
+diff --git a/.gitignore b/.gitignore
+index 6970156..69cfb31 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -20,3 +20,6 @@ src/ver.txt
+ tests/autotest.lua
+ host.lua
+ local.just
++*.swp
++*.swo
++*~
 diff --git a/tests/editor/editor_spec.lua b/tests/editor/editor_spec.lua
-index 204b009..6573116 100644
+index 204b009..dce6c43 100644
 --- a/tests/editor/editor_spec.lua
 +++ b/tests/editor/editor_spec.lua
 @@ -478,6 +478,47 @@ describe('Editor #editor', function()
@@ -58,8 +69,8 @@ index 204b009..6573116 100644
 +      -- input, 'down' and the first 'up' stay inside it; the next 'up'
 +      -- crosses out to the previous block. Guards the later is_at_limit
 +      -- line-scope rewrite from regressing whole-input block navigation.
-+      -- Relocated here from tests/input/input_widget_lifecycle_spec.lua
-+      -- (S21/B-F): this is editor-internal behaviour, not an input
++      -- Relocated here from tests/input/input_widget_lifecycle_spec.lua:
++      -- this is editor-internal behaviour, not an input
 +      -- routing contract — the input suite asserts only that keys reach
 +      -- the editor route (tests/input/input_routing_spec.lua).
 +      describe("navigation at the block limit", function()
@@ -906,10 +917,6 @@ index 0000000..483fe3c
 +end
 +
 +return { new = new }
-diff --git a/tests/input/.input_nfr_forward_spec.lua.swp b/tests/input/.input_nfr_forward_spec.lua.swp
-new file mode 100644
-index 0000000..dfd6a36
-Binary files /dev/null and b/tests/input/.input_nfr_forward_spec.lua.swp differ
 diff --git a/tests/input/cursor_spec.lua b/tests/input/cursor_spec.lua
 index 5abd82b..e8a38b3 100644
 --- a/tests/input/cursor_spec.lua
@@ -1056,17 +1063,18 @@ index f4a50fd..0915ecf 100644
  
 diff --git a/tests/input/input_cursor_text_spec.lua b/tests/input/input_cursor_text_spec.lua
 new file mode 100644
-index 0000000..be08e3f
+index 0000000..07534a0
 --- /dev/null
 +++ b/tests/input/input_cursor_text_spec.lua
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,217 @@
 +-- Availability: feature-new — covers the compy.input surface
 +-- introduced by this feature (since 1.0.0-rc20260712).
 +
 +-- cursor and text surface.
 +-- Covers get_cursor / set_cursor / set_text on the public project surface
-+-- (doc/input_api.md, "API reference"; doc/development/internals/user_input.md,
-+-- "Cursor manipulation and 'reset'"). Implementation:
++-- (doc/input_api.md, "Live changes";
++-- doc/development/internals/user_input.md, "Cursor
++-- manipulation and \"reset\""). Implementation:
 +-- model/input/userInputModel.lua, controller/userInputController.lua.
 +
 +local F = require('tests.helpers.input_fixture')
@@ -1078,9 +1086,7 @@ index 0000000..be08e3f
 +
 +
 +  -- The cursor + text surface (doc/input_api.md, "Live
-+  -- reconfigure: `configure`, `set_text`, `clear`, cursor",
-+  -- and "API reference"). Driven through the public
-+  -- project
++  -- changes"). Driven through the public project
 +  -- surface F.compy_input() — exactly what a project sees.
 +  -- get_cursor/set_cursor/set_text are non-assignable
 +  -- methods (NOT in INPUT_CALLBACKS), so doc/development/decisions/input.md,
@@ -1089,9 +1095,9 @@ index 0000000..be08e3f
 +
 +
 +  describe("get_cursor", function()
-+    -- doc/development/internals/user_input.md, "Cursor manipulation and
-+    -- 'reset'": active → 1-based (line, col); hidden
-+    -- → nil.
++    -- doc/development/internals/user_input.md, "Cursor
++    -- manipulation and \"reset\"": active → 1-based
++    -- (line, col); hidden → nil.
 +    it('reports 1-based (line, col) when active',
 +      function()
 +        local input = F.compy_input()
@@ -1140,9 +1146,9 @@ index 0000000..be08e3f
 +
 + describe("set_cursor", function()
 +
-+    -- doc/development/internals/user_input.md, "Cursor manipulation and
-+    -- 'reset'": move; out-of-range clamps to the
-+    -- valid range.
++    -- doc/development/internals/user_input.md, "Cursor
++    -- manipulation and \"reset\"": move; out-of-range
++    -- clamps to the valid range.
 +    
 +    it('moves the cursor', function()
 +      local input = F.compy_input()
@@ -1174,7 +1180,7 @@ index 0000000..be08e3f
 +      assert.same(1, l) -- single line: clamps to 1
 +    end)
 +
-+    -- doc/input_api.md, "API reference": hidden set_cursor
++    -- doc/input_api.md, "Live changes": hidden set_cursor
 +    -- no-ops and warns.
 +    it('while hidden warns and no-ops', function()
 +      local input = F.compy_input()
@@ -1189,7 +1195,7 @@ index 0000000..be08e3f
 + end)
 +
 + describe("set_text", function()
-+    -- doc/input_api.md, "Live reconfigure": replace
++    -- doc/input_api.md, "Live changes": replace
 +    -- content, cursor to end.
 +    it('replaces content and jumps to the end',
 +      function()
@@ -1203,7 +1209,7 @@ index 0000000..be08e3f
 +      end)
 +
 +    describe("with keep_cursor", function()
-+    -- doc/input_api.md, "Live reconfigure": keep_cursor
++    -- doc/input_api.md, "Live changes": keep_cursor
 +    -- preserves position (clamped).
 +      it('preserves the cursor',
 +        function()
@@ -1227,9 +1233,9 @@ index 0000000..be08e3f
 +      end)
 +    end) 
 +
-+    -- doc/development/internals/user_input.md, "Cursor manipulation and
-+    -- 'reset'": the view reflects the change WITHOUT
-+    -- a re-show
++    -- doc/development/internals/user_input.md, "Cursor
++    -- manipulation and \"reset\"": the view reflects the
++    -- change WITHOUT a re-show
 +    -- (the overlay handle is not re-published; the widget's
 +    -- own view render fires via the controller's update_view).
 +    it('updates the view without a re-show',
@@ -1247,7 +1253,7 @@ index 0000000..be08e3f
 +        assert.is_true(renders > 0)
 +      end)
 +
-+    -- doc/input_api.md, "API reference": hidden set_text
++    -- doc/input_api.md, "Live changes": hidden set_text
 +    -- no-ops and warns.
 +    it('while hidden warns and no-ops', function()
 +      local input = F.compy_input()
@@ -2158,7 +2164,7 @@ index 0000000..c75186c
 +  end)
 diff --git a/tests/input/input_nfr_forward_spec.lua b/tests/input/input_nfr_forward_spec.lua
 new file mode 100644
-index 0000000..5dd63ee
+index 0000000..b3ab34f
 --- /dev/null
 +++ b/tests/input/input_nfr_forward_spec.lua
 @@ -0,0 +1,204 @@
@@ -2307,11 +2313,11 @@ index 0000000..5dd63ee
 +      -- only the overlay widget is wired; wiring the
 +      -- console/editor/search widgets to it is a future
 +      -- consideration, out of #77 blast radius (see
-+      -- doc/development/internals/user_input.md: "Key release", "Dispatch
-+      -- chain", "Search — a third widget instance, live only
-+      -- in editor/search mode", "Cursor manipulation and
-+      -- 'reset'" for the related surfaces), not asserted
-+      -- here.
++      -- doc/development/internals/user_input.md: "Key
++      -- release", "Dispatch chain", "Search — a third
++      -- widget instance, live only in editor/search mode",
++      -- "Cursor manipulation and \"reset\"" for the related
++      -- surfaces), not asserted here.
 +      it('the widget keeps identity across cycles',
 +        function()
 +          F.show_widget()
@@ -2368,15 +2374,15 @@ index 0000000..5dd63ee
 +end)
 diff --git a/tests/input/input_reconfigure_spec.lua b/tests/input/input_reconfigure_spec.lua
 new file mode 100644
-index 0000000..75df985
+index 0000000..7d4fcd9
 --- /dev/null
 +++ b/tests/input/input_reconfigure_spec.lua
-@@ -0,0 +1,344 @@
+@@ -0,0 +1,343 @@
 +-- Availability: feature-new — covers the compy.input surface
 +-- introduced by this feature (since 1.0.0-rc20260712).
 +
 +-- live reconfigure and the continuous-session idiom — split from
-+-- input_contracts_spec.lua (TF1). Routing invariant (doc/development/decisions/input.md,
++-- input_contracts_spec.lua. Routing invariant (doc/development/decisions/input.md,
 +-- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches
 +-- exactly ONE route, fixed by the active screen mode. Vocabulary
 +-- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
@@ -2386,10 +2392,10 @@ index 0000000..75df985
 +-- method-name spies. keypressed fires for every physical key, textinput
 +-- only for character-producing keys (doc/development/internals/user_input.md, "Data
 +-- flow").
-+-- configure()/clear() live-reconfigure semantics and the re-show-from-
-+-- after_submit continuous-session recipe (doc/development/internals/user_input.md,
-+-- "configure(config)", "clear()"; doc/input_api.md, "The continuous-session
-+-- idiom").
++-- configure()/clear() live-reconfigure semantics, and the
++-- continuous session the overlay's stay-shown default enables
++-- (doc/development/internals/user_input.md, "configure(config)",
++-- "clear()"; doc/input_api.md, "Submit lifecycle").
 +
 +local F = require('tests.helpers.input_fixture')
 +
@@ -2629,12 +2635,12 @@ index 0000000..75df985
 +  end)
 +
 +  -- ====================================================
-+  -- doc/input_api.md, "The continuous-session idiom"
-+  -- (migration recipe):
-+  -- on_text_entered consumes; after_submit re-shows.
-+  -- Pins the pattern every example
-+  -- migration relies
-+  -- on, before any example is touched.
++  -- doc/input_api.md, "Submit lifecycle": the overlay stays
++  -- shown after a submit, so a continuous session needs no
++  -- re-show — on_text_entered consumes and after_submit
++  -- clears. A bare re-show from after_submit stays legal and
++  -- is pinned here too, because the sticky-callback re-arm it
++  -- relies on is contract.
 +  --
 +  -- Lifecycle callbacks are direct fields, not show() options.
 +  -- The project assigns after_submit before starting this loop.
@@ -2642,7 +2648,7 @@ index 0000000..75df985
 +
 +  describe('continuous-session idiom #m8', function()
 +
-+    -- The recipe: consume in on_text_entered, re-show
++    -- One shape: consume in on_text_entered, re-show
 +    -- (bare, no config) in after_submit. Asserts (a) the
 +    -- assembled text reaches on_text_entered and (b) the
 +    -- widget is active again once after_submit returns.
@@ -2687,15 +2693,14 @@ index 0000000..75df985
 +        assert.same({ { 'a' }, { 'b' } }, seen)
 +      end)
 +
-+    -- Balloons shape (doc/input_api.md, "Live reconfigure",
++    -- Balloons shape (doc/input_api.md, "Live changes",
 +    -- "A continuous session with a changing prompt"): a
 +    -- hint set via configure()
 +    -- INSIDE on_text_entered (session still active,
-+    -- doc/development/internals/user_input.md, "Submit and cancel — the
-+    -- framework submit chain")
++    -- doc/development/internals/user_input.md, "Submit
++    -- and cancel — widget-owned callback sequences")
 +    -- must survive the after_submit bare re-show, not the
-+    -- show()-time prompt. doc/input_api.md, "The continuous-session idiom"'s
-+    -- apply_config: custom_label is
++    -- show()-time prompt: apply_config's custom_label is
 +    -- only overwritten
 +    -- when cfg.prompt is given, so a bare show({}) never
 +    -- resets what configure() just set.
@@ -2902,7 +2907,7 @@ index 0000000..a25467b
 +end)
 diff --git a/tests/input/input_route_lifecycle_spec.lua b/tests/input/input_route_lifecycle_spec.lua
 new file mode 100644
-index 0000000..98e5e03
+index 0000000..c54b058
 --- /dev/null
 +++ b/tests/input/input_route_lifecycle_spec.lua
 @@ -0,0 +1,188 @@
@@ -3025,7 +3030,7 @@ index 0000000..98e5e03
 +      -- mirrored output fields
 +      -- (userInputController.apply_config) persist across a
 +      -- hide/re-show within one run (doc/input_api.md,
-+      -- "Sticky callbacks") but must not
++      -- "Callback assignments") but must not
 +      -- leak into the next project.
 +      it('resets the widget\'s own output fields',
 +        function()
@@ -3515,10 +3520,10 @@ index 3757965..22cc9eb 100644
  
 diff --git a/tests/input/input_widget_lifecycle_spec.lua b/tests/input/input_widget_lifecycle_spec.lua
 new file mode 100644
-index 0000000..7bda8c7
+index 0000000..bff00e1
 --- /dev/null
 +++ b/tests/input/input_widget_lifecycle_spec.lua
-@@ -0,0 +1,181 @@
+@@ -0,0 +1,226 @@
 +-- Availability: feature-new — covers the compy.input surface
 +-- introduced by this feature (since 1.0.0-rc20260712).
 +
@@ -3533,8 +3538,9 @@ index 0000000..7bda8c7
 +-- physical key, textinput only for character-producing keys
 +-- (doc/development/internals/user_input.md, "Data flow").
 +-- Widget activation/reset via the public compy.input surface and the
-+-- hidden-widget non-consumption rule (doc/input_api.md, "Activating the
-+-- widget: `show`"; doc/development/decisions/input.md, Decision 2).
++-- hidden-widget non-consumption rule (doc/input_api.md,
++-- "`show(config)`"; doc/development/decisions/input.md,
++-- Decision 2).
 +
 +local F  = require('tests.helpers.input_fixture')
 +
@@ -3544,7 +3550,7 @@ index 0000000..7bda8c7
 +  before_each(function() F.reset() end)
 +
 +  -- Widget activation / reset (doc/input_api.md,
-+  -- "Activating the widget: `show`"), driven through
++  -- "`show(config)`"), driven through
 +  -- the public project surface. F.compy_input() resolves
 +  -- project_env.compy.input — exactly what a project sees.
 +  -- show({ text = ... }) seeds the widget's CONTENT (the
@@ -3592,38 +3598,83 @@ index 0000000..7bda8c7
 +        assert.same({ 'first' }, F.widget:get_text())
 +      end)
 +
-+    it('show warns and ignores keys outside its config table',
++    -- doc/development/decisions/input.md, Decision 15 revised:
++    -- show()/configure() take a closed config table, so an
++    -- unrecognised key can only be an authoring mistake. It
++    -- raises rather than warning — the project stops at the
++    -- typo instead of running on in a shape nobody asked for.
++    it('show raises on a key outside its config table',
 +      function()
 +        local input = F.compy_input()
-+        local submitted = 0
-+        local warnings = { }
-+        local original_warn = Log.warn
-+        input.callbacks.after_submit = function()
-+          submitted = submitted + 1
-+        end
-+        Log.warn = function(message)
-+          warnings[#warnings + 1] = message
-+        end
-+        input.show({
-+          text = 'ok',
-+          eval = InputEvalLua,
-+          result = { },
-+          after_submit = function()
-+            submitted = submitted + 10
-+          end,
-+        })
-+        Log.warn = original_warn
-+        F.session.press('return')
-+        local all_warnings = table.concat(warnings, ' ')
-+        assert.equal(1, submitted)
-+        assert.matches('eval', all_warnings)
-+        assert.matches('result', all_warnings)
-+        assert.matches('after_submit', all_warnings)
++        assert.has_error(function()
++          input.show({ text = 'ok', eval = InputEvalLua })
++        end)
++        assert.is_nil(love.state.user_input)
++      end)
++
++    it('the raise names the offending key',
++      function()
++        local input = F.compy_input()
++        local _, err = pcall(function()
++          input.show({ result = { } })
++        end)
++        assert.matches('result', err)
++      end)
++
++    -- The likeliest mistake is a lifecycle callback in the
++    -- table instead of on compy.input.callbacks, so it earns
++    -- a message that says where the assignment belongs.
++    it('a lifecycle callback in the table names callbacks',
++      function()
++        local input = F.compy_input()
++        local _, err = pcall(function()
++          input.show({ after_submit = function() end })
++        end)
++        assert.matches('after_submit', err)
++        assert.matches('callbacks', err)
++      end)
++
++    it('configure raises on an unknown key too',
++      function()
++        local input = F.compy_input()
++        input.show({ text = 'ok' })
++        assert.has_error(function()
++          input.configure({ eval = InputEvalLua })
++        end)
++      end)
++
++    -- force is a show()-only key; configure() has no inactive
++    -- overlay to force, so passing it is the same mistake.
++    it('configure raises on force',
++      function()
++        local input = F.compy_input()
++        input.show({ text = 'ok' })
++        assert.has_error(function()
++          input.configure({ force = true })
++        end)
++      end)
++
++    -- Guard against strictness creeping past its remit: a
++    -- runtime STATE that makes a call a no-op is not an
++    -- authoring error, and must keep warning rather than raise.
++    it('a state-condition no-op warns and does not raise',
++      function()
++        local input = F.compy_input()
++        local ow = Log.warn
++        Log.warn = function() end
++        local ok = pcall(function()
++          input.show({ text = 'first' })
++          input.show({ text = 'second' })
++          input.hide()
++          input.clear()
++        end)
++        Log.warn = ow
++        assert.is_true(ok)
 +      end)
 +
 +    -- force = live reconfiguration of an ACTIVE widget;
 +    -- today only the text subset takes effect
-+    -- (doc/input_api.md, "Activating the widget: `show`").
++    -- (doc/input_api.md, "`show(config)`").
 +    it('re-activation with force reapplies text',
 +      function()
 +        local input = F.compy_input()
@@ -3635,8 +3686,7 @@ index 0000000..7bda8c7
 +
 +    -- force with NO text: a reconfiguration that changes
 +    -- nothing — content survives (it is not a hidden
-+    -- reset; doc/input_api.md, "Activating the widget:
-+    -- `show`").
++    -- reset; doc/input_api.md, "`show(config)`").
 +    it('force without text leaves content intact',
 +      function()
 +        local input = F.compy_input()
@@ -3702,10 +3752,10 @@ index 0000000..7bda8c7
 +end)
 diff --git a/tests/input/input_widgets_callbacks_spec.lua b/tests/input/input_widgets_callbacks_spec.lua
 new file mode 100644
-index 0000000..03ccd13
+index 0000000..7f5996a
 --- /dev/null
 +++ b/tests/input/input_widgets_callbacks_spec.lua
-@@ -0,0 +1,564 @@
+@@ -0,0 +1,566 @@
 +-- Availability: feature-new — the widget output fields are
 +-- introduced by this feature, and the submit/cancel defaults were
 +-- altered by it (since / changed in 1.0.0-rc20260712).
@@ -4023,9 +4073,10 @@ index 0000000..03ccd13
 +      assert.is_true(seen.after)
 +    end)
 +
-+    -- doc/development/internals/user_input.md, "Submit and cancel — the
-+    -- framework tier-1 chains": a custom validator receives the
-+    -- live line array (not joined or stale text).
++    -- doc/development/internals/user_input.md, "Submit and
++    -- cancel — widget-owned callback sequences": a custom
++    -- validator receives the live line array (not joined or
++    -- stale text).
 +    it('a custom validator receives the live lines',
 +      function()
 +        local seen
@@ -4038,9 +4089,9 @@ index 0000000..03ccd13
 +        assert.same({ 'ab' }, seen)
 +      end)
 +
-+    -- doc/development/internals/user_input.md, "Submit and cancel — the
-+    -- framework tier-1 chains": a rejecting validator locks
-+    -- the
++    -- doc/development/internals/user_input.md, "Submit and
++    -- cancel — widget-owned callback sequences": a
++    -- rejecting validator locks the
 +    -- session — no delivery, no deactivation, no
 +    -- after_submit.
 +      it('a rejecting validator locks input without delivering',
@@ -4126,11 +4177,12 @@ index 0000000..03ccd13
 +  end)
 +
 +  describe('Enter and Escape as ordinary keys', function()
-+    -- doc/development/internals/user_input.md, "Submit and cancel — the
-+    -- framework tier-1 chains": Enter/Escape are ordinary
-+    -- keys while
++    -- doc/development/internals/user_input.md, "Submit and
++    -- cancel — widget-owned callback sequences":
++    -- Enter/Escape are ordinary keys while
 +    -- hidden — no
-+    -- framework entry engages, so project handlers can run.
++    -- widget submit/cancel handling engages, so project
++    -- handlers can run.
 +    it('Enter and Escape are ordinary keys while hidden',
 +      function()
 +        local seen = { }
@@ -4231,8 +4283,8 @@ index 0000000..03ccd13
 +        assert.is_true(F.widget:is_empty())
 +      end)
 +
-+    -- doc/input_api.md, "Sticky callbacks": widget outputs
-+    -- persist across a deactivation —
++    -- doc/input_api.md, "Callback assignments": widget
++    -- outputs persist across a deactivation —
 +    -- only project stop resets them (a later chunk), not
 +    -- submit.
 +    it('on_text_entered persists across a hide/re-show cycle',
@@ -4506,7 +4558,7 @@ index 0000000..ce310f8
 +  end)
 +end)
 diff --git a/tests/input/user_input_model_spec.lua b/tests/input/user_input_model_spec.lua
-index f001b02..8d79725 100644
+index f001b02..c73f5de 100644
 --- a/tests/input/user_input_model_spec.lua
 +++ b/tests/input/user_input_model_spec.lua
 @@ -1,3 +1,7 @@
@@ -4527,10 +4579,10 @@ index f001b02..8d79725 100644
 +  -- Model fix: set_text's tail
 +  -- jump_end() used to run unconditionally, making a
 +  -- truthy keep_cursor silently ineffective.
-+  -- doc/input_api.md, "Live reconfigure: `configure`,
-+  -- `set_text`, `clear`, cursor": set_text(t) jumps to end;
-+  -- set_text(t, true) preserves the cursor, clamped if
-+  -- the new text is shorter than the old cursor position.
++  -- doc/input_api.md, "Live changes": set_text(t) jumps
++  -- to end; set_text(t, true) preserves the cursor,
++  -- clamped if the new text is shorter than the old
++  -- cursor position.
 +  describe('set_text keep_cursor', function()
 +    local model = UserInputModel(mockConf, luaEval)
 +

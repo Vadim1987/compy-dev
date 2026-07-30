@@ -60,9 +60,12 @@ git diff $BASE $TIP -- \
 
 # --- Set 3 · Main feature, six orthogonal slices ---
 # 3d · TESTS FIRST (see §2 for why the test slice leads)
+# .gitignore rides here: its only feature-era change is the editor-artifact
+# entry added when a stray tests/input/*.swp was untracked.
 git diff $BASE $TIP -- \
   tests/editor/editor_spec.lua tests/editor/editor_spec_fwd.lua \
   tests/input/ tests/helpers/input_fixture.lua tests/helpers/input_session.lua tests/mock.lua \
+  .gitignore \
   > "$OUT/3d-tests.patch"
 
 # 3a · routing / dispatch core

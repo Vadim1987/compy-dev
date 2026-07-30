@@ -1,5 +1,5 @@
 diff --git a/src/examples/guess/main.lua b/src/examples/guess/main.lua
-index b32e621..915ba5b 100755
+index b32e621..8ab3f85 100755
 --- a/src/examples/guess/main.lua
 +++ b/src/examples/guess/main.lua
 @@ -1,5 +1,4 @@
@@ -19,8 +19,8 @@ index b32e621..915ba5b 100755
 -    local n = tonumber(r())
 -    check(n)
 -  end
-+-- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
-+-- §3, R4-U4 example migration): the widget stays open by default now
++-- Continuous-session idiom (doc/input_api.md, "Submit
++-- lifecycle"): the widget stays open by default now
 +-- (no auto-close), so there is nothing to re-show after submit — just
 +-- clear the field for the next guess. The line validator keeps invalid
 +-- guesses out of the submit callback. Cancel's own default (clear +
@@ -41,7 +41,7 @@ index b32e621..915ba5b 100755
 +  on_text_entered = function(lines) check(tonumber(lines[1])) end,
 +}
 diff --git a/src/examples/repl/main.lua b/src/examples/repl/main.lua
-index cfc6eba..ad533fc 100644
+index cfc6eba..e808530 100644
 --- a/src/examples/repl/main.lua
 +++ b/src/examples/repl/main.lua
 @@ -1,9 +1,11 @@
@@ -53,8 +53,8 @@ index cfc6eba..ad533fc 100644
 -  else
 -    print(r())
 -  end
-+-- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
-+-- §3, R4-U4 example migration): consume the line in on_text_entered;
++-- Continuous-session idiom (doc/input_api.md, "Submit
++-- lifecycle"): consume the line in on_text_entered;
 +-- the widget stays open by default now, so after_submit just clears
 +-- the field for the next line instead of re-showing.
 +compy.input.callbacks.after_submit = function()
@@ -65,7 +65,7 @@ index cfc6eba..ad533fc 100644
 +  on_text_entered = function(lines) print(string.unlines(lines)) end,
 +}
 diff --git a/src/examples/tixy/main.lua b/src/examples/tixy/main.lua
-index 30fedac..92b5be3 100644
+index 30fedac..cde662f 100644
 --- a/src/examples/tixy/main.lua
 +++ b/src/examples/tixy/main.lua
 @@ -36,7 +36,7 @@ function load_example(ex)
@@ -82,8 +82,8 @@ index 30fedac..92b5be3 100644
  end
  
 -r = user_input()
-+-- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
-+-- §3, R4-U4 example migration): consume the submitted code in
++-- Continuous-session idiom (doc/input_api.md, "Submit
++-- lifecycle"): consume the submitted code in
 +-- on_text_entered; the widget stays open by default now and submit
 +-- no longer clears the field, so the just-submitted body is already
 +-- sitting in the field with nothing to re-inject — after_submit is
@@ -163,7 +163,7 @@ index 30fabf7..c810d48 100644
 -  end
  end
 diff --git a/src/examples/valid/main.lua b/src/examples/valid/main.lua
-index ade1aa3..08acc62 100644
+index ade1aa3..8b96eb0 100644
 --- a/src/examples/valid/main.lua
 +++ b/src/examples/valid/main.lua
 @@ -1,5 +1,3 @@
@@ -185,8 +185,8 @@ index ade1aa3..08acc62 100644
 -  else
 -    print(r())
 -  end
-+-- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
-+-- §3, R4-U4 example migration): consume the line in on_text_entered;
++-- Continuous-session idiom (doc/input_api.md, "Submit
++-- lifecycle"): consume the line in on_text_entered;
 +-- the widget stays open by default now, so after_submit just clears
 +-- the field for the next line instead of re-showing. The line validator
 +-- prevents invalid lines from reaching the submit callback.

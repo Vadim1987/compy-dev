@@ -756,7 +756,7 @@ index 0000000..d3417b2
 +here only as a record of the prior cycle. Not applicable now: the terminal milestone landed.)
 diff --git a/agents/validation.md b/agents/validation.md
 new file mode 100644
-index 0000000..9a226c8
+index 0000000..07ef0f0
 --- /dev/null
 +++ b/agents/validation.md
 @@ -0,0 +1,199 @@
@@ -950,7 +950,7 @@ index 0000000..9a226c8
 +
 +## Volatile pointer — the only line that changes between sessions
 +
-+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session22/prompt.md`
++- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session23/prompt.md`
 +
 +## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 +

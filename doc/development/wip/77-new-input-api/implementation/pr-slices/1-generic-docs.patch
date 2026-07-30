@@ -11,7 +11,7 @@ index 29359f5..dc4c570 100644
  
  ---
 diff --git a/doc/development/conventions/code.md b/doc/development/conventions/code.md
-index e79ff56..eeae881 100644
+index e79ff56..ec860bf 100644
 --- a/doc/development/conventions/code.md
 +++ b/doc/development/conventions/code.md
 @@ -1,5 +1,7 @@
@@ -22,7 +22,7 @@ index e79ff56..eeae881 100644
  > These conventions are not fully fixed — they evolve with experience. Some are unique to this project by design.
  > Further discussion: https://github.com/compy-toys/compy/issues/54
  
-@@ -76,3 +78,11 @@ if cond then end
+@@ -76,3 +78,16 @@ if cond then end
  local gfx = love.graphics
  local sfx = compy.audio
  ```
@@ -32,8 +32,13 @@ index e79ff56..eeae881 100644
 +Comments cite **canonical docs** (`doc/…`), never a feature's ephemeral working tree
 +(`doc/development/wip/…`). A wip path rots when the feature's scratch is deleted; cite the
 +persistent doc — and a **named section**, not "paragraph N" — so the reference stays
-+discoverable and greppable. (Live debt: two `src/controller/` comments still carry wip
-+citations — see `doc/development/technical_debt/input.md`.)
++discoverable and greppable.
++
++A named section is only useful while it exists. When you rename or remove a heading, grep
++`src/` and `tests/` for comments citing the old name — a citation that no longer resolves is
++worse than none, because it reads as authoritative. Renaming the input guide's headings once
++left 31 citations pointing at sections that were gone, two of them naming a design model the
++feature had already retired.
 diff --git a/doc/development/conventions/git.md b/doc/development/conventions/git.md
 index 212baa4..62773a6 100644
 --- a/doc/development/conventions/git.md

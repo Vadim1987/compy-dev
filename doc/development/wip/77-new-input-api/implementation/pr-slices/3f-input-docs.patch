@@ -1,9 +1,9 @@
 diff --git a/CHANGELOG.md b/CHANGELOG.md
 new file mode 100644
-index 0000000..2d70f3b
+index 0000000..db8c862
 --- /dev/null
 +++ b/CHANGELOG.md
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,20 @@
 +# Changelog
 +
 +## Unreleased
@@ -11,8 +11,14 @@ index 0000000..2d70f3b
 +### Changed
 +
 +- Project input now uses separate `highlighter`, `validator`, and
-+  `on_text_entered` callbacks. Submissions are line arrays; the retired
-+  `eval` and `result` show keys now warn and are ignored.
++  `on_text_entered` callbacks. Submissions are line arrays.
++
++- `compy.input.show` and `compy.input.configure` raise on a key outside
++  their config table, rather than ignoring it. This includes the retired
++  `eval` and `result` keys, and lifecycle callbacks such as `after_submit`
++  that belong on `compy.input.callbacks`. Calls that are no-ops because of
++  the current state — `show` on an active overlay, mutations while hidden —
++  still warn as before.
 +
 +- While a project runs, keyboard and text input with no shortcut, hook,
 +  or shown input widget no longer accumulates in the hidden console.
@@ -51,10 +57,10 @@ index 0000000..c464c16
 +| [`input.md`](input.md) | Keyboard/text input routing, the dispatch chain, and the project-facing input widget |
 diff --git a/doc/development/decisions/input.md b/doc/development/decisions/input.md
 new file mode 100644
-index 0000000..1af7009
+index 0000000..5e7b9ae
 --- /dev/null
 +++ b/doc/development/decisions/input.md
-@@ -0,0 +1,650 @@
+@@ -0,0 +1,685 @@
 +# Input subsystem — architecture & key decisions
 +
 +The *why* behind Compy's keyboard/text input routing and the project-facing input widget.
@@ -312,10 +318,10 @@ index 0000000..1af7009
 +**Withdrawn guarantee — recorded explicitly, not left implicit.** Nothing any longer prevents a
 +project shortcut from shadowing Enter's submit or Escape's cancel while the widget is shown, and
 +a project overriding `after_submit`/`after_cancel` owns the lifecycle act itself. This was never
-+a stakeholder requirement — `design/requirements.md` records the cancel/dismiss notification as
-+explicitly left unresolved by stakeholders ("may be expected — to be confirmed"); the
-+non-overridable shape was a design-team fix for an earlier `oneshot` two-role problem (below), not
-+an external mandate. Withdrawing it is acceptable specifically because it is not the only safety
++a stakeholder requirement: the round of requirements gathering that preceded this feature left
++the cancel/dismiss notification explicitly unresolved, recorded verbatim as *"may be expected —
++to be confirmed"*, and it was never confirmed. The non-overridable shape was a design-team fix
++for an earlier `oneshot` two-role problem (below), not an external mandate. Withdrawing it is acceptable specifically because it is not the only safety
 +net: the gateway's **power keys** (Ctrl+Q, Ctrl+Break, etc. — `controller.lua`, pre-dating this
 +feature) remain unconditional and unshadowable, running before any route dispatch, chain
 +included. That is the actual, permanent escape hatch; the framework tier was never it.
@@ -576,9 +582,43 @@ index 0000000..1af7009
 +
 +---
 +
-+## Decision 15 — unknown show configuration warns
++## Decision 15 revised — unrecognised show/configure configuration raises
 +
-+**Status: implemented.**
++**Status: in-flight (owner ruling, 2026-07-30); supersedes the warn-and-ignore
++form below.**
++
++**Decision.** A key outside the documented config table, supplied to
++`show(config)` or `configure(config)`, **raises**. A recognised field that is
++only writable by direct assignment — the lifecycle callbacks — is equally
++unrecognised in this table and raises with a message naming
++`compy.input.callbacks`. `force` is a `show`-only key and raises from
++`configure`.
++
++**Why — DevX: strict contract enforcement, explicit failure mode.**
++Warn-and-ignore would be right if these functions took a general-purpose
++document and applied whichever subset they understood. They do not: the config
++table is small and closed, so a key outside it can only be an authoring error.
++Ignoring it leaves the project running in a shape its author did not ask for,
++with the evidence buried in a log line nobody is reading; raising stops it at
++the typo. This also makes the surface uniform — `compy.input.shortcuts = {}`
++already raises under Decision 7 revised, so a structural violation raising here
++is the rule, not a new one.
++
++**Scope — violations raise, runtime states do not.** A raise means *the project
++asked for something that does not exist*. A call that is a no-op because of the
++runtime **state** is not that, and keeps warning per Decision 3: `show` on an
++already-active overlay without `force`, and `set_text` / `set_cursor` / `clear`
++while hidden. Those are legitimate calls at an inconvenient moment, not
++mistakes in the project's source.
++
++**Consequence.** `show` and `configure` raise on the first offending key, with
++the trace on the project's own call line. A project's error surfaces the normal
++way: raised from top-level project code it aborts the run and reports; raised
++from a `love.*` handler it suspends the run with the message. The project guide
++names the accepted keys, and the retired `eval` / `result` keys now raise
++instead of warning.
++
++### Superseded — the original warn-and-ignore form
 +
 +**Decision.** An unrecognised key supplied to show(config) will emit a
 +warning and be ignored. A recognised field that is only writable by direct
@@ -589,9 +629,10 @@ index 0000000..1af7009
 +author an immediate, actionable explanation and follows the subsystem's
 +existing warn-don't-swallow discipline.
 +
-+**Consequence.** `show` reports each unknown key once per call and ignores it.
-+The project guide names the accepted table keys and the direct-assignment
-+lifecycle callbacks.
++**Why it was revised.** The rationale above argues against silence, and a
++warning is the weakest answer to it that still counts as "not silent". It also
++left `configure` inconsistent: it dropped unknown keys with no signal at all,
++so the same typo behaved differently depending on which function received it.
 +
 +---
 +
@@ -706,7 +747,7 @@ index 0000000..1af7009
 +are retired rather than carried as compatibility keys. The internal evaluator
 +objects used by console and editor remain implementation details.
 diff --git a/doc/development/internals/user_input.md b/doc/development/internals/user_input.md
-index 4d2c935..ef299b1 100644
+index 4d2c935..12ebdc7 100644
 --- a/doc/development/internals/user_input.md
 +++ b/doc/development/internals/user_input.md
 @@ -1,33 +1,58 @@
@@ -1143,7 +1184,7 @@ index 4d2c935..ef299b1 100644
  
  ---
  
-@@ -132,15 +456,209 @@ Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with
+@@ -132,15 +456,213 @@ Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with
  
  ## The `user_input` Overlay — Input Perspective
  
@@ -1304,9 +1345,9 @@ index 4d2c935..ef299b1 100644
 +internal `UserInputController:is_shown()` exists
 +(`userInputController.lua:487-489`), reading a strictly-internal `self.shown` flag with no
 +`love.state` reach, but is not exposed on this surface — a project that needs to know whether the
-+widget is currently up reads `love.state.user_input` directly (as
-+`examples/maze/main.lua` does, with its own per-tick re-arm poll)
-+rather than calling a `compy.input` method.
++widget is currently up reads `love.state.user_input` directly, with its own per-tick re-arm
++poll, rather than calling a `compy.input` method. (The worked example of this shape lives in an
++untracked scratch project, so it is described here rather than cited.)
 +
 +#### `show(config)` — activate
 +
@@ -1314,15 +1355,18 @@ index 4d2c935..ef299b1 100644
 +`prompt`, `text`, `cursor` (`{line, col}`, applied after `text`),
 +`validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, and
 +`force`. The project wrapper checks this table before it reaches
-+`apply_config`: each unrecognised key is warned about and ignored. This
++`apply_config`: an unrecognised key **raises** at the project's call line
++(`decisions/input.md`, Decision 15 revised), rather than being dropped. This
 +includes lifecycle names such as `after_submit`, which are direct
-+`compy.input.callbacks` assignments rather than `show` keys. The wrapper
-+does not expose the host evaluator or legacy result paths.
++`compy.input.callbacks` assignments rather than `show` keys, and which raise
++with a message naming `callbacks`. The wrapper does not expose the host
++evaluator or legacy result paths.
 +
 +#### `configure(config)` — the live-reconfigure surface
 +
 +On an active session, `configure` takes the same config keys as
-+`show()` and applies only the ones given, immediately: `prompt`,
++`show()` — minus `force`, which raises here — and applies only the
++ones given, immediately: `prompt`,
 +`highlighter`, `validator`, and the widget-output callbacks
 +(`on_text_entered`, `on_limit_reached`) take effect from the very
 +next prompt render / keystroke / submit onward. `text` and `cursor`
@@ -1333,7 +1377,8 @@ index 4d2c935..ef299b1 100644
 +applies in full or is dropped in full, per the rule above — never a
 +half-applied config.
 +
-+While hidden, `configure` is always safe and never warns (it is not
++While hidden, `configure` still validates its keys, but is otherwise
++always safe and never warns (it is not
 +a refusal): every provided field — including `prompt`, `text`, and
 +`cursor` — is retained and applied on the very next `show()`. That
 +application is one-shot: a *later* bare `show()` (no config) does
@@ -1359,7 +1404,7 @@ index 4d2c935..ef299b1 100644
  
  ---
  
-@@ -155,5 +673,16 @@ Only one overlay can exist at a time. If `love.state.user_input` is already set,
+@@ -155,5 +677,16 @@ Only one overlay can exist at a time. If `love.state.user_input` is already set,
  | `src/model/input/selection.lua` | Selection range model |
  | `src/model/input/history.lua` | Command history (console) |
  | `src/view/input/userInputView.lua` | Renders the input strip and status line |
@@ -1439,10 +1484,10 @@ index 0000000..0bde907
 +  consume the returned proxy or change `table.protect`'s semantics.
 diff --git a/doc/development/technical_debt/input.md b/doc/development/technical_debt/input.md
 new file mode 100644
-index 0000000..1b29ed8
+index 0000000..c817a80
 --- /dev/null
 +++ b/doc/development/technical_debt/input.md
-@@ -0,0 +1,572 @@
+@@ -0,0 +1,579 @@
 +# Input subsystem
 +
 +Keyboard/text/pointer routing, the console and project input controllers
@@ -1685,9 +1730,12 @@ index 0000000..1b29ed8
 +
 +### Overlay-shape test exercises a stub, not the real draw wiring
 +
-+- **Where:** `tests/input/overlay_spec.lua` — the overlay-shape test builds
-+  an ad-hoc controller with a `draw`-only stub view and asserts
-+  `love.state.user_input` is truthy and callable.
++- **Where:** the overlay handle is asserted only for shape — that
++  `love.state.user_input` is set and callable while the widget is shown
++  (e.g. `tests/input/input_redesign_ac_spec.lua`). The dedicated
++  `overlay_spec.lua` that built an ad-hoc controller over a `draw`-only
++  stub view was removed when the suite was re-authored; the gap below is
++  what survived it, not the file.
 +- **State:** Guards against the handle being re-narrowed, but does not
 +  exercise the app's startup widget-instance wiring or the real
 +  `set_love_draw` overlay wrapper in `controller.lua` — the exact path a
@@ -2007,16 +2055,20 @@ index 0000000..1b29ed8
 +  `oneshot` flag. Its survival under a console/editor re-plug remains a
 +  tracked future concern, out of #77 scope.
 +
-+### Comment wip-citation cleanup (from the canonical-docs comment rule)
++### Comment wip-citation cleanup (RESOLVED, 2026-07-30)
 +
-+Two `src/controller/` comments cite the feature's ephemeral wip tree instead of a canonical
-+doc, violating the `doc/development/conventions/code.md` "Comment References" rule:
-+`src/controller/consoleController.lua` (~L511) and `src/controller/userInputController.lua`
-+(~L8) both cite `doc/development/wip/77-new-input-api/validation/…`. Rehome to the persistent
-+doc each summarizes (`internals/user_input.md` / `decisions/input.md`) when next editing those
-+files. Low priority; comment-only.
++Comments citing the feature's ephemeral wip tree instead of a canonical doc, in violation of
++the `doc/development/conventions/code.md` "Comment References" rule. This entry recorded the
++residue as two `src/controller/` comments; a pre-PR revalidation found **thirteen** comment
++blocks across seven tracked files, four of them shipped examples under `src/examples/`.
++
++All are rehomed: the controller comments to the `decisions/input.md` decisions they already
++cited alongside the wip path, the examples to `doc/input_api.md`, "Submit lifecycle". Kept as
++a resolved entry rather than deleted, because the undercount is the lesson — a debt row's
++stated scope is a claim like any other, and this one was never re-measured after the tree
++moved under it.
 diff --git a/doc/development/tests.md b/doc/development/tests.md
-index 9554e13..fecbe23 100644
+index 9554e13..ee768f2 100644
 --- a/doc/development/tests.md
 +++ b/doc/development/tests.md
 @@ -1,5 +1,7 @@
@@ -2066,7 +2118,7 @@ index 9554e13..fecbe23 100644
 +
 +## Input Contract Suite (feature #77)
 +
-+The `#input` contract suite for the new input API originally lived in one large file (`input_contracts_spec.lua`); in feature-#77 validation (TF1) it was split along cognitive seams into nine `input_*_spec.lua` files under `tests/input/`: `input_routing_spec`, `input_shortcuts_click_spec`, `input_widget_lifecycle_spec`, `input_nfr_forward_spec`, `input_dispatch_chain_spec`, `input_widget_io_spec`, `input_route_lifecycle_spec`, `input_cursor_text_spec`, and `input_reconfigure_spec`. Each carries the file-level `#input` tag and builds the shared `input_fixture` from a `setup()` hook (torn down in `teardown()`, reset per test in `before_each`) — so every file is runnable standalone. The suite enforces the input contract — every test tracing to a corpus clause cited in a comment (never in the test description). It drives the real production path throughout: the REAL `love.handlers` gate, a REAL `ConsoleController`, and the real project-activation call (`Controller.set_user_handlers`) via the `input_fixture`/`input_session` helpers described above — never a spy on an internal method except one deliberately-noted sink-signature row.
++The `#input` contract suite for the new input API originally lived in one large file (`input_contracts_spec.lua`); in feature-#77 validation it was split along cognitive seams into nine `input_*_spec.lua` files under `tests/input/`: `input_routing_spec`, `input_shortcuts_click_spec`, `input_widget_lifecycle_spec`, `input_nfr_forward_spec`, `input_dispatch_chain_spec`, `input_widget_io_spec`, `input_route_lifecycle_spec`, `input_cursor_text_spec`, and `input_reconfigure_spec`. Each carries the file-level `#input` tag and builds the shared `input_fixture` from a `setup()` hook (torn down in `teardown()`, reset per test in `before_each`) — so every file is runnable standalone. The suite enforces the input contract — every test tracing to a corpus clause cited in a comment (never in the test description). It drives the real production path throughout: the REAL `love.handlers` gate, a REAL `ConsoleController`, and the real project-activation call (`Controller.set_user_handlers`) via the `input_fixture`/`input_session` helpers described above — never a spy on an internal method except one deliberately-noted sink-signature row.
 +
 +Tests carry four labelled organising buckets (in-comment labels; the file split largely follows them), so a reader can tell a stable guarantee from a forward-looking one at a glance:
 +
@@ -2077,7 +2129,7 @@ index 9554e13..fecbe23 100644
 +
 +Tags beyond the file-level `#input`, matching implementation milestones:
 +
-+- `#legacy` — proves the retired poll-idiom globals (`user_input`, `input_code`, `input_text`, `write_to_input`, `validated_input`, and the debug-only `astv_input`) are gone as ordinary `nil` fields (removed at 0.1.0-m8, M8-03) — no shim, no deprecation path. The replacement surface (`compy.input`) is exercised throughout the rest of the suite, so the "Not covered: `user_input` overlay API" row from the previous version of this doc no longer applies.
++- `#legacy` — proves the retired poll-idiom globals (`user_input`, `input_code`, `input_text`, `write_to_input`, `validated_input`, and the debug-only `astv_input`) are gone as ordinary `nil` fields (removed by this feature) — no shim, no deprecation path. The replacement surface (`compy.input`) is exercised throughout the rest of the suite, so the "Not covered: `user_input` overlay API" row from the previous version of this doc no longer applies.
 +- `#m5c` — the four-tier dispatch chain (framework handler → combo table → generic `on_*` callback → sink) and the route connection lifecycle (connect/disconnect at the `running` boundary, full teardown at stop, `inspect`, `compy.before_exit`).
 +- `#m7` — the cursor/text surface (`get_cursor`/`set_cursor`/`set_text`) and live reconfigure/clear (`configure`/`clear`) on an active or hidden session.
 +- `#m8` — the continuous-session idiom (`on_text_entered` consumes and `after_submit` clears the next draft), the recipe every migrated example project (tixy, repl, guess, valid) relies on.
@@ -2102,10 +2154,10 @@ index 9554e13..fecbe23 100644
 +**Tag organisation** — `.busted` excludes `delay`-tagged tests by default. Tags in active use: `#parser`, `#chunk`, `#analyzer`, `#ast`, `#src`, `#editor`, `#input`, `#markdown`, `#visible`, plus the feature #77 milestone tags `#legacy`, `#m5c`, `#m7`, `#m8` (across the `input_*_spec.lua` contract files; see the Input Contract Suite section above). No tests currently use the `delay` tag, so the exclude is defensive rather than active.
 diff --git a/doc/input_api.md b/doc/input_api.md
 new file mode 100644
-index 0000000..3dfa6b1
+index 0000000..2d7609e
 --- /dev/null
 +++ b/doc/input_api.md
-@@ -0,0 +1,179 @@
+@@ -0,0 +1,184 @@
 +# Compy Input API
 +
 +This guide is for projects running inside Compy. `compy.input` is the
@@ -2146,11 +2198,15 @@ index 0000000..3dfa6b1
 +| `force` | `show` only: while active, replace `text` instead of warning. |
 +
 +`show` on an active overlay warns and does nothing unless `force = true`.
-+Unknown keys are warned about and ignored. This includes lifecycle callbacks
-+such as `after_submit`: assign those to `compy.input.callbacks` instead.
++
++A key outside this table **raises**. The config table is closed, so an
++unrecognised key can only be a mistake, and a mistake you can see beats one
++that leaves the overlay quietly not doing what you asked. This includes
++lifecycle callbacks such as `after_submit`: assign those to
++`compy.input.callbacks` instead.
 +
 +```lua
-+-- Wrong: warned and ignored.
++-- Wrong: raises, naming the key and where it belongs.
 +compy.input.show{ after_submit = function() end }
 +
 +-- Right: a direct callback assignment.
@@ -2234,7 +2290,8 @@ index 0000000..3dfa6b1
 +## Live changes
 +
 +`compy.input.configure(config)` updates an active overlay. It accepts the
-+same documented configuration keys except `force`; active `text` and `cursor`
++same documented configuration keys except `force`, and raises on anything
++else by the same rule as `show`; active `text` and `cursor`
 +are not changed by `configure`, so use `set_text`, `set_cursor`, or `clear`.
 +When hidden, `configure` retains `prompt`, `text`, and `cursor` for one later
 +`show`.
