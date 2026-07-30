@@ -105,7 +105,7 @@ describe('#input #r4 input-API redesign acceptance', function()
       on_text_entered = function(t) got = t end,
     })
     F.session.press('return')
-    assert.equal('hello', got)
+    assert.same({ 'hello' }, got)
     assert.is_not_nil(love.state.user_input)
     assert.is_false(F.widget:is_empty())
   end)

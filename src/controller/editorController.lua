@@ -9,11 +9,11 @@ local class = require('util.class')
 --- @oaram CC ConsoleController
 local function new(M, CC)
   return {
-    input = UserInputController(M.input, nil, true, true):always_shown(),
+    input = UserInputController(M.input, true, true):always_shown(),
     model = M,
     search = SearchController(
       M.search,
-      UserInputController(M.search.input, nil, true):always_shown()
+      UserInputController(M.search.input, true):always_shown()
     ),
     console = CC,
     view = nil,

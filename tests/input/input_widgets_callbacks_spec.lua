@@ -133,6 +133,14 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         local got = F.widget.model:get_highlight()
         assert.equal(marker, got.hl)
       end)
+
+    it('LuaHighlighter colors Lua overlay text', function()
+      local input = F.activate_project()
+      input.show({ highlighter = LuaHighlighter })
+      F.session.type('return 1')
+      local hl = F.widget.model:get_highlight().hl
+      assert.is_true(type(hl) == 'table')
+    end)
   end)
 
   describe('navigation boundary outputs', function()
@@ -254,10 +262,8 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
 
   describe('submit', function()
     -- doc/development/decisions/input.md, Decision 6: the full submit
-    -- call-order chain on a real Enter
-    -- keypress. on_text_entered receives the FULL ASSEMBLED
-    -- text (Decision 5) — not a per-character capture
-    -- (same decision's trap).
+    -- call-order chain on a real Enter keypress. Every project
+    -- callback receives the widget's native line array.
     it('Enter runs the full submit call-order chain',
       function()
         local order = { }
@@ -265,18 +271,27 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         input.callbacks.before_submit = function()
           order[#order + 1] = 'before'
         end
+        input.callbacks.validator = function(t)
+          order[#order + 1] = { 'validator', t }
+          return true
+        end
         input.callbacks.after_submit = function(t)
-          order[#order + 1] = 'after:' .. t
+          order[#order + 1] = { 'after', t }
         end
         input.show({
           text = { 'a', 'b' },
           on_text_entered = function(t)
-            order[#order + 1] = 'entered:' .. t
+            order[#order + 1] = { 'entered', t }
           end,
         })
         F.session.press('return')
         assert.same(
-          { 'before', 'entered:a\nb', 'after:a\nb' }, order)
+          {
+            'before',
+            { 'validator', { 'a', 'b' } },
+            { 'entered', { 'a', 'b' } },
+            { 'after', { 'a', 'b' } },
+          }, order)
       end)
 
     -- Decision 6 revised: submit no longer auto-closes. The
@@ -302,10 +317,9 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
     end)
 
     -- doc/development/internals/user_input.md, "Submit and cancel — the
-    -- framework tier-1 chains": a custom validator is invoked
-    -- with the live
-    -- assembled text (not stale/empty data).
-    it('a custom validator is invoked with the assembled text',
+    -- framework tier-1 chains": a custom validator receives the
+    -- live line array (not joined or stale text).
+    it('a custom validator receives the live lines',
       function()
         local seen
         local input = F.activate_project()
@@ -314,7 +328,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           validator = function(t) seen = t; return true end,
         })
         F.session.press('return')
-        assert.equal('ab', seen)
+        assert.same({ 'ab' }, seen)
       end)
 
     -- doc/development/internals/user_input.md, "Submit and cancel — the
@@ -322,14 +336,14 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
     -- the
     -- session — no delivery, no deactivation, no
     -- after_submit.
-    it('a rejecting validator locks input without delivering',
+      it('a rejecting validator locks input without delivering',
       function()
         local entered, after = false, false
         local input = F.activate_project()
         input.callbacks.after_submit = function() after = true end
         input.show({
           text = 'bad',
-          validator = function() return false, 'nope' end,
+          validator = function() return false, { Error('nope') } end,
           on_text_entered = function() entered = true end,
         })
         F.session.press('return')
@@ -337,6 +351,47 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.is_false(after)
         assert.is_not_nil(love.state.user_input)
         assert.is_true(F.widget:has_error())
+      end)
+
+      it('LineValidators rejects one invalid line', function()
+        local entered = false
+        local input = F.activate_project()
+        input.show({
+          text = { 'ok', 'bad' },
+          validator = LineValidators(function(line)
+            return line ~= 'bad', 'not allowed'
+          end),
+          on_text_entered = function() entered = true end,
+        })
+        F.session.press('return')
+        assert.is_false(entered)
+        assert.is_true(F.widget:has_error())
+        assert.is_not_nil(love.state.user_input)
+      end)
+
+      it('LuaSyntaxValidator rejects invalid Lua', function()
+        local entered = false
+        local input = F.activate_project()
+        input.show({
+          text = 'return (',
+          validator = LuaSyntaxValidator,
+          on_text_entered = function() entered = true end,
+        })
+        F.session.press('return')
+        assert.is_false(entered)
+        assert.is_true(F.widget:has_error())
+      end)
+
+      it('LuaSyntaxValidator accepts Lua lines unchanged', function()
+        local seen
+        local input = F.activate_project()
+        input.show({
+          text = { 'local x = 1', 'return x' },
+          validator = LuaSyntaxValidator,
+          on_text_entered = function(lines) seen = lines end,
+        })
+        F.session.press('return')
+        assert.same({ 'local x = 1', 'return x' }, seen)
       end)
   end)
 

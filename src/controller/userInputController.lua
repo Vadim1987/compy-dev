@@ -19,15 +19,13 @@ local function default_callbacks()
 end
 
 --- @param model UserInputModel
---- @param result table?
 --- @param disable_selection boolean?
 --- @param allow_modify boolean?  enable the Ctrl+D duplicate-line
 --- combo (editor-only today). Known at construction; the overlay
 --- and console never opt in.
-local new = function(model, result, disable_selection, allow_modify)
+local new = function(model, disable_selection, allow_modify)
   return {
     model = model,
-    result = result,
     disable_selection = disable_selection,
     -- Ctrl+D duplicate-line gate (editor-only today; a future
     -- combo-table would supersede this per-action flag).
@@ -49,7 +47,6 @@ end
 --- @class UserInputController
 --- @field model UserInputModel
 --- @field view UserInputView?
---- @field result table
 --- @field disable_selection boolean
 UserInputController = class.create(new)
 
@@ -239,21 +236,11 @@ end
 --- @param self UserInputController
 --- @param cfg table
 local apply_config = function(self, cfg)
-  if cfg.eval then
-    self.model:set_eval(cfg.eval)
-  end
   if cfg.prompt ~= nil then
     self.model.custom_label = cfg.prompt
   end
   if cfg.text ~= nil then
     self.model:set_text(cfg.text)
-  end
-  -- result = the reftable the caller polls
-  -- (r:is_empty()/r()); the submit path writes the
-  -- evaluated value into it. (Legacy poll idiom; superseded
-  -- by the callback API — doc/development/decisions/input.md, Decision 4.)
-  if cfg.result ~= nil then
-    self.result = cfg.result
   end
   local ev = self.model.evaluator
   if cfg.highlighter ~= nil and ev then
@@ -358,7 +345,7 @@ end
 --- — the boundary decision closed here): only
 --- the Contract's live-updatable set reaches apply_config —
 --- prompt/highlighter/validator/widget-output callbacks. text/
---- cursor/eval/result never reach it from here — accepted but
+--- cursor never reaches it from here — accepted but
 --- inert on an active session (use set_text/set_cursor, or
 --- clear()+show()); no partial/silent path exists because this
 --- filtered table is the only thing configure() ever applies.
@@ -394,13 +381,13 @@ end
 --- existing has_error()/clear_error() gate in keypressed().
 --- @param model UserInputModel
 --- @param validator function?
---- @param text string
+--- @param lines string[]
 --- @return boolean ok
 --- REVIEW: why function name is 'gate'(noun) and not 'validate'(action)?
-local function gate(model, validator, text)
+local function gate(model, validator, lines)
   if not validator then return true end
-  local ok, err = validator(text)
-  if not ok then model:set_error({ err }) end
+  local ok, errors = validator(lines)
+  if not ok then model:set_error(errors) end
   return ok
 end
 
@@ -409,28 +396,6 @@ end
 local function debug_noop(label)
   if love.DEBUG then
     Log.debug('input: ' .. label .. ' noop')
-  end
-end
-
---- Submit delivery (doc/development/internals/user_input.md, "Submit and
---- cancel — widget-owned callback sequences"): fills the legacy
---- poll reftable — the push('userinput') producer is gone,
---- the synchronous fill survives — and fires the widget
---- output while the session is still active (observable
---- order, same section).
---- REVIEW: is this legacy reftable even read anywhere now?
---- REVIEW: if 'noop_debug' would be a factory, we could just install its result (with label enclosed) as default value for self.on_text_entered (unless overwritten) therefore collapsing all this wrapper, wiring on_text_entered directly without 'deliver' wrapper
---- REVIEW: `deliver` is vague name -- must be deliver_text_entered or something like that ? (one more symptom of it being redundant wrapper)
---- @param self UserInputController
---- @param text string
-local function deliver(self, text)
-  local res = self.result
-  if type(res) == 'table' then res(text) end
-  local cb = self.callbacks.on_text_entered
-  if cb then
-    cb(text)
-  else
-    debug_noop('on_text_entered')
   end
 end
 
@@ -456,12 +421,12 @@ end
 function UserInputController:submit_flow(keys_pressed)
   run_callback(self, 'before_submit', keys_pressed)
   if self.model:get_text():is_empty() then return end
-  local text = string.unlines(self.model:get_text())
-  if not gate(self.model, self.callbacks.validator, text) then
+  local lines = self.model:get_text()
+  if not gate(self.model, self.callbacks.validator, lines) then
     return
   end
-  deliver(self, text)
-  run_callback(self, 'after_submit', text)
+  run_callback(self, 'on_text_entered', lines)
+  run_callback(self, 'after_submit', lines)
 end
 
 --- Cancel flow (Decision 6 revised; delta-spec §3): the
@@ -755,8 +720,7 @@ end
 -- Uniform textinput signature
 -- (doc/development/decisions/input.md, Decision 9). Visibility is
 -- decided by the internal hidden-check (shown -> edit; hidden ->
--- no-op), which supersedes the old self.result/running gate: a
--- shown widget edits regardless of the legacy poll reftable.
+-- no-op). A shown widget always edits its live model state.
 function UserInputController:textinput(t, keys_pressed)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end

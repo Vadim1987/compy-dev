@@ -27,7 +27,7 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
     -- construction, like user_input_view_spec.lua.
     local function bare_uic()
       local m = UserInputModel(F.cfg, InputEvalText)
-      local c = UserInputController(m, nil, true)
+      local c = UserInputController(m, true)
       c:init_view({
         render = function() end,
         draw   = function() end,
@@ -209,7 +209,7 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
           on_text_entered = function(t) got = t end,
         })
         F.session.press('return')
-        assert.equal('hi', got)
+        assert.same({ 'hi' }, got)
 
         input.show({ text = 'bye', force = true })
         F.session.press('escape')
@@ -270,7 +270,7 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
             on_text_entered = function(t) got = t end,
           })
           mock.keystroke('C-return', F.session.press)
-          assert.equal('hi', got)
+          assert.same({ 'hi' }, got)
         end)
 
         it('overlay: Alt+Enter submits', function()
@@ -281,7 +281,7 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
             on_text_entered = function(t) got = t end,
           })
           mock.keystroke('M-return', F.session.press)
-          assert.equal('hi', got)
+          assert.same({ 'hi' }, got)
         end)
 
         it('console: Ctrl+Enter evaluates', function()

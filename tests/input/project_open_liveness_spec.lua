@@ -82,6 +82,6 @@ describe('project_open liveness #input', function()
     })
     love.state.app_state = 'project_open' -- route NOT released
     F.session.press('return')
-    assert.are.equal('x', seen)
+    assert.same({ 'x' }, seen)
   end)
 end)

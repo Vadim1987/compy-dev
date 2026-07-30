@@ -114,7 +114,7 @@ end
 -- wrappers resolve it from there).
 local function build_widget(cfg)
   local m = UserInputModel(cfg, InputEvalText)
-  local c = UserInputController(m, nil, true)
+  local c = UserInputController(m, true)
   c:init_view({ render = function() end, draw = function() end })
   love.state.user_input_controller = c
   return c
@@ -227,7 +227,7 @@ end
 -- pointer delivery to the widget half.
 function F.show_selectable_widget(lines)
   local m = UserInputModel(cfg, InputEvalText)
-  local w = UserInputController(m, nil, false)
+  local w = UserInputController(m, false)
   w:init_view({ render = function() end, draw = function() end })
   w.model:set_text(lines or { 'aa', 'bb', 'cc' })
   love.state.user_input = { M = m, C = w, V = w.view }

@@ -894,6 +894,14 @@ function ConsoleController.prepare_project_env(cc)
   local compy_namespace      = get_compy_namespace(terminal)
   project_env.compy          = compy_namespace
 
+  project_env.LuaHighlighter = LuaHighlighter
+  project_env.LuaSyntaxValidator = LuaSyntaxValidator
+  project_env.LineValidators = LineValidators
+  project_env.InputEvalText  = nil
+  project_env.InputEvalLua   = nil
+  project_env.ValidatedTextEval = nil
+  project_env.LuaEditorEval  = nil
+
   project_env.eval           = LANG.eval
   project_env.print_eval     = LANG.print_eval
 

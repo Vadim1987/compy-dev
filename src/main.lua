@@ -372,7 +372,7 @@ function love.load()
   -- should own its model/view construction is the open
   -- {badspecref: A5} question — M2 agenda A5.)
   local ui_m = UserInputModel(baseconf, InputEvalText)
-  local ui_c = UserInputController(ui_m, nil, true)
+  local ui_c = UserInputController(ui_m, true)
   local ui_v = UserInputView(baseconf.view, ui_c)
   -- init_view binds the view to the controller (self.view = v); it is NOT an activation/show.
   ui_c:init_view(ui_v)
