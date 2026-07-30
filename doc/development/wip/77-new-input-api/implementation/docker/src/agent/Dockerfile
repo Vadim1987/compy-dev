@@ -146,3 +146,7 @@ COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.cursor/AGENTS.md
 COPY --chown=${USER}:${USER} orientation.md /home/${USER}/.codex/AGENTS.md
 
 WORKDIR /repo
+
+USER root
+RUN cp -r --preserve=all /home/${USER} /home/${USER}.skel
+USER ${USER}
