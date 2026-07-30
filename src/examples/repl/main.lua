@@ -7,5 +7,5 @@ compy.input.callbacks.after_submit = function()
 end
 
 compy.input.show{
-  on_text_entered = function(text) print(text) end,
+  on_text_entered = function(lines) print(string.unlines(lines)) end,
 }
