@@ -24,24 +24,24 @@ Each returns `true` on success or `false, Error("message", column)` on failure. 
 ## Active validators
 
 ```lua
-compy.input.after_submit = function()
-  compy.input.show{}
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
 end
 
 compy.input.show{
-  eval = ValidatedTextEval({
+  validator = LineValidators({
     min_length(2),
     is_lower
   }),
-  on_text_entered = function(t) print(t) end,
+  on_text_entered = function(lines) print(string.unlines(lines)) end,
 }
 ```
 
-Validation is wired via `eval = ValidatedTextEval({...})` **(supported since 1.0.0-rc20260712)** — the same validator-list shape the old `validated_input` took. All validators in the list must pass for the input to be accepted; if any fail, the first error's column is highlighted. `after_submit` (a **field-write**, not a `show{}` key) re-arms the overlay with a bare `show{}` after each submit — the continuous-session idiom, see [Compy Input API](../../../input_api.md).
+Validation is wired via `LineValidators({...})` **(supported since 1.0.0-rc20260712)** — the same validator-list shape the old `validated_input` took. All validators in the list must pass for every submitted line to be accepted. `after_submit` is a direct field write that clears the next draft; see [Compy Input API](../../../input_api.md).
 
 ## Purpose
 
-Demonstrates the `ValidatedTextEval` API and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input. The old `validated_input(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
+Demonstrates `LineValidators` and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input. The old `validated_input(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
 
 ## Files
 

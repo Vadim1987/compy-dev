@@ -10,13 +10,13 @@ For the full project-author usage guide, see [Compy Input API](../../../input_ap
 
 ```lua
 -- Continuous-session idiom (M8-01): consume the line in
--- on_text_entered, re-show (bare) from after_submit.
-compy.input.after_submit = function()
-  compy.input.show{}
+-- on_text_entered, then clear the next draft from after_submit.
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
 end
 
 compy.input.show{
-  on_text_entered = function(text) print(text) end,
+  on_text_entered = function(lines) print(string.unlines(lines)) end,
 }
 ```
 
@@ -26,7 +26,7 @@ The smallest possible demonstration of the `compy.input.show`/`after_submit` con
 
 ## Notes
 
-`compy.input.show{}` is called with no config — no prompt, no initial text. The overlay appears with an empty input field. `on_text_entered` fires with the submitted text while the session is still active; `after_submit` is a **field-write** (not a `show{}` key) that fires after the widget deactivates, and re-arms the overlay for the next line by calling `compy.input.show{}` again.
+`compy.input.show{}` is called with no config — no prompt, no initial text. The overlay appears with an empty input field. `on_text_entered` receives submitted line strings while the session is active; `after_submit` is a direct callback assignment that clears the next draft.
 
 The old `user_input()`/`input_text()` poll-a-reftable pattern (`r = user_input()`, `r:is_empty()`, `r()` each `love.update()` tick) is **(deprecated, removed in 1.0.0-rc20260712)**.
 

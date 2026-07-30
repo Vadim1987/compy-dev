@@ -30,17 +30,17 @@ end
 
 ## Input pattern
 
-Uses `compy.input.show{}` with `eval = InputEvalLua` **(supported since 1.0.0-rc20260712)** — the input widget has Lua syntax highlighting and validation. `love.update(dt)` now only advances `time`; there is no polling of an input handle. See [Compy Input API](../../../input_api.md) for the full usage guide.
+Uses `compy.input.show{}` with `LuaHighlighter` and `LuaSyntaxValidator` **(supported since 1.0.0-rc20260712)** — the input widget has Lua syntax highlighting and validation. `love.update(dt)` now only advances `time`; there is no polling of an input handle. See [Compy Input API](../../../input_api.md) for the full usage guide.
 
 ```lua
-local function submit_body(text)
-  body = string.unlines(text)
+local function submit_body(lines)
+  body = string.unlines(lines)
   setupTixy()
   legend = ""
 end
 
-compy.input.after_submit = function()
-  compy.input.show{ text = string.lines(body) }
+compy.input.callbacks.after_cancel = function()
+  compy.input.set_text(string.lines(body))
 end
 
 function love.update(dt)
@@ -50,12 +50,13 @@ end
 compy.input.show{
   prompt = "function tixy(t, i, x, y)",
   text = string.lines(body),
-  eval = InputEvalLua,
+  highlighter = LuaHighlighter,
+  validator = LuaSyntaxValidator,
   on_text_entered = submit_body,
 }
 ```
 
-`submit_body` (wired as `on_text_entered`) consumes the submitted formula while the session is still active; `after_submit` — a **field-write**, not a `show{}` key — re-arms the overlay afterwards, seeding `text` with the just-submitted (and possibly example-loaded) `body` so editing continues in place rather than clearing the prompt.
+`submit_body` (wired as `on_text_entered`) consumes submitted line strings while the session is active. Cancel clears the field, so `after_cancel` is a direct callback assignment that restores the current body.
 
 `compy.input.set_text(body)` in `load_example()` pre-fills the live input with the current formula when loading a preset — the user sees the formula they're about to run before submitting. This replaces the old `write_to_input(body)` call.
 
@@ -63,7 +64,7 @@ The old `r = user_input()` / `input_code(...)` polling pattern is **(deprecated,
 
 ## Example cycling
 
-`examples.lua` is a table of `{code, legend}` pairs. Left click advances, right click randomizes. `advance()` and `retreat()` call `load_example()` which calls `setupTixy()` and `write_to_input`.
+`examples.lua` is a table of `{code, legend}` pairs. Left click advances, right click randomizes. `advance()` and `retreat()` call `load_example()`, which calls `setupTixy()` and `set_text`.
 
 ## Points of attention
 

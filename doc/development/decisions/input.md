@@ -190,13 +190,14 @@ migrate to `compy.input.*`; the replacement mapping is documented in the usage g
 **Decision.** The chain routes events *into* the active route. The widget reports results *out*
 through its own configured **widget outputs**, which are **not** chain components:
 
-- `on_text_entered(text)` — fires at submit, with the full assembled text.
+- `on_text_entered(lines)` — fires at submit, with assembled line strings.
 - `on_limit_reached(direction, scope)` — fires when the cursor tries to move past a boundary
   (`direction` up/down/left/right; `scope` whole-input or current-line).
-- `validator(text)` and `highlighter(text)` — behaviour configured on the widget.
+- `validator(lines)` and `highlighter(lines)` — widget behaviour; the
+  highlighter is display-only and the validator gates submit.
 
-These are set at `show()` / `configure()`, or assigned as `compy.input` fields — one underlying
-callback, two ergonomics.
+These are set at `show()` / `configure()`, or assigned as `compy.input.callbacks` fields — one
+underlying callback, two ergonomics.
 
 **Why.** Routing has two genuinely different directions and conflating them is the trap this
 subsystem was explicitly designed around. Events arriving are a chain concern; a *result* is the
@@ -234,7 +235,7 @@ tier. The widget provides their *default* behaviour as callback-driven flows of 
 framework-owned ones:
 
 ```
-submit_flow:  before_submit()  →  validate  →  deliver (on_text_entered)  →  after_submit()
+submit_flow:  before_submit() → validator → on_text_entered → after_submit()
 cancel_flow:  before_cancel()  →  clear (hardwired, unless vetoed)         →  after_cancel()
 ```
 
@@ -520,7 +521,7 @@ individually revisable — but only by a named ruling, not by drift. See
 
 ## Decision 15 — unknown show configuration warns
 
-**Status: owner-ratified in validation; implementation pending.**
+**Status: implemented.**
 
 **Decision.** An unrecognised key supplied to show(config) will emit a
 warning and be ignored. A recognised field that is only writable by direct
@@ -531,9 +532,9 @@ otherwise simple API needlessly difficult to use. A warning gives the project
 author an immediate, actionable explanation and follows the subsystem's
 existing warn-don't-swallow discipline.
 
-**Execution.** Add a public-path warning test, make config application report
-each unknown key once per call, document the distinction between show keys and
-field-write-only callbacks, then remove the now-resolved debt entry.
+**Consequence.** `show` reports each unknown key once per call and ignores it.
+The project guide names the accepted table keys and the direct-assignment
+lifecycle callbacks.
 
 ---
 
@@ -640,17 +641,10 @@ internals.
 
 ---
 
-## Where the shipped system differs from the design intent
+## Implementation alignment
 
-A design corpus preceded the implementation. One of its stated intents did not fully land and is
-captured in the technical-debt register so a reader is not misled:
-
-- The design's config table lists `validator` / `highlighter` as the behaviour keys; the shipped
-  `show()` additionally accepts `eval` and `result` keys (an evaluator object and a legacy result
-  reference), which are real and working but unrecorded in the design contract.
-
-Separately, config keys that `show{}` does not recognise are silently dropped rather than warned
-about — an inconsistency against the warn-don't-swallow discipline applied elsewhere on this
-surface (the cursor/text calls do warn when refused). These, and the open combo-repeat and
-pressed-keys-view-iteration items noted above, live in
-[`../technical_debt/input.md`](../technical_debt/input.md).
+The public `show` table now matches the intended project surface: validation
+and highlighting are separate callbacks, submitted values are line arrays,
+and a project consumes them through `on_text_entered`. `eval` and `result`
+are retired rather than carried as compatibility keys. The internal evaluator
+objects used by console and editor remain implementation details.

@@ -10,7 +10,7 @@ For the project-facing usage guide (examples, the `show()` config table, the sub
 
 ## Text Input Widget
 
-`UserInputModel` / `UserInputController` / `UserInputView` form a shared widget reused in three contexts: the console REPL, the editor input strip, and project-created overlays. The widget is always the same code; what differs is the evaluator attached to it and which controller handles the result.
+`UserInputModel` / `UserInputController` / `UserInputView` form a shared widget reused in three contexts: the console REPL, the editor input strip, and project-created overlays. The widget is always the same code; what differs is the host evaluator and the controller handling the submission.
 
 ### Data flow
 
@@ -69,10 +69,14 @@ When an error is set on the model (`set_error()`), the input is visually locked:
 Each `UserInputModel` has an `Evaluator` that runs on submit:
 - **Console**: `LuaEval` — metalua parse, validates Lua syntax before accepting the submit
 - **Editor input (Lua file)**: `LuaEditorEval` — same as LuaEval but adds 64-char line length validator
-- **Project overlays**: `InputEvalText` (plain), `InputEvalLua` (Lua syntax), or a `ValidatedTextEval` with custom validators
+- **Project overlays**: the internal plain evaluator plus project callbacks for
+  validation and display. Projects cannot install evaluator objects.
 - **Search**: `nil` evaluator (search input is free text, no validation)
 
-Validators run on every character (via `validation_hl` for real-time highlighting) and again on submit. A validator returns `true` or `false, Error(msg, column)`. The column is used to highlight the specific offending character.
+Host evaluators can validate during editing. The project overlay's public
+validator runs at submit and receives `string[]`; it returns `true` or
+`false, Error[]`. `LuaHighlighter`, `LuaSyntaxValidator`, and
+`LineValidators` are the only evaluator-derived helpers exported to a project.
 
 ### Cursor manipulation and "reset" — three API layers, now all connected
 
@@ -512,10 +516,10 @@ shown — hidden, the widget is skipped entirely by the dispatch walk.
 ```
 run_callback(self, 'before_submit', keys_pressed)   -- veto reserved, unbuilt (R9)
 if self.model:get_text():is_empty() then return end
-local text = string.unlines(self.model:get_text())
-if not gate(self.model, self.callbacks.validator, text) then return end   -- reject: error shown, stop
-deliver(self, text)                                  -- fires callbacks.on_text_entered
-run_callback(self, 'after_submit', text)              -- DEFAULT: no-op — widget stays open
+local lines = self.model:get_text()
+if not gate(self.model, self.callbacks.validator, lines) then return end
+run_callback(self, 'on_text_entered', lines)
+run_callback(self, 'after_submit', lines)            -- DEFAULT: no-op — widget stays open
 ```
 
 `on_text_entered` fires **while the widget is still active** — there is no implicit hide any more.
@@ -609,25 +613,14 @@ rather than calling a `compy.input` method.
 
 #### `show(config)` — activate
 
-All fields are optional and, except where noted, match the
-project-facing guide's table (`doc/input_api.md`): `prompt`, `text`,
-`cursor` (`{line, col}`, applied after `text` — see "Cursor
-manipulation" above), `validator`, `highlighter`, `on_text_entered`,
-`on_limit_reached`, `force`. `apply_config`
-(`userInputController.lua:211-239`) additionally accepts two keys
-outside that table: `eval` (installs an `Evaluator` object directly —
-the mechanism `doc/input_api.md`'s own `eval` config key documents
-for project authors) and `result` (a legacy reftable the submit path
-still fills for the old poll idiom). Neither is a config key in the
-frozen feature #77 design spec, whose table lists only `validator`/
-`highlighter` — an unrecorded but real and working surface.
-`apply_config` reads only its known keys with no `else`/warn branch,
-so a config key it doesn't recognise (a typo, or a field-write-only
-name like `after_submit` passed inside `show{}` instead of assigned
-directly) is **silently dropped** — no error, no log. This is an
-inconsistency, not a blanket policy: `set_cursor`/`set_text`, by
-contrast, **do** warn when called while hidden
-(`consoleController.lua:495`, `:505`).
+All fields are optional and match the project-facing guide's table:
+`prompt`, `text`, `cursor` (`{line, col}`, applied after `text`),
+`validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, and
+`force`. The project wrapper checks this table before it reaches
+`apply_config`: each unrecognised key is warned about and ignored. This
+includes lifecycle names such as `after_submit`, which are direct
+`compy.input.callbacks` assignments rather than `show` keys. The wrapper
+does not expose the host evaluator or legacy result paths.
 
 #### `configure(config)` — the live-reconfigure surface
 

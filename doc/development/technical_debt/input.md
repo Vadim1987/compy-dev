@@ -75,19 +75,6 @@ keystroke for any event the project didn't override.
 - **Why it stands:** Benign; never invoked, so it costs nothing at runtime.
 - **Revisit:** Safe to delete outright whenever this file is next touched.
 
-### Controller-side dead `result`/reftable delivery path
-
-- **Where:** `src/controller/userInputController.lua` — `apply_config` sets
-  `self.result` from `cfg.result`, and `deliver()` has a
-  `if type(res) == 'table' then res(text) end` branch for it.
-- **State:** Nothing anywhere in the tree ever passes a table as `result`
-  (grep finds zero producers), so `self.result` is always non-table and the
-  reftable-delivery branch in `deliver()` is unreachable.
-- **Why it stands:** A natural cleanup, not urgent — the field is
-  write-once-from-config with no writer left.
-- **Revisit:** Next controller-focused pass; remove the branch and the
-  `result` config key together if nothing is expected to resurrect them.
-
 ### A truthy `hooks[event]` return silently disables `on_limit_reached`
 
 - **Where:** `src/controller/projectInputController.lua` (the free-function
@@ -173,18 +160,6 @@ question, not resolved here.
   the documented contract to say so explicitly.
 - **Revisit:** Decide, then either add the surface or update the contract
   doc to rule out polling by design.
-
-### `eval`/`result` config keys are an undocumented deviation
-
-- **Where:** `apply_config` in `userInputController.lua` accepts `eval` and
-  `result` as `show{}`/`configure{}` config keys; several example projects
-  pass `eval =`.
-- **State:** Neither key is part of the documented public config-key set
-  (`validator` is the documented equivalent shape).
-- **Why it stands:** Open — bless `eval`/`result` as public API and record
-  the deviation, or steer callers onto the documented key(s) instead.
-- **Revisit:** Decide when the public config-key set is next reconciled with
-  actual usage.
 
 ### Shortcuts key-repeat semantics are shipped unsettled
 

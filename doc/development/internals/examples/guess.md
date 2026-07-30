@@ -11,20 +11,20 @@ Single-file. No `love.update`/`love.draw` override — output goes to the termin
 ## Input pattern
 
 ```lua
-compy.input.after_submit = function()
-  compy.input.show{}
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
 end
 
 init()
 
 compy.input.show{
   prompt = "Guess a number:",
-  eval = ValidatedTextEval({ is_natural }),
-  on_text_entered = function(t) check(tonumber(t)) end,
+  validator = LineValidators({ is_natural }),
+  on_text_entered = function(lines) check(tonumber(lines[1])) end,
 }
 ```
 
-This is the continuous-session idiom (see [Compy Input API](../../../input_api.md)): `compy.input.show{}` activates the overlay once; `on_text_entered` fires with the submitted guess while the session is still active; `after_submit` — a **field-write**, not a `show{}` key — re-arms the overlay (bare `show{}`) for the next guess. Validation is wired via `eval = ValidatedTextEval({ is_natural })`, reusing the same validator-list shape the old `validated_input` took.
+This is the continuous-session idiom (see [Compy Input API](../../../input_api.md)): `compy.input.show{}` activates the overlay once; `on_text_entered` receives submitted line strings while the session is active; `after_submit` clears the next draft. `LineValidators({ is_natural })` adapts the existing line rule to the overlay validator.
 
 The old `r = user_input()` / `validated_input(...)` polling pattern is **(deprecated, removed in 1.0.0-rc20260712)**.
 
