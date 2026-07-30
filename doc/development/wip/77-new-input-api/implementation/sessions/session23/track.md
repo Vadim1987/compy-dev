@@ -134,3 +134,18 @@
   sweeping the owner's working-tree changes — stage explicit paths, never a
   directory, in this tree.
 - Not wrapped: awaiting owner acceptance before report + successor prompt.
+
+## 2026-07-30 — owner accepted; wrapped
+
+- Owner accepted the executed work and instructed the wrap, with one framing
+  for the successor: **be ready to inspect human feedback from TF2**. Written
+  into `session24/prompt.md` as the live expectation of a wait-for-human
+  placeholder (per the sessions handover table, a revalidation task's successor
+  is a placeholder) — receive, triage against the standing ledgers, act only on
+  instruction.
+- Behavioural note: the owner compacted context *before* the wrap rather than
+  after, treating token headroom as something to manage proactively at a phase
+  boundary. Worth mirroring — the wrap is exactly the cheap point to do it,
+  since the report is the distillation anyway.
+- Wrap commit: report + successor prompt + repointed CURRENT PROMPT, one
+  `docs` commit.
