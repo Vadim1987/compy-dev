@@ -380,7 +380,6 @@ local function gate(model, validator, lines)
 end
 
 --- @param label string
---- REVIEW/nitpick: noop_debug would be better semantically (primary action first, side-effect second). Also using it as factory would be even more elegant (therefore 'noop_debug()' would produce earmarked 'noop' that could be invoked transparently)
 local function debug_noop(label)
   if love.DEBUG then
     Log.debug('input: ' .. label .. ' noop')
