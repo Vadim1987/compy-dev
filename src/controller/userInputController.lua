@@ -5,8 +5,7 @@ require("util.string.string")
 require("util.lua")
 
 -- Stay-open defaults for the submit/cancel lifecycle
--- (doc/development/wip/77-new-input-api/validation/reviews/
--- delta-spec-input-api.md §3): after_submit/after_cancel default to
+-- after_submit/after_cancel default to
 -- no-ops, so a widget stays open unless a callback hides it. on_limit_
 -- reached defaults to a no-op so the navigation-boundary emit is an
 -- unconditional call. Re-seeded (not wiped) on teardown (AC10).
@@ -283,13 +282,7 @@ local open_fresh = function(self, cfg)
   -- checks to paint V:draw() each frame, and it carries the
   -- { M, C, V } handle the legacy poll idiom reads. Drivers
   -- change but the flag persists (doc/development/internals/user_input.md,
-  -- "Widget lifecycle"). NOTE: factoring this into a
-  -- named setup_legacy_user_input() and the open_fresh/init
-  -- naming are open {badspecref: A5} items (M2 agenda A5,
-  -- widget lifecycle contract; see
-  -- {badspecref: M2-human-review.md} implementation/
-  -- reviews/M2-human-review.md) — deferred to the
-  -- {badspecref: 0.1.0-m4} architect pass, not changed here.
+  -- "Widget lifecycle").
   love.state.user_input = {
     M = self.model,
     C = self,
@@ -330,11 +323,7 @@ end
 --- love.state.user_input is what "hides" the overlay: the
 --- draw loop (controller.lua) paints V:draw() only while
 --- the flag is set, so nil-ing it stops the paint on the
---- next frame. (Flag-presence vs. querying controller state
---- is the {badspecref: A5} contract question (M2 agenda
---- A5) — see
---- {badspecref: M2-human-review.md} (implementation/
---- reviews/M2-human-review.md).)
+--- next frame.
 function UserInputController:hide()
   self.shown = false
   love.state.user_input = nil
@@ -383,7 +372,6 @@ end
 --- @param validator function?
 --- @param lines string[]
 --- @return boolean ok
---- REVIEW: why function name is 'gate'(noun) and not 'validate'(action)?
 local function gate(model, validator, lines)
   if not validator then return true end
   local ok, errors = validator(lines)
@@ -494,9 +482,7 @@ end
 -- path now (see "emit_limit" below).
 -- This handler now receives the uniform
 -- (k, keys_pressed, isr) triple (doc/development/decisions/input.md,
--- Decision 9; resolves the {badspecref: m4/m5 A2} open
--- note — M2 agenda A2, keys_pressed-as-2nd-arg to text
--- handlers, closed by M4/M5 dispatch design).
+-- Decision 9).
 -- Its own editing logic still reads modifiers via Key.*
 -- (love.keyboard) — widening that to the keys_pressed
 -- read-only view is not required here, but recommended in
@@ -510,8 +496,7 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   -- branch returned without re-rendering. Mutating branches below re-render at their end,
   -- so this is belt-and-suspenders, not the primary update.
   self:update_view()
-  -- _G.web: web/love.js build flag (pre-existing, not part
-  -- of {badspecref: #77}). On web, space may not emit
+  -- _G.web: web/love.js build flag. On web, space may not emit
   -- textinput, so synthesise it here.
   if _G.web and k == 'space' then
     self:textinput(' ')
@@ -752,7 +737,6 @@ function UserInputController:keyreleased(k, keys_pressed)
     return
   end
 
-  -- REVIEW: why this wrap with immediate call? Cannot we just call the function body with same effect without wrapping? ah... its just following the convention for combos handling
   local function selection()
     if Key.is_shift(k) then
       input:release_selection()

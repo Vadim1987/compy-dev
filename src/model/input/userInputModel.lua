@@ -410,7 +410,6 @@ end
 --  history   --
 ----------------
 
---- REVIEW: when widget is re-armed, or cancelled or closed-on-submit, history is dropped? what about when its reconfigured? when one project launches input, than is torn down and new project launches input
 --- @return boolean
 -- doc/development/internals/user_input.md, "Submit and cancel —
 -- widget-owned callback sequences": oneshot is gone, so nothing
@@ -599,7 +598,6 @@ function UserInputModel:is_at_limit(dir, scope)
   
   local line = self:get_text_line(cl)
   local line_end = string.ulen(line) + 1
-  -- REVIEW: 'req' name does not reflect semantics -- what is it at all?
   local req = (n == 1) and 'input' or (scope or 'input')
 
   if dir == 'left' then
@@ -838,8 +836,6 @@ function UserInputModel:cancel()
   self:reset()
 end
 
---- REVIEW: previous one-shot logic also involved love.harmony.utils interaction -- what is it for and is it ok that its gone?
---- REVIEW: report_parse_error is misleading name, should not be _move_cursor_to_err_pos ?
 --- @private
 --- Cursor-to-error-position on an evaluator reject. Split out
 --- of handle() to keep it under the function-body line limit
@@ -893,8 +889,6 @@ function UserInputModel:handle(eval)
 
   return ok, (result or ent)
 end
-
---- REVIEW: regarding all files(!) -> should comments vs annotations order be the same everywhere? I see comments between annotations, before, after... need normalization for readablitity as also because at least some type parsers may break?(not sure which ones we are using though)
 
 ----------------
 --   error    --

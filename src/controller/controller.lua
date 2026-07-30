@@ -24,9 +24,6 @@ local get_user_input = function()
 end
 
 
---- REVIEW: why separate function for every forwarder, not generic one, with event name as payload?
---- REVIEW: why explicit work with ui.c instead of something like get_user_input().handle(event_name,k,held_keys,is_r) ?
---- REVIEW: why returning strict 'true' instead of returning whatever handler returns?
 --- Intra-route forward: the console route hands the event
 --- to the widget it activated (nil under 'inspect' — the
 --- console owns that surface itself). The widget receives the
@@ -142,7 +139,6 @@ local function wrap(f, CC, ...)
   end
 end
 
---- REVIEW: `key` is ambiguous -- use 'handlername' or whatever semantically meaningful?
 --- The project's own handler for an event, error-wrapped;
 --- nil when the project did not define one. "Native" here
 --- and below = a handler the project installed in its own
@@ -370,7 +366,6 @@ end
 local COMBO_MODS = Key.mod_triples
 
 
---- REVIEW: from engineering perspective it would be more interesting to unwrap 'serialized' combo definitions (defined by project) into a chain of functions built-in-place, that would be applied to every keypress. building functions once per project load -- looks clear than building tables on every keypress (NOT TO IMPLEMENT NOW: put into tech debt ledger as suggestion)
 --- Serialise a key event into a canonical combo string ("ctrl+s", "alt+shift+f4").
 --- Held modifiers are prepended in COMBO_MODS precedence, l/r folded to generic names.
 --- NOTE: the per-keypress table allocation here, and
@@ -448,9 +443,6 @@ Controller = {
   --- @param CC ConsoleController
   set_love_keypressed = function(CC)
     local function keypressed(k, _, isr)
-      --- REVIEW: consider alternative combo-table mechanism
-      --- (table on initialization used to build a chain of
-      --- checkers)
       -- TODO(debt): these debug-hotkey if-blocks predate combos;
       -- migrate onto the combo-table mechanism
       -- (doc/development/decisions/input.md, Decision 8). See
@@ -873,7 +865,6 @@ Controller = {
     --- @diagnostic disable-next-line: undefined-field
     local handlers = love.handlers
 
-    -- REVIEW: what is 'sc' ? meaningless name
     handlers.keypressed = function(k, sc, isr)
       Controller.keys_pressed[k] = true
       --- Power shortcuts

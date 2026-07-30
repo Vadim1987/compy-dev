@@ -34,7 +34,7 @@ local EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
 --- Decision 10 revised): each event with no explicit project hook gets
 --- the project's own love.* handler, once, at activation. After this
 --- the hooks table is the single source of truth — a nil'd hook clears,
---- with no resurrection (validation/reviews/delta-spec-input-api.md §5).
+--- with no resurrection.
 --- Runs after the project's top-level code, so an explicit hooks[event]
 --- set there is already present and correctly preserved.
 --- @param hooks table  compy_input.hooks
@@ -55,8 +55,7 @@ end
 --- @field compy_input table?
 ProjectInputController = class.create(new)
 
---- The dumb three-consumer walk (obligation 6a; validation/
---- reviews/delta-spec-input-api.md §2): shortcuts[event][combo] →
+--- The three-consumer walk: shortcuts[event][combo] →
 --- hooks[event] → widget, stopping at the first that consumes.
 --- A shortcut or hook consumes by returning truthy; the widget
 --- consumes whenever it is shown (its own internal flag), and is
@@ -135,8 +134,6 @@ end
 --- shortcuts fire on
 --- key-repeat is unruled; isrepeat is threaded to hooks only,
 --- combos keep current behaviour. Do not design a mechanism.
---- REVIEW: what is 'sc' and why its not used?
---- REVIEW: duplicaion of 'k,k' and 't,t' looks smelly -- why is it needed. in additon, _dispatch grabs keys_pressed itself(should not) and how other arguments are consumed its not very easy to understand.
 function ProjectInputController:keypressed(k, sc, isr)
   return self:_dispatch(
     'keypressed', k, k, Controller.held_keys(), isr)

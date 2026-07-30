@@ -368,9 +368,7 @@ function love.load()
   -- callbacks table at that moment (owner ruling 2026-07-20:
   -- compy.input.callbacks IS the widget's self.callbacks). The
   -- widget is a boot-provisioned instance; provisioning it early
-  -- has no dependency on the console. (Whether the controller
-  -- should own its model/view construction is the open
-  -- {badspecref: A5} question — M2 agenda A5.)
+  -- has no dependency on the console.
   local ui_m = UserInputModel(baseconf, InputEvalText)
   local ui_c = UserInputController(ui_m, true)
   local ui_v = UserInputView(baseconf.view, ui_c)

@@ -11,9 +11,8 @@ local gui_k   = { "lgui", "rgui" }
 
 -- Single source of truth for left/right modifier folding. Each row is
 -- { left-key, right-key, generic-name }; combo_string folds e.g. lctrl|rctrl -> "ctrl"
--- (precedence order: ctrl, alt, shift, gui). Centralised
--- here in {badspecref: 0.1.0-m2a} — it was previously a
--- duplicate COMBO_MODS literal in controller.lua.
+-- (precedence order: ctrl, alt, shift, gui). This is the single
+-- source shared by combo registration and dispatch.
 local mod_triples = {
   { ctrl_k[1],  ctrl_k[2],  "ctrl" },
   { alt_k[1],   alt_k[2],   "alt" },
@@ -67,13 +66,11 @@ local function normalize_combo(combo)
   return table.concat(parts, '+')
 end
 
---- REVIEW: can we think of building set of validators instead? it may be interesting because we'd only have to check for combos that are defined, not convert every typed combo into string on every keystroke. So that our table would *speak* the language of serialized combos but *act* as fast 'decision-tree' (and could return noop if nothing found, as a bonus -- saving the nil check upstream and allowing unconditional execution of returned handler)
 --- A project handlers sub-table (doc/development/decisions/input.md,
 --- Decision 8): assigned combo keys normalise on
 --- registration, so handlers.keypressed['Ctrl+S'] is
 --- stored (and dispatch-matched) as 'ctrl+s'.
---- The default matcher is exact canonical lookup (O(1)); the
---- normalising seam is where a future glob matcher would live.
+--- The matcher uses exact canonical lookup (O(1)).
 --- @return table
 local function new_handler_table()
   return setmetatable({ }, {
@@ -119,7 +116,6 @@ local function alt()
   return love.keyboard.isDown(unpack(alt_k))
 end
 
--- REVIEW: would 'mod_folds' or 'mod_aliases' be better name than `mod_triples` ?
 Key = {
   mod_triples = mod_triples,
   normalize_combo = normalize_combo,

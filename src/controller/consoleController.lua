@@ -370,10 +370,6 @@ end
 -- UserInputController (love.state.user_input_controller);
 -- projects never touch the controller directly. Namespace +
 -- lifecycle docs: doc/development/internals/user_input.md.
--- DEFERRED ({badspecref: 0.1.0-m7}): whether to pre-stub
--- not-yet-implemented methods here as explicit
--- not-implemented no-ops is unsettled — to be resolved in
--- the {badspecref: m7 design session}.
 -- compy.input's write boundary (doc/development/decisions/input.md,
 -- Decision 7, revised — .../validation/reviews/
 -- delta-design-input-api.md): the container and the IDENTITY of its
@@ -532,8 +528,7 @@ end
 -- (resolved from love.state, never held by the project).
 -- The widget-method surface a project drives (show/hide/
 -- configure/set_text/set_cursor/get_cursor/clear), parameterized
--- by instance (doc/development/wip/77-new-input-api/validation/
--- reviews/delta-spec-input-api.md, §4 / obligation 6b): any
+-- by instance: any
 -- adopter — not only the project overlay — gets the same
 -- ergonomics over ITS OWN widget by supplying its own resolvers.
 -- `get_widget` resolves the UserInputController; `get_active_flag`
@@ -658,11 +653,8 @@ local get_compy_input = function()
   return build_input_surface(state, methods)
 end
 
---- REVIEW/provenance: is `compy.before_exit` a requested+ratified feature, or an interim
---- bridge born from a misinterpreted spec? Born on this branch in 386cfe1 (M5c chunk 4);
---- absent in updev. It is a project *lifecycle* callback, not input dispatch — verify it
---- against design/spec/M6-02-before-exit.md before we treat it as load-bearing. (D6 leaves
---- `before_exit_slot` untouched: outside the input-slot vocabulary.)
+-- Project lifecycle callback. It is intentionally separate from
+-- compy.input's keyboard/text dispatch surface.
 local function default_before_exit()
   Log.debug('compy.before_exit noop')
 end
