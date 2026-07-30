@@ -466,13 +466,49 @@ local SHOW_KEYS = {
   on_limit_reached = true,
 }
 
-local function reject_unknown_show_keys(cfg)
+-- configure() takes the same table minus force: force answers
+-- "replace the text of an ALREADY-active overlay", which is
+-- the only state configure() ever runs in.
+local CONFIGURE_KEYS = { }
+for k in pairs(SHOW_KEYS) do CONFIGURE_KEYS[k] = true end
+CONFIGURE_KEYS.force = nil
+
+-- Lifecycle callbacks are compy.input.callbacks assignments,
+-- never config-table keys. Naming one here is the likeliest
+-- mistake, so it earns a message that says where it belongs.
+local LIFECYCLE_KEYS = {
+  before_submit = true, after_submit = true,
+  before_cancel = true, after_cancel = true,
+}
+
+--- @param fname string
+--- @param key any
+--- @return string
+local function bad_key_message(fname, key)
+  local name = tostring(key)
+  if LIFECYCLE_KEYS[name] then
+    return fname .. ": assign '" .. name ..
+      "' on compy.input.callbacks, do not pass it here"
+  end
+  return fname .. ": unknown config key '" .. name .. "'"
+end
+
+--- Strict contract enforcement
+--- (doc/development/decisions/input.md, Decision 15 revised):
+--- the config table is CLOSED, so a key
+--- outside it can only be an authoring error — raise, and let
+--- the project stop at the typo instead of running on in a
+--- shape nobody asked for. Level 3 puts the trace on the
+--- project's own show()/configure() line.
+--- Runtime STATE no-ops (an active overlay, a hidden widget)
+--- are NOT this: they keep warning, per Decision 3.
+--- @param cfg table
+--- @param fname string
+--- @param allowed table
+local function check_keys(cfg, fname, allowed)
   for key in pairs(cfg) do
-    if not SHOW_KEYS[key] then
-      local name = tostring(key)
-      Log.warn('compy.input.show ignored key ' .. name ..
-        '; use its config table or compy.input.callbacks')
-      cfg[key] = nil
+    if not allowed[key] then
+      error(bad_key_message(fname, key), 3)
     end
   end
 end
@@ -545,7 +581,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
   return {
     show = function(cfg)
       local next_cfg = cfg or {}
-      reject_unknown_show_keys(next_cfg)
+      check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
       merge_output_keys(state, next_cfg)
       consume_pending(state.pending, next_cfg)
       local ui = get_widget()
@@ -594,6 +630,8 @@ local function build_widget_api(get_widget, get_active_flag, state)
     -- show(). Never a partial/silent apply either way.
     configure = function(cfg)
       local next_cfg = cfg or { }
+      check_keys(next_cfg, 'compy.input.configure',
+        CONFIGURE_KEYS)
       if not get_active_flag() then
         stash_hidden_configure(state, next_cfg)
         return

@@ -72,33 +72,78 @@ describe('input contracts: widget lifecycle #input', function()
         assert.same({ 'first' }, F.widget:get_text())
       end)
 
-    it('show warns and ignores keys outside its config table',
+    -- doc/development/decisions/input.md, Decision 15 revised:
+    -- show()/configure() take a closed config table, so an
+    -- unrecognised key can only be an authoring mistake. It
+    -- raises rather than warning — the project stops at the
+    -- typo instead of running on in a shape nobody asked for.
+    it('show raises on a key outside its config table',
       function()
         local input = F.compy_input()
-        local submitted = 0
-        local warnings = { }
-        local original_warn = Log.warn
-        input.callbacks.after_submit = function()
-          submitted = submitted + 1
-        end
-        Log.warn = function(message)
-          warnings[#warnings + 1] = message
-        end
-        input.show({
-          text = 'ok',
-          eval = InputEvalLua,
-          result = { },
-          after_submit = function()
-            submitted = submitted + 10
-          end,
-        })
-        Log.warn = original_warn
-        F.session.press('return')
-        local all_warnings = table.concat(warnings, ' ')
-        assert.equal(1, submitted)
-        assert.matches('eval', all_warnings)
-        assert.matches('result', all_warnings)
-        assert.matches('after_submit', all_warnings)
+        assert.has_error(function()
+          input.show({ text = 'ok', eval = InputEvalLua })
+        end)
+        assert.is_nil(love.state.user_input)
+      end)
+
+    it('the raise names the offending key',
+      function()
+        local input = F.compy_input()
+        local _, err = pcall(function()
+          input.show({ result = { } })
+        end)
+        assert.matches('result', err)
+      end)
+
+    -- The likeliest mistake is a lifecycle callback in the
+    -- table instead of on compy.input.callbacks, so it earns
+    -- a message that says where the assignment belongs.
+    it('a lifecycle callback in the table names callbacks',
+      function()
+        local input = F.compy_input()
+        local _, err = pcall(function()
+          input.show({ after_submit = function() end })
+        end)
+        assert.matches('after_submit', err)
+        assert.matches('callbacks', err)
+      end)
+
+    it('configure raises on an unknown key too',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'ok' })
+        assert.has_error(function()
+          input.configure({ eval = InputEvalLua })
+        end)
+      end)
+
+    -- force is a show()-only key; configure() has no inactive
+    -- overlay to force, so passing it is the same mistake.
+    it('configure raises on force',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'ok' })
+        assert.has_error(function()
+          input.configure({ force = true })
+        end)
+      end)
+
+    -- Guard against strictness creeping past its remit: a
+    -- runtime STATE that makes a call a no-op is not an
+    -- authoring error, and must keep warning rather than raise.
+    it('a state-condition no-op warns and does not raise',
+      function()
+        local input = F.compy_input()
+        local ow = Log.warn
+        Log.warn = function() end
+        local ok = pcall(function()
+          input.show({ text = 'first' })
+          input.show({ text = 'second' })
+          input.hide()
+          input.clear()
+        end)
+        Log.warn = ow
+        assert.is_true(ok)
       end)
 
     -- force = live reconfiguration of an ACTIVE widget;
