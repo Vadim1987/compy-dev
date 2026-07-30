@@ -336,3 +336,16 @@
   whitespace check passed before commit.
 - The serial J1 tests-only cleanup is in progress. Source/debt cleanup must
   follow it; only then may review-navigation slices be regenerated.
+
+## 2026-07-30 — J1 plain-vocabulary gate complete
+
+- Tests-only cleanup committed `c09f590`: it removes construction-era marker
+  syntax and WIP/milestone citations without changing assertions; RVW-023's
+  useful evaluator explanation is retained in plain language. Focused and full
+  suites stayed green (**862 / 0 / 0 / 3**).
+- The serial source pass committed `e28f58d`: no source marker remains, current
+  rationale cites permanent decisions/debt where it is useful, and it found no
+  new debt requiring expansion. Full suite and whitespace check are green.
+- C1 authority corrections and J1 are now settled. The only remaining pre-TF2
+  action is the expressly navigation-only fresh slice batch; it is not final
+  Phase-G PR assembly and will be regenerated again after any later TF work.
