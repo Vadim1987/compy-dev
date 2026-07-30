@@ -440,7 +440,7 @@ Not commissioned for closure; each may never need action.
 - **State:** `forward_*` reads as "forward where/why?" (it routes to the
   currently-active keyboard route and returns whether that route consumed);
   `userlove` is the project's sandboxed `love` table. Both are correct but
-  under-named — the reason they carried inline `REVIEW:` markers.
+  under-named — the reason this rename remains recorded here.
 - **Why it stands:** Pure rename; no behavioural content. Deferred to avoid
   churn on a landing branch.
 - **Revisit:** Next time this file is edited — rename to intent-revealing
@@ -538,8 +538,8 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** `allow_modify` is a one-off flag; the widget owning its own
   **combo table** (Ctrl+D and the lifecycle keys as registered combos an editor or
   project extends) is the better end-state the owner named — deferred with the
-  console/editor migration (Decision 1), not this pass. The old `REVIEW:` at the
-  former `:724` that asked for exactly this is retired (its concern is resolved
+  console/editor migration (Decision 1), not this pass. The former inline question
+  at `:724` is retired (its concern is resolved
   in shape; the combo-table refinement is what remains).
 
 ### Discovered, de-facto behaviours pinned during the un-fork (rationale note)
@@ -559,8 +559,8 @@ be silently narrowed later (any change is a separate, owner-gated decision):
 - **The overlay's input view skips the per-frame `update_view()` workaround by
   widget *identity*** (`userInputView.lua:draw`, `self.controller ~=
   love.state.user_input_controller`) — an identity check standing in for the old
-  `oneshot` flag. Its own in-code `REVIEW:` asks whether it survives a
-  console/editor re-plug; carried, out of #77 scope.
+  `oneshot` flag. Its survival under a console/editor re-plug remains a
+  tracked future concern, out of #77 scope.
 
 ### Comment wip-citation cleanup (from the canonical-docs comment rule)
 
