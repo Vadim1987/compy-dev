@@ -35,10 +35,12 @@ Each command writes one patch. The pathspecs are exhaustive and disjoint — tog
 full wip-excluded diff (verification in §4). Regenerate all of them:
 
 ```sh
-OUT=./pr-slices; mkdir -p "$OUT"
+OUT=doc/development/wip/77-new-input-api/implementation/pr-slices
+mkdir -p "$OUT"
 
 # --- Set 1 · generic docs-corpus (22 files) ---
 git diff $BASE $TIP -- \
+  doc/development/internals/event_dispatch_layers.md \
   doc/development/conventions/architecture_principles.md \
   doc/development/conventions/code.md \
   doc/development/conventions/git.md \
@@ -59,12 +61,14 @@ git diff $BASE $TIP -- \
 # --- Set 3 · Main feature, six orthogonal slices ---
 # 3d · TESTS FIRST (see §2 for why the test slice leads)
 git diff $BASE $TIP -- \
+  tests/editor/editor_spec.lua tests/editor/editor_spec_fwd.lua \
   tests/input/ tests/helpers/input_fixture.lua tests/helpers/input_session.lua tests/mock.lua \
   > "$OUT/3d-tests.patch"
 
 # 3a · routing / dispatch core
 git diff $BASE $TIP -- \
-  src/controller/controller.lua src/controller/projectInputController.lua \
+  src/controller/controller.lua src/controller/editorController.lua \
+  src/controller/projectInputController.lua \
   > "$OUT/3a-routing-core.patch"
 
 # 3b · widget sink + compy.input.* singleton + boot provisioning
@@ -75,6 +79,7 @@ git diff $BASE $TIP -- \
 # 3c · model / view / util
 git diff $BASE $TIP -- \
   src/model/input/userInputModel.lua src/model/consoleModel.lua src/model/editor/searchModel.lua \
+  src/model/interpreter/eval/evaluator.lua \
   src/view/input/userInputView.lua src/util/key.lua \
   > "$OUT/3c-model-view-util.patch"
 
@@ -86,7 +91,7 @@ git diff $BASE $TIP -- \
 
 # 3f · input permanent docs
 git diff $BASE $TIP -- \
-  doc/input_api.md doc/development/internals/user_input.md \
+  CHANGELOG.md doc/input_api.md doc/development/internals/user_input.md \
   doc/development/decisions/ doc/development/technical_debt/ doc/development/tests.md \
   > "$OUT/3f-input-docs.patch"
 ```

@@ -1,5 +1,5 @@
 diff --git a/src/controller/controller.lua b/src/controller/controller.lua
-index e22f3c4..27e1e59 100644
+index e22f3c4..5d25d9e 100644
 --- a/src/controller/controller.lua
 +++ b/src/controller/controller.lua
 @@ -1,8 +1,10 @@
@@ -13,16 +13,18 @@ index e22f3c4..27e1e59 100644
  local LANG = require("util.eval")
  
  local messages = {
-@@ -20,16 +22,70 @@ local get_user_input = function()
+@@ -20,16 +22,77 @@ local get_user_input = function()
    if love.state.app_state == 'inspect' then return end
    return love.state.user_input
  end
 +
++
 +--- Intra-route forward: the console route hands the event
 +--- to the widget it activated (nil under 'inspect' — the
-+--- console owns that surface itself). The sink receives the
++--- console owns that surface itself). The widget receives the
 +--- uniform per-channel signature with the read-only
-+--- keys_pressed proxy (spec §2, AC-8). Returns whether the
++--- pressed-keys view (doc/development/decisions/input.md, Decision 9 and
++--- Decision 13). Returns whether the
 +--- widget was the surface (true = forwarded), so the caller
 +--- falls back to the console line only when no widget is up.
 +--- @param k string
@@ -59,23 +61,28 @@ index e22f3c4..27e1e59 100644
 -
 -local _supported = {
 +--- @type boolean
-+-- set when a project installs any pointer/click handler; with an
-+-- active overlay it marks a non-blocking project as still "live"
-+-- (ruling a): keep the project route, Ctrl+Esc -> console.
++-- set when a project installs any pointer/click handler.
++-- Together with a shown input widget it marks a non-blocking
++-- project (one that overrides no update/draw, e.g. a
++-- pen-and-paper game) as still "live"
++-- (doc/development/technical_debt/input.md, "Input-only / pointer-only
++-- projects stay live in `project_open` (RESOLVED, ruling
++-- a)"): keep the project route, Ctrl+Esc -> console.
 +local user_pointer
 +
 +
-+-- keyboard/text and pointer are split because they have
-+-- different install paths AND different lifecycles: the
-+-- keyboard/text slots route through the four-tier chain and
-+-- are released at running->project_open, while pointer natives
-+-- are pure-wrapped straight into love.* and stay hooked until
-+-- the project stops. The #77 widget-lockout problem only ever
-+-- existed on keyboard/text; pointer never had the gate and was
-+-- deliberately out of scope. See decisions/input.md #11
-+-- "route connects only while running" (which forbids unifying
-+-- the two lifecycles). Pointer delivery itself: see the debt
-+-- note referenced at handlers.mousepressed below.
++-- keyboard/text and pointer are split: different install
++-- paths AND lifecycles. Keyboard/text events run the
++-- three-consumer chain (shortcuts -> hooks -> widget) and
++-- return to the console at running->project_open; pointer
++-- handlers are error-wrapped
++-- straight into love.* and stay hooked until the project
++-- stops. The widget-lockout problem only ever existed on
++-- keyboard/text; pointer was deliberately left as-is. See
++-- doc/development/decisions/input.md #11 "route connects only while running"
++-- (which forbids unifying the two lifecycles). Pointer
++-- delivery itself: see the debt note referenced at
++-- handlers.mousepressed below.
 +local _keyboard = {
    'keypressed',
    'keyreleased',
@@ -86,7 +93,7 @@ index e22f3c4..27e1e59 100644
    'mousemoved',
    'mousepressed',
    'mousereleased',
-@@ -40,6 +96,14 @@ local _supported = {
+@@ -40,6 +103,14 @@ local _supported = {
    'touchreleased',
  }
  
@@ -101,12 +108,18 @@ index e22f3c4..27e1e59 100644
  --- @param CC ConsoleController
  --- @param msg string
  local function user_error_handler(CC, msg)
-@@ -68,31 +132,135 @@ local function wrap(f, CC, ...)
+@@ -68,31 +139,141 @@ local function wrap(f, CC, ...)
    end
  end
  
-+--- The project's own handler for a slot, error-wrapped —
-+--- nil when the project did not define one.
++--- The project's own handler for an event, error-wrapped;
++--- nil when the project did not define one. "Native" here
++--- and below = a handler the project installed in its own
++--- sandboxed love table (passed in as `userlove`). The wrap
++--- routes errors to the project error handler; the return
++--- value is discarded, which suits fire-and-forget pointer
++--- handlers — chain_native below is the variant for chain
++--- participants, which must keep the return.
  --- @param userlove table
  --- @param CC ConsoleController
 -local set_handlers = function(userlove, CC)
@@ -125,14 +138,14 @@ index e22f3c4..27e1e59 100644
 +  end
 +end
 +
-+--- Wrap a project keyboard native as a chain participant: run
-+--- it inside the project canvas with project error handling AND
-+--- PROPAGATE its return value — the chain's truthy=consume
-+--- contract depends on it (resolves C3/C14 return-propagation;
-+--- wrap_handler above discards the return, which is fine for the
-+--- fire-and-forget pointer/click handlers but not for a chain
-+--- tier). A raised error routes to user_error_handler and the
-+--- call reports non-consuming (nil).
++--- Wrap a project keyboard handler for the dispatch chain:
++--- run it with project error handling, drawing routed onto
++--- the project's canvas (CC:use_canvas — the offscreen
++--- surface project draws land on), AND propagate its return
++--- value — the chain's truthy=consume contract depends on it
++--- (doc/development/decisions/input.md, Decision 2: return-propagation).
++--- A raised error routes to user_error_handler and the call
++--- reports non-consuming (nil).
 +--- @param CC ConsoleController
 +--- @param fn function
 +--- @return function
@@ -160,13 +173,14 @@ index e22f3c4..27e1e59 100644
 +  end
 +end
 +
-+--- The project's own keyboard/text handlers, error-wrapped as
-+--- tier-3 chain participants (R7 pure wrap) — return values
-+--- preserved so a native can consume like any participant.
++--- The project's own keyboard/text handlers, error-wrapped for
++--- seeding as hooks[event] (doc/development/decisions/input.md,
++--- Decision 10 revised: pure wrap) — return values
++--- preserved so a seeded hook can consume like any participant.
 +--- @param userlove table
 +--- @param CC ConsoleController
-+--- @return table natives
-+local function project_natives(userlove, CC)
++--- @return table handlers
++local function project_handlers(userlove, CC)
 +  return {
 +    keypressed =
 +        keyboard_native(userlove, CC, 'keypressed'),
@@ -177,24 +191,27 @@ index e22f3c4..27e1e59 100644
 +  }
 +end
 +
-+--- The project route occupies the keyboard/text slots for
++--- The project route occupies the keyboard/text handlers for
 +--- the run; the project's own handlers ride along for
-+--- delegation (never slot occupants themselves).
++--- delegation (never route owners themselves).
 +--- @param userlove table
 +--- @param CC ConsoleController
 +-- `userlove`: the project's sandboxed `love` table. `occupy`:
-+-- take over the keyboard/text slots for the project route's
-+-- run (Decision 11 uses this verb). Giving the project route
++-- take over the keyboard/text handlers for the project route's
++-- run (doc/development/decisions/input.md Decision 11 uses
++-- this verb). Giving the project route
 +-- its own connect path — not a generic route swap — is
 +-- deliberate: the three routes are not yet fully symmetric
 +-- (the editor is still reached via the console fork), so PIC
-+-- is wired explicitly here. See decisions/input.md #1
++-- is wired explicitly here. See doc/development/decisions/input.md #1
 +-- "route-centric routing" + #11 "route connects only while
-+-- running". (`userlove`/`forward_*` renames: technical_debt.)
++-- running". It installs even with no project handlers: an
++-- unhandled event must stop in the project route, never reach the
++-- hidden console. (`userlove`/`forward_*` renames: technical_debt.)
 +local function occupy_keyboard(userlove, CC)
 +  local pic = Controller.project_input
 +  local compy = CC:get_project_env().compy
-+  pic:activate(project_natives(userlove, CC), compy.input)
++  pic:activate(project_handlers(userlove, CC), compy.input)
 +  -- wrapped (not assigned) to bind `pic` as method receiver:
 +  -- `love.keypressed = pic.keypressed` would drop `self`.
 +  love.keypressed = function(k, sc, isr)
@@ -206,10 +223,6 @@ index e22f3c4..27e1e59 100644
 +  love.keyreleased = function(k)
 +    return pic:keyreleased(k)
 +  end
-+  -- TODO(debt): `_keyboard_route` is written here (and in
-+  -- set_love_keypressed) but read nowhere — a write-only field.
-+  -- See technical_debt/input.md "`_keyboard_route` is write-only".
-+  Controller._keyboard_route = pic
 +end
 +
 +--- @param userlove table
@@ -250,12 +263,12 @@ index e22f3c4..27e1e59 100644
    local udr = userlove.draw
    local mdr = View.main_draw
    if udr and udr ~= mdr then
-@@ -106,6 +274,52 @@ local set_handlers = function(userlove, CC)
+@@ -106,6 +287,53 @@ local set_handlers = function(userlove, CC)
    end
  end
  
-+-- `userlove` = the project's sandboxed `love` table (see
-+-- occupy_keyboard above; rename tracked in technical_debt).
++-- `userlove` = the project's sandboxed `love` table 
++-- (also used in occupy_* and hook_* above); 
 +--- @param userlove table
 +--- @param CC ConsoleController
 +local set_handlers = function(userlove, CC)
@@ -265,36 +278,37 @@ index e22f3c4..27e1e59 100644
 +  hook_draw(userlove)
 +end
 +
-+local INPUT_CALLBACK_SLOTS = {
-+  'on_key_pressed', 'on_text_input', 'on_key_released',
-+  'on_text_entered', 'on_limit_reached', 'validator',
-+  'highlighter', 'before_submit', 'after_submit',
-+  'before_cancel', 'after_cancel',
-+}
++local HOOK_EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
 +
 +--- @param t table
 +local function wipe_table(t)
 +  for k in pairs(t) do rawset(t, k, nil) end
 +end
 +
++--- Teardown of the project's compy.input registrations
++--- (doc/development/decisions/input.md, Decision 11): clears the
++--- project's shortcuts and hooks. The callbacks table lives on the
++--- widget and is re-seeded by reset_widget_outputs (below), so it
++--- is not touched here. Reaches through the frozen container's
++--- sub-tables — the container itself refuses direct writes
++--- (Decision 7 revised).
 +--- @param CC ConsoleController
 +local function reset_compy_input(CC)
 +  local input = CC:get_project_env().compy.input
-+  wipe_table(input.handlers.keypressed)
-+  wipe_table(input.handlers.keyreleased)
-+  wipe_table(input.handlers.textinput)
-+  for _, k in ipairs(INPUT_CALLBACK_SLOTS) do
-+    input[k] = nil
-+  end
++  wipe_table(input.shortcuts.keypressed)
++  wipe_table(input.shortcuts.keyreleased)
++  wipe_table(input.shortcuts.textinput)
++  for _, ev in ipairs(HOOK_EVENTS) do input.hooks[ev] = nil end
 +end
 +
++--- Teardown of the widget's own output/callback state on project
++--- stop (Decision 11): re-seed the callbacks to their stay-open
++--- defaults (AC10 — not a wipe-to-nil) and clear the evaluator's
++--- highlighter.
 +local function reset_widget_outputs()
 +  local ui = love.state.user_input_controller
 +  if not ui then return end
-+  ui.validator = nil
-+  ui.on_text_entered = nil
-+  ui.on_limit_reached = noop
-+  ui.result = nil
++  ui:reset_callbacks()
 +  if ui.model and ui.model.evaluator then
 +    ui.model.evaluator.highlighter = nil
 +  end
@@ -303,7 +317,7 @@ index e22f3c4..27e1e59 100644
  local click_delay = 0.4
  local drift_tolerance = 2.5
  
-@@ -133,6 +347,53 @@ local function no_drift(prev, cur)
+@@ -133,6 +361,57 @@ local function no_drift(prev, cur)
    return false
  end
  
@@ -311,11 +325,14 @@ index e22f3c4..27e1e59 100644
 +-- { left-key, right-key, generic-name } in precedence order.
 +local COMBO_MODS = Key.mod_triples
 +
++
 +--- Serialise a key event into a canonical combo string ("ctrl+s", "alt+shift+f4").
 +--- Held modifiers are prepended in COMBO_MODS precedence, l/r folded to generic names.
-+--- NOTE: the per-keypress table allocation here, and whether dispatch should match on
-+--- keys_pressed directly instead of serialising, is an open design question deferred to
-+--- 0.1.0-m5 (three-level dispatch) — see implementation/reviews/M2-human-review.md (A6).
++--- NOTE: the per-keypress table allocation here, and
++--- whether dispatch should match on keys_pressed directly
++--- instead of serialising, is an open design question
++--- (doc/development/technical_debt/input.md, "Combo-string dispatch
++--- allocates a table per call").
 +--- @param k string            triggering key (raw LÖVE name)
 +--- @param keys_pressed table  { keyname -> true } live held-key set
 +--- @return string             canonical combo string
@@ -331,11 +348,12 @@ index e22f3c4..27e1e59 100644
 +end
 +
 +-- Memoised read-only view over Controller.keys_pressed handed to
-+-- every chain consumer (spec §1, AC-8): reads pass through to the
++-- every chain consumer (doc/development/decisions/input.md, Decision 13):
++-- reads pass through to the
 +-- live held set; assignment raises. Rebuilt only when the backing
 +-- identity changes (tests swap the table wholesale), so dispatch
 +-- allocates nothing per event. NOTE: under LuaJIT/Lua 5.1 `pairs`
-+-- ignores __pairs, so pairs(proxy) yields nothing on this
++-- ignores __pairs, so iterating this view yields nothing on this
 +-- platform; the load-bearing contract (read-through + write-raise)
 +-- holds, and __pairs is kept for 5.2+ hosts.
 +local held_backing, held_proxy
@@ -357,7 +375,7 @@ index e22f3c4..27e1e59 100644
  --- @class Controller
  --- @field _defaults Handlers
  --- @field _userhandler Handlers
-@@ -153,13 +414,20 @@ Controller = {
+@@ -153,13 +432,21 @@ Controller = {
    --- @private
    _userhandlers = {},
  
@@ -374,12 +392,13 @@ index e22f3c4..27e1e59 100644
 -    local function keypressed(k)
 +    local function keypressed(k, _, isr)
 +      -- TODO(debt): these debug-hotkey if-blocks predate combos;
-+      -- migrate onto the combo-table mechanism (Decision 8). See
-+      -- technical_debt/input.md "Console debug hotkeys are ad-hoc".
++      -- migrate onto the combo-table mechanism
++      -- (doc/development/decisions/input.md, Decision 8). See
++      -- doc/development/technical_debt/input.md "Console debug hotkeys are ad-hoc".
        if Key.ctrl() and Key.shift() then
          if love.DEBUG then
            if k == "1" then
-@@ -184,17 +452,31 @@ Controller = {
+@@ -184,6 +471,13 @@ Controller = {
            end
          end
        end
@@ -388,21 +407,18 @@ index e22f3c4..27e1e59 100644
 +      -- on consume we stop. Two-statement (not `or`-chained) form
 +      -- is deliberate: this is the terminal love-boundary, so the
 +      -- return is not propagated (LÖVE ignores handler returns).
-+      -- `forward_*` rename tracked in technical_debt/input.md.
++      -- `forward_*` rename tracked in doc/development/technical_debt/input.md.
 +      if forward_keypressed(k, isr) then return end
        CC:keypressed(k)
      end
      Controller._defaults.keypressed = keypressed
-+    Controller._keyboard_route = CC
-     love.keypressed = keypressed
-   end,
- 
+@@ -193,8 +487,14 @@ Controller = {
    --- @private
    --- @param CC ConsoleController
    set_love_keyreleased = function(CC)
 +    -- Same wrapper shape as keypressed above (terminal love-
 +    -- boundary, return not propagated). CC is the console — the
-+    -- named default/restore route (decisions/input.md #1); not
++    -- named default/restore route (doc/development/decisions/input.md #1); not
 +    -- "special", just the default occupant. Per-event installer
 +    -- repetition + `forward_*` naming logged in technical_debt.
      --- @diagnostic disable-next-line: duplicate-set-field
@@ -411,7 +427,7 @@ index e22f3c4..27e1e59 100644
        CC:keyreleased(k)
      end
      Controller._defaults.keyreleased = keyreleased
-@@ -204,7 +486,10 @@ Controller = {
+@@ -204,7 +504,10 @@ Controller = {
    --- @private
    --- @param CC ConsoleController
    set_love_textinput = function(CC)
@@ -422,27 +438,33 @@ index e22f3c4..27e1e59 100644
        CC:textinput(t)
      end
      Controller._defaults.textinput = textinput
-@@ -461,7 +746,12 @@ Controller = {
+@@ -461,7 +764,16 @@ Controller = {
          love.draw = View.end_draw
          return true
        end
 -      if love.state.app_state == 'running' then
-+      -- A running project stops to console; so does a still-live
-+      -- non-blocking one (overlay/pointer, ruling a). An idle
-+      -- console in project_open falls through and the app quits.
++      -- A running project stops to the console. So does the
++      -- corner case: a paper-and-pen style project that is
++      -- still interactive (input widget shown or pointer
++      -- handlers installed — doc/development/technical_debt/input.md,
++      -- "Input-only / pointer-only projects stay live in
++      -- `project_open` (RESOLVED, ruling a)"). An idle
++      -- console in project_open falls through: the app quits.
 +      if love.state.app_state == 'running'
 +          or (love.state.app_state == 'project_open'
 +              and Controller.user_is_interactive()) then
          CC:stop_project_run()
          return true
        end
-@@ -472,9 +762,30 @@ Controller = {
+@@ -472,9 +784,34 @@ Controller = {
    ----------------
    ---  public  ---
    ----------------
-+  --- Restore console keyboard/text at the 'running' ->
-+  --- 'project_open' boundary (AC-27). Pointer slots stay
-+  --- hooked until stop (AC-28).
++  --- Hand keyboard/text back to the console at the moment a
++  --- project's code finishes running but the project stays
++  --- open (the 'running' -> 'project_open' state change —
++  --- doc/development/decisions/input.md, Decision 11). Pointer handlers
++  --- stay hooked until the project stops (same decision).
 +  --- @param CC ConsoleController
 +  release_keyboard_route = function(CC)
 +    Controller.project_input:deactivate()
@@ -454,20 +476,22 @@ index e22f3c4..27e1e59 100644
    --- @param CC ConsoleController
    --- @param CV ConsoleView
    set_default_handlers = function(CC, CV)
-+    -- the console is the NAMED restore target: releasing
-+    -- the project route precedes reinstalling the console.
++    -- When the project route lets go of the keyboard/text
++    -- callbacks they always return to the console: it is the
++    -- default/restore route (doc/development/decisions/input.md #1), so the
++    -- release must precede reinstalling the console below.
 +    -- The only console/PIC tie is this restore ordering +
-+    -- inspect suppression (decisions/input.md #11/#12) — not
++    -- inspect suppression (doc/development/decisions/input.md #11/#12) — not
 +    -- a special-case beyond that.
 +    Controller.project_input:deactivate()
 +
 +    -- TODO(debt): these ten near-identical set_love_* installers
 +    -- could be driven from a { event -> installer } table. See
-+    -- technical_debt/input.md "Per-event set_love_* installers".
++    -- doc/development/technical_debt/input.md "Per-event set_love_* installers".
      Controller.set_love_keypressed(CC)
      Controller.set_love_keyreleased(CC)
      Controller.set_love_textinput(CC)
-@@ -505,9 +816,12 @@ Controller = {
+@@ -505,9 +842,12 @@ Controller = {
      --- SKIPPED threaderror
      --- SKIPPED lowmemory
  
@@ -480,7 +504,7 @@ index e22f3c4..27e1e59 100644
      Controller.set_love_draw(CC, CV)
      Controller._defaults.draw = View.main_draw
      Controller.set_love_quit(CC)
-@@ -525,7 +839,8 @@ Controller = {
+@@ -525,7 +865,8 @@ Controller = {
      --- @diagnostic disable-next-line: undefined-field
      local handlers = love.handlers
  
@@ -490,7 +514,7 @@ index e22f3c4..27e1e59 100644
        --- Power shortcuts
        local function quickswitch()
          if Key.ctrl() and not Key.alt() and k == 't' then
-@@ -622,34 +937,38 @@ Controller = {
+@@ -622,34 +963,35 @@ Controller = {
          project_state_change()
        end
  
@@ -499,18 +523,15 @@ index e22f3c4..27e1e59 100644
 -        user_input.C:keypressed(k)
 -      else
 -        if love.keypressed then return love.keypressed(k) end
-+      -- no overlay gate: the slot occupant (the active
-+      -- route's controller) always receives; widgets are
-+      -- reached intra-route, never by dispatch here
-+      -- this is `love.handlers.keypressed` (the raw event-pump
-+      -- entry), one level above the slot. `love.keypressed` IS
-+      -- the route slot: set_love_keypressed installs the console
-+      -- route's handler into it, occupy_keyboard installs the
-+      -- project route's — so forwarding here = "invoke whoever
-+      -- currently occupies the slot". (Mirrors stock LÖVE's own
-+      -- love.handlers[name] -> love[name].) See decisions/input.md
-+      -- #1 "route-centric routing" + #11 "route occupies the
-+      -- keyboard/text slots".
++      -- This is `love.handlers.keypressed`, the raw
++      -- event-pump entry; `love.keypressed` below holds the
++      -- active route's handler (console via
++      -- set_love_keypressed, project via occupy_keyboard).
++      -- Forwarding = invoke whichever route is installed.
++      -- Widgets are reached inside the route, never gated
++      -- here. (Mirrors stock LÖVE's love.handlers[name] ->
++      -- love[name].) See doc/development/decisions/input.md #1
++      -- "route-centric routing" + #11.
 +      if love.keypressed then
 +        return love.keypressed(k, sc, isr)
        end
@@ -544,30 +565,30 @@ index e22f3c4..27e1e59 100644
        end
      end
  
-@@ -658,6 +977,18 @@ Controller = {
+@@ -658,6 +1000,18 @@ Controller = {
      --- @param btn integer
      --- @param touch boolean
      --- @param presses number
-+    -- Honest answer: pointer has NO four-tier chain to mirror
-+    -- the keyboard's. This is an unstructured broadcast — deliver
-+    -- to the widget whenever one is present (no bounds/consume
-+    -- check, return ignored), then unconditionally to the slot
-+    -- occupant (the project's native). We touch `user_input`
-+    -- directly because the widget needs pointer events (click-to-
-+    -- cursor / drag-select) and there is no chain to carry them.
-+    -- Pointer never had the #77 widget-lockout, so its delivery
-+    -- was left as pre-existing behaviour, deliberately out of
-+    -- scope. Whether pointer should get a mirrored consume-chain
-+    -- is an OPEN owner ruling — see technical_debt/input.md
++    -- Pointer has NO three-consumer chain: this is an
++    -- unstructured broadcast. The widget gets the event
++    -- whenever present (no bounds/consume check, return
++    -- ignored), then the project's own handler gets it
++    -- unconditionally. `user_input` is touched directly
++    -- because the widget needs pointer events (click-to-
++    -- cursor / drag-select) and no chain carries them.
++    -- Pointer never had the widget-lockout problem, so its
++    -- delivery stays pre-existing behaviour, deliberately
++    -- out of scope. A mirrored consume-chain for pointer is
++    -- an OPEN owner ruling — see doc/development/technical_debt/input.md
 +    -- "Pointer delivery is an unstructured broadcast".
      handlers.mousepressed = function(x, y, btn, touch, presses)
        local user_input = get_user_input()
        if user_input then
-@@ -775,6 +1106,13 @@ Controller = {
+@@ -775,6 +1129,13 @@ Controller = {
      return (user_update or user_draw)
    end,
  
-+  --- Ruling (a): a non-blocking project is still "live" while it
++  --- A non-blocking project is still "live" while it
 +  --- has an active input overlay or a pointer/click handler — it
 +  --- keeps the project route and Ctrl+Esc returns to the console.
 +  user_is_interactive = function()
@@ -577,7 +598,7 @@ index e22f3c4..27e1e59 100644
    --- @param userlove table
    save_user_handlers = function(userlove)
      --- @param key string
-@@ -799,9 +1137,13 @@ Controller = {
+@@ -799,9 +1160,13 @@ Controller = {
      set_handlers(Controller._userhandlers, CC)
    end,
  
@@ -592,247 +613,201 @@ index e22f3c4..27e1e59 100644
    end,
  
    oneshot = function()
-@@ -817,3 +1159,6 @@ Controller = {
+@@ -817,3 +1182,5 @@ Controller = {
      end
    end,
  }
 +
-+-- the single project-route instance the slot wiring uses
 +Controller.project_input = ProjectInputController()
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index cd9b28e..ad01936 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -9,11 +9,11 @@ local class = require('util.class')
+ --- @oaram CC ConsoleController
+ local function new(M, CC)
+   return {
+-    input = UserInputController(M.input, nil, true),
++    input = UserInputController(M.input, true, true):always_shown(),
+     model = M,
+     search = SearchController(
+       M.search,
+-      UserInputController(M.search.input, nil, true)
++      UserInputController(M.search.input, true):always_shown()
+     ),
+     console = CC,
+     view = nil,
+@@ -704,6 +704,7 @@ function EditorController:_normal_mode_keys(k)
+       end
+ 
+       self:_handle_submit(add)
++      block_input()
+     end
+ 
+     if not Key.ctrl()
+@@ -711,6 +712,7 @@ function EditorController:_normal_mode_keys(k)
+         and not Key.alt()
+         and Key.is_enter(k) then
+       self:_handle_submit(replace)
++      block_input()
+     end
+   end
+   local function load()
+@@ -718,11 +720,13 @@ function EditorController:_normal_mode_keys(k)
+         not Key.shift()
+         and k == "escape" then
+       load_selection()
++      block_input()
+     end
+     if not Key.ctrl() and
+         Key.shift() and
+         k == "escape" then
+       load_selection(true)
++      block_input()
+     end
+   end
+   local function delete()
 diff --git a/src/controller/projectInputController.lua b/src/controller/projectInputController.lua
 new file mode 100644
-index 0000000..998e210
+index 0000000..f91f8d5
 --- /dev/null
 +++ b/src/controller/projectInputController.lua
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,154 @@
 +local class = require('util.class')
 +require("util.key")
 +
-+-- The project route: occupant of the keyboard/text slots while
++-- The project route: owner of the keyboard/text handlers while
 +-- a project run owns the screen — a sibling to ConsoleController
-+-- / EditorController. Inside the route every keyboard/text event
-+-- runs ONE four-tier chain (spec §2), the same shape on all
-+-- three channels:
++-- / EditorController. The route is DUMB: it navigates each
++-- keyboard/text event through THREE consumers in order, stopping
++-- at the first that returns truthy (doc/development/decisions/input.md,
++-- Decision 2 revised), the same shape on all three channels:
 +--
-+--   1. framework_handlers.<event>[combo]  structural keys
-+--      (spec §5: keypressed['return']/['escape'], engaged
-+--       only while the widget is shown; non-overridable)
-+--   2. compy.input.handlers.<event>[combo]  project combo
-+--      handlers (R14 per-event sub-tables; normalising §1)
-+--   3. per-event generic callback           on_key_pressed /
-+--      on_text_input / on_key_released — precedence (R7):
-+--      explicit on_* > native captured at activate > noop+log
-+--   4. sink                                  the singleton
-+--      widget; terminal, with an INTERNAL hidden-check
-+--      (userInputController) — no external gating wrapper
++--   1. compy.input.shortcuts[event][combo]  project shortcut
++--      combos (doc/development/decisions/input.md, Decision 8:
++--      per-event sub-tables, normalising)
++--   2. compy.input.hooks[event]             one hook per event
++--      (doc/development/decisions/input.md, Decision 10 revised): the
++--      single source of truth, seeded once at activate() with the
++--      project's captured love.* handler where unset; a nil clears
++--      with no resurrection
++--   3. the widget                           terminal; consumes
++--      whenever it is shown (its own internal flag), skipped when
++--      hidden. Enter/Escape/submit/cancel are the WIDGET's own
++--      business (userInputController), signalled via callbacks —
++--      never a routing concern.
 +--
-+-- Truthy return at any tier consumes the event (stop, sink
-+-- included); falsey falls through. Consuming never removes a
-+-- tier (R13); the sink's return carries no chain meaning (R12).
++-- Truthy at a consumer stops the walk; falsey falls through. The
++-- widget's participation derives from its shownness, not a return
++-- value (doc/development/decisions/input.md, Decision 5 revised).
 +-- Routing contract: doc/development/internals/user_input.md
 +
-+-- Event type -> its tier-3 generic-callback field on compy.input.
-+local CHANNELS = {
-+  keypressed  = 'on_key_pressed',
-+  keyreleased = 'on_key_released',
-+  textinput   = 'on_text_input',
-+}
++-- The three uniform event channels the chain dispatches on.
++local EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
 +
-+--- @param branch string
-+local function log_branch(branch)
-+  if love.DEBUG then
-+    Log.debug('project input: ' .. branch)
++--- Seed the project's hooks table (doc/development/decisions/input.md,
++--- Decision 10 revised): each event with no explicit project hook gets
++--- the project's own love.* handler, once, at activation. After this
++--- the hooks table is the single source of truth — a nil'd hook clears,
++--- with no resurrection.
++--- Runs after the project's top-level code, so an explicit hooks[event]
++--- set there is already present and correctly preserved.
++--- @param hooks table  compy_input.hooks
++--- @param handlers table  { event -> fn? }
++local function seed_hooks(hooks, handlers)
++  for _, event in ipairs(EVENTS) do
++    if hooks[event] == nil then
++      hooks[event] = handlers[event]
++    end
 +  end
-+end
-+
-+--- Run a route-owned before_/after_ hook (spec §5, AC-26): a
-+--- project-set function fires; an absent one debug-logs — the
-+--- same noop+log default shape as tier 3 (log_branch above).
-+--- Hooks live on compy_input (the route), never on the
-+--- widget (spec §5 scope note: "the widget never owns
-+--- submit").
-+--- @param ci table  compy_input surface
-+--- @param name string  hook field name
-+local function run_hook(ci, name, ...)
-+  local hook = ci[name]
-+  if hook then
-+    hook(...)
-+    return
-+  end
-+  log_branch(name .. ' noop')
-+end
-+
-+--- @return UserInputController? ui  the singleton, only while
-+--- shown (AC-20: hidden -> no framework entry engages, so the
-+--- combo falls through to lower tiers like any other key).
-+local function shown_widget()
-+  local ui = love.state.user_input_controller
-+  if ui and ui:is_shown() then return ui end
-+end
-+
-+--- Tier-1 submit entry (spec §5, AC-17/20/21): before_submit
-+--- always runs; after_submit only on accept (ui:submit()
-+--- returns the delivered text, nil on reject/empty).
-+--- @param self ProjectInputController
-+--- @return fun(k: string, keys_pressed: table)
-+local function framework_submit(self)
-+  return function(_, keys_pressed)
-+    local ui = shown_widget()
-+    if not ui then return false end
-+    local ci = self.compy_input
-+    run_hook(ci, 'before_submit', keys_pressed)
-+    local text = ui:submit()
-+    if text ~= nil then run_hook(ci, 'after_submit', text) end
-+    return true
-+  end
-+end
-+
-+--- Tier-1 cancel entry (spec §5, AC-19/20/21): before_/
-+--- after_cancel bracket ui:cancel() unconditionally — cancel
-+--- always dismisses, unlike submit there is no reject path.
-+--- @param self ProjectInputController
-+--- @return fun(k: string, keys_pressed: table)
-+local function framework_cancel(self)
-+  return function(_, keys_pressed)
-+    local ui = shown_widget()
-+    if not ui then return false end
-+    local ci = self.compy_input
-+    run_hook(ci, 'before_cancel', keys_pressed)
-+    ui:cancel()
-+    run_hook(ci, 'after_cancel')
-+    return true
-+  end
-+end
-+
-+-- Tier-1 return/escape (spec §5): populated once, at
-+-- construction, not per-activate() — they are structural/
-+-- non-overridable, not project-installed, so they exist
-+-- whether or not a project is currently running.
-+--- @param self ProjectInputController
-+local function install_tier1(self)
-+  local kp = self.framework_handlers.keypressed
-+  kp['return'] = framework_submit(self)
-+  kp['escape'] = framework_cancel(self)
 +end
 +
 +local function new()
-+  local self = {
-+    natives = {},
-+    compy_input = nil,
-+    framework_handlers = {
-+      keypressed  = {},
-+      keyreleased = {},
-+      textinput   = {},
-+    },
-+  }
-+  install_tier1(self)
-+  return self
++  return { compy_input = nil }
 +end
 +
 +--- @class ProjectInputController
-+--- @field natives table
 +--- @field compy_input table?
-+--- @field framework_handlers table
 +ProjectInputController = class.create(new)
 +
-+--- Tier 3 — the per-event generic callback, resolved by
-+--- precedence (spec §8 R7): an explicit compy.input.on_* wins;
-+--- else the project's native captured at activate; else a noop
-+--- that only debug-logs and never consumes (AC-10). A truthy
-+--- return consumes; falsey falls through to the sink.
++--- The three-consumer walk: shortcuts[event][combo] →
++--- hooks[event] → widget, stopping at the first that consumes.
++--- A shortcut or hook consumes by returning truthy; the widget
++--- consumes whenever it is shown (its own internal flag), and is
++--- skipped when hidden — so the walk reports consumed iff a
++--- consumer fired or the widget was shown. A free function over
++--- plain tables + a widget reference, so any adopter (not only
++--- the project overlay) can reuse it over its own instance.
++--- @param shortcuts table   per-event combo tables
++--- @param hooks table       per-event hook fns
++--- @param widget table      responds to widget[event](...) + is_shown()
 +--- @param event string
-+--- @return boolean? consumed
-+--- TODO(debt): tier-3 precedence is fixed at activate but
-+--- re-resolved per event; a default noop-that-logs would also
-+--- drop the `if cb` guard. See technical_debt/input.md
-+--- "`_tier3` re-resolves the callback precedence on every event".
-+function ProjectInputController:_tier3(event, ...)
-+  local ci = self.compy_input
-+  local cb = ci[CHANNELS[event]] or self.natives[event]
-+  if cb then return cb(...) end
-+  log_branch('generic callback noop: ' .. event)
++--- @param trigger string
++--- @return boolean consumed
++local function dispatch(shortcuts, hooks, widget, event, trigger, ...)
++  local combo = Controller.combo_string(
++    trigger, Controller.keys_pressed)
++  local sc = shortcuts[event][combo]
++  if sc and sc(...) then return true end
++  local hk = hooks[event]
++  if hk and hk(...) then return true end
++  if widget and widget:is_shown() then
++    widget[event](widget, ...)
++    return true
++  end
 +  return false
 +end
 +
-+--- (Not reached when a prior tier consumed: `_dispatch` short-
-+--- circuits with `return true` at each tier, so `_sink` runs
-+--- only on full fall-through.)
-+--- TODO(debt): reaches the widget via the `love.state` global +
-+--- nil-guards it; inject `self.input` and assert the singleton.
-+--- See technical_debt/input.md "Widget sink reaches the
-+--- singleton via `love.state` global".
-+--- Tier 4 — the terminal widget sink. Always invoked (never
-+--- gated from outside): the hidden-check is INTERNAL to the
-+--- sink, which no-ops while the overlay is hidden (AC-11/13).
-+--- The sink's return is discarded — it carries no chain
-+--- meaning (R12); the chain ends here regardless.
-+--- @param event string
-+function ProjectInputController:_sink(event, ...)
-+  local ui = love.state.user_input_controller
-+  if ui then ui[event](ui, ...) end
-+end
-+
-+--- Run the four-tier chain for one event. `trigger` is the
-+--- combo token (the key, or the text); the varargs are the
-+--- channel payload handed to every participant. Returns truthy
-+--- once a tier consumes; otherwise the event reaches the sink.
++--- Run the chain for one event. `trigger` is the combo token
++--- (the key, or the text); the varargs are the channel payload.
 +--- @param event string
 +--- @param trigger string
-+--- @return boolean? consumed
-+--- The staged form (not one `or` chain) guards nil per-tier
-+--- handlers: `fw`/`ph` come from sparse combo tables and are
-+--- often nil, so each is `x and x(...)`. A single `or` chain
-+--- would need every tier guaranteed-callable.
++--- @return boolean consumed
 +function ProjectInputController:_dispatch(event, trigger, ...)
-+  local combo = Controller.combo_string(
-+    trigger, Controller.keys_pressed)
-+  local fw = self.framework_handlers[event][combo]
-+  if fw and fw(...) then return true end
-+  local ph = self.compy_input.handlers[event][combo]
-+  if ph and ph(...) then return true end
-+  if self:_tier3(event, ...) then return true end
-+  return self:_sink(event, ...)
++  return dispatch(
++    self.compy_input.shortcuts, self.compy_input.hooks,
++    love.state.user_input_controller, event, trigger, ...)
 +end
 +
-+--- Take the keyboard route for a project run. `natives` holds
-+--- the project's own error-wrapped love.* keyboard handlers
-+--- (from the caller); they seed tier 3 as default participants
-+--- (R7 pure wrap) — read once here, never re-consulted, and
-+--- only used when the project sets no on_* (precedence in
-+--- _tier3). No handler is copied onto compy.input.
-+--- @param natives table?
++--- Take the keyboard route for a project run. `handlers` holds the
++--- project's own error-wrapped love.* keyboard handlers (from the
++--- caller); they seed the hooks table once here (seed_hooks;
++--- doc/development/decisions/input.md, Decision 10 revised) — only where
++--- the project set no explicit hook. After seeding, hooks is read
++--- directly on each event; there is no separate handlers store.
++--- @param handlers table?
 +--- @param compy_input table
-+--- (Natives are seeded by precedence, never copied onto
-+--- compy.input — see decisions/input.md #10 "legacy natives
-+--- pure-wrapped as tier-3".)
-+function ProjectInputController:activate(natives, compy_input)
-+  self.natives = natives or {}
++function ProjectInputController:activate(handlers, compy_input)
 +  self.compy_input = compy_input
++  seed_hooks(compy_input.hooks, handlers or {})
 +end
 +
-+--- Release the route (AC-27/29). The caller restores the
-+--- console/framework slots around this call (controller.lua
-+--- release_keyboard_route / set_default_handlers) — deactivate
-+--- only drops THIS controller's own references, it never
-+--- touches love.* itself.
++--- Forget the project's handlers (doc/development/decisions/input.md,
++--- Decision 11).
++--- Nulling compy_input does not itself disconnect anything: the
++--- caller (controller.lua release_keyboard_route /
++--- set_default_handlers) re-points the love.* callbacks at the
++--- console, after which _dispatch is unreachable. Dropping the
++--- reference here lets the stopped project's handlers be collected
++--- and guarantees the next activate() starts from a clean state
++--- instead of a stale project's callbacks.
 +function ProjectInputController:deactivate()
 +  self.compy_input = nil
-+  self.natives = {}
 +end
 +
-+--- Keypressed (AC-27, ratified-model ruling 3). The route is
-+--- connected/disconnected at the 'running' <-> 'project_open'
-+--- boundary by reinstalling the love.* slots (controller.lua),
-+--- not per-event here — once disconnected, love.keypressed no
-+--- longer even points at this method, so there is nothing left
-+--- to guard. The old per-event `app_state ~= 'running'` forward
-+--- (M4 ruling 1) is gone: it compensated for slots that were
-+--- never actually restored at the transition; now they are.
++--- Keypressed (doc/development/decisions/input.md, Decision 11). The
++--- route is connected/disconnected at the
++--- 'running' <-> 'project_open' boundary by reinstalling
++--- the love.* callbacks (controller.lua), not per-event
++--- here — once disconnected, love.keypressed no longer even
++--- points at this method, so no state guard is needed.
 +--- @param k string
 +--- @param sc string?
 +--- @param isr boolean?
-+--- DEFERRED (0.1.0-m5): whether the combo tiers (1-2) fire on
-+--- key-repeat is unruled; isrepeat is threaded to tier 3 only,
++--- DEFERRED (doc/development/technical_debt/input.md, "Shortcuts
++--- key-repeat semantics are shipped unsettled"): whether
++--- shortcuts fire on
++--- key-repeat is unruled; isrepeat is threaded to hooks only,
 +--- combos keep current behaviour. Do not design a mechanism.
 +function ProjectInputController:keypressed(k, sc, isr)
 +  return self:_dispatch(

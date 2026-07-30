@@ -11,7 +11,7 @@ index 29359f5..dc4c570 100644
  
  ---
 diff --git a/doc/development/conventions/code.md b/doc/development/conventions/code.md
-index e79ff56..094834f 100644
+index e79ff56..eeae881 100644
 --- a/doc/development/conventions/code.md
 +++ b/doc/development/conventions/code.md
 @@ -1,5 +1,7 @@
@@ -22,6 +22,18 @@ index e79ff56..094834f 100644
  > These conventions are not fully fixed — they evolve with experience. Some are unique to this project by design.
  > Further discussion: https://github.com/compy-toys/compy/issues/54
  
+@@ -76,3 +78,11 @@ if cond then end
+ local gfx = love.graphics
+ local sfx = compy.audio
+ ```
++
++## Comment References
++
++Comments cite **canonical docs** (`doc/…`), never a feature's ephemeral working tree
++(`doc/development/wip/…`). A wip path rots when the feature's scratch is deleted; cite the
++persistent doc — and a **named section**, not "paragraph N" — so the reference stays
++discoverable and greppable. (Live debt: two `src/controller/` comments still carry wip
++citations — see `doc/development/technical_debt/input.md`.)
 diff --git a/doc/development/conventions/git.md b/doc/development/conventions/git.md
 index 212baa4..62773a6 100644
 --- a/doc/development/conventions/git.md
@@ -59,7 +71,7 @@ index 4f04465..19bce88 100644
  
  User projects can draw in one of two ways, selected by whether `love.draw` is overridden.
 diff --git a/doc/development/internals/console.md b/doc/development/internals/console.md
-index dacae48..2036004 100644
+index dacae48..9c04b23 100644
 --- a/doc/development/internals/console.md
 +++ b/doc/development/internals/console.md
 @@ -1,5 +1,7 @@
@@ -94,7 +106,7 @@ index dacae48..2036004 100644
 -Source: `prepare_project_env` (line 555–611), `love.state.user_input` handling in `controller.lua` handlers.
 +Projects can request live text input mid-run via `compy.input.*`
 +**(supported since 1.0.0-rc20260712)**
-+(`show`/`hide`/`configure`/`clear`/`set_text`, callback slots
++(`show`/`hide`/`configure`/`clear`/`set_text`, callback fields
 +`on_text_entered`/`after_submit`/etc. — the full surface is in
 +[`user_input.md`](user_input.md), and the project-author usage guide
 +is [`../../input_api.md`](../../input_api.md)). This creates a second
@@ -140,8 +152,129 @@ index b269684..2b2b178 100644
  ## The Core Concept: Block-Centric Editing
  
  The editor does not operate on lines. For Lua files, it operates on **blocks** — top-level syntactic units produced by the metalua chunker. A block is either a `Chunk` (one or more source lines forming a complete top-level statement/expression) or an `Empty` (a blank separator line). The selection highlight, navigation, submit, delete, insert, and move operations all act on blocks, not on individual lines.
+diff --git a/doc/development/internals/event_dispatch_layers.md b/doc/development/internals/event_dispatch_layers.md
+new file mode 100644
+index 0000000..4871634
+--- /dev/null
++++ b/doc/development/internals/event_dispatch_layers.md
+@@ -0,0 +1,115 @@
++# Event Dispatch Layers — `love.handlers.*` vs `love.<event>`
++
++<!-- authored By LLM; human-approved NOT YET -->
++
++Compy mirrors stock LÖVE's own two-layer event dispatch, and the mirroring is deliberate, not
++incidental. Stock LÖVE's `love.run` pumps OS events into a dispatch table `love.handlers[name]`;
++the default entry LÖVE itself installs there simply forwards to the user-facing callback
++`love[name]` (`love.handlers.keypressed` calls `love.keypressed`). Compy reproduces that same
++split on purpose — see the comment at `src/controller/controller.lua:974-982`.
++
++This doc exists because the two layers are easy to conflate from the code alone: both are called
++"handlers" by something, in two different vocabularies that happen to collide. Read this before
++trying to reverse-engineer the wiring from `controller.lua` cold. For the *why* of the routing
++this wiring carries (route-centric dispatch, the default/restore route, etc.), see
++[`../decisions/input.md`](../decisions/input.md), in particular its
++["Vocabulary — hook, callback, handler"](../decisions/input.md#vocabulary--hook-callback-handler-and-why-there-is-no-slot)
++section, which this doc's closing section contrasts against.
++
++---
++
++## Layer 1 — `love.handlers.*`, the raw event-pump table
++
++Installed once by `Controller.setup_callback_handlers(CC)` (`src/controller/controller.lua:864`).
++The function body grabs the table LÖVE itself exposes — `local handlers = love.handlers`
++(`controller.lua:873`) — and assigns each event onto it, e.g.
++`handlers.keypressed = function(k, sc, isr) ... end` (`controller.lua:876`).
++
++Each raw handler does exactly two jobs, in order:
++
++1. **Route-independent framework concerns** that must run no matter which route is currently
++   active: the global power hotkeys — Ctrl+T quickswitch (`controller.lua:879-900`), Ctrl+Alt+R
++   restart (`:928-932`), Ctrl+Alt+P / F10 profiler toggle (`:933-955`), Ctrl+Esc quit (on the
++   *release* side, `handlers.keyreleased`, `:997-998`) — plus `Controller.keys_pressed`
++   bookkeeping (`:877`, and the mirrored removal in `handlers.keyreleased` at `:995`).
++2. **Forward to the active route.** Once the framework-level concerns have run, the raw handler
++   defers unconditionally to whatever route currently owns the corresponding `love.<event>`:
++   `if love.keypressed then return love.keypressed(k, sc, isr) end` (`controller.lua:983-985`).
++
++`setup_callback_handlers` is called **exactly once, at boot** (`src/main.lua:389`) and never
++re-invoked or swapped afterward — the fixed, permanent event pump for the process's lifetime.
++Tests reproduce this startup wiring directly: `tests/input/keys_pressed_spec.lua` and
++`tests/helpers/input_session.lua`.
++
++---
++
++## Layer 2 — `love.<event>`, the active route's handler
++
++This is the layer that actually changes as the app moves between console, editor, and a running
++project. Each `Controller.set_love_<event>(CC[, CV])` installer assigns the corresponding
++`love.<event>` directly — e.g. `Controller.set_love_keypressed(CC)` (`controller.lua:448`) ends
++with `love.keypressed = keypressed` (`controller.lua:491`), where the local `keypressed` closure
++is the console/editor route's default handler for that event.
++
++`Controller.set_default_handlers(CC, CV)` (`controller.lua:809`) is the bulk operation that makes
++the console the owner of every `love.<event>` at once — "restore to the default route," in the
++vocabulary of `decisions/input.md` Decision 1. It does three things, in order:
++
++1. Calls `Controller.project_input:deactivate()` (`controller.lua:817`) — drops the project route
++   first, so the reinstall below is never racing an already-live project occupant.
++2. Calls the ten per-event `set_love_*` installers (`controller.lua:822-834`) — keypressed,
++   keyreleased, textinput, mousemoved, mousepressed, mousereleased, wheelmoved, touchpressed,
++   touchreleased, touchmoved — each one repointing its `love.<event>` at the console.
++3. Resets the user-handler presence flags (`user_update`/`user_draw`/`user_pointer = false`,
++   `controller.lua:854`, `:856-857`) and installs the console's own `update`/`draw`/`quit`
++   (`:855`, `:858-860`), recording the console's own handlers into `Controller._defaults`
++   (`:859`, and per-installer at e.g. `:490`).
++
++`set_default_handlers` is called at boot right after Layer 1 is installed —
++`src/main.lua:389-390`, `setup_callback_handlers` then `set_default_handlers` back to back — and
++again on every project teardown: `src/controller/consoleController.lua:1033` and the
++`stop_project_run` call at `:1130`.
++
++During a project **run**, the project route takes `love.keypressed` (and the other event handlers)
++away from the console instead, via `occupy_keyboard` (`controller.lua:234-297`).
++`set_default_handlers` is what takes it back on stop — it is the console's own restore operation,
++not a general-purpose "reset everything" call. The `controller.lua:974-982` comment states this
++explicitly at the Layer-1 forwarding site: *"`love.keypressed` below holds the active route's
++handler — console via `set_love_keypressed`, project via `occupy_keyboard`."*
++
++---
++
++## The difference in one line
++
++`setup_callback_handlers` builds the **fixed pump** — Layer 1, `love.handlers.*` — which always
++runs the global shortcuts first, then forwards; it is set once at boot and never swapped again.
++`set_default_handlers` (re)installs **Layer 2**, `love.<event>` — the layer routes actually swap
++between console, editor, and a running project — and its specific job each time it runs is "reset
++every `love.<event>` back to the console." These are not two ways of doing the same thing: one is
++permanent plumbing, the other is a route-switch operation invoked repeatedly over the app's
++lifetime.
++
++---
++
++## Why this doc exists — the naming collision
++
++`setup_callback_handlers`'s "callback" / "handlers" wording is **LÖVE-runtime vocabulary**: the
++function name literally sets up `love.handlers`, which is what LÖVE itself calls that table — the
++word choice is inherited from the engine, not invented by Compy. This is a distinct, *lower* layer
++than the input-API vocabulary ratified in
++[`decisions/input.md`'s "Vocabulary — hook, callback, handler"](../decisions/input.md#vocabulary--hook-callback-handler-and-why-there-is-no-slot)
++section, where a **handler** means something more specific: the project's captured `love.*`
++function, seeded into a hook (Decision 10) — "a callback whose mount point is never empty."
++
++So the word "handler" legitimately names two different things at two different layers:
++
++- **runtime layer** (this doc): `love.handlers[name]` (the pump table itself) and `love[name]`
++  (whatever currently occupies it) — LÖVE's own terms, predating and outside Compy's input-API
++  design.
++- **input-API layer** (`decisions/input.md`): the project's captured `love.*`, seeded once into
++  `compy.input.hooks[event]` when the project sets no explicit hook (Decision 10).
++
++The D6 vocabulary pass in `decisions/input.md` deliberately left this runtime-wiring layer
++untouched — `setup_callback_handlers` was not renamed, and is not going to be. This doc is the map
++so that collision does not mislead a reader who lands on `controller.lua` and sees "handler" used
++two different ways within a few hundred lines of each other.
 diff --git a/doc/development/internals/examples/balloons.md b/doc/development/internals/examples/balloons.md
-index 7671ba0..6950d48 100644
+index 7671ba0..9119a61 100644
 --- a/doc/development/internals/examples/balloons.md
 +++ b/doc/development/internals/examples/balloons.md
 @@ -1,5 +1,7 @@
@@ -157,7 +290,7 @@ index 7671ba0..6950d48 100644
  ## Input
  
 -Uses `user_input()` overlay. On each `update()`, if no pending input, `ui_read_input(input_handler)` is called which calls `input_text()` to show the overlay. When the user submits, the result is routed to `game_validate_input` which checks it against the active challenge.
-+Uses `compy.input.*` **(supported since 1.0.0-rc20260712)**, wrapped by `terminal.lua`'s `terminal_init()` (called once, at `ui.lua` require-time, to build `ui.terminal`). `terminal_init()` activates the continuous-session idiom: `compy.input.after_submit = function() compy.input.show({}) end` (a **field-write**, not a `show{}` key) re-arms the overlay after every submit, and `compy.input.show({ on_text_entered = deliver })` starts the session. `deliver(text)` forwards each submitted line to whatever handler `terminal_set_handler(handler)` last installed — `main.lua`'s `game_init()` wires this to `game_state_router(on_input)`, which dispatches by `game_state` to `game_validate_input` (`"active"`) or `game_command` (`"loaded"`/`"finished"`), the same way `hooks.update`/`hooks.draw` are dispatched. `game_validate_input` checks the submitted text against the active challenge. Live prompt changes go through `ui_draw_hint()` → `ui.terminal.write(hint)` → `terminal_write(msg)` → `compy.input.configure({ prompt = msg })` — a live-reconfigure, not a new `show`.
++Uses `compy.input.*` **(supported since 1.0.0-rc20260712)**, wrapped by `terminal.lua`'s `terminal_init()` (called once, at `ui.lua` require-time, to build `ui.terminal`). The current project-local balloons source is untracked scratch, so this narrative records the supported shape: `compy.input.callbacks.after_submit = function() compy.input.clear() end` clears each next draft, and `compy.input.show({ on_text_entered = deliver })` starts the session. `deliver(lines)` forwards each submitted line set to whatever handler `terminal_set_handler(handler)` last installed. Live prompt changes go through `ui_draw_hint()` → `ui.terminal.write(hint)` → `terminal_write(msg)` → `compy.input.configure({ prompt = msg })` — a live reconfigure, not a new `show`.
 +
 +See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `user_input()`/`input_text()` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
  
@@ -176,7 +309,7 @@ index 64c99f1..b5e3771 100644
  
  ## Architecture
 diff --git a/doc/development/internals/examples/guess.md b/doc/development/internals/examples/guess.md
-index 06f36ff..52a6276 100644
+index 06f36ff..cde6560 100644
 --- a/doc/development/internals/examples/guess.md
 +++ b/doc/development/internals/examples/guess.md
 @@ -1,27 +1,32 @@
@@ -203,28 +336,28 @@ index 06f36ff..52a6276 100644
 -    local n = tonumber(r())
 -    check(n)
 -  end
-+compy.input.after_submit = function()
-+  compy.input.show{}
++compy.input.callbacks.after_submit = function()
++  compy.input.clear()
  end
 +
 +init()
 +
 +compy.input.show{
 +  prompt = "Guess a number:",
-+  eval = ValidatedTextEval({ is_natural }),
-+  on_text_entered = function(t) check(tonumber(t)) end,
++  validator = LineValidators({ is_natural }),
++  on_text_entered = function(lines) check(tonumber(lines[1])) end,
 +}
  ```
  
 -This is the canonical `validated_input` pattern: poll `r:is_empty()`, show the input overlay when nothing is pending, consume and process when something arrives. The `validated_input` call only fires if there's currently no active overlay (the framework guards against double-activation).
-+This is the continuous-session idiom (see [Compy Input API](../../../input_api.md)): `compy.input.show{}` activates the overlay once; `on_text_entered` fires with the submitted guess while the session is still active; `after_submit` — a **field-write**, not a `show{}` key — re-arms the overlay (bare `show{}`) for the next guess. Validation is wired via `eval = ValidatedTextEval({ is_natural })`, reusing the same validator-list shape the old `validated_input` took.
++This is the continuous-session idiom (see [Compy Input API](../../../input_api.md)): `compy.input.show{}` activates the overlay once; `on_text_entered` receives submitted line strings while the session is active; `after_submit` clears the next draft. `LineValidators({ is_natural })` adapts the existing line rule to the overlay validator.
 +
 +The old `r = user_input()` / `validated_input(...)` polling pattern is **(deprecated, removed in 1.0.0-rc20260712)**.
  
  ## Validator
  
 diff --git a/doc/development/internals/examples/index.md b/doc/development/internals/examples/index.md
-index e38bb66..0938d63 100644
+index e38bb66..e4f4515 100644
 --- a/doc/development/internals/examples/index.md
 +++ b/doc/development/internals/examples/index.md
 @@ -1,20 +1,24 @@
@@ -245,7 +378,7 @@ index e38bb66..0938d63 100644
 +| [balloons](balloons.md) | Real-time typing game — pop balloons before they fill the screen | real-time `love.draw` | `compy.input.show{}` continuous session |
  | [clock](clock.md) | Animated digital clock with randomised color cycling | real-time `love.draw` + `love.update` | keyboard (`love.keyreleased`) |
 -| [guess](guess.md) | Number guessing game with per-character validation | pen-and-paper (`love.update` polling) | `validated_input()` overlay |
-+| [guess](guess.md) | Number guessing game with per-character validation | pen-and-paper (no `love.update`) | `compy.input.show{ eval = ValidatedTextEval{...} }` continuous session |
++| [guess](guess.md) | Number guessing game with per-character validation | pen-and-paper (no `love.update`) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
  | [life](life.md) | Conway's Game of Life with mouse and keyboard controls | real-time `love.draw` + `love.update` | `love.keypressed`, `love.mousepressed` |
  | [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.singleclick`, `love.mousemoved`, `love.keypressed` |
  | [pong](pong.md) | Full Pong game with AI opponent and fixed-timestep physics | real-time `love.draw` + `love.update` | keyboard + mouse; selectable AI strategy |
@@ -256,9 +389,9 @@ index e38bb66..0938d63 100644
 -| [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `input_code()` overlay (live Lua) |
 -| [turtle](turtle.md) | Turtle-graphics interpreter driven by typed commands | real-time `love.draw`, draws trails | `input_text()` + `love.keypressed` |
 -| [valid](valid.md) | Validator showcase — collects user input with custom rules | pen-and-paper (`love.update` polling) | `validated_input()` overlay |
-+| [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `compy.input.show{ eval = InputEvalLua }` continuous session (live Lua) |
++| [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `compy.input.show{ highlighter = LuaHighlighter, validator = LuaSyntaxValidator }` |
 +| [turtle](turtle.md) | Turtle-graphics interpreter driven by typed commands | real-time `love.draw`, draws trails | `compy.input.show{}` one-shot (on `i`) + `love.keypressed` |
-+| [valid](valid.md) | Validator showcase — collects user input with custom rules | pen-and-paper (no `love.update`) | `compy.input.show{ eval = ValidatedTextEval{...} }` continuous session |
++| [valid](valid.md) | Validator showcase — collects user input with custom rules | pen-and-paper (no `love.update`) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
 diff --git a/doc/development/internals/examples/life.md b/doc/development/internals/examples/life.md
 index 7bfc748..b29e16a 100644
 --- a/doc/development/internals/examples/life.md
@@ -296,7 +429,7 @@ index bbf566a..ece1dca 100644
  
  ## Architecture
 diff --git a/doc/development/internals/examples/repl.md b/doc/development/internals/examples/repl.md
-index 8f71ee0..4af8a8c 100644
+index 8f71ee0..6fca463 100644
 --- a/doc/development/internals/examples/repl.md
 +++ b/doc/development/internals/examples/repl.md
 @@ -1,28 +1,34 @@
@@ -320,13 +453,13 @@ index 8f71ee0..4af8a8c 100644
 -    print(r())
 -  end
 +-- Continuous-session idiom (M8-01): consume the line in
-+-- on_text_entered, re-show (bare) from after_submit.
-+compy.input.after_submit = function()
-+  compy.input.show{}
++-- on_text_entered, then clear the next draft from after_submit.
++compy.input.callbacks.after_submit = function()
++  compy.input.clear()
  end
 +
 +compy.input.show{
-+  on_text_entered = function(text) print(text) end,
++  on_text_entered = function(lines) print(string.unlines(lines)) end,
 +}
  ```
  
@@ -338,7 +471,7 @@ index 8f71ee0..4af8a8c 100644
  ## Notes
  
 -`input_text()` is called with no arguments — no prompt, no initial text. The overlay appears with an empty input field. On submit, `r()` returns the entered string and the cycle begins again.
-+`compy.input.show{}` is called with no config — no prompt, no initial text. The overlay appears with an empty input field. `on_text_entered` fires with the submitted text while the session is still active; `after_submit` is a **field-write** (not a `show{}` key) that fires after the widget deactivates, and re-arms the overlay for the next line by calling `compy.input.show{}` again.
++`compy.input.show{}` is called with no config — no prompt, no initial text. The overlay appears with an empty input field. `on_text_entered` receives submitted line strings while the session is active; `after_submit` is a direct callback assignment that clears the next draft.
 +
 +The old `user_input()`/`input_text()` poll-a-reftable pattern (`r = user_input()`, `r:is_empty()`, `r()` each `love.update()` tick) is **(deprecated, removed in 1.0.0-rc20260712)**.
  
@@ -369,7 +502,7 @@ index c8f1368..ea85cc3 100644
  
  ## Code pattern
 diff --git a/doc/development/internals/examples/tixy.md b/doc/development/internals/examples/tixy.md
-index 61ef8bb..2a0cf29 100644
+index 61ef8bb..47e3867 100644
 --- a/doc/development/internals/examples/tixy.md
 +++ b/doc/development/internals/examples/tixy.md
 @@ -1,5 +1,7 @@
@@ -380,23 +513,23 @@ index 61ef8bb..2a0cf29 100644
  **Live-coded pixel grid** inspired by tixy.land. A 16×16 grid of circles whose radii and colors are driven by a user-editable formula `tixy(t, i, x, y)`.
  
  ## Architecture
-@@ -28,23 +30,36 @@ end
+@@ -28,27 +30,41 @@ end
  
  ## Input pattern
  
 -Uses `input_code()` overlay — the input widget has Lua syntax highlighting and validation. The `r = user_input()` / `input_code(...)` polling pattern is identical to other examples, but the prompt is the function signature and the initial content is the current formula body.
-+Uses `compy.input.show{}` with `eval = InputEvalLua` **(supported since 1.0.0-rc20260712)** — the input widget has Lua syntax highlighting and validation. `love.update(dt)` now only advances `time`; there is no polling of an input handle. See [Compy Input API](../../../input_api.md) for the full usage guide.
++Uses `compy.input.show{}` with `LuaHighlighter` and `LuaSyntaxValidator` **(supported since 1.0.0-rc20260712)** — the input widget has Lua syntax highlighting and validation. `love.update(dt)` now only advances `time`; there is no polling of an input handle. See [Compy Input API](../../../input_api.md) for the full usage guide.
  
  ```lua
 -r = user_input()
-+local function submit_body(text)
-+  body = string.unlines(text)
++local function submit_body(lines)
++  body = string.unlines(lines)
 +  setupTixy()
 +  legend = ""
 +end
 +
-+compy.input.after_submit = function()
-+  compy.input.show{ text = string.lines(body) }
++compy.input.callbacks.after_cancel = function()
++  compy.input.set_text(string.lines(body))
 +end
 +
  function love.update(dt)
@@ -413,13 +546,14 @@ index 61ef8bb..2a0cf29 100644
 +compy.input.show{
 +  prompt = "function tixy(t, i, x, y)",
 +  text = string.lines(body),
-+  eval = InputEvalLua,
++  highlighter = LuaHighlighter,
++  validator = LuaSyntaxValidator,
 +  on_text_entered = submit_body,
 +}
  ```
  
 -`write_to_input(body)` in `load_example()` pre-fills the input with the current formula when loading a preset — the user sees the formula they're about to run before submitting.
-+`submit_body` (wired as `on_text_entered`) consumes the submitted formula while the session is still active; `after_submit` — a **field-write**, not a `show{}` key — re-arms the overlay afterwards, seeding `text` with the just-submitted (and possibly example-loaded) `body` so editing continues in place rather than clearing the prompt.
++`submit_body` (wired as `on_text_entered`) consumes submitted line strings while the session is active. Cancel clears the field, so `after_cancel` is a direct callback assignment that restores the current body.
 +
 +`compy.input.set_text(body)` in `load_example()` pre-fills the live input with the current formula when loading a preset — the user sees the formula they're about to run before submitting. This replaces the old `write_to_input(body)` call.
 +
@@ -427,8 +561,13 @@ index 61ef8bb..2a0cf29 100644
  
  ## Example cycling
  
+-`examples.lua` is a table of `{code, legend}` pairs. Left click advances, right click randomizes. `advance()` and `retreat()` call `load_example()` which calls `setupTixy()` and `write_to_input`.
++`examples.lua` is a table of `{code, legend}` pairs. Left click advances, right click randomizes. `advance()` and `retreat()` call `load_example()`, which calls `setupTixy()` and `set_text`.
+ 
+ ## Points of attention
+ 
 diff --git a/doc/development/internals/examples/turtle.md b/doc/development/internals/examples/turtle.md
-index 60f8696..afb1b09 100644
+index 60f8696..b9f5eec 100644
 --- a/doc/development/internals/examples/turtle.md
 +++ b/doc/development/internals/examples/turtle.md
 @@ -1,5 +1,7 @@
@@ -439,7 +578,7 @@ index 60f8696..afb1b09 100644
  **Turtle graphics interpreter** driven by typed commands and keyboard input.
  
  ## Architecture
-@@ -10,21 +12,30 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
+@@ -10,21 +12,32 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
  
  ## Input pattern
  
@@ -452,7 +591,9 @@ index 60f8696..afb1b09 100644
 +  if key == "i" then
 +    compy.input.show{
 +      prompt = "TURTLE",
-+      on_text_entered = eval,
++      on_text_entered = function(lines)
++        eval(lines[1])
++      end,
 +    }
 +  end
  
@@ -468,7 +609,7 @@ index 60f8696..afb1b09 100644
  ```
  
 -`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher.
-+`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; `on_text_entered = eval` wires it directly as the submit callback.
++`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; the submit callback passes it the first submitted line.
 +
 +`love.keyreleased`: the `i` key opens the input overlay with a fresh `compy.input.show{}` call each time (there is no `after_submit` re-arm, so the overlay does not automatically reopen after a submit — pressing `i` again is required). `shift+r` resets turtle position.
  
@@ -477,7 +618,7 @@ index 60f8696..afb1b09 100644
  
  ## Drawing
  
-@@ -32,7 +43,7 @@ end
+@@ -32,7 +45,7 @@ end
  
  ## Points of attention
  
@@ -487,7 +628,7 @@ index 60f8696..afb1b09 100644
  
  ## Files
 diff --git a/doc/development/internals/examples/valid.md b/doc/development/internals/examples/valid.md
-index b76ab03..35727f8 100644
+index b76ab03..093206b 100644
 --- a/doc/development/internals/examples/valid.md
 +++ b/doc/development/internals/examples/valid.md
 @@ -1,10 +1,12 @@
@@ -512,32 +653,32 @@ index b76ab03..35727f8 100644
 -  min_length(2),
 -  is_lower
 -})
-+compy.input.after_submit = function()
-+  compy.input.show{}
++compy.input.callbacks.after_submit = function()
++  compy.input.clear()
 +end
 +
 +compy.input.show{
-+  eval = ValidatedTextEval({
++  validator = LineValidators({
 +    min_length(2),
 +    is_lower
 +  }),
-+  on_text_entered = function(t) print(t) end,
++  on_text_entered = function(lines) print(string.unlines(lines)) end,
 +}
  ```
  
 -All validators in the list must pass for the input to be accepted. If any fail, the first error's column is highlighted.
-+Validation is wired via `eval = ValidatedTextEval({...})` **(supported since 1.0.0-rc20260712)** — the same validator-list shape the old `validated_input` took. All validators in the list must pass for the input to be accepted; if any fail, the first error's column is highlighted. `after_submit` (a **field-write**, not a `show{}` key) re-arms the overlay with a bare `show{}` after each submit — the continuous-session idiom, see [Compy Input API](../../../input_api.md).
++Validation is wired via `LineValidators({...})` **(supported since 1.0.0-rc20260712)** — the same validator-list shape the old `validated_input` took. All validators in the list must pass for every submitted line to be accepted. `after_submit` is a direct field write that clears the next draft; see [Compy Input API](../../../input_api.md).
  
  ## Purpose
  
 -Demonstrates the `validated_input` API and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input.
-+Demonstrates the `ValidatedTextEval` API and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input. The old `validated_input(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
++Demonstrates `LineValidators` and how to write validator functions with column-accurate error reporting. The validator signatures here are the reference implementation pattern for any project that needs constrained text input. The old `validated_input(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
  
  ## Files
  
 diff --git a/doc/development/internals/project_sandbox_env.md b/doc/development/internals/project_sandbox_env.md
 new file mode 100644
-index 0000000..68a22c1
+index 0000000..242b3cf
 --- /dev/null
 +++ b/doc/development/internals/project_sandbox_env.md
 @@ -0,0 +1,57 @@
@@ -596,8 +737,8 @@ index 0000000..68a22c1
 +
 +- Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).
 +- Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
-+- The analysis that surfaced this model (feature #77, session 18):
-+  `doc/development/wip/77-new-input-api/notes/stakeholder-3-input/assessment.md` (P4).
++- This model was surfaced by input-subsystem analysis during feature #77 (the project-exit-cleanup
++  pain point, P4).
 diff --git a/doc/development/overview.md b/doc/development/overview.md
 index 05028b6..ceae0b8 100644
 --- a/doc/development/overview.md
