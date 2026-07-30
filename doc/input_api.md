@@ -38,11 +38,15 @@ next draft; it is assigned on `callbacks`, not passed to `show`.
 | `force` | `show` only: while active, replace `text` instead of warning. |
 
 `show` on an active overlay warns and does nothing unless `force = true`.
-Unknown keys are warned about and ignored. This includes lifecycle callbacks
-such as `after_submit`: assign those to `compy.input.callbacks` instead.
+
+A key outside this table **raises**. The config table is closed, so an
+unrecognised key can only be a mistake, and a mistake you can see beats one
+that leaves the overlay quietly not doing what you asked. This includes
+lifecycle callbacks such as `after_submit`: assign those to
+`compy.input.callbacks` instead.
 
 ```lua
--- Wrong: warned and ignored.
+-- Wrong: raises, naming the key and where it belongs.
 compy.input.show{ after_submit = function() end }
 
 -- Right: a direct callback assignment.
@@ -126,7 +130,8 @@ compy.input.show{
 ## Live changes
 
 `compy.input.configure(config)` updates an active overlay. It accepts the
-same documented configuration keys except `force`; active `text` and `cursor`
+same documented configuration keys except `force`, and raises on anything
+else by the same rule as `show`; active `text` and `cursor`
 are not changed by `configure`, so use `set_text`, `set_cursor`, or `clear`.
 When hidden, `configure` retains `prompt`, `text`, and `cursor` for one later
 `show`.

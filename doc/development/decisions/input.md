@@ -519,9 +519,43 @@ individually revisable — but only by a named ruling, not by drift. See
 
 ---
 
-## Decision 15 — unknown show configuration warns
+## Decision 15 revised — unrecognised show/configure configuration raises
 
-**Status: implemented.**
+**Status: in-flight (owner ruling, 2026-07-30); supersedes the warn-and-ignore
+form below.**
+
+**Decision.** A key outside the documented config table, supplied to
+`show(config)` or `configure(config)`, **raises**. A recognised field that is
+only writable by direct assignment — the lifecycle callbacks — is equally
+unrecognised in this table and raises with a message naming
+`compy.input.callbacks`. `force` is a `show`-only key and raises from
+`configure`.
+
+**Why — DevX: strict contract enforcement, explicit failure mode.**
+Warn-and-ignore would be right if these functions took a general-purpose
+document and applied whichever subset they understood. They do not: the config
+table is small and closed, so a key outside it can only be an authoring error.
+Ignoring it leaves the project running in a shape its author did not ask for,
+with the evidence buried in a log line nobody is reading; raising stops it at
+the typo. This also makes the surface uniform — `compy.input.shortcuts = {}`
+already raises under Decision 7 revised, so a structural violation raising here
+is the rule, not a new one.
+
+**Scope — violations raise, runtime states do not.** A raise means *the project
+asked for something that does not exist*. A call that is a no-op because of the
+runtime **state** is not that, and keeps warning per Decision 3: `show` on an
+already-active overlay without `force`, and `set_text` / `set_cursor` / `clear`
+while hidden. Those are legitimate calls at an inconvenient moment, not
+mistakes in the project's source.
+
+**Consequence.** `show` and `configure` raise on the first offending key, with
+the trace on the project's own call line. A project's error surfaces the normal
+way: raised from top-level project code it aborts the run and reports; raised
+from a `love.*` handler it suspends the run with the message. The project guide
+names the accepted keys, and the retired `eval` / `result` keys now raise
+instead of warning.
+
+### Superseded — the original warn-and-ignore form
 
 **Decision.** An unrecognised key supplied to show(config) will emit a
 warning and be ignored. A recognised field that is only writable by direct
@@ -532,9 +566,10 @@ otherwise simple API needlessly difficult to use. A warning gives the project
 author an immediate, actionable explanation and follows the subsystem's
 existing warn-don't-swallow discipline.
 
-**Consequence.** `show` reports each unknown key once per call and ignores it.
-The project guide names the accepted table keys and the direct-assignment
-lifecycle callbacks.
+**Why it was revised.** The rationale above argues against silence, and a
+warning is the weakest answer to it that still counts as "not silent". It also
+left `configure` inconsistent: it dropped unknown keys with no signal at all,
+so the same typo behaved differently depending on which function received it.
 
 ---
 

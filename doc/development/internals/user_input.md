@@ -617,15 +617,18 @@ All fields are optional and match the project-facing guide's table:
 `prompt`, `text`, `cursor` (`{line, col}`, applied after `text`),
 `validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, and
 `force`. The project wrapper checks this table before it reaches
-`apply_config`: each unrecognised key is warned about and ignored. This
+`apply_config`: an unrecognised key **raises** at the project's call line
+(`decisions/input.md`, Decision 15 revised), rather than being dropped. This
 includes lifecycle names such as `after_submit`, which are direct
-`compy.input.callbacks` assignments rather than `show` keys. The wrapper
-does not expose the host evaluator or legacy result paths.
+`compy.input.callbacks` assignments rather than `show` keys, and which raise
+with a message naming `callbacks`. The wrapper does not expose the host
+evaluator or legacy result paths.
 
 #### `configure(config)` — the live-reconfigure surface
 
 On an active session, `configure` takes the same config keys as
-`show()` and applies only the ones given, immediately: `prompt`,
+`show()` — minus `force`, which raises here — and applies only the
+ones given, immediately: `prompt`,
 `highlighter`, `validator`, and the widget-output callbacks
 (`on_text_entered`, `on_limit_reached`) take effect from the very
 next prompt render / keystroke / submit onward. `text` and `cursor`
@@ -636,7 +639,8 @@ are accepted but have **no effect** on an active session —
 applies in full or is dropped in full, per the rule above — never a
 half-applied config.
 
-While hidden, `configure` is always safe and never warns (it is not
+While hidden, `configure` still validates its keys, but is otherwise
+always safe and never warns (it is not
 a refusal): every provided field — including `prompt`, `text`, and
 `cursor` — is retained and applied on the very next `show()`. That
 application is one-shot: a *later* bare `show()` (no config) does
