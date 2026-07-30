@@ -168,8 +168,8 @@ function love.draw()
   drawText()
 end
 
--- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
--- §3, R4-U4 example migration): consume the submitted code in
+-- Continuous-session idiom (doc/input_api.md, "Submit
+-- lifecycle"): consume the submitted code in
 -- on_text_entered; the widget stays open by default now and submit
 -- no longer clears the field, so the just-submitted body is already
 -- sitting in the field with nothing to re-inject — after_submit is

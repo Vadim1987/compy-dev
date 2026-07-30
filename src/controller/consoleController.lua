@@ -44,8 +44,9 @@ function ConsoleController.new(M, main_ctrl)
   local IC = UserInputController(M.input):always_shown()
   -- Console history navigation: at the vertical boundary the
   -- widget fires on_limit_reached; the console maps up/down to
-  -- history back/forward (validation/reviews/delta-spec-input-api.md
-  -- §6), retiring the old keypressed return-value channel.
+  -- history back/forward (doc/development/decisions/input.md,
+  -- Decision 5 revised), retiring the old keypressed
+  -- return-value channel.
   IC.callbacks.on_limit_reached = function(dir)
     if dir == 'up' then IC:history_back() end
     if dir == 'down' then IC:history_fwd() end
@@ -371,8 +372,7 @@ end
 -- projects never touch the controller directly. Namespace +
 -- lifecycle docs: doc/development/internals/user_input.md.
 -- compy.input's write boundary (doc/development/decisions/input.md,
--- Decision 7, revised — .../validation/reviews/
--- delta-design-input-api.md): the container and the IDENTITY of its
+-- Decision 7 revised): the container and the IDENTITY of its
 -- three sub-tables (shortcuts / hooks / callbacks) are frozen — a
 -- project cannot replace them (compy.input.shortcuts = {} raises).
 -- Every LEAF inside is freely writable: shortcuts[event][combo] = fn
@@ -1294,9 +1294,10 @@ function ConsoleController:keypressed(k)
     end
     -- History navigation at the vertical boundary is driven by
     -- the widget's on_limit_reached callback (set at construction),
-    -- not by keypressed's return value (retired, Decision 5
-    -- revised / delta-spec §6). keypressed still runs for its
-    -- editing side effects; its return is unused.
+    -- not by keypressed's return value (retired,
+    -- doc/development/decisions/input.md, Decision 5 revised).
+    -- keypressed still runs for its editing side effects; its
+    -- return is unused.
     input:keypressed(k)
     if not Key.shift() and Key.is_enter(k) then
       if not input:has_error() then

@@ -356,9 +356,9 @@ end
 ----------------------
 
 -- Submit/cancel are the widget's OWN default behaviour
--- (doc/development/decisions/input.md, Decision 6 revised; validation/
--- reviews/delta-spec-input-api.md §3): the widget runs them on
--- Enter/Escape as an ordinary consumer (never a routing concern)
+-- (doc/development/decisions/input.md, Decision 6 revised): the
+-- widget runs them on Enter/Escape as an ordinary consumer
+-- (never a routing concern)
 -- and signals out through its callbacks. before_/after_submit and
 -- before_/after_cancel are read off self.callbacks — the same
 -- table a project populates via compy.input.callbacks.
@@ -400,7 +400,7 @@ local function run_callback(self, name, ...)
 end
 
 --- Submit flow (doc/development/decisions/input.md, Decision 6
---- revised; validation/reviews/delta-spec-input-api.md §3): the
+--- revised): the
 --- widget's own Enter behaviour. before_submit (veto reserved,
 --- unbuilt) → empty guard → validate → deliver (fires
 --- on_text_entered) → after_submit. after_submit defaults to a
@@ -417,7 +417,7 @@ function UserInputController:submit_flow(keys_pressed)
   run_callback(self, 'after_submit', lines)
 end
 
---- Cancel flow (Decision 6 revised; delta-spec §3): the
+--- Cancel flow (Decision 6 revised): the
 --- widget's own Escape behaviour. A truthy before_cancel VETOES
 --- (skips the clear); otherwise clear (hardwired) → after_cancel.
 --- after_cancel defaults to a no-op — Escape clears but the widget
@@ -459,8 +459,8 @@ end
 --- Re-seed the callbacks to the stay-open DEFAULT_CALLBACKS, IN
 --- PLACE — never reassign the table, the compy.input surface
 --- holds this exact reference. Teardown between project runs
---- (doc/development/decisions/input.md, Decision 11; delta-spec §3
---- "re-seed, don't wipe" / AC10): clears a stopped project's
+--- (doc/development/decisions/input.md, Decision 11 — "re-seed,
+--- don't wipe"): clears a stopped project's
 --- callbacks and restores defaults, so a nil'd after_cancel never
 --- silently means "stays open forever" for the next project.
 function UserInputController:reset_callbacks()
@@ -507,7 +507,7 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   -- Decision 5 revised): the widget signals a hit limit ONLY
   -- through on_limit_reached — the keypressed return value no
   -- longer carries a limit flag (retired; console reads history
-  -- via its own on_limit_reached callback, delta-spec §6).
+  -- via its own on_limit_reached callback).
   local function emit_limit(dir, scope)
     local cb = self.callbacks.on_limit_reached
     if cb then cb(dir, scope) end

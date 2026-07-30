@@ -46,8 +46,8 @@ function check(n)
   end
 end
 
--- Continuous-session idiom (validation/reviews/delta-spec-input-api.md
--- §3, R4-U4 example migration): the widget stays open by default now
+-- Continuous-session idiom (doc/input_api.md, "Submit
+-- lifecycle"): the widget stays open by default now
 -- (no auto-close), so there is nothing to re-show after submit — just
 -- clear the field for the next guess. The line validator keeps invalid
 -- guesses out of the submit callback. Cancel's own default (clear +

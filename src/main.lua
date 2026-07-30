@@ -352,9 +352,7 @@ function love.load()
   end
   local ctrl = Controller
   --- MVC wiring
-  -- RESOLVED-BY-REDESIGN (R4-1 inventory; validation/reviews/
-  -- R4-U3-callback-model.md, delta-design "Implementation note"):
-  -- the reusable seam now exists (free-function `dispatch` +
+  -- The reusable seam now exists (free-function `dispatch` +
   -- the `build_widget_api` factory in consoleController.lua), so
   -- console/editor COULD rewire onto it. They stay on their own
   -- separate `UserInputController` instances anyway, because
