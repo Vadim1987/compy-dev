@@ -257,3 +257,55 @@
   LuaHighlighter, LuaSyntaxValidator, and LineValidators. A serial Terra
   test-first worker is now adding the public-route acceptance rows; production
   code is still unchanged.
+
+## 2026-07-30 — compacted handoff; remaining execution order
+
+- Re-read the session and validation workflow after context compaction and
+  reconciled the live tree: R2 is now committed as `2e0d93f` with its public
+  contract rows; the full suite is **861 / 0 / 0 / 3**. The interrupted
+  R2 contract-test worker left a prompt but no edit or outcome; record that
+  fact before the migration documentation commit.
+- Owner reconfirmed the remaining order: R5 unknown-show warnings, R2 example
+  and persistent-doc migration, the C1 cold authority/provenance sweep, then
+  the PR review-navigation batch. Each independent concern stays a green
+  local commit; slice generation remains last.
+- Serial Terra R5 work has begun with a materialized prompt/outcome requirement;
+  parent will inspect, verify, and commit it before starting the R2 migration.
+
+## 2026-07-30 — R2 production correction complete
+
+- The R2 worker was interrupted with no edits after its prompt was saved; the
+  owning session wrote the focused failing real-route tests instead. They
+  failed on joined-string delivery and absent LineValidators, proving the
+  pre-correction mismatch.
+- Committed `2e0d93f` (`feat(input): use line callbacks and validators`):
+  project submit now passes one line array to validator, on_text_entered, and
+  after_submit; the legacy result delivery/config route is gone. Explicit
+  project conveniences are LuaHighlighter, LuaSyntaxValidator, and
+  LineValidators; evaluator objects remain internal.
+- The production correction includes its acceptance and all affected callback
+  expectations. Full suite: **861 / 0 / 0 / 3**. R5 warning behaviour,
+  example migration, public-doc correction, authority sweep, navigation
+  generation, and TF2 remain.
+
+## 2026-07-30 — R5 and R2 migration execution complete
+
+- Committed R5 as `09eb143` (`fix(input): warn on unsupported show keys`).
+  A real project overlay call proves retired `eval`/`result` and misplaced
+  `after_submit` each warn and do not displace the direct callback. Full suite
+  after the new acceptance row: **862 / 0 / 0 / 3**.
+- Committed tracked-example migration as `53a80ce` and repaired the omitted
+  REPL line-array callback in `a19ac03`; checked examples now use
+  LineValidators or the separate Lua highlighter/syntax validator policy.
+- Committed the persistent R2/R5 contract corpus as `3e93e8e`: project guide,
+  internals, decision/debt state, example narratives, and release note now
+  describe line arrays, separated policies, retirement, and warnings. A
+  final factual pass found the docs must still reconcile the already-complete
+  D4 status during C1.
+
+## 2026-07-30 — C1 cold authority sweep started
+
+- The mandated serial Terra audit is independently comparing persistent docs
+  with current commits and owner rulings. Its prompt and outcome are required
+  validation artifacts; parent will apply only its verified minimal findings
+  before the review-navigation batch.
