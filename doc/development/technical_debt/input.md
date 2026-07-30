@@ -14,6 +14,19 @@ action; revisit at the named point).
 
 ## Standing
 
+### Future input unification
+
+- **State:** Keyboard/text route through shortcuts, hooks, then the shown
+  widget. Pointer input remains on separate raw LÖVE paths, and derived
+  singleclick/doubleclick callbacks remain direct compy callbacks.
+- **Why it stands:** This asymmetry predates #77 and is not worsened by it.
+  There is no proven demand or feasible design for pointer combos,
+  interception, common pointer-aware widgets, or a shared raw-versus-derived
+  dispatch contract. Folding clicks into hooks now would falsely imply one.
+- **Revisit:** Only when a concrete pointer feature requires it. Establish
+  scope, timing, primary versus other buttons, modifier snapshots, and the
+  drag/selection/touch contract before proposing a unification.
+
 ### Project-handler wrapping: dedup the guard, drop the misleading `keyboard_` name
 `controller.lua:146-217` builds the wrappers that adapt a project's own `love.*`
 handlers (its `userlove` table) for the input chain. Two builders — `wrapped_native`

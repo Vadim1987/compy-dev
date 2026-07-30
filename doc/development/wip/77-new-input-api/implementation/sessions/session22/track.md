@@ -126,3 +126,107 @@
   real-entry characterization protects future rewiring, while the analysis
   makes #77's migration-readiness boundary reviewable without a speculative
   editor rewrite.
+
+## 2026-07-30 — R2 split by owner discussion; API-model finding
+
+- Owner ruled the legacy result reftable route for retirement. The verbatim
+  stakeholder record requires no backward compatibility and explicitly
+  prefers migrated examples over retained legacy input APIs.
+- R2 is not one decision: result is retirement work, while eval needs a
+  separate public-contract ruling. The original ticket explicitly asks for
+  configurable highlighter and verifier, but does not prescribe a generic
+  evaluator config object.
+- Code inspection found a material contract mismatch: project-overlay submit
+  calls only the simple validator(text) gate, not the configured evaluator
+  apply method. Thus ValidatedTextEval is not currently a reliable overlay
+  submit gate despite the public guide claiming it is. Do not execute the
+  result deletion until the owner rules the intended minimal evaluator /
+  highlighter / validator model and its submit order.
+
+## 2026-07-30 — R2 correction chunk planned; execution deferred
+
+- Owner ratified the minimal project-overlay direction: no result or eval
+  config keys; optional highlighter and validator functions; one line-array
+  representation; validator, on_text_entered, after_submit submit order.
+- The S22-R2 input-contract plan under validation notes records scope,
+  exclusions,
+  test-first execution order, migration/doc/release-note work, and the one
+  remaining implementation-time owner choice: public names for Lua helpers
+  and the existing-line-validator adapter.
+- R2 is **5 of 12** dispositioned at the design level. It is a deferred
+  implementation correction, to execute after the owner finishes the
+  remaining triage so TF2 sees its final shape once.
+
+## 2026-07-30 — R5 ruled; warning correction queued
+
+- Owner ruled that an unknown show configuration key warns and is ignored.
+  Rationale: immediate, actionable feedback for a typo or misplaced callback
+  is an obvious user-experience benefit over a silent no-op.
+- Canonical Decision 15 records the in-flight ruling. The S22-R5 unknown-show
+  keys plan records its later test-first execution: unknown key and misplaced
+  field-write callback warnings, config-key enumeration, public-doc update,
+  debt cleanup, and full-suite verification.
+- R5 is **6 of 12** visible pre-TF2 items dispositioned. Its implementation
+  is intentionally deferred with the R2 correction chunk until triage ends.
+
+## 2026-07-30 — G2 boundary reopened for Sol architecture judgment
+
+- Owner accepts concise singleclick/doubleclick aliases as useful installation
+  paths, but challenged a premature assumption that derived clicks belong in
+  the keyboard/text dispatch mechanism unchanged.
+- The live question is the smallest safe future-facing boundary: alias-seeded
+  hooks with pointer-local delayed delivery, a narrow derived-click dispatcher,
+  or full pointer participation in shortcuts/hooks/widget dispatch. Raw pointer,
+  drag, selection, touch, M1/M2, modifier, and timing behaviour must not be
+  changed for cosmetic symmetry.
+- Sol consultation prompt is materialized under validation/prompts; outcome is
+  required under validation/outcomes before an owner resolution. G2 remains
+  in progress, so the count stays **6 of 12**.
+
+## 2026-07-30 — G2 resolved: retain asymmetry, defer unification
+
+- Sol confirmed that full dispatch would be false symmetry: derived clicks
+  have none of shortcut precedence, widget fallback, or consume semantics, and
+  raw pointer broadcast must preserve M2, modifiers, drag, selection, touch,
+  timing, and lifecycle behaviour.
+- Owner rejected even alias-seeded click hooks because a shared registration
+  table would falsely imply common dispatch mechanisms. No G2 code, test,
+  fixture, example, or public API change is queued for #77.
+- Decision 16 retains the pre-feature split; the future-input-unification debt
+  entry records the only trigger for reconsideration: concrete demand plus a
+  feasible pointer design. G2 is **7 of 12** dispositioned.
+
+## 2026-07-30 — D4 ruled: behavioural evidence by default
+
+- Owner ruled that #77 tests principally prove observable behaviour through
+  real project/framework entry points and public surfaces. Test coverage is
+  proportionate, not exhaustive; rare internal edges do not earn tests merely
+  by being reachable.
+- Direct seams, mocks, and interception remain exceptional mechanism guards:
+  allowed only when the real route cannot practically isolate the mechanism,
+  and each must say why it is not a public contract test.
+- Canonical Decision 17 and the S22 D4 behavioural-test plan record the
+  bounded execution: review concrete fixture setup/reset and activation cases,
+  replace only unjustified simulations, and do not launch a general rewrite.
+  D4 is **8 of 12** dispositioned.
+
+## 2026-07-30 — RVW-023 resolved: retain the explanatory matrix
+
+- Owner accepted the existing explanation of the Lua and text highlighter
+  regression matrix. The LuaEval factory is needed only for a fresh mutable
+  nil-highlighter case; InputEvalLua remains the normal shared evaluator.
+- Do not add aliases or a table merely to shorten this small test. Remove its
+  stale review marker in the later cleanup pass; no behavioural change or
+  dedicated test work is required. RVW-023 is **9 of 12** dispositioned.
+
+## 2026-07-30 — RVW-020, J1, and RVW-087 closed
+
+- Owner ratified the already-landed assert_indexable_hl helper name (RVW-020).
+  J1 needs no further terminology ruling: execute the established plain-
+  vocabulary and persistent-reference cleanup criterion.
+- Owner ruled that held-key-view identity is not public API. The cached view
+  is retained solely as a garbage-collection NFR; its planned mechanism test
+  protects no per-event allocation without exposing identity to projects.
+- The S22 RVW-087 NFR plan and Decision 13 allocation note record this work.
+  All **12 of 12** visible pre-TF2 items are now dispositioned. Remaining work
+  is the queued execution, authority sweep, navigation regeneration, and TF2.

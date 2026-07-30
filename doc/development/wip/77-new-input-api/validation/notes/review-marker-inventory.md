@@ -228,7 +228,10 @@ empty **Disposition** (`—`, filled during sweeps).
 - Comments-on: `it('parser present, highlighter returns nil -> hl still indexable', ...)`
 - Bucket: **TRIAGE**
 - Rationale: naming/structure proposal for the three evaluator variants → TRIAGE
-- Disposition: **KEPT for owner TF2 manual review (B-E/E1, S19)** — aliasing/table restructure not applied. Added an explanatory comment above the three `it`s: one case per highlighter condition, and why case 1 uses the `LuaEval()` **factory** (fresh mutable instance, override `.highlighter`→nil) vs cases 2/3 using the unmutated `InputEvalLua` singleton / text eval. Marker left in place.
+- Disposition: **RESOLVED (S22 owner ruling)** — retain the explanatory
+  matrix already present. A local alias/table rewrite adds indirection without
+  improving the regression evidence; remove the stale marker in the planned
+  cleanup pass.
 
 **RVW-024** `tests/input/highlight_regression_spec.lua:53` — Kind: `clarity/fidelity`
 > "REVIEW/clarity/fidelity:  how LuaEval() with nil-returning highlighter is different from case#2 and case#3? it seems to be a mix of both, but not sure which production scenarios are mapped. And maybe there shold be 4 cases? ( [lua || text] x [ missing hl || returning empty ])"

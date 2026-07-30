@@ -483,6 +483,12 @@ practice — `pairs()` ignores the metamethod that would make it iterable, so it
 nothing; indexing works. The iteration support is kept for a future 5.2+ host. See the
 technical-debt register.
 
+**Allocation note.** The implementation caches the view while the backing
+held-key table has the same identity, so normal dispatch does not allocate a
+proxy per event. This is a non-functional requirement, not a project-facing
+identity guarantee: a callback may rely on the view being read-only and
+current, never on object equality across calls.
+
 ---
 
 ## Decision 14 — de-facto contracts: reverse-engineered behaviour is preserved and formalised, not silently changed
@@ -509,6 +515,74 @@ and Alt+Enter submit, not only bare Enter); `SearchController:keypressed` return
 its caller; and the overlay input view's per-frame-render workaround keyed by widget identity. Each is
 individually revisable — but only by a named ruling, not by drift. See
 [`../technical_debt/input.md`](../technical_debt/input.md) for the live list.
+
+---
+
+## Decision 15 — unknown show configuration warns
+
+**Status: owner-ratified in validation; implementation pending.**
+
+**Decision.** An unrecognised key supplied to show(config) will emit a
+warning and be ignored. A recognised field that is only writable by direct
+assignment is also unrecognised in this table and warns with the same rule.
+
+**Why.** Silent configuration typos have no visible effect and make an
+otherwise simple API needlessly difficult to use. A warning gives the project
+author an immediate, actionable explanation and follows the subsystem's
+existing warn-don't-swallow discipline.
+
+**Execution.** Add a public-path warning test, make config application report
+each unknown key once per call, document the distinction between show keys and
+field-write-only callbacks, then remove the now-resolved debt entry.
+
+---
+
+## Decision 16 — defer future input unification
+
+**Status: owner-ratified in validation; no #77 implementation.**
+
+**Decision.** Keep the existing asymmetry: derived singleclick and doubleclick
+remain concise compy callbacks, while keyboard/text use the project input
+hooks. Do not add click entries to the hooks table and do not route pointer
+events through keyboard/text dispatching merely for symmetry.
+
+**Why.** The present pointer system has no requested or feasibility-tested
+unified target, combo, interception, or widget contract. Derived clicks are
+primary-button timer notifications; raw mouse, drag, selection, touch, and
+modifier behaviour follow separate live paths. A superficial shared table
+would imply shared dispatch semantics and constrain a future design before a
+real demand exists. Preserving the pre-feature split contains #77 scope and
+does not worsen the current behaviour.
+
+**Future trigger.** Reconsider only when a concrete demand and a feasible
+design exist for unified pointer/click handling, such as modifier gestures,
+pointer combos, interceptors, or common pointer-aware widgets. That work must
+define raw versus synthetic timing and preserve drag, selection, and touch.
+
+---
+
+## Decision 17 — behavioural evidence is the default test evidence
+
+**Status: owner-ratified in validation; targeted execution pending.**
+
+**Decision.** Tests for the project input API prove observable project and
+framework behaviour through real entry points and public surfaces. Do not add
+test coverage merely because an internal edge is reachable; coverage is earned
+by the feature's complexity, criticality, and externally meaningful behaviour.
+
+**Exception.** A direct controller/model seam, mock, or interception is
+allowed only when it is necessary to isolate a mechanism that cannot be
+practically observed through the real path. The test must state why the seam
+is used and must not present itself as an end-to-end contract test.
+
+**Why.** Recreating lifecycle or routing logic in fixtures can validate the
+fixture instead of the product. A behavioural default keeps the #77 suite
+credible without demanding disproportionate coverage of rare, exotic, or
+non-critical internals.
+
+**Execution.** Review D4's concrete fixture markers under this rule. Replace
+only unjustified hand-rolled public-path simulations; retain justified unit
+seams with a concise rationale. Do not begin a general fixture rewrite.
 
 ---
 

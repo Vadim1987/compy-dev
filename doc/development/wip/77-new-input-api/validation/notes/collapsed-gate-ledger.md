@@ -28,8 +28,11 @@ decided until the owner rules it in the collapsed sitting.
   Before TF2, a cold provenance inventory and owning-session canonical-doc pass will retrospectively
   mark decision authority/status where useful and ensure the shipping docs stand alone. **R4 is
   CLOSED (S22):** unconditional Shift+Enter newline insertion is the retained established
-  contract; the unrequested public toggle and its stale debt/marker were removed. R2/R5 remain
-  open. The rows are otherwise not restated here.
+  contract; the unrequested public toggle and its stale debt/marker were removed. **R2 is
+  RULED (S22), execution deferred:** retire result/eval config keys in favour of the minimal
+  highlighter/validator callback contract recorded in S22-R2 input-contract plan. **R5 is
+  RULED (S22), execution deferred:** unknown show keys warn rather than silently drop, per
+  Decision 15 and S22-R5 unknown-show-keys plan. The rows are otherwise not restated here.
 - **Category (b) — scaffolding-suspects, CLOSED:** the dispatch/vocab cluster and the
   `app_state` fork — both dispositioned **and executed** by Phase R (`affc932`). Recorded in
   the reconciliation §"Category (b)"; they add no *open* work.
@@ -56,6 +59,12 @@ the project supplied one, otherwise leaving the console callback installed; the 
 called it when no widget was shown. #77's unconditional project-route installation closes that
 fallback. `tests/input/input_events_spec.lua` now guards the change directly. Inspect is
 unchanged pre-feature debugger behaviour: console input evaluates in the paused project's env.
+
+**G-2 disposition (S22, revised after Sol consultation).** Retain the
+pre-feature mouse/click versus keyboard/text API asymmetry. Do not add click
+hooks or a shared dispatcher in #77: pointer input lacks a demanded, proven,
+and designed common dispatch contract. Decision 16 and the future-input-
+unification technical-debt entry record the rationale and future trigger.
 
 ---
 
