@@ -309,3 +309,30 @@
   with current commits and owner rulings. Its prompt and outcome are required
   validation artifacts; parent will apply only its verified minimal findings
   before the review-navigation batch.
+
+## 2026-07-30 — C1 findings applied; review-prep remains
+
+- C1 found and closed a real migration omission: Turtle consumed a string
+  although project callbacks now receive line arrays. `9f23e8a` repairs both
+  source and narrative; the full suite stayed **862 / 0 / 0 / 3**.
+- `7548541` applies verified persistent corrections for retired result
+  constructor prose, line-array example prose, Decision 17/D4 completion,
+  inspect authority, and resolved silent-key debt. The C1 prompt/outcome and
+  all R2/R5 evidence are committed in `52c2379`.
+- C1 says the corpus is not TF2-ready until its stale test-guide fixture/count
+  wording and the independently queued J1 plain-vocabulary/review-marker pass
+  are completed. A serial Terra J1 audit is now collecting a bounded cleanup
+  plan; review navigation and slice regeneration follow it.
+
+## 2026-07-30 — pre-TF2 gates resumed after compaction
+
+- J1's cold audit found 55 remaining construction-era markers in tracked
+  source/tests, but no persistent-document markers and no behavior change to
+  make. It separates mechanical plain-language cleanup from genuine future
+  debt; the tracked binary swap artifact is explicitly out of scope.
+- Closed C1's remaining test-guide fact gate in `4c662e9`: the fixture now
+  documents real activation/stop teardown, m8 describes its current draft
+  clearing, and the live count is **862 / 0 / 0 / 3**. The full suite and
+  whitespace check passed before commit.
+- The serial J1 tests-only cleanup is in progress. Source/debt cleanup must
+  follow it; only then may review-navigation slices be regenerated.
