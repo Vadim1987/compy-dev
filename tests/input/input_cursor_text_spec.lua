@@ -3,8 +3,9 @@
 
 -- cursor and text surface.
 -- Covers get_cursor / set_cursor / set_text on the public project surface
--- (doc/input_api.md, "API reference"; doc/development/internals/user_input.md,
--- "Cursor manipulation and 'reset'"). Implementation:
+-- (doc/input_api.md, "Live changes";
+-- doc/development/internals/user_input.md, "Cursor
+-- manipulation and \"reset\""). Implementation:
 -- model/input/userInputModel.lua, controller/userInputController.lua.
 
 local F = require('tests.helpers.input_fixture')
@@ -16,9 +17,7 @@ describe('input API: cursor and text surface', function()
 
 
   -- The cursor + text surface (doc/input_api.md, "Live
-  -- reconfigure: `configure`, `set_text`, `clear`, cursor",
-  -- and "API reference"). Driven through the public
-  -- project
+  -- changes"). Driven through the public project
   -- surface F.compy_input() — exactly what a project sees.
   -- get_cursor/set_cursor/set_text are non-assignable
   -- methods (NOT in INPUT_CALLBACKS), so doc/development/decisions/input.md,
@@ -27,9 +26,9 @@ describe('input API: cursor and text surface', function()
 
 
   describe("get_cursor", function()
-    -- doc/development/internals/user_input.md, "Cursor manipulation and
-    -- 'reset'": active → 1-based (line, col); hidden
-    -- → nil.
+    -- doc/development/internals/user_input.md, "Cursor
+    -- manipulation and \"reset\"": active → 1-based
+    -- (line, col); hidden → nil.
     it('reports 1-based (line, col) when active',
       function()
         local input = F.compy_input()
@@ -78,9 +77,9 @@ describe('input API: cursor and text surface', function()
 
  describe("set_cursor", function()
 
-    -- doc/development/internals/user_input.md, "Cursor manipulation and
-    -- 'reset'": move; out-of-range clamps to the
-    -- valid range.
+    -- doc/development/internals/user_input.md, "Cursor
+    -- manipulation and \"reset\"": move; out-of-range
+    -- clamps to the valid range.
     
     it('moves the cursor', function()
       local input = F.compy_input()
@@ -112,7 +111,7 @@ describe('input API: cursor and text surface', function()
       assert.same(1, l) -- single line: clamps to 1
     end)
 
-    -- doc/input_api.md, "API reference": hidden set_cursor
+    -- doc/input_api.md, "Live changes": hidden set_cursor
     -- no-ops and warns.
     it('while hidden warns and no-ops', function()
       local input = F.compy_input()
@@ -127,7 +126,7 @@ describe('input API: cursor and text surface', function()
  end)
 
  describe("set_text", function()
-    -- doc/input_api.md, "Live reconfigure": replace
+    -- doc/input_api.md, "Live changes": replace
     -- content, cursor to end.
     it('replaces content and jumps to the end',
       function()
@@ -141,7 +140,7 @@ describe('input API: cursor and text surface', function()
       end)
 
     describe("with keep_cursor", function()
-    -- doc/input_api.md, "Live reconfigure": keep_cursor
+    -- doc/input_api.md, "Live changes": keep_cursor
     -- preserves position (clamped).
       it('preserves the cursor',
         function()
@@ -165,9 +164,9 @@ describe('input API: cursor and text surface', function()
       end)
     end) 
 
-    -- doc/development/internals/user_input.md, "Cursor manipulation and
-    -- 'reset'": the view reflects the change WITHOUT
-    -- a re-show
+    -- doc/development/internals/user_input.md, "Cursor
+    -- manipulation and \"reset\"": the view reflects the
+    -- change WITHOUT a re-show
     -- (the overlay handle is not re-published; the widget's
     -- own view render fires via the controller's update_view).
     it('updates the view without a re-show',
@@ -185,7 +184,7 @@ describe('input API: cursor and text surface', function()
         assert.is_true(renders > 0)
       end)
 
-    -- doc/input_api.md, "API reference": hidden set_text
+    -- doc/input_api.md, "Live changes": hidden set_text
     -- no-ops and warns.
     it('while hidden warns and no-ops', function()
       local input = F.compy_input()

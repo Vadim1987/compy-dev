@@ -514,8 +514,7 @@ end
 --- (byte length, matching move_cursor's own bound below) —
 --- set_text(t, true)'s landing when the
 --- new content is shorter than the preserved cursor
---- position (doc/input_api.md, "Live reconfigure:
---- `configure`, `set_text`, `clear`, cursor").
+--- position (doc/input_api.md, "Live changes").
 function UserInputModel:_clamp_cursor_pos()
   local n = self:get_n_text_lines()
   local l = math.max(1, math.min(self.cursor.l, n))

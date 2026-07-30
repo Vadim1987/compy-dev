@@ -12,8 +12,9 @@
 -- physical key, textinput only for character-producing keys
 -- (doc/development/internals/user_input.md, "Data flow").
 -- Widget activation/reset via the public compy.input surface and the
--- hidden-widget non-consumption rule (doc/input_api.md, "Activating the
--- widget: `show`"; doc/development/decisions/input.md, Decision 2).
+-- hidden-widget non-consumption rule (doc/input_api.md,
+-- "`show(config)`"; doc/development/decisions/input.md,
+-- Decision 2).
 
 local F  = require('tests.helpers.input_fixture')
 
@@ -23,7 +24,7 @@ describe('input contracts: widget lifecycle #input', function()
   before_each(function() F.reset() end)
 
   -- Widget activation / reset (doc/input_api.md,
-  -- "Activating the widget: `show`"), driven through
+  -- "`show(config)`"), driven through
   -- the public project surface. F.compy_input() resolves
   -- project_env.compy.input — exactly what a project sees.
   -- show({ text = ... }) seeds the widget's CONTENT (the
@@ -102,7 +103,7 @@ describe('input contracts: widget lifecycle #input', function()
 
     -- force = live reconfiguration of an ACTIVE widget;
     -- today only the text subset takes effect
-    -- (doc/input_api.md, "Activating the widget: `show`").
+    -- (doc/input_api.md, "`show(config)`").
     it('re-activation with force reapplies text',
       function()
         local input = F.compy_input()
@@ -114,8 +115,7 @@ describe('input contracts: widget lifecycle #input', function()
 
     -- force with NO text: a reconfiguration that changes
     -- nothing — content survives (it is not a hidden
-    -- reset; doc/input_api.md, "Activating the widget:
-    -- `show`").
+    -- reset; doc/input_api.md, "`show(config)`").
     it('force without text leaves content intact',
       function()
         local input = F.compy_input()

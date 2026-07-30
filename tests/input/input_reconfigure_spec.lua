@@ -2,7 +2,7 @@
 -- introduced by this feature (since 1.0.0-rc20260712).
 
 -- live reconfigure and the continuous-session idiom — split from
--- input_contracts_spec.lua (TF1). Routing invariant (doc/development/decisions/input.md,
+-- input_contracts_spec.lua. Routing invariant (doc/development/decisions/input.md,
 -- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches
 -- exactly ONE route, fixed by the active screen mode. Vocabulary
 -- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
@@ -12,10 +12,10 @@
 -- method-name spies. keypressed fires for every physical key, textinput
 -- only for character-producing keys (doc/development/internals/user_input.md, "Data
 -- flow").
--- configure()/clear() live-reconfigure semantics and the re-show-from-
--- after_submit continuous-session recipe (doc/development/internals/user_input.md,
--- "configure(config)", "clear()"; doc/input_api.md, "The continuous-session
--- idiom").
+-- configure()/clear() live-reconfigure semantics, and the
+-- continuous session the overlay's stay-shown default enables
+-- (doc/development/internals/user_input.md, "configure(config)",
+-- "clear()"; doc/input_api.md, "Submit lifecycle").
 
 local F = require('tests.helpers.input_fixture')
 
@@ -255,12 +255,12 @@ describe('input contracts: live reconfigure #input', function()
   end)
 
   -- ====================================================
-  -- doc/input_api.md, "The continuous-session idiom"
-  -- (migration recipe):
-  -- on_text_entered consumes; after_submit re-shows.
-  -- Pins the pattern every example
-  -- migration relies
-  -- on, before any example is touched.
+  -- doc/input_api.md, "Submit lifecycle": the overlay stays
+  -- shown after a submit, so a continuous session needs no
+  -- re-show — on_text_entered consumes and after_submit
+  -- clears. A bare re-show from after_submit stays legal and
+  -- is pinned here too, because the sticky-callback re-arm it
+  -- relies on is contract.
   --
   -- Lifecycle callbacks are direct fields, not show() options.
   -- The project assigns after_submit before starting this loop.
@@ -268,7 +268,7 @@ describe('input contracts: live reconfigure #input', function()
 
   describe('continuous-session idiom #m8', function()
 
-    -- The recipe: consume in on_text_entered, re-show
+    -- One shape: consume in on_text_entered, re-show
     -- (bare, no config) in after_submit. Asserts (a) the
     -- assembled text reaches on_text_entered and (b) the
     -- widget is active again once after_submit returns.
@@ -313,15 +313,14 @@ describe('input contracts: live reconfigure #input', function()
         assert.same({ { 'a' }, { 'b' } }, seen)
       end)
 
-    -- Balloons shape (doc/input_api.md, "Live reconfigure",
+    -- Balloons shape (doc/input_api.md, "Live changes",
     -- "A continuous session with a changing prompt"): a
     -- hint set via configure()
     -- INSIDE on_text_entered (session still active,
-    -- doc/development/internals/user_input.md, "Submit and cancel — the
-    -- framework submit chain")
+    -- doc/development/internals/user_input.md, "Submit
+    -- and cancel — widget-owned callback sequences")
     -- must survive the after_submit bare re-show, not the
-    -- show()-time prompt. doc/input_api.md, "The continuous-session idiom"'s
-    -- apply_config: custom_label is
+    -- show()-time prompt: apply_config's custom_label is
     -- only overwritten
     -- when cfg.prompt is given, so a bare show({}) never
     -- resets what configure() just set.

@@ -117,7 +117,7 @@ describe('input contracts: route connection lifecycle #input', function()
       -- mirrored output fields
       -- (userInputController.apply_config) persist across a
       -- hide/re-show within one run (doc/input_api.md,
-      -- "Sticky callbacks") but must not
+      -- "Callback assignments") but must not
       -- leak into the next project.
       it('resets the widget\'s own output fields',
         function()

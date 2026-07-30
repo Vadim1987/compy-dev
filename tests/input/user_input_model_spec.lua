@@ -148,10 +148,10 @@ describe("input model spec #input", function()
   -- Model fix: set_text's tail
   -- jump_end() used to run unconditionally, making a
   -- truthy keep_cursor silently ineffective.
-  -- doc/input_api.md, "Live reconfigure: `configure`,
-  -- `set_text`, `clear`, cursor": set_text(t) jumps to end;
-  -- set_text(t, true) preserves the cursor, clamped if
-  -- the new text is shorter than the old cursor position.
+  -- doc/input_api.md, "Live changes": set_text(t) jumps
+  -- to end; set_text(t, true) preserves the cursor,
+  -- clamped if the new text is shorter than the old
+  -- cursor position.
   describe('set_text keep_cursor', function()
     local model = UserInputModel(mockConf, luaEval)
 

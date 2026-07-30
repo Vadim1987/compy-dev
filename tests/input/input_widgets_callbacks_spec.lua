@@ -315,9 +315,10 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
       assert.is_true(seen.after)
     end)
 
-    -- doc/development/internals/user_input.md, "Submit and cancel — the
-    -- framework tier-1 chains": a custom validator receives the
-    -- live line array (not joined or stale text).
+    -- doc/development/internals/user_input.md, "Submit and
+    -- cancel — widget-owned callback sequences": a custom
+    -- validator receives the live line array (not joined or
+    -- stale text).
     it('a custom validator receives the live lines',
       function()
         local seen
@@ -330,9 +331,9 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.same({ 'ab' }, seen)
       end)
 
-    -- doc/development/internals/user_input.md, "Submit and cancel — the
-    -- framework tier-1 chains": a rejecting validator locks
-    -- the
+    -- doc/development/internals/user_input.md, "Submit and
+    -- cancel — widget-owned callback sequences": a
+    -- rejecting validator locks the
     -- session — no delivery, no deactivation, no
     -- after_submit.
       it('a rejecting validator locks input without delivering',
@@ -418,11 +419,12 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
   end)
 
   describe('Enter and Escape as ordinary keys', function()
-    -- doc/development/internals/user_input.md, "Submit and cancel — the
-    -- framework tier-1 chains": Enter/Escape are ordinary
-    -- keys while
+    -- doc/development/internals/user_input.md, "Submit and
+    -- cancel — widget-owned callback sequences":
+    -- Enter/Escape are ordinary keys while
     -- hidden — no
-    -- framework entry engages, so project handlers can run.
+    -- widget submit/cancel handling engages, so project
+    -- handlers can run.
     it('Enter and Escape are ordinary keys while hidden',
       function()
         local seen = { }
@@ -523,8 +525,8 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.is_true(F.widget:is_empty())
       end)
 
-    -- doc/input_api.md, "Sticky callbacks": widget outputs
-    -- persist across a deactivation —
+    -- doc/input_api.md, "Callback assignments": widget
+    -- outputs persist across a deactivation —
     -- only project stop resets them (a later chunk), not
     -- submit.
     it('on_text_entered persists across a hide/re-show cycle',

@@ -437,9 +437,10 @@ end
 -- Decision 5):
 -- show()/configure() config key and direct field-write
 -- share one underlying `state` entry, sticky across shows
--- until overwritten (doc/input_api.md, "Sticky callbacks";
--- the doc/development/internals/user_input.md, "configure(config)" live
--- reconfigure surface below leaves this unchanged).
+-- until overwritten (doc/input_api.md, "Callback
+-- assignments"; the doc/development/internals/user_input.md,
+-- "configure(config)" live reconfigure surface below
+-- leaves this unchanged).
 local OUTPUT_KEYS = {
   'on_text_entered',
   'on_limit_reached',
@@ -554,17 +555,18 @@ local function build_widget_api(get_widget, get_active_flag, state)
       local ui = get_widget()
       if ui then ui:hide() end
     end,
-    -- doc/development/internals/user_input.md, "Cursor manipulation and
-    -- 'reset'": 1-based (line, col); nil when
-    -- hidden — a plain read of "nothing to report", not a
-    -- refused mutation, so unlike set_cursor/set_text below
-    -- it does not warn (same section).
+    -- doc/development/internals/user_input.md, "Cursor
+    -- manipulation and \"reset\"": 1-based (line, col); nil
+    -- when hidden — a plain read of "nothing to report", not
+    -- a refused mutation, so unlike set_cursor/set_text
+    -- below it does not warn (same section).
     get_cursor = function()
       if not get_active_flag() then return nil end
       return get_widget():get_cursor_pos()
     end,
-    -- doc/development/internals/user_input.md, "Cursor manipulation and
-    -- 'reset'": clamped move; no-op + warn while hidden.
+    -- doc/development/internals/user_input.md, "Cursor
+    -- manipulation and \"reset\"": clamped move; no-op +
+    -- warn while hidden.
     set_cursor = function(line, col)
       if not get_active_flag() then
         Log.warn('compy.input.set_cursor ignored — hidden')
@@ -572,11 +574,10 @@ local function build_widget_api(get_widget, get_active_flag, state)
       end
       get_widget():set_cursor_pos(line, col)
     end,
-    -- doc/input_api.md, "Live reconfigure: `configure`,
-    -- `set_text`, `clear`, cursor": replace content (cursor
-    -- to end, or kept + clamped); no-op + warn while hidden;
-    -- view updates via the controller's set_text (no
-    -- re-show).
+    -- doc/input_api.md, "Live changes": replace content
+    -- (cursor to end, or kept + clamped); no-op + warn
+    -- while hidden; view updates via the controller's
+    -- set_text (no re-show).
     set_text = function(text, keep_cursor)
       if not get_active_flag() then
         Log.warn('compy.input.set_text ignored — hidden')

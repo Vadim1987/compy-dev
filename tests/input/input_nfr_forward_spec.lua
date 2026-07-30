@@ -143,11 +143,11 @@ describe('input contracts: NFR and planned changes #input', function()
       -- only the overlay widget is wired; wiring the
       -- console/editor/search widgets to it is a future
       -- consideration, out of #77 blast radius (see
-      -- doc/development/internals/user_input.md: "Key release", "Dispatch
-      -- chain", "Search — a third widget instance, live only
-      -- in editor/search mode", "Cursor manipulation and
-      -- 'reset'" for the related surfaces), not asserted
-      -- here.
+      -- doc/development/internals/user_input.md: "Key
+      -- release", "Dispatch chain", "Search — a third
+      -- widget instance, live only in editor/search mode",
+      -- "Cursor manipulation and \"reset\"" for the related
+      -- surfaces), not asserted here.
       it('the widget keeps identity across cycles',
         function()
           F.show_widget()

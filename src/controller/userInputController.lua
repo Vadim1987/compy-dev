@@ -146,9 +146,9 @@ function UserInputController:set_cursor(cursor)
 end
 
 --- Clamped 2D move (compy.input.set_cursor;
---- doc/development/internals/user_input.md, "Cursor manipulation and
---- 'reset'"). Named
---- apart from set_cursor(Cursor) above — that simple function
+--- doc/development/internals/user_input.md, "Cursor
+--- manipulation and \"reset\""). Named apart from
+--- set_cursor(Cursor) above — that simple function
 --- already has a different signature/caller (editorController
 --- load_selection); this computes a valid landing itself
 --- (byte length, matching move_cursor's own bound) rather
@@ -263,8 +263,9 @@ end
 --- clear-on-no-text lives here, not in apply_config, because it is activation policy
 --- (a re-show with no text starts empty) rather than per-field config.
 --- `cursor` (a `{line, col}` pair) lands here too, applied
---- after text (doc/development/internals/user_input.md, "Cursor
---- manipulation and 'reset'") — kept out of apply_config so
+--- after text (doc/development/internals/user_input.md,
+--- "Cursor manipulation and \"reset\"") — kept out of
+--- apply_config so
 --- the live-reconfigure path (configure() below) can never
 --- reach it.
 --- @param self UserInputController
