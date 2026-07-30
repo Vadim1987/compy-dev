@@ -99,6 +99,23 @@ concern**; when a unit of work contains two, it is two commits, and the smaller 
 - Same standing limits as before: unit-sized, conventional-commits style (`agents/rules.md`), each
   unit noted in track, **NEVER push**, never sweep the owner's unrelated working-tree changes in.
 
+## Comment References
+
+During active development phase comments could've referenced intermittent doc sources (in-place decisions, reviews, resolutions etc.)
+
+However, before final PR lands: 
+comments cite **canonical docs** (`doc/…`), never a feature's ephemeral working tree
+(`doc/development/wip/…`). A wip path rots when the feature's scratch is deleted; cite the
+persistent doc — and a **named section**, not "paragraph N" — so the reference stays
+discoverable and greppable.
+
+A named section is only useful while it exists. When you rename or remove a heading, grep
+`src/` and `tests/` for comments citing the old name — a citation that no longer resolves is
+worse than none, because it reads as authoritative. Renaming the input guide's headings once
+left 31 citations pointing at sections that were gone, two of them naming a design model the
+feature had already retired.
+
+
 ## Sub-agents and model economy (owner directive, 2026-07-18)
 
 - **Sonnet** for everything mechanical or scoped (audits, sweeps, renames, fixture work) —
