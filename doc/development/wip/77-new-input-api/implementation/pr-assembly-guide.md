@@ -120,11 +120,13 @@ git diff $BASE $TIP -- \
 Set 4 (nested example repos — invisible to the parent `git diff`, become PRs in their own repos):
 
 ```sh
-# In the balloons checkout:
-git -C src/examples/balloons format-patch -1 56347d0 -o "$OUT"        # the migration commit
-git -C src/examples/balloons diff > "$OUT/4-balloons-uncommitted-worktree.patch"   # ⚠ extra +32 main.lua, see §5
-# In the maze checkout (migration is uncommitted working tree):
-git -C src/examples/maze diff > "$OUT/4-maze-worktree.patch"
+# Set 4 is NOT a slice of this PR. Each nested example is its own repo with
+# its own remote, and ships as its OWN PR, landing alongside the platform PR
+# (owner, 2026-07-31). Nothing here is pushed by this guide; the patches are
+# for review convenience only.
+git -C src/examples/balloons format-patch origin/main..HEAD -o "$OUT"   # 2 commits
+git -C src/examples/maze     format-patch origin/v3.4..HEAD -o "$OUT"   # 1 commit
+# keyboard: clean and in sync with its origin — nothing of this feature in it.
 ```
 
 ---
@@ -319,17 +321,42 @@ git diff HEAD $TIP -- . ':(exclude)doc/development/wip/'   # must be empty at th
 
 ---
 
-## 5. Set 4 caveats (nested repos)
+## 5. Set 4 — the nested example repos, one PR each
 
-- `4-balloons-56347d0.patch` — `format-patch` of the migration commit; `git am` in the balloons repo
-  (preserves message + authorship).
-- `4-balloons-uncommitted-worktree.patch` — ⚠ an **extra uncommitted `main.lua` edit (+32)** sitting
-  on top of `56347d0` in the balloons working tree, **not** part of the commit. Decide: fold into the
-  migration, keep as a separate commit, or discard.
-- `4-maze-worktree.patch` — maze's migration is an **uncommitted** working tree (`controls.lua`,
-  `main.lua`); `git apply` in the maze repo, then commit there.
-- Deliberately **not captured**: balloons `ISSUES.md` / `docs/*` / `implementation.md`, and the
-  `keyboard` / `drawdebug` checkouts (scratch / untouched).
+They are separate repositories with separate remotes, so their work **cannot**
+ride this PR's diff. Each carries its own local commits and opens its own PR,
+tracking the platform PR closely — ideally landing with it, since the
+migrations depend on the platform's `1.0.0-rc20260712` surface.
+
+| Repo | Remote | Branch | Local commits (unpushed) |
+|---|---|---|---|
+| balloons | `hleb-rubanau/compy-balloons` | `main` | `56347d0` migration off the poll idiom · `94a5f02` assign `after_submit` through `compy.input.callbacks` (the load-time raise from smoke report 5) |
+| maze | `nagydani/Compy-maze` | `v3.4` | `790ac19` migration off the poll idiom, with the shown-guard on `compy.input.is_shown()` |
+| keyboard | `dsent/keyboard` | `dsent/dev` | none — clean and in sync |
+
+Notes per repo:
+
+- **balloons** — the migration commit predates the strict-config ruling, which
+  is why the second commit exists: `compy.input.after_submit = …` raises now
+  (frozen container, Decision 7 / Decision 15) and lifecycle callbacks live
+  under `compy.input.callbacks`. Untracked `ISSUES.md` / `docs/*` /
+  `implementation.md` are the owner's working notes and are deliberately not
+  captured.
+- **maze** — the migration was an uncommitted working tree until 2026-07-31.
+  Its per-tick re-arm guard read `love.state.user_input`, which is **always
+  nil inside a project** (sandboxed `love` clone), so it never fired and
+  `show()` was re-issued every tick; it now asks `compy.input.is_shown()`
+  (Decision 18). Left for that repo to rule on, and flagged in the commit:
+  since submit no longer closes the overlay or clears the field,
+  `need_reopen`/`reopen_text` may be dead weight, and "prompt only while the
+  player is idle" would need an explicit `hide()`.
+- **keyboard** — defines `love.keypressed` / `love.keyreleased` /
+  `love.textinput` and uses `compy.audio`; it never shows an overlay. It does
+  **not** bypass the routes (smoke report 7's question): a project's keyboard
+  `love.*` functions are captured and run as hooks inside the project route
+  (Decision 10). Nothing to migrate, nothing to commit.
+
+Do **not** push any of these; opening the PRs is the owner's call.
 
 ---
 

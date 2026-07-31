@@ -170,8 +170,11 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
 3. Known anomalies to leave alone unless the owner asks:
    `docker/compose.yml` local diff (not ours), untracked scratch
    (`src/STEPS.md`, `claude.sh`, `input-pr-slices.tar.gz`, `src/examples/*`,
-   `src/vadexamples/`). Nested example repos: balloons carries unpushed commits,
-   maze an uncommitted patch — sanctioned, do not "clean up".
+   `src/vadexamples/`). **Nested example repos are not anomalies** (owner,
+   2026-07-31): balloons, maze and keyboard are separate repos with their own
+   remotes, and each carries its own local commits and opens its own PR
+   alongside the platform one — see `pr-assembly-guide.md` §5. Commit in them
+   as the work demands; **never push** any of them either.
 
 ## Session mechanics (strict — sweep-style discipline, sessions 01–05 pattern)
 
