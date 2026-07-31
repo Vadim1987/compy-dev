@@ -33,7 +33,7 @@ describe('input contracts: shortcuts and click #input', function()
   -- these consume the key: it still reaches the active
   -- route afterward"): a framework shortcut fires its effect
   -- and the key still reaches its route.
-  describe('global shortcuts do not consume the key (#disputable))',
+  describe('global shortcuts do not consume the key (#disputable)',
     function()
 
       it('a shortcut fires but does not consume', function()
