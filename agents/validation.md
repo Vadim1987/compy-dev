@@ -169,8 +169,8 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
    evidence; slice regeneration last.
 3. Known anomalies to leave alone unless the owner asks: `implementation/ses/SWEEP.tgz`
    (root-owned), `docker/compose.yml` local diff (not ours), untracked scratch
-   (`src/STEPS.md`, `claude.sh`, `input-pr-slices.tar.gz`, `src/examples/*`, `src/vadexamples/`,
-   `tests/editor/editor_spec_fwd.lua`). Nested example repos: balloons carries unpushed commits,
+   (`src/STEPS.md`, `claude.sh`, `input-pr-slices.tar.gz`, `src/examples/*`,
+   `src/vadexamples/`). Nested example repos: balloons carries unpushed commits,
    maze an uncommitted patch — sanctioned, do not "clean up".
 
 ## Session mechanics (strict — sweep-style discipline, sessions 01–05 pattern)
