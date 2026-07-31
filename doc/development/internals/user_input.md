@@ -270,7 +270,7 @@ surface consumes them (the overlay widget while shown, the project's handler —
 hook — while hidden) is the route's internal delegation, no longer a gateway drop. Mouse never had this problem:
 `handlers.mousepressed`/`mousereleased` call the overlay conditionally but call the project's own
 handler **unconditionally**, regardless of overlay state. This is why touch/mouse needed no
-separate #77 scope item: only keyboard was ever exclusively gated.
+separate scope item: only keyboard was ever exclusively gated.
 
 ### Editor-specific keys
 
@@ -362,7 +362,7 @@ selection-release job is moot for them), and their error state is also clearable
 which covers Space too, since Space is itself a text-producing key. So the missing fork happens to be
 inert today, not silently broken — but it is still a real asymmetry against the otherwise-careful
 routing discipline. Carried as-is; out of this pass's scope (console/editor's own `keyreleased`
-routing is untouched by feature #77).
+routing is untouched by the input API).
 
 ### Search — a third widget instance, live only in editor/search mode
 
@@ -380,19 +380,19 @@ the `app_state` fork was removed. There is no evaluator (search input is free te
 validation) and **Enter returns the currently-selected result** (a jump target `{block, line}`) up to
 `_search_mode_keys` rather than submitting the typed query — the same "keypress return value carries a
 domain result" shape the shared widget's own limit-flag return was retired for (Decision 5 revised);
-left in place here because `SearchController` is a different class, out of feature #77's scope
+left in place here because `SearchController` is a different class, out of the input API's scope
 (`technical_debt/input.md`). `SearchController` defines no `:keyreleased` method at all — combined with the missing
 editor fork above, search's `UserInputController` instance never receives a release under any
 circumstance. `SearchController:clear()` (`searchController.lua:44-47`) reaches past its own
 controller straight into `self.model.input:clear_input()`, skipping `clear_error()` — currently
 harmless (search has no evaluator, so no error can ever be set) but a layering inconsistency against
-every other reset path described above. None of the design documents for feature #77 mention this
+every other reset path described above. None of the input API's design documents mention this
 surface — it is real, live code with no corresponding entry in the design corpus, carried here as
 the first record of it in the permanent doc corpus.
 
 ### Future editor migration path (analysis, not scheduled)
 
-Feature #77 makes a later editor migration possible; it does not migrate the editor. The reusable
+The input API makes a later editor migration possible; it does not migrate the editor. The reusable
 seam is the three-consumer dispatch shape — shortcuts, hook, widget — over plain tables and a widget
 instance. It must not be mistaken for an instruction to share the project widget: console, editor,
 and Search keep independent text, cursor, history, and view state.

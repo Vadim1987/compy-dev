@@ -4,7 +4,8 @@ Keyboard/text/pointer routing, the console and project input controllers
 (`src/controller/controller.lua`, `userInputController.lua`,
 `projectInputController.lua`, `consoleController.lua`), and the project-facing
 `compy.input` surface. Cross-reference: `internals/user_input.md`,
-`../input_api.md`.
+`../input_api.md`. "The input API" below means the `compy.input` surface
+introduced in **1.0.0-rc20260712**.
 
 Three groups below: standing properties (settled, just noted), open decisions
 (the framework owner has not yet ruled), and anticipated items (may never need
@@ -19,7 +20,7 @@ action; revisit at the named point).
 - **State:** Keyboard/text route through shortcuts, hooks, then the shown
   widget. Pointer input remains on separate raw LÖVE paths, and derived
   singleclick/doubleclick callbacks remain direct compy callbacks.
-- **Why it stands:** This asymmetry predates #77 and is not worsened by it.
+- **Why it stands:** This asymmetry predates the input API and is not worsened by it.
   There is no proven demand or feasible design for pointer combos,
   interception, common pointer-aware widgets, or a shared raw-versus-derived
   dispatch contract. Folding clicks into hooks now would falsely imply one.
@@ -115,8 +116,8 @@ keystroke for any event the project didn't override.
   app instead of returning to the console, because `love.quit`
   only stopped-to-console while `app_state == 'running'`.
 - **Confirmed pre-existing:** this was verified byte-identical on
-  `master` (pre-`0022004`) — not a #77 regression. The
-  `release_keyboard_route` call site is new on the #77 branch
+  `master` (pre-`0022004`) — not an input-API regression. The
+  `release_keyboard_route` call site is new in 1.0.0-rc20260712
   (route-lifecycle rework, AC-27/28), but the lifecycle split it
   slots into predates the feature.
 - **Resolution:** owner ruled (a) — an input-only / pointer-only
@@ -487,10 +488,10 @@ Not commissioned for closure; each may never need action.
   project's native handler). Both fire: a shown widget cannot swallow a click
   aimed at it, and a project's click handler fires even for clicks inside the
   widget. The keyboard three-consumer chain (Decision 2 revised) has **no pointer mirror**.
-  Pointer never had the #77 widget-lockout, so its delivery was left as
-  pre-existing behaviour, deliberately out of #77 scope.
+  Pointer never had the widget-lockout, so its delivery was left as
+  pre-existing behaviour, deliberately out of the input API's scope.
 - **Why it stands:** Works for today's consumers; building a pointer chain was
-  explicitly not in #77 scope.
+  explicitly not in the input API's scope.
 - **Owner ruling needed:** should pointer get a mirrored consume-chain (the
   "two symmetrically mirrored chains" idea, analogous to Decision 1's deferred
   console/editor convergence), and should a shown widget consume pointer
@@ -558,12 +559,12 @@ be silently narrowed later (any change is a separate, owner-gated decision):
 - **`SearchController:keypressed` returns a jump target** (`{block, line}`) up its
   caller on Enter — the same "keypress return carries a domain result" shape the
   shared widget's limit-flag return was retired for (Decision 5 revised). Left as
-  is because `SearchController` is a different class, out of #77 scope.
+  is because `SearchController` is a different class, out of scope here.
 - **The overlay's input view skips the per-frame `update_view()` workaround by
   widget *identity*** (`userInputView.lua:draw`, `self.controller ~=
   love.state.user_input_controller`) — an identity check standing in for the old
   `oneshot` flag. Its survival under a console/editor re-plug remains a
-  tracked future concern, out of #77 scope.
+  tracked future concern, out of the input API's scope.
 
 ### Comment wip-citation cleanup (RESOLVED, 2026-07-30)
 

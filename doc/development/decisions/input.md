@@ -7,6 +7,9 @@ For the project-author usage guide — the `show()` config table, worked example
 [`../../input_api.md`](../../input_api.md). This doc records the decisions those two describe;
 it does not restate their mechanism.
 
+The surface these decisions describe ships as **1.0.0-rc20260712**; "the input API" below
+always means that surface.
+
 The subsystem replaced an older input API that was polling-based and routed by widget
 presence. Understanding what it was chosen *over* is most of the rationale, so the contrast
 appears throughout.
@@ -445,7 +448,7 @@ stops, so pen-and-paper projects (which draw on click while otherwise idle) rema
 `'project_open'`. An implementer must **not** "tidy up" by unifying pointer disconnection into
 this boundary; the asymmetry is intentional and load-bearing for those projects.
 
-**Changed baseline behaviour.** Before #77, a running project without its own keyboard/text
+**Changed baseline behaviour.** Before this API, a running project without its own keyboard/text
 handler left the console callback installed. With no shown project widget, unhandled input could
 therefore accumulate in the hidden console and Enter could evaluate it. The project route now
 occupies keyboard/text handlers for every running project: an event reaches a shortcut, hook, or
@@ -579,7 +582,7 @@ so the same typo behaved differently depending on which function received it.
 
 ## Decision 16 — defer future input unification
 
-**Status: owner-ratified in validation; no #77 implementation.**
+**Status: owner-ratified in validation; not implemented in 1.0.0-rc20260712.**
 
 **Decision.** Keep the existing asymmetry: derived singleclick and doubleclick
 remain concise compy callbacks, while keyboard/text use the project input
@@ -591,7 +594,7 @@ unified target, combo, interception, or widget contract. Derived clicks are
 primary-button timer notifications; raw mouse, drag, selection, touch, and
 modifier behaviour follow separate live paths. A superficial shared table
 would imply shared dispatch semantics and constrain a future design before a
-real demand exists. Preserving the pre-feature split contains #77 scope and
+real demand exists. Preserving the pre-feature split contains this API's scope and
 does not worsen the current behaviour.
 
 **Future trigger.** Reconsider only when a concrete demand and a feasible
@@ -616,7 +619,7 @@ practically observed through the real path. The test must state why the seam
 is used and must not present itself as an end-to-end contract test.
 
 **Why.** Recreating lifecycle or routing logic in fixtures can validate the
-fixture instead of the product. A behavioural default keeps the #77 suite
+fixture instead of the product. A behavioural default keeps the input suite
 credible without demanding disproportionate coverage of rare, exotic, or
 non-critical internals.
 
