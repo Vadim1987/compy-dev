@@ -120,7 +120,63 @@ describe('#input events dispatching', function()
 
   end)
 
-  -- REMARK: need to also test selectivity (shortcut fires/consumes only for matched key; hook and widget receive for all keys)
+  -- doc/development/decisions/input.md, Decision 2: only the shortcut
+  -- tier is KEYED — it participates for its own combo and for nothing
+  -- else, while the hook and the widget are unkeyed and therefore see
+  -- every event their channel carries. The groups above pin what a
+  -- MATCHED shortcut does; these pin its silence on every other key,
+  -- once per channel, since each channel keys its own combo table
+  -- (doc/development/decisions/input.md, Decision 8). Every shortcut
+  -- here is registered CONSUMING, so a spurious match would be
+  -- observable twice over: `fired` flips AND the tiers below it stop
+  -- receiving.
+  describe('shortcut selectivity', function()
+
+    it('a keypressed shortcut is silent for another key',
+      function()
+        local fired, seen = false, 0
+        local input = F.activate_project()
+        input.shortcuts.keypressed['a'] =
+            function() fired = true; return true end
+        input.hooks.keypressed = function() seen = seen + 1 end
+        F.show_widget({ text = 'ab' })
+        F.session.press('backspace')
+        assert.is_false(fired)
+        assert.equal(1, seen)
+        assert.same({ 'a' }, F.widget:get_text())
+      end)
+
+    it('a textinput shortcut is silent for another character',
+      function()
+        local fired, got = false, { }
+        local input = F.activate_project()
+        input.shortcuts.textinput['s'] =
+            function() fired = true; return true end
+        input.hooks.textinput =
+            function(t) got[#got + 1] = t end
+        F.show_widget()
+        F.session.type('q')
+        assert.is_false(fired)
+        assert.same({ 'q' }, got)
+        assert.same({ 'q' }, F.widget:get_text())
+      end)
+
+    -- The widget is left out of this one on purpose: it is shown, so
+    -- it consumes the release unconditionally and would witness
+    -- nothing about the shortcut.
+    it('a keyreleased shortcut is silent for another key',
+      function()
+        local fired, seen = false, 0
+        local input = F.activate_project()
+        input.shortcuts.keyreleased['a'] =
+            function() fired = true; return true end
+        input.hooks.keyreleased = function() seen = seen + 1 end
+        F.session.press('b')
+        F.session.release('b')
+        assert.is_false(fired)
+        assert.equal(1, seen)
+      end)
+  end)
 
   -- doc/development/decisions/input.md, Decision 2: the interception
   -- matrix. Two things at once — each participant intercepts for
