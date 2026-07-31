@@ -83,7 +83,7 @@ describe('input contracts: widget lifecycle #input', function()
         assert.has_error(function()
           input.show({ text = 'ok', eval = InputEvalLua })
         end)
-        assert.is_nil(love.state.user_input)
+        assert.is_false(F.is_widget_visible())
       end)
 
     it('the raise names the offending key',

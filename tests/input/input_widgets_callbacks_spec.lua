@@ -305,11 +305,11 @@ describe('widget outputs, submit and cancel #input',
       input.show({
         text = 'x',
         on_text_entered = function()
-          seen.entered = love.state.user_input ~= nil
+          seen.entered = F.is_widget_visible()
         end,
       })
       input.callbacks.after_submit = function()
-        seen.after = love.state.user_input ~= nil
+        seen.after = F.is_widget_visible()
       end
       F.session.press('return')
       assert.is_true(seen.entered)
@@ -353,7 +353,7 @@ describe('widget outputs, submit and cancel #input',
         F.session.press('return')
         assert.is_false(entered)
         assert.is_false(after)
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
         assert.is_true(F.widget:has_error())
       end)
 
@@ -370,7 +370,7 @@ describe('widget outputs, submit and cancel #input',
         F.session.press('return')
         assert.is_false(entered)
         assert.is_true(F.widget:has_error())
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
       end)
 
       it('LuaSyntaxValidator rejects invalid Lua', function()
@@ -417,7 +417,7 @@ describe('widget outputs, submit and cancel #input',
         input.show({ text = 'x' })
         F.session.press('escape')
         assert.same({ 'before', 'after' }, order)
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
         assert.is_true(F.widget:is_empty())
       end)
 
@@ -436,7 +436,7 @@ describe('widget outputs, submit and cancel #input',
         input.show({ text = 'abc' })
         F.session.press('escape')
         assert.is_false(F.widget:is_empty())
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
         assert.is_false(after)
       end)
   end)
@@ -483,7 +483,7 @@ describe('widget outputs, submit and cancel #input',
         F.session.press('return')
         assert.is_true(shadowed)
         assert.is_false(submitted)
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
       end)
 
     -- doc/development/internals/user_input.md, "Multiline input":
@@ -506,7 +506,7 @@ describe('widget outputs, submit and cancel #input',
         F.session.press('lshift')
         mock.keystroke('S-return', F.session.press, false)
         assert.same({ 'a', '' }, F.widget:get_text())
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
       end)
 
     -- The interceptability half of the row above. Shift+Return
@@ -569,7 +569,7 @@ describe('widget outputs, submit and cancel #input',
         end
         input.show({ text = 'first' })
         F.session.press('return')
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
         assert.is_true(F.widget:is_empty())
       end)
 
@@ -584,7 +584,7 @@ describe('widget outputs, submit and cancel #input',
           function() input.hide() end
         input.show({ text = 'hello' })
         F.session.press('return')
-        assert.is_nil(love.state.user_input)
+        assert.is_false(F.is_widget_visible())
       end)
 
     -- doc/input_api.md, "Callback assignments": widget
@@ -616,12 +616,12 @@ describe('widget outputs, submit and cancel #input',
         assert.has_no.errors(function()
           F.session.press('return')
         end)
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
         assert.is_false(F.widget:is_empty())
         assert.has_no.errors(function()
           F.session.press('escape')
         end)
-        assert.is_not_nil(love.state.user_input)
+        assert.is_true(F.is_widget_visible())
         assert.is_true(F.widget:is_empty())
       end)
   end)

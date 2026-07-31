@@ -188,6 +188,18 @@ function F.set_compy_handler(name, fn)
   CC:get_project_env().compy[name] = fn
 end
 
+-- Is an overlay visible to the framework? Reads love.state.user_input
+-- rather than the widget's own is_shown(): that field IS the overlay
+-- contract (userInputController.lua, open_fresh/hide) — the draw loop
+-- paints the widget for exactly as long as it is set, and the console
+-- route forwards events to the widget for exactly as long as it is
+-- set. So this is the observable "the user sees an input field", not
+-- the widget's self-report, and it stays honest if the two ever
+-- disagree.
+function F.is_widget_visible()
+  return love.state.user_input ~= nil
+end
+
 function F.set_mouse_pos(x, y)
   mx, my = x, y
 end

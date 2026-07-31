@@ -109,7 +109,7 @@ describe('input contracts: route connection lifecycle #input', function()
         end
         F.show_widget({ text = 'x' })
         F.cc:stop_project_run()
-        assert.is_nil(love.state.user_input)
+        assert.is_false(F.is_widget_visible())
         assert.equal(0, cancelled)
       end)
 
@@ -153,7 +153,7 @@ describe('input contracts: route connection lifecycle #input', function()
           F.session.press('escape')
 
           assert.is_false(leaked)
-          assert.is_not_nil(love.state.user_input)
+          assert.is_true(F.is_widget_visible())
           assert.is_true(F.widget:is_empty())
         end)
     end)
