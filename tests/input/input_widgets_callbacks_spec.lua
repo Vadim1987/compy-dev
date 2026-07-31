@@ -501,6 +501,27 @@ describe('widget outputs, submit and cancel #input',
         assert.same({ 'a', '' }, F.widget:get_text())
         assert.is_not_nil(love.state.user_input)
       end)
+
+    -- The interceptability half of the row above. Shift+Return
+    -- reaches the widget only because nothing upstream claimed it:
+    -- it is an ordinary combo, so a project shortcut on
+    -- 'shift+return' consumes it like any other key and no newline
+    -- is inserted (doc/development/decisions/input.md, Decision 2 —
+    -- the route holds no unshadowable keys; the gateway power keys
+    -- are the only ones a project cannot reach).
+    it('a shortcut on shift+return intercepts the newline',
+      function()
+        local fired = false
+        local input = F.activate_project()
+        input.shortcuts.keypressed['shift+return'] = function()
+          fired = true; return true
+        end
+        F.show_widget({ text = 'a' })
+        F.session.press('lshift')
+        mock.keystroke('S-return', F.session.press, false)
+        assert.is_true(fired)
+        assert.same({ 'a' }, F.widget:get_text())
+      end)
   end)
 
   describe('suppressed cancel', function()
