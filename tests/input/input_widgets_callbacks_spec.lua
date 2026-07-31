@@ -417,16 +417,18 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.is_true(F.widget:is_empty())
       end)
 
-    -- doc/input_api.md, "Submit lifecycle": a truthy before_cancel
-    -- VETOES the cancel outright -- the draft survives, after_cancel
-    -- never runs. This is how a project guards unsaved content
-    -- against a stray Escape.
+    -- doc/input_api.md, "Submit lifecycle": a truthy
+    -- before_cancel VETOES the cancel outright -- the draft
+    -- survives and after_cancel never runs. This is how a
+    -- project guards unsaved content against a stray Escape.
     it('a truthy before_cancel vetoes the whole cancel',
       function()
         local input = F.activate_project()
         local after = false
-        input.callbacks.before_cancel = function() return true end
-        input.callbacks.after_cancel = function() after = true end
+        input.callbacks.before_cancel =
+          function() return true end
+        input.callbacks.after_cancel =
+          function() after = true end
         input.show({ text = 'abc' })
         F.session.press('escape')
         assert.is_false(F.widget:is_empty())
@@ -542,14 +544,15 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.is_true(F.widget:is_empty())
       end)
 
-    -- doc/input_api.md, "Submit lifecycle": closing after a submit
-    -- is still available -- it is now one explicit line rather than
-    -- the framework's unasked-for default. This reproduces the
-    -- pre-feature prompt-once behaviour.
+    -- doc/input_api.md, "Submit lifecycle": closing after a
+    -- submit is still available -- it is now one explicit line
+    -- rather than the framework's unasked-for default. This
+    -- reproduces the pre-feature prompt-once behaviour.
     it('after_submit may hide, reproducing prompt-once',
       function()
         local input = F.activate_project()
-        input.callbacks.after_submit = function() input.hide() end
+        input.callbacks.after_submit =
+          function() input.hide() end
         input.show({ text = 'hello' })
         F.session.press('return')
         assert.is_nil(love.state.user_input)

@@ -73,20 +73,23 @@ describe('history #history', function()
   end)
 end)
 
--- Recall the way a user reaches it, through the real console. The
--- console input is single-line, so Up hits the vertical limit at
--- once and the widget reports that through the on_limit_reached
--- callback wired at construction; the console's handler turns it
+-- Recall the way a user reaches it, through the real console.
+-- The console input is single-line, so Up hits the vertical
+-- limit at once and the widget reports that through the
+-- on_limit_reached callback wired at construction; the
+-- console's handler turns it
 -- into history_back (doc/development/decisions/input.md,
 -- Decision 5). The retired mechanism -- the console reading
 -- keypressed's return value -- is why this is an end-to-end row
 -- and not another model one.
-describe('console history navigation #input #history', function()
+describe('console history navigation #input #history',
+  function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
 
-  it('Up at the vertical limit recalls the last entry', function()
+  it('Up at the vertical limit recalls the last entry',
+    function()
     F.console.model.history:remember({ 'foo' })
     F.session.press('up')
     assert.same({ 'foo' }, F.console:get_text())
