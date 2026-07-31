@@ -53,7 +53,8 @@ is the console/editor route's default handler for that event.
 
 `Controller.set_default_handlers(CC, CV)` (`controller.lua:809`) is the bulk operation that makes
 the console the owner of every `love.<event>` at once — "restore to the default route," in the
-vocabulary of `decisions/input.md` Decision 1. It does three things, in order:
+vocabulary of [`../decisions/input.md`](../decisions/input.md), Decision 1. It does three things,
+in order:
 
 1. Calls `Controller.project_input:deactivate()` (`controller.lua:817`) — drops the project route
    first, so the reinstall below is never racing an already-live project occupant.
@@ -108,12 +109,12 @@ So the word "handler" legitimately names two different things at two different l
 - **runtime layer** (this doc): `love.handlers[name]` (the pump table itself) and `love[name]`
   (whatever currently occupies it) — LÖVE's own terms, predating and outside Compy's input-API
   design.
-- **input-API layer** (`decisions/input.md`): the project's captured `love.*`, seeded once into
-  `compy.input.hooks[event]` when the project sets no explicit hook (Decision 10).
+- **input-API layer** ([`../decisions/input.md`](../decisions/input.md)): the project's captured
+  `love.*`, seeded once into `compy.input.hooks[event]` when the project sets no explicit hook
+  (Decision 10).
 
-> REMARK: ephemeral specref (what is D6?) and bad document reference (decisions/input.md without full path below and above), plus why would we speak about history here? its noice.
-
-The D6 vocabulary pass in `decisions/input.md` deliberately left this runtime-wiring layer
-untouched — `setup_callback_handlers` was not renamed, and is not going to be. This doc is the map
-so that collision does not mislead a reader who lands on `controller.lua` and sees "handler" used
-two different ways within a few hundred lines of each other.
+The vocabulary section of [`../decisions/input.md`](../decisions/input.md) governs the input API and
+stops there: this runtime-wiring layer is outside its scope, so `setup_callback_handlers` keeps the
+name LÖVE's own vocabulary gave it. This doc is the map, so the collision does not mislead a reader
+who lands on `controller.lua` and sees "handler" used two different ways within a few hundred lines
+of each other.
