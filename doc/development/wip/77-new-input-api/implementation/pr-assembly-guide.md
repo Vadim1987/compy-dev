@@ -40,9 +40,7 @@ mkdir -p "$OUT"
 
 # --- Set 1 · generic docs-corpus (22 files), split 1a / 1b — see §1.1 ---
 SET1="doc/development/internals/event_dispatch_layers.md
-  doc/development/conventions/architecture_principles.md
-  doc/development/conventions/code.md
-  doc/development/conventions/git.md
+  doc/development/conventions/
   doc/development/docs.md
   doc/development/drawing_system.md
   doc/development/overview.md
@@ -146,7 +144,31 @@ glance whether it is one line repeated 23 times or 23 arguments to check.
 
 Here the mechanical pass is commit **`6c766da`** ("mark LLM-authored dev docs as
 pending human approval"), which inserted one `<!-- authored By LLM; human-approved
-NOT YET -->` line after each H1. So:
+NOT YET -->` line after each H1.
+
+**That marker is no longer how provenance is recorded.** The 2026-07-31 ruling
+replaced it with a YAML front-matter block (`doc/development/conventions/docs.md`),
+applied to the persistent corpus and two internals docs. This does **not** invalidate
+`1a`: every one of its 21 files still carries the comment at `$TIP`, so the slice is
+still "one line repeated 21 times". It does mean two things for the reviewer, and both
+belong in `1b` because they are meaningful, not mechanical:
+
+- the files whose provenance form *changed* (in Set 1: `event_dispatch_layers.md`,
+  `project_sandbox_env.md`) show a marker removed and a described block added;
+- the convention itself (`conventions/docs.md`) is a new file — which is why `SET1`
+  above names the `conventions/` **directory** rather than its three original files.
+  A pathspec that lists files cannot see a file that did not exist when it was written.
+
+Before regenerating, confirm the premise still holds — if this prints anything, those
+files' markers were replaced too and they must be dropped from `1a`'s pathspec:
+
+```sh
+for f in $(git diff --name-only 6c766da^ 6c766da -- $SET1); do
+  grep -q "authored By LLM" "$f" || echo "no longer stamped at TIP: $f"
+done
+```
+
+So:
 
 - **`1a`** = that commit, narrowed to the Set-1 pathspec — 21 files, one added line
   (plus a blank) each. Generated from `6c766da^..6c766da`, **not** from `$BASE`:
@@ -278,6 +300,13 @@ At authoring time this yielded **61 files**, no diff — the slices reconstruct 
 wip-excluded change set exactly. If `diff` reports lines, a new file landed outside every pathspec
 (add it to the right slice) or a file moved sets (fix the overlap).
 
+**This is the check that catches a file the pathspecs cannot see, and it has already caught
+one.** `doc/development/conventions/docs.md` (the front-matter convention, 2026-07-31) fell
+outside every slice because `SET1` named three `conventions/` files individually; it would have
+been dropped from the PR silently. `SET1` now names the directory. Run this check after **any**
+commit that adds a file, not only before Phase G — a pathspec written against a tree cannot
+anticipate one.
+
 `sort -u` above hides the two intentional file-level overlaps introduced in §1.1 — Set-1 docs appear
 in both `1a` and `1b`, and `userInputModel.lua` in both `3c` and `3g`. The completeness half of the
 check is unaffected; for the disjointness half, the stronger test is the one that actually matters:
@@ -309,7 +338,7 @@ git diff HEAD $TIP -- . ':(exclude)doc/development/wip/'   # must be empty at th
 | Set / slice | Files | Churn (authoring-time) |
 |---|---|---|
 | 1a docs rubber-stamping | 21 | +42 (one marker + blank per file) |
-| 1b generic docs | 10 | the rest of Set 1 |
+| 1b generic docs | 10+ | the rest of Set 1 — grew with the front-matter conversion and `conventions/docs.md` |
 | 2 agentic | 10 | +513 |
 | 3d tests | 6 | +2615 / −5 (minus the highlight spec) |
 | 3g highlight regression | 2 | the `highlight()` hunk + its spec |
