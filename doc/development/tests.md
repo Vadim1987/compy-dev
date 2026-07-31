@@ -62,7 +62,7 @@ Tags beyond the file-level `#input`:
 - `#legacy` (`input_shortcuts_click_spec`) — proves the retired poll-idiom globals (`user_input`, `input_code`, `input_text`, `write_to_input`, `validated_input`, and the debug-only `astv_input`) are gone as ordinary `nil` fields — no shim, no deprecation path. The replacement surface (`compy.input`) is exercised throughout the rest of the suite, so the "Not covered: `user_input` overlay API" row from an earlier version of this doc no longer applies.
 - `#lifecycle` (`input_lifecycle_uniform_spec`) — the one-lifecycle claim: Enter submits and Escape cancels identically in the console, the editor and a project overlay.
 - `#history` (`history_spec`) — history recall, including the console's Up-at-the-top recall through the real key path.
-- `#disputable` (`input_shortcuts_click_spec`) — marks a contract whose *desirability* is contested even though the assertion is factually true. Currently one group: global shortcuts fire without consuming the key.
+- `#disputable` (`input_shortcuts_click_spec`, `input_widget_lifecycle_spec`) — marks a contract whose *desirability* is contested even though the assertion is factually true. Two groups: global shortcuts fire without consuming the key, and the console line receiving what a hidden widget declined (recorded in `technical_debt/input.md`, "On the console route, a hidden widget's input falls to the console line").
 
 **The 3 pending tests are named gaps, not failures.** `busted tests` reports `861 successes / 0 failures / 0 errors / 3 pending` (confirmed by a live run). Each pending row documents a cell in the mode × channel routing grid that is either out of the input API's scope or not black-box observable today:
 

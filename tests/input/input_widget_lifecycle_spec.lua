@@ -172,7 +172,9 @@ describe('input contracts: widget lifecycle #input', function()
     -- After hide the widget stops being the surface the
     -- route forwards to: typed text lands in the console,
     -- not the widget (whose non-mutation is asserted in
-    -- the hidden-widget row below).
+    -- the hidden-widget row below). That the CONSOLE is
+    -- where it lands is the disputed half — see the group
+    -- below for where that is recorded.
     it('hide deactivates the widget', function()
       local input = F.compy_input()
       input.show()
@@ -191,7 +193,17 @@ describe('input contracts: widget lifecycle #input', function()
   -- One row per channel: the pair differs only in which channel the
   -- event arrives on (textinput vs keypressed), so they are named for
   -- that and nothing else.
-  describe('a hidden widget does not consume', function()
+  --
+  -- #disputable — the first assertion of each row (the widget keeps
+  -- its content) is settled contract; the second (the CONSOLE LINE
+  -- receives what the hidden widget declined) is the console route's
+  -- own fallback, and whether it should exist at all was one of this
+  -- feature's live arguments. It is ruled for the project route and
+  -- unruled here: doc/development/technical_debt/input.md, "On the
+  -- console route, a hidden widget's input falls to the console line".
+  -- These rows pin today's behaviour so a change to it is deliberate;
+  -- they do not endorse it.
+  describe('a hidden widget does not consume #disputable', function()
 
     it('a typed character while hidden does not mutate it', function()
       local input = F.compy_input()

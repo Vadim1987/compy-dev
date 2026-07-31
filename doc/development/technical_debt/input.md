@@ -201,6 +201,35 @@ question, not resolved here.
   this today.
 - **Revisit:** Decide when another project author hits the same need.
 
+### On the console route, a hidden widget's input falls to the console line
+
+- **Where:** `src/controller/controller.lua` — `forward_keypressed` /
+  `forward_textinput` / `forward_keyreleased` hand the event to the widget
+  only while `love.state.user_input` is set, which `hide()` clears; the
+  console-route defaults then fall back to `CC:keypressed` / `CC:textinput`,
+  i.e. the console command line. Pinned by
+  `tests/input/input_widget_lifecycle_spec.lua`, "a hidden widget does not
+  consume" (marked `#disputable`).
+- **Why it stands:** The general principle — *input the widget declined
+  should have no effect* — was ruled for the **project** route only:
+  Decision 11 ("Changed baseline behaviour", `../decisions/input.md`) gives
+  a running project's route every keyboard/text event, so an event no
+  shortcut, hook, or shown widget takes simply ends there, instead of
+  accumulating in the console behind the project's screen. The **console**
+  route kept the old shape, and it is not obviously wrong there: the console
+  line is that route's own input surface, so "the widget is down, type into
+  the terminal" is arguably the correct reading, not a leak. What is unruled
+  is whether the two routes should read the same way.
+- **Reachability:** No leak path through a *running* project is known today
+  — the running case is Decision 11's, and the `project_open` case is
+  narrowed by ruling (a) above (`user_is_interactive`), which keeps the
+  project route for any project with an overlay or a pointer handler. The
+  open question is therefore a contract question first: two routes, two
+  answers to the same question, only one of them written down.
+- **Revisit:** At the next ruling pass over route symmetry — either sanction
+  the console fallback explicitly in the contract doc, or give the console
+  route the project route's "declined means no effect" shape.
+
 ---
 
 ## Anticipated — revisit at the named point, close only if warranted
