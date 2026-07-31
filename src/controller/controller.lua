@@ -139,6 +139,17 @@ local function wrap(f, CC, ...)
   end
 end
 
+--- NAMING — disputed, not re-approved. The rename of `*_native`,
+--- `userlove` and `forward_*` is deferred to just before the PR
+--- (owner, 2026-07-31); candidates on the table are
+--- `wrap_project_handler` / `chain_project_handler`, `project_love`,
+--- `to_widget_*`. Why two wrappers and not one with a flag:
+--- `wrapped_native` rides on `CC:wrap_handler`, shared with the
+--- compy click handlers, which discards the return by construction —
+--- and a chain participant's return IS its consume signal, so
+--- `chain_native` cannot reuse it. Dedup and the guard they share:
+--- doc/development/technical_debt/input.md, "Project-handler wrapping".
+
 --- The project's own handler for an event, error-wrapped;
 --- nil when the project did not define one. "Native" here
 --- and below = a handler the project installed in its own
