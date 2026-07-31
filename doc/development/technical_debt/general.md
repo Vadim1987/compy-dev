@@ -1,3 +1,11 @@
+---
+description: Cross-cutting technical debt outside the input subsystem
+status: active
+audience: developer
+authored: llm
+reviewed: none
+---
+
 # General
 
 Debt not tied to one subsystem — load-order/aliasing assumptions and shared-utility

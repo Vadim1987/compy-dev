@@ -1,3 +1,11 @@
+---
+description: Project-author guide to compy.input — the overlay, its config table, the submit lifecycle, hooks and shortcuts
+status: active
+audience: project author
+authored: llm
+reviewed: none
+---
+
 # Compy Input API
 
 This guide is for projects running inside Compy. `compy.input` is the

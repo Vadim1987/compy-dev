@@ -1,10 +1,10 @@
 ---
-description: How a running project's Lua environment is sandboxed — the deep-cloned env, the shared-leaf-function consequence, and the three tiers of state (managed callbacks, compy.* wrappers, leaky raw love.* globals)
+description: How a running project's Lua environment is sandboxed — the deep-cloned env, the shared-leaf-function consequence, and the three tiers of state
 status: active
 audience: developer
+authored: llm
+reviewed: none
 ---
-
-> REMARK: I like the annotation above, is it OKF format? but how can we wire 'produced by LLM' and 'reviewed by human' here? And why it was not done? (ok, likely some model with less attention to rules)
 
 # Project sandbox environment
 

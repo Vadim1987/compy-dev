@@ -1,3 +1,11 @@
+---
+description: Input subsystem debt — standing properties, open decisions, and anticipated items with their revisit conditions
+status: active
+audience: developer
+authored: llm
+reviewed: none
+---
+
 # Input subsystem
 
 Keyboard/text/pointer routing, the console and project input controllers

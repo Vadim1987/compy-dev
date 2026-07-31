@@ -1,0 +1,56 @@
+---
+description: Front matter every doc under doc/ carries — what the fields mean, what they replace, and how provenance is recorded
+status: active
+audience: developer
+authored: llm
+reviewed: none
+---
+
+# Documentation Conventions
+
+Owner ruling, 2026-07-31. Before it, provenance lived in an HTML comment
+(`<!-- authored By LLM; human-approved NOT YET -->`) carried by 58 files, while
+one file carried YAML front matter and the three most load-bearing documents
+carried neither. This replaces both with one block.
+
+## The block
+
+Every document under `doc/` opens with YAML front matter — the
+Jekyll/Hugo/Obsidian convention, which is what the block above is; there is no
+governing standard beyond it, so these fields are ours:
+
+```yaml
+---
+description: one line, what the document is for
+status: active | draft | superseded
+audience: developer | project author | stakeholder
+authored: llm | human | mixed
+reviewed: none | <name>, <YYYY-MM-DD>
+---
+```
+
+- **description** — one line. It is what a reader sees in an index or a search
+  result, so write what the document is *for*, not what it is called.
+- **status** — `superseded` documents keep a pointer to their successor in the
+  body, they are not deleted.
+- **audience** — who it is written for. `project author` means someone writing
+  a project that runs inside Compy; `stakeholder` means someone reviewing what
+  was built without reading the code.
+- **authored** — who wrote the prose. `mixed` is honest and common.
+- **reviewed** — `none` until a human has actually read it end to end, then the
+  reviewer and the date. This is the field the old comment's
+  "human-approved NOT YET" was carrying; it is not a formality, and it does not
+  update itself.
+
+## Rules
+
+- The block is the **only** place provenance is recorded. Do not re-add the
+  HTML comment.
+- `reviewed:` is changed by the reviewer, not by the author and not by an
+  agent — an agent may add the field with `none`, never fill it in.
+- A renamed heading breaks every citation pointing at it. When you rename one,
+  grep `src/`, `tests/` and `doc/` for the old anchor and repoint it in the
+  same commit.
+- Cite canonical docs (`doc/…`), never a feature's ephemeral working tree
+  (`doc/development/wip/…`), and cite a **named section** rather than a
+  paragraph number.

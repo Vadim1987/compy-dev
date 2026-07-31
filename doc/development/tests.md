@@ -1,6 +1,12 @@
-# Test Suite Review
+---
+description: What the test suite covers, the shared input fixtures, the tag vocabulary, and the named gaps
+status: active
+audience: developer
+authored: llm
+reviewed: none
+---
 
-<!-- authored By LLM; human-approved NOT YET -->
+# Test Suite Review
 
 Assessment of `tests/` relative to the codebase and the knowledge base under `doc/development/`. Organised into: relevant infrastructure, coverage map, gaps.
 

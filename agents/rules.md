@@ -18,6 +18,7 @@ Mapping of reference docs:
 ./doc/development/conventions/architecture_principles.md -- fundamental conventions and constraints applying to the whole project
 ./doc/development/conventions/code.md -- code style
 ./doc/development/conventions/git.md -- conventional commits usage
+./doc/development/conventions/docs.md -- doc front matter, provenance, citation hygiene
 `./doc/development/internals/*` -- current implementation essentials, derived from codebase isnpection -- currently cover editor, console, examples
 ./doc/development/internals/user_input.md -- cross-component usage of user input in different modes
 ./doc/development/drawing_system.md -- unobvious wiring of drawing system, enabling paper-and-pen vs realtime drawing modes

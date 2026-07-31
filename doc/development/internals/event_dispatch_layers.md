@@ -1,6 +1,12 @@
-# Event Dispatch Layers — `love.handlers.*` vs `love.<event>`
+---
+description: The two-layer love.handlers.* vs love.<event> wiring, and what becomes of a project-defined love.*
+status: active
+audience: developer
+authored: llm
+reviewed: none
+---
 
-<!-- authored By LLM; human-approved NOT YET -->
+# Event Dispatch Layers — `love.handlers.*` vs `love.<event>`
 
 Compy mirrors stock LÖVE's own two-layer event dispatch, and the mirroring is deliberate, not
 incidental. Stock LÖVE's `love.run` pumps OS events into a dispatch table `love.handlers[name]`;

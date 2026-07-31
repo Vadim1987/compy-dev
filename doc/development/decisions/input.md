@@ -1,3 +1,11 @@
+---
+description: The why behind Compy keyboard/text input routing and the project-facing input widget — the ratified decisions
+status: active
+audience: developer
+authored: llm
+reviewed: none
+---
+
 # Input subsystem — architecture & key decisions
 
 The *why* behind Compy's keyboard/text input routing and the project-facing input widget.
