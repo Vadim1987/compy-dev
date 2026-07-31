@@ -13,6 +13,7 @@ appears throughout.
 
 ---
 
+> REMARK: we can retire 'slot' from here as well, its not referenced anywhere except ephemeral docs
 ## Vocabulary — hook, callback, handler (and why there is no "slot")
 
 Three words name assignable functions in this subsystem; they are kept distinct on purpose,
@@ -31,11 +32,14 @@ set and an open, self-authored callback set are different contracts even where t
 mechanics coincide; merging the vocabularies would erase that boundary just where a reader most
 needs it.
 
+> REMARK: here we have some self-induced confusion. Inside project route we have hooks/callbacks/widget. We do not (or should not) use handlers in any other meaning than Love2d uses them (layer-2 love.<event> is handler). The only real confusion may come from the fact that some projects may install love.textinput (thinking they are using *handler*) but its actually captured and demoted to hook. Encouraged path is instaling them as hook.
+
 - **handler** — the project's captured `love.*` function (Decision 10). A handler is simply a
   **callback whose mount point is never empty**: the route always owns a `love.keypressed`
   etc., so "handler" earns its own word for the always-present occupant a route installs, as
   distinct from the sometimes-unset `hooks`/`callbacks` a project assigns.
 
+> REMARK: no need to defend against not using 'slot', just not use it and drop this paragraph
 There is **no "slot".** "Install a hook/callback into slot *X*" says exactly what "define
 hook/callback *X*" already says — the mount point is implied by the definition, so naming it
 separately only added a vague third noun that drifted across all three senses above. The word

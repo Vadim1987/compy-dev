@@ -8,6 +8,9 @@ Detailed docs for each are in this directory. For the project-author usage guide
 
 Input mode column uses `compy.input.*` **(supported since 1.0.0-rc20260712)** throughout; the legacy `user_input()`/`input_text()`/`input_code()`/`validated_input()`/`write_to_input()` poll-a-reftable API is **(deprecated, removed in 1.0.0-rc20260712)**.
 
+> REMARK: naming 'guess' as 'pen-and-paper' would be exagerration. its pure terminal, no drawing field at all. pen-and-paper idiom only relates to the games where some drawing happens -- but on virtul canvas and on demand, not every tick. So just "no drawing, pure terminal", or something like that. Same about repl.
+> REMARK: "repl.. echoing whatever user types" -- obviously executing whatever user types, not echoing
+
 | Example | One-line description | Draw mode | Input mode |
 |---|---|---|---|
 | [balloons](balloons.md) | Real-time typing game — pop balloons before they fill the screen | real-time `love.draw` | `compy.input.show{}` continuous session |

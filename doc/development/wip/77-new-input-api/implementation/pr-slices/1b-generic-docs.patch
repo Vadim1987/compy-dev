@@ -1,92 +1,7 @@
-diff --git a/doc/development/conventions/architecture_principles.md b/doc/development/conventions/architecture_principles.md
-index 29359f5..dc4c570 100644
---- a/doc/development/conventions/architecture_principles.md
-+++ b/doc/development/conventions/architecture_principles.md
-@@ -1,5 +1,7 @@
- # Architecture Principles
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- Compy is an educational artifact as much as a software project. Its architecture reflects that: the goal is to model good habits for students, not to maximize abstraction or minimize developer friction.
- 
- ---
-diff --git a/doc/development/conventions/code.md b/doc/development/conventions/code.md
-index e79ff56..ec860bf 100644
---- a/doc/development/conventions/code.md
-+++ b/doc/development/conventions/code.md
-@@ -1,5 +1,7 @@
- # Code Conventions
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- > These conventions are not fully fixed — they evolve with experience. Some are unique to this project by design.
- > Further discussion: https://github.com/compy-toys/compy/issues/54
- 
-@@ -76,3 +78,16 @@ if cond then end
- local gfx = love.graphics
- local sfx = compy.audio
- ```
-+
-+## Comment References
-+
-+Comments cite **canonical docs** (`doc/…`), never a feature's ephemeral working tree
-+(`doc/development/wip/…`). A wip path rots when the feature's scratch is deleted; cite the
-+persistent doc — and a **named section**, not "paragraph N" — so the reference stays
-+discoverable and greppable.
-+
-+A named section is only useful while it exists. When you rename or remove a heading, grep
-+`src/` and `tests/` for comments citing the old name — a citation that no longer resolves is
-+worse than none, because it reads as authoritative. Renaming the input guide's headings once
-+left 31 citations pointing at sections that were gone, two of them naming a design model the
-+feature had already retired.
-diff --git a/doc/development/conventions/git.md b/doc/development/conventions/git.md
-index 212baa4..62773a6 100644
---- a/doc/development/conventions/git.md
-+++ b/doc/development/conventions/git.md
-@@ -1,5 +1,7 @@
- # Commit Message Conventions
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- This project follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). The primary motivation is **automatic semantic versioning** — commit types signal the severity of a change, not just its category.
- 
- ## Types
-diff --git a/doc/development/docs.md b/doc/development/docs.md
-index 18dd97f..0653178 100644
---- a/doc/development/docs.md
-+++ b/doc/development/docs.md
-@@ -1,5 +1,7 @@
- # Project Documentation Review
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- Assessment of `doc/` relative to the codebase and the knowledge base under `doc/development/`. Organised into: relevant (usable as-is), drift (needs attention), gaps.
- 
- ---
-diff --git a/doc/development/drawing_system.md b/doc/development/drawing_system.md
-index 4f04465..19bce88 100644
---- a/doc/development/drawing_system.md
-+++ b/doc/development/drawing_system.md
-@@ -1,5 +1,7 @@
- # Drawing System
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- ## Two Modes
- 
- User projects can draw in one of two ways, selected by whether `love.draw` is overridden.
 diff --git a/doc/development/internals/console.md b/doc/development/internals/console.md
 index dacae48..9c04b23 100644
 --- a/doc/development/internals/console.md
 +++ b/doc/development/internals/console.md
-@@ -1,5 +1,7 @@
- # Console Mode — Implementation Overview
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- Console mode is the default application state — active when no project is running and the editor is not open. It presents the user with a REPL-like interface: type Lua, press Enter, see results. It is also the lifecycle manager for projects: opening, running, suspending, stopping, and closing them.
- 
- ---
 @@ -102,24 +104,30 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
  
  ## The `user_input` Overlay
@@ -145,18 +60,6 @@ index dacae48..9c04b23 100644
  
  `compy.terminal` wraps the VT-100 terminal instance directly (the same terminal that renders the console output). Projects can use it for text-mode output within their run context.
  
-diff --git a/doc/development/internals/editor.md b/doc/development/internals/editor.md
-index b269684..2b2b178 100644
---- a/doc/development/internals/editor.md
-+++ b/doc/development/internals/editor.md
-@@ -1,5 +1,7 @@
- # Editor — Implementation Overview
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- ## The Core Concept: Block-Centric Editing
- 
- The editor does not operate on lines. For Lua files, it operates on **blocks** — top-level syntactic units produced by the metalua chunker. A block is either a `Chunk` (one or more source lines forming a complete top-level statement/expression) or an `Empty` (a blank separator line). The selection highlight, navigation, submit, delete, insert, and move operations all act on blocks, not on individual lines.
 diff --git a/doc/development/internals/event_dispatch_layers.md b/doc/development/internals/event_dispatch_layers.md
 new file mode 100644
 index 0000000..4871634
@@ -301,18 +204,6 @@ index 7671ba0..9119a61 100644
  
  ## Points of attention
  
-diff --git a/doc/development/internals/examples/clock.md b/doc/development/internals/examples/clock.md
-index 64c99f1..b5e3771 100644
---- a/doc/development/internals/examples/clock.md
-+++ b/doc/development/internals/examples/clock.md
-@@ -1,5 +1,7 @@
- # clock
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Animated digital clock** with randomly picked foreground and background colors. Uses a LÖVE stencil for a decorative moving-circle mask effect.
- 
- ## Architecture
 diff --git a/doc/development/internals/examples/guess.md b/doc/development/internals/examples/guess.md
 index 06f36ff..cde6560 100644
 --- a/doc/development/internals/examples/guess.md
@@ -397,42 +288,6 @@ index e38bb66..e4f4515 100644
 +| [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `compy.input.show{ highlighter = LuaHighlighter, validator = LuaSyntaxValidator }` |
 +| [turtle](turtle.md) | Turtle-graphics interpreter driven by typed commands | real-time `love.draw`, draws trails | `compy.input.show{}` one-shot (on `i`) + `love.keypressed` |
 +| [valid](valid.md) | Validator showcase — collects user input with custom rules | pen-and-paper (no `love.update`) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
-diff --git a/doc/development/internals/examples/life.md b/doc/development/internals/examples/life.md
-index 7bfc748..b29e16a 100644
---- a/doc/development/internals/examples/life.md
-+++ b/doc/development/internals/examples/life.md
-@@ -1,5 +1,7 @@
- # life
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Conway's Game of Life.** Full real-time simulation with keyboard and mouse controls, speed adjustment, and random initialization.
- 
- ## Architecture
-diff --git a/doc/development/internals/examples/paint.md b/doc/development/internals/examples/paint.md
-index d21fd2b..e025366 100644
---- a/doc/development/internals/examples/paint.md
-+++ b/doc/development/internals/examples/paint.md
-@@ -1,5 +1,7 @@
- # paint
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Pixel paint application** with a color palette, brush/eraser tools, and line weight selector.
- 
- ## Architecture
-diff --git a/doc/development/internals/examples/pong.md b/doc/development/internals/examples/pong.md
-index bbf566a..ece1dca 100644
---- a/doc/development/internals/examples/pong.md
-+++ b/doc/development/internals/examples/pong.md
-@@ -1,5 +1,7 @@
- # pong
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Full Pong game** with two AI difficulty levels, two-player keyboard mode, fixed-timestep physics, and mouse control for the player paddle.
- 
- ## Architecture
 diff --git a/doc/development/internals/examples/repl.md b/doc/development/internals/examples/repl.md
 index 8f71ee0..6fca463 100644
 --- a/doc/development/internals/examples/repl.md
@@ -482,30 +337,6 @@ index 8f71ee0..6fca463 100644
  
  ## Files
  
-diff --git a/doc/development/internals/examples/sapper.md b/doc/development/internals/examples/sapper.md
-index 3e6e9d7..68bee8d 100644
---- a/doc/development/internals/examples/sapper.md
-+++ b/doc/development/internals/examples/sapper.md
-@@ -1,5 +1,7 @@
- # sapper
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Minesweeper** implemented entirely in pen-and-paper mode. The board is drawn once at init and updated incrementally on each user action.
- 
- ## Architecture
-diff --git a/doc/development/internals/examples/sine.md b/doc/development/internals/examples/sine.md
-index c8f1368..ea85cc3 100644
---- a/doc/development/internals/examples/sine.md
-+++ b/doc/development/internals/examples/sine.md
-@@ -1,5 +1,7 @@
- # sine
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **One-shot sine wave plot.** Draws axes and a sine curve at startup using `gfx.points`. No update loop, no input.
- 
- ## Code pattern
 diff --git a/doc/development/internals/examples/tixy.md b/doc/development/internals/examples/tixy.md
 index 61ef8bb..47e3867 100644
 --- a/doc/development/internals/examples/tixy.md
@@ -744,15 +575,3 @@ index 0000000..242b3cf
 +- Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
 +- This model was surfaced by input-subsystem analysis during feature #77 (the project-exit-cleanup
 +  pain point, P4).
-diff --git a/doc/development/overview.md b/doc/development/overview.md
-index 05028b6..ceae0b8 100644
---- a/doc/development/overview.md
-+++ b/doc/development/overview.md
-@@ -1,5 +1,7 @@
- # Implementation Overview
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- High-level implementation details for Compy. Load this when you need architecture context beyond what CLAUDE.md provides.
- 
- ## Hardware and Platform Context

@@ -83,11 +83,15 @@ describe('input API: cursor and text surface', function()
     
     it('moves the cursor', function()
       local input = F.compy_input()
-      input.show({ text = 'hello' })
+      input.show({ text = 'lemon' })
       input.set_cursor(1, 3)
       local l, c = input.get_cursor()
       assert.same(1, l)
       assert.same(3, c)
+      -- ensure cursor was not only reported but really set where expected
+      F.session.press('backspace')
+      local modified_text = F.widget:get_text()
+      assert.same({'leon'}, modified_text)
     end)
 
     -- Discriminating: seat the cursor at col 2 first, so a
@@ -151,6 +155,10 @@ describe('input API: cursor and text surface', function()
           local l, c = input.get_cursor()
           assert.same(1, l)
           assert.same(3, c)
+          -- ensure cursor was not only reported but really set where expected
+          F.session.press('backspace')
+          local modified_text = F.widget:get_text()
+          assert.same({'wold'}, modified_text)
         end)
 
       it('clamps when text shrinks',

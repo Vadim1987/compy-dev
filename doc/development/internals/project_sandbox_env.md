@@ -3,6 +3,9 @@ description: How a running project's Lua environment is sandboxed — the deep-c
 status: active
 audience: developer
 ---
+
+> REMARK: I like the annotation above, is it OKF format? but how can we wire 'produced by LLM' and 'reviewed by human' here? And why it was not done? (ok, likely some model with less attention to rules)
+
 # Project sandbox environment
 
 A project does **not** run in the raw global environment. The console controller builds a per-project
@@ -18,6 +21,8 @@ is load-bearing for any feature touching project lifecycle, global state, or tea
 - `table.clone` (`util/table.lua:48`) is **recursive** (deep) and copies metatables, with a `seen` set
   for cycles.
 
+> REMARK: text below surprises me a bit ; what you mean by 'same function the global love holds' are not these hooks captured and wrapped by controller, not wired directly? (and currently, with new feature, some are installed as 'input' hooks, not as global love handlers? 
+
 **The crucial consequence.** A deep clone gives the env a `love` table with a **fresh identity**, but
 its **leaf values are shared by reference** — `table.clone` returns non-tables as-is (`table.lua:50`).
 So every *function* on `love` (and `love.mouse`, `love.keyboard`, `love.audio`, …) is the **same C
@@ -26,6 +31,8 @@ are not.
 
 ## Three tiers of project state
 
+> REMARK: what 'no leak' means here?  its only understood at last line
+
 | Tier | What | Isolated / restored? |
 |---|---|---|
 | **T1 — callbacks** | `love.draw`, `love.update`, `love.keypressed`, `love.textinput`, `love.mouse*`… defined by the project | **Yes — framework-managed.** Set on the project's cloned `love`; harvested by `save_user_handlers(runner_env['love'])` (`consoleController.lua:824`) and wired into the real dispatch; reset to defaults on stop (`set_default_handlers` / `restore_user_handlers`, `controller.lua:826`). No leak. |
@@ -33,6 +40,9 @@ are not.
 | **T3 — raw `love.*` imperative calls** | `love.keyboard.setKeyRepeat`/`setTextInput`, `love.mouse.setRelativeMode`/`setVisible`, raw `love.audio.newSource`/`play`, cursor… called (not defined) by the project | **No.** These invoke the shared C functions → mutate **real global SDL/LÖVE subsystem state**. Nothing snapshots or restores them across run boundaries. **They leak into the IDE/console after the project exits.** |
 
 ## Why this matters
+
+> REMARK: drop the issue number (#77), if project is cloned it does not survive. Lets use version everywhere
+> REMARK: did we dropped the idea of 'before_exit' invocation? the hook is mentioned, but if it does not really exist, and is not described anywhere, it would be confusing. the minimal (still dirty doc fix) would be to explain that 'before_exit' is a suggested hook that is not implemented (if its not)
 
 - **T1 isolation is what makes the IDE survive a project** — a project that defines `love.draw` doesn't
   permanently hijack the console, because the framework swaps handlers in/out. Any input feature that
@@ -53,5 +63,4 @@ are not.
 
 - Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).
 - Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
-- This model was surfaced by input-subsystem analysis during feature #77 (the project-exit-cleanup
   pain point, P4).

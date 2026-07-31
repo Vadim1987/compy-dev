@@ -14,6 +14,10 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
 
 Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc20260712)**, and direct keyboard actions. Unlike the other examples, turtle does **not** use the continuous-session `after_submit` idiom — there is no overlay shown at load; `i` opens it on demand, one shot at a time:
 
+> REMARK: why not use combo for 'i'? 
+> REMARK: why love.keyboard.isDown() and not another combo (which is exactly the keys we introduced combos for?
+> REMARK: why install via love.keyreleased and not via compy.input.hooks.keyreleased? 
+
 ```lua
 function love.keyreleased(key)
   if key == "i" then
@@ -34,6 +38,8 @@ end
 ```
 
 `eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; the submit callback passes it the first submitted line.
+
+> REMARK: is not re-arm an earlier concept which we later reversed to mimic the 'oneshot' logic that preceded the feature? is lack of this oneshot logic also a reason for bug of input not being cleared?
 
 `love.keyreleased`: the `i` key opens the input overlay with a fresh `compy.input.show{}` call each time (there is no `after_submit` re-arm, so the overlay does not automatically reopen after a submit — pressing `i` again is required). `shift+r` resets turtle position.
 

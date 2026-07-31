@@ -1,9 +1,8 @@
--- Availability: feature-new — the dispatch chain, the per-event
--- hooks and the project-handler install path are introduced by this
--- feature (since 1.0.0-rc20260712); none exist in the baseline.
+-- Availability: the dispatch chain, the per-event
+-- hooks and the project-handler install path are introduced by 
+-- new input API (since 1.0.0-rc20260712); none exist prior to it.
 
 -- dispatch chain: tier mechanics 
--- {historical: split from input_contracts_spec.lua (TF1)}.
 --
 -- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
@@ -20,9 +19,7 @@
 -- This file covers the dispatch-chain MECHANICS: order/consume/fall-through,
 -- combo tables, signatures, defaults, hook and handler install, the
 -- mutable/immutable boundary (doc/development/decisions/input.md, Decision 2).
--- Widget OUTPUTS (submit/cancel) live in input_widget_callbacks_spec.lua. These
--- are two of the suite's nine thematic files (TF1 split by topic — not a
--- two-way mechanics/outputs cut).
+-- Widget OUTPUTS (callbacks fired on submit/cancel) live in input_widget_callbacks_spec.lua. 
 
 local F = require('tests.helpers.input_fixture')
 
@@ -48,8 +45,6 @@ describe('#input events dispatching', function()
     F.session.press(k)
   end
 
-  -- doc/development/decisions/input.md, Decision 2.
-
   describe('order, consume, fall-through', function()
     -- Walked on the keypressed channel only, deliberately. The walk
     -- is ONE channel-agnostic function in production —
@@ -61,7 +56,7 @@ describe('#input events dispatching', function()
     -- channels each REACH the walk is proven separately, per channel,
     -- in the combo group below.
 
-    -- doc/development/decisions/input.md, Decision 2 revised: the dumb
+    -- doc/development/decisions/input.md, Decision 2: the dumb
     -- walk stops at the first consumer. A shortcut returning
     -- truthy consumes — the hook and widget below never run.
     it('a shortcut consumes before the hook and widget',
@@ -125,6 +120,8 @@ describe('#input events dispatching', function()
     end)
 
   end)
+
+  -- REMARK: need to also test selectivity (shortcut fires/consumes only for matched key; hook and widget receive for all keys)
 
   -- doc/development/decisions/input.md, Decision 2: the interception
   -- matrix. Two things at once — each participant intercepts for
@@ -193,7 +190,6 @@ describe('#input events dispatching', function()
     end
   end)
 
-  -- doc/development/decisions/input.md, Decision 8.
   describe('shortcuts fire on the normalised combo', function()
     -- doc/development/decisions/input.md, Decision 8: each channel has its
     -- OWN combo sub-table
@@ -256,7 +252,7 @@ describe('#input events dispatching', function()
     end)
   end)
 
-  -- ---- signatures + read-only proxy
+  -- ---- signatures + read-only proxy of pressed-keys table
   -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 
   describe('signatures and the read-only proxy', function()
@@ -430,8 +426,7 @@ describe('#input events dispatching', function()
     -- hooks.keypressed. What is specific to textinput, and is why
     -- this row exists, is the PER-CHARACTER cadence.
     -- doc/development/decisions/input.md, Decision 5: the textinput hook
-    -- fires PER-CHARACTER (distinct from the submit output on_text_entered,
-    -- which is the pending row above).
+    -- fires PER-CHARACTER (distinct from the submit output on_text_entered)
     it('the textinput hook fires per character as text arrives',
       function()
         local got = { }
@@ -444,7 +439,7 @@ describe('#input events dispatching', function()
         assert.same({ 'a', 'b' }, got)
       end)
 
-    -- doc/development/decisions/input.md, Decision 10 (on_* install path):
+    -- doc/development/decisions/input.md, Decision 10 (hooks install path):
     -- a truthy callback intercepts
     -- the widget; a present-but-falsey callback falls through.
     it('a truthy textinput hook intercepts; falsey reaches the widget',

@@ -2,9 +2,12 @@
 
 <!-- authored By LLM; human-approved NOT YET -->
 
+> REMARK:  it does not 'echo' it 'evaluate'!
 **Minimal REPL.** Accepts text input from the user and echoes it to the terminal.
 
 For the full project-author usage guide, see [Compy Input API](../../../input_api.md).
+
+> REMARK: M8-01 is a development artifact  -- need to reference persistent doc or remove reference!
 
 ## Code
 

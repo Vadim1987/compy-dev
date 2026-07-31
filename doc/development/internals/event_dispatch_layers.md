@@ -101,6 +101,8 @@ than the input-API vocabulary ratified in
 section, where a **handler** means something more specific: the project's captured `love.*`
 function, seeded into a hook (Decision 10) — "a callback whose mount point is never empty."
 
+> REMARK: see remark in decisions/input:35 ("self-induced confusion") -- there's no "two meanings", 'handler' is always used to describe a runtime handler; the only possible confusion is that projects used to define their own 'love.draw', 'love.update', 'love.keypressed' -- and those "handlers" were actually installed on sandboxed table -- and now compy reinstalls keyboard-relevant as *hooks*, never making them real handlers. This is something worth explanation.
+
 So the word "handler" legitimately names two different things at two different layers:
 
 - **runtime layer** (this doc): `love.handlers[name]` (the pump table itself) and `love[name]`
@@ -108,6 +110,8 @@ So the word "handler" legitimately names two different things at two different l
   design.
 - **input-API layer** (`decisions/input.md`): the project's captured `love.*`, seeded once into
   `compy.input.hooks[event]` when the project sets no explicit hook (Decision 10).
+
+> REMARK: ephemeral specref (what is D6?) and bad document reference (decisions/input.md without full path below and above), plus why would we speak about history here? its noice.
 
 The D6 vocabulary pass in `decisions/input.md` deliberately left this runtime-wiring layer
 untouched — `setup_callback_handlers` was not renamed, and is not going to be. This doc is the map
