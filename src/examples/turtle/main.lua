@@ -44,6 +44,14 @@ function love.keypressed(key)
   end
 end
 
+-- Continuous-session idiom (doc/input_api.md, "Submit lifecycle"):
+-- submit no longer clears the field, so the next command would be
+-- typed onto the previous one. Clearing is the project's call now,
+-- and one line of it is the whole migration.
+compy.input.callbacks.after_submit = function()
+  compy.input.clear()
+end
+
 function love.keyreleased(key)
   if key == "i" then
     compy.input.show{
