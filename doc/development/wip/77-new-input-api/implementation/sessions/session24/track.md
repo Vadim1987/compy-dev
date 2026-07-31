@@ -239,3 +239,62 @@ is stated in every message (4 new rows, no row removed or split).
 - Band 2 is **closed**. Next is band 3 — W7, the headless defect hunt (A1
   second-project overlay, A4 error lock, A5 tixy, guess reject freeze), the
   first band that can change production code.
+
+### band 3 executed: W7 → W8 (2026-07-31)
+
+Six commits. Suite **865 → 869**; two production defects found, reproduced
+headlessly and fixed test-first. Both were invisible to the suite for reasons
+worth carrying forward.
+
+- **A1 — "no overlay when a project starts after Ctrl+Q from another project"
+  (tixy 3, turtle 8, valid 9): REAL REGRESSION, FIXED** (`d6b3db4`, note
+  `validation/notes/S24-W7-A1-second-project-overlay.md`).
+  `stop_project_run` cleared `love.state.user_input` directly instead of asking
+  the widget to hide, so `UserInputController.shown` stayed **true** after the
+  project that raised it was gone. The next project's `show{}` hit the
+  already-active guard (Decision 3), warned, and no-opped — leaving the
+  previous project's text in a widget nobody could see. Every stop path arms it
+  (all route through `stop_project_run`), and the flag starts down at boot,
+  which is exactly report (9)'s "first project after boot" wording.
+  - Fixed with `hide_overlay()` — take the overlay down THROUGH the widget.
+  - **Why the suite was green:** the nearest teardown row starts its first
+    project without an overlay; and `F.reset()` forced `widget.shown = false`
+    every test under a comment calling it "state production neither creates nor
+    observes". The fixture was compensating for the bug. That line is gone and
+    the suite is green without it.
+- **A4 + most of A5's UX asks — one defect: an input-only project's overlay was
+  NEVER PAINTED. PRE-EXISTING (not a feature regression), FIXED** (`e80c644`,
+  note `validation/notes/S24-W7-A4-A5-invisible-overlay.md`).
+  The overlay had ONE paint site: the wrapper `set_love_update` installs when a
+  project REPLACES `love.draw`. A project hooking no draw (guess, valid, repl,
+  sapper) keeps the console's draw, which never painted it. Probe over the real
+  `run_project`: drawing project 2 paints / 2 frames, non-drawing **0**.
+  - Explains as one cause: "I don't see what I typed", "no prompt", "black
+    instead of blue input bar", "no signal that I left the console", and
+    **"it freezes"** — the error lock is real and correct, the error text IS
+    rendered (probe: the rejecting submit re-renders with `Errors:/…` in the
+    same keystroke), but into a canvas nobody blitted.
+  - Byte-identical draw wiring at `3256aac`, so **not** ours; what changed is
+    reachability — ruling (a) made input-only projects live for the first time.
+    Fix is three lines in `set_love_draw`, reusing `get_user_input()` so the
+    inspect gate (Decision 12) is inherited, not duplicated. **Owner smoke test
+    should confirm the composition; reverting is those three lines.**
+- **A5-tixy — BY DESIGN in the example.** The top-right text is `legend`,
+  cleared by tixy's own `submit_body` (`legend = ""`): submitting your own
+  formula retires the caption describing the canned one. No framework
+  involvement.
+- **guess reject-path — no project-specific defect.** `LineValidators({
+  is_natural })` is submit-time and correct; the "freeze after entering a
+  symbol" is the invisible error lock above. Noted for W8/W9: guess defines
+  `is_natural` **twice**, the second shadowing the first (dead code).
+- **W8** (`9ebeb46`): turtle's `after_submit` clear — the one in-scope example
+  never migrated to Decision 6's continuity default.
+- New for the **W9** queue, from this band: (i) turtle re-calls `show{}` on
+  every `i` KEYRELEASE, including while the overlay is up and while typing a
+  word containing "i" → warn + no-op each time; it belongs with the A3
+  repeat-`show` ruling and with turtle's combo/hook migration. (ii) whether an
+  error lock with no on-screen exit hint is acceptable now that it is visible.
+  (iii) guess's duplicate `is_natural`.
+- Band 3 is **closed**. Bands 1–3 are all closed; next is band 4 — **W9, the
+  one owner sitting**, which is the first thing in this plan that needs the
+  owner rather than the tree.
