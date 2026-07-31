@@ -45,6 +45,28 @@
   persistent-corpus lines + the files' own headers cite them
   (`technical_debt/input.md:245,:540`, `internals/user_input.md:331`).
   Nothing done — owner asked for feasibility only.
+- Owner then instructed BOTH actions, and widened scope beyond `wip/`:
+  rename + re-prose the lifecycle spec, **dissolve** the redesign-AC spec
+  (redistribute + kill duplicates), reason given — "otherwise I myself
+  cannot read and review them". Also asked for a wip note keeping the
+  move restorable until the PR.
+- Executed in three commits, suite green at each: `eb43d34` dissolve
+  (867 → 861), `0586a57` 64-char rewrap of the rehomed rows, `88fa83f`
+  rename `input_lifecycle_unfork_spec.lua` →
+  `input_lifecycle_uniform_spec.lua` + prose + the two corpus citations.
+  Restoration map: `validation/notes/2026-07-31-spec-dissolution-map.md`.
+- Judgment kept in-session rather than delegated (charter (b) says
+  delegate down): the deliverable IS the prose quality the owner could
+  not read, and the drop/keep calls needed per-row coverage proof. Each
+  "duplicate" was verified against its claimed home in code BEFORE
+  deletion — two rows survived that check (AC4 auto-close, AC6
+  consumption-at-the-route-seam) and were moved, not dropped.
+- Discovered, reported not fixed: `doc/development/tests.md` carries a
+  stale suite count (862) and names two split files by retired names
+  (`input_dispatch_chain_spec`, `input_widget_io_spec`) — as do the two
+  spec headers pointing at each other. Same class as session23's F1.
+- Erratum: `eb43d34`'s message miscounts one moved row as dropped;
+  corrected in the map note, history not rewritten.
 - Behavioural note: the owner is reading the PR candidate as a cold
   reviewer would — "does this file's *name* explain itself without wip
   context" — which is the C1/J1 vocabulary axis surfacing from TF2 rather
