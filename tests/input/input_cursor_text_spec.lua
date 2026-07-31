@@ -88,10 +88,12 @@ describe('input API: cursor and text surface', function()
       local l, c = input.get_cursor()
       assert.same(1, l)
       assert.same(3, c)
-      -- ensure cursor was not only reported but really set where expected
-      F.session.press('backspace')
-      local modified_text = F.widget:get_text()
-      assert.same({'leon'}, modified_text)
+      -- The caret is really seated, not merely reported back:
+      -- typing lands at the caret. `col` counts positions
+      -- BETWEEN characters (1 .. #line + 1), so col 3 is
+      -- between 'e' and 'm' (doc/input_api.md, "Live changes").
+      F.session.type('X')
+      assert.same({ 'leXmon' }, F.widget:get_text())
     end)
 
     -- Discriminating: seat the cursor at col 2 first, so a
@@ -155,10 +157,11 @@ describe('input API: cursor and text surface', function()
           local l, c = input.get_cursor()
           assert.same(1, l)
           assert.same(3, c)
-          -- ensure cursor was not only reported but really set where expected
-          F.session.press('backspace')
-          local modified_text = F.widget:get_text()
-          assert.same({'wold'}, modified_text)
+          -- Seated for real, across the text swap: typing lands
+          -- at the caret, which sits between 'o' and 'r'
+          -- (caret positions, doc/input_api.md, "Live changes").
+          F.session.type('X')
+          assert.same({ 'woXrld' }, F.widget:get_text())
         end)
 
       it('clamps when text shrinks',

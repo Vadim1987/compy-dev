@@ -140,6 +140,13 @@ When hidden, `configure` retains `prompt`, `text`, and `cursor` for one later
 empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
 it. Mutating calls warn and do nothing while the overlay is hidden.
 
+`col` is a **caret position between characters**, not a character index: it
+ranges over `1 .. #line + 1`, where `1` is before the first character and
+`#line + 1` is at the end of the line. So on `"lemon"`, `set_cursor(1, 3)`
+puts the caret between `e` and `m` — typing inserts there (`"leXmon"`) and
+Backspace deletes the character before it (`"lmon"`). Out-of-range values
+clamp to that range rather than failing.
+
 ## Event hooks and shortcuts
 
 `compy.input.shortcuts.keypressed[combo]` registers a combo-specific
