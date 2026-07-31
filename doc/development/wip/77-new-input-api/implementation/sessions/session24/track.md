@@ -108,6 +108,28 @@
   doc (who drives live runs · detached examples in scope? · confirm
   the cursor verdict · re-ordering from take 02).
 
+## 2026-07-31 — owner reshapes P1; replanned in five certainty bands
+
+- Owner rulings received: (1) **no xvfb** — the example defects are mine to
+  hunt **headlessly**: hypothesis → busted test (mock/intercept as
+  troubleshooting needs) → localize → prepare fix; their manual smoke test
+  comes after and confirms rather than gates. (2) `keyboard`, `maze`,
+  `balloons` are **out of bug-fixing scope** — never smoke-tested properly,
+  so their reports are unconfirmed evidence. (3) Cursor verdict confirmed:
+  correct the expectations to caret semantics.
+- W0 executed on the spot (`5356355`): probes kept but switched to
+  insertion (`'lemon'` + col 3 + `X` → `'leXmon'`), which shows the caret's
+  side without arithmetic, and `doc/input_api.md` now states the convention
+  it never had. Suite green again, **861 / 0 / 0 / 3**.
+- Replan appended as §8 of the triage doc, §6 marked superseded. Five bands,
+  each less certain than the last: settled prose/composition → additive
+  coverage → headless defect hunt → **one** ruling sitting → post-ruling
+  execution → Phase G. Bands never depend forward, so take 02 can land at
+  any boundary without unwinding work.
+- Behavioural note: the owner optimizes for *their own* scarce attention —
+  "minimal intervention, no destabilization" — and treats certainty as the
+  ordering key rather than importance. Queue rulings, never trickle them.
+
 - Behavioural note: the owner is reading the PR candidate as a cold
   reviewer would — "does this file's *name* explain itself without wip
   context" — which is the C1/J1 vocabulary axis surfacing from TF2 rather
