@@ -334,3 +334,45 @@ table). Eleven commits. Suite **871 / 0 / 0 / 3**.
 - **Open after this sitting:** the wrapper rename, the owner's smoke test of
   the overlay paint, and **W11 / Phase G** slice regeneration — which stays
   last precisely because the rename will move code.
+
+### post-sitting corrections (2026-07-31, owner-raised)
+
+Four owner observations after the W9 execution; three were right, one was a
+hypothesis the history disproves.
+
+- **PR assembly, front-matter era** (`56941dd`). The owner flagged that the
+  1a/1b rule was written for "one HTML line". The rule survives — all 21 files
+  in `1a` still carry the comment at TIP — but the check found something
+  worse: `SET1` named three `conventions/` files individually, so the new
+  `conventions/docs.md` fell outside **every** slice pathspec and would have
+  vanished from the PR silently. `SET1` now names the directory; §4 states
+  that its completeness check is what catches this class, with this as the
+  worked example, and that it belongs after any commit that ADDS a file.
+- **Error-lock exits: NOT drift** (`eadcc8c`). Hypothesis was that clearing on
+  Left/Right/Space was an unpermitted relaxation, a side effect of the 2D
+  limit work. History says otherwise: the frozen design §10 mandates
+  "acknowledged **(Enter/Space/arrows)**", the widening landed under that AC
+  with the reason in its message (`9bb6d29`), and no other commit touches that
+  key list. `internals/user_input.md` described the wider set **at the PR
+  base** while the code did Enter/Up/Down — the change aligned code to spec
+  *and* doc. Narrowing it now would be an edit to a frozen document. Recorded
+  so it is not re-opened as drift, with the quirk that does bite: an arrow
+  acknowledges and is then swallowed instead of moving the caret.
+- **Stale "no visibility predicate" paragraph** (`43bde2f`) — found by the
+  owner's "recheck where that phrasing is used". `internals/user_input.md`
+  still said there is no `is_shown()` and recommended the `love.state` read
+  that never worked. The other four uses of the show-if-not-shown phrasing
+  (project guide, turtle doc, turtle source, the test row) were consistent.
+- **The keypressed/textinput race — REAL, and now fixed** (`0207617`,
+  Decision 19). LÖVE delivers both events for one physical key with no
+  ordering guarantee, so a project opening the overlay from a key races its
+  own trigger. Reproduced: open on `keypressed('i')` → the field comes up
+  containing `i`. turtle (open on release) is safe **only by luck** — with the
+  textinput delivered last it fails identically, which is now a pinned row.
+  Fix: an overlay shown from inside a keyboard/text event is **sealed** for
+  the rest of that event batch (released at the start of `love.update`, which
+  is exactly the batch boundary). Batch-scoped rather than key-matched on
+  purpose: order-independent and no key→text mapping (`space` → `" "`,
+  `shift+i` → `"I"`, IME output). A sealed overlay is still shown, so
+  consumption reporting is unchanged. maze/sapper-style shows from `update` or
+  a click are not sealed and stay live at once.
