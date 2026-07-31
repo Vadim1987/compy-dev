@@ -32,7 +32,6 @@ The old `r = user_input()` / `validated_input(...)` polling pattern is **(deprec
 
 `is_natural` validates that the input is a string of digit characters using `string.forall(digits, Char.is_digit)`. Returns an `Error` object with a column position on failure — the framework uses this to highlight the offending character in the input widget.
 
-Note: `is_natural` is defined twice in the file (the second definition overwrites the first). The second version uses `Char.is_digit` from the framework's string utilities; the first used `tonumber`. This is organic evolution — the first definition is dead code.
 
 ## Files
 

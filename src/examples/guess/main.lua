@@ -9,20 +9,6 @@ function init()
 end
 
 function is_natural(s)
-  local n = tonumber(s)
-  if not n then
-    return false, "NaN"
-  end
-  if n <= 0 then
-    return false, "Not a positive number!"
-  end
-  if math.floor(n) ~= n then
-    return false, "Not an integer!"
-  end
-  return true
-end
-
-function is_natural(s)
   local digits = string.usub(s, 1)
   local ok, err_c = string.forall(digits, Char.is_digit)
   if ok then
