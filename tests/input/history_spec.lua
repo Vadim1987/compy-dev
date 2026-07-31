@@ -1,8 +1,10 @@
--- Availability: pre-baseline — behaviour asserted here predates
--- this feature; no version tag.
+-- Availability: pre-baseline for the History model below; the
+-- console-navigation group at the bottom of this file is
+-- feature-new (changed in 1.0.0-rc20260712).
 
 --- @diagnostic disable: invisible
 require("model.input.history")
+local F = require('tests.helpers.input_fixture')
 
 if not orig_print then
   --- @diagnostic disable: duplicate-set-field
@@ -68,5 +70,25 @@ describe('history #history', function()
     assert.same(3, history.index)
     assert.is_false(ok)
     assert.same(nil, cur)
+  end)
+end)
+
+-- Recall the way a user reaches it, through the real console. The
+-- console input is single-line, so Up hits the vertical limit at
+-- once and the widget reports that through the on_limit_reached
+-- callback wired at construction; the console's handler turns it
+-- into history_back (doc/development/decisions/input.md,
+-- Decision 5). The retired mechanism -- the console reading
+-- keypressed's return value -- is why this is an end-to-end row
+-- and not another model one.
+describe('console history navigation #input #history', function()
+  setup(function() F.setup() end)
+  teardown(function() F.teardown() end)
+  before_each(function() F.reset() end)
+
+  it('Up at the vertical limit recalls the last entry', function()
+    F.console.model.history:remember({ 'foo' })
+    F.session.press('up')
+    assert.same({ 'foo' }, F.console:get_text())
   end)
 end)

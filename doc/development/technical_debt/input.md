@@ -242,7 +242,7 @@ Not commissioned for closure; each may never need action.
 
 - **Where:** the overlay handle is asserted only for shape — that
   `love.state.user_input` is set and callable while the widget is shown
-  (e.g. `tests/input/input_redesign_ac_spec.lua`). The dedicated
+  (e.g. `tests/input/input_widgets_callbacks_spec.lua`). The dedicated
   `overlay_spec.lua` that built an ad-hoc controller over a `draw`-only
   stub view was removed when the suite was re-authored; the gap below is
   what survived it, not the file.

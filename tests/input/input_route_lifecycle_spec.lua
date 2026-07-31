@@ -133,6 +133,29 @@ describe('input contracts: route connection lifecycle #input', function()
           assert.equal(noop, F.widget.callbacks.on_limit_reached)
           assert.is_nil(F.widget.model.evaluator.highlighter)
         end)
+
+      -- doc/development/decisions/input.md, Decision 11: teardown
+      -- also re-seeds the DEFAULT lifecycle callbacks on the
+      -- project-facing surface, not merely nils them. The next
+      -- project therefore meets the documented stay-open default
+      -- -- neither the previous project's after_cancel nor a
+      -- nil-call error.
+      it('re-seeds the default callbacks for the next project',
+        function()
+          local first = F.activate_project()
+          local leaked = false
+          first.callbacks.after_cancel =
+            function() leaked = true end
+          F.cc:stop_project_run()
+
+          local second = F.activate_project()
+          second.show({ text = 'x' })
+          F.session.press('escape')
+
+          assert.is_false(leaked)
+          assert.is_not_nil(love.state.user_input)
+          assert.is_true(F.widget:is_empty())
+        end)
     end)
 
     describe('inspect', function()

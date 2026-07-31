@@ -6,8 +6,8 @@
 -- 'editor'` branch so `keypressed` runs one uniform path. See
 -- doc/development/decisions/input.md Decision 6 for the rationale
 -- and doc/development/internals/user_input.md for the mechanism.
--- Mirrors input_redesign_ac_spec.lua's style — assertions on
--- observable seams (widget text, fired callbacks), plus a couple
+-- Assertions are on observable seams (widget text, fired
+-- callbacks), plus a couple
 -- of narrow method-patch spies where the seam IS the call itself
 -- (evaluate_input call count, model:cancel not running) — the same
 -- technique input_widgets_callbacks_spec.lua uses for its one

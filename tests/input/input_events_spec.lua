@@ -402,6 +402,21 @@ describe('#input events dispatching', function()
         assert.same({ 'keep' }, F.widget:get_text())
         assert.same({ 'ab' }, F.console:get_text())
       end)
+
+    -- doc/development/decisions/input.md, Decision 2: whether the
+    -- route reports the event as consumed follows from ONE fact --
+    -- is the widget shown. The rows above observe that through
+    -- mutations; this one reads the route's own answer, because a
+    -- shown widget consumes even keys it does nothing with (so a
+    -- 'did it change anything' test cannot witness it).
+    it('the route consumes exactly while the widget is shown',
+      function()
+        F.activate_project()
+        local route = Controller.project_input
+        assert.is_falsy(route:keypressed('x'))
+        F.show_widget({ text = 'a' })
+        assert.is_true(route:keypressed('x'))
+      end)
   end)
 
   -- ---- the per-event hook
@@ -532,6 +547,26 @@ describe('#input events dispatching', function()
         assert.equal(1, cb_hits)
         assert.equal(0, handler_hits)
       end)
+
+    -- doc/development/decisions/input.md, Decision 10 revised:
+    -- the seeding happens ONCE, at activation. Clearing the hook
+    -- afterwards leaves it cleared -- the captured handler is not
+    -- re-resolved behind it. (The retired model re-read
+    -- `explicit or handler` per event, so a nil silently fell
+    -- back to the handler; a project could then not turn its own
+    -- love.keypressed off.)
+    it('clearing a seeded hook does not resurrect the handler',
+      function()
+        local seen = 0
+        local input = F.activate_project({
+          keypressed = function() seen = seen + 1 end,
+        })
+        F.session.press('x')
+        assert.equal(1, seen)
+        input.hooks.keypressed = nil
+        F.session.press('x')
+        assert.equal(1, seen)
+      end)
   end)
 
   -- ---- the mutable/immutable boundary
@@ -539,25 +574,34 @@ describe('#input events dispatching', function()
   -- -------------
 
   describe('the mutable/immutable boundary', function()
-    -- doc/development/decisions/input.md, Decision 7: exactly the
-    -- the hook fields are assignable;
-    -- anything else raises loudly (never a silent swallow).
-    it('assigning an unknown key raises', function()
+    -- doc/development/decisions/input.md, Decision 7 revised:
+    -- `compy.input` and the IDENTITY of its three sub-tables
+    -- (shortcuts, hooks, callbacks) are frozen, while every leaf
+    -- inside them is freely writable. A project therefore fills
+    -- the surface in but can neither replace nor shadow it, and a
+    -- misspelled field raises instead of being swallowed.
+    it('replacing the surface or a sub-table raises', function()
       local input = F.compy_input()
       assert.has_error(function() input.nonsense = 1 end)
       assert.has_error(function()
         input.show = function() end
       end)
       assert.has_error(function() input.shortcuts = { } end)
+      assert.has_error(function() input.hooks = { } end)
+      assert.has_error(function() input.callbacks = { } end)
+      assert.has_error(
+        function() input.shortcuts.keypressed = { } end)
     end)
 
-    it('assigning an allowed hook is accepted',
+    it('leaf writes inside the sub-tables are accepted',
       function()
         local input = F.compy_input()
         assert.has_no.errors(function()
           input.hooks.keypressed  = function() end
           input.hooks.textinput   = function() end
           input.hooks.keyreleased = function() end
+          input.callbacks.validator = function() return true end
+          input.shortcuts.keypressed['ctrl+s'] = function() end
         end)
       end)
   end)
