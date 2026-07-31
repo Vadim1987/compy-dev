@@ -44,22 +44,31 @@ function love.keypressed(key)
   end
 end
 
--- Continuous-session idiom (doc/input_api.md, "Submit lifecycle"):
--- submit no longer clears the field, so the next command would be
--- typed onto the previous one. Clearing is the project's call now,
--- and one line of it is the whole migration.
+-- One-shot prompt (doc/input_api.md, "Submit lifecycle"): the overlay
+-- stays open after submit by default, so a project that wants a
+-- prompt-per-command closes it itself. Hiding also empties the field
+-- for the next `i` — no separate clear needed.
 compy.input.callbacks.after_submit = function()
-  compy.input.clear()
+  compy.input.hide()
 end
 
+-- This project keeps its keyboard on love.keypressed/keyreleased on
+-- purpose: the framework captures a project's own love.* handlers and
+-- runs them as hooks (doc/input_api.md, "Event hooks and shortcuts"),
+-- and turtle is the example that demonstrates that path. Everything
+-- here would work the same written as compy.input.hooks.*.
 function love.keyreleased(key)
-  if key == "i" then
+  -- Open only when it is closed, and consume `i` only then: the hook
+  -- runs BEFORE the overlay, so without the guard every `i` typed into
+  -- the prompt would re-trigger show (which warns and no-ops).
+  if key == "i" and not compy.input.is_shown() then
     compy.input.show{
       prompt = "TURTLE",
       on_text_entered = function(lines)
         eval(lines[1])
       end,
     }
+    return true
   end
 
   if love.keyboard.isDown("lctrl", "rctrl") then

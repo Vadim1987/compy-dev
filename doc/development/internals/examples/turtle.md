@@ -12,21 +12,27 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
 
 ## Input pattern
 
-Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc20260712)**, and direct keyboard actions. Unlike the other examples, turtle does **not** use the continuous-session `after_submit` idiom — there is no overlay shown at load; `i` opens it on demand, one shot at a time:
+Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc20260712)**, and direct keyboard actions. Turtle is the **one-shot** shape rather than the continuous session the other examples use: nothing is shown at load, `i` opens the prompt, and `after_submit` closes it again — so each command gets a fresh, empty field.
 
-> REMARK: why not use combo for 'i'? 
-> REMARK: why love.keyboard.isDown() and not another combo (which is exactly the keys we introduced combos for?
-> REMARK: why install via love.keyreleased and not via compy.input.hooks.keyreleased? 
+Turtle also keeps its keyboard on `love.keypressed`/`love.keyreleased` **on purpose** (owner ruling, 2026-07-31). The framework captures a project's own `love.*` keyboard functions and runs them as hooks, and this is the example that demonstrates that path — everything below would behave identically written as `compy.input.hooks.keyreleased` or, for `i` and `ctrl+escape`, as `compy.input.shortcuts.keyreleased` combos. Keeping one example on the captured path is what makes the path visible at all.
 
 ```lua
+compy.input.callbacks.after_submit = function()
+  compy.input.hide()
+end
+
 function love.keyreleased(key)
-  if key == "i" then
+  -- Open only when it is closed, and consume `i` only then: the hook
+  -- runs BEFORE the overlay, so without the guard every `i` typed into
+  -- the prompt would re-trigger show (which warns and no-ops).
+  if key == "i" and not compy.input.is_shown() then
     compy.input.show{
       prompt = "TURTLE",
       on_text_entered = function(lines)
         eval(lines[1])
       end,
     }
+    return true
   end
 
   if love.keyboard.isDown("lctrl", "rctrl") then
@@ -39,9 +45,9 @@ end
 
 `eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; the submit callback passes it the first submitted line.
 
-> REMARK: is not re-arm an earlier concept which we later reversed to mimic the 'oneshot' logic that preceded the feature? is lack of this oneshot logic also a reason for bug of input not being cleared?
+"Re-arm" was the pre-feature vocabulary: because submit used to close the overlay, a project that wanted another line had to re-open it. That is reversed now — the overlay stays open after submit (Decision 6), so a *one-shot* prompt is the shape that needs the extra line, and turtle's `after_submit` is it. And yes: the missing close is exactly why typed commands used to pile up in the field (report A2, "input is not cleared after Enter") — a one-shot prompt that never closed kept the previous command.
 
-`love.keyreleased`: the `i` key opens the input overlay with a fresh `compy.input.show{}` call each time (there is no `after_submit` re-arm, so the overlay does not automatically reopen after a submit — pressing `i` again is required). `shift+r` resets turtle position.
+`love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. `shift+r` resets turtle position.
 
 See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `r = user_input()` / `input_text(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
 
@@ -51,7 +57,7 @@ See [Compy Input API](../../../input_api.md) for the general usage pattern. The 
 
 ## Points of attention
 
-- Each press of `i` calls `compy.input.show{}` fresh — there is no `after_submit` re-arm, so the overlay does not reappear automatically after a command is submitted; the player must press `i` again for the next typed command.
+- Each command is one prompt: `i` opens it, submit closes it (`after_submit` → `hide`), and the player presses `i` again for the next command. The guard on `compy.input.is_shown()` is what keeps the `i` inside a typed word from re-triggering `show`.
 - `debug_color` is set in `love.update` based on turtle position — this modifies a global used by `drawDebuginfo`. The debug overlay is toggled by `space`.
 
 ## Files
