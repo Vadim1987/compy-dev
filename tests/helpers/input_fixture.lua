@@ -237,8 +237,9 @@ function F.show_selectable_widget(lines)
   return w
 end
 
--- Production stop owns route/output teardown. The remaining cleanup is
--- fixture-owned state that production neither creates nor observes.
+-- Production stop owns route/output teardown, the overlay's shownness
+-- included. What remains here is either fixture-owned state production
+-- never creates, or content production keeps on purpose between runs.
 function F.reset()
   CC:stop_project_run()
   Controller.keys_pressed       = { }
@@ -252,8 +253,11 @@ function F.reset()
   love.update(1.0)
   CC.input:clear()
   CC.editor.input:clear()
+  -- Only the widget's CONTENT: production teardown hides the overlay
+  -- but deliberately keeps its text. `widget.shown = false` used to be
+  -- forced here too, which quietly compensated for stop_project_run
+  -- not lowering the flag — and hid that bug from the whole suite.
   widget:clear()
-  widget.shown = false
 end
 
 return F

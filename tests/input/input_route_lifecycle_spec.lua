@@ -156,6 +156,26 @@ describe('input contracts: route connection lifecycle #input', function()
           assert.is_true(F.is_widget_visible())
           assert.is_true(F.widget:is_empty())
         end)
+
+      -- doc/development/decisions/input.md, Decision 11: the row
+      -- above starts its first project WITHOUT an overlay, so it
+      -- cannot see whether stop leaves the widget re-showable. This
+      -- one does: project one shows, is stopped, and project two
+      -- shows again. The overlay must come up with the SECOND
+      -- project's text — the widget's own shown flag is part of what
+      -- teardown resets, not merely the published love.state handle.
+      it('a second project gets its overlay after the first ' ..
+          'is stopped', function()
+        local first = F.activate_project()
+        first.show({ text = 'one' })
+        F.cc:stop_project_run()
+
+        local second = F.activate_project()
+        second.show({ text = 'two' })
+
+        assert.is_true(F.is_widget_visible())
+        assert.same({ 'two' }, F.widget:get_text())
+      end)
     end)
 
     describe('inspect', function()

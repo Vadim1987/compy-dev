@@ -1187,13 +1187,28 @@ function ConsoleController:evacuate_required()
   end
 end
 
+--- Take the overlay down THROUGH the widget on project stop, so its
+--- own `shown` flag comes down together with the published handle.
+--- Clearing love.state.user_input alone left the widget believing it
+--- was still active, and the next project's show() was then refused
+--- as a repeat by the already-active guard
+--- (doc/development/decisions/input.md, Decision 3) — a stopped
+--- project's overlay silently swallowing the next project's.
+--- hide() fires no cancel chain (Decision 6), which is what teardown
+--- wants: this is not a user-facing dismiss.
+local function hide_overlay()
+  local widget = love.state.user_input_controller
+  if widget then return widget:hide() end
+  love.state.user_input = nil
+end
+
 function ConsoleController:stop_project_run()
   self:evacuate_required()
   local compy = self:get_project_env().compy
   compy.before_exit()
   self.main_ctrl.set_default_handlers(self, self.view)
   self.main_ctrl.set_love_update(self)
-  love.state.user_input = nil
+  hide_overlay()
   View.clear_snapshot()
   self.main_ctrl.set_love_draw(self, self.view)
   self.main_ctrl.clear_user_handlers(self)
