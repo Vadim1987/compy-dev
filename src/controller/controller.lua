@@ -727,8 +727,18 @@ Controller = {
   --- @param CC ConsoleController
   --- @param CV ConsoleView
   set_love_draw = function(CC, CV)
+    -- The overlay is painted on top of the console frame, mirroring
+    -- what set_love_update's wrapper does on top of a PROJECT frame.
+    -- Both paths are needed: the wrapper installs only when a project
+    -- replaces love.draw, so a project that hooks no draw at all (an
+    -- input-only one — technical_debt/input.md, ruling (a)) would
+    -- otherwise show a widget that takes keystrokes and paints
+    -- nothing. get_user_input() carries the inspect gate, so the
+    -- suspended project's widget stays unhonoured (Decision 12).
     local function draw()
       View.draw(CC, CV)
+      local ui = get_user_input()
+      if ui then ui.V:draw() end
       View.drawFPS()
     end
     love.draw = draw

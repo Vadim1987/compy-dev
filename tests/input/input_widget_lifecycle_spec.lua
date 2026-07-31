@@ -228,6 +228,50 @@ describe('input contracts: widget lifecycle #input', function()
     end)
   end)
 
+  -- A shown overlay must be PAINTED, whatever the project does.
+  -- Two draw paths exist and they are not interchangeable: a project
+  -- that hooks love.draw is wrapped by set_love_update, which paints
+  -- the overlay after the project's own frame; a project that hooks
+  -- nothing keeps the console's draw, which is the path these rows
+  -- pin. Consuming input the user cannot see is the failure mode
+  -- (doc/development/internals/user_input.md, "Widget lifecycle"),
+  -- and the overlay's own view is the only surface that shows it —
+  -- the console's input line below it belongs to the console.
+  -- The view is the fixture's stub, so what is asserted is the
+  -- WIRING (the frame reaches the overlay's view), never pixels.
+  describe('a shown overlay is painted', function()
+
+    it('the console draw path paints a shown overlay', function()
+      local painted = 0
+      F.widget.view.draw = function() painted = painted + 1 end
+      F.compy_input().show({ text = 'x' })
+      love.draw()
+      assert.equal(1, painted)
+    end)
+
+    it('a hidden overlay is not painted', function()
+      local painted = 0
+      F.widget.view.draw = function() painted = painted + 1 end
+      local input = F.compy_input()
+      input.show({ text = 'x' })
+      input.hide()
+      love.draw()
+      assert.equal(0, painted)
+    end)
+
+    -- doc/development/decisions/input.md, Decision 12: under inspect
+    -- the console owns the surface and the project's widget is
+    -- unhonoured — including on screen.
+    it('an overlay is not painted under inspect', function()
+      local painted = 0
+      F.widget.view.draw = function() painted = painted + 1 end
+      F.compy_input().show({ text = 'x' })
+      love.state.app_state = 'inspect'
+      love.draw()
+      assert.equal(0, painted)
+    end)
+  end)
+
   -- Editor block navigation at the buffer limit lives in
   -- tests/editor/editor_spec.lua ("with blocks:" → "navigation at the
   -- block limit"): it is editor-INTERNAL behaviour driven below the
