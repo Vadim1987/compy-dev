@@ -376,3 +376,31 @@ hypothesis the history disproves.
   `shift+i` → `"I"`, IME output). A sealed overlay is still shown, so
   consumption reporting is unchanged. maze/sapper-style shows from `update` or
   a click are not sealed and stay live at once.
+
+### nested example repos: their own commits, their own PRs (owner, 2026-07-31)
+
+Owner directive: maze, keyboard and balloons are separate repos and each
+should carry local commits and its own PR, following the platform PR closely.
+This supersedes guardrail 3's "sanctioned, do not clean up" framing — what
+looked like anomalies was the work-in-progress of those PRs.
+
+- **maze** (`nagydani/Compy-maze`, `v3.4`, was in sync): the whole migration
+  was sitting **uncommitted**. Committed as `790ac19`, with the dead guard
+  fixed on the way in — `love.state.user_input` → `compy.input.is_shown()`
+  (Decision 18). Deliberately NOT redesigned: since submit no longer closes
+  the overlay or clears the field, `need_reopen`/`reopen_text` may be dead
+  weight and "prompt only while idle" would need an explicit `hide()` — that
+  is a game-design call for that repo, and the commit says so.
+- **balloons** (`hleb-rubanau/compy-balloons`, `main`, was 1 ahead): the
+  staged `terminal.lua` fix was the answer to smoke report 5 —
+  `compy.input.after_submit = …` **raises** (frozen container), lifecycle
+  callbacks live under `.callbacks`, and the re-show is gone since submit no
+  longer closes. Committed as `94a5f02`; now 2 ahead.
+- **keyboard** (`dsent/keyboard`, `dsent/dev`): clean and in sync, nothing of
+  ours in it. Also answers smoke report 7 statically — it defines
+  `love.keypressed`/`keyreleased`/`textinput` and uses `compy.audio`, never
+  shows an overlay, and does **not** bypass the routes: those functions are
+  captured and run as hooks inside the project route (Decision 10).
+- Nothing pushed anywhere. `pr-assembly-guide.md` §1/§5 rewritten: Set 4 is
+  not a slice of this PR but three sibling PRs, with each repo's remote,
+  branch and commits listed.
