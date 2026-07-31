@@ -134,3 +134,65 @@
   reviewer would — "does this file's *name* explain itself without wip
   context" — which is the C1/J1 vocabulary axis surfacing from TF2 rather
   than a defect hunt.
+
+## 2026-07-31 — band 1 executed: W1 → W4
+
+- **W1** (`1f6129c`) cold-reader prose sweep of the whole input suite, 19 files.
+  Comments and describe/it names only — verified mechanically that no
+  non-comment line moved and every added line is ≤64 chars. Standardized
+  availability on "predates / introduced with / changed by the Compy input API
+  (1.0.0-rc20260712)"; killed "this feature", "feature-new", "pre-baseline",
+  `#77`, `#m5c`/`#m7`/`#m8`, TF1 split provenance, commit `1a2a9a3`,
+  "Decision N *revised*". Renamed `input_nfr_forward_spec`'s mislabelled
+  "planned changes (pending until implemented)" group (it holds a LIVE row) to
+  "teardown leaves the love.* wiring at defaults" and dropped its orphan
+  comment block. 861 / 0 / 0 / 3 throughout.
+- **W2** was already done earlier in the session (`9357d76` delete
+  `editor_spec_fwd.lua`, `ad393a1` guardrail 3).
+- **Owner instruction mid-band:** drop the tracked `ses/SWEEP.tgz`. Extracted
+  first — all nine `SWEEP/session01..05/{prompt,track}.md` are byte-identical
+  to the copies under `implementation/sessions/`, so nothing was lost
+  (`30a2f34`). Guardrail 3 and the WIP index's flag list updated; the index's
+  §Flags entry kept and marked RESOLVED so the anomaly stays legible.
+- **W3** (`a622cd5`) composition recipes into `pr-assembly-guide.md`, both
+  **verified end-to-end in a scratch worktree** rather than asserted: applying
+  the ten slices in the §2 order onto `BASE` reproduces HEAD byte for byte
+  outside `wip/`.
+  - 1a/1b: 1a = `6c766da^..6c766da` narrowed to Set 1 (NOT `$BASE..6c766da`,
+    which drags unrelated content from the 60 commits in between); 1b is by
+    definition the remainder, computable only after 1a applies. Recorded as a
+    standing rule, per the owner's "would be nice to do it always".
+  - 3g: the `highlight()` guard + its spec, selected by git's own hunk funcname
+    context. The only hunk-level filter in the guide; §1.1 says how to notice
+    if a second hunk ever slips into it.
+  - Noted that the hand-split `1a` patch in `pr-slices/` holds 14 files vs the
+    recipe's 21 — the recipe supersedes it at Phase G.
+- **W4**, the factual doc REMARKs, in five commits (`ae17579`, `ea7b211`,
+  `6ff2261`, `06bbe91`, `9b7ed6e`). Notable findings while verifying rather
+  than transcribing the remarks:
+  - **`before_exit` fires on every stop path that runs a project** — Ctrl+Q,
+    Ctrl+S, Ctrl+T and the Ctrl+Esc/`love.quit` path all reach
+    `stop_project_run` (`controller.lua:751-779`, `:877`, `:899`, `:903`). The
+    doc's old claim that force-exit "runs no project code" was wrong and is
+    gone. Only quitting with no project running runs none.
+  - **"repl echoes → should say evaluates" is NOT a doc bug.** The example
+    really echoes: `on_text_entered` pipes lines to `print`, and the overlay is
+    provisioned with `InputEvalText` (`main.lua:370`), a plain-text evaluator
+    with no parser. Documented as-is + named the real question (should the REPL
+    example evaluate?) → **queued for the W9 sitting**, not silently "fixed".
+  - "pen-and-paper" was wrong for guess, repl AND valid (the owner named two);
+    introduced "terminal only" as a third draw mode with all three defined.
+  - `#77` swept from the persistent corpus (17 mentions); both ledgers gained a
+    version anchor line, since neither stated the version anywhere.
+  - `tests.md`: every concrete fact in the Input Contract Suite section had
+    drifted — file list (3 dead names), the A/B/C/D buckets (labels no longer
+    in any file), the milestone tag list, the suite count, all three pending
+    line numbers.
+- Discovered, not fixed: `input_shortcuts_click_spec.lua:36` has a stray double
+  paren in `'... (#disputable))'` — leave for W6, which owns the disputable
+  marking. `technical_debt/input.md:118` cites master merge `0022004` (survives,
+  unlike a branch hash) and "Decision 2 revised" — the "revised" framing in the
+  decisions ledger's own headings is W9 territory.
+- Band 1 is **closed**. Next is band 2 (W5 additive coverage, W6 judgment prose
+  + the `is_widget_visible()` fixture factoring) — the first band that touches
+  test bodies.
