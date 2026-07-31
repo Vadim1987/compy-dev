@@ -196,7 +196,7 @@ end
 
 --- The project's own keyboard/text handlers, error-wrapped for
 --- seeding as hooks[event] (doc/development/decisions/input.md,
---- Decision 10 revised: pure wrap) — return values
+--- Decision 10: pure wrap) — return values
 --- preserved so a seeded hook can consume like any participant.
 --- @param userlove table
 --- @param CC ConsoleController
@@ -311,7 +311,7 @@ end
 --- widget and is re-seeded by reset_widget_outputs (below), so it
 --- is not touched here. Reaches through the frozen container's
 --- sub-tables — the container itself refuses direct writes
---- (Decision 7 revised).
+--- (Decision 7).
 --- @param CC ConsoleController
 local function reset_compy_input(CC)
   local input = CC:get_project_env().compy.input

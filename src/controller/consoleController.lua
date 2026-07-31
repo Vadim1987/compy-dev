@@ -45,7 +45,7 @@ function ConsoleController.new(M, main_ctrl)
   -- Console history navigation: at the vertical boundary the
   -- widget fires on_limit_reached; the console maps up/down to
   -- history back/forward (doc/development/decisions/input.md,
-  -- Decision 5 revised), retiring the old keypressed
+  -- Decision 5), retiring the old keypressed
   -- return-value channel.
   IC.callbacks.on_limit_reached = function(dir)
     if dir == 'up' then IC:history_back() end
@@ -372,7 +372,7 @@ end
 -- projects never touch the controller directly. Namespace +
 -- lifecycle docs: doc/development/internals/user_input.md.
 -- compy.input's write boundary (doc/development/decisions/input.md,
--- Decision 7 revised): the container and the IDENTITY of its
+-- Decision 7): the container and the IDENTITY of its
 -- three sub-tables (shortcuts / hooks / callbacks) are frozen — a
 -- project cannot replace them (compy.input.shortcuts = {} raises).
 -- Every LEAF inside is freely writable: shortcuts[event][combo] = fn
@@ -494,7 +494,7 @@ local function bad_key_message(fname, key)
 end
 
 --- Strict contract enforcement
---- (doc/development/decisions/input.md, Decision 15 revised):
+--- (doc/development/decisions/input.md, Decision 15):
 --- the config table is CLOSED, so a key
 --- outside it can only be an authoring error — raise, and let
 --- the project stop at the typo instead of running on in a
@@ -557,11 +557,11 @@ local function stash_hidden_configure(state, cfg)
 end
 
 -- Builds the compy.input surface: the three-consumer dispatch
--- surface (doc/development/decisions/input.md, Decision 2 revised) a
+-- surface (doc/development/decisions/input.md, Decision 2) a
 -- project registers against. `shortcuts[event]` are the
 -- doc/development/decisions/input.md, Decision 8 per-event combo
 -- sub-tables (normalising); `hooks[event]` is the one seeded hook
--- per event (Decision 10 revised). show/hide drive the widget
+-- per event (Decision 10). show/hide drive the widget
 -- (resolved from love.state, never held by the project).
 -- The widget-method surface a project drives (show/hide/
 -- configure/set_text/set_cursor/get_cursor/clear), parameterized
@@ -1356,7 +1356,7 @@ function ConsoleController:keypressed(k)
     -- History navigation at the vertical boundary is driven by
     -- the widget's on_limit_reached callback (set at construction),
     -- not by keypressed's return value (retired,
-    -- doc/development/decisions/input.md, Decision 5 revised).
+    -- doc/development/decisions/input.md, Decision 5).
     -- keypressed still runs for its editing side effects; its
     -- return is unused.
     input:keypressed(k)

@@ -246,7 +246,7 @@ generic controller — see the dispatch chain above: the console/editor route fo
 `ConsoleController:keypressed` before any of this runs.
 
 **The "limit reached" boundary signal used to travel two independent paths; the return-value one is
-retired (Decision 5 revised).** `cursor_vertical_move`/`is_at_limit` return `true` at a boundary, but
+retired (Decision 5).** `cursor_vertical_move`/`is_at_limit` return `true` at a boundary, but
 `UserInputController:keypressed` no longer threads that out as its own return value at all — the
 method returns nothing now. The sole notification path, for every consumer, is the widget output:
 the same boundary check calls `self.callbacks.on_limit_reached(dir, scope)` directly from inside the
@@ -258,7 +258,7 @@ through this same callback: `ConsoleController.new` wires `console_widget.callba
 directly on its own `UserInputController` instance (`consoleController.lua:49-52`) to call
 `history_back()`/`history_fwd()`, replacing the old `local limit = input:keypressed(k)` return-value
 capture (`ConsoleController:keypressed` now calls `input:keypressed(k)` purely for its editing side
-effects, return value unused — Decision 5 revised). Editor never needed the signal at all, since it
+effects, return value unused — Decision 5). Editor never needed the signal at all, since it
 independently computes boundary state via `inputView:is_at_limit(...)` at the view layer.
 
 **FR-6 (project notification of key events): the keyboard exclusion is resolved as of 1.0.0-rc20260712.**
@@ -322,7 +322,7 @@ construction, like `disable_selection`, not something the widget reads from glob
 combo-table owned by the widget would supersede the one-off flag — see `technical_debt/input.md`.)
 
 There is no `oneshot` flag any more, and no separate framework-owned submit path — there is no
-framework tier at all (Decision 2 revised). Enter and Escape are ordinary keys handled at the end of
+framework tier at all (Decision 2). Enter and Escape are ordinary keys handled at the end of
 this same shared method, **uniformly for every instance**: `Key.is_enter(k) and not Key.shift()`
 calls `self:submit_flow(keys_pressed)`; `k == 'escape' and not Key.ctrl()` calls
 `self:cancel_flow(keys_pressed)` — see "Submit and cancel" below. **The guard is "Enter without
@@ -379,7 +379,7 @@ search widget's instance never runs the shared submit/cancel flow at all, and ne
 the `app_state` fork was removed. There is no evaluator (search input is free text with no
 validation) and **Enter returns the currently-selected result** (a jump target `{block, line}`) up to
 `_search_mode_keys` rather than submitting the typed query — the same "keypress return value carries a
-domain result" shape the shared widget's own limit-flag return was retired for (Decision 5 revised);
+domain result" shape the shared widget's own limit-flag return was retired for (Decision 5);
 left in place here because `SearchController` is a different class, out of the input API's scope
 (`technical_debt/input.md`). `SearchController` defines no `:keyreleased` method at all — combined with the missing
 editor fork above, search's `UserInputController` instance never receives a release under any
@@ -500,7 +500,7 @@ one keypress — see "Submit and cancel" below for the exact order.
 
 ### Submit and cancel — widget-owned callback sequences
 
-Enter and Escape are **ordinary keys handled by the widget itself** (Decision 6 revised) — there is
+Enter and Escape are **ordinary keys handled by the widget itself** (Decision 6) — there is
 no framework tier any more, and no non-overridable interception above the widget: a project
 shortcut registered on `'return'`/`'escape'` (`compy.input.shortcuts.keypressed['return']`, etc.)
 wins over the widget's default, same as any other combo (**withdrawn guarantee**, deliberate — see
@@ -524,7 +524,7 @@ run_callback(self, 'after_submit', lines)            -- DEFAULT: no-op — widge
 
 `on_text_entered` fires **while the widget is still active** — there is no implicit hide any more.
 `after_submit` DEFAULTS to a no-op, so **a successful submit no longer auto-closes the widget** —
-this is the flipped default (Decision 6 revised): the widget stays open unless a project's own
+this is the flipped default (Decision 6): the widget stays open unless a project's own
 `after_submit` calls `compy.input.hide()`. `before_submit`'s return value is reserved for a future
 veto and is ignored today (R9, unbuilt); rejecting bad input is the `validator`'s job.
 
@@ -578,7 +578,7 @@ For a project-author usage guide with examples, see
 `compy.input` is a table created once per project environment (`get_compy_input()`,
 `consoleController.lua:601-635`, wrapped into the project's `compy` table by
 `get_compy_namespace()`). Its container and the identity of its three sub-tables
-(`shortcuts`/`hooks`/`callbacks`) are frozen — Decision 7 revised, see the
+(`shortcuts`/`hooks`/`callbacks`) are frozen — Decision 7, see the
 "compy.input's write boundary" comment in `consoleController.lua` — but every leaf inside them is
 freely writable. It exposes:
 - `compy.input.show(config)` — activates the widget
@@ -595,7 +595,7 @@ freely writable. It exposes:
   content.
 - `compy.input.shortcuts.keypressed/keyreleased/textinput[combo]` — the per-event combo tables
   (Decision 8), and `compy.input.hooks.keypressed/keyreleased/textinput` — the one seeded hook per
-  event (Decision 10 revised).
+  event (Decision 10).
 - `compy.input.callbacks.{on_text_entered, on_limit_reached, validator, highlighter, before_submit,
   after_submit, before_cancel, after_cancel}` — the widget's own `self.callbacks` table (same
   object, not a copy — see "Submit and cancel" above); every member is a plain leaf-write, uniform
@@ -622,7 +622,7 @@ All fields are optional and match the project-facing guide's table:
 `validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, and
 `force`. The project wrapper checks this table before it reaches
 `apply_config`: an unrecognised key **raises** at the project's call line
-(`decisions/input.md`, Decision 15 revised), rather than being dropped. This
+(`decisions/input.md`, Decision 15), rather than being dropped. This
 includes lifecycle names such as `after_submit`, which are direct
 `compy.input.callbacks` assignments rather than `show` keys, and which raise
 with a message naming `callbacks`. The wrapper does not expose the host

@@ -356,7 +356,7 @@ end
 ----------------------
 
 -- Submit/cancel are the widget's OWN default behaviour
--- (doc/development/decisions/input.md, Decision 6 revised): the
+-- (doc/development/decisions/input.md, Decision 6): the
 -- widget runs them on Enter/Escape as an ordinary consumer
 -- (never a routing concern)
 -- and signals out through its callbacks. before_/after_submit and
@@ -417,7 +417,7 @@ function UserInputController:submit_flow(keys_pressed)
   run_callback(self, 'after_submit', lines)
 end
 
---- Cancel flow (Decision 6 revised): the
+--- Cancel flow (Decision 6): the
 --- widget's own Escape behaviour. A truthy before_cancel VETOES
 --- (skips the clear); otherwise clear (hardwired) → after_cancel.
 --- after_cancel defaults to a no-op — Escape clears but the widget
@@ -478,7 +478,7 @@ end
 --- (doc/development/decisions/input.md, Decision 13)
 --- @param isr boolean?
 -- No return value: the old limit-flag return channel is retired
--- (Decision 5 revised) — on_limit_reached is the sole notification
+-- (Decision 5) — on_limit_reached is the sole notification
 -- path now (see "emit_limit" below).
 -- This handler now receives the uniform
 -- (k, keys_pressed, isr) triple (doc/development/decisions/input.md,
@@ -504,7 +504,7 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   local input = self.model
 
   -- Navigation-boundary output (doc/development/decisions/input.md,
-  -- Decision 5 revised): the widget signals a hit limit ONLY
+  -- Decision 5): the widget signals a hit limit ONLY
   -- through on_limit_reached — the keypressed return value no
   -- longer carries a limit flag (retired; console reads history
   -- via its own on_limit_reached callback).
@@ -685,7 +685,7 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   copypaste()
   selection()
 
-  -- The widget's own submit/cancel flow (Decision 6 revised): plain Enter
+  -- The widget's own submit/cancel flow (Decision 6): plain Enter
   -- submits, plain Escape cancels — ordinary widget behaviour, out through
   -- callbacks. Shift+Enter is a newline (newline() above); Ctrl+Escape is not a
   -- cancel. Editor/console callers that must not run these consume the key

@@ -89,7 +89,7 @@ keystroke for any event the project didn't override.
   input-API redesign unchanged — renamed from the old tier-3/tier-4
   vocabulary to hooks/widget, but the underlying coupling is the same.
 - **Why it stands:** The truthy-consume shape (decisions/input.md,
-  Decision 2 revised) is working as designed; it just wasn't checked against
+  Decision 2) is working as designed; it just wasn't checked against
   this specific hooks/widget interaction. No dedicated guard exists.
 - **Revisit:** Note the coupling wherever `on_limit_reached` is
   documented for project authors, or decide it needs a guard.
@@ -111,7 +111,7 @@ keystroke for any event the project didn't override.
   (`examples/sapper`), this meant (1) submit was dead — typing
   still reached the overlay but Enter never fired, because
   submit/cancel (then a non-overridable framework tier, since
-  retired — Decision 2 revised) lives in the *project*
+  retired — Decision 2) lives in the *project*
   route, which `project_open` disconnected — and (2) Ctrl+Esc quit the whole
   app instead of returning to the console, because `love.quit`
   only stopped-to-console while `app_state == 'running'`.
@@ -493,7 +493,7 @@ Not commissioned for closure; each may never need action.
   synchronously from inside its own callback — a re-entry guard
   suppressed it, then `hide()` wiped it. One example project worked around
   this by deferring the reshow a frame.
-- **Resolution:** Auto-close on submit is gone (Decision 6 revised):
+- **Resolution:** Auto-close on submit is gone (Decision 6):
   `after_submit` DEFAULTS to a
   no-op and the widget stays open. A rejected validator locks the field with the
   rejected text still showing — there is nothing to reshow, so the one-frame
@@ -583,7 +583,7 @@ Not commissioned for closure; each may never need action.
 - **Old state:** The precedence (explicit `on_*` wins, else captured native, else
   noop) was fixed at `activate` but re-resolved on every dispatched event
   instead of once.
-- **Resolution:** `_generic_callback` is gone. Decision 10 revised
+- **Resolution:** `_generic_callback` is gone. Decision 10
   replaced the two-store precedence rule with one table (`hooks[event]`), seeded once at
   `activate` (`seed_hooks`, `projectInputController.lua:43-49`) — there is
   no per-event resolution left to memoise; `dispatch` (`:74-86`) just reads
@@ -599,7 +599,7 @@ Not commissioned for closure; each may never need action.
   discarded — and *then* forwards unconditionally to the slot occupant (the
   project's native handler). Both fire: a shown widget cannot swallow a click
   aimed at it, and a project's click handler fires even for clicks inside the
-  widget. The keyboard three-consumer chain (Decision 2 revised) has **no pointer mirror**.
+  widget. The keyboard three-consumer chain (Decision 2) has **no pointer mirror**.
   Pointer never had the widget-lockout, so its delivery was left as
   pre-existing behaviour, deliberately out of the input API's scope.
 - **Why it stands:** Works for today's consumers; building a pointer chain was
@@ -670,7 +670,7 @@ be silently narrowed later (any change is a separate, owner-gated decision):
   `doc/development/decisions/input.md` Decision 6). Pinned for overlay + console.
 - **`SearchController:keypressed` returns a jump target** (`{block, line}`) up its
   caller on Enter — the same "keypress return carries a domain result" shape the
-  shared widget's limit-flag return was retired for (Decision 5 revised). Left as
+  shared widget's limit-flag return was retired for (Decision 5). Left as
   is because `SearchController` is a different class, out of scope here.
 - **The overlay's input view skips the per-frame `update_view()` workaround by
   widget *identity*** (`userInputView.lua:draw`, `self.controller ~=

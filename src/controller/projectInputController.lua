@@ -6,13 +6,13 @@ require("util.key")
 -- / EditorController. The route is DUMB: it navigates each
 -- keyboard/text event through THREE consumers in order, stopping
 -- at the first that returns truthy (doc/development/decisions/input.md,
--- Decision 2 revised), the same shape on all three channels:
+-- Decision 2), the same shape on all three channels:
 --
 --   1. compy.input.shortcuts[event][combo]  project shortcut
 --      combos (doc/development/decisions/input.md, Decision 8:
 --      per-event sub-tables, normalising)
 --   2. compy.input.hooks[event]             one hook per event
---      (doc/development/decisions/input.md, Decision 10 revised): the
+--      (doc/development/decisions/input.md, Decision 10): the
 --      single source of truth, seeded once at activate() with the
 --      project's captured love.* handler where unset; a nil clears
 --      with no resurrection
@@ -24,14 +24,14 @@ require("util.key")
 --
 -- Truthy at a consumer stops the walk; falsey falls through. The
 -- widget's participation derives from its shownness, not a return
--- value (doc/development/decisions/input.md, Decision 5 revised).
+-- value (doc/development/decisions/input.md, Decision 5).
 -- Routing contract: doc/development/internals/user_input.md
 
 -- The three uniform event channels the chain dispatches on.
 local EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
 
 --- Seed the project's hooks table (doc/development/decisions/input.md,
---- Decision 10 revised): each event with no explicit project hook gets
+--- Decision 10): each event with no explicit project hook gets
 --- the project's own love.* handler, once, at activation. After this
 --- the hooks table is the single source of truth — a nil'd hook clears,
 --- with no resurrection.
@@ -97,7 +97,7 @@ end
 --- Take the keyboard route for a project run. `handlers` holds the
 --- project's own error-wrapped love.* keyboard handlers (from the
 --- caller); they seed the hooks table once here (seed_hooks;
---- doc/development/decisions/input.md, Decision 10 revised) — only where
+--- doc/development/decisions/input.md, Decision 10) — only where
 --- the project set no explicit hook. After seeding, hooks is read
 --- directly on each event; there is no separate handlers store.
 --- @param handlers table?

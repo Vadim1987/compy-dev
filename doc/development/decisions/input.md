@@ -100,7 +100,7 @@ components, in order:
 1. **`shortcuts[event][combo]`** — per-combo functions the project registered (Decision 8's
    per-event keying and canonical-combo normalisation apply unchanged).
 2. **`hooks[event]`** — one per-event hook, absorbing both the old per-event generic
-   callback and the legacy project `love.*` handler seeding path into one hook (Decision 10 revised).
+   callback and the legacy project `love.*` handler seeding path into one hook (Decision 10).
 3. **the widget** — terminal, always invoked while the route is active. Its *shownness*, not its
    return value, decides whether it consumed the event: shown → the widget runs and the chain
    reports consumed; hidden → the widget is skipped and the chain reports not-consumed (Decision
@@ -115,7 +115,7 @@ falls through.
 non-overridable and not exposed to project code, that claimed Enter/Escape unconditionally while
 the widget was shown. It is deleted outright, code and tests: it existed solely to give
 Enter/Escape special handling inside the route, and that job is now done by the widget's own
-default behaviour (Decision 6 revised) plus the gateway's power keys, which were never part of
+default behaviour (Decision 6) plus the gateway's power keys, which were never part of
 this chain and are unaffected. A project shortcut can now be registered on Enter/Escape and win,
 exactly as it can on any other combo — the DOM-style "handled stops propagation" convention below
 now applies without a carve-out.
@@ -368,7 +368,7 @@ container's name changed: the table was called `handlers`, now **`shortcuts`** �
 collided with LÖVE's own vocabulary (a local variable literally named `handlers`, bound to
 `love.handlers`, sits in the very gateway function this subsystem's dispatch discusses), and the
 combos are, in effect, project-registered shortcuts (`ctrl+s` etc.), so the new name reads
-naturally. `hooks[event]` (Decision 10 revised) is now symmetric with `shortcuts[event]`.
+naturally. `hooks[event]` (Decision 10) is now symmetric with `shortcuts[event]`.
 
 **Why.** One flat combo table across channels was a known derivation-drift attractor — it makes
 a keypressed combo and a textinput combo collide in one namespace. Per-event keying keeps them
@@ -546,7 +546,7 @@ table is small and closed, so a key outside it can only be an authoring error.
 Ignoring it leaves the project running in a shape its author did not ask for,
 with the evidence buried in a log line nobody is reading; raising stops it at
 the typo. This also makes the surface uniform — `compy.input.shortcuts = {}`
-already raises under Decision 7 revised, so a structural violation raising here
+already raises under Decision 7, so a structural violation raising here
 is the rule, not a new one.
 
 **Scope — violations raise, runtime states do not.** A raise means *the project
@@ -676,7 +676,7 @@ compy.input.show{
 
 No per-frame poll, no manual teardown, and — because the project route stays connected while the
 widget is shown — the project's other key handlers keep firing throughout. The widget also stays
-open by default after a submit or cancel (Decision 6 revised), so continuous prompting needs
+open by default after a submit or cancel (Decision 6), so continuous prompting needs
 nothing more than clearing the field from `after_submit` — there is no re-`show()` involved at
 all; richer uses layer on `validator`, `highlighter`, `on_limit_reached`, and the cursor/text
 calls. The simple case stays one call; the expressive case is reachable without reading framework
