@@ -196,3 +196,46 @@
 - Band 1 is **closed**. Next is band 2 (W5 additive coverage, W6 judgment prose
   + the `is_widget_visible()` fixture factoring) — the first band that touches
   test bodies.
+
+### band 2 executed: W5 → W6 (2026-07-31)
+
+Six commits, suite green at each; count moved **861 → 865** and the arithmetic
+is stated in every message (4 new rows, no row removed or split).
+
+- **W5**, additive coverage, two commits.
+  - `52cda7e` — shortcut **selectivity**, one row per channel
+    (`input_events_spec`). Each shortcut is registered *consuming*, so a
+    spurious match would be visible twice (the flag flips **and** the tiers
+    below stop receiving). Replaces this file's standing REMARK.
+  - `9281cdb` — the paired **Shift+Return interceptability** row
+    (`input_widgets_callbacks_spec`): a project shortcut on `'shift+return'`
+    consumes it and the newline never happens. **Green on the first run**,
+    which is the point — it proves the neighbouring row's "never intercepted"
+    comment was a false claim, not a missing feature.
+- **W6**, judgment prose + the fixture, four commits.
+  - `4c74acb` — "console receives input while the widget is hidden" now has a
+    persistent home: `technical_debt/input.md`, *"On the console route, a
+    hidden widget's input falls to the console line"* (Open decisions), and the
+    group is tagged `#disputable` pointing at it. The finding that gave the
+    entry its shape: the principle *declined input has no effect* is ruled for
+    the **project** route only (Decision 11's changed baseline); the console
+    route kept the old fallback to its own command line, which is defensible
+    on its own terms — two routes, two answers, one written down. No leak path
+    through a running project is known today (ruling (a)'s `user_is_interactive`
+    keeps the project route for anything with an overlay or pointer handler),
+    so this is a **contract** question first, not a bug report.
+  - `6b0650f` — the Shift+Return framing (it describes what the WIDGET does
+    once the event arrives, not reachability) and the custom-validator row's
+    submit/cancel citation (the validator is a step *of* that chain — the
+    reference is not a mismatch, and the row pins the argument, not the order).
+  - `a355aa7` — the stray `'(#disputable))'` paren from the TF1 split.
+  - `32a0710` — `F.is_widget_visible()` in the shared fixture, replacing 20
+    inline `love.state.user_input` reads across four spec files. Kept as a
+    `love.state` read on purpose: that field IS the overlay contract (the draw
+    loop paints while it is set, the console route forwards while it is set),
+    so it is an honest observable, unlike the widget's own `is_shown()`.
+    Deliberately NOT rewritten: the two rows that read the handle's *identity*
+    and `project_open_liveness_spec`'s writes, which stub state, not observe it.
+- Band 2 is **closed**. Next is band 3 — W7, the headless defect hunt (A1
+  second-project overlay, A4 error lock, A5 tixy, guess reject freeze), the
+  first band that can change production code.
