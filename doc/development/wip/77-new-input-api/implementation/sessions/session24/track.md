@@ -298,3 +298,39 @@ worth carrying forward.
 - Band 3 is **closed**. Bands 1–3 are all closed; next is band 4 — **W9, the
   one owner sitting**, which is the first thing in this plan that needs the
   owner rather than the tree.
+
+### bands 4–5 executed: W9 sitting + W10 (2026-07-31)
+
+The sitting ran in one pass over `validation/reviews/S24-W9-ruling-sheet.md`
+(twelve items; the sheet carries every ruling verbatim plus an execution
+table). Eleven commits. Suite **871 / 0 / 0 / 3**.
+
+- **Item 12 was escalated mid-sitting and is the substantive one.** Ruling 1
+  asked turtle's `i` to check widget state — and it could not: a project's
+  `love` is a deep clone, so `love.state.user_input` read inside a project is
+  **always nil** (probed). maze's re-arm guard is that exact read, i.e. dead
+  code, which is *why* it re-shows every tick. Owner ruled to expose
+  `compy.input.is_shown()`; landed as **Decision 18**, closing the standing
+  "No public `is_active()`-shaped visibility query" open decision.
+- **Three rulings came back conditional and were resolved by checking, not
+  assuming.** The error lock and repl's echo are both pre-feature (verified at
+  `3256aac`: the lock there is *stricter*, and repl reprints there too), so
+  nothing to reproduce and no re-escalation; and pointer handlers really are
+  treated differently from keyboard ones (`hook_pointer` installs them as real
+  `love.<event>` handlers), so the vocabulary rewrite owes the caveat the owner
+  asked for — cited to the two ledger entries that already carry the
+  asymmetry rather than duplicated.
+- **Repeat-`show` was ruled the other way from the recommendation:** not a
+  framework concern at all — the examples are at fault. turtle now hides on
+  submit and opens only when closed; maze stays untouched (detached repo).
+- The "Decision N revised" drop turned out to be 38 citations, not one
+  heading — four controller files and three corpus docs.
+- The wrapper rename is **deliberately deferred to just before the PR**, with
+  a comment marking the names disputed so they are not silently re-approved a
+  third time.
+- Front matter with provenance fields is now a convention
+  (`doc/development/conventions/docs.md`, indexed from `agents/rules.md`),
+  applied to the persistent corpus first.
+- **Open after this sitting:** the wrapper rename, the owner's smoke test of
+  the overlay paint, and **W11 / Phase G** slice regeneration — which stays
+  last precisely because the rename will move code.

@@ -348,3 +348,25 @@ exposing it is one line.
 
 **RULING (owner, 2026-07-31): add `compy.input.is_shown()`.** Closes the
 open-decisions entry and makes maze's intended idiom expressible.
+
+---
+
+## Execution (band 5 / W10) — 2026-07-31, same session
+
+| Item | Ruling | Landed as |
+|---|---|---|
+| 12 · `is_shown()` | add it | `2661276` `feat(input): expose compy.input.is_shown()` — Decision 18, closes the open-decisions entry, documented in the project guide with the guard idiom, 2 new rows |
+| 1 · repeat `show` | fix the examples, not the framework | `3d0a869` (turtle: hide on submit + `is_shown` guard). maze is a detached repo, out of scope — its dead guard is recorded under item 12's ledger entry |
+| 7 · turtle migration | leave on the captured path, say why | `3d0a869` — comment in the example and in its internals doc, which also answers the three REMARKs asking why it is not written with combos |
+| 11 · guess dead code | delete | `9c8061b` — and the paragraph in guess.md that documented the duplication |
+| 2 · violation surfacing | leave, refer to stakeholders | `cff6830` — ledger entry with the options and recommendation, not just a note |
+| 10 · error lock | pre-feature check first | `cff6830` — checked: the lock at `3256aac` is stricter (only Enter/Up/Down cleared it). Nothing to reproduce, no compatibility layer, no re-escalation |
+| 8 · repl | pre-feature check first | `cff6830` — checked: `3256aac` reprints too. Behaviour kept, UX concern recorded with the explanation of why the console was mistakable for it |
+| 3 · slot · 4 · handler | rewrite | `999fef5` — plus the two anchor links repointed to the renamed heading |
+| 9 · "revised" | drop | `4751a23` — the heading, and the 38 citations behind it in four controller files and three corpus docs |
+| 6 · wrapper names | defer to just before the PR | `af26fa2` — a comment saying the names are disputed, the candidates, and why two wrappers rather than one |
+| 5 · front matter | adopt with provenance fields | `8d665fe` — `conventions/docs.md` + the persistent corpus and two internals docs |
+
+**Still open after this sitting:** the wrapper rename (item 6, deliberately —
+just before the PR), the owner's smoke test of the overlay paint (item 11), and
+Phase G slice regeneration, which stays last because the rename will move code.
