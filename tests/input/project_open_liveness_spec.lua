@@ -1,6 +1,7 @@
--- Availability: changed in 1.0.0-rc20260712 — an input-only /
--- pointer-only project staying live in project_open is a change
--- made by this feature (technical_debt/input.md, ruling a).
+-- Availability: changed by the Compy input API
+-- (1.0.0-rc20260712) — an input-only / pointer-only project now
+-- stays live in project_open (technical_debt/input.md, ruling
+-- a).
 
 -- An input-only / pointer-only
 -- project is "live" without hooking love.update/draw.

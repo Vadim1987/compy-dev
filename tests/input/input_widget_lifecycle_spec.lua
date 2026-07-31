@@ -1,7 +1,7 @@
--- Availability: feature-new — covers the compy.input surface
--- introduced by this feature (since 1.0.0-rc20260712).
+-- Availability: introduced with the Compy input API
+-- (1.0.0-rc20260712) — covers the compy.input surface.
 
--- widget lifecycle — split from input_contracts_spec.lua (TF1). Routing
+-- widget lifecycle. Routing
 -- invariant (doc/development/decisions/input.md, Decision 1): inter-route dispatch is
 -- EXCLUSIVE — each event reaches exactly ONE route, fixed by the active
 -- screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch chain"):
@@ -72,7 +72,7 @@ describe('input contracts: widget lifecycle #input', function()
         assert.same({ 'first' }, F.widget:get_text())
       end)
 
-    -- doc/development/decisions/input.md, Decision 15 revised:
+    -- doc/development/decisions/input.md, Decision 15:
     -- show()/configure() take a closed config table, so an
     -- unrecognised key can only be an authoring mistake. It
     -- raises rather than warning — the project stops at the

@@ -2,24 +2,23 @@
 -- hooks and the project-handler install path are introduced by 
 -- new input API (since 1.0.0-rc20260712); none exist prior to it.
 
--- dispatch chain: tier mechanics 
---
--- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
--- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
--- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
--- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
--- the route-managed input surface and terminal of the chain. 
--- 
--- Tests assert
--- observable outcomes at public seams, never method-name spies.
---
--- keypressed fires for every physical key, textinput only for
--- character-producing keys (doc/development/internals/user_input.md, "Data flow").
---
--- This file covers the dispatch-chain MECHANICS: order/consume/fall-through,
--- combo tables, signatures, defaults, hook and handler install, the
--- mutable/immutable boundary (doc/development/decisions/input.md, Decision 2).
--- Widget OUTPUTS (callbacks fired on submit/cancel) live in input_widget_callbacks_spec.lua. 
+-- dispatch chain: tier mechanics  Routing invariant
+-- (doc/development/decisions/input.md, Decision 1): inter-route
+-- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
+-- fixed by the active screen mode. Vocabulary
+-- (doc/development/internals/user_input.md, "Dispatch chain"):
+-- ROUTE = the controller an event is dispatched to; WIDGET =
+-- the route-managed input surface and terminal of the chain.
+-- Tests assert observable outcomes at public seams, never
+-- method-name spies.  keypressed fires for every physical key,
+-- textinput only for character-producing keys
+-- (doc/development/internals/user_input.md, "Data flow").  This
+-- file covers the dispatch-chain MECHANICS:
+-- order/consume/fall-through, combo tables, signatures,
+-- defaults, hook and handler install, the mutable/immutable
+-- boundary (doc/development/decisions/input.md, Decision 2).
+-- Widget OUTPUTS (the callbacks fired on submit and cancel)
+-- live in input_widgets_callbacks_spec.lua.
 
 local F = require('tests.helpers.input_fixture')
 
@@ -72,7 +71,7 @@ describe('#input events dispatching', function()
         assert.is_false(reached_hook)
       end)
 
-    -- doc/development/decisions/input.md, Decision 2 revised: an
+    -- doc/development/decisions/input.md, Decision 2: an
     -- unconsumed event walks shortcut → hook → widget in order;
     -- falsy consumers fall through, and the shown widget is the
     -- terminal consumer (backspace edits it — the observable trace).
@@ -544,7 +543,7 @@ describe('#input events dispatching', function()
         assert.equal(0, handler_hits)
       end)
 
-    -- doc/development/decisions/input.md, Decision 10 revised:
+    -- doc/development/decisions/input.md, Decision 10:
     -- the seeding happens ONCE, at activation. Clearing the
     -- hook afterwards leaves it cleared -- the captured handler
     -- is not re-resolved behind it. (The retired model re-read
@@ -570,7 +569,7 @@ describe('#input events dispatching', function()
   -- -------------
 
   describe('the mutable/immutable boundary', function()
-    -- doc/development/decisions/input.md, Decision 7 revised:
+    -- doc/development/decisions/input.md, Decision 7:
     -- `compy.input` and the IDENTITY of its three sub-tables
     -- (shortcuts, hooks, callbacks) are frozen, while every
     -- leaf inside them is freely writable. A project therefore

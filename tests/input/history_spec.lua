@@ -1,6 +1,7 @@
--- Availability: pre-baseline for the History model below; the
--- console-navigation group at the bottom of this file is
--- feature-new (changed in 1.0.0-rc20260712).
+-- Availability: the History model below predates the Compy
+-- input API (introduced in 1.0.0-rc20260712); the
+-- console-navigation group at the bottom of this file arrived
+-- with it.
 
 --- @diagnostic disable: invisible
 require("model.input.history")

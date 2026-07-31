@@ -1,9 +1,9 @@
--- Availability: feature-new — the widget output fields are
--- introduced by this feature, and the submit/cancel defaults were
--- altered by it (since / changed in 1.0.0-rc20260712).
+-- Availability: introduced with the Compy input API
+-- (1.0.0-rc20260712) — the widget output fields are new with
+-- it, and it is what set today's submit/cancel defaults.
 
--- dispatch chain: widget outputs and submit/cancel — split from
--- input_contracts_spec.lua (TF1). Routing invariant (doc/development/decisions/input.md,
+-- dispatch chain: widget outputs and submit/cancel.
+-- Routing invariant (doc/development/decisions/input.md,
 -- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches
 -- exactly ONE route, fixed by the active screen mode. Vocabulary
 -- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
@@ -17,7 +17,7 @@
 -- output fields, the highlighter/on_limit_reached boundary, and the full
 -- submit/cancel call-order chains of Decision 6). The mechanics half
 -- (order/consume/fall-through, combo tables, signatures) is
--- input_dispatch_chain_spec.lua.
+-- input_events_spec.lua.
 
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
@@ -36,7 +36,8 @@ local mock = require('tests.mock')
 -- which patches the shared widget and restores it).
 -- ====================================================
 
-describe('dispatch chain: widget outputs and submit/cancel #m5c #input', function()
+describe('widget outputs, submit and cancel #input',
+  function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
@@ -293,7 +294,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
           }, order)
       end)
 
-    -- Decision 6 revised: submit no longer auto-closes. The
+    -- Decision 6: submit does not auto-close. The
     -- default after_submit is a no-op, so BOTH on_text_entered and
     -- after_submit see the session still active — the widget stays
     -- open unless a callback hides it (AC3).
@@ -396,7 +397,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
   end)
 
   describe('cancel — the Escape chain', function()
-    -- Decision 6 revised (AC1): Escape runs the
+    -- Decision 6: Escape runs the
     -- cancel call-order chain (before_cancel → clear → after_cancel)
     -- and CLEARS content, but the default after_cancel is a no-op —
     -- the widget stays shown unless a callback hides it.
@@ -459,7 +460,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.same({ 'return', 'escape' }, seen)
       end)
 
-    -- Decision 6 revised (AC5): Enter/Escape are
+    -- Decision 6: Enter/Escape are
     -- ordinary chain participants — a project shortcut on 'return'
     -- runs first and consumes, so the widget's submit never fires
     -- (the withdrawn non-overridable guarantee; the gateway power
@@ -528,7 +529,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
   end)
 
   describe('continuity across submit', function()
-    -- Decision 6 revised (AC3): the widget stays
+    -- Decision 6: the widget stays
     -- open after submit by default. A project wanting
     -- clear-and-continue does so from its own after_submit
     -- (continuity is now the default, not a re-activation trick).
@@ -576,7 +577,7 @@ describe('dispatch chain: widget outputs and submit/cancel #m5c #input', functio
         assert.equal(2, hits)
       end)
 
-    -- Decision 6 revised (AC1,3): absent callbacks
+    -- Decision 6: absent callbacks
     -- default to no-ops — submit and cancel both complete without
     -- error and the widget STAYS OPEN. Submit preserves content
     -- (no auto-clear); cancel clears it.

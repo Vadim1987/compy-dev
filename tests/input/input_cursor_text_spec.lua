@@ -1,8 +1,8 @@
--- Availability: feature-new — covers the compy.input surface
--- introduced by this feature (since 1.0.0-rc20260712).
+-- Availability: introduced with the Compy input API
+-- (1.0.0-rc20260712) — covers the compy.input surface.
 
--- cursor and text surface.
--- Covers get_cursor / set_cursor / set_text on the public project surface
+-- Cursor and text surface: get_cursor / set_cursor / set_text,
+-- driven through F.compy_input() — exactly what a project sees
 -- (doc/input_api.md, "Live changes";
 -- doc/development/internals/user_input.md, "Cursor
 -- manipulation and \"reset\""). Implementation:
@@ -16,13 +16,10 @@ describe('input API: cursor and text surface', function()
   before_each(function() F.reset() end)
 
 
-  -- The cursor + text surface (doc/input_api.md, "Live
-  -- changes"). Driven through the public project
-  -- surface F.compy_input() — exactly what a project sees.
-  -- get_cursor/set_cursor/set_text are non-assignable
-  -- methods (NOT in INPUT_CALLBACKS), so doc/development/decisions/input.md,
-  -- Decision 7 rides the
-  -- same __newindex boundary as show/hide.
+  -- These three are non-assignable methods (NOT in
+  -- INPUT_CALLBACKS), so they ride the same frozen-surface
+  -- boundary as show/hide — doc/development/decisions/input.md,
+  -- Decision 7 (what a project may assign).
 
 
   describe("get_cursor", function()
@@ -209,9 +206,10 @@ describe('input API: cursor and text surface', function()
     end)
   end)
 
-    -- doc/development/decisions/input.md, Decision 7: the three callables are
-    -- non-assignable — the
-    -- mutable boundary raises loudly (never a silent swallow).
+    -- doc/development/decisions/input.md, Decision 7 (what a
+    -- project may assign): the three callables are not among
+    -- them, so the frozen surface raises loudly rather than
+    -- swallowing the write.
     it('assigning the cursor/text callables raises',
       function()
         local input = F.compy_input()

@@ -1,7 +1,7 @@
--- Availability: feature-new mechanism — the held-key set and combo
--- normalisation are absent from the baseline (since
--- 1.0.0-rc20260712); the shortcut behaviour they drive is asserted
--- in input_shortcuts_click_spec.lua.
+-- Availability: introduced with the Compy input API
+-- (1.0.0-rc20260712) — the held-key set and combo normalisation
+-- have no predecessor; the shortcut behaviour they drive is
+-- asserted in input_shortcuts_click_spec.lua.
 
 -- Stub view.view before anything requires it: the real module (src/view/view.lua) calls
 -- gfx.newFont() at load time (gfx = love.graphics), which needs a graphics context absent in

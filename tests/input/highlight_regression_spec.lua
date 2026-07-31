@@ -1,6 +1,6 @@
--- Availability: pre-baseline machinery — the highlighter predates
--- this feature; this guards a render crash fixed in it (changed in
--- 1.0.0-rc20260712).
+-- Availability: the highlighter predates the Compy input API
+-- (introduced in 1.0.0-rc20260712); this guards a render crash
+-- fixed there.
 
 -- Regression guard: highlight `.hl` must stay indexable.
 --
@@ -32,21 +32,21 @@ describe("highlight nil-index regression #input", function()
   mock           = require("tests.mock")
   mock.mock_love({ state = { app_state = 'ready' } })
 
-  -- The contract guarded here is the MODEL's: whenever get_highlight()
-  -- returns a highlight at all, its `.hl` must be indexable.
-  --
-  -- Asserted on the model directly, not through a replica of the view's
-  -- access. The view carries its own `if hl and hl[tlc.l]` guard since
-  -- the same fix that made `.hl` indexable (1a2a9a3,
-  -- src/view/input/userInputView.lua), so a view-shaped replica would
-  -- assert a symptom the live view no longer shows — while the model
-  -- contract, which every other consumer of `.hl` depends on, is the
-  -- thing that actually has to hold. Nothing is swallowed by pcall
-  -- either: a nil `.hl` fails the assertion outright instead of
-  -- collapsing into a boolean.
+  -- The contract guarded here is the MODEL's: whenever
+  -- get_highlight() returns a highlight at all, its `.hl` must
+  -- be indexable.  Asserted on the model directly, not through
+  -- a replica of the view's access. The view carries its own
+  -- `if hl and hl[tlc.l]` guard since the same fix that made
+  -- `.hl` indexable (src/view/input/userInputView.lua), so a
+  -- view-shaped replica would assert a symptom the live view no
+  -- longer shows — while the model contract, which every other
+  -- consumer of `.hl` depends on, is the thing that actually
+  -- has to hold. Nothing is swallowed by pcall either: a nil
+  -- `.hl` fails the assertion outright instead of collapsing
+  -- into a boolean.
   local function assert_indexable_hl(model)
     local h = model:get_input().highlight
-    assert.is_not_nil(h, 'a highlight is memoised for this evaluator')
+    assert.is_not_nil(h)
     assert.is_table(h.hl, '.hl is a table, never nil')
     assert.has_no.errors(function() return h.hl[1] and h.hl[1][1] end)
   end

@@ -1,7 +1,7 @@
--- Availability: pre-baseline — behaviour asserted here predates
--- this feature; no version tag.
+-- Availability: predates the Compy input API (introduced in
+-- 1.0.0-rc20260712).
 
--- NFR guards and planned changes. Routing invariant
+-- NFR and mechanism guards. Routing invariant
 -- (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 -- the active screen mode. 
@@ -14,34 +14,36 @@
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
 
--- This file's assertions are deliberately non-final: current behaviour
--- characterized as it stands today (pre-baseline de-facto, untagged),
--- guards on mechanism and NFRs rather than behaviour, and planned changes
--- pending implementation.
+-- Two kinds of row live here, and neither is a project-facing
+-- behaviour contract: de-facto behaviour characterized as it
+-- stands, and guards on mechanism (identity, allocation, the
+-- held-key table) rather than on behaviour. Project contracts
+-- live in the other input_*_spec.lua files.
 
 local F = require('tests.helpers.input_fixture')
 
-describe('input contracts: NFR and planned changes #input', function()
+describe('input contracts: NFR and mechanism guards #input',
+  function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
 
   -- ====================================================
-  -- Current characterized behaviour (no stakeholder mandate).
-  -- Pre-1.0.0 de-facto behaviour, reverse-engineered and canonicalized
-  -- here — no version tag: the behaviour is not new to this feature. Each
-  -- asserts only verifiable present behaviour, so a deliberate change reads
-  -- as expected while an accidental one still fails the build.
-  -- (doc/development/tests.md, "Input Contract Suite (feature #77)")
+  -- Characterized behaviour (no stakeholder mandate). De-facto
+  -- behaviour that predates the Compy input API,
+  -- reverse-engineered and canonicalized here. Each row asserts
+  -- only what is verifiably true today, so a deliberate change
+  -- reads as expected while an accidental one still fails the
+  -- build. (doc/development/tests.md, "Input Contract Suite")
   -- ====================================================
   describe('current behaviour — characterized, no mandate',
     function()
 
-      -- inspect (doc/development/decisions/input.md, Decision 12): the
-      -- pre-feature debugger keeps the console REPL bound to the paused
-      -- project's environment. A shown project widget is unhonoured.
-      -- This is distinct from the former running-project console fallback,
-      -- which #77 removes through the project route.
+      -- inspect (doc/development/decisions/input.md, Decision
+      -- 12): the debugger keeps the console REPL bound to the
+      -- paused project's environment, and a shown project
+      -- widget is unhonoured. Distinct from the running-project
+      -- console fallback, which the project route retired.
       it('inspect: the console owns the surface', function()
         F.show_widget()
         F.console:add_text('ab')
@@ -75,7 +77,7 @@ describe('input contracts: NFR and planned changes #input', function()
   -- Labelled so no reader mistakes them for behaviour contracts. These
   -- intentionally poke internals (identity, allocation, the held-key
   -- table), which is exactly what an NFR guard is for.
-  -- (doc/development/tests.md, "Input Contract Suite (feature #77)")
+  -- (doc/development/tests.md, "Input Contract Suite")
   -- ====================================================
   describe('mechanism / NFR guards — not behaviour',
     function()
@@ -142,7 +144,7 @@ describe('input contracts: NFR and planned changes #input', function()
       -- Singleton identity across show/hide (NFR): today
       -- only the overlay widget is wired; wiring the
       -- console/editor/search widgets to it is a future
-      -- consideration, out of #77 blast radius (see
+      -- consideration, deliberately out of scope (see
       -- doc/development/internals/user_input.md: "Key
       -- release", "Dispatch chain", "Search — a third
       -- widget instance, live only in editor/search mode",
@@ -170,10 +172,11 @@ describe('input contracts: NFR and planned changes #input', function()
     end)
 
   -- ====================================================
-  -- Planned changes — not yet shipped. Bodies document the
-  -- target public assertion; implementers adapt them to the landed API.
-  -- ====================================================
-  describe('planned changes (pending until implemented)',
+  -- Teardown, seen from the LÖVE side. The project-facing half
+  -- of Decision 11 is input_route_lifecycle_spec.lua; this row
+  -- watches the same stop from below, where the wiring actually
+  -- lives. ====================================================
+  describe('teardown leaves the love.* wiring at defaults',
     function()
 
       -- Decision 11 requires full teardown: after stop no
@@ -188,17 +191,5 @@ describe('input contracts: NFR and planned changes #input', function()
           Controller._defaults.keypressed, love.keypressed)
       end)
 
-      -- on_text_entered is the SUBMIT output (widget
-      -- vocabulary, doc/development/decisions/input.md, Decision 5): fired
-      -- once at Enter with the
-      -- assembled text — NOT
-      -- the per-character chain callback (that is on_text_input,
-      -- covered live in the dispatch-chain block below,
-      -- same decision).
-      -- Landed live in the 'submit and cancel chain' block
-      -- below ('Enter runs the full submit call-order chain'
-      -- etc.) — not here, since exercising it needs the real
-      -- project route (F.activate_project), not this group's
-      -- fixtures.
     end)
 end)

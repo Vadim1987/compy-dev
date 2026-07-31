@@ -1,6 +1,6 @@
--- Availability: feature-new — one uniform lifecycle across all
--- surfaces is introduced by this feature
--- (since 1.0.0-rc20260712).
+-- Availability: introduced with the Compy input API
+-- (1.0.0-rc20260712) — one uniform lifecycle across all
+-- surfaces.
 
 -- Enter and Escape mean the same thing in every input surface.
 -- A single lifecycle — `submit_flow` / `cancel_flow` in
@@ -300,7 +300,7 @@ describe('#input #lifecycle one input lifecycle, every surface',
     -- is carved out (doc/development/decisions/input.md,
     -- Decision 6 and Decision 14; mechanism in
     -- doc/development/internals/user_input.md). It is
-    -- longstanding behaviour this feature kept, pinned here so
+    -- longstanding behaviour the input API kept, pinned here so
     -- the breadth is not narrowed to bare Enter by accident —
     -- narrowing it is a deliberate spec change, not a tidy-up.
     describe('every non-Shift Enter submits', function()

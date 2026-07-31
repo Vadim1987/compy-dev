@@ -1,5 +1,5 @@
--- Availability: pre-baseline — behaviour asserted here predates
--- this feature; no version tag.
+-- Availability: predates the Compy input API (introduced in
+-- 1.0.0-rc20260712).
 
 -- routing. Routing invariant
 -- (doc/development/decisions/input.md, Decision 1): inter-route dispatch is EXCLUSIVE —
@@ -21,20 +21,19 @@ describe('input contracts: routing #input', function()
   before_each(function() F.reset() end)
 
   -- ====================================================
-  -- Preserved routing invariant (pre-1.0.0 baseline behaviour, kept — no
-  -- version tag: not introduced by this feature).
-  --
-  -- Keyboard, text and pointer are EXCLUSIVE on the
-  -- active route (doc/development/decisions/input.md, Decision 1 and Decision 2;
-  -- doc/development/internals/user_input.md, "Dispatch chain"): the mode-fixed route
-  -- receives, the others do not. One subgroup per mode
-  -- below, so a missing mode x channel cell is visible on
-  -- sight (the routing invariant, doc/development/decisions/input.md
-  -- Decision 1, applied per mode x channel). Every
-  -- test in this group fires its events through the
-  -- installed love.handlers entries — the same dispatch
-  -- path a real keystroke takes — via the driver in
-  -- tests/helpers/input_session.lua.
+  -- Preserved routing invariant — behaviour that predates the
+  -- Compy input API and was kept by it.  Keyboard, text and
+  -- pointer are EXCLUSIVE on the active route
+  -- (doc/development/decisions/input.md, Decision 1 and
+  -- Decision 2; doc/development/internals/user_input.md,
+  -- "Dispatch chain"): the mode-fixed route receives, the
+  -- others do not. One subgroup per mode below, so a missing
+  -- mode x channel cell is visible on sight (the routing
+  -- invariant, doc/development/decisions/input.md Decision 1,
+  -- applied per mode x channel). Every test in this group fires
+  -- its events through the installed love.handlers entries —
+  -- the same dispatch path a real keystroke takes — via the
+  -- driver in tests/helpers/input_session.lua.
   -- ====================================================
 
   describe('routing: console mode', function()
@@ -147,7 +146,7 @@ describe('input contracts: routing #input', function()
 
   -- Editor Search is characterized with real key/text entry in
   -- tests/editor/editor_spec.lua. It remains editor-owned behaviour,
-  -- not a project-facing #77 input-API contract.
+  -- not a project-facing input-API contract.
 
   describe('routing: project run', function()
 

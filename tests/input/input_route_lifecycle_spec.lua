@@ -1,8 +1,8 @@
--- Availability: feature-new — route connect/disconnect, stop
--- teardown and the compy.before_exit hook are introduced by this
--- feature (since 1.0.0-rc20260712).
+-- Availability: introduced with the Compy input API
+-- (1.0.0-rc20260712) — route connect/disconnect, stop teardown
+-- and the compy.before_exit hook.
 
--- route connection lifecycle — split from input_contracts_spec.lua (TF1).
+-- route connection lifecycle.
 -- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 -- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
@@ -39,7 +39,7 @@ describe('input contracts: route connection lifecycle #input', function()
   -- not a simulation of them.
   -- ====================================================
 
-  describe('route connection lifecycle #m5c', function()
+  describe('route connection lifecycle', function()
 
     describe('connection at the running boundary', function()
       -- doc/development/decisions/input.md, Decision 11: the route

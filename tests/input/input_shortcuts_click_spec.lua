@@ -1,21 +1,24 @@
--- Availability: mixed — global shortcuts and click detection are
--- pre-baseline (untagged); the combo normalisation they read is
--- feature-new (since 1.0.0-rc20260712), and the legacy text
--- solicitation globals are removed in 1.0.0-rc20260712.
+-- Availability: global shortcuts and click detection predate
+-- the Compy input API (introduced in 1.0.0-rc20260712); the
+-- combo normalisation they read arrived with it, and the legacy
+-- text solicitation globals were removed by it.
 
--- shortcuts and click detection — split from input_contracts_spec.lua
--- (TF1). Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
--- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
--- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
--- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
--- the route-managed input surface and terminal of the chain. Tests assert
--- observable outcomes at public seams, never method-name spies.
--- keypressed fires for every physical key, textinput only for
--- character-producing keys (doc/development/internals/user_input.md, "Data flow").
--- Non-consuming global shortcuts, framework click detection, project-stop
--- console handback, and the legacy poll-idiom removal
--- (doc/development/internals/user_input.md, "Dispatch chain"; doc/input_api.md,
--- "Migration from the legacy globals").
+-- shortcuts and click detection. Routing invariant
+-- (doc/development/decisions/input.md, Decision 1): inter-route
+-- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
+-- fixed by the active screen mode. Vocabulary
+-- (doc/development/internals/user_input.md, "Dispatch chain"):
+-- ROUTE = the controller an event is dispatched to; WIDGET =
+-- the route-managed input surface and terminal of the chain.
+-- Tests assert observable outcomes at public seams, never
+-- method-name spies. keypressed fires for every physical key,
+-- textinput only for character-producing keys
+-- (doc/development/internals/user_input.md, "Data flow").
+-- Non-consuming global shortcuts, framework click detection,
+-- project-stop console handback, and the legacy poll-idiom
+-- removal (doc/development/internals/user_input.md, "Dispatch
+-- chain"; doc/input_api.md, "Migration from the legacy
+-- globals").
 
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
@@ -151,9 +154,10 @@ describe('input contracts: shortcuts and click #input', function()
   -- astv_input (a sixth global on the same machinery) are
   -- gone from the project environment — an ordinary nil
   -- field, no shim, no deprecation path (same section).
-  describe('legacy text solicitation #legacy', function()
+  describe('legacy text solicitation is removed #legacy',
+    function()
 
-    it('the legacy globals are gone — ordinary nil calls',
+    it('every legacy global is an ordinary nil field',
       function()
         F.activate_project()
         local env = F.cc:get_project_env()

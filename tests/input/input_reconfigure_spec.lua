@@ -1,8 +1,8 @@
--- Availability: feature-new — covers the compy.input surface
--- introduced by this feature (since 1.0.0-rc20260712).
+-- Availability: introduced with the Compy input API
+-- (1.0.0-rc20260712) — covers the compy.input surface.
 
--- live reconfigure and the continuous-session idiom — split from
--- input_contracts_spec.lua. Routing invariant (doc/development/decisions/input.md,
+-- live reconfigure and the continuous-session idiom.
+-- Routing invariant (doc/development/decisions/input.md,
 -- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches
 -- exactly ONE route, fixed by the active screen mode. Vocabulary
 -- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
@@ -30,7 +30,7 @@ describe('input contracts: live reconfigure #input', function()
   -- documented in doc/development/internals/user_input.md.
   -- ====================================================
 
-  describe('live reconfigure and clear #m7', function()
+  describe('live reconfigure and clear', function()
 
     describe('configure on an active session', function()
       -- doc/development/internals/user_input.md, "configure(config)": prompt
@@ -266,7 +266,7 @@ describe('input contracts: live reconfigure #input', function()
   -- The project assigns after_submit before starting this loop.
   -- ====================================================
 
-  describe('continuous-session idiom #m8', function()
+  describe('continuous-session idiom', function()
 
     -- One shape: consume in on_text_entered, re-show
     -- (bare, no config) in after_submit. Asserts (a) the
@@ -298,7 +298,7 @@ describe('input contracts: live reconfigure #input', function()
       function()
         local input = F.activate_project()
         local seen = { }
-        -- New idiom (Decision 6 revised): the widget stays open;
+        -- The idiom (Decision 6): the widget stays open;
         -- the project clears between prompts from after_submit.
         input.callbacks.after_submit = function() input.clear() end
         input.show({
