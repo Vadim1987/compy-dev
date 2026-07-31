@@ -136,6 +136,22 @@ are not changed by `configure`, so use `set_text`, `set_cursor`, or `clear`.
 When hidden, `configure` retains `prompt`, `text`, and `cursor` for one later
 `show`.
 
+`compy.input.is_shown()` tells you whether the overlay is up. Use it when a
+project must not act twice — opening the prompt from a key that is also
+typed *into* the prompt, for example:
+
+```lua
+compy.input.hooks.keyreleased = function(key)
+  if key == 'i' and not compy.input.is_shown() then
+    compy.input.show{ prompt = 'command' }
+    return true -- consumed; while it is open, 'i' belongs to the overlay
+  end
+end
+```
+
+Do not read `love.state` for this: a project runs in a sandboxed copy of
+`love`, so that field is always `nil` from inside a project.
+
 `compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
 empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
 it. Mutating calls warn and do nothing while the overlay is hidden.

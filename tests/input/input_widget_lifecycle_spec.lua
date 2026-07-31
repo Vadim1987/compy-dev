@@ -228,6 +228,41 @@ describe('input contracts: widget lifecycle #input', function()
     end)
   end)
 
+  -- doc/input_api.md, "Live changes": the overlay answers whether it
+  -- is up. A project cannot read this from love.state — its `love` is
+  -- a sandboxed clone, so `love.state.user_input` is always nil inside
+  -- a project (project_sandbox_env.md, T1) — which is why the query is
+  -- part of the surface rather than an idiom.
+  describe('is_shown', function()
+
+    it('reports the overlay state across a show/hide cycle',
+      function()
+        local input = F.compy_input()
+        assert.is_false(input.is_shown())
+        input.show({ text = 'x' })
+        assert.is_true(input.is_shown())
+        input.hide()
+        assert.is_false(input.is_shown())
+      end)
+
+    -- The guard the ruling asks an example to write: act only when
+    -- the overlay is down, and leave the key to it when it is up.
+    it('lets a project skip a redundant show', function()
+      local shows = 0
+      local input = F.activate_project()
+      input.hooks.keypressed = function()
+        if input.is_shown() then return end
+        shows = shows + 1
+        input.show({ text = 'from i' })
+        return true
+      end
+      F.session.press('i')
+      F.session.press('i')
+      assert.equal(1, shows)
+      assert.same({ 'from i' }, F.widget:get_text())
+    end)
+  end)
+
   -- A shown overlay must be PAINTED, whatever the project does.
   -- Two draw paths exist and they are not interchangeable: a project
   -- that hooks love.draw is wrapped by set_love_update, which paints

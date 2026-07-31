@@ -583,6 +583,10 @@ For a project-author usage guide with examples, see
 freely writable. It exposes:
 - `compy.input.show(config)` — activates the widget
 - `compy.input.hide()` — deactivates without firing the cancel sequence
+- `compy.input.is_shown()` — whether the overlay is up (Decision 18); the one
+  state query, and the only way a project can learn this — its own
+  `love.state.user_input` is a sandbox clone and never set
+  (`project_sandbox_env.md`)
 - `compy.input.get_cursor()` / `set_cursor(line, col)` /
   `set_text(text [, keep_cursor])` — the cursor/text surface; see
   "Cursor manipulation" above for the layering this sits on.

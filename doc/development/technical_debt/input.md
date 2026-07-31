@@ -188,18 +188,23 @@ question, not resolved here.
 - **Revisit:** If a real consumer needs to iterate the held set on the
   shipping runtime.
 
-### No public `is_active()`-shaped visibility query
+### No public `is_active()`-shaped visibility query (RESOLVED, 2026-07-31)
 
-- **Where:** the `compy.input` project surface (`consoleController.lua`)
-  exposes `handlers`/`show`/`hide`/`get_cursor`/`set_cursor`/`set_text`/
-  `configure`/`clear`/… — no `is_shown`/`is_active`/`is_visible`. An
-  internal `UserInputController:is_shown()` exists but is not part of the
-  project-facing surface, so at least one example project reads
-  `love.state.user_input` directly and keeps its own per-tick re-arm poll.
-- **Why it stands:** Open — sanction a public visibility-query accessor, or
-  leave direct `love.state` reads as the (undocumented) way projects do
-  this today.
-- **Revisit:** Decide when another project author hits the same need.
+- **Where:** the `compy.input` project surface (`consoleController.lua`) had
+  no `is_shown`/`is_active`/`is_visible`, though an internal
+  `UserInputController:is_shown()` existed.
+- **State (old), and worse than this entry recorded:** the entry said example
+  projects read `love.state.user_input` directly, as if that were a working
+  workaround. **It is not.** A project's `love` is a sandboxed deep clone
+  (`../internals/project_sandbox_env.md`), so `love.state.user_input` read
+  from inside a project is always `nil` — the framework writes the real
+  global, the project sees its copy. `examples/maze/main.lua:497` guards a
+  re-show with exactly that read: dead code that never fires, which is why
+  maze re-shows the overlay on every tick.
+- **Resolution:** owner ruled to expose it —
+  `compy.input.is_shown()` (`../decisions/input.md`, Decision 18), returning
+  the widget's own flag so it cannot drift from the one the dispatch walk
+  reads. Used by `examples/turtle` for its open-only-if-closed guard.
 
 ### On the console route, a hidden widget's input falls to the console line
 

@@ -690,3 +690,31 @@ and highlighting are separate callbacks, submitted values are line arrays,
 and a project consumes them through `on_text_entered`. `eval` and `result`
 are retired rather than carried as compatibility keys. The internal evaluator
 objects used by console and editor remain implementation details.
+
+---
+
+## Decision 18 — the overlay answers one state question: `is_shown()`
+
+**Status: implemented** (owner ruling, 2026-07-31).
+
+**Decision.** `compy.input.is_shown()` returns whether the overlay is
+currently up. It is the only state query on the surface, and it is read-only.
+
+**Why.** A project cannot determine this any other way. Its `love` is a
+sandboxed deep clone (`../internals/project_sandbox_env.md`), so
+`love.state.user_input` read from inside a project is **always** `nil` — the
+framework writes the real global, the project sees its copy. Two examples had
+already written that read as a guard; it silently never fired, and one of them
+therefore re-showed the overlay on every tick.
+
+**Why only this one.** Everything else a project might poll — content, cursor,
+error state — it already receives through callbacks, which is Decision 4's
+whole point. Shownness is different: it is the one fact the framework changes
+without telling the project (a stop tears the overlay down, a hide from another
+callback lowers it), so a project that must not act twice has nothing to read.
+The internal flag it exposes is the widget's own `is_shown()`, so the answer
+cannot drift from the one the dispatch walk uses.
+
+**Consequence.** `show` on an already-active overlay stays a warn-and-no-op
+(Decision 3): a project that wants "open it only if it is closed" now writes
+that, instead of relying on the warning as flow control.

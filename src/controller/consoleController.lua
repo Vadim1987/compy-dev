@@ -591,6 +591,14 @@ local function build_widget_api(get_widget, get_active_flag, state)
       local ui = get_widget()
       if ui then ui:hide() end
     end,
+    -- doc/development/decisions/input.md, Decision 18: the one
+    -- state question a project may ask the overlay. It cannot
+    -- read this itself — a project's `love` is a sandboxed
+    -- clone, so `love.state.user_input` is always nil inside a
+    -- project (internals/project_sandbox_env.md).
+    is_shown = function()
+      return get_active_flag() or false
+    end,
     -- doc/development/internals/user_input.md, "Cursor
     -- manipulation and \"reset\"": 1-based (line, col); nil
     -- when hidden — a plain read of "nothing to report", not
