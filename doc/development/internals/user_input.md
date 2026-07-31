@@ -613,13 +613,16 @@ function (`build_input_surface`, `consoleController.lua:425-438`); assigning to
 `compy.input.shortcuts`/`hooks`/`callbacks` themselves (replacing the sub-table) also raises —
 only their leaves are writable.
 
-There is no project-facing `is_active()`/`is_shown()` predicate: an
-internal `UserInputController:is_shown()` exists
-(`userInputController.lua:487-489`), reading a strictly-internal `self.shown` flag with no
-`love.state` reach, but is not exposed on this surface — a project that needs to know whether the
-widget is currently up reads `love.state.user_input` directly, with its own per-tick re-arm
-poll, rather than calling a `compy.input` method. (The worked example of this shape lives in an
-untracked scratch project, so it is described here rather than cited.)
+`compy.input.is_shown()` is the one state predicate on this surface (Decision 18). It returns the
+widget's own internal `self.shown` flag (`UserInputController:is_shown()`), so a project's answer
+cannot drift from the one the dispatch walk reads.
+
+Reading `love.state.user_input` from inside a project instead does **not** work, and never did: a
+project's `love` is a sandboxed deep clone (`project_sandbox_env.md`), so the framework writes the
+real global while the project sees its own copy, which stays `nil` forever. An untracked scratch
+project guards a per-tick re-arm with exactly that read; the guard has never fired, which is why
+that project re-issues `show()` on every tick. That dead guard is the concrete reason the
+predicate was added.
 
 #### `show(config)` — activate
 
