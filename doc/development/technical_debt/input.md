@@ -351,16 +351,17 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When example-project behaviour is next characterised as a
   body of work.
 
-### `F.reset()` test helper exceeds the 14-line function-body limit
+### `F.reset()` test helper exceeds the 14-line function-body limit (RESOLVED, 2026-07-31)
 
 - **Where:** `tests/helpers/input_fixture.lua`, `F.reset()`.
-- **State:** Currently around 18 code lines (native-slot restores plus
-  several state-clearing assignments), against the project's 14-line
-  function-body hard limit.
-- **Why it stands:** Mechanical, not a design question — the convention is
-  to redesign, not raise the limit.
-- **Revisit:** Extract the native-slot restores into a small helper;
-  trivial, test-only fix.
+- **State (old):** Around 18 code lines — native-slot restores plus several
+  state-clearing assignments — against the project's 14-line function-body
+  hard limit.
+- **Resolution:** The native-slot restores the entry names are gone: the
+  helper delegates to production teardown (`CC:stop_project_run()`) and clears
+  only what production does not own. Nine code lines as of the overlay-shown
+  fix, which removed the last compensating assignment (`widget.shown = false`).
+  Nothing to extract.
 
 ### Test-fixture standup boilerplate / naming
 
