@@ -287,6 +287,22 @@ question, not resolved here.
   The band's invisibility was equally pre-existing (same render path, same
   unpainted overlay). The input API neither introduced the lock nor narrowed
   its exits; it widened them.
+- **Is the widening drift? No — it is the ratified behaviour, and it also
+  matches what the docs already claimed.** The frozen design (`§10 Edge
+  cases`) reads "input locked until acknowledged **(Enter/Space/arrows)**",
+  and the widening landed under that AC with the reason in its commit message
+  (`9bb6d29`, "Widen the sink's has_error() lock-clear gate to
+  Space/Left/Right"). It is not a side effect of the 2D cursor/limit work —
+  no other commit touches that key list. Independently, `internals/user_input.md`
+  described the exit set as "Enter, space, or arrow keys" **at the PR base**,
+  while the code did Enter/Up/Down: the change aligned code with both the spec
+  and the doc. Narrowing it now would be a design change to a frozen document,
+  not a drift fix.
+- **The quirk worth naming:** an arrow key *acknowledges* the error and is
+  then swallowed — it does not also move the caret to the offending character,
+  which is what a user pressing Left after "not allowed" is trying to do. And
+  `keyreleased` clears on Space as well, so Space acknowledges twice
+  (harmless, but the two handlers duplicate the rule).
 - **Options:** (a) append a hint line to the rendered error band ("Enter or
   Space to continue") — smallest change, no semantics touched;
   (b) clear the error on the next `textinput`, which makes a rejected line
