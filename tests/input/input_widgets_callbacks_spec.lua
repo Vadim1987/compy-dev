@@ -316,10 +316,13 @@ describe('widget outputs, submit and cancel #input',
       assert.is_true(seen.after)
     end)
 
-    -- doc/development/internals/user_input.md, "Submit and
-    -- cancel — widget-owned callback sequences": a custom
-    -- validator receives the live line array (not joined or
-    -- stale text).
+    -- The validator is a step OF the submit chain, which is why it
+    -- is documented with it (doc/development/internals/user_input.md,
+    -- "Submit and cancel — widget-owned callback sequences") — the
+    -- section reference is not a mismatch. What this row pins is not
+    -- the chain order (the first row of this group does that) but the
+    -- argument: a custom validator receives the widget's live line
+    -- array, not joined or stale text.
     it('a custom validator receives the live lines',
       function()
         local seen
@@ -483,9 +486,13 @@ describe('widget outputs, submit and cancel #input',
         assert.is_not_nil(love.state.user_input)
       end)
 
-    -- doc/development/internals/user_input.md, "Multiline input": Shift+Return
-    -- is never intercepted by the route and unconditionally inserts a newline.
-    -- The widget stays open; it does not submit.
+    -- doc/development/internals/user_input.md, "Multiline input":
+    -- what the WIDGET does with Shift+Return once the event reaches
+    -- it — insert a newline unconditionally, do not submit, stay
+    -- open. "Unconditionally" is the widget's own internal claim (no
+    -- state of its own suppresses the newline); it says nothing about
+    -- whether the event can be claimed before it arrives. It can, and
+    -- the row below pins that.
     -- Drives BOTH modifier tracks the production code reads:
     -- F.session.press keeps Controller.keys_pressed (combo_
     -- string) correct, mock.keystroke's 'S' token flips the
