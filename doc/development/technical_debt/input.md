@@ -235,6 +235,83 @@ question, not resolved here.
   the console fallback explicitly in the contract doc, or give the console
   route the project route's "declined means no effect" shape.
 
+### A raise from project top-level and from a handler surface differently
+
+- **Status:** owner ruled (2026-07-31) to leave the behaviour as-is and refer
+  the question to stakeholders; recorded here with the options as ruled.
+- **Where:** `consoleController.lua` `run_project` / `run_user_code` versus
+  `controller.lua` `user_error_handler`.
+- **State:** the same authoring error reaches the author two different ways,
+  decided by which `pcall` catches it. Raised from **top-level project code**:
+  `run_user_code`'s `pcall` returns, `run_project` prints `'Error: ' .. msg`
+  and drops to `project_open` — one console line, the project still open,
+  nothing else on screen. Raised from a **`love.*` handler or hook**: `wrap`
+  → `user_error_handler` → `suspend_run(msg)` → the error window over the
+  project's last frame.
+- **Why it matters:** balloons (smoke report 5) passed a lifecycle callback
+  inside `show{}`, which Decision 15 makes a raise. The raise printed its line
+  and left the user "in a console that gave no signal they were still inside a
+  project" — which is the failure mode Decision 15's own rationale ("explicit
+  failure mode") is meant to prevent.
+- **Options:** (a) route a top-level raise through the same suspend/error
+  window path as a handler raise — one failure surface for one class of
+  failure; (b) keep the console line but make the state legible (name the open
+  project and how to leave it); (c) leave as is. **Recommended: (a)** — the
+  asymmetry is an accident of which `pcall` caught it, not a decision anyone
+  took, and (b) preserves the accident while adding words to it.
+- **Revisit:** stakeholder review of the PR.
+
+### The error lock is correct, documented, and hostile
+
+- **Status:** owner ruled (2026-07-31): behaviour is pre-feature, so leave it;
+  record the UX concern with options for stakeholder review.
+- **Where:** `userInputController.lua` — while `model:has_error()` holds,
+  `textinput` is dropped and `keypressed` is swallowed except Enter / Space /
+  arrows, which clear the error.
+- **State:** to a user this is a freeze with no stated exit. It is what
+  smoke reports 1 (guess, "froze after entering a symbol") and 9 (valid,
+  "entering '1' stops processing any input") describe. The error band itself
+  IS rendered and, since the overlay-paint fix, IS visible; nothing in it says
+  which keys resume.
+- **Pre-feature check (asked for at the ruling):** nothing to reproduce. At
+  the PR base `3256aac` the same lock exists and is **stricter** — only Enter,
+  Up and Down cleared it, where today's also accepts Left, Right and Space.
+  The band's invisibility was equally pre-existing (same render path, same
+  unpainted overlay). The input API neither introduced the lock nor narrowed
+  its exits; it widened them.
+- **Options:** (a) append a hint line to the rendered error band ("Enter or
+  Space to continue") — smallest change, no semantics touched;
+  (b) clear the error on the next `textinput`, which makes a rejected line
+  silently editable and drops what the lock is for; (c) leave it documented
+  only. **Recommended: (a)**.
+- **Revisit:** stakeholder review of the PR.
+
+### `repl` does not evaluate, and its name says it does
+
+- **Status:** owner ruled (2026-07-31): behaviour is pre-feature, so keep it;
+  record the UX concern for stakeholder review.
+- **Where:** `src/examples/repl/main.lua`.
+- **State:** the example prints each submitted line back — `on_text_entered`
+  pipes lines to `print`, and the overlay runs the plain-text evaluator
+  (`InputEvalText`), which has no parser. `x = 2 + 3` returns the characters,
+  not a binding.
+- **Pre-feature check (asked for at the ruling):** the same. At `3256aac` the
+  example is `r = user_input()` plus an update loop doing `input_text()` /
+  `print(r())` — reprint, not evaluate. The migration preserved the behaviour
+  exactly.
+- **Why it is a concern anyway:** evaluating Lua and printing a result is what
+  the **console** does, and until the two fixes of 2026-07-31 (a refused
+  overlay after a project stop, and an overlay that was never painted at all)
+  a project's input surface was visually indistinguishable from the console —
+  same input line, no signal. An author testing `repl` could reasonably
+  believe it evaluated, having been typing at the console. Both causes are
+  fixed, so the modes now look different; the name still promises a
+  read-**eval**-print loop the example does not provide.
+- **Options:** (a) make it evaluate — the project env already exposes `eval`,
+  so it is one line in `on_text_entered`; (b) keep the echo and rename the
+  example (`echo`); (c) keep both, documented as-is (today's state).
+- **Revisit:** stakeholder review of the PR.
+
 ---
 
 ## Anticipated — revisit at the named point, close only if warranted
