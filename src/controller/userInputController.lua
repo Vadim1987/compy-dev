@@ -290,6 +290,10 @@ local open_fresh = function(self, cfg)
     V = self.view,
   }
   self.shown = true
+  -- Seal (doc/development/decisions/input.md, Decision 19): opened from
+  -- inside a keyboard/text event, so the rest of that event batch
+  -- belongs to whoever opened us — not to this overlay.
+  self.sealed = (Controller and Controller.dispatching_input) or false
   self:update_view()
 end
 
@@ -318,6 +322,17 @@ function UserInputController:show(config)
     return
   end
   open_fresh(self, cfg)
+end
+
+--- Release the seal (doc/development/decisions/input.md, Decision 19):
+--- an overlay shown from inside a key event ignores the rest of that
+--- event batch, so the key that opened it — and the textinput echo
+--- LÖVE may deliver before or after it — never lands as typed content.
+--- Called once per frame from the event-batch close in controller.lua:
+--- LÖVE dispatches a whole batch before update, so update is exactly
+--- where "the event that opened me" stops being current.
+function UserInputController:unseal()
+  self.sealed = false
 end
 
 --- Deactivate without firing the cancel chain. Clearing
@@ -492,6 +507,9 @@ function UserInputController:keypressed(k, keys_pressed, isr)
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return
   end
+  -- Sealed (Decision 19): swallowed here, not passed on — the
+  -- overlay IS shown, so the route still reports consumed.
+  if self.sealed then return end
   -- Defensive render-on-entry: guarantees the view catches up to the model even if a prior
   -- branch returned without re-rendering. Mutating branches below re-render at their end,
   -- so this is belt-and-suspenders, not the primary update.
@@ -711,6 +729,9 @@ function UserInputController:textinput(t, keys_pressed)
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return
   end
+  -- Sealed (Decision 19): swallowed here, not passed on — the
+  -- overlay IS shown, so the route still reports consumed.
+  if self.sealed then return end
   self:update_view()
   if self.model:has_error() then
     return
@@ -727,6 +748,9 @@ function UserInputController:keyreleased(k, keys_pressed)
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return
   end
+  -- Sealed (Decision 19): swallowed here, not passed on — the
+  -- overlay IS shown, so the route still reports consumed.
+  if self.sealed then return end
   local input = self.model
   self:update_view()
 

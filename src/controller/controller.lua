@@ -111,6 +111,17 @@ for _, k in ipairs(_pointer) do
   table.insert(_supported, k)
 end
 
+--- Close the event batch. LÖVE pumps every queued event and dispatches
+--- it BEFORE calling love.update, so update is exactly where a batch
+--- ends. Two things live for one batch and are released here: the
+--- dispatch flag below, and the overlay seal it arms
+--- (doc/development/decisions/input.md, Decision 19).
+local function end_event_batch()
+  Controller.dispatching_input = false
+  local ui = love.state.user_input_controller
+  if ui and ui.unseal then ui:unseal() end
+end
+
 --- @param CC ConsoleController
 --- @param msg string
 local function user_error_handler(CC, msg)
@@ -444,6 +455,11 @@ Controller = {
   _userhandlers = {},
 
   keys_pressed = { },
+  --- True while a keyboard/text event is being dispatched to a route,
+  --- so an overlay shown from inside that event can seal itself against
+  --- the rest of the batch (Decision 19). Set at the gateway forwards
+  --- below, cleared in update by end_event_batch.
+  dispatching_input = false,
   combo_string = combo_string,
   held_keys = held_keys,
 
@@ -651,6 +667,7 @@ Controller = {
   --- @param CC ConsoleController
   set_love_update = function(CC)
     local function update(dt)
+      end_event_batch()
       if love.PROFILE then
         Prof.update()
       end
@@ -993,12 +1010,14 @@ Controller = {
       -- here. (Mirrors stock LÖVE's love.handlers[name] ->
       -- love[name].) See doc/development/decisions/input.md #1
       -- "route-centric routing" + #11.
+      Controller.dispatching_input = true
       if love.keypressed then
         return love.keypressed(k, sc, isr)
       end
     end
 
     handlers.textinput = function(t)
+      Controller.dispatching_input = true
       if love.textinput then
         return love.textinput(t)
       end
@@ -1011,6 +1030,7 @@ Controller = {
           love.event.quit()
         end
       end
+      Controller.dispatching_input = true
       if love.keyreleased then
         return love.keyreleased(k)
       end

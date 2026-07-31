@@ -263,6 +263,57 @@ describe('input contracts: widget lifecycle #input', function()
     end)
   end)
 
+  -- doc/development/decisions/input.md, Decision 19: the key that
+  -- opens the overlay belongs to whoever opened it. LÖVE delivers a
+  -- keypressed and a textinput for the same physical key and does not
+  -- guarantee their order, so an overlay shown from inside a key event
+  -- would otherwise receive that key's own echo as typed content.
+  describe('the key that opens the overlay does not reach it',
+    function()
+
+      local function open_on(event, key)
+        local input = F.activate_project()
+        input.hooks[event] = function(k)
+          if k == key and not input.is_shown() then
+            input.show({ prompt = 'cmd' })
+            return true
+          end
+        end
+        return input
+      end
+
+      it('a keypressed-opened overlay does not type the key',
+        function()
+          open_on('keypressed', 'i')
+          F.session.press('i')
+          F.session.type('i')
+          assert.is_true(F.is_widget_visible())
+          assert.is_true(F.widget:is_empty())
+        end)
+
+      -- The same batch with textinput delivered LAST — the order
+      -- LÖVE does not promise, and the one that makes an
+      -- open-on-release project (turtle) safe only by luck.
+      it('holds whatever order the batch arrives in', function()
+        open_on('keyreleased', 'i')
+        F.session.press('i')
+        F.session.release('i')
+        F.session.type('i')
+        assert.is_true(F.widget:is_empty())
+      end)
+
+      -- The seal lasts exactly one event batch: LÖVE pumps every
+      -- event before update, so update is where the batch ends.
+      it('accepts input from the next frame on', function()
+        open_on('keypressed', 'i')
+        F.session.press('i')
+        F.session.type('i')
+        F.love_update(0.016)
+        F.session.type('x')
+        assert.same({ 'x' }, F.widget:get_text())
+      end)
+    end)
+
   -- A shown overlay must be PAINTED, whatever the project does.
   -- Two draw paths exist and they are not interchangeable: a project
   -- that hooks love.draw is wrapped by set_love_update, which paints

@@ -727,3 +727,44 @@ cannot drift from the one the dispatch walk uses.
 **Consequence.** `show` on an already-active overlay stays a warn-and-no-op
 (Decision 3): a project that wants "open it only if it is closed" now writes
 that, instead of relying on the warning as flow control.
+
+---
+
+## Decision 19 — an overlay ignores the event batch that opened it
+
+**Status: implemented** (2026-07-31).
+
+**Decision.** An overlay shown from inside a keyboard/text event is **sealed**
+for the remainder of that event batch: every keyboard/text event still in the
+batch is swallowed by the widget rather than acted on. The seal is released
+once per frame, at the start of `love.update`. An overlay shown from anywhere
+else — project `update`, top-level project code, a mouse callback — is not
+sealed and is live immediately.
+
+**Why.** LÖVE delivers a `keypressed` **and** a `textinput` for the same
+physical key, and **does not guarantee their order**. A project that opens the
+overlay from a key therefore races its own trigger: the echo of the opening
+key lands in the field as typed content. Measured before the fix — open on
+`keypressed('i')`, then the `textinput('i')` of the same press: the field
+contains `i`. Opening on `keyreleased` (what `examples/turtle` does) is safe
+only because the echo usually arrives first; delivered in the other order it
+fails identically.
+
+No project can fix this for itself. It would have to consume a `textinput`
+whose text it cannot derive from the key name (`space` → `" "`, `shift+i` →
+`"I"`, and anything an IME produces), and every project that opens an overlay
+from a key would have to re-implement it.
+
+**Why a batch, not a key match.** The seal deliberately does not try to
+identify "the echo of key X" — it swallows whatever else arrives in the same
+batch, which is order-independent and needs no key→text mapping. LÖVE pumps
+and dispatches every queued event before calling `love.update`, so update is
+exactly the batch boundary; the widget is live from the next frame on. The
+cost is that a second, unrelated key typed inside the same frame is also
+swallowed — at 60 fps that is a keystroke arriving under 17 ms after the one
+that opened the overlay.
+
+**Not a consumption change.** A sealed overlay is still *shown*: the route
+reports the event consumed exactly as before, so nothing falls through to the
+console behind it (Decision 2 is untouched). The event is swallowed at the
+widget, not passed on.
