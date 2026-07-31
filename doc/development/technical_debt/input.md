@@ -537,7 +537,7 @@ Not commissioned for closure; each may never need action.
   (`block_input()` in `EditorController:_normal_mode_keys`' `submit()`/`load()`),
   so the widget's uniform `submit_flow`/`cancel_flow` never runs for the keys the
   editor owns. No instance reads global mode. Suite green
-  (`tests/input/input_lifecycle_unfork_spec.lua`).
+  (`tests/input/input_lifecycle_uniform_spec.lua`).
 - **Revisit:** `allow_modify` is a one-off flag; the widget owning its own
   **combo table** (Ctrl+D and the lifecycle keys as registered combos an editor or
   project extends) is the better end-state the owner named — deferred with the

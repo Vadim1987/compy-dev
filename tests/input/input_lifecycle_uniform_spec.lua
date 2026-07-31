@@ -1,23 +1,38 @@
--- Availability: feature-new — the un-forked widget lifecycle is
--- introduced by this feature (since 1.0.0-rc20260712).
+-- Availability: feature-new — one uniform lifecycle across all
+-- surfaces is introduced by this feature
+-- (since 1.0.0-rc20260712).
 
--- Pins the behaviour of the UserInputController:keypressed
--- `app_state`-fork removal: deleting the `love.state.app_state ==
--- 'editor'` branch so `keypressed` runs one uniform path. See
--- doc/development/decisions/input.md Decision 6 for the rationale
--- and doc/development/internals/user_input.md for the mechanism.
+-- Enter and Escape mean the same thing in every input surface.
+-- A single lifecycle — `submit_flow` / `cancel_flow` in
+-- UserInputController — serves the console line, the editor's
+-- input and the project overlay alike; no widget instance reads
+-- the global screen mode to decide what a key does. Where a
+-- surface needs different behaviour it says so locally: the
+-- editor consumes Enter/Escape upstream before the widget sees
+-- them, and Ctrl+D line-duplication is a per-instance
+-- `allow_modify` flag set at construction.
+--
+-- This file is the guard against that uniformity being quietly
+-- re-conditioned on global state. Each group drives one surface
+-- through the same two keys and states what it must produce;
+-- the ones that look repetitive ARE the claim — same keys, same
+-- lifecycle, three surfaces.
+--
+-- Rationale: doc/development/decisions/input.md, Decision 6.
+-- Mechanism: doc/development/internals/user_input.md.
+--
 -- Assertions are on observable seams (widget text, fired
--- callbacks), plus a couple
--- of narrow method-patch spies where the seam IS the call itself
--- (evaluate_input call count, model:cancel not running) — the same
--- technique input_widgets_callbacks_spec.lua uses for its one
--- widget-signature row.
+-- callbacks), plus two narrow method patches where the seam IS
+-- the call itself (the console's evaluate_input call count, and
+-- model:cancel not running under the editor's Escape) — the
+-- same technique input_widgets_callbacks_spec.lua uses for its
+-- one widget-signature row.
 
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
 local TU   = require('tests.testutil')
 
-describe('#input #lifecycle_unfork input lifecycle un-forking',
+describe('#input #lifecycle one input lifecycle, every surface',
   function()
     setup(function() F.setup() end)
     teardown(function() F.teardown() end)
@@ -51,13 +66,15 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
       return F.editor
     end
 
-    -- ---- 1. uniform lifecycle, no app_state gate ----------
+    -- ---- 1. the lifecycle ignores the screen mode ----------
 
-    describe('uniform lifecycle (no app_state gate)', function()
-      -- RED today: the 'editor' branch never runs
-      -- submit_flow/cancel_flow at all, regardless of
-      -- who the caller is — a bare widget under app_state
-      -- 'editor' should still submit/cancel like any other.
+    describe('a widget does not read the screen mode',
+      function()
+      -- The clearest statement of the rule: a plain widget,
+      -- owned by nobody, behaves identically no matter what
+      -- love.state.app_state happens to say. Screen mode picks
+      -- which ROUTE receives an event; it never changes what
+      -- the widget does with one.
       it('plain Enter submits, plain Escape cancels', function()
         local c = bare_uic()
         love.state.app_state = 'editor'
@@ -75,10 +92,17 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
       end)
     end)
 
-    -- ---- 2. editor Escape preserves the load ---------------
+    -- ---- 2. the editor's own meaning for Escape ------------
 
-    describe('editor Escape preserves the load', function()
-      it('loads the selection, does not wipe it', function()
+    -- In the editor, Escape means "load the selected line into
+    -- the input for editing" — the opposite of the widget's
+    -- clear-the-draft cancel. The editor therefore consumes the
+    -- key upstream (EditorController:_normal_mode_keys) and the
+    -- widget's cancel_flow never runs; the spy on model.cancel
+    -- is how that absence is observed.
+    describe('editor Escape loads instead of cancelling',
+      function()
+      it('loads the selection and does not clear it', function()
         local doc = { 'first line', 'second line', '' }
         local ed  = open_doc(doc)
         local model = ed.input.model
@@ -98,11 +122,16 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
       end)
     end)
 
-    -- ---- 3. editor Enter / Ctrl+Enter submit locally -------
+    -- ---- 3. the editor's own meaning for Enter -------------
 
-    describe('editor submit does not double-fire through UIC',
+    -- Same shape as Escape above: Enter (plain or with Ctrl)
+    -- applies the edit to the buffer, and the editor consumes
+    -- it, so the submission is delivered once — to the editor —
+    -- and never a second time through the widget's
+    -- on_text_entered.
+    describe('editor Enter submits to the editor alone',
       function()
-        it('plain Enter: _handle_submit, no on_text_entered',
+        it('plain Enter applies the edit, no on_text_entered',
           function()
             local doc = { '', 'body', '' }
             local ed  = open_doc(doc)
@@ -118,7 +147,7 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
             assert.is_true(ed.input:is_empty())
           end)
 
-        it('Ctrl+Enter: _handle_submit, no on_text_entered',
+        it('Ctrl+Enter applies the edit, no on_text_entered',
           function()
             local doc = { '', 'body', '' }
             local ed  = open_doc(doc)
@@ -133,18 +162,19 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
           end)
       end)
 
-    -- ---- 4. editor Alt+Enter does nothing ------------------
+    -- ---- 4. an Enter variant the editor does not claim -----
 
-    -- Alt+Enter is NOT one of the editor's own submit variants
-    -- (submit() handles only plain/Ctrl Enter), so it is not
-    -- blocked — it falls through to the widget's uniform
-    -- submit_flow. That is acceptable precisely because the editor
-    -- sets no on_text_entered/after_submit callbacks, so submit_flow
-    -- delivers to nothing and leaves the loaded input untouched
-    -- (the same harmless no-op console relies on). This guards that
-    -- an unhandled Enter variant causes no real editor submit.
-    describe('editor Alt+Enter (unhandled variant)', function()
-      it('reaches a callback-less submit_flow — input untouched',
+    -- Alt+Enter is not one of the editor's submit variants, so
+    -- the editor lets it through and the widget's ordinary
+    -- submit runs. Nothing happens, and nothing is supposed to:
+    -- the editor assigns no on_text_entered or after_submit, so
+    -- a submit with no callbacks delivers to nobody and leaves
+    -- the loaded text alone — the same harmless no-op the
+    -- console relies on. The row exists so an unclaimed variant
+    -- can never grow into a real, unintended editor submit.
+    describe('editor Alt+Enter, an unclaimed variant',
+      function()
+      it('submits to nobody and leaves the text alone',
         function()
           local doc = { 'first line', 'second line', '' }
           local ed  = open_doc(doc)
@@ -158,10 +188,14 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
         end)
     end)
 
-    -- ---- 5. Shift+Enter on non-empty editor input ----------
+    -- ---- 5. Shift+Enter is a newline everywhere ------------
 
+    -- Shift+Enter is carved out of submit in every surface: it
+    -- inserts a line-feed and never submits, including inside
+    -- the editor's input, where the surrounding Enter variants
+    -- are claimed by the editor.
     describe('editor Shift+Enter on non-empty input', function()
-      it('is NOT blocked — inserts a line-feed', function()
+      it('inserts a line-feed instead of submitting', function()
         local doc = { '', 'body', '' }
         local ed  = open_doc(doc)
 
@@ -172,10 +206,17 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
       end)
     end)
 
-    -- ---- 6. console + a light overlay re-assert ------------
+    -- ---- 6. the same two keys in the other two surfaces ----
 
-    describe('console lifecycle', function()
-      it('plain Enter: evaluate_input runs once, text intact',
+    -- The uniformity claim in its plainest form: after the
+    -- editor rows above, the console and the project overlay
+    -- are driven through the same Enter and Escape. Their
+    -- subject-matter contracts (the full submit call-order
+    -- chain, the cancel chain, validators) belong to
+    -- input_widgets_callbacks_spec.lua; what is asserted here
+    -- is only that each surface runs the one lifecycle at all.
+    describe('console: the same Enter and Escape', function()
+      it('Enter evaluates the line exactly once, text intact',
         function()
           local calls, seen = 0, nil
           local orig = F.cc.evaluate_input
@@ -200,7 +241,8 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
       end)
     end)
 
-    describe('overlay submit/cancel — light re-assert', function()
+    describe('project overlay: the same Enter and Escape',
+      function()
       it('Enter submits, Escape cancels', function()
         local input = F.activate_project()
         local got
@@ -219,14 +261,16 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
 
     -- ---- 7. `modify` per-instance flag ---------------------
 
-    -- self.allow_modify alone decides whether Ctrl+D duplicates
-    -- the line; app_state no longer gates it (the app_state fork
-    -- was removed — decisions/input.md Decision 6). The ON case
-    -- still pairs the flag with app_state 'editor' and the OFF
-    -- case with a non-editor app_state to mirror the editor's
-    -- real usage, though UIC itself no longer reads app_state.
-    describe('modify flag gates Ctrl+D duplicate-line', function()
-      it('ON: Ctrl+D duplicates the current line', function()
+    -- Line-duplication is the one behaviour that genuinely
+    -- differs between surfaces, and it is carried by a
+    -- constructor flag on the instance that wants it —
+    -- `allow_modify`, alongside `disable_selection` — not by
+    -- the screen mode. Each case still sets app_state, to the
+    -- value the real caller would have, precisely to show the
+    -- flag and not the mode is what decides
+    -- (doc/development/decisions/input.md, Decision 6).
+    describe('the modify flag alone gates Ctrl+D', function()
+      it('with the flag: Ctrl+D duplicates the line', function()
         local c = bare_uic()
         c.allow_modify = true
         love.state.app_state = 'editor'
@@ -237,7 +281,7 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
         assert.same({ 'abc', 'abc' }, c:get_text():items())
       end)
 
-      it('OFF: Ctrl+D does nothing', function()
+      it('without it: Ctrl+D does nothing', function()
         local c = bare_uic()
         c.allow_modify = false
         love.state.app_state = 'ready'
@@ -249,19 +293,17 @@ describe('#input #lifecycle_unfork input lifecycle un-forking',
       end)
     end)
 
-    -- ---- 8. non-shift Enter breadth (Ctrl/Alt) submits -----
+    -- ---- 8. how wide "Enter" is -----------------------------
 
-    -- The lifecycle guard is `is_enter and not shift`, NOT "bare
-    -- Enter": Ctrl+Enter and Alt+Enter submit too (only Shift+Enter
-    -- is carved out, as the newline). Rationale for pinning:
-    -- discovered as existing behaviour, with no mandate to alter
-    -- it — treated as a de-facto standard per the implementation
-    -- (decisions/input.md Decision 6 / Decision 14; mechanism in
-    -- internals/user_input.md) and frozen so the console/overlay
-    -- expectation isn't silently narrowed later. (Narrowing to
-    -- bare-Enter-only would be a separate, owner-gated spec change.)
-    describe('non-shift Enter (Ctrl/Alt) submits by design',
-      function()
+    -- Submit triggers on any Enter that is not Shift+Enter, so
+    -- Ctrl+Enter and Alt+Enter submit as well; only the newline
+    -- is carved out (doc/development/decisions/input.md,
+    -- Decision 6 and Decision 14; mechanism in
+    -- doc/development/internals/user_input.md). It is
+    -- longstanding behaviour this feature kept, pinned here so
+    -- the breadth is not narrowed to bare Enter by accident —
+    -- narrowing it is a deliberate spec change, not a tidy-up.
+    describe('every non-Shift Enter submits', function()
         it('overlay: Ctrl+Enter submits', function()
           local input = F.activate_project()
           local got
