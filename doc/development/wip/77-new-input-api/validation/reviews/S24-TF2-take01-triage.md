@@ -5,7 +5,8 @@ owner's direct interventions in the same commit and the comment-policy move in
 `e9a7ccd`. The take is explicitly **incomplete** ("there could be more"), so
 everything below is written to be resumable per take.
 
-Status of this document: **triage + proposed plan, nothing executed.**
+Status of this document: triage + plan. §6 is **superseded by §8** (owner
+direction, 2026-07-31). Only §8's W0 has been executed.
 
 ## 0. Tree state and the one thing that is broken right now
 
@@ -13,8 +14,9 @@ Status of this document: **triage + proposed plan, nothing executed.**
   while index/worktree stayed at `26127bf`. The owner has since resynced; tree
   now equals HEAD. **No content was lost** (the stale worktree was byte-identical
   to `26127bf`).
-- **The suite is RED: 859 / 2 / 0 / 3.** Both failures are the owner's two new
-  assertions in `input_cursor_text_spec.lua` (`@84`, `@149`).
+- **The suite was RED: 859 / 2 / 0 / 3** — the owner's two new assertions in
+  `input_cursor_text_spec.lua`. **Resolved in `5356355`** (§8 W0); back to
+  861 / 0 / 0 / 3.
 
 **Evaluation (verified in code, not inferred).** The added probes are right in
 intent — `get_cursor` returning what was set proves nothing about where the caret
@@ -214,7 +216,11 @@ They currently ship. Each must end as either a doc change or a recorded ruling.
   `keyboard_` name") as deferred; the owner is now asking for it. Needs a naming
   ruling, then an LSP rename with a grep backstop, complete or not at all.
 
-## 6. Proposed plan
+## 6. Proposed plan — SUPERSEDED by §8
+
+Kept for the record; the owner's direction of 2026-07-31 (§8) replaces the
+ordering and the intervention model. The package contents below still hold.
+
 
 Ordering rationale: the suite must be green before anything else is judged
 against it; live defects can change the API and must not be discovered *after* a
@@ -246,3 +252,49 @@ shipped examples are broken. P6/P7 are Phase G.
 3. **The §0 verdict** — correct the test expectations to caret semantics (my
    recommendation), or is a change to `set_cursor` semantics on the table?
 4. Anything in take 02 that should re-order P1–P6 before I start P0.
+
+## 8. Revised plan (owner direction, 2026-07-31) — certainty first, one sitting
+
+The owner's three instructions reshape §6:
+
+1. **P1 becomes headless bug-hunting, not a driven run.** No `xvfb`. I form the
+   hypothesis, express it as a busted test (mocking/intercepting as
+   troubleshooting requires), localize the fault, and prepare the fix. The
+   owner's manual smoke test comes later and confirms — it does not gate the
+   investigation.
+2. **`keyboard`, `maze`, `balloons` are OUT of bug-fixing scope** — they were not
+   smoke-tested properly, so their reports are unconfirmed evidence. In-scope
+   examples: `guess`, `repl`, `tixy`, `turtle`, `valid`, `sapper` (tracked).
+3. **Minimal owner intervention, no destabilization.** Low-risk, high-certainty
+   work goes first; everything needing a ruling is queued into **one** sitting.
+
+### Ordering principle
+
+Each band is strictly less certain and more destabilizing than the one before
+it. A band never depends on a later band, so take 02 can land at any boundary
+without unwinding work.
+
+| Band | Package | Risk | Owner input |
+| --- | --- | --- | --- |
+| **1. Settled** | **W0 ✅ DONE** — caret probes corrected + convention documented (`5356355`). Suite back to **861 / 0 / 0 / 3** | none | answered (Q3) |
+| | **W1** — prose actualization, mechanical half of TF3: availability headers → "input API introduced in `1.0.0-rc20260712`"; drop `#77`, `feature-new`, `pre-baseline`, `#m5c`/`#m7`/`#m8`, TF1 provenance, commit hash `1a2a9a3`, "Decision N *revised*"; fix the wrong "highlight is memoized" message; de-duplicate the cursor-spec header; name Decision 7 in passing; reframe `shortcuts_click`'s last row; `nfr_forward` reframe + un-name its "pending until implemented" group (its row is live) + drop the orphan comment block | none — comments and descriptions only, test bodies untouched, count must not move | none |
+| | **W2** — delete `tests/editor/editor_spec_fwd.lua` (tracked, therefore in the PR diff) and correct guardrail 3 in `agents/validation.md`, which calls it untracked scratch. Count drops by that file's rows; arithmetic stated in the message | low, isolated | none |
+| | **W3** — composition recipes into `pr-assembly-guide.md`: the 1a rubber-stamping / 1b meaningful split (reproducing `6c766`) as a standing rule, and the highlight-regression carve-out | none — a doc | none |
+| | **W4** — doc REMARKs, factual half: `before_exit` exists → document it; "echoes" → **evaluates**; drop the "pen-and-paper" mislabel for terminal-only examples; `#77` → version; fix the ephemeral `D6` reference and the path-less `decisions/input.md` citations; reword the clone/handler paragraph that conflates shared C functions with project-defined `love.*` | low — prose in persistent docs | none |
+| **2. Additive** | **W5** — coverage the take asked for, as new rows only: shortcut **selectivity** (fires/consumes only for its own key; hook and widget still see every key) across channels, and the paired Shift+Return **interceptability** row that the corrected framing implies | low — additions cannot destabilize existing rows; a red here is a finding | none |
+| | **W6** — judgment prose: mark "console receives input while the widget is hidden" as **disputable** with a persistent-doc home (creating the ledger entry if none exists); correct the Shift+Return framing; factor the direct `love.state.user_input` read into a fixture `is_widget_visible()` — its own commit, since the fixture is shared by every input spec | low/medium — fixture change touches all input specs | none |
+| **3. Investigative** | **W7** — headless defect hunt, test-first, one cluster at a time. Deliverable per report: an evidence note under `validation/notes/`, a characterization test, and — where it is a regression — a localized fix as its own commit. Order by expected yield: **A1** (second project after a Ctrl+Q exit gets no overlay; the seam is above the route layer, since activate→stop→activate already passes — drive `run_project`/`stop_project_run` and assert `love.state.user_input`), **A4** (the error lock: prove the exit path and whether an error is observable at all while a project owns the screen), **A5-tixy** (top-right text vanishing on submit), **guess** (reject-path freeze under its real validator). Out of scope: keyboard, maze, balloons | medium — this is where real bugs live; every fix lands test-first with the suite green | none until a fix needs a ruling |
+| | **W8** — in-scope example migration: turtle's missing `after_submit` clear (A2, verified), plus anything W7 proves | low | none |
+| **4. Ruling** | **W9** — ONE sitting, everything queued with evidence and a recommendation, one item at a time: repeat-`show` policy · how a contract violation surfaces (error window vs console line) · retire "slot" + delete its defence paragraph · the handler/hook vocabulary rewrite · doc front-matter and LLM/human provenance standard · wrapper naming (`forward_keypressed`, `chain_native`/`wrap_native`/`keyboard_native`) · turtle's combo/hook migration (changes what the example demonstrates) · any W7 finding that needs a call | — | **the only intervention this plan asks for** |
+| **5. Post-ruling** | **W10** — execute W9: vocabulary and doc rewrites, the naming sweep (LSP rename + grep backstop, complete or not at all), strictness changes | medium | none |
+| | **W11** — Phase G regeneration, unchanged, still last | — | owner accepts the PR |
+
+### Invariants across all bands
+
+- Suite green and stated at every commit; one concern per commit.
+- No production behaviour changes outside W7/W10, and none without a breaking
+  test first.
+- Take 02 lands cleanly at any band boundary; W1–W6 are pure prep and cannot be
+  invalidated by new findings, only extended.
+- Model economy: W1, W4, W8 and the mechanical part of W10 are Sonnet batches
+  under a written contract; W5–W7 and W9 stay in-session.
