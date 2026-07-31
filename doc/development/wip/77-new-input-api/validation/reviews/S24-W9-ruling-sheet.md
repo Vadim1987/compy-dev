@@ -36,7 +36,14 @@ what does not survive is the tick-rate spam that makes the log useless. (b)
 reads attractive but silently accepts a project that re-shows in a loop, and
 (d) contradicts Decision 15's own scope line.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): none of the above — no framework change.** A
+repeat `show` is not a contract violation; both cases are small but bad
+implementations in the *examples*. maze should not call it every tick unless
+there is a documented reason (and then it should pass `force` or hide the
+widget first). turtle should hide the widget when it is not needed, and its
+`i` interceptor should check widget state, **consuming only when the widget is
+not shown**. Executed for turtle (maze is a detached repo, out of scope) —
+which surfaced item 12.
 
 ---
 
@@ -65,7 +72,9 @@ which undercuts the ruling's own stated rationale ("explicit failure mode").
 asymmetry is an accident of which `pcall` caught it, not a decision anyone
 took, and (b) preserves the accident while adding words to it.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): leave as-is**, and register the asymmetry as
+technical debt for stakeholder review, carrying the options and recommendation
+above into the ledger entry rather than only this sheet.
 
 ---
 
@@ -84,7 +93,8 @@ word teaches the word. Nothing in `src/`, `tests/` or the persistent corpus
 uses it (checked: only ephemeral `wip/` docs and unrelated senses of the
 English word).
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): (a)** — drop the heading clause and delete the
+defence paragraph.
 
 ---
 
@@ -111,7 +121,21 @@ it as a hook in the first place.
 `event_dispatch_layers.md` closing section becomes "what happens to a
 project-defined `love.*`", which is the fact a reader actually needs.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): (a), with a stated caveat.** Rewrite to one
+meaning — but admit the asymmetry, and record it as debt, **if** a
+project-defined `love.<pointer event>` is treated differently; if pointer
+functions are also demoted to hooks and dispatched through the same routing
+path, there is no debt to record.
+
+**Verified: they are treated differently.** `hook_pointer` (`controller.lua`)
+installs a project's pointer functions as the real `love.<event>` handlers
+(`love[k] = wrapped_native(...)`, return value discarded), so for pointer they
+stay handlers in LÖVE's own sense, while keyboard/text functions are captured
+and demoted to `hooks[event]`. The vocabulary rewrite states this rather than
+glossing it, and the routing asymmetry itself is already carried by
+`technical_debt/input.md`, "Pointer delivery is an unstructured broadcast, not
+a chain" and the Standing entry "Future input unification" — cited, not
+duplicated.
 
 ---
 
@@ -142,7 +166,8 @@ that survive `wip/77` deletion) and to the rest opportunistically. One place to
 look, machine-readable, and it fixes the fact that the documents most likely to
 be read by a stakeholder are the ones with no provenance at all.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): (a)** — YAML front-matter carrying provenance
+fields, replacing the HTML comment; persistent corpus first.
 
 ---
 
@@ -174,7 +199,12 @@ least defined in a comment at its first use. Whichever is chosen, it is LSP
 rename + grep backstop, **complete or not at all** — a half-renamed pair is
 worse than either.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): defer the rename to just before the PR**, when
+everything else is settled. In the meantime add comments explaining why *these*
+names, what the alternatives are, and why `wrap_`/`chain_` are separate rather
+than one method — **only if they stay short**. If that needs big prose, one
+line saying the names are disputed, so they are not silently re-approved for
+the third time.
 
 ---
 
@@ -196,7 +226,8 @@ typing any word containing `i` (this is item 1's other victim).
 ruled (b), since a silent no-op makes the guard unnecessary. Migrating (b)
 costs the example set its only demonstration of the capture path.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): (a) — leave it on the captured path, and say
+in the example why.**
 
 ---
 
@@ -218,7 +249,20 @@ own reaction on the smoke test ("not sure what to run there") is what an echo
 named `repl` produces. It also gives the example set one project that shows
 `compy.input` driving evaluation.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): conditional — verified, so: keep the
+behaviour and register the UX concern as debt.** The owner's recollection was
+that it *does* evaluate (`x=2+3` then `print(x)` printing `5`), and asked
+whether that was a misunderstanding of which mode they were in.
+
+**It was — and the framework made the mistake easy.** The pre-feature example
+also only reprinted: at `3256aac`, `repl/main.lua` is `r = user_input()` plus
+an update loop doing `input_text()` / `print(r())`. Today's version is the
+same behaviour on the new API (`InputEvalText`, `print(string.unlines(lines))`).
+Evaluating Lua and printing `5` is what the **console** does — and until this
+session's two fixes, a project whose overlay had been refused (A1) or was
+simply never painted (A4) was visually indistinguishable from the console:
+same black input line, no signal. Both are fixed, so the two modes now look
+different. Behaviour unchanged; UX concern recorded.
 
 ---
 
@@ -236,7 +280,7 @@ below already records that there was an earlier form. (b) Keep it.
 moved mid-development; they care what it says. The history stays one heading
 below, which is where it belongs.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): (a)** — drop "revised" from the heading.
 
 ---
 
@@ -256,7 +300,18 @@ requiring a named key. (c) Leave it — documented is enough.
 complaint ("it freezes"), and it changes no semantics — (b) does, and would
 make a rejected line silently editable in a way the lock deliberately prevents.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31): conditional — check the pre-feature behaviour
+first, reproduce it if feasible, and record the UX bug with options in the
+ledger; re-escalate if reproducing it would need a compatibility layer whose
+only purpose is to restore bad UX.**
+
+**Checked: there is nothing to reproduce.** At `3256aac` the lock is already
+there and is *stricter* — `has_error()` swallows everything except Enter / up /
+down (`userInputController.lua`), where today's also accepts left / right /
+space. The error band's invisibility is equally pre-existing (same render path,
+same unpainted overlay). So the feature neither introduced the lock nor
+narrowed its exits; it widened them. No compatibility layer, no
+re-escalation — UX concern and options recorded in the ledger.
 
 ---
 
@@ -269,4 +324,27 @@ make a rejected line silently editable in a way the lock deliberately prevents.
   the composition looks right (overlay over the console frame, no doubling) or
   say the word and it reverts to three lines.
 
-**RULING:** _(pending)_
+**RULING (owner, 2026-07-31):** delete guess's dead definition; the owner
+smoke-tests the overlay paint before the PR (not reverted).
+
+---
+
+## 12. NEW — `compy.input.is_shown()` (escalated during the sitting)
+
+Ruling 1 asks turtle's `i` interceptor to check widget state. **It cannot.** A
+project's `love` is a deep clone of the global one, so `love.state.user_input`
+read from inside a project is **always nil** (probed directly). Two
+consequences:
+
+- maze's re-arm guard `if love.state.user_input then`
+  (`examples/maze/main.lua:497`) is dead code that never fires — which is
+  precisely *why* maze calls `show` on every tick (report 6).
+- `technical_debt/input.md`, "No public `is_active()`-shaped visibility query"
+  understates it: it records that an example reads `love.state` directly, as if
+  that worked.
+
+The internal flag already exists (`get_active_flag` → `widget:is_shown()`), so
+exposing it is one line.
+
+**RULING (owner, 2026-07-31): add `compy.input.is_shown()`.** Closes the
+open-decisions entry and makes maze's intended idiom expressible.
