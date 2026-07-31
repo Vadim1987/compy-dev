@@ -8,13 +8,13 @@ the default entry LÖVE itself installs there simply forwards to the user-facing
 `love[name]` (`love.handlers.keypressed` calls `love.keypressed`). Compy reproduces that same
 split on purpose — see the comment at `src/controller/controller.lua:974-982`.
 
-This doc exists because the two layers are easy to conflate from the code alone: both are called
-"handlers" by something, in two different vocabularies that happen to collide. Read this before
-trying to reverse-engineer the wiring from `controller.lua` cold. For the *why* of the routing
-this wiring carries (route-centric dispatch, the default/restore route, etc.), see
-[`../decisions/input.md`](../decisions/input.md), in particular its
-["Vocabulary — hook, callback, handler"](../decisions/input.md#vocabulary--hook-callback-handler-and-why-there-is-no-slot)
-section, which this doc's closing section contrasts against.
+This doc exists because the two layers are easy to conflate from the code alone — both are
+LÖVE's own "handlers", one the pump table and one its per-event occupant, and `controller.lua`
+uses the word for both within a few hundred lines. Read this before trying to reverse-engineer
+the wiring cold. For the *why* of the routing this wiring carries (route-centric dispatch, the
+default/restore route, etc.), see [`../decisions/input.md`](../decisions/input.md), in particular
+its ["Vocabulary — hook, callback, handler"](../decisions/input.md#vocabulary--hook-callback-handler)
+section; this doc's closing section covers what becomes of a project's own `love.*`.
 
 ---
 
@@ -92,29 +92,27 @@ lifetime.
 
 ---
 
-## Why this doc exists — the naming collision
+## What becomes of a project-defined `love.*`
 
-`setup_callback_handlers`'s "callback" / "handlers" wording is **LÖVE-runtime vocabulary**: the
-function name literally sets up `love.handlers`, which is what LÖVE itself calls that table — the
-word choice is inherited from the engine, not invented by Compy. This is a distinct, *lower* layer
-than the input-API vocabulary ratified in
-[`decisions/input.md`'s "Vocabulary — hook, callback, handler"](../decisions/input.md#vocabulary--hook-callback-handler-and-why-there-is-no-slot)
-section, where a **handler** means something more specific: the project's captured `love.*`
-function, seeded into a hook (Decision 10) — "a callback whose mount point is never empty."
+`setup_callback_handlers`'s "callback" / "handlers" wording is **LÖVE's own**: the function
+literally sets up `love.handlers`, which is what LÖVE calls that table. There is no second,
+Compy-specific sense of *handler* to collide with it — the input API's vocabulary
+([`../decisions/input.md`](../decisions/input.md#vocabulary--hook-callback-handler)) names two
+*other* things, **hook** and **callback**, and leaves "handler" to LÖVE.
 
-> REMARK: see remark in decisions/input:35 ("self-induced confusion") -- there's no "two meanings", 'handler' is always used to describe a runtime handler; the only possible confusion is that projects used to define their own 'love.draw', 'love.update', 'love.keypressed' -- and those "handlers" were actually installed on sandboxed table -- and now compy reinstalls keyboard-relevant as *hooks*, never making them real handlers. This is something worth explanation.
+What does need saying is what happens to a project's own `love.*` functions, because a project
+author writing them believes they are installing handlers:
 
-So the word "handler" legitimately names two different things at two different layers:
+- **keyboard and text** (`keypressed`, `keyreleased`, `textinput`) — captured from the project's
+  sandboxed `love` table and **seeded as `compy.input.hooks[event]`** (Decision 10), once, at
+  activation. They run in hook position inside the route's walk, with hook semantics: a truthy
+  return consumes. They are never installed as `love.<event>`; the route owns that. Writing
+  `compy.input.hooks.textinput = f` directly is the same thing said plainly, and is the
+  encouraged form.
+- **pointer** (`mousepressed`, `mousemoved`, …) — installed as the **actual** `love.<event>`
+  handlers (`hook_pointer`), error-wrapped, return value discarded. Here "handler" keeps its
+  literal meaning and nothing is demoted.
 
-- **runtime layer** (this doc): `love.handlers[name]` (the pump table itself) and `love[name]`
-  (whatever currently occupies it) — LÖVE's own terms, predating and outside Compy's input-API
-  design.
-- **input-API layer** ([`../decisions/input.md`](../decisions/input.md)): the project's captured
-  `love.*`, seeded once into `compy.input.hooks[event]` when the project sets no explicit hook
-  (Decision 10).
-
-The vocabulary section of [`../decisions/input.md`](../decisions/input.md) governs the input API and
-stops there: this runtime-wiring layer is outside its scope, so `setup_callback_handlers` keeps the
-name LÖVE's own vocabulary gave it. This doc is the map, so the collision does not mislead a reader
-who lands on `controller.lua` and sees "handler" used two different ways within a few hundred lines
-of each other.
+So the two channels answer the question differently, and that asymmetry is carried in
+[`../technical_debt/input.md`](../technical_debt/input.md) ("Pointer delivery is an unstructured
+broadcast, not a chain"; Standing: "Future input unification") rather than resolved here.

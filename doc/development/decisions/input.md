@@ -16,11 +16,9 @@ appears throughout.
 
 ---
 
-> REMARK: we can retire 'slot' from here as well, its not referenced anywhere except ephemeral docs
-## Vocabulary — hook, callback, handler (and why there is no "slot")
+## Vocabulary — hook, callback, handler
 
-Three words name assignable functions in this subsystem; they are kept distinct on purpose,
-and an earlier interim word — *slot* — is deliberately retired.
+Three words name assignable functions in this subsystem; they are kept distinct on purpose.
 
 - **hook** — a function keyed by a **LÖVE event name** (`hooks[event]`: `keypressed`,
   `textinput`, `keyreleased`). The namespace is **closed and externally defined**: it can only
@@ -35,19 +33,22 @@ set and an open, self-authored callback set are different contracts even where t
 mechanics coincide; merging the vocabularies would erase that boundary just where a reader most
 needs it.
 
-> REMARK: here we have some self-induced confusion. Inside project route we have hooks/callbacks/widget. We do not (or should not) use handlers in any other meaning than Love2d uses them (layer-2 love.<event> is handler). The only real confusion may come from the fact that some projects may install love.textinput (thinking they are using *handler*) but its actually captured and demoted to hook. Encouraged path is instaling them as hook.
+- **handler** — exactly what LÖVE means by it: the function occupying `love.<event>`, and the
+  `love.handlers[name]` entry that dispatches to it. Compy adds no second sense; where this doc
+  says "handler" it is always the runtime one.
 
-- **handler** — the project's captured `love.*` function (Decision 10). A handler is simply a
-  **callback whose mount point is never empty**: the route always owns a `love.keypressed`
-  etc., so "handler" earns its own word for the always-present occupant a route installs, as
-  distinct from the sometimes-unset `hooks`/`callbacks` a project assigns.
+**Where that trips people up.** A project writing `love.textinput = f` believes it is installing
+a handler. It is not. While the project runs, the route owns `love.textinput`, and the project's
+function is captured and seeded as `hooks.textinput` (Decision 10) — it runs in hook position,
+with hook semantics (truthy consumes). Writing `compy.input.hooks.textinput = f` says the same
+thing plainly, and is the encouraged form.
 
-> REMARK: no need to defend against not using 'slot', just not use it and drop this paragraph
-There is **no "slot".** "Install a hook/callback into slot *X*" says exactly what "define
-hook/callback *X*" already says — the mount point is implied by the definition, so naming it
-separately only added a vague third noun that drifted across all three senses above. The word
-is dissolved: occupancy → **route**/**handlers**, the assignable event position → **hook**, the
-assignable widget position → **callback**.
+**Pointer events are the exception, and the asymmetry is real.** A project's `love.mousepressed`
+and friends are installed as the actual `love.<event>` handlers (`hook_pointer`, return value
+discarded), so there "handler" keeps its literal meaning and nothing is demoted. That split
+between keyboard/text and pointer is recorded, not resolved here — see
+[`../technical_debt/input.md`](../technical_debt/input.md), "Pointer delivery is an unstructured
+broadcast, not a chain", and the Standing entry "Future input unification".
 
 ---
 
@@ -526,7 +527,7 @@ individually revisable — but only by a named ruling, not by drift. See
 
 ---
 
-## Decision 15 revised — unrecognised show/configure configuration raises
+## Decision 15 — unrecognised show/configure configuration raises
 
 **Status: in-flight (owner ruling, 2026-07-30); supersedes the warn-and-ignore
 form below.**
