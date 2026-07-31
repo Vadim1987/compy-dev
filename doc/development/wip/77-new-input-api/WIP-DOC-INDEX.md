@@ -22,9 +22,10 @@
     — summarized per-directory with milestone families, not per-file.
 - **+1** newer markdown artifact (`reviews/synthetic-diff-manifest.md`, created mid-review;
   see §Flags) → 254 md files present at index time.
-- **Non-doc files to flag** (see §Flags): `implementation/ses/SWEEP.tgz` (root-owned binary),
-  `reviews/synthetic-system-diff.patch` (302 KB), plus docker infra (`compose.yml`, `.env`,
-  `Dockerfile`, `mcp.json`) and an empty `implementation/notes/.gitkeep`.
+- **Non-doc files to flag** (see §Flags): `reviews/synthetic-system-diff.patch` (302 KB),
+  plus docker infra (`compose.yml`, `.env`, `Dockerfile`, `mcp.json`) and an empty
+  `implementation/notes/.gitkeep`. (`implementation/ses/SWEEP.tgz` was flagged here at
+  index time; it has since been deleted — see §Flags.)
 
 ---
 
@@ -235,7 +236,8 @@ The manifest cites a shipped **usage guide** (commit `ced38bd`) that likely supe
 
 ### Empty / non-doc
 - `implementation/notes/` — empty, `.gitkeep` placeholder only.
-- `implementation/ses/` — see §Flags (binary `SWEEP.tgz`).
+- `implementation/ses/` — held only the binary `SWEEP.tgz`; **deleted** (see §Flags),
+  so the directory no longer exists.
 
 ---
 
@@ -259,8 +261,12 @@ The manifest cites a shipped **usage guide** (commit `ced38bd`) that likely supe
   original 253-doc corpus. The patch is the shipped system change (baseline `3256aac` → HEAD `ced38bd`,
   wip dir excluded, LLM-header-only files stripped); the manifest is its auditable reproduction record.
   **Most faithful record of what the feature actually changed** — useful for cross-check, but a diff, not a doc to incorporate. The manifest references a shipped **usage guide** commit that likely supersedes `notes/talk/api-demo.md`.
-- **`implementation/ses/SWEEP.tgz`** (~29 KB) — **root-owned** binary tar archive (anomalous: all other
-  files are `agent`-owned) sitting in a doc tree. Provenance/content unclear from the directory; not extracted.
+- **`implementation/ses/SWEEP.tgz`** (~29 KB) — binary tar archive sitting in a doc tree
+  (also root-owned at index time, anomalous: all other files are `agent`-owned).
+  **RESOLVED 2026-07-31 — deleted on owner instruction.** Extracted before deletion: it held
+  `SWEEP/session01…05/{prompt,track}.md`, all nine files **byte-identical** to their copies
+  under `implementation/sessions/`, i.e. a stale snapshot of the sweep's bind-mounted source.
+  Nothing was lost.
 - **`implementation/docker/compose.yml`** — carries an uncommitted working-tree diff flagged as pre-existing
   / not-this-feature's; worth a glance before deleting the tree.
 - Numerous specs/notes carry `Approved by human? NOT YET` in their headers despite downstream evidence of

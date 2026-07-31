@@ -167,8 +167,8 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
 2. Ordering constraints of the current plan hold until replanned with the owner — as of the
    foundation document: fixture fidelity (S7) before any ruling that cites green tests as
    evidence; slice regeneration last.
-3. Known anomalies to leave alone unless the owner asks: `implementation/ses/SWEEP.tgz`
-   (root-owned), `docker/compose.yml` local diff (not ours), untracked scratch
+3. Known anomalies to leave alone unless the owner asks:
+   `docker/compose.yml` local diff (not ours), untracked scratch
    (`src/STEPS.md`, `claude.sh`, `input-pr-slices.tar.gz`, `src/examples/*`,
    `src/vadexamples/`). Nested example repos: balloons carries unpushed commits,
    maze an uncommitted patch — sanctioned, do not "clean up".
