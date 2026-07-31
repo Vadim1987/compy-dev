@@ -2,18 +2,23 @@
 
 <!-- authored By LLM; human-approved NOT YET -->
 
-> REMARK:  it does not 'echo' it 'evaluate'!
-**Minimal REPL.** Accepts text input from the user and echoes it to the terminal.
+**Minimal input loop.** Accepts a line from the user and **prints it straight back** to the terminal.
+
+Despite the name, it does **not** evaluate what you type: `on_text_entered` receives the submitted
+line strings and passes them to `print`, and the overlay widget is provisioned with the plain-text
+evaluator (`InputEvalText`, `main.lua:370`), which has no parser and executes nothing. Type `x = 2 + 3`
+and you get the characters `x = 2 + 3` back, not a binding. Making it a real read-**eval**-print loop
+is an open question for the examples, not a documentation gap.
 
 For the full project-author usage guide, see [Compy Input API](../../../input_api.md).
-
-> REMARK: M8-01 is a development artifact  -- need to reference persistent doc or remove reference!
 
 ## Code
 
 ```lua
--- Continuous-session idiom (M8-01): consume the line in
--- on_text_entered, then clear the next draft from after_submit.
+-- Continuous-session idiom (doc/input_api.md, "Submit
+-- lifecycle"): consume the line in on_text_entered;
+-- the widget stays open by default now, so after_submit just clears
+-- the field for the next line instead of re-showing.
 compy.input.callbacks.after_submit = function()
   compy.input.clear()
 end
@@ -25,7 +30,7 @@ compy.input.show{
 
 ## Purpose
 
-The smallest possible demonstration of the `compy.input.show`/`after_submit` continuous-session idiom **(supported since 1.0.0-rc20260712)**. No game logic, no drawing, no state. Useful as a reference skeleton for any project that needs live text input.
+The smallest possible demonstration of the `compy.input.show`/`after_submit` continuous-session idiom **(supported since 1.0.0-rc20260712)**. No game logic, no drawing, no state, no evaluation. Useful as a reference skeleton for any project that needs live text input.
 
 ## Notes
 
