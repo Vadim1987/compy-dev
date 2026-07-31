@@ -67,6 +67,47 @@
   spec headers pointing at each other. Same class as session23's F1.
 - Erratum: `eb43d34`'s message miscounts one moved row as dropped;
   corrected in the map note, history not rewritten.
+## 2026-07-31 — TF2 human take 01 received
+
+- Two owner commits arrived by **push** into this checked-out repo:
+  `e9a7ccd` (comment policy moved from `conventions/code.md` to
+  `agents/validation.md` — "very context-specific") and `786e8e4`
+  ("TF2: human take 01 (there could be more)"). The push moved HEAD
+  while index/worktree stayed at `26127bf`, so for a while any commit
+  of mine would have silently reverted the owner's review. Flagged;
+  owner resynced. Nothing lost — the stale worktree was byte-identical
+  to `26127bf`. **Standing lesson: after any owner push, verify
+  `git diff HEAD` is empty before committing.**
+- Suite went **RED, 859 / 2 / 0 / 3** — the owner's two new cursor
+  probes. Verified in code: `col` is a caret position (`1..len+1`),
+  `backspace` splices `usub(1, cc-2)..usub(cc)`, and the neighbouring
+  clamp row (`'hello'` → 6) proves the same convention. The probes are
+  right in intent, the expectations off by one. The real finding
+  underneath: `doc/input_api.md` never states the convention, which is
+  why it bit.
+- Triage + plan written to
+  `validation/reviews/S24-TF2-take01-triage.md`: 9 example reports
+  clustered into A1 no-overlay-on-second-project (suspected real
+  regression) · A2 no auto-clear (Decision 6, examples un-migrated —
+  turtle verified to lack `after_submit`) · A3 strictness surface
+  (Decision 15 in-flight; balloons raise did not reach the error
+  window, maze warns per tick) · A4 "freeze" = the error lock with no
+  visible error (`has_error` gate at `userInputController.lua:526`,
+  `:715`) · plus singles. Class B = TF3 test actualization, C = nine
+  REMARK blocks now sitting in tracked docs, D = slice composition +
+  wrapper naming.
+- Verified for the owner along the way: `compy.before_exit` **does**
+  exist (`consoleController.lua:697-720`, fired `:1193`); the word
+  `slot` survives only in the paragraph defending its non-use and in
+  the implementation's `before_exit_slot`; `tests/editor/editor_spec_fwd.lua`
+  is **tracked**, so guardrail 3 in `agents/validation.md` is wrong to
+  call it untracked scratch; `input_nfr_forward_spec`'s
+  "pending until implemented" group indeed holds a live passing row
+  plus an orphan comment block.
+- Nothing executed. Four blocking questions at the end of the triage
+  doc (who drives live runs · detached examples in scope? · confirm
+  the cursor verdict · re-ordering from take 02).
+
 - Behavioural note: the owner is reading the PR candidate as a cold
   reviewer would — "does this file's *name* explain itself without wip
   context" — which is the C1/J1 vocabulary axis surfacing from TF2 rather
