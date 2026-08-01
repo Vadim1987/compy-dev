@@ -404,3 +404,19 @@ looked like anomalies was the work-in-progress of those PRs.
 - Nothing pushed anywhere. `pr-assembly-guide.md` §1/§5 rewritten: Set 4 is
   not a slice of this PR but three sibling PRs, with each repo's remote,
   branch and commits listed.
+
+### wrap (2026-08-01)
+
+Owner contested Decision 19 as landed-without-ratification and corrected the
+sibling-repo framing (we suggest complete migrations; we do not hand our API
+change's consequences back to repo authors). Both recorded in
+`validation/reviews/S24-contradictions.md`, with the third, weaker item (the
+overlay paint awaiting a smoke test) alongside them. Decision 19 is now marked
+contested in the ledger, the project guide and the code that implements it.
+
+Distilled into `report.md`; successor `session25/prompt.md` commissioned as a
+**revalidation** (session24 was cognitive-heavy), ordered C1 → C2 → re-evaluate
+where the feature stands. Pointer in `agents/validation.md` repointed.
+
+Session totals: 34 commits in `/repo`, 1 in maze, 1 in balloons; suite
+861 → 874 / 0 / 0 / 3; nothing pushed anywhere.
