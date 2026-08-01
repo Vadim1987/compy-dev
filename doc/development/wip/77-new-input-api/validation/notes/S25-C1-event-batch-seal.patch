@@ -1,0 +1,283 @@
+diff --git a/doc/development/decisions/input.md b/doc/development/decisions/input.md
+index a33f8252..4a420085 100644
+--- a/doc/development/decisions/input.md
++++ b/doc/development/decisions/input.md
+@@ -727,3 +727,44 @@ cannot drift from the one the dispatch walk uses.
+ **Consequence.** `show` on an already-active overlay stays a warn-and-no-op
+ (Decision 3): a project that wants "open it only if it is closed" now writes
+ that, instead of relying on the warning as flow control.
++
++---
++
++## Decision 19 — an overlay ignores the event batch that opened it
++
++**Status: implemented** (2026-07-31).
++
++**Decision.** An overlay shown from inside a keyboard/text event is **sealed**
++for the remainder of that event batch: every keyboard/text event still in the
++batch is swallowed by the widget rather than acted on. The seal is released
++once per frame, at the start of `love.update`. An overlay shown from anywhere
++else — project `update`, top-level project code, a mouse callback — is not
++sealed and is live immediately.
++
++**Why.** LÖVE delivers a `keypressed` **and** a `textinput` for the same
++physical key, and **does not guarantee their order**. A project that opens the
++overlay from a key therefore races its own trigger: the echo of the opening
++key lands in the field as typed content. Measured before the fix — open on
++`keypressed('i')`, then the `textinput('i')` of the same press: the field
++contains `i`. Opening on `keyreleased` (what `examples/turtle` does) is safe
++only because the echo usually arrives first; delivered in the other order it
++fails identically.
++
++No project can fix this for itself. It would have to consume a `textinput`
++whose text it cannot derive from the key name (`space` → `" "`, `shift+i` →
++`"I"`, and anything an IME produces), and every project that opens an overlay
++from a key would have to re-implement it.
++
++**Why a batch, not a key match.** The seal deliberately does not try to
++identify "the echo of key X" — it swallows whatever else arrives in the same
++batch, which is order-independent and needs no key→text mapping. LÖVE pumps
++and dispatches every queued event before calling `love.update`, so update is
++exactly the batch boundary; the widget is live from the next frame on. The
++cost is that a second, unrelated key typed inside the same frame is also
++swallowed — at 60 fps that is a keystroke arriving under 17 ms after the one
++that opened the overlay.
++
++**Not a consumption change.** A sealed overlay is still *shown*: the route
++reports the event consumed exactly as before, so nothing falls through to the
++console behind it (Decision 2 is untouched). The event is swallowed at the
++widget, not passed on.
+diff --git a/doc/development/internals/examples/turtle.md b/doc/development/internals/examples/turtle.md
+index 05e7b00a..8e7780c1 100644
+--- a/doc/development/internals/examples/turtle.md
++++ b/doc/development/internals/examples/turtle.md
+@@ -47,7 +47,7 @@ end
+ 
+ "Re-arm" was the pre-feature vocabulary: because submit used to close the overlay, a project that wanted another line had to re-open it. That is reversed now — the overlay stays open after submit (Decision 6), so a *one-shot* prompt is the shape that needs the extra line, and turtle's `after_submit` is it. And yes: the missing close is exactly why typed commands used to pile up in the field (report A2, "input is not cleared after Enter") — a one-shot prompt that never closed kept the previous command.
+ 
+-`love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. `shift+r` resets turtle position.
++`love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. The guard is about *later* `i`s — the echo of the **opening** `i` is the framework's business: an overlay shown from inside a key event ignores the rest of that event batch ([`../../decisions/input.md`](../../decisions/input.md), Decision 19), so the key that opens the prompt never types itself into it, whichever order LÖVE delivers it in. `shift+r` resets turtle position.
+ 
+ See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `r = user_input()` / `input_text(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
+ 
+diff --git a/doc/input_api.md b/doc/input_api.md
+index 199d4087..c61ba436 100644
+--- a/doc/input_api.md
++++ b/doc/input_api.md
+@@ -160,6 +160,14 @@ end
+ Do not read `love.state` for this: a project runs in a sandboxed copy of
+ `love`, so that field is always `nil` from inside a project.
+ 
++The key that opens the overlay never lands in it. LÖVE delivers a `keypressed`
++and a `textinput` for the same physical key, in no guaranteed order, so an
++overlay opened from a key would otherwise receive that key's own echo as typed
++text. An overlay shown from inside a key event ignores the rest of that event
++batch and starts accepting input on the next frame — you do not have to
++consume the echo yourself, and it works the same whether you open on
++`keypressed` or `keyreleased`.
++
+ `compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
+ empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
+ it. Mutating calls warn and do nothing while the overlay is hidden.
+diff --git a/src/controller/controller.lua b/src/controller/controller.lua
+index 54a30c41..d32552e7 100644
+--- a/src/controller/controller.lua
++++ b/src/controller/controller.lua
+@@ -111,6 +111,17 @@ for _, k in ipairs(_pointer) do
+   table.insert(_supported, k)
+ end
+ 
++--- Close the event batch. LÖVE pumps every queued event and dispatches
++--- it BEFORE calling love.update, so update is exactly where a batch
++--- ends. Two things live for one batch and are released here: the
++--- dispatch flag below, and the overlay seal it arms
++--- (doc/development/decisions/input.md, Decision 19).
++local function end_event_batch()
++  Controller.dispatching_input = false
++  local ui = love.state.user_input_controller
++  if ui and ui.unseal then ui:unseal() end
++end
++
+ --- @param CC ConsoleController
+ --- @param msg string
+ local function user_error_handler(CC, msg)
+@@ -444,6 +455,11 @@ Controller = {
+   _userhandlers = {},
+ 
+   keys_pressed = { },
++  --- True while a keyboard/text event is being dispatched to a route,
++  --- so an overlay shown from inside that event can seal itself against
++  --- the rest of the batch (Decision 19). Set at the gateway forwards
++  --- below, cleared in update by end_event_batch.
++  dispatching_input = false,
+   combo_string = combo_string,
+   held_keys = held_keys,
+ 
+@@ -651,6 +667,7 @@ Controller = {
+   --- @param CC ConsoleController
+   set_love_update = function(CC)
+     local function update(dt)
++      end_event_batch()
+       if love.PROFILE then
+         Prof.update()
+       end
+@@ -993,12 +1010,14 @@ Controller = {
+       -- here. (Mirrors stock LÖVE's love.handlers[name] ->
+       -- love[name].) See doc/development/decisions/input.md #1
+       -- "route-centric routing" + #11.
++      Controller.dispatching_input = true
+       if love.keypressed then
+         return love.keypressed(k, sc, isr)
+       end
+     end
+ 
+     handlers.textinput = function(t)
++      Controller.dispatching_input = true
+       if love.textinput then
+         return love.textinput(t)
+       end
+@@ -1011,6 +1030,7 @@ Controller = {
+           love.event.quit()
+         end
+       end
++      Controller.dispatching_input = true
+       if love.keyreleased then
+         return love.keyreleased(k)
+       end
+diff --git a/src/controller/userInputController.lua b/src/controller/userInputController.lua
+index 84e91c32..358fa7ef 100644
+--- a/src/controller/userInputController.lua
++++ b/src/controller/userInputController.lua
+@@ -290,6 +290,10 @@ local open_fresh = function(self, cfg)
+     V = self.view,
+   }
+   self.shown = true
++  -- Seal (doc/development/decisions/input.md, Decision 19): opened from
++  -- inside a keyboard/text event, so the rest of that event batch
++  -- belongs to whoever opened us — not to this overlay.
++  self.sealed = (Controller and Controller.dispatching_input) or false
+   self:update_view()
+ end
+ 
+@@ -320,6 +324,17 @@ function UserInputController:show(config)
+   open_fresh(self, cfg)
+ end
+ 
++--- Release the seal (doc/development/decisions/input.md, Decision 19):
++--- an overlay shown from inside a key event ignores the rest of that
++--- event batch, so the key that opened it — and the textinput echo
++--- LÖVE may deliver before or after it — never lands as typed content.
++--- Called once per frame from the event-batch close in controller.lua:
++--- LÖVE dispatches a whole batch before update, so update is exactly
++--- where "the event that opened me" stops being current.
++function UserInputController:unseal()
++  self.sealed = false
++end
++
+ --- Deactivate without firing the cancel chain. Clearing
+ --- love.state.user_input is what "hides" the overlay: the
+ --- draw loop (controller.lua) paints V:draw() only while
+@@ -492,6 +507,9 @@ function UserInputController:keypressed(k, keys_pressed, isr)
+     if love.DEBUG then Log.debug('input: hidden no-op') end
+     return
+   end
++  -- Sealed (Decision 19): swallowed here, not passed on — the
++  -- overlay IS shown, so the route still reports consumed.
++  if self.sealed then return end
+   -- Defensive render-on-entry: guarantees the view catches up to the model even if a prior
+   -- branch returned without re-rendering. Mutating branches below re-render at their end,
+   -- so this is belt-and-suspenders, not the primary update.
+@@ -711,6 +729,9 @@ function UserInputController:textinput(t, keys_pressed)
+     if love.DEBUG then Log.debug('input: hidden no-op') end
+     return
+   end
++  -- Sealed (Decision 19): swallowed here, not passed on — the
++  -- overlay IS shown, so the route still reports consumed.
++  if self.sealed then return end
+   self:update_view()
+   if self.model:has_error() then
+     return
+@@ -727,6 +748,9 @@ function UserInputController:keyreleased(k, keys_pressed)
+     if love.DEBUG then Log.debug('input: hidden no-op') end
+     return
+   end
++  -- Sealed (Decision 19): swallowed here, not passed on — the
++  -- overlay IS shown, so the route still reports consumed.
++  if self.sealed then return end
+   local input = self.model
+   self:update_view()
+ 
+diff --git a/tests/input/input_widget_lifecycle_spec.lua b/tests/input/input_widget_lifecycle_spec.lua
+index 36c84b7e..c92ce0d2 100644
+--- a/tests/input/input_widget_lifecycle_spec.lua
++++ b/tests/input/input_widget_lifecycle_spec.lua
+@@ -263,22 +263,55 @@ describe('input contracts: widget lifecycle #input', function()
+     end)
+   end)
+ 
+-  -- KNOWN DEFECT, no mechanism ruled. See
+-  -- doc/development/technical_debt/input.md, "An overlay opened
+-  -- from a key can receive that key's own echo".
+-  -- LÖVE delivers a keypressed AND a textinput for one physical
+-  -- key and guarantees nothing about their order, so an overlay
+-  -- shown from inside a key event receives that key's own echo
+-  -- as typed content. Reproduced: a project opening on
+-  -- keypressed('i') gets a field containing "i"; opening on
+-  -- keyreleased fails the same way when the textinput of that
+-  -- press is delivered last. Both rows below FAIL today by
+-  -- design. They name the contract; the fix is a design call
+-  -- (four candidate mechanisms in that entry), not a bug fix.
++  -- doc/development/decisions/input.md, Decision 19: the key that
++  -- opens the overlay belongs to whoever opened it. LÖVE delivers a
++  -- keypressed and a textinput for the same physical key and does not
++  -- guarantee their order, so an overlay shown from inside a key event
++  -- would otherwise receive that key's own echo as typed content.
+   describe('the key that opens the overlay does not reach it',
+     function()
+-      pending('a keypressed-opened overlay does not type it')
+-      pending('holds whatever order the batch arrives in')
++
++      local function open_on(event, key)
++        local input = F.activate_project()
++        input.hooks[event] = function(k)
++          if k == key and not input.is_shown() then
++            input.show({ prompt = 'cmd' })
++            return true
++          end
++        end
++        return input
++      end
++
++      it('a keypressed-opened overlay does not type the key',
++        function()
++          open_on('keypressed', 'i')
++          F.session.press('i')
++          F.session.type('i')
++          assert.is_true(F.is_widget_visible())
++          assert.is_true(F.widget:is_empty())
++        end)
++
++      -- The same batch with textinput delivered LAST — the order
++      -- LÖVE does not promise, and the one that makes an
++      -- open-on-release project (turtle) safe only by luck.
++      it('holds whatever order the batch arrives in', function()
++        open_on('keyreleased', 'i')
++        F.session.press('i')
++        F.session.release('i')
++        F.session.type('i')
++        assert.is_true(F.widget:is_empty())
++      end)
++
++      -- The seal lasts exactly one event batch: LÖVE pumps every
++      -- event before update, so update is where the batch ends.
++      it('accepts input from the next frame on', function()
++        open_on('keypressed', 'i')
++        F.session.press('i')
++        F.session.type('i')
++        F.love_update(0.016)
++        F.session.type('x')
++        assert.same({ 'x' }, F.widget:get_text())
++      end)
+     end)
+ 
+   -- A shown overlay must be PAINTED, whatever the project does.

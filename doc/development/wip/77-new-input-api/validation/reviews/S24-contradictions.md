@@ -17,6 +17,15 @@ that is the successor's first job, with the owner.
 
 ## C1 · Decision 19 (the event-batch seal) is in the codebase **unratified**
 
+> **RESOLVED 2026-08-01 (session25), option (c).** The owner ruled the
+> mechanism out of the codebase and the docs, keeping the tests that surface
+> the problem; the race is carried as a debt entry until a design pass.
+> Executed in `190f0c9`. What was reverted, what was verified in code, and the
+> option set the design pass inherits:
+> [`S25-C1-event-batch-seal.md`](S25-C1-event-batch-seal.md). The revert table
+> below is kept as the record of what was removed — it was checked and found
+> complete.
+
 **Contested by the owner, 2026-08-01:** *"your resolution of race condition was
 not architecturally reviewed by me — I contest its being folded into the
 codebase without design ratification."*
