@@ -160,16 +160,6 @@ end
 Do not read `love.state` for this: a project runs in a sandboxed copy of
 `love`, so that field is always `nil` from inside a project.
 
-The key that opens the overlay never lands in it (**unratified — see
-Decision 19; this paragraph describes behaviour that is in the tree pending the
-owner's design review**). LÖVE delivers a `keypressed`
-and a `textinput` for the same physical key, in no guaranteed order, so an
-overlay opened from a key would otherwise receive that key's own echo as typed
-text. An overlay shown from inside a key event ignores the rest of that event
-batch and starts accepting input on the next frame — you do not have to
-consume the echo yourself, and it works the same whether you open on
-`keypressed` or `keyreleased`.
-
 `compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
 empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
 it. Mutating calls warn and do nothing while the overlay is hidden.

@@ -47,7 +47,7 @@ end
 
 "Re-arm" was the pre-feature vocabulary: because submit used to close the overlay, a project that wanted another line had to re-open it. That is reversed now — the overlay stays open after submit (Decision 6), so a *one-shot* prompt is the shape that needs the extra line, and turtle's `after_submit` is it. And yes: the missing close is exactly why typed commands used to pile up in the field (report A2, "input is not cleared after Enter") — a one-shot prompt that never closed kept the previous command.
 
-`love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. The guard is about *later* `i`s — the echo of the **opening** `i` is the framework's business: an overlay shown from inside a key event ignores the rest of that event batch ([`../../decisions/input.md`](../../decisions/input.md), Decision 19), so the key that opens the prompt never types itself into it, whichever order LÖVE delivers it in. `shift+r` resets turtle position.
+`love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. `shift+r` resets turtle position.
 
 See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `r = user_input()` / `input_text(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
 

@@ -336,6 +336,40 @@ question, not resolved here.
   example (`echo`); (c) keep both, documented as-is (today's state).
 - **Revisit:** stakeholder review of the PR.
 
+### An overlay opened from a key can receive that key's own echo
+
+- **Status:** verified defect, **no mechanism ruled**. A fix was implemented
+  and then reverted at the owner's instruction (2026-08-01) because its design
+  had never been put to them; the reproduction survives as pending rows in
+  `tests/input/input_widget_lifecycle_spec.lua`, group *"the key that opens
+  the overlay does not reach it"*.
+- **Where:** `src/controller/controller.lua` (the `keypressed` / `textinput` /
+  `keyreleased` gateways) and `src/controller/userInputController.lua` (the
+  show path and the three widget handlers).
+- **State:** LÖVE delivers a `keypressed` **and** a `textinput` for one
+  physical key and guarantees nothing about their order. A project that opens
+  the overlay from a key therefore races its own trigger: measured — open on
+  `keypressed('i')`, and the `textinput('i')` of the same press lands in the
+  field, so the overlay comes up already containing `i`. Opening on
+  `keyreleased` (what `examples/turtle` does) is safe only because the echo
+  usually arrives first; with the `textinput` delivered last it fails
+  identically.
+- **Why a project cannot fix it for itself:** it would have to consume a
+  `textinput` whose text it cannot derive from the key name (`space` → `" "`,
+  `shift+i` → `"I"`, anything an IME emits), and every project that opens an
+  overlay from a key would re-implement it.
+- **Options:** (a) seal the overlay for the rest of the event batch that
+  opened it, released at the start of `love.update` — order-independent and
+  needs no key→text mapping, but it also swallows an unrelated key typed
+  within the same frame and assumes the stock run loop is the only pump;
+  (b) match the trigger key's echo specifically — narrower, but needs the
+  key→text mapping (a) avoids; (c) arm only on `keypressed`, leaving
+  open-on-`keyreleased` projects racing; (d) no framework change, and the API
+  documents an idiom projects follow instead.
+- **Revisit:** a design pass on the run loop's event-batch guarantees — the
+  choice between (a)–(d) turns on what the framework is willing to promise
+  about batch boundaries, which is a design question, not a bug fix.
+
 ---
 
 ## Anticipated — revisit at the named point, close only if warranted
