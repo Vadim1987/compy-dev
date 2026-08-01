@@ -732,7 +732,14 @@ that, instead of relying on the warning as flow control.
 
 ## Decision 19 — an overlay ignores the event batch that opened it
 
-**Status: implemented** (2026-07-31).
+**Status: IMPLEMENTED BUT NOT RATIFIED — contested (owner, 2026-08-01).** The
+code below is in the tree; the design was never put to the owner, who contests
+its landing without review. Do not build on it, and do not cite it as settled.
+The race it addresses is verified independently of the fix; the *mechanism*,
+its batch scope, its release point and its exclusions are all unratified.
+Options, evidence and the exact revert surface:
+[`../wip/77-new-input-api/validation/reviews/S24-contradictions.md`](../wip/77-new-input-api/validation/reviews/S24-contradictions.md),
+C1.
 
 **Decision.** An overlay shown from inside a keyboard/text event is **sealed**
 for the remainder of that event batch: every keyboard/text event still in the

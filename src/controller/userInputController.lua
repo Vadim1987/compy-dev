@@ -324,6 +324,9 @@ function UserInputController:show(config)
   open_fresh(self, cfg)
 end
 
+--- UNRATIFIED (owner contests, 2026-08-01): the mechanism below landed
+--- without a design ruling — see validation/reviews/S24-contradictions.md, C1,
+--- for the revert surface. Do not extend it before it is settled.
 --- Release the seal (doc/development/decisions/input.md, Decision 19):
 --- an overlay shown from inside a key event ignores the rest of that
 --- event batch, so the key that opened it — and the textinput echo
