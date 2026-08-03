@@ -132,6 +132,14 @@ local function run_user_code(f, cc, project_path)
   return true
 end
 
+-- Project lifecycle callback. It is intentionally separate from
+-- compy.input's keyboard/text dispatch surface. Declared up
+-- here with hide_overlay because both ends of a run reset it:
+-- the stop path, and the failed-run path in run_project.
+local function default_before_exit()
+  Log.debug('compy.before_exit noop')
+end
+
 --- Take the overlay down THROUGH the widget when a run ends,
 --- so its own `shown` flag comes down together with the
 --- published handle. Clearing love.state.user_input alone left
@@ -290,10 +298,13 @@ function ConsoleController:run_project(name)
         hide_overlay()
         -- ...and the participants it installed before raising.
         -- Same invariant, same reason: nothing survives the
-        -- project that installed it. Deliberately NOT the whole
-        -- stop sequence — compy.before_exit belongs to a run
-        -- that started, and this one never did.
+        -- project that installed it. before_exit is RESET but
+        -- not FIRED: the frozen spec scopes the hook to stop
+        -- paths and excludes crash, yet a slot left holding the
+        -- dead project's function would fire for the next one.
         self.main_ctrl.clear_user_handlers(self)
+        self:get_project_env().compy.before_exit =
+            default_before_exit
         love.state.app_state = 'project_open'
         print('Error: ', run_err)
       else
@@ -784,12 +795,6 @@ local get_compy_input = function()
   -- — a project cannot build one, its `love` being a clone.
   local held = Controller.held_keys
   return build_input_surface(state, methods, held)
-end
-
--- Project lifecycle callback. It is intentionally separate from
--- compy.input's keyboard/text dispatch surface.
-local function default_before_exit()
-  Log.debug('compy.before_exit noop')
 end
 
 -- Builds the `compy.*` table injected into a project's sandbox env (terminal, audio, graphics,

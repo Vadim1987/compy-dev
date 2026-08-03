@@ -257,6 +257,26 @@ describe('input contracts: route connection lifecycle #input', function()
           assert.is_nil(captured.callbacks.before_submit)
           assert.is_nil(captured.callbacks.validator)
         end)
+
+      -- compy.before_exit does NOT fire here: the ratified
+      -- contract scopes the hook to stop paths and excludes
+      -- crash. But it must still be RESET, or it outlives the
+      -- project that installed it and fires for the NEXT one.
+      -- Not firing and not resetting are different questions,
+      -- and only the first is ruled.
+      -- The next run's stop is the control: were the slot
+      -- still holding the dead project's fn, it would fire.
+      it('does not leave its before_exit for the next run',
+        function()
+          local fired = 0
+          run_raising_project(function()
+            F.cc:get_project_env().compy.before_exit =
+                function() fired = fired + 1 end
+          end)
+          F.activate_project()
+          F.cc:stop_project_run()
+          assert.equal(0, fired)
+        end)
     end)
 
     describe('inspect', function()
