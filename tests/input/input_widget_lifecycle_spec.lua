@@ -263,23 +263,85 @@ describe('input contracts: widget lifecycle #input', function()
     end)
   end)
 
-  -- KNOWN DEFECT, no mechanism ruled. See
-  -- doc/development/technical_debt/input.md, "An overlay opened
-  -- from a key can receive that key's own echo".
-  -- LÖVE delivers a keypressed AND a textinput for one physical
-  -- key and guarantees nothing about their order, so an overlay
-  -- shown from inside a key event receives that key's own echo
-  -- as typed content. Reproduced: a project opening on
-  -- keypressed('i') gets a field containing "i"; opening on
-  -- keyreleased fails the same way when the textinput of that
-  -- press is delivered last. Both rows below FAIL today by
-  -- design. They name the contract; the fix is a design call
-  -- (four candidate mechanisms in that entry), not a bug fix.
-  describe('the key that opens the overlay does not reach it',
-    function()
-      pending('a keypressed-opened overlay does not type it')
-      pending('holds whatever order the batch arrives in')
+  -- doc/input_api.md, "Opening the overlay from a key". LÖVE
+  -- delivers a keypressed AND a textinput for one physical key
+  -- and guarantees nothing about their order, so the trigger's
+  -- own echo can land in the field it just opened. The API's
+  -- answer is a project idiom, not a mechanism: a one-shot
+  -- shortcut on the textinput channel eats the echo and
+  -- unregisters itself, re-armed wherever the project closes.
+  -- These rows pin the idiom the guide documents. It is only as
+  -- good as the seams it rests on: shortcuts run before the
+  -- widget on every channel, and a handler may clear its own
+  -- slot mid-flight.
+  describe('the documented echo guard', function()
+
+    local function arm(input)
+      input.shortcuts.textinput['i'] = function()
+        input.shortcuts.textinput['i'] = nil
+        return true
+      end
+    end
+
+    -- The guide's shape: open from a key, guard with the pair.
+    local function open_on(event)
+      local input = F.activate_project()
+      input.hooks[event] = function(k)
+        if k == 'i' and not input.is_shown() then
+          input.show({ prompt = 'cmd' })
+          return true
+        end
+      end
+      arm(input)
+      return input
+    end
+
+    it('the echo does not reach an overlay it opened',
+      function()
+        open_on('keypressed')
+        F.session.press('i')
+        F.session.type('i')
+        assert.is_true(F.is_widget_visible())
+        assert.is_true(F.widget:is_empty())
+      end)
+
+    -- The order LÖVE does not promise: the echo arrives BEFORE
+    -- the open and is eaten while the overlay is still closed,
+    -- which is why the idiom needs no ordering guarantee.
+    it('holds when the echo precedes the open', function()
+      open_on('keyreleased')
+      F.session.type('i')
+      F.session.press('i')
+      F.session.release('i')
+      assert.is_true(F.is_widget_visible())
+      assert.is_true(F.widget:is_empty())
     end)
+
+    -- One-shot: spent on the echo, so the trigger character is
+    -- ordinary content from then on.
+    it('the trigger is typable once the one-shot is spent',
+      function()
+        open_on('keypressed')
+        F.session.press('i')
+        F.session.type('i')
+        F.session.type('i')
+        F.session.type('x')
+        assert.same({ 'ix' }, F.widget:get_text())
+      end)
+
+    -- The re-arm the guide insists on: without it the second
+    -- open takes the echo, which is the whole cost of the idiom.
+    it('a re-armed guard protects the next open too', function()
+      local input = open_on('keypressed')
+      F.session.press('i')
+      F.session.type('i')
+      input.hide()
+      arm(input)
+      F.session.press('i')
+      F.session.type('i')
+      assert.is_true(F.widget:is_empty())
+    end)
+  end)
 
   -- A shown overlay must be PAINTED, whatever the project does.
   -- Two draw paths exist and they are not interchangeable: a project

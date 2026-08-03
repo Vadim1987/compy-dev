@@ -338,11 +338,13 @@ question, not resolved here.
 
 ### An overlay opened from a key can receive that key's own echo
 
-- **Status:** verified defect, **no mechanism ruled**. A fix was implemented
-  and then reverted at the owner's instruction (2026-08-01) because its design
-  had never been put to them; the reproduction survives as pending rows in
-  `tests/input/input_widget_lifecycle_spec.lua`, group *"the key that opens
-  the overlay does not reach it"*.
+- **Status:** answered by a **documented project idiom**, not by a framework
+  mechanism (owner, 2026-08-03) — `../../input_api.md`, *"Opening the overlay
+  from a key"*, pinned by `tests/input/input_widget_lifecycle_spec.lua`, group
+  *"the documented echo guard"*, and used by `src/examples/turtle`. A
+  framework fix was implemented and then reverted (2026-08-01) because its
+  design had never been ruled. What remains open is whether the framework
+  should ever take this over; the entry stays for that question.
 - **Where:** `src/controller/controller.lua` (the `keypressed` / `textinput` /
   `keyreleased` gateways) and `src/controller/userInputController.lua` (the
   show path and the three widget handlers).

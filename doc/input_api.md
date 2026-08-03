@@ -160,6 +160,10 @@ end
 Do not read `love.state` for this: a project runs in a sandboxed copy of
 `love`, so that field is always `nil` from inside a project.
 
+That guard stops *later* presses of `i` from re-opening the prompt. It does
+not stop the `i` that opened it from being typed into it — see "Opening the
+overlay from a key" below.
+
 `compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
 empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
 it. Mutating calls warn and do nothing while the overlay is hidden.
@@ -180,6 +184,44 @@ way. A shortcut runs before the overlay and can consume the event.
 `compy.input.hooks.keypressed`, `.keyreleased`, and `.textinput` are one
 fallback function per event. At activation, an existing project `love.*`
 handler seeds the matching hook when no explicit hook was supplied.
+
+## Opening the overlay from a key
+
+LÖVE delivers a `keypressed` **and** a `textinput` for one physical key, and
+does not promise their order. So a prompt opened from `i` can come up with an
+`i` already in the field — the trigger's own echo, arriving on the other
+channel either side of the open. The `is_shown()` guard does not help: it is
+about the *next* press, not this one.
+
+Guard the trigger with a one-shot shortcut on the `textinput` channel.
+Shortcuts run before the overlay, so it swallows the echo whichever side of
+the open it lands on, and it unregisters itself so the character is typable
+as content afterwards:
+
+```lua
+local function arm_echo_guard()
+  compy.input.shortcuts.textinput['i'] = function()
+    compy.input.shortcuts.textinput['i'] = nil
+    return true -- the echo is consumed, not typed
+  end
+end
+arm_echo_guard()
+
+compy.input.callbacks.after_submit = function()
+  compy.input.hide()
+  arm_echo_guard() -- the next open needs a fresh one-shot
+end
+```
+
+Re-arm wherever you close the overlay: one that is closed without re-arming
+takes the echo on its next open. Only your own `hide()` calls need this —
+Escape *clears* the field without closing, so the spent one-shot is still
+correct.
+
+Use a **bare** key as the trigger. A modified combo cannot be guarded this
+way: the two channels do not share a combo string for it — `shift+i` on
+`keypressed` against `shift+I` on `textinput` — and the upper-case form
+cannot be registered.
 
 ## Callback assignments
 
