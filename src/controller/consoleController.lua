@@ -288,6 +288,12 @@ function ConsoleController:run_project(name)
         -- (doc/development/decisions/input.md, Decision 11).
         self.main_ctrl.release_keyboard_route(self)
         hide_overlay()
+        -- ...and the participants it installed before raising.
+        -- Same invariant, same reason: nothing survives the
+        -- project that installed it. Deliberately NOT the whole
+        -- stop sequence — compy.before_exit belongs to a run
+        -- that started, and this one never did.
+        self.main_ctrl.clear_user_handlers(self)
         love.state.app_state = 'project_open'
         print('Error: ', run_err)
       else

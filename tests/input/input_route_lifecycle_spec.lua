@@ -191,14 +191,18 @@ describe('input contracts: route connection lifecycle #input', function()
       -- loader is stubbed, because a chunk that shows an
       -- overlay and then raises is the one part of this path a
       -- unit test cannot supply from disk.
-      local function run_raising_project()
+      -- `extra` runs after the overlay is up and before the
+      -- raise, so a row can install participants the way a real
+      -- project's top-level code would.
+      local function run_raising_project(extra)
         local P = F.cc.model.projects
         local prev_current, prev_run = P.current, P.run
         P.current = { name = 'boom' }
         P.run = function()
           return function()
-            F.cc:get_project_env().compy.input
-                .show({ text = 'x' })
+            local input = F.cc:get_project_env().compy.input
+            input.show({ text = 'x' })
+            if extra then extra(input) end
             error('kaboom')
           end, nil, '/tmp/boom'
         end
@@ -227,6 +231,32 @@ describe('input contracts: route connection lifecycle #input', function()
         assert.is_true(F.is_widget_visible())
         assert.same({ 'two' }, F.widget:get_text())
       end)
+
+      -- Same invariant as the stop-teardown row above, on the
+      -- other end of a run: top-level code that raises has
+      -- usually installed participants first, and Decision 11
+      -- lets none of them outlive the project that installed
+      -- them. Nothing to inspect on this path either: a
+      -- top-level raise is caught by run_user_code's bare
+      -- pcall, so it never reaches suspend_run and never
+      -- enters 'inspect'.
+      it('clears every project-installed handler and hook',
+        function()
+          local captured
+          run_raising_project(function(input)
+            input.shortcuts.keypressed['a'] = function() end
+            input.hooks.keypressed = function() end
+            input.callbacks.before_submit = function() end
+            input.callbacks.validator = function() return
+              true
+            end
+            captured = input
+          end)
+          assert.same({ }, captured.shortcuts.keypressed)
+          assert.is_nil(captured.hooks.keypressed)
+          assert.is_nil(captured.callbacks.before_submit)
+          assert.is_nil(captured.callbacks.validator)
+        end)
     end)
 
     describe('inspect', function()
