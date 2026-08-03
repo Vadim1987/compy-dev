@@ -49,6 +49,8 @@ end
 
 `love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. `shift+r` resets turtle position.
 
+That guard is about *later* `i`s. The **opening** `i` is a separate problem: LÖVE delivers a `keypressed` and a `textinput` for it in no guaranteed order, so the trigger's own echo can land in the field it just opened. `arm_echo_guard` handles it — a one-shot `compy.input.shortcuts.textinput["i"]` that consumes the echo and unregisters itself, re-armed by `after_submit` alongside the `hide()` ([Compy Input API](../../../input_api.md), "Opening the overlay from a key"). Two guards, one line apart, for two different problems.
+
 See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `r = user_input()` / `input_text(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
 
 ## Drawing
@@ -57,7 +59,7 @@ See [Compy Input API](../../../input_api.md) for the general usage pattern. The 
 
 ## Points of attention
 
-- Each command is one prompt: `i` opens it, submit closes it (`after_submit` → `hide`), and the player presses `i` again for the next command. The guard on `compy.input.is_shown()` is what keeps the `i` inside a typed word from re-triggering `show`.
+- Each command is one prompt: `i` opens it, submit closes it (`after_submit` → `hide` → re-arm), and the player presses `i` again for the next command. The guard on `compy.input.is_shown()` is what keeps the `i` inside a typed word from re-triggering `show`; the one-shot textinput shortcut is what keeps the opening `i` out of the field. Closing without the re-arm would let the next open take the echo.
 - `debug_color` is set in `love.update` based on turtle position — this modifies a global used by `drawDebuginfo`. The debug overlay is toggled by `space`.
 
 ## Files

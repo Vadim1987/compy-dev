@@ -44,12 +44,29 @@ function love.keypressed(key)
   end
 end
 
+-- The `i` that opens the prompt must not also be typed into
+-- it (doc/input_api.md, "Opening the overlay from a key"):
+-- LÖVE delivers a keypressed and a textinput for one physical
+-- key in no guaranteed order. This one-shot eats that echo
+-- whichever side of the open it lands on, then unregisters so
+-- `i` is ordinary content afterwards.
+local function arm_echo_guard()
+  compy.input.shortcuts.textinput["i"] = function()
+    compy.input.shortcuts.textinput["i"] = nil
+    return true
+  end
+end
+arm_echo_guard()
+
 -- One-shot prompt (doc/input_api.md, "Submit lifecycle"): the overlay
 -- stays open after submit by default, so a project that wants a
 -- prompt-per-command closes it itself. Hiding also empties the field
--- for the next `i` — no separate clear needed.
+-- for the next `i` — no separate clear needed. Closing is also
+-- where the echo guard is re-armed: the next open needs a
+-- fresh one-shot.
 compy.input.callbacks.after_submit = function()
   compy.input.hide()
+  arm_echo_guard()
 end
 
 -- This project keeps its keyboard on love.keypressed/keyreleased on
