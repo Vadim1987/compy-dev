@@ -427,6 +427,13 @@ Not commissioned for closure; each may never need action.
   a trigger that *is* that modifier. A naive `^alt%+` pattern matches it.
 - **Why it stands:** the exact-lookup matcher is `O(1)` and predictable, and
   the questions above are unanswered.
+- **A sanctioned form has been proposed** (owner, 2026-08-03): combo classes
+  written as `ctrl+alt+*`. `normalize_combo` already handles them unchanged
+  (`*` is just a non-modifier token), the handler already receives the real
+  trigger as its first argument, and precedence costs one extra lookup on a
+  miss. Weighed in the feature's validation record; ruling pending on the two
+  corners — a modifier's own press (`alt+lalt` would match `alt+*`), and
+  whether a bare `*` is allowed at all when a hook already means that.
 - **Revisit:** if a second project needs a modifier-class rule. One entry per
   key is a fine answer for small sets; a hook is a fine answer for open ones.
   Worth naming in the API guide either way, since today a reader may assume

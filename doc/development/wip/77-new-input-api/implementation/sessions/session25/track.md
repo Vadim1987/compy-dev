@@ -291,6 +291,47 @@ lets expose the table"*.
 - Owner nuance carried into the plan: the whole-channel-hook trap is a
   **caveat for the developer to weigh**, not a prohibition.
 
+### owner: the noop default was asked for repeatedly and ignored — CONFIRMED
+
+- Checked the record rather than taking a side. The owner is right, and it is
+  **drift against a frozen document**, not a preference that lost an argument:
+  `design/design.md:39` ratifies tier 3 as *"DEFAULT: noop (+debug log)"*, and
+  `design/notes/decisions.md:297` has the table itself answering with a
+  default, `:793` stating the intent — *"silent failure is replaced by a
+  visible hint in debug mode"*.
+- What shipped: nil guards (`if sc and sc(...)`, `if hk and hk(...)`) and
+  **no logging at all** in `projectInputController.lua` — `Log` is not even
+  required in that file.
+- The reframe that matters: behaviourally a nil guard and a nil-returning noop
+  are identical, which is presumably why it passed review — but the design's
+  *reason* for the default was the debug log, and **you cannot log from a
+  nil**. The lost thing is the ratified AC, not the `and`.
+- Cost found: `seed_hooks` (`:44`) reads `hooks[event] == nil` as "unset", so
+  a noop-returning `__index` would silently stop Decision 10's capture path;
+  needs `rawget`. And a stored-table default would make
+  `compy.input.hooks.textinput` answer with a function the project never
+  installed — so the default belongs in the **dispatch view**, with the
+  project-facing leaf surface still answering nil.
+- Written up with both proposals: `validation/reviews/S25-noop-default-and-wildcards.md`.
+
+### combo classes (`ctrl+alt+*`) — better than I had it
+
+- Owner proposed the sanctioned form. It is cheaper than my debt entry
+  implied: `normalize_combo` handles `*` **unchanged** (just a non-modifier
+  token), the handler already gets the real trigger as argument 1, and
+  precedence is one extra lookup on a miss only.
+- The evidence that convinced me: keyboard's `appChord` needs an explicit
+  `if INPUT.ctrl then return false end` to keep `ctrl+alt+h` out of the
+  Alt class. With combo classes that exclusion is **free** — different
+  modifier set, no match — so the wildcard is not just equivalent to the
+  hand-rolled test, it is more correct. `appChord` collapses to two
+  declarative entries.
+- Recommended taking it; ruling needed on two corners (the `alt+lalt`
+  self-match, and whether bare `*` is allowed when a hook already means that).
+- The two proposals **compose**: the combo table's `__index` tries the class
+  key, then falls back to the logging noop. The wildcard IS an `__index`
+  behaviour — the mechanism the owner asked for originally.
+
 ### re-explaining the combo wildcard finding
 
 - Probed rather than asserted. The metatable of a combo table is **reachable**
