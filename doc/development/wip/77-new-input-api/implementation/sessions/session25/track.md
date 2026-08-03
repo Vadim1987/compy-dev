@@ -567,3 +567,26 @@ Three asks, all taken: a `bypass_repeat` sibling, `chord()` renamed, and
   (our migrations are our work product, no homework for repo authors), the
   "left for that repo to rule on" framing removed, both new commits listed,
   and each repo's note rewritten to what was actually verified.
+
+### wrap (2026-08-03)
+
+Owner asked for the plan's state, for any question left neither answered nor
+deferred, and for the wrap if a cold session could take over.
+
+- **Found while answering, not before:** a bare `*` shortcut is legal.
+  `shortcuts.keypressed['*']` registers without raising and catches every
+  *unmodified* key (probed: `q` yes, `ctrl+s` no — that is the `ctrl+*`
+  class). Coherent with Decision 21, but my earlier claim that the
+  registration raise "settles whether a bare `*` is legal" was wrong: it
+  permits it, undocumented and untested. Carried to the successor as a ruling
+  to make, not fixed at wrap time.
+- Two offers of mine were never taken up and would otherwise have been lost:
+  carrying the scancode analysis into the persistent ledger, and squashing
+  keyboard's own commit churn before its sibling PR. Both are in the successor
+  prompt.
+- Distilled into `report.md`; `session26/prompt.md` commissioned as a
+  **wait-for-human** per `agents/sessions.md` §5 (a revalidation task's
+  successor) and per the owner's own framing — *"move on in coordination with
+  me"*. Pointer in `agents/validation.md` repointed.
+- Session totals: 30 commits in `/repo`, 3 in keyboard, 1 in maze, 1 in
+  balloons; suite **874 → 904 / 0 / 0 / 3**; nothing pushed anywhere.
