@@ -23,6 +23,50 @@ action; revisit at the named point).
 
 ## Standing
 
+### A project that raises leaves global device state dirty; no force-reset exists
+
+- **State:** the sandbox deep-clones the `love` table but shares leaf C
+  functions, so a project's imperative `love.*` calls — `setKeyRepeat`,
+  `setTextInput`, `setRelativeMode`, raw audio — mutate real SDL/LÖVE state.
+  The only mechanism that restores any of it is the project's own
+  `compy.before_exit`, and by ratified contract that hook fires on **stop**
+  paths only; crash is explicitly out of its scope. A project that mutates
+  global state in top-level code and then raises therefore never restores it:
+  `run_project`'s failed-run branch drops to `project_open` without ever
+  calling `stop_project_run`, so nothing fires, and the dirty state bleeds
+  into the next run. `examples/keyboard` is the canonical mutator
+  (`setKeyRepeat(false)` at startup).
+- **Why it stands:** two separate rulings, both deliberate. The hook is scoped
+  to stop paths by design — crash/hard-kill was called out as a later layer,
+  not an oversight. And firing a *partially initialised* project's teardown
+  was ruled against (owner, 2026-08-03): no proper start, no contract is
+  expected to run. Resetting the slot is a different question and IS done —
+  a dead project's hook must not survive to fire against the next project's
+  state (fixed 2026-08-03, `226628ae`).
+- **Shape:** a framework-owned **force-reset** of the global surfaces the
+  sandbox shares, run on every run-ending path including the crash ones, and
+  independent of `compy.before_exit` — a project that crashed cannot be
+  trusted to clean up after itself, which is exactly why its own hook is the
+  wrong instrument here.
+- **Revisit:** owner ruled 2026-08-03 to record it and implement the
+  force-reset later; revisit when that work is scheduled.
+
+### `compy.before_exit` is absent from the persistent API docs
+
+- **State:** `compy.before_exit` is a public, project-settable lifecycle slot
+  (`consoleController.lua`, the compy namespace's `__newindex`), pinned by
+  `tests/input/input_route_lifecycle_spec.lua` and named in
+  `doc/development/tests.md` — but it appears in neither `doc/input_api.md`
+  nor `doc/development/decisions/input.md`. Its only specification lives in
+  the feature's ephemeral working tree, which is scheduled for deletion.
+- **Why it matters:** the PR is meant to be reviewable from `doc/input_api.md`
+  plus the PR description alone. A public member whose contract survives only
+  in `wip/` fails that test, and the entry above depends on the contract
+  ("fires on stop paths, not on crash") being findable.
+- **Revisit:** before the PR — either document the slot in `doc/input_api.md`
+  with its fires/reset/return-value contract, or record why it is deliberately
+  undocumented.
+
 ### Future input unification
 
 - **State:** Keyboard/text route through shortcuts, hooks, then the shown
