@@ -240,6 +240,36 @@ lets expose the table"*.
   exercised by the platform suite and it cannot be driven headlessly. It joins
   C3 on the owner's smoke-test list.
 
+### the isrepeat question, put properly (2026-08-03)
+
+- Owner pushed on the `chord()` decorator: *"manual check of isrepeat flag in
+  every shortcut handler is a serious code smell that points to suboptimal API
+  design"*, and floated two shapes — auto-consume-without-invoking on repeat
+  (leaning against it themselves), and splitting the shortcut table by the
+  flag. Written up in `validation/reviews/S25-shortcuts-isrepeat.md`; nothing
+  implemented, ruling theirs.
+- Precision worth keeping: keyboard wrote **one decorator applied three
+  times**, not a check per handler. The smell is real but its size is "one
+  helper per project".
+- The argument that decided my recommendation is not about repeats at all:
+  **`shortcuts` and `hooks` differ today only in their lookup key**, not their
+  semantics. Making shortcuts once-per-press gives the tier a meaning
+  (cooked commands vs the raw channel), which is what "suboptimal design" is
+  actually pointing at.
+- Second-order: the capability auto-filtering would remove — hold-to-repeat
+  driven by OS key repeat — is badly served by that primitive anyway (~500 ms
+  initial delay, user-configured rate), and **Decision 20 has just made the
+  better shape possible** (poll `keys_pressed` in `update`). The same proposal
+  was weaker a week ago.
+- Blast radius measured, not estimated: **one** test row (the
+  "same delivered triple" row drives a repeat through a shortcut), zero
+  examples other than keyboard, and zero consumers in the tree want
+  repeat-firing shortcuts.
+- Recommended A; C (ship `compy.input.once`) as the PR-safe fallback that does
+  not foreclose A; B (split table) dropped — it breaks the
+  `shortcuts.<event>` ↔ `love.<event>` mapping and moves a per-handler line
+  into a per-registration decision.
+
 - `pr-assembly-guide.md` §5 reframed: the owner's standard stated at the top
   (our migrations are our work product, no homework for repo authors), the
   "left for that repo to rule on" framing removed, both new commits listed,
