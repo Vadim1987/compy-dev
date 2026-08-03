@@ -441,6 +441,42 @@ cases. Also ruled: **no logging** of unconsumed events.
   ratifies "DEFAULT: noop (+debug log)" and a reviewer will find it. The nil
   guards in `dispatch` now carry a comment saying they are deliberate.
 
+### owner catches two defects in what I just shipped (2026-08-03)
+
+Both in `suppress_repeat`, one in its test and one in the thing itself.
+
+- **The test was hollow.** The row claiming to pin "consumes the repeat it
+  swallows" deleted both characters with an *unbound* backspace first, then
+  asserted the text was still empty — an assertion an empty buffer satisfies
+  no matter what the wrapper returns. Proved by **mutation, not by reading**:
+  with the wrapper changed to `if isr then return end`, the whole suite still
+  passed 894/0/0/3. Rewritten to start from `'abcd'`, establish the control
+  that an unbound repeat *does* edit, then assert across a bound press and
+  repeat. Fails against the mutation, passes against the real code
+  (`cdfea35b`).
+- **The implementation was wrong** (`34399a33`). Owner: *"suppress_repeat has
+  just one job — return true on repeat or return fn(...) result otherwise. it
+  has no business in upper-level dispatching."* It returned `true`
+  unconditionally, discarding the handler's result, so it was a repeat filter
+  AND a consume-always policy. A handler that wanted to act once per press and
+  still fall through could not say so. My own prose gave it away — I kept
+  calling it "two halves", which is exactly the smell.
+- Fixed to `if isr then return true end; return fn(...)`. The swallowed
+  repeat is still consumed, and that is *not* a second policy: suppressing the
+  action without suppressing propagation would move the problem, letting a
+  held key fall past the shortcut into the widget.
+- Fallout in keyboard (`e00430b`): its bindings were consumed only as a side
+  effect of being wrapped. Left alone, Shift+Escape would have reached the
+  game as an Escape and `alt+*` would have stopped swallowing the class, which
+  is its whole purpose. Local `chord()` is back with a *different* job —
+  adding the `return true` that is the handler's call — and the repeat
+  filtering stays with the platform wrapper.
+- **Pattern worth carrying:** three times this phase a green test has been
+  blind to what it named (the fixture compensating for the `shown` regression,
+  the draw-path defect the fixture stubbed, this row). Mutation is cheap and
+  settles it in one run; I should reach for it whenever a row asserts an
+  *absence*.
+
 ### re-explaining the combo wildcard finding
 
 - Probed rather than asserted. The metatable of a combo table is **reachable**
