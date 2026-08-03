@@ -370,9 +370,17 @@ Notes per repo:
   hooks inside the project route (Decision 10). It also keeps that route,
   which is the part worth checking rather than assuming — it defines
   `love.update` and `love.draw`, so `user_is_blocking()` holds it
-  (`controller.lua`). Nothing to migrate, nothing to commit; adopting
-  `compy.input.shortcuts` would be the wrong advice, since it wants every key,
-  not specific combos.
+  (`controller.lua`). **Nothing to commit *yet*, but "nothing to migrate" was
+  wrong** — it hand-rolls combo dispatch with its own l/r modifier fold, a
+  key-repeat filter that exists because the pre-feature gateway dropped
+  `isrepeat` (it no longer does), a mirror of the held-key set, and it leaks
+  global key-repeat state believing no exit hook exists (`compy.before_exit`
+  does). Scope and evidence:
+  [`../validation/reviews/S25-keyboard-verdict-overturned.md`](../validation/reviews/S25-keyboard-verdict-overturned.md).
+  A migration is proposed there and is the owner's call; it is the one sibling
+  repo whose review could still change the *platform*, since its draw-time
+  read of held modifiers is the consumer the standing `compy.keys_pressed`
+  open decision was waiting for.
 
 Do **not** push any of these; opening the PRs is the owner's call.
 

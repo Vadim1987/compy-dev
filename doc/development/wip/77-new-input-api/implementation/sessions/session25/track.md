@@ -163,6 +163,44 @@
   draw/update/overlay/pointer) would lose the route and its captured hooks
   would never fire. Hypothetical — no such project exists — filed under
   Anticipated in `technical_debt/input.md`.
+## 2026-08-03 — owner overturns the keyboard verdict
+
+- Owner: *"I am surprised how keyboard (project most tied to keyboard input)
+  is not supposedly benefitting from new API. what's the point and value of
+  API then? if all that keyboard does is reacting to keypresses, why would we
+  even encourage doing that outside of new API?"*
+- **They are right and I was wrong — twice.** Session24 answered smoke report
+  7 (*does keyboard bypass the routes?*) and I carried that answer into a
+  second, unasked verdict (*nothing to migrate*), which I then re-confirmed
+  today after checking only route retention. Checking what keyboard *does*
+  with keys takes ten minutes and inverts it.
+- Four re-implementations, all verified: hand-rolled combo dispatch with its
+  own l/r modifier fold (`reservedChord`/`appChord`/`modHeld` vs Decision 8 +
+  `Key.mod_triples`); a key-repeat filter; a held-key mirror; and leaked
+  global key-repeat state.
+- **Two of keyboard's own comments document limitations this feature
+  removed.** (i) *"the IDE strips the isrepeat flag"* — true at `3256aac`
+  (`local function keypressed(k)`, one parameter), false now
+  (`_dispatch('keypressed', k, k, held_keys(), isr)`). (ii) *"the runner
+  exposes no project-exit cleanup hook"* — `compy.before_exit` exists
+  (`consoleController.lua:705-728`). Nobody told keyboard either was fixed.
+- **The finding that can still move the platform:** `keyboard_view.lua:171,178`
+  read held-modifier state **during draw**. The callback-arg shape cannot
+  serve a per-frame renderer, so the standing open decision
+  "`compy.keys_pressed` is not exposed to projects" now has its real consumer,
+  and the evidence rules out the "callback-arg is the sanctioned shape"
+  answer. Ledger entry updated; the ruling is the owner's.
+- Also corroborating: keyboard independently documented the
+  textinput-before-keypress ordering hazard — C1's problem, found by an
+  unrelated project before we did.
+- Write-up `validation/reviews/S25-keyboard-verdict-overturned.md`; §5
+  corrected in the same commit. Migration scoped there but NOT executed —
+  750 lines of another repo's game logic is the owner's call, and unlike
+  maze/balloons it is not a consequence of our API change.
+- Behavioural note: the owner tests a verdict by asking what it implies about
+  the *product* ("what's the point of the API then"), not by re-checking the
+  evidence. Both overturned verdicts this session came from that move.
+
 - `pr-assembly-guide.md` §5 reframed: the owner's standard stated at the top
   (our migrations are our work product, no homework for repo authors), the
   "left for that repo to rule on" framing removed, both new commits listed,

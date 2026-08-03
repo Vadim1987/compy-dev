@@ -167,8 +167,15 @@ question, not resolved here.
 - **Why it stands:** Open design question — expose a read-only held-key view
   to projects, or treat callback-arg access as the sanctioned shape and amend
   the documented contract to say so explicitly.
-- **Revisit:** Decide, then either add the surface or update the contract
-  doc to rule out polling by design.
+- **A real consumer now exists, and it rules out the second option**
+  (2026-08-03): the `keyboard` example maintains its own `INPUT.held` /
+  `INPUT.shift` mirror and reads it **during draw**, to decide whether to
+  render shifted key labels. A per-event argument cannot serve a per-frame
+  renderer, so callback-arg access alone is insufficient for any project that
+  *renders* held state rather than reacting to it.
+- **Revisit:** now — the evidence for the call is in hand. Either add the
+  project-readable surface, or document that a project must mirror the set
+  itself, which is what `keyboard` does today.
 
 ### Shortcuts key-repeat semantics are shipped unsettled
 
