@@ -337,7 +337,7 @@ suggest migrations, we do not hand the author a question we created.
 |---|---|---|---|
 | balloons | `hleb-rubanau/compy-balloons` | `main` | `56347d0` migration off the poll idiom · `94a5f02` assign `after_submit` through `compy.input.callbacks` (the load-time raise from smoke report 5) · `cc0dbd7` submit delivers lines, not a command string |
 | maze | `nagydani/Compy-maze` | `v3.4` | `790ac19` migration off the poll idiom, with the shown-guard on `compy.input.is_shown()` · `d2ce7a0` idle-gated prompt, `need_reopen`/`reopen_text` retired |
-| keyboard | `dsent/keyboard` | `dsent/dev` | none — clean and in sync |
+| keyboard | `dsent/keyboard` | `dsent/dev` | `4814407` run on the Compy input API instead of hand-rolling it |
 
 Notes per repo:
 
@@ -377,10 +377,14 @@ Notes per repo:
   global key-repeat state believing no exit hook exists (`compy.before_exit`
   does). Scope and evidence:
   [`../validation/reviews/S25-keyboard-verdict-overturned.md`](../validation/reviews/S25-keyboard-verdict-overturned.md).
-  A migration is proposed there and is the owner's call; it is the one sibling
-  repo whose review could still change the *platform*, since its draw-time
-  read of held modifiers is the consumer the standing `compy.keys_pressed`
-  open decision was waiting for.
+  **The migration is done** (`4814407`, owner's call 2026-08-03): hooks
+  instead of `love.*` globals, the three reserved chords as shortcuts,
+  `isrepeat` instead of edge tracking, and the held-set mirror replaced by a
+  proxy over `compy.input.keys_pressed` — which is the *platform* change this
+  repo's review produced (Decision 20), since its key-cap renderer reads held
+  modifiers from `love.draw`, where no event argument exists. It is the
+  acceptance case for the API, and the only sibling repo whose review changed
+  the platform.
 
 Do **not** push any of these; opening the PRs is the owner's call.
 

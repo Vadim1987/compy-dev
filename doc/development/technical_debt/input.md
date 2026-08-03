@@ -187,8 +187,16 @@ question, not resolved here.
 - **Why it stands:** Whether shortcuts dispatch should also gate on
   `isrepeat` (fire once per physical press) or intentionally fire on every
   repeat is an open behavioural call, shipped open by design.
-- **Revisit:** Rule one way or the other when shortcuts dispatch gets its next
-  real consumer or complaint.
+- **The first real consumer wants once-per-press** (2026-08-03): `keyboard`'s
+  reserved chords (`shift+escape`, `ctrl+alt+up`/`down`) are now shortcuts,
+  and each wraps itself in a `if not isr then … end` gate — otherwise holding
+  `ctrl+alt+up` ramps the notch every frame. The flag *is* delivered to
+  shortcuts, so the workaround is three lines; the question is whether every
+  consumer should have to write them.
+- **Revisit:** now — the consumer named in the previous revisit condition has
+  appeared. Note that "fire once per press" cannot simply become the default:
+  a held-to-repeat binding (a game's movement key) wants the opposite, so the
+  answer may be a per-registration option rather than one global rule.
 
 ### Held-key pressed-keys view iteration is index-only on the shipping runtime
 
@@ -393,6 +401,25 @@ question, not resolved here.
 ## Anticipated — revisit at the named point, close only if warranted
 
 Not commissioned for closure; each may never need action.
+
+### A combo table cannot express a modifier-class rule
+
+- **Where:** `compy.input.shortcuts[event]` (`../decisions/input.md`,
+  Decision 8) — `Key.new_handler_table`, an exact canonical lookup keyed by
+  one full combo string.
+- **State:** every binding names one combo. A project that wants "**every**
+  `alt+x` is a chord, swallow it whatever `x` is" cannot say so; it needs an
+  entry per key, or it keeps that rule in a hook and tests the modifiers by
+  hand. Found by the `keyboard` migration (2026-08-03), which moved its three
+  named chords to shortcuts and kept `appChord` — its Alt-class rule — as a
+  hook for exactly this reason.
+- **Why it stands:** the exact-lookup matcher is `O(1)` and predictable, and a
+  wildcard raises questions the design has not answered — precedence against
+  an exact binding, and whether the trigger is passed to the handler.
+- **Revisit:** if a second project needs a modifier-class rule. One entry per
+  key is a fine answer for small sets; a hook is a fine answer for open ones.
+  Worth naming in the API guide either way, since today a reader may assume
+  `shortcuts` covers what it does not.
 
 ### A keyboard-hooks-only project does not count as interactive
 

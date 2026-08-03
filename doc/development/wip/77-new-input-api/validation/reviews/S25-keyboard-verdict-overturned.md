@@ -114,7 +114,29 @@ The overlay — the bulk of the API — genuinely does not apply: keyboard never
 solicits text. That is not a hole in the API. It is the difference between an
 input *surface* and input *routing*, and keyboard needs the second.
 
-## Recommendation
+## Executed (owner, 2026-08-03)
+
+> *"sure we want it. the reason why game invented its own equivalents was our
+> API not being ready. so its the best demo case and acceptance. and yes lets
+> expose the table"*
+
+- **Platform** — `compy.input.keys_pressed`, Decision 20, four pinned rows
+  (suite 875 → 879). The debt ledger's open decision is closed.
+- **keyboard** — `4814407`: hooks instead of `love.*`, three reserved chords
+  as shortcuts, `isrepeat` instead of edge tracking, and `INPUT` reduced to a
+  proxy over the framework's held set. Every consumer of `INPUT.shift` /
+  `INPUT.held` across five files is untouched.
+- **Not migrated, on purpose** — `appChord`. "Every `alt+x` is a chord" is a
+  rule about a modifier *class*, and a combo table binds one combo at a time.
+  Filed as debt: *"A combo table cannot express a modifier-class rule"*.
+- **Two open decisions got their first real consumer**, which is what an
+  acceptance case is for: shortcuts' `isrepeat` semantics (keyboard's chords
+  hand-write the gate, or a held `ctrl+alt+up` ramps the notch every frame),
+  and the held-key exposure, now ruled.
+- **Unverified**: none of this is exercised by the platform suite, and the
+  game cannot be driven headlessly. It needs the owner's smoke test.
+
+## Recommendation (as it stood before the ruling)
 
 1. **Correct the record.** `pr-assembly-guide.md` §5 said "nothing to
    migrate, nothing to commit". Done in the same commit as this note.

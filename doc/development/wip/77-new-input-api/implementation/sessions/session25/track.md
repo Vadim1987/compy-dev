@@ -201,6 +201,45 @@
   the *product* ("what's the point of the API then"), not by re-checking the
   evidence. Both overturned verdicts this session came from that move.
 
+### both ruled and executed (2026-08-03)
+
+Owner: *"sure we want it. the reason why game invented its own equivalents was
+our API not being ready. so its the best demo case and acceptance. and yes
+lets expose the table"*.
+
+- **Decision 20 / `compy.input.keys_pressed`** (`a3e3d39`, platform).
+  Tests-first: 4 rows red, then the surface. Resolved through
+  `build_input_surface`'s `__index` on **every access**, never captured — the
+  view is rebuilt when its backing identity changes, so a build-time reference
+  would go stale. Placement (`compy.input`, not top-level `compy`) is mine and
+  says so in the ledger entry; the ruling was to expose the table.
+  Suite **875 → 879 / 0 / 0 / 3**.
+- **keyboard** (`4814407`). Hooks instead of `love.*` wrappers; three reserved
+  chords as shortcuts; `isrepeat` instead of edge tracking; `INPUT` reduced
+  from a maintained mirror to a proxy over the framework's held set, leaving
+  all five consumer files (`help`, `alt`, `findkey`, `hunt`, `keyboard_view`)
+  untouched.
+- **The trap worth remembering:** the mirror could NOT simply be swapped in
+  for the repeat filter. `inputStale(k)` tested `INPUT.held[k]` *before*
+  appKeypressed added the key, so "already held" meant "this is a repeat".
+  The framework's set has the key in it **at dispatch time** for a fresh press
+  too, so a naive swap would have filtered every keystroke. The keypressed
+  path had to move to `isr`; the textinput path keeps the held test, where the
+  framework's set is the more correct answer (textinput has no repeat flag).
+- **Two open decisions got their first real consumer** — which is what an
+  acceptance case is for. Shortcuts' `isrepeat` semantics: keyboard's chords
+  hand-write `if not isr`, or a held `ctrl+alt+up` ramps the notch every
+  frame; entry updated, with the caveat that once-per-press cannot just become
+  the default (a movement key wants the opposite, so it may need to be
+  per-registration). And the held-key exposure, now ruled.
+- **New debt found by the migration:** a combo table cannot express a
+  modifier-class rule ("every `alt+x` is a chord"), so `appChord` stays a
+  hook. Recorded under Anticipated, with the note that the API guide should
+  probably say so, since a reader may assume `shortcuts` covers it.
+- **Unverified and flagged in the commit:** none of keyboard's behaviour is
+  exercised by the platform suite and it cannot be driven headlessly. It joins
+  C3 on the owner's smoke-test list.
+
 - `pr-assembly-guide.md` §5 reframed: the owner's standard stated at the top
   (our migrations are our work product, no homework for repo authors), the
   "left for that repo to rule on" framing removed, both new commits listed,
