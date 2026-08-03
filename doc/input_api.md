@@ -202,6 +202,22 @@ compy.input.shortcuts.keypressed['alt+p'] = function()
 end
 ```
 
+A held key repeats, and shortcuts and hooks see every repeat. A binding that
+should act once per physical press wraps itself:
+
+```lua
+compy.input.shortcuts.keypressed['ctrl+alt+up'] =
+  compy.input.suppress_repeat(function() notch(1) end)
+```
+
+`suppress_repeat(fn)` calls `fn` on a fresh press only, and consumes the event
+either way — including the repeats it swallows, so a held command key never
+falls through to the overlay behind it.
+
+It wraps a hook the same way, but think before you do: a whole-channel hook
+wrapped in it swallows *every* repeat on that channel, so held backspace and
+held arrows stop repeating in the overlay too.
+
 Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else
 being held, so holding a movement key would silently break unrelated

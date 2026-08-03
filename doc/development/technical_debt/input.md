@@ -179,7 +179,7 @@ question, not resolved here.
   `compy.input` rather than at the top of `compy`: it is input state, and the
   input guide is where a reader looks for it.
 
-### Shortcuts key-repeat semantics are shipped unsettled
+### Shortcuts key-repeat semantics are shipped unsettled (RESOLVED, 2026-08-03)
 
 - **Where:** `src/controller/projectInputController.lua`, `:keypressed` —
   `isrepeat` is threaded through to `hooks[event]` dispatch only; `shortcuts`
@@ -193,10 +193,13 @@ question, not resolved here.
   `ctrl+alt+up` ramps the notch every frame. The flag *is* delivered to
   shortcuts, so the workaround is three lines; the question is whether every
   consumer should have to write them.
-- **Revisit:** now — the consumer named in the previous revisit condition has
-  appeared. Note that "fire once per press" cannot simply become the default:
-  a held-to-repeat binding (a game's movement key) wants the opposite, so the
-  answer may be a per-registration option rather than one global rule.
+- **Resolution:** owner ruled that dispatch keeps firing on every repeat and a
+  binding opts out for itself — `compy.input.suppress_repeat(fn)`
+  (`../decisions/input.md`, Decision 22). Filtering inside the shortcut tier
+  was rejected for two reasons: it suppresses with no way to recover a
+  hold-to-act binding, and it would leave the same hand-written check in
+  `hooks.keypressed`, where commands are equally idiomatically bound. The
+  wrapper has one signature and composes across all three tiers.
 
 ### Held-key pressed-keys view iteration is index-only on the shipping runtime
 

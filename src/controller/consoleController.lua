@@ -597,6 +597,18 @@ local function build_widget_api(get_widget, get_active_flag, state)
       local ui = get_widget()
       if ui then ui:hide() end
     end,
+    -- doc/development/decisions/input.md, Decision 22: dispatch
+    -- does not gate on isrepeat, so a held combo fires every
+    -- frame. This wraps a command binding to run once per
+    -- physical press. It CONSUMES either way — that half is
+    -- easy to get wrong by hand, since an unconsumed repeat
+    -- falls through to the hook and the widget.
+    suppress_repeat = function(fn)
+      return function(k, keys, isr)
+        if not isr then fn(k, keys, isr) end
+        return true
+      end
+    end,
     -- doc/development/decisions/input.md, Decision 18: the one
     -- state question a project may ask the overlay. It cannot
     -- read this itself — a project's `love` is a sandboxed

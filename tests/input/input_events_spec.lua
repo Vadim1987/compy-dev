@@ -432,6 +432,77 @@ describe('#input events dispatching', function()
     end)
   end)
 
+  -- doc/development/decisions/input.md, Decision 22. Dispatch does
+  -- not gate on isrepeat — a held combo fires every frame — so a
+  -- command binding wraps itself. The consuming half is the part
+  -- that is easy to get wrong by hand: a repeat that is NOT
+  -- consumed falls through to the hook and the widget.
+  describe('suppress_repeat', function()
+
+    it('a fresh press runs the wrapped function', function()
+      local ran = 0
+      local input = F.activate_project()
+      input.shortcuts.keypressed['ctrl+s'] =
+          input.suppress_repeat(function() ran = ran + 1 end)
+      chord('lctrl', 's')
+      assert.equal(1, ran)
+    end)
+
+    it('a repeat does not run it', function()
+      local ran = 0
+      local input = F.activate_project()
+      input.shortcuts.keypressed['s'] =
+          input.suppress_repeat(function() ran = ran + 1 end)
+      F.session.press('s')
+      F.session.repeat_press('s')
+      F.session.repeat_press('s')
+      assert.equal(1, ran)
+    end)
+
+    -- The load-bearing half: consumed on a repeat as well, so the
+    -- widget behind never sees the held key.
+    it('consumes the repeat it swallows', function()
+      local input = F.activate_project()
+      input.shortcuts.keypressed['s'] =
+          input.suppress_repeat(function() end)
+      F.show_widget({ text = 'ab' })
+      F.session.press('backspace')
+      F.session.repeat_press('backspace')
+      assert.same({ '' }, F.widget:get_text())
+      input.shortcuts.keypressed['backspace'] =
+          input.suppress_repeat(function() end)
+      F.session.repeat_press('backspace')
+      assert.same({ '' }, F.widget:get_text())
+    end)
+
+    it('passes the payload through to the wrapped function',
+      function()
+        local seen
+        local input = F.activate_project()
+        input.shortcuts.keypressed['alt+*'] =
+            input.suppress_repeat(function(k, keys)
+              seen = { k, keys['lalt'] }
+            end)
+        F.session.press('lalt')
+        F.session.press('q')
+        assert.same({ 'q', true }, seen)
+      end)
+
+    -- Same signature everywhere, so it wraps a hook as readily as a
+    -- shortcut. Whether that is WISE is the project's call — a
+    -- whole-channel hook swallows every repeat, the widget's
+    -- included.
+    it('wraps a hook the same way', function()
+      local ran = 0
+      local input = F.activate_project()
+      input.hooks.keypressed =
+          input.suppress_repeat(function() ran = ran + 1 end)
+      F.session.press('s')
+      F.session.repeat_press('s')
+      assert.equal(1, ran)
+    end)
+  end)
+
   -- ---- signatures + read-only proxy of pressed-keys table
   -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 

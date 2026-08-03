@@ -808,3 +808,44 @@ keyboard/text channels, and `compy.input.keys_pressed` (Decision 20) elsewhere.
 **Consequence.** `shortcuts` stays the easy, predictable mechanism: exact
 match, one optional class marker, no corner cases to design against. Anything
 more sophisticated is a hook, with no capability lost.
+
+---
+
+## Decision 22 — `suppress_repeat`, an opt-in once-per-press wrapper
+
+**Status: implemented** (owner ruling, 2026-08-03).
+
+**Decision.** Dispatch does **not** gate on `isrepeat`: a held combo fires on
+every OS key repeat, and a hook sees every repeat too. A binding that wants to
+act once per physical press wraps itself in
+`compy.input.suppress_repeat(fn)`, which calls `fn` only on a fresh press and
+**consumes either way**.
+
+**Why a wrapper and not a dispatch rule.** Filtering repeats inside the
+shortcut tier was weighed and rejected. Two reasons:
+
+- **It suppresses without recovery.** The framework cannot tell a command
+  binding (`ctrl+s`) from a hold-to-act one, so filtering takes a capability
+  away with no opt-out.
+- **It would fix half the cases.** Commands are just as idiomatically bound in
+  `hooks.keypressed`, which a shortcut-tier rule does not touch — the
+  hand-written check would remain there. A wrapper has one signature and
+  composes across all three tiers.
+
+**Why it consumes on a repeat.** That half is the one that is easy to get
+wrong by hand: a repeat that is *not* consumed falls past the shortcut into
+the hook and then the widget, so a held command key would type into a shown
+overlay. Consuming keeps the binding's claim on the key for as long as it is
+held.
+
+**On hooks.** It wraps a hook as readily as a shortcut. Whether that is wise
+is the project's call: wrapping a *whole-channel* hook swallows every repeat
+on that channel, the widget's included — held backspace and held arrows stop
+repeating. The guide states the caveat; it is not prevented.
+
+**Prior art in the record.** The frozen design carried a provisional leaning
+toward fresh-only at the combo tiers (salvage register, "Combo-tier repeat
+semantics"), explicitly **not ruled** and parked to settle near
+implementation. This settles it the other way, for the two reasons above; the
+constraint attached to it — existing combos keep current behaviour unless
+explicitly altered — is satisfied, since the wrapper is opt-in.
