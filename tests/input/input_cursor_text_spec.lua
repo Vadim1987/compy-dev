@@ -39,9 +39,13 @@ describe('input API: cursor and text surface', function()
     -- proves it keeps TRACKING: the reported position follows real
     -- edits (a typed character, a deletion) rather than being a
     -- constant that happens to match the opening state.
+    -- activate_project, not compy_input alone: this row TYPES,
+    -- so it needs the route a real project's overlay is fed
+    -- through. Reading the surface needs no route; delivery
+    -- does.
     it('keeps reporting the cursor as the text is edited',
       function()
-        local input = F.compy_input()
+        local input = F.activate_project()
         input.show({ text = 'hi' })
         assert.same({ 1, 3 }, { input.get_cursor() })
         F.session.type('!')
@@ -78,8 +82,10 @@ describe('input API: cursor and text surface', function()
     -- manipulation and \"reset\"": move; out-of-range
     -- clamps to the valid range.
     
+    -- activate_project: the row types to prove the caret is
+    -- seated, so it needs the project route to deliver.
     it('moves the cursor', function()
-      local input = F.compy_input()
+      local input = F.activate_project()
       input.show({ text = 'lemon' })
       input.set_cursor(1, 3)
       local l, c = input.get_cursor()
@@ -145,9 +151,11 @@ describe('input API: cursor and text surface', function()
     describe("with keep_cursor", function()
     -- doc/input_api.md, "Live changes": keep_cursor
     -- preserves position (clamped).
+      -- activate_project: types across the text swap, so the
+      -- project route has to be up to deliver it.
       it('preserves the cursor',
         function()
-          local input = F.compy_input()
+          local input = F.activate_project()
           input.show({ text = 'hello' })
           input.set_cursor(1, 3)
           input.set_text('world', true)
