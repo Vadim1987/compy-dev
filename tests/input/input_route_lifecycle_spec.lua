@@ -296,6 +296,63 @@ describe('input contracts: route connection lifecycle #input', function()
       end)
     end)
 
+    -- A raise inside a project's own handler must reach
+    -- user_error_handler and suspend the run
+    -- (doc/development/technical_debt/input.md, "A raise from
+    -- project top-level and from a handler surface
+    -- differently" describes this as the handler-side
+    -- behaviour). suspend_run moves 'running' to 'snapshot';
+    -- the screenshot callback that completes the move to
+    -- 'inspect' needs a real graphics context, so 'snapshot'
+    -- is the observable this far.
+    -- Each row asserts the handler RAN before it raised, so a
+    -- silently-skipped handler cannot pass the row by never
+    -- reaching its error.
+    describe('a raise in a project handler suspends', function()
+      it('from a pointer handler', function()
+        local ran = 0
+        F.activate_project({
+          mousepressed = function()
+            ran = ran + 1
+            error('boom')
+          end,
+        })
+        F.session.mousepressed(10, 10, 1, false, 1)
+        assert.equal(1, ran)
+        assert.equal('snapshot', love.state.app_state)
+      end)
+
+      it('from the project update handler', function()
+        local ran = 0
+        F.activate_project({
+          update = function()
+            ran = ran + 1
+            error('boom')
+          end,
+        })
+        F.love_update(0.1)
+        assert.equal(1, ran)
+        assert.equal('snapshot', love.state.app_state)
+      end)
+
+      -- The control: this channel already worked, because the
+      -- keyboard chain's wrapper binds CC in a closure. Kept
+      -- as the row that shows the other two are not asserting
+      -- something impossible.
+      it('from a keyboard hook', function()
+        local ran = 0
+        F.activate_project({
+          keypressed = function()
+            ran = ran + 1
+            error('boom')
+          end,
+        })
+        F.session.press('a')
+        assert.equal(1, ran)
+        assert.equal('snapshot', love.state.app_state)
+      end)
+    end)
+
     describe('compy.before_exit', function()
       -- compy.before_exit fires once on
       -- stop, before

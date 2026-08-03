@@ -92,15 +92,25 @@ end
 --- @return boolean success
 --- @return any result
 --- @return any ...
+-- The message handler MUST be a closure binding CC: xpcall
+-- calls it with exactly one argument (the error), so passing
+-- user_error_handler directly bound CC to the error string,
+-- left msg nil, and raised inside the handler — where xpcall
+-- swallowed it, so a project raise vanished with no error
+-- window at all (doc/development/technical_debt/input.md,
+-- "`wrap`'s error handler is called with the wrong arity").
 local function wrap(f, CC, ...)
+  local function on_error(msg)
+    user_error_handler(CC, msg)
+  end
   if _G.web then
     local ok, r = pcall(f, ...)
     if not ok then
-      user_error_handler(CC, r)
+      on_error(r)
     end
     return r
   else
-    return xpcall(f, user_error_handler, ...)
+    return xpcall(f, on_error, ...)
   end
 end
 

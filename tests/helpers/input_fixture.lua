@@ -66,6 +66,13 @@ local function enrich_gfx()
   gfx.clear     = function() end
   gfx.push      = function() end
   gfx.pop       = function() end
+  -- love.update walks into the snapshot branch as soon as a
+  -- project raise sets 'snapshot', so this has to exist. It is
+  -- a no-op that never invokes its callback, modelling "the
+  -- screenshot has not been delivered yet" — the state a run
+  -- sits in between suspend_run and suspend. Rows wanting the
+  -- far side of that boundary call CC:suspend() themselves.
+  gfx.captureScreenshot = function() end
 end
 
 -- A monospace font is a leaf dependency of the terminal; stub the
