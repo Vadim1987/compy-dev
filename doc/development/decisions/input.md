@@ -846,6 +846,24 @@ so a held command key would type into a shown overlay. Consuming what it
 swallows keeps the binding's claim on the key for as long as it is held, and
 is part of the filtering job rather than a second policy.
 
+**What it is not for.** Consuming the repeat is the one policy the wrapper
+does keep, and its name is what says so. The only alternative on a repeat is
+to fall through, which is a different tool: "act once, but let the key keep
+flowing to the widget" — a project that wants to notice the *start* of a held
+backspace without interrupting the editing it drives. That is three lines by
+hand and should be written by hand:
+
+```lua
+compy.input.shortcuts.keypressed['backspace'] =
+  function(k, keys, isr)
+    if not isr then note_deleting() end
+    -- no return: the widget keeps receiving every repeat
+  end
+```
+
+Wrapping that in `suppress_repeat` would stop the held backspace from
+deleting.
+
 **On hooks.** It wraps a hook as readily as a shortcut. Whether that is wise
 is the project's call: wrapping a *whole-channel* hook swallows every repeat
 on that channel, the widget's included — held backspace and held arrows stop
