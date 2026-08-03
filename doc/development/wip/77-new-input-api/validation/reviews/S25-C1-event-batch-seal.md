@@ -128,6 +128,17 @@ review, and the ledger entry stays deliberately short.
 - **(d) No framework change, documented idiom** — viable per finding 3
   above: clear or re-set the field on the first `update` after opening. Every
   project that opens an overlay from a key repeats it, and it flickers.
+- **(d′) No framework change, PAIRED SHORTCUTS** (owner, 2026-08-03) —
+  register the trigger on **both** channels: `shortcuts.keypressed[combo]`
+  opens, `shortcuts.textinput[combo]` swallows the echo and unregisters
+  itself, and a close path re-arms it. Order-agnostic without any framework
+  mechanism, and no flicker. **Verified against the real dispatch chain**
+  (6/6, both orders) — [`../notes/S25-C1-paired-shortcut-spike.md`](../notes/S25-C1-paired-shortcut-spike.md).
+  Two limits: the re-arm has no single home (no `after_hide` callback, and
+  Escape clears without hiding), so it rots when a close path is added; and
+  only **bare** triggers share a combo key — a `shift+i` trigger needs
+  `shortcuts.textinput['shift+I']`, a slot that cannot be written because
+  registration lower-cases and dispatch does not. Strictly better than (d).
 - **(e) Deferred show** — `show()` called from inside a key event takes
   effect *at the batch boundary* instead of showing-and-sealing. One rule and
   one state instead of two, and it removes the "shown but deaf" condition
@@ -135,13 +146,28 @@ review, and the ledger entry stays deliberately short.
   `compy.input.is_shown()` returns `false` immediately after `show()` within
   the same event, and the overlay is not painted for that frame.
 
-**Recommendation, for whenever the design pass happens: (a), ratified
-explicitly** — smallest mechanism, and its one cost is a keystroke inside the
-same 17 ms frame. If the owner would rather not have a shown-but-deaf widget
-at all, **(e)** is the coherent alternative and should be weighed against the
-`is_shown()` surprise it introduces. **(c)** is out on the evidence; **(b)**
-buys precision with the mapping the whole design avoids; **(d)** is the
-do-nothing baseline and should be priced as such, not dismissed.
+**Recommendation — revised 2026-08-03**, after the owner's (d′) was spiked.
+It splits by whether the framework changes at all:
+
+- **Shipping this PR without a framework change: (d′), documented.** It is
+  verified, order-agnostic, costs the framework nothing, and covers the only
+  in-tree case (`examples/turtle`'s bare `i`). The price is honest boilerplate
+  in the guide and a race that returns whenever a project forgets to re-arm.
+  Against the stakeholders' "simpler and more robust" ask, *documenting* an
+  idiom is a smaller move than *implementing* a mechanism at the last minute.
+- **If the framework does change: (a′), arming the one-shot itself** — the
+  owner's mechanism moved one layer down, so projects write nothing. A
+  framework-armed one-shot can be a wildcard (swallow the next `textinput`,
+  whatever it is), which needs no combo lookup and therefore dodges the
+  case defect that limits (d′). Strictly narrower than the reverted (a), and
+  it lives in the existing shortcuts vocabulary instead of new widget state.
+
+Superseded by the above: the earlier recommendation of **(a) ratified as
+implemented**. It is still coherent, but (a′) dominates it — same guarantee,
+smaller blast radius, and no new state on the widget. **(e)** remains the
+alternative if a shown-but-deaf widget is the objection; **(c)** is out on the
+evidence; **(b)** buys precision with the mapping the whole design avoids;
+**(d)** is superseded by (d′).
 
 ## The suggested patch
 

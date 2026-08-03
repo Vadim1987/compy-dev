@@ -62,3 +62,35 @@
   at `190f0c9`.
 - `lua-lsp` MCP was down all session (broken pipe on every call); symbol facts
   were established by grep plus byte-identity against `eadcc8cd` instead.
+
+## 2026-08-03 — owner proposes the paired-shortcut idiom; spiked
+
+- Owner: address C1 with *"a specific order-agnostic setup"* — the trigger
+  registered on BOTH channels, `shortcuts.keypressed[combo]` opening and
+  `shortcuts.textinput[combo]` swallowing the echo and unregistering itself,
+  re-armed by whatever closes the widget.
+- **It works.** Spiked against the real chain, 6/6 including a deliberate
+  negative row. Both delivery orders come up with an empty field; order B (the
+  echo arriving BEFORE the keypress) is eaten while the overlay is still
+  closed, which is why nothing depends on LÖVE's ordering. Evidence + source:
+  `validation/notes/S25-C1-paired-shortcut-spike.md`.
+- Why the chain permits it (`projectInputController.lua:71-83`): shortcuts run
+  before the widget **on every channel**, the lookup is a direct index (so a
+  handler may delete its own slot mid-flight), and leaf writes are allowed
+  though sub-table identities are frozen.
+- **Two limits, one of them somebody else's bug.** (i) No `after_hide`
+  callback and Escape clears without hiding, so the re-arm has no single home
+  and rots when a close path is added later. (ii) Only bare combos work:
+  measured — dispatch looks up `shift+I`, registration stores `shift+i`, so
+  the slot is unreachable. That is the ledger's own "combo_string does not
+  normalise the case of a textinput token", whose revisit condition was "if a
+  real textinput-combo consumer appears" — this proposal IS that consumer, so
+  the entry is updated with the measurement and the trigger noted as fired.
+- **Recommendation revised** (was: ratify (a) as implemented). Now split:
+  ship-without-framework-change → (d′) documented; if the framework does
+  change → (a′), the framework arming the one-shot itself, which as a
+  *wildcard* needs no combo lookup and so dodges limit (ii) entirely. The
+  owner's idea is what makes (a′) expressible in the existing shortcuts
+  vocabulary instead of as new widget state.
+- Behavioural note: the owner reaches for composition of existing primitives
+  before new mechanism — and it paid, twice: a better (d), and a better (a).

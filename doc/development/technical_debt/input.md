@@ -365,7 +365,14 @@ question, not resolved here.
   (b) match the trigger key's echo specifically — narrower, but needs the
   key→text mapping (a) avoids; (c) arm only on `keypressed`, leaving
   open-on-`keyreleased` projects racing; (d) no framework change, and the API
-  documents an idiom projects follow instead.
+  documents an idiom projects follow instead — the workable one being a
+  **paired shortcut**: register the trigger on both channels, where
+  `shortcuts.keypressed[combo]` opens and `shortcuts.textinput[combo]`
+  swallows the echo and unregisters itself, re-armed by whatever closes the
+  overlay. Verified in both delivery orders. Its two limits: the re-arm has no
+  single home (Escape clears without hiding, and there is no close callback),
+  and it is confined to **bare** combos by the case defect recorded under
+  *"`combo_string` does not normalise the case of a textinput token"*.
 - **Revisit:** a design pass on the run loop's event-batch guarantees — the
   choice between (a)–(d) turns on what the framework is willing to promise
   about batch boundaries, which is a design question, not a bug fix.
@@ -388,12 +395,23 @@ Not commissioned for closure; each may never need action.
 
 ### `combo_string` does not normalise the case of a textinput token
 
-- **Where:** `src/controller/controller.lua`, `combo_string`.
-- **State:** An upper-case *textinput* combo token would not match a
-  normalised lower-case registration. Textinput combos are a rarely-used
-  corner of the combo surface.
-- **Why it stands:** No real consumer has hit this yet.
-- **Revisit:** If a real textinput-combo consumer appears.
+- **Where:** `src/controller/controller.lua`, `combo_string`; the
+  registration side is `Key.new_handler_table`'s normalising `__newindex`
+  (`src/util/key.lua`), which lower-cases through `normalize_combo`.
+- **State:** An upper-case *textinput* combo token cannot match a
+  registration, because registration lower-cases and dispatch does not.
+  Measured (2026-08-03) with `shift` held and `I` typed: dispatch looks up
+  `shift+I`, while `shortcuts.textinput['shift+I']` is stored as `shift+i`.
+  The slot is therefore **unreachable**, not merely awkward — the handler can
+  be written but can never fire. Bare lower-case tokens are unaffected.
+- **Why it stands:** No *adopted* consumer yet — but the revisit condition
+  below has now fired. The paired-shortcut idiom recorded under *"An overlay
+  opened from a key can receive that key's own echo"* is a real textinput-combo
+  consumer, and this defect is exactly what confines it to bare triggers.
+- **Revisit:** now — together with the ruling on that entry. If the idiom is
+  adopted as the documented answer, this becomes blocking for any modified
+  trigger; if a framework mechanism is adopted instead, a wildcard one-shot
+  needs no combo lookup and this stays a corner.
 
 ### `gui_k` modifier pair has no consumer
 
