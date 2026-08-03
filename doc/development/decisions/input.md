@@ -811,63 +811,44 @@ more sophisticated is a hook, with no capability lost.
 
 ---
 
-## Decision 22 — `suppress_repeat` / `bypass_repeat`, the repeat wrappers
+## Decision 22 — `compy.input.fn.ignore_repeat`
 
 **Status: implemented** (owner ruling, 2026-08-03).
 
 **Decision.** Dispatch does **not** gate on `isrepeat`: a held combo fires on
-every OS key repeat, and a hook sees every repeat too. A binding that wants to
-act once per physical press wraps itself in
-`compy.input.suppress_repeat(fn)`. On a repeat it returns `true` without
-calling `fn`; on a fresh press it returns **whatever `fn` returns**.
+every OS key repeat, and a hook sees every repeat too. A binding that should
+act once per physical press wraps its handler in
+`compy.input.fn.ignore_repeat(fn)`, which skips `fn` on a repeat.
 
-**The pair.** Both skip `fn` on a repeat and differ only in what becomes of
-the event:
+**Scope: whether the handler runs, and nothing else.** A fresh press returns
+whatever `fn` returned; a skipped repeat returns nothing, so the event carries
+on down the chain exactly as an unhandled one would. Consumption is declared
+separately (Decision 24) — the two are orthogonal and compose.
 
-| wrapper | on a repeat | for |
-|---|---|---|
-| `suppress_repeat(fn)` | returns `true` — consumed | a command binding: the key belongs to it for as long as it is held |
-| `bypass_repeat(fn)` | returns nothing — carries on down the chain | act once, but let the key keep driving what is below (a held backspace still deletes) |
+**Why not a dispatch rule.** Filtering repeats inside the shortcut tier was
+weighed and rejected: it suppresses with no way to recover a hold-to-act
+binding, and it would leave the same hand-written check in `hooks.keypressed`,
+where commands are equally idiomatically bound. A wrapper has one signature
+and composes across all three tiers.
 
-**Scope: the repeat filter, and nothing else.** Whether an event is consumed
-is the wrapped handler's call, exactly as for any other participant
-(Decision 2), so the wrapper passes its return value straight through. A
-wrapper that forced `true` on a fresh press would quietly take away a
-handler's ability to fall through — dispatch policy is not the decorator's
+**Withdrawn on the way here.** An earlier pass shipped `suppress_repeat`
+(skip the handler *and* consume the repeat) and `bypass_repeat`. Measuring
+them showed `suppress_repeat` offered an incoherent middle: with a
+non-consuming handler the *fresh* press fell through to the hook while every
+repeat was consumed, so press 1 behaved differently from presses 2+. Both are
+gone; `ignore_repeat` is `bypass_repeat` renamed, because "bypass" claimed
+something about where the event goes and that is no longer this wrapper's
 business.
 
-**Why a wrapper and not a dispatch rule.** Filtering repeats inside the
-shortcut tier was weighed and rejected. Two reasons:
-
-- **It suppresses without recovery.** The framework cannot tell a command
-  binding (`ctrl+s`) from a hold-to-act one, so filtering takes a capability
-  away with no opt-out.
-- **It would fix half the cases.** Commands are just as idiomatically bound in
-  `hooks.keypressed`, which a shortcut-tier rule does not touch — the
-  hand-written check would remain there. A wrapper has one signature and
-  composes across all three tiers.
-
-**Why the swallowed repeat is consumed.** Suppressing the action without
-suppressing the propagation would move the problem rather than solve it: an
-unconsumed repeat falls past the shortcut into the hook and then the widget,
-so a held command key would type into a shown overlay. Consuming what it
-swallows keeps the binding's claim on the key for as long as it is held, and
-is part of the filtering job rather than a second policy.
-
-**Why two and not one with a flag.** On a repeat there are exactly two
-coherent outcomes — consume it or let it pass — and which one a binding wants
-is fixed when it is registered, not per event. Two names read at the
-registration site; a boolean argument would have to be looked up.
-
 **On hooks.** It wraps a hook as readily as a shortcut. Whether that is wise
-is the project's call: wrapping a *whole-channel* hook swallows every repeat
-on that channel, the widget's included — held backspace and held arrows stop
+is the project's call: a *whole-channel* hook wrapped in it, combined with
+`stop_here`, stops the widget's own held backspace and held arrows from
 repeating. The guide states the caveat; it is not prevented.
 
 **Prior art in the record.** The frozen design carried a provisional leaning
 toward fresh-only at the combo tiers (salvage register, "Combo-tier repeat
 semantics"), explicitly **not ruled** and parked to settle near
-implementation. This settles it the other way, for the two reasons above; the
+implementation. This settles it the other way, for the reasons above; the
 constraint attached to it — existing combos keep current behaviour unless
 explicitly altered — is satisfied, since the wrapper is opt-in.
 
@@ -908,39 +889,55 @@ such, not an oversight to tidy later.
 
 ---
 
-## Decision 24 — `always_true`, declaring consumption at the registration site
+## Decision 24 — `compy.input.fn.stop_here` and `.side_run`
 
 **Status: implemented** (owner ruling, 2026-08-03).
 
-**Decision.** `compy.input.always_true([fn])` returns a handler that calls
-`fn` with the invocation arguments, if given, and then returns `true`. With no
-`fn`, the binding's only job is to swallow the event.
+**Decision.** Two combinators declare what becomes of the event, at the
+registration site rather than inside the handler:
+
+| wrapper | runs `fn` | returns |
+|---|---|---|
+| `stop_here([fn])` | if given | `true` — the event stops here |
+| `side_run([fn])` | if given | `false` — the event carries on |
+
+Both take the function optionally. `stop_here()` with none is a binding whose
+only job is to swallow; `side_run` always lets the event through, **including
+when the wrapped function returns truthy** — the declaration outranks the
+handler, which is the point of declaring it.
 
 **Why.** A binding that must not fall through otherwise says so by ending
 every handler with `return true`. That is the dark side of the DOM idiom: it
 forces the function to know its **propagation context** — a function that
-merely toggles a pause has to know what happens after it returns, and a
-function reused elsewhere carries that knowledge with it. `always_true` moves
-the statement to where it belongs, the dispatch map:
+merely toggles a pause has to know what happens after it returns, and carries
+that knowledge wherever it is reused. These move the statement to the dispatch
+map, where a reader of the registration table can see it:
 
 ```lua
-sc['alt+p'] = compy.input.always_true(pauseToggle)
-sc['alt+*'] = compy.input.always_true()
+sc['alt+p'] = compy.input.fn.stop_here(pauseToggle)
+sc['alt+*'] = compy.input.fn.stop_here()
+sc['f5']    = compy.input.fn.side_run(log_keystroke)
 ```
 
-The registration reads as what it is — *this combo is claimed* — and
-`pauseToggle` stays a function about pausing.
-
-**Not a reversal of Decision 22.** That one refused to let `suppress_repeat`
+**Not a reversal of Decision 22.** That one refused to let a repeat wrapper
 decide consumption behind the developer's back. This is the developer
-deciding, explicitly, at the site where the binding is declared. The
-difference is who chooses, not where the `true` comes from.
+deciding, explicitly, where the binding is declared. The difference is who
+chooses, not where the `true` comes from.
 
-**Composes.** Neither wrapper knows about the other:
-`suppress_repeat(always_true(fn))` is a reserved binding — once per physical
-press, never falling through — and reads in that order.
+**Composes with Decision 22, and that is the whole design.** One combinator
+about invocation, two about propagation, none knowing about the others:
 
-**Vocabulary note.** The chain's own word for a truthy return is *consume*
-(Decision 2), so `consuming(fn)` would sit closer to the glossary.
-`always_true` was chosen for saying plainly what the function does at a
-call site where the reader may not have the glossary in mind.
+- `stop_here(ignore_repeat(fn))` — a reserved key: acts once per physical
+  press, and nothing below ever sees it.
+- `side_run(ignore_repeat(fn))` — a once-per-press side effect: acts on the
+  fresh press and claims nothing, so the widget still receives every key.
+
+**Naming.** They are named for their effect on the **event**, in dispatch
+terms, rather than for their return value (`always_true`/`always_false`, which
+is what they are underneath). A registration table is read to answer "what
+happens to this key", and the names answer it there.
+
+**Namespace.** They live under `compy.input.fn`, not on `compy.input`
+directly: they are stateless functions *about* functions, not part of the
+widget or dispatch surface, and grouping them says so. Writes to `fn` raise
+like every other frozen sub-table.

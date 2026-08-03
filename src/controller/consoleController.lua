@@ -411,11 +411,54 @@ local function build_leaf_surface(store)
   })
 end
 
+--- The dispatch combinators (doc/development/decisions/input.md,
+--- Decisions 22 and 24), reached as compy.input.fn.*. Stateless
+--- and orthogonal: `ignore_repeat` decides whether the handler
+--- RUNS, `stop_here`/`side_run` decide where the event GOES, and
+--- neither knows about the other. Named for their effect on the
+--- event, which is what a reader of a registration table needs.
+--- A reserved binding is `stop_here(ignore_repeat(fn))`.
+local INPUT_FN = {
+  --- Skip the handler on an OS key repeat. Says nothing about
+  --- propagation: a fresh press returns what the handler
+  --- returned, a skipped repeat returns nothing.
+  ignore_repeat = function(fn)
+    return function(k, keys, isr)
+      if isr then return end
+      return fn(k, keys, isr)
+    end
+  end,
+  --- Run `fn` if given, then consume. With no `fn` the binding's
+  --- only job is to swallow the event.
+  stop_here = function(fn)
+    return function(...)
+      if fn then fn(...) end
+      return true
+    end
+  end,
+  --- Run `fn` if given, and let the event carry on regardless of
+  --- what it returned — the binding is a side effect, not a
+  --- claim on the key.
+  side_run = function(fn)
+    return function(...)
+      if fn then fn(...) end
+      return false
+    end
+  end,
+}
+
+local input_fn_surface = setmetatable({ }, {
+  __index = function(_, k) return INPUT_FN[k] end,
+  __newindex = function(_, k)
+    frozen_error('fn.' .. tostring(k))
+  end,
+})
+
 --- Assemble the compy.input surface: reads resolve the three frozen
---- sub-tables (shortcuts / hooks / callbacks), the live
---- held-key view, or a callable method; every write to the
---- container itself is refused loudly (Decision 7 revised —
---- frozen container, writable leaves).
+--- sub-tables (shortcuts / hooks / callbacks), the combinator
+--- table, the live held-key view, or a callable method; every
+--- write to the container itself is refused loudly (Decision 7
+--- revised — frozen container, writable leaves).
 --- `get_keys` is resolved on every read, never captured: the
 --- view is rebuilt when its backing table identity changes
 --- (Decision 13), so a reference taken at build time goes stale.
@@ -432,6 +475,7 @@ local function build_input_surface(state, methods, get_keys)
       if k == 'shortcuts' then return shortcuts end
       if k == 'hooks' then return hooks end
       if k == 'callbacks' then return callbacks end
+      if k == 'fn' then return input_fn_surface end
       if k == 'keys_pressed' then return get_keys() end
       return methods[k]
     end,
@@ -596,39 +640,6 @@ local function build_widget_api(get_widget, get_active_flag, state)
     hide = function()
       local ui = get_widget()
       if ui then ui:hide() end
-    end,
-    -- Three stateless combinators, not widget methods; they live
-    -- here because a project reaches them as compy.input.*.
-    --
-    -- doc/development/decisions/input.md, Decision 22: dispatch
-    -- does not gate on isrepeat, so a held combo fires every
-    -- frame. Both wrappers skip the handler on a repeat and
-    -- differ in what becomes of the event — suppressed is
-    -- consumed, bypassed carries on down the chain. Neither
-    -- touches a FRESH press: it returns whatever the handler
-    -- returns, that being the handler's call and not theirs.
-    suppress_repeat = function(fn)
-      return function(k, keys, isr)
-        if isr then return true end
-        return fn(k, keys, isr)
-      end
-    end,
-    bypass_repeat = function(fn)
-      return function(k, keys, isr)
-        if isr then return end
-        return fn(k, keys, isr)
-      end
-    end,
-    -- doc/development/decisions/input.md, Decision 24: declare
-    -- that a binding consumes at the registration site, so the
-    -- handler need not know what happens after it returns. The
-    -- function is optional — with none, the binding's only job
-    -- is to swallow the event.
-    always_true = function(fn)
-      return function(...)
-        if fn then fn(...) end
-        return true
-      end
     end,
     -- doc/development/decisions/input.md, Decision 18: the one
     -- state question a project may ask the overlay. It cannot

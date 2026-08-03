@@ -432,18 +432,19 @@ describe('#input events dispatching', function()
     end)
   end)
 
-  -- doc/development/decisions/input.md, Decision 22. Dispatch does
-  -- not gate on isrepeat — a held combo fires every frame — so a
-  -- command binding wraps itself. The consuming half is the part
-  -- that is easy to get wrong by hand: a repeat that is NOT
-  -- consumed falls through to the hook and the widget.
-  describe('suppress_repeat', function()
+  -- The dispatch combinators live under compy.input.fn, named
+  -- for what they do to the EVENT — that is what a reader of a
+  -- registration table wants to know
+  -- (doc/development/decisions/input.md, Decisions 22 and 24).
+  -- They are orthogonal: ignore_repeat is about whether the
+  -- handler RUNS, stop_here/side_run about where the event GOES.
+  describe('compy.input.fn.ignore_repeat', function()
 
     it('a fresh press runs the wrapped function', function()
       local ran = 0
       local input = F.activate_project()
       input.shortcuts.keypressed['ctrl+s'] =
-          input.suppress_repeat(function() ran = ran + 1 end)
+          input.fn.ignore_repeat(function() ran = ran + 1 end)
       chord('lctrl', 's')
       assert.equal(1, ran)
     end)
@@ -452,25 +453,22 @@ describe('#input events dispatching', function()
       local ran = 0
       local input = F.activate_project()
       input.shortcuts.keypressed['s'] =
-          input.suppress_repeat(function() ran = ran + 1 end)
+          input.fn.ignore_repeat(function() ran = ran + 1 end)
       F.session.press('s')
       F.session.repeat_press('s')
       F.session.repeat_press('s')
       assert.equal(1, ran)
     end)
 
-    -- The load-bearing half: consumed on a repeat as well, so the
-    -- widget behind never sees the held key.
-    -- The wrapper filters repeats and nothing else. Whether a
-    -- FRESH press is consumed is the wrapped handler's call, like
-    -- any other participant's (Decision 2), so its return value
-    -- passes straight through.
+    -- It says nothing about propagation: a fresh press returns
+    -- whatever the handler returned, exactly as an unwrapped one
+    -- would (Decision 2).
     it('a fresh press propagates the handler return value',
       function()
         local reached = false
         local input = F.activate_project()
         input.shortcuts.keypressed['s'] =
-            input.suppress_repeat(function() end)
+            input.fn.ignore_repeat(function() end)
         input.hooks.keypressed = function()
           reached = true; return true
         end
@@ -482,7 +480,7 @@ describe('#input events dispatching', function()
       local reached = false
       local input = F.activate_project()
       input.shortcuts.keypressed['s'] =
-          input.suppress_repeat(function() return true end)
+          input.fn.ignore_repeat(function() return true end)
       input.hooks.keypressed = function()
         reached = true; return true
       end
@@ -490,79 +488,14 @@ describe('#input events dispatching', function()
       assert.is_false(reached)
     end)
 
-    -- The repeat it swallows IS consumed, whatever the handler
-    -- would have returned — an unconsumed repeat falls past the
-    -- shortcut into the hook and then the widget, so a held key
-    -- would edit the overlay behind it. Both halves are visible
-    -- here at once: a NON-consuming handler lets the fresh press
-    -- reach the widget, and the repeat still does not.
-    it('consumes the repeat it swallows', function()
-      local input = F.activate_project()
-      F.show_widget({ text = 'abcd' })
-      -- Control: unbound, a repeat reaches the widget and edits.
-      F.session.repeat_press('backspace')
-      assert.same({ 'abc' }, F.widget:get_text())
-      input.shortcuts.keypressed['backspace'] =
-          input.suppress_repeat(function() end)
-      F.session.press('backspace')
-      F.session.repeat_press('backspace')
-      F.session.repeat_press('backspace')
-      assert.same({ 'ab' }, F.widget:get_text())
-    end)
-
-    it('passes the payload through to the wrapped function',
-      function()
-        local seen
-        local input = F.activate_project()
-        input.shortcuts.keypressed['alt+*'] =
-            input.suppress_repeat(function(k, keys)
-              seen = { k, keys['lalt'] }
-            end)
-        F.session.press('lalt')
-        F.session.press('q')
-        assert.same({ 'q', true }, seen)
-      end)
-
-    -- Same signature everywhere, so it wraps a hook as readily as a
-    -- shortcut. Whether that is WISE is the project's call — a
-    -- whole-channel hook swallows every repeat, the widget's
-    -- included.
-    it('wraps a hook the same way', function()
-      local ran = 0
-      local input = F.activate_project()
-      input.hooks.keypressed =
-          input.suppress_repeat(function() ran = ran + 1 end)
-      F.session.press('s')
-      F.session.repeat_press('s')
-      assert.equal(1, ran)
-    end)
-  end)
-
-  -- The sibling of suppress_repeat
-  -- (doc/development/decisions/input.md, Decision 22): both skip
-  -- the handler on a repeat, and they differ in what becomes of
-  -- the event — suppressed means consumed, bypassed means it
-  -- carries on down the chain.
-  describe('bypass_repeat', function()
-
-    it('a fresh press runs the wrapped function', function()
-      local ran = 0
-      local input = F.activate_project()
-      input.shortcuts.keypressed['s'] =
-          input.bypass_repeat(function() ran = ran + 1 end)
-      F.session.press('s')
-      F.session.repeat_press('s')
-      assert.equal(1, ran)
-    end)
-
-    -- The whole difference: the repeat it skips still reaches the
-    -- widget, so a held key keeps driving the overlay while the
-    -- binding acts once. Contrast the suppress_repeat row above,
-    -- where the same sequence leaves the text alone.
+    -- The repeat it skips carries on down the chain, so a held
+    -- key keeps driving what is below while the binding acts
+    -- once. 'abcd' loses one character to the fresh press and one
+    -- to each repeat that reaches the widget.
     it('the repeat it skips still reaches the widget', function()
       local input = F.activate_project()
       input.shortcuts.keypressed['backspace'] =
-          input.bypass_repeat(function() end)
+          input.fn.ignore_repeat(function() end)
       F.show_widget({ text = 'abcd' })
       F.session.press('backspace')
       F.session.repeat_press('backspace')
@@ -570,31 +503,40 @@ describe('#input events dispatching', function()
       assert.same({ 'a' }, F.widget:get_text())
     end)
 
-    it('a fresh press propagates the handler return value',
+    it('passes the payload through to the wrapped function',
       function()
-        local reached = false
+        local seen
         local input = F.activate_project()
-        input.shortcuts.keypressed['s'] =
-            input.bypass_repeat(function() return true end)
-        input.hooks.keypressed = function()
-          reached = true; return true
-        end
-        F.session.press('s')
-        assert.is_false(reached)
+        input.shortcuts.keypressed['alt+*'] =
+            input.fn.ignore_repeat(function(k, keys)
+              seen = { k, keys['lalt'] }
+            end)
+        F.session.press('lalt')
+        F.session.press('q')
+        assert.same({ 'q', true }, seen)
       end)
+
+    -- Same signature everywhere, so it wraps a hook as readily as
+    -- a shortcut.
+    it('wraps a hook the same way', function()
+      local ran = 0
+      local input = F.activate_project()
+      input.hooks.keypressed =
+          input.fn.ignore_repeat(function() ran = ran + 1 end)
+      F.session.press('s')
+      F.session.repeat_press('s')
+      assert.equal(1, ran)
+    end)
   end)
 
-  -- doc/development/decisions/input.md, Decision 24: declare that
-  -- a binding consumes at the registration site, so the handler
-  -- does not have to know what happens after it returns.
-  describe('always_true', function()
+  describe('compy.input.fn.stop_here', function()
 
     it('runs the function and consumes', function()
       local ran = false
       local reached = false
       local input = F.activate_project()
       input.shortcuts.keypressed['s'] =
-          input.always_true(function() ran = true end)
+          input.fn.stop_here(function() ran = true end)
       input.hooks.keypressed = function()
         reached = true; return true
       end
@@ -611,7 +553,7 @@ describe('#input events dispatching', function()
     it('consumes with no function to run', function()
       local seen = { }
       local input = F.activate_project()
-      input.shortcuts.keypressed['alt+*'] = input.always_true()
+      input.shortcuts.keypressed['alt+*'] = input.fn.stop_here()
       input.hooks.keypressed = function(k)
         seen[#seen + 1] = k; return true
       end
@@ -625,7 +567,7 @@ describe('#input events dispatching', function()
         local seen
         local input = F.activate_project()
         input.shortcuts.keypressed['alt+*'] =
-            input.always_true(function(k, keys, isr)
+            input.fn.stop_here(function(k, keys, isr)
               seen = { k, keys['lalt'], isr }
             end)
         F.session.press('lalt')
@@ -633,35 +575,91 @@ describe('#input events dispatching', function()
         assert.same({ 'q', true, false }, seen)
       end)
 
-    -- On its own it consumes a repeat too — but by RUNNING the
-    -- function again, which is the whole reason to compose the
-    -- two. A held ctrl+alt+up would ramp the notch every frame.
+    -- It knows nothing about repeats: a held key runs the action
+    -- every frame. That is the whole reason to compose the two.
     it('runs the function on every repeat', function()
       local ran = 0
       local input = F.activate_project()
       input.shortcuts.keypressed['s'] =
-          input.always_true(function() ran = ran + 1 end)
+          input.fn.stop_here(function() ran = ran + 1 end)
       F.session.press('s')
       F.session.repeat_press('s')
       F.session.repeat_press('s')
       assert.equal(3, ran)
     end)
+  end)
 
-    -- How a reserved binding is spelled: once per physical press,
-    -- and never falling through. Neither wrapper knows about the
-    -- other; they compose.
-    it('composes with suppress_repeat', function()
-      local ran = 0
+  describe('compy.input.fn.side_run', function()
+
+    -- The mirror of stop_here: run, and let the event carry on
+    -- regardless of what the function returned.
+    it('runs the function and does not consume', function()
+      local ran = false
+      local reached = false
       local input = F.activate_project()
-      input.shortcuts.keypressed['backspace'] =
-          input.suppress_repeat(
-            input.always_true(function() ran = ran + 1 end))
-      F.show_widget({ text = 'abcd' })
-      F.session.press('backspace')
-      F.session.repeat_press('backspace')
-      assert.equal(1, ran)
-      assert.same({ 'abcd' }, F.widget:get_text())
+      input.shortcuts.keypressed['s'] =
+          input.fn.side_run(function() ran = true end)
+      input.hooks.keypressed = function()
+        reached = true; return true
+      end
+      F.session.press('s')
+      assert.is_true(ran)
+      assert.is_true(reached)
     end)
+
+    -- Even a handler that returns truthy does not consume — the
+    -- point of the wrapper is that this binding is a side effect,
+    -- and the declaration outranks whatever the function says.
+    it('does not consume even for a truthy handler', function()
+      local reached = false
+      local input = F.activate_project()
+      input.shortcuts.keypressed['s'] =
+          input.fn.side_run(function() return true end)
+      input.hooks.keypressed = function()
+        reached = true; return true
+      end
+      F.session.press('s')
+      assert.is_true(reached)
+    end)
+  end)
+
+  -- How a reserved binding is spelled: acts once per physical
+  -- press, and nothing below ever sees the key. Neither wrapper
+  -- knows about the other.
+  describe('composing the combinators', function()
+
+    it('stop_here over ignore_repeat is act-once-and-claim',
+      function()
+        local ran = 0
+        local input = F.activate_project()
+        input.shortcuts.keypressed['backspace'] =
+            input.fn.stop_here(
+              input.fn.ignore_repeat(function() ran = ran + 1 end))
+        F.show_widget({ text = 'abcd' })
+        F.session.press('backspace')
+        F.session.repeat_press('backspace')
+        F.session.repeat_press('backspace')
+        assert.equal(1, ran)
+        assert.same({ 'abcd' }, F.widget:get_text())
+      end)
+
+    -- The other pairing is a once-per-press side effect: it acts
+    -- on the fresh press only and never claims the key, so the
+    -- widget still receives every one of them.
+    it('side_run over ignore_repeat acts once and claims nothing',
+      function()
+        local ran = 0
+        local input = F.activate_project()
+        input.shortcuts.keypressed['backspace'] =
+            input.fn.side_run(
+              input.fn.ignore_repeat(function() ran = ran + 1 end))
+        F.show_widget({ text = 'abcd' })
+        F.session.press('backspace')
+        F.session.repeat_press('backspace')
+        F.session.repeat_press('backspace')
+        assert.equal(1, ran)
+        assert.same({ 'a' }, F.widget:get_text())
+      end)
   end)
 
   -- ---- signatures + read-only proxy of pressed-keys table

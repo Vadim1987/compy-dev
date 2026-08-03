@@ -150,7 +150,8 @@ end
 --- isrepeat reaches every consumer and dispatch does not gate on
 --- it (doc/development/decisions/input.md, Decision 22): a held
 --- combo fires each frame, and a binding that wants once per
---- physical press wraps itself in compy.input.suppress_repeat.
+--- physical press wraps itself in
+--- compy.input.fn.ignore_repeat.
 function ProjectInputController:keypressed(k, sc, isr)
   return self:_dispatch(
     'keypressed', k, k, Controller.held_keys(), isr)

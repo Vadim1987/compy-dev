@@ -202,45 +202,41 @@ compy.input.shortcuts.keypressed['alt+p'] = function()
 end
 ```
 
-A held key repeats, and shortcuts and hooks see every repeat. A binding that
-should act once per physical press wraps itself:
+A held key repeats, and shortcuts and hooks see every repeat. Three
+combinators under `compy.input.fn` let a registration say what should happen,
+so the handler does not have to:
+
+| wrapper | effect |
+|---|---|
+| `fn.ignore_repeat(f)` | skip `f` on a repeat; says nothing about propagation |
+| `fn.stop_here([f])` | run `f` if given, then consume — the event stops here |
+| `fn.side_run([f])` | run `f` if given, and let the event carry on |
+
+They are orthogonal — one about whether your function *runs*, two about where
+the event *goes* — and they compose:
 
 ```lua
-compy.input.shortcuts.keypressed['ctrl+alt+up'] =
-  compy.input.suppress_repeat(function()
-    notch(1)
-    return true
-  end)
+local fn = compy.input.fn
+-- a reserved key: acts once per press, nothing below sees it
+sc['ctrl+alt+up'] = fn.stop_here(fn.ignore_repeat(function() notch(1) end))
+-- swallow a whole class, with nothing to run
+sc['alt+*'] = fn.stop_here()
+-- a side effect: acts once, and the key still reaches the overlay
+sc['backspace'] = fn.side_run(fn.ignore_repeat(note_deleting))
 ```
 
-`suppress_repeat(fn)` calls `fn` on a fresh press and returns whatever `fn`
-returns — consuming is still your handler's decision, as everywhere else. On a
-repeat it returns `true` without calling `fn`: the repeat it swallows is
-consumed, so a held key never falls through to the overlay behind it.
+`stop_here` and `side_run` both take the function optionally, and `side_run`
+lets the event through even when the wrapped function returns truthy — the
+declaration at the registration site outranks the handler, which is the point
+of declaring it there.
 
-`bypass_repeat(fn)` is its sibling. It also skips `fn` on a repeat, but lets
-the repeat carry on down the chain — use it to act once on a held key while
-what is below keeps receiving it, so a held backspace still deletes.
+Without them you would end handlers with `return true`, which makes a function
+that merely toggles a pause know what happens after it returns, and carry that
+knowledge wherever it is reused.
 
-Both wrap a hook the same way, but think before you do: a whole-channel hook
-wrapped in `suppress_repeat` swallows *every* repeat on that channel, so held
-backspace and held arrows stop repeating in the overlay too.
-
-Rather than ending a handler with `return true`, you can say at the
-registration site that a binding is claimed:
-
-```lua
-compy.input.shortcuts.keypressed['alt+p'] =
-  compy.input.always_true(pause)
-compy.input.shortcuts.keypressed['alt+*'] = compy.input.always_true()
-```
-
-`always_true([fn])` runs `fn` with the event's arguments if you pass one, then
-returns `true`; with no `fn` the binding's only job is to swallow. It keeps
-`pause` a function about pausing, instead of one that also has to know what
-happens after it returns. The two compose —
-`suppress_repeat(always_true(fn))` fires once per physical press and never
-falls through.
+All three wrap a hook the same way, but think before you do: a whole-channel
+hook wrapped in `stop_here(ignore_repeat(...))` swallows every repeat on that
+channel, so held backspace and held arrows stop repeating in the overlay too.
 
 Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else

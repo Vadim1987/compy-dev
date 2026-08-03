@@ -194,8 +194,9 @@ question, not resolved here.
   shortcuts, so the workaround is three lines; the question is whether every
   consumer should have to write them.
 - **Resolution:** owner ruled that dispatch keeps firing on every repeat and a
-  binding opts out for itself — `compy.input.suppress_repeat(fn)`
-  (`../decisions/input.md`, Decision 22). Filtering inside the shortcut tier
+  binding opts out for itself — `compy.input.fn.ignore_repeat(fn)`
+  (`../decisions/input.md`, Decision 22), with `fn.stop_here` alongside it
+  when the binding also claims the key (Decision 24). Filtering inside the shortcut tier
   was rejected for two reasons: it suppresses with no way to recover a
   hold-to-act binding, and it would leave the same hand-written check in
   `hooks.keypressed`, where commands are equally idiomatically bound. The
