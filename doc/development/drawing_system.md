@@ -37,7 +37,7 @@ function ConsoleController:use_canvas(f)
 end
 ```
 
-All user event handlers are wrapped in `wrap_handler` (`consoleController.lua:202`), which calls `use_canvas` internally. User `love.update` is also run inside `use_canvas` (see `controller.lua`, `set_love_update`). This means any `gfx.*` calls in event handlers or update automatically go to the virtual canvas, not the screen.
+Project input code is wrapped in `guarded` (`controller.lua`), which calls `use_canvas` internally. It wraps the point where a **route is entered** rather than each handler, so a whole dispatch walk — shortcuts, hooks and the input widget alike — runs with the canvas bound (`../decisions/input.md`, Decision 25). User `love.update` is also run inside `use_canvas` (see `controller.lua`, `set_love_update`). This means any `gfx.*` calls in project input handlers or update automatically go to the virtual canvas, not the screen.
 
 ### User `love.draw` detection — `src/controller/controller.lua`, `set_love_update`
 

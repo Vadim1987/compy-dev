@@ -142,11 +142,17 @@ local function wrap(f, CC, ...)
   end
 end
 
---- NAMING — the rename of `userlove` is still deferred to
---- just before the PR (owner, 2026-07-31). The `*_native`
---- names went with the two wrappers when they merged, taking
---- the honest names the debt entry had recorded; `forward_*`
---- left by deletion, its console-route widget gate being gone.
+--- NAMING — settled. `userlove` KEEPS its name (owner ruling,
+--- 2026-08-03: "its nice and makes no harm itself"). Read it as
+--- "a table indexed by love-event name holding the project's
+--- handlers", which is what both callers pass: the sandboxed
+--- `love` table from `set_user_handlers`, and the saved
+--- `_userhandlers` from `restore_user_handlers`. The second is
+--- why the once-proposed `project_love` was dropped: it would
+--- have been true at only one of the two.
+--- The `*_native` names went with the two wrappers when they
+--- merged; `forward_*` left by deletion, its console-route
+--- widget gate being gone.
 
 --- Run `fn` the way project code must always be run: drawing
 --- routed onto the project's canvas (CC:use_canvas — the

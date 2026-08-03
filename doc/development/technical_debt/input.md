@@ -49,9 +49,17 @@ action; revisit at the named point).
 - **Revisit:** if a Web build is released, or when CI grows a second
   interpreter.
 
-### `wrap`'s error handler is called with the wrong arity, so project raises vanish
+### `wrap`'s error handler is called with the wrong arity, so project raises vanish (RESOLVED, 2026-08-03)
 
-- **Where:** `src/controller/controller.lua`, `wrap` — the non-web branch is
+- **Resolution:** `wrap` binds CC in a closure used by both branches
+  (`2554d2e3`), so a raise anywhere in project code now reaches
+  `user_error_handler` and suspends the run. Three rows pin it — pointer,
+  `love.update`, and a keyboard hook as the control that the other two are not
+  asserting something impossible. Owner ruling: a certainly-wrong behaviour is
+  not preserved on the grounds that changing it was never approved, even
+  though it is pre-feature.
+- **Where it was:** `src/controller/controller.lua`, `wrap` — the non-web
+  branch was
   `return xpcall(f, user_error_handler, ...)`. `xpcall` invokes a message
   handler with exactly **one** argument (the error), but the signature is
   `user_error_handler(CC, msg)`. So `CC` binds to the error string, `msg` is
@@ -77,10 +85,11 @@ action; revisit at the named point).
   LuaJIT gives `1, 2`; 5.1 semantics give `nil, nil`. The branch is therefore
   **load-bearing and must not be collapsed away** — a warning to that effect
   now sits on it in code.
-- **Reach:** `wrap` has three call sites — `wrapped_native` (pointer
-  handlers), the loader, and the project `update` wrapper. `CC:wrap_handler`,
-  which takes `wrap` as its error handler, adds the compy single/double click
-  handlers.
+- **Reach at the time:** `wrap` had three call sites — `wrapped_native`
+  (pointer handlers), the loader, and the project `update` wrapper — plus
+  `CC:wrap_handler`, which took `wrap` as its error handler, for the compy
+  click handlers. All of those except the loader and the update wrapper have
+  since been replaced by `guarded`.
 - **Pre-feature, verified:** `wrap` and `user_error_handler` are
   byte-identical at the PR base `3256aac`. The input API neither introduced
   nor worsened this; it only made the contrast visible, because the keyboard
@@ -88,12 +97,10 @@ action; revisit at the named point).
 - **Consequence for the docs:** "A raise from project top-level and from a
   handler surface differently" (below) describes the handler path as
   reaching the error window. That holds for keyboard hooks only.
-- **Shape:** bind CC at the call, as `chain_native` already does. Falls out
-  for free if the two project-handler wrappers are collapsed into one — see
-  "Project-handler wrapping" above, whose dedup cannot proceed without
-  choosing one of the two error paths.
-- **Revisit:** with the project-handler wrapper dedup, or sooner if a
-  silent-failure report arrives.
+- **Kept as a closed entry** because two things in it are still live
+  knowledge: why the web branch exists (above), and the fact that this
+  subsystem's error path had a defect no test could see for the length of the
+  feature — the argument for the Web-coverage entry that opens this section.
 
 ### A project that raises leaves global device state dirty; no force-reset exists
 
@@ -427,7 +434,10 @@ question, not resolved here.
   project and how to leave it); (c) leave as is. **Recommended: (a)** — the
   asymmetry is an accident of which `pcall` caught it, not a decision anyone
   took, and (b) preserves the accident while adding words to it.
-- **Revisit:** stakeholder review of the PR.
+- **Revisit:** AFTER the PR merges, not during its review (owner,
+  2026-08-03). Deferred deliberately to keep the PR's scope to the
+  stakeholders' ask, and to leave them room to contest the suggested fix —
+  a glitch may have had a reason nobody here can see.
 
 ### The error lock is correct, documented, and hostile
 
@@ -468,7 +478,10 @@ question, not resolved here.
   (b) clear the error on the next `textinput`, which makes a rejected line
   silently editable and drops what the lock is for; (c) leave it documented
   only. **Recommended: (a)**.
-- **Revisit:** stakeholder review of the PR.
+- **Revisit:** AFTER the PR merges, not during its review (owner,
+  2026-08-03). Deferred deliberately to keep the PR's scope to the
+  stakeholders' ask, and to leave them room to contest the suggested fix —
+  a glitch may have had a reason nobody here can see.
 
 ### `repl` does not evaluate, and its name says it does
 
@@ -494,7 +507,10 @@ question, not resolved here.
 - **Options:** (a) make it evaluate — the project env already exposes `eval`,
   so it is one line in `on_text_entered`; (b) keep the echo and rename the
   example (`echo`); (c) keep both, documented as-is (today's state).
-- **Revisit:** stakeholder review of the PR.
+- **Revisit:** AFTER the PR merges, not during its review (owner,
+  2026-08-03). Deferred deliberately to keep the PR's scope to the
+  stakeholders' ask, and to leave them room to contest the suggested fix —
+  a glitch may have had a reason nobody here can see.
 
 ### An overlay opened from a key can receive that key's own echo
 
@@ -913,23 +929,21 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When this handler is next touched — lift the debug toggles
   onto the combo-table mechanism (Decision 8), or a `toggle_debug(k)` helper.
 
-### `userlove` does not convey its semantics
+### `userlove` does not convey its semantics (CLOSED — ruled to keep, 2026-08-03)
 
-- **Where:** `src/controller/controller.lua` — the `userlove` parameter
-  threaded through `wrapped_native` / `keyboard_native` / `project_handlers` /
-  `occupy_keyboard` / `hook_pointer` / `hook_update` / `hook_draw` /
-  `set_handlers`, and the public `save_user_handlers`.
-- **State:** the name says "the project's sandboxed `love` table", and at one
-  of its two entry points it is not one: `restore_user_handlers` passes
-  `Controller._userhandlers`, a saved-handler table. What the parameter
-  actually is, at both entry points, is *a table indexed by love-event name
-  whose values are the project's handlers* — so the once-recorded candidate
-  `project_love` would be wrong half the time.
-- **Why it stands:** Pure rename; no behavioural content. Deferred to avoid
-  churn on a landing branch.
-- **Revisit:** Next time this file is edited — rename to something true at
-  both call sites (e.g. `user_handlers`, matching the four public
-  `*_user_handlers` functions) in one sweep.
+- **Ruling:** the name stays. Owner, 2026-08-03: *"I'd not rename userlove,
+  its nice and makes no harm itself."* The rename was the last item of the
+  deferred naming cluster; the rest of that cluster resolved by deletion
+  rather than renaming (see the entries above).
+- **What the reader needs instead, and now has in the code comment:**
+  `userlove` is *a table indexed by love-event name holding the project's
+  handlers*. Both callers pass one — `set_user_handlers` the sandboxed `love`
+  table, `restore_user_handlers` the saved `Controller._userhandlers`. That
+  second caller is why the once-proposed `project_love` was dropped: it would
+  have been true at only one of the two entry points.
+- **Kept as a closed entry rather than deleted** because the wrong candidate
+  is the useful part of the record: anyone re-proposing `project_love` should
+  find the reason it was refused.
 - **Note (2026-08-03):** this entry used to also cover `forward_keypressed` /
   `forward_keyreleased` / `forward_textinput`. Those were **deleted, not
   renamed** — they implemented the console route's widget gate, which
