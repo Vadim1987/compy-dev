@@ -118,7 +118,7 @@ local function wrap(f, CC, ...)
     end
     -- `ok, r`, not bare `r`: the two branches used to answer in
     -- different shapes, and every caller discarded the result
-    -- so nothing caught it. chain_project_handler reads the
+    -- so nothing caught it. project_handler's wrapper reads the
     -- pair, so they have to agree — and the @return above now
     -- describes both.
     return ok, r
@@ -133,37 +133,30 @@ end
 --- the honest names the debt entry had recorded; `forward_*`
 --- left by deletion, its console-route widget gate being gone.
 
---- Wrap a project handler: run it with project error handling,
+--- The project's own handler for an event, error-wrapped; nil
+--- when the project did not define one.
+---
+--- The guard is load-bearing, not ceremony: without it this
+--- hands back a live wrapper around nil, which does
+--- xpcall(nil, ...) on every event the project never overrode
+--- and routes the resulting error to the project error handler
+--- — error spam per keystroke.
+---
+--- The wrapper runs the handler with project error handling and
 --- drawing routed onto the project's canvas (CC:use_canvas —
---- the offscreen surface project draws land on), and propagate
+--- the offscreen surface project draws land on), and propagates
 --- its return value. Keyboard participants need that return —
 --- the chain's truthy=consume contract depends on it
 --- (doc/development/decisions/input.md, Decision 2:
 --- return-propagation) — and pointer handlers are installed
 --- as love.* callbacks, whose return LÖVE ignores, so one
---- wrapper serves both: the value is dropped at that site.
---- A raised error routes to user_error_handler and the call
---- reports non-consuming (nil).
---- @param CC ConsoleController
---- @param fn function
---- @return function
-local function chain_project_handler(CC, fn)
-  return function(...)
-    local args = { ... }
-    return CC:use_canvas(function()
-      local ok, res = wrap(fn, CC, unpack(args))
-      if ok then return res end
-    end)
-  end
-end
-
---- The project's own handler for an event, error-wrapped; nil
---- when the project did not define one. The guard is
---- load-bearing, not ceremony: without it this returns a live
---- wrapper around nil, which does xpcall(nil, ...) on every
---- event the project never overrode and routes the resulting
---- error to the project error handler — error spam per
---- keystroke.
+--- shape serves both: the value is dropped there. A raised
+--- error routes to user_error_handler and the call reports
+--- non-consuming (nil).
+---
+--- The guard is an early return rather than an `if` around the
+--- closure: wrapping it would put the `if ok` at five levels
+--- deep, over the nesting limit.
 --- @param userlove table
 --- @param CC ConsoleController
 --- @param key string
@@ -171,8 +164,13 @@ end
 local function project_handler(userlove, CC, key)
   local orig = Controller._defaults[key]
   local new = userlove[key]
-  if orig and new and orig ~= new then
-    return chain_project_handler(CC, new)
+  if not (orig and new and orig ~= new) then return end
+  return function(...)
+    local args = { ... }
+    return CC:use_canvas(function()
+      local ok, res = wrap(new, CC, unpack(args))
+      if ok then return res end
+    end)
   end
 end
 
