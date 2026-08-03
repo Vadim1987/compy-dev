@@ -194,37 +194,65 @@ describe('input contracts: widget lifecycle #input', function()
   -- event arrives on (textinput vs keypressed), so they are named for
   -- that and nothing else.
   --
-  -- #disputable — the first assertion of each row (the widget keeps
-  -- its content) is settled contract; the second (the CONSOLE LINE
-  -- receives what the hidden widget declined) is the console route's
-  -- own fallback, and whether it should exist at all was one of this
-  -- feature's live arguments. It is ruled for the project route and
-  -- unruled here: doc/development/technical_debt/input.md, "On the
-  -- console route, a hidden widget's input falls to the console line".
-  -- These rows pin today's behaviour so a change to it is deliberate;
-  -- they do not endorse it.
-  describe('a hidden widget does not consume #disputable', function()
+  -- These ran on the CONSOLE route while it still had a widget
+  -- step, and were tagged #disputable because the second half
+  -- of each -- the console line receiving what the hidden
+  -- widget declined -- rested on a fallback nobody had ruled
+  -- on. That fallback is gone: the console route has no widget
+  -- step at all now (Decision 1, "widget visibility is never a
+  -- routing condition"), which would leave these rows passing
+  -- for a reason unrelated to their claim -- a SHOWN widget
+  -- would satisfy them there just as well.
+  --
+  -- Re-sited on the project route, where a hidden widget is a
+  -- real decision: the walk skips it and reports not-consumed.
+  -- What discriminates hidden from shown is the WIDGET's own
+  -- text, and the third row is the control that says so. The
+  -- hook assertion is not a discriminator -- hooks run BEFORE
+  -- the widget, so it fires either way; it proves the event
+  -- reached the chain at all rather than being dropped
+  -- upstream, which would make an unchanged widget prove
+  -- nothing. The dispute is settled, not pinned, so the tag is
+  -- gone.
+  describe('a hidden widget is skipped', function()
 
-    it('a typed character while hidden does not mutate it', function()
-      local input = F.compy_input()
+    it('a typed character while hidden does not mutate it',
+      function()
+        local input = F.activate_project()
+        local seen = 0
+        input.hooks.textinput = function() seen = seen + 1 end
+        input.show({ text = 'keep' })
+        input.hide()
+        F.session.type('Z')
+        assert.same({ 'keep' }, F.widget:get_text())
+        assert.equal(1, seen)
+      end)
+
+    -- The keypressed sibling of the row above.
+    it('a pressed key while hidden leaves it alone',
+      function()
+      local input = F.activate_project()
+      local seen = 0
+      input.hooks.keypressed = function() seen = seen + 1 end
       input.show({ text = 'keep' })
       input.hide()
-      F.session.type('Z')
-      assert.same({ 'keep' }, F.widget:get_text())
-      assert.same({ 'Z' }, F.console:get_text())
-    end)
-
-    -- The keypressed sibling of the row above: a key arriving while
-    -- the widget is hidden goes to the console and mutates the
-    -- console line while the hidden widget remains unchanged.
-    it('a pressed key while hidden does not mutate it', function()
-      local input = F.compy_input()
-      input.show({ text = 'keep' })
-      input.hide()
-      F.console:add_text('ab')
       F.session.press('backspace')
       assert.same({ 'keep' }, F.widget:get_text())
-      assert.same({ 'a' }, F.console:get_text())
+      assert.equal(1, seen)
+    end)
+
+    -- THE CONTROL for both rows above: the identical keystroke,
+    -- with the widget shown, DOES edit it. Without this the
+    -- two could pass against a widget that never receives
+    -- anything under any condition.
+    it('shown, the same key edits the widget', function()
+      local input = F.activate_project()
+      local seen = 0
+      input.hooks.keypressed = function() seen = seen + 1 end
+      input.show({ text = 'keep' })
+      F.session.press('backspace')
+      assert.same({ 'kee' }, F.widget:get_text())
+      assert.equal(1, seen)
     end)
   end)
 

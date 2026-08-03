@@ -381,11 +381,13 @@ question, not resolved here.
   route ends an unclaimed event in the chain, the console route ends it in its
   own input surface — but that is each route's own terminal, not two answers
   to one question.
-- **Left over:** the rows in `tests/input/input_widget_lifecycle_spec.lua`
-  ("a hidden widget does not consume", `#disputable`) still pass, but no
-  longer discriminate: with no widget step on the console route, a *shown*
-  widget would behave the same as a hidden one there. Re-siting them on the
-  project route is a live question — see the fixture-fidelity note below.
+- **The rows that pinned it are re-sited, not deleted** (2026-08-03). They had
+  gone vacuous: with no widget step on the console route, a *shown* widget
+  would have satisfied them there too. On the project route a hidden widget is
+  a real decision — the walk skips it and reports not-consumed — so they now
+  discriminate on the widget's own text, with a third row as the control that
+  the same keystroke edits a shown widget. The `#disputable` tag is gone: the
+  question it marked is answered, not merely pinned.
 - **Where it was:** `src/controller/controller.lua` — `forward_keypressed` /
   `forward_textinput` / `forward_keyreleased` handed the event to the widget
   only while `love.state.user_input` was set, which `hide()` clears; the
