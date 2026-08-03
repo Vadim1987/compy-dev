@@ -39,18 +39,17 @@ local user_draw
 local user_pointer
 
 
--- keyboard/text and pointer are split: different install
--- paths AND lifecycles. Keyboard/text events run the
--- three-consumer chain (shortcuts -> hooks -> widget) and
--- return to the console at running->project_open; pointer
--- handlers are error-wrapped
--- straight into love.* and stay hooked until the project
--- stops. The widget-lockout problem only ever existed on
--- keyboard/text; pointer was deliberately left as-is. See
--- doc/development/decisions/input.md #11 "route connects only while running"
--- (which forbids unifying the two lifecycles). Pointer
--- delivery itself: see the debt note referenced at
--- handlers.mousepressed below.
+-- Two lists, one lifetime. Every channel installs the same way
+-- (occupy_keyboard), runs the same chain, and is released at
+-- the same moment: the project's stop. The split that existed
+-- here (keyboard released at running->project_open, pointer
+-- exempted so pen-and-paper projects survived it) came with
+-- this feature and is gone: at the PR base nothing was
+-- released before suspend or stop.
+-- The lists remain because the two groups still differ in what
+-- they CARRY, not in how they are routed: keyboard/text events
+-- have a combo trigger and therefore a shortcuts tier, pointer
+-- events have neither and enter the walk at the hook tier.
 local _keyboard = {
   'keypressed',
   'keyreleased',
@@ -199,14 +198,11 @@ end
 --- @param CC ConsoleController
 --- @return table handlers
 local function project_handlers(userlove, CC)
-  return {
-    keypressed =
-        project_handler(userlove, 'keypressed'),
-    textinput =
-        project_handler(userlove, 'textinput'),
-    keyreleased =
-        project_handler(userlove, 'keyreleased'),
-  }
+  local out = {}
+  for _, k in ipairs(_supported) do
+    out[k] = project_handler(userlove, k)
+  end
+  return out
 end
 
 --- The project route occupies the keyboard/text handlers for
@@ -244,20 +240,29 @@ local function occupy_keyboard(userlove, CC)
   love.keyreleased = guarded(CC, function(k)
     return pic:keyreleased(k)
   end)
+  -- Pointer occupies the same way, through the same chain. The
+  -- split that kept it out was this feature's invention, not
+  -- inherited behaviour: pre-feature every event installed
+  -- through one path and none was released before stop.
+  for _, k in ipairs(_pointer) do
+    love[k] = guarded(CC, function(...)
+      return pic[k](pic, ...)
+    end)
+  end
 end
 
 --- @param userlove table
 --- @param CC ConsoleController
+-- Pointer handlers are installed by occupy_keyboard now, along
+-- with every other channel; what remains here is the liveness
+-- flag. `user_pointer` marks a non-blocking project as still
+-- interactive so it keeps the route in 'project_open'
+-- (technical_debt/input.md, ruling (a)).
+--- @param userlove table
+--- @param CC ConsoleController
 local function hook_pointer(userlove, CC)
   for _, k in ipairs(_pointer) do
-    -- Same boundary the keyboard route gets, applied where
-    -- the pointer handler is entered: it owns the love.* slot
-    -- outright rather than joining a chain (for now: see the
-    -- pointer-unification plan).
-    local h = project_handler(userlove, k)
-    if h then
-      --- @type function
-      love[k] = guarded(CC, h)
+    if project_handler(userlove, k) then
       user_pointer = true
     end
   end
@@ -302,7 +307,11 @@ local set_handlers = function(userlove, CC)
   hook_draw(userlove)
 end
 
-local HOOK_EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
+-- Every channel that can carry a hook, pointer included: else
+-- a stopped project's pointer hook survives teardown and blocks
+-- the NEXT project's seeding (seed_hooks fills only a nil
+-- slot). Decision 11's teardown invariant covers all of them.
+local HOOK_EVENTS = _supported
 
 --- @param t table
 local function wipe_table(t)
@@ -1024,11 +1033,6 @@ Controller = {
     -- an OPEN owner ruling — see doc/development/technical_debt/input.md
     -- "Pointer delivery is an unstructured broadcast".
     handlers.mousepressed = function(x, y, btn, touch, presses)
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:mousepressed(x, y, btn, touch, presses)
-      else
-      end
       if love.mousepressed then
         return love.mousepressed(x, y, btn, touch, presses)
       end
@@ -1045,11 +1049,6 @@ Controller = {
         click_timer = click_delay
         click_pos = { x = x, y = y }
       end
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:mousereleased(x, y, btn, touch, presses)
-      else
-      end
       if love.mousereleased then
         return love.mousereleased(x, y, btn, touch, presses)
       end
@@ -1061,11 +1060,6 @@ Controller = {
     --- @param dy number
     --- @param touch boolean
     handlers.mousemoved = function(x, y, dx, dy, touch)
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:mousemoved(x, y, dx, dy, touch)
-      else
-      end
       if love.mousemoved then
         return love.mousemoved(x, y, dx, dy, touch)
       end
@@ -1085,11 +1079,6 @@ Controller = {
     --- @param dy number?
     --- @param pressure number?
     handlers.touchpressed = function(id, x, y, dx, dy, pressure)
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:touchpressed(id, x, y, dx, dy, pressure)
-      else
-      end
       if love.touchpressed then
         return love.touchpressed(id, x, y, dx, dy, pressure)
       end
@@ -1102,11 +1091,6 @@ Controller = {
     --- @param dy number?
     --- @param pressure number?
     handlers.touchreleased = function(id, x, y, dx, dy, pressure)
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:touchreleased(id, x, y, dx, dy, pressure)
-      else
-      end
       if love.touchreleased then
         return love.touchreleased(id, x, y, dx, dy, pressure)
       end
@@ -1119,11 +1103,6 @@ Controller = {
     --- @param dy number?
     --- @param pressure number?
     handlers.touchmoved = function(id, x, y, dx, dy, pressure)
-      local user_input = get_user_input()
-      if user_input then
-        user_input.C:touchmoved(id, x, y, dx, dy, pressure)
-      else
-      end
       if love.touchmoved then
         return love.touchmoved(id, x, y, dx, dy, pressure)
       end

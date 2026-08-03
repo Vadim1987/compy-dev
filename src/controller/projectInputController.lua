@@ -27,8 +27,21 @@ require("util.key")
 -- value (doc/development/decisions/input.md, Decision 5).
 -- Routing contract: doc/development/internals/user_input.md
 
--- The three uniform event channels the chain dispatches on.
-local EVENTS = { 'keypressed', 'keyreleased', 'textinput' }
+-- Every channel the chain dispatches on. Keyboard/text carry a
+-- combo trigger and a shortcuts tier; pointer channels carry
+-- neither and start at the hook tier, so `dispatch` tolerates a
+-- missing shortcuts table rather than each channel special-
+-- casing itself. Pointer payloads are exactly LÖVE's own
+-- arguments; no held-key view is appended, since a project
+-- reads that through
+-- compy.input.keys_pressed (Decision 20) and appending it would
+-- change the signature every existing pointer handler was
+-- written against.
+local EVENTS = {
+  'keypressed', 'keyreleased', 'textinput',
+  'mousepressed', 'mousereleased', 'mousemoved', 'wheelmoved',
+  'touchpressed', 'touchreleased', 'touchmoved',
+}
 
 --- Seed the project's hooks table (doc/development/decisions/input.md,
 --- Decision 10): each event with no explicit project hook gets
@@ -64,6 +77,9 @@ ProjectInputController = class.create(new)
 --- @param trigger string
 --- @return function?
 local function find_shortcut(tbl, trigger)
+  -- Pointer channels have no combo table and no trigger; they
+  -- enter the walk at the hook tier.
+  if not tbl then return end
   local keys = Controller.keys_pressed
   local sc = tbl[Controller.combo_string(trigger, keys)]
   if sc or Key.is_mod(trigger) then return sc end
@@ -169,4 +185,24 @@ end
 function ProjectInputController:keyreleased(k)
   return self:_dispatch(
     'keyreleased', k, k, Controller.held_keys())
+end
+
+-- Pointer channels. Each is the keyboard shape minus the combo
+-- trigger: no shortcuts tier (find_shortcut answers nil for a
+-- missing table), hooks then the shown widget, first truthy
+-- return consuming. The payload is LÖVE's own argument list,
+-- unchanged, so a project handler seeded from love.mousepressed
+-- and the widget's own method both see what they always saw.
+--- @param event string
+local function pointer_channel(event)
+  ProjectInputController[event] = function(self, ...)
+    return self:_dispatch(event, nil, ...)
+  end
+end
+
+for _, event in ipairs({
+  'mousepressed', 'mousereleased', 'mousemoved', 'wheelmoved',
+  'touchpressed', 'touchreleased', 'touchmoved',
+}) do
+  pointer_channel(event)
 end

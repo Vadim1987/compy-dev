@@ -20,6 +20,7 @@ local function emitters()
     type          = function(t) h.textinput(t) end,
     mousepressed  = function(...) h.mousepressed(...) end,
     mousereleased = function(...) h.mousereleased(...) end,
+    mousemoved    = function(...) h.mousemoved(...) end,
     touchpressed  = function(...) h.touchpressed(...) end,
     handlers      = h,
   }

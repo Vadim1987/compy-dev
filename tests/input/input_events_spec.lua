@@ -1059,4 +1059,66 @@ describe('#input events dispatching', function()
         end)
       end)
   end)
+
+  -- Pointer events run the SAME chain as keyboard ones, so a
+  -- pointer hook is an ordinary participant: it consumes on a
+  -- truthy return and falls through on a falsey one, and the
+  -- widget is the chain's terminal rather than a parallel
+  -- recipient. Before this, pointer was an unstructured
+  -- broadcast — the widget got the event first, the project's
+  -- handler got it unconditionally after, and neither could
+  -- stop the other.
+  describe('pointer runs the dispatch chain', function()
+    it('a seeded pointer handler receives the event',
+      function()
+        local got
+        F.activate_project({
+          mousepressed = function(x, y, btn)
+            got = { x, y, btn }
+          end,
+        })
+        F.session.mousepressed(10, 20, 1, false, 1)
+        assert.same({ 10, 20, 1 }, got)
+      end)
+
+    it('a directly-assigned pointer hook receives it',
+      function()
+        local input = F.activate_project()
+        local got = 0
+        input.hooks.mousepressed = function() got = got + 1 end
+        F.session.mousepressed(10, 20, 1, false, 1)
+        assert.equal(1, got)
+      end)
+
+    -- Falls through on falsey, so the widget still gets it —
+    -- this is the pre-unification "both receive it" behaviour,
+    -- now an ordinary consequence of the chain rather than a
+    -- broadcast. The selection is the widget's observable.
+    it('a non-consuming hook still lets the widget see it',
+      function()
+        local input = F.activate_project()
+        local got = 0
+        input.hooks.mousepressed = function() got = got + 1 end
+        local w = F.show_selectable_widget()
+        F.set_mouse_down(true)
+        F.session.mousepressed(10, 540, 1, false, 1)
+        F.session.mousemoved(60, 540, 50, 0, false)
+        assert.equal(1, got)
+        assert.is_true(w.model:has_selection())
+      end)
+
+    -- The capability the broadcast could not express: a shown
+    -- widget can now be starved of a click aimed past it.
+    it('a consuming hook stops the event before the widget',
+      function()
+        local input = F.activate_project()
+        input.hooks.mousepressed = function() return true end
+        input.hooks.mousemoved = function() return true end
+        local w = F.show_selectable_widget()
+        F.set_mouse_down(true)
+        F.session.mousepressed(10, 540, 1, false, 1)
+        F.session.mousemoved(60, 540, 50, 0, false)
+        assert.is_false(w.model:has_selection())
+      end)
+  end)
 end)

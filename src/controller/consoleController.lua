@@ -309,17 +309,15 @@ function ConsoleController:run_project(name)
         print('Error: ', run_err)
       else
         if not self.main_ctrl.user_is_blocking() then
-          -- An input-only / pointer-only project stays live
-          -- (doc/development/technical_debt/input.md, "Input-only /
-          -- pointer-only projects stay live in
-          -- `project_open` (RESOLVED, ruling a)"): keep the
-          -- project route so submit/cancel
-          -- and Ctrl+Esc->console work. Only a project with no
-          -- interaction surface hands the keyboard back to the
-          -- console.
-          if not self.main_ctrl.user_is_interactive() then
-            self.main_ctrl.release_keyboard_route(self)
-          end
+          -- The route is NOT released here. A non-blocking run
+          -- reaching 'project_open' keeps every channel until
+          -- the project actually stops. That is the pre-feature
+          -- lifecycle: at the PR base nothing was released
+          -- before suspend or stop, and the keyboard-only
+          -- release this feature added was what forced pointer
+          -- to be exempted from it. With every channel on one
+          -- route there is nothing left to exempt.
+          -- (doc/development/decisions/input.md, Decision 11.)
           love.state.app_state = 'project_open'
         end
       end

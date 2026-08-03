@@ -27,6 +27,9 @@ local TU   = require('tests.testutil')
 -- Mouse position the click path samples; tests drive it through
 -- set_mouse_pos to make drift detection observable.
 local mx, my = 0, 0
+-- Held-button state the widget's drag-select reads through
+-- love.mouse.isDown; see mock_runtime below.
+local mouse_down = false
 
 local function mock_runtime()
   mock.mock_love({
@@ -44,7 +47,14 @@ local function mock_runtime()
       stop      = function() end,
       play      = function() end,
     },
-    mouse      = { getPosition = function() return mx, my end },
+    -- isDown is real production input: the widget's drag-select
+    -- consults it on every mousemoved
+    -- (userInputModel, "mouse_drag"). Driven by
+    -- F.set_mouse_down so a row can hold a button over a move.
+    mouse      = {
+      getPosition = function() return mx, my end,
+      isDown      = function() return mouse_down end,
+    },
     paths      = { project_path = '/tmp' },
     filesystem = { getInfo = function() end },
   })
@@ -211,6 +221,12 @@ function F.set_mouse_pos(x, y)
   mx, my = x, y
 end
 
+--- Hold or release the primary button for love.mouse.isDown.
+--- @param down boolean
+function F.set_mouse_down(down)
+  mouse_down = down
+end
+
 function F.love_update(dt)
   love.update(dt)
 end
@@ -241,6 +257,13 @@ function F.show_selectable_widget(lines)
   w:init_view({ render = function() end, draw = function() end })
   w.model:set_text(lines or { 'aa', 'bb', 'cc' })
   love.state.user_input = { M = m, C = w, V = w.view }
+  -- The dispatch chain resolves its terminal consumer from
+  -- love.state.user_input_controller, not from the published
+  -- handle, so a row that wants this widget to receive chain
+  -- traffic has to stand it up there too. F.reset puts the
+  -- shared widget back.
+  w:always_shown()
+  love.state.user_input_controller = w
   return w
 end
 
@@ -248,6 +271,10 @@ end
 -- included. What remains here is either fixture-owned state production
 -- never creates, or content production keeps on purpose between runs.
 function F.reset()
+  -- Undo a show_selectable_widget swap before teardown runs, so
+  -- stop_project_run tears down the shared widget rather than a
+  -- row-local one.
+  love.state.user_input_controller = widget
   CC:stop_project_run()
   Controller.keys_pressed       = { }
   love.state.app_state          = 'ready'

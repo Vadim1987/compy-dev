@@ -42,36 +42,54 @@ describe('input contracts: route connection lifecycle #input', function()
   describe('route connection lifecycle', function()
 
     describe('connection at the running boundary', function()
-      -- doc/development/decisions/input.md, Decision 11: the route
-      -- owns keyboard/text only while 'running' -- a
-      -- non-blocking run's exit restores console text entry.
-      it('the console regains text entry when a ' ..
-          'non-blocking run exits', function()
-        local input = F.activate_project()
-        local got = 0
-        input.hooks.textinput = function() got = got + 1 end
-        Controller.release_keyboard_route(F.cc)
-        love.state.app_state = 'project_open'
-        F.session.type('a')
-        assert.equal(0, got)
-        assert.same({ 'a' }, F.console:get_text())
-      end)
+      -- The route is held by an OPEN project, not only by a
+      -- running one: a non-blocking run reaching 'project_open'
+      -- keeps every channel until the project actually stops.
+      -- That is the pre-feature lifecycle — at the PR base
+      -- nothing was released before suspend or stop. It is what
+      -- lets one release path serve every channel. Ctrl+Esc
+      -- is the documented way back to the console.
+      it('keyboard stays on the route in project_open',
+        function()
+          local input = F.activate_project()
+          local got = 0
+          input.hooks.textinput = function() got = got + 1 end
+          love.state.app_state = 'project_open'
+          F.session.type('a')
+          assert.equal(1, got)
+          assert.same({ '' }, F.console:get_text())
+        end)
 
-      -- doc/development/decisions/input.md, Decision 11: pointer is explicitly
-      -- NOT part of that disconnect -- a pen-and-paper
-      -- project (sapper-like) stays clickable in
-      -- 'project_open'.
-      it('pointer stays hooked when a non-blocking run ' ..
-          'ends', function()
-        local got = 0
-        F.activate_project({
-          mousepressed = function() got = got + 1 end,
-        })
-        Controller.release_keyboard_route(F.cc)
-        love.state.app_state = 'project_open'
-        F.session.mousepressed(10, 10, 1, false, 1)
-        assert.equal(1, got)
-      end)
+      -- The pen-and-paper case (sapper-like): clickable while
+      -- otherwise idle. It used to need an explicit exemption
+      -- from a keyboard-only release; with one lifetime for all
+      -- channels there is nothing to exempt.
+      it('pointer stays on the route in project_open',
+        function()
+          local got = 0
+          F.activate_project({
+            mousepressed = function() got = got + 1 end,
+          })
+          love.state.app_state = 'project_open'
+          F.session.mousepressed(10, 10, 1, false, 1)
+          assert.equal(1, got)
+        end)
+
+      -- Stop is still the boundary that hands everything back.
+      it('stop returns both channels to the console',
+        function()
+          local input = F.activate_project()
+          local keys, clicks = 0, 0
+          input.hooks.textinput = function() keys = keys + 1 end
+          input.hooks.mousepressed =
+              function() clicks = clicks + 1 end
+          F.cc:stop_project_run()
+          F.session.type('a')
+          F.session.mousepressed(10, 10, 1, false, 1)
+          assert.equal(0, keys)
+          assert.equal(0, clicks)
+          assert.same({ 'a' }, F.console:get_text())
+        end)
     end)
 
     describe('stop teardown', function()
