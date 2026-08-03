@@ -55,20 +55,6 @@ end
 --- @field compy_input table?
 ProjectInputController = class.create(new)
 
---- The three-consumer walk: shortcuts[event][combo] →
---- hooks[event] → widget, stopping at the first that consumes.
---- A shortcut or hook consumes by returning truthy; the widget
---- consumes whenever it is shown (its own internal flag), and is
---- skipped when hidden — so the walk reports consumed iff a
---- consumer fired or the widget was shown. A free function over
---- plain tables + a widget reference, so any adopter (not only
---- the project overlay) can reuse it over its own instance.
---- @param shortcuts table   per-event combo tables
---- @param hooks table       per-event hook fns
---- @param widget table      responds to widget[event](...) + is_shown()
---- @param event string
---- @param trigger string
---- @return boolean consumed
 --- Exact combo first, then the modifier class
 --- (doc/development/decisions/input.md, Decision 21): 'alt+*' is
 --- every Alt chord. The class key needs no parsing — it is the
@@ -84,12 +70,25 @@ local function find_shortcut(tbl, trigger)
   return tbl[Controller.combo_string('*', keys)]
 end
 
---- The nil guards below are deliberate
---- (doc/development/decisions/input.md, Decision 23): whether a
---- hook is set is information a project reads, so an unset one
---- stays nil rather than defaulting to a callable noop. Nothing
---- is logged when an event is consumed by nobody either — that
---- is a line per ordinary keystroke at this tier.
+--- The three-consumer walk: shortcuts[event][combo] →
+--- hooks[event] → widget, stopping at the first that consumes.
+--- A shortcut or hook consumes by returning truthy; the widget
+--- consumes whenever it is shown (its own internal flag), and is
+--- skipped when hidden — so the walk reports consumed iff a
+--- consumer fired or the widget was shown. A free function over
+--- plain tables + a widget reference, so any adopter (not only
+--- the project overlay) can reuse it over its own instance.
+--- The nil guards are deliberate (Decision 23): whether a hook
+--- is set is information a project reads, so an unset one stays
+--- nil rather than defaulting to a callable noop. Nothing is
+--- logged when an event is consumed by nobody either — that
+--- would be a line per ordinary keystroke at this tier.
+--- @param shortcuts table   per-event combo tables
+--- @param hooks table       per-event hook fns
+--- @param widget table      responds to widget[event](...) + is_shown()
+--- @param event string
+--- @param trigger string
+--- @return boolean consumed
 local function dispatch(shortcuts, hooks, widget, event, trigger, ...)
   local sc = find_shortcut(shortcuts[event], trigger)
   if sc and sc(...) then return true end
@@ -148,11 +147,10 @@ end
 --- @param k string
 --- @param sc string?
 --- @param isr boolean?
---- DEFERRED (doc/development/technical_debt/input.md, "Shortcuts
---- key-repeat semantics are shipped unsettled"): whether
---- shortcuts fire on
---- key-repeat is unruled; isrepeat is threaded to hooks only,
---- combos keep current behaviour. Do not design a mechanism.
+--- isrepeat reaches every consumer and dispatch does not gate on
+--- it (doc/development/decisions/input.md, Decision 22): a held
+--- combo fires each frame, and a binding that wants once per
+--- physical press wraps itself in compy.input.suppress_repeat.
 function ProjectInputController:keypressed(k, sc, isr)
   return self:_dispatch(
     'keypressed', k, k, Controller.held_keys(), isr)
