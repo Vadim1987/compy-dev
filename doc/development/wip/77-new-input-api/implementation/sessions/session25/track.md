@@ -366,6 +366,47 @@ lets expose the table"*.
   debt entry; the fix is to raise at registration, which also disposes of the
   bare-`*` question.
 
+### owner partially reverts on noop; and the design backs them on grammar
+
+- **Noop: RULED against the defaulting `__index`.** Owner's reason is better
+  than either of mine: a hook's nil-ness is *information*, and code that
+  installs/removes a handler conditionally on what another part installed
+  needs it. A defaulting `__index` deletes an introspection capability rather
+  than merely hiding a check. Explicit branches in `dispatch`, nil checks
+  kept. Side effect: the `seed_hooks` problem evaporates — nothing changes
+  there if nil keeps meaning unset.
+- Raised back: taken literally at the combo tier, the log is a **flood** — a
+  line per keystroke that is not a bound combo, 60/s under `love.DEBUG`.
+  `design.md:39` puts the default at tier 3 (the generic callback), not the
+  combo tier, and the useful signal is "the walk fell through entirely".
+  Recommended one log where `dispatch` returns false. Also noted `dispatch`'s
+  body is 11 lines against the 14 limit, so full if/elseif branches (+6) force
+  a split; one `if not sc then …` per tier fits.
+- **Grammar: the owner is right and the frozen design says so.**
+  `design.md:348`, salvage register: *"Combo format: modifier-first fixed
+  precedence …; registration normalised on assignment; **matcher = marked
+  extension seam**"*. What is ratified is the SERIALISATION. "Exactly one
+  trigger" is nowhere in it — it is a consequence of `combo_string` prepending
+  only modifiers. I had been describing an implementation choice as if the
+  design imposed it.
+  - Consequence: combo classes land **inside** the seam the design marked.
+  - The narrowing is still worth keeping, but on its merits: exact-lookup
+    dispatch is sound only because a combo names every modifier that matters
+    (`ctrl+s` deliberately does not fire with Alt held). Extend that to
+    ordinary keys and every binding becomes conditional on nothing else being
+    held — hold `a`, press `space`, and the `space` binding silently dies.
+    The alternative ("named keys held, others ignored") is a subset test, not
+    a lookup — `O(bindings)` per event. That IS the seam.
+- **Disclosure I owed on the earlier ruling:** `design.md:367` records a
+  provisional leaning of **fresh-only at combo tiers** — i.e. option A — as
+  **not ruled**, to "settle near implementation". So A was the design's own
+  leaning and I recommended it without knowing that, then dropped it without
+  knowing that either. Recorded in the isrepeat note: the decorator ruling
+  settles an open item rather than overturning a ratified one, the owner's
+  objections stand independently of the leaning, and its attached constraint
+  ("existing combos keep current behaviour unless explicitly altered") is
+  satisfied by an opt-in decorator.
+
 ### re-explaining the combo wildcard finding
 
 - Probed rather than asserted. The metatable of a combo table is **reachable**

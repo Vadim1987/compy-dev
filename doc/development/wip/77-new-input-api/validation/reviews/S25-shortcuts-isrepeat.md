@@ -152,6 +152,38 @@ a held combo's repeats would reach a shown widget, and a project would have to
 install a hook re-implementing combo matching to swallow specific combos while
 letting held-arrow navigation past. Strictly worse than the line it removes.
 
+### Disclosure: the frozen design leaned the other way, and I missed it
+
+Found after the ruling, while checking an unrelated question
+(2026-08-03). `design.md:367`, salvage register:
+
+> **Combo-tier repeat semantics**: provisional leaning (**fresh-only at combo
+> tiers**; `on_key_pressed` sees repeats) — **not ruled**; owner constraint:
+> existing combos keep current behaviour unless explicitly altered; settle
+> near implementation (doc A §9).
+
+So option A was not an invention of this session — it is the design's own
+provisional leaning, and the tier split I argued for is the one recorded
+there. Three things about that:
+
+1. It is **explicitly "not ruled"**, and parked to "settle near
+   implementation". This is that moment, so ruling it now is exactly on
+   process, not against it.
+2. The ruling for the decorator therefore does not overturn a ratified item.
+   It settles an open one, the other way from a leaning.
+3. The owner's two objections stand regardless of the leaning: the framework
+   cannot distinguish a command binding from a hold-to-act one, and a
+   tier rule leaves the same hand-written check in `hooks.keypressed`. A
+   leaning is not an argument.
+
+The constraint attached to it — *existing combos keep current behaviour unless
+explicitly altered* — is satisfied either way: the decorator is opt-in and
+changes nothing that is already registered.
+
+Flagged because a reviewer reading `design.md` will find the leaning, and the
+PR should not look as though it was unaware of it. If the owner wants to
+reconsider A in light of it, nothing here is built yet.
+
 ### Implementation plan — deferred, not started
 
 - **`compy.input.suppress_repeat(fn)`** — decorator. Returns a handler that,

@@ -70,7 +70,42 @@ lost, and it is a ratified acceptance criterion, not a taste.
   table — the leaf surface keeps answering nil to projects, dispatch resolves
   through a defaulting read.
 
-### Recommendation — CORRECTED 2026-08-03
+### RULED 2026-08-03 — explicit branches, not a defaulting `__index`
+
+> *"wiring noop into index masks the real behaviour and disables full class of
+> decisions based on whether hook was set or not … just adding three `else`
+> branches inside dispatch function (keeping its nil checks in place) would be
+> more transparent."*
+
+Accepted, and the reason given is stronger than either argument I had made:
+**a hook's nil-ness is information**, and code that installs or removes a
+handler conditionally on what another part already installed needs it. A
+defaulting `__index` does not merely hide the check, it deletes an
+introspection capability. It also disposes of the `seed_hooks` problem below —
+nothing changes there if `nil` keeps meaning unset.
+
+Shape: keep `if sc and sc(...)`, add the unhandled branch beside it.
+
+**One thing to settle before implementing: where the log goes, or it is a
+flood.** A "no shortcut for this combo" line fires on *every* keystroke that
+is not a bound combo — i.e. on ordinary typing, 60/s under `love.DEBUG`. That
+is not the "visible hint" the design asked for. Two observations:
+
+- `design.md:39` puts the default at **tier 3** (the per-event generic
+  callback, today `hooks[event]`), not at the combo tier. Logging only there is
+  closer to what was ratified.
+- The genuinely useful signal is *the walk fell through entirely* — nothing
+  consumed the event and no widget was shown. That is one log per truly
+  dropped event, and it is the case a project author is actually debugging.
+
+Recommendation: log once, where `dispatch` returns false, naming event and
+combo; optionally a second line at the hook tier. Not three logs.
+
+Also a size constraint worth knowing: `dispatch`'s body is 11 lines against
+the 14-line limit, so three full `if/elseif` branches (+6) do not fit and
+would force a split. One `if not sc then …` line per tier fits.
+
+### Recommendation — CORRECTED 2026-08-03 (superseded by the ruling above)
 
 The recommendation below was *"put the default in the dispatch view, keep the
 project-facing tables answering nil"*. Both halves were wrong, and the owner's
@@ -180,7 +215,59 @@ Why explicit rather than `__index`:
 - The noop default is genuinely a *default*, so `__index` is right for it.
   Different concern, different mechanism.
 
-## The grammar question: `a+b+*` cannot mean what it looks like
+## The grammar question — what was actually ratified
+
+The owner (2026-08-03): *"'A combo is modifiers plus exactly one trigger' —
+it never was my definition. i only ratified writing modifiers in the beginning
+of serialized string for predictable and readable ordering."*
+
+**They are right, and the frozen design says so.** `design.md:348`, the
+salvage register:
+
+> **Combo format**: modifier-first fixed precedence (ctrl, alt, shift, gui),
+> l/r folded, `+`-joined; registration normalised on assignment;
+> **matcher = marked extension seam**.
+
+What is ratified is the *serialisation*: ordering, folding, joining,
+normalise-on-assign. The **matcher is explicitly an extension seam** — the
+design anticipated it being extended. "Exactly one trigger" is nowhere in it;
+it is an implementation consequence of `combo_string` prepending only the four
+modifier classes.
+
+Two things follow. Combo classes (`ctrl+alt+*`) land *inside* the seam the
+design marked, rather than against the grain of it. And the single-trigger
+narrowing is a decision to defend on its merits, not an inherited constraint:
+
+### Why the narrowing is nonetheless worth keeping
+
+Not tradition — the exact-lookup matcher depends on it.
+
+Dispatch serialises the actual key state into one string and does one `O(1)`
+lookup. That is sound for modifiers because a combo names **every** modifier
+that matters: `ctrl+s` deliberately does *not* fire while Alt is also held.
+Extend the same rule to ordinary keys and every binding becomes conditional on
+nothing else being held — hold `a` for movement, press `space`, and the
+`space` binding silently stops firing because the combo is now `a+space`. That
+is a severe foot-gun, and it is the real reason non-modifiers stay out.
+
+The alternative — "a combo fires when the keys it names are held, other held
+keys ignored" — cannot be a serialise-and-look-up matcher at all. It is a
+subset test against every registered binding, i.e. `O(bindings)` per event or
+a new index. That is a different mechanism, which is precisely why the design
+called the matcher a seam.
+
+There is also an asymmetry that does not go away: modifiers are few, named,
+and held deliberately before the trigger. For two letters, `a+b` and `b+a`
+look symmetric and are not — the trigger is whichever arrived last. And
+multi-key chords are unreliable on hardware with limited n-key rollover,
+which matters for this device.
+
+**So:** keep the narrowing, but record it as a *decision with reasons* rather
+than an accident, and stop describing it as if the design imposed it. If
+multi-key chords are ever wanted, the honest route is the matcher seam and a
+subset test — not a wider serialisation.
+
+## `a+b+*` today: it does not mean what it looks like, and fails silently
 
 A combo is **modifiers plus exactly one trigger**. `combo_string` prepends only
 the four modifier classes; a held non-modifier key never enters the string.
