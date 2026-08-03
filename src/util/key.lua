@@ -80,10 +80,20 @@ end
 --- rest: 'ctrl+a+b' became 'ctrl+b', and 'a+b+*' became a bare
 --- '*' — the widest binding there is, from a string written to
 --- mean the narrowest.
+---
+--- A bare '*' is refused for a different reason: it satisfies
+--- the one-trigger rule but is the class of "no modifiers
+--- held", i.e. every unmodified key. That is what hooks[event]
+--- already is, by a spelling that reads like a narrow binding.
 --- @param combo string
 local function check_combo(combo)
-  local _, trigger, n = split_combo(combo)
-  if n == 1 then return end
+  local mods, trigger, n = split_combo(combo)
+  if n == 1 then
+    if trigger ~= '*' or next(mods) then return end
+    error("bad combo '*': a class needs modifiers to be a"
+      .. ' class of (e.g. alt+*); for every key, use'
+      .. ' compy.input.hooks', 4)
+  end
   local why = (n == 0) and 'names no trigger'
       or 'names more than one trigger'
   error("bad combo '" .. tostring(combo) .. "': " .. why

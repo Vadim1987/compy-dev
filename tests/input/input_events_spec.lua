@@ -350,6 +350,28 @@ describe('#input events dispatching', function()
         input.shortcuts.keypressed['ctrl+alt'] = function() end
       end)
     end)
+
+    -- A BARE class marker is refused, though it satisfies the
+    -- one-trigger rule. `'*'` with no modifiers is the class of
+    -- "no modifiers held": every unmodified key, which is
+    -- what a hook already is, arrived at by a spelling that
+    -- looks like a narrow binding. The shortcuts tier is for
+    -- naming a key; wanting every key means wanting the hook.
+    it('rejects a bare class marker', function()
+      local input = F.activate_project()
+      assert.has_error(function()
+        input.shortcuts.keypressed['*'] = function() end
+      end)
+    end)
+
+    -- The control: a class is legal the moment it has modifiers
+    -- to be a class OF, which is what the row above is not.
+    it('accepts a class with modifiers', function()
+      local input = F.activate_project()
+      assert.has_no.errors(function()
+        input.shortcuts.keypressed['shift+*'] = function() end
+      end)
+    end)
   end)
 
   -- A trailing '*' binds the whole modifier class

@@ -787,6 +787,14 @@ Alt chord. Dispatch tries the exact combo first and consults the class only on
 a miss, so an exact binding always wins. A class never matches when the
 trigger is itself a modifier.
 
+**A bare `*` raises** (owner ruling, 2026-08-03). It satisfies the one-trigger
+rule, and the empty modifier set is a class like any other, so it would bind
+every *unmodified* key — `q` yes, `ctrl+s` no, that being the `ctrl+*` class.
+But "every key on this channel" is exactly what `hooks[event]` is, and a
+second spelling for it that reads like a narrow binding is the kind of thing a
+reader has to be told about rather than can infer. A class needs modifiers to
+be a class *of*; the raise says so and names the hook as the alternative.
+
 **Why the rule is enforced rather than canonicalised.** The canonical form kept
 the *last* non-modifier token and dropped the rest, silently: `ctrl+a+b` was
 stored as `ctrl+b`, and `a+b+*` as a bare `*` — the widest binding there is,

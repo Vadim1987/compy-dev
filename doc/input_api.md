@@ -194,6 +194,9 @@ registered, Alt+P runs the exact one. A class is its modifier set exactly, so
 `'alt+*'` does not catch Ctrl+Alt+H, and it never fires for the modifier's own
 press.
 
+A bare `'*'` raises: a class needs modifiers to be a class *of*. For every key
+on a channel, use a hook — that is what hooks are.
+
 ```lua
 compy.input.shortcuts.keypressed['alt+*'] = function() return true end
 compy.input.shortcuts.keypressed['alt+p'] = function()

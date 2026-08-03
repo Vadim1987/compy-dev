@@ -570,25 +570,24 @@ question, not resolved here.
 - **Revisit:** when a project needs layout-independent positional keys.
 
 
-### A bare `*` shortcut is legal, and ruled that it should not be
+### A bare `*` shortcut is legal, and ruled that it should not be (RESOLVED, 2026-08-03)
 
-- **Where:** `src/util/key.lua`, `check_combo` — it accepts any combo naming
-  exactly one non-modifier token, and `*` is one.
-- **State (measured 2026-08-03):** `shortcuts.keypressed['*']` registers
-  without raising and catches every **unmodified** key — `q` fires it,
-  `ctrl+s` does not, since that belongs to the `ctrl+*` class. The behaviour
-  is coherent with Decision 21 (a class is its modifier set exactly, and the
-  empty set is a class), but it is undocumented and untested, and it
-  duplicates what a hook already expresses more plainly.
-- **Owner ruling (2026-08-03): it should raise.** Recorded here rather than
-  in `../decisions/input.md` because the tree does **not** do this yet — a
-  ratified entry describing behaviour the code lacks is the exact error this
-  phase spent a session undoing.
-- **Revisit:** now — it is a ruled, unimplemented change. `check_combo` gains
-  a case for "trigger is `*` with no modifiers", Decision 21 gains the
-  sentence, the guide gains it, and a row pins the raise. The session25 claim
-  that the multi-trigger raise "settles whether a bare `*` is legal" was
-  wrong: it permits it.
+- **Resolution:** `check_combo` (`src/util/key.lua`) now raises on a `*`
+  trigger with no modifiers, naming the alternative in the message ("for every
+  key, use `compy.input.hooks`"). Decision 21 and `doc/input_api.md` carry the
+  rule, and two rows pin it — the raise, and the control that `shift+*` is
+  still accepted, so the check cannot pass by rejecting classes generally.
+- **What it was (measured 2026-08-03):** `shortcuts.keypressed['*']`
+  registered without raising and caught every **unmodified** key — `q` fired
+  it, `ctrl+s` did not, that belonging to the `ctrl+*` class. Coherent with
+  Decision 21 (a class is its modifier set exactly, and the empty set is a
+  class), but undocumented, untested, and a second spelling for what a hook
+  already expresses.
+- The entry was kept here rather than in `../decisions/input.md` while it was
+  unimplemented, deliberately: a ratified entry describing behaviour the code
+  lacks is the exact error this phase spent a session undoing.
+- Corrected while closing: the session25 claim that the multi-trigger raise
+  "settles whether a bare `*` is legal" was wrong. It permitted it.
 
 
 ## Anticipated — revisit at the named point, close only if warranted
