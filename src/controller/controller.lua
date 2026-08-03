@@ -116,11 +116,16 @@ local function wrap(f, CC, ...)
     if not ok then
       on_error(r)
     end
-    -- `ok, r`, not bare `r`: the two branches used to answer in
-    -- different shapes, and every caller discarded the result
-    -- so nothing caught it. project_handler's wrapper reads the
-    -- pair, so they have to agree — and the @return above now
-    -- describes both.
+    -- `ok, r`, not bare `r`: this branch used to answer with a
+    -- lone value while the other answered xpcall's tuple, and
+    -- every caller discarded the result so nothing caught it.
+    -- What the branches now share is the FIRST TWO values,
+    -- which is all any caller reads (project_handler takes
+    -- `ok, res`, dropping `res` when `ok` is false). Tails still
+    -- differ and deliberately are not reconciled: xpcall
+    -- forwards every return of `f` where pcall is captured to
+    -- one here, and on failure xpcall yields `false, nil`
+    -- against this branch's `false, <error>`.
     return ok, r
   else
     return xpcall(f, on_error, ...)
