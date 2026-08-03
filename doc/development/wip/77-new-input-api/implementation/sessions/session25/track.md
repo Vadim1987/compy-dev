@@ -508,6 +508,49 @@ Three asks, all taken: a `bypass_repeat` sibling, `chord()` renamed, and
   claim.
 - Suite **896 → 903 / 0 / 0 / 3**.
 
+### owner settles the combinator set: compy.input.fn (2026-08-03)
+
+- Ruled: `fn.stop_here` (always_true), `fn.side_run` (always_false),
+  `fn.ignore_repeat`; `suppress_repeat` dropped, since
+  `stop_here + ignore_repeat` covers it. Named **in dispatch terms** — what
+  happens to the EVENT — because that is what a reader of a registration
+  table needs. `a9545fae`.
+- `side_run` is the owner's, and I had missed it. It completes the pair and
+  covers the "act on the side, claim nothing" shape, letting the event through
+  **even when the wrapped function returns truthy** — the declaration outranks
+  the handler, which is the point of declaring it at the site.
+- `suppress_repeat` was deleted rather than renamed. The measurement is why:
+  with a non-consuming handler the FRESH press fell through to the hook while
+  every repeat was consumed, so press 1 behaved differently from presses 2+.
+  Nothing should offer that.
+- Decisions 22 and 24 rewritten along the orthogonality seam — 22 is
+  invocation (does the handler run), 24 is propagation (where the event
+  goes). keyboard `032265d`, its local aliases gone.
+
+### PROCESS ERROR, mine, and its cleanup (2026-08-03)
+
+- I staged `git add -A src` instead of explicit paths. That committed
+  `src/STEPS.md` — the owner's untracked scratch — and turned the three
+  nested example repos into gitlinks. Both are exactly what the standing
+  rules forbid ("stage explicit paths, never a directory"; "never sweep the
+  owner's unrelated working-tree changes in").
+- First correction was a `git rm --cached` follow-up, leaving the bad commit
+  in the log because history is not mine to rewrite unasked. **Owner ruled to
+  squash it** — *"its literally your history in terms that you created it"* —
+  with an explicit precaution: back the detached repos up first.
+- Executed: the three nested repos copied to the session scratchpad and their
+  HEADs recorded before touching anything (`cc0dbd7` balloons, `eb90389`
+  keyboard, `d2ce7a0` maze), then `git reset --soft` over the three commits
+  and a re-commit from an index that already held the corrected tree. Proved
+  by tree hash rather than inspection: the rebuilt history's tree is
+  byte-identical to the pre-squash one, so the squash lost nothing.
+- Lesson for the rest of this phase: the guardrail exists because this tree
+  permanently carries owner scratch and three nested repos, so `add -A` is
+  never safe here, not even scoped to a subdirectory. Explicit paths, always.
+- Behavioural note: the owner's instinct on being told about a mistake was to
+  ask what could still be damaged by the *fix* (the detached repos), not to
+  dwell on the mistake.
+
 ### re-explaining the combo wildcard finding
 
 - Probed rather than asserted. The metatable of a combo table is **reachable**
