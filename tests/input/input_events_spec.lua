@@ -633,6 +633,20 @@ describe('#input events dispatching', function()
         assert.same({ 'q', true, false }, seen)
       end)
 
+    -- On its own it consumes a repeat too — but by RUNNING the
+    -- function again, which is the whole reason to compose the
+    -- two. A held ctrl+alt+up would ramp the notch every frame.
+    it('runs the function on every repeat', function()
+      local ran = 0
+      local input = F.activate_project()
+      input.shortcuts.keypressed['s'] =
+          input.always_true(function() ran = ran + 1 end)
+      F.session.press('s')
+      F.session.repeat_press('s')
+      F.session.repeat_press('s')
+      assert.equal(3, ran)
+    end)
+
     -- How a reserved binding is spelled: once per physical press,
     -- and never falling through. Neither wrapper knows about the
     -- other; they compose.
