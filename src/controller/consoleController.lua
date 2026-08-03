@@ -230,25 +230,13 @@ function ConsoleController:loadfile(name)
   return chunk
 end
 
---- Wrap `f` with errhand if passed, and set target canvas
---- @param f function
---- @param errhand function?
---- @return function wrapped_handler
-function ConsoleController:wrap_handler(f, errhand)
-  local eh = errhand or identity
-  return function(...)
-    local args = { ... }
-    self:use_canvas(
-      function()
-        return eh(f, self, unpack(args))
-      end
-    )
-  end
-end
-
--- (get_compy_handler removed: its only callers resolved
--- compy.singleclick / compy.doubleclick, which are now ordinary
--- hooks reached through the dispatch chain.)
+-- (wrap_handler and get_compy_handler removed together: both
+-- existed for compy.singleclick / compy.doubleclick, which are
+-- now ordinary events reached through the dispatch chain. The
+-- one surviving way to run project code — canvas bound, errors
+-- routed, return propagated — is `guarded` in controller.lua,
+-- applied where a route is entered. wrap_handler differed from
+-- it only by discarding the return, which nothing needed.)
 
 --- @param name string?
 function ConsoleController:run_project(name)

@@ -171,8 +171,10 @@ action; revisit at the named point).
   genuine obstacle was that the two paths had *different error handling*, one
   of which was broken — see the arity entry above, fixed first so the
   collapse could be behaviour-preserving rather than a fix in disguise.
-- `CC:wrap_handler` survives for the compy single/double click handlers,
-  which are not project `love.*` handlers and keep their own path.
+- `CC:wrap_handler` survived this step for the compy single/double click
+  handlers, then went with them when the clicks became ordinary events
+  (Decision 25). Nothing wraps project code any other way now: `guarded`
+  (`controller.lua`), applied where a route is entered, is the only one.
 - **Verified behaviour-preserving:** suite 911/0/0/3 across the change, and
   the pointer path now propagates a return value that both `love.handlers`
   and the poll loop discard.
