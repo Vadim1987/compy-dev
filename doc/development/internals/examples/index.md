@@ -19,10 +19,10 @@ the terminal via `print`.
 | [clock](clock.md) | Animated digital clock with randomised color cycling | real-time `love.draw` + `love.update` | keyboard (`love.keyreleased`) |
 | [guess](guess.md) | Number guessing game with per-character validation | terminal only (no drawing) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
 | [life](life.md) | Conway's Game of Life with mouse and keyboard controls | real-time `love.draw` + `love.update` | `love.keypressed`, `love.mousepressed` |
-| [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.singleclick`, `love.mousemoved`, `love.keypressed` |
+| [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.input.hooks.singleclick`, `love.mousemoved`, `love.keypressed` |
 | [pong](pong.md) | Full Pong game with AI opponent and fixed-timestep physics | real-time `love.draw` + `love.update` | keyboard + mouse; selectable AI strategy |
 | [repl](repl.md) | Minimal input loop — prints each submitted line back; does not evaluate it | terminal only (no drawing) | `compy.input.show{}` continuous session |
-| [sapper](sapper.md) | Minesweeper (pen-and-paper) with click-driven board | pen-and-paper | `compy.singleclick`, `compy.doubleclick`, `love.mousepressed` |
+| [sapper](sapper.md) | Minesweeper (pen-and-paper) with click-driven board | pen-and-paper | `compy.input.hooks.singleclick`, `compy.input.hooks.doubleclick`, `love.mousepressed` |
 | [sine](sine.md) | One-shot sine wave plot drawn at init, no update loop | pen-and-paper (init only) | none |
 | [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `compy.input.show{ highlighter = LuaHighlighter, validator = LuaSyntaxValidator }` |
 | [turtle](turtle.md) | Turtle-graphics interpreter driven by typed commands | real-time `love.draw`, draws trails | `compy.input.show{}` one-shot (on `i`) + `love.keypressed` |

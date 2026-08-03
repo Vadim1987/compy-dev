@@ -8,7 +8,7 @@ reviewed: none
 
 # User Input — Implementation Overview
 
-Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget shared across console, editor, and project overlays) and **mouse/pointer input** (handled partly by the framework, partly delegated to projects). This doc covers both, with mode-specific notes where the behavior differs.
+Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget shared across console, editor, and project overlays) and **mouse/pointer input** (mouse/touch channels a project can hook, plus mouse interaction with the input widget itself). Both now run through the same project-route dispatch chain (`ProjectInputController`, "Keyboard Handling" below) while a project runs; pointer channels differ only in having no shortcuts tier and no combo trigger (see "Mouse Input" below). This doc covers both, with mode-specific notes where the behavior differs.
 
 For the project-facing usage guide (examples, the `show()` config table, the submit lifecycle from a project author's point of view), see [Compy Input API](../../input_api.md). This doc is the "how it works under the hood" narrative — routing, the dispatch chain, and the mechanism behind each guarantee. For the two-layer `love.handlers.*` vs `love.<event>` wiring underneath the gateway (§"Dispatch chain" below), see [Event Dispatch Layers](event_dispatch_layers.md).
 
@@ -182,7 +182,32 @@ Global shortcuts intercepted in `love.handlers.keypressed` (`controller.lua:797+
 
 The gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The active route's controller always receives the event. The project route runs the three-consumer walk above: the project's captured `love.*` handler auto-provisions as the seeded hook (once, at activation — seen even while the widget is shown, only when the project set no explicit `hooks[event]`; an explicit hook always wins), and the widget is the terminal consumer with its hidden-check *internal* (`is_shown()` reads a strictly-internal `self.shown` flag; the widget no-ops while hidden, so a hidden widget mutates nothing without any external gate). The console-route default handlers still forward to the widget when `love.state.user_input` is set (except under `inspect`). The widget is never a routing destination of the gateway and never the active route. `Controller._keyboard_route` records which controller is the active route (the `ConsoleController` by default, the `ProjectInputController` during a run) — bookkeeping with no reader beyond its own two assignment sites (`controller.lua:209`, `:434`) today.
 
-**On the `'running'` → `'project_open'` boundary, the project route is disconnected only when the project has no interaction surface left — an interactive non-blocking project keeps it.** A non-blocking project that returns (no `update`/`draw` hooked) drops `app_state` to `'project_open'`; `ConsoleController:run_project` then checks `Controller.user_is_interactive()` (`controller.lua:1112-1113`: `love.state.user_input ~= nil or user_pointer`, the latter set in `hook_pointer` when the project installs any pointer/click handler and reset in `set_default_handlers`). Only when that predicate is false does `run_project` call `Controller.release_keyboard_route(CC)` (`controller.lua:730-735`, `consoleController.lua:266-267`), which calls `Controller.project_input:deactivate()` and **reinstalls the console's own `love.keypressed`/`keyreleased`/`textinput`** — the same handler-reassignment `set_default_handlers` does on project stop, just scoped to the keyboard/text handlers (pointer handlers stay hooked either way, so pen-and-paper projects remain clickable while `'project_open'`). A project with an active input overlay or a hooked pointer handler instead keeps the project route live: `ProjectInputController` stays the keyboard/text occupant, so the overlay's submit/cancel keep working and `love.quit` (`controller.lua:752-754`) treats `'project_open'` + `user_is_interactive()` the same as `'running'`, stopping to console on Ctrl+Esc rather than letting the app quit. `ProjectInputController` itself has no per-event "am I still running?" forward any more — its own `:keypressed` doc comment (`projectInputController.lua:205-213`) is explicit that this older guard is gone precisely *because* the handlers are only ever restored when the route is actually released, so there is nothing left to guard against.
+**The `'running'` → `'project_open'` boundary no longer disconnects the project route at all —
+every channel it occupies (keyboard, text, and pointer alike) now has one lifetime, released only
+at the project's stop.** A non-blocking project that returns (no `update`/`draw` hooked) still
+drops `app_state` to `'project_open'`, but `ConsoleController:run_project` releases nothing at
+that transition (`consoleController.lua:300-311`): `occupy_keyboard` (`controller.lua:236-268`)
+installed keyboard, text, pointer, and derived-click handlers together at run start, and
+`ProjectInputController` keeps occupying all of them — the overlay's submit/cancel and any
+pointer hook keep working — until `stop_project_run` reinstalls the console's own handlers
+(`consoleController.lua:1276-1289`, via `set_default_handlers`). The asymmetric design this
+replaced — keyboard released at `running` → `project_open` while pointer stayed hooked so a
+pen-and-paper project remained clickable — was this feature's own addition and has been retired
+along with the asymmetry itself; nothing was released before stop at the pre-feature baseline
+either (`controller.lua:42-52`, "Two lists, one lifetime"). `Controller.release_keyboard_route`
+still exists, but its sole remaining call site is defensive cleanup on a project's top-level crash
+(`consoleController.lua:286`, `run_project`'s failure branch) — `occupy_keyboard` never ran in
+that case (it is only reached after a successful top-level run), so there is nothing to actually
+disconnect; it is not a normal lifecycle step any more. `Controller.user_is_interactive()`
+(`controller.lua:1165-1166`: `love.state.user_input ~= nil or user_pointer`, the latter set in
+`hook_pointer` when the project installs any pointer/click handler and reset in
+`set_default_handlers`) still gates one thing, unchanged: `love.quit` (`controller.lua:790-821`)
+treats `'project_open'` + `user_is_interactive()` the same as `'running'`, stopping to console on
+Ctrl+Esc rather than letting the app quit — an idle console reached via `'project_open'` with
+neither an overlay nor a pointer hook falls through, and the app really quits.
+`ProjectInputController` itself still has no per-event "am I still running?" forward: the route is
+unreachable the moment `stop_project_run` re-points `love.keypressed` etc. back at the console, so
+there is nothing left to guard against between events.
 
 **`inspect` mode overrides all of the above.** While `app_state == 'inspect'` (a paused/broken-into project), the console REPL owns every input channel and a project-set overlay is not honoured, regardless of the routing described above. The mechanism: `get_user_input()` (`controller.lua:21-24`) unconditionally returns `nil` while `app_state == 'inspect'`, so every `forward_*` call in this section reports "no widget" and every `love.handlers.*` entry point falls back to the console's own default handler — because `ConsoleController:suspend()` (`consoleController.lua:919-936`) physically swaps `love.keypressed`/`textinput`/`draw`/`update` back to the console's own functions via `set_default_handlers`, not merely short-circuiting them. The console additionally runs the *paused project's own* environment while inspecting: `get_effective_env()`/`evaluate_input()` select `project_env` (not the console env) when `app_state == 'inspect'`, so REPL input mutates the paused project's globals — a live debugger console, not a separate idle console. This behaviour is carried as characterized status quo, not a ratified contract — its shape under a future console/editor migration is an open call for the owner, not settled here.
 
@@ -277,10 +302,13 @@ Historically, while `love.state.user_input` was set, `controller.lua`'s
 `love.keypressed`/`love.textinput` were not called at all (binary, not partial). With the gate
 removed, project key/text events always reach the project route (`ProjectInputController`); which
 surface consumes them (the overlay widget while shown, the project's handler — seeded as a
-hook — while hidden) is the route's internal delegation, no longer a gateway drop. Mouse never had this problem:
-`handlers.mousepressed`/`mousereleased` call the overlay conditionally but call the project's own
-handler **unconditionally**, regardless of overlay state. This is why touch/mouse needed no
-separate scope item: only keyboard was ever exclusively gated.
+hook — while hidden) is the route's internal delegation, no longer a gateway drop. Mouse had no
+such gate to begin with: at the time, `handlers.mousepressed`/`mousereleased` called the overlay
+conditionally but called the project's own handler **unconditionally**, regardless of overlay
+state — which is why touch/mouse needed no separate FR-6 scope item; only keyboard was ever
+exclusively gated. That mouse-specific shape is itself now retired: pointer channels (mouse and
+touch alike) have since been folded into this very same project-route dispatch chain as
+keyboard/text — see "Mouse Input" below for the current routing and what changed.
 
 ### Editor-specific keys
 
@@ -430,24 +458,67 @@ newly adopted mode before replacing its current handler.
 
 ## Mouse Input
 
+### Unified dispatch
+
+Pointer events — `mousepressed`, `mousereleased`, `mousemoved`, `wheelmoved`, `touchpressed`,
+`touchreleased`, `touchmoved` — now run through the very same project-route dispatch chain as
+keyboard/text (`ProjectInputController`, "Keyboard Handling" above), not a broadcast. Previously
+the gateway (`controller.lua`) called the overlay widget unconditionally when present, then called
+the project's own handler unconditionally as well — neither delivery order nor consumption could
+be affected by the other, and nothing could stop the other from also seeing the event. Now the
+project's *hook* runs first; the widget is the walk's terminal consumer, reached only if nothing
+upstream consumed the event — so a pointer hook returning truthy now stops the widget from ever
+seeing that event, the reverse of the old always-both delivery.
+
+Pointer channels enter the walk one tier in, at the hook: there is no shortcuts tier and no combo
+trigger for pointer (`find_shortcut` answers `nil` for a missing combo table,
+`projectInputController.lua:81-88`) — a project cannot register
+`compy.input.shortcuts.mousepressed[...]`, only `compy.input.hooks.mousepressed` (and the other
+pointer events). A project's own `love.mousepressed` (etc.), if defined, is auto-seeded as that
+event's hook exactly like keyboard/text (see "Keyboard Handling" above; the seeding itself is
+generic over all of `_supported`, `controller.lua:211-217`); an explicit `compy.input.hooks.<event>`
+write still wins over the seed.
+
+Pointer payloads are exactly LÖVE's own arguments, unchanged — unlike keyboard/text, no held-key
+view is appended (`projectInputController.lua:30-39`); a project reads held modifier state via
+`compy.input.keys_pressed` instead, same as any pointer handler always could via
+`Key.ctrl()`/`Key.shift()`.
+
 ### Framework-level click handling
 
-The framework implements single/double click detection in `love.handlers.mousereleased` (controller.lua:662+). On each mouse release:
-1. `click_count` is incremented, `click_timer` is set to 0.4s
-2. On the next `love.update()`, if `click_timer` has expired:
-   - `click_count == 1`: single click confirmed — calls `compy.singleclick(x, y)` if defined
-   - `click_count >= 2`: double click — calls `compy.doubleclick(x, y)` if defined
-3. A drift tolerance of 2.5px is applied: if the mouse moved more than that between press and release, the click is suppressed
+Single/double click detection still lives entirely in the framework's own click timer
+(`controller.lua`'s `set_love_update`), not in a project. On each mouse release of button 1,
+`click_count` increments and `click_timer` (re)arms to 0.4s (`controller.lua:1075-1084`); a drift
+tolerance of 2.5px between press and release position suppresses the click. When `click_timer`
+next expires (`controller.lua:685-704`): `click_count == 1` synthesises a single click,
+`click_count >= 2` a double — and the timer **emits the derived event through the gateway like a
+native one**, `love.handlers.singleclick(x, y)` / `love.handlers.doubleclick(x, y)`
+(`controller.lua:700`). From there it runs the same route as every other pointer channel above.
 
-`compy.singleclick` and `compy.doubleclick` are looked up in `env['compy']` — the project's `compy` table. They are not LÖVE2D events; they are Compy-specific abstractions. Projects define them as `function compy.singleclick(x, y) ... end`.
+`compy.singleclick` and `compy.doubleclick` — fields on the project's `compy` table that the old
+framework code looked up and called directly — are **REMOVED**. Single/double clicks are ordinary
+events now: a project reaches them as `compy.input.hooks.singleclick` /
+`compy.input.hooks.doubleclick`, through the identical dispatch chain as every other pointer
+channel (`projectInputController.lua:203-213`). One difference from every other channel:
+`singleclick`/`doubleclick` are never auto-seeded from a project's own handler, because there is
+no native `love.singleclick`/`love.doubleclick` for a project to have defined in the first place —
+the framework's `_derived` list is deliberately excluded from the auto-seed pass
+(`controller.lua:70-79`) — so a project must assign `compy.input.hooks.singleclick = fn` (etc.)
+explicitly to receive it.
 
 The 0.4s delay means single clicks are always confirmed after a short wait — there is no "instant single click" path. This is a deliberate tradeoff for double-click detection consistency.
 
 ### Direct mouse events
 
-`love.mousepressed`, `love.mousereleased`, `love.mousemoved`, `love.wheelmoved` are also forwarded directly to project-defined handlers via the standard LÖVE2D mechanism (projects set `love.mousepressed = function(...) end`). These go through `wrap_handler` (error catching + canvas routing) if set by the project.
-
-The framework's own `mousepressed`/`mousereleased` handlers (in `love.handlers`) call the user handler AND the overlay controller if present — both get the event.
+`love.mousepressed`, `love.mousereleased`, `love.mousemoved`, `love.wheelmoved` still reach a
+project the same way syntactically (projects set `love.mousepressed = function(...) end`), but the
+mechanism underneath is the one described in "Unified dispatch" above, not a direct forward: an
+unset `compy.input.hooks.<event>` is seeded from this function once at project activation, then
+the seeded hook runs as an ordinary dispatch-chain participant — truthy consumes, falsy falls
+through toward the widget. Error catching and canvas routing are no longer applied per handler:
+`guarded` (`controller.lua`) wraps the point where the route is *entered*, so the whole walk —
+shortcuts, hooks and widget alike — runs with the project canvas bound and one error handler above
+it. (`ConsoleController:wrap_handler`, which used to do this per handler, is gone.)
 
 ### Input widget mouse
 
@@ -460,7 +531,12 @@ Mouse events on the input widget are only processed when `disable_selection` is 
 
 ### Touch
 
-Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with `-- TODO` in `UserInputController`. The framework's `love.handlers` forwards touch events to project handlers if defined.
+Touch handlers (`touchpressed`, `touchreleased`, `touchmoved`) are stubbed with `-- TODO` in
+`UserInputController` (no-op bodies) — but touch runs through the same project-route dispatch
+chain as every other pointer channel ("Unified dispatch" above): a project's own `love.touchpressed`
+(etc.), if defined, is seeded as `compy.input.hooks.touchpressed` exactly like mouse, and the widget
+still counts as consuming the event whenever it is shown (the shown-widget rule applies uniformly,
+regardless of what the stub body does).
 
 ---
 

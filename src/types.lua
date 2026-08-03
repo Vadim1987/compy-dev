@@ -189,9 +189,70 @@
 --- @field n_rows integer
 --- @field fpsc FPSC
 
---- @class Compy
+--- @class InputShowConfig table
+--- @field prompt string?
+--- @field text str?
+--- @field cursor integer[]?
+--- @field force boolean?
+--- @field validator function?
+--- @field highlighter function?
+--- @field on_text_entered function?
+--- @field on_limit_reached function?
+
+--- @class InputCallbacks table
+--- @field on_text_entered function?
+--- @field on_limit_reached function?
+--- @field validator function?
+--- @field highlighter function?
+--- @field before_submit function?
+--- @field after_submit function?
+--- @field before_cancel function?
+--- @field after_cancel function?
+
+--- @class InputShortcuts table
+--- @field keypressed table
+--- @field keyreleased table
+--- @field textinput table
+
+--- @class InputHooks table
+--- @field keypressed function?
+--- @field keyreleased function?
+--- @field textinput function?
+--- @field mousepressed function?
+--- @field mousereleased function?
+--- @field mousemoved function?
+--- @field wheelmoved function?
+--- @field touchpressed function?
+--- @field touchreleased function?
+--- @field touchmoved function?
 --- @field singleclick function?
 --- @field doubleclick function?
+
+--- @class InputFn table
+--- @field ignore_repeat function
+--- @field stop_here function
+--- @field side_run function
+
+--- @class CompyInput table
+--- @field show fun(cfg: InputShowConfig?)
+--- @field hide fun()
+--- @field is_shown fun(): boolean
+--- @field get_cursor fun(): integer?, integer?
+--- @field set_cursor fun(line: integer, col: integer)
+--- @field set_text fun(text: str, keep_cursor: boolean?)
+--- configure takes InputShowConfig minus `force`, which answers
+--- a show-only question; passing it raises.
+--- @field configure fun(cfg: InputShowConfig?)
+--- @field clear fun()
+--- @field shortcuts InputShortcuts
+--- @field hooks InputHooks
+--- @field callbacks InputCallbacks
+--- @field fn InputFn
+--- @field keys_pressed table
+
+--- @class Compy
+--- @field input CompyInput
+--- @field before_exit function
 --- @field terminal table?
 --- @field audio table?
 --- @field font table?

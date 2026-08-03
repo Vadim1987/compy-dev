@@ -6,7 +6,7 @@
 
 ## Architecture
 
-Single large file (~700 lines). No `love.draw` or `love.update` override. All game logic runs in `compy.singleclick` / `compy.doubleclick` handlers and `love.mousepressed` (for modifier-key variants). The terminal output is never used.
+Single large file (~700 lines). No `love.draw` or `love.update` override. All game logic runs in `compy.input.hooks.singleclick` / `compy.input.hooks.doubleclick` handlers and `love.mousepressed` (for modifier-key variants). The terminal output is never used.
 
 ## Draw model
 
@@ -34,7 +34,7 @@ end
 
 ## Click handling
 
-`compy.singleclick` → flag cell. `compy.doubleclick` → unlock cell (or restart if game over). `love.mousepressed` → same actions when shift/ctrl held (alternative input for touch devices without double-click).
+`compy.input.hooks.singleclick` → flag cell. `compy.input.hooks.doubleclick` → unlock cell (or restart if game over). `love.mousepressed` → same actions when shift/ctrl held (alternative input for touch devices without double-click).
 
 Mine placement uses probabilistic streaming: iterate all mineable positions once, at each position place a mine with probability `mines_remaining / cells_remaining`. No shuffle needed.
 

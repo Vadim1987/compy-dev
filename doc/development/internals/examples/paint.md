@@ -6,7 +6,7 @@
 
 ## Architecture
 
-Single-file. Overrides `love.draw`, `love.mousemoved`, `love.keypressed`. Uses `compy.singleclick` and `compy.doubleclick` (left click = primary color, right click = background color). Real-time draw mode for the UI; drawing to the canvas is immediate (pen-and-paper within a sub-canvas).
+Single-file. Overrides `love.draw`, `love.mousemoved`, `love.keypressed`. Uses `compy.input.hooks.singleclick` and `compy.input.hooks.doubleclick` (left click = primary color, right click = background color). Real-time draw mode for the UI; drawing to the canvas is immediate (pen-and-paper within a sub-canvas).
 
 ## Canvas strategy
 
@@ -24,8 +24,8 @@ Brush and eraser icons are drawn with `gfx.push()`/`gfx.pop()`, `gfx.translate()
 
 ## Points of attention
 
-- `compy.singleclick` is for discrete color selection / tool selection. `love.mousemoved` handles continuous paint strokes (checks `love.mouse.isDown` to require held button).
-- Right-click (`btn == 2`) sets background color in the palette and paints with background color on canvas — the `compy.doubleclick` is mapped here rather than a true double-click.
+- `compy.input.hooks.singleclick` is for discrete color selection / tool selection. `love.mousemoved` handles continuous paint strokes (checks `love.mouse.isDown` to require held button).
+- Right-click (`btn == 2`) sets background color in the palette and paints with background color on canvas — the `compy.input.hooks.doubleclick` is mapped here rather than a true double-click.
 - The `goose` color (a teal `{0.303, 0.431, 0.431}`) used for the weight selector highlight is a named constant for historical/whimsical reasons.
 
 ## Files
