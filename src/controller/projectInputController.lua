@@ -88,8 +88,8 @@ end
 --- (doc/development/decisions/input.md, Decision 23): whether a
 --- hook is set is information a project reads, so an unset one
 --- stays nil rather than defaulting to a callable noop. Nothing
---- is logged when an event is consumed by nobody either — at this
---- tier that is a line per ordinary keystroke.
+--- is logged when an event is consumed by nobody either — that
+--- is a line per ordinary keystroke at this tier.
 local function dispatch(shortcuts, hooks, widget, event, trigger, ...)
   local sc = find_shortcut(shortcuts[event], trigger)
   if sc and sc(...) then return true end
