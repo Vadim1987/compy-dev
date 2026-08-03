@@ -24,41 +24,6 @@ local get_user_input = function()
 end
 
 
---- Intra-route forward: the console route hands the event
---- to the widget it activated (nil under 'inspect' — the
---- console owns that surface itself). The widget receives the
---- uniform per-channel signature with the read-only
---- pressed-keys view (doc/development/decisions/input.md, Decision 9 and
---- Decision 13). Returns whether the
---- widget was the surface (true = forwarded), so the caller
---- falls back to the console line only when no widget is up.
---- @param k string
---- @param isr boolean?
---- @return boolean forwarded
-local function forward_keypressed(k, isr)
-  local ui = get_user_input()
-  if not ui then return false end
-  ui.C:keypressed(k, Controller.held_keys(), isr)
-  return true
-end
-
---- @param t string
---- @return boolean forwarded
-local function forward_textinput(t)
-  local ui = get_user_input()
-  if not ui then return false end
-  ui.C:textinput(t, Controller.held_keys())
-  return true
-end
-
---- @param k string
---- @return boolean forwarded
-local function forward_keyreleased(k)
-  local ui = get_user_input()
-  if not ui then return false end
-  ui.C:keyreleased(k, Controller.held_keys())
-  return true
-end
 --- @type boolean
 local user_update
 --- @type boolean
@@ -139,11 +104,13 @@ local function wrap(f, CC, ...)
   end
 end
 
---- NAMING — disputed, not re-approved. The rename of `*_native`,
---- `userlove` and `forward_*` is deferred to just before the PR
+--- NAMING — disputed, not re-approved. The rename of `*_native`
+--- and `userlove` is deferred to just before the PR
 --- (owner, 2026-07-31); candidates on the table are
---- `wrap_project_handler` / `chain_project_handler`, `project_love`,
---- `to_widget_*`. Why two wrappers and not one with a flag:
+--- `wrap_project_handler` / `chain_project_handler`.
+--- (`forward_*` left this list by deletion, not rename — the
+--- console-route widget gate it implemented is gone.)
+--- Why two wrappers and not one with a flag:
 --- `wrapped_native` rides on `CC:wrap_handler`, shared with the
 --- compy click handlers, which discards the return by construction —
 --- and a chain participant's return IS its consume signal, so
@@ -239,7 +206,7 @@ end
 -- "route-centric routing" + #11 "route connects only while
 -- running". It installs even with no project handlers: an
 -- unhandled event must stop in the project route, never reach the
--- hidden console. (`userlove`/`forward_*` renames: technical_debt.)
+-- hidden console. (`userlove` rename: technical_debt.)
 local function occupy_keyboard(userlove, CC)
   local pic = Controller.project_input
   local compy = CC:get_project_env().compy
@@ -482,13 +449,12 @@ Controller = {
           end
         end
       end
-      -- `forward_keypressed` routes to the active keyboard route
-      -- (e.g. the editor fork) and returns whether it consumed;
-      -- on consume we stop. Two-statement (not `or`-chained) form
-      -- is deliberate: this is the terminal love-boundary, so the
-      -- return is not propagated (LÖVE ignores handler returns).
-      -- `forward_*` rename tracked in doc/development/technical_debt/input.md.
-      if forward_keypressed(k, isr) then return end
+      -- Straight to the console, with no widget test in front of
+      -- it: widget visibility is state on the widget, never a
+      -- routing condition (doc/development/decisions/input.md,
+      -- Decision 1). A project overlay is reached inside the
+      -- PROJECT route's chain, and the console never holds the
+      -- slot while one is up.
       CC:keypressed(k)
     end
     Controller._defaults.keypressed = keypressed
@@ -502,10 +468,9 @@ Controller = {
     -- boundary, return not propagated). CC is the console — the
     -- named default/restore route (doc/development/decisions/input.md #1); not
     -- "special", just the default occupant. Per-event installer
-    -- repetition + `forward_*` naming logged in technical_debt.
+    -- repetition logged in technical_debt.
     --- @diagnostic disable-next-line: duplicate-set-field
     local function keyreleased(k)
-      if forward_keyreleased(k) then return end
       CC:keyreleased(k)
     end
     Controller._defaults.keyreleased = keyreleased
@@ -518,7 +483,6 @@ Controller = {
     -- Same wrapper shape (see keypressed/keyreleased above);
     -- naming + table-driven install logged in technical_debt.
     local function textinput(t)
-      if forward_textinput(t) then return end
       CC:textinput(t)
     end
     Controller._defaults.textinput = textinput

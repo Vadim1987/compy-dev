@@ -49,7 +49,7 @@ The "keypressed = control channel, textinput = character channel" split used thr
 
 `isrepeat` is threaded through the gateway and the project route, but not uniformly all the way to every consumer. LÖVE calls `love.handlers.keypressed` with `(key, scancode, isrepeat)`; the gateway (`controller.lua:797`) keeps all three and calls `love.keypressed(k, sc, isr)` unconditionally (`controller.lua:899-900`). From there:
 - while a project runs, the project route's `love.keypressed` is `ProjectInputController:keypressed(k, sc, isr)` (`controller.lua:141-144`), which threads `isr` through the dispatch walk, widget included (`projectInputController.lua:74-86`) — both `compy.input.hooks.keypressed` and the widget receive the uniform `(k, keys_pressed, isrepeat)` triple;
-- in console/editor mode the route's default handler keeps `isr` only to forward it to a shown widget (`forward_keypressed`, `controller.lua:41-46`, called from the console-route default keypressed at `controller.lua:447-491`) — a widget being edited sees repeats; but the fallback call `CC:keypressed(k)` (and, from there, `EditorController:keypressed(k)`) drops it, so console/editor's own mode dispatch never sees `isrepeat`.
+- in console/editor mode the route's default handler accepts `isr` and drops it: the only call it makes is `CC:keypressed(k)` (and, from there, `EditorController:keypressed(k)`), so console/editor's own mode dispatch never sees `isrepeat`. The console route has no widget step to thread it to — see "Keyboard Handling".
 Shortcuts dispatch (the `compy.input.shortcuts` combo tables) does not gate on `isrepeat` either — see "Key state" below.
 
 ### Multiline input
@@ -498,10 +498,10 @@ existing text is preserved. No cancel sequence fires in either case.
 While a project runs, `compy.input.show(config)`/etc. drive the *same* widget instance and the
 *same* routing already described under "Keyboard Handling" above — there is no separate "instead
 of the main controller" special case any more. In short: the gateway always calls the active
-route's occupant; the console/editor route's default handler additionally forwards to the
-widget (`forward_keypressed`/`forward_textinput`/`forward_keyreleased`) whenever
-`love.state.user_input` is set (except under `inspect`); the project route always reaches the
-widget as its walk's terminal consumer. The overlay view is drawn via `user_input.V:draw()` inside
+route's occupant; the console/editor route's default handler goes straight to its own surface
+(the console line, or the editor fork) with no widget test in front of it — widget visibility is
+state on the widget, never a routing condition (`../decisions/input.md`, Decision 1); the project
+route always reaches the widget as its walk's terminal consumer. The overlay view is drawn via `user_input.V:draw()` inside
 the framework's `love.update` wrapping of the project draw function (`controller.lua`,
 `set_love_update`).
 

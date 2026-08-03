@@ -235,15 +235,26 @@ question, not resolved here.
   the widget's own flag so it cannot drift from the one the dispatch walk
   reads. Used by `examples/turtle` for its open-only-if-closed guard.
 
-### On the console route, a hidden widget's input falls to the console line
+### On the console route, a hidden widget's input falls to the console line (RESOLVED, 2026-08-03)
 
-- **Where:** `src/controller/controller.lua` — `forward_keypressed` /
-  `forward_textinput` / `forward_keyreleased` hand the event to the widget
-  only while `love.state.user_input` is set, which `hide()` clears; the
-  console-route defaults then fall back to `CC:keypressed` / `CC:textinput`,
-  i.e. the console command line. Pinned by
-  `tests/input/input_widget_lifecycle_spec.lua`, "a hidden widget does not
-  consume" (marked `#disputable`).
+- **Resolution:** settled by construction — the console route no longer has a
+  widget step at all. The three `forward_*` functions that implemented it were
+  deleted, so every keyboard/text event on that route goes to `CC:keypressed` /
+  `CC:textinput` (the console line, or the editor fork), hidden widget or
+  shown. Decision 1's "widget visibility is never a routing condition" now
+  holds on both routes. The two routes still read differently — the project
+  route ends an unclaimed event in the chain, the console route ends it in its
+  own input surface — but that is each route's own terminal, not two answers
+  to one question.
+- **Left over:** the rows in `tests/input/input_widget_lifecycle_spec.lua`
+  ("a hidden widget does not consume", `#disputable`) still pass, but no
+  longer discriminate: with no widget step on the console route, a *shown*
+  widget would behave the same as a hidden one there. Re-siting them on the
+  project route is a live question — see the fixture-fidelity note below.
+- **Where it was:** `src/controller/controller.lua` — `forward_keypressed` /
+  `forward_textinput` / `forward_keyreleased` handed the event to the widget
+  only while `love.state.user_input` was set, which `hide()` clears; the
+  console-route defaults then fell back to `CC:keypressed` / `CC:textinput`.
 - **Why it stands:** The general principle — *input the widget declined
   should have no effect* — was ruled for the **project** route only:
   Decision 11 ("Changed baseline behaviour", `../decisions/input.md`) gives
@@ -775,19 +786,31 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When this handler is next touched — lift the debug toggles
   onto the combo-table mechanism (Decision 8), or a `toggle_debug(k)` helper.
 
-### `forward_*` / `userlove` names do not convey their semantics
+### `userlove` does not convey its semantics
 
-- **Where:** `src/controller/controller.lua` — `forward_keypressed` /
-  `forward_keyreleased` / `forward_textinput`, and the `userlove` parameter
-  threaded through `occupy_keyboard` / `set_handlers`.
-- **State:** `forward_*` reads as "forward where/why?" (it routes to the
-  currently-active keyboard route and returns whether that route consumed);
-  `userlove` is the project's sandboxed `love` table. Both are correct but
-  under-named — the reason this rename remains recorded here.
+- **Where:** `src/controller/controller.lua` — the `userlove` parameter
+  threaded through `wrapped_native` / `keyboard_native` / `project_handlers` /
+  `occupy_keyboard` / `hook_pointer` / `hook_update` / `hook_draw` /
+  `set_handlers`, and the public `save_user_handlers`.
+- **State:** the name says "the project's sandboxed `love` table", and at one
+  of its two entry points it is not one: `restore_user_handlers` passes
+  `Controller._userhandlers`, a saved-handler table. What the parameter
+  actually is, at both entry points, is *a table indexed by love-event name
+  whose values are the project's handlers* — so the once-recorded candidate
+  `project_love` would be wrong half the time.
 - **Why it stands:** Pure rename; no behavioural content. Deferred to avoid
   churn on a landing branch.
-- **Revisit:** Next time this file is edited — rename to intent-revealing
-  names (e.g. `route_keypressed`, `project_love`) in one sweep.
+- **Revisit:** Next time this file is edited — rename to something true at
+  both call sites (e.g. `user_handlers`, matching the four public
+  `*_user_handlers` functions) in one sweep.
+- **Note (2026-08-03):** this entry used to also cover `forward_keypressed` /
+  `forward_keyreleased` / `forward_textinput`. Those were **deleted, not
+  renamed** — they implemented the console route's widget gate, which
+  Decision 1 rules out ("widget visibility is state on the widget, never a
+  routing condition"), and which was unreachable once the failed-run teardown
+  was fixed. Its description here was also wrong on fact: it routed to the
+  console route's active *widget*, not to "the currently-active keyboard
+  route".
 
 ### Per-event `set_love_*` installers are lexically isomorphic
 
