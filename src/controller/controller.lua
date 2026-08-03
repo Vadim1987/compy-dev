@@ -68,8 +68,8 @@ local _pointer = {
 }
 
 -- Derived events: not LÖVE's. The click timer in
--- set_love_update synthesises them from raw presses. They travel
--- the gateway and the route like native ones, so a project reads
+-- set_love_update synthesises them from raw presses. They
+-- travel gateway and route like native ones, so a project reads
 -- through compy.input.hooks like anything else. They are NOT in
 -- _supported because there is no love.<name> for a project to
 -- have written, so nothing seeds them from the sandbox table.
