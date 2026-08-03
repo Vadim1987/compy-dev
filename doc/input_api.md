@@ -249,6 +249,38 @@ channels, and `compy.input.keys_pressed` is readable anywhere.
 fallback function per event. At activation, an existing project `love.*`
 handler seeds the matching hook when no explicit hook was supplied.
 
+## Pointer and click hooks
+
+Pointer events run the same chain as keyboard ones, so they are hooks like
+any other: `hooks.mousepressed`, `.mousereleased`, `.mousemoved`,
+`.wheelmoved`, `.touchpressed`, `.touchreleased`, `.touchmoved`. Each
+receives exactly the arguments LÖVE delivers, and each is seeded at
+activation from your `love.*` handler of the same name, so an existing
+`function love.mousepressed(x, y, btn)` keeps working untouched.
+
+Two more are **derived**: the framework watches the raw presses and decides
+whether they amount to one click or two, then delivers the verdict as an
+ordinary event.
+
+```lua
+compy.input.hooks.singleclick = function(x, y) place(x, y) end
+compy.input.hooks.doubleclick = function(x, y) remove(x, y) end
+```
+
+A single click is only confirmed after the double-click window has passed,
+so it arrives slightly late — that wait is what makes the two
+distinguishable. Moving the pointer between the presses invalidates both.
+
+Being ordinary chain participants, pointer hooks **consume on a truthy
+return** like keyboard ones: return truthy and a shown overlay does not see
+the event. Return nothing and it carries on to the overlay, which is what
+you want while an overlay is up for its own reasons.
+
+There are no pointer *shortcuts* — a combo needs a key to name, so
+`shortcuts` covers the keyboard and text channels only. Pointer events enter
+the walk at the hook tier. Read `compy.input.keys_pressed` inside a pointer
+hook if you need to know which modifiers were held.
+
 ## Opening the overlay from a key
 
 LÖVE delivers a `keypressed` **and** a `textinput` for one physical key, and
@@ -368,6 +400,8 @@ their work into a callback:
 | `input_code(prompt, text)` | `show{ prompt = prompt, text = text, highlighter = LuaHighlighter, validator = LuaSyntaxValidator, on_text_entered = fn }` |
 | `validated_input(filters, prompt)` | `show{ prompt = prompt, validator = LineValidators(filters), on_text_entered = fn }` |
 | `write_to_input(text)` | `compy.input.set_text(text)` |
+| `function compy.singleclick(x, y)` | `compy.input.hooks.singleclick = function(x, y) ... end` |
+| `function compy.doubleclick(x, y)` | `compy.input.hooks.doubleclick = function(x, y) ... end` |
 | `eval = InputEvalLua` | `highlighter = LuaHighlighter, validator = LuaSyntaxValidator` |
 | `eval = ValidatedTextEval(filters)` | `validator = LineValidators(filters)` |
 | `result = ...` | Consume `lines` in `on_text_entered`; no result object exists. |

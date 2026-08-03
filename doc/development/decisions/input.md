@@ -51,12 +51,13 @@ function is captured and seeded as `hooks.textinput` (Decision 10) — it runs i
 with hook semantics (truthy consumes). Writing `compy.input.hooks.textinput = f` says the same
 thing plainly, and is the encouraged form.
 
-**Pointer events are the exception, and the asymmetry is real.** A project's `love.mousepressed`
-and friends are installed as the actual `love.<event>` handlers (`hook_pointer`, return value
-discarded), so there "handler" keeps its literal meaning and nothing is demoted. That split
-between keyboard/text and pointer is recorded, not resolved here — see
-[`../technical_debt/input.md`](../technical_debt/input.md), "Pointer delivery is an unstructured
-broadcast, not a chain", and the Standing entry "Future input unification".
+**Pointer events used to be the exception; they no longer are** (Decision 25). A project's
+`love.mousepressed` and friends are seeded and run in hook position exactly like the keyboard
+ones, so the paragraph above applies unchanged to every channel. The hook namespace is still
+closed and externally defined, with one qualification: it also holds the two events the framework
+*derives* rather than receives — `singleclick` and `doubleclick`. LÖVE does not emit those; the
+click timer synthesises them and emits them through the gateway, so they are hooks by the same
+rule that governs the rest.
 
 ---
 
@@ -442,20 +443,31 @@ combined a project handler with widget solicitation changed behaviour and were m
 the change. Breaking-and-fixing the affected examples was the explicit expectation, not a
 regression to avoid; handler-only projects (no widget) are unaffected.
 
-## Decision 11 — the route connects only while the project is actively running
+## Decision 11 — the route is held by an open project, released at its stop
 
-**Decision.** The project route occupies the **keyboard/text** handlers only while the application
-is in the `'running'` state. When a non-blocking project's `main.lua` returns (nothing hooked
-into update/draw), the state drops to `'project_open'` and the keyboard/text handlers are restored
-to the console route. On project stop, every handler restores to framework defaults and every
-project participant — handler tables, callbacks, widget configuration — resets.
+**SUPERSEDED IN PART, 2026-08-03** — see Decision 25. The original decision released
+keyboard/text at the `'running' → 'project_open'` boundary while exempting pointer, and justified
+the asymmetry as inherited platform behaviour. That justification did not survive checking (below);
+the release is gone and every channel now shares one lifetime. What stands unchanged is the
+teardown invariant, which is the part later decisions depend on.
 
-**Why.** This is the established platform behaviour, adopted as a design constraint because no
-product ruling motivated changing it. The precise scope matters and is binding: the disconnect
-covers **keyboard/text handlers only** — pointer handlers stay hooked until the project actually
-stops, so pen-and-paper projects (which draw on click while otherwise idle) remain interactive in
-`'project_open'`. An implementer must **not** "tidy up" by unifying pointer disconnection into
-this boundary; the asymmetry is intentional and load-bearing for those projects.
+**Decision (as amended).** The project route occupies **every** input channel — keyboard, text,
+pointer and the derived click events — from activation until the project stops. A non-blocking
+project reaching `'project_open'` keeps them; `Ctrl+Esc` is the way back to the console. On project
+stop, every handler restores to framework defaults and every project participant — handler tables,
+callbacks, widget configuration — resets.
+
+**Why the original rationale was withdrawn.** It read: *"This is the established platform
+behaviour, adopted as a design constraint because no product ruling motivated changing it,"* and
+called the keyboard/pointer asymmetry *"intentional and load-bearing"*. Checked against the PR base
+`3256aac`: `set_default_handlers` is called from exactly two sites — `suspend()` and
+`stop_project_run()` — and the `running → project_open` transition releases nothing. Both channels
+stayed installed until suspend or stop. There was no asymmetry to inherit. `release_keyboard_route`
+was introduced *by this feature*, keyboard-only, and pointer then had to be exempted from a release
+that had not previously existed — so the exemption was a consequence of the new mechanism, not a
+constraint on it. The asymmetry was also unreachable in practice: the release fired only when
+`user_is_interactive()` was false, and that predicate is "an overlay or a pointer handler exists",
+so at the only moment it ran there were no pointer handlers to exempt.
 
 **Changed baseline behaviour.** Before this API, a running project without its own keyboard/text
 handler left the console callback installed. With no shown project widget, unhandled input could
@@ -941,3 +953,52 @@ happens to this key", and the names answer it there.
 directly: they are stateless functions *about* functions, not part of the
 widget or dispatch surface, and grouping them says so. Writes to `fn` raise
 like every other frozen sub-table.
+
+## Decision 25 — one route, one chain, one lifetime for every input channel
+
+**Decision.** Pointer events (`mousepressed`, `mousereleased`, `mousemoved`, `wheelmoved`,
+`touchpressed`, `touchreleased`, `touchmoved`) and the framework's derived click events
+(`singleclick`, `doubleclick`) are dispatched by the project route through the same chain as
+keyboard and text, with the same error boundary and the same lifetime. Concretely:
+
+- **The widget is the chain's terminal**, not a parallel recipient. Previously the gateway
+  broadcast a pointer event to the widget *first* and then to the project's handler
+  unconditionally. Delivery order therefore reverses: the project's hook runs first, the widget
+  last, and an unconsumed event still reaches both.
+- **A pointer hook consumes on a truthy return**, like any participant. This is new expressive
+  power — a shown widget can now be starved of a click aimed past it — and it was free: no
+  example pointer handler returned a value, and the return was discarded in any case.
+- **No shortcuts tier for pointer.** A combo names a key; a pointer event has none. Pointer
+  enters the walk at the hook tier, and `find_shortcut` answers nil for a missing table rather
+  than each channel special-casing itself. A pointer combo grammar is deliberately not invented
+  here.
+- **Payloads are exactly LÖVE's arguments.** No held-key view is appended: a project reads that
+  through `compy.input.keys_pressed` (Decision 20), and appending it would change the signature
+  every existing pointer handler was written against.
+- **Derived clicks are events, not a bespoke surface.** The click timer only decides *which*
+  event the raw presses amount to and applies the drift check, then emits through
+  `love.handlers.singleclick(x, y)` like any native event. `compy.singleclick` /
+  `compy.doubleclick` are removed; projects bind `compy.input.hooks.singleclick`. The console and
+  editor do not use these events, so on those routes the slot is empty and the emit is a silent
+  no-op.
+- **One error boundary, at route entry.** `guarded(CC, fn)` wraps the point where a route is
+  entered rather than each participant. The chain itself has no error handling, so wrapping
+  participants had left `shortcuts[...]` and directly-assigned `hooks[...]` — the two surfaces
+  this guide teaches — unprotected, and made a raise in the third look like a falsey "did not
+  consume", so the walk continued into the widget of a project that had just crashed.
+
+**Why.** The keyboard/pointer split was this feature's own invention rather than inherited
+behaviour (Decision 11, amended). Once that was established, every remaining argument for keeping
+pointer outside the chain dissolved: the lifecycle difference was self-inflicted and unreachable,
+the consume contract cost nothing because nothing returned a value, and the pieces that looked
+like distinct machinery — a second wrapper, a second install path, a bespoke click surface —
+existed only to serve the split. Unifying removes mechanism instead of adding it.
+
+**Consequence, accepted.** A non-blocking project with no interaction surface keeps the keyboard
+until it stops, where it previously handed it back at `'project_open'`. That is the pre-feature
+behaviour, and `Ctrl+Esc` remains the documented exit.
+
+**Not decided here.** Whether pointer should gain a combo vocabulary of its own — a modifier-only
+shortcut such as `ctrl` plus a button — is left open. It is now a small change rather than the
+"mirror consume-chain" it was once estimated as, because the chain it would join already carries
+pointer.

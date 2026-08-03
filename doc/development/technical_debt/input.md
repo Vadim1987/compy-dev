@@ -137,18 +137,23 @@ action; revisit at the named point).
   `doc/input_api.md` plus the description alone. The entry above also depends
   on that contract being findable.
 
-### Future input unification
+### Future input unification (RESOLVED, 2026-08-03)
 
-- **State:** Keyboard/text route through shortcuts, hooks, then the shown
-  widget. Pointer input remains on separate raw LÖVE paths, and derived
-  singleclick/doubleclick callbacks remain direct compy callbacks.
-- **Why it stands:** This asymmetry predates the input API and is not worsened by it.
-  There is no proven demand or feasible design for pointer combos,
-  interception, common pointer-aware widgets, or a shared raw-versus-derived
-  dispatch contract. Folding clicks into hooks now would falsely imply one.
-- **Revisit:** Only when a concrete pointer feature requires it. Establish
-  scope, timing, primary versus other buttons, modifier snapshots, and the
-  drag/selection/touch contract before proposing a unification.
+- **Resolution:** done, and in the direction this entry doubted. Every
+  channel — keyboard, text, pointer, and the derived singleclick/doubleclick
+  events — routes through one chain with one error boundary and one lifetime
+  (`../decisions/input.md`, Decision 25). The derived clicks did fold into
+  hooks: `compy.singleclick` is gone and `compy.input.hooks.singleclick`
+  replaces it.
+- **Where this entry was wrong, worth keeping:** it recorded the asymmetry as
+  predating the input API. It did not. At the PR base every event installed
+  through one path and none was released before stop; the split was
+  introduced by this feature (Decision 11, amended). The entry then reasoned
+  from the false premise to "folding clicks into hooks would falsely imply" a
+  shared contract — when a shared contract was in fact the pre-existing state.
+- **What genuinely remains unproven** and is recorded separately: pointer
+  combos, and whether a shown widget should consume clicks within its bounds.
+  See "Pointer delivery is an unstructured broadcast" below.
 
 ### Project-handler wrapping: dedup the guard, drop the misleading `keyboard_` name (RESOLVED, 2026-08-03)
 
@@ -961,26 +966,29 @@ Not commissioned for closure; each may never need action.
   `hooks[event]` directly.
 - **Revisit:** None needed; carried here as resolved history, not deleted.
 
-### Pointer delivery is an unstructured broadcast, not a chain
+### Pointer delivery is an unstructured broadcast, not a chain (RESOLVED, 2026-08-03)
 
-- **Where:** `src/controller/controller.lua` — the gateway `handlers.mouse*`
-  / `handlers.touch*` handlers (e.g. `handlers.mousepressed`).
-- **State:** Each pointer handler delivers to the input widget whenever one is
-  present — no bounds check, no consume semantics, the widget's return
-  discarded — and *then* forwards unconditionally to the slot occupant (the
-  project's native handler). Both fire: a shown widget cannot swallow a click
-  aimed at it, and a project's click handler fires even for clicks inside the
-  widget. The keyboard three-consumer chain (Decision 2) has **no pointer mirror**.
-  Pointer never had the widget-lockout, so its delivery was left as
-  pre-existing behaviour, deliberately out of the input API's scope.
-- **Why it stands:** Works for today's consumers; building a pointer chain was
-  explicitly not in the input API's scope.
-- **Owner ruling needed:** should pointer get a mirrored consume-chain (the
-  "two symmetrically mirrored chains" idea, analogous to Decision 1's deferred
-  console/editor convergence), and should a shown widget consume pointer
-  events within its bounds? Until ruled, the broadcast stands.
-- **Revisit:** When pointer routing gets a real second consumer, or the
-  owner rules on the mirror-chain question.
+- **Resolution:** pointer joined the existing chain rather than getting a
+  mirror of it (`../decisions/input.md`, Decision 25). The gateway's pointer
+  entries no longer deliver to the widget themselves; they hand the event to
+  the active route like every other channel, and the widget is the chain's
+  terminal. A pointer hook consumes on a truthy return, so a shown widget
+  *can* now be starved of a click aimed past it — the capability this entry
+  asked about.
+- **What made it cheap in the end:** the owner's ruling that the
+  keyboard/pointer split was self-inflicted rather than inherited (Decision 11,
+  amended). The consume contract itself cost nothing: measured across
+  `life`, `sapper`, `tixy`, `paint` and `pong`, no project pointer handler
+  returns a value, and the return was discarded in any case. So this was never
+  the "two symmetrically mirrored chains" it was estimated as — one chain
+  already existed and pointer simply entered it.
+- **Still open, deliberately:** whether a shown widget should consume clicks
+  **within its bounds** automatically. Nothing does bounds checks today; the
+  chain gives a project the means to decide, which is a different answer from
+  the framework deciding for it.
+- **Also still open:** a pointer *combo* vocabulary (a modifier-only shortcut
+  such as `ctrl` plus a button). Pointer has no shortcuts tier and enters the
+  walk at the hook tier; Decision 25 records the question as not-decided.
 
 ### Widget sink reaches the singleton via `love.state` global + nil-guard (RESOLVED-IN-PART by the input-API redesign)
 
