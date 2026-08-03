@@ -1100,6 +1100,21 @@ Controller = {
       end
     end
 
+    -- Wheel had no entry of compy's own until 2026-08-03. It
+    -- still reached a project, but by accident: this function
+    -- writes INTO love.handlers rather than replacing it, so
+    -- LÖVE's stock wheelmoved survived and called
+    -- love.wheelmoved. Declaring it makes the gateway
+    -- self-contained instead of depending on that, and puts
+    -- wheel on the same footing as every other pointer channel.
+    --- @param x number
+    --- @param y number
+    handlers.wheelmoved = function(x, y)
+      if love.wheelmoved then
+        return love.wheelmoved(x, y)
+      end
+    end
+
     -- Derived click events, synthesised by the click timer in
     -- set_love_update. Same shape as every native entry above:
     -- hand it to whatever occupies the slot, and skip when

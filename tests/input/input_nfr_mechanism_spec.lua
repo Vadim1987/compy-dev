@@ -53,23 +53,38 @@ describe('input contracts: NFR and mechanism guards #input',
       -- without the suspend() the widget would receive the
       -- keystroke.)
 
-      -- wheel (doc/development/internals/user_input.md, "Direct mouse
-      -- events"): the gateway has no wheel
-      -- entry, so the framework forwards nothing; only a
-      -- project's own love.wheelmoved consumes it}. No
-      -- example project consumes it today. Mechanism-by-
-      -- omission, not a designed asymmetry; intended
-      -- forward shape (not asserted): project
-      -- pass-through, opt-in consume.
-      -- `F.session.handlers` IS the live `love.handlers` table (see
-      -- tests/helpers/input_session.lua) — the production gateway
-      -- LOVE itself dispatches through, not a fixture mirror — so its
-      -- missing `wheelmoved` entry is the real absence, asserted at
-      -- the same seam every other routing row uses.
-      it('wheel has no framework gateway entry', function()
-        assert.is_nil(F.session.handlers.wheelmoved)
+    end)
+
+  -- Wheel used to be the one pointer channel compy declared no
+  -- gateway entry for. It still worked in production, by
+  -- accident rather than design: setup_callback_handlers writes
+  -- INTO love.handlers rather than replacing it, so LÖVE's own
+  -- stock wheelmoved entry survived and called love.wheelmoved.
+  -- The fixture builds a fresh love.handlers, so the absence
+  -- was visible here and nowhere else: a row characterising
+  -- the fixture, not the product. compy now declares the entry
+  -- itself (owner ruling, 2026-08-03), which is also what makes
+  -- the gateway self-contained rather than dependent on the
+  -- stock table surviving our mutation.
+  describe('wheel reaches the route like any pointer event',
+    function()
+
+      it('a project hook receives it', function()
+        local input = F.activate_project()
+        local got
+        input.hooks.wheelmoved =
+            function(x, y) got = { x, y } end
+        F.session.wheelmoved(0, 1)
+        assert.same({ 0, 1 }, got)
       end)
 
+      -- The control: with no project route the emit is a no-op
+      -- rather than an error, the same as the derived clicks.
+      it('is silently dropped with no project route', function()
+        assert.has_no.errors(function()
+          F.session.wheelmoved(0, 1)
+        end)
+      end)
     end)
 
   -- ====================================================

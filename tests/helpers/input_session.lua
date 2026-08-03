@@ -21,6 +21,7 @@ local function emitters()
     mousepressed  = function(...) h.mousepressed(...) end,
     mousereleased = function(...) h.mousereleased(...) end,
     mousemoved    = function(...) h.mousemoved(...) end,
+    wheelmoved    = function(...) h.wheelmoved(...) end,
     touchpressed  = function(...) h.touchpressed(...) end,
     handlers      = h,
   }
