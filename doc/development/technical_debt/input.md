@@ -402,6 +402,58 @@ question, not resolved here.
 
 ---
 
+### Combo triggers are key-name-only; positional bindings have no vocabulary
+
+- **Where:** `src/controller/controller.lua`, `combo_string` — a combo's
+  trigger is the LÖVE **key name**, which is layout-dependent, and the
+  scancode is discarded at the gateway (`set_love_keypressed`:
+  `local function keypressed(k, _, isr)`), so it reaches neither the routes
+  nor the dispatch chain.
+- **State:** compy has both audiences and serves only one. *Mnemonic*
+  bindings — `ctrl+s` for save, `examples/turtle`'s `i` for input — want the
+  key name, because the user's keycap says S. *Positional* bindings — a
+  game's WASD — want the scancode, because on AZERTY `w` bound by name lands
+  under the player's little finger. LÖVE exposes both for exactly this
+  reason; the input API exposes only the first.
+- **Why it stands (owner ruling, 2026-08-03):** not now, and **never as a
+  swap** — a swap fixes one audience by breaking the other. No layout
+  complaint exists in the record; this is a hypothesis about non-QWERTY
+  users, not a report from one. Any future answer is **additive**: a second
+  registration vocabulary (`shortcuts.scancode.*`, or an `sc:` prefix inside
+  the combo string), never a change to what an existing combo means.
+- **Also note it cannot help the textinput channel at all:**
+  `love.textinput(text)` carries no scancode — one string, the character
+  produced after layout, modifiers and IME. So scancodes cannot unify the
+  keyboard and text channels; they would widen the gap between them.
+- **Cost, if it is ever taken:** threading the scancode from the gateway
+  through `forward_*` and the routes to the chain, and a scancode-keyed held
+  set — `Controller.keys_pressed` is key-name-keyed, and `combo_string`
+  builds its modifier prefixes from it, so a scancode combo would otherwise
+  be a hybrid (modifiers by name, trigger by position).
+- **Revisit:** when a project needs layout-independent positional keys.
+
+
+### A bare `*` shortcut is legal, and ruled that it should not be
+
+- **Where:** `src/util/key.lua`, `check_combo` — it accepts any combo naming
+  exactly one non-modifier token, and `*` is one.
+- **State (measured 2026-08-03):** `shortcuts.keypressed['*']` registers
+  without raising and catches every **unmodified** key — `q` fires it,
+  `ctrl+s` does not, since that belongs to the `ctrl+*` class. The behaviour
+  is coherent with Decision 21 (a class is its modifier set exactly, and the
+  empty set is a class), but it is undocumented and untested, and it
+  duplicates what a hook already expresses more plainly.
+- **Owner ruling (2026-08-03): it should raise.** Recorded here rather than
+  in `../decisions/input.md` because the tree does **not** do this yet — a
+  ratified entry describing behaviour the code lacks is the exact error this
+  phase spent a session undoing.
+- **Revisit:** now — it is a ruled, unimplemented change. `check_combo` gains
+  a case for "trigger is `*` with no modifiers", Decision 21 gains the
+  sentence, the guide gains it, and a row pins the raise. The session25 claim
+  that the multi-trigger raise "settles whether a bare `*` is legal" was
+  wrong: it permits it.
+
+
 ## Anticipated — revisit at the named point, close only if warranted
 
 Not commissioned for closure; each may never need action.

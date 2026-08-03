@@ -44,17 +44,23 @@ those.
   a game can be verified headlessly: C3 (the overlay paint fix), keyboard's
   whole migration, turtle's echo guard, maze's idle gating, balloons' submit
   fix. This is the one item nobody else can do.
-- **A bare `*` shortcut needs a ruling.** `shortcuts.keypressed['*']`
-  registers without raising and catches every *unmodified* key — `q` yes,
-  `ctrl+s` no, since that belongs to the `ctrl+*` class. It is coherent with
-  Decision 21 but undocumented and untested, and session25's claim that the
-  registration raise "settles whether a bare `*` is legal" was wrong: it
-  permits it. Allow it (guide line + a row) or forbid it (raise) — owner's
-  call.
-- **Two offers never taken up.** Whether the scancode analysis
-  (`validation/notes/S25-scancode-question.md`) is carried into
-  `technical_debt/input.md` as an open decision; and whether `keyboard`'s own
-  commit churn is squashed before its sibling PR opens.
+- **RULED, and yours to execute: a bare `*` shortcut must raise** (owner,
+  2026-08-03). Today `shortcuts.keypressed['*']` registers without raising
+  and catches every *unmodified* key — `q` yes, `ctrl+s` no, since that
+  belongs to the `ctrl+*` class. This is the one ruled-but-unimplemented item
+  in the tree, and it is deliberately recorded in
+  `technical_debt/input.md` rather than in the decisions ledger, because a
+  ratified entry describing behaviour the code lacks is the exact error this
+  phase spent a session undoing. Work it test-first: `check_combo`
+  (`src/util/key.lua`) gains a case for "trigger is `*` with no modifiers",
+  then Decision 21 gains the sentence, then the guide, then the row moves the
+  entry to RESOLVED.
+- **Already settled, do not re-open.** The scancode question is recorded in
+  `technical_debt/input.md` as the open decision *"Combo triggers are
+  key-name-only"* — not now, never as a swap, additive if ever. And the
+  sibling repos are **not** to be squashed: every repo is sliced for its PR
+  the same way the platform is (owner, 2026-08-03), so their commit churn
+  never reaches the PR. `pr-assembly-guide.md` §1 and §5 carry both.
 - **The deferred wrapper rename** — `forward_*`, `userlove`, the `*_native`
   trio — ruled to happen *just before* the PR, because it moves code.
 - **Phase G, slice regeneration.** Still last, and now with a third reason:

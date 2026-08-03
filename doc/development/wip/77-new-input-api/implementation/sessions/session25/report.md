@@ -81,15 +81,8 @@ the silent multi-trigger truncation, and the held-key exposure.
 1. **The owner's smoke test.** Nothing this session touching the screen or a
    game is headlessly verifiable: C3 (the overlay paint), keyboard's whole
    migration, turtle's echo guard, maze's idle gating, balloons' submit fix.
-2. **A bare `*` shortcut is legal, undocumented and untested** — found while
-   wrapping. `shortcuts.keypressed['*']` registers without raising and catches
-   every *unmodified* key (`q` yes, `ctrl+s` no, since that is the `ctrl+*`
-   class). Coherent with Decision 21, but I told the owner the registration
-   raise would "settle whether a bare `*` is legal" and it does not — it
-   permits it. Needs a ruling, then a line in the guide and a row.
-3. **Two offers never taken up**: whether the scancode question is carried into
-   the persistent ledger as an open decision, and whether keyboard's own
-   commit churn is squashed before its sibling PR opens.
+2. **A bare `*` shortcut must raise** — see the addendum below.
+3. *(was: two offers never taken up — both answered, see the addendum)*
 4. **Deferred by earlier ruling**: the wrapper rename (`forward_*`, `userlove`,
    the `*_native` trio), to happen just before the PR.
 5. **Phase G** — slice regeneration, still last, and now with a third reason:
@@ -98,3 +91,25 @@ the silent multi-trigger truncation, and the held-key exposure.
 
 Details and evidence: `validation/reviews/S25-*.md`,
 `validation/notes/S25-*`, and this session's `track.md`.
+
+## Addendum — owner rulings at the wrap (2026-08-03)
+
+Three questions this session raised and would otherwise have lost. All are
+recorded in their persistent homes; the first is the only one carrying work.
+
+- **A bare `*` shortcut should raise.** It does not today — it registers and
+  catches every *unmodified* key. Recorded in `technical_debt/input.md`
+  (*"A bare `*` shortcut is legal, and ruled that it should not be"*) rather
+  than in the decisions ledger, deliberately: a ratified entry describing
+  behaviour the code lacks is the C1 error repeated. The successor executes
+  it test-first, then moves the entry to RESOLVED.
+- **The scancode question is carried as an open decision**, not dropped:
+  `technical_debt/input.md`, *"Combo triggers are key-name-only; positional
+  bindings have no vocabulary"* — not now, never as a swap, additive if ever,
+  and it cannot help the textinput channel at all.
+- **No repo needs its history squashed.** Every repo is sliced for its PR the
+  same way the platform is, so intermediate churn never reaches the PR.
+  `pr-assembly-guide.md` §1 and §5 say so, and §1's Set 4 block is corrected
+  while there: keyboard is **8** commits ahead of `origin/dsent/dev`, not
+  "clean and in sync" as it still claimed, and balloons and maze have moved
+  to 3 and 2.

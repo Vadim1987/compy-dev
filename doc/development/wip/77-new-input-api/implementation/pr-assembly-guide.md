@@ -122,11 +122,12 @@ Set 4 (nested example repos — invisible to the parent `git diff`, become PRs i
 ```sh
 # Set 4 is NOT a slice of this PR. Each nested example is its own repo with
 # its own remote, and ships as its OWN PR, landing alongside the platform PR
-# (owner, 2026-07-31). Nothing here is pushed by this guide; the patches are
-# for review convenience only.
-git -C src/examples/balloons format-patch origin/main..HEAD -o "$OUT"   # 2 commits
-git -C src/examples/maze     format-patch origin/v3.4..HEAD -o "$OUT"   # 1 commit
-# keyboard: clean and in sync with its origin — nothing of this feature in it.
+# (owner, 2026-07-31), sliced the same way this one is (owner, 2026-08-03) —
+# so their local commit churn does not need tidying first. Nothing here is
+# pushed by this guide; the patches are for review convenience only.
+git -C src/examples/balloons format-patch origin/main..HEAD -o "$OUT"   # 3 commits
+git -C src/examples/maze     format-patch origin/v3.4..HEAD -o "$OUT"   # 2 commits
+git -C src/examples/keyboard format-patch origin/dsent/dev..HEAD -o "$OUT" # 8
 ```
 
 ---
@@ -333,11 +334,18 @@ migrations depend on the platform's `1.0.0-rc20260712` surface.
 the repo's author. A consequence of *our* API change is ours to finish — we
 suggest migrations, we do not hand the author a question we created.
 
+**Each repo is sliced for its PR the same way the platform is** (owner,
+2026-08-03), by the recipes in §1–§2 applied to that repo. Their local commit
+history is therefore **not** squashed or tidied in advance — the slices are cut
+from the diff, so churn in the intermediate commits does not reach the PR. This
+supersedes the standing offer to squash `keyboard`'s helper-naming churn: there
+is nothing to squash.
+
 | Repo | Remote | Branch | Local commits (unpushed) |
 |---|---|---|---|
 | balloons | `hleb-rubanau/compy-balloons` | `main` | `56347d0` migration off the poll idiom · `94a5f02` assign `after_submit` through `compy.input.callbacks` (the load-time raise from smoke report 5) · `cc0dbd7` submit delivers lines, not a command string |
 | maze | `nagydani/Compy-maze` | `v3.4` | `790ac19` migration off the poll idiom, with the shown-guard on `compy.input.is_shown()` · `d2ce7a0` idle-gated prompt, `need_reopen`/`reopen_text` retired |
-| keyboard | `dsent/keyboard` | `dsent/dev` | `4814407` run on the Compy input API instead of hand-rolling it |
+| keyboard | `dsent/keyboard` | `dsent/dev` | 8, from `4814407` run on the Compy input API through the `compy.input.fn` adoption |
 
 Notes per repo:
 
