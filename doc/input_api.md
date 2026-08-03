@@ -218,9 +218,29 @@ returns — consuming is still your handler's decision, as everywhere else. On a
 repeat it returns `true` without calling `fn`: the repeat it swallows is
 consumed, so a held key never falls through to the overlay behind it.
 
-It wraps a hook the same way, but think before you do: a whole-channel hook
-wrapped in it swallows *every* repeat on that channel, so held backspace and
-held arrows stop repeating in the overlay too.
+`bypass_repeat(fn)` is its sibling. It also skips `fn` on a repeat, but lets
+the repeat carry on down the chain — use it to act once on a held key while
+what is below keeps receiving it, so a held backspace still deletes.
+
+Both wrap a hook the same way, but think before you do: a whole-channel hook
+wrapped in `suppress_repeat` swallows *every* repeat on that channel, so held
+backspace and held arrows stop repeating in the overlay too.
+
+Rather than ending a handler with `return true`, you can say at the
+registration site that a binding is claimed:
+
+```lua
+compy.input.shortcuts.keypressed['alt+p'] =
+  compy.input.always_true(pause)
+compy.input.shortcuts.keypressed['alt+*'] = compy.input.always_true()
+```
+
+`always_true([fn])` runs `fn` with the event's arguments if you pass one, then
+returns `true`; with no `fn` the binding's only job is to swallow. It keeps
+`pause` a function about pausing, instead of one that also has to know what
+happens after it returns. The two compose —
+`suppress_repeat(always_true(fn))` fires once per physical press and never
+falls through.
 
 Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else

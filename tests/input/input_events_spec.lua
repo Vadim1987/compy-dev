@@ -538,6 +538,118 @@ describe('#input events dispatching', function()
     end)
   end)
 
+  -- The sibling of suppress_repeat
+  -- (doc/development/decisions/input.md, Decision 22): both skip
+  -- the handler on a repeat, and they differ in what becomes of
+  -- the event — suppressed means consumed, bypassed means it
+  -- carries on down the chain.
+  describe('bypass_repeat', function()
+
+    it('a fresh press runs the wrapped function', function()
+      local ran = 0
+      local input = F.activate_project()
+      input.shortcuts.keypressed['s'] =
+          input.bypass_repeat(function() ran = ran + 1 end)
+      F.session.press('s')
+      F.session.repeat_press('s')
+      assert.equal(1, ran)
+    end)
+
+    -- The whole difference: the repeat it skips still reaches the
+    -- widget, so a held key keeps driving the overlay while the
+    -- binding acts once. Contrast the suppress_repeat row above,
+    -- where the same sequence leaves the text alone.
+    it('the repeat it skips still reaches the widget', function()
+      local input = F.activate_project()
+      input.shortcuts.keypressed['backspace'] =
+          input.bypass_repeat(function() end)
+      F.show_widget({ text = 'abcd' })
+      F.session.press('backspace')
+      F.session.repeat_press('backspace')
+      F.session.repeat_press('backspace')
+      assert.same({ 'a' }, F.widget:get_text())
+    end)
+
+    it('a fresh press propagates the handler return value',
+      function()
+        local reached = false
+        local input = F.activate_project()
+        input.shortcuts.keypressed['s'] =
+            input.bypass_repeat(function() return true end)
+        input.hooks.keypressed = function()
+          reached = true; return true
+        end
+        F.session.press('s')
+        assert.is_false(reached)
+      end)
+  end)
+
+  -- doc/development/decisions/input.md, Decision 24: declare that
+  -- a binding consumes at the registration site, so the handler
+  -- does not have to know what happens after it returns.
+  describe('always_true', function()
+
+    it('runs the function and consumes', function()
+      local ran = false
+      local reached = false
+      local input = F.activate_project()
+      input.shortcuts.keypressed['s'] =
+          input.always_true(function() ran = true end)
+      input.hooks.keypressed = function()
+        reached = true; return true
+      end
+      F.session.press('s')
+      assert.is_true(ran)
+      assert.is_false(reached)
+    end)
+
+    -- No function at all: a binding whose only job is to swallow.
+    -- The modifier's own press is not in its class (Decision 21),
+    -- so it reaches the hook and the Alt chord does not — which
+    -- is what makes this assertion about the class rather than
+    -- about nothing arriving at all.
+    it('consumes with no function to run', function()
+      local seen = { }
+      local input = F.activate_project()
+      input.shortcuts.keypressed['alt+*'] = input.always_true()
+      input.hooks.keypressed = function(k)
+        seen[#seen + 1] = k; return true
+      end
+      F.session.press('lalt')
+      F.session.press('q')
+      assert.same({ 'lalt' }, seen)
+    end)
+
+    it('hands the invocation arguments to the function',
+      function()
+        local seen
+        local input = F.activate_project()
+        input.shortcuts.keypressed['alt+*'] =
+            input.always_true(function(k, keys, isr)
+              seen = { k, keys['lalt'], isr }
+            end)
+        F.session.press('lalt')
+        F.session.press('q')
+        assert.same({ 'q', true, false }, seen)
+      end)
+
+    -- How a reserved binding is spelled: once per physical press,
+    -- and never falling through. Neither wrapper knows about the
+    -- other; they compose.
+    it('composes with suppress_repeat', function()
+      local ran = 0
+      local input = F.activate_project()
+      input.shortcuts.keypressed['backspace'] =
+          input.suppress_repeat(
+            input.always_true(function() ran = ran + 1 end))
+      F.show_widget({ text = 'abcd' })
+      F.session.press('backspace')
+      F.session.repeat_press('backspace')
+      assert.equal(1, ran)
+      assert.same({ 'abcd' }, F.widget:get_text())
+    end)
+  end)
+
   -- ---- signatures + read-only proxy of pressed-keys table
   -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 

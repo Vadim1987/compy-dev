@@ -811,7 +811,7 @@ more sophisticated is a hook, with no capability lost.
 
 ---
 
-## Decision 22 — `suppress_repeat`, an opt-in once-per-press wrapper
+## Decision 22 — `suppress_repeat` / `bypass_repeat`, the repeat wrappers
 
 **Status: implemented** (owner ruling, 2026-08-03).
 
@@ -820,6 +820,14 @@ every OS key repeat, and a hook sees every repeat too. A binding that wants to
 act once per physical press wraps itself in
 `compy.input.suppress_repeat(fn)`. On a repeat it returns `true` without
 calling `fn`; on a fresh press it returns **whatever `fn` returns**.
+
+**The pair.** Both skip `fn` on a repeat and differ only in what becomes of
+the event:
+
+| wrapper | on a repeat | for |
+|---|---|---|
+| `suppress_repeat(fn)` | returns `true` — consumed | a command binding: the key belongs to it for as long as it is held |
+| `bypass_repeat(fn)` | returns nothing — carries on down the chain | act once, but let the key keep driving what is below (a held backspace still deletes) |
 
 **Scope: the repeat filter, and nothing else.** Whether an event is consumed
 is the wrapped handler's call, exactly as for any other participant
@@ -846,23 +854,10 @@ so a held command key would type into a shown overlay. Consuming what it
 swallows keeps the binding's claim on the key for as long as it is held, and
 is part of the filtering job rather than a second policy.
 
-**What it is not for.** Consuming the repeat is the one policy the wrapper
-does keep, and its name is what says so. The only alternative on a repeat is
-to fall through, which is a different tool: "act once, but let the key keep
-flowing to the widget" — a project that wants to notice the *start* of a held
-backspace without interrupting the editing it drives. That is three lines by
-hand and should be written by hand:
-
-```lua
-compy.input.shortcuts.keypressed['backspace'] =
-  function(k, keys, isr)
-    if not isr then note_deleting() end
-    -- no return: the widget keeps receiving every repeat
-  end
-```
-
-Wrapping that in `suppress_repeat` would stop the held backspace from
-deleting.
+**Why two and not one with a flag.** On a repeat there are exactly two
+coherent outcomes — consume it or let it pass — and which one a binding wants
+is fixed when it is registered, not per event. Two names read at the
+registration site; a boolean argument would have to be looked up.
 
 **On hooks.** It wraps a hook as readily as a shortcut. Whether that is wise
 is the project's call: wrapping a *whole-channel* hook swallows every repeat
@@ -910,3 +905,42 @@ whose "is this unset?" test is what Decision 10's capture path runs on.
 
 **Consequence.** The nil guards in `dispatch` are deliberate and documented as
 such, not an oversight to tidy later.
+
+---
+
+## Decision 24 — `always_true`, declaring consumption at the registration site
+
+**Status: implemented** (owner ruling, 2026-08-03).
+
+**Decision.** `compy.input.always_true([fn])` returns a handler that calls
+`fn` with the invocation arguments, if given, and then returns `true`. With no
+`fn`, the binding's only job is to swallow the event.
+
+**Why.** A binding that must not fall through otherwise says so by ending
+every handler with `return true`. That is the dark side of the DOM idiom: it
+forces the function to know its **propagation context** — a function that
+merely toggles a pause has to know what happens after it returns, and a
+function reused elsewhere carries that knowledge with it. `always_true` moves
+the statement to where it belongs, the dispatch map:
+
+```lua
+sc['alt+p'] = compy.input.always_true(pauseToggle)
+sc['alt+*'] = compy.input.always_true()
+```
+
+The registration reads as what it is — *this combo is claimed* — and
+`pauseToggle` stays a function about pausing.
+
+**Not a reversal of Decision 22.** That one refused to let `suppress_repeat`
+decide consumption behind the developer's back. This is the developer
+deciding, explicitly, at the site where the binding is declared. The
+difference is who chooses, not where the `true` comes from.
+
+**Composes.** Neither wrapper knows about the other:
+`suppress_repeat(always_true(fn))` is a reserved binding — once per physical
+press, never falling through — and reads in that order.
+
+**Vocabulary note.** The chain's own word for a truthy return is *consume*
+(Decision 2), so `consuming(fn)` would sit closer to the glossary.
+`always_true` was chosen for saying plainly what the function does at a
+call site where the reader may not have the glossary in mind.

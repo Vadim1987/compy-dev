@@ -597,18 +597,37 @@ local function build_widget_api(get_widget, get_active_flag, state)
       local ui = get_widget()
       if ui then ui:hide() end
     end,
+    -- Three stateless combinators, not widget methods; they live
+    -- here because a project reaches them as compy.input.*.
+    --
     -- doc/development/decisions/input.md, Decision 22: dispatch
     -- does not gate on isrepeat, so a held combo fires every
-    -- frame. This filters repeats and nothing else: a
-    -- swallowed repeat is consumed, since an unconsumed one
-    -- would fall
-    -- through to the hook and the widget, but a fresh press
-    -- returns whatever the wrapped handler returns. Whether to
-    -- consume is the handler's call, not the wrapper's.
+    -- frame. Both wrappers skip the handler on a repeat and
+    -- differ in what becomes of the event — suppressed is
+    -- consumed, bypassed carries on down the chain. Neither
+    -- touches a FRESH press: it returns whatever the handler
+    -- returns, that being the handler's call and not theirs.
     suppress_repeat = function(fn)
       return function(k, keys, isr)
         if isr then return true end
         return fn(k, keys, isr)
+      end
+    end,
+    bypass_repeat = function(fn)
+      return function(k, keys, isr)
+        if isr then return end
+        return fn(k, keys, isr)
+      end
+    end,
+    -- doc/development/decisions/input.md, Decision 24: declare
+    -- that a binding consumes at the registration site, so the
+    -- handler need not know what happens after it returns. The
+    -- function is optional — with none, the binding's only job
+    -- is to swallow the event.
+    always_true = function(fn)
+      return function(...)
+        if fn then fn(...) end
+        return true
       end
     end,
     -- doc/development/decisions/input.md, Decision 18: the one
