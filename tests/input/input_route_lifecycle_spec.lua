@@ -353,6 +353,51 @@ describe('input contracts: route connection lifecycle #input', function()
       end)
     end)
 
+    -- The chain itself has no error boundary — dispatch
+    -- (projectInputController.lua) has no pcall/xpcall. The
+    -- boundary belongs where the chain is INVOKED, on the
+    -- controller side, so that it covers every tier rather than
+    -- whichever participants happened to be wrapped on the way
+    -- in. These rows pin all three tiers and the abort.
+    describe('the chain is error-bounded at entry', function()
+      it('a raising shortcut does not escape the chain',
+        function()
+          local input = F.activate_project()
+          input.shortcuts.keypressed['a'] =
+              function() error('boom') end
+          assert.has_no.errors(function()
+            F.session.press('a')
+          end)
+          assert.equal('snapshot', love.state.app_state)
+        end)
+
+      -- The documented API surface: a hook the project assigns
+      -- itself, rather than one seeded from its love.* handler.
+      it('a raising direct hook does not escape the chain',
+        function()
+          local input = F.activate_project()
+          input.hooks.keypressed = function() error('boom') end
+          assert.has_no.errors(function()
+            F.session.press('a')
+          end)
+          assert.equal('snapshot', love.state.app_state)
+        end)
+
+      -- A raise aborts the WALK. Previously the wrapper caught
+      -- per-participant, answered falsey, and the walk carried
+      -- on — so a crashed project's overlay edited the very
+      -- event that crashed it.
+      it('a raise stops the walk before the widget',
+        function()
+          local input = F.activate_project()
+          input.hooks.textinput = function() error('boom') end
+          input.show({ text = '' })
+          F.session.type('z')
+          assert.same({ '' }, F.widget:get_text())
+          assert.equal('snapshot', love.state.app_state)
+        end)
+    end)
+
     describe('compy.before_exit', function()
       -- compy.before_exit fires once on
       -- stop, before

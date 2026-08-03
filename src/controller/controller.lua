@@ -138,62 +138,74 @@ end
 --- the honest names the debt entry had recorded; `forward_*`
 --- left by deletion, its console-route widget gate being gone.
 
---- The project's own handler for an event, error-wrapped; nil
---- when the project did not define one.
+--- Run `fn` the way project code must always be run: drawing
+--- routed onto the project's canvas (CC:use_canvas — the
+--- offscreen surface project draws land on), errors routed to
+--- the project error handler, return value propagated.
 ---
---- The guard is load-bearing, not ceremony: without it this
---- hands back a live wrapper around nil, which does
---- xpcall(nil, ...) on every event the project never overrode
---- and routes the resulting error to the project error handler
---- — error spam per keystroke.
----
---- The wrapper runs the handler with project error handling and
---- drawing routed onto the project's canvas (CC:use_canvas —
---- the offscreen surface project draws land on), and propagates
---- its return value. Keyboard participants need that return —
---- the chain's truthy=consume contract depends on it
---- (doc/development/decisions/input.md, Decision 2:
---- return-propagation) — and pointer handlers are installed
---- as love.* callbacks, whose return LÖVE ignores, so one
---- shape serves both: the value is dropped there. A raised
---- error routes to user_error_handler and the call reports
---- non-consuming (nil).
----
---- The guard is an early return rather than an `if` around the
---- closure: wrapping it would put the `if ok` at five levels
---- deep, over the nesting limit.
---- @param userlove table
+--- This is THE boundary, and it sits at the point where a route
+--- is entered rather than around each participant. The dispatch
+--- chain itself carries no error handling
+--- (projectInputController.lua), so wrapping participants left
+--- two of the three tiers unprotected — a raise in
+--- `shortcuts[...]` or in a directly-assigned `hooks[...]`
+--- escaped the chain entirely — and made a raise in the third
+--- look like a falsey "did not consume", so the walk carried on
+--- into the widget. One boundary above the walk covers every
+--- tier and aborts it.
 --- @param CC ConsoleController
---- @param key string
---- @return function? wrapped
-local function project_handler(userlove, CC, key)
-  local orig = Controller._defaults[key]
-  local new = userlove[key]
-  if not (orig and new and orig ~= new) then return end
+--- @param fn function
+--- @return function
+local function guarded(CC, fn)
   return function(...)
     local args = { ... }
     return CC:use_canvas(function()
-      local ok, res = wrap(new, CC, unpack(args))
+      local ok, res = wrap(fn, CC, unpack(args))
       if ok then return res end
     end)
   end
 end
 
---- The project's own keyboard/text handlers, error-wrapped for
---- seeding as hooks[event] (doc/development/decisions/input.md,
---- Decision 10: pure wrap) — return values
---- preserved so a seeded hook can consume like any participant.
+--- The project's own handler for an event, raw; nil when the
+--- project did not define one. NOT wrapped — `guarded` above
+--- covers it once the route is entered, which is what makes a
+--- seeded handler an ordinary chain participant rather than a
+--- specially-protected one (doc/development/decisions/input.md,
+--- Decision 10).
+---
+--- The guard is load-bearing, not ceremony: without it a
+--- project that never overrode an event seeds `hooks[event]`
+--- with the framework's own default, which would then run as
+--- if it were the project's.
+---
+--- Early return rather than an `if` around the body: an `if`
+--- would nest what follows a level deeper.
+--- @param userlove table
+--- @param key string
+--- @return function? handler
+local function project_handler(userlove, key)
+  local orig = Controller._defaults[key]
+  local new = userlove[key]
+  if not (orig and new and orig ~= new) then return end
+  return new
+end
+
+--- The project's own keyboard/text handlers, for seeding as
+--- hooks[event] (doc/development/decisions/input.md,
+--- Decision 10) — raw, so a seeded hook is an ordinary chain
+--- participant: it consumes on truthy and falls through on
+--- falsey exactly like one the project assigned itself.
 --- @param userlove table
 --- @param CC ConsoleController
 --- @return table handlers
 local function project_handlers(userlove, CC)
   return {
     keypressed =
-        project_handler(userlove, CC, 'keypressed'),
+        project_handler(userlove, 'keypressed'),
     textinput =
-        project_handler(userlove, CC, 'textinput'),
+        project_handler(userlove, 'textinput'),
     keyreleased =
-        project_handler(userlove, CC, 'keyreleased'),
+        project_handler(userlove, 'keyreleased'),
   }
 end
 
@@ -218,29 +230,34 @@ local function occupy_keyboard(userlove, CC)
   local pic = Controller.project_input
   local compy = CC:get_project_env().compy
   pic:activate(project_handlers(userlove, CC), compy.input)
-  -- wrapped (not assigned) to bind `pic` as method receiver:
+  -- `guarded` here, not around each participant: entering the
+  -- route IS the boundary, so every tier of the walk runs with
+  -- the project canvas bound and one error handler above it.
+  -- Wrapped (not assigned) to bind `pic` as method receiver:
   -- `love.keypressed = pic.keypressed` would drop `self`.
-  love.keypressed = function(k, sc, isr)
+  love.keypressed = guarded(CC, function(k, sc, isr)
     return pic:keypressed(k, sc, isr)
-  end
-  love.textinput = function(t)
+  end)
+  love.textinput = guarded(CC, function(t)
     return pic:textinput(t)
-  end
-  love.keyreleased = function(k)
+  end)
+  love.keyreleased = guarded(CC, function(k)
     return pic:keyreleased(k)
-  end
+  end)
 end
 
 --- @param userlove table
 --- @param CC ConsoleController
 local function hook_pointer(userlove, CC)
   for _, k in ipairs(_pointer) do
-    -- Same wrapper the keyboard participants get; installed
-    -- straight onto love[k], where LÖVE ignores the return.
-    local w = project_handler(userlove, CC, k)
-    if w then
+    -- Same boundary the keyboard route gets, applied where
+    -- the pointer handler is entered: it owns the love.* slot
+    -- outright rather than joining a chain (for now: see the
+    -- pointer-unification plan).
+    local h = project_handler(userlove, k)
+    if h then
       --- @type function
-      love[k] = w
+      love[k] = guarded(CC, h)
       user_pointer = true
     end
   end
