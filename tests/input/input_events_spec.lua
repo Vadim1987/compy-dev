@@ -307,6 +307,131 @@ describe('#input events dispatching', function()
     end)
   end)
 
+  -- A combo is modifiers plus ONE trigger
+  -- (doc/development/decisions/input.md, Decision 21). The rule is
+  -- enforced at registration because the canonical form silently
+  -- kept the LAST non-modifier token before: 'ctrl+a+b' became
+  -- 'ctrl+b', and 'a+b+*' became a bare '*' — the widest possible
+  -- binding written as the narrowest. Raising is the same
+  -- treatment show/configure give an unrecognised key (Decision 15).
+  describe('the combo registration contract', function()
+
+    it('rejects a combo with two triggers', function()
+      local input = F.activate_project()
+      assert.has_error(function()
+        input.shortcuts.keypressed['ctrl+a+b'] = function() end
+      end)
+    end)
+
+    it('rejects a class combo with a trigger beside it', function()
+      local input = F.activate_project()
+      assert.has_error(function()
+        input.shortcuts.keypressed['a+b+*'] = function() end
+      end)
+    end)
+
+    -- The legal shapes stay legal: a bare trigger, modifiers plus a
+    -- trigger, and modifiers plus the class marker.
+    it('accepts a trigger, a combo, and a class', function()
+      local input = F.activate_project()
+      local sc = input.shortcuts.keypressed
+      sc['a'] = function() end
+      sc['Ctrl+Alt+S'] = function() end
+      sc['ctrl+alt+*'] = function() end
+      assert.is_function(sc['a'])
+      assert.is_function(sc['ctrl+alt+s'])
+      assert.is_function(sc['ctrl+alt+*'])
+    end)
+
+    -- A combo naming no trigger at all is not a binding.
+    it('rejects a modifier-only combo', function()
+      local input = F.activate_project()
+      assert.has_error(function()
+        input.shortcuts.keypressed['ctrl+alt'] = function() end
+      end)
+    end)
+  end)
+
+  -- A trailing '*' binds the whole modifier class
+  -- (doc/development/decisions/input.md, Decision 21): 'alt+*' is
+  -- every Alt chord. Exact bindings win; the class is consulted
+  -- only on a miss, so the hit path is unchanged.
+  describe('combo classes', function()
+
+    local function bind_class(input, combo)
+      local seen = { }
+      input.shortcuts.keypressed[combo] = function(k)
+        seen[#seen + 1] = k; return true
+      end
+      return seen
+    end
+
+    it('one class binding catches every key in it', function()
+      local input = F.activate_project()
+      local seen = bind_class(input, 'alt+*')
+      F.session.press('lalt')
+      F.session.press('q')
+      F.session.press('z')
+      assert.same({ 'q', 'z' }, seen)
+    end)
+
+    -- The handler needs to know WHICH key matched, and already
+    -- does: the trigger is argument one, as on any other combo.
+    it('the class handler receives the real trigger', function()
+      local input = F.activate_project()
+      local seen = bind_class(input, 'ctrl+alt+*')
+      F.session.press('lctrl')
+      F.session.press('lalt')
+      F.session.press('h')
+      assert.same({ 'h' }, seen)
+    end)
+
+    it('an exact binding wins over the class', function()
+      local input = F.activate_project()
+      local seen = bind_class(input, 'alt+*')
+      local exact = false
+      input.shortcuts.keypressed['alt+p'] =
+          function() exact = true; return true end
+      F.session.press('lalt')
+      F.session.press('p')
+      assert.is_true(exact)
+      assert.same({ }, seen)
+    end)
+
+    -- A class is its modifier set exactly, so Ctrl+Alt+H is NOT an
+    -- Alt chord. This is the exclusion a hand-rolled modifier test
+    -- has to write out and get right.
+    it('a wider modifier set is a different class', function()
+      local input = F.activate_project()
+      local seen = bind_class(input, 'alt+*')
+      F.session.press('lalt')
+      F.session.press('lctrl')
+      F.session.press('h')
+      assert.same({ }, seen)
+    end)
+
+    -- Holding Alt alone dispatches the combo 'alt+lalt' — the
+    -- modifier prepended to itself as the trigger. A class must not
+    -- match its own modifier, or every Alt press fires it.
+    it('a class does not match its own modifier key', function()
+      local input = F.activate_project()
+      local seen = bind_class(input, 'alt+*')
+      F.session.press('lalt')
+      assert.same({ }, seen)
+    end)
+
+    it('classes work on the textinput channel too', function()
+      local seen = { }
+      local input = F.activate_project()
+      input.shortcuts.textinput['ctrl+*'] = function(t)
+        seen[#seen + 1] = t; return true
+      end
+      F.session.press('lctrl')
+      F.session.type('x')
+      assert.same({ 'x' }, seen)
+    end)
+  end)
+
   -- ---- signatures + read-only proxy of pressed-keys table
   -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 

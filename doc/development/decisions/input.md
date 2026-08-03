@@ -761,3 +761,50 @@ to expose the table; this placement is the implementation's choice.
 write-raise contract, reachable from a second place. Iteration remains inert on
 the shipping LuaJIT runtime (`pairs` ignores `__pairs`), so it is index-only —
 `keys_pressed['lctrl']`, not a loop over held keys.
+
+---
+
+## Decision 21 — a combo names modifiers plus one trigger, or a class
+
+**Status: implemented** (owner ruling, 2026-08-03).
+
+**Decision.** A combo string is modifiers plus **exactly one** trigger token.
+A combo naming two triggers, or none, **raises at registration**. The trigger
+may be the marker `*`, which binds the whole modifier class: `alt+*` is every
+Alt chord. Dispatch tries the exact combo first and consults the class only on
+a miss, so an exact binding always wins. A class never matches when the
+trigger is itself a modifier.
+
+**Why the rule is enforced rather than canonicalised.** The canonical form kept
+the *last* non-modifier token and dropped the rest, silently: `ctrl+a+b` was
+stored as `ctrl+b`, and `a+b+*` as a bare `*` — the widest binding there is,
+from a string written to mean the narrowest. Raising is the treatment
+`show`/`configure` already give an unrecognised key (Decision 15).
+
+**Why classes.** Some rules are about a modifier class, not a key: *every*
+`alt+x` is a chord, whatever `x` is. Without the class form a project writes
+one entry per key, or keeps the rule in a hook and hand-tests the modifiers —
+which `examples/keyboard` did, and which needed an explicit "and not Ctrl"
+clause to keep `ctrl+alt+h` out of the Alt class. A class gets that exclusion
+for free: a different modifier set is a different class.
+
+**Why the trigger, not the modifiers, may be starred.** The ratified combo
+format is a *serialisation* — modifier-first fixed precedence, l/r folded,
+`+`-joined (frozen design, salvage register) — and the **matcher is a marked
+extension seam**. A trailing `*` extends the matcher within that seam and
+needs no change to the serialisation: `*` is simply a non-modifier token, so
+`normalize_combo` already canonicalises `Ctrl+Alt+*` unchanged, and the class
+key at dispatch is the same `combo_string` call with `'*'` as the trigger.
+
+**Why exactly one trigger stays the rule.** Exact-lookup dispatch is sound
+because a combo names every modifier that matters — `ctrl+s` deliberately does
+not fire while Alt is held. Extending that to ordinary keys would make every
+binding conditional on nothing else being held: hold `a` for movement, press
+`space`, and the `space` binding stops firing because the combo is now
+`a+space`. Multi-key chords therefore stay out of the combo grammar. A project
+that wants them uses a hook, which receives the held-key view on **all three**
+keyboard/text channels, and `compy.input.keys_pressed` (Decision 20) elsewhere.
+
+**Consequence.** `shortcuts` stays the easy, predictable mechanism: exact
+match, one optional class marker, no corner cases to design against. Anything
+more sophisticated is a hook, with no capability lost.

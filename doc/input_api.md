@@ -181,6 +181,34 @@ clamp to that range rather than failing.
 function. `shortcuts.keyreleased` and `shortcuts.textinput` work the same
 way. A shortcut runs before the overlay and can consume the event.
 
+A combo is its modifiers plus **one** trigger — `'ctrl+alt+s'`. Modifiers come
+first in a fixed order (ctrl, alt, shift, gui), left and right fold together,
+and the whole string is normalised when you assign it, so `'Ctrl+Alt+S'` and
+`'ctrl+alt+s'` are the same binding. A combo naming two triggers or none
+raises.
+
+The trigger may be `*`, which binds the whole modifier class: `'alt+*'` is
+every Alt chord, and the handler receives the actual key as its first
+argument. An exact binding wins — with both `'alt+*'` and `'alt+p'`
+registered, Alt+P runs the exact one. A class is its modifier set exactly, so
+`'alt+*'` does not catch Ctrl+Alt+H, and it never fires for the modifier's own
+press.
+
+```lua
+compy.input.shortcuts.keypressed['alt+*'] = function() return true end
+compy.input.shortcuts.keypressed['alt+p'] = function()
+  pause()
+  return true
+end
+```
+
+Combos of ordinary keys — "A and B held together" — are deliberately not
+expressible. Every binding would otherwise become conditional on nothing else
+being held, so holding a movement key would silently break unrelated
+shortcuts. For that, and for anything else beyond exact-or-class matching, use
+a hook: it receives the held-key table as its second argument on all three
+channels, and `compy.input.keys_pressed` is readable anywhere.
+
 `compy.input.hooks.keypressed`, `.keyreleased`, and `.textinput` are one
 fallback function per event. At activation, an existing project `love.*`
 handler seeds the matching hook when no explicit hook was supplied.

@@ -402,7 +402,7 @@ question, not resolved here.
 
 Not commissioned for closure; each may never need action.
 
-### A multi-trigger combo is silently truncated at registration
+### A multi-trigger combo is silently truncated at registration (RESOLVED, 2026-08-03)
 
 - **Where:** `src/util/key.lua`, `normalize_combo` / `split_combo` — the
   trigger is "the last non-modifier token wins", with no complaint about the
@@ -416,14 +416,12 @@ Not commissioned for closure; each may never need action.
   no trace of `a`). Multi-key chords are outside the grammar; a project that
   wants "a and b held together" reads `compy.input.keys_pressed`
   (Decision 20).
-- **Why it stands:** nobody has written one yet — found while designing combo
-  classes, not from a report.
-- **Revisit:** with the combo-class ruling. The fix is to **raise** at
-  registration on more than one non-modifier token, matching Decision 15's
-  raise-on-contract-violation; that also settles whether a bare `*` is legal
-  without needing a separate rule.
+- **Resolution:** registration now **raises** on a combo naming more than one
+  trigger, or none (`../decisions/input.md`, Decision 21) — the same treatment
+  `show`/`configure` give an unrecognised key. `a+b+*` no longer registers the
+  widest possible binding; it is refused with the legal shape in the message.
 
-### A combo table cannot express a modifier-class rule
+### A combo table cannot express a modifier-class rule (RESOLVED, 2026-08-03)
 
 - **Where:** `compy.input.shortcuts[event]` (`../decisions/input.md`,
   Decision 8) — `Key.new_handler_table`, an exact canonical lookup keyed by
@@ -446,19 +444,19 @@ Not commissioned for closure; each may never need action.
   the modifier's own press — holding Alt and pressing nothing else dispatches
   the combo **`alt+lalt`**, since `combo_string` prepends the held modifier to
   a trigger that *is* that modifier. A naive `^alt%+` pattern matches it.
-- **Why it stands:** the exact-lookup matcher is `O(1)` and predictable, and
-  the questions above are unanswered.
-- **A sanctioned form has been proposed** (owner, 2026-08-03): combo classes
-  written as `ctrl+alt+*`. `normalize_combo` already handles them unchanged
-  (`*` is just a non-modifier token), the handler already receives the real
-  trigger as its first argument, and precedence costs one extra lookup on a
-  miss. Weighed in the feature's validation record; ruling pending on the two
-  corners — a modifier's own press (`alt+lalt` would match `alt+*`), and
-  whether a bare `*` is allowed at all when a hook already means that.
-- **Revisit:** if a second project needs a modifier-class rule. One entry per
-  key is a fine answer for small sets; a hook is a fine answer for open ones.
-  Worth naming in the API guide either way, since today a reader may assume
-  `shortcuts` covers what it does not.
+- **Resolution:** owner ruled a sanctioned form — a trailing `*` binds the
+  modifier class (`../decisions/input.md`, Decision 21). `alt+*` is every Alt
+  chord; exact bindings win, the class is consulted only on a miss, and it
+  never matches the modifier's own press. The three questions above are
+  answered by it: precedence is exact-first; the trigger is already the
+  handler's first argument; and a class does not match when the trigger is
+  itself a modifier. The unsealed-metatable route above is superseded — do
+  not use it.
+- **Still true, and now documented rather than implicit:** the class form is
+  about a *modifier* class. Combos of ordinary keys (`a+b`) remain outside the
+  grammar by design, since including held non-modifiers would make every
+  binding conditional on nothing else being held. That case is a hook plus
+  `compy.input.keys_pressed`.
 
 ### A keyboard-hooks-only project does not count as interactive
 

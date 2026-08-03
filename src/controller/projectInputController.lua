@@ -69,10 +69,23 @@ ProjectInputController = class.create(new)
 --- @param event string
 --- @param trigger string
 --- @return boolean consumed
+--- Exact combo first, then the modifier class
+--- (doc/development/decisions/input.md, Decision 21): 'alt+*' is
+--- every Alt chord. The class key needs no parsing — it is the
+--- same serialisation with '*' as the trigger. A modifier's own
+--- press dispatches e.g. 'alt+lalt' and must not match 'alt+*'.
+--- @param tbl table   one channel's combo table
+--- @param trigger string
+--- @return function?
+local function find_shortcut(tbl, trigger)
+  local keys = Controller.keys_pressed
+  local sc = tbl[Controller.combo_string(trigger, keys)]
+  if sc or Key.is_mod(trigger) then return sc end
+  return tbl[Controller.combo_string('*', keys)]
+end
+
 local function dispatch(shortcuts, hooks, widget, event, trigger, ...)
-  local combo = Controller.combo_string(
-    trigger, Controller.keys_pressed)
-  local sc = shortcuts[event][combo]
+  local sc = find_shortcut(shortcuts[event], trigger)
   if sc and sc(...) then return true end
   local hk = hooks[event]
   if hk and hk(...) then return true end
