@@ -118,31 +118,38 @@ action; revisit at the named point).
   scope, timing, primary versus other buttons, modifier snapshots, and the
   drag/selection/touch contract before proposing a unification.
 
-### Project-handler wrapping: dedup the guard, drop the misleading `keyboard_` name
-`controller.lua:146-217` builds the wrappers that adapt a project's own `love.*`
-handlers (its `userlove` table) for the input chain. Two builders — `wrapped_native`
-(`:158`, via `CC:wrap_handler`, **return discarded** — fire-and-forget pointer
-handlers, assigned straight onto `love.*` in `hook_pointer`) and `keyboard_native`
-(`:193`, via `chain_native` `:177`, **return propagated** — chain participants seeded
-as `pic.hooks[event]` in `occupy_keyboard`) — carry the **identical guard**
-(`orig and new and orig ~= new`: "project set its own handler, differing from the
-framework default") and differ only in the wrapper they call. The guard is
-load-bearing, **not** removable: skip it and `keyboard_native` returns
-`chain_native(CC, nil)`, a non-nil wrapper that on every keypress does `xpcall(nil,…)`
-and routes the resulting error to the project error handler — error-handler spam per
-keystroke for any event the project didn't override.
-- **Two problems.** (1) `keyboard_native` is misnamed — nothing keyboard-specific;
-  it is *the return-propagating variant of the guarded wrapper*, only ever called with
-  keyboard keys. (2) The guard is duplicated across the two builders.
-- **Shape.** One guarded-wrapper helper parametrized by return-policy (keep vs
-  discard); honest names (e.g. `chain_project_handler` / `wrap_project_handler`), no
-  `native`/`keyboard_` label. Behaviour-preserving.
-- **Why deferred (not folded into D5 vocabulary rename, 2026-07-21):** renaming these
-  under a mechanical sweep would either bless the smell with fresh names or smuggle a
-  behaviour-touching refactor into a rename commit. D5 renamed everything else
-  (`natives`→`handlers`, docs, tests); this region + its defining comment (`:146-153`)
-  were carved out for this dedicated pass. Related breadcrumb: the `userlove`/`forward_*`
-  rename note at `controller.lua:233`.
+### Project-handler wrapping: dedup the guard, drop the misleading `keyboard_` name (RESOLVED, 2026-08-03)
+
+- **Resolution:** the two builders are one. `chain_project_handler(CC, fn)`
+  wraps, `project_handler(userlove, CC, key)` guards, and both the keyboard
+  participants (`project_handlers`) and the pointer installs (`hook_pointer`)
+  use it. The guard exists once. `wrapped_native` / `keyboard_native` /
+  `chain_native` are gone, and with them the `native` label and the
+  keyboard-specific name on a function that was never keyboard-specific.
+- **What made the collapse possible:** the split was justified by return
+  policy — `CC:wrap_handler` discards the return by construction, and a chain
+  participant's return is its consume signal. That was never a real
+  constraint: a returning wrapper is usable where the return is ignored,
+  which is exactly what a pointer handler installed on `love.*` does. The
+  genuine obstacle was that the two paths had *different error handling*, one
+  of which was broken — see the arity entry above, fixed first so the
+  collapse could be behaviour-preserving rather than a fix in disguise.
+- `CC:wrap_handler` survives for the compy single/double click handlers,
+  which are not project `love.*` handlers and keep their own path.
+- **Verified behaviour-preserving:** suite 911/0/0/3 across the change, and
+  the pointer path now propagates a return value that both `love.handlers`
+  and the poll loop discard.
+- **What it was:** two builders adapting a project's own `love.*` handlers —
+  `wrapped_native` (via `CC:wrap_handler`, return discarded, installed
+  straight onto `love.*` by `hook_pointer`) and `keyboard_native` (via
+  `chain_native`, return propagated, seeded as `hooks[event]` by
+  `occupy_keyboard`) — carrying the **identical** guard
+  (`orig and new and orig ~= new`) and differing only in the wrapper they
+  called. `keyboard_native` was misnamed: nothing about it was
+  keyboard-specific. Deferred out of the D5 vocabulary rename (2026-07-21)
+  on the reasoning that renaming under a mechanical sweep would either bless
+  the smell with fresh names or smuggle a behaviour-touching refactor into a
+  rename commit — which is why it waited for a pass of its own.
 
 ### `keys_pressed` can go stale on focus loss
 

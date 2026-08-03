@@ -108,77 +108,63 @@ local function wrap(f, CC, ...)
     if not ok then
       on_error(r)
     end
-    return r
+    -- `ok, r`, not bare `r`: the two branches used to answer in
+    -- different shapes, and every caller discarded the result
+    -- so nothing caught it. chain_project_handler reads the
+    -- pair, so they have to agree — and the @return above now
+    -- describes both (technical_debt/input.md, same entry).
+    return ok, r
   else
     return xpcall(f, on_error, ...)
   end
 end
 
---- NAMING — disputed, not re-approved. The rename of `*_native`
---- and `userlove` is deferred to just before the PR
---- (owner, 2026-07-31); candidates on the table are
---- `wrap_project_handler` / `chain_project_handler`.
---- (`forward_*` left this list by deletion, not rename — the
---- console-route widget gate it implemented is gone.)
---- Why two wrappers and not one with a flag:
---- `wrapped_native` rides on `CC:wrap_handler`, shared with the
---- compy click handlers, which discards the return by construction —
---- and a chain participant's return IS its consume signal, so
---- `chain_native` cannot reuse it. Dedup and the guard they share:
---- doc/development/technical_debt/input.md, "Project-handler wrapping".
+--- NAMING — the rename of `userlove` is still deferred to
+--- just before the PR (owner, 2026-07-31). The `*_native`
+--- names went with the two wrappers when they merged, taking
+--- the honest names the debt entry had recorded; `forward_*`
+--- left by deletion, its console-route widget gate being gone.
 
---- The project's own handler for an event, error-wrapped;
---- nil when the project did not define one. "Native" here
---- and below = a handler the project installed in its own
---- sandboxed love table (passed in as `userlove`). The wrap
---- routes errors to the project error handler; the return
---- value is discarded, which suits fire-and-forget pointer
---- handlers — chain_native below is the variant for chain
---- participants, which must keep the return.
---- @param userlove table
---- @param CC ConsoleController
---- @param key string
---- @return function? wrapped
-local function wrapped_native(userlove, CC, key)
-  local orig = Controller._defaults[key]
-  local new = userlove[key]
-  if orig and new and orig ~= new then
-    return CC:wrap_handler(new, wrap)
-  end
-end
-
---- Wrap a project keyboard handler for the dispatch chain:
---- run it with project error handling, drawing routed onto
---- the project's canvas (CC:use_canvas — the offscreen
---- surface project draws land on), AND propagate its return
---- value — the chain's truthy=consume contract depends on it
---- (doc/development/decisions/input.md, Decision 2: return-propagation).
+--- Wrap a project handler: run it with project error handling,
+--- drawing routed onto the project's canvas (CC:use_canvas —
+--- the offscreen surface project draws land on), and propagate
+--- its return value. Keyboard participants need that return —
+--- the chain's truthy=consume contract depends on it
+--- (doc/development/decisions/input.md, Decision 2:
+--- return-propagation) — and pointer handlers are installed
+--- as love.* callbacks, whose return LÖVE ignores, so one
+--- wrapper serves both: the value is dropped at that site.
 --- A raised error routes to user_error_handler and the call
 --- reports non-consuming (nil).
 --- @param CC ConsoleController
 --- @param fn function
 --- @return function
-local function chain_native(CC, fn)
+local function chain_project_handler(CC, fn)
   return function(...)
     local args = { ... }
     return CC:use_canvas(function()
-      local ok, res = xpcall(fn, function(m)
-        user_error_handler(CC, m)
-      end, unpack(args))
+      local ok, res = wrap(fn, CC, unpack(args))
       if ok then return res end
     end)
   end
 end
 
+--- The project's own handler for an event, error-wrapped; nil
+--- when the project did not define one. The guard is
+--- load-bearing, not ceremony: without it this returns a live
+--- wrapper around nil, which does xpcall(nil, ...) on every
+--- event the project never overrode and routes the resulting
+--- error to the project error handler — error spam per
+--- keystroke.
 --- @param userlove table
 --- @param CC ConsoleController
 --- @param key string
---- @return function?
-local function keyboard_native(userlove, CC, key)
+--- @return function? wrapped
+local function project_handler(userlove, CC, key)
   local orig = Controller._defaults[key]
   local new = userlove[key]
   if orig and new and orig ~= new then
-    return chain_native(CC, new)
+    return chain_project_handler(CC, new)
   end
 end
 
@@ -192,11 +178,11 @@ end
 local function project_handlers(userlove, CC)
   return {
     keypressed =
-        keyboard_native(userlove, CC, 'keypressed'),
+        project_handler(userlove, CC, 'keypressed'),
     textinput =
-        keyboard_native(userlove, CC, 'textinput'),
+        project_handler(userlove, CC, 'textinput'),
     keyreleased =
-        keyboard_native(userlove, CC, 'keyreleased'),
+        project_handler(userlove, CC, 'keyreleased'),
   }
 end
 
@@ -238,7 +224,9 @@ end
 --- @param CC ConsoleController
 local function hook_pointer(userlove, CC)
   for _, k in ipairs(_pointer) do
-    local w = wrapped_native(userlove, CC, k)
+    -- Same wrapper the keyboard participants get; installed
+    -- straight onto love[k], where LÖVE ignores the return.
+    local w = project_handler(userlove, CC, k)
     if w then
       --- @type function
       love[k] = w
