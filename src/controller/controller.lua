@@ -67,6 +67,17 @@ local _pointer = {
   'touchreleased',
 }
 
+-- Derived events: not LÖVE's. The click timer in
+-- set_love_update synthesises them from raw presses. They travel
+-- the gateway and the route like native ones, so a project reads
+-- through compy.input.hooks like anything else. They are NOT in
+-- _supported because there is no love.<name> for a project to
+-- have written, so nothing seeds them from the sandbox table.
+local _derived = {
+  'singleclick',
+  'doubleclick',
+}
+
 local _supported = {}
 for _, k in ipairs(_keyboard) do
   table.insert(_supported, k)
@@ -249,6 +260,11 @@ local function occupy_keyboard(userlove, CC)
       return pic[k](pic, ...)
     end)
   end
+  for _, k in ipairs(_derived) do
+    love[k] = guarded(CC, function(...)
+      return pic[k](pic, ...)
+    end)
+  end
 end
 
 --- @param userlove table
@@ -266,9 +282,12 @@ local function hook_pointer(userlove, CC)
       user_pointer = true
     end
   end
-  if CC:get_compy_handler('singleclick')
-      or CC:get_compy_handler('doubleclick') then
-    user_pointer = true
+  -- Runs after occupy_keyboard, so the hooks table is already
+  -- seeded, so a click hook the project set in top-level code
+  -- is visible here.
+  local hooks = CC:get_project_env().compy.input.hooks
+  for _, k in ipairs(_derived) do
+    if hooks[k] then user_pointer = true end
   end
 end
 
@@ -311,7 +330,13 @@ end
 -- a stopped project's pointer hook survives teardown and blocks
 -- the NEXT project's seeding (seed_hooks fills only a nil
 -- slot). Decision 11's teardown invariant covers all of them.
-local HOOK_EVENTS = _supported
+local HOOK_EVENTS = {}
+for _, k in ipairs(_supported) do
+  table.insert(HOOK_EVENTS, k)
+end
+for _, k in ipairs(_derived) do
+  table.insert(HOOK_EVENTS, k)
+end
 
 --- @param t table
 local function wipe_table(t)
@@ -438,10 +463,11 @@ end
 --- @field user_is_blocking function
 Controller = {
   --- @private
-  _defaults = {
-    singleclick = function() end,
-    doubleclick = function() end,
-  },
+  -- Empty: the click stubs that used to sit here were a fossil
+  -- of the era when single/doubleclick were love.* events. They
+  -- were dead: every _defaults read iterates _supported (plus
+  -- 'draw'), which never included them.
+  _defaults = { },
   --- @private
   _userhandlers = {},
 
@@ -657,28 +683,21 @@ Controller = {
         click_timer = click_timer - dt
       end
       if click_timer <= 0 then
+        -- Synthesis only: decide WHICH derived event the raw
+        -- presses amount to, then emit it through the gateway
+        -- like any native one. Who receives it, whether it is
+        -- error-wrapped and whether anyone consumes it are the
+        -- route's business, not this timer's.
+        local derived
         if click_count == 1 then
-          -- single click confirmed after delay
-          local handler = CC:get_compy_handler('singleclick')
-          if handler then
-            local h = CC:wrap_handler(handler, wrap)
-            local x, y = love.mouse.getPosition()
-            local cur = { x = x, y = y }
-            if no_drift(click_pos, cur) then
-              h(x, y)
-            end
-          end
+          derived = 'singleclick'
         elseif click_count >= 2 then
-          -- double click detected
-          local dbl_handler =
-              CC:get_compy_handler('doubleclick')
-          if dbl_handler then
-            local h = CC:wrap_handler(dbl_handler, wrap)
-            local x, y = love.mouse.getPosition()
-            local cur = { x = x, y = y }
-            if no_drift(click_pos, cur) then
-              h(x, y)
-            end
+          derived = 'doubleclick'
+        end
+        if derived then
+          local x, y = love.mouse.getPosition()
+          if no_drift(click_pos, { x = x, y = y }) then
+            love.handlers[derived](x, y)
           end
         end
         click_count = 0
@@ -815,6 +834,13 @@ Controller = {
     Controller.set_love_keypressed(CC)
     Controller.set_love_keyreleased(CC)
     Controller.set_love_textinput(CC)
+    -- The derived click slots have no console occupant to
+    -- restore, the console not using them, so releasing means
+    -- emptying them. Left set they would keep pointing at a
+    -- deactivated route.
+    for _, k in ipairs(_derived) do
+      love[k] = nil
+    end
   end,
 
   --- @param CC ConsoleController
@@ -868,6 +894,9 @@ Controller = {
     Controller.set_love_update(CC)
     user_draw = false
     user_pointer = false
+    for _, k in ipairs(_derived) do
+      love[k] = nil
+    end
     Controller.set_love_draw(CC, CV)
     Controller._defaults.draw = View.main_draw
     Controller.set_love_quit(CC)
@@ -1062,6 +1091,17 @@ Controller = {
     handlers.mousemoved = function(x, y, dx, dy, touch)
       if love.mousemoved then
         return love.mousemoved(x, y, dx, dy, touch)
+      end
+    end
+
+    -- Derived click events, synthesised by the click timer in
+    -- set_love_update. Same shape as every native entry above:
+    -- hand it to whatever occupies the slot, and skip when
+    -- nothing does. The console and editor do not use them, so
+    -- on those routes the slot is simply empty.
+    for _, name in ipairs(_derived) do
+      handlers[name] = function(x, y)
+        if love[name] then return love[name](x, y) end
       end
     end
 

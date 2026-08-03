@@ -246,20 +246,9 @@ function ConsoleController:wrap_handler(f, errhand)
   end
 end
 
---- @param name string
---- @return function? handler
-function ConsoleController:get_compy_handler(name)
-  local env = self:get_project_env()
-  if not env then return end
-  local active_compy = env['compy']
-  if not active_compy then return end
-  local handler = active_compy[name]
-  if not handler then
-    return
-  else
-    return handler
-  end
-end
+-- (get_compy_handler removed: its only callers resolved
+-- compy.singleclick / compy.doubleclick, which are now ordinary
+-- hooks reached through the dispatch chain.)
 
 --- @param name string?
 function ConsoleController:run_project(name)

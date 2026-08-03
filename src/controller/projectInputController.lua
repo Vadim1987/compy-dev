@@ -200,9 +200,14 @@ local function pointer_channel(event)
   end
 end
 
+-- The last two are DERIVED: the framework's click timer
+-- synthesises them, LÖVE does not deliver them. They dispatch
+-- identically all the same, which is the point: a project binds
+-- compy.input.hooks.singleclick as it binds any other.
 for _, event in ipairs({
   'mousepressed', 'mousereleased', 'mousemoved', 'wheelmoved',
   'touchpressed', 'touchreleased', 'touchmoved',
+  'singleclick', 'doubleclick',
 }) do
   pointer_channel(event)
 end

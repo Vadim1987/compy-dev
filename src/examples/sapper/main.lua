@@ -668,7 +668,7 @@ function single(x, y)
   end
 end
 
-function compy.singleclick(x, y)
+compy.input.hooks.singleclick = function(x, y)
   if not Key.shift() and not Key.alt() and not Key.ctrl()
   then
     single(x, y)
@@ -686,7 +686,7 @@ function doppel(x, y)
   end
 end
 
-function compy.doubleclick(x, y)
+compy.input.hooks.doubleclick = function(x, y)
   if not Key.shift() and not Key.alt() and not Key.ctrl()
   then
     doppel(x, y)

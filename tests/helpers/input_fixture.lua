@@ -197,14 +197,6 @@ function F.compy_input()
   return CC:get_project_env().compy.input
 end
 
--- Register a project click handler
--- (compy.singleclick/doubleclick), the target the framework
--- click path invokes (doc/development/internals/user_input.md,
--- "Framework-level click handling").
-function F.set_compy_handler(name, fn)
-  CC:get_project_env().compy[name] = fn
-end
-
 -- Is an overlay visible to the framework? Reads love.state.user_input
 -- rather than the widget's own is_shown(): that field IS the overlay
 -- contract (userInputController.lua, open_fresh/hide) — the draw loop

@@ -353,11 +353,11 @@ function point(x, y, btn)
   end
 end
 
-function compy.singleclick(x, y)
+compy.input.hooks.singleclick = function(x, y)
   point(x, y, 1)
 end
 
-function compy.doubleclick(x, y)
+compy.input.hooks.doubleclick = function(x, y)
   point(x, y, 2)
 end
 

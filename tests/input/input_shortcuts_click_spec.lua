@@ -92,8 +92,8 @@ describe('input contracts: shortcuts and click #input', function()
     it('a single click confirms after the window',
       function()
         local hit = 0
-        local bump = function() hit = hit + 1 end
-        F.set_compy_handler('singleclick', bump)
+        local input = F.activate_project()
+        input.hooks.singleclick = function() hit = hit + 1 end
         F.set_mouse_pos(10, 540)
         F.session.mousereleased(10, 540, 1, false, 1)
         F.love_update(0.1)
@@ -105,8 +105,8 @@ describe('input contracts: shortcuts and click #input', function()
     it('pointer drift suppresses the single click',
       function()
         local hit = 0
-        local bump = function() hit = hit + 1 end
-        F.set_compy_handler('singleclick', bump)
+        local input = F.activate_project()
+        input.hooks.singleclick = function() hit = hit + 1 end
         F.session.mousereleased(10, 540, 1, false, 1)
         F.set_mouse_pos(400, 400)
         F.love_update(0.5)
@@ -116,13 +116,23 @@ describe('input contracts: shortcuts and click #input', function()
     it('a double click calls the project handler',
       function()
         local hit = 0
-        local bump = function() hit = hit + 1 end
-        F.set_compy_handler('doubleclick', bump)
+        local input = F.activate_project()
+        input.hooks.doubleclick = function() hit = hit + 1 end
         F.set_mouse_pos(10, 540)
         F.session.mousereleased(10, 540, 1, false, 1)
         F.session.mousereleased(10, 540, 1, false, 1)
         F.love_update(0.5)
         assert.equal(1, hit)
+      end)
+
+    -- The derived events travel the gateway like native ones,
+    -- so with no project route holding the slot the emit is a
+    -- no-op, not an error. The console does not use them.
+    it('a click with no project route is silently dropped',
+      function()
+        F.set_mouse_pos(10, 540)
+        F.session.mousereleased(10, 540, 1, false, 1)
+        assert.has_no.errors(function() F.love_update(0.5) end)
       end)
   end)
 
