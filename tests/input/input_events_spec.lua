@@ -394,6 +394,53 @@ describe('#input events dispatching', function()
       end)
     end)
 
+    -- The same held set, readable OUTSIDE an event
+    -- (doc/development/decisions/input.md, Decision 20;
+    -- doc/input_api.md, "Held keys"). The participant argument
+    -- above cannot serve a project that RENDERS held state: a
+    -- per-frame draw runs between events, with no argument in
+    -- hand. examples/keyboard mirrored the whole set by hand for
+    -- exactly this reason.
+    describe('compy.input.keys_pressed', function()
+
+      it('reports a held key from outside any handler',
+        function()
+          local input = F.activate_project()
+          F.session.press('a')
+          assert.is_true(input.keys_pressed['a'])
+        end)
+
+      it('drops a released key', function()
+        local input = F.activate_project()
+        F.session.press('a')
+        F.session.release('a')
+        assert.is_nil(input.keys_pressed['a'])
+      end)
+
+      -- Read-only, by the same rule as the participant argument:
+      -- the project observes the held set, it does not own it.
+      it('cannot be written to', function()
+        local input = F.activate_project()
+        assert.has_error(function()
+          input.keys_pressed['x'] = true
+        end)
+      end)
+
+      -- It is the SAME view, not a snapshot taken at namespace
+      -- build time: what a handler is handed and what the project
+      -- reads afterwards agree.
+      it('agrees with the view a handler receives', function()
+        local from_handler
+        local input = F.activate_project()
+        input.hooks.keypressed = function(_, keys)
+          from_handler = keys['a']; return true
+        end
+        F.session.press('a')
+        assert.equal(from_handler, input.keys_pressed['a'])
+        assert.is_true(input.keys_pressed['a'])
+      end)
+    end)
+
     -- doc/development/decisions/input.md, Decision 9: the WIDGET is included
     -- in the uniform
     -- signature — it

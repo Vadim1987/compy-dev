@@ -156,7 +156,7 @@ keystroke for any event the project didn't override.
 The framework owner has not yet ruled on these; each is recorded as an open
 question, not resolved here.
 
-### `compy.keys_pressed` is not exposed to projects
+### `compy.keys_pressed` is not exposed to projects (RESOLVED, 2026-08-03)
 
 - **Where:** the project-facing `compy` namespace (`consoleController.lua`,
   the function that assembles it) exposes `terminal`, `audio`, `graphics`,
@@ -173,9 +173,11 @@ question, not resolved here.
   render shifted key labels. A per-event argument cannot serve a per-frame
   renderer, so callback-arg access alone is insufficient for any project that
   *renders* held state rather than reacting to it.
-- **Revisit:** now — the evidence for the call is in hand. Either add the
-  project-readable surface, or document that a project must mirror the set
-  itself, which is what `keyboard` does today.
+- **Resolution:** owner ruled to expose it — `compy.input.keys_pressed`
+  (`../decisions/input.md`, Decision 20), the same read-only view the chain
+  hands participants, resolved per access so it cannot go stale. Placed on
+  `compy.input` rather than at the top of `compy`: it is input state, and the
+  input guide is where a reader looks for it.
 
 ### Shortcuts key-repeat semantics are shipped unsettled
 

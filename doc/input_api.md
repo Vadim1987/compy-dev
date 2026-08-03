@@ -223,6 +223,31 @@ way: the two channels do not share a combo string for it — `shift+i` on
 `keypressed` against `shift+I` on `textinput` — and the upper-case form
 cannot be registered.
 
+## Held keys
+
+`compy.input.keys_pressed` is a read-only table of the keys held right now,
+keyed by LÖVE key name: `compy.input.keys_pressed['lshift']` is `true` while
+either shift is down and `nil` otherwise. Reading it is allowed anywhere,
+including from `love.draw` — which is the point, since a project that *draws*
+held state has no event argument to consult.
+
+```lua
+function love.draw()
+  local shifted = compy.input.keys_pressed['lshift']
+      or compy.input.keys_pressed['rshift']
+  draw_keycaps(shifted)
+end
+```
+
+Writing to it raises: the project observes the held set, it does not own it.
+The same table arrives as the second argument of every shortcut, hook and
+widget call, so a handler can use either.
+
+Left and right modifiers are **not** folded here — this is the raw held set,
+so test `lshift` and `rshift` separately. (Combo strings *are* folded:
+`shortcuts.keypressed['shift+a']` matches either.) Iterating the table yields
+nothing on the shipping runtime; index it by name.
+
 ## Callback assignments
 
 `compy.input.callbacks` is writable. These entries may also be supplied in

@@ -727,3 +727,37 @@ cannot drift from the one the dispatch walk uses.
 **Consequence.** `show` on an already-active overlay stays a warn-and-no-op
 (Decision 3): a project that wants "open it only if it is closed" now writes
 that, instead of relying on the warning as flow control.
+
+---
+
+## Decision 20 — a project can read the held-key set outside an event
+
+**Status: implemented** (owner ruling, 2026-08-03).
+
+**Decision.** `compy.input.keys_pressed` is the read-only pressed-keys view
+(Decision 13), readable at any time — not only as a dispatch argument. Reads
+pass through to the live held set; assignment raises. It resolves on every
+access rather than being captured once, so it cannot go stale when the backing
+table's identity changes.
+
+**Why.** The same reason as Decision 18: a project's `love` is a sandboxed deep
+clone, so it cannot reach the real held set on its own. Until now the view
+arrived only as argument 2 of a shortcut/hook/widget call, which serves a
+project that *reacts* to keys and fails one that *renders* them: a per-frame
+`love.draw` runs between events with no argument in hand.
+
+**The consumer that settled it.** `examples/keyboard` maintains its own
+`INPUT.held` / `INPUT.shift` mirror, updated on every press and release, and
+reads it during draw to decide whether to render shifted key labels
+(`keyboard_view.lua`). It is a hand-built copy of a table the framework already
+owns, and it exists because there was no way to ask.
+
+**Placement.** On `compy.input`, beside `is_shown()`, rather than as a new
+top-level `compy.keys_pressed`: it is input state, the input guide is where a
+reader looks for it, and `compy`'s other members are subsystems. The ruling was
+to expose the table; this placement is the implementation's choice.
+
+**Not a new capability.** It is the same view, with the same read-through and
+write-raise contract, reachable from a second place. Iteration remains inert on
+the shipping LuaJIT runtime (`pairs` ignores `__pairs`), so it is index-only —
+`keys_pressed['lctrl']`, not a loop over held keys.

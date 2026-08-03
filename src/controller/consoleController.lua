@@ -412,13 +412,18 @@ local function build_leaf_surface(store)
 end
 
 --- Assemble the compy.input surface: reads resolve the three frozen
---- sub-tables (shortcuts / hooks / callbacks) or a callable method;
---- every write to the container itself is refused loudly (Decision 7
---- revised — frozen container, writable leaves).
+--- sub-tables (shortcuts / hooks / callbacks), the live
+--- held-key view, or a callable method; every write to the
+--- container itself is refused loudly (Decision 7 revised —
+--- frozen container, writable leaves).
+--- `get_keys` is resolved on every read, never captured: the
+--- view is rebuilt when its backing table identity changes
+--- (Decision 13), so a reference taken at build time goes stale.
 --- @param state table
 --- @param methods table
+--- @param get_keys fun(): table
 --- @return table
-local function build_input_surface(state, methods)
+local function build_input_surface(state, methods, get_keys)
   local shortcuts = build_shortcuts_surface(state.shortcuts)
   local hooks = build_leaf_surface(state.hooks)
   local callbacks = build_leaf_surface(state.callbacks)
@@ -427,6 +432,7 @@ local function build_input_surface(state, methods)
       if k == 'shortcuts' then return shortcuts end
       if k == 'hooks' then return hooks end
       if k == 'callbacks' then return callbacks end
+      if k == 'keys_pressed' then return get_keys() end
       return methods[k]
     end,
     __newindex = function(_, k) frozen_error(k) end,
@@ -697,7 +703,12 @@ local get_compy_input = function()
     function() return love.state.user_input_controller end,
     get_active,
     state)
-  return build_input_surface(state, methods)
+  -- doc/development/decisions/input.md, Decision 20: the
+  -- held-key view a project can read OUTSIDE an event. The same
+  -- read-only proxy the chain hands participants (Decision 13)
+  -- — a project cannot build one, its `love` being a clone.
+  local held = Controller.held_keys
+  return build_input_surface(state, methods, held)
 end
 
 -- Project lifecycle callback. It is intentionally separate from

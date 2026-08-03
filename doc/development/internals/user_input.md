@@ -222,11 +222,15 @@ reads pass through to the live set, writes raise. On the shipping
 LuaJIT/Lua 5.1 runtime `pairs()` ignores a table's `__pairs`
 metamethod, so iterating this view silently yields nothing — it
 is index-only in practice (`view['lctrl']` works, iterating over
-it does not); `__pairs` is kept for a future 5.2+ host. There is
-no project-facing way to *poll* held keys outside a callback
-either — `compy`'s namespace (`get_compy_namespace`,
-`consoleController.lua:549-558`) has no `keys_pressed` field; the
-read-only view only ever arrives as a callback argument.
+it does not); `__pairs` is kept for a future 5.2+ host. The same
+view is also readable outside a callback, as
+`compy.input.keys_pressed` (`../decisions/input.md`, Decision 20):
+`build_input_surface` resolves it through the surface's `__index`
+on every access, so it tracks a backing-table swap instead of
+capturing a proxy at namespace-build time. A project that renders
+held state — `examples/keyboard` draws shifted key labels — has no
+callback argument in `love.draw`, which is what the second access
+path is for.
 
 The whole keypressed path hands the widget the uniform
 `(k, keys_pressed, isrepeat)` triple — the widget is included by
