@@ -463,16 +463,21 @@ describe('#input events dispatching', function()
     -- widget behind never sees the held key.
     it('consumes the repeat it swallows', function()
       local input = F.activate_project()
-      input.shortcuts.keypressed['s'] =
-          input.suppress_repeat(function() end)
-      F.show_widget({ text = 'ab' })
-      F.session.press('backspace')
+      F.show_widget({ text = 'abcd' })
+      -- Control: unbound, a repeat reaches the widget and edits.
+      -- Without this the assertion below could pass because the
+      -- key never reached the widget in the first place.
       F.session.repeat_press('backspace')
-      assert.same({ '' }, F.widget:get_text())
+      assert.same({ 'abc' }, F.widget:get_text())
+      -- Bound: the fresh press and the repeat are both consumed,
+      -- so the widget behind is untouched by either. A wrapper
+      -- that returned nil on a repeat instead of true would let
+      -- this one through and delete another character.
       input.shortcuts.keypressed['backspace'] =
           input.suppress_repeat(function() end)
+      F.session.press('backspace')
       F.session.repeat_press('backspace')
-      assert.same({ '' }, F.widget:get_text())
+      assert.same({ 'abc' }, F.widget:get_text())
     end)
 
     it('passes the payload through to the wrapped function',
