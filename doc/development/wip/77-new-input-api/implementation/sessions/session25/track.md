@@ -94,3 +94,35 @@
   vocabulary instead of as new widget state.
 - Behavioural note: the owner reaches for composition of existing primitives
   before new mechanism — and it paid, twice: a better (d), and a better (a).
+
+## 2026-08-03 — (d′) adopted; docs + turtle migrated
+
+- Owner: *"now, lets update the docs and turtle example"* → (d′) is the ruled
+  answer. Executed in two commits.
+- `66e8719f` — `doc/input_api.md` gains "Opening the overlay from a key" (the
+  idiom, why it is order-agnostic, where the re-arm goes, and the bare-trigger
+  limitation stated plainly). The two parked pendings become **four live
+  rows** pinning the guide's shape: a documented idiom rots unless pinned.
+  Debt entry restatused from "no mechanism ruled" to "answered by a documented
+  idiom"; what stays open is whether the framework should ever take it over.
+  Suite **871 → 875 / 0 / 0 / 3** — pending is back to the intentional 3.
+- `a0df94aa` — turtle carries `arm_echo_guard()`, re-armed in `after_submit`
+  beside the `hide()`. Verified rather than assumed: top-level registration
+  survives activation, because `activate()` seeds hooks only and runs *after*
+  the project's top-level code (`projectInputController.lua`, `seed_hooks`
+  doc comment), so the table the project wrote to is the one dispatch reads.
+- Discovered, not fixed (report-don't-fix): `src/examples/turtle/main.lua`
+  carries pre-existing comment lines at 68–71 chars, over the 64 hard limit —
+  including ones added during this feature. My added lines are ≤64, so the
+  file is now mixed-width. Same class as other example-era debt.
+- **Scancode question** (owner, same turn): *should combo registration and
+  dispatch key on scancode?* Answered, not executed —
+  `validation/notes/S25-scancode-question.md`. Short version: **no as a C1
+  fix** (`love.textinput(text)` carries no scancode at all, so it cannot
+  unify the channels — it widens the gap), and **a real but separate question**
+  for the shortcuts surface, where compy has both audiences (positional WASD
+  wants scancode; mnemonic ctrl+s and turtle's `i` want the key name). Cost is
+  understated at first glance: the gateway *discards* the scancode today
+  (`keypressed(k, _, isr)`), and `keys_pressed` is key-name-keyed, so
+  `combo_string`'s modifier prefixes would need the same treatment. Recommend
+  not now and never as a swap; additively if a positional consumer appears.
