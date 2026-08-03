@@ -84,6 +84,12 @@ local function find_shortcut(tbl, trigger)
   return tbl[Controller.combo_string('*', keys)]
 end
 
+--- The nil guards below are deliberate
+--- (doc/development/decisions/input.md, Decision 23): whether a
+--- hook is set is information a project reads, so an unset one
+--- stays nil rather than defaulting to a callable noop. Nothing
+--- is logged when an event is consumed by nobody either — at this
+--- tier that is a line per ordinary keystroke.
 local function dispatch(shortcuts, hooks, widget, event, trigger, ...)
   local sc = find_shortcut(shortcuts[event], trigger)
   if sc and sc(...) then return true end

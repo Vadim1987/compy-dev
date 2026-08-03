@@ -407,6 +407,40 @@ lets expose the table"*.
   ("existing combos keep current behaviour unless explicitly altered") is
   satisfied by an opt-in decorator.
 
+### owner approves the plan; three features implemented (2026-08-03)
+
+Owner ruled exact matching plus an optional trailing asterisk, with a
+devx rationale worth recording verbatim in intent: **90% of bindings want
+exact matching and rely on modifiers, which is what modifiers are for**; the
+remaining 10% have hooks, which reach the held set, so *no capability is
+stripped* — shortcuts are simply focused on being easy, straightforward and
+predictable, and the developer is protected from designing against corner
+cases. Also ruled: **no logging** of unconsumed events.
+
+- Verified their aside first: hooks receive `Controller.held_keys()` as
+  argument 2 on **all three** keyboard/text channels (keypressed, keyreleased,
+  textinput) — yes. Pointer events bypass the chain entirely (`hook_pointer`
+  installs real `love.*` handlers), and Decision 20 covers that gap.
+- **`edb6321b` — Decision 21, combo classes + one trigger per combo.** Tests
+  first (3 red for the contract, 3 for the matcher). `find_shortcut` tries the
+  exact combo, then `combo_string('*', keys)` — the class key needs no
+  parsing, being the same serialisation with `*` as the trigger. `Key.is_mod`
+  added so a class cannot match its own modifier (`alt+lalt`). Registration
+  raises on two triggers or none, which kills the silent truncation
+  (`a+b+*` → bare `*`). 879 → 889.
+- **`d93065f1` — Decision 22, `compy.input.suppress_repeat`.** Opt-in
+  once-per-press wrapper that consumes either way. The consuming half is
+  pinned by a row that holds backspace against a live widget — an unconsumed
+  repeat would fall past the shortcut into the hook and the widget. 889 → 894.
+- **`ced8f40` in keyboard** — `appChord` deleted for `sc["alt+*"]` +
+  `sc["alt+p"]`, private `chord()` deleted for the public wrapper. The
+  hand-written "and not Ctrl" test goes too: `ctrl+alt+h` is a different
+  modifier set, so it is not in the Alt class and still reaches the scene.
+- **Decision 23 — the log and the noop default are both declined**, recorded
+  as a decision rather than left as an unexplained gap, since `design.md:39`
+  ratifies "DEFAULT: noop (+debug log)" and a reviewer will find it. The nil
+  guards in `dispatch` now carry a comment saying they are deliberate.
+
 ### re-explaining the combo wildcard finding
 
 - Probed rather than asserted. The metatable of a combo table is **reachable**

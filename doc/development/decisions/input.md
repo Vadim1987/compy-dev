@@ -849,3 +849,38 @@ semantics"), explicitly **not ruled** and parked to settle near
 implementation. This settles it the other way, for the two reasons above; the
 constraint attached to it — existing combos keep current behaviour unless
 explicitly altered — is satisfied, since the wrapper is opt-in.
+
+---
+
+## Decision 23 — an unhandled event is not logged
+
+**Status: implemented as no change** (owner ruling, 2026-08-03).
+
+**Decision.** `dispatch` does not log when an event is consumed by nobody. The
+walk keeps its `nil` checks and gains no unhandled branch.
+
+**What this settles.** The design's chain diagram gave tier 3 a "DEFAULT: noop
+(+debug log)", and the design notes proposed *default noop + debug log* as the
+standard for all project-facing callbacks, so that "silent failure is replaced
+by a visible hint in debug mode". The tree implements the behaviour — an
+unhandled event falls through and mutates nothing — but not the log.
+
+**Why the log is declined.** Taken literally at the combo tier it is a line per
+keystroke that is not a bound combo, i.e. on ordinary typing, every frame a key
+repeats. That is not a hint. The one variant worth anything — the chain *has*
+participants and the event still fell through all of them — is a
+platform-debugging question, and a platform developer can add the line to
+`dispatch` for the length of an investigation. A project developer lives
+without it.
+
+**Why the noop default is declined too.** The other half of the same proposal
+was a `__index` returning a noop, so dispatch could always call. It is refused
+for a reason that outweighs the tidier call site: **whether a hook is set is
+information**. Code that installs or removes a handler depending on what
+another part of the project already installed needs to read `nil` and get
+`nil`. A defaulting `__index` does not hide a check, it removes an
+introspection capability — and it would also silently break `seed_hooks`,
+whose "is this unset?" test is what Decision 10's capture path runs on.
+
+**Consequence.** The nil guards in `dispatch` are deliberate and documented as
+such, not an oversight to tidy later.
