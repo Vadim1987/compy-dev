@@ -385,6 +385,26 @@ question, not resolved here.
 
 Not commissioned for closure; each may never need action.
 
+### A keyboard-hooks-only project does not count as interactive
+
+- **Where:** `src/controller/controller.lua`, `user_is_blocking()` /
+  `user_is_interactive()`, consulted by `ConsoleController:run_project` after
+  the project's top-level code runs.
+- **State:** the route is kept when the project replaced `love.update` or
+  `love.draw` (blocking), or when it has an overlay or a pointer handler
+  (interactive). Keyboard hooks are neither. So a project whose only
+  interaction surface is `love.keypressed`/`keyreleased`/`textinput` — no
+  draw, no update, no overlay, no pointer — hands the keyboard back to the
+  console, and the hooks the framework captured for it (Decision 10) can
+  never fire. `examples/keyboard` is *not* an instance: it defines
+  `love.update` and `love.draw`, so it is blocking and keeps the route.
+- **Why it stands:** hypothetical. No such project exists in the tree, and one
+  would be invisible by construction — its only outputs would be sound or
+  console text.
+- **Revisit:** if a keyboard-only project appears, or when ruling (a)'s
+  "interaction surface" definition is next revisited; the fix would be to
+  count seeded hooks alongside the overlay and pointer tests.
+
 ### Combo-string dispatch allocates a table per call
 
 - **Where:** `src/controller/controller.lua` — `combo_string` builds a

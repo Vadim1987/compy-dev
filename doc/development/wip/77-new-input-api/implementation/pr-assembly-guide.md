@@ -328,10 +328,15 @@ ride this PR's diff. Each carries its own local commits and opens its own PR,
 tracking the platform PR closely — ideally landing with it, since the
 migrations depend on the platform's `1.0.0-rc20260712` surface.
 
+**These migrations are our work product, held to this PR's standard** (owner,
+2026-08-01): complete, reviewable on their own, and carrying no homework for
+the repo's author. A consequence of *our* API change is ours to finish — we
+suggest migrations, we do not hand the author a question we created.
+
 | Repo | Remote | Branch | Local commits (unpushed) |
 |---|---|---|---|
-| balloons | `hleb-rubanau/compy-balloons` | `main` | `56347d0` migration off the poll idiom · `94a5f02` assign `after_submit` through `compy.input.callbacks` (the load-time raise from smoke report 5) |
-| maze | `nagydani/Compy-maze` | `v3.4` | `790ac19` migration off the poll idiom, with the shown-guard on `compy.input.is_shown()` |
+| balloons | `hleb-rubanau/compy-balloons` | `main` | `56347d0` migration off the poll idiom · `94a5f02` assign `after_submit` through `compy.input.callbacks` (the load-time raise from smoke report 5) · `cc0dbd7` submit delivers lines, not a command string |
+| maze | `nagydani/Compy-maze` | `v3.4` | `790ac19` migration off the poll idiom, with the shown-guard on `compy.input.is_shown()` · `d2ce7a0` idle-gated prompt, `need_reopen`/`reopen_text` retired |
 | keyboard | `dsent/keyboard` | `dsent/dev` | none — clean and in sync |
 
 Notes per repo:
@@ -339,22 +344,35 @@ Notes per repo:
 - **balloons** — the migration commit predates the strict-config ruling, which
   is why the second commit exists: `compy.input.after_submit = …` raises now
   (frozen container, Decision 7 / Decision 15) and lifecycle callbacks live
-  under `compy.input.callbacks`. Untracked `ISSUES.md` / `docs/*` /
-  `implementation.md` are the owner's working notes and are deliberately not
-  captured.
+  under `compy.input.callbacks`. The third came out of reviewing the first two
+  end-to-end: `on_text_entered` delivers an **array of line strings**, while
+  the retired `terminal()` returned one string, and the migration passed the
+  array straight through. Nothing raised — `game_commands` is an `action_map`,
+  so a table key just misses and returns the fallback, i.e. every command
+  silently re-prompted instead of running. `deliver` now joins with
+  `string.unlines`. Untracked `ISSUES.md` / `docs/*` / `implementation.md` are
+  the owner's working notes and are deliberately not captured.
 - **maze** — the migration was an uncommitted working tree until 2026-07-31.
   Its per-tick re-arm guard read `love.state.user_input`, which is **always
   nil inside a project** (sandboxed `love` clone), so it never fired and
   `show()` was re-issued every tick; it now asks `compy.input.is_shown()`
-  (Decision 18). Left for that repo to rule on, and flagged in the commit:
-  since submit no longer closes the overlay or clears the field,
-  `need_reopen`/`reopen_text` may be dead weight, and "prompt only while the
-  player is idle" would need an explicit `hide()`.
+  (Decision 18). The two consequences that commit left open are closed by
+  `d2ce7a0`: `need_reopen`/`reopen_text` are retired, because submit no longer
+  closes or clears, so a rejected command's text stays in the field with the
+  player still idle and the prompt stays up on its own; and "prompt only while
+  idle" is now explicit — `rearm_input` syncs the overlay to `player_is_idle()`
+  each tick, hiding it while a move plays out. Reopening is what clears, since
+  `show()` with no `text` empties the field.
 - **keyboard** — defines `love.keypressed` / `love.keyreleased` /
-  `love.textinput` and uses `compy.audio`; it never shows an overlay. It does
-  **not** bypass the routes (smoke report 7's question): a project's keyboard
-  `love.*` functions are captured and run as hooks inside the project route
-  (Decision 10). Nothing to migrate, nothing to commit.
+  `love.textinput` and uses `compy.audio`; it never shows an overlay and uses
+  no `compy.input` at all. It does **not** bypass the routes (smoke report 7's
+  question): a project's keyboard `love.*` functions are captured and run as
+  hooks inside the project route (Decision 10). It also keeps that route,
+  which is the part worth checking rather than assuming — it defines
+  `love.update` and `love.draw`, so `user_is_blocking()` holds it
+  (`controller.lua`). Nothing to migrate, nothing to commit; adopting
+  `compy.input.shortcuts` would be the wrong advice, since it wants every key,
+  not specific combos.
 
 Do **not** push any of these; opening the PRs is the owner's call.
 

@@ -126,3 +126,44 @@
   (`keypressed(k, _, isr)`), and `keys_pressed` is key-name-keyed, so
   `combo_string`'s modifier prefixes would need the same treatment. Recommend
   not now and never as a swap; additively if a positional consumer appears.
+
+## 2026-08-03 — C2 executed
+
+- **maze** (`d2ce7a0`). Both open questions answered by checking, not
+  assuming. `submit_flow` runs the callbacks and returns — it touches neither
+  the model nor `shown` — so a rejected command's text stays in the field with
+  the player still idle, and the prompt stays up on its own: `need_reopen` /
+  `reopen_text` were carrying text across a close that no longer happens, and
+  are gone. "Prompt only while idle" was silently LOST, not merely implicit —
+  with nothing closing the overlay, `rearm_input` hit its `is_shown()` early
+  return forever and the prompt stayed up mid-move. Now explicit: sync to
+  `player_is_idle()` each tick, hide when a move plays out, reopen when it
+  lands. Reopening is also the clear — `open_fresh` calls `clear_input()` when
+  `cfg.text == nil`, so `show{}` with no text empties the field. (Note: it is
+  **show** that clears, not `hide()`, which only drops `shown` and the state
+  flag — turtle's comment says otherwise and is imprecise.)
+- No echo guard needed in maze: the prompt opens from `update` (ctrl_update →
+  rearm_input) and from `editor()` at level init, never from a key event.
+- **balloons** (`cc0dbd7`) — a REAL defect found by reviewing the two commits
+  end-to-end, not a tidy-up. `on_text_entered` delivers an array of line
+  strings (suite pins `assert.same({'hi'}, got)`); the retired `terminal()`
+  returned one string; the migration passed the array straight to handlers
+  that index `game_commands[txt]`. Silent, because `action_map.__index`
+  returns the fallback on a miss — every typed command re-prompted instead of
+  running, and in the active state `fmt(GAME_PROMPT, txt)` would render a
+  table address. Fixed with `string.unlines` in `deliver`. The earlier
+  after_submit raise masked it: balloons never got past load.
+- **keyboard** — confirmed needs nothing, and the route-retention claim
+  verified rather than carried: it uses no `compy.input` at all, and keeps the
+  project route because it defines `love.update`/`love.draw`, so
+  `user_is_blocking()` holds it. Recommending `compy.input.shortcuts` would be
+  wrong — it wants every key, not combos.
+- Discovered, reported not fixed: `user_is_interactive()` counts an overlay or
+  a pointer handler, never seeded keyboard hooks, so a hooks-only project (no
+  draw/update/overlay/pointer) would lose the route and its captured hooks
+  would never fire. Hypothetical — no such project exists — filed under
+  Anticipated in `technical_debt/input.md`.
+- `pr-assembly-guide.md` §5 reframed: the owner's standard stated at the top
+  (our migrations are our work product, no homework for repo authors), the
+  "left for that repo to rule on" framing removed, both new commits listed,
+  and each repo's note rewritten to what was actually verified.
