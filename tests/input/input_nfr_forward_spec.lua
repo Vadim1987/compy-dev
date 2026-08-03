@@ -39,19 +39,19 @@ describe('input contracts: NFR and mechanism guards #input',
   describe('current behaviour — characterized, no mandate',
     function()
 
-      -- inspect (doc/development/decisions/input.md, Decision
-      -- 12): the debugger keeps the console REPL bound to the
-      -- paused project's environment, and a shown project
-      -- widget is unhonoured. Distinct from the running-project
-      -- console fallback, which the project route retired.
-      it('inspect: the console owns the surface', function()
-        F.show_widget()
-        F.console:add_text('ab')
-        love.state.app_state = 'inspect'
-        F.session.type('Z')
-        assert.same({ 'abZ' }, F.console:get_text())
-        assert.is_true(F.widget:is_empty())
-      end)
+      -- (An 'inspect: the console owns the surface' row lived
+      -- here and was removed 2026-08-03: it had stopped
+      -- discriminating. It set app_state = 'inspect' over a
+      -- shown widget and asserted the console got the text —
+      -- but once the console route lost its widget step
+      -- entirely (Decision 1), the console gets the text with
+      -- or without the inspect line. Deleting that line left
+      -- the row green, which is the definition of noise.
+      -- Decision 12 is still covered, by a row that does
+      -- discriminate: input_route_lifecycle_spec.lua,
+      -- 'inspect' — it activates the PROJECT route first, so
+      -- without the suspend() the widget would receive the
+      -- keystroke.)
 
       -- wheel (doc/development/internals/user_input.md, "Direct mouse
       -- events"): the gateway has no wheel
