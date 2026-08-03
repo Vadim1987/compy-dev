@@ -23,6 +23,32 @@ action; revisit at the named point).
 
 ## Standing
 
+### The Web build has no coverage, and carried a feature-era regression unseen
+
+- **State:** nothing in `busted tests` exercises the `_G.web` branch, and the
+  suite runs on LuaJIT, where the desktop branch works. A defect reachable
+  only on the Web build is therefore invisible to every check this project
+  runs.
+- **The worked example, found 2026-08-03:** the dispatch chain introduced by
+  `56c4284f` wrapped project keyboard handlers in a **bare**
+  `xpcall(fn, handler, unpack(args))`, with no web branch. On PUC Lua 5.1 —
+  what the Web build runs — `xpcall` drops the trailing arguments, so every
+  adopted `love.keypressed` / `textinput` / `keyreleased` would have been
+  called with nil for `key`, the held-key view and `isrepeat`. Before the
+  feature there was exactly **one** `xpcall` in `controller.lua`, inside
+  `wrap`'s guarded branch; the feature added a second, unguarded one. The
+  wrapper collapse (`f1dc6aee`) removed it again, so the count is back to one
+  — the regression is fixed, but it lived undetected for the whole feature
+  because no check could see it.
+- **Why it stands:** running the suite against PUC Lua 5.1, or building and
+  driving love.js in CI, is infrastructure this project does not have, and
+  neither is in this feature's scope.
+- **Shape:** cheapest useful step is a lint or a review checklist item —
+  **no bare `xpcall` with arguments in `src/`**; argument-forwarding goes
+  through `wrap`. A grep is enough to enforce it and would have caught this.
+- **Revisit:** if a Web build is released, or when CI grows a second
+  interpreter.
+
 ### `wrap`'s error handler is called with the wrong arity, so project raises vanish
 
 - **Where:** `src/controller/controller.lua`, `wrap` — the non-web branch is
@@ -38,13 +64,19 @@ action; revisit at the named point).
   suspends correctly, because that path goes through `chain_native`, which
   binds CC in a closure (`xpcall(fn, function(m) user_error_handler(CC, m)
   end, ...)`) and gets the arity right.
-- **`_G.web` is falsy on the desktop build, so the broken branch is the live
-  one.** The web branch passes both arguments and has **no** arity problem;
-  it has a different flaw — it returns `r`, which on failure is the error
-  string, where the non-web branch returns `xpcall`'s `ok, res...` tuple. The
-  two branches therefore have different return shapes, and the `@return
-  boolean success, any result, ...` annotation matches only the non-web one.
-  Harmless today because every `wrap` call site discards the result.
+- **`_G.web` is falsy on the desktop build, so the broken branch was the live
+  one.** The web branch passed both arguments and never had the arity
+  problem. Its own flaw — returning bare `r` where the other branch returned
+  `xpcall`'s `ok, res...` tuple, so the `@return` annotation described only
+  one of them — was fixed alongside the wrapper collapse (`f1dc6aee`).
+- **Why the web branch exists at all, established 2026-08-03:** it is not a
+  stylistic duplicate. `xpcall(f, h, ...)` forwarding arguments to `f` is a
+  LuaJIT / Lua 5.2 extension; PUC Lua 5.1 takes exactly two arguments and
+  drops the rest, so on that runtime every handler would be invoked with nil
+  for all of its parameters. `pcall(f, ...)` forwards on both. Measured here:
+  LuaJIT gives `1, 2`; 5.1 semantics give `nil, nil`. The branch is therefore
+  **load-bearing and must not be collapsed away** — a warning to that effect
+  now sits on it in code.
 - **Reach:** `wrap` has three call sites — `wrapped_native` (pointer
   handlers), the loader, and the project `update` wrapper. `CC:wrap_handler`,
   which takes `wrap` as its error handler, adds the compy single/double click

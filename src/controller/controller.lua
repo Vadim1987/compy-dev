@@ -104,6 +104,14 @@ local function wrap(f, CC, ...)
     user_error_handler(CC, msg)
   end
   if _G.web then
+    -- DO NOT collapse this branch into the xpcall below. It is
+    -- not a stylistic duplicate: `xpcall(f, h, ...)` passing
+    -- arguments to `f` is a LuaJIT/5.2 extension, and PUC Lua
+    -- 5.1 — what the Web build runs — takes exactly two
+    -- arguments and drops the rest, so every handler would be
+    -- called with nil for all of its parameters. pcall passes
+    -- them on both runtimes. `_G.web` is set from
+    -- OS.get_name() == 'Web' (main.lua).
     local ok, r = pcall(f, ...)
     if not ok then
       on_error(r)
@@ -112,7 +120,7 @@ local function wrap(f, CC, ...)
     -- different shapes, and every caller discarded the result
     -- so nothing caught it. chain_project_handler reads the
     -- pair, so they have to agree — and the @return above now
-    -- describes both (technical_debt/input.md, same entry).
+    -- describes both.
     return ok, r
   else
     return xpcall(f, on_error, ...)
