@@ -402,6 +402,27 @@ question, not resolved here.
 
 Not commissioned for closure; each may never need action.
 
+### A multi-trigger combo is silently truncated at registration
+
+- **Where:** `src/util/key.lua`, `normalize_combo` / `split_combo` — the
+  trigger is "the last non-modifier token wins", with no complaint about the
+  earlier ones.
+- **State (measured 2026-08-03):** `ctrl+a+b` is stored as `ctrl+b`, and
+  `a+b+*` is stored as **`*`** — a string an author wrote to mean the
+  narrowest possible binding registers the widest possible one. Nothing warns.
+  The grammar is *modifiers plus exactly one trigger*: `combo_string` prepends
+  only the four modifier classes, so a held non-modifier key never enters the
+  combo string at all (measured: `a` and `b` held, `b` pressed → `ctrl+alt+b`,
+  no trace of `a`). Multi-key chords are outside the grammar; a project that
+  wants "a and b held together" reads `compy.input.keys_pressed`
+  (Decision 20).
+- **Why it stands:** nobody has written one yet — found while designing combo
+  classes, not from a report.
+- **Revisit:** with the combo-class ruling. The fix is to **raise** at
+  registration on more than one non-modifier token, matching Decision 15's
+  raise-on-contract-violation; that also settles whether a bare `*` is legal
+  without needing a separate rule.
+
 ### A combo table cannot express a modifier-class rule
 
 - **Where:** `compy.input.shortcuts[event]` (`../decisions/input.md`,

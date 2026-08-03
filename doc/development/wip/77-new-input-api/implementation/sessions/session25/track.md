@@ -332,6 +332,40 @@ lets expose the table"*.
   key, then falls back to the logging noop. The wildcard IS an `__index`
   behaviour — the mechanism the owner asked for originally.
 
+### owner presses on the details; three of my claims corrected (2026-08-03)
+
+- **"Dispatch view" was fiction.** `occupy_keyboard` passes `compy.input`
+  itself to `pic:activate`, and `_dispatch` reads
+  `self.compy_input.shortcuts`/`.hooks` — dispatch goes through the SAME
+  proxies the project uses. There is no second view to hide a default in;
+  making one is machinery, not scoping.
+- **My objection to a stored default was already moot.** `seed_hooks` writes
+  captured `love.*` into the hooks table, so a project that defined
+  `love.keypressed` already finds `compy.input.hooks.keypressed` non-nil
+  without assigning it. "Did I set this?" is not answerable today either.
+  → the noop belongs on the store's `__index`, which is what the owner asked
+  for originally.
+- **And `rawget` does not rescue `seed_hooks`.** It receives the leaf *proxy*,
+  an empty table over the store, so `rawget(proxy, k)` is always nil. Seeding
+  needs an explicit is-set query or has to move to where the store is in
+  scope. That is the one genuine cost, and I had named the wrong one.
+- **Class lookup should be an explicit two-step read in `dispatch`, not
+  `__index`** — the owner was right to question it. `__index` would hand a
+  class handler back to a project inspecting an unregistered combo (a lie),
+  and it buries precedence + the modifier-trigger exclusion inside a data
+  structure. The class key needs no parsing:
+  `combo_string('*', keys_pressed)` builds it from the same held set
+  (measured → `ctrl+alt+*`). The noop default IS a default, so `__index` is
+  right for *it*; the two are different concerns and my "they compose via
+  `__index`" line was sloppy.
+- **`a+b+*` opened a real defect.** The grammar is modifiers + exactly ONE
+  trigger — a held non-modifier never enters the combo string (measured: `a`
+  and `b` held, `b` pressed → `ctrl+alt+b`). And `normalize_combo` takes the
+  LAST non-modifier token silently: `ctrl+a+b` → `ctrl+b`, and **`a+b+*` →
+  `*`**, i.e. the widest binding from a string meant as the narrowest. New
+  debt entry; the fix is to raise at registration, which also disposes of the
+  bare-`*` question.
+
 ### re-explaining the combo wildcard finding
 
 - Probed rather than asserted. The metatable of a combo table is **reachable**

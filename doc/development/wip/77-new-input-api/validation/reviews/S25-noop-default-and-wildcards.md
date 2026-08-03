@@ -70,16 +70,38 @@ lost, and it is a ratified acceptance criterion, not a taste.
   table — the leaf surface keeps answering nil to projects, dispatch resolves
   through a defaulting read.
 
-### Recommendation
+### Recommendation — CORRECTED 2026-08-03
 
-Implement it, scoped as: **dispatch always calls; the default is a noop that
-logs under `love.DEBUG`; the project-facing tables keep answering `nil`.**
-That satisfies the ratified AC (the visible hint exists), removes the guards
-from the walk, and does not make "unset" unanswerable to a project.
+The recommendation below was *"put the default in the dispatch view, keep the
+project-facing tables answering nil"*. Both halves were wrong, and the owner's
+question is what exposed them.
 
-It is a small change to one function plus a `rawget` in `seed_hooks`. The
-value is not the saved `and` — it is the log the design asked for and the
-tree does not have.
+**There is no dispatch view to put it in.** `occupy_keyboard` passes
+`compy.input` itself to `pic:activate`, and `_dispatch` reads
+`self.compy_input.shortcuts` / `.hooks` — dispatch goes through the **same
+proxies the project uses**. Creating a separate view is not a scoping
+detail, it is new machinery.
+
+**And "did I set this?" is already unanswerable.** `seed_hooks` writes the
+project's captured `love.*` handlers into the hooks table (Decision 10), so a
+project that defined `love.keypressed` finds `compy.input.hooks.keypressed`
+non-nil having never assigned it. The property I said a noop default would
+destroy is already gone.
+
+So the honest recommendation is the plain one the owner asked for
+originally: **put the noop on the store's `__index`**, where both dispatch and
+the project get a callable. Consistency is a feature — a project chaining to
+an unset hook stops being a crash for the same reason dispatch stops needing a
+guard.
+
+**The one real cost, and it is not `rawget`.** `seed_hooks` tests
+`hooks[event] == nil` to decide whether to seed (`projectInputController.lua:44`).
+With a defaulting store, nothing is ever nil, and seeding silently stops —
+Decision 10's whole capture path. `rawget` does **not** rescue it either:
+`seed_hooks` receives the *leaf proxy*, which is an empty table over the store,
+so `rawget(proxy, k)` is always nil. Seeding needs an explicit "is this set"
+query on the surface, or seeding has to move to where the store is in scope.
+That is the piece to design, and it is the only one.
 
 ## 2 · Wildcard combo classes (`ctrl+alt+*`)
 
@@ -128,9 +150,63 @@ normaliser untouched, and it deletes hand-rolled modifier tests from projects
 rather than adding a concept. Ruling needed on the two corners above; both are
 one-liners once decided.
 
-## How these two interact
+## How the class check should actually be implemented
 
-If both land, the combo table's `__index` does one job with two steps: try the
-class key, then fall back to the logging noop. They compose rather than
-compete — the wildcard *is* an `__index` behaviour, which is the mechanism the
-owner asked for in the first place.
+The earlier claim that the two proposals "compose through `__index`" was
+sloppy. They are different kinds of thing and belong in different places.
+
+**The class lookup is an explicit two-step read in `dispatch`, not `__index`:**
+
+```lua
+local sc = shortcuts[event][combo]
+if sc == nil and not Key.is_mod(trigger) then
+  sc = shortcuts[event][Controller.combo_string('*', keys)]
+end
+```
+
+The class key needs no parsing — `combo_string('*', keys_pressed)` builds it
+directly from the same held set the exact combo came from. Measured: with
+Ctrl and Alt held it returns `ctrl+alt+*`.
+
+Why explicit rather than `__index`:
+
+- **`__index` would lie to readers.** A project inspecting
+  `compy.input.shortcuts.keypressed['alt+q']` would get the class handler back
+  for a combo it never registered. The table should stay a plain map of what
+  was registered.
+- **Precedence and the modifier-trigger exclusion are policy**, and policy in
+  a data structure's metamethod is invisible at the point it matters. In
+  `dispatch` it is two greppable lines next to the walk they belong to.
+- The noop default is genuinely a *default*, so `__index` is right for it.
+  Different concern, different mechanism.
+
+## The grammar question: `a+b+*` cannot mean what it looks like
+
+A combo is **modifiers plus exactly one trigger**. `combo_string` prepends only
+the four modifier classes; a held non-modifier key never enters the string.
+Measured with `a` and `b` both held and `b` pressed: the combo is
+`ctrl+alt+b`, with no trace of `a`.
+
+So `a+b+*` is not expressible, and neither is `a+b` — multi-key chords are
+outside the grammar entirely, wildcard or not. A project wanting "a and b held
+together" reads `compy.input.keys_pressed` (Decision 20), which is what it is
+for.
+
+**And today that failure is silent, which is a defect in its own right.**
+`normalize_combo` takes the *last* non-modifier token as the trigger and drops
+the rest. Measured:
+
+| written | stored as |
+|---|---|
+| `a+b+*` | `*` |
+| `ctrl+a+b` | `ctrl+b` |
+| `ctrl+alt+*` | `ctrl+alt+*` |
+
+So `a+b+*` registers a bare-`*` handler — the widest possible binding, from a
+string the author meant as the narrowest. `ctrl+a+b` silently becomes
+`ctrl+b`. This is independent of wildcards and should be fixed regardless:
+**raise at registration on a combo carrying more than one non-modifier
+token**, the same way `show`/`configure` raise on an unrecognised key
+(Decision 15). It also disposes of the bare-`*` question — if `*` is the only
+non-modifier token allowed alongside modifiers, `a+b+*` raises rather than
+needing a rule.
