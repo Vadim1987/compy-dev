@@ -132,6 +132,24 @@ local function run_user_code(f, cc, project_path)
   return true
 end
 
+--- Take the overlay down THROUGH the widget when a run ends,
+--- so its own `shown` flag comes down together with the
+--- published handle. Clearing love.state.user_input alone left
+--- the widget believing it was still active, and the next
+--- project's show() was then refused as a repeat by the
+--- already-active guard (doc/development/decisions/input.md,
+--- Decision 3) — a stopped project's overlay silently
+--- swallowing the next project's.
+--- hide() fires no cancel chain (Decision 6), which is what
+--- teardown wants: this is not a user-facing dismiss.
+--- Declared here rather than beside stop_project_run because
+--- the failed-run path in run_project below needs it too.
+local function hide_overlay()
+  local widget = love.state.user_input_controller
+  if widget then return widget:hide() end
+  love.state.user_input = nil
+end
+
 --- @param cc ConsoleController
 local function close_project(cc)
   local ok = cc:close_project()
@@ -262,7 +280,14 @@ function ConsoleController:run_project(name)
       love.state.app_state = 'running'
       local rok, run_err = run_user_code(f, self, path)
       if not rok then
+        -- Top-level code raised, so the route was never
+        -- connected. Release, then take down any overlay the
+        -- project managed to show first: Decision 11's teardown
+        -- invariant says a widget whose owning route is
+        -- inactive goes unhonoured, and a shown one is not
+        -- (doc/development/decisions/input.md, Decision 11).
         self.main_ctrl.release_keyboard_route(self)
+        hide_overlay()
         love.state.app_state = 'project_open'
         print('Error: ', run_err)
       else
@@ -1248,21 +1273,6 @@ function ConsoleController:evacuate_required()
       end
     end
   end
-end
-
---- Take the overlay down THROUGH the widget on project stop, so its
---- own `shown` flag comes down together with the published handle.
---- Clearing love.state.user_input alone left the widget believing it
---- was still active, and the next project's show() was then refused
---- as a repeat by the already-active guard
---- (doc/development/decisions/input.md, Decision 3) — a stopped
---- project's overlay silently swallowing the next project's.
---- hide() fires no cancel chain (Decision 6), which is what teardown
---- wants: this is not a user-facing dismiss.
-local function hide_overlay()
-  local widget = love.state.user_input_controller
-  if widget then return widget:hide() end
-  love.state.user_input = nil
 end
 
 function ConsoleController:stop_project_run()

@@ -178,6 +178,57 @@ describe('input contracts: route connection lifecycle #input', function()
       end)
     end)
 
+    -- doc/development/decisions/input.md, Decision 11 (the
+    -- teardown invariant): a project whose TOP-LEVEL code
+    -- raises never reaches the route installer, so run_project
+    -- tears the route down instead of connecting it. An
+    -- overlay the project already showed is part of that
+    -- teardown — the invariant says a widget whose owning
+    -- route is inactive goes unhonoured, and a shown one is
+    -- not unhonoured.
+    describe('teardown after a top-level raise', function()
+      -- Drives the REAL ConsoleController:run_project. Only the
+      -- loader is stubbed, because a chunk that shows an
+      -- overlay and then raises is the one part of this path a
+      -- unit test cannot supply from disk.
+      local function run_raising_project()
+        local P = F.cc.model.projects
+        local prev_current, prev_run = P.current, P.run
+        P.current = { name = 'boom' }
+        P.run = function()
+          return function()
+            F.cc:get_project_env().compy.input
+                .show({ text = 'x' })
+            error('kaboom')
+          end, nil, '/tmp/boom'
+        end
+        F.cc:run_project('boom')
+        P.current, P.run = prev_current, prev_run
+      end
+
+      -- Both halves, deliberately: hide_overlay exists because
+      -- clearing the published handle alone left the widget
+      -- believing it was still active
+      -- (consoleController.lua hide_overlay).
+      it('leaves no overlay behind', function()
+        run_raising_project()
+        assert.is_false(F.is_widget_visible())
+        assert.is_false(F.widget:is_shown())
+      end)
+
+      -- The user-visible consequence of the row above, and the
+      -- control that proves it is not vacuous: show() is a
+      -- no-op over an active overlay (Decision 3), so a
+      -- surviving widget would silently swallow the next run's.
+      it('lets the next run show its own overlay', function()
+        run_raising_project()
+        local second = F.activate_project()
+        second.show({ text = 'two' })
+        assert.is_true(F.is_widget_visible())
+        assert.same({ 'two' }, F.widget:get_text())
+      end)
+    end)
+
     describe('inspect', function()
       -- doc/development/decisions/input.md, Decision 12: inspect is the console
       -- bound over the project env -- the project route
