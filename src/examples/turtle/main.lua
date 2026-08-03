@@ -60,10 +60,11 @@ arm_echo_guard()
 
 -- One-shot prompt (doc/input_api.md, "Submit lifecycle"): the overlay
 -- stays open after submit by default, so a project that wants a
--- prompt-per-command closes it itself. Hiding also empties the field
--- for the next `i` — no separate clear needed. Closing is also
--- where the echo guard is re-armed: the next open needs a
--- fresh one-shot.
+-- prompt-per-command closes it itself. The field comes up empty
+-- next time because show() with no `text` clears it — hide()
+-- only takes the overlay down — so no separate clear is
+-- needed. Closing is also where the echo guard is re-armed: the
+-- next open needs a fresh one-shot.
 compy.input.callbacks.after_submit = function()
   compy.input.hide()
   arm_echo_guard()
