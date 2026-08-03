@@ -221,3 +221,69 @@ wrong. **Option B** should be dropped either way.
 
 Whichever is ruled, the debt entry closes and the guide gains a sentence: today
 a reader has no way to know shortcuts fire on repeat at all.
+
+---
+
+## Naming pass, and a measurement that changes the set (2026-08-03)
+
+The owner pushed back on the local aliases `once`/`claim` — `once` is
+compellingly wrong (it invites a reader to expect debounce-by-timer
+semantics), `claim` is vague — and sketched
+`always_true(ignore_repeat(fn))` as the shape.
+
+Probing that sketch produced a result worth the whole exercise.
+
+### The three shapes are not the three I described
+
+| written | fresh press | repeat |
+|---|---|---|
+| `bypass_repeat(fn)` | `fn` runs; **its return decides** | skipped, event continues |
+| `suppress_repeat(fn)` | `fn` runs; **its return decides** | skipped, **consumed** |
+| `always_true(bypass_repeat(fn))` | `fn` runs; **consumed** | skipped, **consumed** |
+
+Measured, not reasoned: with a non-consuming handler,
+`always_true(bypass_repeat(f))` produced `ran` and nothing else, while
+`suppress_repeat(f)` produced `ran, fell through` — the fresh press reached
+the hook underneath.
+
+**Row 2 is incoherent.** A binding using it lets the *first* press fall
+through to the widget and then eats every repeat: press 1 behaves differently
+from presses 2+. Nobody wants that, and it is what `suppress_repeat` offers
+today. Rows 1 and 3 are the coherent pair, and both are uniform in propagation.
+
+Note also that row 3 is exactly what `suppress_repeat` did **before** the fix
+two commits ago — the version that forced `true`. The bug was not that it
+consumed; it was that consuming was welded to repeat-filtering with no way to
+separate them.
+
+### Proposal: two combinators, not three
+
+- **`ignore_repeat(fn)`** — skip the handler on a repeat, and say nothing
+  about propagation. Renamed from `bypass_repeat`, and for a reason rather
+  than taste: "bypass" is a claim about where the *event* goes, which is no
+  longer this wrapper's business. "Ignore" describes what the handler does,
+  which is all it does.
+- **`always_true([fn])`** — unchanged. Propagation, declared at the
+  registration site.
+- **Drop `suppress_repeat`.** The two coherent behaviours are
+  `ignore_repeat(fn)` and `always_true(ignore_repeat(fn))`; the incoherent
+  middle one stops being offered. Anyone who genuinely wants it writes four
+  lines, and should have to think while doing so.
+
+Two orthogonal combinators — one about invocation, one about propagation —
+compose into every shape that makes sense, and neither name has to be
+memorised.
+
+### On aliases
+
+Recommend none. `always_true(ignore_repeat(goBack))` is 55 characters at the
+call site: it fits, and it reads in the order it happens. A local
+`once`/`claim`/`stop_here` layer reintroduces exactly the indirection that
+made `reserved()` worth deleting — and `stop_here` would be a third synonym
+for a `true` return, after `always_true` and the glossary's own *consume*.
+
+`consuming(fn)` would sit closest to the ratified vocabulary (Decision 2:
+"truthy return = consumed"). `always_true` is kept because it says plainly
+what the function does at a call site where the reader may not have the
+glossary in mind — but if the glossary word is preferred, that is the one
+rename worth making, and it is cheap now.
