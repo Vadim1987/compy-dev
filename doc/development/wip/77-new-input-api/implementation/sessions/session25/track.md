@@ -270,6 +270,39 @@ lets expose the table"*.
   `shortcuts.<event>` ↔ `love.<event>` mapping and moves a per-handler line
   into a per-registration decision.
 
+### owner rules C; A dropped, and they were right (2026-08-03)
+
+- *"i like the decorator option. lets implement and document and test this
+  decorator. not using it blindly on hooks should be decision of developer."*
+  **Recorded for implementation, deliberately NOT started** — plan in
+  `validation/reviews/S25-shortcuts-isrepeat.md`.
+- **Why my recommendation was wrong**, kept because the error is instructive:
+  (i) I priced irrecoverable suppression as bounded, and it is not — the
+  framework cannot tell a command binding from a hold-to-act one; (ii) I
+  missed that a dispatch rule fixes only commands bound as *shortcuts* and
+  leaves the same hand-written check in `hooks.keypressed`. **A decorator
+  composes across all three tiers; a rule on one tier cannot.** That second
+  point also dissolves the tier-semantics argument I had leaned on hardest.
+- One correction back to the owner: their fall-through scenario describes a
+  *third* variant (skip the tier on repeat), not A (consume without
+  invoking). The skip variant is the genuinely broken one — repeats reach a
+  shown widget. A was merely opinionated, not broken. The ruling stands either
+  way.
+- Owner nuance carried into the plan: the whole-channel-hook trap is a
+  **caveat for the developer to weigh**, not a prohibition.
+
+### re-explaining the combo wildcard finding
+
+- Probed rather than asserted. The metatable of a combo table is **reachable**
+  (`Key.new_handler_table` sets no `__metatable`), and an added `__index` gives
+  a working `alt+*` wildcard — dispatch's plain lookup consults it on a miss.
+  So "cannot express" was too strong: there is no *sanctioned* way, and the
+  mechanism exists.
+- The probe also turned up a corner any wildcard design must answer: holding
+  Alt alone dispatches the combo **`alt+lalt`** — `combo_string` prepends the
+  held modifier to a trigger that is that same modifier key. A naive `^alt%+`
+  pattern matches it. Ledger entry now carries all three points.
+
 - `pr-assembly-guide.md` §5 reframed: the owner's standard stated at the top
   (our migrations are our work product, no homework for repo authors), the
   "left for that repo to rule on" framing removed, both new commits listed,

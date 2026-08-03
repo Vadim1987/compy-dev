@@ -124,7 +124,57 @@ dispatch change, no semantic ruling, opt-in, composes.
 folklore. **Against:** it names the smell rather than removing it — every
 consumer still has to know the flag exists and decide.
 
-## Recommendation
+## RULED (owner, 2026-08-03): option C, the decorator
+
+> *"i like the decorator option. lets implement and document and test this
+> decorator. not using it blindly on hooks should be decision of developer."*
+
+Option A is **dropped**, and the owner's objection is the reason it should be.
+Two things about it were wrong in the recommendation below:
+
+1. **Irrecoverable suppression is not a bounded cost.** The framework cannot
+   know which bindings are commands and which are hold-to-act, so filtering
+   repeats at the tier takes a capability away with no way back — the owner's
+   *"suppress some behaviours without a way to recover them"*.
+2. **A dispatch rule fixes only half the cases.** It would cover commands
+   bound as shortcuts and do nothing for commands bound in
+   `hooks.keypressed`, which is equally idiomatic. A decorator composes across
+   all three tiers; a rule on one tier cannot. This also dissolves the
+   tier-semantics argument the recommendation leaned on: "shortcuts are
+   commands" is an opinion the framework would impose, and it would still
+   leave the hand-written check in the hook path.
+
+For the record, one thing in the owner's framing needs correcting, because it
+describes a *third* variant rather than A: A consumed the repeat without
+invoking the handler, so nothing fell through to the hook or the widget. The
+variant where the shortcut tier is **skipped** for repeats is the broken one —
+a held combo's repeats would reach a shown widget, and a project would have to
+install a hook re-implementing combo matching to swallow specific combos while
+letting held-arrow navigation past. Strictly worse than the line it removes.
+
+### Implementation plan — deferred, not started
+
+- **`compy.input.suppress_repeat(fn)`** — decorator. Returns a handler that,
+  given the standard `(k, keys, isr)` payload, calls `fn` on a fresh press and
+  **consumes either way**. Stateless.
+- The consume-on-repeat half is the load-bearing part, not the flag test: a
+  repeat that is not consumed falls to the widget, which is exactly the
+  failure the skipped-tier variant produces.
+- **Tests:** fresh press invokes and consumes; repeat consumes without
+  invoking; the wrapped handler still receives the payload; it works when
+  installed as a hook as well as a shortcut.
+- **Guide:** a section under "Event hooks and shortcuts" — the idiom, and the
+  note that wrapping a *whole-channel* hook swallows every repeat including
+  ones the widget wants (held backspace, held arrows). Per the ruling, that
+  stays the developer's call, stated as a caveat and not a prohibition.
+- **Decision 21** in the ledger; the debt entry *"Shortcuts key-repeat
+  semantics are shipped unsettled"* closes as deliberate: shortcuts see every
+  repeat, `suppress_repeat` is the sanctioned once-per-press idiom.
+- **keyboard** drops its private `chord` for the public decorator.
+- Dispatch is **unchanged** — Decision 2's dumb walk intact, three tiers
+  uniform, nothing suppressed that cannot be recovered.
+
+## Recommendation (superseded by the ruling above)
 
 **Option A**, with the guide stating the rule as *shortcuts fire once per
 physical press; hooks see every event, repeats included; hold-to-repeat

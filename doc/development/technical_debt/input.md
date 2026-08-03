@@ -407,15 +407,26 @@ Not commissioned for closure; each may never need action.
 - **Where:** `compy.input.shortcuts[event]` (`../decisions/input.md`,
   Decision 8) — `Key.new_handler_table`, an exact canonical lookup keyed by
   one full combo string.
-- **State:** every binding names one combo. A project that wants "**every**
-  `alt+x` is a chord, swallow it whatever `x` is" cannot say so; it needs an
-  entry per key, or it keeps that rule in a hook and tests the modifiers by
+- **State:** every binding names one combo, and dispatch is one exact lookup
+  of `combo_string`'s output. A project that wants "**every** `alt+x` is a
+  chord, swallow it whatever `x` is" has no sanctioned way to say so; it needs
+  an entry per key, or it keeps that rule in a hook and tests the modifiers by
   hand. Found by the `keyboard` migration (2026-08-03), which moved its three
   named chords to shortcuts and kept `appChord` — its Alt-class rule — as a
   hook for exactly this reason.
-- **Why it stands:** the exact-lookup matcher is `O(1)` and predictable, and a
-  wildcard raises questions the design has not answered — precedence against
-  an exact binding, and whether the trigger is passed to the handler.
+- **The table is not sealed, though** (measured 2026-08-03):
+  `Key.new_handler_table` sets no `__metatable`, so a project can reach the
+  metatable and add an `__index`, and dispatch's plain lookup then consults it
+  on a miss — a working wildcard, in three lines. It is undocumented, it would
+  break the moment the table is sealed, and a reader would take it for a bug.
+  Recorded because it shows the mechanism exists, **not** as an idiom.
+- **A wildcard would have to answer more than it looks:** precedence against
+  an exact binding, whether the matched trigger is passed to the handler, and
+  the modifier's own press — holding Alt and pressing nothing else dispatches
+  the combo **`alt+lalt`**, since `combo_string` prepends the held modifier to
+  a trigger that *is* that modifier. A naive `^alt%+` pattern matches it.
+- **Why it stands:** the exact-lookup matcher is `O(1)` and predictable, and
+  the questions above are unanswered.
 - **Revisit:** if a second project needs a modifier-class rule. One entry per
   key is a fine answer for small sets; a hook is a fine answer for open ones.
   Worth naming in the API guide either way, since today a reader may assume
