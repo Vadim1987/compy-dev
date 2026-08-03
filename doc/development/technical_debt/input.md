@@ -23,6 +23,46 @@ action; revisit at the named point).
 
 ## Standing
 
+### `wrap`'s error handler is called with the wrong arity, so project raises vanish
+
+- **Where:** `src/controller/controller.lua`, `wrap` — the non-web branch is
+  `return xpcall(f, user_error_handler, ...)`. `xpcall` invokes a message
+  handler with exactly **one** argument (the error), but the signature is
+  `user_error_handler(CC, msg)`. So `CC` binds to the error string, `msg` is
+  nil, and `'user error: ' .. msg` raises *inside* the message handler, where
+  `xpcall` swallows it. Nothing reaches `suspend_run`.
+- **Measured effect** (probe run 2026-08-03, asserting the handler executed
+  before the raise): a raise in a project's **pointer handler** or in its
+  **`love.update`** runs the handler, then vanishes — no error window, no
+  console line, `app_state` still `'running'`. A raise in a **keyboard hook**
+  suspends correctly, because that path goes through `chain_native`, which
+  binds CC in a closure (`xpcall(fn, function(m) user_error_handler(CC, m)
+  end, ...)`) and gets the arity right.
+- **`_G.web` is falsy on the desktop build, so the broken branch is the live
+  one.** The web branch passes both arguments and has **no** arity problem;
+  it has a different flaw — it returns `r`, which on failure is the error
+  string, where the non-web branch returns `xpcall`'s `ok, res...` tuple. The
+  two branches therefore have different return shapes, and the `@return
+  boolean success, any result, ...` annotation matches only the non-web one.
+  Harmless today because every `wrap` call site discards the result.
+- **Reach:** `wrap` has three call sites — `wrapped_native` (pointer
+  handlers), the loader, and the project `update` wrapper. `CC:wrap_handler`,
+  which takes `wrap` as its error handler, adds the compy single/double click
+  handlers.
+- **Pre-feature, verified:** `wrap` and `user_error_handler` are
+  byte-identical at the PR base `3256aac`. The input API neither introduced
+  nor worsened this; it only made the contrast visible, because the keyboard
+  chain's own wrapper does it correctly.
+- **Consequence for the docs:** "A raise from project top-level and from a
+  handler surface differently" (below) describes the handler path as
+  reaching the error window. That holds for keyboard hooks only.
+- **Shape:** bind CC at the call, as `chain_native` already does. Falls out
+  for free if the two project-handler wrappers are collapsed into one — see
+  "Project-handler wrapping" above, whose dedup cannot proceed without
+  choosing one of the two error paths.
+- **Revisit:** with the project-handler wrapper dedup, or sooner if a
+  silent-failure report arrives.
+
 ### A project that raises leaves global device state dirty; no force-reset exists
 
 - **State:** the sandbox deep-clones the `love` table but shares leaf C
