@@ -726,3 +726,41 @@ construction**; two `internals/user_input.md` passages rewritten.
   `validation/notes/S26-owner-on-the-failure-mode.md` (`ee8fc4f2`).
 - Suite **922 / 0 / 0 / 3**. Nothing pushed anywhere. Next: the owner's smoke
   test.
+
+## 2026-08-03 — pre-PR close-out
+
+- Owner ruled `userlove` KEPT ("its nice and makes no harm itself"). Fixed the
+  comment instead, since the real ambiguity was never the name: at one of two
+  callers the argument is `_userhandlers`, not a `love` table. Debt entry
+  closed as ruled-to-keep, preserving why `project_love` was refused.
+- Answered four owner questions with evidence rather than recall, and two
+  turned up work:
+  - **Canvas**: `hook_draw` is byte-identical to `3256aac`; a project's own
+    `love.draw` runs OUTSIDE `use_canvas` (screen), and `View.draw` — which
+    composites the virtual canvas — never runs for such a project. The owner
+    had reconstructed exactly this. We changed neither path; shortcuts newly
+    gained canvas binding, which is a fix for pen-and-paper projects and
+    neutral otherwise. No nesting introduced (the click emit sits before the
+    update's `use_canvas`).
+  - **`#disputable`**: there were **two** groups, not the one I had reported.
+    The second (global shortcuts fire without consuming) is genuinely open and
+    keeps its tag.
+- **Suite audit for invented-then-dissolved behaviour** (`eb40b631`): one
+  casualty. "inspect: the console owns the surface" stopped discriminating
+  once the console route lost its widget step — proved by deleting its own
+  `inspect` line and watching it stay green. Removed; the discriminating
+  coverage is `input_route_lifecycle_spec`'s `inspect` row.
+- `a888b60b` renamed `input_nfr_forward_spec` → `input_nfr_mechanism_spec`
+  (named after functions deleted in `7be800f6`).
+- `264e0c6c` declared a `wheelmoved` gateway entry. Wheel had worked on
+  **borrowed wiring** — `setup_callback_handlers` writes INTO `love.handlers`,
+  so LÖVE's stock entry survived. The old row asserting "no gateway entry" was
+  characterising the FIXTURE, not the product.
+- `83875ede` the PR description; `69551a25` slices regenerated + reordered
+  (docs→tests→code→examples) + `pr-commit-messages.md`; `3879e3b2` the
+  smoke-test plan.
+- Slices verified rather than assumed: 92/92 files covered, no strays, all ten
+  apply in order against BASE, and the result is byte-identical to the tip
+  outside `wip/`. Done against a temporary index so the working tree was never
+  touched — technique written into the guide.
+- Suite **904 → 923 / 0 / 0 / 3**. Nothing pushed anywhere.
