@@ -121,7 +121,7 @@ local function wrap(f, CC, ...)
     -- every caller discarded the result so nothing caught it.
     -- What the branches now share is the FIRST TWO values,
     -- which is all any caller reads (project_handler takes
-    -- `ok, res`, dropping `res` when `ok` is false). Tails still
+    -- `ok, res`, dropping `res` when `ok` is false). The tails
     -- differ and deliberately are not reconciled: xpcall
     -- forwards every return of `f` where pcall is captured to
     -- one here, and on failure xpcall yields `false, nil`
