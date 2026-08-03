@@ -477,6 +477,37 @@ Both in `suppress_repeat`, one in its test and one in the thing itself.
   settles it in one run; I should reach for it whenever a row asserts an
   *absence*.
 
+### owner completes the helper set (2026-08-03)
+
+Three asks, all taken: a `bypass_repeat` sibling, `chord()` renamed, and
+`always_true` extended to wrap an optional fn.
+
+- **`bypass_repeat`** (`4d9f698d`) completes the pair. Both skip the handler
+  on a repeat; suppressed is consumed, bypassed carries on down the chain. It
+  is the shape the previous commit could only describe in prose — act once on
+  a held key while what is below keeps receiving it. Two names rather than one
+  wrapper with a flag: which one a binding wants is fixed at registration, not
+  per event.
+- **`always_true([fn])`** — the argument is the good one and worth keeping:
+  ending every handler with `return true` is the **dark side of the DOM
+  idiom**, forcing a function that merely toggles a pause to know its
+  propagation context, and to carry that knowledge wherever it is reused. The
+  declaration belongs in the dispatch map. Decision 24 records that this is
+  **not** a reversal of Decision 22 — that refused a wrapper deciding
+  consumption behind the developer's back; this is the developer deciding
+  explicitly at the site where the binding is declared. Who chooses, not where
+  the `true` comes from.
+- **keyboard `28d84cd`:** `chord()` → `reserved()`, body now
+  `suppress_repeat(always_true(fn))`. `alt+*` becomes `reserved()` with no
+  function at all, swallowing the class being its whole job, and goBack /
+  notchAdjust / pauseToggle go back to being about their own subject.
+- One new row caught a mistake **in itself** rather than in the code: it
+  asserted a class binding consumed everything, but a modifier's own press is
+  deliberately not in its class (Decision 21), so `lalt` reaches the hook and
+  only the chord does not. Rewritten to assert that, which is the sharper
+  claim.
+- Suite **896 → 903 / 0 / 0 / 3**.
+
 ### re-explaining the combo wildcard finding
 
 - Probed rather than asserted. The metatable of a combo table is **reachable**
