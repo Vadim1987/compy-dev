@@ -599,14 +599,16 @@ local function build_widget_api(get_widget, get_active_flag, state)
     end,
     -- doc/development/decisions/input.md, Decision 22: dispatch
     -- does not gate on isrepeat, so a held combo fires every
-    -- frame. This wraps a command binding to run once per
-    -- physical press. It CONSUMES either way — that half is
-    -- easy to get wrong by hand, since an unconsumed repeat
-    -- falls through to the hook and the widget.
+    -- frame. This filters repeats and nothing else: a
+    -- swallowed repeat is consumed, since an unconsumed one
+    -- would fall
+    -- through to the hook and the widget, but a fresh press
+    -- returns whatever the wrapped handler returns. Whether to
+    -- consume is the handler's call, not the wrapper's.
     suppress_repeat = function(fn)
       return function(k, keys, isr)
-        if not isr then fn(k, keys, isr) end
-        return true
+        if isr then return true end
+        return fn(k, keys, isr)
       end
     end,
     -- doc/development/decisions/input.md, Decision 18: the one

@@ -461,23 +461,53 @@ describe('#input events dispatching', function()
 
     -- The load-bearing half: consumed on a repeat as well, so the
     -- widget behind never sees the held key.
+    -- The wrapper filters repeats and nothing else. Whether a
+    -- FRESH press is consumed is the wrapped handler's call, like
+    -- any other participant's (Decision 2), so its return value
+    -- passes straight through.
+    it('a fresh press propagates the handler return value',
+      function()
+        local reached = false
+        local input = F.activate_project()
+        input.shortcuts.keypressed['s'] =
+            input.suppress_repeat(function() end)
+        input.hooks.keypressed = function()
+          reached = true; return true
+        end
+        F.session.press('s')
+        assert.is_true(reached)
+      end)
+
+    it('a consuming handler still consumes', function()
+      local reached = false
+      local input = F.activate_project()
+      input.shortcuts.keypressed['s'] =
+          input.suppress_repeat(function() return true end)
+      input.hooks.keypressed = function()
+        reached = true; return true
+      end
+      F.session.press('s')
+      assert.is_false(reached)
+    end)
+
+    -- The repeat it swallows IS consumed, whatever the handler
+    -- would have returned — an unconsumed repeat falls past the
+    -- shortcut into the hook and then the widget, so a held key
+    -- would edit the overlay behind it. Both halves are visible
+    -- here at once: a NON-consuming handler lets the fresh press
+    -- reach the widget, and the repeat still does not.
     it('consumes the repeat it swallows', function()
       local input = F.activate_project()
       F.show_widget({ text = 'abcd' })
       -- Control: unbound, a repeat reaches the widget and edits.
-      -- Without this the assertion below could pass because the
-      -- key never reached the widget in the first place.
       F.session.repeat_press('backspace')
       assert.same({ 'abc' }, F.widget:get_text())
-      -- Bound: the fresh press and the repeat are both consumed,
-      -- so the widget behind is untouched by either. A wrapper
-      -- that returned nil on a repeat instead of true would let
-      -- this one through and delete another character.
       input.shortcuts.keypressed['backspace'] =
           input.suppress_repeat(function() end)
       F.session.press('backspace')
       F.session.repeat_press('backspace')
-      assert.same({ 'abc' }, F.widget:get_text())
+      F.session.repeat_press('backspace')
+      assert.same({ 'ab' }, F.widget:get_text())
     end)
 
     it('passes the payload through to the wrapped function',

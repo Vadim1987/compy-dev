@@ -818,8 +818,15 @@ more sophisticated is a hook, with no capability lost.
 **Decision.** Dispatch does **not** gate on `isrepeat`: a held combo fires on
 every OS key repeat, and a hook sees every repeat too. A binding that wants to
 act once per physical press wraps itself in
-`compy.input.suppress_repeat(fn)`, which calls `fn` only on a fresh press and
-**consumes either way**.
+`compy.input.suppress_repeat(fn)`. On a repeat it returns `true` without
+calling `fn`; on a fresh press it returns **whatever `fn` returns**.
+
+**Scope: the repeat filter, and nothing else.** Whether an event is consumed
+is the wrapped handler's call, exactly as for any other participant
+(Decision 2), so the wrapper passes its return value straight through. A
+wrapper that forced `true` on a fresh press would quietly take away a
+handler's ability to fall through — dispatch policy is not the decorator's
+business.
 
 **Why a wrapper and not a dispatch rule.** Filtering repeats inside the
 shortcut tier was weighed and rejected. Two reasons:
@@ -832,11 +839,12 @@ shortcut tier was weighed and rejected. Two reasons:
   hand-written check would remain there. A wrapper has one signature and
   composes across all three tiers.
 
-**Why it consumes on a repeat.** That half is the one that is easy to get
-wrong by hand: a repeat that is *not* consumed falls past the shortcut into
-the hook and then the widget, so a held command key would type into a shown
-overlay. Consuming keeps the binding's claim on the key for as long as it is
-held.
+**Why the swallowed repeat is consumed.** Suppressing the action without
+suppressing the propagation would move the problem rather than solve it: an
+unconsumed repeat falls past the shortcut into the hook and then the widget,
+so a held command key would type into a shown overlay. Consuming what it
+swallows keeps the binding's claim on the key for as long as it is held, and
+is part of the filtering job rather than a second policy.
 
 **On hooks.** It wraps a hook as readily as a shortcut. Whether that is wise
 is the project's call: wrapping a *whole-channel* hook swallows every repeat
