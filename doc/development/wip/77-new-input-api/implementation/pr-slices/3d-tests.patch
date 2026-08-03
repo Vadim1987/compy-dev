@@ -1,5 +1,5 @@
 diff --git a/.gitignore b/.gitignore
-index 6970156..69cfb31 100644
+index 69701567..69cfb316 100644
 --- a/.gitignore
 +++ b/.gitignore
 @@ -20,3 +20,6 @@ src/ver.txt
@@ -10,7 +10,7 @@ index 6970156..69cfb31 100644
 +*.swo
 +*~
 diff --git a/tests/editor/editor_spec.lua b/tests/editor/editor_spec.lua
-index 204b009..dce6c43 100644
+index 204b0096..dce6c43d 100644
 --- a/tests/editor/editor_spec.lua
 +++ b/tests/editor/editor_spec.lua
 @@ -478,6 +478,47 @@ describe('Editor #editor', function()
@@ -93,10 +93,10 @@ index 204b009..dce6c43 100644
            some_func = mock_func_snippet('some')
 diff --git a/tests/helpers/input_fixture.lua b/tests/helpers/input_fixture.lua
 new file mode 100644
-index 0000000..d2990a9
+index 00000000..18629ba9
 --- /dev/null
 +++ b/tests/helpers/input_fixture.lua
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,289 @@
 +-- Shared fixture for the input contract suite. Builds the
 +-- real love.handlers wiring over a real ConsoleController,
 +-- the input widget (mirroring main.lua), the
@@ -126,6 +126,9 @@ index 0000000..d2990a9
 +-- Mouse position the click path samples; tests drive it through
 +-- set_mouse_pos to make drift detection observable.
 +local mx, my = 0, 0
++-- Held-button state the widget's drag-select reads through
++-- love.mouse.isDown; see mock_runtime below.
++local mouse_down = false
 +
 +local function mock_runtime()
 +  mock.mock_love({
@@ -143,7 +146,14 @@ index 0000000..d2990a9
 +      stop      = function() end,
 +      play      = function() end,
 +    },
-+    mouse      = { getPosition = function() return mx, my end },
++    -- isDown is real production input: the widget's drag-select
++    -- consults it on every mousemoved
++    -- (userInputModel, "mouse_drag"). Driven by
++    -- F.set_mouse_down so a row can hold a button over a move.
++    mouse      = {
++      getPosition = function() return mx, my end,
++      isDown      = function() return mouse_down end,
++    },
 +    paths      = { project_path = '/tmp' },
 +    filesystem = { getInfo = function() end },
 +  })
@@ -165,6 +175,13 @@ index 0000000..d2990a9
 +  gfx.clear     = function() end
 +  gfx.push      = function() end
 +  gfx.pop       = function() end
++  -- love.update walks into the snapshot branch as soon as a
++  -- project raise sets 'snapshot', so this has to exist. It is
++  -- a no-op that never invokes its callback, modelling "the
++  -- screenshot has not been delivered yet" — the state a run
++  -- sits in between suspend_run and suspend. Rows wanting the
++  -- far side of that boundary call CC:suspend() themselves.
++  gfx.captureScreenshot = function() end
 +end
 +
 +-- A monospace font is a leaf dependency of the terminal; stub the
@@ -279,16 +296,26 @@ index 0000000..d2990a9
 +  return CC:get_project_env().compy.input
 +end
 +
-+-- Register a project click handler
-+-- (compy.singleclick/doubleclick), the target the framework
-+-- click path invokes (doc/development/internals/user_input.md,
-+-- "Framework-level click handling").
-+function F.set_compy_handler(name, fn)
-+  CC:get_project_env().compy[name] = fn
++-- Is an overlay visible to the framework? Reads love.state.user_input
++-- rather than the widget's own is_shown(): that field IS the overlay
++-- contract (userInputController.lua, open_fresh/hide) — the draw loop
++-- paints the widget for exactly as long as it is set, and the console
++-- route forwards events to the widget for exactly as long as it is
++-- set. So this is the observable "the user sees an input field", not
++-- the widget's self-report, and it stays honest if the two ever
++-- disagree.
++function F.is_widget_visible()
++  return love.state.user_input ~= nil
 +end
 +
 +function F.set_mouse_pos(x, y)
 +  mx, my = x, y
++end
++
++--- Hold or release the primary button for love.mouse.isDown.
++--- @param down boolean
++function F.set_mouse_down(down)
++  mouse_down = down
 +end
 +
 +function F.love_update(dt)
@@ -321,12 +348,24 @@ index 0000000..d2990a9
 +  w:init_view({ render = function() end, draw = function() end })
 +  w.model:set_text(lines or { 'aa', 'bb', 'cc' })
 +  love.state.user_input = { M = m, C = w, V = w.view }
++  -- The dispatch chain resolves its terminal consumer from
++  -- love.state.user_input_controller, not from the published
++  -- handle, so a row that wants this widget to receive chain
++  -- traffic has to stand it up there too. F.reset puts the
++  -- shared widget back.
++  w:always_shown()
++  love.state.user_input_controller = w
 +  return w
 +end
 +
-+-- Production stop owns route/output teardown. The remaining cleanup is
-+-- fixture-owned state that production neither creates nor observes.
++-- Production stop owns route/output teardown, the overlay's shownness
++-- included. What remains here is either fixture-owned state production
++-- never creates, or content production keeps on purpose between runs.
 +function F.reset()
++  -- Undo a show_selectable_widget swap before teardown runs, so
++  -- stop_project_run tears down the shared widget rather than a
++  -- row-local one.
++  love.state.user_input_controller = widget
 +  CC:stop_project_run()
 +  Controller.keys_pressed       = { }
 +  love.state.app_state          = 'ready'
@@ -339,17 +378,20 @@ index 0000000..d2990a9
 +  love.update(1.0)
 +  CC.input:clear()
 +  CC.editor.input:clear()
++  -- Only the widget's CONTENT: production teardown hides the overlay
++  -- but deliberately keeps its text. `widget.shown = false` used to be
++  -- forced here too, which quietly compensated for stop_project_run
++  -- not lowering the flag — and hid that bug from the whole suite.
 +  widget:clear()
-+  widget.shown = false
 +end
 +
 +return F
 diff --git a/tests/helpers/input_session.lua b/tests/helpers/input_session.lua
 new file mode 100644
-index 0000000..483fe3c
+index 00000000..f9afb7fb
 --- /dev/null
 +++ b/tests/helpers/input_session.lua
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,45 @@
 +-- Keypress-level driver over the installed love.handlers.* gate.
 +-- Every emitter fires a REAL event through the production
 +-- gateway (love.handlers.*), never straight to a controller, so a
@@ -372,6 +414,8 @@ index 0000000..483fe3c
 +    type          = function(t) h.textinput(t) end,
 +    mousepressed  = function(...) h.mousepressed(...) end,
 +    mousereleased = function(...) h.mousereleased(...) end,
++    mousemoved    = function(...) h.mousemoved(...) end,
++    wheelmoved    = function(...) h.wheelmoved(...) end,
 +    touchpressed  = function(...) h.touchpressed(...) end,
 +    handlers      = h,
 +  }
@@ -394,160 +438,70 @@ index 0000000..483fe3c
 +
 +return { new = new }
 diff --git a/tests/input/cursor_spec.lua b/tests/input/cursor_spec.lua
-index 5abd82b..e8a38b3 100644
+index 5abd82b8..aa4e4c18 100644
 --- a/tests/input/cursor_spec.lua
 +++ b/tests/input/cursor_spec.lua
 @@ -1,3 +1,6 @@
-+-- Availability: pre-baseline — behaviour asserted here predates
-+-- this feature; no version tag.
++-- Availability: predates the Compy input API (introduced in
++-- 1.0.0-rc20260712).
 +
  require("model.input.cursor")
  require("util.debug")
  
-diff --git a/tests/input/highlight_regression_spec.lua b/tests/input/highlight_regression_spec.lua
-new file mode 100644
-index 0000000..748ed51
---- /dev/null
-+++ b/tests/input/highlight_regression_spec.lua
-@@ -0,0 +1,116 @@
-+-- Availability: pre-baseline machinery — the highlighter predates
-+-- this feature; this guards a render crash fixed in it (changed in
-+-- 1.0.0-rc20260712).
-+
-+-- Regression guard: highlight `.hl` must stay indexable.
-+--
-+-- The invariant: UserInputModel:get_highlight(), whenever it returns a
-+-- highlight at all, exposes an INDEXABLE `.hl` — never a plain-table
-+-- field left nil. Consumers index it straight away (the view reads
-+-- `highlight.hl` then `hl[l][c]`), and the original
-+-- "attempt to index upvalue hl (a nil value)" crash was exactly that
-+-- field arriving nil.
-+--
-+-- `highlight()` has TWO branches and each had to be taught the
-+-- invariant separately — the parser branch (`{ hl = hl or {}, … }`)
-+-- and the parser-less one (`{ hl = ev.highlighter(text) or {} }`). The
-+-- rows below are the resulting matrix: [lua parser || plain text] x
-+-- [highlighter returning nil || highlighter absent], plus the
-+-- empty/non-empty text split on the standard lua evaluator.
-+
-+require("model.input.userInputModel")
-+require("model.interpreter.eval.evaluator")
-+require("util.string.string")
-+
-+if not orig_print then
-+  _G.orig_print = function() end
-+end
-+
-+describe("highlight nil-index regression #input", function()
-+  local w        = 64
-+  local mockConf = { view = { drawableChars = w, lines = 16, input_max = 14 } }
-+  mock           = require("tests.mock")
-+  mock.mock_love({ state = { app_state = 'ready' } })
-+
-+  -- The contract guarded here is the MODEL's: whenever get_highlight()
-+  -- returns a highlight at all, its `.hl` must be indexable.
-+  --
-+  -- Asserted on the model directly, not through a replica of the view's
-+  -- access. The view carries its own `if hl and hl[tlc.l]` guard since
-+  -- the same fix that made `.hl` indexable (1a2a9a3,
-+  -- src/view/input/userInputView.lua), so a view-shaped replica would
-+  -- assert a symptom the live view no longer shows — while the model
-+  -- contract, which every other consumer of `.hl` depends on, is the
-+  -- thing that actually has to hold. Nothing is swallowed by pcall
-+  -- either: a nil `.hl` fails the assertion outright instead of
-+  -- collapsing into a boolean.
-+  local function assert_indexable_hl(model)
-+    local h = model:get_input().highlight
-+    assert.is_not_nil(h, 'a highlight is memoised for this evaluator')
-+    assert.is_table(h.hl, '.hl is a table, never nil')
-+    assert.has_no.errors(function() return h.hl[1] and h.hl[1][1] end)
-+  end
-+
-+  -- One row per highlighter condition that decides whether `.hl` is a
-+  -- crash-prone plain literal or indexable:
-+  --   1. Lua parser present, highlighter returns nil — the original
-+  --      regression path. Uses the LuaEval() FACTORY (a fresh
-+  --      instance) so it can override .highlighter to nil without
-+  --      mutating the shared InputEvalLua singleton.
-+  --   2. Standard Lua eval (InputEvalLua singleton, real
-+  --      highlighter) — normal colouring, one row for empty text and
-+  --      one for non-empty.
-+  --   3. Text eval (no parser), highlighter returns nil — the same
-+  --      hole on the other branch, and the one a project actually
-+  --      reaches through show({ highlighter = … }).
-+  --   4. Text eval, no highlighter at all — the validation-highlight
-+  --      path, a different production scenario (text, not Lua).
-+  it('lua eval, highlighter returns nil -> hl still indexable',
-+    function()
-+      local ev = LuaEval()
-+      ev.highlighter = function() return nil end -- parser, no colouring
-+      local m = UserInputModel(mockConf, ev)
-+      m:set_text({ 'return 1' })
-+      assert_indexable_hl(m)
-+    end)
-+
-+  -- "empty" and "non-empty" are the model's TEXT, split into their own
-+  -- rows so each states which one it covers: a freshly built model
-+  -- holds no text, and the highlight is memoised on first query.
-+  it('lua eval, empty text -> hl indexable', function()
-+    assert_indexable_hl(UserInputModel(mockConf, InputEvalLua))
-+  end)
-+
-+  it('lua eval, non-empty text -> hl indexable', function()
-+    local m = UserInputModel(mockConf, InputEvalLua)
-+    m:set_text({ 'return 1' })
-+    assert_indexable_hl(m)
-+  end)
-+
-+  -- The non-parser branch's own nil-highlighter cell — the missing
-+  -- square of [lua || text] x [highlighter absent || returning nil].
-+  -- Reachable from the public API: the project widget is built on a
-+  -- parser-less evaluator (`UserInputModel(baseconf, InputEvalText)`,
-+  -- src/main.lua) and `show({ highlighter = f })` assigns f straight
-+  -- onto that evaluator (src/controller/userInputController.lua), so a
-+  -- highlighter returning nil for some input — e.g. one that returns
-+  -- nothing for empty text — lands here. A fresh ValidatedTextEval
-+  -- stands in for it so the shared InputEvalText singleton is not
-+  -- mutated.
-+  it('text eval, highlighter returns nil -> hl still indexable',
-+    function()
-+      local ev = ValidatedTextEval({ function() return true end })
-+      ev.highlighter = function() return nil end
-+      local m = UserInputModel(mockConf, ev)
-+      m:set_text({ '42' })
-+      assert_indexable_hl(m)
-+    end)
-+
-+  it('text eval, no highlighter -> hl indexable', function()
-+    local m = UserInputModel(mockConf,
-+      ValidatedTextEval({ function() return true end }))
-+    assert_indexable_hl(m)
-+    m:set_text({ '42' })
-+    assert_indexable_hl(m)
-+  end)
-+end)
 diff --git a/tests/input/history_spec.lua b/tests/input/history_spec.lua
-index f4a50fd..0915ecf 100644
+index f4a50fd1..164c6abc 100644
 --- a/tests/input/history_spec.lua
 +++ b/tests/input/history_spec.lua
-@@ -1,3 +1,6 @@
-+-- Availability: pre-baseline — behaviour asserted here predates
-+-- this feature; no version tag.
+@@ -1,5 +1,11 @@
++-- Availability: the History model below predates the Compy
++-- input API (introduced in 1.0.0-rc20260712); the
++-- console-navigation group at the bottom of this file arrived
++-- with it.
 +
  --- @diagnostic disable: invisible
  require("model.input.history")
++local F = require('tests.helpers.input_fixture')
  
+ if not orig_print then
+   --- @diagnostic disable: duplicate-set-field
+@@ -67,3 +73,26 @@ describe('history #history', function()
+     assert.same(nil, cur)
+   end)
+ end)
++
++-- Recall the way a user reaches it, through the real console.
++-- The console input is single-line, so Up hits the vertical
++-- limit at once and the widget reports that through the
++-- on_limit_reached callback wired at construction; the
++-- console's handler turns it
++-- into history_back (doc/development/decisions/input.md,
++-- Decision 5). The retired mechanism -- the console reading
++-- keypressed's return value -- is why this is an end-to-end row
++-- and not another model one.
++describe('console history navigation #input #history',
++  function()
++  setup(function() F.setup() end)
++  teardown(function() F.teardown() end)
++  before_each(function() F.reset() end)
++
++  it('Up at the vertical limit recalls the last entry',
++    function()
++    F.console.model.history:remember({ 'foo' })
++    F.session.press('up')
++    assert.same({ 'foo' }, F.console:get_text())
++  end)
++end)
 diff --git a/tests/input/input_cursor_text_spec.lua b/tests/input/input_cursor_text_spec.lua
 new file mode 100644
-index 0000000..07534a0
+index 00000000..8e441440
 --- /dev/null
 +++ b/tests/input/input_cursor_text_spec.lua
-@@ -0,0 +1,217 @@
-+-- Availability: feature-new — covers the compy.input surface
-+-- introduced by this feature (since 1.0.0-rc20260712).
+@@ -0,0 +1,234 @@
++-- Availability: introduced with the Compy input API
++-- (1.0.0-rc20260712) — covers the compy.input surface.
 +
-+-- cursor and text surface.
-+-- Covers get_cursor / set_cursor / set_text on the public project surface
++-- Cursor and text surface: get_cursor / set_cursor / set_text,
++-- driven through F.compy_input() — exactly what a project sees
 +-- (doc/input_api.md, "Live changes";
 +-- doc/development/internals/user_input.md, "Cursor
 +-- manipulation and \"reset\""). Implementation:
@@ -561,13 +515,10 @@ index 0000000..07534a0
 +  before_each(function() F.reset() end)
 +
 +
-+  -- The cursor + text surface (doc/input_api.md, "Live
-+  -- changes"). Driven through the public project
-+  -- surface F.compy_input() — exactly what a project sees.
-+  -- get_cursor/set_cursor/set_text are non-assignable
-+  -- methods (NOT in INPUT_CALLBACKS), so doc/development/decisions/input.md,
-+  -- Decision 7 rides the
-+  -- same __newindex boundary as show/hide.
++  -- These three are non-assignable methods (NOT in
++  -- INPUT_CALLBACKS), so they ride the same frozen-surface
++  -- boundary as show/hide — doc/development/decisions/input.md,
++  -- Decision 7 (what a project may assign).
 +
 +
 +  describe("get_cursor", function()
@@ -587,9 +538,13 @@ index 0000000..07534a0
 +    -- proves it keeps TRACKING: the reported position follows real
 +    -- edits (a typed character, a deletion) rather than being a
 +    -- constant that happens to match the opening state.
++    -- activate_project, not compy_input alone: this row TYPES,
++    -- so it needs the route a real project's overlay is fed
++    -- through. Reading the surface needs no route; delivery
++    -- does.
 +    it('keeps reporting the cursor as the text is edited',
 +      function()
-+        local input = F.compy_input()
++        local input = F.activate_project()
 +        input.show({ text = 'hi' })
 +        assert.same({ 1, 3 }, { input.get_cursor() })
 +        F.session.type('!')
@@ -626,13 +581,21 @@ index 0000000..07534a0
 +    -- manipulation and \"reset\"": move; out-of-range
 +    -- clamps to the valid range.
 +    
++    -- activate_project: the row types to prove the caret is
++    -- seated, so it needs the project route to deliver.
 +    it('moves the cursor', function()
-+      local input = F.compy_input()
-+      input.show({ text = 'hello' })
++      local input = F.activate_project()
++      input.show({ text = 'lemon' })
 +      input.set_cursor(1, 3)
 +      local l, c = input.get_cursor()
 +      assert.same(1, l)
 +      assert.same(3, c)
++      -- The caret is really seated, not merely reported back:
++      -- typing lands at the caret. `col` counts positions
++      -- BETWEEN characters (1 .. #line + 1), so col 3 is
++      -- between 'e' and 'm' (doc/input_api.md, "Live changes").
++      F.session.type('X')
++      assert.same({ 'leXmon' }, F.widget:get_text())
 +    end)
 +
 +    -- Discriminating: seat the cursor at col 2 first, so a
@@ -687,15 +650,22 @@ index 0000000..07534a0
 +    describe("with keep_cursor", function()
 +    -- doc/input_api.md, "Live changes": keep_cursor
 +    -- preserves position (clamped).
++      -- activate_project: types across the text swap, so the
++      -- project route has to be up to deliver it.
 +      it('preserves the cursor',
 +        function()
-+          local input = F.compy_input()
++          local input = F.activate_project()
 +          input.show({ text = 'hello' })
 +          input.set_cursor(1, 3)
 +          input.set_text('world', true)
 +          local l, c = input.get_cursor()
 +          assert.same(1, l)
 +          assert.same(3, c)
++          -- Seated for real, across the text swap: typing lands
++          -- at the caret, which sits between 'o' and 'r'
++          -- (caret positions, doc/input_api.md, "Live changes").
++          F.session.type('X')
++          assert.same({ 'woXrld' }, F.widget:get_text())
 +        end)
 +
 +      it('clamps when text shrinks',
@@ -743,9 +713,10 @@ index 0000000..07534a0
 +    end)
 +  end)
 +
-+    -- doc/development/decisions/input.md, Decision 7: the three callables are
-+    -- non-assignable — the
-+    -- mutable boundary raises loudly (never a silent swallow).
++    -- doc/development/decisions/input.md, Decision 7 (what a
++    -- project may assign): the three callables are not among
++    -- them, so the frozen surface raises loudly rather than
++    -- swallowing the write.
 +    it('assigning the cursor/text callables raises',
 +      function()
 +        local input = F.compy_input()
@@ -762,35 +733,31 @@ index 0000000..07534a0
 +end)
 diff --git a/tests/input/input_events_spec.lua b/tests/input/input_events_spec.lua
 new file mode 100644
-index 0000000..1da2626
+index 00000000..ace92ce1
 --- /dev/null
 +++ b/tests/input/input_events_spec.lua
-@@ -0,0 +1,564 @@
-+-- Availability: feature-new — the dispatch chain, the per-event
-+-- hooks and the project-handler install path are introduced by this
-+-- feature (since 1.0.0-rc20260712); none exist in the baseline.
+@@ -0,0 +1,1146 @@
++-- Availability: the dispatch chain, the per-event
++-- hooks and the project-handler install path are introduced by 
++-- new input API (since 1.0.0-rc20260712); none exist prior to it.
 +
-+-- dispatch chain: tier mechanics 
-+-- {historical: split from input_contracts_spec.lua (TF1)}.
-+--
-+-- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
-+-- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
-+-- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
-+-- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
-+-- the route-managed input surface and terminal of the chain. 
-+-- 
-+-- Tests assert
-+-- observable outcomes at public seams, never method-name spies.
-+--
-+-- keypressed fires for every physical key, textinput only for
-+-- character-producing keys (doc/development/internals/user_input.md, "Data flow").
-+--
-+-- This file covers the dispatch-chain MECHANICS: order/consume/fall-through,
-+-- combo tables, signatures, defaults, hook and handler install, the
-+-- mutable/immutable boundary (doc/development/decisions/input.md, Decision 2).
-+-- Widget OUTPUTS (submit/cancel) live in input_widget_callbacks_spec.lua. These
-+-- are two of the suite's nine thematic files (TF1 split by topic — not a
-+-- two-way mechanics/outputs cut).
++-- dispatch chain: tier mechanics  Routing invariant
++-- (doc/development/decisions/input.md, Decision 1): inter-route
++-- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
++-- fixed by the active screen mode. Vocabulary
++-- (doc/development/internals/user_input.md, "Dispatch chain"):
++-- ROUTE = the controller an event is dispatched to; WIDGET =
++-- the route-managed input surface and terminal of the chain.
++-- Tests assert observable outcomes at public seams, never
++-- method-name spies.  keypressed fires for every physical key,
++-- textinput only for character-producing keys
++-- (doc/development/internals/user_input.md, "Data flow").  This
++-- file covers the dispatch-chain MECHANICS:
++-- order/consume/fall-through, combo tables, signatures,
++-- defaults, hook and handler install, the mutable/immutable
++-- boundary (doc/development/decisions/input.md, Decision 2).
++-- Widget OUTPUTS (the callbacks fired on submit and cancel)
++-- live in input_widgets_callbacks_spec.lua.
 +
 +local F = require('tests.helpers.input_fixture')
 +
@@ -816,8 +783,6 @@ index 0000000..1da2626
 +    F.session.press(k)
 +  end
 +
-+  -- doc/development/decisions/input.md, Decision 2.
-+
 +  describe('order, consume, fall-through', function()
 +    -- Walked on the keypressed channel only, deliberately. The walk
 +    -- is ONE channel-agnostic function in production —
@@ -829,7 +794,7 @@ index 0000000..1da2626
 +    -- channels each REACH the walk is proven separately, per channel,
 +    -- in the combo group below.
 +
-+    -- doc/development/decisions/input.md, Decision 2 revised: the dumb
++    -- doc/development/decisions/input.md, Decision 2: the dumb
 +    -- walk stops at the first consumer. A shortcut returning
 +    -- truthy consumes — the hook and widget below never run.
 +    it('a shortcut consumes before the hook and widget',
@@ -845,7 +810,7 @@ index 0000000..1da2626
 +        assert.is_false(reached_hook)
 +      end)
 +
-+    -- doc/development/decisions/input.md, Decision 2 revised: an
++    -- doc/development/decisions/input.md, Decision 2: an
 +    -- unconsumed event walks shortcut → hook → widget in order;
 +    -- falsy consumers fall through, and the shown widget is the
 +    -- terminal consumer (backspace edits it — the observable trace).
@@ -892,6 +857,64 @@ index 0000000..1da2626
 +      assert.equal(2, n)
 +    end)
 +
++  end)
++
++  -- doc/development/decisions/input.md, Decision 2: only the shortcut
++  -- tier is KEYED — it participates for its own combo and for nothing
++  -- else, while the hook and the widget are unkeyed and therefore see
++  -- every event their channel carries. The groups above pin what a
++  -- MATCHED shortcut does; these pin its silence on every other key,
++  -- once per channel, since each channel keys its own combo table
++  -- (doc/development/decisions/input.md, Decision 8). Every shortcut
++  -- here is registered CONSUMING, so a spurious match would be
++  -- observable twice over: `fired` flips AND the tiers below it stop
++  -- receiving.
++  describe('shortcut selectivity', function()
++
++    it('a keypressed shortcut is silent for another key',
++      function()
++        local fired, seen = false, 0
++        local input = F.activate_project()
++        input.shortcuts.keypressed['a'] =
++            function() fired = true; return true end
++        input.hooks.keypressed = function() seen = seen + 1 end
++        F.show_widget({ text = 'ab' })
++        F.session.press('backspace')
++        assert.is_false(fired)
++        assert.equal(1, seen)
++        assert.same({ 'a' }, F.widget:get_text())
++      end)
++
++    it('a textinput shortcut is silent for another character',
++      function()
++        local fired, got = false, { }
++        local input = F.activate_project()
++        input.shortcuts.textinput['s'] =
++            function() fired = true; return true end
++        input.hooks.textinput =
++            function(t) got[#got + 1] = t end
++        F.show_widget()
++        F.session.type('q')
++        assert.is_false(fired)
++        assert.same({ 'q' }, got)
++        assert.same({ 'q' }, F.widget:get_text())
++      end)
++
++    -- The widget is left out of this one on purpose: it is shown, so
++    -- it consumes the release unconditionally and would witness
++    -- nothing about the shortcut.
++    it('a keyreleased shortcut is silent for another key',
++      function()
++        local fired, seen = false, 0
++        local input = F.activate_project()
++        input.shortcuts.keyreleased['a'] =
++            function() fired = true; return true end
++        input.hooks.keyreleased = function() seen = seen + 1 end
++        F.session.press('b')
++        F.session.release('b')
++        assert.is_false(fired)
++        assert.equal(1, seen)
++      end)
 +  end)
 +
 +  -- doc/development/decisions/input.md, Decision 2: the interception
@@ -961,7 +984,6 @@ index 0000000..1da2626
 +    end
 +  end)
 +
-+  -- doc/development/decisions/input.md, Decision 8.
 +  describe('shortcuts fire on the normalised combo', function()
 +    -- doc/development/decisions/input.md, Decision 8: each channel has its
 +    -- OWN combo sub-table
@@ -1024,7 +1046,384 @@ index 0000000..1da2626
 +    end)
 +  end)
 +
-+  -- ---- signatures + read-only proxy
++  -- A combo is modifiers plus ONE trigger
++  -- (doc/development/decisions/input.md, Decision 21). The rule is
++  -- enforced at registration because the canonical form silently
++  -- kept the LAST non-modifier token before: 'ctrl+a+b' became
++  -- 'ctrl+b', and 'a+b+*' became a bare '*' — the widest possible
++  -- binding written as the narrowest. Raising is the same
++  -- treatment show/configure give an unrecognised key (Decision 15).
++  describe('the combo registration contract', function()
++
++    it('rejects a combo with two triggers', function()
++      local input = F.activate_project()
++      assert.has_error(function()
++        input.shortcuts.keypressed['ctrl+a+b'] = function() end
++      end)
++    end)
++
++    it('rejects a class combo with a trigger beside it', function()
++      local input = F.activate_project()
++      assert.has_error(function()
++        input.shortcuts.keypressed['a+b+*'] = function() end
++      end)
++    end)
++
++    -- The legal shapes stay legal: a bare trigger, modifiers plus a
++    -- trigger, and modifiers plus the class marker.
++    it('accepts a trigger, a combo, and a class', function()
++      local input = F.activate_project()
++      local sc = input.shortcuts.keypressed
++      sc['a'] = function() end
++      sc['Ctrl+Alt+S'] = function() end
++      sc['ctrl+alt+*'] = function() end
++      assert.is_function(sc['a'])
++      assert.is_function(sc['ctrl+alt+s'])
++      assert.is_function(sc['ctrl+alt+*'])
++    end)
++
++    -- A combo naming no trigger at all is not a binding.
++    it('rejects a modifier-only combo', function()
++      local input = F.activate_project()
++      assert.has_error(function()
++        input.shortcuts.keypressed['ctrl+alt'] = function() end
++      end)
++    end)
++
++    -- A BARE class marker is refused, though it satisfies the
++    -- one-trigger rule. `'*'` with no modifiers is the class of
++    -- "no modifiers held": every unmodified key, which is
++    -- what a hook already is, arrived at by a spelling that
++    -- looks like a narrow binding. The shortcuts tier is for
++    -- naming a key; wanting every key means wanting the hook.
++    it('rejects a bare class marker', function()
++      local input = F.activate_project()
++      assert.has_error(function()
++        input.shortcuts.keypressed['*'] = function() end
++      end)
++    end)
++
++    -- The control: a class is legal the moment it has modifiers
++    -- to be a class OF, which is what the row above is not.
++    it('accepts a class with modifiers', function()
++      local input = F.activate_project()
++      assert.has_no.errors(function()
++        input.shortcuts.keypressed['shift+*'] = function() end
++      end)
++    end)
++  end)
++
++  -- A trailing '*' binds the whole modifier class
++  -- (doc/development/decisions/input.md, Decision 21): 'alt+*' is
++  -- every Alt chord. Exact bindings win; the class is consulted
++  -- only on a miss, so the hit path is unchanged.
++  describe('combo classes', function()
++
++    local function bind_class(input, combo)
++      local seen = { }
++      input.shortcuts.keypressed[combo] = function(k)
++        seen[#seen + 1] = k; return true
++      end
++      return seen
++    end
++
++    it('one class binding catches every key in it', function()
++      local input = F.activate_project()
++      local seen = bind_class(input, 'alt+*')
++      F.session.press('lalt')
++      F.session.press('q')
++      F.session.press('z')
++      assert.same({ 'q', 'z' }, seen)
++    end)
++
++    -- The handler needs to know WHICH key matched, and already
++    -- does: the trigger is argument one, as on any other combo.
++    it('the class handler receives the real trigger', function()
++      local input = F.activate_project()
++      local seen = bind_class(input, 'ctrl+alt+*')
++      F.session.press('lctrl')
++      F.session.press('lalt')
++      F.session.press('h')
++      assert.same({ 'h' }, seen)
++    end)
++
++    it('an exact binding wins over the class', function()
++      local input = F.activate_project()
++      local seen = bind_class(input, 'alt+*')
++      local exact = false
++      input.shortcuts.keypressed['alt+p'] =
++          function() exact = true; return true end
++      F.session.press('lalt')
++      F.session.press('p')
++      assert.is_true(exact)
++      assert.same({ }, seen)
++    end)
++
++    -- A class is its modifier set exactly, so Ctrl+Alt+H is NOT an
++    -- Alt chord. This is the exclusion a hand-rolled modifier test
++    -- has to write out and get right.
++    it('a wider modifier set is a different class', function()
++      local input = F.activate_project()
++      local seen = bind_class(input, 'alt+*')
++      F.session.press('lalt')
++      F.session.press('lctrl')
++      F.session.press('h')
++      assert.same({ }, seen)
++    end)
++
++    -- Holding Alt alone dispatches the combo 'alt+lalt' — the
++    -- modifier prepended to itself as the trigger. A class must not
++    -- match its own modifier, or every Alt press fires it.
++    it('a class does not match its own modifier key', function()
++      local input = F.activate_project()
++      local seen = bind_class(input, 'alt+*')
++      F.session.press('lalt')
++      assert.same({ }, seen)
++    end)
++
++    it('classes work on the textinput channel too', function()
++      local seen = { }
++      local input = F.activate_project()
++      input.shortcuts.textinput['ctrl+*'] = function(t)
++        seen[#seen + 1] = t; return true
++      end
++      F.session.press('lctrl')
++      F.session.type('x')
++      assert.same({ 'x' }, seen)
++    end)
++  end)
++
++  -- The dispatch combinators live under compy.input.fn, named
++  -- for what they do to the EVENT — that is what a reader of a
++  -- registration table wants to know
++  -- (doc/development/decisions/input.md, Decisions 22 and 24).
++  -- They are orthogonal: ignore_repeat is about whether the
++  -- handler RUNS, stop_here/side_run about where the event GOES.
++  describe('compy.input.fn.ignore_repeat', function()
++
++    it('a fresh press runs the wrapped function', function()
++      local ran = 0
++      local input = F.activate_project()
++      input.shortcuts.keypressed['ctrl+s'] =
++          input.fn.ignore_repeat(function() ran = ran + 1 end)
++      chord('lctrl', 's')
++      assert.equal(1, ran)
++    end)
++
++    it('a repeat does not run it', function()
++      local ran = 0
++      local input = F.activate_project()
++      input.shortcuts.keypressed['s'] =
++          input.fn.ignore_repeat(function() ran = ran + 1 end)
++      F.session.press('s')
++      F.session.repeat_press('s')
++      F.session.repeat_press('s')
++      assert.equal(1, ran)
++    end)
++
++    -- It says nothing about propagation: a fresh press returns
++    -- whatever the handler returned, exactly as an unwrapped one
++    -- would (Decision 2).
++    it('a fresh press propagates the handler return value',
++      function()
++        local reached = false
++        local input = F.activate_project()
++        input.shortcuts.keypressed['s'] =
++            input.fn.ignore_repeat(function() end)
++        input.hooks.keypressed = function()
++          reached = true; return true
++        end
++        F.session.press('s')
++        assert.is_true(reached)
++      end)
++
++    it('a consuming handler still consumes', function()
++      local reached = false
++      local input = F.activate_project()
++      input.shortcuts.keypressed['s'] =
++          input.fn.ignore_repeat(function() return true end)
++      input.hooks.keypressed = function()
++        reached = true; return true
++      end
++      F.session.press('s')
++      assert.is_false(reached)
++    end)
++
++    -- The repeat it skips carries on down the chain, so a held
++    -- key keeps driving what is below while the binding acts
++    -- once. 'abcd' loses one character to the fresh press and one
++    -- to each repeat that reaches the widget.
++    it('the repeat it skips still reaches the widget', function()
++      local input = F.activate_project()
++      input.shortcuts.keypressed['backspace'] =
++          input.fn.ignore_repeat(function() end)
++      F.show_widget({ text = 'abcd' })
++      F.session.press('backspace')
++      F.session.repeat_press('backspace')
++      F.session.repeat_press('backspace')
++      assert.same({ 'a' }, F.widget:get_text())
++    end)
++
++    it('passes the payload through to the wrapped function',
++      function()
++        local seen
++        local input = F.activate_project()
++        input.shortcuts.keypressed['alt+*'] =
++            input.fn.ignore_repeat(function(k, keys)
++              seen = { k, keys['lalt'] }
++            end)
++        F.session.press('lalt')
++        F.session.press('q')
++        assert.same({ 'q', true }, seen)
++      end)
++
++    -- Same signature everywhere, so it wraps a hook as readily as
++    -- a shortcut.
++    it('wraps a hook the same way', function()
++      local ran = 0
++      local input = F.activate_project()
++      input.hooks.keypressed =
++          input.fn.ignore_repeat(function() ran = ran + 1 end)
++      F.session.press('s')
++      F.session.repeat_press('s')
++      assert.equal(1, ran)
++    end)
++  end)
++
++  describe('compy.input.fn.stop_here', function()
++
++    it('runs the function and consumes', function()
++      local ran = false
++      local reached = false
++      local input = F.activate_project()
++      input.shortcuts.keypressed['s'] =
++          input.fn.stop_here(function() ran = true end)
++      input.hooks.keypressed = function()
++        reached = true; return true
++      end
++      F.session.press('s')
++      assert.is_true(ran)
++      assert.is_false(reached)
++    end)
++
++    -- No function at all: a binding whose only job is to swallow.
++    -- The modifier's own press is not in its class (Decision 21),
++    -- so it reaches the hook and the Alt chord does not — which
++    -- is what makes this assertion about the class rather than
++    -- about nothing arriving at all.
++    it('consumes with no function to run', function()
++      local seen = { }
++      local input = F.activate_project()
++      input.shortcuts.keypressed['alt+*'] = input.fn.stop_here()
++      input.hooks.keypressed = function(k)
++        seen[#seen + 1] = k; return true
++      end
++      F.session.press('lalt')
++      F.session.press('q')
++      assert.same({ 'lalt' }, seen)
++    end)
++
++    it('hands the invocation arguments to the function',
++      function()
++        local seen
++        local input = F.activate_project()
++        input.shortcuts.keypressed['alt+*'] =
++            input.fn.stop_here(function(k, keys, isr)
++              seen = { k, keys['lalt'], isr }
++            end)
++        F.session.press('lalt')
++        F.session.press('q')
++        assert.same({ 'q', true, false }, seen)
++      end)
++
++    -- It knows nothing about repeats: a held key runs the action
++    -- every frame. That is the whole reason to compose the two.
++    it('runs the function on every repeat', function()
++      local ran = 0
++      local input = F.activate_project()
++      input.shortcuts.keypressed['s'] =
++          input.fn.stop_here(function() ran = ran + 1 end)
++      F.session.press('s')
++      F.session.repeat_press('s')
++      F.session.repeat_press('s')
++      assert.equal(3, ran)
++    end)
++  end)
++
++  describe('compy.input.fn.side_run', function()
++
++    -- The mirror of stop_here: run, and let the event carry on
++    -- regardless of what the function returned.
++    it('runs the function and does not consume', function()
++      local ran = false
++      local reached = false
++      local input = F.activate_project()
++      input.shortcuts.keypressed['s'] =
++          input.fn.side_run(function() ran = true end)
++      input.hooks.keypressed = function()
++        reached = true; return true
++      end
++      F.session.press('s')
++      assert.is_true(ran)
++      assert.is_true(reached)
++    end)
++
++    -- Even a handler that returns truthy does not consume — the
++    -- point of the wrapper is that this binding is a side effect,
++    -- and the declaration outranks whatever the function says.
++    it('does not consume even for a truthy handler', function()
++      local reached = false
++      local input = F.activate_project()
++      input.shortcuts.keypressed['s'] =
++          input.fn.side_run(function() return true end)
++      input.hooks.keypressed = function()
++        reached = true; return true
++      end
++      F.session.press('s')
++      assert.is_true(reached)
++    end)
++  end)
++
++  -- How a reserved binding is spelled: acts once per physical
++  -- press, and nothing below ever sees the key. Neither wrapper
++  -- knows about the other.
++  describe('composing the combinators', function()
++
++    it('stop_here over ignore_repeat is act-once-and-claim',
++      function()
++        local ran = 0
++        local input = F.activate_project()
++        input.shortcuts.keypressed['backspace'] =
++            input.fn.stop_here(
++              input.fn.ignore_repeat(function() ran = ran + 1 end))
++        F.show_widget({ text = 'abcd' })
++        F.session.press('backspace')
++        F.session.repeat_press('backspace')
++        F.session.repeat_press('backspace')
++        assert.equal(1, ran)
++        assert.same({ 'abcd' }, F.widget:get_text())
++      end)
++
++    -- The other pairing is a once-per-press side effect: it acts
++    -- on the fresh press only and never claims the key, so the
++    -- widget still receives every one of them.
++    it('side_run over ignore_repeat acts once and claims nothing',
++      function()
++        local ran = 0
++        local input = F.activate_project()
++        input.shortcuts.keypressed['backspace'] =
++            input.fn.side_run(
++              input.fn.ignore_repeat(function() ran = ran + 1 end))
++        F.show_widget({ text = 'abcd' })
++        F.session.press('backspace')
++        F.session.repeat_press('backspace')
++        F.session.repeat_press('backspace')
++        assert.equal(1, ran)
++        assert.same({ 'a' }, F.widget:get_text())
++      end)
++  end)
++
++  -- ---- signatures + read-only proxy of pressed-keys table
 +  -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
 +
 +  describe('signatures and the read-only proxy', function()
@@ -1111,6 +1510,53 @@ index 0000000..1da2626
 +      end)
 +    end)
 +
++    -- The same held set, readable OUTSIDE an event
++    -- (doc/development/decisions/input.md, Decision 20;
++    -- doc/input_api.md, "Held keys"). The participant argument
++    -- above cannot serve a project that RENDERS held state: a
++    -- per-frame draw runs between events, with no argument in
++    -- hand. examples/keyboard mirrored the whole set by hand for
++    -- exactly this reason.
++    describe('compy.input.keys_pressed', function()
++
++      it('reports a held key from outside any handler',
++        function()
++          local input = F.activate_project()
++          F.session.press('a')
++          assert.is_true(input.keys_pressed['a'])
++        end)
++
++      it('drops a released key', function()
++        local input = F.activate_project()
++        F.session.press('a')
++        F.session.release('a')
++        assert.is_nil(input.keys_pressed['a'])
++      end)
++
++      -- Read-only, by the same rule as the participant argument:
++      -- the project observes the held set, it does not own it.
++      it('cannot be written to', function()
++        local input = F.activate_project()
++        assert.has_error(function()
++          input.keys_pressed['x'] = true
++        end)
++      end)
++
++      -- It is the SAME view, not a snapshot taken at namespace
++      -- build time: what a handler is handed and what the project
++      -- reads afterwards agree.
++      it('agrees with the view a handler receives', function()
++        local from_handler
++        local input = F.activate_project()
++        input.hooks.keypressed = function(_, keys)
++          from_handler = keys['a']; return true
++        end
++        F.session.press('a')
++        assert.equal(from_handler, input.keys_pressed['a'])
++        assert.is_true(input.keys_pressed['a'])
++      end)
++    end)
++
 +    -- doc/development/decisions/input.md, Decision 9: the WIDGET is included
 +    -- in the uniform
 +    -- signature — it
@@ -1170,6 +1616,22 @@ index 0000000..1da2626
 +        assert.same({ 'keep' }, F.widget:get_text())
 +        assert.same({ 'ab' }, F.console:get_text())
 +      end)
++
++    -- doc/development/decisions/input.md, Decision 2: whether
++    -- the route reports the event as consumed follows from ONE
++    -- fact -- is the widget shown. The rows above observe that
++    -- through mutations; this one reads the route's own answer,
++    -- because a shown widget consumes even keys it does nothing
++    -- with (so a 'did it change anything' test cannot witness
++    -- it).
++    it('the route consumes exactly while the widget is shown',
++      function()
++        F.activate_project()
++        local route = Controller.project_input
++        assert.is_falsy(route:keypressed('x'))
++        F.show_widget({ text = 'a' })
++        assert.is_true(route:keypressed('x'))
++      end)
 +  end)
 +
 +  -- ---- the per-event hook
@@ -1182,8 +1644,7 @@ index 0000000..1da2626
 +    -- hooks.keypressed. What is specific to textinput, and is why
 +    -- this row exists, is the PER-CHARACTER cadence.
 +    -- doc/development/decisions/input.md, Decision 5: the textinput hook
-+    -- fires PER-CHARACTER (distinct from the submit output on_text_entered,
-+    -- which is the pending row above).
++    -- fires PER-CHARACTER (distinct from the submit output on_text_entered)
 +    it('the textinput hook fires per character as text arrives',
 +      function()
 +        local got = { }
@@ -1196,7 +1657,7 @@ index 0000000..1da2626
 +        assert.same({ 'a', 'b' }, got)
 +      end)
 +
-+    -- doc/development/decisions/input.md, Decision 10 (on_* install path):
++    -- doc/development/decisions/input.md, Decision 10 (hooks install path):
 +    -- a truthy callback intercepts
 +    -- the widget; a present-but-falsey callback falls through.
 +    it('a truthy textinput hook intercepts; falsey reaches the widget',
@@ -1300,6 +1761,26 @@ index 0000000..1da2626
 +        assert.equal(1, cb_hits)
 +        assert.equal(0, handler_hits)
 +      end)
++
++    -- doc/development/decisions/input.md, Decision 10:
++    -- the seeding happens ONCE, at activation. Clearing the
++    -- hook afterwards leaves it cleared -- the captured handler
++    -- is not re-resolved behind it. (The retired model re-read
++    -- `explicit or handler` per event, so a nil silently fell
++    -- back to the handler; a project could then not turn its
++    -- own love.keypressed off.)
++    it('clearing a seeded hook does not resurrect the handler',
++      function()
++        local seen = 0
++        local input = F.activate_project({
++          keypressed = function() seen = seen + 1 end,
++        })
++        F.session.press('x')
++        assert.equal(1, seen)
++        input.hooks.keypressed = nil
++        F.session.press('x')
++        assert.equal(1, seen)
++      end)
 +  end)
 +
 +  -- ---- the mutable/immutable boundary
@@ -1307,55 +1788,142 @@ index 0000000..1da2626
 +  -- -------------
 +
 +  describe('the mutable/immutable boundary', function()
-+    -- doc/development/decisions/input.md, Decision 7: exactly the
-+    -- the hook fields are assignable;
-+    -- anything else raises loudly (never a silent swallow).
-+    it('assigning an unknown key raises', function()
++    -- doc/development/decisions/input.md, Decision 7:
++    -- `compy.input` and the IDENTITY of its three sub-tables
++    -- (shortcuts, hooks, callbacks) are frozen, while every
++    -- leaf inside them is freely writable. A project therefore
++    -- fills the surface in but can neither replace nor shadow
++    -- it, and a misspelled field raises instead of being
++    -- swallowed.
++    it('replacing the surface or a sub-table raises', function()
 +      local input = F.compy_input()
 +      assert.has_error(function() input.nonsense = 1 end)
 +      assert.has_error(function()
 +        input.show = function() end
 +      end)
 +      assert.has_error(function() input.shortcuts = { } end)
++      assert.has_error(function() input.hooks = { } end)
++      assert.has_error(function() input.callbacks = { } end)
++      assert.has_error(
++        function() input.shortcuts.keypressed = { } end)
 +    end)
 +
-+    it('assigning an allowed hook is accepted',
++    it('leaf writes inside the sub-tables are accepted',
 +      function()
 +        local input = F.compy_input()
 +        assert.has_no.errors(function()
 +          input.hooks.keypressed  = function() end
 +          input.hooks.textinput   = function() end
 +          input.hooks.keyreleased = function() end
++          input.callbacks.validator = function() return true end
++          input.shortcuts.keypressed['ctrl+s'] = function() end
 +        end)
 +      end)
 +  end)
-+end)
-diff --git a/tests/input/input_lifecycle_unfork_spec.lua b/tests/input/input_lifecycle_unfork_spec.lua
-new file mode 100644
-index 0000000..c75186c
---- /dev/null
-+++ b/tests/input/input_lifecycle_unfork_spec.lua
-@@ -0,0 +1,302 @@
-+-- Availability: feature-new — the un-forked widget lifecycle is
-+-- introduced by this feature (since 1.0.0-rc20260712).
 +
-+-- Pins the behaviour of the UserInputController:keypressed
-+-- `app_state`-fork removal: deleting the `love.state.app_state ==
-+-- 'editor'` branch so `keypressed` runs one uniform path. See
-+-- doc/development/decisions/input.md Decision 6 for the rationale
-+-- and doc/development/internals/user_input.md for the mechanism.
-+-- Mirrors input_redesign_ac_spec.lua's style — assertions on
-+-- observable seams (widget text, fired callbacks), plus a couple
-+-- of narrow method-patch spies where the seam IS the call itself
-+-- (evaluate_input call count, model:cancel not running) — the same
-+-- technique input_widgets_callbacks_spec.lua uses for its one
-+-- widget-signature row.
++  -- Pointer events run the SAME chain as keyboard ones, so a
++  -- pointer hook is an ordinary participant: it consumes on a
++  -- truthy return and falls through on a falsey one, and the
++  -- widget is the chain's terminal rather than a parallel
++  -- recipient. Before this, pointer was an unstructured
++  -- broadcast — the widget got the event first, the project's
++  -- handler got it unconditionally after, and neither could
++  -- stop the other.
++  describe('pointer runs the dispatch chain', function()
++    it('a seeded pointer handler receives the event',
++      function()
++        local got
++        F.activate_project({
++          mousepressed = function(x, y, btn)
++            got = { x, y, btn }
++          end,
++        })
++        F.session.mousepressed(10, 20, 1, false, 1)
++        assert.same({ 10, 20, 1 }, got)
++      end)
++
++    it('a directly-assigned pointer hook receives it',
++      function()
++        local input = F.activate_project()
++        local got = 0
++        input.hooks.mousepressed = function() got = got + 1 end
++        F.session.mousepressed(10, 20, 1, false, 1)
++        assert.equal(1, got)
++      end)
++
++    -- Falls through on falsey, so the widget still gets it —
++    -- this is the pre-unification "both receive it" behaviour,
++    -- now an ordinary consequence of the chain rather than a
++    -- broadcast. The selection is the widget's observable.
++    it('a non-consuming hook still lets the widget see it',
++      function()
++        local input = F.activate_project()
++        local got = 0
++        input.hooks.mousepressed = function() got = got + 1 end
++        local w = F.show_selectable_widget()
++        F.set_mouse_down(true)
++        F.session.mousepressed(10, 540, 1, false, 1)
++        F.session.mousemoved(60, 540, 50, 0, false)
++        assert.equal(1, got)
++        assert.is_true(w.model:has_selection())
++      end)
++
++    -- The capability the broadcast could not express: a shown
++    -- widget can now be starved of a click aimed past it.
++    it('a consuming hook stops the event before the widget',
++      function()
++        local input = F.activate_project()
++        input.hooks.mousepressed = function() return true end
++        input.hooks.mousemoved = function() return true end
++        local w = F.show_selectable_widget()
++        F.set_mouse_down(true)
++        F.session.mousepressed(10, 540, 1, false, 1)
++        F.session.mousemoved(60, 540, 50, 0, false)
++        assert.is_false(w.model:has_selection())
++      end)
++  end)
++end)
+diff --git a/tests/input/input_lifecycle_uniform_spec.lua b/tests/input/input_lifecycle_uniform_spec.lua
+new file mode 100644
+index 00000000..69e4f2f7
+--- /dev/null
++++ b/tests/input/input_lifecycle_uniform_spec.lua
+@@ -0,0 +1,344 @@
++-- Availability: introduced with the Compy input API
++-- (1.0.0-rc20260712) — one uniform lifecycle across all
++-- surfaces.
++
++-- Enter and Escape mean the same thing in every input surface.
++-- A single lifecycle — `submit_flow` / `cancel_flow` in
++-- UserInputController — serves the console line, the editor's
++-- input and the project overlay alike; no widget instance reads
++-- the global screen mode to decide what a key does. Where a
++-- surface needs different behaviour it says so locally: the
++-- editor consumes Enter/Escape upstream before the widget sees
++-- them, and Ctrl+D line-duplication is a per-instance
++-- `allow_modify` flag set at construction.
++--
++-- This file is the guard against that uniformity being quietly
++-- re-conditioned on global state. Each group drives one surface
++-- through the same two keys and states what it must produce;
++-- the ones that look repetitive ARE the claim — same keys, same
++-- lifecycle, three surfaces.
++--
++-- Rationale: doc/development/decisions/input.md, Decision 6.
++-- Mechanism: doc/development/internals/user_input.md.
++--
++-- Assertions are on observable seams (widget text, fired
++-- callbacks), plus two narrow method patches where the seam IS
++-- the call itself (the console's evaluate_input call count, and
++-- model:cancel not running under the editor's Escape) — the
++-- same technique input_widgets_callbacks_spec.lua uses for its
++-- one widget-signature row.
 +
 +local F    = require('tests.helpers.input_fixture')
 +local mock = require('tests.mock')
 +local TU   = require('tests.testutil')
 +
-+describe('#input #lifecycle_unfork input lifecycle un-forking',
++describe('#input #lifecycle one input lifecycle, every surface',
 +  function()
 +    setup(function() F.setup() end)
 +    teardown(function() F.teardown() end)
@@ -1389,13 +1957,15 @@ index 0000000..c75186c
 +      return F.editor
 +    end
 +
-+    -- ---- 1. uniform lifecycle, no app_state gate ----------
++    -- ---- 1. the lifecycle ignores the screen mode ----------
 +
-+    describe('uniform lifecycle (no app_state gate)', function()
-+      -- RED today: the 'editor' branch never runs
-+      -- submit_flow/cancel_flow at all, regardless of
-+      -- who the caller is — a bare widget under app_state
-+      -- 'editor' should still submit/cancel like any other.
++    describe('a widget does not read the screen mode',
++      function()
++      -- The clearest statement of the rule: a plain widget,
++      -- owned by nobody, behaves identically no matter what
++      -- love.state.app_state happens to say. Screen mode picks
++      -- which ROUTE receives an event; it never changes what
++      -- the widget does with one.
 +      it('plain Enter submits, plain Escape cancels', function()
 +        local c = bare_uic()
 +        love.state.app_state = 'editor'
@@ -1413,10 +1983,17 @@ index 0000000..c75186c
 +      end)
 +    end)
 +
-+    -- ---- 2. editor Escape preserves the load ---------------
++    -- ---- 2. the editor's own meaning for Escape ------------
 +
-+    describe('editor Escape preserves the load', function()
-+      it('loads the selection, does not wipe it', function()
++    -- In the editor, Escape means "load the selected line into
++    -- the input for editing" — the opposite of the widget's
++    -- clear-the-draft cancel. The editor therefore consumes the
++    -- key upstream (EditorController:_normal_mode_keys) and the
++    -- widget's cancel_flow never runs; the spy on model.cancel
++    -- is how that absence is observed.
++    describe('editor Escape loads instead of cancelling',
++      function()
++      it('loads the selection and does not clear it', function()
 +        local doc = { 'first line', 'second line', '' }
 +        local ed  = open_doc(doc)
 +        local model = ed.input.model
@@ -1436,11 +2013,16 @@ index 0000000..c75186c
 +      end)
 +    end)
 +
-+    -- ---- 3. editor Enter / Ctrl+Enter submit locally -------
++    -- ---- 3. the editor's own meaning for Enter -------------
 +
-+    describe('editor submit does not double-fire through UIC',
++    -- Same shape as Escape above: Enter (plain or with Ctrl)
++    -- applies the edit to the buffer, and the editor consumes
++    -- it, so the submission is delivered once — to the editor —
++    -- and never a second time through the widget's
++    -- on_text_entered.
++    describe('editor Enter submits to the editor alone',
 +      function()
-+        it('plain Enter: _handle_submit, no on_text_entered',
++        it('plain Enter applies the edit, no on_text_entered',
 +          function()
 +            local doc = { '', 'body', '' }
 +            local ed  = open_doc(doc)
@@ -1456,7 +2038,7 @@ index 0000000..c75186c
 +            assert.is_true(ed.input:is_empty())
 +          end)
 +
-+        it('Ctrl+Enter: _handle_submit, no on_text_entered',
++        it('Ctrl+Enter applies the edit, no on_text_entered',
 +          function()
 +            local doc = { '', 'body', '' }
 +            local ed  = open_doc(doc)
@@ -1471,18 +2053,19 @@ index 0000000..c75186c
 +          end)
 +      end)
 +
-+    -- ---- 4. editor Alt+Enter does nothing ------------------
++    -- ---- 4. an Enter variant the editor does not claim -----
 +
-+    -- Alt+Enter is NOT one of the editor's own submit variants
-+    -- (submit() handles only plain/Ctrl Enter), so it is not
-+    -- blocked — it falls through to the widget's uniform
-+    -- submit_flow. That is acceptable precisely because the editor
-+    -- sets no on_text_entered/after_submit callbacks, so submit_flow
-+    -- delivers to nothing and leaves the loaded input untouched
-+    -- (the same harmless no-op console relies on). This guards that
-+    -- an unhandled Enter variant causes no real editor submit.
-+    describe('editor Alt+Enter (unhandled variant)', function()
-+      it('reaches a callback-less submit_flow — input untouched',
++    -- Alt+Enter is not one of the editor's submit variants, so
++    -- the editor lets it through and the widget's ordinary
++    -- submit runs. Nothing happens, and nothing is supposed to:
++    -- the editor assigns no on_text_entered or after_submit, so
++    -- a submit with no callbacks delivers to nobody and leaves
++    -- the loaded text alone — the same harmless no-op the
++    -- console relies on. The row exists so an unclaimed variant
++    -- can never grow into a real, unintended editor submit.
++    describe('editor Alt+Enter, an unclaimed variant',
++      function()
++      it('submits to nobody and leaves the text alone',
 +        function()
 +          local doc = { 'first line', 'second line', '' }
 +          local ed  = open_doc(doc)
@@ -1496,10 +2079,14 @@ index 0000000..c75186c
 +        end)
 +    end)
 +
-+    -- ---- 5. Shift+Enter on non-empty editor input ----------
++    -- ---- 5. Shift+Enter is a newline everywhere ------------
 +
++    -- Shift+Enter is carved out of submit in every surface: it
++    -- inserts a line-feed and never submits, including inside
++    -- the editor's input, where the surrounding Enter variants
++    -- are claimed by the editor.
 +    describe('editor Shift+Enter on non-empty input', function()
-+      it('is NOT blocked — inserts a line-feed', function()
++      it('inserts a line-feed instead of submitting', function()
 +        local doc = { '', 'body', '' }
 +        local ed  = open_doc(doc)
 +
@@ -1510,10 +2097,17 @@ index 0000000..c75186c
 +      end)
 +    end)
 +
-+    -- ---- 6. console + a light overlay re-assert ------------
++    -- ---- 6. the same two keys in the other two surfaces ----
 +
-+    describe('console lifecycle', function()
-+      it('plain Enter: evaluate_input runs once, text intact',
++    -- The uniformity claim in its plainest form: after the
++    -- editor rows above, the console and the project overlay
++    -- are driven through the same Enter and Escape. Their
++    -- subject-matter contracts (the full submit call-order
++    -- chain, the cancel chain, validators) belong to
++    -- input_widgets_callbacks_spec.lua; what is asserted here
++    -- is only that each surface runs the one lifecycle at all.
++    describe('console: the same Enter and Escape', function()
++      it('Enter evaluates the line exactly once, text intact',
 +        function()
 +          local calls, seen = 0, nil
 +          local orig = F.cc.evaluate_input
@@ -1538,7 +2132,8 @@ index 0000000..c75186c
 +      end)
 +    end)
 +
-+    describe('overlay submit/cancel — light re-assert', function()
++    describe('project overlay: the same Enter and Escape',
++      function()
 +      it('Enter submits, Escape cancels', function()
 +        local input = F.activate_project()
 +        local got
@@ -1557,14 +2152,16 @@ index 0000000..c75186c
 +
 +    -- ---- 7. `modify` per-instance flag ---------------------
 +
-+    -- self.allow_modify alone decides whether Ctrl+D duplicates
-+    -- the line; app_state no longer gates it (the app_state fork
-+    -- was removed — decisions/input.md Decision 6). The ON case
-+    -- still pairs the flag with app_state 'editor' and the OFF
-+    -- case with a non-editor app_state to mirror the editor's
-+    -- real usage, though UIC itself no longer reads app_state.
-+    describe('modify flag gates Ctrl+D duplicate-line', function()
-+      it('ON: Ctrl+D duplicates the current line', function()
++    -- Line-duplication is the one behaviour that genuinely
++    -- differs between surfaces, and it is carried by a
++    -- constructor flag on the instance that wants it —
++    -- `allow_modify`, alongside `disable_selection` — not by
++    -- the screen mode. Each case still sets app_state, to the
++    -- value the real caller would have, precisely to show the
++    -- flag and not the mode is what decides
++    -- (doc/development/decisions/input.md, Decision 6).
++    describe('the modify flag alone gates Ctrl+D', function()
++      it('with the flag: Ctrl+D duplicates the line', function()
 +        local c = bare_uic()
 +        c.allow_modify = true
 +        love.state.app_state = 'editor'
@@ -1575,7 +2172,7 @@ index 0000000..c75186c
 +        assert.same({ 'abc', 'abc' }, c:get_text():items())
 +      end)
 +
-+      it('OFF: Ctrl+D does nothing', function()
++      it('without it: Ctrl+D does nothing', function()
 +        local c = bare_uic()
 +        c.allow_modify = false
 +        love.state.app_state = 'ready'
@@ -1587,19 +2184,17 @@ index 0000000..c75186c
 +      end)
 +    end)
 +
-+    -- ---- 8. non-shift Enter breadth (Ctrl/Alt) submits -----
++    -- ---- 8. how wide "Enter" is -----------------------------
 +
-+    -- The lifecycle guard is `is_enter and not shift`, NOT "bare
-+    -- Enter": Ctrl+Enter and Alt+Enter submit too (only Shift+Enter
-+    -- is carved out, as the newline). Rationale for pinning:
-+    -- discovered as existing behaviour, with no mandate to alter
-+    -- it — treated as a de-facto standard per the implementation
-+    -- (decisions/input.md Decision 6 / Decision 14; mechanism in
-+    -- internals/user_input.md) and frozen so the console/overlay
-+    -- expectation isn't silently narrowed later. (Narrowing to
-+    -- bare-Enter-only would be a separate, owner-gated spec change.)
-+    describe('non-shift Enter (Ctrl/Alt) submits by design',
-+      function()
++    -- Submit triggers on any Enter that is not Shift+Enter, so
++    -- Ctrl+Enter and Alt+Enter submit as well; only the newline
++    -- is carved out (doc/development/decisions/input.md,
++    -- Decision 6 and Decision 14; mechanism in
++    -- doc/development/internals/user_input.md). It is
++    -- longstanding behaviour the input API kept, pinned here so
++    -- the breadth is not narrowed to bare Enter by accident —
++    -- narrowing it is a deliberate spec change, not a tidy-up.
++    describe('every non-Shift Enter submits', function()
 +        it('overlay: Ctrl+Enter submits', function()
 +          local input = F.activate_project()
 +          local got
@@ -1638,16 +2233,16 @@ index 0000000..c75186c
 +        end)
 +      end)
 +  end)
-diff --git a/tests/input/input_nfr_forward_spec.lua b/tests/input/input_nfr_forward_spec.lua
+diff --git a/tests/input/input_nfr_mechanism_spec.lua b/tests/input/input_nfr_mechanism_spec.lua
 new file mode 100644
-index 0000000..b3ab34f
+index 00000000..0d3d15d5
 --- /dev/null
-+++ b/tests/input/input_nfr_forward_spec.lua
-@@ -0,0 +1,204 @@
-+-- Availability: pre-baseline — behaviour asserted here predates
-+-- this feature; no version tag.
++++ b/tests/input/input_nfr_mechanism_spec.lua
+@@ -0,0 +1,210 @@
++-- Availability: predates the Compy input API (introduced in
++-- 1.0.0-rc20260712).
 +
-+-- NFR guards and planned changes. Routing invariant
++-- NFR and mechanism guards. Routing invariant
 +-- (doc/development/decisions/input.md, Decision 1): inter-route
 +-- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 +-- the active screen mode. 
@@ -1660,60 +2255,77 @@ index 0000000..b3ab34f
 +-- keypressed fires for every physical key, textinput only for
 +-- character-producing keys (doc/development/internals/user_input.md, "Data flow").
 +
-+-- This file's assertions are deliberately non-final: current behaviour
-+-- characterized as it stands today (pre-baseline de-facto, untagged),
-+-- guards on mechanism and NFRs rather than behaviour, and planned changes
-+-- pending implementation.
++-- Two kinds of row live here, and neither is a project-facing
++-- behaviour contract: de-facto behaviour characterized as it
++-- stands, and guards on mechanism (identity, allocation, the
++-- held-key table) rather than on behaviour. Project contracts
++-- live in the other input_*_spec.lua files.
 +
 +local F = require('tests.helpers.input_fixture')
 +
-+describe('input contracts: NFR and planned changes #input', function()
++describe('input contracts: NFR and mechanism guards #input',
++  function()
 +  setup(function() F.setup() end)
 +  teardown(function() F.teardown() end)
 +  before_each(function() F.reset() end)
 +
 +  -- ====================================================
-+  -- Current characterized behaviour (no stakeholder mandate).
-+  -- Pre-1.0.0 de-facto behaviour, reverse-engineered and canonicalized
-+  -- here — no version tag: the behaviour is not new to this feature. Each
-+  -- asserts only verifiable present behaviour, so a deliberate change reads
-+  -- as expected while an accidental one still fails the build.
-+  -- (doc/development/tests.md, "Input Contract Suite (feature #77)")
++  -- Characterized behaviour (no stakeholder mandate). De-facto
++  -- behaviour that predates the Compy input API,
++  -- reverse-engineered and canonicalized here. Each row asserts
++  -- only what is verifiably true today, so a deliberate change
++  -- reads as expected while an accidental one still fails the
++  -- build. (doc/development/tests.md, "Input Contract Suite")
 +  -- ====================================================
 +  describe('current behaviour — characterized, no mandate',
 +    function()
 +
-+      -- inspect (doc/development/decisions/input.md, Decision 12): the
-+      -- pre-feature debugger keeps the console REPL bound to the paused
-+      -- project's environment. A shown project widget is unhonoured.
-+      -- This is distinct from the former running-project console fallback,
-+      -- which #77 removes through the project route.
-+      it('inspect: the console owns the surface', function()
-+        F.show_widget()
-+        F.console:add_text('ab')
-+        love.state.app_state = 'inspect'
-+        F.session.type('Z')
-+        assert.same({ 'abZ' }, F.console:get_text())
-+        assert.is_true(F.widget:is_empty())
++      -- (An 'inspect: the console owns the surface' row lived
++      -- here and was removed 2026-08-03: it had stopped
++      -- discriminating. It set app_state = 'inspect' over a
++      -- shown widget and asserted the console got the text —
++      -- but once the console route lost its widget step
++      -- entirely (Decision 1), the console gets the text with
++      -- or without the inspect line. Deleting that line left
++      -- the row green, which is the definition of noise.
++      -- Decision 12 is still covered, by a row that does
++      -- discriminate: input_route_lifecycle_spec.lua,
++      -- 'inspect' — it activates the PROJECT route first, so
++      -- without the suspend() the widget would receive the
++      -- keystroke.)
++
++    end)
++
++  -- Wheel used to be the one pointer channel compy declared no
++  -- gateway entry for. It still worked in production, by
++  -- accident rather than design: setup_callback_handlers writes
++  -- INTO love.handlers rather than replacing it, so LÖVE's own
++  -- stock wheelmoved entry survived and called love.wheelmoved.
++  -- The fixture builds a fresh love.handlers, so the absence
++  -- was visible here and nowhere else: a row characterising
++  -- the fixture, not the product. compy now declares the entry
++  -- itself (owner ruling, 2026-08-03), which is also what makes
++  -- the gateway self-contained rather than dependent on the
++  -- stock table surviving our mutation.
++  describe('wheel reaches the route like any pointer event',
++    function()
++
++      it('a project hook receives it', function()
++        local input = F.activate_project()
++        local got
++        input.hooks.wheelmoved =
++            function(x, y) got = { x, y } end
++        F.session.wheelmoved(0, 1)
++        assert.same({ 0, 1 }, got)
 +      end)
 +
-+      -- wheel (doc/development/internals/user_input.md, "Direct mouse
-+      -- events"): the gateway has no wheel
-+      -- entry, so the framework forwards nothing; only a
-+      -- project's own love.wheelmoved consumes it}. No
-+      -- example project consumes it today. Mechanism-by-
-+      -- omission, not a designed asymmetry; intended
-+      -- forward shape (not asserted): project
-+      -- pass-through, opt-in consume.
-+      -- `F.session.handlers` IS the live `love.handlers` table (see
-+      -- tests/helpers/input_session.lua) — the production gateway
-+      -- LOVE itself dispatches through, not a fixture mirror — so its
-+      -- missing `wheelmoved` entry is the real absence, asserted at
-+      -- the same seam every other routing row uses.
-+      it('wheel has no framework gateway entry', function()
-+        assert.is_nil(F.session.handlers.wheelmoved)
++      -- The control: with no project route the emit is a no-op
++      -- rather than an error, the same as the derived clicks.
++      it('is silently dropped with no project route', function()
++        assert.has_no.errors(function()
++          F.session.wheelmoved(0, 1)
++        end)
 +      end)
-+
 +    end)
 +
 +  -- ====================================================
@@ -1721,7 +2333,7 @@ index 0000000..b3ab34f
 +  -- Labelled so no reader mistakes them for behaviour contracts. These
 +  -- intentionally poke internals (identity, allocation, the held-key
 +  -- table), which is exactly what an NFR guard is for.
-+  -- (doc/development/tests.md, "Input Contract Suite (feature #77)")
++  -- (doc/development/tests.md, "Input Contract Suite")
 +  -- ====================================================
 +  describe('mechanism / NFR guards — not behaviour',
 +    function()
@@ -1788,7 +2400,7 @@ index 0000000..b3ab34f
 +      -- Singleton identity across show/hide (NFR): today
 +      -- only the overlay widget is wired; wiring the
 +      -- console/editor/search widgets to it is a future
-+      -- consideration, out of #77 blast radius (see
++      -- consideration, deliberately out of scope (see
 +      -- doc/development/internals/user_input.md: "Key
 +      -- release", "Dispatch chain", "Search — a third
 +      -- widget instance, live only in editor/search mode",
@@ -1816,10 +2428,11 @@ index 0000000..b3ab34f
 +    end)
 +
 +  -- ====================================================
-+  -- Planned changes — not yet shipped. Bodies document the
-+  -- target public assertion; implementers adapt them to the landed API.
-+  -- ====================================================
-+  describe('planned changes (pending until implemented)',
++  -- Teardown, seen from the LÖVE side. The project-facing half
++  -- of Decision 11 is input_route_lifecycle_spec.lua; this row
++  -- watches the same stop from below, where the wiring actually
++  -- lives. ====================================================
++  describe('teardown leaves the love.* wiring at defaults',
 +    function()
 +
 +      -- Decision 11 requires full teardown: after stop no
@@ -1834,31 +2447,19 @@ index 0000000..b3ab34f
 +          Controller._defaults.keypressed, love.keypressed)
 +      end)
 +
-+      -- on_text_entered is the SUBMIT output (widget
-+      -- vocabulary, doc/development/decisions/input.md, Decision 5): fired
-+      -- once at Enter with the
-+      -- assembled text — NOT
-+      -- the per-character chain callback (that is on_text_input,
-+      -- covered live in the dispatch-chain block below,
-+      -- same decision).
-+      -- Landed live in the 'submit and cancel chain' block
-+      -- below ('Enter runs the full submit call-order chain'
-+      -- etc.) — not here, since exercising it needs the real
-+      -- project route (F.activate_project), not this group's
-+      -- fixtures.
 +    end)
 +end)
 diff --git a/tests/input/input_reconfigure_spec.lua b/tests/input/input_reconfigure_spec.lua
 new file mode 100644
-index 0000000..7d4fcd9
+index 00000000..47bf40a1
 --- /dev/null
 +++ b/tests/input/input_reconfigure_spec.lua
 @@ -0,0 +1,343 @@
-+-- Availability: feature-new — covers the compy.input surface
-+-- introduced by this feature (since 1.0.0-rc20260712).
++-- Availability: introduced with the Compy input API
++-- (1.0.0-rc20260712) — covers the compy.input surface.
 +
-+-- live reconfigure and the continuous-session idiom — split from
-+-- input_contracts_spec.lua. Routing invariant (doc/development/decisions/input.md,
++-- live reconfigure and the continuous-session idiom.
++-- Routing invariant (doc/development/decisions/input.md,
 +-- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches
 +-- exactly ONE route, fixed by the active screen mode. Vocabulary
 +-- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
@@ -1886,7 +2487,7 @@ index 0000000..7d4fcd9
 +  -- documented in doc/development/internals/user_input.md.
 +  -- ====================================================
 +
-+  describe('live reconfigure and clear #m7', function()
++  describe('live reconfigure and clear', function()
 +
 +    describe('configure on an active session', function()
 +      -- doc/development/internals/user_input.md, "configure(config)": prompt
@@ -1924,7 +2525,7 @@ index 0000000..7d4fcd9
 +        })
 +        F.session.press('return')
 +        assert.same({ 'ab' }, seen)
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +      end)
 +
 +      -- doc/development/internals/user_input.md, "configure(config)":
@@ -2122,7 +2723,7 @@ index 0000000..7d4fcd9
 +  -- The project assigns after_submit before starting this loop.
 +  -- ====================================================
 +
-+  describe('continuous-session idiom #m8', function()
++  describe('continuous-session idiom', function()
 +
 +    -- One shape: consume in on_text_entered, re-show
 +    -- (bare, no config) in after_submit. Asserts (a) the
@@ -2142,7 +2743,7 @@ index 0000000..7d4fcd9
 +        F.session.type('a')
 +        F.session.press('return')
 +        assert.same({ { 'a' } }, seen)
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +        assert.is_true(F.widget:is_shown())
 +      end)
 +
@@ -2154,7 +2755,7 @@ index 0000000..7d4fcd9
 +      function()
 +        local input = F.activate_project()
 +        local seen = { }
-+        -- New idiom (Decision 6 revised): the widget stays open;
++        -- The idiom (Decision 6): the widget stays open;
 +        -- the project clears between prompts from after_submit.
 +        input.callbacks.after_submit = function() input.clear() end
 +        input.show({
@@ -2193,205 +2794,21 @@ index 0000000..7d4fcd9
 +      F.session.type('a')
 +      F.session.press('return')
 +      assert.equal('live', F.widget.model:get_label())
-+      assert.is_not_nil(love.state.user_input)
++      assert.is_true(F.is_widget_visible())
 +    end)
 +  end)
-+end)
-diff --git a/tests/input/input_redesign_ac_spec.lua b/tests/input/input_redesign_ac_spec.lua
-new file mode 100644
-index 0000000..a25467b
---- /dev/null
-+++ b/tests/input/input_redesign_ac_spec.lua
-@@ -0,0 +1,178 @@
-+-- Availability: feature-new — these are the redesign acceptance
-+-- criteria: behaviour introduced or altered by this feature
-+-- (since / changed in 1.0.0-rc20260712).
-+
-+-- The input-API redesign's acceptance criteria, pinned here as
-+-- durable, tests-first anchors — these tests ARE the ACs. Rationale
-+-- for each behaviour lives in doc/development/decisions/input.md;
-+-- the mechanism is in doc/development/internals/user_input.md.
-+-- Assertions are on observable seams (the surface, the widget's text,
-+-- project-registered callbacks) — never internal method spies.
-+
-+local F = require('tests.helpers.input_fixture')
-+
-+describe('#input #r4 input-API redesign acceptance', function()
-+  setup(function() F.setup() end)
-+  teardown(function() F.teardown() end)
-+  before_each(function() F.reset() end)
-+
-+  -- AC8 (Decision 10 revised): hooks[event] is one
-+  -- table, seeded ONCE at activation with the project's captured
-+  -- love.* handler; thereafter a nil clears it with no
-+  -- resurrection — the deliberate semantic change from the old
-+  -- per-event `explicit or handler` re-resolution.
-+  describe('AC8 — hook seeding, one-shot', function()
-+    it('a captured handler fires via the seeded hook', function()
-+      local seen = 0
-+      F.activate_project({
-+        keypressed = function() seen = seen + 1 end,
-+      })
-+      F.session.press('x')
-+      assert.equal(1, seen)
-+    end)
-+
-+    it('nil-ing a seeded hook does not resurrect the handler',
-+      function()
-+        local seen = 0
-+        local input = F.activate_project({
-+          keypressed = function() seen = seen + 1 end,
-+        })
-+        F.session.press('x')
-+        assert.equal(1, seen)
-+        input.hooks.keypressed = nil
-+        F.session.press('x')
-+        assert.equal(1, seen)
-+      end)
-+  end)
-+
-+  -- AC9 (Decision 7 revised): the container and the
-+  -- IDENTITY of its three sub-tables are frozen; every leaf inside is
-+  -- freely writable.
-+  describe('AC9 — D7 guard: frozen container, writable leaves',
-+    function()
-+      it('replacing a sub-table identity raises', function()
-+        local input = F.compy_input()
-+        assert.has_error(function() input.shortcuts = { } end)
-+        assert.has_error(function() input.hooks = { } end)
-+        assert.has_error(function() input.callbacks = { } end)
-+        assert.has_error(
-+          function() input.shortcuts.keypressed = { } end)
-+      end)
-+
-+      it('leaf writes succeed', function()
-+        local input = F.compy_input()
-+        assert.has_no.errors(function()
-+          input.hooks.keypressed = function() end
-+          input.callbacks.validator = function() return true end
-+          input.shortcuts.keypressed['ctrl+s'] = function() end
-+        end)
-+      end)
-+    end)
-+
-+  -- AC1 (Decision 6): Escape clears content; the default
-+  -- after_cancel is a no-op, so the widget STAYS shown.
-+  it('AC1 — Escape clears and leaves the widget shown', function()
-+    local input = F.activate_project()
-+    input.show({ text = 'abc' })
-+    assert.is_not_nil(love.state.user_input)
-+    F.session.press('escape')
-+    assert.is_true(F.widget:is_empty())
-+    assert.is_not_nil(love.state.user_input)
-+  end)
-+
-+  -- AC2 (Decision 6): a truthy before_cancel VETOES — content
-+  -- is not cleared, after_cancel does not fire, widget unchanged.
-+  it('AC2 — before_cancel veto keeps content, skips after_cancel',
-+    function()
-+      local input = F.activate_project()
-+      local after = false
-+      input.callbacks.before_cancel = function() return true end
-+      input.callbacks.after_cancel = function() after = true end
-+      input.show({ text = 'abc' })
-+      F.session.press('escape')
-+      assert.is_false(F.widget:is_empty())
-+      assert.is_not_nil(love.state.user_input)
-+      assert.is_false(after)
-+    end)
-+
-+  -- AC3 (Decision 6): submit fires on_text_entered, stays open,
-+  -- and does NOT auto-clear content (that is the project's job).
-+  it('AC3 — submit stays open with no auto-clear', function()
-+    local input = F.activate_project()
-+    local got
-+    input.show({
-+      text = 'hello',
-+      on_text_entered = function(t) got = t end,
-+    })
-+    F.session.press('return')
-+    assert.same({ 'hello' }, got)
-+    assert.is_not_nil(love.state.user_input)
-+    assert.is_false(F.widget:is_empty())
-+  end)
-+
-+  -- AC4 (Decision 6): opt-in auto-close reproduces the old
-+  -- prompt-once behaviour with one line.
-+  it('AC4 — after_submit = hide reproduces auto-close', function()
-+    local input = F.activate_project()
-+    input.callbacks.after_submit = function() input.hide() end
-+    input.show({ text = 'hello' })
-+    F.session.press('return')
-+    assert.is_nil(love.state.user_input)
-+  end)
-+
-+  -- AC5 (Decision 6): Enter is shadowable — a shortcut on
-+  -- 'return' runs first and consumes, so no submit occurs.
-+  it('AC5 — a shortcut on return shadows the submit', function()
-+    local input = F.activate_project()
-+    local submitted = false
-+    input.shortcuts.keypressed['return'] = function() return true end
-+    input.show({
-+      text = 'hello',
-+      on_text_entered = function() submitted = true end,
-+    })
-+    F.session.press('return')
-+    assert.is_false(submitted)
-+    assert.is_not_nil(love.state.user_input)
-+  end)
-+
-+  -- AC6 (Decision 2): the widget consumes iff shown — a hidden
-+  -- widget falls through (not consumed); a shown widget consumes
-+  -- any key, including ones it does nothing with.
-+  it('AC6 — consumption derives from shownness', function()
-+    F.activate_project()
-+    local pic = Controller.project_input
-+    assert.is_falsy(pic:keypressed('x'))
-+    F.show_widget({ text = 'a' })
-+    assert.is_true(pic:keypressed('x'))
-+  end)
-+
-+  -- AC10 (Decision 11): teardown re-seeds DEFAULT_CALLBACKS — a
-+  -- stopped project's after_cancel does not leak into the next,
-+  -- which sees the stay-open default (not a nil-call error).
-+  it('AC10 — teardown re-seeds, no cross-project callback leak',
-+    function()
-+      local a = F.activate_project()
-+      local leaked = false
-+      a.callbacks.after_cancel = function() leaked = true end
-+      F.cc:stop_project_run()
-+      local b = F.activate_project()
-+      b.show({ text = 'x' })
-+      F.session.press('escape')
-+      assert.is_false(leaked)
-+      assert.is_not_nil(love.state.user_input)
-+      assert.is_true(F.widget:is_empty())
-+    end)
-+
-+  -- AC7 (Decision 5): the console's history navigation is
-+  -- driven by its widget's on_limit_reached callback (wired at
-+  -- construction), NOT by keypressed's return value (retired).
-+  -- Up on the single-line console input hits the vertical limit →
-+  -- on_limit_reached('up') → history_back recalls the last entry.
-+  it('AC7 — console Up at the vertical limit navigates history',
-+    function()
-+      local console = F.console
-+      console.model.history:remember({ 'foo' })
-+      F.session.press('up')
-+      assert.same({ 'foo' }, console:get_text())
-+    end)
 +end)
 diff --git a/tests/input/input_route_lifecycle_spec.lua b/tests/input/input_route_lifecycle_spec.lua
 new file mode 100644
-index 0000000..c54b058
+index 00000000..6df9ee77
 --- /dev/null
 +++ b/tests/input/input_route_lifecycle_spec.lua
-@@ -0,0 +1,188 @@
-+-- Availability: feature-new — route connect/disconnect, stop
-+-- teardown and the compy.before_exit hook are introduced by this
-+-- feature (since 1.0.0-rc20260712).
+@@ -0,0 +1,453 @@
++-- Availability: introduced with the Compy input API
++-- (1.0.0-rc20260712) — route connect/disconnect, stop teardown
++-- and the compy.before_exit hook.
 +
-+-- route connection lifecycle — split from input_contracts_spec.lua (TF1).
++-- route connection lifecycle.
 +-- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
 +-- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
 +-- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
@@ -2428,39 +2845,57 @@ index 0000000..c54b058
 +  -- not a simulation of them.
 +  -- ====================================================
 +
-+  describe('route connection lifecycle #m5c', function()
++  describe('route connection lifecycle', function()
 +
 +    describe('connection at the running boundary', function()
-+      -- doc/development/decisions/input.md, Decision 11: the route
-+      -- owns keyboard/text only while 'running' -- a
-+      -- non-blocking run's exit restores console text entry.
-+      it('the console regains text entry when a ' ..
-+          'non-blocking run exits', function()
-+        local input = F.activate_project()
-+        local got = 0
-+        input.hooks.textinput = function() got = got + 1 end
-+        Controller.release_keyboard_route(F.cc)
-+        love.state.app_state = 'project_open'
-+        F.session.type('a')
-+        assert.equal(0, got)
-+        assert.same({ 'a' }, F.console:get_text())
-+      end)
++      -- The route is held by an OPEN project, not only by a
++      -- running one: a non-blocking run reaching 'project_open'
++      -- keeps every channel until the project actually stops.
++      -- That is the pre-feature lifecycle — at the PR base
++      -- nothing was released before suspend or stop. It is what
++      -- lets one release path serve every channel. Ctrl+Esc
++      -- is the documented way back to the console.
++      it('keyboard stays on the route in project_open',
++        function()
++          local input = F.activate_project()
++          local got = 0
++          input.hooks.textinput = function() got = got + 1 end
++          love.state.app_state = 'project_open'
++          F.session.type('a')
++          assert.equal(1, got)
++          assert.same({ '' }, F.console:get_text())
++        end)
 +
-+      -- doc/development/decisions/input.md, Decision 11: pointer is explicitly
-+      -- NOT part of that disconnect -- a pen-and-paper
-+      -- project (sapper-like) stays clickable in
-+      -- 'project_open'.
-+      it('pointer stays hooked when a non-blocking run ' ..
-+          'ends', function()
-+        local got = 0
-+        F.activate_project({
-+          mousepressed = function() got = got + 1 end,
-+        })
-+        Controller.release_keyboard_route(F.cc)
-+        love.state.app_state = 'project_open'
-+        F.session.mousepressed(10, 10, 1, false, 1)
-+        assert.equal(1, got)
-+      end)
++      -- The pen-and-paper case (sapper-like): clickable while
++      -- otherwise idle. It used to need an explicit exemption
++      -- from a keyboard-only release; with one lifetime for all
++      -- channels there is nothing to exempt.
++      it('pointer stays on the route in project_open',
++        function()
++          local got = 0
++          F.activate_project({
++            mousepressed = function() got = got + 1 end,
++          })
++          love.state.app_state = 'project_open'
++          F.session.mousepressed(10, 10, 1, false, 1)
++          assert.equal(1, got)
++        end)
++
++      -- Stop is still the boundary that hands everything back.
++      it('stop returns both channels to the console',
++        function()
++          local input = F.activate_project()
++          local keys, clicks = 0, 0
++          input.hooks.textinput = function() keys = keys + 1 end
++          input.hooks.mousepressed =
++              function() clicks = clicks + 1 end
++          F.cc:stop_project_run()
++          F.session.type('a')
++          F.session.mousepressed(10, 10, 1, false, 1)
++          assert.equal(0, keys)
++          assert.equal(0, clicks)
++          assert.same({ 'a' }, F.console:get_text())
++        end)
 +    end)
 +
 +    describe('stop teardown', function()
@@ -2498,7 +2933,7 @@ index 0000000..c54b058
 +        end
 +        F.show_widget({ text = 'x' })
 +        F.cc:stop_project_run()
-+        assert.is_nil(love.state.user_input)
++        assert.is_false(F.is_widget_visible())
 +        assert.equal(0, cancelled)
 +      end)
 +
@@ -2522,6 +2957,151 @@ index 0000000..c54b058
 +          assert.equal(noop, F.widget.callbacks.on_limit_reached)
 +          assert.is_nil(F.widget.model.evaluator.highlighter)
 +        end)
++
++      -- doc/development/decisions/input.md, Decision 11:
++      -- teardown also re-seeds the DEFAULT lifecycle callbacks
++      -- on the project-facing surface, not merely nils them.
++      -- The next project therefore meets the documented
++      -- stay-open default -- neither the previous project's
++      -- after_cancel nor a nil-call error.
++      it('re-seeds the default callbacks for the next project',
++        function()
++          local first = F.activate_project()
++          local leaked = false
++          first.callbacks.after_cancel =
++            function() leaked = true end
++          F.cc:stop_project_run()
++
++          local second = F.activate_project()
++          second.show({ text = 'x' })
++          F.session.press('escape')
++
++          assert.is_false(leaked)
++          assert.is_true(F.is_widget_visible())
++          assert.is_true(F.widget:is_empty())
++        end)
++
++      -- doc/development/decisions/input.md, Decision 11: the row
++      -- above starts its first project WITHOUT an overlay, so it
++      -- cannot see whether stop leaves the widget re-showable. This
++      -- one does: project one shows, is stopped, and project two
++      -- shows again. The overlay must come up with the SECOND
++      -- project's text — the widget's own shown flag is part of what
++      -- teardown resets, not merely the published love.state handle.
++      it('a second project gets its overlay after the first ' ..
++          'is stopped', function()
++        local first = F.activate_project()
++        first.show({ text = 'one' })
++        F.cc:stop_project_run()
++
++        local second = F.activate_project()
++        second.show({ text = 'two' })
++
++        assert.is_true(F.is_widget_visible())
++        assert.same({ 'two' }, F.widget:get_text())
++      end)
++    end)
++
++    -- doc/development/decisions/input.md, Decision 11 (the
++    -- teardown invariant): a project whose TOP-LEVEL code
++    -- raises never reaches the route installer, so run_project
++    -- tears the route down instead of connecting it. An
++    -- overlay the project already showed is part of that
++    -- teardown — the invariant says a widget whose owning
++    -- route is inactive goes unhonoured, and a shown one is
++    -- not unhonoured.
++    describe('teardown after a top-level raise', function()
++      -- Drives the REAL ConsoleController:run_project. Only the
++      -- loader is stubbed, because a chunk that shows an
++      -- overlay and then raises is the one part of this path a
++      -- unit test cannot supply from disk.
++      -- `extra` runs after the overlay is up and before the
++      -- raise, so a row can install participants the way a real
++      -- project's top-level code would.
++      local function run_raising_project(extra)
++        local P = F.cc.model.projects
++        local prev_current, prev_run = P.current, P.run
++        P.current = { name = 'boom' }
++        P.run = function()
++          return function()
++            local input = F.cc:get_project_env().compy.input
++            input.show({ text = 'x' })
++            if extra then extra(input) end
++            error('kaboom')
++          end, nil, '/tmp/boom'
++        end
++        F.cc:run_project('boom')
++        P.current, P.run = prev_current, prev_run
++      end
++
++      -- Both halves, deliberately: hide_overlay exists because
++      -- clearing the published handle alone left the widget
++      -- believing it was still active
++      -- (consoleController.lua hide_overlay).
++      it('leaves no overlay behind', function()
++        run_raising_project()
++        assert.is_false(F.is_widget_visible())
++        assert.is_false(F.widget:is_shown())
++      end)
++
++      -- The user-visible consequence of the row above, and the
++      -- control that proves it is not vacuous: show() is a
++      -- no-op over an active overlay (Decision 3), so a
++      -- surviving widget would silently swallow the next run's.
++      it('lets the next run show its own overlay', function()
++        run_raising_project()
++        local second = F.activate_project()
++        second.show({ text = 'two' })
++        assert.is_true(F.is_widget_visible())
++        assert.same({ 'two' }, F.widget:get_text())
++      end)
++
++      -- Same invariant as the stop-teardown row above, on the
++      -- other end of a run: top-level code that raises has
++      -- usually installed participants first, and Decision 11
++      -- lets none of them outlive the project that installed
++      -- them. Nothing to inspect on this path either: a
++      -- top-level raise is caught by run_user_code's bare
++      -- pcall, so it never reaches suspend_run and never
++      -- enters 'inspect'.
++      it('clears every project-installed handler and hook',
++        function()
++          local captured
++          run_raising_project(function(input)
++            input.shortcuts.keypressed['a'] = function() end
++            input.hooks.keypressed = function() end
++            input.callbacks.before_submit = function() end
++            input.callbacks.validator = function() return
++              true
++            end
++            captured = input
++          end)
++          assert.same({ }, captured.shortcuts.keypressed)
++          assert.is_nil(captured.hooks.keypressed)
++          assert.is_nil(captured.callbacks.before_submit)
++          assert.is_nil(captured.callbacks.validator)
++        end)
++
++      -- doc/input_api.md, "Stop hook — compy.before_exit":
++      -- the hook fires on stop paths and a raise is not one,
++      -- and it is reset by whichever path ended the run so one
++      -- project's hook never fires for the next. Two claims,
++      -- so two checkpoints: after the raise (it did not fire)
++      -- and after a LATER run's stop, which is the control —
++      -- were the slot still holding the dead project's fn, a
++      -- real stop would certainly fire it.
++      it('neither fires nor survives a top-level raise',
++        function()
++          local fired = 0
++          run_raising_project(function()
++            F.cc:get_project_env().compy.before_exit =
++                function() fired = fired + 1 end
++          end)
++          assert.equal(0, fired)
++          F.activate_project()
++          F.cc:stop_project_run()
++          assert.equal(0, fired)
++        end)
 +    end)
 +
 +    describe('inspect', function()
@@ -2538,6 +3118,108 @@ index 0000000..c54b058
 +        assert.same({ 'a' }, F.console:get_text())
 +        assert.same({ 'x' }, F.widget:get_text())
 +      end)
++    end)
++
++    -- A raise inside a project's own handler must reach
++    -- user_error_handler and suspend the run
++    -- (doc/development/technical_debt/input.md, "A raise from
++    -- project top-level and from a handler surface
++    -- differently" describes this as the handler-side
++    -- behaviour). suspend_run moves 'running' to 'snapshot';
++    -- the screenshot callback that completes the move to
++    -- 'inspect' needs a real graphics context, so 'snapshot'
++    -- is the observable this far.
++    -- Each row asserts the handler RAN before it raised, so a
++    -- silently-skipped handler cannot pass the row by never
++    -- reaching its error.
++    describe('a raise in a project handler suspends', function()
++      it('from a pointer handler', function()
++        local ran = 0
++        F.activate_project({
++          mousepressed = function()
++            ran = ran + 1
++            error('boom')
++          end,
++        })
++        F.session.mousepressed(10, 10, 1, false, 1)
++        assert.equal(1, ran)
++        assert.equal('snapshot', love.state.app_state)
++      end)
++
++      it('from the project update handler', function()
++        local ran = 0
++        F.activate_project({
++          update = function()
++            ran = ran + 1
++            error('boom')
++          end,
++        })
++        F.love_update(0.1)
++        assert.equal(1, ran)
++        assert.equal('snapshot', love.state.app_state)
++      end)
++
++      -- The control: this channel already worked, because the
++      -- keyboard chain's wrapper binds CC in a closure. Kept
++      -- as the row that shows the other two are not asserting
++      -- something impossible.
++      it('from a keyboard hook', function()
++        local ran = 0
++        F.activate_project({
++          keypressed = function()
++            ran = ran + 1
++            error('boom')
++          end,
++        })
++        F.session.press('a')
++        assert.equal(1, ran)
++        assert.equal('snapshot', love.state.app_state)
++      end)
++    end)
++
++    -- The chain itself has no error boundary — dispatch
++    -- (projectInputController.lua) has no pcall/xpcall. The
++    -- boundary belongs where the chain is INVOKED, on the
++    -- controller side, so that it covers every tier rather than
++    -- whichever participants happened to be wrapped on the way
++    -- in. These rows pin all three tiers and the abort.
++    describe('the chain is error-bounded at entry', function()
++      it('a raising shortcut does not escape the chain',
++        function()
++          local input = F.activate_project()
++          input.shortcuts.keypressed['a'] =
++              function() error('boom') end
++          assert.has_no.errors(function()
++            F.session.press('a')
++          end)
++          assert.equal('snapshot', love.state.app_state)
++        end)
++
++      -- The documented API surface: a hook the project assigns
++      -- itself, rather than one seeded from its love.* handler.
++      it('a raising direct hook does not escape the chain',
++        function()
++          local input = F.activate_project()
++          input.hooks.keypressed = function() error('boom') end
++          assert.has_no.errors(function()
++            F.session.press('a')
++          end)
++          assert.equal('snapshot', love.state.app_state)
++        end)
++
++      -- A raise aborts the WALK. Previously the wrapper caught
++      -- per-participant, answered falsey, and the walk carried
++      -- on — so a crashed project's overlay edited the very
++      -- event that crashed it.
++      it('a raise stops the walk before the widget',
++        function()
++          local input = F.activate_project()
++          input.hooks.textinput = function() error('boom') end
++          input.show({ text = '' })
++          F.session.type('z')
++          assert.same({ '' }, F.widget:get_text())
++          assert.equal('snapshot', love.state.app_state)
++        end)
 +    end)
 +
 +    describe('compy.before_exit', function()
@@ -2577,12 +3259,12 @@ index 0000000..c54b058
 +end)
 diff --git a/tests/input/input_routing_spec.lua b/tests/input/input_routing_spec.lua
 new file mode 100644
-index 0000000..a455521
+index 00000000..2d603723
 --- /dev/null
 +++ b/tests/input/input_routing_spec.lua
-@@ -0,0 +1,217 @@
-+-- Availability: pre-baseline — behaviour asserted here predates
-+-- this feature; no version tag.
+@@ -0,0 +1,216 @@
++-- Availability: predates the Compy input API (introduced in
++-- 1.0.0-rc20260712).
 +
 +-- routing. Routing invariant
 +-- (doc/development/decisions/input.md, Decision 1): inter-route dispatch is EXCLUSIVE —
@@ -2604,20 +3286,19 @@ index 0000000..a455521
 +  before_each(function() F.reset() end)
 +
 +  -- ====================================================
-+  -- Preserved routing invariant (pre-1.0.0 baseline behaviour, kept — no
-+  -- version tag: not introduced by this feature).
-+  --
-+  -- Keyboard, text and pointer are EXCLUSIVE on the
-+  -- active route (doc/development/decisions/input.md, Decision 1 and Decision 2;
-+  -- doc/development/internals/user_input.md, "Dispatch chain"): the mode-fixed route
-+  -- receives, the others do not. One subgroup per mode
-+  -- below, so a missing mode x channel cell is visible on
-+  -- sight (the routing invariant, doc/development/decisions/input.md
-+  -- Decision 1, applied per mode x channel). Every
-+  -- test in this group fires its events through the
-+  -- installed love.handlers entries — the same dispatch
-+  -- path a real keystroke takes — via the driver in
-+  -- tests/helpers/input_session.lua.
++  -- Preserved routing invariant — behaviour that predates the
++  -- Compy input API and was kept by it.  Keyboard, text and
++  -- pointer are EXCLUSIVE on the active route
++  -- (doc/development/decisions/input.md, Decision 1 and
++  -- Decision 2; doc/development/internals/user_input.md,
++  -- "Dispatch chain"): the mode-fixed route receives, the
++  -- others do not. One subgroup per mode below, so a missing
++  -- mode x channel cell is visible on sight (the routing
++  -- invariant, doc/development/decisions/input.md Decision 1,
++  -- applied per mode x channel). Every test in this group fires
++  -- its events through the installed love.handlers entries —
++  -- the same dispatch path a real keystroke takes — via the
++  -- driver in tests/helpers/input_session.lua.
 +  -- ====================================================
 +
 +  describe('routing: console mode', function()
@@ -2700,7 +3381,7 @@ index 0000000..a455521
 +    -- ConsoleController does, consoleController.lua
 +    -- "ConsoleController:keyreleased"), so there is nothing
 +    -- observable on the editor side to assert. Mechanism-by-omission,
-+    -- the same shape as the wheel gap in input_nfr_forward_spec.
++    -- the same shape as the wheel gap in input_nfr_mechanism_spec.
 +    -- What IS assertable, and is the routing claim this grid cell
 +    -- exists for, is EXCLUSIVITY — the release does not leak to the
 +    -- console (doc/development/decisions/input.md, Decision 1;
@@ -2730,7 +3411,7 @@ index 0000000..a455521
 +
 +  -- Editor Search is characterized with real key/text entry in
 +  -- tests/editor/editor_spec.lua. It remains editor-owned behaviour,
-+  -- not a project-facing #77 input-API contract.
++  -- not a project-facing input-API contract.
 +
 +  describe('routing: project run', function()
 +
@@ -2800,28 +3481,31 @@ index 0000000..a455521
 +end)
 diff --git a/tests/input/input_shortcuts_click_spec.lua b/tests/input/input_shortcuts_click_spec.lua
 new file mode 100644
-index 0000000..201e49d
+index 00000000..af7cb258
 --- /dev/null
 +++ b/tests/input/input_shortcuts_click_spec.lua
-@@ -0,0 +1,168 @@
-+-- Availability: mixed — global shortcuts and click detection are
-+-- pre-baseline (untagged); the combo normalisation they read is
-+-- feature-new (since 1.0.0-rc20260712), and the legacy text
-+-- solicitation globals are removed in 1.0.0-rc20260712.
+@@ -0,0 +1,182 @@
++-- Availability: global shortcuts and click detection predate
++-- the Compy input API (introduced in 1.0.0-rc20260712); the
++-- combo normalisation they read arrived with it, and the legacy
++-- text solicitation globals were removed by it.
 +
-+-- shortcuts and click detection — split from input_contracts_spec.lua
-+-- (TF1). Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
-+-- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
-+-- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
-+-- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
-+-- the route-managed input surface and terminal of the chain. Tests assert
-+-- observable outcomes at public seams, never method-name spies.
-+-- keypressed fires for every physical key, textinput only for
-+-- character-producing keys (doc/development/internals/user_input.md, "Data flow").
-+-- Non-consuming global shortcuts, framework click detection, project-stop
-+-- console handback, and the legacy poll-idiom removal
-+-- (doc/development/internals/user_input.md, "Dispatch chain"; doc/input_api.md,
-+-- "Migration from the legacy globals").
++-- shortcuts and click detection. Routing invariant
++-- (doc/development/decisions/input.md, Decision 1): inter-route
++-- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
++-- fixed by the active screen mode. Vocabulary
++-- (doc/development/internals/user_input.md, "Dispatch chain"):
++-- ROUTE = the controller an event is dispatched to; WIDGET =
++-- the route-managed input surface and terminal of the chain.
++-- Tests assert observable outcomes at public seams, never
++-- method-name spies. keypressed fires for every physical key,
++-- textinput only for character-producing keys
++-- (doc/development/internals/user_input.md, "Data flow").
++-- Non-consuming global shortcuts, framework click detection,
++-- project-stop console handback, and the legacy poll-idiom
++-- removal (doc/development/internals/user_input.md, "Dispatch
++-- chain"; doc/input_api.md, "Migration from the legacy
++-- globals").
 +
 +local F    = require('tests.helpers.input_fixture')
 +local mock = require('tests.mock')
@@ -2836,7 +3520,7 @@ index 0000000..201e49d
 +  -- these consume the key: it still reaches the active
 +  -- route afterward"): a framework shortcut fires its effect
 +  -- and the key still reaches its route.
-+  describe('global shortcuts do not consume the key (#disputable))',
++  describe('global shortcuts do not consume the key (#disputable)',
 +    function()
 +
 +      it('a shortcut fires but does not consume', function()
@@ -2895,8 +3579,8 @@ index 0000000..201e49d
 +    it('a single click confirms after the window',
 +      function()
 +        local hit = 0
-+        local bump = function() hit = hit + 1 end
-+        F.set_compy_handler('singleclick', bump)
++        local input = F.activate_project()
++        input.hooks.singleclick = function() hit = hit + 1 end
 +        F.set_mouse_pos(10, 540)
 +        F.session.mousereleased(10, 540, 1, false, 1)
 +        F.love_update(0.1)
@@ -2908,8 +3592,8 @@ index 0000000..201e49d
 +    it('pointer drift suppresses the single click',
 +      function()
 +        local hit = 0
-+        local bump = function() hit = hit + 1 end
-+        F.set_compy_handler('singleclick', bump)
++        local input = F.activate_project()
++        input.hooks.singleclick = function() hit = hit + 1 end
 +        F.session.mousereleased(10, 540, 1, false, 1)
 +        F.set_mouse_pos(400, 400)
 +        F.love_update(0.5)
@@ -2919,13 +3603,23 @@ index 0000000..201e49d
 +    it('a double click calls the project handler',
 +      function()
 +        local hit = 0
-+        local bump = function() hit = hit + 1 end
-+        F.set_compy_handler('doubleclick', bump)
++        local input = F.activate_project()
++        input.hooks.doubleclick = function() hit = hit + 1 end
 +        F.set_mouse_pos(10, 540)
 +        F.session.mousereleased(10, 540, 1, false, 1)
 +        F.session.mousereleased(10, 540, 1, false, 1)
 +        F.love_update(0.5)
 +        assert.equal(1, hit)
++      end)
++
++    -- The derived events travel the gateway like native ones,
++    -- so with no project route holding the slot the emit is a
++    -- no-op, not an error. The console does not use them.
++    it('a click with no project route is silently dropped',
++      function()
++        F.set_mouse_pos(10, 540)
++        F.session.mousereleased(10, 540, 1, false, 1)
++        assert.has_no.errors(function() F.love_update(0.5) end)
 +      end)
 +  end)
 +
@@ -2957,9 +3651,10 @@ index 0000000..201e49d
 +  -- astv_input (a sixth global on the same machinery) are
 +  -- gone from the project environment — an ordinary nil
 +  -- field, no shim, no deprecation path (same section).
-+  describe('legacy text solicitation #legacy', function()
++  describe('legacy text solicitation is removed #legacy',
++    function()
 +
-+    it('the legacy globals are gone — ordinary nil calls',
++    it('every legacy global is an ordinary nil field',
 +      function()
 +        F.activate_project()
 +        local env = F.cc:get_project_env()
@@ -2973,37 +3668,37 @@ index 0000000..201e49d
 +  end)
 +end)
 diff --git a/tests/input/input_spec.lua b/tests/input/input_spec.lua
-index 6b6ffe2..f6ef0c1 100644
+index 6b6ffe2f..0f7b1bf1 100644
 --- a/tests/input/input_spec.lua
 +++ b/tests/input/input_spec.lua
 @@ -1,3 +1,6 @@
-+-- Availability: pre-baseline — behaviour asserted here predates
-+-- this feature; no version tag.
++-- Availability: predates the Compy input API (introduced in
++-- 1.0.0-rc20260712).
 +
  require("model.interpreter.eval.evaluator")
  
  describe('Input Evaluator #input', function()
 diff --git a/tests/input/input_text_spec.lua b/tests/input/input_text_spec.lua
-index 3757965..22cc9eb 100644
+index 3757965a..441e1c93 100644
 --- a/tests/input/input_text_spec.lua
 +++ b/tests/input/input_text_spec.lua
 @@ -1,3 +1,6 @@
-+-- Availability: pre-baseline — behaviour asserted here predates
-+-- this feature; no version tag.
++-- Availability: predates the Compy input API (introduced in
++-- 1.0.0-rc20260712).
 +
  require("model.input.inputText")
  require("model.input.cursor")
  
 diff --git a/tests/input/input_widget_lifecycle_spec.lua b/tests/input/input_widget_lifecycle_spec.lua
 new file mode 100644
-index 0000000..bff00e1
+index 00000000..f6383df0
 --- /dev/null
 +++ b/tests/input/input_widget_lifecycle_spec.lua
-@@ -0,0 +1,226 @@
-+-- Availability: feature-new — covers the compy.input surface
-+-- introduced by this feature (since 1.0.0-rc20260712).
+@@ -0,0 +1,425 @@
++-- Availability: introduced with the Compy input API
++-- (1.0.0-rc20260712) — covers the compy.input surface.
 +
-+-- widget lifecycle — split from input_contracts_spec.lua (TF1). Routing
++-- widget lifecycle. Routing
 +-- invariant (doc/development/decisions/input.md, Decision 1): inter-route dispatch is
 +-- EXCLUSIVE — each event reaches exactly ONE route, fixed by the active
 +-- screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch chain"):
@@ -3074,7 +3769,7 @@ index 0000000..bff00e1
 +        assert.same({ 'first' }, F.widget:get_text())
 +      end)
 +
-+    -- doc/development/decisions/input.md, Decision 15 revised:
++    -- doc/development/decisions/input.md, Decision 15:
 +    -- show()/configure() take a closed config table, so an
 +    -- unrecognised key can only be an authoring mistake. It
 +    -- raises rather than warning — the project stops at the
@@ -3085,7 +3780,7 @@ index 0000000..bff00e1
 +        assert.has_error(function()
 +          input.show({ text = 'ok', eval = InputEvalLua })
 +        end)
-+        assert.is_nil(love.state.user_input)
++        assert.is_false(F.is_widget_visible())
 +      end)
 +
 +    it('the raise names the offending key',
@@ -3174,7 +3869,9 @@ index 0000000..bff00e1
 +    -- After hide the widget stops being the surface the
 +    -- route forwards to: typed text lands in the console,
 +    -- not the widget (whose non-mutation is asserted in
-+    -- the hidden-widget row below).
++    -- the hidden-widget row below). That the CONSOLE is
++    -- where it lands is the disputed half — see the group
++    -- below for where that is recorded.
 +    it('hide deactivates the widget', function()
 +      local input = F.compy_input()
 +      input.show()
@@ -3193,28 +3890,225 @@ index 0000000..bff00e1
 +  -- One row per channel: the pair differs only in which channel the
 +  -- event arrives on (textinput vs keypressed), so they are named for
 +  -- that and nothing else.
-+  describe('a hidden widget does not consume', function()
++  --
++  -- These ran on the CONSOLE route while it still had a widget
++  -- step, and were tagged #disputable because the second half
++  -- of each -- the console line receiving what the hidden
++  -- widget declined -- rested on a fallback nobody had ruled
++  -- on. That fallback is gone: the console route has no widget
++  -- step at all now (Decision 1, "widget visibility is never a
++  -- routing condition"), which would leave these rows passing
++  -- for a reason unrelated to their claim -- a SHOWN widget
++  -- would satisfy them there just as well.
++  --
++  -- Re-sited on the project route, where a hidden widget is a
++  -- real decision: the walk skips it and reports not-consumed.
++  -- What discriminates hidden from shown is the WIDGET's own
++  -- text, and the third row is the control that says so. The
++  -- hook assertion is not a discriminator -- hooks run BEFORE
++  -- the widget, so it fires either way; it proves the event
++  -- reached the chain at all rather than being dropped
++  -- upstream, which would make an unchanged widget prove
++  -- nothing. The dispute is settled, not pinned, so the tag is
++  -- gone.
++  describe('a hidden widget is skipped', function()
 +
-+    it('a typed character while hidden does not mutate it', function()
-+      local input = F.compy_input()
++    it('a typed character while hidden does not mutate it',
++      function()
++        local input = F.activate_project()
++        local seen = 0
++        input.hooks.textinput = function() seen = seen + 1 end
++        input.show({ text = 'keep' })
++        input.hide()
++        F.session.type('Z')
++        assert.same({ 'keep' }, F.widget:get_text())
++        assert.equal(1, seen)
++      end)
++
++    -- The keypressed sibling of the row above.
++    it('a pressed key while hidden leaves it alone',
++      function()
++      local input = F.activate_project()
++      local seen = 0
++      input.hooks.keypressed = function() seen = seen + 1 end
 +      input.show({ text = 'keep' })
 +      input.hide()
-+      F.session.type('Z')
-+      assert.same({ 'keep' }, F.widget:get_text())
-+      assert.same({ 'Z' }, F.console:get_text())
-+    end)
-+
-+    -- The keypressed sibling of the row above: a key arriving while
-+    -- the widget is hidden goes to the console and mutates the
-+    -- console line while the hidden widget remains unchanged.
-+    it('a pressed key while hidden does not mutate it', function()
-+      local input = F.compy_input()
-+      input.show({ text = 'keep' })
-+      input.hide()
-+      F.console:add_text('ab')
 +      F.session.press('backspace')
 +      assert.same({ 'keep' }, F.widget:get_text())
-+      assert.same({ 'a' }, F.console:get_text())
++      assert.equal(1, seen)
++    end)
++
++    -- THE CONTROL for both rows above: the identical keystroke,
++    -- with the widget shown, DOES edit it. Without this the
++    -- two could pass against a widget that never receives
++    -- anything under any condition.
++    it('shown, the same key edits the widget', function()
++      local input = F.activate_project()
++      local seen = 0
++      input.hooks.keypressed = function() seen = seen + 1 end
++      input.show({ text = 'keep' })
++      F.session.press('backspace')
++      assert.same({ 'kee' }, F.widget:get_text())
++      assert.equal(1, seen)
++    end)
++  end)
++
++  -- doc/input_api.md, "Live changes": the overlay answers whether it
++  -- is up. A project cannot read this from love.state — its `love` is
++  -- a sandboxed clone, so `love.state.user_input` is always nil inside
++  -- a project (project_sandbox_env.md, T1) — which is why the query is
++  -- part of the surface rather than an idiom.
++  describe('is_shown', function()
++
++    it('reports the overlay state across a show/hide cycle',
++      function()
++        local input = F.compy_input()
++        assert.is_false(input.is_shown())
++        input.show({ text = 'x' })
++        assert.is_true(input.is_shown())
++        input.hide()
++        assert.is_false(input.is_shown())
++      end)
++
++    -- The guard the ruling asks an example to write: act only when
++    -- the overlay is down, and leave the key to it when it is up.
++    it('lets a project skip a redundant show', function()
++      local shows = 0
++      local input = F.activate_project()
++      input.hooks.keypressed = function()
++        if input.is_shown() then return end
++        shows = shows + 1
++        input.show({ text = 'from i' })
++        return true
++      end
++      F.session.press('i')
++      F.session.press('i')
++      assert.equal(1, shows)
++      assert.same({ 'from i' }, F.widget:get_text())
++    end)
++  end)
++
++  -- doc/input_api.md, "Opening the overlay from a key". LÖVE
++  -- delivers a keypressed AND a textinput for one physical key
++  -- and guarantees nothing about their order, so the trigger's
++  -- own echo can land in the field it just opened. The API's
++  -- answer is a project idiom, not a mechanism: a one-shot
++  -- shortcut on the textinput channel eats the echo and
++  -- unregisters itself, re-armed wherever the project closes.
++  -- These rows pin the idiom the guide documents. It is only as
++  -- good as the seams it rests on: shortcuts run before the
++  -- widget on every channel, and a handler may clear its own
++  -- slot mid-flight.
++  describe('the documented echo guard', function()
++
++    local function arm(input)
++      input.shortcuts.textinput['i'] = function()
++        input.shortcuts.textinput['i'] = nil
++        return true
++      end
++    end
++
++    -- The guide's shape: open from a key, guard with the pair.
++    local function open_on(event)
++      local input = F.activate_project()
++      input.hooks[event] = function(k)
++        if k == 'i' and not input.is_shown() then
++          input.show({ prompt = 'cmd' })
++          return true
++        end
++      end
++      arm(input)
++      return input
++    end
++
++    it('the echo does not reach an overlay it opened',
++      function()
++        open_on('keypressed')
++        F.session.press('i')
++        F.session.type('i')
++        assert.is_true(F.is_widget_visible())
++        assert.is_true(F.widget:is_empty())
++      end)
++
++    -- The order LÖVE does not promise: the echo arrives BEFORE
++    -- the open and is eaten while the overlay is still closed,
++    -- which is why the idiom needs no ordering guarantee.
++    it('holds when the echo precedes the open', function()
++      open_on('keyreleased')
++      F.session.type('i')
++      F.session.press('i')
++      F.session.release('i')
++      assert.is_true(F.is_widget_visible())
++      assert.is_true(F.widget:is_empty())
++    end)
++
++    -- One-shot: spent on the echo, so the trigger character is
++    -- ordinary content from then on.
++    it('the trigger is typable once the one-shot is spent',
++      function()
++        open_on('keypressed')
++        F.session.press('i')
++        F.session.type('i')
++        F.session.type('i')
++        F.session.type('x')
++        assert.same({ 'ix' }, F.widget:get_text())
++      end)
++
++    -- The re-arm the guide insists on: without it the second
++    -- open takes the echo, which is the whole cost of the idiom.
++    it('a re-armed guard protects the next open too', function()
++      local input = open_on('keypressed')
++      F.session.press('i')
++      F.session.type('i')
++      input.hide()
++      arm(input)
++      F.session.press('i')
++      F.session.type('i')
++      assert.is_true(F.widget:is_empty())
++    end)
++  end)
++
++  -- A shown overlay must be PAINTED, whatever the project does.
++  -- Two draw paths exist and they are not interchangeable: a project
++  -- that hooks love.draw is wrapped by set_love_update, which paints
++  -- the overlay after the project's own frame; a project that hooks
++  -- nothing keeps the console's draw, which is the path these rows
++  -- pin. Consuming input the user cannot see is the failure mode
++  -- (doc/development/internals/user_input.md, "Widget lifecycle"),
++  -- and the overlay's own view is the only surface that shows it —
++  -- the console's input line below it belongs to the console.
++  -- The view is the fixture's stub, so what is asserted is the
++  -- WIRING (the frame reaches the overlay's view), never pixels.
++  describe('a shown overlay is painted', function()
++
++    it('the console draw path paints a shown overlay', function()
++      local painted = 0
++      F.widget.view.draw = function() painted = painted + 1 end
++      F.compy_input().show({ text = 'x' })
++      love.draw()
++      assert.equal(1, painted)
++    end)
++
++    it('a hidden overlay is not painted', function()
++      local painted = 0
++      F.widget.view.draw = function() painted = painted + 1 end
++      local input = F.compy_input()
++      input.show({ text = 'x' })
++      input.hide()
++      love.draw()
++      assert.equal(0, painted)
++    end)
++
++    -- doc/development/decisions/input.md, Decision 12: under inspect
++    -- the console owns the surface and the project's widget is
++    -- unhonoured — including on screen.
++    it('an overlay is not painted under inspect', function()
++      local painted = 0
++      F.widget.view.draw = function() painted = painted + 1 end
++      F.compy_input().show({ text = 'x' })
++      love.state.app_state = 'inspect'
++      love.draw()
++      assert.equal(0, painted)
 +    end)
 +  end)
 +
@@ -3228,16 +4122,16 @@ index 0000000..bff00e1
 +end)
 diff --git a/tests/input/input_widgets_callbacks_spec.lua b/tests/input/input_widgets_callbacks_spec.lua
 new file mode 100644
-index 0000000..7f5996a
+index 00000000..2fea6629
 --- /dev/null
 +++ b/tests/input/input_widgets_callbacks_spec.lua
-@@ -0,0 +1,566 @@
-+-- Availability: feature-new — the widget output fields are
-+-- introduced by this feature, and the submit/cancel defaults were
-+-- altered by it (since / changed in 1.0.0-rc20260712).
+@@ -0,0 +1,628 @@
++-- Availability: introduced with the Compy input API
++-- (1.0.0-rc20260712) — the widget output fields are new with
++-- it, and it is what set today's submit/cancel defaults.
 +
-+-- dispatch chain: widget outputs and submit/cancel — split from
-+-- input_contracts_spec.lua (TF1). Routing invariant (doc/development/decisions/input.md,
++-- dispatch chain: widget outputs and submit/cancel.
++-- Routing invariant (doc/development/decisions/input.md,
 +-- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches
 +-- exactly ONE route, fixed by the active screen mode. Vocabulary
 +-- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
@@ -3251,7 +4145,7 @@ index 0000000..7f5996a
 +-- output fields, the highlighter/on_limit_reached boundary, and the full
 +-- submit/cancel call-order chains of Decision 6). The mechanics half
 +-- (order/consume/fall-through, combo tables, signatures) is
-+-- input_dispatch_chain_spec.lua.
++-- input_events_spec.lua.
 +
 +local F    = require('tests.helpers.input_fixture')
 +local mock = require('tests.mock')
@@ -3270,7 +4164,8 @@ index 0000000..7f5996a
 +-- which patches the shared widget and restores it).
 +-- ====================================================
 +
-+describe('dispatch chain: widget outputs and submit/cancel #m5c #input', function()
++describe('widget outputs, submit and cancel #input',
++  function()
 +  setup(function() F.setup() end)
 +  teardown(function() F.teardown() end)
 +  before_each(function() F.reset() end)
@@ -3527,7 +4422,7 @@ index 0000000..7f5996a
 +          }, order)
 +      end)
 +
-+    -- Decision 6 revised: submit no longer auto-closes. The
++    -- Decision 6: submit does not auto-close. The
 +    -- default after_submit is a no-op, so BOTH on_text_entered and
 +    -- after_submit see the session still active — the widget stays
 +    -- open unless a callback hides it (AC3).
@@ -3538,21 +4433,24 @@ index 0000000..7f5996a
 +      input.show({
 +        text = 'x',
 +        on_text_entered = function()
-+          seen.entered = love.state.user_input ~= nil
++          seen.entered = F.is_widget_visible()
 +        end,
 +      })
 +      input.callbacks.after_submit = function()
-+        seen.after = love.state.user_input ~= nil
++        seen.after = F.is_widget_visible()
 +      end
 +      F.session.press('return')
 +      assert.is_true(seen.entered)
 +      assert.is_true(seen.after)
 +    end)
 +
-+    -- doc/development/internals/user_input.md, "Submit and
-+    -- cancel — widget-owned callback sequences": a custom
-+    -- validator receives the live line array (not joined or
-+    -- stale text).
++    -- The validator is a step OF the submit chain, which is why it
++    -- is documented with it (doc/development/internals/user_input.md,
++    -- "Submit and cancel — widget-owned callback sequences") — the
++    -- section reference is not a mismatch. What this row pins is not
++    -- the chain order (the first row of this group does that) but the
++    -- argument: a custom validator receives the widget's live line
++    -- array, not joined or stale text.
 +    it('a custom validator receives the live lines',
 +      function()
 +        local seen
@@ -3583,7 +4481,7 @@ index 0000000..7f5996a
 +        F.session.press('return')
 +        assert.is_false(entered)
 +        assert.is_false(after)
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +        assert.is_true(F.widget:has_error())
 +      end)
 +
@@ -3600,7 +4498,7 @@ index 0000000..7f5996a
 +        F.session.press('return')
 +        assert.is_false(entered)
 +        assert.is_true(F.widget:has_error())
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +      end)
 +
 +      it('LuaSyntaxValidator rejects invalid Lua', function()
@@ -3630,7 +4528,7 @@ index 0000000..7f5996a
 +  end)
 +
 +  describe('cancel — the Escape chain', function()
-+    -- Decision 6 revised (AC1): Escape runs the
++    -- Decision 6: Escape runs the
 +    -- cancel call-order chain (before_cancel → clear → after_cancel)
 +    -- and CLEARS content, but the default after_cancel is a no-op —
 +    -- the widget stays shown unless a callback hides it.
@@ -3647,8 +4545,27 @@ index 0000000..7f5996a
 +        input.show({ text = 'x' })
 +        F.session.press('escape')
 +        assert.same({ 'before', 'after' }, order)
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +        assert.is_true(F.widget:is_empty())
++      end)
++
++    -- doc/input_api.md, "Submit lifecycle": a truthy
++    -- before_cancel VETOES the cancel outright -- the draft
++    -- survives and after_cancel never runs. This is how a
++    -- project guards unsaved content against a stray Escape.
++    it('a truthy before_cancel vetoes the whole cancel',
++      function()
++        local input = F.activate_project()
++        local after = false
++        input.callbacks.before_cancel =
++          function() return true end
++        input.callbacks.after_cancel =
++          function() after = true end
++        input.show({ text = 'abc' })
++        F.session.press('escape')
++        assert.is_false(F.widget:is_empty())
++        assert.is_true(F.is_widget_visible())
++        assert.is_false(after)
 +      end)
 +  end)
 +
@@ -3674,7 +4591,7 @@ index 0000000..7f5996a
 +        assert.same({ 'return', 'escape' }, seen)
 +      end)
 +
-+    -- Decision 6 revised (AC5): Enter/Escape are
++    -- Decision 6: Enter/Escape are
 +    -- ordinary chain participants — a project shortcut on 'return'
 +    -- runs first and consumes, so the widget's submit never fires
 +    -- (the withdrawn non-overridable guarantee; the gateway power
@@ -3694,12 +4611,16 @@ index 0000000..7f5996a
 +        F.session.press('return')
 +        assert.is_true(shadowed)
 +        assert.is_false(submitted)
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +      end)
 +
-+    -- doc/development/internals/user_input.md, "Multiline input": Shift+Return
-+    -- is never intercepted by the route and unconditionally inserts a newline.
-+    -- The widget stays open; it does not submit.
++    -- doc/development/internals/user_input.md, "Multiline input":
++    -- what the WIDGET does with Shift+Return once the event reaches
++    -- it — insert a newline unconditionally, do not submit, stay
++    -- open. "Unconditionally" is the widget's own internal claim (no
++    -- state of its own suppresses the newline); it says nothing about
++    -- whether the event can be claimed before it arrives. It can, and
++    -- the row below pins that.
 +    -- Drives BOTH modifier tracks the production code reads:
 +    -- F.session.press keeps Controller.keys_pressed (combo_
 +    -- string) correct, mock.keystroke's 'S' token flips the
@@ -3713,7 +4634,28 @@ index 0000000..7f5996a
 +        F.session.press('lshift')
 +        mock.keystroke('S-return', F.session.press, false)
 +        assert.same({ 'a', '' }, F.widget:get_text())
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
++      end)
++
++    -- The interceptability half of the row above. Shift+Return
++    -- reaches the widget only because nothing upstream claimed it:
++    -- it is an ordinary combo, so a project shortcut on
++    -- 'shift+return' consumes it like any other key and no newline
++    -- is inserted (doc/development/decisions/input.md, Decision 2 —
++    -- the route holds no unshadowable keys; the gateway power keys
++    -- are the only ones a project cannot reach).
++    it('a shortcut on shift+return intercepts the newline',
++      function()
++        local fired = false
++        local input = F.activate_project()
++        input.shortcuts.keypressed['shift+return'] = function()
++          fired = true; return true
++        end
++        F.show_widget({ text = 'a' })
++        F.session.press('lshift')
++        mock.keystroke('S-return', F.session.press, false)
++        assert.is_true(fired)
++        assert.same({ 'a' }, F.widget:get_text())
 +      end)
 +  end)
 +
@@ -3743,7 +4685,7 @@ index 0000000..7f5996a
 +  end)
 +
 +  describe('continuity across submit', function()
-+    -- Decision 6 revised (AC3): the widget stays
++    -- Decision 6: the widget stays
 +    -- open after submit by default. A project wanting
 +    -- clear-and-continue does so from its own after_submit
 +    -- (continuity is now the default, not a re-activation trick).
@@ -3755,8 +4697,22 @@ index 0000000..7f5996a
 +        end
 +        input.show({ text = 'first' })
 +        F.session.press('return')
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +        assert.is_true(F.widget:is_empty())
++      end)
++
++    -- doc/input_api.md, "Submit lifecycle": closing after a
++    -- submit is still available -- it is now one explicit line
++    -- rather than the framework's unasked-for default. This
++    -- reproduces the pre-feature prompt-once behaviour.
++    it('after_submit may hide, reproducing prompt-once',
++      function()
++        local input = F.activate_project()
++        input.callbacks.after_submit =
++          function() input.hide() end
++        input.show({ text = 'hello' })
++        F.session.press('return')
++        assert.is_false(F.is_widget_visible())
 +      end)
 +
 +    -- doc/input_api.md, "Callback assignments": widget
@@ -3777,7 +4733,7 @@ index 0000000..7f5996a
 +        assert.equal(2, hits)
 +      end)
 +
-+    -- Decision 6 revised (AC1,3): absent callbacks
++    -- Decision 6: absent callbacks
 +    -- default to no-ops — submit and cancel both complete without
 +    -- error and the widget STAYS OPEN. Submit preserves content
 +    -- (no auto-clear); cancel clears it.
@@ -3788,26 +4744,26 @@ index 0000000..7f5996a
 +        assert.has_no.errors(function()
 +          F.session.press('return')
 +        end)
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +        assert.is_false(F.widget:is_empty())
 +        assert.has_no.errors(function()
 +          F.session.press('escape')
 +        end)
-+        assert.is_not_nil(love.state.user_input)
++        assert.is_true(F.is_widget_visible())
 +        assert.is_true(F.widget:is_empty())
 +      end)
 +  end)
 +end)
 diff --git a/tests/input/keys_pressed_spec.lua b/tests/input/keys_pressed_spec.lua
 new file mode 100644
-index 0000000..438211a
+index 00000000..c2164560
 --- /dev/null
 +++ b/tests/input/keys_pressed_spec.lua
 @@ -0,0 +1,136 @@
-+-- Availability: feature-new mechanism — the held-key set and combo
-+-- normalisation are absent from the baseline (since
-+-- 1.0.0-rc20260712); the shortcut behaviour they drive is asserted
-+-- in input_shortcuts_click_spec.lua.
++-- Availability: introduced with the Compy input API
++-- (1.0.0-rc20260712) — the held-key set and combo normalisation
++-- have no predecessor; the shortcut behaviour they drive is
++-- asserted in input_shortcuts_click_spec.lua.
 +
 +-- Stub view.view before anything requires it: the real module (src/view/view.lua) calls
 +-- gfx.newFont() at load time (gfx = love.graphics), which needs a graphics context absent in
@@ -3942,13 +4898,14 @@ index 0000000..438211a
 +end)
 diff --git a/tests/input/project_open_liveness_spec.lua b/tests/input/project_open_liveness_spec.lua
 new file mode 100644
-index 0000000..ce310f8
+index 00000000..6372e165
 --- /dev/null
 +++ b/tests/input/project_open_liveness_spec.lua
-@@ -0,0 +1,87 @@
-+-- Availability: changed in 1.0.0-rc20260712 — an input-only /
-+-- pointer-only project staying live in project_open is a change
-+-- made by this feature (technical_debt/input.md, ruling a).
+@@ -0,0 +1,88 @@
++-- Availability: changed by the Compy input API
++-- (1.0.0-rc20260712) — an input-only / pointer-only project now
++-- stays live in project_open (technical_debt/input.md, ruling
++-- a).
 +
 +-- An input-only / pointer-only
 +-- project is "live" without hooking love.update/draw.
@@ -4034,13 +4991,13 @@ index 0000000..ce310f8
 +  end)
 +end)
 diff --git a/tests/input/user_input_model_spec.lua b/tests/input/user_input_model_spec.lua
-index f001b02..c73f5de 100644
+index f001b02f..64af32ef 100644
 --- a/tests/input/user_input_model_spec.lua
 +++ b/tests/input/user_input_model_spec.lua
 @@ -1,3 +1,7 @@
-+-- Availability: mostly pre-baseline — the input model predates this
-+-- feature and carries no version tag; the set_text keep_cursor group
-+-- is the one addition (since 1.0.0-rc20260712).
++-- Availability: the input model predates the Compy input API
++-- (introduced in 1.0.0-rc20260712); the set_text keep_cursor
++-- group is the one addition it brought.
 +
  require("model.input.userInputModel")
  require("model.interpreter.eval.evaluator")
@@ -4095,18 +5052,18 @@ index f001b02..c73f5de 100644
      local model = UserInputModel(mockConf, luaEval)
      local test_t = {
 diff --git a/tests/input/user_input_view_spec.lua b/tests/input/user_input_view_spec.lua
-index 8b3f5bb..a828a56 100644
+index 8b3f5bba..56d4fbcc 100644
 --- a/tests/input/user_input_view_spec.lua
 +++ b/tests/input/user_input_view_spec.lua
 @@ -1,3 +1,6 @@
-+-- Availability: pre-baseline — behaviour asserted here predates
-+-- this feature; no version tag.
++-- Availability: predates the Compy input API (introduced in
++-- 1.0.0-rc20260712).
 +
  require("model.interpreter.eval.evaluator")
  require("model.input.userInputModel")
  require("controller.userInputController")
 diff --git a/tests/mock.lua b/tests/mock.lua
-index 360369f..9783ba7 100644
+index 360369f7..9783ba7c 100644
 --- a/tests/mock.lua
 +++ b/tests/mock.lua
 @@ -53,9 +53,12 @@ local function release_keys()

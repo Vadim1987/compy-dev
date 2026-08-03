@@ -1,8 +1,83 @@
+diff --git a/doc/development/conventions/docs.md b/doc/development/conventions/docs.md
+new file mode 100644
+index 00000000..0af23779
+--- /dev/null
++++ b/doc/development/conventions/docs.md
+@@ -0,0 +1,56 @@
++---
++description: Front matter every doc under doc/ carries — what the fields mean, what they replace, and how provenance is recorded
++status: active
++audience: developer
++authored: llm
++reviewed: none
++---
++
++# Documentation Conventions
++
++Owner ruling, 2026-07-31. Before it, provenance lived in an HTML comment
++(`<!-- authored By LLM; human-approved NOT YET -->`) carried by 58 files, while
++one file carried YAML front matter and the three most load-bearing documents
++carried neither. This replaces both with one block.
++
++## The block
++
++Every document under `doc/` opens with YAML front matter — the
++Jekyll/Hugo/Obsidian convention, which is what the block above is; there is no
++governing standard beyond it, so these fields are ours:
++
++```yaml
++---
++description: one line, what the document is for
++status: active | draft | superseded
++audience: developer | project author | stakeholder
++authored: llm | human | mixed
++reviewed: none | <name>, <YYYY-MM-DD>
++---
++```
++
++- **description** — one line. It is what a reader sees in an index or a search
++  result, so write what the document is *for*, not what it is called.
++- **status** — `superseded` documents keep a pointer to their successor in the
++  body, they are not deleted.
++- **audience** — who it is written for. `project author` means someone writing
++  a project that runs inside Compy; `stakeholder` means someone reviewing what
++  was built without reading the code.
++- **authored** — who wrote the prose. `mixed` is honest and common.
++- **reviewed** — `none` until a human has actually read it end to end, then the
++  reviewer and the date. This is the field the old comment's
++  "human-approved NOT YET" was carrying; it is not a formality, and it does not
++  update itself.
++
++## Rules
++
++- The block is the **only** place provenance is recorded. Do not re-add the
++  HTML comment.
++- `reviewed:` is changed by the reviewer, not by the author and not by an
++  agent — an agent may add the field with `none`, never fill it in.
++- A renamed heading breaks every citation pointing at it. When you rename one,
++  grep `src/`, `tests/` and `doc/` for the old anchor and repoint it in the
++  same commit.
++- Cite canonical docs (`doc/…`), never a feature's ephemeral working tree
++  (`doc/development/wip/…`), and cite a **named section** rather than a
++  paragraph number.
+diff --git a/doc/development/drawing_system.md b/doc/development/drawing_system.md
+index 19bce888..0fa6e22b 100644
+--- a/doc/development/drawing_system.md
++++ b/doc/development/drawing_system.md
+@@ -37,7 +37,7 @@ function ConsoleController:use_canvas(f)
+ end
+ ```
+ 
+-All user event handlers are wrapped in `wrap_handler` (`consoleController.lua:202`), which calls `use_canvas` internally. User `love.update` is also run inside `use_canvas` (see `controller.lua`, `set_love_update`). This means any `gfx.*` calls in event handlers or update automatically go to the virtual canvas, not the screen.
++Project input code is wrapped in `guarded` (`controller.lua`), which calls `use_canvas` internally. It wraps the point where a **route is entered** rather than each handler, so a whole dispatch walk — shortcuts, hooks and the input widget alike — runs with the canvas bound (`../decisions/input.md`, Decision 25). User `love.update` is also run inside `use_canvas` (see `controller.lua`, `set_love_update`). This means any `gfx.*` calls in project input handlers or update automatically go to the virtual canvas, not the screen.
+ 
+ ### User `love.draw` detection — `src/controller/controller.lua`, `set_love_update`
+ 
 diff --git a/doc/development/internals/console.md b/doc/development/internals/console.md
-index dacae48..9c04b23 100644
+index d24d68f0..9c04b23a 100644
 --- a/doc/development/internals/console.md
 +++ b/doc/development/internals/console.md
-@@ -102,24 +104,30 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
+@@ -104,24 +104,30 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
  
  ## The `user_input` Overlay
  
@@ -51,7 +126,7 @@ index dacae48..9c04b23 100644
  
  ---
  
-@@ -133,7 +141,7 @@ Projects receive a `compy` table with:
+@@ -135,7 +141,7 @@ Projects receive a `compy` table with:
  | `compy.terminal` | VT-100 terminal control (`gotoxy`, `clear`, `show_cursor`, `hide_cursor`) |
  | `compy.graphics` | Extended graphics (`shape2d`) — `src/util/graphics/shape2d.lua` |
  | `compy.fonts` | Font path constants (`mono`, `sans`, `serif`, etc.) — `src/util/namespace/fonts.lua` |
@@ -62,13 +137,19 @@ index dacae48..9c04b23 100644
  
 diff --git a/doc/development/internals/event_dispatch_layers.md b/doc/development/internals/event_dispatch_layers.md
 new file mode 100644
-index 0000000..4871634
+index 00000000..e7a55b0e
 --- /dev/null
 +++ b/doc/development/internals/event_dispatch_layers.md
-@@ -0,0 +1,115 @@
-+# Event Dispatch Layers — `love.handlers.*` vs `love.<event>`
+@@ -0,0 +1,124 @@
++---
++description: The two-layer love.handlers.* vs love.<event> wiring, and what becomes of a project-defined love.*
++status: active
++audience: developer
++authored: llm
++reviewed: none
++---
 +
-+<!-- authored By LLM; human-approved NOT YET -->
++# Event Dispatch Layers — `love.handlers.*` vs `love.<event>`
 +
 +Compy mirrors stock LÖVE's own two-layer event dispatch, and the mirroring is deliberate, not
 +incidental. Stock LÖVE's `love.run` pumps OS events into a dispatch table `love.handlers[name]`;
@@ -76,13 +157,13 @@ index 0000000..4871634
 +`love[name]` (`love.handlers.keypressed` calls `love.keypressed`). Compy reproduces that same
 +split on purpose — see the comment at `src/controller/controller.lua:974-982`.
 +
-+This doc exists because the two layers are easy to conflate from the code alone: both are called
-+"handlers" by something, in two different vocabularies that happen to collide. Read this before
-+trying to reverse-engineer the wiring from `controller.lua` cold. For the *why* of the routing
-+this wiring carries (route-centric dispatch, the default/restore route, etc.), see
-+[`../decisions/input.md`](../decisions/input.md), in particular its
-+["Vocabulary — hook, callback, handler"](../decisions/input.md#vocabulary--hook-callback-handler-and-why-there-is-no-slot)
-+section, which this doc's closing section contrasts against.
++This doc exists because the two layers are easy to conflate from the code alone — both are
++LÖVE's own "handlers", one the pump table and one its per-event occupant, and `controller.lua`
++uses the word for both within a few hundred lines. Read this before trying to reverse-engineer
++the wiring cold. For the *why* of the routing this wiring carries (route-centric dispatch, the
++default/restore route, etc.), see [`../decisions/input.md`](../decisions/input.md), in particular
++its ["Vocabulary — hook, callback, handler"](../decisions/input.md#vocabulary--hook-callback-handler)
++section; this doc's closing section covers what becomes of a project's own `love.*`.
 +
 +---
 +
@@ -121,7 +202,8 @@ index 0000000..4871634
 +
 +`Controller.set_default_handlers(CC, CV)` (`controller.lua:809`) is the bulk operation that makes
 +the console the owner of every `love.<event>` at once — "restore to the default route," in the
-+vocabulary of `decisions/input.md` Decision 1. It does three things, in order:
++vocabulary of [`../decisions/input.md`](../decisions/input.md), Decision 1. It does three things,
++in order:
 +
 +1. Calls `Controller.project_input:deactivate()` (`controller.lua:817`) — drops the project route
 +   first, so the reinstall below is never racing an already-live project occupant.
@@ -159,41 +241,35 @@ index 0000000..4871634
 +
 +---
 +
-+## Why this doc exists — the naming collision
++## What becomes of a project-defined `love.*`
 +
-+`setup_callback_handlers`'s "callback" / "handlers" wording is **LÖVE-runtime vocabulary**: the
-+function name literally sets up `love.handlers`, which is what LÖVE itself calls that table — the
-+word choice is inherited from the engine, not invented by Compy. This is a distinct, *lower* layer
-+than the input-API vocabulary ratified in
-+[`decisions/input.md`'s "Vocabulary — hook, callback, handler"](../decisions/input.md#vocabulary--hook-callback-handler-and-why-there-is-no-slot)
-+section, where a **handler** means something more specific: the project's captured `love.*`
-+function, seeded into a hook (Decision 10) — "a callback whose mount point is never empty."
++`setup_callback_handlers`'s "callback" / "handlers" wording is **LÖVE's own**: the function
++literally sets up `love.handlers`, which is what LÖVE calls that table. There is no second,
++Compy-specific sense of *handler* to collide with it — the input API's vocabulary
++([`../decisions/input.md`](../decisions/input.md#vocabulary--hook-callback-handler)) names two
++*other* things, **hook** and **callback**, and leaves "handler" to LÖVE.
 +
-+So the word "handler" legitimately names two different things at two different layers:
++What does need saying is what happens to a project's own `love.*` functions, because a project
++author writing them believes they are installing handlers:
 +
-+- **runtime layer** (this doc): `love.handlers[name]` (the pump table itself) and `love[name]`
-+  (whatever currently occupies it) — LÖVE's own terms, predating and outside Compy's input-API
-+  design.
-+- **input-API layer** (`decisions/input.md`): the project's captured `love.*`, seeded once into
-+  `compy.input.hooks[event]` when the project sets no explicit hook (Decision 10).
++- **keyboard and text** (`keypressed`, `keyreleased`, `textinput`) — captured from the project's
++  sandboxed `love` table and **seeded as `compy.input.hooks[event]`** (Decision 10), once, at
++  activation. They run in hook position inside the route's walk, with hook semantics: a truthy
++  return consumes. They are never installed as `love.<event>`; the route owns that. Writing
++  `compy.input.hooks.textinput = f` directly is the same thing said plainly, and is the
++  encouraged form.
++- **pointer** (`mousepressed`, `mousemoved`, …) — installed as the **actual** `love.<event>`
++  handlers (`hook_pointer`), error-wrapped, return value discarded. Here "handler" keeps its
++  literal meaning and nothing is demoted.
 +
-+The D6 vocabulary pass in `decisions/input.md` deliberately left this runtime-wiring layer
-+untouched — `setup_callback_handlers` was not renamed, and is not going to be. This doc is the map
-+so that collision does not mislead a reader who lands on `controller.lua` and sees "handler" used
-+two different ways within a few hundred lines of each other.
++So the two channels answer the question differently, and that asymmetry is carried in
++[`../technical_debt/input.md`](../technical_debt/input.md) ("Pointer delivery is an unstructured
++broadcast, not a chain"; Standing: "Future input unification") rather than resolved here.
 diff --git a/doc/development/internals/examples/balloons.md b/doc/development/internals/examples/balloons.md
-index 7671ba0..9119a61 100644
+index aae8275e..9119a615 100644
 --- a/doc/development/internals/examples/balloons.md
 +++ b/doc/development/internals/examples/balloons.md
-@@ -1,5 +1,7 @@
- # balloons
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Real-time typing game.** Balloons carrying words fall from the top of the screen; the player types the words to pop them before they reach the bottom.
- 
- ## Architecture
-@@ -16,7 +18,9 @@ The state router pattern (`game_state_router`) dispatches draw/update calls to d
+@@ -18,7 +18,9 @@ The state router pattern (`game_state_router`) dispatches draw/update calls to d
  
  ## Input
  
@@ -205,15 +281,10 @@ index 7671ba0..9119a61 100644
  ## Points of attention
  
 diff --git a/doc/development/internals/examples/guess.md b/doc/development/internals/examples/guess.md
-index 06f36ff..cde6560 100644
+index a7fe3354..e6c2c3c6 100644
 --- a/doc/development/internals/examples/guess.md
 +++ b/doc/development/internals/examples/guess.md
-@@ -1,27 +1,32 @@
- # guess
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Number guessing game** with per-character input validation.
+@@ -6,30 +6,32 @@
  
  ## Architecture
  
@@ -252,21 +323,29 @@ index 06f36ff..cde6560 100644
  
  ## Validator
  
+ `is_natural` validates that the input is a string of digit characters using `string.forall(digits, Char.is_digit)`. Returns an `Error` object with a column position on failure — the framework uses this to highlight the offending character in the input widget.
+ 
+-Note: `is_natural` is defined twice in the file (the second definition overwrites the first). The second version uses `Char.is_digit` from the framework's string utilities; the first used `tonumber`. This is organic evolution — the first definition is dead code.
+ 
+ ## Files
+ 
 diff --git a/doc/development/internals/examples/index.md b/doc/development/internals/examples/index.md
-index e38bb66..e4f4515 100644
+index edad77b8..f3b82ed2 100644
 --- a/doc/development/internals/examples/index.md
 +++ b/doc/development/internals/examples/index.md
-@@ -1,20 +1,24 @@
- # Examples — Index
+@@ -4,19 +4,26 @@
  
-+<!-- authored By LLM; human-approved NOT YET -->
-+
  All examples live under `src/examples/`. Each is a self-contained project with a `main.lua`. They demonstrate different combinations of framework capabilities.
  
 -Detailed docs for each are in this directory.
 +Detailed docs for each are in this directory. For the project-author usage guide to the input API used throughout this table, see [Compy Input API](../../../input_api.md).
 +
 +Input mode column uses `compy.input.*` **(supported since 1.0.0-rc20260712)** throughout; the legacy `user_input()`/`input_text()`/`input_code()`/`validated_input()`/`write_to_input()` poll-a-reftable API is **(deprecated, removed in 1.0.0-rc20260712)**.
++
++**Draw mode** distinguishes three shapes. *Real-time* redraws every tick from `love.draw`/`love.update`.
++*Pen-and-paper* draws too, but on demand — to a canvas that persists between events rather than being
++repainted each frame. *Terminal only* draws nothing at all: no `love.draw`, no canvas, output goes to
++the terminal via `print`.
  
  | Example | One-line description | Draw mode | Input mode |
  |---|---|---|---|
@@ -274,33 +353,65 @@ index e38bb66..e4f4515 100644
 +| [balloons](balloons.md) | Real-time typing game — pop balloons before they fill the screen | real-time `love.draw` | `compy.input.show{}` continuous session |
  | [clock](clock.md) | Animated digital clock with randomised color cycling | real-time `love.draw` + `love.update` | keyboard (`love.keyreleased`) |
 -| [guess](guess.md) | Number guessing game with per-character validation | pen-and-paper (`love.update` polling) | `validated_input()` overlay |
-+| [guess](guess.md) | Number guessing game with per-character validation | pen-and-paper (no `love.update`) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
++| [guess](guess.md) | Number guessing game with per-character validation | terminal only (no drawing) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
  | [life](life.md) | Conway's Game of Life with mouse and keyboard controls | real-time `love.draw` + `love.update` | `love.keypressed`, `love.mousepressed` |
- | [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.singleclick`, `love.mousemoved`, `love.keypressed` |
+-| [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.singleclick`, `love.mousemoved`, `love.keypressed` |
++| [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.input.hooks.singleclick`, `love.mousemoved`, `love.keypressed` |
  | [pong](pong.md) | Full Pong game with AI opponent and fixed-timestep physics | real-time `love.draw` + `love.update` | keyboard + mouse; selectable AI strategy |
 -| [repl](repl.md) | Minimal REPL — echoes whatever text the user types | pen-and-paper (`love.update` polling) | `input_text()` overlay |
-+| [repl](repl.md) | Minimal REPL — echoes whatever text the user types | pen-and-paper (no `love.update`) | `compy.input.show{}` continuous session |
- | [sapper](sapper.md) | Minesweeper (pen-and-paper) with click-driven board | pen-and-paper | `compy.singleclick`, `compy.doubleclick`, `love.mousepressed` |
+-| [sapper](sapper.md) | Minesweeper (pen-and-paper) with click-driven board | pen-and-paper | `compy.singleclick`, `compy.doubleclick`, `love.mousepressed` |
++| [repl](repl.md) | Minimal input loop — prints each submitted line back; does not evaluate it | terminal only (no drawing) | `compy.input.show{}` continuous session |
++| [sapper](sapper.md) | Minesweeper (pen-and-paper) with click-driven board | pen-and-paper | `compy.input.hooks.singleclick`, `compy.input.hooks.doubleclick`, `love.mousepressed` |
  | [sine](sine.md) | One-shot sine wave plot drawn at init, no update loop | pen-and-paper (init only) | none |
 -| [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `input_code()` overlay (live Lua) |
 -| [turtle](turtle.md) | Turtle-graphics interpreter driven by typed commands | real-time `love.draw`, draws trails | `input_text()` + `love.keypressed` |
 -| [valid](valid.md) | Validator showcase — collects user input with custom rules | pen-and-paper (`love.update` polling) | `validated_input()` overlay |
 +| [tixy](tixy.md) | Live-coded pixel grid — edit the tixy formula in-app | real-time `love.draw` + `love.update` | `compy.input.show{ highlighter = LuaHighlighter, validator = LuaSyntaxValidator }` |
 +| [turtle](turtle.md) | Turtle-graphics interpreter driven by typed commands | real-time `love.draw`, draws trails | `compy.input.show{}` one-shot (on `i`) + `love.keypressed` |
-+| [valid](valid.md) | Validator showcase — collects user input with custom rules | pen-and-paper (no `love.update`) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
++| [valid](valid.md) | Validator showcase — collects user input with custom rules | terminal only (no drawing) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
+diff --git a/doc/development/internals/examples/paint.md b/doc/development/internals/examples/paint.md
+index e0253665..301c2acd 100644
+--- a/doc/development/internals/examples/paint.md
++++ b/doc/development/internals/examples/paint.md
+@@ -6,7 +6,7 @@
+ 
+ ## Architecture
+ 
+-Single-file. Overrides `love.draw`, `love.mousemoved`, `love.keypressed`. Uses `compy.singleclick` and `compy.doubleclick` (left click = primary color, right click = background color). Real-time draw mode for the UI; drawing to the canvas is immediate (pen-and-paper within a sub-canvas).
++Single-file. Overrides `love.draw`, `love.mousemoved`, `love.keypressed`. Uses `compy.input.hooks.singleclick` and `compy.input.hooks.doubleclick` (left click = primary color, right click = background color). Real-time draw mode for the UI; drawing to the canvas is immediate (pen-and-paper within a sub-canvas).
+ 
+ ## Canvas strategy
+ 
+@@ -24,8 +24,8 @@ Brush and eraser icons are drawn with `gfx.push()`/`gfx.pop()`, `gfx.translate()
+ 
+ ## Points of attention
+ 
+-- `compy.singleclick` is for discrete color selection / tool selection. `love.mousemoved` handles continuous paint strokes (checks `love.mouse.isDown` to require held button).
+-- Right-click (`btn == 2`) sets background color in the palette and paints with background color on canvas — the `compy.doubleclick` is mapped here rather than a true double-click.
++- `compy.input.hooks.singleclick` is for discrete color selection / tool selection. `love.mousemoved` handles continuous paint strokes (checks `love.mouse.isDown` to require held button).
++- Right-click (`btn == 2`) sets background color in the palette and paints with background color on canvas — the `compy.input.hooks.doubleclick` is mapped here rather than a true double-click.
+ - The `goose` color (a teal `{0.303, 0.431, 0.431}`) used for the weight selector highlight is a named constant for historical/whimsical reasons.
+ 
+ ## Files
 diff --git a/doc/development/internals/examples/repl.md b/doc/development/internals/examples/repl.md
-index 8f71ee0..6fca463 100644
+index d4979610..400a06bc 100644
 --- a/doc/development/internals/examples/repl.md
 +++ b/doc/development/internals/examples/repl.md
-@@ -1,28 +1,34 @@
- # repl
+@@ -2,29 +2,41 @@
  
-+<!-- authored By LLM; human-approved NOT YET -->
+ <!-- authored By LLM; human-approved NOT YET -->
+ 
+-**Minimal REPL.** Accepts text input from the user and echoes it to the terminal.
++**Minimal input loop.** Accepts a line from the user and **prints it straight back** to the terminal.
 +
- **Minimal REPL.** Accepts text input from the user and echoes it to the terminal.
- 
++Despite the name, it does **not** evaluate what you type: `on_text_entered` receives the submitted
++line strings and passes them to `print`, and the overlay widget is provisioned with the plain-text
++evaluator (`InputEvalText`, `main.lua:370`), which has no parser and executes nothing. Type `x = 2 + 3`
++and you get the characters `x = 2 + 3` back, not a binding. Making it a real read-**eval**-print loop
++is an open question for the examples, not a documentation gap.
++
 +For the full project-author usage guide, see [Compy Input API](../../../input_api.md).
-+
+ 
  ## Code
  
  ```lua
@@ -312,8 +423,10 @@ index 8f71ee0..6fca463 100644
 -  else
 -    print(r())
 -  end
-+-- Continuous-session idiom (M8-01): consume the line in
-+-- on_text_entered, then clear the next draft from after_submit.
++-- Continuous-session idiom (doc/input_api.md, "Submit
++-- lifecycle"): consume the line in on_text_entered;
++-- the widget stays open by default now, so after_submit just clears
++-- the field for the next line instead of re-showing.
 +compy.input.callbacks.after_submit = function()
 +  compy.input.clear()
  end
@@ -326,7 +439,7 @@ index 8f71ee0..6fca463 100644
  ## Purpose
  
 -The smallest possible demonstration of the `user_input` / `input_text` polling pattern. No game logic, no drawing, no state. Useful as a reference skeleton for any project that needs live text input in an `update()` loop.
-+The smallest possible demonstration of the `compy.input.show`/`after_submit` continuous-session idiom **(supported since 1.0.0-rc20260712)**. No game logic, no drawing, no state. Useful as a reference skeleton for any project that needs live text input.
++The smallest possible demonstration of the `compy.input.show`/`after_submit` continuous-session idiom **(supported since 1.0.0-rc20260712)**. No game logic, no drawing, no state, no evaluation. Useful as a reference skeleton for any project that needs live text input.
  
  ## Notes
  
@@ -337,19 +450,33 @@ index 8f71ee0..6fca463 100644
  
  ## Files
  
-diff --git a/doc/development/internals/examples/tixy.md b/doc/development/internals/examples/tixy.md
-index 61ef8bb..47e3867 100644
---- a/doc/development/internals/examples/tixy.md
-+++ b/doc/development/internals/examples/tixy.md
-@@ -1,5 +1,7 @@
- # tixy
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Live-coded pixel grid** inspired by tixy.land. A 16×16 grid of circles whose radii and colors are driven by a user-editable formula `tixy(t, i, x, y)`.
+diff --git a/doc/development/internals/examples/sapper.md b/doc/development/internals/examples/sapper.md
+index 68bee8da..02c4b139 100644
+--- a/doc/development/internals/examples/sapper.md
++++ b/doc/development/internals/examples/sapper.md
+@@ -6,7 +6,7 @@
  
  ## Architecture
-@@ -28,27 +30,41 @@ end
+ 
+-Single large file (~700 lines). No `love.draw` or `love.update` override. All game logic runs in `compy.singleclick` / `compy.doubleclick` handlers and `love.mousepressed` (for modifier-key variants). The terminal output is never used.
++Single large file (~700 lines). No `love.draw` or `love.update` override. All game logic runs in `compy.input.hooks.singleclick` / `compy.input.hooks.doubleclick` handlers and `love.mousepressed` (for modifier-key variants). The terminal output is never used.
+ 
+ ## Draw model
+ 
+@@ -34,7 +34,7 @@ end
+ 
+ ## Click handling
+ 
+-`compy.singleclick` → flag cell. `compy.doubleclick` → unlock cell (or restart if game over). `love.mousepressed` → same actions when shift/ctrl held (alternative input for touch devices without double-click).
++`compy.input.hooks.singleclick` → flag cell. `compy.input.hooks.doubleclick` → unlock cell (or restart if game over). `love.mousepressed` → same actions when shift/ctrl held (alternative input for touch devices without double-click).
+ 
+ Mine placement uses probabilistic streaming: iterate all mineable positions once, at each position place a mine with probability `mines_remaining / cells_remaining`. No shuffle needed.
+ 
+diff --git a/doc/development/internals/examples/tixy.md b/doc/development/internals/examples/tixy.md
+index f96257c3..47e38678 100644
+--- a/doc/development/internals/examples/tixy.md
++++ b/doc/development/internals/examples/tixy.md
+@@ -30,27 +30,41 @@ end
  
  ## Input pattern
  
@@ -403,34 +530,36 @@ index 61ef8bb..47e3867 100644
  ## Points of attention
  
 diff --git a/doc/development/internals/examples/turtle.md b/doc/development/internals/examples/turtle.md
-index 60f8696..b9f5eec 100644
+index bdfbd4a2..dbc352a3 100644
 --- a/doc/development/internals/examples/turtle.md
 +++ b/doc/development/internals/examples/turtle.md
-@@ -1,5 +1,7 @@
- # turtle
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Turtle graphics interpreter** driven by typed commands and keyboard input.
- 
- ## Architecture
-@@ -10,21 +12,32 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
+@@ -12,21 +12,46 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
  
  ## Input pattern
  
 -Dual input: typed commands via `input_text()` overlay, and direct keyboard actions.
-+Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc20260712)**, and direct keyboard actions. Unlike the other examples, turtle does **not** use the continuous-session `after_submit` idiom — there is no overlay shown at load; `i` opens it on demand, one shot at a time:
++Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc20260712)**, and direct keyboard actions. Turtle is the **one-shot** shape rather than the continuous session the other examples use: nothing is shown at load, `i` opens the prompt, and `after_submit` closes it again — so each command gets a fresh, empty field.
++
++Turtle also keeps its keyboard on `love.keypressed`/`love.keyreleased` **on purpose** (owner ruling, 2026-07-31). The framework captures a project's own `love.*` keyboard functions and runs them as hooks, and this is the example that demonstrates that path — everything below would behave identically written as `compy.input.hooks.keyreleased` or, for `i` and `ctrl+escape`, as `compy.input.shortcuts.keyreleased` combos. Keeping one example on the captured path is what makes the path visible at all.
  
  ```lua
 -local r = user_input()
++compy.input.callbacks.after_submit = function()
++  compy.input.hide()
++end
++
 +function love.keyreleased(key)
-+  if key == "i" then
++  -- Open only when it is closed, and consume `i` only then: the hook
++  -- runs BEFORE the overlay, so without the guard every `i` typed into
++  -- the prompt would re-trigger show (which warns and no-ops).
++  if key == "i" and not compy.input.is_shown() then
 +    compy.input.show{
 +      prompt = "TURTLE",
 +      on_text_entered = function(lines)
 +        eval(lines[1])
 +      end,
 +    }
++    return true
 +  end
  
 -function love.update()
@@ -447,32 +576,31 @@ index 60f8696..b9f5eec 100644
 -`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher.
 +`eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; the submit callback passes it the first submitted line.
 +
-+`love.keyreleased`: the `i` key opens the input overlay with a fresh `compy.input.show{}` call each time (there is no `after_submit` re-arm, so the overlay does not automatically reopen after a submit — pressing `i` again is required). `shift+r` resets turtle position.
++"Re-arm" was the pre-feature vocabulary: because submit used to close the overlay, a project that wanted another line had to re-open it. That is reversed now — the overlay stays open after submit (Decision 6), so a *one-shot* prompt is the shape that needs the extra line, and turtle's `after_submit` is it. And yes: the missing close is exactly why typed commands used to pile up in the field (report A2, "input is not cleared after Enter") — a one-shot prompt that never closed kept the previous command.
++
++`love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. `shift+r` resets turtle position.
++
++That guard is about *later* `i`s. The **opening** `i` is a separate problem: LÖVE delivers a `keypressed` and a `textinput` for it in no guaranteed order, so the trigger's own echo can land in the field it just opened. `arm_echo_guard` handles it — a one-shot `compy.input.shortcuts.textinput["i"]` that consumes the echo and unregisters itself, re-armed by `after_submit` alongside the `hide()` ([Compy Input API](../../../input_api.md), "Opening the overlay from a key"). Two guards, one line apart, for two different problems.
  
 -`love.keyreleased`: `i` key opens the input overlay interactively (`r = input_text("TURTLE")`), overwriting the existing `r` reference. `shift+r` resets turtle position.
 +See [Compy Input API](../../../input_api.md) for the general usage pattern. The old `r = user_input()` / `input_text(...)` polling API is **(deprecated, removed in 1.0.0-rc20260712)**.
  
  ## Drawing
  
-@@ -32,7 +45,7 @@ end
+@@ -34,7 +59,7 @@ end
  
  ## Points of attention
  
 -- The `r` variable (user_input handle) is reassigned inside `love.keyreleased` (`r = input_text("TURTLE")`). This means after pressing `i`, the old handle is abandoned and a new overlay is created. The polling in `love.update` starts consuming the new handle. This pattern works but relies on the variable being captured by reference in the update closure — which it is, since both closures close over the upvalue `r`.
-+- Each press of `i` calls `compy.input.show{}` fresh — there is no `after_submit` re-arm, so the overlay does not reappear automatically after a command is submitted; the player must press `i` again for the next typed command.
++- Each command is one prompt: `i` opens it, submit closes it (`after_submit` → `hide` → re-arm), and the player presses `i` again for the next command. The guard on `compy.input.is_shown()` is what keeps the `i` inside a typed word from re-triggering `show`; the one-shot textinput shortcut is what keeps the opening `i` out of the field. Closing without the re-arm would let the next open take the echo.
  - `debug_color` is set in `love.update` based on turtle position — this modifies a global used by `drawDebuginfo`. The debug overlay is toggled by `space`.
  
  ## Files
 diff --git a/doc/development/internals/examples/valid.md b/doc/development/internals/examples/valid.md
-index b76ab03..093206b 100644
+index df53dec5..093206b0 100644
 --- a/doc/development/internals/examples/valid.md
 +++ b/doc/development/internals/examples/valid.md
-@@ -1,10 +1,12 @@
- # valid
- 
-+<!-- authored By LLM; human-approved NOT YET -->
-+
- **Validator showcase.** Collects user input with a combination of custom validators and prints the result.
+@@ -6,7 +6,7 @@
  
  ## Architecture
  
@@ -481,7 +609,7 @@ index b76ab03..093206b 100644
  
  ## Validators defined
  
-@@ -22,17 +24,24 @@ Each returns `true` on success or `false, Error("message", column)` on failure.
+@@ -24,17 +24,24 @@ Each returns `true` on success or `false, Error("message", column)` on failure.
  ## Active validators
  
  ```lua
@@ -514,15 +642,18 @@ index b76ab03..093206b 100644
  
 diff --git a/doc/development/internals/project_sandbox_env.md b/doc/development/internals/project_sandbox_env.md
 new file mode 100644
-index 0000000..242b3cf
+index 00000000..c59b1310
 --- /dev/null
 +++ b/doc/development/internals/project_sandbox_env.md
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,94 @@
 +---
-+description: How a running project's Lua environment is sandboxed — the deep-cloned env, the shared-leaf-function consequence, and the three tiers of state (managed callbacks, compy.* wrappers, leaky raw love.* globals)
++description: How a running project's Lua environment is sandboxed — the deep-cloned env, the shared-leaf-function consequence, and the three tiers of state
 +status: active
 +audience: developer
++authored: llm
++reviewed: none
 +---
++
 +# Project sandbox environment
 +
 +A project does **not** run in the raw global environment. The console controller builds a per-project
@@ -540,11 +671,26 @@ index 0000000..242b3cf
 +
 +**The crucial consequence.** A deep clone gives the env a `love` table with a **fresh identity**, but
 +its **leaf values are shared by reference** — `table.clone` returns non-tables as-is (`table.lua:50`).
-+So every *function* on `love` (and `love.mouse`, `love.keyboard`, `love.audio`, …) is the **same C
-+function** the global `love` holds. The *table* is sandboxed; the *functions and their side effects*
-+are not.
++So every *engine function* the clone starts with — `love.graphics.print`, `love.mouse.setVisible`,
++`love.keyboard.setKeyRepeat`, `love.audio.play`, … — is the **same C function** the global `love`
++holds. The *table* is sandboxed; the *functions and their side effects* are not.
++
++This is about the functions a project **calls**, not the callbacks it **defines**. Those are the
++opposite case: when a project assigns `love.draw`, `love.keypressed`, `love.textinput` and friends, it
++writes into its own cloned `love`, and the framework harvests them from there
++(`save_user_handlers(runner_env['love'])`, `consoleController.lua:824`) rather than letting them reach
++the real global — see T1 below, and `event_dispatch_layers.md` for where a harvested callback is
++re-installed. Input callbacks in particular are re-installed as *hooks* on the project route, never as
++global LÖVE handlers ([`user_input.md`](user_input.md), "Dispatch chain"). Nothing in this section
++weakens that: a captured callback is safe precisely *because* it never touches the shared leaf, and
++a shared leaf is dangerous precisely *because* nothing captures a call to it.
 +
 +## Three tiers of project state
++
++**Leak** here means one thing: state a project changed that is **still changed after the project
++stops**, so the console — or the next project — inherits it. A tier "does not leak" when the framework
++either keeps the state inside the project's own env or restores it at stop; it "leaks" when the state
++lives in a global subsystem nobody snapshots.
 +
 +| Tier | What | Isolated / restored? |
 +|---|---|---|
@@ -556,22 +702,41 @@ index 0000000..242b3cf
 +
 +- **T1 isolation is what makes the IDE survive a project** — a project that defines `love.draw` doesn't
 +  permanently hijack the console, because the framework swaps handlers in/out. Any input feature that
-+  reroutes callbacks (e.g. #77's `ProjectInputController`) lives in this T1 machinery.
++  reroutes callbacks (e.g. the `ProjectInputController` added in 1.0.0-rc20260712) lives in this T1
++  machinery.
 +- **T3 is the real leak surface.** A project that sets relative-mouse mode, hides the cursor, disables
-+  key-repeat, or leaves a sound playing leaves that state changed after exit — including after the
-+  `Ctrl+Esc` force-exit path (`controller.lua:672`, `love.event.quit()`), which today runs no project
-+  code. Example: `src/examples/keyboard/input.lua` *wants* to disable key-repeat for clean input but
++  key-repeat, or leaves a sound playing leaves that state changed after exit.
++  Example: `src/examples/keyboard/input.lua` *wants* to disable key-repeat for clean input but
 +  deliberately doesn't, **because it cannot restore it on exit** — and hand-rolls edge-tracking instead.
 +- **The robust fix for T3 is framework snapshot/restore across run boundaries** — extend the T1
 +  save/restore discipline to imperative subsystem state. This is sandbox-safe (doesn't trust the
-+  project to clean up), survives crash/force-exit, and is strictly better than a project teardown hook.
-+  A project `before_exit` hook (which *can* be framework-invoked at the quit sites, including
-+  `Ctrl+Esc`) is then needed only for **project-internal** teardown (save/memoize), not for restoring
-+  global state.
++  project to clean up), survives a crash, and is strictly better than relying on a project teardown
++  hook — which is why `compy.before_exit` (below) is scoped to project-internal teardown and not
++  offered as the answer to T3.
++
++### `compy.before_exit` — the project teardown hook
++
++It exists and is wired; it is **not** a proposal. `compy.before_exit` is a slot on the injected
++`compy` namespace, defaulting to a no-op (`consoleController.lua:697`), assignable by the project
++through the namespace metatable (`:715–721`) — assign a function to it and the framework calls it
++**once, first thing, when the project stops** (`ConsoleController:stop_project_run`, `:1193`), before
++any handler teardown. The slot is then reset to the default (`:1200`), so the next project starts
++clean and cannot inherit the previous one's teardown.
++
++Every stop path that runs a project reaches `stop_project_run`, so the hook fires on all of them:
++`Ctrl+Q` and `Ctrl+S` (`controller.lua:899`, `:903`), `Ctrl+T` into the editor (`:877`), and the
++`Ctrl+Esc` / `love.quit` path (`controller.lua:751–779`, which stops the project instead of quitting
++whenever one is running or the console is still interactive). The only exit that runs no project code
++is quitting with **no** project running, where there is nothing to tear down.
++
++What it is for: **project-internal** teardown — save a score, flush a memo, stop a timer. It is not a
++restore mechanism for T3 global state, which the project cannot restore reliably in any case
++(a crash never reaches the hook). Covered by `tests/input/input_route_lifecycle_spec.lua`
++("`compy.before_exit`").
 +
 +## Pointers
 +
 +- Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).
 +- Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
-+- This model was surfaced by input-subsystem analysis during feature #77 (the project-exit-cleanup
-+  pain point, P4).
++- The stop sequence `before_exit` opens: [`../decisions/input.md`](../decisions/input.md),
++  Decision 11 (the route connects only while the project is actively running).

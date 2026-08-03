@@ -90,6 +90,7 @@ git diff $BASE $TIP -- \
 # 3b · widget sink + compy.input.* singleton + boot provisioning
 git diff $BASE $TIP -- \
   src/controller/userInputController.lua src/controller/consoleController.lua src/main.lua \
+  src/types.lua \
   > "$OUT/3b-widget-surface.patch"
 
 # 3c · model / view / util — MINUS the highlight() hunk, which rides 3g (§1.1)
@@ -105,9 +106,11 @@ git diff $BASE $TIP -- \
   >> "$OUT/3c-model-view-util.patch"
 
 # 3e · tracked example migrations
-git diff $BASE $TIP -- \
-  src/examples/guess/main.lua src/examples/repl/main.lua src/examples/tixy/main.lua \
-  src/examples/turtle/main.lua src/examples/valid/main.lua \
+# The whole directory, NOT a file list: paint and sapper joined the set when
+# compy.singleclick was retired, and a file list cannot see a file added
+# after it was written. Nested repos (balloons/maze/keyboard) are invisible
+# to this diff anyway — they are separate repos, see Set 4.
+git diff $BASE $TIP -- src/examples/ \
   > "$OUT/3e-examples-tracked.patch"
 
 # 3f · input permanent docs
@@ -217,49 +220,63 @@ reproduces `userInputModel.lua` at `$TIP` byte for byte).
 
 ---
 
-## 2. Assembly order — tests precede code
+## 2. Assembly order — docs, tests, code, examples
 
-Build the reassembled branch by applying the slices as one commit each, in **this** order. The test
-slice (`3d`) leads the feature commits: it lands **before** the implementation, matching the project's
-tests-first discipline (`agents/development.md`: start from a breaking test, then implement). The test
-commit is intentionally **red** against `BASE` and goes green once `3a`–`3c` land — that red→green
-transition is the point, not an accident to hide.
+Owner ruling (2026-08-03): order the commits **docs → tests → code → examples**, and keep the
+messages as **sections in a markdown document** rather than a table — easier to review in an editor.
 
-| # | Commit | Slice | Suggested message |
-|---|--------|-------|-------------------|
-| 1 | docs rubber-stamping | **1a** | `docs: mark LLM-authored dev docs as pending human approval` |
-| 2 | generic docs | **1b** | `docs: refresh development doc-corpus` |
-| 3 | agentic tooling | Set 2 | `chore(agents): add agent charters + process docs` |
-| 4 | **input contract suite** | **3d** | `test(input): add the #input contract suite + fixtures` |
-| 5 | highlight regression | **3g** | `fix(input): keep the highlight table indexable` |
-| 6 | routing/dispatch core | 3a | `feat(input): gateway + four-tier dispatch + route restoration` |
-| 7 | widget + singleton surface | 3b | `feat(input): widget sink + compy.input.* surface + boot provisioning` |
-| 8 | model/view/util | 3c | `feat(input): held-keys, combos, text model/view` |
-| 9 | tracked example migrations | 3e | `refactor(examples): migrate tracked examples to the input API` |
-| 10 | input docs | 3f | `docs(input): input API guide, internals, decisions, debt ledger` |
+**The messages live in [`pr-commit-messages.md`](pr-commit-messages.md)**, one section per commit in
+apply order. This section is the mechanism; that file is the content.
 
-Notes on ordering:
-- **Sets 1–3 are disjoint by file** (§4) with **one deliberate exception** — `3g` and `3c` split
-  `userInputModel.lua` between them (§1.1) — so `git apply` never conflicts regardless of order,
-  except that `3g` must precede `3c`. Otherwise the sequence is for *review narrative* (tests-first,
-  then core→surface→periphery→docs), not for mechanical correctness.
-- `1a` before `1b` is likewise mandatory, and for the same reason: `1b` is *defined* as the remainder
-  after `1a` (§1.1).
-- `3g` carries both a test and a source fix, so it is self-contained and green on its own — it is the
-  one feature commit that does not depend on the red→green arc of `3d`.
-- Sets 1 and 2 are separable PRs; they can precede the feature or ship as their own mini-PRs. Steps
-  1–3 are listed here only to reproduce the full branch in one pass.
-- Apply each with `git apply "$OUT/<slice>.patch"` then `git add -A && git commit`. Because the tree
-  starts at `BASE`, every slice applies cleanly.
+| # | Slice | Group |
+|---|---|---|
+| 1 | `1a-generic-docs-rubberstamping` | docs |
+| 2 | `1b-generic-docs` | docs |
+| 3 | `2-agentic` | docs |
+| 4 | `3f-input-docs` | docs |
+| 5 | `3d-tests` | tests |
+| 6 | `3g-highlight-regression` | code (self-contained; see below) |
+| 7 | `3a-routing-core` | code |
+| 8 | `3b-widget-surface` | code |
+| 9 | `3c-model-view-util` | code |
+| 10 | `3e-examples-tracked` | examples |
+
+Constraints the order must respect — everything else is review narrative:
+
+- **`1a` before `1b`.** `1b` is *defined* as the remainder after `1a` is applied (§1.1), so it
+  cannot be generated, let alone applied, first.
+- **`3g` before `3c`.** They split `userInputModel.lua` between them (§1.1); nothing else in the
+  sequence shares a file.
+- **`3d` is RED where it lands**, and green once 7–9 are in. That is tests-first working as
+  intended (`agents/development.md`), not a broken commit to apply out of order.
+- **`3g` carries a fix and its test together**, so it is green on its own and is the one commit that
+  does not depend on `3d`'s red→green arc. Splitting it would leave a test proving nothing and a fix
+  proving nothing.
+
+Apply each with `git apply "$OUT/<slice>.patch"`, then `git add -A && git commit -F -` with the
+message from `pr-commit-messages.md`. Because the tree starts at `BASE`, every slice applies cleanly.
 
 ```sh
 git switch -c input-delivery-reassembled $BASE
 # 1a first, then regenerate 1b against it — see §1.1
-for slice in 1a-generic-docs-rubberstamping 1b-generic-docs 2-agentic 3d-tests \
-             3g-highlight-regression 3a-routing-core 3b-widget-surface \
-             3c-model-view-util 3e-examples-tracked 3f-input-docs; do
-  git apply "$OUT/$slice.patch" && git add -A && git commit -q -m "apply $slice"   # replace msg per table
+for slice in 1a-generic-docs-rubberstamping 1b-generic-docs 2-agentic 3f-input-docs \
+             3d-tests 3g-highlight-regression 3a-routing-core 3b-widget-surface \
+             3c-model-view-util 3e-examples-tracked; do
+  git apply "$OUT/$slice.patch" && git add -A && git commit -q -m "apply $slice"   # replace msg
 done
+```
+
+**Verified 2026-08-03** (regeneration at Phase G): all ten slices apply in this order against
+`BASE`, and the resulting tree is **byte-identical to the branch tip** outside
+`doc/development/wip/`. The check does not need a branch — apply them to a temporary index and
+compare trees:
+
+```sh
+export GIT_INDEX_FILE=$(mktemp)
+git read-tree $BASE
+for slice in <the ten above>; do git apply --cached "$OUT/$slice.patch" || echo "FAIL $slice"; done
+git diff --stat $(git write-tree) $TIP -- . ':(exclude)doc/development/wip/'   # must be empty
+unset GIT_INDEX_FILE
 ```
 
 ---

@@ -1,5 +1,5 @@
 diff --git a/src/examples/guess/main.lua b/src/examples/guess/main.lua
-index b32e621..8ab3f85 100755
+index b32e621d..eac1f153 100755
 --- a/src/examples/guess/main.lua
 +++ b/src/examples/guess/main.lua
 @@ -1,5 +1,4 @@
@@ -8,7 +8,28 @@ index b32e621..8ab3f85 100755
  N = 100
  -- number_to_guess
  ntg = 0
-@@ -47,13 +46,24 @@ function check(n)
+@@ -9,20 +8,6 @@ function init()
+   ntg = math.random(N)
+ end
+ 
+-function is_natural(s)
+-  local n = tonumber(s)
+-  if not n then
+-    return false, "NaN"
+-  end
+-  if n <= 0 then
+-    return false, "Not a positive number!"
+-  end
+-  if math.floor(n) ~= n then
+-    return false, "Not an integer!"
+-  end
+-  return true
+-end
+-
+ function is_natural(s)
+   local digits = string.usub(s, 1)
+   local ok, err_c = string.forall(digits, Char.is_digit)
+@@ -47,13 +32,24 @@ function check(n)
    end
  end
  
@@ -40,8 +61,50 @@ index b32e621..8ab3f85 100755
 +  validator = LineValidators({ is_natural }),
 +  on_text_entered = function(lines) check(tonumber(lines[1])) end,
 +}
+diff --git a/src/examples/paint/README.md b/src/examples/paint/README.md
+index cd3537c7..72ae1eea 100644
+--- a/src/examples/paint/README.md
++++ b/src/examples/paint/README.md
+@@ -189,14 +189,16 @@ Note the _x_ coordinate, which is offset by `box_w` (the width of the side panel
+ There's one more challenge to tackle: with touch, we don't have second button, no right-click. If we want a secondary use case (like setting the background color instead of the foreground), we have to come up with some other way.
+ Double clicks/taps are a workable solution, but there is a problem: detecting them is not trivial. Any second click is necessarily preceded by a first one, so you need to kind of hold off on doing anything and wait to see if a second tap follows.
+ 
+-To solve for this, we created custom handlers for single and double clicks:
++To solve for this, the framework derives single and double click
++events from the raw presses and delivers them like any other
++input event, so you bind them the same way:
+ 
+ ```lua
+-function compy.singleclick(x, y)
++compy.input.hooks.singleclick = function(x, y)
+   point(x, y, 1)
+ end
+ 
+-function compy.doubleclick(x, y)
++compy.input.hooks.doubleclick = function(x, y)
+   point(x, y, 2)
+ end
+ ```
+diff --git a/src/examples/paint/main.lua b/src/examples/paint/main.lua
+index 96e5d3be..442857de 100644
+--- a/src/examples/paint/main.lua
++++ b/src/examples/paint/main.lua
+@@ -353,11 +353,11 @@ function point(x, y, btn)
+   end
+ end
+ 
+-function compy.singleclick(x, y)
++compy.input.hooks.singleclick = function(x, y)
+   point(x, y, 1)
+ end
+ 
+-function compy.doubleclick(x, y)
++compy.input.hooks.doubleclick = function(x, y)
+   point(x, y, 2)
+ end
+ 
 diff --git a/src/examples/repl/main.lua b/src/examples/repl/main.lua
-index cfc6eba..e808530 100644
+index cfc6ebaf..e8085307 100644
 --- a/src/examples/repl/main.lua
 +++ b/src/examples/repl/main.lua
 @@ -1,9 +1,11 @@
@@ -64,8 +127,30 @@ index cfc6eba..e808530 100644
 +compy.input.show{
 +  on_text_entered = function(lines) print(string.unlines(lines)) end,
 +}
+diff --git a/src/examples/sapper/main.lua b/src/examples/sapper/main.lua
+index 041ea9f2..51a4543a 100644
+--- a/src/examples/sapper/main.lua
++++ b/src/examples/sapper/main.lua
+@@ -668,7 +668,7 @@ function single(x, y)
+   end
+ end
+ 
+-function compy.singleclick(x, y)
++compy.input.hooks.singleclick = function(x, y)
+   if not Key.shift() and not Key.alt() and not Key.ctrl()
+   then
+     single(x, y)
+@@ -686,7 +686,7 @@ function doppel(x, y)
+   end
+ end
+ 
+-function compy.doubleclick(x, y)
++compy.input.hooks.doubleclick = function(x, y)
+   if not Key.shift() and not Key.alt() and not Key.ctrl()
+   then
+     doppel(x, y)
 diff --git a/src/examples/tixy/main.lua b/src/examples/tixy/main.lua
-index 30fedac..cde662f 100644
+index 30fedac9..cde662fa 100644
 --- a/src/examples/tixy/main.lua
 +++ b/src/examples/tixy/main.lua
 @@ -36,7 +36,7 @@ function load_example(ex)
@@ -128,7 +213,7 @@ index 30fedac..cde662f 100644
 +  on_text_entered = submit_body,
 +}
 diff --git a/src/examples/turtle/main.lua b/src/examples/turtle/main.lua
-index 30fabf7..c810d48 100644
+index 30fabf7b..7ae2b018 100644
 --- a/src/examples/turtle/main.lua
 +++ b/src/examples/turtle/main.lua
 @@ -9,8 +9,6 @@ incr = 10
@@ -140,21 +225,59 @@ index 30fabf7..c810d48 100644
  function eval(input)
    local f = actions[input]
    if f then
-@@ -48,7 +46,12 @@ end
+@@ -46,9 +44,49 @@ function love.keypressed(key)
+   end
+ end
  
++-- The `i` that opens the prompt must not also be typed into
++-- it (doc/input_api.md, "Opening the overlay from a key"):
++-- LÖVE delivers a keypressed and a textinput for one physical
++-- key in no guaranteed order. This one-shot eats that echo
++-- whichever side of the open it lands on, then unregisters so
++-- `i` is ordinary content afterwards.
++local function arm_echo_guard()
++  compy.input.shortcuts.textinput["i"] = function()
++    compy.input.shortcuts.textinput["i"] = nil
++    return true
++  end
++end
++arm_echo_guard()
++
++-- One-shot prompt (doc/input_api.md, "Submit lifecycle"): the overlay
++-- stays open after submit by default, so a project that wants a
++-- prompt-per-command closes it itself. The field comes up empty
++-- next time because show() with no `text` clears it — hide()
++-- only takes the overlay down — so no separate clear is
++-- needed. Closing is also where the echo guard is re-armed: the
++-- next open needs a fresh one-shot.
++compy.input.callbacks.after_submit = function()
++  compy.input.hide()
++  arm_echo_guard()
++end
++
++-- This project keeps its keyboard on love.keypressed/keyreleased on
++-- purpose: the framework captures a project's own love.* handlers and
++-- runs them as hooks (doc/input_api.md, "Event hooks and shortcuts"),
++-- and turtle is the example that demonstrates that path. Everything
++-- here would work the same written as compy.input.hooks.*.
  function love.keyreleased(key)
-   if key == "i" then
+-  if key == "i" then
 -    r = input_text("TURTLE")
++  -- Open only when it is closed, and consume `i` only then: the hook
++  -- runs BEFORE the overlay, so without the guard every `i` typed into
++  -- the prompt would re-trigger show (which warns and no-ops).
++  if key == "i" and not compy.input.is_shown() then
 +    compy.input.show{
 +      prompt = "TURTLE",
 +      on_text_entered = function(lines)
 +        eval(lines[1])
 +      end,
 +    }
++    return true
    end
  
    if love.keyboard.isDown("lctrl", "rctrl") then
-@@ -62,7 +65,4 @@ function love.update()
+@@ -62,7 +100,4 @@ function love.update()
    if ty > midy then
      debug_color = Color.red
    end
@@ -163,7 +286,7 @@ index 30fabf7..c810d48 100644
 -  end
  end
 diff --git a/src/examples/valid/main.lua b/src/examples/valid/main.lua
-index ade1aa3..8b96eb0 100644
+index ade1aa36..8b96eb02 100644
 --- a/src/examples/valid/main.lua
 +++ b/src/examples/valid/main.lua
 @@ -1,5 +1,3 @@

@@ -1,5 +1,5 @@
 diff --git a/doc/development/conventions/architecture_principles.md b/doc/development/conventions/architecture_principles.md
-index 29359f5..dc4c570 100644
+index 29359f57..dc4c5702 100644
 --- a/doc/development/conventions/architecture_principles.md
 +++ b/doc/development/conventions/architecture_principles.md
 @@ -1,5 +1,7 @@
@@ -11,7 +11,7 @@ index 29359f5..dc4c570 100644
  
  ---
 diff --git a/doc/development/conventions/code.md b/doc/development/conventions/code.md
-index e79ff56..ec860bf 100644
+index e79ff568..094834f5 100644
 --- a/doc/development/conventions/code.md
 +++ b/doc/development/conventions/code.md
 @@ -1,5 +1,7 @@
@@ -23,7 +23,7 @@ index e79ff56..ec860bf 100644
  > Further discussion: https://github.com/compy-toys/compy/issues/54
  
 diff --git a/doc/development/conventions/git.md b/doc/development/conventions/git.md
-index 212baa4..62773a6 100644
+index 212baa40..62773a64 100644
 --- a/doc/development/conventions/git.md
 +++ b/doc/development/conventions/git.md
 @@ -1,5 +1,7 @@
@@ -35,7 +35,7 @@ index 212baa4..62773a6 100644
  
  ## Types
 diff --git a/doc/development/docs.md b/doc/development/docs.md
-index 18dd97f..0653178 100644
+index 18dd97f6..06531789 100644
 --- a/doc/development/docs.md
 +++ b/doc/development/docs.md
 @@ -1,5 +1,7 @@
@@ -47,7 +47,7 @@ index 18dd97f..0653178 100644
  
  ---
 diff --git a/doc/development/drawing_system.md b/doc/development/drawing_system.md
-index 4f04465..19bce88 100644
+index 4f04465d..19bce888 100644
 --- a/doc/development/drawing_system.md
 +++ b/doc/development/drawing_system.md
 @@ -1,5 +1,7 @@
@@ -59,7 +59,7 @@ index 4f04465..19bce88 100644
  
  User projects can draw in one of two ways, selected by whether `love.draw` is overridden.
 diff --git a/doc/development/internals/console.md b/doc/development/internals/console.md
-index dacae48..9c04b23 100644
+index dacae487..d24d68f0 100644
 --- a/doc/development/internals/console.md
 +++ b/doc/development/internals/console.md
 @@ -1,5 +1,7 @@
@@ -71,7 +71,7 @@ index dacae48..9c04b23 100644
  
  ---
 diff --git a/doc/development/internals/editor.md b/doc/development/internals/editor.md
-index b269684..2b2b178 100644
+index b2696849..2b2b1781 100644
 --- a/doc/development/internals/editor.md
 +++ b/doc/development/internals/editor.md
 @@ -1,5 +1,7 @@
@@ -82,8 +82,20 @@ index b269684..2b2b178 100644
  ## The Core Concept: Block-Centric Editing
  
  The editor does not operate on lines. For Lua files, it operates on **blocks** — top-level syntactic units produced by the metalua chunker. A block is either a `Chunk` (one or more source lines forming a complete top-level statement/expression) or an `Empty` (a blank separator line). The selection highlight, navigation, submit, delete, insert, and move operations all act on blocks, not on individual lines.
+diff --git a/doc/development/internals/examples/balloons.md b/doc/development/internals/examples/balloons.md
+index 7671ba00..aae8275e 100644
+--- a/doc/development/internals/examples/balloons.md
++++ b/doc/development/internals/examples/balloons.md
+@@ -1,5 +1,7 @@
+ # balloons
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Real-time typing game.** Balloons carrying words fall from the top of the screen; the player types the words to pop them before they reach the bottom.
+ 
+ ## Architecture
 diff --git a/doc/development/internals/examples/clock.md b/doc/development/internals/examples/clock.md
-index 64c99f1..b5e3771 100644
+index 64c99f13..b5e3771c 100644
 --- a/doc/development/internals/examples/clock.md
 +++ b/doc/development/internals/examples/clock.md
 @@ -1,5 +1,7 @@
@@ -94,8 +106,32 @@ index 64c99f1..b5e3771 100644
  **Animated digital clock** with randomly picked foreground and background colors. Uses a LÖVE stencil for a decorative moving-circle mask effect.
  
  ## Architecture
+diff --git a/doc/development/internals/examples/guess.md b/doc/development/internals/examples/guess.md
+index 06f36ff3..a7fe3354 100644
+--- a/doc/development/internals/examples/guess.md
++++ b/doc/development/internals/examples/guess.md
+@@ -1,5 +1,7 @@
+ # guess
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Number guessing game** with per-character input validation.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/index.md b/doc/development/internals/examples/index.md
+index e38bb66a..edad77b8 100644
+--- a/doc/development/internals/examples/index.md
++++ b/doc/development/internals/examples/index.md
+@@ -1,5 +1,7 @@
+ # Examples — Index
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ All examples live under `src/examples/`. Each is a self-contained project with a `main.lua`. They demonstrate different combinations of framework capabilities.
+ 
+ Detailed docs for each are in this directory.
 diff --git a/doc/development/internals/examples/life.md b/doc/development/internals/examples/life.md
-index 7bfc748..b29e16a 100644
+index 7bfc748f..b29e16a4 100644
 --- a/doc/development/internals/examples/life.md
 +++ b/doc/development/internals/examples/life.md
 @@ -1,5 +1,7 @@
@@ -107,7 +143,7 @@ index 7bfc748..b29e16a 100644
  
  ## Architecture
 diff --git a/doc/development/internals/examples/paint.md b/doc/development/internals/examples/paint.md
-index d21fd2b..e025366 100644
+index d21fd2b0..e0253665 100644
 --- a/doc/development/internals/examples/paint.md
 +++ b/doc/development/internals/examples/paint.md
 @@ -1,5 +1,7 @@
@@ -118,8 +154,32 @@ index d21fd2b..e025366 100644
  **Pixel paint application** with a color palette, brush/eraser tools, and line weight selector.
  
  ## Architecture
+diff --git a/doc/development/internals/examples/pong.md b/doc/development/internals/examples/pong.md
+index bbf566aa..ece1dca5 100644
+--- a/doc/development/internals/examples/pong.md
++++ b/doc/development/internals/examples/pong.md
+@@ -1,5 +1,7 @@
+ # pong
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Full Pong game** with two AI difficulty levels, two-player keyboard mode, fixed-timestep physics, and mouse control for the player paddle.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/repl.md b/doc/development/internals/examples/repl.md
+index 8f71ee0d..d4979610 100644
+--- a/doc/development/internals/examples/repl.md
++++ b/doc/development/internals/examples/repl.md
+@@ -1,5 +1,7 @@
+ # repl
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Minimal REPL.** Accepts text input from the user and echoes it to the terminal.
+ 
+ ## Code
 diff --git a/doc/development/internals/examples/sapper.md b/doc/development/internals/examples/sapper.md
-index 3e6e9d7..68bee8d 100644
+index 3e6e9d74..68bee8da 100644
 --- a/doc/development/internals/examples/sapper.md
 +++ b/doc/development/internals/examples/sapper.md
 @@ -1,5 +1,7 @@
@@ -131,7 +191,7 @@ index 3e6e9d7..68bee8d 100644
  
  ## Architecture
 diff --git a/doc/development/internals/examples/sine.md b/doc/development/internals/examples/sine.md
-index c8f1368..ea85cc3 100644
+index c8f13683..ea85cc34 100644
 --- a/doc/development/internals/examples/sine.md
 +++ b/doc/development/internals/examples/sine.md
 @@ -1,5 +1,7 @@
@@ -142,20 +202,44 @@ index c8f1368..ea85cc3 100644
  **One-shot sine wave plot.** Draws axes and a sine curve at startup using `gfx.points`. No update loop, no input.
  
  ## Code pattern
-diff --git a/doc/development/internals/examples/pong.md b/doc/development/internals/examples/pong.md
-index bbf566a..ece1dca 100644
---- a/doc/development/internals/examples/pong.md
-+++ b/doc/development/internals/examples/pong.md
+diff --git a/doc/development/internals/examples/tixy.md b/doc/development/internals/examples/tixy.md
+index 61ef8bb1..f96257c3 100644
+--- a/doc/development/internals/examples/tixy.md
++++ b/doc/development/internals/examples/tixy.md
 @@ -1,5 +1,7 @@
- # pong
+ # tixy
  
 +<!-- authored By LLM; human-approved NOT YET -->
 +
- **Full Pong game** with two AI difficulty levels, two-player keyboard mode, fixed-timestep physics, and mouse control for the player paddle.
+ **Live-coded pixel grid** inspired by tixy.land. A 16×16 grid of circles whose radii and colors are driven by a user-editable formula `tixy(t, i, x, y)`.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/turtle.md b/doc/development/internals/examples/turtle.md
+index 60f86967..bdfbd4a2 100644
+--- a/doc/development/internals/examples/turtle.md
++++ b/doc/development/internals/examples/turtle.md
+@@ -1,5 +1,7 @@
+ # turtle
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Turtle graphics interpreter** driven by typed commands and keyboard input.
+ 
+ ## Architecture
+diff --git a/doc/development/internals/examples/valid.md b/doc/development/internals/examples/valid.md
+index b76ab032..df53dec5 100644
+--- a/doc/development/internals/examples/valid.md
++++ b/doc/development/internals/examples/valid.md
+@@ -1,5 +1,7 @@
+ # valid
+ 
++<!-- authored By LLM; human-approved NOT YET -->
++
+ **Validator showcase.** Collects user input with a combination of custom validators and prints the result.
  
  ## Architecture
 diff --git a/doc/development/overview.md b/doc/development/overview.md
-index 05028b6..ceae0b8 100644
+index 05028b66..ceae0b87 100644
 --- a/doc/development/overview.md
 +++ b/doc/development/overview.md
 @@ -1,5 +1,7 @@

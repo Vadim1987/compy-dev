@@ -1,31 +1,5 @@
-diff --git a/src/model/consoleModel.lua b/src/model/consoleModel.lua
-index 2d2897c..455a0d8 100644
---- a/src/model/consoleModel.lua
-+++ b/src/model/consoleModel.lua
-@@ -12,7 +12,7 @@ require("model.project.project")
- --- @field cfg Config
- ConsoleModel = class.create(function(cfg)
-   return {
--    input    = UserInputModel(cfg, LuaEval(), false, 'console'),
-+    input    = UserInputModel(cfg, LuaEval(), 'console'),
-     editor   = EditorModel(cfg),
-     output   = CanvasModel(cfg),
-     projects = ProjectService(),
-diff --git a/src/model/editor/searchModel.lua b/src/model/editor/searchModel.lua
-index 38b4962..9b7a410 100644
---- a/src/model/editor/searchModel.lua
-+++ b/src/model/editor/searchModel.lua
-@@ -28,7 +28,7 @@ require('util.scrollableContent')
- Search = class.create(function(cfg)
-   local l = cfg.view.lines
-   return {
--    input = UserInputModel(cfg, nil, false, 'search'),
-+    input = UserInputModel(cfg, nil, 'search'),
-     searchset = {},
-     resultset = {},
-     visible = ScrollableContent(0, 1, l)
 diff --git a/src/model/input/userInputModel.lua b/src/model/input/userInputModel.lua
-index 4613fee..60daa51 100644
+index 4613feec..60daa516 100644
 --- a/src/model/input/userInputModel.lua
 +++ b/src/model/input/userInputModel.lua
 @@ -12,7 +12,6 @@ require("util.debug")
@@ -63,23 +37,6 @@ index 4613fee..60daa51 100644
    self:jump_end()
  end
  
-@@ -386,10 +385,14 @@ function UserInputModel:highlight()
-       hl = ev.highlighter(text)
-     end
- 
--    self._memo.highlight = { hl = hl, parse_err = parse_err }
-+    -- hl stays indexable even with no highlighter (parser but
-+    -- no colouring): the view indexes highlight.hl unconditionally.
-+    self._memo.highlight = { hl = hl or {}, parse_err = parse_err }
-   else
-     if ev.highlighter then
--      self._memo.highlight = { hl = ev.highlighter(text) }
-+      -- same invariant as the parser branch above: a highlighter that
-+      -- returns nil must not leave `.hl` nil for the view to index
-+      self._memo.highlight = { hl = ev.highlighter(text) or {} }
-     else
-       self._memo.highlight = ev:validation_hl(text)
-     end
 @@ -408,8 +411,15 @@ end
  ----------------
  
@@ -252,8 +209,34 @@ index 4613fee..60daa51 100644
      else
        ok = true
      end
+diff --git a/src/model/consoleModel.lua b/src/model/consoleModel.lua
+index 2d2897c1..455a0d81 100644
+--- a/src/model/consoleModel.lua
++++ b/src/model/consoleModel.lua
+@@ -12,7 +12,7 @@ require("model.project.project")
+ --- @field cfg Config
+ ConsoleModel = class.create(function(cfg)
+   return {
+-    input    = UserInputModel(cfg, LuaEval(), false, 'console'),
++    input    = UserInputModel(cfg, LuaEval(), 'console'),
+     editor   = EditorModel(cfg),
+     output   = CanvasModel(cfg),
+     projects = ProjectService(),
+diff --git a/src/model/editor/searchModel.lua b/src/model/editor/searchModel.lua
+index 38b49627..9b7a410e 100644
+--- a/src/model/editor/searchModel.lua
++++ b/src/model/editor/searchModel.lua
+@@ -28,7 +28,7 @@ require('util.scrollableContent')
+ Search = class.create(function(cfg)
+   local l = cfg.view.lines
+   return {
+-    input = UserInputModel(cfg, nil, false, 'search'),
++    input = UserInputModel(cfg, nil, 'search'),
+     searchset = {},
+     resultset = {},
+     visible = ScrollableContent(0, 1, l)
 diff --git a/src/model/interpreter/eval/evaluator.lua b/src/model/interpreter/eval/evaluator.lua
-index 5715a7c..0db5957 100644
+index 5715a7c4..0db59575 100644
 --- a/src/model/interpreter/eval/evaluator.lua
 +++ b/src/model/interpreter/eval/evaluator.lua
 @@ -135,6 +135,29 @@ local luaTools = {
@@ -287,10 +270,10 @@ index 5715a7c..0db5957 100644
  --- @param filters Filters?
  --- @param custom_apply function?
 diff --git a/src/util/key.lua b/src/util/key.lua
-index a644716..e9475f2 100644
+index a6447165..6de55ab8 100644
 --- a/src/util/key.lua
 +++ b/src/util/key.lua
-@@ -5,6 +5,80 @@ local unpack  = unpack or table.unpack
+@@ -5,6 +5,117 @@ local unpack  = unpack or table.unpack
  local shift_k = { "lshift", "rshift" }
  local ctrl_k  = { "lctrl", "rctrl" }
  local alt_k   = { "lalt", "ralt" }
@@ -323,19 +306,26 @@ index a644716..e9475f2 100644
 +  fold_mod[row[2]] = row[3]
 +end
 +
-+--- Split a combo string into a generic-modifier set and the
-+--- trigger token. Tokens fold l/r to generic names; anything
-+--- that is not a modifier is the trigger (last one wins).
++--- Split a combo string into a generic-modifier set, the trigger
++--- token, and how many triggers were seen. Tokens fold l/r to
++--- generic names; anything that is not a modifier is a trigger.
++--- The count is what lets registration refuse a combo naming two
++--- of them — dispatch itself only ever splits its own output.
 +--- @param combo string
 +--- @return table mods
 +--- @return string? trigger
++--- @return integer triggers
 +local function split_combo(combo)
-+  local mods, trigger = { }, nil
++  local mods, trigger, n = { }, nil, 0
 +  for tok in combo:lower():gmatch('[^+]+') do
 +    local g = fold_mod[tok] or tok
-+    if mod_rank[g] then mods[g] = true else trigger = g end
++    if mod_rank[g] then
++      mods[g] = true
++    else
++      trigger, n = g, n + 1
++    end
 +  end
-+  return mods, trigger
++  return mods, trigger, n
 +end
 +
 +--- Canonicalise a combo string (doc/development/decisions/input.md,
@@ -355,15 +345,45 @@ index a644716..e9475f2 100644
 +  return table.concat(parts, '+')
 +end
 +
++--- A combo names modifiers plus exactly ONE trigger
++--- (doc/development/decisions/input.md, Decision 21). Refused at
++--- registration rather than silently canonicalised, because the
++--- canonical form used to keep the LAST trigger and drop the
++--- rest: 'ctrl+a+b' became 'ctrl+b', and 'a+b+*' became a bare
++--- '*' — the widest binding there is, from a string written to
++--- mean the narrowest.
++---
++--- A bare '*' is refused for a different reason: it satisfies
++--- the one-trigger rule but is the class of "no modifiers
++--- held", i.e. every unmodified key. That is what hooks[event]
++--- already is, by a spelling that reads like a narrow binding.
++--- @param combo string
++local function check_combo(combo)
++  local mods, trigger, n = split_combo(combo)
++  if n == 1 then
++    if trigger ~= '*' or next(mods) then return end
++    error("bad combo '*': a class needs modifiers to be a"
++      .. ' class of (e.g. alt+*); for every key, use'
++      .. ' compy.input.hooks', 4)
++  end
++  local why = (n == 0) and 'names no trigger'
++      or 'names more than one trigger'
++  error("bad combo '" .. tostring(combo) .. "': " .. why
++    .. ' (modifiers plus one trigger, e.g. ctrl+alt+s'
++    .. ' or ctrl+alt+*)', 4)
++end
++
 +--- A project handlers sub-table (doc/development/decisions/input.md,
 +--- Decision 8): assigned combo keys normalise on
 +--- registration, so handlers.keypressed['Ctrl+S'] is
 +--- stored (and dispatch-matched) as 'ctrl+s'.
-+--- The matcher uses exact canonical lookup (O(1)).
++--- The matcher uses exact canonical lookup (O(1)), plus one
++--- class lookup on a miss (Decision 21).
 +--- @return table
 +local function new_handler_table()
 +  return setmetatable({ }, {
 +    __newindex = function(t, k, v)
++      check_combo(k)
 +      rawset(t, normalize_combo(k), v)
 +    end,
 +  })
@@ -371,7 +391,24 @@ index a644716..e9475f2 100644
  
  --- @param k string
  --- @return boolean
-@@ -43,11 +117,14 @@ local function alt()
+@@ -12,6 +123,16 @@ local function is_enter(k)
+   return k == "return" or k == 'kpenter'
+ end
+ 
++--- Whether a key name is any modifier, l/r alike. A combo class
++--- (Decision 21) must not match its own modifier: holding Alt
++--- alone dispatches 'alt+lalt', the modifier prepended to itself
++--- as the trigger, which 'alt+*' would otherwise catch.
++--- @param k string
++--- @return boolean
++local function is_mod(k)
++  return fold_mod[k] ~= nil
++end
++
+ --- @return boolean
+ local function is_shift(k)
+   return table.is_member(shift_k, k)
+@@ -43,11 +164,15 @@ local function alt()
  end
  
  Key = {
@@ -386,6 +423,7 @@ index a644716..e9475f2 100644
 +  normalize_combo = normalize_combo,
 +  new_handler_table = new_handler_table,
 +  is_enter    = is_enter,
++  is_mod      = is_mod,
 +  shift       = shift,
 +  is_shift    = is_shift,
 +  ctrl        = ctrl,
@@ -394,7 +432,7 @@ index a644716..e9475f2 100644
 +  is_alt      = is_alt,
  }
 diff --git a/src/view/input/userInputView.lua b/src/view/input/userInputView.lua
-index 73cbbd8..43b8e3f 100644
+index 73cbbd83..43b8e3f6 100644
 --- a/src/view/input/userInputView.lua
 +++ b/src/view/input/userInputView.lua
 @@ -16,7 +16,6 @@ local new = function(cfg, ctrl)

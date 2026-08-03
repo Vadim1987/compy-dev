@@ -51,8 +51,11 @@ owner and revisable, not a frozen mandate.
   — note these live in the FEATURE-level `reviews/`, **not** `implementation/reviews/`; older
   handover prompts point one level too shallow.
 - **PR ASSEMBLY:** `doc/development/wip/77-new-input-api/implementation/pr-assembly-guide.md`
-  (re-runnable, git-only; slices in `implementation/pr-slices/`, `3*.patch` currently STALE vs
-  the tree — regeneration is always the LAST step, after the tree settles).
+  (re-runnable, git-only; slices in `implementation/pr-slices/`, commit messages in
+  `implementation/pr-commit-messages.md`, description in `implementation/pr-description.md`).
+  **Regenerated 2026-08-03 at HEAD `264e0c6c`** and verified: all ten apply in order against
+  `BASE` and reproduce the tip byte-identically outside `wip/`. They go stale again the moment
+  the tree moves, so regeneration stays the LAST step before the PR.
 - **PERSISTENT DOCS CORPUS** (the only docs that survive `wip/77` deletion; all spec refs must
   resolve here): `doc/input_api.md`, `doc/development/internals/user_input.md`,
   `doc/development/decisions/input.md`, `doc/development/technical_debt/{input,general}.md`,
