@@ -116,7 +116,7 @@ describe('input contracts: routing #input', function()
     -- ConsoleController does, consoleController.lua
     -- "ConsoleController:keyreleased"), so there is nothing
     -- observable on the editor side to assert. Mechanism-by-omission,
-    -- the same shape as the wheel gap in input_nfr_forward_spec.
+    -- the same shape as the wheel gap in input_nfr_mechanism_spec.
     -- What IS assertable, and is the routing claim this grid cell
     -- exists for, is EXCLUSIVITY — the release does not leak to the
     -- console (doc/development/decisions/input.md, Decision 1;
