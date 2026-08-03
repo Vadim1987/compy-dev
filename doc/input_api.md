@@ -321,6 +321,41 @@ nothing on the shipping runtime; index it by name.
 The lifecycle entries are direct assignments only: `before_submit`,
 `after_submit`, `before_cancel`, and `after_cancel`.
 
+## Stop hook — `compy.before_exit`
+
+A settable slot on `compy` itself, not on `compy.input`: it is a
+project-*run* lifecycle hook, not an input-channel callback. It exists so a
+project can put back global device state it changed imperatively — the
+sandbox clones the `love` table but shares the underlying C functions, so
+calls like `love.keyboard.setKeyRepeat(false)` change real state that
+outlives the run.
+
+```lua
+love.keyboard.setKeyRepeat(false)
+
+compy.before_exit = function()
+  love.keyboard.setKeyRepeat(true)
+end
+```
+
+- **Signature:** no arguments — the project knows its own state.
+- **Return value:** ignored. It cannot suppress or defer the stop.
+- **Timing:** runs *before* the framework's own teardown, so `love.*` calls
+  inside it are still safe.
+- **Fires on:** every framework-invoked stop of a running project —
+  `Ctrl+Esc`, quitting the project, switching away to the editor, and app
+  shutdown in play mode.
+- **Does NOT fire when the project's own code raises.** A raise in top-level
+  code ends the run without a stop, and a raise inside a handler suspends it
+  instead; neither is a stop path. Do not rely on this hook to undo something
+  a crash could leave behind — see
+  [technical debt](development/technical_debt/input.md), "A project that
+  raises leaves global device state dirty".
+- **Reset:** back to the default no-op once the run ends, by whichever path
+  it ended — so one project's hook never fires for the next one. Like every
+  other project participant, it does not survive the run that installed it.
+- **Default:** a no-op that logs in debug mode.
+
 ## Migration
 
 The retired polling globals have no replacement compatibility layer. Move

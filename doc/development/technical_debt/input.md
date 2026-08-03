@@ -51,21 +51,19 @@ action; revisit at the named point).
 - **Revisit:** owner ruled 2026-08-03 to record it and implement the
   force-reset later; revisit when that work is scheduled.
 
-### `compy.before_exit` is absent from the persistent API docs
+### `compy.before_exit` is absent from the persistent API docs (RESOLVED, 2026-08-03)
 
-- **State:** `compy.before_exit` is a public, project-settable lifecycle slot
-  (`consoleController.lua`, the compy namespace's `__newindex`), pinned by
-  `tests/input/input_route_lifecycle_spec.lua` and named in
-  `doc/development/tests.md` — but it appears in neither `doc/input_api.md`
-  nor `doc/development/decisions/input.md`. Its only specification lives in
-  the feature's ephemeral working tree, which is scheduled for deletion.
-- **Why it matters:** the PR is meant to be reviewable from `doc/input_api.md`
-  plus the PR description alone. A public member whose contract survives only
-  in `wip/` fails that test, and the entry above depends on the contract
-  ("fires on stop paths, not on crash") being findable.
-- **Revisit:** before the PR — either document the slot in `doc/input_api.md`
-  with its fires/reset/return-value contract, or record why it is deliberately
-  undocumented.
+- **Resolution:** documented as `doc/input_api.md`, "Stop hook —
+  `compy.before_exit`" (owner ruled 2026-08-03), covering signature, ignored
+  return, timing before framework teardown, which stop paths fire it, that a
+  raise is **not** one of them, and the reset. Every clause is pinned in
+  `tests/input/input_route_lifecycle_spec.lua`; the not-fired-on-raise claim
+  was mutation-checked rather than read.
+- **What it was:** a public, project-settable lifecycle slot whose only
+  specification lived in the feature's ephemeral working tree, which is
+  scheduled for deletion — while the PR is meant to be reviewable from
+  `doc/input_api.md` plus the description alone. The entry above also depends
+  on that contract being findable.
 
 ### Future input unification
 
