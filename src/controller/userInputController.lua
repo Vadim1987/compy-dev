@@ -475,14 +475,20 @@ end
 --  keyboard  --
 ----------------
 
+--- LÖVE's own argument list, like every other consumer on the
+--- chain (doc/development/decisions/input.md, Decision 26). The
+--- tail is unread here and named anyway: this widget is where a
+--- repeat-aware edit would land, and the position has to be the
+--- right one when it does.
 --- @param k string
---- @param isr boolean?
+--- @param sc string?    scancode
+--- @param isr boolean?  key repeat
 -- No return value: the old limit-flag return channel is retired
 -- (Decision 5) — on_limit_reached is the sole notification
 -- path now (see "emit_limit" below).
 -- Its editing logic reads modifiers via Key.* (love.keyboard);
 -- the held set is compy.input.keys_pressed.
-function UserInputController:keypressed(k, isr)
+function UserInputController:keypressed(k, sc, isr)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return
@@ -712,7 +718,8 @@ function UserInputController:textinput(t)
 end
 
 --- @param k string
-function UserInputController:keyreleased(k)
+--- @param sc string?    scancode; LÖVE's second argument, unread
+function UserInputController:keyreleased(k, sc)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return
