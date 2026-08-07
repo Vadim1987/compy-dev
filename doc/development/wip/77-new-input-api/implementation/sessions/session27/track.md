@@ -211,6 +211,50 @@ temporarily to run its experiments and my commits moved its baseline mid-run
 (934 → 936). It reported the drift honestly rather than assuming a failed
 restore, and its findings stand — but the confusion was mine to avoid.
 
+### P7 complete except prose
+
+- `bd51bb31` **frozen-view collapse.** Audit by experiment settled which
+  wrappers earn their place: `build_leaf_surface` INERT (deleted — `hooks` and
+  `callbacks` handed over as themselves); the other three share one shape and
+  became `build_frozen_view(resolve, name)`, which is R012 with a signature.
+  The empty table is the mechanism, not an accident — a metatable defends only
+  keys its table does NOT hold, the same fact that let `compy.input = {}`
+  through. `frozen_error` → `unassignable_error`.
+- `0f7150c0` + `22d55195` **config keys named by behaviour.** `OUTPUT_KEYS` →
+  `CALLBACK_KEYS` (sticky), `PENDING_KEYS` → `PER_SHOW_KEYS` (spent by the
+  show that reads them — "pending" named the exception as if it were the rule).
+  `SHOW_KEYS`/`CONFIGURE_KEYS` derived from those two instead of re-typed.
+- `37cfbec8` **show/hide lifted** out of the api table (R017). No new file:
+  they are only meaningful against the `state` and resolver that live there.
+- `b9f5f2e8` **the four evaluator nils are REMOVALS.** Probed: `pre_env` carries
+  `InputEvalText` as a table, `project_env` does not — the assignment is what
+  makes that true. They read as an export list and are a sandbox boundary. **I
+  nearly deleted them as no-ops.** This is also why R135 was wrong to call the
+  doc's "projects cannot install evaluator objects" stale — it is enforced here.
+- `85219123` `guarded` → `with_canvas_and_errors`; stale pointer comment
+  ("NO three-consumer chain... unstructured broadcast") deleted, false in every
+  sentence since session26; R030 answered in place.
+- `55169683` `cancel()` → `discard_draft()`, dead `hide()` shed (its only caller
+  passes the console widget, which is `always_shown`, so the hide became a no-op
+  when that was enforced). Answers R040: the two are NOT the same operation — a
+  debug path must not run a project's lifecycle callbacks.
+
+**Left in `src/`: 5 remarks, all pure prose** → the P11 comment sweep.
+
+### Open for the owner
+
+**The `before_exit` metatable slot.** R018 asks why it is not a plain field.
+Audit finding: `table.clone` copies with `pairs` and reuses metatables by
+reference, so a closure-captured slot is shared across every clone of the
+namespace forever — `base_env.compy.before_exit` and
+`project_env.compy.before_exit` are one variable. A plain field would be
+deep-copied per clone instead. Nothing tests, documents or depends on the
+mirroring, and the full suite passes with a plain field. But `compy.input`
+survives cloning by the *same* mechanism, so a plain field would make
+`before_exit` the odd member of the namespace. Not changed: deleting machinery
+whose consequences nobody has pinned down is the `wrap_handler` failure mode.
+Evidence: `validation/outcomes/S27-surface-audit.md` §4.
+
 ## Sub-agents
 
 - **S27-inventory** (Sonnet, read-only, background): verbatim extraction of every
