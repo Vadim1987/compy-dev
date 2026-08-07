@@ -18,7 +18,7 @@
 -- defaults, hook and handler install, the mutable/immutable
 -- boundary (doc/development/decisions/input.md, Decision 2).
 -- Widget OUTPUTS (the callbacks fired on submit and cancel)
--- live in input_widgets_callbacks_spec.lua.
+-- live in input_widget_callbacks_spec.lua.
 
 local F = require('tests.helpers.input_fixture')
 

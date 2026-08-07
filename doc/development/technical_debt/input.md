@@ -550,7 +550,7 @@ question, not resolved here.
 
 - **Status:** answered by a **documented project idiom**, not by a framework
   mechanism (owner, 2026-08-03) — `../../input_api.md`, *"Opening the overlay
-  from a key"*, pinned by `tests/input/input_widget_lifecycle_spec.lua`, group
+  from a key"*, pinned by `tests/input/input_widget_control_spec.lua`, group
   *"the documented echo guard"*, and used by `src/examples/turtle`. A
   framework fix was implemented and then reverted (2026-08-01) because its
   design had never been ruled. What remains open is whether the framework
@@ -769,7 +769,7 @@ Not commissioned for closure; each may never need action.
 
 - **Where:** the overlay handle is asserted only for shape — that
   `love.state.user_input` is set and callable while the widget is shown
-  (e.g. `tests/input/input_widgets_callbacks_spec.lua`). The dedicated
+  (e.g. `tests/input/input_widget_callbacks_spec.lua`). The dedicated
   `overlay_spec.lua` that built an ad-hoc controller over a `draw`-only
   stub view was removed when the suite was re-authored; the gap below is
   what survived it, not the file.
@@ -875,7 +875,7 @@ Not commissioned for closure; each may never need action.
 ### Force-path "does not warn" coverage gap
 
 - **Where:** the config-suppression warning test coverage
-  (`tests/input/input_widget_lifecycle_spec.lua`, the widget activation/reset block).
+  (`tests/input/input_widget_control_spec.lua`, the `show(): activation and reset` group).
 - **State:** The suite covers "a non-forced re-show while active warns
   once", but there is no explicit assertion that the sanctioned `force`
   override path warns zero times. That guarantee is the inverse of the
@@ -1078,7 +1078,7 @@ Not commissioned for closure; each may never need action.
   (`block_input()` in `EditorController:_normal_mode_keys`' `submit()`/`load()`),
   so the widget's uniform `submit_flow`/`cancel_flow` never runs for the keys the
   editor owns. No instance reads global mode. Suite green
-  (`tests/input/input_lifecycle_uniform_spec.lua`).
+  (`tests/input/input_widget_callbacks_spec.lua`, the `the same lifecycle on every route` group).
 - **Revisit:** `allow_modify` is a one-off flag; the widget owning its own
   **combo table** (Ctrl+D and the lifecycle keys as registered combos an editor or
   project extends) is the better end-state the owner named — deferred with the

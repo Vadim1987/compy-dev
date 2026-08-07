@@ -717,7 +717,7 @@ describe('Editor #editor', function()
       -- input, 'down' and the first 'up' stay inside it; the next 'up'
       -- crosses out to the previous block. Guards the later is_at_limit
       -- line-scope rewrite from regressing whole-input block navigation.
-      -- Relocated here from tests/input/input_widget_lifecycle_spec.lua:
+      -- Relocated here from the input contract suite (tests/input/):
       -- this is editor-internal behaviour, not an input
       -- routing contract — the input suite asserts only that keys reach
       -- the editor route (tests/input/input_routing_spec.lua).

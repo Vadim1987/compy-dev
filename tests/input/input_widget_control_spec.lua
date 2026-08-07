@@ -35,9 +35,10 @@ describe('input surface: widget control #input', function()
   describe('show(): activation and reset', function()
 
     -- Prompt LABELLING at activation. Re-labelling on an already
-    -- active session is the reconfigure concern and is covered there
-    -- (input_reconfigure_spec.lua, 'updates the prompt on an active
-    -- session'), so this row only pins the show() half.
+    -- active session is the reconfigure concern and is covered in
+    -- this file's 'configure(): the live session' group ('updates
+    -- the prompt on an active session'), so this row only pins the
+    -- show() half.
     it('a fresh activation applies the prompt label', function()
       local input = F.compy_input()
       input.show({ text = 'hi', prompt = 'name?' })

@@ -750,8 +750,8 @@ describe('input surface: widget callbacks #input', function()
   -- callbacks), plus two narrow method patches where the seam IS
   -- the call itself (the console's evaluate_input call count, and
   -- model:cancel not running under the editor's Escape) — the
-  -- same technique input_widgets_callbacks_spec.lua uses for its
-  -- one widget-signature row.
+  -- same technique input_events_spec.lua uses for its one
+  -- widget-signature row.
   describe('the same lifecycle on every route #lifecycle', function()
     -- A standalone widget, NOT the persistent/overlay — direct
     -- construction, like user_input_view_spec.lua.
@@ -927,9 +927,10 @@ describe('input surface: widget callbacks #input', function()
     -- editor rows above, the console and the project overlay
     -- are driven through the same Enter and Escape. Their
     -- subject-matter contracts (the full submit call-order
-    -- chain, the cancel chain, validators) belong to
-    -- input_widgets_callbacks_spec.lua; what is asserted here
-    -- is only that each surface runs the one lifecycle at all.
+    -- chain, the cancel chain, validators) belong to this file's
+    -- 'submit' and 'cancel — the Escape chain' groups; what is
+    -- asserted here is only that each surface runs the one
+    -- lifecycle at all.
     describe('console: the same Enter and Escape', function()
       it('Enter evaluates the line exactly once, text intact',
         function()

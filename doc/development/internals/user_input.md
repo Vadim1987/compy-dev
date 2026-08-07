@@ -398,7 +398,8 @@ calls `self:submit_flow(keys_pressed)`; `k == 'escape' and not Key.ctrl()` calls
 `self:cancel_flow(keys_pressed)` — see "Submit and cancel" below. **The guard is "Enter without
 Shift", not "bare Enter": Ctrl+Enter and Alt+Enter submit too** (only Shift+Enter is carved out, as
 the newline); likewise Escape-without-Ctrl cancels. This is a de-facto contract (Decision 14,
-guard shape `return and not shift_held`), pinned by `tests/input/input_lifecycle_uniform_spec.lua`.
+guard shape `return and not shift_held`), pinned by `tests/input/input_widget_callbacks_spec.lua`, the
+`the same lifecycle on every route` group.
 The widget's own
 Enter/Escape handling IS the submit/cancel mechanism; there is no route-level interception above it.
 Contexts that must NOT run the flows arrange it themselves: the editor consumes the key upstream
