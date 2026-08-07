@@ -1422,7 +1422,7 @@ function ConsoleController:keypressed(k)
     end
     if not love.state.testing then
       love.state.testing = 'running'
-      input:cancel()
+      input:discard_draft()
       TerminalTest.test(out.terminal)
     elseif love.state.testing == 'waiting' then
       TerminalTest.reset(out.terminal)

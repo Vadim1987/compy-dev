@@ -192,15 +192,13 @@ function UserInputController:evaluate()
   return ok, res
 end
 
---- Unconditional clear + hide. NOT the project widget's Escape path
---- any more (that is `cancel_flow`, below, callback-driven and
---- stay-open by default) — this method survives only as
---- console's own debug/test-mode cancel
---- (`consoleController.lua`'s `terminal_test`).
----> REMARK: why console cannot run same callback flow with hide-after-cancel (if it needs it)? then we'd have just a single function instead of two (and this one function would be named 'cancel')
-function UserInputController:cancel()
+--- Throw away the current draft, firing nothing. Deliberately
+--- NOT `cancel_flow` (below): that is a project's Escape and
+--- runs `before_cancel`/`after_cancel`, which a console debug
+--- path must not trigger on a project's behalf. Its only
+--- caller is `consoleController.lua`'s `terminal_test`.
+function UserInputController:discard_draft()
   self.model:cancel()
-  self:hide()
 end
 
 function UserInputController:jump_home()
