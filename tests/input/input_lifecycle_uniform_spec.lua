@@ -14,7 +14,7 @@
 -- surface needs different behaviour it says so locally: the
 -- editor consumes Enter/Escape upstream before the widget sees
 -- them, and Ctrl+D line-duplication is a per-instance
--- `allow_modify` flag set at construction.
+-- `allow_duplicate_line` flag set at construction.
 --
 -- This file is the guard against that uniformity being quietly
 -- re-conditioned on global state. Each group drives one surface
@@ -268,7 +268,7 @@ describe('#input #lifecycle one input lifecycle, every surface',
     -- Line-duplication is the one behaviour that genuinely
     -- differs between surfaces, and it is carried by a
     -- constructor flag on the instance that wants it —
-    -- `allow_modify`, alongside `disable_selection` — not by
+    -- `allow_duplicate_line`, alongside `disable_selection` — not by
     -- the screen mode. Each case still sets app_state, to the
     -- value the real caller would have, precisely to show the
     -- flag and not the mode is what decides
@@ -276,7 +276,7 @@ describe('#input #lifecycle one input lifecycle, every surface',
     describe('the modify flag alone gates Ctrl+D', function()
       it('with the flag: Ctrl+D duplicates the line', function()
         local c = bare_uic()
-        c.allow_modify = true
+        c.allow_duplicate_line = true
         love.state.app_state = 'editor'
         c:show({ text = 'abc' })
 
@@ -287,7 +287,7 @@ describe('#input #lifecycle one input lifecycle, every surface',
 
       it('without it: Ctrl+D does nothing', function()
         local c = bare_uic()
-        c.allow_modify = false
+        c.allow_duplicate_line = false
         love.state.app_state = 'ready'
         c:show({ text = 'abc' })
 

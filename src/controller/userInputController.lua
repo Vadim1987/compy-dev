@@ -22,29 +22,21 @@ local function default_callbacks()
   }
 end
 
----> REMARKS: comments inlined are quire useless, code is already self-evident? max 1 line with short purpsoe would be enough -- and its already in the announce. btw, name 'allow_modify' is misleading -- its more about supporting line duplication?
 --- @param model UserInputModel
 --- @param disable_selection boolean?
---- @param allow_modify boolean?  enable the Ctrl+D duplicate-line
---- combo (editor-only today). Known at construction; the overlay
---- and console never opt in.
-local new = function(model, disable_selection, allow_modify)
+--- @param allow_duplicate_line boolean?  editor-only today
+local new = function(model, disable_selection,
+                     allow_duplicate_line)
   return {
     model = model,
     disable_selection = disable_selection,
-    -- Ctrl+D duplicate-line gate (editor-only today; a future
-    -- combo-table would supersede this per-action flag).
-    allow_modify = allow_modify,
-    -- Strictly internal shown/hidden flag (owner ruling
-    -- 2026-07-20): is_shown() reads this, never love.state. The
-    -- overlay starts hidden and is toggled by show()/hide();
-    -- always-active widgets (console/editor) set it true at
-    -- construction.
+    allow_duplicate_line = allow_duplicate_line,
+    -- is_shown() reads this, never love.state (owner ruling
+    -- 2026-07-20).
     shown = false,
-    -- The widget-invoked callbacks (outputs + submit/cancel
-    -- lifecycle). For the project overlay this table IS
-    -- compy.input.callbacks (same table, owner ruling 2026-07-20);
-    -- console/editor set their own directly.
+    -- For the project widget this table IS compy.input.callbacks,
+    -- the same table (owner ruling 2026-07-20); console and
+    -- editor set their own directly.
     callbacks = default_callbacks(),
   }
 end
@@ -235,9 +227,18 @@ end
 ---   widget API    ---
 ----------------------
 
--- Internal widget API. Not called by projects directly — only via the compy.input.*
--- wrappers (consoleController). Free functions rather than class methods because they are
--- private helpers to show()/hide() below.
+-- Internal widget API, reached only through the compy.input.*
+-- wrappers (consoleController). Free functions, not methods:
+-- they are private helpers to show()/hide() below.
+
+-- The callbacks a config table may carry. The lifecycle ones
+-- (before_/after_submit, before_/after_cancel) are deliberately
+-- absent: they are set through compy.input.callbacks, never
+-- through show() or configure().
+local CONFIG_CALLBACKS = {
+  'validator', 'on_text_entered', 'on_limit_reached',
+}
+
 --- @param self UserInputController
 --- @param cfg table
 local apply_config = function(self, cfg)
@@ -251,33 +252,44 @@ local apply_config = function(self, cfg)
   if cfg.highlighter ~= nil and ev then
     ev.highlighter = cfg.highlighter
   end
-  ---> REMARK: can just iterate over callback keys instead of bloated copy-paste with similar if-checks? 
-  if cfg.validator ~= nil then
-    self.callbacks.validator = cfg.validator
-  end
-  if cfg.on_text_entered ~= nil then
-    self.callbacks.on_text_entered = cfg.on_text_entered
-  end
-  if cfg.on_limit_reached ~= nil then
-    self.callbacks.on_limit_reached = cfg.on_limit_reached
+  for _, name in ipairs(CONFIG_CALLBACKS) do
+    if cfg[name] ~= nil then
+      self.callbacks[name] = cfg[name]
+    end
   end
 end
 
----> REMARK: 'open_fresh' is misleading -- I'd rather make it a part of normal 'show' and rename 'already shown' branch into function 're_show' or something like that, because reshowing is secondary scenario (less operations, conditional)
---- Fresh activation of the overlay widget: clear content when no text is given, apply
---- config, publish the overlay handle, render once. Called only by show() on the
---- inactive->active transition (show() guards against re-entry while active). The
---- clear-on-no-text lives here, not in apply_config, because it is activation policy
---- (a re-show with no text starts empty) rather than per-field config.
---- `cursor` (a `{line, col}` pair) lands here too, applied
---- after text (doc/development/internals/user_input.md,
---- "Cursor manipulation and \"reset\"") — kept out of
---- apply_config so
---- the live-reconfigure path (configure() below) can never
---- reach it.
+--- Re-show over an already-shown widget: the secondary path,
+--- and deliberately the narrow one. Only the text subset of cfg
+--- applies; a full live reconfigure is configure()
+--- (doc/development/internals/user_input.md, "configure(config)").
 --- @param self UserInputController
 --- @param cfg table
-local open_fresh = function(self, cfg)
+local re_show = function(self, cfg)
+  -- doc/development/decisions/input.md, Decision 3
+  -- (warn-don't-swallow): a plain show() over an active widget
+  -- is suppressed; say so.
+  if not cfg.force then
+    Log.warn('UserInputController:show ignored — widget already'
+      .. ' active (pass force=true to override)')
+    return
+  end
+  if cfg.text ~= nil then
+    self.model:set_text(cfg.text)
+    self:update_view()
+  end
+end
+
+--- The activation path: clear when no text is given, apply
+--- config, publish the handle, render once. The clear-on-no-text
+--- is activation policy (a fresh show with no text starts empty),
+--- which is why it is here and not in apply_config; `cursor` is
+--- here for the same reason — configure() must never reach it
+--- (doc/development/internals/user_input.md, "Cursor manipulation
+--- and \"reset\"").
+--- @param self UserInputController
+--- @param cfg table
+local open_widget = function(self, cfg)
   if cfg.text == nil then
     self.model:clear_input()
   end
@@ -300,31 +312,13 @@ local open_fresh = function(self, cfg)
   self:update_view()
 end
 
---- Activate the widget.
---- No-op if already active, unless force=true.
+--- Activate the widget. Shown already, it re-shows instead —
+--- a no-op unless force=true.
 --- @param config table?
 function UserInputController:show(config)
   local cfg = config or {}
-  if self.shown then
-    -- doc/development/decisions/input.md, Decision 3 (warn-don't-swallow):
-    -- a plain show() over an active overlay is suppressed;
-    -- say so.
-    if not cfg.force then
-      Log.warn('UserInputController:show ignored — overlay already active (pass force=true to override)')
-      return
-    end
-    -- force=true intentionally applies only the text subset
-    -- of cfg on an active overlay; a full live reconfigure
-    -- is the compy.input API's configure() (internals/
-    -- user_input.md, "configure(config)"). Other fields
-    -- are ignored here by design.
-    if cfg.text ~= nil then
-      self.model:set_text(cfg.text)
-      self:update_view()
-    end
-    return
-  end
-  open_fresh(self, cfg)
+  if self.shown then return re_show(self, cfg) end
+  open_widget(self, cfg)
 end
 
 --- Deactivate without firing the cancel chain. Clearing
@@ -348,13 +342,11 @@ end
 --- filtered table is the only thing configure() ever applies.
 --- @param cfg table
 function UserInputController:configure(cfg)
-  apply_config(self, {
-    prompt           = cfg.prompt,
-    highlighter      = cfg.highlighter,
-    validator        = cfg.validator,
-    on_text_entered  = cfg.on_text_entered,
-    on_limit_reached = cfg.on_limit_reached,
-  })
+  local live = { prompt = cfg.prompt, highlighter = cfg.highlighter }
+  for _, name in ipairs(CONFIG_CALLBACKS) do
+    live[name] = cfg[name]
+  end
+  apply_config(self, live)
   self:update_view()
 end
 
@@ -370,18 +362,15 @@ end
 -- before_/after_cancel are read off self.callbacks — the same
 -- table a project populates via compy.input.callbacks.
 
---- Validator gate (doc/development/internals/user_input.md, "Submit and
---- cancel — widget-owned callback sequences").
---- No custom validator
---- accepts unconditionally; a set validator's ok/err_msg
---- verdict decides, locking the session on reject via the
---- existing has_error()/clear_error() gate in keypressed().
+--- Run the project's validator, if it set one, and record its
+--- errors on the model — which is what locks the session until
+--- keypressed()'s has_error()/clear_error() releases it. No
+--- validator accepts unconditionally.
 --- @param model UserInputModel
 --- @param validator function?
 --- @param lines string[]
---- @return boolean ok
----> REMARK: gate is ambiguous name, and could in fact be folded into a single call-site
-local function gate(model, validator, lines)
+--- @return boolean accepted
+local function validate(model, validator, lines)
   if not validator then return true end
   local ok, errors = validator(lines)
   if not ok then model:set_error(errors) end
@@ -417,7 +406,8 @@ function UserInputController:submit_flow()
   if run_callback(self, 'before_submit') then return end
   if self.model:get_text():is_empty() then return end
   local lines = self.model:get_text()
-  if not gate(self.model, self.callbacks.validator, lines) then
+  local validator = self.callbacks.validator
+  if not validate(self.model, validator, lines) then
     return
   end
   run_callback(self, 'on_text_entered', lines)
@@ -681,7 +671,7 @@ function UserInputController:keypressed(k, isr)
   vertical()
   horizontal()
   newline()
-  if self.allow_modify then modify() end
+  if self.allow_duplicate_line then modify() end
   copypaste()
   selection()
 
