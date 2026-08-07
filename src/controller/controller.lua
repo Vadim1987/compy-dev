@@ -6,7 +6,6 @@ require("util.string.string")
 require("util.key")
 require("util.lua")
 local LANG = require("util.eval")
----> REMARK: I think this file still has two big problems: it plugs and unplugs many supported events literally one by one while it could just set up proxying by event name in a cycle (with couple exceptions that are needed to calculate derived events). So it needs big huge pass, collapsing duplicating functions and drying up comments which are extremely verbose (more than needed)
 
 local messages = {
   user_break = "BREAK into program",
@@ -154,38 +153,20 @@ local function wrap(f, CC, ...)
   end
 end
 
----> REMARK: extremely verbose prose shorten to minimum, and consider renaming function to something meaningful (naive but semantically correct variant: "with_canvas_and_error_handling")
---- NAMING — settled. `userlove` KEEPS its name (owner ruling,
---- 2026-08-03: "its nice and makes no harm itself"). Read it as
---- "a table indexed by love-event name holding the project's
---- handlers", which is what both callers pass: the sandboxed
---- `love` table from `set_user_handlers`, and the saved
---- `_userhandlers` from `restore_user_handlers`. The second is
---- why the once-proposed `project_love` was dropped: it would
---- have been true at only one of the two.
---- The `*_native` names went with the two wrappers when they
---- merged; `forward_*` left by deletion, its console-route
---- widget gate being gone.
-
 --- Run `fn` the way project code must always be run: drawing
---- routed onto the project's canvas (CC:use_canvas — the
---- offscreen surface project draws land on), errors routed to
---- the project error handler, return value propagated.
+--- routed onto the project's canvas, errors routed to the
+--- project error handler, return value propagated.
 ---
---- This is THE boundary, and it sits at the point where a route
---- is entered rather than around each participant. The dispatch
---- chain itself carries no error handling
---- (projectInputController.lua), so wrapping participants left
---- two of the three tiers unprotected — a raise in
---- `shortcuts[...]` or in a directly-assigned `hooks[...]`
---- escaped the chain entirely — and made a raise in the third
---- look like a falsey "did not consume", so the walk carried on
---- into the widget. One boundary above the walk covers every
---- tier and aborts it.
+--- Applied where a route is ENTERED, not around each chain
+--- participant: the walk carries no error handling of its own,
+--- so wrapping participants left a raise in `shortcuts[...]`
+--- or a directly-assigned `hooks[...]` escaping the chain, and
+--- made a raise in the widget look like "did not consume", so
+--- the walk carried on past it.
 --- @param CC ConsoleController
 --- @param fn function
 --- @return function
-local function guarded(CC, fn)
+local function with_canvas_and_errors(CC, fn)
   return function(...)
     local args = { ... }
     return CC:use_canvas(function()
@@ -196,7 +177,7 @@ local function guarded(CC, fn)
 end
 
 --- The project's own handler for an event, raw; nil when the
---- project did not define one. NOT wrapped — `guarded` above
+--- project did not define one. NOT wrapped — the boundary
 --- covers it once the route is entered, which is what makes a
 --- seeded handler an ordinary chain participant rather than a
 --- specially-protected one (doc/development/decisions/input.md,
@@ -235,8 +216,6 @@ local function project_handlers(userlove, CC)
 end
 
 
----> REMARK: eliminate artificial split between keyboard and non-keyboard events, wire them all at once (note there's also hook_pointer function -- clearly a leftover -- sort out this mess)
----> REMARK: also, it would be more readable in the form where we just cycle around event names and do for i,event in ipirs(supported) do love[event]=guarded(CC, function(...) cc:dispatch(event,...) end end ? and to prevent GC abuse this set of proxy dispatchers could be built *once*? 
 --- The project route occupies the keyboard/text handlers for
 --- the run; the project's own handlers ride along for
 --- delegation (never route owners themselves).
@@ -258,13 +237,13 @@ local function occupy_input(userlove, CC)
   local pic = Controller.project_input
   local compy = CC:get_project_env().compy
   pic:activate(project_handlers(userlove, CC), compy.input)
-  -- `guarded` here, not around each participant: entering the
+  -- with_canvas_and_errors here, not around each participant:
   -- route IS the boundary, so every tier of the walk runs with
   -- the project canvas bound and one error handler above it.
   -- Wrapped (not assigned) to bind `pic` as method receiver:
   -- `love.keypressed = pic.keypressed` would drop `self`.
   for _, k in ipairs(_bindable) do
-    love[k] = guarded(CC, function(...)
+    love[k] = with_canvas_and_errors(CC, function(...)
       return pic[k](pic, ...)
     end)
   end
@@ -320,7 +299,6 @@ end
 --- @param userlove table
 --- @param CC ConsoleController
 local set_handlers = function(userlove, CC)
-  ---> REMARK: as part of de-duplication and elimination of interim text/pointer split there should be just hook_input(userlove,CC) which will do all the machinery inside, uniformly across all supported events -- passing all function arguments downstream. and maybe with a single guarded call around 'dispatch' if possible?
   occupy_input(userlove, CC)
   mark_pointer_liveness(userlove, CC)
   hook_update(userlove)
@@ -595,7 +573,11 @@ Controller = {
         elseif click_count >= 2 then
           derived = 'doubleclick'
         end
-        ---> REMARK: is it a new logic or relocated? if there was drift (so no_drift is falsey), are at least two singleclicks fired? looks like they are swallowed
+        -- Drift discards the click outright rather than
+        -- degrading it to presses: moving between the two
+        -- invalidates both (doc/input_api.md, "Pointer and
+        -- click hooks"). A project that wants the raw
+        -- presses binds mousereleased, which is untouched.
         if derived then
           local x, y = love.mouse.getPosition()
           if no_drift(click_pos, { x = x, y = y }) then
@@ -937,19 +919,9 @@ Controller = {
     --- @param btn integer
     --- @param touch boolean
     --- @param presses number
-    ----> REMARK: comment simply out of date and explains what is *not* being done -- actualize or (better) eliminate. 
-    -- Pointer has NO three-consumer chain: this is an
-    -- unstructured broadcast. The widget gets the event
-    -- whenever present (no bounds/consume check, return
-    -- ignored), then the project's own handler gets it
-    -- unconditionally. `user_input` is touched directly
-    -- because the widget needs pointer events (click-to-
-    -- cursor / drag-select) and no chain carries them.
-    -- Pointer never had the widget-lockout problem, so its
-    -- delivery stays pre-existing behaviour, deliberately
-    -- out of scope. A mirrored consume-chain for pointer is
-    -- an OPEN owner ruling — see doc/development/technical_debt/input.md
-    -- "Pointer delivery is an unstructured broadcast".
+    -- The gateway entry: hand the event to whoever occupies
+    -- the slot. Under a project run that is the project
+    -- route's chain; otherwise the console's own handler.
     handlers.mousepressed = function(x, y, btn, touch, presses)
       if love.mousepressed then
         return love.mousepressed(x, y, btn, touch, presses)

@@ -435,8 +435,6 @@ local function build_shortcuts_surface(shortcuts)
 end
 
 ---> REMARK: fix prose -- not "where the event GOES" but "whether event PROPAGATES by returning hardcoded true/false"
----> REMARK: why not shorter form? e.g. 'fn and fn(...);return false;' ? its one-off, very straight wrappers
----> REMARK: if we drop the 'keys' parameter (therefore unifying shorcuts/hooks signature with love.*), ignore_repeat should be updated
 --- The dispatch combinators (doc/development/decisions/input.md,
 --- Decisions 22 and 24), reached as compy.input.fn.*. Stateless
 --- and orthogonal: `ignore_repeat` decides whether the handler
@@ -474,8 +472,6 @@ local INPUT_FN = {
   end,
 }
 
----> REMARK: why set '__index' if its trivial
----> REMARK: we have characteristical 'frozen write' metatable, why not use class instead of repeating same setmetatable three times?
 local input_fn_surface = build_frozen_view(
   function(k) return INPUT_FN[k] end,
   function(k) return 'fn.' .. tostring(k) end)
