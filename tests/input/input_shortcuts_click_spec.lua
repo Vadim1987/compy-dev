@@ -25,7 +25,8 @@
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
 
-describe('input contracts: shortcuts and click #input', function()
+describe('input surface: inbound events — shortcuts and clicks'
+  .. ' #input', function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)

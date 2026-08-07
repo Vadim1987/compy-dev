@@ -12,7 +12,8 @@
 
 local F = require('tests.helpers.input_fixture')
 
-describe('input API: cursor and text surface', function()
+describe('input surface: widget control — cursor and text #input',
+  function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)

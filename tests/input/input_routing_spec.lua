@@ -15,7 +15,8 @@
 
 local F = require('tests.helpers.input_fixture')
 
-describe('input contracts: routing #input', function()
+describe('input surface: inbound events — routing #input',
+  function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)

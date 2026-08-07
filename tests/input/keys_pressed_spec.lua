@@ -49,7 +49,8 @@ Controller.setup_callback_handlers({
 local kp_handler = love.handlers.keypressed
 local kr_handler = love.handlers.keyreleased
 
-describe('keys_pressed table #input', function()
+describe('input surface: inbound events — the held-key set'
+  .. ' #input', function()
   before_each(function()
     Controller.keys_pressed = { }
   end)
@@ -94,7 +95,8 @@ end)
 -- registration-time dispatcher closures — same open item
 -- as doc/development/technical_debt/input.md, "Combo-string dispatch
 -- allocates a table per call".
-describe('combo_string #input', function()
+describe('input surface: inbound events — combo serialisation'
+  .. ' #input', function()
   local cs = Controller.combo_string
 
   it('bare key escape', function()

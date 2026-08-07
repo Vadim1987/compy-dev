@@ -29,7 +29,8 @@ local F = require('tests.helpers.input_fixture')
 -- project registers — except the one widget-signature row, which patches the
 -- shared widget and restores it.
 
-describe('#input events dispatching', function()
+describe('input surface: inbound events — dispatch #input',
+  function()
 
 
   setup(function() F.setup() end)
