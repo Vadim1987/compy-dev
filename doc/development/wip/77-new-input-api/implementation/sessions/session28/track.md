@@ -86,6 +86,34 @@
   ruling is a semantics correction, not a behaviour switch for live channels.
 - Decision 2's paragraph now carries a third stale claim (widget decline) on top
   of R081's two; appended to `validation/notes/S28-owner-concerns.md` for P10/W9.
+## 2026-08-07 — owner rejects the decline mechanism
+
+- **Ruling:** truthy consumes, non-truthy does not; no false/nil distinction; the
+  minimum that stops singleclick/doubleclick blowing up is a plain no-op inside
+  the widget. *"I am actively against hallucinated special cases (KISS and DRY
+  must be honored)"* — and: write it into the rules.
+- I had read "ideally does not consume" as a requirement and built a decline
+  protocol for it. The ideal was subordinate to not inventing mechanics; the
+  requirement was only "does not blow up". Rule of thumb I take from it: when a
+  ruling contains an ideal and a requirement, the requirement is the mandate.
+- `811849e2` reverts the mechanism — widget tier back to shown-means-consumed,
+  no-ops plain, decline row deleted with the mechanism it pinned. The defect row
+  survives and still discriminates (mutation-checked by file copy this time, not
+  `git checkout`). 955 → 954.
+- `f8ad6940` `agents/rules.md` Design section gains **"No invented special cases
+  (KISS, DRY)"**, with the rejected code as the worked example and three signs:
+  a sentinel only one caller produces, a branch nothing exercises, an exception
+  clause on a previously uniform decision.
+- `493c3cbe` F2 signature unification (owner approved, rationale: shrink the
+  future-mistake surface). `keypressed(k, sc, isr)`, `keyreleased(k, sc)`. All
+  call sites audited — every non-chain caller passes the key alone, so nothing
+  relied on the old second position. No new row: an existing one already pins
+  that ('a', 'scan-a', true) reaches the widget. 954 unchanged.
+- Tooling anomaly handed to a cold Sonnet agent (owner's suggestion: git hook
+  inherited from their workspace? linter rewriting atomically without changing
+  content? LSP?). Prompt `validation/prompts/S28-tooling-anomaly-agent.md`,
+  deliverable `validation/outcomes/S28-tooling-anomaly.md`. Read-only, and told
+  to record the message verbatim if it fires during its own run.
 - Task as understood, stated to the owner before proceeding: part 1 revalidation
   of session27 (Decisions 26/27/28, five defect fixes + their tests, the 187-id
   coverage claim, the four changed severity calls), report findings, then part 2
