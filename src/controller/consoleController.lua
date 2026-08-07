@@ -1,6 +1,7 @@
 require("view.input.userInputView")
 require("controller.editorController")
 require("controller.userInputController")
+require("controller.projectInputController")
 
 
 local class = require('util.class')
@@ -755,17 +756,20 @@ local get_compy_input = function()
   -- table — only mutate it — since the surface holds this exact
   -- reference (teardown re-seeds in place).
   local widget = love.state.user_input_controller
+  -- One combo table per channel, from the list the route
+  -- dispatches on — not a copy of it, so a channel cannot exist
+  -- for dispatch and be missing here.
+  local shortcut_tables = { }
+  for _, ev in ipairs(ProjectInputController.EVENTS) do
+    shortcut_tables[ev] = Key.new_handler_table()
+  end
   local state = {
     -- shortcuts: per-event combo tables (Decision 8, normalising).
     -- hooks: one fn per event, seeded once at activation (Decision
     -- 10 revised). callbacks: the widget's own table (Decision 7
     -- revised). shortcuts/hooks start empty (leaves fill on project
     -- write); callbacks carries the widget's stay-open defaults.
-    shortcuts = {
-      keypressed  = Key.new_handler_table(),
-      keyreleased = Key.new_handler_table(),
-      textinput   = Key.new_handler_table(),
-    },
+    shortcuts = shortcut_tables,
     hooks = { },
     callbacks = widget.callbacks,
     pending = { },

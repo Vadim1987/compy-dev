@@ -290,11 +290,20 @@ return** like keyboard ones: return truthy and a shown overlay does not see
 the event. Return nothing and it carries on to the overlay, which is what
 you want while an overlay is up for its own reasons.
 
-> REMARK: there should be pointer shortcuts!
-There are no pointer *shortcuts* — a combo needs a key to name, so
-`shortcuts` covers the keyboard and text channels only. Pointer events enter
-the walk at the hook tier. Read `compy.input.keys_pressed` inside a pointer
-hook if you need to know which modifiers were held.
+Pointer events take shortcuts too, and the combo is the held modifiers with
+no trigger to name: `ctrl+*` is a ctrl-click.
+
+```lua
+compy.input.shortcuts.mousepressed['ctrl+*'] = function(x, y, button)
+  inspect(x, y)
+  return true
+end
+```
+
+With no modifier held there is no combo to name, so an ordinary click goes
+straight to the hook — which is where unmodified pointer handling belongs.
+The button is not part of the combo: it arrives as LÖVE's own argument, so
+one combo vocabulary covers every channel.
 
 > REMARK: not 'overlay', but 'input widget'
 > REMARK: frame this whole paragraph as example of solving non-conventional challenge (preventing modifier-based hotkey from echoing into the input widget), not say "if you open with 'i'" as if it was some common or recommended convention

@@ -83,6 +83,57 @@ describe('input contracts: shortcuts and click #input', function()
         end)
     end)
 
+  -- Pointer shortcuts. A pointer event names no trigger key, so
+  -- its combo is the held modifiers plus the wildcard: 'ctrl+*'
+  -- is a ctrl-click. Nothing else about the tier differs — same
+  -- table, same walk, same truthy-consumes rule.
+  describe('pointer shortcuts', function()
+
+    it('a modifier combo fires and consumes', function()
+      local fired, reached_hook = false, false
+      local input = F.activate_project()
+      input.shortcuts.mousepressed['ctrl+*'] =
+          function() fired = true; return true end
+      input.hooks.mousepressed =
+          function() reached_hook = true end
+      F.session.press('lctrl')
+      F.session.mousepressed(10, 10, 1, false, 1)
+      assert.is_true(fired)
+      assert.is_false(reached_hook)
+    end)
+
+    -- The control: with no modifier held there is no combo to
+    -- name, so the same event goes to the hook untouched. Without
+    -- this row a shortcut tier that fired on EVERY pointer event
+    -- would pass the row above.
+    it('an unmodified pointer event reaches the hook',
+      function()
+        local fired, reached_hook = false, false
+        local input = F.activate_project()
+        input.shortcuts.mousepressed['ctrl+*'] =
+            function() fired = true; return true end
+        input.hooks.mousepressed =
+            function() reached_hook = true end
+        F.session.mousepressed(10, 10, 1, false, 1)
+        assert.is_false(fired)
+        assert.is_true(reached_hook)
+      end)
+
+    -- The button is LÖVE's own third argument, not part of the
+    -- combo: one vocabulary for combos (modifiers), and the
+    -- button read where LÖVE already delivers it.
+    it('the handler receives LOVE arguments, button included',
+      function()
+        local seen
+        local input = F.activate_project()
+        input.shortcuts.mousepressed['ctrl+*'] =
+            function(x, y, btn) seen = { x, y, btn }; return true end
+        F.session.press('lctrl')
+        F.session.mousepressed(10, 20, 2, false, 1)
+        assert.same({ 10, 20, 2 }, seen)
+      end)
+  end)
+
   -- Framework click detection (doc/development/internals/user_input.md,
   -- "Framework-level click handling"): a derived
   -- path over raw pointer delivery, asserted on outcomes

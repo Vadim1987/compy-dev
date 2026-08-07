@@ -374,7 +374,7 @@ local function reset_compy_input(CC)
   -- state, so `pairs` on them yields nothing. Every channel that
   -- can hold something is named in a list, and the list is what
   -- teardown walks.
-  for _, ev in ipairs(_keyboard) do
+  for _, ev in ipairs(_bindable) do
     wipe_table(input.shortcuts[ev])
   end
   for _, ev in ipairs(HOOK_EVENTS) do input.hooks[ev] = nil end
@@ -446,6 +446,20 @@ local function combo_string(k, keys_pressed)
   return table.concat(parts, '+')
 end
 
+--- Is any modifier held? The cheap pre-check the triggerless
+--- (pointer) shortcut lookup runs before building a combo
+--- string, so an unmodified motion event allocates nothing.
+--- @param keys_pressed table
+--- @return boolean
+local function any_mod(keys_pressed)
+  for _, m in ipairs(COMBO_MODS) do
+    if keys_pressed[m[1]] or keys_pressed[m[2]] then
+      return true
+    end
+  end
+  return false
+end
+
 -- Memoised read-only view over Controller.keys_pressed handed to
 -- every chain consumer (doc/development/decisions/input.md, Decision 13):
 -- reads pass through to the
@@ -494,6 +508,7 @@ Controller = {
 
   keys_pressed = { },
   combo_string = combo_string,
+  any_mod = any_mod,
   held_keys = held_keys,
 
   ----------------

@@ -1,12 +1,12 @@
 local class = require('util.class')
 require("util.key")
 
--- The project route: owner of the keyboard/text handlers while
--- a project run owns the screen — a sibling to ConsoleController
--- / EditorController. The route is DUMB: it navigates each
--- keyboard/text event through THREE consumers in order, stopping
--- at the first that returns truthy (doc/development/decisions/input.md,
--- Decision 2), the same shape on all three channels:
+-- The project route: owner of the input handlers while a project
+-- run owns the screen — a sibling to ConsoleController /
+-- EditorController. The route is DUMB: it navigates every event,
+-- keyboard and pointer alike, through THREE consumers in order,
+-- stopping at the first that returns truthy
+-- (doc/development/decisions/input.md, Decision 2):
 --
 --   1. compy.input.shortcuts[event][combo]  project shortcut
 --      combos (doc/development/decisions/input.md, Decision 8:
@@ -27,16 +27,6 @@ require("util.key")
 -- value (doc/development/decisions/input.md, Decision 5).
 -- Routing contract: doc/development/internals/user_input.md
 
--- Every channel the chain dispatches on. Keyboard/text carry a
--- combo trigger and a shortcuts tier; pointer channels carry
--- neither and start at the hook tier, so `dispatch` tolerates a
--- missing shortcuts table rather than each channel special-
--- casing itself. Pointer payloads are exactly LÖVE's own
--- arguments; no held-key view is appended, since a project
--- reads that through
--- compy.input.keys_pressed (Decision 20) and appending it would
--- change the signature every existing pointer handler was
--- written against.
 -- Every channel the chain dispatches on, in ONE list. The derived
 -- clicks belong in it: where an event comes from (LÖVE, or the
 -- framework's click timer) is not how a project binds it, and the
@@ -48,9 +38,8 @@ local EVENTS = {
   'singleclick', 'doubleclick',
 }
 
--- The channels that carry a combo trigger, and therefore a
--- shortcuts tier. Everything else in EVENTS enters the walk at
--- the hook tier.
+-- The channels that NAME a trigger in their combos. Everything
+-- else builds its combo from held modifiers alone.
 local KEYBOARD = {
   keypressed = true, keyreleased = true, textinput = true,
 }
@@ -80,19 +69,32 @@ end
 --- @field compy_input table?
 ProjectInputController = class.create(new)
 
+-- Published: the console provisions one shortcut table per
+-- channel and teardown wipes them, so both need the list this
+-- file dispatches on rather than a copy of it.
+ProjectInputController.EVENTS = EVENTS
+
 --- Exact combo first, then the modifier class
 --- (doc/development/decisions/input.md, Decision 21): 'alt+*' is
 --- every Alt chord. The class key needs no parsing — it is the
 --- same serialisation with '*' as the trigger. A modifier's own
 --- press dispatches e.g. 'alt+lalt' and must not match 'alt+*'.
+---
+--- A pointer event names no trigger, so the class key is all it
+--- can have: 'ctrl+*' is a ctrl-click. With no modifier held
+--- there is nothing to name and the event belongs to the hook —
+--- which is also why the held-modifier test comes first, so an
+--- unmodified mousemoved never allocates a combo string.
 --- @param tbl table   one channel's combo table
---- @param trigger string
+--- @param trigger string?
 --- @return function?
 local function find_shortcut(tbl, trigger)
-  -- Pointer channels have no combo table and no trigger; they
-  -- enter the walk at the hook tier.
   if not tbl then return end
   local keys = Controller.keys_pressed
+  if not trigger then
+    if not Controller.any_mod(keys) then return end
+    return tbl[Controller.combo_string('*', keys)]
+  end
   local sc = tbl[Controller.combo_string(trigger, keys)]
   if sc or Key.is_mod(trigger) then return sc end
   return tbl[Controller.combo_string('*', keys)]
@@ -200,13 +202,12 @@ function ProjectInputController:keyreleased(k)
 end
 
 
----> REMARK: as discussed, lets *support* combo triggers, fully unifying all dispatching of input events. just that combo triggers for pointer won't have the 'triggering' key they would be modifier-only . btw what about right button? and maybe 'button' for those which support button number. easy change, would unify a lot
--- Pointer channels. Each is the keyboard shape minus the combo
--- trigger: no shortcuts tier (find_shortcut answers nil for a
--- missing table), hooks then the shown widget, first truthy
--- return consuming. The payload is LÖVE's own argument list,
--- unchanged, so a project handler seeded from love.mousepressed
--- and the widget's own method both see what they always saw.
+-- Pointer channels. Exactly the keyboard shape with no trigger
+-- to name: the same shortcuts tier keyed on modifier classes,
+-- then hooks, then the shown widget, first truthy return
+-- consuming. The payload is LÖVE's own argument list, unchanged
+-- — the button rides in it (mousepressed's third argument)
+-- rather than in a combo vocabulary of its own.
 --- @param event string
 local function pointer_channel(event)
   ProjectInputController[event] = function(self, ...)
