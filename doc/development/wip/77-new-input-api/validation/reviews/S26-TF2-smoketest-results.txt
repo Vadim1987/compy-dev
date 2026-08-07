@@ -1,0 +1,17 @@
+Console commands work (and console shortcuts)
+
+
+A1. paint works, but right-clicking on color does nothing
+A2. clicks and double-clicks work in sapper (any chance to *not* show inactive console input at the bottom?)
+A3. <did not tested reliably, on a laptop touchpad>
+A4. Turtle works fine. editing with 'error(boom)' gives expected result. typing nonsense into the prompt just make it clear and close
+A5. confirmed on sapper (console inactive while playing, active on Ctrl+Esc (but output not seen under the game field))
+A6. works
+B1. turtle shows 
+B2. guarded
+B3. maze works ("Ctrl" shadows the screen", when project is launched from another project navigation symbols are glitchy). works through levels 1-3 (real-time movement) and starting from level 4 (interactive prompt, hides when idle)
+B4. balloons work as expected
+B5. keyboard works *mostly* (including menu and help), except two paths never tested  before -- switching difficulty by Ctrl+Alt+<arrow> , and subgame #4 "alt keys" -- it shows lowercase 'k' or 'q' and then does not react when I press this symbol (however when I press shift visual representation of keyboard changes)
+C1. confirmed
+C2. I can register but its not clear how to test... nevermind for now
+C3. confirmed
