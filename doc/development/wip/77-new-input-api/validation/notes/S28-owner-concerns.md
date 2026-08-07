@@ -88,3 +88,59 @@ consequence — and if a second worked example is ever wanted, "accept the first
 glyph, drop the repeats" is the natural companion. **No platform helper for
 it:** one example's need is not an API (`agents/rules.md`, "No invented special
 cases").
+
+---
+
+## Attestations — owner rulings given in chat, session28
+
+Each is already acted on; this is the record of the reasoning, and of where the
+result lives. Nothing here exists anywhere else in that form.
+
+**On the click-at-a-shown-widget fix.** A no-op that does not blow up is the
+requirement; "ideally does not consume" was an ideal, not a mandate. *"Truthy
+result consumes, non-truthy does not. No need to have separate rule and invent
+mechanics that solves nothing… I am actively against hallucinated special cases
+(KISS and DRY principles must be honored)."* → `811849e2`, and the directive is
+in `agents/rules.md`, Design.
+
+**On the widget's key signatures.** Unify them — *"signatures unification is
+reducing future mistakes surface"* — but check every call site first. → `493c3cbe`.
+
+**On the three surfaces.** `inbound events` / `widget control` / `widget
+callbacks`. The tests adopt the vocabulary now; the guide inherits it in P10.
+
+**On the merges.** Merge outright, but **inventory the cases first, write a merge
+plan to disk, and have a cold agent revalidate the plan before anything moves
+and the results afterwards.** Both reviews found real errors.
+
+**On paint (SM1).** Leave it. The right-click suggestion came from the smoke
+test, not from the example's intent; secondary-button availability is not uniform
+across environments, so mapping the secondary action to a double-click may be
+deliberate. Record the hardcoded `1`/`2` as debt, with a recommendation: name the
+layers, stop using a button number as the layer identifier, and consider Ctrl or
+Alt as the better "background" metaphor.
+
+**On sapper (SM2).** Do not change the console's drawing logic for the looks of
+one pen-and-paper example. Record the status quo as disputable debt.
+
+**On the smoke findings generally.** Analyse from description and code, without
+`xvfb` — *"not expecting you to really debug visual glitches, but to figure out
+possible causes from description and code and try fixing them in good faith"* —
+and the owner verifies later in a separate smoke test.
+
+**On the keyboard judgement state.** No journal. A predeclared state table with
+scalar fields, because *"blocking table writes is more reliable than freezing
+isolated scalar value, plus it explicitly models the internal game state"*, and
+predeclaring minimises GC churn. Two consumption scenarios, two fields: one for
+the tail/grace mechanics, one for judgement dedupe.
+
+**On the grace and frames.** The owner overturned an attempted state-only design:
+the grace *"compensates for disorder between key and text events, which in turn
+means we cannot do timeless state-only evaluation and need to count frames"*.
+Correct — a `textinput` arriving after its own `keyreleased` is ambiguous by
+state alone.
+
+**On vocabulary.** State the rules in LÖVE's own event names and drop the coined
+term "glyph": *"its interpretation may drift without strict definition… we
+already had problems with coined umbrella terms that spoil architecture."* →
+`doc/development/internals/examples/keyboard.md`.

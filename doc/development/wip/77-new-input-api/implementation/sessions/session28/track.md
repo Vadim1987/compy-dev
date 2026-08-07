@@ -199,3 +199,60 @@
   of session27 (Decisions 26/27/28, five defect fixes + their tests, the 187-id
   coverage claim, the four changed severity calls), report findings, then part 2
   P8-tail → P9 → P10 → P11 → close-out.
+
+## 2026-08-07 — P9, then the P9b design
+
+- `84c2043e` **SM1/SM2 ruled no-change** after the owner asked for code-only
+  analysis. SM1 base-checked: right-click never worked in paint, before or after
+  — its `btn` is an action selector fed by single-vs-double click. SM2's cause
+  found (sapper defines no `love.draw`, so the console's own draw path stays
+  installed and paints an inert prompt) → disputable debt.
+- `3dd52ad2` + `de890735` paint's `btn` carries two meanings — a real LÖVE button
+  on the drag path, a literal on the click path. **First wording was wrong** and
+  the owner caught the implication: I called it "a click count", which reads as
+  the framework sending a count into a button parameter. It does not; paint
+  writes the literal itself. Corrected — latent trap, not a defect.
+- `2095959f` paint recommendation (name the layers; stop using a button number as
+  a layer id; consider Ctrl/Alt as the background metaphor) + why the keyboard
+  fix is not the turtle echo guard.
+- Sub-agent analysed SM3a/3b/4/5. `3a9d48c` (keyboard repo) **SM5 fixed**: the
+  scene dropped a `textinput` whose key was held, and desktop LÖVE delivers
+  `keypressed` first, so every fresh character was discarded. **I nearly shipped
+  the agent's proposed fix, which leaned on the same ordering from the other
+  side.** `73dae3f5` SM4 pinned (not a platform defect; a pin, not a proof).
+- **P9b designed with the owner across several turns**, and the design improved
+  under challenge each time: single `lastGlyph` → two fields → state-only →
+  state + a bounded tail window. My "no clock" position was **wrong** and the
+  owner's reasoning overturned it: a `textinput` arriving after its own
+  `keyreleased` is ambiguous by state alone. Held-set snapshots were considered
+  and rejected (they get the dissolving chord backwards).
+- `2ae27961` design moved to the **persistent** corpus,
+  `doc/development/internals/examples/keyboard.md`, rewritten in LÖVE's event
+  vocabulary with "glyph" removed at the owner's instruction.
+
+## 2026-08-07 — WRAPPED
+
+Suite **954 / 0 / 0 / 3**, green and stated at every commit. 26 commits here, 1
+in `examples/keyboard`. Nothing pushed anywhere.
+
+Wrapped **not** for context pressure (46% used) but because P9b/P10/P11 do not
+fit any one session, every unit is committed, and P9b's spec is in the persistent
+corpus — so a cold session starts with no reconstruction cost.
+
+Distilled into `report.md`; self-assessment in `observations.md`; owner rulings
+into `../../../validation/notes/S28-owner-concerns.md`; successor commissioned as
+session29 and the pointer repointed. Track kept raw per `agents/sessions.md` §3.
+
+## Sub-agents
+
+All Sonnet, explicit model, prompts and deliverables on disk under
+`validation/{prompts,outcomes}/`:
+
+- **S28-mutation-check** — the five defect fixes, one mutation at a time.
+- **S28-tooling-anomaly** — the phantom "file was modified" messages.
+- **S28-merge-inventory** — every row of the four merging files.
+- **S28-merge-plan-review** (pre-move) and **S28-merge-result-review** (post-move).
+- **S28-smoke-analysis** — SM3a/3b/4/5 from code.
+
+The two merge reviews were the highest-value spawns: each found a real error I
+had made.
