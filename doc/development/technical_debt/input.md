@@ -1144,3 +1144,39 @@ into a view whose job is to paint the console.
 fixing it:** a state test in the view, invisible to the suite — the input fixture stubs the
 `view.view` module wholesale, so `ConsoleView:draw` is not exercised by any row, and the fix
 would be verifiable only by a human smoke test. Revisit if a project owner asks.
+
+### paint's `useCanvas(btn)` means a mouse button on one path and a click count on the other (pre-existing)
+
+`src/examples/paint/main.lua` calls `useCanvas(x, y, btn)` from two places, and `btn` means
+something different in each:
+
+- **the drag path** — `love.mousemoved` polls `love.mouse.isDown(btn)` for `btn = 1, 2` and
+  passes the held button through. Here `btn` is a real LÖVE mouse button.
+- **the click path** — `point(x, y, btn)`, reached from `hooks.singleclick` with a hardcoded
+  `1` and from `hooks.doubleclick` with a hardcoded `2`. Here `btn` is a click *count*.
+
+So the function reads as button-aware, and half its callers cannot supply a button. The
+consequences a user meets: right-**drag** on the canvas paints with the background colour,
+right-**click** does nothing, and double-click paints with the background colour — one effect,
+two unrelated gestures, plus a third gesture that looks like it should work and does not. The
+same conflation runs through `setColor`, whose `btn > 1` branch is reachable only by double
+click, so "secondary colour" is bound to double-click rather than to the secondary button.
+
+**Pre-existing, not a migration artefact.** At the PR base (`3256aac`) the drag path is
+byte-identical and the click path bound `compy.singleclick` / `compy.doubleclick` with the same
+hardcoded 1 and 2. This feature renamed the bindings (`compy.X` →
+`compy.input.hooks.X`) and changed nothing about the meaning.
+
+**Why it cannot simply be fixed by binding the button.** The derived clicks name no button by
+ratified decision (`../decisions/input.md`, Decision 27, "The derived clicks keep `(x, y)` and
+name no button"): they are not LÖVE events and the click timer synthesises them from
+left-button releases only. A project that needs to know which button produced a click binds
+`mousereleased` and does its own timing — which is exactly what the framework's timer does on
+the project's behalf for the left button.
+
+**Ruled not to change paint (owner, 2026-08-07):** the example never intended a secondary-button
+gesture, secondary-button availability is not uniform across environments, and mapping the
+secondary action onto a double-click may well be deliberate. Recorded because the parameter's
+double meaning is a trap for the next person to edit this example, not because the behaviour is
+wrong. If it is ever revisited, the honest fix is to split the parameter — one argument for the
+tool's colour choice, not a number that is sometimes a button.

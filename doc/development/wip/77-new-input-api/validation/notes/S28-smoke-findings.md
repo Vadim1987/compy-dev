@@ -45,6 +45,18 @@ with the background colour while the right button is held — at the base as wel
 as now. So right-**drag** paints and right-**click** does nothing, which is
 likely what made the smoke test read as a bug.
 
+**Follow-up (owner, 2026-08-07): "paint had a hope that singleclick would be
+counted separately for btn1 and btn2, and it never materialized."** Checked, and
+the code says something sharper than a hope: `useCanvas(x, y, btn)` is called
+from **both** paths, and `btn` means a different thing in each — a real mouse
+button from the drag path, a click count from the click path. So the function is
+button-aware and half its callers cannot supply a button. Recorded as technical
+debt: `doc/development/technical_debt/input.md`, "paint's `useCanvas(btn)` means
+a mouse button on one path and a click count on the other (pre-existing)". The
+entry states why binding the button is not the fix — the derived clicks name no
+button by Decision 27 — and that the honest fix, if ever taken, is to split the
+parameter rather than to add a gesture.
+
 ## SM2 — sapper: the inactive console prompt at the bottom. **CAUSE FOUND. Ruled to keep.**
 
 **What the code does.** Sapper defines no `love.draw`; it renders the minefield
