@@ -649,12 +649,12 @@ shown — hidden, the widget is skipped entirely by the dispatch walk.
 > REMARK: what do you mean 'reserved, unbuilt' and what is R9? If we declare that callback should be veto-ing, than it should be
 
 ```
-run_callback(self, 'before_submit', keys_pressed)   -- veto reserved, unbuilt (R9)
+if run_callback(self, 'before_submit') then return end   -- truthy = veto
 if self.model:get_text():is_empty() then return end
 local lines = self.model:get_text()
 if not gate(self.model, self.callbacks.validator, lines) then return end
 run_callback(self, 'on_text_entered', lines)
-run_callback(self, 'after_submit', lines)            -- DEFAULT: no-op — widget stays open
+run_callback(self, 'after_submit', lines)               -- DEFAULT: no-op — widget stays open
 ```
 
 > REMARK: and there was no implicit hide so 'anymore' is improper and whole reference can be removed. or just say -- "there's no implicit hide". asme abot 'no longer auto-closes' -- it never was unless configured with 'one-shot' flag (now replaced by callbacks).
@@ -663,21 +663,21 @@ run_callback(self, 'after_submit', lines)            -- DEFAULT: no-op — widge
 `on_text_entered` fires **while the widget is still active** — there is no implicit hide any more.
 `after_submit` DEFAULTS to a no-op, so **a successful submit no longer auto-closes the widget** —
 this is the flipped default (Decision 6): the widget stays open unless a project's own
-`after_submit` calls `compy.input.hide()`. `before_submit`'s return value is reserved for a future
-veto and is ignored today (R9, unbuilt); rejecting bad input is the `validator`'s job.
+`after_submit` calls `compy.input.hide()`. A truthy `before_submit` **vetoes** the submit outright:
+nothing downstream runs and the text stays in the field. It is a guard on *whether to submit at
+all*; rejecting bad input with a message is still the `validator`'s job.
 
 **Cancel** (`UserInputController:cancel_flow`):
 
 ```
-if run_callback(self, 'before_cancel', keys_pressed) then return end  -- truthy = veto, skip clear
+if run_callback(self, 'before_cancel') then return end   -- truthy = veto, skip clear
 self.model:cancel()                                   -- clear, hardwired
 run_callback(self, 'after_cancel')                     -- DEFAULT: no-op — widget stays open
 ```
 
 > REMARK: "unlike_submit" should be wrong because submit should also be honored 
-Unlike submit, `before_cancel`'s return value **is honoured**: a truthy return vetoes the clear
-step entirely (content and widget state untouched, `after_cancel` does not fire) — the one
-asymmetry between the two default sequences. `after_cancel` DEFAULTS to a no-op, so Escape clears
+`before_cancel`'s return value is honoured the same way `before_submit`'s is: a truthy return
+vetoes the clear step entirely (content and widget state untouched, `after_cancel` does not fire). `after_cancel` DEFAULTS to a no-op, so Escape clears
 the field but the widget stays open, same flipped default as submit.
 
 `run_callback(self, name, ...)` (`userInputController.lua:438-442`) looks up `self.callbacks[name]`;

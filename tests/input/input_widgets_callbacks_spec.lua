@@ -268,6 +268,48 @@ describe('widget outputs, submit and cancel #input',
   -- Decision 6) -------
 
   describe('submit', function()
+    -- A truthy before_submit VETOES the submit, the mirror of
+    -- before_cancel below: nothing downstream runs and the text
+    -- stays in the field, so a project can refuse a submission it
+    -- is not ready for without having to undo one.
+    it('a truthy before_submit vetoes the whole submit',
+      function()
+        local input = F.activate_project()
+        local reached = { }
+        input.callbacks.before_submit = function() return true end
+        input.callbacks.validator = function()
+          reached[#reached + 1] = 'validator'; return true
+        end
+        input.callbacks.after_submit = function()
+          reached[#reached + 1] = 'after'
+        end
+        input.show({
+          text = 'abc',
+          on_text_entered = function()
+            reached[#reached + 1] = 'entered'
+          end,
+        })
+        F.session.press('return')
+        assert.same({ }, reached)
+        assert.same({ 'abc' }, F.widget:get_text())
+      end)
+
+    -- The control for the row above: a FALSEY before_submit must
+    -- not veto anything. Without it, a submit broken outright
+    -- would satisfy the veto assertion just as well.
+    it('a falsey before_submit lets the submit through',
+      function()
+        local input = F.activate_project()
+        local entered
+        input.callbacks.before_submit = function() return nil end
+        input.show({
+          text = 'abc',
+          on_text_entered = function(t) entered = t end,
+        })
+        F.session.press('return')
+        assert.same({ 'abc' }, entered)
+      end)
+
     -- doc/development/decisions/input.md, Decision 6: the full submit
     -- call-order chain on a real Enter keypress. Every project
     -- callback receives the widget's native line array.

@@ -72,7 +72,8 @@ end
 Enter submits; Shift+Enter inserts a newline. On a non-empty submission the
 order is:
 
-1. `before_submit()`, if assigned.
+1. `before_submit()`, if assigned. A truthy return vetoes the
+   submit: steps 2-4 do not run and the text stays in the field.
 2. `validator(lines)`, if assigned.
 3. `on_text_entered(lines)`, if assigned.
 4. `after_submit(lines)`, if assigned.

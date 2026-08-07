@@ -9,10 +9,14 @@ require("util.lua")
 -- no-ops, so a widget stays open unless a callback hides it. on_limit_
 -- reached defaults to a no-op so the navigation-boundary emit is an
 -- unconditional call. Re-seeded (not wiped) on teardown (AC10).
+-- before_submit/before_cancel are deliberately absent: their
+-- return is READ as a veto, and an unset one must be
+-- distinguishable from one that declines to veto
+-- (doc/development/decisions/input.md, Decision 23). run_callback
+-- already answers nil for an absent name, which is no veto.
 local function default_callbacks()
   return {
     on_limit_reached = noop,
-    --> REMARK: where are before_submit and before_cancel?
     after_submit = noop,
     after_cancel = noop,
   }
@@ -404,13 +408,13 @@ local function run_callback(self, name, ...)
 end
 
 --- Submit flow (doc/development/decisions/input.md, Decision 6
---- revised): the
---- widget's own Enter behaviour. before_submit (veto reserved,
---- unbuilt) → empty guard → validate → deliver (fires
---- on_text_entered) → after_submit. after_submit defaults to a
---- no-op, so the widget stays open unless a callback hides it.
+--- revised): the widget's own Enter behaviour. A truthy
+--- before_submit VETOES; otherwise empty guard → validate →
+--- deliver (fires on_text_entered) → after_submit. after_submit
+--- defaults to a no-op, so the widget stays open unless a
+--- callback hides it.
 function UserInputController:submit_flow()
-  run_callback(self, 'before_submit')
+  if run_callback(self, 'before_submit') then return end
   if self.model:get_text():is_empty() then return end
   local lines = self.model:get_text()
   if not gate(self.model, self.callbacks.validator, lines) then
