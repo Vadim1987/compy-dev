@@ -442,7 +442,8 @@ the smoke-test findings, which have no remark ids and get their own:
 |---|---|---|
 | SM1 | paint: right-clicking a colour does nothing | **S0** — needs W2 (button in combo) or a `mousepressed` hook that reads the button |
 | SM2 | sapper: inactive console input strip visible at the bottom | S2 — cosmetic, owner asked "any chance to not show it" |
-| SM3 | maze: Ctrl shadows the screen; nav symbols glitch when launched from another project | **S0** — "launched from another project" is a route-teardown smell, exactly the class session26 fixed four of |
+| SM3a | maze: nav symbols glitch when launched **from another project** | **S0** — owner's hypothesis (2026-08-07): maze switches fonts, and the switch probably only takes on a first start, not after another project. Check font state across a project→project transition before assuming a route bug |
+| SM3b | maze: Ctrl alone dims the screen | S2 — owner: likely maze's own UX bug, not the platform. Not critical, but **pin it** rather than leave it unexplained |
 | SM4 | keyboard: Ctrl+Alt+arrow difficulty switch does nothing | **S0** — a three-modifier chord; likely a combo-serialisation gap |
 | SM5 | keyboard: subgame 4 "alt keys" shows a key and does not react when pressed | **S0** |
 
@@ -541,8 +542,7 @@ state dirty").
 | ~~P6~~ **DONE** (`bb6569a2`) | W4 — dispatch/wiring collapse | P2–P5 | behaviour-preserving; suite is the proof. `hook_pointer` is renamed, not deleted |
 | ~~P7~~ **DONE** | W7 — controller structure + the 16-line rule | P6 | see commits `99f883d0`…`75c0d9ea` |
 | **P7b** | **Teardown ownership** (owner, 2026-08-07) — Decision 28 | P7 | **DONE** (`ab2d45eb`) |
-| P7 | W7 — controller structure, incl. the 16-line rule in `agents/rules.md` | P6 | |
-| P8 | W8 — test restructuring | P2–P7 | do NOT restructure tests before the code stops moving |
+| **P8** | W8 — test restructuring. **PART DONE**: R058/R059/R060/R061 (tracer + matrix supersession), R067 (NFR narrowing), R068 (blind row), R070 (before_exit contract). **Left:** R057 (three-surface grouping), R074/R078/R079 (merge / dissolve), R047, R063, R064, R069, R075 | P2–P7 | do NOT restructure tests before the code stops moving |
 | P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | **[REV]** the three nested repos carry **no automated tests** — one static spec doc, no runnable suite. Committing is not verification: a smoke re-pass on the channels W1/W2/W3 touch is the gate, `examples/keyboard` at minimum. Never pushed |
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it. **Tombstone decisions, never renumber** |
 | P11 | W12 — comment sweep, slices, revalidation ×2 | P10 | the commission's (e)–(9) |
