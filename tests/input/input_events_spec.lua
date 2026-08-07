@@ -1113,6 +1113,31 @@ describe('#input events dispatching', function()
         function() input.shortcuts.keypressed = { } end)
     end)
 
+    -- The clause the group above states and never asserted: a
+    -- project "can neither replace nor shadow" the surface. The
+    -- rows above all go THROUGH compy.input's own metatable, so
+    -- they cannot reach the one write that replaces the whole
+    -- container -- `compy.input = {}`, which is a write to
+    -- `compy`, one table up. Swallowed, that leaves the widget,
+    -- the seeded hooks and the combo tables all still live and
+    -- still receiving, while the project holds a plain table it
+    -- believes is the API.
+    it('replacing compy.input itself raises', function()
+      F.activate_project()
+      local compy = F.cc:get_project_env().compy
+      assert.has_error(function() compy.input = { } end)
+    end)
+
+    -- The control: `compy` is not frozen wholesale. A project
+    -- may still add its own fields there, so the row above is
+    -- pinning one protected name and not a blanket refusal.
+    it('other compy fields stay writable', function()
+      F.activate_project()
+      local compy = F.cc:get_project_env().compy
+      assert.has_no.errors(function() compy.mygame = { } end)
+      assert.same({ }, compy.mygame)
+    end)
+
     it('leaf writes inside the sub-tables are accepted',
       function()
         local input = F.compy_input()

@@ -796,23 +796,34 @@ end
 -- fonts, input); called while preparing the project environment.
 local get_compy_namespace = function(terminal)
   require("util.namespace.fonts")
-  ---> REMARK: why so special treatment for 'before_exit_slot' if default_before_exit is simply a noop? that's exactly case where simple check of nil-ness followed by execution of non-nil function would be justified than complex meta-table jugglng (feel free to contest)
+  -- Two members are held as upvalues rather than fields, and
+  -- for the same reason: a metatable's __newindex only fires
+  -- for a key the table does NOT hold, so a raw field cannot
+  -- be defended. `input` must refuse assignment (Decision 7)
+  -- and `before_exit` must intercept it.
   local before_exit_slot = default_before_exit
+  local input_surface = get_compy_input()
   local ns = {
     terminal = get_compy_terminal(terminal),
     audio = compy_audio,
     graphics = compy_graphics,
     fonts = CompyFonts(),
-    input = get_compy_input(),
   }
   return setmetatable(ns, {
     __index = function(t, k)
       if k == 'before_exit' then return before_exit_slot end
+      if k == 'input' then return input_surface end
       return rawget(t, k)
     end,
     __newindex = function(t, k, v)
       if k == 'before_exit' then
         before_exit_slot = v
+      elseif k == 'input' then
+        -- Decision 7's first clause. compy.input's own
+        -- metatable cannot defend this: replacing the
+        -- container is a write to `compy`, one table up.
+        error("compy.input is not assignable — write to its"
+          .. ' sub-tables (shortcuts / hooks / callbacks)', 2)
       else
         rawset(t, k, v)
       end
