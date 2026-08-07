@@ -45,9 +45,11 @@ describe('#input events dispatching', function()
   end
 
 
-  ---> REMARK: can we rewrite it as more readable matrix (maybe yes, maybe no). just using unified 'registration', and varying consumption returns to observe different depth of chain propagation
-  ---> REMARK: I really think we could have 'describe-level' "order" table, standardized mock shortcuts/handlers factories that always include updating 'order' when invoked and than return whatever they are told to return. And initial setup of widget with "abc", than combining test cases and inspecting results will be much more obvious. I would even say its MUST HAVE: this way we need to understand paradigm *once*, and tests become more concise. Now each test case establishes its own rules, slightly different -- it looks like too much copy-n-paste, which also *slightly* differs inside, so reader has to decode the universe of each case
-  ---> REMARK: BY THE WAY, AREN'T OUR SHORCUTS mod-only ? WHY TESTS SETTING SHORTCUT AGAINST SIMPLE SYMBOL ARE WORKING THEN?
+  -- A shortcut combo is modifiers plus a trigger, and the
+  -- modifiers are optional: an unmodified key is a combo of one
+  -- token, so `shortcuts.keypressed['a']` binds a bare 'a'. Only
+  -- the CLASS form needs a modifier — `'*'` alone raises,
+  -- because a class needs modifiers to be a class of.
 
   describe('registration outlives the event', function()
     -- Order, consumption and fall-through are the interception
