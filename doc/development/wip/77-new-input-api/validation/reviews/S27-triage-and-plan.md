@@ -543,7 +543,8 @@ state dirty").
 | ~~P7~~ **DONE** | W7 — controller structure + the 16-line rule | P6 | see commits `99f883d0`…`75c0d9ea` |
 | **P7b** | **Teardown ownership** (owner, 2026-08-07) — Decision 28 | P7 | **DONE** (`ab2d45eb`) |
 | **P8** | W8 — test restructuring. **PART DONE**: R058/R059/R060/R061 (tracer + matrix supersession), R067 (NFR narrowing), R068 (blind row), R070 (before_exit contract). **Left:** R057 (three-surface grouping), R074/R078/R079 (merge / dissolve), R047, R063, R064, R069, R075 | P2–P7 | do NOT restructure tests before the code stops moving |
-| P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | **[REV]** the three nested repos carry **no automated tests** — one static spec doc, no runnable suite. Committing is not verification: a smoke re-pass on the channels W1/W2/W3 touch is the gate, `examples/keyboard` at minimum. Never pushed |
+| P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | **[REV]** the three nested repos carry **no automated tests** — one static spec doc, no runnable suite. Committing is not verification: a smoke re-pass on the channels W1/W2/W3 touch is the gate, `examples/keyboard` at minimum. Never pushed. **[S28] PART DONE** — SM1/SM2 ruled no-change, SM3b explained, SM4 pinned by a suite row, SM5 fixed (`3a9d48c`); SM3a left open, needs one runtime check. Evidence: `../notes/S28-smoke-findings.md` |
+| **P9b** | **keyboard: judgement decoupled from delivery order** (owner design, 2026-08-07) — **NEXT TO EXECUTE**. `ALT_JUDGE` predeclared state table (`lastGlyph`, `accepting`), judgement reads `textinput` only, `keypressed`/held set drive visualisation only, non-printing targets injected rather than judged on a second path. Supersedes the interim `spendGlyph` fix and should subtract code | P9 | design of record: `../notes/S28-keyboard-judgement-design.md`. Nested repo, **no suite** — reasoned, not proven; smoke checklist is in the design note. No platform change |
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it. **Tombstone decisions, never renumber** |
 | P11 | W12 — comment sweep, slices, revalidation ×2 | P10 | the commission's (e)–(9) |
 
@@ -632,3 +633,31 @@ W10 every id not listed above (92): R001 R002 R003 R007 R010 R013 R032 R034
 **[REV] Moves in this revision:** R044 W7→W6 · R081 W10→W9 · R088 W10→W9 ·
 R110 W9→W10 · R135 W9→W10 (answered, no action). Counts unchanged: W9 16,
 W10 92.
+
+---
+
+## 6. [S28] Amendments made in session28
+
+The phase table above is the running plan and is amended in place rather than
+superseded, per `agents/validation.md` ("Revisions are made *with the owner
+in-session* and materialized on disk"). Session27's own text is untouched;
+everything session28 changed is marked `[S28]`.
+
+| # | amendment | why |
+|---|---|---|
+| 1 | **P8 marked done.** R047, R063, R069 answered; R057 landed as three named surfaces; R064/R074/R075/R078 landed as the merge (four input specs → two) | executed 2026-08-07, plan + two cold reviews in `../reviews/S28-merge-plan.md` and `../outcomes/S28-merge-result-review.md` |
+| 2 | **P9 marked part-done**, with each smoke finding's disposition named in the row | four of five closed from code at the owner's instruction; SM3a needs the app, which that pass excluded |
+| 3 | **P9b added** — the keyboard judgement redesign | owner design given in-session after SM5's fix landed; it supersedes that fix rather than sitting beside it, so it belongs in the plan and not only in a note |
+
+Two rulings from the same session that constrain later phases, recorded here so
+a phase does not have to rediscover them:
+
+- **R081's correction is wider than filed** (`../notes/S28-owner-concerns.md`):
+  Decision 2's paragraph is stale twice over — the "three components" scope, and
+  any claim that pointer channels have no shortcuts tier, which Decision 27
+  retired. P10/W9 owns both.
+- **`doc/input_api.md` states the two-channel ordering fact inside the
+  echo-guard section**, as though it were a fact about opening a widget. It is a
+  fact about the channels; a project meeting the other consequence of it has no
+  signpost. P10 owns the restatement. **No platform helper** — one example's
+  need is not an API.
