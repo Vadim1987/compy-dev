@@ -2,6 +2,10 @@
 -- (1.0.0-rc20260712) — the widget output fields are new with
 -- it, and it is what set today's submit/cancel defaults.
 
+
+---> REMARK: rename file (there are others mentioning 'widgets' this one mentions 'widget')
+
+---> REMARK: remove copypasted irrelevant prose below
 -- dispatch chain: widget outputs and submit/cancel.
 -- Routing invariant (doc/development/decisions/input.md,
 -- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches
@@ -22,6 +26,7 @@
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
 
+---> REMARK: artifact prose from elsewhere? distill to only relevant 
 -- ====================================================
 -- The dispatch chain (doc/development/decisions/input.md, Decision 2).
 -- All rows drive the REAL project route: F.activate_
@@ -36,6 +41,8 @@ local mock = require('tests.mock')
 -- which patches the shared widget and restores it).
 -- ====================================================
 
+
+---> REMARK: don't we have another test suit which also tests submit and cancel? consider merging, unification and deduplication of cases
 describe('widget outputs, submit and cancel #input',
   function()
   setup(function() F.setup() end)

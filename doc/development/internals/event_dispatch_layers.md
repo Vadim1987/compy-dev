@@ -97,18 +97,19 @@ permanent plumbing, the other is a route-switch operation invoked repeatedly ove
 lifetime.
 
 ---
-
 ## What becomes of a project-defined `love.*`
 
 `setup_callback_handlers`'s "callback" / "handlers" wording is **LÖVE's own**: the function
 literally sets up `love.handlers`, which is what LÖVE calls that table. There is no second,
 Compy-specific sense of *handler* to collide with it — the input API's vocabulary
 ([`../decisions/input.md`](../decisions/input.md#vocabulary--hook-callback-handler)) names two
+> REMARK/nitpick -- project vocabulary introduces *three* terms (also a 'shortcut') -- maybe its worth mentioning here too
 *other* things, **hook** and **callback**, and leaves "handler" to LÖVE.
 
 What does need saying is what happens to a project's own `love.*` functions, because a project
 author writing them believes they are installing handlers:
 
+> REMARK: this needs actualization, because the routing was recently unified and there's no more artificial divergence between keyboard/pointer?
 - **keyboard and text** (`keypressed`, `keyreleased`, `textinput`) — captured from the project's
   sandboxed `love` table and **seeded as `compy.input.hooks[event]`** (Decision 10), once, at
   activation. They run in hook position inside the route's walk, with hook semantics: a truthy

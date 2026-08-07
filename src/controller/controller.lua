@@ -6,6 +6,7 @@ require("util.string.string")
 require("util.key")
 require("util.lua")
 local LANG = require("util.eval")
+---> REMARK: I think this file still has two big problems: it plugs and unplugs many supported events literally one by one while it could just set up proxying by event name in a cycle (with couple exceptions that are needed to calculate derived events). So it needs big huge pass, collapsing duplicating functions and drying up comments which are extremely verbose (more than needed)
 
 local messages = {
   user_break = "BREAK into program",
@@ -38,7 +39,7 @@ local user_draw
 -- a)"): keep the project route, Ctrl+Esc -> console.
 local user_pointer
 
-
+---> REMARK: if there's no moer distinction, why keep separate lists? also if we anyway hook singleclick/doubleclick (therefore handling the situation when project sets them via love.singleclick) -- why not just get back to a consolidated supported list? separation seemingly has no more sense there (again, like it was pre-feature)
 -- Two lists, one lifetime. Every channel installs the same way
 -- (occupy_keyboard), runs the same chain, and is released at
 -- the same moment: the project's stop. The split that existed
@@ -142,6 +143,7 @@ local function wrap(f, CC, ...)
   end
 end
 
+---> REMARK: extremely verbose prose shorten to minimum, and consider renaming function to something meaningful (naive but semantically correct variant: "with_canvas_and_error_handling")
 --- NAMING — settled. `userlove` KEEPS its name (owner ruling,
 --- 2026-08-03: "its nice and makes no harm itself"). Read it as
 --- "a table indexed by love-event name holding the project's
@@ -222,6 +224,9 @@ local function project_handlers(userlove, CC)
   return out
 end
 
+
+---> REMARK: eliminate artificial split between keyboard and non-keyboard events, wire them all at once (note there's also hook_pointer function -- clearly a leftover -- sort out this mess)
+---> REMARK: also, it would be more readable in the form where we just cycle around event names and do for i,event in ipirs(supported) do love[event]=guarded(CC, function(...) cc:dispatch(event,...) end end ? and to prevent GC abuse this set of proxy dispatchers could be built *once*? 
 --- The project route occupies the keyboard/text handlers for
 --- the run; the project's own handlers ride along for
 --- delegation (never route owners themselves).
@@ -326,6 +331,7 @@ end
 --- @param userlove table
 --- @param CC ConsoleController
 local set_handlers = function(userlove, CC)
+  ---> REMARK: as part of de-duplication and elimination of interim text/pointer split there should be just hook_input(userlove,CC) which will do all the machinery inside, uniformly across all supported events -- passing all function arguments downstream. and maybe with a single guarded call around 'dispatch' if possible?
   occupy_keyboard(userlove, CC)
   hook_pointer(userlove, CC)
   hook_update(userlove)
@@ -359,9 +365,11 @@ end
 --- @param CC ConsoleController
 local function reset_compy_input(CC)
   local input = CC:get_project_env().compy.input
+  ---> REMARK: wipe should happen across all supported types, and shortcut tables should be provisioned for all supported types (or we can use index, setindex machinery there if we do not want to list them all)
   wipe_table(input.shortcuts.keypressed)
   wipe_table(input.shortcuts.keyreleased)
   wipe_table(input.shortcuts.textinput)
+  ---> REMARK why not wipe_table(input.hooks) ?
   for _, ev in ipairs(HOOK_EVENTS) do input.hooks[ev] = nil end
 end
 
@@ -473,6 +481,7 @@ Controller = {
   -- of the era when single/doubleclick were love.* events. They
   -- were dead: every _defaults read iterates _supported (plus
   -- 'draw'), which never included them.
+  ---> REMARK: did not we agree that they are *fired* as love.* events  and handled by project via hooks? (by hardwiring proxy from love.* to CC:dispatch(event,..) for all events, native and derived?
   _defaults = { },
   --- @private
   _userhandlers = {},
@@ -516,6 +525,7 @@ Controller = {
           end
         end
       end
+      ---> comment describing what code does NOT do is absolutely of no use; delete if it has no positive info
       -- Straight to the console, with no widget test in front of
       -- it: widget visibility is state on the widget, never a
       -- routing condition (doc/development/decisions/input.md,
@@ -700,6 +710,7 @@ Controller = {
         elseif click_count >= 2 then
           derived = 'doubleclick'
         end
+        ---> REMARK: is it a new logic or relocated? if there was drift (so no_drift is falsey), are at least two singleclicks fired? looks like they are swallowed
         if derived then
           local x, y = love.mouse.getPosition()
           if no_drift(click_pos, { x = x, y = y }) then
@@ -837,6 +848,7 @@ Controller = {
   --- @param CC ConsoleController
   release_keyboard_route = function(CC)
     Controller.project_input:deactivate()
+    ---> REMARK: should not be iteration over all supported type? and why separate function for every type of event instead of unified function with an event name as param (or list of event names)
     Controller.set_love_keypressed(CC)
     Controller.set_love_keyreleased(CC)
     Controller.set_love_textinput(CC)
@@ -1055,6 +1067,7 @@ Controller = {
     --- @param btn integer
     --- @param touch boolean
     --- @param presses number
+    ----> REMARK: comment simply out of date and explains what is *not* being done -- actualize or (better) eliminate. 
     -- Pointer has NO three-consumer chain: this is an
     -- unstructured broadcast. The widget gets the event
     -- whenever present (no bounds/consume check, return
@@ -1126,6 +1139,7 @@ Controller = {
       end
     end
 
+    ---> REMARK: is it no more touched/invoked ever?
     handlers.userinput = function()
       local user_input = get_user_input()
       if user_input then

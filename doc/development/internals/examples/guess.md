@@ -2,6 +2,8 @@
 
 <!-- authored By LLM; human-approved NOT YET -->
 
+> REMARK: can we avoid using ambiguous word 'overlay' which is just a synonym for project's input widget? unifying terminology would be less confusing to reader
+
 **Number guessing game** with per-character input validation.
 
 ## Architecture

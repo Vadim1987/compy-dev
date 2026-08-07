@@ -12,11 +12,13 @@ require("util.lua")
 local function default_callbacks()
   return {
     on_limit_reached = noop,
+    --> REMARK: where are before_submit and before_cancel?
     after_submit = noop,
     after_cancel = noop,
   }
 end
 
+---> REMARKS: comments inlined are quire useless, code is already self-evident? max 1 line with short purpsoe would be enough -- and its already in the announce. btw, name 'allow_modify' is misleading -- its more about supporting line duplication?
 --- @param model UserInputModel
 --- @param disable_selection boolean?
 --- @param allow_modify boolean?  enable the Ctrl+D duplicate-line
@@ -199,6 +201,7 @@ end
 --- stay-open by default) — this method survives only as
 --- console's own debug/test-mode cancel
 --- (`consoleController.lua`'s `terminal_test`).
+---> REMARK: why console cannot run same callback flow with hide-after-cancel (if it needs it)? then we'd have just a single function instead of two (and this one function would be named 'cancel')
 function UserInputController:cancel()
   self.model:cancel()
   self:hide()
@@ -231,7 +234,6 @@ end
 -- Internal widget API. Not called by projects directly — only via the compy.input.*
 -- wrappers (consoleController). Free functions rather than class methods because they are
 -- private helpers to show()/hide() below.
-
 --- @param self UserInputController
 --- @param cfg table
 local apply_config = function(self, cfg)
@@ -245,6 +247,7 @@ local apply_config = function(self, cfg)
   if cfg.highlighter ~= nil and ev then
     ev.highlighter = cfg.highlighter
   end
+  ---> REMARK: can just iterate over callback keys instead of bloated copy-paste with similar if-checks? 
   if cfg.validator ~= nil then
     self.callbacks.validator = cfg.validator
   end
@@ -256,7 +259,7 @@ local apply_config = function(self, cfg)
   end
 end
 
-
+---> REMARK: 'open_fresh' is misleading -- I'd rather make it a part of normal 'show' and rename 'already shown' branch into function 're_show' or something like that, because reshowing is secondary scenario (less operations, conditional)
 --- Fresh activation of the overlay widget: clear content when no text is given, apply
 --- config, publish the overlay handle, render once. Called only by show() on the
 --- inactive->active transition (show() guards against re-entry while active). The
@@ -373,6 +376,7 @@ end
 --- @param validator function?
 --- @param lines string[]
 --- @return boolean ok
+---> REMARK: gate is ambiguous name, and could in fact be folded into a single call-site
 local function gate(model, validator, lines)
   if not validator then return true end
   local ok, errors = validator(lines)
@@ -446,6 +450,7 @@ function UserInputController:is_shown()
   return self.shown
 end
 
+---> REMARK: why would we need this function and how can it guarantee that controller is "always" shown and nothing else resets the flag? Why we would need it first of all, if it was not used pre-feature? 
 --- Mark this widget as an always-active surface (console/editor
 --- input, never toggled like the transient overlay) and return
 --- self, for inline construction. The overlay leaves shown=false

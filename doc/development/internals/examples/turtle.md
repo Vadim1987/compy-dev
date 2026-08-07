@@ -14,6 +14,8 @@ Overrides `love.draw`, `love.update`, `love.keypressed`, `love.keyreleased`.
 
 Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc20260712)**, and direct keyboard actions. Turtle is the **one-shot** shape rather than the continuous session the other examples use: nothing is shown at load, `i` opens the prompt, and `after_submit` closes it again — so each command gets a fresh, empty field.
 
+> REMARK: remove 'owner ruling' provisional reference, just say its done on purpsoe
+
 Turtle also keeps its keyboard on `love.keypressed`/`love.keyreleased` **on purpose** (owner ruling, 2026-07-31). The framework captures a project's own `love.*` keyboard functions and runs them as hooks, and this is the example that demonstrates that path — everything below would behave identically written as `compy.input.hooks.keyreleased` or, for `i` and `ctrl+escape`, as `compy.input.shortcuts.keyreleased` combos. Keeping one example on the captured path is what makes the path visible at all.
 
 ```lua

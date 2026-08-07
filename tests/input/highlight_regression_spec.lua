@@ -1,3 +1,7 @@
+---> REMARK: remove references to input API release cycle, completely. its just a regression test accompanying bugfix
+---> REMARK: simplify prose and desctibe *behavioural* test which raises exception (so, the real bug path -- i.e. project that supplies <some configuration> gets exception on <someinput>). Current checks read as testing seomthing purely internal.
+---> REMARK: acceptance criteria: code does not break the way it used to . 'highlight must stay indexable' is implementation details, not acceptance criteria
+
 -- Availability: the highlighter predates the Compy input API
 -- (introduced in 1.0.0-rc20260712); this guards a render crash
 -- fixed there.

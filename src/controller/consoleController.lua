@@ -16,7 +16,6 @@ local messages = {
     return 'cannot open ' .. n .. ': No such file or directory'
   end,
 }
-
 --- @class ConsoleController
 --- @field time number
 --- @field model Model
@@ -132,6 +131,7 @@ local function run_user_code(f, cc, project_path)
   return true
 end
 
+---> REMARK: comment does not match code and is too verbose
 -- Project lifecycle callback. It is intentionally separate from
 -- compy.input's keyboard/text dispatch surface. Declared up
 -- here with hide_overlay because both ends of a run reset it:
@@ -140,6 +140,8 @@ local function default_before_exit()
   Log.debug('compy.before_exit noop')
 end
 
+---> REMARK: word 'overlay' is strongly opposed. if its needed in console context (the only context where its meaningful), let use something like 'input_widget_overlay'
+---> REMARK: too verbose comment. just briefly tell in which contexts function is supposed to be invoked instead of reexplaining how it works (prose length is x5 longer than code length!)
 --- Take the overlay down THROUGH the widget when a run ends,
 --- so its own `shown` flag comes down together with the
 --- published handle. Clearing love.state.user_input alone left
@@ -397,7 +399,7 @@ end
 -- hooks[event] = fn, callbacks[name] = fn. One structural rule
 -- replaces the old enumerated 11-name allowlist — nothing to keep in
 -- sync with the API surface.
-
+---> REMARK: need more explicit name e.g. 'unassignable_error', 
 --- @param k any
 local function frozen_error(k)
   error("compy.input: '" .. tostring(k)
@@ -410,6 +412,7 @@ end
 --- @param shortcuts table
 local function build_shortcuts_surface(shortcuts)
   return setmetatable({ }, {
+    ---> REMARK: setting __index is redundant, because its trivial?
     __index = function(_, event) return shortcuts[event] end,
     __newindex = function(_, event)
       frozen_error('shortcuts.' .. tostring(event))
@@ -421,6 +424,7 @@ end
 --- nested to protect); only the sub-table's own identity is frozen, at
 --- the compy.input container level above.
 --- @param store table
+---> REMARK: whole function is redundant because its trivial? (literally setting __index and __newindex to their default behaviour!)
 local function build_leaf_surface(store)
   return setmetatable({ }, {
     __index = function(_, k) return store[k] end,
@@ -428,12 +432,16 @@ local function build_leaf_surface(store)
   })
 end
 
+---> REMARK: fix prose -- not "where the event GOES" but "whether event PROPAGATES by returning hardcoded true/false"
+---> REMARK: why not shorter form? e.g. 'fn and fn(...);return false;' ? its one-off, very straight wrappers
+---> REMARK: if we drop the 'keys' parameter (therefore unifying shorcuts/hooks signature with love.*), ignore_repeat should be updated
 --- The dispatch combinators (doc/development/decisions/input.md,
 --- Decisions 22 and 24), reached as compy.input.fn.*. Stateless
 --- and orthogonal: `ignore_repeat` decides whether the handler
 --- RUNS, `stop_here`/`side_run` decide where the event GOES, and
 --- neither knows about the other. Named for their effect on the
 --- event, which is what a reader of a registration table needs.
+---> REMARK: what you mean by 'reserved binding'? Its maybe 'recommended' or 'often used'?
 --- A reserved binding is `stop_here(ignore_repeat(fn))`.
 local INPUT_FN = {
   --- Skip the handler on an OS key repeat. Says nothing about
@@ -464,6 +472,8 @@ local INPUT_FN = {
   end,
 }
 
+---> REMARK: why set '__index' if its trivial
+---> REMARK: we have characteristical 'frozen write' metatable, why not use class instead of repeating same setmetatable three times?
 local input_fn_surface = setmetatable({ }, {
   __index = function(_, k) return INPUT_FN[k] end,
   __newindex = function(_, k)
@@ -500,6 +510,7 @@ local function build_input_surface(state, methods, get_keys)
   })
 end
 
+---> REMARK: lets respect the vocabulary. these things are called *callbacks*.
 -- The four widget-output entries (doc/development/decisions/input.md,
 -- Decision 5):
 -- show()/configure() config key and direct field-write
@@ -515,11 +526,13 @@ local OUTPUT_KEYS = {
   'highlighter',
 }
 
+---> REMARK: why "pending"? need better name. like 'configure-only'? not sure about 'cursor' -- aren't we using set_cursor/get_cursor? not sure what 'cursor' ever means and how its used -- is it?
 -- prompt/text/cursor are per-show fields (never sticky at
 -- this layer) — EXCEPT when configure() stashes them while
 -- hidden: then they apply once, on the very next show().
 local PENDING_KEYS = { 'prompt', 'text', 'cursor' }
 
+---> REMARK: why dupicate key names instead of assembling from two tables above?
 -- show() has a deliberately small config table.  Callback
 -- lifecycle hooks remain explicit compy.input.callbacks writes.
 local SHOW_KEYS = {
@@ -533,6 +546,7 @@ local SHOW_KEYS = {
   on_limit_reached = true,
 }
 
+---> REMARK: why two distinct tables 'SHOW_KEYS' and 'CONFIGURE_KEYS' if they are identical by shape and content?
 -- configure() takes the same table minus force: force answers
 -- "replace the text of an ALREADY-active overlay", which is
 -- the only state configure() ever runs in.
@@ -622,6 +636,8 @@ local function stash_hidden_configure(state, cfg)
     if cfg[k] ~= nil then state.pending[k] = cfg[k] end
   end
 end
+
+---> REMARK: major flaw in recent changes across this file is: a) there's too much boilerplate and copypaste for functions that merely do one simple sing (validation and rejection of config keys in various contexts) b) real load-bearing functions are simply lambdas inside moster block (build_widget_api) -- I'd rather extract show and hide here into first-class functions, and reference them from api dictionary -- its much more readable (also why not define them in separate file at all?)
 
 -- Builds the compy.input surface: the three-consumer dispatch
 -- surface (doc/development/decisions/input.md, Decision 2) a
@@ -776,6 +792,7 @@ end
 -- fonts, input); called while preparing the project environment.
 local get_compy_namespace = function(terminal)
   require("util.namespace.fonts")
+  ---> REMARK: why so special treatment for 'before_exit_slot' if default_before_exit is simply a noop? that's exactly case where simple check of nil-ness followed by execution of non-nil function would be justified than complex meta-table jugglng (feel free to contest)
   local before_exit_slot = default_before_exit
   local ns = {
     terminal = get_compy_terminal(terminal),
@@ -1027,6 +1044,7 @@ function ConsoleController.prepare_project_env(cc)
   project_env.LuaHighlighter = LuaHighlighter
   project_env.LuaSyntaxValidator = LuaSyntaxValidator
   project_env.LineValidators = LineValidators
+  ---> REMARK: why those four below are nils, and what's the point of exporting them into project_env if they are not real functions?
   project_env.InputEvalText  = nil
   project_env.InputEvalLua   = nil
   project_env.ValidatedTextEval = nil
@@ -1264,6 +1282,7 @@ end
 function ConsoleController:stop_project_run()
   self:evacuate_required()
   local compy = self:get_project_env().compy
+  ---> REMARK: that's exactly where we can check hook existance before execution instead of relying on 20 lines of useless boilerplate and metatables
   compy.before_exit()
   self.main_ctrl.set_default_handlers(self, self.view)
   self.main_ctrl.set_love_update(self)

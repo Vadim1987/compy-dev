@@ -1,3 +1,7 @@
+---> REMARK: rename the file to say something about submit-cancel (better than ambigous 'lifecycle')
+---> REMARK: dry up the prose and consider making test cases more readable and self-evident
+---> REMARK: I'd avoid word 'overlay' fully -- can be 'project input widget'
+
 -- Availability: introduced with the Compy input API
 -- (1.0.0-rc20260712) — one uniform lifecycle across all
 -- surfaces.

@@ -8,9 +8,13 @@ reviewed: none
 
 # Compy Input API
 
+> REMARK: rewrite intro completely, be dev-friendly. Vague statements do not help. Just tell its an API for configuring and interacting with text solicitation subsystem, and for reacting to user input events (all of them). Tell that even when widget is not shown or used, still it can be used to manage hotkeys, combos etc.
+
 This guide is for projects running inside Compy. `compy.input` is the
 project-facing input surface: it opens one shared text overlay and delivers
 submissions through callbacks. There is no polling API or compatibility shim.
+
+> REMARK: would it help readability if we conceptually split API into three surfaces (and say so): a) dispatching/intercepting inbound events via shortcuts and hooks b) altering the soliciting widget state (hide/show/cursor/reconfigure) c) handling events generated inside widget via callbacks (submit, cancel, limit...)
 
 ## Quick start
 
@@ -157,6 +161,8 @@ compy.input.hooks.keyreleased = function(key)
 end
 ```
 
+> REMARK: why developer would even think of reading love.state?
+
 Do not read `love.state` for this: a project runs in a sandboxed copy of
 `love`, so that field is always `nil` from inside a project.
 
@@ -237,10 +243,14 @@ Without them you would end handlers with `return true`, which makes a function
 that merely toggles a pause know what happens after it returns, and carry that
 knowledge wherever it is reused.
 
+> REMARK: retire word 'overlay' -- "stop reaching the input widget too" is a proper formula 
+
 All three wrap a hook the same way, but think before you do: a whole-channel
 hook wrapped in `stop_here(ignore_repeat(...))` swallows every repeat on that
 channel, so held backspace and held arrows stop repeating in the overlay too.
 
+> REMARK: "not expressible as shortcuts and should be processed inside hook, if needed"
+> REMARK: we may decide not to deliver keys_pressed as an argument, expecting project to access it via compy.input.keys_pressed instead (already available) -- lets popularize that way
 Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else
 being held, so holding a movement key would silently break unrelated
@@ -279,10 +289,14 @@ return** like keyboard ones: return truthy and a shown overlay does not see
 the event. Return nothing and it carries on to the overlay, which is what
 you want while an overlay is up for its own reasons.
 
+> REMARK: there should be pointer shortcuts!
 There are no pointer *shortcuts* — a combo needs a key to name, so
 `shortcuts` covers the keyboard and text channels only. Pointer events enter
 the walk at the hook tier. Read `compy.input.keys_pressed` inside a pointer
 hook if you need to know which modifiers were held.
+
+> REMARK: not 'overlay', but 'input widget'
+> REMARK: frame this whole paragraph as example of solving non-conventional challenge (preventing modifier-based hotkey from echoing into the input widget), not say "if you open with 'i'" as if it was some common or recommended convention
 
 ## Opening the overlay from a key
 
@@ -311,6 +325,8 @@ compy.input.callbacks.after_submit = function()
   arm_echo_guard() -- the next open needs a fresh one-shot
 end
 ```
+
+> REMARK: term 're-arm' is invented -- if you use it, make sure its explained or defined in the same doc, upfront.
 
 Re-arm wherever you close the overlay: one that is closed without re-arming
 takes the echo on its next open. Only your own `hide()` calls need this —
@@ -372,6 +388,8 @@ compy.before_exit = function()
   love.keyboard.setKeyRepeat(true)
 end
 ```
+
+> REMARK: it should be able to suprress/defer the stop?  or if its not allowed purposefully -- that it should not be announced as 'deferred' functionality in other part of documentation
 
 - **Signature:** no arguments — the project knows its own state.
 - **Return value:** ignored. It cannot suppress or defer the stop.

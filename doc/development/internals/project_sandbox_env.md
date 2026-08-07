@@ -68,6 +68,9 @@ lives in a global subsystem nobody snapshots.
 
 ### `compy.before_exit` — the project teardown hook
 
+> REMARK: Update 'exists, not a proposal' with concrete avaiability reference -- "since version..."
+> REMARK: during session 24 we discussed a conceptual problem that before_exit() cannot guarantee a teardown if project raises before being ablt to clean up. the prose below should be updated to refkect this concern and also reference the appropriate decisions and tech debt record (which in turn could reference back here) -- and the 'proposed robust fix' in the previous paragraph is precisely a counter-measure for this failure mode -- indentified, registered, not implemented (contrary to 'before_exit' hook)
+
 It exists and is wired; it is **not** a proposal. `compy.before_exit` is a slot on the injected
 `compy` namespace, defaulting to a no-op (`consoleController.lua:697`), assignable by the project
 through the namespace metatable (`:715–721`) — assign a function to it and the framework calls it
@@ -86,6 +89,7 @@ restore mechanism for T3 global state, which the project cannot restore reliably
 (a crash never reaches the hook). Covered by `tests/input/input_route_lifecycle_spec.lua`
 ("`compy.before_exit`").
 
+> REMARK: make pointer annotations more useful for reader, and also check their completeness/consistency and whther they are actual
 ## Pointers
 
 - Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).

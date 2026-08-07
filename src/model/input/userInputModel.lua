@@ -835,6 +835,9 @@ function UserInputModel:cancel()
   self:reset()
 end
 
+
+----> REMARK: if we won't inject boilerplate comments, _apply_eval would have normal size even with this code folded-in, so do it (if there's small overhead like 16 lines -- I ratify it; new rule -- 16 lines are tolerablea
+----> REMARL: verbose comment, compress and make simpler)
 --- @private
 --- Cursor-to-error-position on an evaluator reject. Split out
 --- of handle() to keep it under the function-body line limit

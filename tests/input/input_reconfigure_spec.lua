@@ -268,6 +268,7 @@ describe('input contracts: live reconfigure #input', function()
 
   describe('continuous-session idiom', function()
 
+    ---> REMARK: did not we swap default widget behaviour to always show, and recommended to make closing explicit from 'after_submit'? Then this test actually tests nothing and needs to be replaced with closure-on-submit
     -- One shape: consume in on_text_entered, re-show
     -- (bare, no config) in after_submit. Asserts (a) the
     -- assembled text reaches on_text_entered and (b) the

@@ -1,6 +1,3 @@
--- Availability: predates the Compy input API (introduced in
--- 1.0.0-rc20260712).
-
 require("model.input.inputText")
 require("model.input.cursor")
 

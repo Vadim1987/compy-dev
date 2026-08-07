@@ -3,6 +3,8 @@
 -- combo normalisation they read arrived with it, and the legacy
 -- text solicitation globals were removed by it.
 
+---> REMARK: is the prose below copied from elsewhere? it seems it recites the routing rules while suite tests something else? also its very excessive...
+
 -- shortcuts and click detection. Routing invariant
 -- (doc/development/decisions/input.md, Decision 1): inter-route
 -- dispatch is EXCLUSIVE — each event reaches exactly ONE route,

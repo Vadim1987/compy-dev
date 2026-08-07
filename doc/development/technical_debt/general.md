@@ -13,6 +13,8 @@ semantics.
 
 ---
 
+> REMARK: its not a defect, but convention -- gfx is alias for love.graphics, sfx is alias for compy.audio 
+
 ## `gfx` implicit global in `controller.lua`
 
 - **Where:** `src/controller/controller.lua` — `set_love_update` / `set_love_draw` (and

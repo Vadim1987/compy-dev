@@ -1,3 +1,5 @@
+---> REMARK: all cases here are expressed in terminology that is hard to udnerstand and follow. either we need a separate document describing it and referenced from here, or tests claims need to be rewritten to be more undertandable, or tests are checking some phantom logic and are possibly dissolvable
+
 -- Availability: changed by the Compy input API
 -- (1.0.0-rc20260712) — an input-only / pointer-only project now
 -- stays live in project_open (technical_debt/input.md, ruling

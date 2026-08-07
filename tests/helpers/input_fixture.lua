@@ -197,6 +197,7 @@ function F.compy_input()
   return CC:get_project_env().compy.input
 end
 
+---> REMARK: "console route forwards..." is not true any more. only rendering part is true
 -- Is an overlay visible to the framework? Reads love.state.user_input
 -- rather than the widget's own is_shown(): that field IS the overlay
 -- contract (userInputController.lua, open_fresh/hide) — the draw loop

@@ -1,3 +1,5 @@
+> REMARK: too shy for major changes done -- rewired dispatching, unblocked event-handling, new topology with shortcuts/hooks.... many documentation and technical debt added. And version is 1.0.0-rc...
+
 # Changelog
 
 ## Unreleased

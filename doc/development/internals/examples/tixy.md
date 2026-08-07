@@ -32,6 +32,8 @@ end
 
 Uses `compy.input.show{}` with `LuaHighlighter` and `LuaSyntaxValidator` **(supported since 1.0.0-rc20260712)** — the input widget has Lua syntax highlighting and validation. `love.update(dt)` now only advances `time`; there is no polling of an input handle. See [Compy Input API](../../../input_api.md) for the full usage guide.
 
+> REMARK: did we decided to change preexisting behaviour by dropping legend on submit? maybe do not do it?
+
 ```lua
 local function submit_body(lines)
   body = string.unlines(lines)

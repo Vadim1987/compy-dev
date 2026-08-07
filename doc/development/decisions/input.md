@@ -106,6 +106,8 @@ proving ground for the shape.
 **Decision.** Inside the active route, every keyboard/text event runs one chain of three
 components, in order:
 
+> REMARK: any real reason to treat widget specially? why not interpret it as any other chain element? I feel special treatment is an artifact of design hallucinations that were self-inflicted and dissolved. I see no reason to treat widget separately -- and if we discard decision 5, codebase change would be minimal and won't change any behaviour
+
 1. **`shortcuts[event][combo]`** — per-combo functions the project registered (Decision 8's
    per-event keying and canonical-combo normalisation apply unchanged).
 2. **`hooks[event]`** — one per-event hook, absorbing both the old per-event generic
@@ -115,11 +117,13 @@ components, in order:
    reports consumed; hidden → the widget is skipped and the chain reports not-consumed (Decision
    5 explains why the widget's own return stays chain-meaningless).
 
+> REMARK: now its more than three components, we are sending pointer events the same way!
 A **truthy return at any component consumes** the event: it travels no further, the widget
 included. A falsey return falls through. The same three-component shape runs on all three
 channels (`keypressed`, `textinput`, `keyreleased`); a component with no participant simply
 falls through.
 
+> REMARK: "there was once" is irrelevant -- a history of hallucination, self-inflicted and dissolved during implementation. Does not have to be mentioned
 **No framework tier.** There was once a fourth, leading component — `framework handlers` —
 non-overridable and not exposed to project code, that claimed Enter/Escape unconditionally while
 the widget was shown. It is deleted outright, code and tests: it existed solely to give
@@ -129,6 +133,8 @@ this chain and are unaffected. A project shortcut can now be registered on Enter
 exactly as it can on any other combo — the DOM-style "handled stops propagation" convention below
 now applies without a carve-out.
 
+> REMARK: 'old four-component shape' was pure hallucination, remove its mentions from here
+
 **Why.** One uniform shape on every channel is the predictability meta-rule made concrete:
 nothing "special" gets its own routing rule; a released key and a typed character travel the
 same path a pressed key does. The truthy-consume convention is the familiar DOM-style
@@ -137,6 +143,7 @@ special-cased exactly two keys (Enter, Escape) at a component that existed for n
 removing it doesn't lose capability — it removes a component that was purpose-built for a job the
 widget can now do itself, uniformly, like any other chain participant.
 
+> REMARK: "de-facto SDL articat" is vague and its not clear how its relevant here
 **Recognized external constraint — no cross-channel ordering guarantee (an inherited
 platform fact, not a decision of this subsystem's).** LÖVE/SDL documents *no* ordering
 between the `keypressed` and `textinput` channels for a single keystroke — upstream's
@@ -149,6 +156,7 @@ The corollary for tests is binding: a spec must **not** bake a canonical
 `keypressed`→`textinput` order in as an invariant, or a synchronous harness goes green while
 the device fails.
 
+> REMARK: 'consuming-is-not-removing' is an artifact of self-reasoning across hallucinations. nothing nowhere required 'consuming' to be 'removing', so defending against it makes no sense. I'd remove whole paragraph -- it speaks about what is *not* supported, while this not-supported was also never-requested or never-assumed
 **A load-bearing distinction: consuming is not removing.** A component consuming an event
 for *this* keystroke never removes a lower component from the configuration. Configuration is
 permanent; flow is decided per-event. There is no replace-semantics anywhere in the chain —
@@ -156,11 +164,13 @@ assigning a hook replaces *that hook only*, it does not detach the widget beneat
 it. This is what lets the widget be a permanent terminal fixture rather than something the project
 wires up and can accidentally unwire.
 
+> REMARK: this is proper approach and it contradicts with  formula few paragraphs before (supposedly stale) that says widget state is "checked at the end of chain, and bypassed if not shown" -- which was fully unnecessary complication hopefully dissolved since then
 **A load-bearing decision about the widget: its hidden-check is internal.** The terminal widget is
 always invoked; it decides for itself to no-op when it is hidden. There is no external
 "is it shown?" wrapper gating the call. This is why widget visibility carries no routing weight
 (Decision 1) — the branch lives inside the widget, where it mutates nothing and only debug-logs.
 
+> REMARK: its really not exactly this way -- we still use 'ifs' because we decided not to plumb tables with 'no-ops' default. so this paragraph could be recalibrated to reality or removed
 **Consequence.** Dispatch is the uniform short-circuit shape this design always aimed at:
 `shortcuts(...) or hooks(...) or widget(...)`, because the widget's participation now derives
 from a boolean (shown?) rather than needing a special nil-guard the way a sparse combo table
@@ -179,12 +189,15 @@ shared instance also makes the "hide and bring back with state intact" requireme
 free: the state was never destroyed. And it is what makes Decision 1 cheap — a shared surface
 whose show/hide are pure state changes has nothing to reconnect.
 
+>REMARK: "same code" (which is kinda true? check) does not mean "same instance" -- and there are reason to limit 'singleton' to project widgets only. prose below was a pre-implementation vision -- but implementation at least currently ended with the different instances (console needs to maintain its own). So the prose below should be recalibrated to reality
 **Consequence.** The same widget code backs the console REPL, the editor input strip, and
 project overlays; what differs between them is the evaluator attached and which route handles
 the result — not the widget. `show()` on an already-active session is a no-op (it *warns*
 rather than swallowing — see Decision 7's discipline) unless `{force = true}` is passed.
 
 ## Decision 4 — callbacks replace polling
+
+> REMARK: replace "input events" with "events originated at input widget" -- to not confuse inbound events and outbound ones. Or if we speak both classes, let's make the paragraph more clear about it . right now it reads like other input events are the same as 'submission' which is not true and confuses reader. rewrite the opening to be unambiguous about context -- message itself (the prose which follows the opening) is correct -- we discard polling idiom.
 
 **Decision.** Submission and all other input events are delivered through **callbacks and
 handler tables**, never through a polled reference. The legacy text-input globals and the
@@ -204,6 +217,8 @@ migrate to `compy.input.*`; the replacement mapping is documented in the usage g
 
 ## Decision 5 — two directions, two surfaces; the limit signal travels fully through the output side
 
+> REMARK: its the good moment to say "chain routes events into the route where they are consumed by shortcuts/hooks. The widgets reports results out through *callbacks*". Which is exactly the difference in terminology -- callbacks originate during input processing, shortcuts/hooks consume inbound OS events. Important part here is using term "callbacks" instead of "widget outputs" which are not defined anywhere.
+
 **Decision.** The chain routes events *into* the active route. The widget reports results *out*
 through its own configured **widget outputs**, which are **not** chain components:
 
@@ -216,6 +231,9 @@ through its own configured **widget outputs**, which are **not** chain component
 These are set at `show()` / `configure()`, or assigned as `compy.input.callbacks` fields — one
 underlying callback, two ergonomics.
 
+> REMARK: conflating them is not generally a trap -- so no need for this false rationalization. Just say we distinguish
+> REMARK: overall this block has too much self-invented explanation, including 'student' passage. No need to overprotect the normal engineering decision.
+ 
 **Why.** Routing has two genuinely different directions and conflating them is the trap this
 subsystem was explicitly designed around. Events arriving are a chain concern; a *result* is the
 widget's to announce. In particular:
@@ -245,7 +263,10 @@ its own instance's `on_limit_reached`, filtered to the vertical direction; no ot
 exists — editor's search widget reads its own, unrelated return contract and is untouched
 (a discovered, pinned behaviour; see Decision 14).
 
+
 ## Decision 6 — submit and cancel are widget-owned callback-driven flows, not a framework tier
+
+> REMARK: if it does not differ from pre-feature behaviour, there's no decision to record at all.  Why this decision arrived -- attempt to combat design hallucination which assigned special roles. If as a result we just got back to normal platform behaviour, there was no decision worth standing in this register. IF we did de-facto change the behaviour -- the whole 'decision' block should be compressed 2-3 times and explain only change and why it was necessary/useful. Right now block of decision 6 is overbloated and its not clear which exact decision it describes and what was its rationale/consequences.
 
 **Decision.** Enter and Escape are ordinary chain participants (Decision 2), not a framework
 tier. The widget provides their *default* behaviour as callback-driven flows of its own, not
@@ -326,6 +347,7 @@ Escape path only. A `before_submit` veto return remains a deliberately reserved 
 ignored today, but not precluded; blocking bad input at submit is already the validator's job.
 
 ## Decision 7 — freeze the container and its sub-table identities; leaves are writable
+> REMARK: the decision is very trivial, I do not think its worth documenting, or should be literally few lines
 
 **Decision.** `compy.input` itself, and the *identity* of each of its three sub-tables
 (`shortcuts`, `hooks`, `callbacks`), are frozen — a project cannot do
@@ -357,6 +379,8 @@ only through its combo-keyed leaves, never through wholesale sub-table replaceme
 frozen-identities clause exists specifically to protect that invariant.
 
 ## Decision 8 — per-event combo tables and canonical combo serialisation
+
+> REMARK: rewrite -- now 'combo-tables' are reproduced without explanation. Instead the solution was to support combo-tables at all (to avoid stuffing all event-handling logic in a single hook and enable modularity). The way combo tables are assembled and checked is downstream tactical decision -- we took the simplest form. So the full block has to be rewritten 
 
 **Decision.** The combo tables are keyed **event-type-first** and live on
 `compy.input.shortcuts`: `shortcuts.keypressed[combo]`, `shortcuts.keyreleased[combo]`,
@@ -396,6 +420,11 @@ document's label for discussing the same concept without the collision.
 
 ## Decision 9 — uniform signatures and `isrepeat` threading
 
+> REMARK: this one needs to be updated. First, the form of signature is ours to decide -- one-line saying that we extend love's signature by keys_pressed would be enough
+> REMARK: in fact, decision could be even revisited -- now when we just decided to make keys_pressed available globally we have no reason to pass it to hooks. therefore, signatures fall back to standard love2d ones
+> REMARK: we invented helpers/wrappers to simplify gating on is-repeat and blocking propagation -- worth mentioning here instead of saying that shortcuts could not be gated?
+> REMARK/SUMMARY: importance of this decision could be now neglectable (its original purpose was to carry-through the keys pressed proxy, but later we figured out that keys-pressed need to be globally available anyway -- so we can drop both decision and its codebase counterparts without regression in system behaviour (at cost of maybe minimal rewrites) -- worth doing pre-PR to reduce complexity?
+
 **Decision.** Every participant on a channel receives the same signature, the widget included:
 keypressed carries `(k, keys_pressed, isrepeat)`, textinput `(text, keys_pressed)`, keyreleased
 `(k, keys_pressed)`. On the project route, `isrepeat` is threaded through every component of the
@@ -412,6 +441,10 @@ code carries this as a deferred marker. See the technical-debt register for the 
 
 ## Decision 10 — one `hooks[event]` table, seeded once at activation
 
+> REMARK: these 'no' sound like protecting against alternatives not-requested-and-not-considered 
+> REMARK:  now 'all' events are shaped this way
+> REMARK: lets reframe the decision as "new api has more appropriate place for hooks -- so we silently re-wire old 'project-installed callbacks' there -- encouraging new usage but not disabling old one, if it's ever needed for pedagogical purposes 
+
 **Decision.** A project's own `love.keypressed` / `love.textinput` / `love.keyreleased` handlers
 auto-provision into `hooks[event]` (Decision 2's second chain component) — no widget-aware
 gating, no lifecycle split, no custom logic. `hooks[event]` is a single table and the single
@@ -420,6 +453,7 @@ explicit hook gets seeded once with its captured project handler (if any); after
 table **is** the whole story — nil-ing a hook clears it, full stop, with no fallback
 resurrection.
 
+> REMARK: nobody cares which exactly original intermittent shape decision had once if it was rewritten since and dissolved form never materialized in release/contract/doc
 **Substance changed from the original pure-wrap.** The original decision resolved the hook
 by precedence on **every event**: an explicit `compy.input.on_*` assignment won; otherwise the
 captured handler seeded the hook; otherwise a no-op — nil-ing the explicit assignment resurrected
@@ -444,6 +478,7 @@ the change. Breaking-and-fixing the affected examples was the explicit expectati
 regression to avoid; handler-only projects (no widget) are unaffected.
 
 ## Decision 11 — the route is held by an open project, released at its stop
+> REMARK: clean up self-arguing with past decisions that were than reshaped before release. WHat was not in released version is considered as never existing (except few bits explicitly ratified by stakeholders) 
 
 **SUPERSEDED IN PART, 2026-08-03** — see Decision 25. The original decision released
 keyboard/text at the `'running' → 'project_open'` boundary while exempting pointer, and justified
@@ -484,6 +519,8 @@ latter (Decision 12).
 
 ## Decision 12 — `inspect` is a mode-to-route line, nothing more
 
+> REMARK: if its the behaviour system had and keeps having, its not a decision -- its documented de-facto standard
+
 **Decision.** `inspect` (a paused or broken-into project) is simply **the console route active,
 bound over the project's environment**. The project route is disconnected exactly as the
 connection rule (Decision 11) describes, and the project's own widget is unhonoured because its
@@ -522,6 +559,8 @@ current, never on object equality across calls.
 
 ## Decision 14 — de-facto contracts: reverse-engineered behaviour is preserved and formalised, not silently changed
 
+> REMARK: only historical correction -- we proactively reverse-engineered system behaviour and codified existing de-facto standards in a tests, and documented some -- therefore canonicalizing them *before* implementation; the fact that some of those came unnoticed until post-implementation controversies resolution is secondary . its mostly about historic accuracy of the first phrase, decision itself stands
+
 **Decision.** Where post-implementation validation of this subsystem discovered behaviour that no
 design document mandated — behaviour that fell out of how the code was built rather than from a
 ruling — the standing rule is to **preserve it and record it as a contract**, not to "fix" it in
@@ -548,6 +587,9 @@ individually revisable — but only by a named ruling, not by drift. See
 ---
 
 ## Decision 15 — unrecognised show/configure configuration raises
+
+> REMARK: its quite trivial and obvious tactical decision, is it even worth documenting?
+
 
 **Status: in-flight (owner ruling, 2026-07-30); supersedes the warn-and-ignore
 form below.**
@@ -583,6 +625,7 @@ from a `love.*` handler it suspends the run with the message. The project guide
 names the accepted keys, and the retired `eval` / `result` keys now raise
 instead of warning.
 
+> REMARK: no need to describe interim forms, invented and dissolved in-flight
 ### Superseded — the original warn-and-ignore form
 
 **Decision.** An unrecognised key supplied to show(config) will emit a
@@ -602,6 +645,7 @@ so the same typo behaved differently depending on which function received it.
 ---
 
 ## Decision 16 — defer future input unification
+> REMARK: this decision was fully overwritten and de-facto input was unified across events axis (to not be confused with postponed unification of routing mechanisms across cosnole/editor/project which is still deferred). So this block should be removed
 
 **Status: owner-ratified in validation; not implemented in 1.0.0-rc20260712.**
 
@@ -649,6 +693,8 @@ project-stop teardown. It retains the narrow activation seam where a full
 runner is inappropriate for an isolated handler test, with that reason stated.
 
 ---
+
+> REMARK: is it an artifact block describing history which passed? (afaik now 'dispatch'  *is* reusable function) -- review and recheck if it belongs here
 
 ## Implementation note — making the mechanism reusable (non-normative, no project-facing contract change)
 
@@ -716,6 +762,8 @@ objects used by console and editor remain implementation details.
 
 ## Decision 18 — the overlay answers one state question: `is_shown()`
 
+> REMARK: let's fully retire ambiguous 'overlay' from everywhere. Its input widget.
+
 **Status: implemented** (owner ruling, 2026-07-31).
 
 **Decision.** `compy.input.is_shown()` returns whether the overlay is
@@ -743,6 +791,8 @@ that, instead of relying on the warning as flow control.
 ---
 
 ## Decision 20 — a project can read the held-key set outside an event
+
+> REMARK: as said, we even can get rid of held-keys passed as arguments to hooks, which aligns hooks signature with love2d native signatures and would be a big win
 
 **Status: implemented** (owner ruling, 2026-08-03).
 
@@ -777,6 +827,8 @@ the shipping LuaJIT runtime (`pairs` ignores `__pairs`), so it is index-only —
 ---
 
 ## Decision 21 — a combo names modifiers plus one trigger, or a class
+
+> REMARK: historical references (when exactly was something decided) bear no value, strip them
 
 **Status: implemented** (owner ruling, 2026-08-03).
 
@@ -832,6 +884,8 @@ more sophisticated is a hook, with no capability lost.
 ---
 
 ## Decision 22 — `compy.input.fn.ignore_repeat`
+
+> REMARK: ignore_repeat appears to be keypressed-specific wrapper, because its not passed anywhere else? worth mentioning.
 
 **Status: implemented** (owner ruling, 2026-08-03).
 
@@ -1005,6 +1059,8 @@ existed only to serve the split. Unifying removes mechanism instead of adding it
 **Consequence, accepted.** A non-blocking project with no interaction surface keeps the keyboard
 until it stops, where it previously handed it back at `'project_open'`. That is the pre-feature
 behaviour, and `Ctrl+Esc` remains the documented exit.
+
+> REMARK: I thought we agreed on combos for pointers (love2d signature kept, combo is constructed from modifier keys pressed, no trigger key) -- better once do it and enable than document and argue across many iterations
 
 **Not decided here.** Whether pointer should gain a combo vocabulary of its own — a modifier-only
 shortcut such as `ctrl` plus a button — is left open. It is now a small change rather than the

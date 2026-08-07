@@ -1,5 +1,7 @@
 # balloons
 
+> REMARK: it seems balloons itself is a bit overcomplicated now (it built its own abstraction layer around input, to combat previous complexity -- now it could e.g. clear/configure/deliver in a single on_submit callbac. We won't rework it -- just admit the fact (API now makes possible to eliminate internal complexity, but we only do focused updates)
+
 <!-- authored By LLM; human-approved NOT YET -->
 
 **Real-time typing game.** Balloons carrying words fall from the top of the screen; the player types the words to pop them before they reach the bottom.

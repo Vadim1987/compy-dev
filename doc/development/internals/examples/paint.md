@@ -1,5 +1,7 @@
 # paint
 
+> REMARK: worth installing love.{mousemoved,keypressed} as hooks? (as they will anyway be reassigned there). It would be cleaner. we can even introduce paradigm of aliasing compy.input.hooks as 'hooks' for comprehension
+
 <!-- authored By LLM; human-approved NOT YET -->
 
 **Pixel paint application** with a color palette, brush/eraser tools, and line weight selector.

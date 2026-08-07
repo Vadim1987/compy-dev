@@ -1,6 +1,7 @@
 -- Availability: introduced with the Compy input API
 -- (1.0.0-rc20260712) — covers the compy.input surface.
 
+---> REMARK: prose below seems to be copied from elsewhere without much relevance to test suite content
 -- widget lifecycle. Routing
 -- invariant (doc/development/decisions/input.md, Decision 1): inter-route dispatch is
 -- EXCLUSIVE — each event reaches exactly ONE route, fixed by the active
@@ -15,6 +16,9 @@
 -- hidden-widget non-consumption rule (doc/input_api.md,
 -- "`show(config)`"; doc/development/decisions/input.md,
 -- Decision 2).
+
+---> REMARK: avoid word 'overlay', better 'project input widget'
+---> REMARK: There was another test suite on reconfiguration -- worth merging here and possibly de-duplicating?
 
 local F  = require('tests.helpers.input_fixture')
 

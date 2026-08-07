@@ -1,3 +1,5 @@
+---> REMARK: what remained here is very unlikely collection, I'd dissolve it across other files. E.g. held_keys is literally a part of documented contract now -- worth its own test suite. "wheel" test should be universalized across all supported event types, and live somewhere around dispatching, as literally a list of supported event types and cyle over it testing that every event is reaching, The *only* NFR I could think of is the usage of widget singleton across project invocations (therefore avoiding GC abuse) -- but its no here (if it was moved elsewhere, that's fine) . If we move these two said tests as said, there's a chance file could be dissolved
+
 -- Availability: predates the Compy input API (introduced in
 -- 1.0.0-rc20260712).
 

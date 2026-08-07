@@ -37,6 +37,7 @@ require("util.key")
 -- compy.input.keys_pressed (Decision 20) and appending it would
 -- change the signature every existing pointer handler was
 -- written against.
+---> REMARK: where are singleclick/doubleclick? they should better be supported as any other
 local EVENTS = {
   'keypressed', 'keyreleased', 'textinput',
   'mousepressed', 'mousereleased', 'mousemoved', 'wheelmoved',
@@ -154,6 +155,8 @@ function ProjectInputController:deactivate()
   self.compy_input = nil
 end
 
+---> REMARK: as said in other remark (on documentation), let's drop 'held_keys()' and instead build combo inside dispatch. This way dispatch would become universal function across all events -- we do not need separate self:textnput, self:keypressed etc. -- and signatures would be aligned with love's?
+
 --- Keypressed (doc/development/decisions/input.md, Decision 11). The
 --- route is connected/disconnected at the
 --- 'running' <-> 'project_open' boundary by reinstalling
@@ -187,6 +190,8 @@ function ProjectInputController:keyreleased(k)
     'keyreleased', k, k, Controller.held_keys())
 end
 
+
+---> REMARK: as discussed, lets *support* combo triggers, fully unifying all dispatching of input events. just that combo triggers for pointer won't have the 'triggering' key they would be modifier-only . btw what about right button? and maybe 'button' for those which support button number. easy change, would unify a lot
 -- Pointer channels. Each is the keyboard shape minus the combo
 -- trigger: no shortcuts tier (find_shortcut answers nil for a
 -- missing table), hooks then the shown widget, first truthy

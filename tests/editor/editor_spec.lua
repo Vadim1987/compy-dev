@@ -485,6 +485,8 @@ describe('Editor #editor', function()
           }
         end)
 
+        --> real textinput delivers symbols one-by-one, also in this situation could just call 'controller:textinput()' to the same effect?
+        --> I would rather expect 'textinputs' served character-by-character and followed by 'enter'
         local function type_search(text)
           mock.textinput(text, function(t) controller:textinput(t) end)
         end
@@ -704,6 +706,7 @@ describe('Editor #editor', function()
 
       end)
 
+      --> REMARK: rewrite and simplify prose: "later" is no more relevant when feature is delivered. Just "guards compatibility of block navigation with widget's internal limits processing"
       -- Block navigation at the buffer limit: with block #3 open in the
       -- input, 'down' and the first 'up' stay inside it; the next 'up'
       -- crosses out to the previous block. Guards the later is_at_limit

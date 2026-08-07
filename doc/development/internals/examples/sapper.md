@@ -34,6 +34,8 @@ end
 
 ## Click handling
 
+> REMARK: why not align the hooks assignment and set mousepressed via hooks or shortcuts? it makes sense to discourage using love.<event> path, while keeping it supported as backwards-compatibility layer
+
 `compy.input.hooks.singleclick` → flag cell. `compy.input.hooks.doubleclick` → unlock cell (or restart if game over). `love.mousepressed` → same actions when shift/ctrl held (alternative input for touch devices without double-click).
 
 Mine placement uses probabilistic streaming: iterate all mineable positions once, at each position place a mine with probability `mines_remaining / cells_remaining`. No shuffle needed.

@@ -44,6 +44,11 @@ describe('#input events dispatching', function()
     F.session.press(k)
   end
 
+
+  ---> REMARK: can we rewrite it as more readable matrix (maybe yes, maybe no). just using unified 'registration', and varying consumption returns to observe different depth of chain propagation
+  ---> REMARK: I really think we could have 'describe-level' "order" table, standardized mock shortcuts/handlers factories that always include updating 'order' when invoked and than return whatever they are told to return. And initial setup of widget with "abc", than combining test cases and inspecting results will be much more obvious. I would even say its MUST HAVE: this way we need to understand paradigm *once*, and tests become more concise. Now each test case establishes its own rules, slightly different -- it looks like too much copy-n-paste, which also *slightly* differs inside, so reader has to decode the universe of each case
+  ---> REMARK: BY THE WAY, AREN'T OUR SHORCUTS mod-only ? WHY TESTS SETTING SHORTCUT AGAINST SIMPLE SYMBOL ARE WORKING THEN?
+
   describe('order, consume, fall-through', function()
     -- Walked on the keypressed channel only, deliberately. The walk
     -- is ONE channel-agnostic function in production —
@@ -93,15 +98,15 @@ describe('#input events dispatching', function()
     -- handler stops the descent —
     -- neither the hook nor the widget runs.
     it('a shortcut returning truthy stops the chain (hook not reached)', function()
-      local reached_cb = false
+      local reached_hook = false
       local input = F.activate_project()
       input.shortcuts.keypressed['backspace'] =
           function() return true end
       input.hooks.keypressed =
-          function() reached_cb = true; return true end
+          function() reached_hook = true; return true end
       F.show_widget({ text = 'ab' })
       F.session.press('backspace')
-      assert.is_false(reached_cb)
+      assert.is_false(reached_hook)
       assert.same({ 'ab' }, F.widget:get_text())
     end)
 
@@ -186,6 +191,7 @@ describe('#input events dispatching', function()
   -- pass-through or consuming, or leave them undefined; `seen` is the
   -- mnemonic trace and the widget's text is the observable terminal
   -- (backspace edits 'ab' -> 'a' exactly when the widget runs).
+  --> REMARK: this is kind of a matrix test I've thought of -- does it supersede dispatching tests above?
   describe('the interception matrix', function()
 
     local CONSUME, PASS = 'consume', 'pass'
@@ -232,6 +238,7 @@ describe('#input events dispatching', function()
       end
     end
 
+    -->  these things are called 'test cases', not vague 'rows'
     for _, row in ipairs(rows) do
       it(row.name, function()
         local seen = { }
@@ -332,6 +339,7 @@ describe('#input events dispatching', function()
 
     -- The legal shapes stay legal: a bare trigger, modifiers plus a
     -- trigger, and modifiers plus the class marker.
+    ---> REMARK: should also check (right here) that they actually work, not only are registered?
     it('accepts a trigger, a combo, and a class', function()
       local input = F.activate_project()
       local sc = input.shortcuts.keypressed

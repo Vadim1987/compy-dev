@@ -1,3 +1,5 @@
+--> REMARK: what if we organize tests by three groups named explicitly: a) interception of inbound key/mouse events b) management of input widget c) reacting to input widget events (limits, submission, cancellation) -- but we'll need good names for describe, aligned with documentation
+
 -- Availability: introduced with the Compy input API
 -- (1.0.0-rc20260712) — covers the compy.input surface.
 
@@ -59,9 +61,7 @@ describe('input API: cursor and text surface', function()
     it('reports the line on multiline text', function()
       local input = F.compy_input()
       input.show({ text = { 'ab', 'cd' } })
-      local l, c = input.get_cursor()
-      assert.same(2, l)
-      assert.same(3, c)
+      assert.same({2, 3}, input.get_cursor())
     end)
 
     -- Shown-with-text first, THEN hidden: without that setup a nil
@@ -88,9 +88,7 @@ describe('input API: cursor and text surface', function()
       local input = F.activate_project()
       input.show({ text = 'lemon' })
       input.set_cursor(1, 3)
-      local l, c = input.get_cursor()
-      assert.same(1, l)
-      assert.same(3, c)
+      assert.same({1,3}, input.get_cursor())
       -- The caret is really seated, not merely reported back:
       -- typing lands at the caret. `col` counts positions
       -- BETWEEN characters (1 .. #line + 1), so col 3 is

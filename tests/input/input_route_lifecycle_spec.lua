@@ -309,6 +309,7 @@ describe('input contracts: route connection lifecycle #input', function()
         love.state.app_state = 'snapshot'
         F.cc:suspend()
         F.session.type('a')
+        ---> REMARK: worth also checking that widget is not shown after suspend?
         assert.same({ 'a' }, F.console:get_text())
         assert.same({ 'x' }, F.widget:get_text())
       end)
@@ -416,6 +417,7 @@ describe('input contracts: route connection lifecycle #input', function()
         end)
     end)
 
+    ---> REMARK: test that neither raising from before_exit, nor attempt to return true do not block the exit (inability to disable exit from before_exit is dictated by common logic so it becomes final form of the contract for this specific hook)
     describe('compy.before_exit', function()
       -- compy.before_exit fires once on
       -- stop, before

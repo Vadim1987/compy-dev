@@ -1,8 +1,3 @@
--- Availability: the History model below predates the Compy
--- input API (introduced in 1.0.0-rc20260712); the
--- console-navigation group at the bottom of this file arrived
--- with it.
-
 --- @diagnostic disable: invisible
 require("model.input.history")
 local F = require('tests.helpers.input_fixture')
@@ -74,6 +69,7 @@ describe('history #history', function()
   end)
 end)
 
+---> REMARK: is comment even needed here? code is quite self-explanatory 
 -- Recall the way a user reaches it, through the real console.
 -- The console input is single-line, so Up hits the vertical
 -- limit at once and the widget reports that through the

@@ -6,6 +6,9 @@ authored: llm
 reviewed: none
 ---
 
+> REVIEW: drop everything resolved, actualize the list, and maybe make it a bit more comprehensive (less prose, more facts). ToC (list) at the beginning would also help
+> REVIEW: absolutely no mentioning of particular commits is allowed, they will be reassembled for the PR
+
 # Input subsystem
 
 Keyboard/text/pointer routing, the console and project input controllers
