@@ -141,15 +141,6 @@ local function default_before_exit()
   Log.debug('compy.before_exit noop')
 end
 
---- Reset the project's slot. Separate from firing because the
---- crash path resets WITHOUT firing — the hook is scoped to
---- stop paths — while a slot still holding a dead project's
---- function would fire for the NEXT project.
---- @param compy table
-local function reset_before_exit(compy)
-  compy.before_exit = default_before_exit
-end
-
 --- The framework's own teardown, and the ONLY place a project's
 --- `compy.before_exit` is ever invoked.
 ---
@@ -170,6 +161,9 @@ end
 --- this is the seam for it. See
 --- doc/development/technical_debt/input.md, "A project that
 --- raises leaves global device state dirty".
+---
+--- Uninstalling AFTER the call, never before, is what makes a
+--- parting reinstallation from inside the hook unreachable.
 --- @param compy table
 local function framework_before_exit(compy)
   local project_hook = compy.before_exit
@@ -180,10 +174,7 @@ local function framework_before_exit(compy)
         .. tostring(err))
     end
   end
-  -- Unconditional, and after the call: nothing a project
-  -- installed survives it, including a slot the hook itself
-  -- reassigned on its way out.
-  reset_before_exit(compy)
+  compy.before_exit = default_before_exit
 end
 
 ---> REMARK: word 'overlay' is strongly opposed. if its needed in console context (the only context where its meaningful), let use something like 'input_widget_overlay'
@@ -323,12 +314,13 @@ function ConsoleController:run_project(name)
         hide_overlay()
         -- ...and the participants it installed before raising.
         -- Same invariant, same reason: nothing survives the
-        -- project that installed it. before_exit is RESET but
-        -- not FIRED: the frozen spec scopes the hook to stop
-        -- paths and excludes crash, yet a slot left holding the
-        -- dead project's function would fire for the next one.
+        -- project that installed it. before_exit is uninstalled
+        -- but NOT fired: the hook is scoped to stop paths and
+        -- excludes crash, yet a slot left holding the dead
+        -- project's function would fire for the next one.
         self.main_ctrl.clear_user_handlers(self)
-        reset_before_exit(self:get_project_env().compy)
+        self:get_project_env().compy.before_exit =
+            default_before_exit
         love.state.app_state = 'project_open'
         print('Error: ', run_err)
       else

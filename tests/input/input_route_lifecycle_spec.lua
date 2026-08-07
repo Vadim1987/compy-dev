@@ -493,9 +493,11 @@ describe('input contracts: route connection lifecycle #input', function()
       end)
 
       -- Nothing a project installed outlives it, including a
-      -- slot the hook reassigns on its way out -- the reset is
-      -- unconditional and happens after the call, so a parting
-      -- assignment cannot reach the next project.
+      -- slot the hook reassigns on its way out. This is what
+      -- fixes the ORDER: uninstalling after the call, never
+      -- before, is the only arrangement a parting
+      -- reinstallation cannot escape. Mutation-checked:
+      -- moving the uninstall above the call fails this row.
       it('a hook reassigned during teardown does not survive',
         function()
           local leaked = false
