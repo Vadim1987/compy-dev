@@ -326,8 +326,12 @@ describe('#input events dispatching', function()
     end)
 
     -- The legal shapes stay legal: a bare trigger, modifiers plus a
-    -- trigger, and modifiers plus the class marker.
-    ---> REMARK: should also check (right here) that they actually work, not only are registered?
+    -- trigger, and modifiers plus the class marker. Acceptance and
+    -- canonicalisation only — 'Ctrl+Alt+S' reads back as
+    -- 'ctrl+alt+s'. That each shape then FIRES is the interception
+    -- matrix above (bare trigger, exact combo) and the 'combo
+    -- classes' block below; asserting it again here would say it a
+    -- third time.
     it('accepts a trigger, a combo, and a class', function()
       local input = F.activate_project()
       local sc = input.shortcuts.keypressed
