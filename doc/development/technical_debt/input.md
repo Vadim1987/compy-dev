@@ -1152,10 +1152,21 @@ something different in each:
 
 - **the drag path** — `love.mousemoved` polls `love.mouse.isDown(btn)` for `btn = 1, 2` and
   passes the held button through. Here `btn` is a real LÖVE mouse button.
-- **the click path** — `point(x, y, btn)`, reached from `hooks.singleclick` with a hardcoded
-  `1` and from `hooks.doubleclick` with a hardcoded `2`. Here `btn` is a click *count*.
+- **the click path** — `point(x, y, btn)`, reached from `hooks.singleclick` and
+  `hooks.doubleclick`. Here the number is **paint's own action selector, written as a literal
+  in each binding**: `1` for the primary gesture, `2` for the secondary. The framework passes
+  the two hooks `(x, y)` and nothing else — no button, no count — so nothing hands paint a `2`
+  to misread. Paint picks it.
 
-So the function reads as button-aware, and half its callers cannot supply a button. The
+So the function reads as button-aware, and half its callers cannot supply a button.
+
+**This is not a case of a receiver misinterpreting a value it was sent** — the question is
+worth stating because the coincidence invites it. `doubleclick` does not deliver "button 2";
+it delivers `(x, y)`, and paint's handler body chooses to call the secondary action `2`. Had
+the framework been passing a click count into a button parameter, that would be a defect; it
+never did, at the PR base or now. What is left is a latent trap: one parameter, a real LÖVE
+button on the drag path and a hand-picked constant on the click path, with the two meanings
+agreeing by luck (`2` = "secondary" in both readings). The
 consequences a user meets: right-**drag** on the canvas paints with the background colour,
 right-**click** does nothing, and double-click paints with the background colour — one effect,
 two unrelated gestures, plus a third gesture that looks like it should work and does not. The

@@ -49,8 +49,16 @@ likely what made the smoke test read as a bug.
 counted separately for btn1 and btn2, and it never materialized."** Checked, and
 the code says something sharper than a hope: `useCanvas(x, y, btn)` is called
 from **both** paths, and `btn` means a different thing in each — a real mouse
-button from the drag path, a click count from the click path. So the function is
-button-aware and half its callers cannot supply a button. Recorded as technical
+button from the drag path, and on the click path a literal paint writes itself.
+So the function is button-aware and half its callers cannot supply a button.
+
+**Not a receiver misreading a sent value** (owner's question, 2026-08-07). The
+framework passes the click hooks `(x, y)` and nothing else, at the PR base and
+now: `function compy.singleclick(x, y) point(x, y, 1) end` — the `1` and the `2`
+are written in paint's own handler bodies. Nothing hands paint a count that it
+mistakes for a button, so there is no defect of that shape. What is left is the
+latent trap, where the two meanings agree only by luck (`2` reads as "secondary"
+either way). Recorded as technical
 debt: `doc/development/technical_debt/input.md`, "paint's `useCanvas(btn)` means
 a mouse button on one path and a click count on the other (pre-existing)". The
 entry states why binding the button is not the fix — the derived clicks name no
