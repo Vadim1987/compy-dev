@@ -1118,3 +1118,29 @@ cited alongside the wip path, the examples to `doc/input_api.md`, "Submit lifecy
 a resolved entry rather than deleted, because the undercount is the lesson — a debt row's
 stated scope is a claim like any other, and this one was never re-measured after the tree
 moved under it.
+
+### The console's prompt is drawn under a project that never takes over `love.draw` (DISPUTABLE, ruled to keep 2026-08-07)
+
+`ConsoleView:draw` paints the console's own input strip whenever the screen mode is not
+`editor` (`src/view/consoleView.lua`, `drawConsole`). A project that replaces `love.draw`
+never reaches that path — the gateway's draw wrapper calls the project's own draw instead
+(`src/controller/controller.lua`, `set_love_update`). A project that draws **through the
+console terminal** and defines no `love.draw` of its own does reach it, so the console's
+prompt stays on screen for the whole run, inert: the input route belongs to the project, so
+anything typed at that strip goes to the project, not to the prompt it appears to offer.
+
+`src/examples/sapper` is the case in hand — it renders the minefield as terminal output and
+binds only the derived clicks, so the strip sits under the game field for the entire session.
+Surfaced by the owner's smoke test as *"any chance to not show inactive console input at the
+bottom?"*.
+
+**Ruled to keep as-is (owner, 2026-08-07):** the console's drawing logic is not to be
+conditioned on what a project happens to draw, for the cosmetic benefit of one pen-and-paper
+example. The gate would have to distinguish "a project owns the input route" from "the console
+is interactive again" — `inspect` being the second — which puts project-lifecycle knowledge
+into a view whose job is to paint the console.
+
+**Cost of leaving it:** the strip reads as an available prompt while it is not one. **Cost of
+fixing it:** a state test in the view, invisible to the suite — the input fixture stubs the
+`view.view` module wholesale, so `ConsoleView:draw` is not exercised by any row, and the fix
+would be verifiable only by a human smoke test. Revisit if a project owner asks.
