@@ -485,10 +485,16 @@ describe('Editor #editor', function()
           }
         end)
 
-        --> real textinput delivers symbols one-by-one, also in this situation could just call 'controller:textinput()' to the same effect?
-        --> I would rather expect 'textinputs' served character-by-character and followed by 'enter'
+        -- A typed query arrives one character at a time
+        -- (doc/development/internals/user_input.md, "Data flow"),
+        -- which is what a search box gets in practice; handing the
+        -- controller the whole string was a shortcut the device
+        -- never takes. mock.textinput with an explicit handler is
+        -- exactly that handler call, so it buys nothing here.
         local function type_search(text)
-          mock.textinput(text, function(t) controller:textinput(t) end)
+          for ch in text:gmatch('.') do
+            controller:textinput(ch)
+          end
         end
 
         it('types a query and Enter jumps to its definition', function()
