@@ -1,25 +1,33 @@
----> REMARK: all cases here are expressed in terminology that is hard to udnerstand and follow. either we need a separate document describing it and referenced from here, or tests claims need to be rewritten to be more undertandable, or tests are checking some phantom logic and are possibly dissolvable
-
 -- Availability: changed by the Compy input API
--- (1.0.0-rc20260712) — an input-only / pointer-only project now
--- stays live in project_open (technical_debt/input.md, ruling
--- a).
+-- (1.0.0-rc20260712).
 
--- An input-only / pointer-only
--- project is "live" without hooking love.update/draw.
--- In project_open such a project keeps the project route
--- (so submit works) and Ctrl+Esc returns to the console
--- (not quit the app), while a truly idle console
--- (project_open, nothing interactive) still quits on
--- Ctrl+Esc.
+-- What this file is about, in one paragraph.
 --
--- See doc/development/technical_debt/input.md, the
+-- A project's top-level code runs and finishes. Most projects
+-- keep working after that because they hooked love.update or
+-- love.draw — the framework calls them every frame. But a
+-- project can also be a prompt or a clickable sheet of paper:
+-- no update, no draw, just an input widget or a pointer
+-- handler. Nothing calls it per frame, so the framework has to
+-- decide whether such a project is still ALIVE or is just a
+-- console sitting idle.
+--
+-- The answer (doc/development/technical_debt/input.md,
 -- "Input-only / pointer-only projects stay live in
--- `project_open` (RESOLVED, ruling a)" entry.
+-- `project_open` (RESOLVED, ruling a)"): a shown input widget
+-- or an installed pointer handler counts as alive. Alive means
+-- two things a user can see — the project keeps receiving
+-- events, so Enter still submits; and Ctrl+Esc returns to the
+-- console instead of quitting the app. With neither, there is
+-- nothing to return FROM and Ctrl+Esc quits.
+--
+-- 'project_open' is the state name for "the project's code has
+-- finished but the project has not been stopped".
 
 local F = require('tests.helpers.input_fixture')
 
-describe('project_open liveness #input', function()
+describe('input surface: inbound events — a project stays live'
+  .. ' without update or draw #input', function()
   -- Fixture is built in setup (not at module load); busted 2 insulates
   -- _G/package.loaded per file, so this file runs standalone too.
   setup(function() F.setup() end)
@@ -47,36 +55,57 @@ describe('project_open liveness #input', function()
 
   -- Ctrl+Esc runs love.event.quit -> the love.quit callback;
   -- returning true aborts the OS quit (drop to console), a
-  -- falsy return lets the process exit.
-  it('Ctrl+Esc stops a live overlay project (project_open) instead of quitting', function()
-    local calls = stub_stop()
-    love.state.app_state = 'project_open'
-    love.state.user_input = {} -- an overlay is up => interactive
-    local aborted = love.quit()
-    assert.are.equal(1, calls.n)
-    assert.is_true(aborted)
-  end)
+  -- falsy return lets the process exit. So "returns true" below
+  -- reads as "went back to the console instead of quitting".
+  it('Ctrl+Esc goes back to the console while a widget is up',
+    function()
+      local calls = stub_stop()
+      love.state.app_state = 'project_open'
+      love.state.user_input = {}
+      local aborted = love.quit()
+      assert.are.equal(1, calls.n)
+      assert.is_true(aborted)
+    end)
 
-  it('Ctrl+Esc quits the app from an idle console (project_open, nothing interactive)', function()
-    local calls = stub_stop()
-    love.state.app_state = 'project_open'
-    love.state.user_input = nil
-    local aborted = love.quit()
-    assert.are.equal(0, calls.n)
-    assert.is_not_true(aborted)
-  end)
+  it('Ctrl+Esc quits the app when nothing is left to go back to',
+    function()
+      local calls = stub_stop()
+      love.state.app_state = 'project_open'
+      love.state.user_input = nil
+      local aborted = love.quit()
+      assert.are.equal(0, calls.n)
+      assert.is_not_true(aborted)
+    end)
 
-  it('user_is_interactive tracks an active overlay', function()
-    love.state.user_input = nil
-    assert.is_falsy(Controller.user_is_interactive())
-    love.state.user_input = {}
-    assert.is_truthy(Controller.user_is_interactive())
-  end)
+  it('a shown widget is what makes the project count as alive',
+    function()
+      love.state.user_input = nil
+      assert.is_falsy(Controller.user_is_interactive())
+      love.state.user_input = {}
+      assert.is_truthy(Controller.user_is_interactive())
+    end)
 
-  -- Behavioural guard: with the project route retained (what the
-  -- run_project fix now does for an interactive non-blocking
-  -- project) submit fires in project_open exactly as in running.
-  it('an active overlay submits on Enter while in project_open', function()
+  -- The other half of the rule, and the case the ruling is named
+  -- after: a project that shows no widget at all but installs a
+  -- pointer handler — a clickable sheet of paper. Untested until
+  -- now, though it is the first case the doc entry lists.
+  it('so is a pointer handler, with no widget anywhere',
+    function()
+      local calls = stub_stop()
+      F.activate_project({ mousepressed = function() end })
+      love.state.user_input = nil
+      love.state.app_state = 'project_open'
+      assert.is_truthy(Controller.user_is_interactive())
+      local aborted = love.quit()
+      assert.are.equal(1, calls.n)
+      assert.is_true(aborted)
+    end)
+
+  -- Alive means events still arrive, not merely that Ctrl+Esc
+  -- behaves: the project route is kept, so Enter reaches the
+  -- widget and submits exactly as it did while the code ran.
+  it('Enter still submits after the project code has finished',
+    function()
     local seen
     local input = F.activate_project()
     input.show({
