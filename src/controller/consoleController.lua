@@ -141,6 +141,51 @@ local function default_before_exit()
   Log.debug('compy.before_exit noop')
 end
 
+--- Reset the project's slot. Separate from firing because the
+--- crash path resets WITHOUT firing — the hook is scoped to
+--- stop paths — while a slot still holding a dead project's
+--- function would fire for the NEXT project.
+--- @param compy table
+local function reset_before_exit(compy)
+  compy.before_exit = default_before_exit
+end
+
+--- The framework's own teardown, and the ONLY place a project's
+--- `compy.before_exit` is ever invoked.
+---
+--- Stopping is the framework's business, not the project's.
+--- A hook at all is a convenience — somewhere to save a score
+--- or stop a timer — so it is called here, directly, inside a
+--- pcall, and never through the dispatch chain. That is the
+--- point of the indirection rather than a call at the stop
+--- site: a chain consumer signals by returning truthy, and no
+--- later edit should be able to give a project's teardown hook
+--- that meaning by accident. Nothing reads what it returns, and
+--- there is no return value here for a caller to read either.
+---
+--- Single invocation point by construction, so a second stop
+--- path cannot grow its own arrangement. It is also where
+--- forced restore of global device state belongs once that is
+--- built: the framework has teardown of its own to do, and
+--- this is the seam for it. See
+--- doc/development/technical_debt/input.md, "A project that
+--- raises leaves global device state dirty".
+--- @param compy table
+local function framework_before_exit(compy)
+  local project_hook = compy.before_exit
+  if project_hook then
+    local ok, err = pcall(project_hook)
+    if not ok then
+      Log.error('compy.before_exit raised: '
+        .. tostring(err))
+    end
+  end
+  -- Unconditional, and after the call: nothing a project
+  -- installed survives it, including a slot the hook itself
+  -- reassigned on its way out.
+  reset_before_exit(compy)
+end
+
 ---> REMARK: word 'overlay' is strongly opposed. if its needed in console context (the only context where its meaningful), let use something like 'input_widget_overlay'
 ---> REMARK: too verbose comment. just briefly tell in which contexts function is supposed to be invoked instead of reexplaining how it works (prose length is x5 longer than code length!)
 --- Take the overlay down THROUGH the widget when a run ends,
@@ -283,8 +328,7 @@ function ConsoleController:run_project(name)
         -- paths and excludes crash, yet a slot left holding the
         -- dead project's function would fire for the next one.
         self.main_ctrl.clear_user_handlers(self)
-        self:get_project_env().compy.before_exit =
-            default_before_exit
+        reset_before_exit(self:get_project_env().compy)
         love.state.app_state = 'project_open'
         print('Error: ', run_err)
       else
@@ -1313,29 +1357,13 @@ end
 function ConsoleController:stop_project_run()
   self:evacuate_required()
   local compy = self:get_project_env().compy
-  -- A notification, never a veto, and never able to break the
-  -- stop: it runs at the FIRST statement of teardown, so
-  -- anything escaping it abandons the rest: handlers left
-  -- wired, the reset below unreached, so every later stop
-  -- fails too. Absent is fine (a project releases a callback by
-  -- nilling it); a raise is reported and the stop continues;
-  -- the return value is not read, because a project cannot
-  -- refuse to stop (doc/development/decisions/input.md,
-  -- Decision 11).
-  if compy.before_exit then
-    local ok, err = pcall(compy.before_exit)
-    if not ok then
-      Log.error('compy.before_exit raised: '
-        .. tostring(err))
-    end
-  end
+  framework_before_exit(compy)
   self.main_ctrl.set_default_handlers(self, self.view)
   self.main_ctrl.set_love_update(self)
   hide_overlay()
   View.clear_snapshot()
   self.main_ctrl.set_love_draw(self, self.view)
   self.main_ctrl.clear_user_handlers(self)
-  compy.before_exit = default_before_exit
   self.main_ctrl.report()
   love.state.app_state = 'project_open'
 end

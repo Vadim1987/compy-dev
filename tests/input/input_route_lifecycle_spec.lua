@@ -479,6 +479,37 @@ describe('input contracts: route connection lifecycle #input', function()
         assert.equal('project_open', love.state.app_state)
       end)
 
+      -- Fires exactly once per stop. The framework owns the
+      -- teardown and calls the project's hook from inside it,
+      -- so there is one invocation point by construction; this
+      -- row is what would notice a second one growing.
+      it('fires exactly once per stop', function()
+        local n = 0
+        F.activate_project()
+        F.cc:get_project_env().compy.before_exit =
+            function() n = n + 1 end
+        F.cc:stop_project_run()
+        assert.equal(1, n)
+      end)
+
+      -- Nothing a project installed outlives it, including a
+      -- slot the hook reassigns on its way out -- the reset is
+      -- unconditional and happens after the call, so a parting
+      -- assignment cannot reach the next project.
+      it('a hook reassigned during teardown does not survive',
+        function()
+          local leaked = false
+          F.activate_project()
+          local compy = F.cc:get_project_env().compy
+          compy.before_exit = function()
+            compy.before_exit = function() leaked = true end
+          end
+          F.cc:stop_project_run()
+          F.activate_project()
+          F.cc:stop_project_run()
+          assert.is_false(leaked)
+        end)
+
       -- A project may nil the hook -- clearing a callback is
       -- how every other slot on this surface is released. Stop
       -- must survive it: the call site is the first statement

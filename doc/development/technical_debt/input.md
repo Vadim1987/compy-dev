@@ -132,6 +132,14 @@ action; revisit at the named point).
   wrong instrument here.
 - **Revisit:** owner ruled 2026-08-03 to record it and implement the
   force-reset later; revisit when that work is scheduled.
+- **Where it goes when built (2026-08-07):** `framework_before_exit`
+  (`consoleController.lua`) is now the framework's own teardown function and
+  the only caller of a project's hook (Decision 28). It is the seam this entry
+  has been describing — a framework-owned step, adjacent to but independent of
+  `compy.before_exit`. Note the crash path still does not reach it: it calls
+  `reset_before_exit` only, deliberately, since a partially initialised project
+  runs no teardown. Wiring the force-reset means calling the framework half on
+  the crash path too, which is a decision this entry does not pre-empt.
 
 ### `compy.before_exit` is absent from the persistent API docs (RESOLVED, 2026-08-03)
 

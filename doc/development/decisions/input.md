@@ -1131,3 +1131,34 @@ which is what the framework's timer does on its behalf.
 **Fast path preserved.** For a triggerless channel the held-modifier test runs before any combo
 string is built, so an unmodified `mousemoved` allocates nothing. A bare `'*'` still raises on
 every channel: it would mean "every event", which is what a hook is.
+
+## Decision 28 — stopping is the framework's; the project's hook is called from inside it
+
+**Decision.** The framework owns a teardown function of its own, and it is the **only** place a
+project's `compy.before_exit` is invoked. The project's hook is called directly from inside it,
+inside a `pcall`, with its return value not read. The framework function itself returns nothing, so
+no caller can read one either. Resetting the slot to the default is part of the same function, after
+the call, unconditionally.
+
+**Why.** `before_exit` sits in the project's namespace next to `compy.input.hooks`, and everything
+else in that neighbourhood signals by returning truthy — that is what a chain consumer does. Exiting
+is not a chain. **Stopping is a lifecycle step the framework performs, not one the project
+participates in**, and exposing a hook at all is a convenience: somewhere to save a score, flush a
+memo, stop a timer.
+
+Guarding the call site was not enough, because it left the guarantee as a property of one call
+site's current code. Two defects reached the tree on exactly that footing within one session — a
+nil hook and a raising hook each abandoned teardown from its first statement. The indirection makes
+the guarantee structural: there is one invocation, it is not a dispatch, and there is no return
+value in the chain for a later edit to start honouring by accident.
+
+**Consequence, accepted.** A project cannot refuse to stop, cannot defer the stop, and cannot break
+it by failing. A raise is logged and the stop continues. This is the hook's final form, not a
+deferred question.
+
+**Consequence, intended.** The framework now has a named place to do teardown of *its* own. Forced
+restore of global device state a project altered — key repeat, text input, anything a crashed
+project leaves dirty — belongs here when it is built
+(`doc/development/technical_debt/general.md`). That gap is the one this hook cannot close on the
+project's behalf: a project that raises before reaching a clean state never runs its own teardown,
+because the raise ends the run rather than the stop.

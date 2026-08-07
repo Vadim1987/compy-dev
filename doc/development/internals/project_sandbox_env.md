@@ -88,10 +88,10 @@ restore mechanism for T3 global state, which the project cannot restore reliably
 (a crash never reaches the hook). Covered by `tests/input/input_route_lifecycle_spec.lua`
 ("`compy.before_exit`").
 
-**What it cannot guarantee.** The hook is a notification, not a veto and not a transaction. It runs
-first thing in teardown, so the framework treats anything escaping it as its own problem rather than
-the project's: an absent hook is skipped, a raising one is logged and the stop continues, and the
-return value is not read — a project cannot refuse to stop. The consequence a project author has to
+**What it cannot guarantee.** The hook is a notification, not a veto and not a transaction. The
+framework calls it from inside a teardown function of its own, in a `pcall`, and reads nothing it
+returns (Decision 28) — so an absent hook is skipped, a raising one is logged and the stop
+continues, and a project cannot refuse to stop, defer the stop, or break it by failing. The consequence a project author has to
 plan around is the one this cannot fix: **a project that raises before reaching a clean state never
 gets to run its teardown at all**, because the raise, not the stop, is what ends the run. That gap is
 the failure mode the "proposed robust fix" above is a counter-measure for — identified and
