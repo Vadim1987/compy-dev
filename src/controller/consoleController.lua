@@ -400,37 +400,38 @@ end
 -- hooks[event] = fn, callbacks[name] = fn. One structural rule
 -- replaces the old enumerated 11-name allowlist — nothing to keep in
 -- sync with the API surface.
----> REMARK: need more explicit name e.g. 'unassignable_error', 
 --- @param k any
-local function frozen_error(k)
+local function unassignable_error(k)
   error("compy.input: '" .. tostring(k)
     .. "' is not assignable", 2)
 end
 
---- shortcuts sub-table: per-event combo tables whose identities are
---- frozen (shortcuts.keypressed = {} raises); leaf combo writes reach
---- the combo table's own normalising __newindex (Decision 8).
---- @param shortcuts table
-local function build_shortcuts_surface(shortcuts)
+--- A read-only view over private state: reads resolve through
+--- `resolve`, every write is refused. The empty table is the
+--- point — a metatable defends only the keys its table does not
+--- hold, so nothing may be a real field here.
+--- Three surfaces share this shape: the shortcuts sub-table
+--- (frozen per-event combo tables), the combinator table, and
+--- the compy.input container itself.
+--- @param resolve fun(k: any): any
+--- @param name fun(k: any): string   what the error reports
+--- @return table
+local function build_frozen_view(resolve, name)
   return setmetatable({ }, {
-    ---> REMARK: setting __index is redundant, because its trivial?
-    __index = function(_, event) return shortcuts[event] end,
-    __newindex = function(_, event)
-      frozen_error('shortcuts.' .. tostring(event))
-    end,
+    __index = function(_, k) return resolve(k) end,
+    __newindex = function(_, k) unassignable_error(name(k)) end,
   })
 end
 
---- hooks / callbacks sub-table: flat leaf writes are allowed (nothing
---- nested to protect); only the sub-table's own identity is frozen, at
---- the compy.input container level above.
---- @param store table
----> REMARK: whole function is redundant because its trivial? (literally setting __index and __newindex to their default behaviour!)
-local function build_leaf_surface(store)
-  return setmetatable({ }, {
-    __index = function(_, k) return store[k] end,
-    __newindex = function(_, k, v) store[k] = v end,
-  })
+--- shortcuts sub-table: per-event combo tables whose identities
+--- are frozen (shortcuts.keypressed = {} raises); leaf combo
+--- writes reach the combo table's own normalising __newindex
+--- (doc/development/decisions/input.md, Decision 8).
+--- @param shortcuts table
+local function build_shortcuts_surface(shortcuts)
+  return build_frozen_view(
+    function(event) return shortcuts[event] end,
+    function(event) return 'shortcuts.' .. tostring(event) end)
 end
 
 ---> REMARK: fix prose -- not "where the event GOES" but "whether event PROPAGATES by returning hardcoded true/false"
@@ -475,12 +476,9 @@ local INPUT_FN = {
 
 ---> REMARK: why set '__index' if its trivial
 ---> REMARK: we have characteristical 'frozen write' metatable, why not use class instead of repeating same setmetatable three times?
-local input_fn_surface = setmetatable({ }, {
-  __index = function(_, k) return INPUT_FN[k] end,
-  __newindex = function(_, k)
-    frozen_error('fn.' .. tostring(k))
-  end,
-})
+local input_fn_surface = build_frozen_view(
+  function(k) return INPUT_FN[k] end,
+  function(k) return 'fn.' .. tostring(k) end)
 
 --- Assemble the compy.input surface: reads resolve the three frozen
 --- sub-tables (shortcuts / hooks / callbacks), the combinator
@@ -495,20 +493,21 @@ local input_fn_surface = setmetatable({ }, {
 --- @param get_keys fun(): table
 --- @return table
 local function build_input_surface(state, methods, get_keys)
-  local shortcuts = build_shortcuts_surface(state.shortcuts)
-  local hooks = build_leaf_surface(state.hooks)
-  local callbacks = build_leaf_surface(state.callbacks)
-  return setmetatable({ }, {
-    __index = function(_, k)
-      if k == 'shortcuts' then return shortcuts end
-      if k == 'hooks' then return hooks end
-      if k == 'callbacks' then return callbacks end
-      if k == 'fn' then return input_fn_surface end
-      if k == 'keys_pressed' then return get_keys() end
-      return methods[k]
-    end,
-    __newindex = function(_, k) frozen_error(k) end,
-  })
+  -- hooks and callbacks are handed over as themselves: only
+  -- their IDENTITY is frozen, which the container's own refusal
+  -- above already does, and every leaf inside them is writable.
+  -- A pass-through proxy over them reproduced plain table
+  -- behaviour exactly.
+  local resolve = {
+    shortcuts = build_shortcuts_surface(state.shortcuts),
+    hooks = state.hooks,
+    callbacks = state.callbacks,
+    fn = input_fn_surface,
+  }
+  return build_frozen_view(function(k)
+    if k == 'keys_pressed' then return get_keys() end
+    return resolve[k] or methods[k]
+  end, tostring)
 end
 
 ---> REMARK: lets respect the vocabulary. these things are called *callbacks*.
