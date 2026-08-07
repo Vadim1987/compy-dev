@@ -998,6 +998,24 @@ describe('#input events dispatching', function()
         assert.same({ pressed = 3, released = 3 }, seen)
       end)
 
+    -- The derived click channels seed like every other channel.
+    -- They are framework-synthesised rather than delivered by LÖVE,
+    -- which is a fact about where the event comes FROM, not about
+    -- how a project binds it: a project that wrote
+    -- `love.singleclick` gets it seeded into hooks.singleclick,
+    -- exactly as `love.mousepressed` is seeded into
+    -- hooks.mousepressed. The control is the pair asserted
+    -- together — if seeding covered a hand-listed subset, one of
+    -- these two would be nil.
+    it('seeds the derived click channels too', function()
+      local input = F.activate_project({
+        singleclick = function() end,
+        doubleclick = function() end,
+      })
+      assert.is_function(input.hooks.singleclick)
+      assert.is_function(input.hooks.doubleclick)
+    end)
+
     -- doc/development/decisions/input.md, Decision 10, project-handler
     -- path: a truthy handler intercepts the widget.
     it('a handler returning truthy intercepts the widget',

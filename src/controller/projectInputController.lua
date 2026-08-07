@@ -37,11 +37,22 @@ require("util.key")
 -- compy.input.keys_pressed (Decision 20) and appending it would
 -- change the signature every existing pointer handler was
 -- written against.
----> REMARK: where are singleclick/doubleclick? they should better be supported as any other
+-- Every channel the chain dispatches on, in ONE list. The derived
+-- clicks belong in it: where an event comes from (LÖVE, or the
+-- framework's click timer) is not how a project binds it, and the
+-- seeder has to see the same channels the dispatcher installs.
 local EVENTS = {
   'keypressed', 'keyreleased', 'textinput',
   'mousepressed', 'mousereleased', 'mousemoved', 'wheelmoved',
   'touchpressed', 'touchreleased', 'touchmoved',
+  'singleclick', 'doubleclick',
+}
+
+-- The channels that carry a combo trigger, and therefore a
+-- shortcuts tier. Everything else in EVENTS enters the walk at
+-- the hook tier.
+local KEYBOARD = {
+  keypressed = true, keyreleased = true, textinput = true,
 }
 
 --- Seed the project's hooks table (doc/development/decisions/input.md,
@@ -203,14 +214,6 @@ local function pointer_channel(event)
   end
 end
 
--- The last two are DERIVED: the framework's click timer
--- synthesises them, LÖVE does not deliver them. They dispatch
--- identically all the same, which is the point: a project binds
--- compy.input.hooks.singleclick as it binds any other.
-for _, event in ipairs({
-  'mousepressed', 'mousereleased', 'mousemoved', 'wheelmoved',
-  'touchpressed', 'touchreleased', 'touchmoved',
-  'singleclick', 'doubleclick',
-}) do
-  pointer_channel(event)
+for _, event in ipairs(EVENTS) do
+  if not KEYBOARD[event] then pointer_channel(event) end
 end

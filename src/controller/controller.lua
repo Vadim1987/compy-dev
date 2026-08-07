@@ -39,18 +39,16 @@ local user_draw
 -- a)"): keep the project route, Ctrl+Esc -> console.
 local user_pointer
 
----> REMARK: if there's no moer distinction, why keep separate lists? also if we anyway hook singleclick/doubleclick (therefore handling the situation when project sets them via love.singleclick) -- why not just get back to a consolidated supported list? separation seemingly has no more sense there (again, like it was pre-feature)
--- Two lists, one lifetime. Every channel installs the same way
--- (occupy_keyboard), runs the same chain, and is released at
+-- One lifetime, several names for subsets of it. Every channel
+-- installs the same way, runs the same chain, and is released at
 -- the same moment: the project's stop. The split that existed
 -- here (keyboard released at running->project_open, pointer
 -- exempted so pen-and-paper projects survived it) came with
 -- this feature and is gone: at the PR base nothing was
 -- released before suspend or stop.
--- The lists remain because the two groups still differ in what
--- they CARRY, not in how they are routed: keyboard/text events
--- have a combo trigger and therefore a shortcuts tier, pointer
--- events have neither and enter the walk at the hook tier.
+-- The subsets below name what a group CARRIES, never how it is
+-- routed: keyboard/text events have a combo trigger and
+-- therefore a shortcuts tier.
 local _keyboard = {
   'keypressed',
   'keyreleased',
@@ -71,9 +69,9 @@ local _pointer = {
 -- Derived events: not LÖVE's. The click timer in
 -- set_love_update synthesises them from raw presses. They
 -- travel gateway and route like native ones, so a project reads
--- through compy.input.hooks like anything else. They are NOT in
--- _supported because there is no love.<name> for a project to
--- have written, so nothing seeds them from the sandbox table.
+-- through compy.input.hooks like anything else. They stay a
+-- named subset only because the timer needs to know which
+-- events it synthesises — never to decide how one is bound.
 local _derived = {
   'singleclick',
   'doubleclick',
@@ -85,6 +83,19 @@ for _, k in ipairs(_keyboard) do
 end
 for _, k in ipairs(_pointer) do
   table.insert(_supported, k)
+end
+
+-- Every channel a project can bind, native and derived. One
+-- list, because seeding, teardown and dispatch have to agree
+-- about what a channel is, and three hand-kept subsets did not:
+-- a project writing love.singleclick got nothing, while the
+-- same project writing love.mousepressed got a seeded hook.
+local _bindable = {}
+for _, k in ipairs(_supported) do
+  table.insert(_bindable, k)
+end
+for _, k in ipairs(_derived) do
+  table.insert(_bindable, k)
 end
 
 --- @param CC ConsoleController
@@ -202,9 +213,8 @@ end
 --- @param key string
 --- @return function? handler
 local function project_handler(userlove, key)
-  local orig = Controller._defaults[key]
   local new = userlove[key]
-  if not (orig and new and orig ~= new) then return end
+  if not new or new == Controller._defaults[key] then return end
   return new
 end
 
@@ -218,7 +228,7 @@ end
 --- @return table handlers
 local function project_handlers(userlove, CC)
   local out = {}
-  for _, k in ipairs(_supported) do
+  for _, k in ipairs(_bindable) do
     out[k] = project_handler(userlove, k)
   end
   return out
@@ -338,17 +348,11 @@ local set_handlers = function(userlove, CC)
   hook_draw(userlove)
 end
 
--- Every channel that can carry a hook, pointer included: else
--- a stopped project's pointer hook survives teardown and blocks
--- the NEXT project's seeding (seed_hooks fills only a nil
--- slot). Decision 11's teardown invariant covers all of them.
-local HOOK_EVENTS = {}
-for _, k in ipairs(_supported) do
-  table.insert(HOOK_EVENTS, k)
-end
-for _, k in ipairs(_derived) do
-  table.insert(HOOK_EVENTS, k)
-end
+-- Teardown clears every bindable channel: else a stopped
+-- project's pointer hook survives and blocks the NEXT project's
+-- seeding (seed_hooks fills only a nil slot). Decision 11's
+-- teardown invariant covers all of them.
+local HOOK_EVENTS = _bindable
 
 --- @param t table
 local function wipe_table(t)
@@ -365,11 +369,14 @@ end
 --- @param CC ConsoleController
 local function reset_compy_input(CC)
   local input = CC:get_project_env().compy.input
-  ---> REMARK: wipe should happen across all supported types, and shortcut tables should be provisioned for all supported types (or we can use index, setindex machinery there if we do not want to list them all)
-  wipe_table(input.shortcuts.keypressed)
-  wipe_table(input.shortcuts.keyreleased)
-  wipe_table(input.shortcuts.textinput)
-  ---> REMARK why not wipe_table(input.hooks) ?
+  -- Driven by the channel lists, not by iterating the surface:
+  -- `shortcuts` and `hooks` are metatable proxies over private
+  -- state, so `pairs` on them yields nothing. Every channel that
+  -- can hold something is named in a list, and the list is what
+  -- teardown walks.
+  for _, ev in ipairs(_keyboard) do
+    wipe_table(input.shortcuts[ev])
+  end
   for _, ev in ipairs(HOOK_EVENTS) do input.hooks[ev] = nil end
 end
 
@@ -477,11 +484,10 @@ end
 --- @field user_is_blocking function
 Controller = {
   --- @private
-  -- Empty: the click stubs that used to sit here were a fossil
-  -- of the era when single/doubleclick were love.* events. They
-  -- were dead: every _defaults read iterates _supported (plus
-  -- 'draw'), which never included them.
-  ---> REMARK: did not we agree that they are *fired* as love.* events  and handled by project via hooks? (by hardwiring proxy from love.* to CC:dispatch(event,..) for all events, native and derived?
+  -- Console defaults, per channel. The derived clicks have none:
+  -- nothing occupies them outside a project run, so anything a
+  -- project's sandboxed love table holds there is the project's
+  -- own and seeds a hook (project_handler).
   _defaults = { },
   --- @private
   _userhandlers = {},
