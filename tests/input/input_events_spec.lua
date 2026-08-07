@@ -398,6 +398,28 @@ describe('input surface: inbound events — dispatch #input',
       assert.same({ 'q', 'z' }, seen)
     end)
 
+    -- An EXACT two-modifier combo, which nothing else in the
+    -- suite drove: the rows around this one bind one modifier
+    -- plus a trigger, or two modifiers plus the class marker.
+    -- Both halves of a smoke finding live here — two modifiers
+    -- serialising in canonical order, and a non-character
+    -- trigger (an arrow) naming itself. A shipped example binds
+    -- exactly this shape (examples/keyboard registers
+    -- 'ctrl+alt+up' for its difficulty notch) and was reported
+    -- as doing nothing; the platform half of that report is
+    -- what this row answers.
+    it('a two-modifier combo fires on the real chord', function()
+      local input = F.activate_project()
+      local seen = { }
+      input.shortcuts.keypressed['ctrl+alt+up'] = function(k)
+        seen[#seen + 1] = k; return true
+      end
+      F.session.press('lctrl')
+      F.session.press('lalt')
+      F.session.press('up')
+      assert.same({ 'up' }, seen)
+    end)
+
     -- The handler needs to know WHICH key matched, and already
     -- does: the trigger is argument one, as on any other combo.
     it('the class handler receives the real trigger', function()
