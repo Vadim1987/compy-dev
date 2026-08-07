@@ -527,8 +527,8 @@ local CALLBACK_KEYS = {
 -- {line, col} pair applied after text, the seat compy.input.
 -- set_cursor moves later. configure() while HIDDEN has no
 -- session to apply them to, so it stashes them in state.pending
--- for the next show() to consume — which is the one case where
--- they outlive their call.
+-- for the next show() to consume, the one case where they
+-- outlive their call.
 local PER_SHOW_KEYS = { 'prompt', 'text', 'cursor' }
 
 --- @param names string[]
@@ -546,9 +546,11 @@ end
 -- of an ALREADY-active widget", so it is show()'s alone —
 -- configure() only ever runs in that state.
 local CONFIGURE_KEYS = key_set(CALLBACK_KEYS)
-for _, k in ipairs(PER_SHOW_KEYS) do CONFIGURE_KEYS[k] = true end
 local SHOW_KEYS = key_set(CALLBACK_KEYS, 'force')
-for _, k in ipairs(PER_SHOW_KEYS) do SHOW_KEYS[k] = true end
+for _, k in ipairs(PER_SHOW_KEYS) do
+  CONFIGURE_KEYS[k] = true
+  SHOW_KEYS[k] = true
+end
 
 -- Lifecycle callbacks are compy.input.callbacks assignments,
 -- never config-table keys. Naming one here is the likeliest
