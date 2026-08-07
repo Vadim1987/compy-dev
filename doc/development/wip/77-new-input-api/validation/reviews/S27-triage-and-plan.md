@@ -512,6 +512,24 @@ remaining phases: an argument of the form *"X is already available elsewhere, so
 it need not be here"* proves too much. It was wrong about scancode and wrong
 about the button. Check what else the system already does before invoking it.
 
+**A third correction, and a different lesson (owner, 2026-08-07 — Decision 28).**
+`before_exit` produced three defects in one session: a nil hook and a raising
+hook each abandoned teardown from its first statement, and the second was still
+open after the first was "fixed". Each fix guarded the call site, which left the
+guarantee as a property of that site's current code. The owner's ruling replaces
+it with a structural one: the framework owns a teardown function,
+`framework_before_exit`, and the project's hook is called from inside it — no
+dispatch, one invocation point, no return value in flight for a later edit to
+start honouring. **The generalisable rule: when a guarantee has failed twice at
+the same call site, the fix is to remove the site's discretion, not to guard it
+again.** Applies to anything remaining that a project can reach and the framework
+must not let it steer.
+
+Also intended by that ruling: the framework now has a named seam for teardown of
+its own, which is where the force-reset of dirty global device state goes when it
+is built (`technical_debt/input.md`, "A project that raises leaves global device
+state dirty").
+
 | # | Phase | Depends on | Gate |
 |---|---|---|---|
 | ~~P0~~ **DONE** | Answer the S0s: verify R044, R068, R033/R171 against `3256aac` and the current tree (**done** — `../notes/S27-P0-evidence.md`); reproduce SM1, SM3, SM4, SM5 | — | evidence note on disk before any fix |
@@ -521,6 +539,8 @@ about the button. Check what else the system already does before invoking it.
 | ~~P4~~ **DONE** (`5d144f37`, extended by `1a414dbb`) | W2 — pointer shortcut tier | P1 | **[REV]** independent of W1 too: pointer already dispatches with `trigger = nil` |
 | ~~P5~~ **DONE** (`15679f9d`) | W5 — `before_submit` veto + callback defaults | **[REV] P1, P2** | `before_submit(keys_pressed)` is the parameter P2 removes — **write its tests after P2**, not before |
 | ~~P6~~ **DONE** (`bb6569a2`) | W4 — dispatch/wiring collapse | P2–P5 | behaviour-preserving; suite is the proof. `hook_pointer` is renamed, not deleted |
+| ~~P7~~ **DONE** | W7 — controller structure + the 16-line rule | P6 | see commits `99f883d0`…`75c0d9ea` |
+| **P7b** | **Teardown ownership** (owner, 2026-08-07) — Decision 28 | P7 | **DONE** (`ab2d45eb`) |
 | P7 | W7 — controller structure, incl. the 16-line rule in `agents/rules.md` | P6 | |
 | P8 | W8 — test restructuring | P2–P7 | do NOT restructure tests before the code stops moving |
 | P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | **[REV]** the three nested repos carry **no automated tests** — one static spec doc, no runnable suite. Committing is not verification: a smoke re-pass on the channels W1/W2/W3 touch is the gate, `examples/keyboard` at minimum. Never pushed |
