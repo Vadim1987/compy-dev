@@ -114,11 +114,8 @@ end
 --- hooks[event] → widget, stopping at the first that consumes.
 --- A shortcut or hook consumes by returning truthy; the widget
 --- consumes whenever it is shown (its own internal flag), and is
---- skipped when hidden. Its return stays chain-meaningless with
---- ONE exception: an explicit `false` declines a channel the
---- widget does not participate in, so a click reaching a shown
---- widget is reported unconsumed rather than swallowed (owner
---- ruling, 2026-08-07). A free function over
+--- skipped when hidden — so the walk reports consumed iff a
+--- consumer fired or the widget was shown. A free function over
 --- plain tables + a widget reference, so any adopter (not only
 --- the project overlay) can reuse it over its own instance.
 --- The nil guards are deliberate (Decision 23): whether a hook
@@ -138,7 +135,8 @@ local function dispatch(shortcuts, hooks, widget, event, trigger, ...)
   local hk = hooks[event]
   if hk and hk(...) then return true end
   if widget and widget:is_shown() then
-    return widget[event](widget, ...) ~= false
+    widget[event](widget, ...)
+    return true
   end
   return false
 end

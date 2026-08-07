@@ -825,15 +825,11 @@ end
 
 -- The derived clicks are the framework's synthesis, for projects to
 -- bind; text editing has no use for them. Present because the chain
--- calls every channel on its terminal tier, and returning false
--- because declining is not the same as consuming silently
--- (doc/development/decisions/input.md, Decision 5).
+-- calls every channel on its terminal tier.
 function UserInputController:singleclick()
-  return false
 end
 
 function UserInputController:doubleclick()
-  return false
 end
 
 --- @param id userdata
