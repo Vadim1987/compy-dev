@@ -31,10 +31,13 @@ Three things about it that a successor needs and cannot infer:
 3. **Decision numbers are load-bearing.** 179 comments cite decisions by number.
    The ledger is pruned by **tombstoning in place, never renumbering**.
 
-Full account: `../session27/report.md`. Owner attestations, behavioural notes
-and three process failures worth not repeating:
-`../../../validation/notes/S27-observations.md`. The plan and its revision log:
-`../../../validation/reviews/S27-triage-and-plan.md`.
+Full account: `../session27/report.md`. Owner attestations given in chat, each
+a ruling to honour: `../../../validation/notes/S27-owner-attestations.md`. The
+plan and its revision log:
+`../../../validation/reviews/S27-triage-and-plan.md`. Session27 also left an
+`observations.md` beside its track — self-assessment, outside the workflow, not
+a source of project fact; read it only if the three process failures in it are
+of interest.
 
 ## Your task, part 1 — revalidation (do this first)
 

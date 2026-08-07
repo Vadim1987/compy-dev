@@ -64,7 +64,7 @@ Three times a landed decision was challenged, and twice the reasoning failed:
   approach: remove the call site's discretion rather than guard it again.
 
 **The generalisable lessons are in
-`validation/notes/S27-observations.md`** and are worth carrying: an argument of
+`session27/observations.md`** and are worth carrying: an argument of
 the form *"X is already available elsewhere, so it need not be here"* proves too
 much; and when a guarantee has failed twice in the same place, stop guarding it.
 

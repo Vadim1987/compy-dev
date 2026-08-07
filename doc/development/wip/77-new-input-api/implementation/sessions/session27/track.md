@@ -290,7 +290,7 @@ Suite **953 / 0 / 0 / 3** at wrap, green and stated at every commit. 41 commits
 here, 2 in `examples/keyboard`. Nothing pushed anywhere.
 
 Distilled into `report.md`; observations and owner attestations into
-`../../../validation/notes/S27-observations.md`; successor commissioned as
+`../../../validation/notes/S27-owner-attestations.md`; successor commissioned as
 session28. Track kept raw per `agents/sessions.md` §3.
 
 ## Sub-agents
