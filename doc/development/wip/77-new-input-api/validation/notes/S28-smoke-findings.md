@@ -80,3 +80,82 @@ Revisit only if a project owner asks.
 `view.view` module wholesale, so `ConsoleView:draw` is exercised by no row in
 the suite. Any fix here is verifiable only by a human smoke test — which is a
 second, independent reason not to spend a change on it now.
+
+---
+
+## SM3a — maze: nav symbols glitch when launched from another project. **UNRESOLVED from code.**
+
+Sub-agent analysis (`../outcomes/S28-smoke-analysis.md`): the owner's font
+hypothesis could not be confirmed or refuted by reading. It checked
+font-recreation-at-require, `evacuate_required`'s `package.loaded` scoping, and
+the path between `stop_project_run` and the next project's run, and found **no
+explicit font or graphics-state reset between two consecutive project runs** —
+which is consistent with the hypothesis without demonstrating it.
+
+What it did surface is a **precedent for the failure shape**: `S24-W7-A1`, a
+previously fixed "works for the first project, breaks for every later one" bug
+caused by a flag that stop did not reset. That makes the owner's instinct a
+known class of defect here rather than a guess, but it is not evidence about
+this instance.
+
+**Left open deliberately.** Fixing state-reset code on a hypothesis nobody has
+reproduced is how the `wrap_handler` mistake happened (session26): machinery
+removed or added because it *looked* like the cause. The next step is a runtime
+check — print the font identity at the start of two consecutive maze runs — and
+that needs the app, which this pass excluded by instruction.
+
+## SM3b — maze: Ctrl dims the screen. **EXPLAINED. Not a platform issue, no change.**
+
+The dim overlay is **Shift-gated by design** in maze's own `macro.lua`
+(`SHIFT_KEYS`, `handle_key`, `release_shift`). No path in the example ties it to
+Ctrl, and nothing in the platform dims anything. The likeliest reading is a
+Shift/Ctrl mix-up while smoke-testing — the note itself quotes `"Ctrl"` with
+uncertain punctuation.
+
+**Pinned rather than fixed**, per the owner's instruction not to leave it
+unexplained: the behaviour is intended, the modifier in the report is probably
+misremembered, and confirming it costs one keypress at the next smoke pass.
+
+## SM4 — keyboard: Ctrl+Alt+arrow does nothing. **NOT A PLATFORM DEFECT. Coverage added.**
+
+Traced end to end through `key.lua` (registration, canonicalisation) and the
+dispatcher: an exact two-modifier combo works. Now pinned by a suite row —
+`tests/input/input_events_spec.lua`, "a two-modifier combo fires on the real
+chord" (`73dae3f5`), which registers `'ctrl+alt+up'` and presses the real chord
+through the production gate.
+
+The row is a **pin, not a proof of a fix** — it passed before it was written.
+Its reach was mutation-checked: reordering `mod_order` in `key.lua`, so that
+registration canonicalises modifiers in a different order than dispatch emits
+them, fails it. That asymmetry is precisely what SM4 suspected, and nothing in
+the suite could previously catch it: the neighbouring rows bind one modifier
+plus a trigger, or two modifiers plus the class marker.
+
+**What remains as the likely cause, and it is not ours:** the window manager.
+Ctrl+Alt+Arrow is a desktop-level shortcut on most Linux environments
+(workspace switching), so the chord may never reach the app at all. Cheap to
+confirm at the next smoke pass — try the same binding on a chord the WM does not
+claim.
+
+## SM5 — keyboard: subgame 4 accepts no glyph. **EXAMPLE DEFECT. FIXED** (`3a9d48c`, nested repo).
+
+`inputStale` dropped a `textinput` glyph whose producing key was **held**. On
+desktop LÖVE the keypress arrives before the glyph, so a key is *always* held at
+its own first `textinput` — every fresh target was discarded as a repeat. Shift
+kept working because the key-cap renderer reads the held set live at draw time,
+a different mechanism, which is exactly the clue in the owner's report.
+
+The file's own header asserted the opposite ordering as if it were the only one
+("the IDE delivers textinput BEFORE the matching keypress"), and built the gate
+on it. The platform documents that there is **no ordering guarantee** between
+the two channels (`internals/user_input.md`, "Data flow"), so the held set
+answers the environment rather than the question.
+
+**Fix:** a glyph is *claimed* — one per press, claim released at keyup. "Has
+this key's glyph been judged since its last release" reads the same in both
+orders. The post-keyup grace window is unchanged. The stale header reasoning was
+rewritten with it, since that reasoning is what produced the bug.
+
+**Not covered by any test:** the keyboard project is a nested repo with no
+suite. Reasoned from the code and from the platform's ordering rule; wants a
+smoke pass on the device.
