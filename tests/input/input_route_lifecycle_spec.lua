@@ -450,6 +450,35 @@ describe('input contracts: route connection lifecycle #input', function()
           F.cc:get_project_env().compy.before_exit()
           assert.equal(1, calls)
         end)
+
+      -- A project may nil the hook -- clearing a callback is
+      -- how every other slot on this surface is released. Stop
+      -- must survive it: the call site is the first statement
+      -- of teardown, so a raise there abandons the whole
+      -- sequence, leaving handlers wired and the slot stuck
+      -- nil, which makes every LATER stop raise too.
+      it('stop survives a nil hook', function()
+        F.activate_project()
+        F.cc:get_project_env().compy.before_exit = nil
+        assert.has_no.errors(function()
+          F.cc:stop_project_run()
+        end)
+        -- teardown completed, not merely survived the call
+        assert.equal(
+          Controller._defaults.keypressed, love.keypressed)
+      end)
+
+      -- A second stop still works: the reset line sits after
+      -- the call, so a raise would have skipped it.
+      it('a nil hook does not wedge the next stop', function()
+        F.activate_project()
+        F.cc:get_project_env().compy.before_exit = nil
+        F.cc:stop_project_run()
+        F.activate_project()
+        assert.has_no.errors(function()
+          F.cc:stop_project_run()
+        end)
+      end)
     end)
   end)
 end)

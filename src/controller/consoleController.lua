@@ -1286,8 +1286,14 @@ end
 function ConsoleController:stop_project_run()
   self:evacuate_required()
   local compy = self:get_project_env().compy
-  ---> REMARK: that's exactly where we can check hook existance before execution instead of relying on 20 lines of useless boilerplate and metatables
-  compy.before_exit()
+  -- Guarded, and the guard is not defensive dressing: this is
+  -- the FIRST statement of teardown, so a raise here abandons
+  -- the rest of it — handlers left wired, and the reset below
+  -- never reached, so the slot stays nil and every later stop
+  -- raises too. A project may legitimately nil the hook; that
+  -- is how a callback is released everywhere else on this
+  -- surface.
+  if compy.before_exit then compy.before_exit() end
   self.main_ctrl.set_default_handlers(self, self.view)
   self.main_ctrl.set_love_update(self)
   hide_overlay()
