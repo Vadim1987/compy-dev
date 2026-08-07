@@ -1313,14 +1313,22 @@ end
 function ConsoleController:stop_project_run()
   self:evacuate_required()
   local compy = self:get_project_env().compy
-  -- Guarded, and the guard is not defensive dressing: this is
-  -- the FIRST statement of teardown, so a raise here abandons
-  -- the rest of it — handlers left wired, and the reset below
-  -- never reached, so the slot stays nil and every later stop
-  -- raises too. A project may legitimately nil the hook; that
-  -- is how a callback is released everywhere else on this
-  -- surface.
-  if compy.before_exit then compy.before_exit() end
+  -- A notification, never a veto, and never able to break the
+  -- stop: it runs at the FIRST statement of teardown, so
+  -- anything escaping it abandons the rest: handlers left
+  -- wired, the reset below unreached, so every later stop
+  -- fails too. Absent is fine (a project releases a callback by
+  -- nilling it); a raise is reported and the stop continues;
+  -- the return value is not read, because a project cannot
+  -- refuse to stop (doc/development/decisions/input.md,
+  -- Decision 11).
+  if compy.before_exit then
+    local ok, err = pcall(compy.before_exit)
+    if not ok then
+      Log.error('compy.before_exit raised: '
+        .. tostring(err))
+    end
+  end
   self.main_ctrl.set_default_handlers(self, self.view)
   self.main_ctrl.set_love_update(self)
   hide_overlay()

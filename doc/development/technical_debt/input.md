@@ -239,9 +239,9 @@ because the pattern recurs: when a producer goes, grep for its consumer.
 - **Revisit:** Decide whether the sharing is intended. If it is, say so where
   the slot is built; if not, a plain field is simpler. Evidence, with probe
   transcripts: the frozen-surface audit run in session27.
-- **Not to be confused with** the crash fixed on 2026-08-07: the call site is
-  now guarded (`if compy.before_exit then ... end`), which is orthogonal to how
-  the slot is stored.
+- **Not to be confused with** the crashes fixed on 2026-08-07: the call site is
+  now guarded against both an absent hook and a raising one, which is orthogonal
+  to how the slot is stored.
 
 ### A truthy `hooks[event]` return silently disables `on_limit_reached`
 

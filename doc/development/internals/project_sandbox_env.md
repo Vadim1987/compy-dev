@@ -69,7 +69,6 @@ lives in a global subsystem nobody snapshots.
 ### `compy.before_exit` — the project teardown hook
 
 > REMARK: Update 'exists, not a proposal' with concrete avaiability reference -- "since version..."
-> REMARK: during session 24 we discussed a conceptual problem that before_exit() cannot guarantee a teardown if project raises before being ablt to clean up. the prose below should be updated to refkect this concern and also reference the appropriate decisions and tech debt record (which in turn could reference back here) -- and the 'proposed robust fix' in the previous paragraph is precisely a counter-measure for this failure mode -- indentified, registered, not implemented (contrary to 'before_exit' hook)
 
 It exists and is wired; it is **not** a proposal. `compy.before_exit` is a slot on the injected
 `compy` namespace, defaulting to a no-op (`consoleController.lua:697`), assignable by the project
@@ -88,6 +87,16 @@ What it is for: **project-internal** teardown — save a score, flush a memo, st
 restore mechanism for T3 global state, which the project cannot restore reliably in any case
 (a crash never reaches the hook). Covered by `tests/input/input_route_lifecycle_spec.lua`
 ("`compy.before_exit`").
+
+**What it cannot guarantee.** The hook is a notification, not a veto and not a transaction. It runs
+first thing in teardown, so the framework treats anything escaping it as its own problem rather than
+the project's: an absent hook is skipped, a raising one is logged and the stop continues, and the
+return value is not read — a project cannot refuse to stop. The consequence a project author has to
+plan around is the one this cannot fix: **a project that raises before reaching a clean state never
+gets to run its teardown at all**, because the raise, not the stop, is what ends the run. That gap is
+the failure mode the "proposed robust fix" above is a counter-measure for — identified and
+registered, not implemented. See `doc/development/technical_debt/general.md` for the register entry,
+and `doc/development/decisions/input.md`, Decision 11, for the teardown invariant itself.
 
 > REMARK: make pointer annotations more useful for reader, and also check their completeness/consistency and whther they are actual
 ## Pointers

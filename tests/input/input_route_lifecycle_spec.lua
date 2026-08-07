@@ -417,7 +417,6 @@ describe('input contracts: route connection lifecycle #input', function()
         end)
     end)
 
-    ---> REMARK: test that neither raising from before_exit, nor attempt to return true do not block the exit (inability to disable exit from before_exit is dictated by common logic so it becomes final form of the contract for this specific hook)
     describe('compy.before_exit', function()
       -- compy.before_exit fires once on
       -- stop, before
@@ -450,6 +449,35 @@ describe('input contracts: route connection lifecycle #input', function()
           F.cc:get_project_env().compy.before_exit()
           assert.equal(1, calls)
         end)
+
+      -- A project cannot refuse to stop, and cannot break the
+      -- stop by failing. The hook is a notification, not a
+      -- veto: it runs at the top of teardown, so anything it
+      -- does that escapes -- a raise, or a truthy return read
+      -- as a veto -- would abandon the rest of the sequence.
+      -- That is the whole contract for this hook, and it is
+      -- decided rather than deferred (Decision 11).
+      it('a raising hook does not block the stop', function()
+        F.activate_project()
+        F.cc:get_project_env().compy.before_exit = function()
+          error('boom')
+        end
+        assert.has_no.errors(function()
+          F.cc:stop_project_run()
+        end)
+        assert.equal(
+          Controller._defaults.keypressed, love.keypressed)
+      end)
+
+      it('a truthy return does not veto the stop', function()
+        F.activate_project()
+        F.cc:get_project_env().compy.before_exit =
+            function() return true end
+        F.cc:stop_project_run()
+        assert.equal(
+          Controller._defaults.keypressed, love.keypressed)
+        assert.equal('project_open', love.state.app_state)
+      end)
 
       -- A project may nil the hook -- clearing a callback is
       -- how every other slot on this surface is released. Stop
