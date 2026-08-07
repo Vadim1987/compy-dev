@@ -93,6 +93,18 @@ Same applies to dispatch tables: `actions[key]()` beats `if key == 'x' then ... 
 
 **Pedagogical test.** Before adding an abstraction: *could a motivated student understand and modify this?* If not, look for a simpler path.
 
+**No invented special cases (KISS, DRY).** Solve the requirement, not a generalisation of it. A rule that applies to one case is a special case, and a special case the system did not ask for is a defect however small and however principled it reads — it is a second rule to learn, to document, and to keep true. Signs you are inventing one: a sentinel return value that only one caller produces; a branch whose other arm nothing exercises; an exception clause appended to a decision that was uniform before. The minimum that satisfies the requirement is the answer. When a fix needs a mechanism, say so and get it ruled on rather than shipping it inside a fix that was approved without it.
+```lua
+-- wrong: an unbound channel needs a callable method, so the method
+-- was given a decline protocol the chain had no other use for
+function Widget:singleclick() return false end
+if widget:is_shown() then return widget[event](widget, ...) ~= false end
+
+-- right
+function Widget:singleclick() end
+if widget:is_shown() then widget[event](widget, ...); return true end
+```
+
 ---
 
 ## Tone in Analytic Notes and Specs

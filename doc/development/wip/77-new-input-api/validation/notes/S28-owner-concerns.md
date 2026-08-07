@@ -30,11 +30,19 @@ now. The check is cheap: Decision 27's entry in the ledger vs. the combo-table
 provisioning in `projectInputController.lua`, then grep the permanent docs for
 "shortcut" claims scoped to keyboard.
 
-**Third correction now due in the same paragraph (2026-08-07, F1 ruling).**
-`decisions/input.md:116-118` also states the widget's "*shownness*, not its
-return value, decides whether it consumed". Since commit `8fbcba21` that has one
-exception: an explicit `false` declines a channel the widget does not
-participate in (the derived clicks). So the Decision 2 paragraph carries **three**
-stale claims to fix in one pass — the three-component scope, the pointer
-shortcuts tier, and the widget's decline. The code comment above `dispatch`
-already states the exception; the ledger does not yet.
+**No third correction after all.** For one commit (`8fbcba21`) the widget tier
+honoured an explicit `false` as a decline, which would have made Decision 2's
+"shownness, not the return value" claim conditional. The owner rejected the
+mechanism and `811849e2` removed it: shownness decides, one rule, every channel.
+That sentence stays true and R081's fix has two corrections, not three.
+
+---
+
+## KISS/DRY — no invented special cases (owner, 2026-08-07)
+
+Standing instruction given while rejecting the decline mechanism above: *"I am
+actively against hallucinated special cases (KISS and DRY principles must be
+honored)"*. The minimum that satisfies the requirement is the answer; a second
+rule that solves nothing the system actually suffers from is a defect, even
+when it is small and even when it reads as principled. Written into
+`agents/rules.md`.
