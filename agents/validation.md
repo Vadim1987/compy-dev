@@ -104,6 +104,11 @@ concern**; when a unit of work contains two, it is two commits, and the smaller 
 
 ## Comment References
 
+**Authority on comment content: [`agents/rules/commenting.md`](rules/commenting.md)** — the
+gate (does this comment carry information the code cannot?), the four admissible payloads, the
+size rule, and the `INTERIM:`/`REMARK:` markers that must be **zero before the PR**. Read it
+before any comment sweep; this section covers only the citation half.
+
 During active development phase comments could've referenced intermittent doc sources (in-place decisions, reviews, resolutions etc.)
 
 However, before final PR lands: 
@@ -204,6 +209,9 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
   `sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN+1\2#' agents/validation.md`
   (this file — formerly `agents/pr-prep.md`; older prompts reference it by the old name);
   (c) commit the wrap (track + successor prompt + repointed pointer) as one `docs` commit.
+- **Comment gate before slice regeneration.** Comments in slice scope are swept against
+  `agents/rules/commenting.md` once the code has stabilised and before the slices are
+  regenerated — `grep -rn 'INTERIM:\|REMARK:' src/ tests/` must return nothing.
 - The phase is DONE when: rulings collected, approved corrections executed, slices regenerated,
   PR assembled (description = intent → design → ratified deviations → justification table → open
   questions), and the owner has ruled on deleting `wip/77`. Then record the close-out in the

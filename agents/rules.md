@@ -44,7 +44,8 @@ When a limit is approached, redesign — don't raise the limit.
 - `end` closes on the same line as the last statement in its block.
 - Empty table: `{ }` (spaces inside braces).
 - Table/array literals: one element per line.
-- Comments: own line only, never inline.
+- Comments: own line only, never inline. Content rules — what a comment may
+  carry at all — in [`rules/commenting.md`](rules/commenting.md).
 - At most one blank line between non-blank lines.
 
 ---
