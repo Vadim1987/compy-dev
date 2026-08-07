@@ -186,7 +186,15 @@ clamp to that range rather than failing.
 
 `compy.input.shortcuts.keypressed[combo]` registers a combo-specific
 function. `shortcuts.keyreleased` and `shortcuts.textinput` work the same
-way. A shortcut runs before the overlay and can consume the event.
+way. A shortcut runs before the input widget and can consume the event.
+
+**Every shortcut, hook and callback receives exactly the arguments LÖVE
+delivers for that event** — `keypressed(key, scancode, isrepeat)`,
+`mousepressed(x, y, button, istouch, presses)`, and so on. A handler you
+already wrote as `love.keypressed` works unchanged when it becomes a hook,
+because it is the same signature. Held modifiers are not among the arguments:
+read `compy.input.keys_pressed`, which works inside a handler and outside one
+alike.
 
 A combo is its modifiers plus **one** trigger — `'ctrl+alt+s'`. Modifiers come
 first in a fixed order (ctrl, alt, shift, gui), left and right fold together,

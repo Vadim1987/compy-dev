@@ -57,10 +57,11 @@ Text characters arrive via `love.textinput` (OS-processed, handles IME and layou
 
 The "keypressed = control channel, textinput = character channel" split used throughout this doc is therefore **compy's own convention, not a LÖVE2D guarantee**. Nowhere does compy's `keypressed` code filter out or ignore textual keycodes — it simply never gives `k` a match that means "insert this character" (see `UserInputController:keypressed` below: every branch checks `k` against a fixed set of named control keys, or a modifier + letter combo used as a *shortcut*, e.g. Ctrl+C). A bare `keypressed('q')` with no modifier held matches nothing and falls through untouched. All literal character insertion (`UserInputModel:add_text`) is reachable only from `textinput` handlers, plus two `keypressed`-triggered paths that move **existing** text (not the pressed key) into the model — clipboard paste (Ctrl+V) and `load_selection` (Escape, editor mode, loads buffer text into the input).
 
-`isrepeat` is threaded through the gateway and the project route, but not uniformly all the way to every consumer. LÖVE calls `love.handlers.keypressed` with `(key, scancode, isrepeat)`; the gateway (`controller.lua:797`) keeps all three and calls `love.keypressed(k, sc, isr)` unconditionally (`controller.lua:899-900`). From there:
-- while a project runs, the project route's `love.keypressed` is `ProjectInputController:keypressed(k, sc, isr)` (`controller.lua:141-144`), which threads `isr` through the dispatch walk, widget included (`projectInputController.lua:74-86`) — both `compy.input.hooks.keypressed` and the widget receive the uniform `(k, keys_pressed, isrepeat)` triple;
-- in console/editor mode the route's default handler accepts `isr` and drops it: the only call it makes is `CC:keypressed(k)` (and, from there, `EditorController:keypressed(k)`), so console/editor's own mode dispatch never sees `isrepeat`. The console route has no widget step to thread it to — see "Keyboard Handling".
-Shortcuts dispatch (the `compy.input.shortcuts` combo tables) does not gate on `isrepeat` either — see "Key state" below.
+Every channel carries LÖVE's own argument list end to end, unchanged. LÖVE calls `love.handlers.keypressed` with `(key, scancode, isrepeat)`; the gateway keeps all three, and the project route forwards all three to every consumer — shortcut, hook and widget alike. A handler written as `love.keypressed(key, scancode, isrepeat)` therefore behaves identically once it is seeded as a hook, which is the point (Decision 26).
+
+The console/editor route is the one place that narrows: its default handler accepts the arguments and calls `CC:keypressed(k)` (and from there `EditorController:keypressed(k)`), so console/editor mode dispatch sees neither `scancode` nor `isrepeat`. It has no widget step to thread them to — see "Keyboard Handling".
+
+Shortcuts dispatch (the `compy.input.shortcuts` combo tables) does not gate on `isrepeat` — see "Key state" below.
 
 ### Multiline input
 
@@ -284,13 +285,11 @@ held state — `examples/keyboard` draws shifted key labels — has no
 callback argument in `love.draw`, which is what the second access
 path is for.
 
-> REMARK: check suggestion in other files -- remove keys_pressed from the argument, as its now available globally, and this would unify method signatures with ones used in love2d
 > REMARK: there's no more 'DEFERRED' I think -- we do not guard shortcuts but provide guarding wrapper for convenience
-The whole keypressed path hands the widget the uniform
-`(k, keys_pressed, isrepeat)` triple — the widget is included by
-design (one signature across the path) — but only on the project
-route; see "Data flow" above for exactly where `isrepeat` does and
-does not reach. Shortcuts dispatch itself does not gate on `isrepeat`:
+The whole keypressed path hands the widget LÖVE's own
+`(key, scancode, isrepeat)` — the widget is included by design
+(one signature across the path) — but only on the project route;
+see "Data flow" above for what the console route narrows. Shortcuts dispatch itself does not gate on `isrepeat`:
 shortcuts fire on **every** repeat, not just fresh presses — an
 in-code `DEFERRED` marker above `ProjectInputController:keypressed`
 (`projectInputController.lua:134-138`) records this as an unruled,

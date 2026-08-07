@@ -449,9 +449,9 @@ local INPUT_FN = {
   --- propagation: a fresh press returns what the handler
   --- returned, a skipped repeat returns nothing.
   ignore_repeat = function(fn)
-    return function(k, isr)
+    return function(k, sc, isr)
       if isr then return end
-      return fn(k, isr)
+      return fn(k, sc, isr)
     end
   end,
   --- Run `fn` if given, then consume. With no `fn` the binding's

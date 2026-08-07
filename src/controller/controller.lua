@@ -268,14 +268,6 @@ local function occupy_input(userlove, CC)
       return pic[k](pic, ...)
     end)
   end
-  -- keypressed alone is not a plain forward: LÖVE hands it
-  -- (key, scancode, isrepeat) and the route takes (key,
-  -- isrepeat). Scancode is dropped here, the same place the
-  -- console route drops it, so no consumer downstream has to
-  -- know it was ever delivered.
-  love.keypressed = guarded(CC, function(k, _, isr)
-    return pic:keypressed(k, isr)
-  end)
 end
 
 --- `user_pointer` marks a non-blocking project as still

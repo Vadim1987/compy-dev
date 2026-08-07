@@ -420,24 +420,29 @@ document's label for discussing the same concept without the collision.
 
 ## Decision 9 — uniform signatures and `isrepeat` threading
 
-> REMARK: this one needs to be updated. First, the form of signature is ours to decide -- one-line saying that we extend love's signature by keys_pressed would be enough
-> REMARK: in fact, decision could be even revisited -- now when we just decided to make keys_pressed available globally we have no reason to pass it to hooks. therefore, signatures fall back to standard love2d ones
-> REMARK: we invented helpers/wrappers to simplify gating on is-repeat and blocking propagation -- worth mentioning here instead of saying that shortcuts could not be gated?
-> REMARK/SUMMARY: importance of this decision could be now neglectable (its original purpose was to carry-through the keys pressed proxy, but later we figured out that keys-pressed need to be globally available anyway -- so we can drop both decision and its codebase counterparts without regression in system behaviour (at cost of maybe minimal rewrites) -- worth doing pre-PR to reduce complexity?
+**SUPERSEDED, 2026-08-07** — see Decision 26. The number is kept so the citations that name it
+still resolve; the content below is what was decided, not what the code does.
 
-**Decision.** Every participant on a channel receives the same signature, the widget included:
-keypressed carries `(k, keys_pressed, isrepeat)`, textinput `(text, keys_pressed)`, keyreleased
-`(k, keys_pressed)`. On the project route, `isrepeat` is threaded through every component of the
-chain (Decision 2).
+**Decision (superseded).** Every participant on a channel receives the same signature, the widget
+included: keypressed carries `(k, keys_pressed, isrepeat)`, textinput `(text, keys_pressed)`,
+keyreleased `(k, keys_pressed)`. On the project route, `isrepeat` is threaded through every
+component of the chain (Decision 2).
 
-**Why.** A single signature per channel is the uniformity that lets the widget be just another
-participant rather than a special case. `isrepeat` was restored to the signature so a project can
+**Why it was decided.** A single signature per channel is the uniformity that lets the widget be
+just another participant rather than a special case. `isrepeat` was restored so a project can
 distinguish a held-key repeat from a fresh press.
 
-**Where it stops — recorded honestly.** `isrepeat` reaches `hooks[event]` and the widget, but
-`shortcuts` dispatch does **not** gate on it — it fires on every repeat. Whether shortcuts
-*should* fire fresh-only is left unruled, with existing behaviour kept as the safe default; the
-code carries this as a deferred marker. See the technical-debt register for the open call.
+**Why it did not survive.** The signature was uniform across compy's three keyboard/text channels
+and different from LÖVE's on all of them, while pointer channels already passed LÖVE's arguments
+verbatim — so "uniform" held within a subset and broke at its edge. Decision 20 then made
+`compy.input.keys_pressed` globally readable, which is where a project must read it anyway (a
+per-frame draw has no event argument), leaving the threaded copy with no job. Decision 26 keeps
+the uniformity and drops the invention: every consumer gets LÖVE's own list.
+
+**What survives.** `isrepeat` still reaches every consumer, in LÖVE's own third position. And
+`shortcuts` dispatch still does not gate on it — a shortcut fires on every repeat, and a binding
+that wants once per physical press wraps itself in `compy.input.fn.ignore_repeat` (Decision 22),
+which is the wrapper that replaced the deferred marker this entry once pointed at.
 
 ## Decision 10 — one `hooks[event]` table, seeded once at activation
 
@@ -792,7 +797,6 @@ that, instead of relying on the warning as flow control.
 
 ## Decision 20 — a project can read the held-key set outside an event
 
-> REMARK: as said, we even can get rid of held-keys passed as arguments to hooks, which aligns hooks signature with love2d native signatures and would be a big win
 
 **Status: implemented** (owner ruling, 2026-08-03).
 
@@ -1060,9 +1064,54 @@ existed only to serve the split. Unifying removes mechanism instead of adding it
 until it stops, where it previously handed it back at `'project_open'`. That is the pre-feature
 behaviour, and `Ctrl+Esc` remains the documented exit.
 
-> REMARK: I thought we agreed on combos for pointers (love2d signature kept, combo is constructed from modifier keys pressed, no trigger key) -- better once do it and enable than document and argue across many iterations
+**Settled since, see Decision 27.** The open question this entry left — whether pointer should
+gain a combo vocabulary — is answered: it did, and it needed no vocabulary of its own.
 
-**Not decided here.** Whether pointer should gain a combo vocabulary of its own — a modifier-only
-shortcut such as `ctrl` plus a button — is left open. It is now a small change rather than the
-"mirror consume-chain" it was once estimated as, because the chain it would join already carries
-pointer.
+## Decision 26 — every consumer receives LÖVE's own argument list
+
+**Decision.** Shortcuts, hooks and the widget receive exactly the arguments LÖVE delivers for the
+event, unchanged and in LÖVE's order: `keypressed(key, scancode, isrepeat)`,
+`mousepressed(x, y, button, istouch, presses)`, and so on. No argument is added, removed or
+reordered on the way through the chain. The held-key set is not among them: a consumer reads
+`compy.input.keys_pressed`, which works inside a handler and outside one alike (Decision 20).
+
+**Why.** The chain used to hand keyboard and text consumers a `(k, keys_pressed, isrepeat)` triple
+of its own invention while pointer channels got LÖVE's arguments untouched — so the "uniform
+signature" was uniform across three channels and different from LÖVE on all of them. Two costs
+followed. A project's own `love.keypressed`, seeded as a hook (Decision 10), silently received
+something other than what it was written against; and every per-channel method had to know its
+own payload shape, which is what kept `keypressed`/`keyreleased`/`textinput` from collapsing into
+the same generated channel as the other nine.
+
+The `keys_pressed` argument in particular bought nothing once Decision 20 made the set globally
+readable — and a project that RENDERS held state has to read it that way regardless, since a
+per-frame draw has no event argument in hand.
+
+**Consequence, accepted.** `scancode` reaches consumers although nothing inside compy reads it,
+and combo triggers remain key-name-only (`doc/development/technical_debt/input.md`, "Combo
+triggers are key-name-only"). That is the same bargain the pointer channels already made with
+`istouch` and `presses`: passing LÖVE's list verbatim is the rule, and an unread argument is the
+price of not having a second rule.
+
+**Consequence, accepted.** The console/editor route still narrows to `CC:keypressed(k)`. It has no
+widget tier to thread the rest to, and its own dispatch predates the feature.
+
+## Decision 27 — pointer combos are modifier-only, with no vocabulary of their own
+
+**Decision.** Pointer channels carry a shortcuts tier like every other channel. A pointer combo is
+its held modifiers plus the wildcard — `shortcuts.mousepressed['ctrl+*']` is a ctrl-click. With no
+modifier held there is no combo to name and the event goes to the hook tier. The button is **not**
+part of the combo: it arrives as LÖVE's own argument (Decision 26).
+
+**Why.** The guide had argued the tier was impossible because "a combo needs a key to name". It
+does not: `combo_string('*', keys)` already built a triggerless class key — that is what `alt+*`
+has always been — so the serialiser supported a modifier-only combo before anything used one. The
+asymmetry was an accident of nobody wiring it, not a design.
+
+Naming buttons in the combo (`ctrl+mouse1`) was considered and rejected: it introduces a second
+trigger vocabulary alongside key names to express what `function(x, y, button)` already expresses.
+
+**Consequence, accepted.** An unmodified pointer event never consults the shortcuts tier. This is
+also the fast path — the held-modifier test runs before any combo string is built, so an
+unmodified `mousemoved` allocates nothing. A bare `'*'` still raises on every channel: it would
+mean "every event", which is what a hook is.

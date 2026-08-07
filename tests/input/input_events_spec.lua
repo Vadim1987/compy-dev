@@ -538,7 +538,7 @@ describe('#input events dispatching', function()
         local seen
         local input = F.activate_project()
         input.shortcuts.keypressed['alt+*'] =
-            input.fn.ignore_repeat(function(k, isr)
+            input.fn.ignore_repeat(function(k, _, isr)
               seen = { k, isr, input.keys_pressed['lalt'] }
             end)
         F.session.press('lalt')
@@ -597,7 +597,7 @@ describe('#input events dispatching', function()
         local seen
         local input = F.activate_project()
         input.shortcuts.keypressed['alt+*'] =
-            input.fn.stop_here(function(k, isr)
+            input.fn.stop_here(function(k, _, isr)
               seen = { k, isr, input.keys_pressed['lalt'] }
             end)
         F.session.press('lalt')
@@ -693,7 +693,7 @@ describe('#input events dispatching', function()
   end)
 
   -- ---- signatures + read-only proxy of pressed-keys table
-  -- (doc/development/decisions/input.md, Decision 9 and Decision 13) ---
+  -- (doc/development/decisions/input.md, Decision 26 and Decision 13) ---
 
   describe('signatures and the read-only proxy', function()
     -- The table's CONTENTS are asserted in this file's
@@ -701,56 +701,56 @@ describe('#input events dispatching', function()
     -- press, what it no longer holds after a release, and that a
     -- participant cannot write to it); this group covers the
     -- signature the participants are called with.
-    -- keypressed participants receive LÖVE's own leading arguments
-    -- and nothing else: (key, isrepeat). The held-key set is NOT
-    -- threaded as an argument — it is read from
+    -- keypressed participants receive LÖVE's own argument list,
+    -- unchanged: (key, scancode, isrepeat). The held-key set is
+    -- NOT threaded as an argument — it is read from
     -- compy.input.keys_pressed, which is available everywhere,
     -- including outside an event (doc/input_api.md, "Held keys").
     -- Asserted over the WHOLE chain, not one participant: every
     -- step is configured pass-through (records what it got, returns
     -- false), so the event walks shortcut -> hook -> widget and
     -- each step is checked for what was actually DELIVERED.
-    it('every step of the chain receives the same delivered pair',
+    it('every step of the chain receives LOVE arguments',
       function()
         local seen  = { }
         local input = F.activate_project()
         local step  = function(who)
-          return function(k, isr)
-            seen[who] = { k, isr, input.keys_pressed['a'] }
+          return function(k, sc, isr)
+            seen[who] = { k, sc, isr, input.keys_pressed['a'] }
           end
         end
         input.shortcuts.keypressed['a'] = step('shortcut')
         input.hooks.keypressed         = step('hook')
-        F.session.repeat_press('a')
-        assert.same({ 'a', true, true }, seen.shortcut)
-        assert.same({ 'a', true, true }, seen.hook)
+        F.session.handlers.keypressed('a', 'scan-a', true)
+        assert.same({ 'a', 'scan-a', true, true }, seen.shortcut)
+        assert.same({ 'a', 'scan-a', true, true }, seen.hook)
       end)
 
-    -- Discriminating against the retired triple: a participant
-    -- that reads a THIRD argument gets nothing, because there
-    -- isn't one. Without this row, dropping the middle argument
-    -- and dropping nothing at all look the same to the row above
-    -- (both leave (k, isr) readable at positions 1 and 2 only if
-    -- the middle really went).
-    it('passes no third argument', function()
-      local extra, count = 'unset', nil
-      local input = F.activate_project()
-      input.hooks.keypressed = function(...)
-        count = select('#', ...)
-        extra = select(3, ...)
-        return true
-      end
-      F.session.press('a')
-      assert.equal(2, count)
-      assert.is_nil(extra)
-    end)
+    -- Discriminating on the MIDDLE argument, which is the one
+    -- that changed identity: it is LÖVE's scancode, not the
+    -- held-key table it used to be. A row reading position 2 for
+    -- a truthy value would pass under either, so this one reads
+    -- the value and pins the arity.
+    it('the middle argument is the scancode, not a table',
+      function()
+        local seen, count
+        local input = F.activate_project()
+        input.hooks.keypressed = function(...)
+          count = select('#', ...)
+          seen = select(2, ...)
+          return true
+        end
+        F.session.handlers.keypressed('a', 'scan-a', false)
+        assert.equal(3, count)
+        assert.equal('scan-a', seen)
+      end)
 
-    -- isrepeat is false on a fresh press, true on repeat, and it
-    -- is the SECOND argument now that the held set is not threaded.
+    -- isrepeat is false on a fresh press, true on repeat, in
+    -- LÖVE's own third position.
     it('isrepeat threads to the hook', function()
       local seen = { }
       local input = F.activate_project()
-      input.hooks.keypressed = function(_, isr)
+      input.hooks.keypressed = function(_, _, isr)
         seen[#seen + 1] = isr; return true
       end
       F.session.press('a')
@@ -848,24 +848,22 @@ describe('#input events dispatching', function()
     end)
 
     -- The WIDGET is included in the uniform signature — it
-    -- receives the same (k, isrepeat) pair every other participant
+    -- receives the same LÖVE arguments every other participant
     -- does. Patches the shared widget method, restored after the
     -- assertion.
-    it('the widget receives the uniform keypressed pair',
+    it('the widget receives the uniform keypressed arguments',
       function()
         local seen
         F.activate_project()
         F.show_widget()
         -- This direct replacement observes the widget's documented key
         -- signature; restore the shared method after the event.
-        F.widget.keypressed = function(_, k, isr, extra)
-          seen = { k, isr, extra }
+        F.widget.keypressed = function(_, k, sc, isr)
+          seen = { k, sc, isr }
         end
-        F.session.repeat_press('a')
+        F.session.handlers.keypressed('a', 'scan-a', true)
         F.widget.keypressed = nil
-        assert.equal('a', seen[1])
-        assert.is_true(seen[2])
-        assert.is_nil(seen[3])
+        assert.same({ 'a', 'scan-a', true }, seen)
       end)
 
   end)
