@@ -155,7 +155,10 @@ function ProjectInputController:deactivate()
   self.compy_input = nil
 end
 
----> REMARK: as said in other remark (on documentation), let's drop 'held_keys()' and instead build combo inside dispatch. This way dispatch would become universal function across all events -- we do not need separate self:textnput, self:keypressed etc. -- and signatures would be aligned with love's?
+-- Keyboard/text channels. The payload is LÖVE's own leading
+-- arguments; the held-key set is read from
+-- compy.input.keys_pressed, never threaded as an argument.
+-- These three exist only to name the combo trigger.
 
 --- Keypressed (doc/development/decisions/input.md, Decision 11). The
 --- route is connected/disconnected at the
@@ -172,22 +175,17 @@ end
 --- physical press wraps itself in
 --- compy.input.fn.ignore_repeat.
 function ProjectInputController:keypressed(k, sc, isr)
-  return self:_dispatch(
-    'keypressed', k, k, Controller.held_keys(), isr)
+  return self:_dispatch('keypressed', k, k, isr)
 end
 
 --- @param t string
 function ProjectInputController:textinput(t)
-  return self:_dispatch(
-    'textinput', t, t, Controller.held_keys())
+  return self:_dispatch('textinput', t, t)
 end
 
 --- @param k string
---- The released key is already gone from the held set (removed
---- at the gateway before dispatch), so consumers see it absent.
 function ProjectInputController:keyreleased(k)
-  return self:_dispatch(
-    'keyreleased', k, k, Controller.held_keys())
+  return self:_dispatch('keyreleased', k, k)
 end
 
 

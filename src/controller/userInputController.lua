@@ -409,9 +409,8 @@ end
 --- unbuilt) → empty guard → validate → deliver (fires
 --- on_text_entered) → after_submit. after_submit defaults to a
 --- no-op, so the widget stays open unless a callback hides it.
---- @param keys_pressed table?
-function UserInputController:submit_flow(keys_pressed)
-  run_callback(self, 'before_submit', keys_pressed)
+function UserInputController:submit_flow()
+  run_callback(self, 'before_submit')
   if self.model:get_text():is_empty() then return end
   local lines = self.model:get_text()
   if not gate(self.model, self.callbacks.validator, lines) then
@@ -426,9 +425,8 @@ end
 --- (skips the clear); otherwise clear (hardwired) → after_cancel.
 --- after_cancel defaults to a no-op — Escape clears but the widget
 --- stays open unless a callback hides it.
---- @param keys_pressed table?
-function UserInputController:cancel_flow(keys_pressed)
-  if run_callback(self, 'before_cancel', keys_pressed) then
+function UserInputController:cancel_flow()
+  if run_callback(self, 'before_cancel') then
     return
   end
   self.model:cancel()
@@ -479,20 +477,13 @@ end
 ----------------
 
 --- @param k string
---- @param keys_pressed table?  read-only pressed-keys view
---- (doc/development/decisions/input.md, Decision 13)
 --- @param isr boolean?
 -- No return value: the old limit-flag return channel is retired
 -- (Decision 5) — on_limit_reached is the sole notification
 -- path now (see "emit_limit" below).
--- This handler now receives the uniform
--- (k, keys_pressed, isr) triple (doc/development/decisions/input.md,
--- Decision 9).
--- Its own editing logic still reads modifiers via Key.*
--- (love.keyboard) — widening that to the keys_pressed
--- read-only view is not required here, but recommended in
--- the future.
-function UserInputController:keypressed(k, keys_pressed, isr)
+-- Its editing logic reads modifiers via Key.* (love.keyboard);
+-- the held set is compy.input.keys_pressed.
+function UserInputController:keypressed(k, isr)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return
@@ -696,22 +687,19 @@ function UserInputController:keypressed(k, keys_pressed, isr)
   -- cancel. Editor/console callers that must not run these consume the key
   -- upstream (editor) or set no callbacks (console no-op).
   if Key.is_enter(k) and not Key.shift() then
-    self:submit_flow(keys_pressed)
+    self:submit_flow()
   elseif k == 'escape' and not Key.ctrl() then
-    self:cancel_flow(keys_pressed)
+    self:cancel_flow()
   end
 
   self:update_view()
 end
 
 --- @param t string
---- @param keys_pressed table?  read-only pressed-keys view
---- (doc/development/decisions/input.md, Decision 13)
--- Uniform textinput signature
--- (doc/development/decisions/input.md, Decision 9). Visibility is
--- decided by the internal hidden-check (shown -> edit; hidden ->
--- no-op). A shown widget always edits its live model state.
-function UserInputController:textinput(t, keys_pressed)
+-- Visibility is decided by the internal hidden-check (shown ->
+-- edit; hidden -> no-op). A shown widget always edits its live
+-- model state.
+function UserInputController:textinput(t)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return
@@ -725,9 +713,7 @@ function UserInputController:textinput(t, keys_pressed)
 end
 
 --- @param k string
---- @param keys_pressed table?  read-only pressed-keys view
---- (doc/development/decisions/input.md, Decision 13)
-function UserInputController:keyreleased(k, keys_pressed)
+function UserInputController:keyreleased(k)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return

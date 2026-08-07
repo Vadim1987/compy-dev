@@ -72,7 +72,7 @@ end
 Enter submits; Shift+Enter inserts a newline. On a non-empty submission the
 order is:
 
-1. `before_submit(keys_pressed)`, if assigned.
+1. `before_submit()`, if assigned.
 2. `validator(lines)`, if assigned.
 3. `on_text_entered(lines)`, if assigned.
 4. `after_submit(lines)`, if assigned.
@@ -91,7 +91,7 @@ compy.input.callbacks.after_submit = function()
 end
 ```
 
-Escape first runs `before_cancel(keys_pressed)`. A truthy return vetoes the
+Escape first runs `before_cancel()`. A truthy return vetoes the
 cancel. Otherwise it clears the field and calls `after_cancel()`; it also
 stays shown unless that callback hides it.
 

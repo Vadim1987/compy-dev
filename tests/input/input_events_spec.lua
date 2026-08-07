@@ -538,12 +538,12 @@ describe('#input events dispatching', function()
         local seen
         local input = F.activate_project()
         input.shortcuts.keypressed['alt+*'] =
-            input.fn.ignore_repeat(function(k, keys)
-              seen = { k, keys['lalt'] }
+            input.fn.ignore_repeat(function(k, isr)
+              seen = { k, isr, input.keys_pressed['lalt'] }
             end)
         F.session.press('lalt')
         F.session.press('q')
-        assert.same({ 'q', true }, seen)
+        assert.same({ 'q', false, true }, seen)
       end)
 
     -- Same signature everywhere, so it wraps a hook as readily as
@@ -597,12 +597,12 @@ describe('#input events dispatching', function()
         local seen
         local input = F.activate_project()
         input.shortcuts.keypressed['alt+*'] =
-            input.fn.stop_here(function(k, keys, isr)
-              seen = { k, keys['lalt'], isr }
+            input.fn.stop_here(function(k, isr)
+              seen = { k, isr, input.keys_pressed['lalt'] }
             end)
         F.session.press('lalt')
         F.session.press('q')
-        assert.same({ 'q', true, false }, seen)
+        assert.same({ 'q', false, true }, seen)
       end)
 
     -- It knows nothing about repeats: a held key runs the action
@@ -701,21 +701,22 @@ describe('#input events dispatching', function()
     -- press, what it no longer holds after a release, and that a
     -- participant cannot write to it); this group covers the
     -- signature the participants are called with.
-    -- doc/development/decisions/input.md, Decision 9: keypressed
-    -- participants receive (k, proxy, isrepeat). Asserted over the
-    -- WHOLE chain, not one participant: every step is configured
-    -- pass-through (records its triple, returns false), so the event
-    -- walks shortcut -> hook -> widget and each step is checked for
-    -- what was actually DELIVERED — the key itself, a proxy that
-    -- really reports the held key, and the true isrepeat flag — not
-    -- merely for type compliance.
-    it('every step of the chain receives the same delivered triple',
+    -- keypressed participants receive LÖVE's own leading arguments
+    -- and nothing else: (key, isrepeat). The held-key set is NOT
+    -- threaded as an argument — it is read from
+    -- compy.input.keys_pressed, which is available everywhere,
+    -- including outside an event (doc/input_api.md, "Held keys").
+    -- Asserted over the WHOLE chain, not one participant: every
+    -- step is configured pass-through (records what it got, returns
+    -- false), so the event walks shortcut -> hook -> widget and
+    -- each step is checked for what was actually DELIVERED.
+    it('every step of the chain receives the same delivered pair',
       function()
         local seen  = { }
         local input = F.activate_project()
         local step  = function(who)
-          return function(k, keys, isr)
-            seen[who] = { k, keys['a'], isr }
+          return function(k, isr)
+            seen[who] = { k, isr, input.keys_pressed['a'] }
           end
         end
         input.shortcuts.keypressed['a'] = step('shortcut')
@@ -725,12 +726,31 @@ describe('#input events dispatching', function()
         assert.same({ 'a', true, true }, seen.hook)
       end)
 
-    -- doc/development/decisions/input.md, Decision 9: isrepeat is false on
-    -- a fresh press, true on repeat.
+    -- Discriminating against the retired triple: a participant
+    -- that reads a THIRD argument gets nothing, because there
+    -- isn't one. Without this row, dropping the middle argument
+    -- and dropping nothing at all look the same to the row above
+    -- (both leave (k, isr) readable at positions 1 and 2 only if
+    -- the middle really went).
+    it('passes no third argument', function()
+      local extra, count = 'unset', nil
+      local input = F.activate_project()
+      input.hooks.keypressed = function(...)
+        count = select('#', ...)
+        extra = select(3, ...)
+        return true
+      end
+      F.session.press('a')
+      assert.equal(2, count)
+      assert.is_nil(extra)
+    end)
+
+    -- isrepeat is false on a fresh press, true on repeat, and it
+    -- is the SECOND argument now that the held set is not threaded.
     it('isrepeat threads to the hook', function()
       local seen = { }
       local input = F.activate_project()
-      input.hooks.keypressed = function(_, _, isr)
+      input.hooks.keypressed = function(_, isr)
         seen[#seen + 1] = isr; return true
       end
       F.session.press('a')
@@ -738,17 +758,18 @@ describe('#input events dispatching', function()
       assert.same({ false, true }, seen)
     end)
 
-    -- The held-key table as a participant sees it: what it contains,
-    -- what it no longer contains, and that it cannot be written to
-    -- (doc/development/decisions/input.md, Decision 13;
-    -- doc/development/internals/user_input.md, "Key release").
+    -- The held-key table as a participant sees it. It is no longer
+    -- handed over as an argument — a participant reads it from
+    -- compy.input.keys_pressed, the same table the project reads
+    -- outside an event (doc/development/internals/user_input.md,
+    -- "Key release").
     describe('the pressed-keys table', function()
 
       it('contains the pressed key', function()
         local proxy
         local input = F.activate_project()
-        input.hooks.keypressed = function(_, keys)
-          proxy = keys; return true
+        input.hooks.keypressed = function()
+          proxy = input.keys_pressed; return true
         end
         F.session.press('a')
         assert.is_table(proxy)
@@ -760,8 +781,8 @@ describe('#input events dispatching', function()
       it('no longer contains a released key', function()
         local present = true
         local input = F.activate_project()
-        input.hooks.keyreleased = function(k, keys)
-          present = keys[k]; return true
+        input.hooks.keyreleased = function(k)
+          present = input.keys_pressed[k]; return true
         end
         F.session.press('a')
         F.session.release('a')
@@ -771,8 +792,8 @@ describe('#input events dispatching', function()
       it('cannot be modified from a hook', function()
         local proxy
         local input = F.activate_project()
-        input.hooks.keypressed = function(_, keys)
-          proxy = keys; return true
+        input.hooks.keypressed = function()
+          proxy = input.keys_pressed; return true
         end
         F.session.press('a')
         assert.has_error(function() proxy['x'] = true end)
@@ -817,8 +838,8 @@ describe('#input events dispatching', function()
       it('agrees with the view a handler receives', function()
         local from_handler
         local input = F.activate_project()
-        input.hooks.keypressed = function(_, keys)
-          from_handler = keys['a']; return true
+        input.hooks.keypressed = function()
+          from_handler = input.keys_pressed['a']; return true
         end
         F.session.press('a')
         assert.equal(from_handler, input.keys_pressed['a'])
@@ -826,26 +847,25 @@ describe('#input events dispatching', function()
       end)
     end)
 
-    -- doc/development/decisions/input.md, Decision 9: the WIDGET is included
-    -- in the uniform
-    -- signature — it
-    -- receives the same (k, proxy, isrepeat) triple. Patches the
-    -- shared widget method, restored after the assertion.
-    it('the widget receives the uniform keypressed triple',
+    -- The WIDGET is included in the uniform signature — it
+    -- receives the same (k, isrepeat) pair every other participant
+    -- does. Patches the shared widget method, restored after the
+    -- assertion.
+    it('the widget receives the uniform keypressed pair',
       function()
         local seen
         F.activate_project()
         F.show_widget()
         -- This direct replacement observes the widget's documented key
         -- signature; restore the shared method after the event.
-        F.widget.keypressed = function(_, k, keys, isr)
-          seen = { k, keys, isr }
+        F.widget.keypressed = function(_, k, isr, extra)
+          seen = { k, isr, extra }
         end
         F.session.repeat_press('a')
         F.widget.keypressed = nil
         assert.equal('a', seen[1])
-        assert.is_table(seen[2])
-        assert.is_true(seen[3])
+        assert.is_true(seen[2])
+        assert.is_nil(seen[3])
       end)
 
   end)
