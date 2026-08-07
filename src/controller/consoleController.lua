@@ -803,6 +803,11 @@ local get_compy_namespace = function(terminal)
   -- for a key the table does NOT hold, so a raw field cannot
   -- be defended. `input` must refuse assignment (Decision 7)
   -- and `before_exit` must intercept it.
+  -- UNSETTLED: an upvalue also survives table.clone by
+  -- reference, so every env clone shares ONE before_exit slot.
+  -- Nothing relies on that; nothing rules it out either.
+  -- See doc/development/technical_debt/input.md,
+  -- "`compy.before_exit` is a closure slot".
   local before_exit_slot = default_before_exit
   local input_surface = get_compy_input()
   local ns = {

@@ -213,14 +213,35 @@ action; revisit at the named point).
   `held_keys()` read-only pressed-keys view) must not assume the set is leak-free across
   focus changes; if it matters, clear the set on `love.focus(false)`.
 
-### `love.handlers.userinput` is dead code
+### `love.handlers.userinput` is dead code (RESOLVED, 2026-08-07)
 
-- **Where:** `src/controller/controller.lua` (the `handlers.userinput`
-  assignment, immediately following `handlers.mousemoved`).
-- **State:** Unreachable — nothing in the tree pushes a `'userinput'` LÖVE
-  event since the mechanism that used to trigger it was removed.
-- **Why it stands:** Benign; never invoked, so it costs nothing at runtime.
-- **Revisit:** Safe to delete outright whenever this file is next touched.
+Deleted, with the local `clear_user_input` that existed only to feed it. Both
+`love.event.push('userinput')` sites were present at the PR base
+(`3256aac:userInputModel.lua`) and were removed by this feature, leaving the
+consumer installed — the same shape as `wrap_handler`. Kept as a resolved entry
+because the pattern recurs: when a producer goes, grep for its consumer.
+
+### `compy.before_exit` is a closure slot
+
+- **Where:** `src/controller/consoleController.lua`, `get_compy_namespace` —
+  `before_exit` is a metatable-intercepted upvalue rather than a field of the
+  namespace table.
+- **State:** `table.clone` copies with `pairs` and reuses the metatable **by
+  reference**, so a closure-captured slot is invisible to the copy and every
+  clone of the namespace shares one variable. `base_env.compy.before_exit` and
+  `project_env.compy.before_exit` are therefore the same slot, permanently. A
+  plain field would be deep-copied per clone instead.
+- **Why it stands:** Nothing tests, documents or depends on the sharing, and
+  the suite passes with a plain field — so on its own it reads accidental. But
+  `compy.input` survives cloning by the *same* mechanism, so a plain field
+  would make `before_exit` the odd member of the namespace, and the sharing may
+  be load-bearing for a path not yet identified.
+- **Revisit:** Decide whether the sharing is intended. If it is, say so where
+  the slot is built; if not, a plain field is simpler. Evidence, with probe
+  transcripts: the frozen-surface audit run in session27.
+- **Not to be confused with** the crash fixed on 2026-08-07: the call site is
+  now guarded (`if compy.before_exit then ... end`), which is orthogonal to how
+  the slot is stored.
 
 ### A truthy `hooks[event]` return silently disables `on_limit_reached`
 
