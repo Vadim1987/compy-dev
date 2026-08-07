@@ -1065,11 +1065,20 @@ function ConsoleController.prepare_project_env(cc)
   project_env.LuaHighlighter = LuaHighlighter
   project_env.LuaSyntaxValidator = LuaSyntaxValidator
   project_env.LineValidators = LineValidators
-  ---> REMARK: why those four below are nils, and what's the point of exporting them into project_env if they are not real functions?
-  project_env.InputEvalText  = nil
-  project_env.InputEvalLua   = nil
-  project_env.ValidatedTextEval = nil
-  project_env.LuaEditorEval  = nil
+  -- WITHHELD, not exported. project_env starts as a clone of
+  -- the application env, which carries these four globals, so
+  -- the assignment REMOVES each from a project's reach.
+  -- Projects configure validation through compy.input's
+  -- validator callback; they do not install evaluator objects
+  -- (doc/development/internals/user_input.md, "Evaluators").
+  for _, name in ipairs({
+    'InputEvalText',
+    'InputEvalLua',
+    'ValidatedTextEval',
+    'LuaEditorEval',
+  }) do
+    project_env[name] = nil
+  end
 
   project_env.eval           = LANG.eval
   project_env.print_eval     = LANG.print_eval

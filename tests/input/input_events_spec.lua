@@ -1138,6 +1138,33 @@ describe('#input events dispatching', function()
       assert.same({ }, compy.mygame)
     end)
 
+    -- The evaluator globals are WITHHELD from a project, not
+    -- merely unexported: project_env is cloned from the
+    -- application env, which carries them, so they have to be
+    -- removed. Validation reaches a project as the `validator`
+    -- callback; installing an evaluator object does not.
+    it('the evaluator globals are out of a project reach',
+      function()
+        F.activate_project()
+        local env = F.cc:get_project_env()
+        assert.is_nil(rawget(env, 'InputEvalText'))
+        assert.is_nil(rawget(env, 'InputEvalLua'))
+        assert.is_nil(rawget(env, 'ValidatedTextEval'))
+        assert.is_nil(rawget(env, 'LuaEditorEval'))
+      end)
+
+    -- The control, and the reason the removal is not dead code:
+    -- the env it is cloned FROM does carry them, and a global a
+    -- project IS meant to have survives.
+    it('withholding is selective, not an empty gesture',
+      function()
+        F.activate_project()
+        assert.is_not_nil(
+          rawget(F.cc:get_pre_env_c(), 'InputEvalText'))
+        assert.is_not_nil(
+          rawget(F.cc:get_project_env(), 'LuaHighlighter'))
+      end)
+
     it('leaf writes inside the sub-tables are accepted',
       function()
         local input = F.compy_input()
