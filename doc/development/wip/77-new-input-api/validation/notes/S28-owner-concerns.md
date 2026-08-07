@@ -46,3 +46,45 @@ honored)"*. The minimum that satisfies the requirement is the answer; a second
 rule that solves nothing the system actually suffers from is a defect, even
 when it is small and even when it reads as principled. Written into
 `agents/rules.md`.
+
+---
+
+## Are the keyboard fix and the turtle echo guard two answers to one problem? (owner, 2026-08-07)
+
+**No — same root fact, two different questions. Checked before answering.**
+
+The **root fact** both live on: one physical key produces a `keypressed` **and**
+a `textinput`, in no guaranteed order (`doc/input_api.md`, "Opening the overlay
+from a key"; `internals/user_input.md`, "Data flow").
+
+**The echo guard** (`doc/input_api.md`; used by `examples/turtle`) answers: *a
+known key opens a widget — keep that key's glyph out of the field.* It
+**pre-arms** a one-shot `shortcuts.textinput['i']` that consumes the glyph and
+unregisters itself. Pre-arming is what makes it order-independent: the one-shot
+is already in place whichever side of the open the glyph lands on. It works
+because the key is known in advance and because the right outcome is to
+**discard** the glyph.
+
+**The keyboard's Alt-keys scene** (`3a9d48c`) answers a different question:
+*any printable key may be the target, the glyph must be **accepted** — it is
+the gameplay input — and only its repeats dropped.* The echo idiom cannot be
+borrowed for it on three counts: the key is not known ahead of time, so there is
+nothing to pre-arm; the one-shot discards where this must deliver; and arming on
+the keypress instead would reintroduce the order dependency the guard avoids by
+pre-arming (the keyboard's own header had already reasoned that out, and then
+solved it with the held set, which is the part that was wrong). `fn.ignore_repeat`
+is no help either — it reads `isrepeat`, which only `keypressed` carries, and
+the scene must judge the produced glyph, not the physical key, since Shift
+changes what is produced.
+
+So the claim-per-press fix is not a second solution to the echo problem; the two
+idioms do not overlap and neither can be expressed as the other.
+
+**Worth doing in P10 (docs), not now:** `doc/input_api.md` states the root fact
+inside the echo-guard section, as if it were a fact about opening a widget. It
+is a fact about the two channels, and a project hitting the *other* question has
+no signpost. State it once in its own right, then show the echo guard as one
+consequence — and if a second worked example is ever wanted, "accept the first
+glyph, drop the repeats" is the natural companion. **No platform helper for
+it:** one example's need is not an API (`agents/rules.md`, "No invented special
+cases").

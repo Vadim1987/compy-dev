@@ -1189,5 +1189,29 @@ the project's behalf for the left button.
 gesture, secondary-button availability is not uniform across environments, and mapping the
 secondary action onto a double-click may well be deliberate. Recorded because the parameter's
 double meaning is a trap for the next person to edit this example, not because the behaviour is
-wrong. If it is ever revisited, the honest fix is to split the parameter — one argument for the
-tool's colour choice, not a number that is sometimes a button.
+wrong today.
+
+**Recommendation, for whenever paint is next opened.** Nothing here is urgent — the example
+works, and this is about how easy it is to keep working.
+
+1. **Name the two layers.** `1` and `2` appear as bare literals in the two click bindings and
+   again as branch conditions in `setColor` and `useCanvas`, so the meaning lives in the
+   reader's head rather than in the code. `local FOREGROUND, BACKGROUND = 1, 2` — or better, a
+   value that cannot be confused with a button at all, such as the strings `'fg'` / `'bg'` —
+   makes each site say what it does. This is the cheap half and it removes most of the risk on
+   its own.
+2. **Stop using a button number as the layer identifier.** Even named, `btn` is fragile
+   precisely because one of its two call paths really is a LÖVE button: a future edit that
+   passes a genuine `3` (middle click) or that reads `btn` as a button on the click path will
+   be wrong in a way nothing catches. Splitting the parameter — the drag path translating the
+   held button into a layer before calling — keeps the button at the edge, where it belongs.
+3. **A modifier may be the better metaphor for "background".** Ctrl-draw or Alt-draw is a
+   conventional secondary-action gesture, it reads the same on a trackpad and on hardware with
+   no reliable second button, and the input API expresses it directly:
+   `shortcuts.mousepressed['ctrl+mouse1']` is a ctrl-click and `shortcuts.mousemoved['ctrl+*']`
+   a ctrl-drag (`../decisions/input.md`, Decision 27). That would also let double-click go back
+   to meaning something double-click-shaped, instead of standing in for a button paint cannot
+   observe.
+
+Points 1 and 3 are independent: naming the layers is worth doing even if the gesture never
+changes.
