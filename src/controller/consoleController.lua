@@ -635,7 +635,26 @@ local function stash_hidden_configure(state, cfg)
   end
 end
 
----> REMARK: major flaw in recent changes across this file is: a) there's too much boilerplate and copypaste for functions that merely do one simple sing (validation and rejection of config keys in various contexts) b) real load-bearing functions are simply lambdas inside moster block (build_widget_api) -- I'd rather extract show and hide here into first-class functions, and reference them from api dictionary -- its much more readable (also why not define them in separate file at all?)
+--- The two that DO something, lifted out of the api table below
+--- so they read as functions rather than as entries. Everything
+--- still in the table is a one-line delegation to the widget.
+--- @param get_widget fun(): UserInputController?
+--- @param state table
+--- @param cfg table?
+local function api_show(get_widget, state, cfg)
+  local next_cfg = cfg or { }
+  check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
+  merge_callback_keys(state, next_cfg)
+  consume_pending(state.pending, next_cfg)
+  local ui = get_widget()
+  if ui then ui:show(next_cfg) end
+end
+
+--- @param get_widget fun(): UserInputController?
+local function api_hide(get_widget)
+  local ui = get_widget()
+  if ui then ui:hide() end
+end
 
 -- Builds the compy.input surface: the three-consumer dispatch
 -- surface (doc/development/decisions/input.md, Decision 2) a
@@ -660,18 +679,8 @@ end
 --- @return table
 local function build_widget_api(get_widget, get_active_flag, state)
   return {
-    show = function(cfg)
-      local next_cfg = cfg or {}
-      check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
-      merge_callback_keys(state, next_cfg)
-      consume_pending(state.pending, next_cfg)
-      local ui = get_widget()
-      if ui then ui:show(next_cfg) end
-    end,
-    hide = function()
-      local ui = get_widget()
-      if ui then ui:hide() end
-    end,
+    show = function(cfg) api_show(get_widget, state, cfg) end,
+    hide = function() api_hide(get_widget) end,
     -- doc/development/decisions/input.md, Decision 18: the one
     -- state question a project may ask the overlay. It cannot
     -- read this itself — a project's `love` is a sandboxed
