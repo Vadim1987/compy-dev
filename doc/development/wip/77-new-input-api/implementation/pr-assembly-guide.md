@@ -60,64 +60,67 @@ git diff $BASE $TIP -- \
   AGENTS.md CLAUDE.md agents/ \
   > "$OUT/2-agentic.patch"
 
-# --- Set 3 · Main feature, six orthogonal slices ---
-# 3d · TESTS FIRST (see §2 for why the test slice leads)
+# --- Set 3 · Main feature, seven orthogonal slices ---
+# Letters follow APPLY ORDER (§2): docs → tests → code → examples.
+# Renumber them if the order ever changes; the letter is the position.
+
+# 3a · input permanent docs
+git diff $BASE $TIP -- \
+  CHANGELOG.md doc/input_api.md doc/development/internals/user_input.md \
+  doc/development/decisions/ doc/development/technical_debt/ doc/development/tests.md \
+  > "$OUT/3a-input-docs.patch"
+
+# 3b · tests, BEFORE the code they cover (see §2 for why)
 # .gitignore rides here: its only feature-era change is the editor-artifact
 # entry added when a stray tests/input/*.swp was untracked.
-# The highlight regression spec is EXCLUDED — it rides 3g with its fix (§1.1).
+# The highlight regression spec is EXCLUDED — it rides 3c with its fix (§1.1).
 git diff $BASE $TIP -- \
   tests/editor/editor_spec.lua \
   tests/input/ ':(exclude)tests/input/highlight_regression_spec.lua' \
   tests/helpers/input_fixture.lua tests/helpers/input_session.lua tests/mock.lua \
   .gitignore \
-  > "$OUT/3d-tests.patch"
+  > "$OUT/3b-tests.patch"
 
-# 3g · highlight nil-index regression — the guard AND its test, carved out
-# of 3c and 3d so the fix reads as one self-contained commit (§1.1).
+# 3c · highlight nil-index regression — the guard AND its test, carved out
+# of 3f and 3b so the fix reads as one self-contained commit (§1.1).
 git diff $BASE $TIP -- src/model/input/userInputModel.lua | awk '
   /^diff --git|^index |^--- |^\+\+\+ /{print;next}
   /^@@/{keep=($0 ~ /function UserInputModel:highlight\(\)$/)} keep' \
-  > "$OUT/3g-highlight-regression.patch"
+  > "$OUT/3c-highlight-regression.patch"
 git diff $BASE $TIP -- tests/input/highlight_regression_spec.lua \
-  >> "$OUT/3g-highlight-regression.patch"
+  >> "$OUT/3c-highlight-regression.patch"
 
-# 3a · routing / dispatch core
+# 3d · routing / dispatch core
 git diff $BASE $TIP -- \
   src/controller/controller.lua src/controller/editorController.lua \
   src/controller/projectInputController.lua \
-  > "$OUT/3a-routing-core.patch"
+  > "$OUT/3d-routing-core.patch"
 
-# 3b · widget sink + compy.input.* singleton + boot provisioning
+# 3e · widget sink + compy.input.* singleton + boot provisioning
 git diff $BASE $TIP -- \
   src/controller/userInputController.lua src/controller/consoleController.lua src/main.lua \
   src/types.lua \
-  > "$OUT/3b-widget-surface.patch"
+  > "$OUT/3e-widget-surface.patch"
 
-# 3c · model / view / util — MINUS the highlight() hunk, which rides 3g (§1.1)
+# 3f · model / view / util — MINUS the highlight() hunk, which rides 3c (§1.1)
 UIM=src/model/input/userInputModel.lua
 HLRE='function UserInputModel:highlight\(\)$'
 git diff $BASE $TIP -- $UIM | awk -v re="$HLRE" '
   /^diff --git|^index |^--- |^\+\+\+ /{print;next}
-  /^@@/{keep=!($0 ~ re)} keep' > "$OUT/3c-model-view-util.patch"
+  /^@@/{keep=!($0 ~ re)} keep' > "$OUT/3f-model-view-util.patch"
 git diff $BASE $TIP -- \
   src/model/consoleModel.lua src/model/editor/searchModel.lua \
   src/model/interpreter/eval/evaluator.lua \
   src/view/input/userInputView.lua src/util/key.lua \
-  >> "$OUT/3c-model-view-util.patch"
+  >> "$OUT/3f-model-view-util.patch"
 
-# 3e · tracked example migrations
+# 3g · tracked example migrations
 # The whole directory, NOT a file list: paint and sapper joined the set when
 # compy.singleclick was retired, and a file list cannot see a file added
 # after it was written. Nested repos (balloons/maze/keyboard) are invisible
 # to this diff anyway — they are separate repos, see Set 4.
 git diff $BASE $TIP -- src/examples/ \
-  > "$OUT/3e-examples-tracked.patch"
-
-# 3f · input permanent docs
-git diff $BASE $TIP -- \
-  CHANGELOG.md doc/input_api.md doc/development/internals/user_input.md \
-  doc/development/decisions/ doc/development/technical_debt/ doc/development/tests.md \
-  > "$OUT/3f-input-docs.patch"
+  > "$OUT/3g-examples-tracked.patch"
 ```
 
 Set 4 (nested example repos — invisible to the parent `git diff`, become PRs in their own repos):
@@ -128,9 +131,34 @@ Set 4 (nested example repos — invisible to the parent `git diff`, become PRs i
 # (owner, 2026-07-31), sliced the same way this one is (owner, 2026-08-03) —
 # so their local commit churn does not need tidying first. Nothing here is
 # pushed by this guide; the patches are for review convenience only.
-git -C src/examples/balloons format-patch origin/main..HEAD -o "$OUT"   # 3 commits
-git -C src/examples/maze     format-patch origin/v3.4..HEAD -o "$OUT"   # 2 commits
-git -C src/examples/keyboard format-patch origin/dsent/dev..HEAD -o "$OUT" # 8
+#
+# One patch per repo, cut from the DIFF against that repo's remote branch —
+# not format-patch of the local commits, which is what "sliced the same way"
+# means: each repo's PR is one reviewable change, and the intermediate churn
+# (a migration, then its own corrections) does not reach the reviewer.
+git -C src/examples/balloons diff origin/main..HEAD \
+  > "$OUT/4a-balloons.patch"
+git -C src/examples/maze diff origin/v3.4..HEAD \
+  > "$OUT/4b-maze.patch"
+git -C src/examples/keyboard diff origin/dsent/dev..HEAD \
+  > "$OUT/4c-keyboard.patch"
+```
+
+Apply each in its own repo, from that repo's remote branch:
+`git -C src/examples/<repo> apply "$OUT/4<x>-<repo>.patch"`. Paths inside the
+patch are relative to the nested repo, so it will NOT apply from `/repo`.
+Verify the same way Set 1–3 is verified (§4) — apply to a temporary index and
+compare against that repo's `HEAD`:
+
+```sh
+for r in balloons:4a-balloons maze:4b-maze keyboard:4c-keyboard; do
+  d=src/examples/${r%%:*}; p="$OUT/${r##*:}.patch"
+  ( cd "$d" && GIT_INDEX_FILE=$(mktemp) \
+    && export GIT_INDEX_FILE \
+    && git read-tree "$(git rev-parse @{u} 2>/dev/null || git rev-parse origin/dsent/dev)" \
+    && git apply --cached "$OLDPWD/$p" \
+    && git diff --stat "$(git write-tree)" HEAD )   # must be empty
+done
 ```
 
 ---
@@ -200,21 +228,21 @@ edits kept their marker line in `1b`. The recipe above supersedes it — regener
 Phase G moves those seven markers into `1a`, which is the point of the split. As
 everywhere in this guide, the patch files are transient; §1 is the contract.
 
-### 3g — the highlight regression, fix and test together
+### 3c — the highlight regression, fix and test together
 
 The nil-index highlight guard is two hunks in `UserInputModel:highlight()` plus
-`tests/input/highlight_regression_spec.lua`. Split across `3c` and `3d` it reads as
+`tests/input/highlight_regression_spec.lua`. Split across `3f` and `3b` it reads as
 noise in two unrelated commits; together it is a one-screen bug fix with its own
 proof, which is how it should be reviewed.
 
 The selector is git's own hunk **funcname context** — the `@@` header of the guard's
 hunk ends in `function UserInputModel:highlight()`, so `awk` can keep that hunk for
-`3g` and its complement for `3c` (both commands are in §1 above). This is the only
+`3c` and its complement for `3f` (both commands are in §1 above). This is the only
 place the guide filters hunks rather than paths; if `highlight()` ever grows a second
 feature-era hunk, the filter silently takes it too — check
-`grep '^@@' "$OUT/3g-highlight-regression.patch"` after regenerating.
+`grep '^@@' "$OUT/3c-highlight-regression.patch"` after regenerating.
 
-Apply `3g` **before** `3c`. `3c`'s remaining hunks then land with a small line
+Apply `3c` **before** `3f`. `3f`'s remaining hunks then land with a small line
 offset, which `git apply` resolves by context (verified 2026-07-31: the pair
 reproduces `userInputModel.lua` at `$TIP` byte for byte).
 
@@ -228,29 +256,33 @@ messages as **sections in a markdown document** rather than a table — easier t
 **The messages live in [`pr-commit-messages.md`](pr-commit-messages.md)**, one section per commit in
 apply order. This section is the mechanism; that file is the content.
 
+**Set-3 letters encode the apply order** (owner, 2026-08-07): `3a` is the first Set-3 commit,
+`3g` the last. Re-lettering is part of any reordering — a slice whose letter disagrees with its
+row number is a bug in this table, not a naming preference.
+
 | # | Slice | Group |
 |---|---|---|
 | 1 | `1a-generic-docs-rubberstamping` | docs |
 | 2 | `1b-generic-docs` | docs |
 | 3 | `2-agentic` | docs |
-| 4 | `3f-input-docs` | docs |
-| 5 | `3d-tests` | tests |
-| 6 | `3g-highlight-regression` | code (self-contained; see below) |
-| 7 | `3a-routing-core` | code |
-| 8 | `3b-widget-surface` | code |
-| 9 | `3c-model-view-util` | code |
-| 10 | `3e-examples-tracked` | examples |
+| 4 | `3a-input-docs` | docs |
+| 5 | `3b-tests` | tests |
+| 6 | `3c-highlight-regression` | code (self-contained; see below) |
+| 7 | `3d-routing-core` | code |
+| 8 | `3e-widget-surface` | code |
+| 9 | `3f-model-view-util` | code |
+| 10 | `3g-examples-tracked` | examples |
 
 Constraints the order must respect — everything else is review narrative:
 
 - **`1a` before `1b`.** `1b` is *defined* as the remainder after `1a` is applied (§1.1), so it
   cannot be generated, let alone applied, first.
-- **`3g` before `3c`.** They split `userInputModel.lua` between them (§1.1); nothing else in the
+- **`3c` before `3f`.** They split `userInputModel.lua` between them (§1.1); nothing else in the
   sequence shares a file.
-- **`3d` is RED where it lands**, and green once 7–9 are in. That is tests-first working as
+- **`3b` is RED where it lands**, and green once 7–9 are in. That is tests-first working as
   intended (`agents/development.md`), not a broken commit to apply out of order.
-- **`3g` carries a fix and its test together**, so it is green on its own and is the one commit that
-  does not depend on `3d`'s red→green arc. Splitting it would leave a test proving nothing and a fix
+- **`3c` carries a fix and its test together**, so it is green on its own and is the one commit that
+  does not depend on `3b`'s red→green arc. Splitting it would leave a test proving nothing and a fix
   proving nothing.
 
 Apply each with `git apply "$OUT/<slice>.patch"`, then `git add -A && git commit -F -` with the
@@ -259,9 +291,9 @@ message from `pr-commit-messages.md`. Because the tree starts at `BASE`, every s
 ```sh
 git switch -c input-delivery-reassembled $BASE
 # 1a first, then regenerate 1b against it — see §1.1
-for slice in 1a-generic-docs-rubberstamping 1b-generic-docs 2-agentic 3f-input-docs \
-             3d-tests 3g-highlight-regression 3a-routing-core 3b-widget-surface \
-             3c-model-view-util 3e-examples-tracked; do
+for slice in 1a-generic-docs-rubberstamping 1b-generic-docs 2-agentic 3a-input-docs \
+             3b-tests 3c-highlight-regression 3d-routing-core 3e-widget-surface \
+             3f-model-view-util 3g-examples-tracked; do
   git apply "$OUT/$slice.patch" && git add -A && git commit -q -m "apply $slice"   # replace msg
 done
 ```
@@ -286,12 +318,12 @@ unset GIT_INDEX_FILE
 File-level pathspec exclusion drops wip/77 *files* but not textual *citations* of wip/77 paths inside
 surviving files. 14 such lines survive across the sets; only **3 block the Main feature PR**:
 
-- **`3d`** — `tests/helpers/input_fixture.lua`, `tests/input/input_contracts_spec.lua`
-- **`3f`** — `doc/development/tests.md`
+- **`3b`** — `tests/helpers/input_fixture.lua`, `tests/input/input_contracts_spec.lua`
+- **`3a`** — `doc/development/tests.md`
 
 All three cite `wip/77/notes/input-contracts.md`, whose durable content now lives in the corpus.
 **Repoint to `doc/development/internals/user_input.md` / `doc/development/decisions/input.md`, or drop
-the citation**, inside the `3d`/`3f` commits (fix inline so the branch never references a deleted path).
+the citation**, inside the `3b`/`3a` commits (fix inline so the branch never references a deleted path).
 
 The other 11 danglers are each their own set's concern, not the Main PR's: 1 in Set 1
 (`project_sandbox_env.md`), 10 in Set 2 (the agent charters legitimately describe a process tied to the
@@ -308,9 +340,9 @@ Re-run after regenerating, to prove the split still equals the whole and no file
 git diff $BASE $TIP --name-only -- . ':(exclude)doc/development/wip/77-new-input-api/**' \
   | sort > /tmp/_all.txt
 # Union of the ten Set 1–3 slice pathspecs, file list:
-for s in 1a-generic-docs-rubberstamping 1b-generic-docs 2-agentic 3a-routing-core \
-         3b-widget-surface 3c-model-view-util 3d-tests 3g-highlight-regression \
-         3e-examples-tracked 3f-input-docs; do
+for s in 1a-generic-docs-rubberstamping 1b-generic-docs 2-agentic 3a-input-docs \
+         3b-tests 3c-highlight-regression 3d-routing-core 3e-widget-surface \
+         3f-model-view-util 3g-examples-tracked; do
   git apply --numstat "$OUT/$s.patch" | awk '{print $3}'
 done | sort -u > /tmp/_sliced.txt
 diff /tmp/_all.txt /tmp/_sliced.txt && echo "OK: complete + disjoint"
@@ -328,7 +360,7 @@ commit that adds a file, not only before Phase G — a pathspec written against 
 anticipate one.
 
 `sort -u` above hides the two intentional file-level overlaps introduced in §1.1 — Set-1 docs appear
-in both `1a` and `1b`, and `userInputModel.lua` in both `3c` and `3g`. The completeness half of the
+in both `1a` and `1b`, and `userInputModel.lua` in both `3f` and `3c`. The completeness half of the
 check is unaffected; for the disjointness half, the stronger test is the one that actually matters:
 **assemble the branch per §2 and confirm the tip matches `$TIP`**, which catches a dropped *or*
 duplicated hunk, not just a file:
@@ -411,6 +443,12 @@ Notes per repo:
   acceptance case for the API, and the only sibling repo whose review changed
   the platform.
 
+Each repo's diff is cut as one Set-4 patch — `4a-balloons`, `4b-maze`,
+`4c-keyboard` (§1) — so the three sit alongside the Set 1–3 slices in
+`pr-slices/` and are reviewable without cloning anything. The letters follow
+the table order above and carry no apply-order meaning: the three repos are
+independent of each other and of the platform slices.
+
 Do **not** push any of these; opening the PRs is the owner's call.
 
 ---
@@ -422,13 +460,14 @@ Do **not** push any of these; opening the PRs is the owner's call.
 | 1a docs rubber-stamping | 21 | +42 (one marker + blank per file) |
 | 1b generic docs | 10+ | the rest of Set 1 — grew with the front-matter conversion and `conventions/docs.md` |
 | 2 agentic | 10 | +513 |
-| 3d tests | 6 | +2615 / −5 (minus the highlight spec) |
-| 3g highlight regression | 2 | the `highlight()` hunk + its spec |
-| 3a routing-core | 2 | +542 / −32 |
-| 3b widget-surface | 3 | +566 / −103 |
-| 3c model-view-util | 5 | +164 / −56 (minus the `highlight()` hunk) |
-| 3e examples-tracked | 5 | +60 / −43 |
-| 3f input-docs | 8 | +1669 / −35 |
+| 3a input-docs | 8 | +1669 / −35 |
+| 3b tests | 6 | +2615 / −5 (minus the highlight spec) |
+| 3c highlight regression | 2 | the `highlight()` hunk + its spec |
+| 3d routing-core | 2 | +542 / −32 |
+| 3e widget-surface | 3 | +566 / −103 |
+| 3f model-view-util | 5 | +164 / −56 (minus the `highlight()` hunk) |
+| 3g examples-tracked | 5 | +60 / −43 |
+| 4a balloons · 4b maze · 4c keyboard | own repos | one patch per repo, §1 / §5 |
 
 Churn drifts as the branch evolves; the pathspecs in §1 are the stable contract. When re-running,
 trust §1 + §4, not these numbers.

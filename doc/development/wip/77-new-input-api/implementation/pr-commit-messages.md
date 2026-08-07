@@ -54,7 +54,7 @@ coding rules, the session workflow, and the review/inspection
 planes. No product code.
 ```
 
-## 4 — `3f-input-docs`
+## 4 — `3a-input-docs`
 
 ```
 docs(input): the input API guide, internals, decisions and debt
@@ -75,7 +75,7 @@ before the code so a reviewer can read the contract first.
 - tests.md, CHANGELOG.md — suite inventory and the release note.
 ```
 
-## 5 — `3d-tests`
+## 5 — `3b-tests`
 
 ```
 test(input): the #input contract suite and its fixtures
@@ -96,7 +96,7 @@ input_nfr_mechanism_spec under headings that say so, precisely so
 nobody reads them as promises.
 ```
 
-## 6 — `3g-highlight-regression`
+## 6 — `3c-highlight-regression`
 
 ```
 fix(input): keep the highlight table indexable
@@ -107,7 +107,7 @@ the one commit that does not depend on the red→green arc of the
 suite: it is green on its own.
 ```
 
-## 7 — `3a-routing-core`
+## 7 — `3d-routing-core`
 
 ```
 feat(input): route-centric dispatch and the project route
@@ -132,7 +132,7 @@ its canvas bound and its errors routed to the project error
 handler.
 ```
 
-## 8 — `3b-widget-surface`
+## 8 — `3e-widget-surface`
 
 ```
 feat(input): the compy.input surface and widget sink
@@ -152,7 +152,7 @@ one chance to put back global device state it changed.
 Type annotations for the whole surface land here too.
 ```
 
-## 9 — `3c-model-view-util`
+## 9 — `3f-model-view-util`
 
 ```
 feat(input): held keys, combo parsing, text model and view
@@ -175,7 +175,7 @@ readable outside an event — the callback argument cannot serve a
 per-frame renderer.
 ```
 
-## 10 — `3e-examples-tracked`
+## 10 — `3g-examples-tracked`
 
 ```
 refactor(examples): migrate the bundled examples to the input API
