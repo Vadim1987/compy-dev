@@ -322,11 +322,12 @@ function UserInputController:show(config)
 end
 
 --- Deactivate without firing the cancel chain. Clearing
---- love.state.user_input is what "hides" the overlay: the
---- draw loop (controller.lua) paints V:draw() only while
---- the flag is set, so nil-ing it stops the paint on the
---- next frame.
+--- love.state.user_input is what "hides" the widget: the draw
+--- loop (controller.lua) paints V:draw() only while the flag is
+--- set, so nil-ing it stops the paint on the next frame.
+--- A permanent surface (always_shown) declines.
 function UserInputController:hide()
+  if self.always then return end
   self.shown = false
   love.state.user_input = nil
 end
@@ -442,14 +443,20 @@ function UserInputController:is_shown()
   return self.shown
 end
 
----> REMARK: why would we need this function and how can it guarantee that controller is "always" shown and nothing else resets the flag? Why we would need it first of all, if it was not used pre-feature? 
---- Mark this widget as an always-active surface (console/editor
---- input, never toggled like the transient overlay) and return
---- self, for inline construction. The overlay leaves shown=false
---- and toggles it via show()/hide().
+--- Mark this widget as its host's permanent input surface —
+--- the console line, the editor's input and search strips —
+--- and return self, for inline construction. A project's widget
+--- leaves shown=false and toggles it with show()/hide().
+---
+--- The name is enforced, not aspirational: hide() refuses on
+--- such a widget. Shownness became a flag with this API
+--- (pre-feature there was none: a widget was live iff
+--- love.state.user_input was set), and a flag anything may
+--- clear is a convention, not the guarantee the name claims.
 --- @return UserInputController self
 function UserInputController:always_shown()
   self.shown = true
+  self.always = true
   return self
 end
 

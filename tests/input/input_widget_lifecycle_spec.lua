@@ -293,6 +293,30 @@ describe('input contracts: widget lifecycle #input', function()
       assert.equal(1, shows)
       assert.same({ 'from i' }, F.widget:get_text())
     end)
+
+    -- always_shown() is a construction-time property of the
+    -- console and editor surfaces: they are host chrome, not a
+    -- transient prompt, and no path should take them down.
+    -- Enforcing it is what makes the name true: the flag was a
+    -- convention any hide() call would have silently broken.
+    it('an always-shown widget refuses to hide', function()
+      local m = UserInputModel(F.cfg, InputEvalText)
+      local w = UserInputController(m, true):always_shown()
+      assert.is_true(w:is_shown())
+      w:hide()
+      assert.is_true(w:is_shown())
+    end)
+
+    -- The control: an ordinary widget hides normally, so the
+    -- row above pins the always_shown property and not a hide()
+    -- that stopped working.
+    it('an ordinary widget still hides', function()
+      local m = UserInputModel(F.cfg, InputEvalText)
+      local w = UserInputController(m, true)
+      w.shown = true
+      w:hide()
+      assert.is_false(w:is_shown())
+    end)
   end)
 
   -- doc/input_api.md, "Opening the overlay from a key". LÖVE
