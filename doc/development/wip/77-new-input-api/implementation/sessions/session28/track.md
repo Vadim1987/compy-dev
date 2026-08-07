@@ -114,6 +114,87 @@
   content? LSP?). Prompt `validation/prompts/S28-tooling-anomaly-agent.md`,
   deliverable `validation/outcomes/S28-tooling-anomaly.md`. Read-only, and told
   to record the message verbatim if it fires during its own run.
+## 2026-08-07 — P8 tail begins
+
+- Tooling anomaly closed: harness's own atomic-write detector, content-aware
+  (a byte-identical rewrite did NOT trigger it), benign. Hooks/linters/LSP all
+  ruled out; I spot-checked the hook and binary claims. `f31b43ca`.
+- Three small P8 items, three commits (one concern each):
+  - `53abd09e` **R069 answered against the remark.** Asserting "widget not shown
+    after suspend" FAILS — suspend leaves both the shown flag and the overlay
+    handle standing; only the route is disconnected. Pinned the true pair
+    instead. Another remark that would have been wrong to implement literally.
+  - `1aa01572` **R063 declined, with the evidence named.** All three combo
+    shapes already have firing rows (matrix + 'combo classes'); the row's
+    subject is acceptance and canonicalisation. Comment says where, so the
+    question does not recur. DRY, per the rule just written.
+  - `64ac38d0` **R047 implemented.** Search query now typed character by
+    character; the mock wrapper it used was the handler call with extra steps.
+    Suite unchanged, which says the search path is cadence-insensitive.
+- **Owner rulings on the restructuring:** surfaces are **inbound events /
+  widget control / widget callbacks**; merges go ahead (variant 2) but
+  **inventory first, written merge plan on disk before anything moves, cold
+  agent revalidates the plan BEFORE the move and the results after**.
+- Inventory agent (Sonnet) running: every `it` in the four merge-pair files with
+  describe path + helper dependencies, duplication candidates, one-liners for
+  the rest. Prompt `validation/prompts/S28-merge-inventory-agent.md` →
+  `validation/outcomes/S28-merge-inventory.md`.
+## 2026-08-07 — the merge, planned then executed
+
+- Inventory back: **93 rows, and only ONE of 11 duplication candidates is a true
+  duplicate**; one more is a superset relationship. The rest are designed splits
+  (different entry point / route / depth, several documented in the files' own
+  comments). So R074+R078 are a regrouping, not a cull — that reframing is the
+  whole value of the inventory step the owner insisted on.
+- Plan `validation/reviews/S28-merge-plan.md`: two merged files, two deletions
+  named with their survivors, one three-way cluster deliberately KEPT (each row
+  pins a distinct fact — deleting one to improve a dedup count is the failure
+  this guards against). R064 answered by dissolution rather than rename.
+- **Cold review earned its cost.** Four corrections, all accepted, two
+  re-verified by me in the source:
+  - deletion 1 would have **dropped an assertion** — deleted row checks
+    `F.is_widget_visible()` (love.state overlay handle, user-observable),
+    survivor checks `F.widget:is_shown()` (internal flag, kept free of
+    love.state by owner ruling 2026-07-20). Survivor gains the visible check.
+  - **arithmetic bug that contradicted itself**: File B's table listed row 33
+    inside a group two sections after deleting it; summed 53, not 52. A literal
+    execution lands the suite at 953 and nobody notices.
+  Revision log is §5b. `5f261188`.
+- `90f632cf` **step 1** (Sonnet executor, verbatim move): widget control surface,
+  39 rows, suite 954 unchanged. Verified beyond the count, since a green count
+  survives a silently rewritten row: **43/43 row titles identical, 76/76
+  assertion lines byte-identical**. That check is the one to reuse for step 2.
+- Executor flagged, correctly, that the merged header still carries REMARKs
+  asking for the merge it had just done. Told it to delete them in step 2 — a
+  note whose subject no longer exists is not covered by "do not improve while
+  moving".
+## 2026-08-07 — merge complete, P8 tail done
+
+- `25f70175` **step 2**: widget callbacks surface, 52 rows, 954 → 952. Two
+  deletions, five assertions added to the survivors at the positions §5b names.
+  Verified: 54 titles in, 52 out, missing exactly the two named; asserts 84 → 86,
+  reconciled. Read both modified rows myself rather than trusting the report.
+- `b0c9d032` **the guards' blind spot**: `#lifecycle`, a tag documented in
+  `tests.md`, did NOT move with its rows — `--tags=lifecycle` selected zero. Row
+  titles unchanged and every assertion accounted for; a tag is neither. Caught by
+  chance while chasing dangling filenames. **Lesson for any future move: verify
+  tags and cross-file citations, not just rows and assertions.** Written into
+  the post-move review prompt as its own check.
+- `bc5b97ae` 13 dangling citations repointed. Four of five in tests turned out
+  to be intra-file after the merge → now name a describe group, which cannot rot
+  like a path. One was already wrong pre-merge (credited the method-patch
+  technique to the callbacks suite; the row using it is in the events spec).
+  `tests.md`'s ten-file list rewritten around the three surfaces.
+- `a246c170` **step 3**: surface names on the six files that stay put. Titles
+  only. `input_nfr_mechanism_spec` deliberately keeps its old title — it belongs
+  to no surface and a surface name on it would be false.
+- Post-move cold review running (owner's second required round):
+  `validation/prompts/S28-merge-result-review-agent.md` →
+  `outcomes/S28-merge-result-review.md`. Told to reach the originals via
+  `git show 90f632cf^:` and to prove every tag still selects its rows.
+- Phantom "file was modified" notices fired twice more, on the two files I
+  edited via a python heredoc — i.e. writes outside the harness's own edit path,
+  exactly as the investigation predicted. Confirms the finding; no action.
 - Task as understood, stated to the owner before proceeding: part 1 revalidation
   of session27 (Decisions 26/27/28, five defect fixes + their tests, the 187-id
   coverage claim, the four changed severity calls), report findings, then part 2
