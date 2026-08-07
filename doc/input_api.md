@@ -298,20 +298,25 @@ return** like keyboard ones: return truthy and a shown overlay does not see
 the event. Return nothing and it carries on to the overlay, which is what
 you want while an overlay is up for its own reasons.
 
-Pointer events take shortcuts too, and the combo is the held modifiers with
-no trigger to name: `ctrl+*` is a ctrl-click.
+Pointer events take shortcuts too, and the vocabulary is the same one: the
+button is the trigger, written `mouse1` (left), `mouse2` (right), `mouse3`
+(middle).
 
 ```lua
-compy.input.shortcuts.mousepressed['ctrl+*'] = function(x, y, button)
-  inspect(x, y)
+compy.input.shortcuts.mousepressed['mouse2'] = function(x, y)
+  open_context_menu(x, y)
+  return true
+end
+compy.input.shortcuts.mousepressed['ctrl+mouse1'] = function(x, y)
+  add_to_selection(x, y)
   return true
 end
 ```
 
-With no modifier held there is no combo to name, so an ordinary click goes
-straight to the hook — which is where unmodified pointer handling belongs.
-The button is not part of the combo: it arrives as LÖVE's own argument, so
-one combo vocabulary covers every channel.
+`mousepressed` and `mousereleased` name a button. The channels that have no
+discrete trigger — `mousemoved`, `wheelmoved`, the touch events, and the
+derived clicks — take modifier classes only, so `shortcuts.mousemoved['ctrl+*']`
+is a ctrl-drag and an unmodified move goes straight to the hook.
 
 > REMARK: not 'overlay', but 'input widget'
 > REMARK: frame this whole paragraph as example of solving non-conventional challenge (preventing modifier-based hotkey from echoing into the input widget), not say "if you open with 'i'" as if it was some common or recommended convention

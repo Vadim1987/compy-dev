@@ -1096,22 +1096,36 @@ price of not having a second rule.
 **Consequence, accepted.** The console/editor route still narrows to `CC:keypressed(k)`. It has no
 widget tier to thread the rest to, and its own dispatch predates the feature.
 
-## Decision 27 — pointer combos are modifier-only, with no vocabulary of their own
+## Decision 27 — one combo vocabulary, with the button as a trigger
 
-**Decision.** Pointer channels carry a shortcuts tier like every other channel. A pointer combo is
-its held modifiers plus the wildcard — `shortcuts.mousepressed['ctrl+*']` is a ctrl-click. With no
-modifier held there is no combo to name and the event goes to the hook tier. The button is **not**
-part of the combo: it arrives as LÖVE's own argument (Decision 26).
+**Decision.** Every channel carries a shortcuts tier, and every combo is written the same way:
+modifiers plus a trigger, or modifiers plus `*` for the class. What differs is only what the
+channel has to name. `mousepressed` and `mousereleased` name the **button**, serialised `mouse1` /
+`mouse2` / `mouse3` — so `shortcuts.mousepressed['mouse2']` is a right-click and
+`'ctrl+mouse1'` a ctrl-click. Channels with no discrete trigger — `mousemoved`, `wheelmoved`, the
+touch events, the derived clicks — take modifier classes only, and with no modifier held there is
+nothing to name, so the event goes to the hook tier.
 
-**Why.** The guide had argued the tier was impossible because "a combo needs a key to name". It
-does not: `combo_string('*', keys)` already built a triggerless class key — that is what `alt+*`
-has always been — so the serialiser supported a modifier-only combo before anything used one. The
-asymmetry was an accident of nobody wiring it, not a design.
+**Why.** The guide had argued a pointer tier was impossible because "a combo needs a key to name".
+It does not: `combo_string('*', keys)` already built a triggerless class key — that is what
+`alt+*` has always been. The asymmetry was an accident of nobody wiring it, not a design.
 
-Naming buttons in the combo (`ctrl+mouse1`) was considered and rejected: it introduces a second
-trigger vocabulary alongside key names to express what `function(x, y, button)` already expresses.
+Excluding the button was considered and rejected, on the owner's challenge. The argument for
+excluding it — "the button already arrives as an argument, so the handler can test it" — applies
+word for word to the keyboard, where the key also arrives as an argument and is a combo trigger
+anyway. Taken seriously it abolishes the shortcuts tier entirely and puts every binding back
+behind `if button == 2`, which is the string-tag dispatch `agents/rules.md` forbids in as many
+words. A shortcuts tier exists precisely so a handler does not have to test what it was
+registered for.
 
-**Consequence, accepted.** An unmodified pointer event never consults the shortcuts tier. This is
-also the fast path — the held-modifier test runs before any combo string is built, so an
-unmodified `mousemoved` allocates nothing. A bare `'*'` still raises on every channel: it would
-mean "every event", which is what a hook is.
+**Consequence, accepted.** A channel's trigger is read from a different argument position per
+channel (first for keys and text, third for buttons). That is one table of accessor functions,
+not a branch, and it is the only per-channel knowledge the route holds.
+
+**Consequence, accepted.** The derived clicks name no button, because the click timer does not
+carry one today. Extending it is a separate change; until then `singleclick`/`doubleclick` take
+modifier classes only.
+
+**Fast path preserved.** For a triggerless channel the held-modifier test runs before any combo
+string is built, so an unmodified `mousemoved` allocates nothing. A bare `'*'` still raises on
+every channel: it would mean "every event", which is what a hook is.

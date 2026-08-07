@@ -102,11 +102,10 @@ describe('input contracts: shortcuts and click #input', function()
       assert.is_false(reached_hook)
     end)
 
-    -- The control: with no modifier held there is no combo to
-    -- name, so the same event goes to the hook untouched. Without
-    -- this row a shortcut tier that fired on EVERY pointer event
-    -- would pass the row above.
-    it('an unmodified pointer event reaches the hook',
+    -- The control: an unmatched combo falls through untouched.
+    -- Without this row a shortcut tier that fired on EVERY
+    -- pointer event would pass the row above.
+    it('an unmatched pointer combo reaches the hook',
       function()
         local fired, reached_hook = false, false
         local input = F.activate_project()
@@ -117,6 +116,68 @@ describe('input contracts: shortcuts and click #input', function()
         F.session.mousepressed(10, 10, 1, false, 1)
         assert.is_false(fired)
         assert.is_true(reached_hook)
+      end)
+
+    -- The button is the trigger the channel names, serialised as
+    -- 'mouseN' — so an unmodified right-click is bindable, which
+    -- is what a project reaching for a context action wants.
+    it('the button is the trigger: mouse2 is a right-click',
+      function()
+        local hits = { }
+        local input = F.activate_project()
+        input.shortcuts.mousepressed['mouse2'] =
+            function() hits[#hits + 1] = 'right'; return true end
+        F.session.mousepressed(10, 10, 2, false, 1)
+        assert.same({ 'right' }, hits)
+      end)
+
+    -- Discriminating: the same binding must be SILENT for another
+    -- button. A tier that keyed on the channel alone would pass
+    -- the row above and fail this one.
+    it('a button trigger is silent for another button',
+      function()
+        local fired, reached_hook = false, false
+        local input = F.activate_project()
+        input.shortcuts.mousepressed['mouse2'] =
+            function() fired = true; return true end
+        input.hooks.mousepressed =
+            function() reached_hook = true end
+        F.session.mousepressed(10, 10, 1, false, 1)
+        assert.is_false(fired)
+        assert.is_true(reached_hook)
+      end)
+
+    -- Modifiers compose with the button exactly as they do with a
+    -- key, and exact beats the class (Decision 21) — the same
+    -- rule the keyboard channels follow.
+    it('exact modifier+button wins over the modifier class',
+      function()
+        local hit
+        local input = F.activate_project()
+        input.shortcuts.mousepressed['ctrl+*'] =
+            function() hit = 'class'; return true end
+        input.shortcuts.mousepressed['ctrl+mouse2'] =
+            function() hit = 'exact'; return true end
+        F.session.press('lctrl')
+        F.session.mousepressed(10, 10, 2, false, 1)
+        assert.equal('exact', hit)
+      end)
+
+    -- A channel with no discrete trigger to name stays
+    -- modifier-only: mousemoved has no button, so its combos are
+    -- classes and an unmodified move never consults the tier at
+    -- all (which is also why it allocates nothing).
+    it('a channel with no trigger matches on modifiers alone',
+      function()
+        local hits = { }
+        local input = F.activate_project()
+        input.shortcuts.mousemoved['ctrl+*'] =
+            function() hits[#hits + 1] = 'moved'; return true end
+        F.session.mousemoved(10, 10, 1, 1, false)
+        assert.same({ }, hits)
+        F.session.press('lctrl')
+        F.session.mousemoved(11, 11, 1, 1, false)
+        assert.same({ 'moved' }, hits)
       end)
 
     -- The button is LÖVE's own third argument, not part of the

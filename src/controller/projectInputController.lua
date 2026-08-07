@@ -38,10 +38,19 @@ local EVENTS = {
   'singleclick', 'doubleclick',
 }
 
--- The channels that NAME a trigger in their combos. Everything
--- else builds its combo from held modifiers alone.
-local KEYBOARD = {
-  keypressed = true, keyreleased = true, textinput = true,
+-- What a channel names as its combo trigger, read off LÖVE's own
+-- arguments. Keyboard and text name their first; the two button
+-- channels name their third, serialised as 'mouseN' so a combo
+-- reads the same way whatever the trigger is — 'ctrl+s' and
+-- 'ctrl+mouse2' are one vocabulary, not two.
+-- A channel absent here has no discrete trigger to name and
+-- matches on held modifiers alone ('ctrl+*').
+local TRIGGER = {
+  keypressed    = function(k) return k end,
+  keyreleased   = function(k) return k end,
+  textinput     = function(t) return t end,
+  mousepressed  = function(_, _, b) return 'mouse' .. b end,
+  mousereleased = function(_, _, b) return 'mouse' .. b end,
 }
 
 --- Seed the project's hooks table (doc/development/decisions/input.md,
@@ -80,11 +89,12 @@ ProjectInputController.EVENTS = EVENTS
 --- same serialisation with '*' as the trigger. A modifier's own
 --- press dispatches e.g. 'alt+lalt' and must not match 'alt+*'.
 ---
---- A pointer event names no trigger, so the class key is all it
---- can have: 'ctrl+*' is a ctrl-click. With no modifier held
---- there is nothing to name and the event belongs to the hook —
---- which is also why the held-modifier test comes first, so an
---- unmodified mousemoved never allocates a combo string.
+--- A channel with no trigger to name (mousemoved, wheel, touch,
+--- the derived clicks) can only have the class key: 'ctrl+*' is
+--- a ctrl-drag. With no modifier held there is nothing to name
+--- and the event belongs to the hook — which is why the
+--- held-modifier test comes first, so an unmodified mousemoved
+--- never allocates a combo string.
 --- @param tbl table   one channel's combo table
 --- @param trigger string?
 --- @return function?
@@ -168,16 +178,14 @@ function ProjectInputController:deactivate()
   self.compy_input = nil
 end
 
--- One installer for every channel. The keyboard/text channels
--- name their first argument as the combo trigger; the rest name
--- none and enter the walk at the modifier-class lookup. Nothing
--- else differed between them once the held-key view stopped
--- being threaded through the payload.
+-- One installer for every channel. All that varies is how the
+-- combo trigger is read off the arguments — and for the channels
+-- with none, that there is nothing to read.
 --- @param event string
 local function channel(event)
-  local names_trigger = KEYBOARD[event]
+  local trigger_of = TRIGGER[event]
   ProjectInputController[event] = function(self, ...)
-    local trigger = names_trigger and ... or nil
+    local trigger = trigger_of and trigger_of(...) or nil
     return self:_dispatch(event, trigger, ...)
   end
 end

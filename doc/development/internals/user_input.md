@@ -13,7 +13,7 @@ reviewed: none
 > REMARK: "both now run" is related to project only -- refactoring console/editor management same way is suggested for the future, when project input controller will be battle-tested
 > REMARK: in recent implementation pointer 'no shortcuts for pointer' should not be true -- the table must exist and be checked; combo of mods just constructed without 'trigger key'
 
-Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget shared across console, editor, and project overlays) and **mouse/pointer input** (mouse/touch channels a project can hook, plus mouse interaction with the input widget itself). Both now run through the same project-route dispatch chain (`ProjectInputController`, "Keyboard Handling" below) while a project runs; pointer channels differ only in naming no combo trigger (see "Mouse Input" below). This doc covers both, with mode-specific notes where the behavior differs.
+Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget shared across console, editor, and project overlays) and **mouse/pointer input** (mouse/touch channels a project can hook, plus mouse interaction with the input widget itself). Both now run through the same project-route dispatch chain (`ProjectInputController`, "Keyboard Handling" below) while a project runs; what differs per channel is only which argument names the combo trigger (see "Mouse Input" below). This doc covers both, with mode-specific notes where the behavior differs.
 
 For the project-facing usage guide (examples, the `show()` config table, the submit lifecycle from a project author's point of view), see [Compy Input API](../../input_api.md). This doc is the "how it works under the hood" narrative — routing, the dispatch chain, and the mechanism behind each guarantee. For the two-layer `love.handlers.*` vs `love.<event>` wiring underneath the gateway (§"Dispatch chain" below), see [Event Dispatch Layers](event_dispatch_layers.md).
 
@@ -507,11 +507,13 @@ seeing that event, the reverse of the old always-both delivery.
 
 
 
-Pointer channels run the same three tiers as keyboard/text. They name no trigger, so their combos
-are the held modifiers plus the wildcard — `compy.input.shortcuts.mousepressed['ctrl+*']` is a
-ctrl-click. With no modifier held there is no combo to name and `find_shortcut` returns early
-(before building a combo string, so an unmodified `mousemoved` allocates nothing), leaving the
-event to the hook. A project's own `love.mousepressed` (etc.), if defined, is auto-seeded as that
+Pointer channels run the same three tiers as keyboard/text, with one combo vocabulary across all
+of them (Decision 27). `mousepressed`/`mousereleased` name the button as their trigger, serialised
+`mouseN`, so `compy.input.shortcuts.mousepressed['mouse2']` is a right-click and `'ctrl+mouse2'` a
+modified one. The channels with no discrete trigger — `mousemoved`, `wheelmoved`, touch, the
+derived clicks — take modifier classes only; with no modifier held `find_shortcut` returns before
+building a combo string (so an unmodified `mousemoved` allocates nothing) and the event goes to
+the hook. A project's own `love.mousepressed` (etc.), if defined, is auto-seeded as that
 event's hook exactly like keyboard/text (see "Keyboard Handling" above; the seeding is generic
 over every bindable channel, `controller.lua`); an explicit `compy.input.hooks.<event>` write
 still wins over the seed.
