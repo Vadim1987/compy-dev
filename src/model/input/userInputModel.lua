@@ -836,32 +836,20 @@ function UserInputModel:cancel()
 end
 
 
-----> REMARK: if we won't inject boilerplate comments, _apply_eval would have normal size even with this code folded-in, so do it (if there's small overhead like 16 lines -- I ratify it; new rule -- 16 lines are tolerablea
-----> REMARL: verbose comment, compress and make simpler)
 --- @private
---- Cursor-to-error-position on an evaluator reject. Split out
---- of handle() to keep it under the function-body line limit.
---- @param result Error[]
-function UserInputModel:_report_parse_error(result)
-  --- @TODO fix
-  local perr = result[1]
-  -- Log.debug(Debug.terse_t(perr, nil, nil, true))
-  if not perr or not perr.c then return end
-  --- @TODO check line len and move to next if at end
-  local c = perr.c
-  if c > 1 then c = c + 1 end
-  self:move_cursor(perr.l, c)
-end
-
---- @private
+--- On a reject, seat the cursor on the error position.
 --- @param ent InputText
 --- @return boolean ok
 --- @return string[]|Error[]|InputText result
 function UserInputModel:_apply_eval(ent)
   local ok, result = self.evaluator:apply(ent)
-  if not ok then
-    self:_report_parse_error(result)
-  end
+  if ok then return ok, result end
+  --- @TODO check line len and move to next if at end
+  local perr = result[1]
+  if not perr or not perr.c then return ok, result end
+  local c = perr.c
+  if c > 1 then c = c + 1 end
+  self:move_cursor(perr.l, c)
   return ok, result
 end
 

@@ -30,11 +30,20 @@ Some (not all) essential excerpts from these docs are inlined below (they may be
 | Constraint | Limit |
 |---|---|
 | Line length | 64 chars |
-| Function body | 14 lines |
+| Function body | 14 lines (16 tolerated — see below) |
 | Parameters | 4 |
 | Nesting depth | 4 |
 
 When a limit is approached, redesign — don't raise the limit.
+
+**The one tolerance** (owner ratification, 2026-08-07): a function body may run
+to **16 lines** when the alternative is extracting a helper whose only job is
+to satisfy the limit. A helper that exists for the counter, not for the reader,
+buys nothing — it adds a name, a call site and a doc-comment to save two lines.
+Before using the tolerance, check the cheaper fix: comment boilerplate inside
+the body counts toward nothing and is usually where the overflow came from.
+(The case that produced this rule needed neither — trimming the comments took
+the body to eight lines.)
 
 ---
 
