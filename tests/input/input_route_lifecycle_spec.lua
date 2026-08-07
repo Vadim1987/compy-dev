@@ -309,9 +309,15 @@ describe('input contracts: route connection lifecycle #input', function()
         love.state.app_state = 'snapshot'
         F.cc:suspend()
         F.session.type('a')
-        ---> REMARK: worth also checking that widget is not shown after suspend?
         assert.same({ 'a' }, F.console:get_text())
         assert.same({ 'x' }, F.widget:get_text())
+        -- Unhonoured is not hidden: suspend disconnects the route,
+        -- so the widget receives nothing, while its own shown flag
+        -- and the overlay handle the draw path reads are both left
+        -- standing. Asserted because the two are easy to conflate
+        -- and only the first is what Decision 12 promises.
+        assert.is_true(F.widget:is_shown())
+        assert.is_true(F.is_widget_visible())
       end)
     end)
 
