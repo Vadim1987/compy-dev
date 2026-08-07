@@ -752,7 +752,7 @@ describe('input surface: widget callbacks #input', function()
   -- model:cancel not running under the editor's Escape) — the
   -- same technique input_widgets_callbacks_spec.lua uses for its
   -- one widget-signature row.
-  describe('the same lifecycle on every route', function()
+  describe('the same lifecycle on every route #lifecycle', function()
     -- A standalone widget, NOT the persistent/overlay — direct
     -- construction, like user_input_view_spec.lua.
     local function bare_uic()
