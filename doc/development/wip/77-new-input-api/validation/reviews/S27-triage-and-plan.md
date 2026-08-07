@@ -483,15 +483,44 @@ Stated explicitly so declining is a decision rather than an omission:
 Each phase ends green, stated, and committed. Production fixes are their own
 commits with their breaking test first.
 
+**Status, 2026-08-07 (P0–P6 complete).** The P1 gate was resolved without
+escalating, per the owner's standing instruction to escalate only what advisors
+cannot settle: W2's vocabulary by the owner's own R115, `before_exit` by the
+unguarded teardown, R080 by two independent confirmations, Decision 9 by the
+tombstone rule. Two things changed under owner challenge after they landed, and
+both are recorded in the ledger rather than only here:
+
+- **Decision 26 supersedes the payload shape twice over.** W1 dropped
+  `keys_pressed` *and* `scancode`; the owner asked why scancode was going and the
+  answer did not hold — pointer channels already pass LÖVE's list verbatim,
+  `istouch` and `presses` included, so dropping scancode made `keypressed` the
+  one exception to a rule the system already had. Restored; the fix deleted the
+  gateway's last special case.
+- **Decision 27 gained the button as a trigger.** The plan recommended
+  modifier-only combos with the button read from the payload. The owner
+  challenged it: that argument applies verbatim to the keyboard, where the key
+  also arrives as an argument and is a trigger anyway, so taken seriously it
+  abolishes the shortcuts tier and restores `if button == 2` — the string-tag
+  dispatch `agents/rules.md` forbids. `shortcuts.mousepressed['mouse2']` is a
+  right-click now, and it is the mechanism SM1 needs.
+- **Derived clicks keep `(x, y)`** (owner ruling): they are not LÖVE events and
+  have no stock shape to converge on, so they name no button and take modifier
+  classes only.
+
+**The pattern in both corrections is the same** and worth carrying into the
+remaining phases: an argument of the form *"X is already available elsewhere, so
+it need not be here"* proves too much. It was wrong about scancode and wrong
+about the button. Check what else the system already does before invoking it.
+
 | # | Phase | Depends on | Gate |
 |---|---|---|---|
-| P0 | Answer the S0s: verify R044, R068, R033/R171 against `3256aac` and the current tree (**done** — `../notes/S27-P0-evidence.md`); reproduce SM1, SM3, SM4, SM5 | — | evidence note on disk before any fix |
-| P1 | **Owner rulings**: W2 (confirm modifier-only + `mousepressed` only), W5 (`before_exit` veto — recommend no), W6 (R080 **and R044 together**), W1 (Decision 9 — delete or tombstone) | P0 | **blocks P2** |
-| P2 | W1 — signature unification, incl. `ignore_repeat` **and `examples/keyboard/input.lua:142` by name** | P1 | breaking test first; the keyboard regression is silent, so it needs its own row |
-| P3 | W3 — one event list, seeding and wipe generic | **[REV] none** | independent of W1 — nothing in W3 touches the payload |
-| P4 | W2 — pointer shortcut tier | P1 | **[REV]** independent of W1 too: pointer already dispatches with `trigger = nil` |
-| P5 | W5 — `before_submit` veto + callback defaults | **[REV] P1, P2** | `before_submit(keys_pressed)` is the parameter P2 removes — **write its tests after P2**, not before |
-| P6 | W4 — dispatch/wiring collapse | P2–P5 | behaviour-preserving; suite is the proof. `hook_pointer` is renamed, not deleted |
+| ~~P0~~ **DONE** | Answer the S0s: verify R044, R068, R033/R171 against `3256aac` and the current tree (**done** — `../notes/S27-P0-evidence.md`); reproduce SM1, SM3, SM4, SM5 | — | evidence note on disk before any fix |
+| ~~P1~~ **DONE** | Owner rulings: W2 (confirm modifier-only + `mousepressed` only), W5 (`before_exit` veto — recommend no), W6 (R080 **and R044 together**), W1 (Decision 9 — delete or tombstone) | P0 | **blocks P2** |
+| ~~P2~~ **DONE** (`c4f5a92f`, corrected by `a1952721`) | W1 — signature unification, incl. `ignore_repeat` **and `examples/keyboard/input.lua:142` by name** | P1 | breaking test first; the keyboard regression is silent, so it needs its own row |
+| ~~P3~~ **DONE** (`069b93e9`) | W3 — one event list, seeding and wipe generic | **[REV] none** | independent of W1 — nothing in W3 touches the payload |
+| ~~P4~~ **DONE** (`5d144f37`, extended by `1a414dbb`) | W2 — pointer shortcut tier | P1 | **[REV]** independent of W1 too: pointer already dispatches with `trigger = nil` |
+| ~~P5~~ **DONE** (`15679f9d`) | W5 — `before_submit` veto + callback defaults | **[REV] P1, P2** | `before_submit(keys_pressed)` is the parameter P2 removes — **write its tests after P2**, not before |
+| ~~P6~~ **DONE** (`bb6569a2`) | W4 — dispatch/wiring collapse | P2–P5 | behaviour-preserving; suite is the proof. `hook_pointer` is renamed, not deleted |
 | P7 | W7 — controller structure, incl. the 16-line rule in `agents/rules.md` | P6 | |
 | P8 | W8 — test restructuring | P2–P7 | do NOT restructure tests before the code stops moving |
 | P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | **[REV]** the three nested repos carry **no automated tests** — one static spec doc, no runnable suite. Committing is not verification: a smoke re-pass on the channels W1/W2/W3 touch is the gate, `examples/keyboard` at minimum. Never pushed |

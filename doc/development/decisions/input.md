@@ -1122,9 +1122,11 @@ registered for.
 channel (first for keys and text, third for buttons). That is one table of accessor functions,
 not a branch, and it is the only per-channel knowledge the route holds.
 
-**Consequence, accepted.** The derived clicks name no button, because the click timer does not
-carry one today. Extending it is a separate change; until then `singleclick`/`doubleclick` take
-modifier classes only.
+**The derived clicks keep `(x, y)` and name no button** (owner ruling, 2026-08-07). They are not
+LÖVE events and their signature does not resemble one, so there is no stock shape to converge on
+and no reason to widen them for symmetry's sake. They take modifier classes only. A project that
+needs to distinguish which button produced a click binds `mousereleased` and does its own timing,
+which is what the framework's timer does on its behalf.
 
 **Fast path preserved.** For a triggerless channel the held-modifier test runs before any combo
 string is built, so an unmodified `mousemoved` allocates nothing. A bare `'*'` still raises on
