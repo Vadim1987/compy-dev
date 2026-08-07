@@ -408,8 +408,8 @@ end
 
 --- A read-only view over private state: reads resolve through
 --- `resolve`, every write is refused. The empty table is the
---- point — a metatable defends only the keys its table does not
---- hold, so nothing may be a real field here.
+--- point: a metatable defends only the keys its table does
+--- not hold, so nothing may be a real field here.
 --- Three surfaces share this shape: the shortcuts sub-table
 --- (frozen per-event combo tables), the combinator table, and
 --- the compy.input container itself.
@@ -510,49 +510,45 @@ local function build_input_surface(state, methods, get_keys)
   end, tostring)
 end
 
----> REMARK: lets respect the vocabulary. these things are called *callbacks*.
--- The four widget-output entries (doc/development/decisions/input.md,
--- Decision 5):
--- show()/configure() config key and direct field-write
--- share one underlying `state` entry, sticky across shows
--- until overwritten (doc/input_api.md, "Callback
--- assignments"; the doc/development/internals/user_input.md,
--- "configure(config)" live reconfigure surface below
--- leaves this unchanged).
-local OUTPUT_KEYS = {
+-- A config table carries keys of exactly two kinds, and the
+-- two behave differently enough to be named apart.
+
+-- STICKY: one `state` entry each, shared by the config key and
+-- the direct compy.input.callbacks write, and kept across shows
+-- until overwritten (doc/input_api.md, "Callback assignments").
+local CALLBACK_KEYS = {
   'on_text_entered',
   'on_limit_reached',
   'validator',
   'highlighter',
 }
 
----> REMARK: why "pending"? need better name. like 'configure-only'? not sure about 'cursor' -- aren't we using set_cursor/get_cursor? not sure what 'cursor' ever means and how its used -- is it?
--- prompt/text/cursor are per-show fields (never sticky at
--- this layer) — EXCEPT when configure() stashes them while
--- hidden: then they apply once, on the very next show().
-local PENDING_KEYS = { 'prompt', 'text', 'cursor' }
+-- PER-SHOW: spent by the show() that reads them. `cursor` is a
+-- {line, col} pair applied after text, the seat compy.input.
+-- set_cursor moves later. configure() while HIDDEN has no
+-- session to apply them to, so it stashes them in state.pending
+-- for the next show() to consume — which is the one case where
+-- they outlive their call.
+local PER_SHOW_KEYS = { 'prompt', 'text', 'cursor' }
 
----> REMARK: why dupicate key names instead of assembling from two tables above?
--- show() has a deliberately small config table.  Callback
--- lifecycle hooks remain explicit compy.input.callbacks writes.
-local SHOW_KEYS = {
-  prompt = true,
-  text = true,
-  cursor = true,
-  force = true,
-  highlighter = true,
-  validator = true,
-  on_text_entered = true,
-  on_limit_reached = true,
-}
+--- @param names string[]
+--- @param extra string?
+--- @return table set
+local function key_set(names, extra)
+  local set = { }
+  for _, k in ipairs(names) do set[k] = true end
+  if extra then set[extra] = true end
+  return set
+end
 
----> REMARK: why two distinct tables 'SHOW_KEYS' and 'CONFIGURE_KEYS' if they are identical by shape and content?
--- configure() takes the same table minus force: force answers
--- "replace the text of an ALREADY-active overlay", which is
--- the only state configure() ever runs in.
-local CONFIGURE_KEYS = { }
-for k in pairs(SHOW_KEYS) do CONFIGURE_KEYS[k] = true end
-CONFIGURE_KEYS.force = nil
+-- What each entry point accepts, assembled from the two lists
+-- above rather than re-typed: `force` answers "replace the text
+-- of an ALREADY-active widget", so it is show()'s alone —
+-- configure() only ever runs in that state.
+local CONFIGURE_KEYS = key_set(CALLBACK_KEYS)
+for _, k in ipairs(PER_SHOW_KEYS) do CONFIGURE_KEYS[k] = true end
+local SHOW_KEYS = key_set(CALLBACK_KEYS, 'force')
+for _, k in ipairs(PER_SHOW_KEYS) do SHOW_KEYS[k] = true end
 
 -- Lifecycle callbacks are compy.input.callbacks assignments,
 -- never config-table keys. Naming one here is the likeliest
@@ -600,8 +596,8 @@ end
 --- last-known value.
 --- @param state table
 --- @param cfg table
-local function merge_output_keys(state, cfg)
-  for _, k in ipairs(OUTPUT_KEYS) do
+local function merge_callback_keys(state, cfg)
+  for _, k in ipairs(CALLBACK_KEYS) do
     if cfg[k] ~= nil then state.callbacks[k] = cfg[k] end
     cfg[k] = state.callbacks[k]
   end
@@ -616,7 +612,7 @@ end
 --- @param pending table
 --- @param cfg table
 local function consume_pending(pending, cfg)
-  for _, k in ipairs(PENDING_KEYS) do
+  for _, k in ipairs(PER_SHOW_KEYS) do
     if cfg[k] == nil then cfg[k] = pending[k] end
     pending[k] = nil
   end
@@ -631,8 +627,8 @@ end
 --- @param state table
 --- @param cfg table
 local function stash_hidden_configure(state, cfg)
-  merge_output_keys(state, cfg)
-  for _, k in ipairs(PENDING_KEYS) do
+  merge_callback_keys(state, cfg)
+  for _, k in ipairs(PER_SHOW_KEYS) do
     if cfg[k] ~= nil then state.pending[k] = cfg[k] end
   end
 end
@@ -665,7 +661,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
     show = function(cfg)
       local next_cfg = cfg or {}
       check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
-      merge_output_keys(state, next_cfg)
+      merge_callback_keys(state, next_cfg)
       consume_pending(state.pending, next_cfg)
       local ui = get_widget()
       if ui then ui:show(next_cfg) end
@@ -727,7 +723,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
         stash_hidden_configure(state, next_cfg)
         return
       end
-      merge_output_keys(state, next_cfg)
+      merge_callback_keys(state, next_cfg)
       get_widget():configure(next_cfg)
     end,
     -- doc/development/internals/user_input.md, "clear()": empty content +
