@@ -32,9 +32,7 @@ describe('input API: cursor and text surface', function()
       function()
         local input = F.compy_input()
         input.show({ text = 'hello' })
-        local l, c = input.get_cursor()
-        assert.same(1, l)
-        assert.same(6, c)
+        assert.same({ 1, 6 }, { input.get_cursor() })
       end)
 
     -- The pair above proves the report is 1-based ONCE. This row
@@ -61,7 +59,7 @@ describe('input API: cursor and text surface', function()
     it('reports the line on multiline text', function()
       local input = F.compy_input()
       input.show({ text = { 'ab', 'cd' } })
-      assert.same({2, 3}, input.get_cursor())
+      assert.same({ 2, 3 }, { input.get_cursor() })
     end)
 
     -- Shown-with-text first, THEN hidden: without that setup a nil
@@ -88,7 +86,7 @@ describe('input API: cursor and text surface', function()
       local input = F.activate_project()
       input.show({ text = 'lemon' })
       input.set_cursor(1, 3)
-      assert.same({1,3}, input.get_cursor())
+      assert.same({ 1, 3 }, { input.get_cursor() })
       -- The caret is really seated, not merely reported back:
       -- typing lands at the caret. `col` counts positions
       -- BETWEEN characters (1 .. #line + 1), so col 3 is
