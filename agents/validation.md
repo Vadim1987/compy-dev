@@ -29,12 +29,13 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **923 / 0 / 0 / 3** (the 3 pending are
+6. Confirm the baseline: `busted tests` → expect **953 / 0 / 0 / 3** (the 3 pending are
    intentional; do not "fix" them, and do not add a fourth without saying so). A different count is
    a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
    (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
-   session21 mop-up, 904 after session25, 923 after the session26 unification; **the current
-   session's `prompt.md` carries the authoritative number**, this line is the fallback.)
+   session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
+   session27 remark pass; **the current session's `prompt.md` carries the authoritative number**,
+   this line is the fallback.)
 
 ## Fixed pointers
 
@@ -53,9 +54,10 @@ owner and revisable, not a frozen mandate.
 - **PR ASSEMBLY:** `doc/development/wip/77-new-input-api/implementation/pr-assembly-guide.md`
   (re-runnable, git-only; slices in `implementation/pr-slices/`, commit messages in
   `implementation/pr-commit-messages.md`, description in `implementation/pr-description.md`).
-  **Regenerated 2026-08-03 at HEAD `264e0c6c`** and verified: all ten apply in order against
-  `BASE` and reproduce the tip byte-identically outside `wip/`. They go stale again the moment
-  the tree moves, so regeneration stays the LAST step before the PR.
+  Last regenerated 2026-08-03 at HEAD `264e0c6c` and verified there — **STALE since session27**,
+  which moved the tree substantially. The guide itself was revised 2026-08-07: Set-3 letters now
+  encode apply order, and Set 4 is cut as `4a-balloons` / `4b-maze` / `4c-keyboard`. Regeneration
+  stays the LAST step before the PR.
 - **PERSISTENT DOCS CORPUS** (the only docs that survive `wip/77` deletion; all spec refs must
   resolve here): `doc/input_api.md`, `doc/development/internals/user_input.md`,
   `doc/development/decisions/input.md`, `doc/development/technical_debt/{input,general}.md`,
@@ -219,7 +221,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session27/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session28/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 

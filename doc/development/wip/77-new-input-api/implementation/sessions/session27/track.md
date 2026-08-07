@@ -255,6 +255,44 @@ survives cloning by the *same* mechanism, so a plain field would make
 whose consequences nobody has pinned down is the `wrap_handler` failure mode.
 Evidence: `validation/outcomes/S27-surface-audit.md` §4.
 
+## 2026-08-07 — P8 (part) and the teardown ruling
+
+- `953d0e9f` blind reconfigure row replaced by a discriminating pair, re-mutated
+  after writing to confirm it now fails when it should. Fourth blind row on this
+  feature.
+- `90bb0be1` R059's "MUST HAVE": the paradigm already existed inside the matrix
+  `describe` — lifted to `F.tracer(seen)`. R061 answers itself: the matrix
+  supersedes three of the four hand-written dispatch rows, each strictly weaker
+  than a matrix case that still runs. Deleted; 943 → 940.
+- `a78b9e3d` R060 was a docs gap, not a test bug — modifiers are optional in a
+  combo, `'s'` is a one-token combo, and the guide never said so.
+- `a2ba1d88` the wheel row became a sweep over `ProjectInputController.EVENTS`.
+  Worth it because `wheelmoved` used to work by ACCIDENT (gateway writes into
+  `love.handlers`, so LÖVE's stock entry covered a missing declaration) — a
+  sample cannot catch that, a sweep asserting the two lists agree can.
+  Correction to the owner's read: the widget-singleton NFR is still in that
+  file, and is the clearest example of what it is for.
+- `df3f9119` **third `before_exit` defect**: a RAISING hook still abandoned
+  teardown after the nil case was fixed. Found only because the owner's remark
+  asked for the test. Two rows state the hook's whole contract — a raise does
+  not block the stop, a truthy return does not veto it.
+- `ab2d45eb` + `ccfc07e1` **owner ruling, Decision 28.** Guarding the call site
+  was not enough; the framework now owns `framework_before_exit` and calls the
+  project's hook from inside it, in a pcall, reading nothing. Then refined:
+  uninstall inline, right after the call and never before (before would leave a
+  window for the hook to reinstall itself), and no wrapper for the uninstall.
+  Ordering mutation-checked — moving the assignment above the call fails the
+  reinstallation row.
+
+## 2026-08-07 — WRAPPED
+
+Suite **953 / 0 / 0 / 3** at wrap, green and stated at every commit. 41 commits
+here, 2 in `examples/keyboard`. Nothing pushed anywhere.
+
+Distilled into `report.md`; observations and owner attestations into
+`../../../validation/notes/S27-observations.md`; successor commissioned as
+session28. Track kept raw per `agents/sessions.md` §3.
+
 ## Sub-agents
 
 - **S27-inventory** (Sonnet, read-only, background): verbatim extraction of every
