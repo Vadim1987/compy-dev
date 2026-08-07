@@ -132,7 +132,32 @@
   control (a falsey return must NOT veto — otherwise a broken submit passes the
   veto row). 925 → 927.
 
-Remaining: P4 (pointer shortcut tier), P6 (W4 dispatch/wiring collapse), P7–P11.
+- `5d144f37` **P4/W2** — pointer shortcuts. `combo_string('*', keys)` already
+  built the triggerless key (`alt+*`), so the guide's "a combo needs a key to
+  name" was wrong about its own serialiser. `ctrl+*` is a ctrl-click; no
+  modifier held → no combo → hook. Modifier test runs BEFORE building any
+  string, so an unmodified `mousemoved` allocates nothing. Button stays out of
+  the combo — it is already LÖVE's third argument. Every channel now has a
+  combo table, provisioned from `ProjectInputController.EVENTS` rather than a
+  literal. 927 → 930.
+- `c5f15ed5` **P6/W4** — the collapse. 183 lines net removed, suite unchanged
+  at 930 (that IS the proof). PIC's three keyboard methods became the generic
+  channel installer once scancode was dropped at the gateway instead of inside
+  the route; `occupy_keyboard` → `occupy_input` over the whole list;
+  `hook_pointer` → `mark_pointer_liveness` (renamed, not deleted — it still
+  computes `user_pointer`); nine of ten `set_love_*` generated from a list;
+  `handlers.userinput` + its orphaned `clear_user_input` deleted. App boots
+  clean under `xvfb-run love src`.
+
+**Process slip, recorded.** Staged `git add src/` on that last commit and swept
+the three nested repos in as gitlinks plus the owner's untracked `src/STEPS.md`.
+Caught on the commit output, amended out immediately; nested repos and untracked
+scratch verified intact. The standing rule — *stage explicit paths, never a
+directory* — exists precisely because this tree permanently carries both.
+
+Remaining: P7 (W7 controller structure + the 16-line rule), P8 (tests), P9
+(examples + nested repos + SM1–SM5), P10 (docs/ledger), P11 (comment sweep,
+slices, two revalidations).
 
 ## Sub-agents
 
