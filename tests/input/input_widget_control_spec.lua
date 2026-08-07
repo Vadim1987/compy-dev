@@ -17,9 +17,6 @@
 -- "`show(config)`"; doc/development/decisions/input.md,
 -- Decision 2).
 
----> REMARK: avoid word 'overlay', better 'project input widget'
----> REMARK: There was another test suite on reconfiguration -- worth merging here and possibly de-duplicating?
-
 local F  = require('tests.helpers.input_fixture')
 
 describe('input surface: widget control #input', function()
