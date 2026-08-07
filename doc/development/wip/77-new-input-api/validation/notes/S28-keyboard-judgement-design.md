@@ -94,10 +94,28 @@ celebration still correct the estimate. Concretely: `capsReconcile` stays in
 input hook.
 
 **The post-keyup grace stays.** `INPUT.upRecent` + `INPUT_UP_GRACE` guard a
-different leak: a chord's trailing glyph (e.g. the `h` after Ctrl+Alt+H, arriving
-once Alt is already released). Rule 2 cannot see it — the previous judged glyph
-is a different character — so the grace is still the only thing catching it. It
-is orthogonal to delivery order and cheap.
+different leak: a glyph that arrives after its own key is already up. The OS
+emits repeat glyphs while a key is held, and the last one can land after the
+keyup has been processed — which matters because the keyup is exactly what
+re-opens the key for judging. `appKeyreleased` stamps the release frame
+(`DBG_FRAME`, the game's own counter from `main.lua`), and for one frame after
+it, glyphs for that key are discarded. Orthogonal to delivery order and cheap.
+
+**A chord's trailing glyph needs one more line — record what the modifier guard
+discards.** `appTextinput` drops glyphs while Alt or Ctrl is held (a chord glyph
+is never a target), *before* judging sees them. So if the child holds Ctrl+Alt+H,
+releases the modifiers and **keeps holding `h`**, the next repeat glyph arrives
+unmodified, with nothing recorded about it and its key not released — past rule 2
+(the last judged glyph is a different character) and past the grace. It would be
+judged as a fresh wrong key.
+
+The interim `spendGlyph` fix has this hole; the pre-SM5 held-set check covered it
+by accident, because a held key was always stale. **The design closes it without
+reaching back across the channels: write `lastGlyph` even when the modifier guard
+discards the glyph.** It *was* seen, so recording it makes the trailing repeats
+dedupe away by rule 2. One assignment, no new state, no cross-channel inference —
+and it is the reason judgement state must be reachable from `appTextinput`, not
+private to the scene's judging function.
 
 ## What this removes
 
