@@ -1469,6 +1469,9 @@ end
 --- @param presses number
 function ConsoleController:mousepressed(
     x, y, btn, touch, presses)
+  if love.DEBUG then
+    Log.info(string.format('click! {%d, %d}', x, y))
+  end
   if love.state.app_state == 'editor' then
     if self.cfg.editor.mouse_enabled then
       self.editor.input:mousepressed(x, y, btn, touch, presses)

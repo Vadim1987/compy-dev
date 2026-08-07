@@ -168,53 +168,18 @@ function ProjectInputController:deactivate()
   self.compy_input = nil
 end
 
--- Keyboard/text channels. The payload is LÖVE's own leading
--- arguments; the held-key set is read from
--- compy.input.keys_pressed, never threaded as an argument.
--- These three exist only to name the combo trigger.
-
---- Keypressed (doc/development/decisions/input.md, Decision 11). The
---- route is connected/disconnected at the
---- 'running' <-> 'project_open' boundary by reinstalling
---- the love.* callbacks (controller.lua), not per-event
---- here — once disconnected, love.keypressed no longer even
---- points at this method, so no state guard is needed.
---- @param k string
---- @param sc string?
---- @param isr boolean?
---- isrepeat reaches every consumer and dispatch does not gate on
---- it (doc/development/decisions/input.md, Decision 22): a held
---- combo fires each frame, and a binding that wants once per
---- physical press wraps itself in
---- compy.input.fn.ignore_repeat.
-function ProjectInputController:keypressed(k, sc, isr)
-  return self:_dispatch('keypressed', k, k, isr)
-end
-
---- @param t string
-function ProjectInputController:textinput(t)
-  return self:_dispatch('textinput', t, t)
-end
-
---- @param k string
-function ProjectInputController:keyreleased(k)
-  return self:_dispatch('keyreleased', k, k)
-end
-
-
--- Pointer channels. Exactly the keyboard shape with no trigger
--- to name: the same shortcuts tier keyed on modifier classes,
--- then hooks, then the shown widget, first truthy return
--- consuming. The payload is LÖVE's own argument list, unchanged
--- — the button rides in it (mousepressed's third argument)
--- rather than in a combo vocabulary of its own.
+-- One installer for every channel. The keyboard/text channels
+-- name their first argument as the combo trigger; the rest name
+-- none and enter the walk at the modifier-class lookup. Nothing
+-- else differed between them once the held-key view stopped
+-- being threaded through the payload.
 --- @param event string
-local function pointer_channel(event)
+local function channel(event)
+  local names_trigger = KEYBOARD[event]
   ProjectInputController[event] = function(self, ...)
-    return self:_dispatch(event, nil, ...)
+    local trigger = names_trigger and ... or nil
+    return self:_dispatch(event, trigger, ...)
   end
 end
 
-for _, event in ipairs(EVENTS) do
-  if not KEYBOARD[event] then pointer_channel(event) end
-end
+for _, event in ipairs(EVENTS) do channel(event) end

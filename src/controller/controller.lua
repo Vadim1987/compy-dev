@@ -254,7 +254,7 @@ end
 -- running". It installs even with no project handlers: an
 -- unhandled event must stop in the project route, never reach the
 -- hidden console. (`userlove` rename: technical_debt.)
-local function occupy_keyboard(userlove, CC)
+local function occupy_input(userlove, CC)
   local pic = Controller.project_input
   local compy = CC:get_project_env().compy
   pic:activate(project_handlers(userlove, CC), compy.input)
@@ -263,47 +263,34 @@ local function occupy_keyboard(userlove, CC)
   -- the project canvas bound and one error handler above it.
   -- Wrapped (not assigned) to bind `pic` as method receiver:
   -- `love.keypressed = pic.keypressed` would drop `self`.
-  love.keypressed = guarded(CC, function(k, sc, isr)
-    return pic:keypressed(k, sc, isr)
-  end)
-  love.textinput = guarded(CC, function(t)
-    return pic:textinput(t)
-  end)
-  love.keyreleased = guarded(CC, function(k)
-    return pic:keyreleased(k)
-  end)
-  -- Pointer occupies the same way, through the same chain. The
-  -- split that kept it out was this feature's invention, not
-  -- inherited behaviour: pre-feature every event installed
-  -- through one path and none was released before stop.
-  for _, k in ipairs(_pointer) do
+  for _, k in ipairs(_bindable) do
     love[k] = guarded(CC, function(...)
       return pic[k](pic, ...)
     end)
   end
-  for _, k in ipairs(_derived) do
-    love[k] = guarded(CC, function(...)
-      return pic[k](pic, ...)
-    end)
-  end
+  -- keypressed alone is not a plain forward: LÖVE hands it
+  -- (key, scancode, isrepeat) and the route takes (key,
+  -- isrepeat). Scancode is dropped here, the same place the
+  -- console route drops it, so no consumer downstream has to
+  -- know it was ever delivered.
+  love.keypressed = guarded(CC, function(k, _, isr)
+    return pic:keypressed(k, isr)
+  end)
 end
 
+--- `user_pointer` marks a non-blocking project as still
+--- interactive, so it keeps the route in 'project_open'
+--- (doc/development/technical_debt/input.md, ruling (a)). Set
+--- from the project's own pointer handlers and its click hooks.
 --- @param userlove table
 --- @param CC ConsoleController
--- Pointer handlers are installed by occupy_keyboard now, along
--- with every other channel; what remains here is the liveness
--- flag. `user_pointer` marks a non-blocking project as still
--- interactive so it keeps the route in 'project_open'
--- (technical_debt/input.md, ruling (a)).
---- @param userlove table
---- @param CC ConsoleController
-local function hook_pointer(userlove, CC)
+local function mark_pointer_liveness(userlove, CC)
   for _, k in ipairs(_pointer) do
     if project_handler(userlove, k) then
       user_pointer = true
     end
   end
-  -- Runs after occupy_keyboard, so the hooks table is already
+  -- Runs after occupy_input, so the hooks table is already
   -- seeded, so a click hook the project set in top-level code
   -- is visible here.
   local hooks = CC:get_project_env().compy.input.hooks
@@ -342,8 +329,8 @@ end
 --- @param CC ConsoleController
 local set_handlers = function(userlove, CC)
   ---> REMARK: as part of de-duplication and elimination of interim text/pointer split there should be just hook_input(userlove,CC) which will do all the machinery inside, uniformly across all supported events -- passing all function arguments downstream. and maybe with a single guarded call around 'dispatch' if possible?
-  occupy_keyboard(userlove, CC)
-  hook_pointer(userlove, CC)
+  occupy_input(userlove, CC)
+  mark_pointer_liveness(userlove, CC)
   hook_update(userlove)
   hook_draw(userlove)
 end
@@ -496,6 +483,38 @@ end
 --- @field clear_user_handlers function
 --- @field restore_user_handlers function
 --- @field user_is_blocking function
+-- Every console channel except keypressed forwards its
+-- arguments to the console controller and does nothing else.
+-- Nine copies of the same three lines were nine chances for
+-- one to drift, and
+-- their per-event @param blocks documented LÖVE's signatures
+-- rather than anything this code decides.
+--- @param event string
+--- @return function
+local function console_channel(event)
+  return function(CC)
+    local function handler(...)
+      return CC[event](CC, ...)
+    end
+    Controller._defaults[event] = handler
+    love[event] = handler
+  end
+end
+
+-- The derived clicks get no console installer: the console does
+-- not use them, so releasing them means emptying the slot.
+-- The keyboard channels the console installs generically:
+-- keypressed is excluded, it has debug hotkeys of its own.
+local _keyboard_rest = { 'keyreleased', 'textinput' }
+
+local _console_channels = { }
+for _, k in ipairs(_keyboard_rest) do
+  table.insert(_console_channels, k)
+end
+for _, k in ipairs(_pointer) do
+  table.insert(_console_channels, k)
+end
+
 Controller = {
   --- @private
   -- Console defaults, per channel. The derived clicks have none:
@@ -557,153 +576,6 @@ Controller = {
     end
     Controller._defaults.keypressed = keypressed
     love.keypressed = keypressed
-  end,
-
-  --- @private
-  --- @param CC ConsoleController
-  set_love_keyreleased = function(CC)
-    -- Same wrapper shape as keypressed above (terminal love-
-    -- boundary, return not propagated). CC is the console — the
-    -- named default/restore route (doc/development/decisions/input.md #1); not
-    -- "special", just the default occupant. Per-event installer
-    -- repetition logged in technical_debt.
-    --- @diagnostic disable-next-line: duplicate-set-field
-    local function keyreleased(k)
-      CC:keyreleased(k)
-    end
-    Controller._defaults.keyreleased = keyreleased
-    love.keyreleased = keyreleased
-  end,
-
-  --- @private
-  --- @param CC ConsoleController
-  set_love_textinput = function(CC)
-    -- Same wrapper shape (see keypressed/keyreleased above);
-    -- naming + table-driven install logged in technical_debt.
-    local function textinput(t)
-      CC:textinput(t)
-    end
-    Controller._defaults.textinput = textinput
-    love.textinput = textinput
-  end,
-
-  -------------
-  --  mouse  --
-  -------------
-  --- @private
-  --- @param CC ConsoleController
-  set_love_mousepressed = function(CC)
-    --- @param x number
-    --- @param y number
-    --- @param button number
-    --- @param touch boolean
-    --- @param presses number
-    local function mousepressed(x, y, button, touch, presses)
-      if love.DEBUG then
-        Log.info(string.format('click! {%d, %d}', x, y))
-      end
-      CC:mousepressed(x, y, button, touch, presses)
-    end
-
-    Controller._defaults.mousepressed = mousepressed
-    love.mousepressed = mousepressed
-  end,
-
-  --- @private
-  --- @param CC ConsoleController
-  set_love_mousereleased = function(CC)
-    --- @param x number
-    --- @param y number
-    --- @param button number
-    --- @param touch boolean
-    --- @param presses number
-    local function mousereleased(x, y, button, touch, presses)
-      CC:mousereleased(x, y, button, touch, presses)
-    end
-
-    Controller._defaults.mousereleased = mousereleased
-    love.mousereleased = mousereleased
-  end,
-
-  --- @private
-  --- @param CC ConsoleController
-  set_love_mousemoved = function(CC)
-    --- @param x number
-    --- @param y number
-    --- @param dx number
-    --- @param dy number
-    --- @param touch boolean
-    local function mousemoved(x, y, dx, dy, touch)
-      CC:mousemoved(x, y, dx, dy, touch)
-    end
-
-    Controller._defaults.mousemoved = mousemoved
-    love.mousemoved = mousemoved
-  end,
-
-  --- @private
-  --- @param CC ConsoleController
-  set_love_wheelmoved = function(CC)
-    --- @param x number
-    --- @param y number
-    local function wheelmoved(x, y)
-      CC:wheelmoved(x, y)
-    end
-
-    Controller._defaults.wheelmoved = wheelmoved
-    love.wheelmoved = wheelmoved
-  end,
-
-  -------------
-  --  touch  --
-  -------------
-  --- @private
-  --- @param CC ConsoleController
-  set_love_touchpressed = function(CC)
-    --- @param id userdata
-    --- @param x number
-    --- @param y number
-    --- @param dx number?
-    --- @param dy number?
-    --- @param pressure number?
-    local function touchpressed(id, x, y, dx, dy, pressure)
-      CC:touchpressed(id, x, y, dx, dy, pressure)
-    end
-
-    Controller._defaults.touchpressed = touchpressed
-    love.touchpressed = touchpressed
-  end,
-  --- @private
-  --- @param CC ConsoleController
-  set_love_touchreleased = function(CC)
-    --- @param id userdata
-    --- @param x number
-    --- @param y number
-    --- @param dx number?
-    --- @param dy number?
-    --- @param pressure number?
-    local function touchreleased(id, x, y, dx, dy, pressure)
-      CC:touchreleased(id, x, y, dx, dy, pressure)
-    end
-
-    Controller._defaults.touchreleased = touchreleased
-    love.touchreleased = touchreleased
-  end,
-  --- @private
-  --- @param CC ConsoleController
-  set_love_touchmoved = function(CC)
-    --- @param id userdata
-    --- @param x number
-    --- @param y number
-    --- @param dx number?
-    --- @param dy number?
-    --- @param pressure number?
-    local function touchmoved(id, x, y, dx, dy, pressure)
-      CC:touchmoved(id, x, y, dx, dy, pressure)
-    end
-
-    Controller._defaults.touchmoved = touchmoved
-    love.touchmoved = touchmoved
   end,
 
   --------------
@@ -869,10 +741,10 @@ Controller = {
   --- @param CC ConsoleController
   release_keyboard_route = function(CC)
     Controller.project_input:deactivate()
-    ---> REMARK: should not be iteration over all supported type? and why separate function for every type of event instead of unified function with an event name as param (or list of event names)
     Controller.set_love_keypressed(CC)
-    Controller.set_love_keyreleased(CC)
-    Controller.set_love_textinput(CC)
+    for _, k in ipairs(_keyboard_rest) do
+      Controller['set_love_' .. k](CC)
+    end
     -- The derived click slots have no console occupant to
     -- restore, the console not using them, so releasing means
     -- emptying them. Left set they would keep pointing at a
@@ -894,22 +766,11 @@ Controller = {
     -- a special-case beyond that.
     Controller.project_input:deactivate()
 
-    -- TODO(debt): these ten near-identical set_love_* installers
-    -- could be driven from a { event -> installer } table. See
-    -- doc/development/technical_debt/input.md "Per-event set_love_* installers".
-    Controller.set_love_keypressed(CC)
-    Controller.set_love_keyreleased(CC)
-    Controller.set_love_textinput(CC)
     -- SKIPPED textedited - IME support, TODO?
-
-    Controller.set_love_mousemoved(CC)
-    Controller.set_love_mousepressed(CC)
-    Controller.set_love_mousereleased(CC)
-    Controller.set_love_wheelmoved(CC)
-
-    Controller.set_love_touchpressed(CC)
-    Controller.set_love_touchreleased(CC)
-    Controller.set_love_touchmoved(CC)
+    Controller.set_love_keypressed(CC)
+    for _, k in ipairs(_console_channels) do
+      Controller['set_love_' .. k](CC)
+    end
 
     --- SKIPPED joystick and gamepad support
 
@@ -945,10 +806,6 @@ Controller = {
   setup_callback_handlers = function(CC)
     local cfg = CC.cfg
     local playback = cfg.mode == 'play'
-
-    local clear_user_input = function()
-      love.state.user_input = nil
-    end
 
     --- @diagnostic disable-next-line: undefined-field
     local handlers = love.handlers
@@ -1160,14 +1017,6 @@ Controller = {
       end
     end
 
-    ---> REMARK: is it no more touched/invoked ever?
-    handlers.userinput = function()
-      local user_input = get_user_input()
-      if user_input then
-        clear_user_input()
-      end
-    end
-
     --- @param id userdata
     --- @param x number
     --- @param y number
@@ -1268,5 +1117,9 @@ Controller = {
     end
   end,
 }
+
+for _, k in ipairs(_console_channels) do
+  Controller['set_love_' .. k] = console_channel(k)
+end
 
 Controller.project_input = ProjectInputController()

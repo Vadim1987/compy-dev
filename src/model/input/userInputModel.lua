@@ -840,10 +840,7 @@ end
 ----> REMARL: verbose comment, compress and make simpler)
 --- @private
 --- Cursor-to-error-position on an evaluator reject. Split out
---- of handle() to keep it under the function-body line limit
---- once the push('userinput') block (below it) is gone
---- (doc/development/internals/user_input.md, "Submit and cancel —
---- widget-owned callback sequences").
+--- of handle() to keep it under the function-body line limit.
 --- @param result Error[]
 function UserInputModel:_report_parse_error(result)
   --- @TODO fix
@@ -871,11 +868,10 @@ end
 --- @param eval boolean
 --- @return boolean
 --- @return string[]|Error[]
--- doc/development/internals/user_input.md, "Submit and cancel —
--- widget-owned callback sequences": the old push('userinput')
--- notification (fired here under `if self.oneshot`) is gone
--- — on_text_entered (userInputController.lua submit chain)
--- replaces it as the "value ready" signal.
+-- on_text_entered (userInputController.lua submit chain) is
+-- the "value ready" signal. See
+-- doc/development/internals/user_input.md,
+-- "Submit and cancel — widget-owned callback sequences".
 function UserInputModel:handle(eval)
   local ent = self:get_text()
   local ok, result
