@@ -159,6 +159,58 @@ Remaining: P7 (W7 controller structure + the 16-line rule), P8 (tests), P9
 (examples + nested repos + SM1–SM5), P10 (docs/ledger), P11 (comment sweep,
 slices, two revalidations).
 
+## 2026-08-07 — owner challenges, and P7
+
+Two owner challenges, both landed against me, both recorded in the ledger:
+
+- **scancode** (`a1952721`). Owner asked why it was dropped; my three reasons
+  were true and none was the point. Pointer channels already pass LÖVE's list
+  verbatim (`istouch`, `presses`), so dropping scancode made `keypressed` the
+  one exception to a rule the system already had — and a project writing
+  `love.keypressed(key, scancode, isrepeat)` would have bound scancode to
+  isrepeat. Restoring it DELETED the gateway's last special case. Decision 26.
+- **the button in the combo** (`1a414dbb`). My argument — "the button is already
+  in the payload" — applies verbatim to the keyboard, where the key is also in
+  the payload and is a trigger anyway. Taken seriously it abolishes the
+  shortcuts tier and restores `if button == 2`, the string-tag dispatch
+  `agents/rules.md` forbids. `shortcuts.mousepressed['mouse2']` now works; it is
+  the mechanism SM1 needs. Decision 27 rewritten.
+- **Owner ruling:** `singleclick`/`doubleclick` keep `(x, y)`, name no button —
+  they are not LÖVE events, so there is no stock shape to converge on.
+
+**The shared shape of both, worth carrying forward:** an argument of the form
+*"X is already available elsewhere, so it need not be here"* proves too much.
+Wrong twice. The check that catches it is asking what the system already does
+on its other channels.
+
+### P7 so far
+
+- `99f883d0` + `ae35320a` widget readability (R039/R041/R042/R043): config
+  callbacks looped from one list that `configure()` also reads; `open_fresh`
+  folded into `show` as `open_widget`/`re_show`; `gate` → `validate`;
+  `allow_modify` → `allow_duplicate_line`. Behaviour unchanged.
+- `25b9742e` **`always_shown` enforced** (R044). It guaranteed nothing — `hide()`
+  would have cleared the flag on any instance. Held only because
+  `hide_overlay()` targets the *project* widget, a different object. Latent, not
+  live; one branch.
+- `41747ac0` **teardown crash** (R020). `compy.before_exit()` was unconditional;
+  a nil hook raised at the FIRST statement of teardown, so handlers stayed wired
+  AND the reset line never ran — every later stop raised too. One nil assignment
+  wedged the console.
+- `276f0075` **`compy.input = {}` was not refused** (audit finding, outside its
+  brief). Decision 7 claims the container is frozen; the test group asserting
+  the freeze said so in its own comment while asserting only writes through
+  `compy.input`'s own metatable. `__newindex` fires only for absent keys and
+  `input` was a raw field. The breaking test takes six later tests down with it
+  — the defect demonstrating its own reach.
+
+**Process slip:** ran the surface-audit agent concurrently with my own edits in
+the same tree. `agents/validation.md` directive (d) says sequence sub-agents, do
+not parallelize; I reasoned "it's read-only so no conflict", but it mutates
+temporarily to run its experiments and my commits moved its baseline mid-run
+(934 → 936). It reported the drift honestly rather than assuming a failed
+restore, and its findings stand — but the confusion was mine to avoid.
+
 ## Sub-agents
 
 - **S27-inventory** (Sonnet, read-only, background): verbatim extraction of every
