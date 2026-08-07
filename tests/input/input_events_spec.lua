@@ -49,80 +49,24 @@ describe('#input events dispatching', function()
   ---> REMARK: I really think we could have 'describe-level' "order" table, standardized mock shortcuts/handlers factories that always include updating 'order' when invoked and than return whatever they are told to return. And initial setup of widget with "abc", than combining test cases and inspecting results will be much more obvious. I would even say its MUST HAVE: this way we need to understand paradigm *once*, and tests become more concise. Now each test case establishes its own rules, slightly different -- it looks like too much copy-n-paste, which also *slightly* differs inside, so reader has to decode the universe of each case
   ---> REMARK: BY THE WAY, AREN'T OUR SHORCUTS mod-only ? WHY TESTS SETTING SHORTCUT AGAINST SIMPLE SYMBOL ARE WORKING THEN?
 
-  describe('order, consume, fall-through', function()
-    -- Walked on the keypressed channel only, deliberately. The walk
-    -- is ONE channel-agnostic function in production —
-    -- `dispatch(shortcuts, hooks, widget, event, trigger, ...)` in
-    -- projectInputController.lua indexes `shortcuts[event]` and
-    -- `hooks[event]` and is otherwise identical per channel — so
-    -- re-running the order/consume rows for keyreleased and textinput
-    -- would re-prove the same function three times. That the three
-    -- channels each REACH the walk is proven separately, per channel,
-    -- in the combo group below.
-
-    -- doc/development/decisions/input.md, Decision 2: the dumb
-    -- walk stops at the first consumer. A shortcut returning
-    -- truthy consumes — the hook and widget below never run.
-    it('a shortcut consumes before the hook and widget',
+  describe('registration outlives the event', function()
+    -- Order, consumption and fall-through are the interception
+    -- matrix below — it walks every permutation of present /
+    -- absent / consuming, which is strictly more than a handful
+    -- of hand-written rows could state. What is left here is
+    -- the one property the matrix does not carry: a matrix case
+    -- fires once, so nothing in it can show that consuming an
+    -- event does not spend the registration.
+    it('a consumed event leaves the callback registered',
       function()
-        local reached_hook = false
+        local n = 0
         local input = F.activate_project()
-        input.shortcuts.keypressed['a'] =
-            function() return true end
         input.hooks.keypressed =
-            function() reached_hook = true; return true end
-        F.show_widget({ text = 'b' })
+            function() n = n + 1; return true end
         F.session.press('a')
-        assert.is_false(reached_hook)
+        F.session.press('a')
+        assert.equal(2, n)
       end)
-
-    -- doc/development/decisions/input.md, Decision 2: an
-    -- unconsumed event walks shortcut → hook → widget in order;
-    -- falsy consumers fall through, and the shown widget is the
-    -- terminal consumer (backspace edits it — the observable trace).
-    it('an unconsumed event walks shortcut, hook, then widget',
-      function()
-        local order = { }
-        local input = F.activate_project()
-        input.shortcuts.keypressed['backspace'] =
-            function() order[#order + 1] = 'shortcut' end
-        input.hooks.keypressed =
-            function() order[#order + 1] = 'hook' end
-        F.show_widget({ text = 'ab' })
-        F.session.press('backspace')
-        assert.same({ 'shortcut', 'hook' }, order)
-        assert.same({ 'a' }, F.widget:get_text())
-      end)
-
-    -- doc/development/decisions/input.md, Decision 2: a truthy combo
-    -- handler stops the descent —
-    -- neither the hook nor the widget runs.
-    it('a shortcut returning truthy stops the chain (hook not reached)', function()
-      local reached_hook = false
-      local input = F.activate_project()
-      input.shortcuts.keypressed['backspace'] =
-          function() return true end
-      input.hooks.keypressed =
-          function() reached_hook = true; return true end
-      F.show_widget({ text = 'ab' })
-      F.session.press('backspace')
-      assert.is_false(reached_hook)
-      assert.same({ 'ab' }, F.widget:get_text())
-    end)
-
-    -- doc/development/decisions/input.md, Decision 2: consuming never
-    -- removes a configured callback — the same callback
-    -- fires again on the next event (configuration is permanent).
-    it('is a permanent configuration', function()
-      local n = 0
-      local input = F.activate_project()
-      input.hooks.keypressed =
-          function() n = n + 1; return true end
-      F.session.press('a')
-      F.session.press('a')
-      assert.equal(2, n)
-    end)
-
   end)
 
   -- doc/development/decisions/input.md, Decision 2: only the shortcut
@@ -196,7 +140,7 @@ describe('#input events dispatching', function()
 
     local CONSUME, PASS = 'consume', 'pass'
 
-    local rows = {
+    local cases = {
       { name = 'no participant defined: the widget still runs',
         widget_runs = true, expect = { } },
       { name = 'both pass through: shortcut, hook, then the widget',
@@ -219,34 +163,26 @@ describe('#input events dispatching', function()
         widget_runs = true, expect = { 'shortcut' } },
     }
 
-    -- records itself in `seen`, then consumes iff mode is CONSUME
-    local function participant(seen, who, mode)
-      return function()
-        seen[#seen + 1] = who
-        return mode == CONSUME
-      end
-    end
-
-    local function configure(input, row, seen)
-      if row.shortcut then
+    local function configure(input, case, seen)
+      local participant = F.tracer(seen)
+      if case.shortcut then
         input.shortcuts.keypressed['backspace'] =
-            participant(seen, 'shortcut', row.shortcut)
+            participant('shortcut', case.shortcut == CONSUME)
       end
-      if row.hook then
+      if case.hook then
         input.hooks.keypressed =
-            participant(seen, 'hook', row.hook)
+            participant('hook', case.hook == CONSUME)
       end
     end
 
-    -->  these things are called 'test cases', not vague 'rows'
-    for _, row in ipairs(rows) do
-      it(row.name, function()
+    for _, case in ipairs(cases) do
+      it(case.name, function()
         local seen = { }
-        configure(F.activate_project(), row, seen)
+        configure(F.activate_project(), case, seen)
         F.show_widget({ text = 'ab' })
         F.session.press('backspace')
-        assert.same(row.expect, seen)
-        assert.same({ row.widget_runs and 'a' or 'ab' },
+        assert.same(case.expect, seen)
+        assert.same({ case.widget_runs and 'a' or 'ab' },
           F.widget:get_text())
       end)
     end

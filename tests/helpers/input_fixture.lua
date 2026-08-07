@@ -287,4 +287,21 @@ function F.reset()
   widget:clear()
 end
 
+--- A chain participant that records itself and then decides
+--- whether the walk carries on. One paradigm per suite instead
+--- of a bespoke closure per test: `local p = F.tracer(seen)`,
+--- then `p('shortcut', true)` is a consuming shortcut and
+--- `p('hook')` a hook that falls through. `seen` ends up
+--- holding the participants that ran, in call order.
+--- @param seen table   filled in call order
+--- @return fun(who: string, consume: boolean?): function
+function F.tracer(seen)
+  return function(who, consume)
+    return function()
+      seen[#seen + 1] = who
+      return consume or false
+    end
+  end
+end
+
 return F
