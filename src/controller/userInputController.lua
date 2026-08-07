@@ -281,12 +281,12 @@ local re_show = function(self, cfg)
 end
 
 --- The activation path: clear when no text is given, apply
---- config, publish the handle, render once. The clear-on-no-text
---- is activation policy (a fresh show with no text starts empty),
+--- config, publish the handle, render once. Clear-on-no-text is
+--- activation policy (a fresh show with no text starts empty),
 --- which is why it is here and not in apply_config; `cursor` is
---- here for the same reason — configure() must never reach it
---- (doc/development/internals/user_input.md, "Cursor manipulation
---- and \"reset\"").
+--- here for the same reason: configure() never reaches it.
+--- See doc/development/internals/user_input.md,
+--- "Cursor manipulation and reset".
 --- @param self UserInputController
 --- @param cfg table
 local open_widget = function(self, cfg)
