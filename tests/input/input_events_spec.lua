@@ -907,6 +907,39 @@ describe('#input events dispatching', function()
         F.show_widget({ text = 'a' })
         assert.is_true(route:keypressed('x'))
       end)
+
+    -- The derived clicks are channels of the chain like any other,
+    -- so the terminal tier calls widget.singleclick whenever the
+    -- widget is shown. The widget does not participate in them: it
+    -- has to be callable anyway, and it declines rather than
+    -- swallows. An event no tier consumes is ordinary — the walk
+    -- reports it and nothing treats it as an error (owner ruling,
+    -- 2026-08-07; doc/development/decisions/input.md, Decision 2).
+    it('a shown widget declines the derived clicks',
+      function()
+        F.activate_project()
+        F.show_widget({ text = 'a' })
+        local route = Controller.project_input
+        assert.is_false(route:singleclick(1, 1))
+        assert.is_false(route:doubleclick(1, 1))
+      end)
+
+    -- The same fact where a project meets it: a click arriving at a
+    -- shown widget used to call a nil method, which the route's
+    -- error boundary turned into a dead run (app_state 'snapshot').
+    -- Driven through the gateway, not the route, because the
+    -- boundary is what made the crash survivable and therefore
+    -- invisible.
+    it('a click at a shown widget does not kill the run',
+      function()
+        local input = F.activate_project()
+        local seen = 0
+        input.hooks.singleclick = function() seen = seen + 1 end
+        F.show_widget({ text = 'a' })
+        love.singleclick(1, 1)
+        assert.same(1, seen)
+        assert.same('running', love.state.app_state)
+      end)
   end)
 
   -- ---- the per-event hook
