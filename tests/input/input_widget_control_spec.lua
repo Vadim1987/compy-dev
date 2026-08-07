@@ -22,7 +22,7 @@
 
 local F  = require('tests.helpers.input_fixture')
 
-describe('input contracts: widget lifecycle #input', function()
+describe('input surface: widget control #input', function()
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
   before_each(function() F.reset() end)
@@ -35,7 +35,7 @@ describe('input contracts: widget lifecycle #input', function()
   -- editable text) and show({ prompt = ... }) its label — a separate
   -- config key, one row each (same section). The
   -- "no cancel chain" facts are stable-now.
-  describe('widget activation and reset', function()
+  describe('show(): activation and reset', function()
 
     -- Prompt LABELLING at activation. Re-labelling on an already
     -- active session is the reconfigure concern and is covered there
@@ -55,7 +55,7 @@ describe('input contracts: widget lifecycle #input', function()
         input.show()
         assert.is_true(F.widget:is_empty())
       end)
-    
+
     it('a fresh activation with text sets text',
       function()
         local input = F.compy_input()
@@ -190,6 +190,233 @@ describe('input contracts: widget lifecycle #input', function()
 
   end)
 
+  -- ====================================================
+  -- Live reconfigure + clear. Configure changes live
+  -- callback fields; clear resets an active session as
+  -- documented in doc/development/internals/user_input.md.
+  -- ====================================================
+
+  describe('configure(): the live session', function()
+    -- doc/development/internals/user_input.md, "configure(config)": prompt
+    -- updates live on an active session;
+    -- content/cursor/callbacks stay untouched.
+    it('updates the prompt on an active session',
+      function()
+        local input = F.compy_input()
+        local cb = function() end
+        input.show({ text = 'hi', on_text_entered = cb })
+        input.configure({ prompt = 'new' })
+        assert.equal('new', F.widget.model:get_label())
+        assert.same({ 'hi' }, F.widget:get_text())
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(3, c)
+        assert.equal(cb, input.callbacks.on_text_entered)
+      end)
+
+    -- doc/development/internals/user_input.md, "configure(config)":
+    -- validator — the NEXT submit uses the new fn,
+    -- not the one set at show() (exercised, not just read).
+    it('swaps the live validator', function()
+      local input = F.activate_project()
+      input.show({
+        text      = 'ab',
+        validator = function() return false, 'old' end,
+      })
+      local seen
+      input.configure({
+        validator = function(t)
+          seen = t
+          return true
+        end,
+      })
+      F.session.press('return')
+      assert.same({ 'ab' }, seen)
+      assert.is_true(F.is_widget_visible())
+    end)
+
+    -- doc/development/internals/user_input.md, "configure(config)":
+    -- highlighter — the NEXT keystroke's highlight
+    -- uses the new fn.
+    it('swaps the live highlighter', function()
+      local input = F.activate_project()
+      local marker = { { 'x' } }
+      input.show({
+        highlighter = function() return { { 'old' } } end,
+      })
+      input.configure({
+        highlighter = function() return marker end,
+      })
+      F.session.type('a')
+      local got = F.widget.model:get_highlight()
+      assert.equal(marker, got.hl)
+    end)
+
+    -- doc/development/internals/user_input.md, "configure(config)":
+    -- on_text_entered — the swapped fn fires on the
+    -- next submit; the old one set at show() does not.
+    it('swaps the live on_text_entered', function()
+      local old_called, new_text = false, nil
+      local input = F.activate_project()
+      input.show({
+        text            = 'ab',
+        on_text_entered = function() old_called = true end,
+      })
+      input.configure({
+        on_text_entered = function(t) new_text = t end,
+      })
+      F.session.press('return')
+      assert.is_false(old_called)
+      assert.same({ 'ab' }, new_text)
+    end)
+
+    -- doc/development/internals/user_input.md, "configure(config)":
+    -- on_limit_reached — the swapped fn fires on the
+    -- next boundary; the old one does not.
+    it('swaps the live on_limit_reached', function()
+      local old_called, new_dir = false, nil
+      local input = F.activate_project()
+      input.show({
+        text             = 'ab',
+        on_limit_reached = function() old_called = true end,
+      })
+      input.configure({
+        on_limit_reached = function(dir) new_dir = dir end,
+      })
+      F.widget:jump_home()
+      F.session.press('left')
+      assert.is_false(old_called)
+      assert.equal('left', new_dir)
+    end)
+
+    -- doc/development/internals/user_input.md, "configure(config)":
+    -- text/cursor are inert on an active session
+    -- — even mixed with a live field, the live one applies
+    -- and the inert ones are untouched (no partial/silent
+    -- application: each field's own rule holds exactly).
+    it('leaves text/cursor untouched on an ' ..
+      'active session, even mixed with a live field',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hi' })
+        input.set_cursor(1, 2)
+        input.configure({
+          prompt = 'live',
+          text   = 'ignored',
+          cursor = { 1, 99 },
+        })
+        assert.same({ 'hi' }, F.widget:get_text())
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(2, c)
+        assert.equal('live', F.widget.model:get_label())
+      end)
+  end)
+
+  describe('configure(): while hidden', function()
+    -- doc/development/internals/user_input.md, "configure(config)":
+    -- configure while hidden is safe
+    -- (no warn —
+    -- it is not a refusal) and text/cursor apply on the
+    -- very next show().
+    it('applies text and cursor on the ' ..
+      'next show', function()
+      local input = F.compy_input()
+      local warned = 0
+      local ow = Log.warn
+      Log.warn = function() warned = warned + 1 end
+      input.configure({ text = 'draft', cursor = { 1, 2 } })
+      Log.warn = ow
+      assert.equal(0, warned)
+      input.show({})
+      assert.same({ 'draft' }, F.widget:get_text())
+      local l, c = input.get_cursor()
+      assert.same(1, l)
+      assert.same(2, c)
+    end)
+
+    -- doc/development/internals/user_input.md, "configure(config)": a
+    -- hidden configure of a live field
+    -- (prompt,
+    -- validator) applies cleanly on the next show() too.
+    it('applies prompt and validator on ' ..
+      'the next show', function()
+      local input = F.compy_input()
+      input.configure({
+        prompt    = 'draft-label',
+        validator = function() return true end,
+      })
+      input.show({})
+      assert.equal(
+        'draft-label', F.widget.model:get_label())
+      assert.is_function(input.callbacks.validator)
+    end)
+
+    -- Pending fields are one-shot: a LATER bare show() must
+    -- not keep re-injecting a stale hidden-configured draft
+    -- (distinguishes this from the output-callback
+    -- fields,
+    -- which stay sticky forever by design).
+    it('hidden-configured text does not leak into a later ' ..
+      'show', function()
+      local input = F.compy_input()
+      input.configure({ text = 'draft' })
+      input.show({})
+      input.hide()
+      input.show({})
+      assert.is_true(F.widget:is_empty())
+    end)
+  end)
+
+  describe('clear()', function()
+    -- doc/development/internals/user_input.md, "clear()": on an active
+    -- session empties content,
+    -- cursor to start, no callback fires.
+    it('empties an active session with no callback',
+      function()
+        local input = F.compy_input()
+        local called = false
+        input.show({
+          text            = 'hi',
+          on_text_entered = function() called = true end,
+        })
+        input.clear()
+        assert.is_true(F.widget:is_empty())
+        local l, c = input.get_cursor()
+        assert.same(1, l)
+        assert.same(1, c)
+        assert.is_false(called)
+      end)
+
+    -- doc/development/internals/user_input.md, "clear()": while hidden is
+    -- a no-op + warn —
+    -- unlike configure(), this call IS refused.
+    it('while hidden warns and no-ops', function()
+      local input = F.compy_input()
+      local warned = 0
+      local ow = Log.warn
+      Log.warn = function() warned = warned + 1 end
+      input.clear()
+      Log.warn = ow
+      assert.equal(1, warned)
+    end)
+  end)
+
+  describe('the mutable boundary', function()
+    -- doc/development/decisions/input.md, Decision 7: the mutable boundary
+    -- is unchanged for the two
+    -- new callables.
+    it('assigning configure/clear raises', function()
+      local input = F.compy_input()
+      assert.has_error(function()
+        input.configure = function() end
+      end)
+      assert.has_error(function()
+        input.clear = function() end
+      end)
+    end)
+  end)
+
   -- Hidden widget does not consume (doc/development/decisions/input.md,
   -- Decision 2: "its hidden-check is internal"): an event arriving while the
   -- widget is hidden never mutates widget state — it
@@ -265,7 +492,7 @@ describe('input contracts: widget lifecycle #input', function()
   -- a sandboxed clone, so `love.state.user_input` is always nil inside
   -- a project (project_sandbox_env.md, T1) — which is why the query is
   -- part of the surface rather than an idiom.
-  describe('is_shown', function()
+  describe('is_shown()', function()
 
     it('reports the overlay state across a show/hide cycle',
       function()
