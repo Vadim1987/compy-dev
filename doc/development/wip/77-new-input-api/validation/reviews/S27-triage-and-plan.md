@@ -10,6 +10,13 @@ overridden wherever it disagrees.
 
 Every id is assigned to exactly one workstream (coverage table, Appendix A).
 
+**REVISED 2026-08-07** after two cold reviews —
+`../outcomes/S27-triage-factcheck.md` (fact-check against code) and
+`../outcomes/S27-plan-review.md` (plan quality). Both were run without sight of
+the reasoning that produced this document. Changes are marked **[REV]** and
+logged in §5; the corrections they forced were verified in code before being
+accepted. Neither review found a structural objection; both found real errors.
+
 ---
 
 ## 1. The severity scale
@@ -59,6 +66,34 @@ shift. In-tree that is the examples and the three nested repos; outside the
 tree it is nothing, because nothing has shipped. This is the single most
 consequential item in the inventory and the one the plan gates first.
 
+**[REV] The migration surface, enumerated rather than gestured at.** Of every
+in-tree consumer of `compy.input.hooks` / `.shortcuts`, exactly **one** reads a
+dropped positional argument:
+
+| consumer | registration | affected? |
+|---|---|---|
+| `examples/keyboard/input.lua:142` `appKeypressed(k, _, isr)` | `hooks.keypressed`, `:94` | **YES — silently** |
+| `examples/keyboard` `appKeyreleased(k)` `:152`, `appTextinput(t)` `:163` | `:95`, `:96` | no (first arg only) |
+| `examples/keyboard` `shortcuts.keypressed[...]` `:78-88` | via `compy.input.fn` | no (combinators, see R009) |
+| `examples/turtle/main.lua:54` `shortcuts.textinput['i']` | — | no (takes no args) |
+| `examples/sapper/main.lua:671,689`, `examples/paint/main.lua:356,360` | click hooks `(x, y)` | no (pointer payload unchanged) |
+| `maze`, `balloons` | never touch hooks/shortcuts | no |
+
+`appKeypressed` is the whole risk, and it fails **silently**: after the drop,
+dispatch calls `hooks.keypressed(k, isr)`, the unmigrated function binds
+`_ = isr, isr = nil`, and its repeat filter (`if isr and k ~= "capslock" then
+return end`) stops firing. No crash, no failing test — held-key repeats simply
+stop being filtered. This is the `wrap`-arity failure mode session26 found,
+exactly. **P2 names this file and this function; it is not left to "incl. the
+examples".**
+
+**[REV] "Equal to LÖVE's" overclaims for `keypressed`.** LÖVE's real signature
+is `(key, scancode, isrepeat)`, and the gateway already discards `scancode`
+(`controller.lua:499`, `local function keypressed(k, _, isr)`) — recorded in
+`technical_debt/input.md`, "Combo triggers are key-name-only". Post-W1
+`hooks.keypressed` is `(k, isr)`: **closer** to LÖVE, not identical. Say so in
+the docs rather than letting a reader be surprised.
+
 **Open for the owner:** delete Decision 9 entirely (R099) or keep it, rewritten
 to record that the argument was *considered and dropped*? My recommendation is
 **keep, one paragraph** — the ledger's value is that a future reader stops
@@ -68,7 +103,7 @@ re-proposing it.
 
 **Members:** R037, R115, R131, R145, R152, R177.
 
-Six remarks in two docs and one source file say the same thing, and the owner
+Six remarks in **three** docs and one source file say the same thing, and the owner
 named it in-session as something believed agreed that is not in the code. It is
 not: `find_shortcut` returns nil for a missing table, pointer channels pass
 `trigger = nil`, and `doc/input_api.md` §"Pointer and click hooks" argues
@@ -80,14 +115,23 @@ trigger key — `combo_string('*', keys)` already builds a triggerless class key
 for the `alt+*` wildcard, so the machinery exists. Pointer combos are the same
 serialisation with the modifier set and no trigger.
 
-**Genuinely open, and I want the owner's call (R037 asks both):**
-- **Button in the combo.** `ctrl+mouse1` vs a modifier-only `ctrl+*` that any
-  button matches. Naming buttons makes right-click bindable — which is exactly
-  what the paint smoke-test finding (SM1) needs — but it introduces a second
-  trigger vocabulary alongside key names.
-- **Which channels get a tier.** `mousepressed` clearly. `mousemoved` and
-  `wheelmoved` are less obvious and a shortcut firing per motion event is a
-  performance question, not a design one.
+**[REV] This is now a recommendation, not a coin flip.** I had framed both
+sub-questions as fully open; the cold review pointed out that R115 — a member
+of W2's own list — already answers the first one in the owner's own words:
+*"combo is constructed from modifier keys pressed, **no trigger key**"*
+(`decisions/input.md:1063`). An owner remark is not an automatic mandate, so it
+is still re-confirmed at P1, but the plan's own position is:
+
+- **Modifier-only. No button vocabulary.** `ctrl+*` matches a modified pointer
+  event on the channel it is registered for. Introducing `ctrl+mouse1` would
+  create a second trigger vocabulary alongside key names for one capability.
+- **SM1 (paint right-click) does not need the button in the combo.** The button
+  is already in the payload — LÖVE's own `mousepressed(x, y, button)` — so a
+  hook or a modifier-only shortcut reads it directly. The paint finding is a
+  missing handler, not a missing vocabulary.
+- **`mousepressed` only**, unless the owner asks otherwise. A shortcut table
+  consulted per `mousemoved` is a lookup per motion event, and no finding needs
+  it.
 
 ### W3 — Click events become first-class · **S1**
 
@@ -115,7 +159,12 @@ after the PR.
 `controller.lua` installs and releases handlers one function per event
 (`set_love_keypressed`, `set_love_keyreleased`, `set_love_textinput`, …), keeps
 an `occupy_keyboard` / `hook_pointer` split that no longer distinguishes
-anything, and `hook_pointer` reads as a leftover. `ProjectInputController`
+anything, and `hook_pointer` reads as a leftover. **[REV] "Leftover" oversells
+it:** `hook_pointer` (`controller.lua:290-303`) installs nothing any more —
+`occupy_keyboard` installs every channel including pointer — but it still
+computes the `user_pointer` liveness flag, which is live logic. Its *name* is
+the lie. Rename and re-site the flag computation; do not delete the function's
+body. `ProjectInputController`
 likewise keeps `keypressed`/`keyreleased`/`textinput` methods whose only
 remaining job is to call `held_keys()` — which W1 deletes.
 
@@ -133,11 +182,24 @@ rule. Verifying it is part of the workstream, not a precondition.
 
 **Members:** R038, R121, R122, R158, R160, R161, R181.
 
-Confirmed in code: `submit()` calls `run_callback(self, 'before_submit', …)`
-and **discards the return**, while `cancel()` honours `before_cancel`'s truthy
-return as a veto. The docs describe the asymmetry as deliberate ("veto
-reserved, unbuilt (R9)"). The owner's position across three remarks is that a
-callback documented as vetoing must veto.
+Confirmed in code — **[REV] with the method names corrected**, because I had
+them wrong and the wrong ones exist:
+
+- `UserInputController:submit_flow` (`:413`) calls
+  `run_callback(self, 'before_submit', keys_pressed)` and **discards the
+  return**.
+- `UserInputController:cancel_flow` (`:430`) honours `before_cancel`'s truthy
+  return as a veto.
+- There is **no** `UserInputController:submit()`. There **is** a
+  `UserInputController:cancel()` (`:205`) which is the console's own
+  debug/test-mode unconditional clear-and-hide and does **not** consult
+  `before_cancel` at all. An implementer grepping for `cancel()` lands on the
+  wrong function and could "fix" the wrong path. The veto lives in
+  `cancel_flow`; both flows are reached from `:699` / `:701`.
+
+The docs describe the asymmetry as deliberate ("veto reserved, unbuilt (R9)").
+The owner's position across three remarks is that a callback documented as
+vetoing must veto.
 
 **Verdict: accept the veto.** It is a two-line change and removes an asymmetry
 no one can justify from the outside. It is still **S1** — it changes a
@@ -154,8 +216,16 @@ itself.
 
 **Open for the owner:** does `before_exit` get a suppress/defer return too
 (R181)? The docs currently promise it cannot. Symmetry says yes; "a project can
-refuse to stop" says no. **I recommend no**, and fixing the doc that calls it
-"deferred functionality".
+refuse to stop" says no. **I recommend no** — and **[REV] the code makes the
+case harder than I first put it.** `ConsoleController:stop_project_run`
+(`consoleController.lua:1282-1294`) calls `compy.before_exit()` **unguarded** —
+no `pcall` — and every teardown step (`set_default_handlers`, `hide_overlay`,
+`clear_user_handlers`, the `before_exit` reset itself) sits *after* it in the
+same sequence. A raise there aborts the rest of teardown outright. That is
+R127's gap, live and reproducible, not merely undocumented. Handing a project
+a suppress/defer return over a stop sequence that is not itself raise-safe
+would be backwards. Fix the doc that calls it "deferred functionality"; note
+the guard gap where R127 is answered.
 
 ### W6 — Is the widget a special chain tier? · **S1**
 
@@ -173,7 +243,38 @@ in a permanent doc, fix it. R080 is **S1 and I recommend declining for this
 PR**: the widget genuinely is not a function, it is a stateful sink with no
 return value to give, and "consumes while shown" is a real property rather than
 a leftover. Making it return a boolean would add a return value whose only
-possible source is `is_shown()`. I may be wrong, and this is one I want a cold
+possible source is `is_shown()`.
+
+**[REV] Both cold reviews independently confirmed the decline and added two
+facts I did not have:**
+
+- **No `UserInputController` event method returns anything today** —
+  `keypressed`, `textinput`, `keyreleased`, the four mouse channels and the
+  three touch stubs all return nothing; `keypressed`'s own comment records that
+  "the old limit-flag return channel is retired". So this is not a small edit
+  at the call site: it invents ~10 new boolean contracts, each needing an
+  answer to "what does it mean for the widget to decline *this* keystroke".
+- **There is no tier after the widget for a manufactured `false` to reach.**
+  `dispatch`'s return becomes `love.keypressed`'s return, which LÖVE's event
+  pump discards; only tests observe it. Ten new contracts, zero runtime
+  difference — strictly more elaborate, not more predictable.
+
+**[REV] And a factual correction to put in front of the owner, not a design
+argument.** R080's text is attached to Decision 2 but reasons from "discard
+Decision 5" — two different specialnesses. The one session26 found hallucinated
+and removed was Decision 2's fourth chain tier (the non-overridable framework
+Enter/Escape). Decision 5 is a different rule: widget results travel out
+through callbacks because the widget is terminal and nothing above it can read
+a return. The suspicion that this is hallucination residue is reasonable given
+the history — but the record says only one of the two ever was.
+
+**[REV] R044 joins this workstream** (was W7). The P0 evidence note shows
+`always_shown()` and the whole `shown` flag are this feature's — the base
+controller had `is_oneshot()` and no flag — and that `hide()` would clear the
+flag on any instance it is called on. R080 and R044 are the same question from
+two ends: is "shown" the right primitive? They are ruled on together.
+
+The original wording follows; I may be wrong, and this is one I wanted a cold
 advisor on before it goes to the owner.
 
 ### W7 — `consoleController` / `userInputController` structure · **S2**
@@ -249,11 +350,60 @@ decision to record.* Decision 16 (R109) is the clearest — event-axis
 unification happened, so the entry describing it as deferred is simply wrong.
 
 **(b) Doc accuracy.** R134 (does the click-to-cursor translation apply to a
-project widget?), R135 ("projects cannot install evaluator objects" — projects
-*can* configure a validator), R110 (a note calling `dispatch` non-reusable when
-it is), R127 (`before_exit` cannot guarantee teardown if the project raises —
-identified in session24, never written down). Each is a factual claim to check
-in code and correct.
+project widget?), R127 (`before_exit` cannot guarantee teardown if the project
+raises — identified in session24, never written down; and the call is
+genuinely unguarded, see W5). Each is a factual claim to check in code and
+correct.
+
+**[REV] Two entries corrected here, both against me:**
+
+- **R135 is dropped — I was wrong.** I filed "projects cannot install evaluator
+  objects" as a stale claim on the grounds that projects can configure a
+  validator. The doc's own sentence (`internals/user_input.md:91-92`) already
+  distinguishes the two: *"the internal plain evaluator plus project callbacks
+  for validation and display. Projects cannot install evaluator objects."* A
+  validator is a predicate function; an `Evaluator` (`LuaEval`,
+  `LuaEditorEval`, with an `:apply()` method) is a different object a project
+  genuinely cannot substitute. The doc is precise. **No action** — R135 moves to
+  W10 as answered.
+- **R110 is re-kinded, not re-severitied.** The section does not call `dispatch`
+  non-reusable; it says in past tense that the mid-feature dispatch *had been*,
+  and describes the fix. `dispatch` is a free function today
+  (`projectInputController.lua:109`). Its real ask is "cut this stale
+  intra-feature history", which is W10's historical-contrast batch. Moved.
+
+**[REV] Two entries promoted into this workstream from W10**, both internal
+contradictions of the same class as R086 — which I had split out to S3 while
+leaving these at S4:
+
+- **R088** (`decisions/input.md:192`) — Decision 3's *Why* argues for one shared
+  instance on memory grounds ("forbids allocating a fresh object graph per input
+  session"), while the same file's Implementation note (`:716-718`) states
+  "Multiple `UserInputController` instances remain required… and would be
+  clobbered by a single shared instance". Four instances exist
+  (`main.lua:371`, `consoleController.lua:43`, `editorController.lua:12,16`).
+  The owner's remark says exactly this: the prose was pre-implementation
+  vision. **S3.**
+- **R081** (`decisions/input.md:120`) — Decision 2 says "one chain of three
+  components" scoped to keyboard/text, but pointer runs the *same* `dispatch`
+  minus the shortcuts tier. As written, a reader concludes pointer is outside
+  the chain shape entirely. **S3** — a completeness gap in what a permanent doc
+  claims about routing, not a wording preference.
+
+### **[REV] W9 hard constraint: tombstone decisions, never renumber**
+
+This was missing and it is the one genuine "silently invalidated by a later
+phase" risk in the plan. **179 comments cite decisions by number** — 69 in
+`src/` across seven files and **110 in `tests/`**. Striking Decisions 6, 7, 12,
+15, 16 by deleting their sections would renumber everything above the lowest
+deletion, invalidating an unknown subset of those 179 citations, each of which
+would still read as authoritative.
+
+`decisions/input.md` already holds the safe precedent: Decision 11 was retired
+**in place** — number kept, content marked *"SUPERSEDED IN PART, 2026-08-03 —
+see Decision 25"* (`:483`). **W9 does the same: numbers are permanent,
+content is tombstoned.** This is a constraint on execution, not a preference,
+and it is stated here so P10 does not improvise it.
 
 **R168 is a correction to us, and it is right:** `gfx` is not an undeclared free
 variable, it is the house alias convention (`agents/rules.md`, "Standard
@@ -335,17 +485,17 @@ commits with their breaking test first.
 
 | # | Phase | Depends on | Gate |
 |---|---|---|---|
-| P0 | Answer the S0s: verify R044, R068, R033/R171 against `3256aac` and the current tree; reproduce SM1, SM3, SM4, SM5 | — | evidence note on disk before any fix |
-| P1 | **Owner rulings** on the W2 open questions (button in combo; which channels), W5 (`before_exit`), W6 (R080), W1 (delete Decision 9?) | P0 | **blocks P2** |
-| P2 | W1 — signature unification, incl. `ignore_repeat` and the examples | P1 | breaking test first |
-| P3 | W3 — one event list, seeding and wipe generic | P2 | |
-| P4 | W2 — pointer shortcut tier | P1, P3 | |
-| P5 | W5 — `before_submit` veto + callback defaults | P1 | |
-| P6 | W4 — dispatch/wiring collapse | P2–P5 | behaviour-preserving; suite is the proof |
+| P0 | Answer the S0s: verify R044, R068, R033/R171 against `3256aac` and the current tree (**done** — `../notes/S27-P0-evidence.md`); reproduce SM1, SM3, SM4, SM5 | — | evidence note on disk before any fix |
+| P1 | **Owner rulings**: W2 (confirm modifier-only + `mousepressed` only), W5 (`before_exit` veto — recommend no), W6 (R080 **and R044 together**), W1 (Decision 9 — delete or tombstone) | P0 | **blocks P2** |
+| P2 | W1 — signature unification, incl. `ignore_repeat` **and `examples/keyboard/input.lua:142` by name** | P1 | breaking test first; the keyboard regression is silent, so it needs its own row |
+| P3 | W3 — one event list, seeding and wipe generic | **[REV] none** | independent of W1 — nothing in W3 touches the payload |
+| P4 | W2 — pointer shortcut tier | P1 | **[REV]** independent of W1 too: pointer already dispatches with `trigger = nil` |
+| P5 | W5 — `before_submit` veto + callback defaults | **[REV] P1, P2** | `before_submit(keys_pressed)` is the parameter P2 removes — **write its tests after P2**, not before |
+| P6 | W4 — dispatch/wiring collapse | P2–P5 | behaviour-preserving; suite is the proof. `hook_pointer` is renamed, not deleted |
 | P7 | W7 — controller structure, incl. the 16-line rule in `agents/rules.md` | P6 | |
 | P8 | W8 — test restructuring | P2–P7 | do NOT restructure tests before the code stops moving |
-| P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | each nested repo committed in its own repo, never pushed |
-| P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it |
+| P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | **[REV]** the three nested repos carry **no automated tests** — one static spec doc, no runnable suite. Committing is not verification: a smoke re-pass on the channels W1/W2/W3 touch is the gate, `examples/keyboard` at minimum. Never pushed |
+| P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it. **Tombstone decisions, never renumber** |
 | P11 | W12 — comment sweep, slices, revalidation ×2 | P10 | the commission's (e)–(9) |
 
 **The ordering rule behind this:** code first, tests second, docs third,
@@ -361,6 +511,52 @@ W7–W12. That is why P1 gates.
 
 ---
 
+## 5. [REV] Revision log — what the cold reviews changed
+
+Both reviewers worked without sight of this document's reasoning. Neither
+raised a structural objection; both found real errors. Every correction below
+was re-verified in code before acceptance — including the ones I agreed with.
+
+**Accepted, from the fact-check (`../outcomes/S27-triage-factcheck.md`):**
+
+| # | Correction | Where |
+|---|---|---|
+| 1 | **R135 was wrong** — the evaluator-objects claim is precise, not stale | W9, id → W10 |
+| 2 | **R088 under-rated** — a live contradiction inside `decisions/input.md`, same class as R086 | W10 → W9, S4 → S3 |
+| 3 | **R081 under-rated** — Decision 2's "three components" excludes pointer, which runs the same dispatch | W10 → W9, S4 → S3 |
+| 4 | **`submit()`/`cancel()` do not exist** — the flows are `submit_flow`/`cancel_flow`, and a *different* `cancel()` exists that skips the veto entirely | W5 |
+| 5 | **R110 mis-kinded** — a cut-stale-history ask, not a false claim to correct | W9 → W10 |
+| 6 | **W2 spans three doc files, not two** | W2 |
+| 7 | **`before_exit` is called unguarded** — no `pcall`; a raise aborts the rest of teardown | W5, R127 |
+| 8 | **`hook_pointer` is not dead** — it installs nothing but still computes `user_pointer` liveness; its name is the lie | W4 |
+
+**Accepted, from the plan review (`../outcomes/S27-plan-review.md`):**
+
+| # | Correction | Where |
+|---|---|---|
+| 9 | **Decision renumbering would break citations** — tombstone in place. The reviewer counted 69 in `src/`; **there are 110 more in `tests/`**, 179 total | W9, P10 |
+| 10 | **P5 depends on P2**, not P1 alone — same parameter, same method; its tests must be written after P2 | P5 |
+| 11 | **Name the `examples/keyboard` regression** — `appKeypressed(k, _, isr)` breaks silently under W1 | W1, P2 |
+| 12 | **Nested repos have no automated tests** — P9's gate must be a smoke re-pass, not a commit | P9 |
+| 13 | **W2's button question is already answered by R115** — modifier-only, `mousepressed` only, presented as a recommendation | W2 |
+| 14 | **P3 and P4 do not depend on P2** — nothing in W3 or W2 touches the payload W1 changes | phase table |
+| 15 | **"Equal to LÖVE's" overclaims** — `scancode` is already discarded at the gateway; post-W1 it is `(k, isr)` | W1 |
+| 16 | R080's decline confirmed independently, twice, with two facts I lacked | W6 |
+
+**Rejected, or accepted with a change:** none rejected outright. #9's count was
+corrected upward by my own check; #16's confirmation is treated as evidence for
+the owner, not as a ruling — R080 is still the owner's call at P1.
+
+**One methodological note for the record.** The `lua-lsp` MCP server was
+**unreachable for this entire session** (broken pipe on every call, from the
+parent and both sub-agents). Every reference and dead-code claim in this
+document, the fact-check and the plan review therefore rests on `grep` alone —
+the prescribed backstop, not the prescribed primary tool. `handlers.userinput`
+(W4) is the one deletion that turns on a completeness claim; it should be
+re-checked with the LSP before it is removed.
+
+---
+
 ## Appendix A — id → workstream coverage
 
 W1 R009 R036 R096 R097 R098 R099 R112 R114 R146 R176
@@ -368,18 +564,22 @@ W2 R037 R115 R131 R145 R152 R177
 W3 R022 R027 R029 R030 R035 R154
 W4 R021 R023 R024 R025 R026 R028 R031 R033 R171
 W5 R038 R121 R122 R158 R160 R161 R181
-W6 R080 R086
+W6 R044 R080 R086
 W7 R004 R005 R006 R008 R011 R012 R014 R015 R016 R017 R018 R019 R020 R039
-   R040 R041 R042 R043 R044 R045
+   R040 R041 R042 R043 R045
 W8 R047 R057 R058 R059 R060 R061 R063 R064 R067 R068 R069 R070 R074 R075
    R078 R079
-W9 R093 R094 R105 R107 R109 R110 R127 R134 R135 R165 R166 R167 R168 R169
+W9 R081 R088 R093 R094 R105 R107 R109 R127 R134 R165 R166 R167 R168 R169
    R170 R172
 W11 R118 R120 R123 R124 R125 R183 R184 R185 R186 R187 + SM1–SM5
 W10 every id not listed above (92): R001 R002 R003 R007 R010 R013 R032 R034
    R046 R048 R049 R050 R051 R052 R053 R054 R055 R056 R062 R065 R066 R071
-   R072 R073 R076 R077 R081 R082 R083 R084 R085 R087 R088 R089 R090 R091
-   R092 R095 R100 R101 R102 R103 R104 R106 R108 R111 R113 R116 R117 R119
-   R126 R128 R129 R130 R132 R133 R136 R137 R138 R139 R140 R141 R142 R143
+   R072 R073 R076 R077 R082 R083 R084 R085 R087 R089 R090 R091
+   R092 R095 R100 R101 R102 R103 R104 R106 R108 R110 R111 R113 R116 R117 R119
+   R126 R128 R129 R130 R132 R133 R135 R136 R137 R138 R139 R140 R141 R142 R143
    R144 R147 R148 R149 R150 R151 R153 R155 R156 R157 R159 R162 R163 R164
    R173 R174 R175 R178 R179 R180 R182
+
+**[REV] Moves in this revision:** R044 W7→W6 · R081 W10→W9 · R088 W10→W9 ·
+R110 W9→W10 · R135 W9→W10 (answered, no action). Counts unchanged: W9 16,
+W10 92.
