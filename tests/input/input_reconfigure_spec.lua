@@ -268,28 +268,38 @@ describe('input contracts: live reconfigure #input', function()
 
   describe('continuous-session idiom', function()
 
-    ---> REMARK: did not we swap default widget behaviour to always show, and recommended to make closing explicit from 'after_submit'? Then this test actually tests nothing and needs to be replaced with closure-on-submit
-    -- One shape: consume in on_text_entered, re-show
-    -- (bare, no config) in after_submit. Asserts (a) the
-    -- assembled text reaches on_text_entered and (b) the
-    -- widget is active again once after_submit returns.
-    it('re-shows from after_submit with the same callbacks',
-      function()
-        local input = F.activate_project()
-        local seen = { }
-        input.callbacks.after_submit = function() input.show({}) end
-        input.show({
-          prompt = 'first',
-          on_text_entered = function(t)
-            seen[#seen + 1] = t
-          end,
-        })
-        F.session.type('a')
-        F.session.press('return')
-        assert.same({ { 'a' } }, seen)
-        assert.is_true(F.is_widget_visible())
-        assert.is_true(F.widget:is_shown())
-      end)
+    -- Submit leaves the widget open, so closing is the
+    -- project's to do and after_submit is where it does it.
+    -- Asserted in that direction on purpose: the row that
+    -- asserted the OPPOSITE — re-show from after_submit, then
+    -- check the widget is shown — could not fail, because a
+    -- submit no longer hides and the assertion held whether or
+    -- not the callback ran at all. Proven by mutation: deleting
+    -- the callback assignment left the whole file green.
+    it('after_submit is what closes the widget', function()
+      local input = F.activate_project()
+      local seen = { }
+      input.callbacks.after_submit = function() input.hide() end
+      input.show({
+        prompt = 'first',
+        on_text_entered = function(t) seen[#seen + 1] = t end,
+      })
+      F.session.type('a')
+      F.session.press('return')
+      assert.same({ { 'a' } }, seen)
+      assert.is_false(F.widget:is_shown())
+    end)
+
+    -- The control the pair needs: WITHOUT a closing callback
+    -- the widget stays up. Together the two rows pin the
+    -- default and the override; either alone pins neither.
+    it('and without it the widget stays open', function()
+      local input = F.activate_project()
+      input.show({ prompt = 'first' })
+      F.session.type('a')
+      F.session.press('return')
+      assert.is_true(F.widget:is_shown())
+    end)
 
     -- The re-show re-arms with the STICKY callback — a
     -- second submit is observed without re-passing
