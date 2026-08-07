@@ -1,4 +1,3 @@
----> REMARK: what remained here is very unlikely collection, I'd dissolve it across other files. E.g. held_keys is literally a part of documented contract now -- worth its own test suite. "wheel" test should be universalized across all supported event types, and live somewhere around dispatching, as literally a list of supported event types and cyle over it testing that every event is reaching, The *only* NFR I could think of is the usage of widget singleton across project invocations (therefore avoiding GC abuse) -- but its no here (if it was moved elsewhere, that's fine) . If we move these two said tests as said, there's a chance file could be dissolved
 
 -- Availability: predates the Compy input API (introduced in
 -- 1.0.0-rc20260712).
@@ -16,11 +15,16 @@
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
 
--- Two kinds of row live here, and neither is a project-facing
--- behaviour contract: de-facto behaviour characterized as it
--- stands, and guards on mechanism (identity, allocation, the
--- held-key table) rather than on behaviour. Project contracts
--- live in the other input_*_spec.lua files.
+-- Guards on MECHANISM, not on behaviour: object identity,
+-- allocation, and the held-key table's own shape. Nothing here
+-- is a project-facing contract — those live in the other
+-- input_*_spec.lua files, and a row that turns out to be one
+-- belongs there instead.
+--
+-- The file has been narrowed twice on that test. A wheel row
+-- went to input_events_spec.lua when it became one case of
+-- "every channel reaches the route"; a characterisation row
+-- went entirely, having stopped discriminating.
 
 local F = require('tests.helpers.input_fixture')
 
@@ -38,57 +42,6 @@ describe('input contracts: NFR and mechanism guards #input',
   -- reads as expected while an accidental one still fails the
   -- build. (doc/development/tests.md, "Input Contract Suite")
   -- ====================================================
-  describe('current behaviour — characterized, no mandate',
-    function()
-
-      -- (An 'inspect: the console owns the surface' row lived
-      -- here and was removed 2026-08-03: it had stopped
-      -- discriminating. It set app_state = 'inspect' over a
-      -- shown widget and asserted the console got the text —
-      -- but once the console route lost its widget step
-      -- entirely (Decision 1), the console gets the text with
-      -- or without the inspect line. Deleting that line left
-      -- the row green, which is the definition of noise.
-      -- Decision 12 is still covered, by a row that does
-      -- discriminate: input_route_lifecycle_spec.lua,
-      -- 'inspect' — it activates the PROJECT route first, so
-      -- without the suspend() the widget would receive the
-      -- keystroke.)
-
-    end)
-
-  -- Wheel used to be the one pointer channel compy declared no
-  -- gateway entry for. It still worked in production, by
-  -- accident rather than design: setup_callback_handlers writes
-  -- INTO love.handlers rather than replacing it, so LÖVE's own
-  -- stock wheelmoved entry survived and called love.wheelmoved.
-  -- The fixture builds a fresh love.handlers, so the absence
-  -- was visible here and nowhere else: a row characterising
-  -- the fixture, not the product. compy now declares the entry
-  -- itself (owner ruling, 2026-08-03), which is also what makes
-  -- the gateway self-contained rather than dependent on the
-  -- stock table surviving our mutation.
-  describe('wheel reaches the route like any pointer event',
-    function()
-
-      it('a project hook receives it', function()
-        local input = F.activate_project()
-        local got
-        input.hooks.wheelmoved =
-            function(x, y) got = { x, y } end
-        F.session.wheelmoved(0, 1)
-        assert.same({ 0, 1 }, got)
-      end)
-
-      -- The control: with no project route the emit is a no-op
-      -- rather than an error, the same as the derived clicks.
-      it('is silently dropped with no project route', function()
-        assert.has_no.errors(function()
-          F.session.wheelmoved(0, 1)
-        end)
-      end)
-    end)
-
   -- ====================================================
   -- Mechanism / NFR guards — not behaviour contracts.
   -- Labelled so no reader mistakes them for behaviour contracts. These

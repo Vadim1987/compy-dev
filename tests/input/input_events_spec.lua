@@ -51,6 +51,56 @@ describe('#input events dispatching', function()
   -- the CLASS form needs a modifier — `'*'` alone raises,
   -- because a class needs modifiers to be a class of.
 
+  -- Every declared channel reaches the route. Written as a
+  -- sweep over the list rather than a row per channel: the
+  -- gateway declares twelve entries and the route installs
+  -- twelve handlers, and the thing worth asserting is that
+  -- those two lists agree — which a hand-picked sample cannot
+  -- say. `wheelmoved` in particular used to work by accident
+  -- (LÖVE's own stock entry survived, because the gateway
+  -- writes INTO love.handlers rather than replacing it) and
+  -- was only visible as missing in a fixture that builds the
+  -- table fresh.
+  describe('every channel reaches the route', function()
+
+    -- LÖVE's own argument lists, enough of each to be routed.
+    local ARGS = {
+      keypressed    = { 'a', '', false },
+      keyreleased   = { 'a' },
+      textinput     = { 'a' },
+      mousepressed  = { 1, 2, 1, false, 1 },
+      mousereleased = { 1, 2, 1, false, 1 },
+      mousemoved    = { 1, 2, 0, 0, false },
+      wheelmoved    = { 0, 1 },
+      touchpressed  = { 'id', 1, 2, 0, 0, 1 },
+      touchreleased = { 'id', 1, 2, 0, 0, 1 },
+      touchmoved    = { 'id', 1, 2, 0, 0, 1 },
+    }
+
+    for _, event in ipairs(ProjectInputController.EVENTS) do
+      local args = ARGS[event]
+      if args then
+        it(event .. ' reaches a project hook', function()
+          local input = F.activate_project()
+          local fired = false
+          input.hooks[event] = function() fired = true end
+          F.session.handlers[event](unpack(args))
+          assert.is_true(fired)
+        end)
+      end
+    end
+
+    -- The control: with no project route an emit is a no-op,
+    -- not an error -- the same for every channel.
+    it('and is silently dropped with no route', function()
+      for event, args in pairs(ARGS) do
+        assert.has_no.errors(function()
+          F.session.handlers[event](unpack(args))
+        end, event)
+      end
+    end)
+  end)
+
   describe('registration outlives the event', function()
     -- Order, consumption and fall-through are the interception
     -- matrix below — it walks every permutation of present /
