@@ -205,5 +205,47 @@
 - My recommendation to the owner: keep C, lift the path unification into it,
   do not implement D as written. Presented with the alternative (repair D) —
   owner's call, P9b's disposition is theirs.
+
+## 2026-08-08 — the owner's paradigm, recovered; D discarded and rewritten
+
+- **The owner supplied the missing half:** their session28 proposal was
+  `textinput`-only judgement with *"on win, stop updating last judged input
+  (block writing) and stop judging, update the target, release the block"*.
+  Their statement, 2026-08-08: **the paradigm and the table-as-state-model were
+  their only original inputs to D** — everything else answered corner-cases the
+  assistant raised, which they took for existing game constraints and which were
+  self-inflicted.
+- **The drift is on disk and now annotated.** `S28-owner-concerns.md:131`
+  captured *"blocking table writes is more reliable than freezing isolated
+  scalar value"* — but filed it under *"a predeclared state table with scalar
+  fields"*, i.e. as an argument for the table **shape**, with the paradigm it
+  belonged to absent. The seam is the next line: *"two fields: one for the
+  tail/grace mechanics, one for judgement dedupe"* — the mechanism meant to
+  **replace** the tail/grace was recorded as its peer.
+- **I corrected myself twice today, both times in the owner's favour.** (i) I
+  had said a clock is still needed for repeat-tail vs fast re-press; under the
+  paradigm both match last-judged, both are ignored, and the only casualty is
+  two identical consecutive targets — a `gaugePick` constraint, not a timing
+  problem. So **no clock at all**. (ii) I objected that a hold-rule must
+  re-couple to `keypressed`; the owner's `love.update` variant sidesteps it —
+  asking the held set *"is the key still down"* is a direct question, unlike
+  asking it to *infer* whether a character is a repeat. Recorded that
+  distinction in the doc.
+- **Verified before writing:** `gaugeOnWrong` is idempotent per presentation
+  (`gauge.lua:205`), so repeated wrong characters are already harmless by the
+  game's own rule; `gaugeOnCorrect` → `gaugeNext` is synchronous, so a repeat of
+  the *winning* character lands on the next target — the one repeat that changes
+  an outcome. `upRecent`/`GLYPH_CLAIMED`/`INPUT_UP_GRACE` are read **only** by
+  `spendGlyph` and `appKeyreleased`, so all three leave with the mechanism;
+  `altIsKeyTarget` stays, it selects the feeding channel.
+- `doc/development/internals/examples/keyboard.md` **rewritten wholesale**: one
+  judge (`textinput`), two fields (`lastText`, `blocked`), writes blocked across
+  the win transition, no clock, no grace, no held-set read in judging, no
+  modifier guard (Shift is how capitals are typed — a guard would need an
+  exemption list). The hold suggestion is recorded as a game-design question
+  with both mechanisms costed, explicitly not adopted.
+- Plan §7 amendment 3 + the P9b row rewritten. Grepped the corpus for citations
+  of the discarded design's terms (`TEXT_TAIL_FRAMES`, `seenText`, `judgedText`,
+  `lastGlyph`) — none outside the wip working tree, so nothing dangles.
 </content>
 </invoke>

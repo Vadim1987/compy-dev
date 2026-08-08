@@ -140,6 +140,29 @@ means we cannot do timeless state-only evaluation and need to count frames"*.
 Correct — a `textinput` arriving after its own `keyreleased` is ambiguous by
 state alone.
 
+> **[S29] RETIRED, 2026-08-08.** True of a design that judges **across**
+> channels, which is what was on the table then. It does not survive the
+> paradigm the owner had already proposed and which this note failed to record
+> (see the correction below): once `textinput` is the only judge, that
+> `keyreleased` is never consulted, so the ambiguity has nothing to attach to.
+> Per the game's own scoring the only repeat that changes an outcome is a repeat
+> of the *winning* character, and one remembered character stops it. No frames,
+> no grace. `doc/development/internals/examples/keyboard.md` is rewritten
+> accordingly.
+
+> **[S29] CORRECTION to the entry above it, 2026-08-08.** *"On the keyboard
+> judgement state"* recorded the owner's *"blocking table writes is more
+> reliable than freezing isolated scalar value"* as an argument for a table
+> shape. It was that, but it was also the mechanism of a **paradigm** the note
+> did not capture: judgement from `textinput` alone, with writes blocked across
+> the win transition. The owner's account, 2026-08-08: the paradigm and the
+> table-as-state-model were their **only** original inputs to the design — the
+> rest of what grew around them was response to corner-cases the assistant
+> raised, which they took for existing game constraints and which were
+> self-inflicted. The line *"two fields: one for the tail/grace mechanics, one
+> for judgement dedupe"* is the visible seam: the mechanism meant to *replace*
+> the tail/grace was filed as its peer.
+
 **On vocabulary.** State the rules in LÖVE's own event names and drop the coined
 term "glyph": *"its interpretation may drift without strict definition… we
 already had problems with coined umbrella terms that spoil architecture."* →
