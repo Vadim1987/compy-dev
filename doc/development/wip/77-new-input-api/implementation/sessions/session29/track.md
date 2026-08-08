@@ -128,5 +128,43 @@
 - Both corrections appended to `validation/notes/S28-smoke-findings.md` under an
   `[S29]` heading; session28's text left as written, per the amend-don't-rewrite
   pattern used for the plan's §6/§7.
+
+## 2026-08-08 — step 4: the P9b design
+
+- Cold Sonnet agent, prompt `validation/prompts/S29-p9b-design-agent.md`,
+  deliverable `validation/reviews/S29-p9b-design-revalidation.md`. Briefed to
+  test whether each rule can be *evaluated from the declared state* given what
+  the other channels do to it — framed neutrally, not handed the answer.
+- **Finding 1 (root): the doc contradicts itself about `seenText`.** `:45` calls
+  it "text of the most recent textinput, judged or not" (never cleared); `:33`
+  gives `keyreleased` the job of clearing it. Either reading breaks a rule —
+  never-clear reproduces the original defect through rule 3; clear-on-release
+  leaves rule 4 comparing against "`seenText`'s value at release", which **no
+  declared field holds** once `keyreleased` has run. I had spotted the missing
+  field myself before spawning; the agent found the contradiction that explains
+  how it got there.
+- **Finding 2 (consequence): the acceptance gate never closes observably.**
+  Verified in the nested repo: `alt.lua:148` → `gaugeOnCorrect` →
+  `gaugeNext(st,cfg)` **synchronously**, so `accepting` goes false and true
+  again, and `judgedText` resets, inside the same judging call. Rule 5 is dead
+  in practice and rule 6's dedupe is wiped immediately. Chain: release clears
+  `seenText` (rule 3 passes), rule 4 unimplementable (passes), rule 5 reopened
+  (passes), rule 6 reset (passes) → a trailing OS repeat is judged against the
+  **new** target. That is the bleed the design's own smoke checklist forbids.
+- **Rule 4's necessity argument — the agent is half right, and I disagree with
+  its framing.** Its pair (repeat tail vs late first character) *is* separable
+  by state, using exactly the value `keyreleased` discards: a tail was seen
+  during the hold, a late first character was not. But a clock is still needed
+  for a pair the doc never names — **repeat tail vs a deliberate fast re-press
+  of the same character**, which are identical in state. So the owner's
+  session28 conclusion (a clock is needed) **stands**; the reason written into
+  the doc does not. Worked this through myself rather than relay it.
+- Everything else clean: rule 6 holds as stated, all shipped-code claims land at
+  the cited locations, all citations resolve (incl. `user_input.md` "Data flow"
+  and `gauge.lua`), platform claims confirmed where checkable (no ordering
+  guarantee; no Caps query API in LÖVE 11.5) and honestly marked unverifiable
+  where not (desktop-first/web-first, `capslock` release reliability).
+- Design doc NOT edited — owner's design, persistent corpus, header still says
+  "human-approved NOT YET". Presented for ruling before P9b implementation.
 </content>
 </invoke>
