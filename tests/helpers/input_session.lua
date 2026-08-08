@@ -18,7 +18,7 @@ local function emitters()
   return {
     press         = function(k) h.keypressed(k, '', false) end,
     repeat_press  = function(k) h.keypressed(k, '', true) end,
-    release       = function(k) h.keyreleased(k) end,
+    release       = function(k) h.keyreleased(k, '') end,
     type          = function(t) h.textinput(t) end,
     mousepressed  = function(...) h.mousepressed(...) end,
     mousereleased = function(...) h.mousereleased(...) end,

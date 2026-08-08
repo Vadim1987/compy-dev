@@ -902,7 +902,7 @@ Controller = {
       end
     end
 
-    handlers.keyreleased = function(k)
+    handlers.keyreleased = function(k, sc)
       Controller.keys_pressed[k] = nil
       if Key.ctrl() then
         if k == "escape" then
@@ -910,7 +910,7 @@ Controller = {
         end
       end
       if love.keyreleased then
-        return love.keyreleased(k)
+        return love.keyreleased(k, sc)
       end
     end
 

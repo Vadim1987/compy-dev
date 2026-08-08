@@ -881,6 +881,23 @@ describe('input surface: inbound events — dispatch #input',
         assert.same({ 'a', 'scan-a', true }, seen)
       end)
 
+    -- keyreleased is the other half of the same rule: LÖVE gives it
+    -- (key, scancode), so the chain owes both onward. The gateway
+    -- narrowed this one channel to the key alone long after the
+    -- rule was stated.
+    it('the widget receives the uniform keyreleased arguments',
+      function()
+        local seen
+        F.activate_project()
+        F.show_widget()
+        F.widget.keyreleased = function(_, k, sc)
+          seen = { k, sc }
+        end
+        F.session.handlers.keyreleased('a', 'scan-a')
+        F.widget.keyreleased = nil
+        assert.same({ 'a', 'scan-a' }, seen)
+      end)
+
   end)
 
   -- defaults + hidden widget (doc/development/decisions/input.md,
