@@ -166,5 +166,44 @@
   where not (desktop-first/web-first, `capslock` release reliability).
 - Design doc NOT edited — owner's design, persistent corpus, header still says
   "human-approved NOT YET". Presented for ruling before P9b implementation.
+
+## 2026-08-08 — owner asks: is the design better than the original?
+
+- Owner's suspicion, stated: the design was written by an agent after a spoken
+  discussion they have not reviewed as text, and grew across rounds of challenge
+  — they suspect drift/accretion. Four-way comparison commissioned (A original
+  `c904338`, B migration `4814407`, C shipped interim `3a9d48c`, D the paper
+  design). Prompt `validation/prompts/S29-p9b-design-vs-original-agent.md`,
+  deliverable `validation/reviews/S29-p9b-vs-original.md`.
+- **The premise is refuted, and I verified it myself.** A was not
+  simple-and-correct: `input.lua@c904338:112` `inputStale(k)` returns true when
+  `INPUT.held[k]`, and judging ran through it — so under desktop order
+  (keypressed first) **every fresh printable press was dropped**. The original's
+  printable judging never worked outside the event order it was written against.
+- **B changed nothing in judging** — `git diff c904338 4814407 -- alt.lua` is
+  empty. Pure plumbing migration. So the defect was inherited, not introduced by
+  the input-API work.
+- **C is the real fix** and is small: 55 insertions / 32 deletions over two
+  files. Claim one glyph per press, release at keyup, 1-frame post-keyup grace.
+  Verified `spendGlyph` (`input.lua:154`) and `altTextinput` (`alt.lua:173`).
+  Its claim survives target changes, so it is **structurally immune to the
+  bleed** — `alt.lua`'s own comment names that case.
+- **D as written is worse than C.** Its regression on the bleed is not an
+  independent flaw — it is finding 1 again: rule 4 is C's grace window's
+  analogue, and rule 4 is inert, so nothing catches the post-release trailing
+  glyph. Plus a fourth self-contradiction I confirmed in the doc text: the
+  closing section lists the chord-modifier slip as a defect of the shipped code
+  that D supersedes, while §Concerns admits D keeps it ("the one live-state read
+  left in the path").
+- **D's one earned gain is real:** one judging path instead of two
+  (`altPlayKey` + `altTextinput`), which subtracts a path and matches the
+  no-special-cases rule. That is liftable into C on its own.
+- Case 4 (a fast tap whose glyph trails its own `keyreleased`) is dropped by
+  **A, B and C alike today** — a genuine unfixed hole in the shipped game, and
+  D does not reliably fix it either. That is the real open defect, and it is not
+  what D's machinery is aimed at.
+- My recommendation to the owner: keep C, lift the path unification into it,
+  do not implement D as written. Presented with the alternative (repair D) —
+  owner's call, P9b's disposition is theirs.
 </content>
 </invoke>
