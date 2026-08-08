@@ -100,5 +100,33 @@
 - No doc change owed: `input_api.md`'s bold claim and Decision 26 were already
   right; the code was the thing out of line. The widget's `sc` annotation
   ("unread") stays true and is now also accurate about the source.
+
+## 2026-08-08 — step 3: the smoke-finding dispositions
+
+- Cold Sonnet agent, prompt `validation/prompts/S29-smoke-dispositions-agent.md`,
+  deliverable `validation/reviews/S29-smoke-dispositions-revalidation.md`.
+  Briefed for a verdict **per premise**, not per finding, and told that a wrong
+  premise under a no-change ruling is the most expensive thing available.
+- **The three no-change rulings hold on every premise** (SM1, SM2, SM3b), and so
+  does SM3a's negative claim (no graphics-state reset on the
+  `stop_project_run` → next-run path; the only `setFont` outside project code
+  fires on quit). The two premises I most expected to be asserted rather than
+  checked — `ConsoleView:draw` exercised by no row, and nothing in the platform
+  dimming anything — both verified.
+- **SM4 correction, reproduced by me:** the `mod_order` mutation fails **three**
+  rows (`:336`, `:411`, `:425`), not one. `:425` is the class-marker row the note
+  names as *not* catching this, and it is pre-existing — `edb6321b`, 2026-08-03,
+  four days before the SM4 commit. Verdict unaffected; the coverage-gap framing
+  overstated by one row.
+- **SM5 correction:** "reads the same in both orders" names two orders. A
+  `textinput` after its own `keyreleased` finds an empty claim table and is
+  dropped by the carried-over `INPUT_UP_GRACE` window — same failure shape,
+  other gate, inherited not introduced. **This is the exact case P9b exists to
+  answer** (owner's overturn of the state-only proposal), so it is not new work
+  — but P9b's implementation must be checked against this trace, not only
+  against the design's own examples.
+- Both corrections appended to `validation/notes/S28-smoke-findings.md` under an
+  `[S29]` heading; session28's text left as written, per the amend-don't-rewrite
+  pattern used for the plan's §6/§7.
 </content>
 </invoke>

@@ -167,3 +167,48 @@ rewritten with it, since that reasoning is what produced the bug.
 **Not covered by any test:** the keyboard project is a nested repo with no
 suite. Reasoned from the code and from the platform's ordering rule; wants a
 smoke pass on the device.
+
+---
+
+## [S29] Corrections from the cold revalidation of this note
+
+Session29 had every disposition above checked against the code by a cold agent
+(`../reviews/S29-smoke-dispositions-revalidation.md`). **SM1, SM2, SM3a and SM3b
+hold on every premise**, including the two that were easiest to assert without
+checking — that no row in the suite exercises `ConsoleView:draw`, and that
+nothing in the platform dims anything. Two corrections, neither changing a
+verdict; session28's text above is left as written.
+
+**SM4 — the coverage-gap claim overstates by one row.** The mutation reproduced
+exactly (reorder `mod_order` in `src/util/key.lua`), but it fails **three** rows,
+not one: `input_events_spec.lua:411` (the SM4 pin, as claimed), `:425` *the class
+handler receives the real trigger*, and `:336` for a distinct reason (a direct
+table read, which `Key.new_handler_table` normalises only on write). Row `:425`
+is **pre-existing** — `edb6321b`, 2026-08-03, four days before the SM4 commit —
+and it is the "two modifiers plus the class marker" shape the note names as *not*
+catching this. It does catch it: its class lookup builds a key through
+`combo_string` while registration stored one through `normalize_combo`, so the
+two spellings diverge under the mutation exactly as the pin row's do. Verified
+independently in-session, not only by the agent. The disposition is unaffected —
+"not a platform defect" stands, and the pin row does fire — but the suite was
+never as blind here as the note says.
+
+**SM5 — "reads the same in both orders" names two orders, and there is a third.**
+The fix is correct for the ordering pair its own comment addresses
+(`keypressed` vs `textinput`). It does not cover `textinput` arriving after its
+own **`keyreleased`**: the claim table is empty at that point, so the carried-over
+post-keyup grace window (`INPUT_UP_GRACE`, untouched by the fix) reads the fresh
+glyph as a trailing repeat and drops it. Same failure *shape* SM5 fixed, reached
+through the other gate. Inherited from the old `inputStale` logic rather than
+introduced by `3a9d48c`, and the platform's documented guarantee
+(`internals/user_input.md`, "Data flow") speaks only to `keypressed`/`textinput`
+order, so it does not exclude this.
+
+**This is precisely the case the P9b design exists to answer** — the owner's
+reasoning that overturned the state-only proposal was that a `textinput` after
+its own `keyreleased` is ambiguous by state alone, which is why the design of
+record carries a bounded tail window as well as state
+(`doc/development/internals/examples/keyboard.md`). So the residual hole is not a
+new problem to schedule: it is P9b's, and P9b's implementation should be checked
+against this trace specifically rather than only against the design's own
+examples.
