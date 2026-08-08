@@ -538,7 +538,7 @@ describe('input surface: inbound events — route lifetime #input',
 
       -- A second stop still works: the reset line sits after
       -- the call, so a raise would have skipped it.
-      it('a nil hook does not wedge the next stop', function()
+      it('a nil hook does not block the next stop', function()
         F.activate_project()
         F.cc:get_project_env().compy.before_exit = nil
         F.cc:stop_project_run()

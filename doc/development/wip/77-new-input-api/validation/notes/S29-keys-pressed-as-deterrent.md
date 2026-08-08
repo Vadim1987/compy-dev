@@ -154,7 +154,7 @@ correct source and the device poll is not.** Assembling combos from `Key.*` woul
 be correct only in the common case where nothing else is queued behind the event
 being dispatched.
 
-This also reverses the naive reading of the wedging problem: the table can go
+This also reverses the naive reading of the staleness problem: the table can go
 **stale across focus loss** (P9d fixes that), while the poll is **stale by
 construction relative to queued events**. Neither is simply better; each is
 correct on its own clock — the table at event time, the poll at frame time.

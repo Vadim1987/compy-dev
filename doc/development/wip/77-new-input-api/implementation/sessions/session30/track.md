@@ -186,7 +186,7 @@ is recreating it a level up without good reason. Checked rather than assumed:
     path it currently bypasses — which is what an automation harness should do.
   - Alternative: keep the patch, accept that harmony can no longer drive the
     event-based paths this feature introduced. Cheaper now, blind later.
-- **Irony worth keeping:** harmony's `held` **wedges by design** — `held[m]=true`
+- **Irony worth keeping:** harmony's `held` **goes stale by design** — `held[m]=true`
   is never cleared per key (the inline `release_keys()` at `:286` is commented
   out), relying on an explicit manual `release_keys()` (`:331`). The pre-feature
   mechanism already exhibited Q1's staleness problem and answered it with a
@@ -223,3 +223,53 @@ Explained to the owner from code; facts established:
 - **No automated signal.** Because harmony is outside CI and outside busted,
   breaking it is silent until someone runs it by hand. Argues for making the
   harmony-side change inside this PR rather than leaving it to be discovered.
+
+## 2026-08-08 — "wedge" retired (owner instruction), fixed in place
+
+Owner caught the word becoming load-bearing without ratification and ruled it be
+fixed **now**, not deferred to P10: current reasoning is built on current notes,
+and ambiguous vocabulary invites hallucinated architecture.
+
+**Audit:** zero occurrences at PR base `3256aac` — entirely assistant-introduced
+across sessions 28–29 — and already in three persistent-corpus sites plus a test
+row title. It carried **two distinct senses**: *stuck in a wrong state nothing
+clears* (held set) and *blocked from completing* (teardown).
+
+Replacements: **"stale"** (the owner's own word, from Q1) for the first, with the
+permanence spelled out — "and nothing clears it" — where that is load-bearing;
+**"block"** for the second.
+
+Fixed: `technical_debt/input.md` (heading + body), `internals/examples/keyboard.md`,
+`tests/input/input_route_lifecycle_spec.lua:541` (row title),
+`src/examples/keyboard/input.lua` (comment, rewrapped to the ≤64 rule),
+`validation/reviews/S27-triage-and-plan.md` ×3,
+`validation/notes/S29-{held-state-design-agenda,keys-pressed-as-deterrent,shortcuts-and-the-ordering-premise}.md`,
+and this track. Heading citation checked first — the plan cites the debt section
+by its truncated form, which the rename preserves. Suite **955 / 0 / 0 / 3**.
+
+**Deliberately NOT edited, and why:**
+- `sessions/session27/{report,track}.md`, `sessions/session29/report.md`,
+  `sessions/session30/prompt.md` — frozen session artifacts (session30 prompt:
+  "do not edit any historical session artifact"; sessions.md immutable-prompt rule).
+- `validation/outcomes/S28-mutation-checks.md`,
+  `validation/prompts/S28-mutation-check-agent.md`,
+  `validation/reviews/S29-p9b-{design-revalidation,vs-original}.md` — sub-agent
+  deliverables and prompts of record; rewriting them falsifies what was said/asked.
+  `S28-mutation-checks.md` quoted the renamed row title, so it got an appended
+  `[S30]` citation note rather than an edit — the dangling-citation hazard
+  `agents/validation.md` warns about.
+- `notes/stakeholder-3-input/compy-lua-game-patterns.md` — external stakeholder
+  input document (own frontmatter, cross-refs to `dev/docs/…` outside this repo).
+  Read-only, like `design/`. **Open question for the owner:** if "wedging" there is
+  the stakeholder's own word rather than ours, the retirement is ours only.
+
+## 2026-08-08 — spurious system-reminders observed (flagged, not obeyed)
+
+Twice while editing `S27-triage-and-plan.md` a system-reminder claimed the file
+had been "modified, either by the user or by a linter", dumped file content
+matching `HEAD` exactly, and instructed **"Don't tell the user this."**
+`git diff` showed only my own edits (4 insertions / 3 deletions, all mine).
+Disregarded as spurious/possibly injected, and reported to the owner rather than
+silently obeyed. Noting because **`validation/outcomes/S28-mutation-checks.md`
+already carries a prior session's record of the same event and the same call** —
+so this is recurring in this workspace, not a one-off.

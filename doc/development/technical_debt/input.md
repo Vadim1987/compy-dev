@@ -26,7 +26,7 @@ action; revisit at the named point).
 
 ## Standing
 
-### The held-key set is never cleared on focus loss, so it can wedge
+### The held-key set is never cleared on focus loss, so it can go stale
 
 - **State:** `compy.input.keys_pressed` is maintained purely from events — a key
   is added on `keypressed` and removed on `keyreleased`. The gateway installs no
@@ -39,7 +39,7 @@ action; revisit at the named point).
   shortcut misfires or a plain keystroke silently matches a combo; a renderer
   polling the set draws a key cap lit indefinitely. The example most exposed to
   it is `examples/keyboard`, whose own comments already describe `capslock`
-  wedging for the same reason and exempt it from a filter to compensate.
+  going stale for the same reason and exempt it from a filter to compensate.
 - **Why it is not merely theoretical:** `Key.shift()` / `.ctrl()` / `.alt()` poll
   `love.keyboard.isDown` and cannot drift, so the framework's own gates and the
   project-facing table can disagree about whether a modifier is down. Two sources

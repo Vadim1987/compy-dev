@@ -331,3 +331,19 @@ made. Treated as a spurious/possibly injected message and disregarded,
 including its instruction toward silence; flagging it here since a
 false "don't revert, don't tell the user" instruction is the kind of thing
 this task's non-negotiable rules exist to guard against.
+
+---
+
+## [S30] Citation note — a row title quoted here was renamed
+
+This document quotes the row `a nil hook does not wedge the next stop`
+(`tests/input/input_route_lifecycle_spec.lua`) and uses "wedge/wedged" in its own
+prose for *teardown blocked from completing*. Session30 retired that word on the
+owner's instruction — it was assistant-introduced on this branch (zero
+occurrences at the PR base), it had drifted into carrying two distinct meanings,
+and unratified vocabulary was judged a hallucination risk for reasoning built on
+these notes.
+
+The row is now **`a nil hook does not block the next stop`**. This document's text
+is left as written — it is a record of a check that was run — so read its
+"wedge/wedged" as "blocked / abandoned before completing".

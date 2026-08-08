@@ -237,7 +237,7 @@ The **key** arrives normally as `keypressed('capslock', …)`. Three things do n
 - **the state at startup**, and any toggle made while the window was unfocused;
 - **`keyreleased('capslock')`, reliably** — which is why `capslock` is exempt
   from the `isrepeat` filter in `keypressed`; a missing release would otherwise
-  wedge it in the held set.
+  leave it stuck in the held set, with nothing to clear it.
 
 Correcting the estimate from `textinput` (rule 1) is the only way to observe a
 lock state nobody reported. It must therefore run before any suppression. It

@@ -170,7 +170,7 @@ provides.
 `compy.input.keys_pressed` — the framework's **event-tracked** set. They can
 disagree: a key released while the window is unfocused never delivers its
 `keyreleased`, so the event set stays stale-true while the device poll reports
-false. That is the same wedging hazard the example already documents for
+false. That is the same staleness hazard the example already documents for
 `capslock`.
 
 **The platform mixes the two itself.** `combo_string` builds combos from

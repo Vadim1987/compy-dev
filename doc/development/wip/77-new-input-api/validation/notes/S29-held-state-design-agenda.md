@@ -17,7 +17,7 @@ the next answer contradicts. **Answer them together.**
 *"We need recovery path when set goes stale — it's not written and without
 recovery set is not reliable."*
 
-P9d (clear the set on focus loss) closes the **known** way it wedges. It is not a
+P9d (clear the set on focus loss) closes the **known** way it goes stale. It is not a
 recovery path: it names one cause. Anything else that loses a `keyreleased` —
 a route change mid-press, a raise that abandons dispatch, an OS quirk, a mode
 switch — leaves the set wrong with nothing to notice or correct it.
@@ -94,7 +94,7 @@ therefore re-asserts a key already held, and a release clears it regardless of
 how many presses preceded it.
 
 This is the question underneath Q1: whether a counter (or an ordered log) would
-make the set self-correcting, or merely make a wedged entry wedge harder.
+make the set self-correcting, or merely make a stuck entry harder to clear.
 
 ---
 
