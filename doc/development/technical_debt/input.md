@@ -58,6 +58,44 @@ action; revisit at the named point).
 - **Scheduled: before the PR** (plan phase P9d). If that slips, this entry is the
   record; delete it when the fix lands.
 
+### The gateway asks the device a question about an event
+
+- **State:** Decision 29 settles that event-time questions are answered from the
+  event-tracked `Controller.keys_pressed`. The gateway's own gates do not follow
+  it: `handlers.keypressed` and `handlers.keyreleased` reach for `Key.ctrl()` /
+  `Key.alt()` / `Key.shift()`, which poll `love.keyboard.isDown` — the device,
+  now — while `dispatch` beside them builds combos from the event-tracked set.
+- **What it costs:** LÖVE pumps the whole event queue before dispatching it, so
+  a poll taken while handling the first of several queued events reflects the
+  last. A power shortcut gated that way can miss, or fire for a modifier the
+  user has already let go of. Rare, because it needs two events in one frame,
+  and invisible when it happens — the keystroke simply does something else.
+- **Why it stands:** no reported defect traces to it; it is a consistency gap
+  found by reading, not by failing.
+- **Shape of the fix:** the gates take the held set the handler already has,
+  as `dispatch` does. Same folding, one clock.
+- **Scheduled: before the PR** (plan phase P9e), alongside the focus-loss fix
+  above; both are the framework's own held-state handling. Delete this entry
+  when it lands.
+
+### The held-key surface is a table that cannot be iterated
+
+- **State:** `compy.input.keys_pressed` is delivered as a read-only proxy — an
+  empty table whose metatable carries `__index` and `__pairs`
+  (`controller.lua`, `held_keys`). The shipping LuaJIT/Lua 5.1 runtime **ignores
+  `__pairs`**, so `pairs(compy.input.keys_pressed)` iterates the empty proxy and
+  yields nothing. Index-by-name works; nothing else does.
+- **What it costs:** "which keys are down" — filter the set, count it, render all
+  of it — cannot be written against this surface, and it is the natural thing to
+  want from something shaped like a table. `doc/input_api.md` states the
+  limitation, so a reader is warned rather than surprised.
+- **Why it stands:** `__pairs` was written for a future 5.2+ host, and no shipped
+  project has needed to iterate. The alternatives both cost something: a snapshot
+  accessor allocates per call, and a plain copied table would be writable or need
+  copying on every access.
+- **Revisit:** when a project needs the whole set rather than named keys, or if
+  the host runtime gains `__pairs`. Decision 29 records the question as unruled.
+
 ### The Web build has no coverage, and carried a feature-era regression unseen
 
 - **State:** nothing in `busted tests` exercises the `_G.web` branch, and the

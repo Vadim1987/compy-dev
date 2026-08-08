@@ -1162,3 +1162,55 @@ project leaves dirty — belongs here when it is built
 (`doc/development/technical_debt/general.md`). That gap is the one this hook cannot close on the
 project's behalf: a project that raises before reaching a clean state never runs its own teardown,
 because the raise ends the run rather than the stop.
+
+## Decision 29 — event-tracked keys are the framework's truth; combos are the project's tool
+
+**Decision.** Three statements, in force together.
+
+1. **The framework reads held state from the event-tracked set.** `Controller.keys_pressed` is
+   maintained at the top of `love.handlers.keypressed` / `keyreleased`, before any downstream
+   handler runs, and it is what every **event-time** question is answered from — combo
+   serialisation first among them. The framework does not consult the device for a question about
+   an event.
+2. **A project expresses chords through combos.** `shortcuts[channel][combo]` is the primary way a
+   project reacts to a modified event. It is declarative, it is folded (`ctrl`, never `lctrl`), and
+   it is one vocabulary across every channel (Decision 27).
+3. **The direct reads remain, as secondary channels.** `compy.input.keys_pressed` for held state
+   with no event in hand — a per-frame draw (Decision 20) — and the physical device queries for
+   what the event-tracked set cannot answer. Neither is deprecated; neither is the first thing to
+   reach for.
+
+**Why the framework must use the event-tracked set, and this is the load-bearing part.** The two
+sources answer on **different clocks**. `love.keyboard.isDown` reports the device *now*. The
+event-tracked set reports what was held *at the event being dispatched*. LÖVE pumps the entire
+event queue and then dispatches its events one at a time, so with a press and a release queued in
+the same frame, a device poll taken while dispatching the **press** already reports the key
+released. A combo built that way would be built from the future.
+
+This is why the set exists at all, and the reason survives Decision 26 removing it from the
+payload: what a handler is *handed* and what the framework must *track* are different questions.
+Dropping the argument did not remove the need for the tracking.
+
+**Why a project should reach for a combo first.** A modified event asked about imperatively becomes
+a cascade — `if not shift and not alt and not ctrl then` — restated at every call site, with the
+folding hand-rolled each time. The combo says the same thing once, as data, in the vocabulary the
+framework already serialises. The direct reads are for what a combo cannot express: held state
+during a draw, and the physical distinction between the two keys of a modifier pair.
+
+**Consequence, accepted.** The set can go stale where the device cannot: a key released while the
+window is unfocused never delivers its release. That is bounded and fixable in the framework
+(`technical_debt/input.md`), and the fix is to clear the set — **not** to rebuild combos on the
+device poll, which would trade a bounded staleness for the unbounded one described above.
+
+**Consequence, accepted.** `keys_pressed` stays keyed by LÖVE key name, unfolded: `lshift` and
+`rshift` are separate entries. Folding is lossy in the direction a keyboard renderer needs — it
+wants the cap that is actually down — and physical→logical is one `or` while the reverse is
+impossible. Folded names live in the combo vocabulary, which is where the folding is wanted.
+
+**Consequence, and the one part of the above the surface does not deliver.** "Filter or iterate the
+held set" reads as a natural use of a table, and it does not work: the read-only view is an empty
+proxy carrying `__index` and `__pairs`, and the shipping LuaJIT/Lua 5.1 runtime ignores `__pairs`,
+so `pairs(compy.input.keys_pressed)` yields nothing. The view is index-only in practice.
+`../../input_api.md` states the limitation, so a reader is warned rather than misled — but the
+surface is a table that cannot be read as one. Whether to give it a real snapshot accessor or to
+declare it index-only by design is **unruled**, and recorded in `technical_debt/input.md`.

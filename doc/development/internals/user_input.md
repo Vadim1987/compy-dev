@@ -249,6 +249,18 @@ variants are stored without folding — `lctrl` and `rctrl` are two
 separate entries, not merged into `ctrl`.
 
 > REMARK: for pointer we will assemble combo strings without triggering keys
+**Why the event-tracked set and not `love.keyboard.isDown`**
+(`../decisions/input.md`, Decision 29). The two answer on different
+clocks. A device poll reports what is held *now*; this table reports
+what was held *at the event being dispatched*. LÖVE pumps the whole
+event queue and then dispatches its events one at a time, so with a
+press and a release queued in the same frame, a poll taken while
+dispatching the **press** already reports the key released. Every
+event-time question — combo serialisation above all — is therefore
+answered from this table, and the physical queries in `util/key.lua`
+are for frame-time questions, where "now" is the right clock. The
+two can disagree, and each is correct on its own.
+
 `Controller.combo_string(k, keys_pressed)` serialises a key event
 into a canonical combo string. It prepends any held modifiers in
 fixed precedence order — `ctrl`, `alt`, `shift`, `gui` — then

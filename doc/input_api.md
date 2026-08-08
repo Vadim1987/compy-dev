@@ -364,9 +364,16 @@ cannot be registered.
 
 ## Held keys
 
+**Reach for a combo first.** To react to a *modified event* — a click with Ctrl,
+`Shift+Enter`, `alt+p` — register a shortcut and let the framework match it:
+`shortcuts.keypressed['ctrl+s']`. That says it once, as data, in a vocabulary
+that is already folded and already the same on every channel. Asking about
+modifiers imperatively inside a handler turns into a cascade repeated at every
+call site. The held set below is for what a combo cannot express.
+
 `compy.input.keys_pressed` is a read-only table of the keys held right now,
 keyed by LÖVE key name: `compy.input.keys_pressed['lshift']` is `true` while
-either shift is down and `nil` otherwise. Reading it is allowed anywhere,
+**the left** shift is down and `nil` otherwise. Reading it is allowed anywhere,
 including from `love.draw` — which is the point, since a project that *draws*
 held state has no event argument to consult.
 
@@ -378,9 +385,10 @@ function love.draw()
 end
 ```
 
-Writing to it raises: the project observes the held set, it does not own it.
-The same table arrives as the second argument of every shortcut, hook and
-widget call, so a handler can use either.
+Writing to it raises: the project observes the held set, it does not own it. It
+is **not** passed to handlers — every shortcut, hook and widget call receives
+LÖVE's own arguments and nothing added, so a handler that wants held state reads
+`compy.input.keys_pressed` the same way a `love.draw` does.
 
 Left and right modifiers are **not** folded here — this is the raw held set,
 so test `lshift` and `rshift` separately. (Combo strings *are* folded:
