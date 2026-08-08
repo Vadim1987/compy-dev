@@ -27,10 +27,36 @@ discourage if-cascades, because **a polling table is itself an if-cascade
 surface**: `if keys['lctrl'] then` is the same shape as `if Key.ctrl() then`. It
 relocates the pattern; it does not replace it. Only the combo replaces it.
 
-## Why the deterrent failed, with the evidence
+## First, what "folded" means here
 
-**Every example that wants a modifier reaches for `Key.*`, and none uses
-`keys_pressed`:**
+LÖVE reports the two physical keys of each modifier separately: `lshift` and
+`rshift`, `lctrl` and `rctrl`, `lalt` and `ralt`, `lgui` and `rgui`. **Folding**
+is collapsing that pair into one logical modifier — "Shift is down" being either
+of them.
+
+- `Key.shift()` is **folded**: one call, either key.
+- `compy.input.keys_pressed` is **unfolded**: it carries `lshift` and `rshift` as
+  separate entries, so a project asking "is Shift held" must OR them itself.
+- **`combo_string` folds** — `COMBO_MODS` holds the l/r pair plus the folded name,
+  and the combo it builds says `shift`, never `lshift`.
+
+That last point is the inconsistency in one line: **the combo vocabulary a project
+writes is folded, and the table the same project reads is not.** `'ctrl+s'` on one
+side, `keys_pressed['lctrl'] or keys_pressed['rctrl']` on the other, for the same
+concept.
+
+## [CORRECTED] What the examples do and do not prove
+
+> **Owner correction, 2026-08-08.** An earlier version of this note read the
+> examples' `Key.*` usage as evidence that the deterrent had failed. **That
+> inference is wrong.** The examples were migrated to the new API by an assistant
+> under instruction; low uptake of combos measures how thoroughly (or how
+> conservatively) that migration was done, not what a project author would
+> naturally reach for. Adoption by a migrator is not adoption by a user.
+
+What the sites below **do** establish is a **migration gap** — pre-migration
+modifier cascades left standing where the new tier can express them. That is
+W11 work, not a verdict on the design:
 
 | project | site | shape |
 |---|---|---|
@@ -44,12 +70,18 @@ relocates the pattern; it does not replace it. Only the combo replaces it.
 "Unmodified click" and "shift-click" are the two cases, and Decision 27 already
 expresses both: an unmodified event has nothing to name and goes to the hook
 tier, while `shortcuts.singleclick['shift+*']` names the other. The example
-hand-writes a triple negation in three places instead.
+hand-writes a triple negation in three places instead. Whoever migrated it left
+that behind — which is a task for W11 and says nothing about the API's shape.
 
-**And the incentive points the wrong way.** The documented surface is
-**unfolded**; the undocumented `Key.*` is **folded**. So the sanctioned path is
-more awkward than the unsanctioned one for the same question — and
-`doc/input_api.md:375` teaches the awkward one by example:
+## What stands independently of who wrote the examples
+
+Two properties of the API and its documentation, true regardless of adoption:
+
+**The incentive points the wrong way.** The documented surface is unfolded; the
+undocumented `Key.*` is folded. For the same question, the sanctioned path is the
+more awkward one. That is a property of the surfaces, not of their users.
+
+**The guide teaches the hand-rolled fold.** `doc/input_api.md:375`:
 
 ```lua
 local shifted = compy.input.keys_pressed['lshift']
@@ -57,8 +89,8 @@ local shifted = compy.input.keys_pressed['lshift']
 ```
 
 Nothing anywhere says *"for event-time modifier logic, write a combo"*. A
-deterrent that is never stated, against an alternative that is easier to type,
-is not a deterrent.
+deterrent that is never stated cannot deter — and this one is aimed at readers of
+the guide, so it is the guide that has to state it.
 
 ## The drift is a framework gap, not an argument for `Key.*`
 

@@ -26,6 +26,31 @@ action; revisit at the named point).
 
 ## Standing
 
+### The held-key set is never cleared on focus loss, so it can wedge
+
+- **State:** `compy.input.keys_pressed` is maintained purely from events — a key
+  is added on `keypressed` and removed on `keyreleased`. The gateway installs no
+  focus handler (`controller.lua`, the callback table marks focus **SKIPPED**),
+  so a key released while the window is unfocused never delivers its release and
+  stays in the set as held. Nothing clears it afterwards but a real press and
+  release of that same key.
+- **What it costs:** anything reading the set gets a stale `true`. A combo built
+  by `combo_string` can then carry a modifier the user is not holding, so a
+  shortcut misfires or a plain keystroke silently matches a combo; a renderer
+  polling the set draws a key cap lit indefinitely. The example most exposed to
+  it is `examples/keyboard`, whose own comments already describe `capslock`
+  wedging for the same reason and exempt it from a filter to compensate.
+- **Why it is not merely theoretical:** `Key.shift()` / `.ctrl()` / `.alt()` poll
+  `love.keyboard.isDown` and cannot drift, so the framework's own gates and the
+  project-facing table can disagree about whether a modifier is down. Two sources
+  of truth, one of which decays.
+- **Shape of the fix:** clear the set when the window loses focus. The gateway
+  already owns the callback table where the handler belongs, and the framework
+  now has a named seam for state it owns. No API change, and no project has to
+  know it happened.
+- **Scheduled: before the PR** (plan phase P9d). If that slips, this entry is the
+  record; delete it when the fix lands.
+
 ### The Web build has no coverage, and carried a feature-era regression unseen
 
 - **State:** nothing in `busted tests` exercises the `_G.web` branch, and the
