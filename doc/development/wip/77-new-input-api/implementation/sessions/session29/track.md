@@ -302,3 +302,36 @@
   frame: a reviewer who cannot see this is tracked will assume it was missed.
 </content>
 </invoke>
+
+## 2026-08-08 — WRAPPED
+
+Suite **955 / 0 / 0 / 3**, green and stated at every commit. 13 commits, one a
+production fix (`5a83fe8c`). Nothing pushed.
+
+Wrapped at the owner's call, not on context pressure alone: the five held-key
+questions are a coherent design agenda, and answering them inside a long,
+heterogeneous thread is how the discarded P9b design got made. Q2 answered in
+the agenda note; the other four handed over intact.
+
+Distilled into `report.md`; agenda into
+`../../../validation/notes/S29-held-state-design-agenda.md`; successor
+commissioned as session30 and the pointer repointed. Track kept raw per
+`agents/sessions.md` §3.
+
+## Sub-agents
+
+All Sonnet, explicit model, prompts and deliverables on disk under
+`validation/{prompts,reviews}/` — the owner directed reviews to `reviews/` for
+this phase rather than `outcomes/`:
+
+- **S29-merge-revalidation** — the suite merge, from outside the S28 checks' shape.
+- **S29-production-fixes** — the two fixes, mutation re-run rather than trusted.
+- **S29-smoke-dispositions** — SM1–SM5, per premise rather than per finding.
+- **S29-p9b-design** — the design against its own declared state.
+- **S29-p9b-vs-original** / **S29-new-design-vs-original** — the four-way
+  comparisons, the second extended mid-run to include the migration once the
+  owner flagged shared input infrastructure.
+
+The two design comparisons were the highest-value spawns: the first found the
+design was a regression against shipped code, the second found three gaps in the
+rewrite that replaced it.

@@ -1175,10 +1175,12 @@ because the raise ends the run rather than the stop.
 2. **A project expresses chords through combos.** `shortcuts[channel][combo]` is the primary way a
    project reacts to a modified event. It is declarative, it is folded (`ctrl`, never `lctrl`), and
    it is one vocabulary across every channel (Decision 27).
-3. **The direct reads remain, as secondary channels.** `compy.input.keys_pressed` for held state
-   with no event in hand — a per-frame draw (Decision 20) — and the physical device queries for
-   what the event-tracked set cannot answer. Neither is deprecated; neither is the first thing to
-   reach for.
+3. **The direct reads remain, as secondary channels — for wherever combo and shortcut logic does
+   not fit.** A per-frame draw with no event in hand is the clearest case (Decision 20), not the
+   only one: anything asking about held state in a shape a declarative combo cannot express reads
+   `compy.input.keys_pressed`, or the physical device queries where the event-tracked set cannot
+   answer. Neither is deprecated, and neither is second-class — they are second *choice*, after the
+   declarative route has been considered and found not to fit.
 
 **Why the framework must use the event-tracked set, and this is the load-bearing part.** The two
 sources answer on **different clocks**. `love.keyboard.isDown` reports the device *now*. The
