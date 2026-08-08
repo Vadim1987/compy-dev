@@ -247,5 +247,58 @@
 - Plan §7 amendment 3 + the P9b row rewritten. Grepped the corpus for citations
   of the discarded design's terms (`TEXT_TAIL_FRAMES`, `seenText`, `judgedText`,
   `lastGlyph`) — none outside the wip working tree, so nothing dangles.
+
+## 2026-08-08 — validation of the rewrite, and three gaps that were mine
+
+- Cold Sonnet agent, A vs C vs E, prompt
+  `validation/prompts/S29-new-design-vs-original-agent.md` → review
+  `validation/reviews/S29-new-design-vs-original.md`. Owner extended scope
+  mid-run to include **B**, once they learned the minigames share input
+  infrastructure; sent via message to the running agent rather than a respawn.
+- **Both questions answered.** Better on the counts (judging state 5 → 2 → 2;
+  constants 1 → 1 → **0**; live-state reads in judging 4 → 2 → **0**; clock
+  reads 1 → 1 → **0**). And the subtraction has **no other-scene blast radius**
+  — `GLYPH_CLAIMED`/`spendGlyph`/`upRecent`/`INPUT_UP_GRACE` are read nowhere
+  outside `input.lua` and `alt.lua` across 23 files; no other scene carries an
+  `inputStale`-shaped defect; `help.lua`'s `INPUT.held` read is a continuous
+  poll, not event-time inference.
+- **B behaved better than feared:** its first commit *split* `inputStale` —
+  keypressed-channel repeat filtering moved to the platform's `isrepeat`, which
+  benefits every scene identically, while the textinput defect was left verbatim
+  until `3a9d48c`. Every scene file byte-identical to A across the migration.
+- **Three gaps, all mine, all at the boundary I did not look at.** Verified each
+  in code before fixing: (i) `capsReconcile` runs in the **shared**
+  `appTextinput` for every scene, not in Alt's judging — my "rule 1" would have
+  silently stopped Caps re-estimation in `press`/`find`/`intro`; (ii) the shared
+  handler **already** drops Alt/Ctrl chords, so my "there is no modifier guard"
+  was false as a description; (iii) I dropped `alt.lua`'s exemption that a
+  modifier or `capslock` must not knock a non-printing target. `4a49c4ea`.
+- Opened rather than answered: the **symmetric** chord case — releasing Ctrl+Alt
+  while `H` stays down sends stray `h` into judgement. Recorded what A and C do
+  from the code, not their comments: **C's own comment claims to cover it and
+  the path does not obviously bear that out**. Needs the device; owner's ruling.
+
+## 2026-08-08 — P12 added: upstream reconciliation blocks the PR
+
+- **Owner corrected me.** I had written the upstream-integration question up as
+  a later nice-to-have, "explicitly not a PR blocker". It blocks: a platform
+  upgrade that breaks a downstream project cannot ship without a compatibility
+  PR to that project, and two of the three example repos are **not ours**
+  (`dsent/keyboard`, `nagydani/Compy-maze`). Platform PR + example PRs are one
+  release, not four.
+- Wider than the examples: the **platform** repo has advanced too, possibly
+  along a fork, so the real PR reconciles on three fronts at once.
+- Written into the plan as **P12** with §8 carrying the rationale, the snapshot
+  table (keyboard `3a9d48c` on `newinput`, **no tracking ref**; maze ahead 3;
+  balloons ahead 4 — all against last-known refs, nothing fetched), and the part
+  that is not a merge: upstream's newer minigames were written against the
+  pre-migration path, so re-integration repeats this session's audit over scenes
+  that do not exist here yet. §7 amendment 4 records the correction.
+- Sequenced deliberately last — stabilise the snapshots first; re-planning
+  against a moving upstream mid-design is how work gets done twice, which this
+  session watched happen. P12 owes its own coordinated plan, an owner-authorised
+  fetch of third-party remotes, and a merge-order decision.
+- Also to carry into the PR description's open questions, per the strategic
+  frame: a reviewer who cannot see this is tracked will assume it was missed.
 </content>
 </invoke>

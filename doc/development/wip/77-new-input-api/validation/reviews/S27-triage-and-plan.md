@@ -548,6 +548,7 @@ state dirty").
 | **P9c** | **[S29] The two order-dependent rows this feature owns** (owner, 2026-08-08). Under `--shuffle`, `inbound events — Ctrl+Esc quits the app when nothing is left to go back to` and `inbound events — shortcuts and clicks — a shortcut fires but does not consume (#disputable)` fail. Find what state each depends on and who leaves it; fix or document per row | P9b | **before the PR.** The suite-wide order dependence is separate and pre-dates the branch — filed as persistent debt (`technical_debt/general.md`, "The test suite passes only in declaration order") and explicitly **not** in scope here. In scope: only rows this branch adds |
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it. **Tombstone decisions, never renumber** |
 | P11 | W12 — comment sweep, slices, revalidation ×2 | P10 | the commission's (e)–(9) |
+| **P12** | **[S29] Upstream reconciliation and downstream compatibility** (owner, 2026-08-08). Reconcile this branch against the advanced upstreams — the platform repo (and possibly an advanced fork of it) **and** each example repo — then land the coordinated set of PRs | P11 / close-out of the current snapshots | **Blocks the real PR, and needs its own plan.** Not attempted before the snapshots are stable: re-planning against a moving upstream while the design is still settling means doing it twice. See §8 |
 
 **The ordering rule behind this:** code first, tests second, docs third,
 comments last. Every phase that moves code invalidates doc prose and comments
@@ -673,6 +674,7 @@ text untouched, everything session29 changes marked `[S29]`.
 | 1 | **P9c added** — the two order-dependent rows this branch owns | found while revalidating the S28 merge (`../reviews/S29-merge-revalidation.md`): `busted tests --shuffle` fails these two among a few dozen. Owner ruled 2026-08-08 that the suite-wide condition is persistent debt and these two are a scheduled pre-PR look, kept separate so the branch is not asked to fix a pre-existing problem |
 | 2 | **Decision 26 completed in code** (`5a83fe8c`) — no phase change, recorded because the ledger entry now describes the tree and did not before | revalidating the two production fixes (`../reviews/S29-production-fixes-revalidation.md`) found `handlers.keyreleased` narrowing LÖVE's list to the key alone: the last channel in the system not passing its arguments verbatim, against Decision 26's own rule and `doc/input_api.md`'s bold statement of it. Base-checked — Decision 26 widened `keypressed` and missed its pair, so the gap is the branch's. Owner ruled widen, 2026-08-08 |
 | 3 | **P9b's design discarded and rewritten** (owner ruling, 2026-08-08). The old design is superseded in place in the persistent corpus; the P9b row above carries the new shape | Four-way comparison against the game's own history (`../reviews/S29-p9b-vs-original.md`) plus the design revalidation (`../reviews/S29-p9b-design-revalidation.md`) found it internally contradictory, its rule 4 unimplementable, its rule 5 inert, and — measured against the shipped interim fix — a **regression**: it reintroduced a live held-state read the shipped code had already eliminated. The owner's account: the paradigm and the table-as-state-model were their only original inputs; the rest answered self-inflicted corner-cases |
+| 4 | **P12 added — upstream reconciliation** (owner ruling, 2026-08-08), with its rationale in §8 | recorded at the point the assistant got it wrong: it was first written up as a later nice-to-have and "explicitly not a PR blocker". It **blocks** — a platform upgrade that breaks a downstream project cannot ship without a compatibility PR to that project, and two of the three example repos are not ours. Deliberately sequenced after the current snapshots stabilise, and owed its own coordinated plan |
 
 One finding from the same pass that is **not** scheduled, recorded so a later
 phase does not rediscover it as new:
@@ -686,3 +688,58 @@ phase does not rediscover it as new:
   empirically, not inferred. No fix proposed: `finally` is used nowhere else in
   this suite, so guarding four rows against a bug that does not exist would be a
   suite-wide convention change bought for an ideal.
+
+## 8. [S29] P12 — upstream reconciliation, and why it blocks
+
+Owner ruling, 2026-08-08, recorded at the point the assistant got it wrong: this
+was first written up as a later nice-to-have and "explicitly not a PR blocker".
+**It is a blocker.**
+
+**Why.** W1 changed a project-facing signature. A platform upgrade that breaks a
+downstream project cannot ship without a corresponding PR to that project
+establishing compatibility. Two of the three example repos are **not ours** —
+`dsent/keyboard` and `nagydani/Compy-maze` — so "we fixed it in our checkout" is
+not a state anyone else can consume. The platform PR and the example PRs are one
+release, not four independent ones.
+
+**What has moved underneath us.** The three nested repos in this tree are
+snapshots pinned at the versions the feature was developed against:
+
+| repo | local | tracking | remote |
+|---|---|---|---|
+| keyboard | `3a9d48c` on branch `newinput` | **none recorded** | `dsent/keyboard` |
+| maze | `v3.4`, ahead 3 | `origin/v3.4` | `nagydani/Compy-maze` |
+| balloons | `main`, ahead 4 | `origin/main` | `hleb-rubanau/compy-balloons` |
+
+The owner reports upstream `keyboard` now carries **more minigames than this
+snapshot has**. Nothing here has been fetched — the ahead-counts are against
+last-known refs, and `keyboard`'s branch has no tracking ref at all, so its true
+divergence is unknown from inside this tree.
+
+**And it is wider than the examples.** The **platform** repo has advanced too,
+possibly along an advanced fork. So the real PR reconciles on three fronts at
+once — platform against its own upstream, each example against its upstream, and
+the compatibility matrix between them.
+
+**The part that is not a merge.** New upstream minigames were written against the
+**pre-migration** input path. Re-integration therefore repeats the audit this
+session ran — held-state reads at judging time, repeat inference, signature
+arity — over scenes that **do not exist in this tree yet**. Session29's finding
+that no *current* scene carries an `inputStale`-shaped defect
+(`../reviews/S29-new-design-vs-original.md`, Part 5) says nothing about scenes
+added since.
+
+**Sequencing, and why it is last.** Stabilise the snapshots first — that is what
+P9b through close-out are for. Re-planning against a moving upstream while the
+design is still settling is how the work gets done twice; this session watched a
+design accrete for exactly that reason.
+
+**What P12 owes, at minimum:** its own coordinated plan (not a row in this
+table); a fetch-and-diff of each upstream, authorised by the owner, since it
+touches third-party remotes; the audit above over any new scenes; and a decision
+on ordering — whose PR merges first, and what each says about the others.
+
+**Carry it into the PR description's open questions.** The strategic frame says
+the PR is reviewable from `doc/input_api.md` plus the description alone; a
+reviewer who cannot see that downstream compatibility is a tracked, sequenced
+obligation will reasonably assume it was missed.
