@@ -1,0 +1,225 @@
+# session30 — track
+
+## 2026-08-08 — boot
+
+- Booted per `agents/validation.md` → `agents/sessions.md`. **Fresh start**:
+  session30 held only `prompt.md`, no `track.md` / `report.md` (sessions §2 row 1).
+- HEAD `7e3ae74d` "docs(session29): wrap — report, held-state design agenda,
+  session30 prompt", branch `feature/77-newapi-analysis-s20260615`. Working tree
+  carries only the known untracked scratch (`claude.sh`, `src/STEPS.md`,
+  `input-pr-slices.tar.gz`, `doc/tall_blocks.md`,
+  `doc/development/wip/{clarification,personal-notes,pull-26}/`) and the three
+  nested example repos (`src/examples/{balloons,keyboard,maze}`). No tracked
+  modifications.
+- **Baseline confirmed: `busted tests` → 955 / 0 / 0 / 3.** Matches the prompt.
+  (`agents/validation.md` §6 still says 953 — that line is self-declared fallback;
+  the session prompt is authoritative. No finding.)
+- Read in full: `agents/validation.md`, `agents/sessions.md`, this session's
+  `prompt.md`, session29's `report.md` + `prompt.md` + `track.md`, and
+  `validation/notes/S29-held-state-design-agenda.md`.
+- Noted, not acted on: session29's `track.md` carries a stray `</content>` /
+  `</invoke>` pair at :303-304 (tool-echo residue). Historical artifact —
+  immutable per the prompt; flagged to the owner only.
+- Task as understood, stated to the owner before proceeding: **part 1** — the
+  held-state design session with the owner; **part 2** — resume the plan:
+  P9b → P9c → P9d/P9e → P10 → P11 → close-out → P12. Part 1 gates P9d/P9e.
+
+## 2026-08-08 — owner's four opening remarks (they reframe part 1)
+
+1. **"Suspicious there is no Q2."** Correct instinct. Q2 exists and was closed
+   *by the assistant, in session29*, marked `[ANSWERED IN SESSION]` in the agenda
+   note; session30's own prompt then instructed "do not re-open it". So one of
+   the owner's five questions was retired without an owner ruling. **Reopened.**
+2. **Decision 26 is ours, not an external constraint** — it itself reverted an
+   earlier decision, and it can be overridden. The goal is *what is feasible given
+   fundamental constraints and needs*, not what is already ratified. This
+   dissolves the load-bearing premise of Q2's in-session closure (which reasoned
+   about how 26 and 29 divide jurisdiction, treating 26 as fixed) and it defuses
+   Q3's framing as an "amend-or-supersede question".
+3. **The agenda has a question underneath it, and that is where to start:**
+   *should we store a model of keys pressed at all, or is it unfeasible?* —
+   i.e. weigh event-based tracking vs realtime hardware queries on their merits.
+   Q1 and Q5 are downstream of that. Call it **Q0**.
+4. **Drift policy (owner directive).** The P9b drift happened because a
+   materialised document was never validated against the intent expressed in
+   conversation. The owner will **not** proof-read every materialised note —
+   that is inefficient. Drift is caught on the **next iteration** instead;
+   tolerable and cheaper. So: do not ask the owner to review notes as a routine
+   gate; rely on the next cold pass to catch it.
+
+## 2026-08-08 — Q0 evidence gathered (code-verified unless marked)
+
+Verified in code:
+
+- The model is **two lines**: `controller.lua:788` (`keys_pressed[k] = true` in
+  `handlers.keypressed`) and `:906` (`= nil` in `handlers.keyreleased`). No other
+  writer anywhere.
+- The framework already uses **both sources, inconsistently**: `combo_string`
+  (`:395`) and `any_mod` (`:411`) read the event set; the gateway's own gates read
+  the **device** — `Key.ctrl()` at `:907`, and `Key.ctrl/alt/shift()` has **70
+  call sites across 5 controllers**. `util/key.lua:141-164` shows all three are
+  `love.keyboard.isDown(unpack(...))`. This inconsistency is what P9e names.
+- Exposure path: `held_keys()` memoised read-only proxy (`:430`) →
+  `compy.input.keys_pressed` (`consoleController.lua:540`).
+- **A framework-owned per-frame hook already exists**: `set_love_update`
+  (`:556-634`), which already synthesises derived click events. A reconcile has a
+  home; no new machinery tier.
+- Wedge blast radius confirmed from `find_shortcut`
+  (`projectInputController.lua:101-112`): a phantom held `lalt` makes
+  `combo_string('s', keys)` return `'alt+s'`, so a plainly-keyed `'s'` shortcut
+  **cannot match**; the fallback is `tbl['alt+*']`. One stuck modifier silently
+  disables every unmodified shortcut on every channel.
+- **Fixture-fidelity gap:** `tests/mock.lua:30` is
+  `isDown = function(k) return held[k] end` — single-arg. Every variadic
+  `Key.ctrl()` under the suite therefore only ever consults the **left** key.
+  Matters if we lean harder on the device.
+
+Reasoned from LÖVE/SDL architecture, **not verified at runtime here** (flagged as
+such to the owner; a headless check is proposed):
+
+- `love.event.pump` drains the OS queue and SDL updates its keyboard state array
+  during that pump; `love.event.poll` then dispatches the batch one event at a
+  time. So while dispatching event 1 of N, `isDown` already reports the state
+  *after* event N — Decision 29's "built from the future".
+- The two clocks **coincide by construction** at one moment: after the whole
+  batch is dispatched and before the next pump — i.e. `love.update` entry.
+- SDL clears its keyboard state on focus loss, so a reconcile at update would
+  subsume P9d rather than sit beside it.
+
+## 2026-08-08 — owner reframes Q0: intent was structure, not correctness
+
+Owner's account, and it changes the weighing:
+
+- **Pre-feature, all querying was physical**; there were no shortcuts. Generic
+  user complaints existed — *"weird reaction to keyboard sometimes"* — never
+  recorded, reproduced or investigated.
+- **The original motive for event-based tracking was code structure, not clock
+  correctness**: to stop `if Key.shift()` cascades sprawling through the codebase
+  — global state injected everywhere, nested conditionals at random depth,
+  untestable. If *isolated, centralised* hardware querying reached the same
+  result (one place builds combo strings), the owner would accept that.
+- Therefore **the structural goal does not decide the source**; the source is
+  decidable on reliability alone. Owner wants: which is more reliable, what does
+  LÖVE recommend, how *possible* are the failure scenarios (defending against
+  rare exotica may be unfeasible; sane mitigation may be needed regardless).
+- **Alt+Tab downgraded**: primary device is an Android laptop with keyboard, used
+  by kids who are not expected to switch windows routinely.
+- Pre-feature authority is not binding — physical querying *may* be discouraged
+  now, but only with solid confidence about reasons, justification, feasibility.
+- Owner's own hypothesis: buffered pumping + the unexplained complaints "may be
+  it".
+
+## 2026-08-08 — Q0 census: the cascades and the wrong-clock reads are the same lines
+
+Attributed every `Key.ctrl/alt/shift()` call site to its enclosing function
+(awk over the 5 files, then spot-checked; a first attribution pass wrongly
+credited `editorController:677-719` to `update_status()` — the enclosing scope is
+actually a `k`-handling block, corrected before reporting).
+
+**All 70 sites sit in event-handling paths**: `navigate` (14 + 6), `selection`,
+`horizontal`, `vertical`, `copypaste`, `copycut`, `paste_k`, `removers`,
+`newline`, `delete`, `clear`, `replace`, `add`, `load`, `modify`, `quickswitch`,
+`restart`, `profile`, `project_state_change`, `terminal_test`,
+`EditorController:keypressed`, `EditorController:textinput`,
+`ConsoleController:textinput`, and the gateway's own `keypressed`/`keyreleased`.
+**Not one is a frame-time or draw-time poll.** Every one asks "what was held at
+this event" and answers it by polling the device.
+
+Consequence for Decision 29 clause 3: it preserves direct reads as a legitimate
+secondary channel whose flagship case is "a per-frame draw with no event in hand"
+— and the platform contains **zero** such keyboard instances. The justification is
+theoretical, not observed.
+
+## 2026-08-08 — the buffered-pump mechanism, structural half now code-verified
+
+- **This project overrides `love.run`** — `src/harmony/init.lua:104`
+  (`harmonius_run`), loop at `:49-50`: `love.event.pump()` then
+  `for name,... in love.event.poll() do love.handlers[n](...) end`. So the entire
+  OS batch is drained into LÖVE's queue **before the first handler runs**.
+  Draining is what updates SDL's key-state array, so `isDown` during dispatch of
+  event 1 of N reflects state after event N. LÖVE 11.5.
+- **Unverifiable in this image:** no `xdotool` / `xte` / python-Xlib and no
+  package source, so no synthetic key injection. `love.event.push` bypasses SDL
+  and cannot test the coupling. The SDL half (state array updated during pump)
+  stays documented-contract, not measured here — flagged to the owner, and the
+  frequency half needs the real device.
+- **Existing precedent in this codebase:** `harmony/init.lua:242 patch_isDown`
+  already shadows `love.keyboard.isDown` with a script-maintained `held` table,
+  falling back to the real device unless locked. The system already concluded
+  once that a maintained table beats the device where determinism matters.
+- **Polling's failure mode is one event tracking does not have — false
+  positives.** Tap `s`, then press Ctrl for the next action, both in one batch →
+  at dispatch of `keypressed('s')` `Key.ctrl()` is already true → a plain `s`
+  executes as Ctrl+S. Non-reproducible, frame-boundary dependent, fires an action
+  the user never typed. Lower framerate widens the window, so the Android target
+  is the **worst** case, not the mildest.
+
+## 2026-08-08 — owner: did harmony's shadow table predate the feature? (it did — and it exposes a P9e blast radius)
+
+Owner asked whether `patch_isDown` predates the feature and whether the feature
+is recreating it a level up without good reason. Checked rather than assumed:
+
+- **Predates it, verbatim.** Present at PR base `3256aac`; introduced by
+  `4203de7f feat: harmony`. `git diff --stat 3256aac HEAD -- src/harmony/` is
+  **empty** — this branch has not touched harmony at all.
+- **Not the same mechanism.** Harmony's `held` (`init.lua:174-184`) is **eight
+  modifier keys**, hand-set by a script, deliberately *not* event-derived: a
+  puppet, not a mirror. `keys_pressed` is all keys, event-derived, mirroring
+  reality. Harmony injects a lie so that *polling* consumers believe a modifier
+  is down that no OS ever sent.
+- **The dependency runs the other way.** `love_key` (`:272-293`) splits `'C-S-s'`:
+  modifiers set `held[m] = true` **with no event pushed**; the real key gets
+  `love_event('keypressed'/'keyreleased')` → `love.event.push('sazed_…')` →
+  `harmonius_run` un-prefixes → `love.handlers[n](...)` → **does** land in
+  `Controller.keys_pressed`. So harmony already pushes real events for everything
+  *except* modifiers, and the only reason modifiers are special is that polling
+  consumers are cheaper to fool. The table is a **symptom of the polling
+  architecture**, not a precedent for the feature's model.
+- **FINDING, unrecorded anywhere: P9e breaks harmony's scripted modifiers.** Once
+  the gates read `keys_pressed` instead of `isDown`, harmony's modifiers are
+  invisible. Affected scripts: `scenarios/editor.lua` (`C-t` ×5 via
+  `shortcuts.toggle`, `C-S-s`, `C-S-q`, `C-f`, `S-return`) and
+  `scenarios/inspect.lua` (`C-pause`, `C-S-q`). Harmony is untouched by this
+  branch, so nothing would flag it.
+  - **Recommended fix: harmony pushes real modifier events and `patch_isDown` is
+    deleted.** Net subtraction, and harmony would then exercise the real gateway
+    path it currently bypasses — which is what an automation harness should do.
+  - Alternative: keep the patch, accept that harmony can no longer drive the
+    event-based paths this feature introduced. Cheaper now, blind later.
+- **Irony worth keeping:** harmony's `held` **wedges by design** — `held[m]=true`
+  is never cleared per key (the inline `release_keys()` at `:286` is commented
+  out), relying on an explicit manual `release_keys()` (`:331`). The pre-feature
+  mechanism already exhibited Q1's staleness problem and answered it with a
+  manual reset — the weakest form of a recovery path.
+
+## 2026-08-08 — what harmony actually is, and its coupling (owner was unaware of the whole subsystem)
+
+Explained to the owner from code; facts established:
+
+- **Not used by tests, not in CI.** Zero references to harmony under `tests/`;
+  `.github/workflows/package.yml` runs only `busted tests -o utfTerminal`.
+  Invoked by hand: `justfile:60 dev-harmony` (file-watcher dev loop) and
+  `justfile:131 one-harmony` → `love src harmony`.
+- **Nascent assertion capability, essentially unused:** exactly one `assert` in
+  the whole subsystem (`scenarios/examples.lua:27`,
+  `assert(love.state.app_state == 'running')`). The commit
+  `7b2d8645 fix(harmony): larger timeout for state assert` is a `wait(.1)→wait(.3)`
+  change. So it is a driving/screenshot harness with a toehold in verification,
+  not a test suite.
+- **Correction to what I told the owner earlier:** I listed several chords as
+  lacking a following `release_keys()`. `hm_done` (`init.lua:331`) calls
+  `release_keys()` itself, so every scenario-end chord is covered. The one real leak
+  is `scenarios/editor.lua:102` (`S-return` mid-scenario, Shift held until `:108`).
+- **Owner's generalisation, and it is correct:** any system-wide input change
+  either breaks harmony's scripting or requires matching harmony changes.
+  Sharpened cause: harmony is a **second implementation of the app's input
+  surface** (its own `love.run`, its own held-modifier table, its own patched
+  `isDown`), so it is coupled to whatever that surface happens to be.
+- **The durable fix follows from that.** If harmony injects real modifier events
+  instead of faking the poll, it stops having a private input surface and becomes
+  a *client of `love.handlers`* — the same interface a real keyboard uses. The
+  coupling then survives future input changes for free. That is a stronger reason
+  to do it than the P9e breakage alone.
+- **No automated signal.** Because harmony is outside CI and outside busted,
+  breaking it is silent until someone runs it by hand. Argues for making the
+  harmony-side change inside this PR rather than leaving it to be discovered.

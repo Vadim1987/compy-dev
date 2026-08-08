@@ -547,10 +547,11 @@ state dirty").
 | **P9b** | **keyboard: judgement decoupled from delivery order** (owner design, 2026-08-07) — **NEXT TO EXECUTE**. **[S29] The design was rewritten on 2026-08-08 and the old one discarded** — see §7 amendment 3. Now: `textinput` is the **only** judge; two fields (`lastText`, `blocked`); writes blocked across the win transition; `keypressed` feeds the non-printing targets into the same judging function; `keyreleased` holds no judgement state; **no clock, no grace window, no held-set read**. Subtracts `spendGlyph`, `GLYPH_CLAIMED`, `INPUT.upRecent`, `INPUT_UP_GRACE` and `altPlayKey`'s judging path | P9 | design of record, in the **persistent** corpus: `doc/development/internals/examples/keyboard.md`. Nested repo, **no suite** — reasoned, not proven; smoke checklist is in the design note. No platform change, and **[S29] no game-side change either** — `gaugeCandidates` already excludes `st.cur`, so back-to-back identical targets are prevented today; the design records it as a precondition rather than asking for one |
 | **P9c** | **[S29] The two order-dependent rows this feature owns** (owner, 2026-08-08). Under `--shuffle`, `inbound events — Ctrl+Esc quits the app when nothing is left to go back to` and `inbound events — shortcuts and clicks — a shortcut fires but does not consume (#disputable)` fail. Find what state each depends on and who leaves it; fix or document per row | P9b | **before the PR.** The suite-wide order dependence is separate and pre-dates the branch — filed as persistent debt (`technical_debt/general.md`, "The test suite passes only in declaration order") and explicitly **not** in scope here. In scope: only rows this branch adds |
 | **P9d** | **[S29] Clear `keys_pressed` on focus loss** (owner, 2026-08-08). A key released while the window is unfocused never delivers its release, so the set wedges: a combo can carry a modifier nobody is holding, and a renderer polling the set draws a cap lit for ever. The gateway installs no focus handler — its callback table marks focus SKIPPED | — | **Before the PR.** Code, so it lands before P10's prose. Breaking test first; recorded meanwhile in `technical_debt/input.md`, "The held-key set is never cleared on focus loss", which is deleted when the fix lands |
-| **P9e** | **[S29] The gateway's own gates read the event set, not the device** (owner, 2026-08-08). `handlers.keypressed` / `keyreleased` gate power shortcuts on `Key.ctrl()` / `Key.alt()` / `Key.shift()` — a device poll — while `dispatch` beside them builds combos from `keys_pressed`. Decision 29 settles that an event-time question is answered from the event-tracked set; the gateway does not follow its own rule | P9d | **Before the PR.** Code, so before P10. Separate commit from P9d — same file, two concerns. Recorded meanwhile in `technical_debt/input.md`, "The gateway asks the device a question about an event" |
+| **P9e** | **[S29] The gateway's own gates read the event set, not the device** (owner, 2026-08-08). `handlers.keypressed` / `keyreleased` gate power shortcuts on `Key.ctrl()` / `Key.alt()` / `Key.shift()` — a device poll — while `dispatch` beside them builds combos from `keys_pressed`. Decision 29 settles that an event-time question is answered from the event-tracked set; the gateway does not follow its own rule | P9d | **Before the PR.** Code, so before P10. Separate commit from P9d — same file, two concerns. Recorded meanwhile in `technical_debt/input.md`, "The gateway asks the device a question about an event". **[S30] This row breaks the `harmony` scripting mode** — harmony fakes modifiers by patching `love.keyboard.isDown` and never injects modifier *events*, and its `shortcuts.toggle = 'C-t'` drives precisely this `quickswitch` gate. Harmony is outside `busted` and outside CI, so **nothing signals the breakage**. Do not land P9e without reading §10 and sequencing P13 |
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it. **Tombstone decisions, never renumber**. **[S29]** Decision 29 and the `input_api.md` "Held keys" rewrite landed early by owner instruction — do not redo them |
 | P11 | W12 — comment sweep, slices, revalidation ×2 | P10 | the commission's (e)–(9) |
 | **P12** | **[S29] Upstream reconciliation and downstream compatibility** (owner, 2026-08-08). Reconcile this branch against the advanced upstreams — the platform repo (and possibly an advanced fork of it) **and** each example repo — then land the coordinated set of PRs | P11 / close-out of the current snapshots | **Blocks the real PR, and needs its own plan.** Not attempted before the snapshots are stable: re-planning against a moving upstream while the design is still settling means doing it twice. See §8 |
+| **P13** | **[S30] Harmony reconciliation** (owner ruling, 2026-08-08). `src/harmony` is a scripted-automation mode carrying a **second implementation of the input surface** — its own `love.run`, its own held-modifier table, its own patched `love.keyboard.isDown`. It fakes modifiers to the *poll* and never puts them in the event stream, so every event-side change this feature makes is invisible to it. Inject real modifier `keypressed`/`keyreleased`, **keep** `patch_isDown`, retire the manual `release_keys()` discipline, and build the batch-skew reproduction rig | P9e (which breaks it); independent of P10–P12 | **Own phase, and in the release** — not a platform blocker, but shipping a platform input change that silently breaks the bug-reproduction harness is the loss this row exists to prevent. Like P12 it is **someone else's subsystem** (aldum) and eventually needs them in the loop. See §10 |
 
 **The ordering rule behind this:** code first, tests second, docs third,
 comments last. Every phase that moves code invalidates doc prose and comments
@@ -747,3 +748,94 @@ on ordering — whose PR merges first, and what each says about the others.
 the PR is reviewable from `doc/input_api.md` plus the description alone; a
 reviewer who cannot see that downstream compatibility is a tracked, sequenced
 obligation will reasonably assume it was missed.
+
+## 9. [S30] Amendments made in session30
+
+Same rule as §6 and §7: the phase table is amended in place, earlier sessions'
+text untouched, everything session30 changes marked `[S30]`.
+
+| # | amendment | why |
+|---|---|---|
+| 1 | **P13 added — harmony reconciliation** (owner ruling, 2026-08-08), rationale in §10 | surfaced from the owner's own question — *did the shadow held-table predate the feature, and is the feature recreating it a level up?* It predates it verbatim (`4203de7f feat: harmony`, present at PR base `3256aac`, `git diff 3256aac HEAD -- src/harmony/` **empty**) and is **not** a precedent: harmony's table fakes the device for *polling* consumers, where `keys_pressed` mirrors events. The owner's generalisation is the finding: harmony holds a second implementation of the input surface, so every system-wide input change either breaks it or needs matching changes in it |
+| 2 | **P9e row amended — it breaks harmony** | `shortcuts.toggle = 'C-t'` (`src/harmony/init.lua:186`, used ×5 in `scenarios/editor.lua`) drives the gateway's own `quickswitch` gate, which is exactly what P9e converts from `Key.ctrl()` to the event set. Harmony's modifiers exist only in its patched `isDown`, so the conversion makes them invisible. **Harmony is referenced nowhere under `tests/` and CI runs only `busted tests -o utfTerminal`** — there is no automated signal, and breakage would be discovered by hand, later, by its author |
+| 3 | **An assistant recommendation was overturned by the owner, recorded because the reasoning was wrong in an instructive way** | the assistant proposed *deleting* `patch_isDown` as a net subtraction once harmony injects real events. The owner's correction: physical querying is a **permitted project channel** by our own Decision 29 clause 3, and the sandbox hands projects the real `love` table (`consoleController.lua:40-41`, `:1090-1126` — `project_env` is a clone of `getfenv()`, nothing replaces or restricts `love.keyboard`). A virtualization layer must virtualize every channel its subjects may use, so the patch **stays**. The phase is additive, not a swap |
+
+## 10. [S30] P13 — harmony reconciliation, and why it is in the release
+
+Owner ruling, 2026-08-08: **its own phase, but worth inclusion in the release.**
+
+### What harmony is (nobody's context carried this)
+
+A scripted UI-automation and screenshot harness that drives the real app —
+**not** part of `busted tests`. Written entirely by **aldum**, Apr–Nov 2025;
+~1150 lines across `src/harmony/init.lua` and four scenario files. Launched by
+hand: `justfile:60 dev-harmony` (file-watcher loop) and `justfile:131
+one-harmony` → `love src harmony`; `conf.lua:15-16,52-53` maps the argument to
+`require("harmony.init")(true)` — the `true` is `lock`, so **the only shipped
+wiring is locked**.
+
+Its verification capability is a toehold, not a suite: exactly one `assert` in the
+whole subsystem (`scenarios/examples.lua:27`). The owner's reading of its purpose
+is **bug reproduction** first, walkthrough capture second.
+
+### The mechanism, and the one asymmetry that matters
+
+- Harmony replaces the main loop (`love.run = harmonius_run`, `init.lua:104`).
+  Injected events are pushed as `love.event.push('sazed_' .. name, ...)`
+  (`:156`); the loop strips the prefix and calls `love.handlers[n](...)`. **Real
+  input events are dropped** when locked — only `quit` and Escape survive
+  (`:57-72`). That is what `lock` means: the app disowns the real keyboard.
+- `patch_isDown` (`:242-254`) replaces `love.keyboard.isDown` globally; locked, it
+  answers **only** from harmony's own eight-entry `held` table (`:174-184`) and
+  never consults the device.
+- **`love_key` (`:272-293`) splits `'C-S-s'`: the modifiers set `held[m] = true`
+  with no event pushed; only the real key gets `keypressed`/`keyreleased`.**
+
+That asymmetry is the whole finding. Faking the poll *sufficed* because
+pre-feature every modifier question in the app was `Key.ctrl()` →
+`love.keyboard.isDown`. Harmony is therefore a **statement of what the app's input
+interface used to be** — a symptom of the polling architecture, not a precedent
+for the feature's event-tracked model.
+
+Note also: `held[m] = true` is never cleared automatically — the would-be
+auto-release at `:286` is **commented out** — so clearing depends on an explicit
+`release_keys()`, which `hm_done` (`:331`) runs at each scenario end. The one real
+mid-scenario leak is `scenarios/editor.lua:102` (`S-return`, Shift held until
+`:108`). The pre-feature mechanism thus already exhibited the held-set staleness
+problem and answered it with a manual reset — the weakest form of a recovery path.
+
+### Why it is not a swap
+
+`Key.*` is **not** a LÖVE contract — it is `src/util/key.lua`, this project's own
+helper, whose `shift/ctrl/alt` are thin wrappers over `love.keyboard.isDown`
+(`key.lua:141-164`). The contract harmony patches is LÖVE's, which is the right
+level: it covers `Key.*` for free and covers whatever a project calls directly.
+And projects **may** call it — Decision 29 clause 3 keeps the direct reads as a
+legitimate secondary channel, and the sandbox hands them the real `love` table.
+
+So `patch_isDown` and `held` **stay**. What P13 adds is event injection; what it
+subtracts is the press/release asymmetry and the manual release discipline.
+
+### Contents
+
+1. `love_key` pushes real `keypressed`/`keyreleased` for modifiers, and
+   sets/clears `held` at those same two points. Both consumer kinds then see a
+   scripted modifier: event-tracked *and* polling.
+2. Press and release become symmetric, so `release_keys()` as a discipline —
+   and the commented-out auto-release — can go, and harmony's own table stops
+   being able to wedge.
+3. **The batch-skew reproduction rig.** Harmony controls both what lands in a
+   pump batch and what `isDown` answers, so it can simulate the two-events-in-one-
+   frame skew directly and observe whether the app misjudges. It cannot verify
+   SDL's own timing (locked, the device is never consulted) — but the app's
+   misbehaviour is the thing under test, and this reproduces it **without the
+   target device**. Today harmony structurally cannot: its modifiers never enter
+   the event stream at all.
+
+### Sequencing and ownership
+
+Ordered after P9e (which is what breaks it) and independent of P10–P12. It is in
+the release: the platform PR ships an input change that silently disables the
+project's bug-reproduction harness otherwise, and **no automated signal exists**
+to catch that — harmony is outside `busted` and outside CI. Like P12 it is
+someone else's subsystem and eventually needs aldum in the loop.
