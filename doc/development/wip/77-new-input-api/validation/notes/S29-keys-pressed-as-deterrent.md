@@ -103,6 +103,74 @@ But the conclusion is not "prefer the device poll". It is that the framework
 owes the set a reset on focus loss. Pushing projects to a second source of truth
 to route around a framework gap is how two sources of truth become permanent.
 
+## Why not add folded entries to the same table?
+
+Owner question: if the mismatch is folded-vs-unfolded, why not write
+`keys_pressed.shift = true` beside `lshift` / `rshift`?
+
+**Because it breaks the one property that justifies a table at all** — see the
+section below. `for k in pairs(keys_pressed)` would then yield `lshift` **and**
+`shift`; "all keys held" double-counts, and anything filtering the set sees a
+member no `keypressed` event ever delivered. A derived value stored inside a set
+of observations is the same category error as a computed column in a raw log.
+
+It also breaks the surface's stated invariant — `doc/input_api.md` describes it
+as *"keyed by LÖVE key name"*, and `shift` is not one.
+
+And **physical is the right primitive**, because folding is lossy in the
+direction that matters for rendering: a keyboard renderer wants to light the cap
+that is actually down, which a folded flag cannot tell it. Going
+physical → logical is one `or`; going back is impossible.
+
+If folded access is wanted it belongs in a **separate accessor**, and that is an
+API addition needing the justification table. The cheaper move that costs no
+surface: stop the guide demonstrating the hand-rolled `or`, and route event-time
+modifier questions to combos, which are folded already.
+
+## Do we need the table at all? Yes — and the reason is temporal, not ergonomic
+
+Owner question: the table was originally meant to be **passed** to hooks and
+shortcuts; Decision 26 removed it from the payload in the name of signature
+unification. Combos could be assembled from `Key.*` instead, if a combo is always
+"trigger plus mods". The remaining argument for a table is that "all keys held"
+is filterable and iterable.
+
+That argument is real but secondary. **The decisive one is that the two sources
+answer questions on different clocks.**
+
+- `Key.shift()` / `.ctrl()` / `.alt()` call `love.keyboard.isDown`
+  (`src/util/key.lua:140-164`) — the **device, now**.
+- `compy.input.keys_pressed` is updated inside the gateway's own handler
+  immediately before dispatch — the state **at this event**.
+
+LÖVE's run loop pumps the *entire* event queue and then dispatches the events one
+at a time (this project installs no custom `love.run`). So when two events land in
+one frame — press `a`, release `a` — a device poll taken while dispatching the
+**press** already reports `a` as up. The event-tracked table, replayed in order,
+does not.
+
+**So for a combo, which is an event-time question, the table is the temporally
+correct source and the device poll is not.** Assembling combos from `Key.*` would
+be correct only in the common case where nothing else is queued behind the event
+being dispatched.
+
+This also reverses the naive reading of the wedging problem: the table can go
+**stale across focus loss** (P9d fixes that), while the poll is **stale by
+construction relative to queued events**. Neither is simply better; each is
+correct on its own clock — the table at event time, the poll at frame time.
+
+**Consequence worth recording, because the wrong fix is the plausible-looking
+one:** do **not** close P9d by switching `combo_string` to `Key.*`. It would look
+like it removes a source of truth and fixes the drift in one move, and it would
+trade a bounded, fixable staleness for an unbounded, unfixable one.
+
+**And the framework currently does what we would tell a project not to do:** the
+gateway's own event-time gates read the device poll — `Key.ctrl()` / `Key.alt()`
+/ `Key.shift()` inside `handlers.keypressed` and `handlers.keyreleased`
+(`controller.lua:514, 531, 791, 813, 824`) — while dispatch beside them builds
+combos from the event-tracked set. Same mismatch, in the platform's own code.
+Small in practice; worth a ruling on whether to unify while P9d is open.
+
 ## Options, for the owner — none taken
 
 1. **Clear `keys_pressed` on focus loss.** Closes the drift, framework-side, no

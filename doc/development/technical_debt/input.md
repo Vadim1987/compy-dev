@@ -48,6 +48,13 @@ action; revisit at the named point).
   already owns the callback table where the handler belongs, and the framework
   now has a named seam for state it owns. No API change, and no project has to
   know it happened.
+- **The wrong fix, named so it is not tried:** do **not** rebuild combos from
+  `Key.*` to dodge the staleness. Those poll the device, which answers "held
+  now"; LÖVE pumps the whole event queue and *then* dispatches, so a poll taken
+  while dispatching the first of several queued events already reflects the
+  last. The event-tracked set is the temporally correct source for an event-time
+  question, and the device poll is correct for a frame-time one. This would
+  trade a bounded, fixable staleness for an unbounded, unfixable one.
 - **Scheduled: before the PR** (plan phase P9d). If that slips, this entry is the
   record; delete it when the fix lands.
 
