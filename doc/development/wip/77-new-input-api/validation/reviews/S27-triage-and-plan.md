@@ -545,6 +545,7 @@ state dirty").
 | **P8** | W8 — test restructuring. **PART DONE**: R058/R059/R060/R061 (tracer + matrix supersession), R067 (NFR narrowing), R068 (blind row), R070 (before_exit contract). **Left:** R057 (three-surface grouping), R074/R078/R079 (merge / dissolve), R047, R063, R064, R069, R075 | P2–P7 | do NOT restructure tests before the code stops moving |
 | P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | **[REV]** the three nested repos carry **no automated tests** — one static spec doc, no runnable suite. Committing is not verification: a smoke re-pass on the channels W1/W2/W3 touch is the gate, `examples/keyboard` at minimum. Never pushed. **[S28] PART DONE** — SM1/SM2 ruled no-change, SM3b explained, SM4 pinned by a suite row, SM5 fixed (`3a9d48c`); SM3a left open, needs one runtime check. Evidence: `../notes/S28-smoke-findings.md` |
 | **P9b** | **keyboard: judgement decoupled from delivery order** (owner design, 2026-08-07) — **NEXT TO EXECUTE**. `ALT_JUDGE` predeclared state table (`lastGlyph`, `accepting`), judgement reads `textinput` only, `keypressed`/held set drive visualisation only, non-printing targets injected rather than judged on a second path. Supersedes the interim `spendGlyph` fix and should subtract code | P9 | design of record, now in the **persistent** corpus: `doc/development/internals/examples/keyboard.md`. Nested repo, **no suite** — reasoned, not proven; smoke checklist is in the design note. No platform change |
+| **P9c** | **[S29] The two order-dependent rows this feature owns** (owner, 2026-08-08). Under `--shuffle`, `inbound events — Ctrl+Esc quits the app when nothing is left to go back to` and `inbound events — shortcuts and clicks — a shortcut fires but does not consume (#disputable)` fail. Find what state each depends on and who leaves it; fix or document per row | P9b | **before the PR.** The suite-wide order dependence is separate and pre-dates the branch — filed as persistent debt (`technical_debt/general.md`, "The test suite passes only in declaration order") and explicitly **not** in scope here. In scope: only rows this branch adds |
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it. **Tombstone decisions, never renumber** |
 | P11 | W12 — comment sweep, slices, revalidation ×2 | P10 | the commission's (e)–(9) |
 
@@ -661,3 +662,25 @@ a phase does not have to rediscover them:
   fact about the channels; a project meeting the other consequence of it has no
   signpost. P10 owns the restatement. **No platform helper** — one example's
   need is not an API.
+
+## 7. [S29] Amendments made in session29
+
+Same rule as §6: the phase table is amended in place, session27's and session28's
+text untouched, everything session29 changes marked `[S29]`.
+
+| # | amendment | why |
+|---|---|---|
+| 1 | **P9c added** — the two order-dependent rows this branch owns | found while revalidating the S28 merge (`../reviews/S29-merge-revalidation.md`): `busted tests --shuffle` fails these two among a few dozen. Owner ruled 2026-08-08 that the suite-wide condition is persistent debt and these two are a scheduled pre-PR look, kept separate so the branch is not asked to fix a pre-existing problem |
+
+One finding from the same pass that is **not** scheduled, recorded so a later
+phase does not rediscover it as new:
+
+- **The merge widened one blast radius.** Four `Log.warn` monkeypatch-and-restore
+  rows in `input_widget_control_spec.lua` came from two different source files and
+  now share one busted-insulated file scope. All four restore before their own
+  assertions, so no test can fail from it today; only an unexpected raise from
+  `show`/`configure`/`clear` between patch and restore would leak, and then to
+  rows it previously could not reach. Insulation is per-file — verified
+  empirically, not inferred. No fix proposed: `finally` is used nowhere else in
+  this suite, so guarding four rows against a bug that does not exist would be a
+  suite-wide convention change bought for an ideal.

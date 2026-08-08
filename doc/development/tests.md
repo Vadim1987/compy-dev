@@ -24,6 +24,12 @@ Assessment of `tests/` relative to the codebase and the knowledge base under `do
 
 **`input_session.lua`** (`tests/helpers/input_session.lua`) — the keypress-level driver `input_fixture.lua` builds `F.session` from. One emitter per gateway entry (`press`, `repeat_press`, `release`, `type`, `mousepressed`, `mousereleased`, `touchpressed`), each firing a REAL event through `love.handlers.*` — never straight into a controller — so a contract test exercises the same path a keystroke takes from LÖVE. Distinct from `EditorSession`: that helper bypasses the `love` slots and drives `EditorController` directly, below the gate.
 
+**Run order is load-bearing.** The suite is green in declaration order and only in
+declaration order — `busted tests --shuffle` fails a few dozen rows, at the PR base as well
+as today. Do not read a shuffled failure as a regression, and do not add `--shuffle` to a
+runner without reading `technical_debt/general.md`, "The test suite passes only in
+declaration order".
+
 ---
 
 ## Coverage Map
