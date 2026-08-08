@@ -75,6 +75,44 @@ character is a repeat is not.
   under Ctrl or left-Alt, so those combos are largely unreachable on that channel
   regardless. Again a reachability question, not a correctness one.
 
+## Follow-up: should the keyboard example register `shortcuts.textinput['alt+*']`?
+
+Owner question, same session: the reserved chords are registered on `keypressed`
+only, so should `textinput` get the same `stop_here` plumbing, to suppress
+characters emitted by a chord?
+
+**No — and the reason is that it would not touch the case that motivates it.**
+The two candidate characters are different events:
+
+**The chord's own character** (Alt held while it is produced — AltGr layouts do
+this; desktop Ctrl and left-Alt generally produce nothing). A
+`shortcuts.textinput['alt+*']` registration *would* match this one, because the
+class lookup does run on `textinput`: `find_shortcut` tries
+`tbl[combo_string(t, keys)]` and then falls back to `tbl[combo_string('*', keys)]`
+= `alt+*` while Alt is held. But it is **already suppressed**, by the example's
+own hook: `appTextinput` opens with `if INPUT.alt then return end` /
+`if INPUT.ctrl then return end` (`input.lua:189-194`). Registering the shortcut
+would be a second mechanism doing a job already done, one tier up — the DRY
+problem, and a divergence risk the moment one of the two is edited.
+
+**The trailing character** (modifiers already released, key still held — the
+residual this whole thread is about). By then **no modifier is held**, so
+`combo_string` yields the bare character and the class key is a bare `'*'`.
+`alt+*` cannot match it. The proposed registration is a **no-op on the case it
+was proposed for**, by construction: a modifier-classed shortcut cannot catch an
+event that carries no modifier.
+
+So the concern about chord-emitted characters is genuinely non-existent — but
+because the example already filters them at the hook, not because the platform
+does. The gateway applies **no** modifier filter to `textinput`
+(`controller.lua:899-903`, `handlers.textinput` forwards unconditionally); that
+choice belongs to the example.
+
+Worth knowing for the example: because `INPUT.alt` folds `lalt` and `ralt`, that
+filter also drops **AltGr**-produced characters. No Alt-keys target needs AltGr —
+the target set is ASCII (`ALT_GROUPS`, `SHIFT_MAP`) — so it costs nothing today,
+but a layout-aware target set later would collide with it.
+
 ## Disposition
 
 No change proposed. Recorded because the question is a good one, will be asked
