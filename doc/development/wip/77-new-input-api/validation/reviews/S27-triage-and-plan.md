@@ -671,6 +671,7 @@ text untouched, everything session29 changes marked `[S29]`.
 | # | amendment | why |
 |---|---|---|
 | 1 | **P9c added** — the two order-dependent rows this branch owns | found while revalidating the S28 merge (`../reviews/S29-merge-revalidation.md`): `busted tests --shuffle` fails these two among a few dozen. Owner ruled 2026-08-08 that the suite-wide condition is persistent debt and these two are a scheduled pre-PR look, kept separate so the branch is not asked to fix a pre-existing problem |
+| 2 | **Decision 26 completed in code** (`5a83fe8c`) — no phase change, recorded because the ledger entry now describes the tree and did not before | revalidating the two production fixes (`../reviews/S29-production-fixes-revalidation.md`) found `handlers.keyreleased` narrowing LÖVE's list to the key alone: the last channel in the system not passing its arguments verbatim, against Decision 26's own rule and `doc/input_api.md`'s bold statement of it. Base-checked — Decision 26 widened `keypressed` and missed its pair, so the gap is the branch's. Owner ruled widen, 2026-08-08 |
 
 One finding from the same pass that is **not** scheduled, recorded so a later
 phase does not rediscover it as new:

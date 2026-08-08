@@ -53,5 +53,52 @@
   `Ctrl+Esc quits the app when nothing is left to go back to`; shortcuts:
   `a shortcut fires but does not consume`, `#disputable`). Separate observation
   for the owner, not a merge finding.
+- Owner ruled: order-dependence → persistent debt (`technical_debt/general.md`),
+  the two rows → new plan phase **P9c** before the PR, scoped to rows this branch
+  adds. `d8a15f04`, suite 954.
+
+## 2026-08-08 — step 2: the two production fixes
+
+- Cold Sonnet agent, prompt `validation/prompts/S29-production-fixes-agent.md`,
+  deliverable `validation/reviews/S29-production-fixes-revalidation.md`. Briefed
+  that `8fbcba21`'s message describes the reverted decline mechanism, so the tree
+  must be checked against the *net* of `8fbcba21` + `811849e2`.
+- Fix 1 clean and better than claimed: mutation re-run at HEAD reproduces the
+  exact defect (nil call at `projectInputController.lua:138`, `app_state`
+  `'snapshot'`), only the named row fails → **proof, not a pin**. "Not
+  pre-existing" holds — `projectInputController.lua` does not exist at `3256aac`.
+  EVENTS is 12 channels and the widget now implements all 12.
+- Fix 2's call-site audit holds, by grep with receiver types read manually. The
+  **LSP was unusable for this question** — `references` on the qualified method
+  resolved to constructor sites; on the bare name it blended `love.keypressed`,
+  `ConsoleController:keypressed` and `Controller._defaults.keypressed` without
+  disambiguating by receiver. Worth remembering: the hygiene rule says LSP for
+  facts, but for a method name shared across unrelated tables it is grep that
+  answers, and the LSP that corroborates.
+- **Agent's "low severity" finding is bigger than it filed it.** Traced it
+  myself: `controller.lua:905` `handlers.keyreleased = function(k)` drops LÖVE's
+  scancode at the gateway — the single choke point both routes pass through.
+  Enumerated all ten gateway wrappers: every other channel forwards LÖVE's list
+  in full (keypressed 3/3 since Decision 26, mouse* 5/5, touch* 6/6, wheelmoved
+  2/2, textinput 1/1). **`keyreleased` is the only exception left**, and
+  Decision 26's rule is "no argument is added, removed or reordered on the way
+  through the chain". `doc/input_api.md` states it in bold as the PR's contract.
+  Base-checked: at `3256aac` both keypressed and keyreleased narrowed to `(k)`;
+  Decision 26 widened keypressed and **missed keyreleased**.
+- So `493c3cbe`'s `keyreleased(k, sc)` names a parameter production can never
+  populate, and a project writing the documented signature gets nil. Presented
+  to the owner: widen the gateway (one line + a breaking row) vs record the
+  exception in Decision 26 and drop `sc`. Not fixed unilaterally — production
+  change plus a decision-scope question.
+- **Owner ruled: widen.** `5a83fe8c` — breaking row first (`{'a'}` against
+  `{'a','scan-a'}`), then `handlers.keyreleased = function(k, sc)` forwarding
+  both. Verified both route forwarders pass `...`, so the scancode reaches
+  hooks, shortcuts and the widget; the console route's internal narrowing to
+  `CC:keyreleased(k, sc)` is the one Decision 26 already accepts. Also widened
+  `input_session`'s `release` emitter — a driver modelling a shape the gateway
+  rejects cannot see this class of defect. 954 → 955.
+- No doc change owed: `input_api.md`'s bold claim and Decision 26 were already
+  right; the code was the thing out of line. The widget's `sc` annotation
+  ("unread") stays true and is now also accurate about the source.
 </content>
 </invoke>
