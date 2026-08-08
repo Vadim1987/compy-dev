@@ -37,7 +37,7 @@ judgement:
 
 | event | job |
 |---|---|
-| `keypressed` | filter OS repeats at the source via `isrepeat`; toggle the Caps estimate; **feed** the non-printing targets (`backspace`, `tab`, `return`), which produce no `textinput`; drive the on-screen keyboard |
+| `keypressed` | filter OS repeats at the source via `isrepeat`; toggle the Caps estimate; **feed** the non-printing targets (`backspace`, `tab`, `return`), which produce no `textinput`; **record** a handled chord's textual part (below); drive the on-screen keyboard |
 | `keyreleased` | presentation only — release the key cap. **No judgement state whatsoever** |
 | `textinput` | judge |
 
@@ -171,40 +171,59 @@ target.
 - **A character produced after a chord's modifiers are released is an ordinary
   character.** It passes the shared filter, because by then no modifier is held.
   A player who reaches `h` by releasing Alt from `Alt+H` has typed `h`, and that
-  is a win (owner ruling, 2026-08-08). **The symmetric case is open — see
-  below.**
+  is a win (owner ruling, 2026-08-08). The losing half of that — a trailing
+  character that is *not* the target — is handled by the chord record below,
+  without adding state.
 - **A character whose `textinput` arrives after its own `keyreleased` is
   judged.** Nothing couples to `keyreleased`, so a fast tap cannot lose its
   character. Every shipped version of this game to date drops it.
 - **No test suite.** The repository has none, so this design is reasoned, not
   proven.
 
-## Open — the hint chord's trailing character
-
-Raised by review, 2026-08-08; **not decided, and no mechanism is proposed here.**
+## A handled chord records its character without judging it
 
 `Ctrl+Alt+H` re-arms the hint. If the player lets go of Ctrl and Alt while `H` is
 still down, `H`'s repeats produce `h` characters that pass the shared chord
 filter — no modifier is held by then — and reach judgement. If `h` is not the
-current target, that is a **miss**, and it fumbles the very presentation the
-player just asked for a hint about.
+current target that is a **miss**, and it fumbles the presentation the player
+just asked for help with: `gaugeOnWrong` decrements that target's `learn[].n`
+and the eventual correct answer then scores nothing.
 
-What the earlier versions do with it, from the code rather than from their
-comments:
+**Resolution (owner, 2026-08-08).** When the scene handles a chord, it writes the
+chord's textual part into `lastText` **without judging it**. The trailing
+character then meets rule 2 and is ignored. If it never arrives, nothing is owed:
+the next judged character overwrites `lastText` anyway. No new state, no timing,
+no held read — the field that already exists is told what the player has
+effectively produced.
 
-- **A** dropped it, because `inputStale` rejects a character whose key is held —
-  a side effect of the helper whose main use was the defect, but it did cover
-  this case.
-- **C** claims to cover it (`alt.lua`'s comment names `Alt+H` by example), but
-  the path does not obviously bear that out: while the modifiers are down the
-  character never reaches `altTextinput` at all, so no claim is recorded, and the
-  first character arriving after the release is unclaimed and would be judged.
+**One invariant this must not break.** In normal play `lastText` can never equal
+the live target: it is written only by judging, and after a hit the target
+advances away from it (`gaugeCandidates` excludes `st.cur`), while after a miss
+the character written is by definition not the target. A chord write is the first
+thing that could violate that — hinting while the target *is* `h` would suppress
+the player's own correct `h`, and keep suppressing it, since only a judged
+character clears the field. **So the record is made only when the chord's textual
+part is not the current target.** When it *is* the target, the trailing character
+is let through and judged — a win, which is the ruling already given for reaching
+`h` by releasing Alt from `Alt+H`.
 
-Whether any character is produced at all in that sequence depends on whether the
-OS emits repeats for a key held across a modifier release. That is not
-answerable by reading — it needs the device — and it decides whether this is a
-real defect in C today or only a theoretical one. **It is a game-rule question
-either way, and the owner's to settle.**
+**Residual, stated not solved.** Chords consumed at the platform's shortcuts tier
+(`alt+*`, `alt+p` — `input.lua`, `register_reserved`) never reach the scene, so
+the scene cannot record for them, and a character trailing one of those can still
+be judged. Narrower than the hint case: those chords carry no game meaning, and
+it needs the same held-across-release behaviour to occur at all.
+
+**For the record, what the earlier versions do here** — read from the code, not
+from their comments. **A** dropped it, because `inputStale` rejects a character
+whose key is held: a side effect of the helper whose main use was the defect, but
+it did cover this. **C** claims to cover it (`alt.lua`'s comment names `Alt+H` by
+example) and the path does not bear that out — while the modifiers are down the
+character never reaches `altTextinput`, so no claim is recorded, and the first
+character after the release is unclaimed and would be judged. Whether any
+character is produced at all depends on whether the OS emits repeats for a key
+held across a modifier release, which needs the device to settle; it decides
+whether C has a live defect here or a theoretical one, but not what this design
+does.
 
 ## Caps Lock
 
@@ -256,8 +275,10 @@ The second is the better shape if the rule is wanted.
   target;
 - holding a wrong key knocks once, not once per frame;
 - `Ctrl+Alt+H`, then typing the hinted letter — the letter registers;
-- `Ctrl+Alt+H` **releasing the modifiers while `H` stays down** — settles the
-  open question above: does a stray `h` fumble the target?
+- `Ctrl+Alt+H` **releasing the modifiers while `H` stays down** — no stray `h`
+  reaches the target, and the target is not fumbled;
+- the same, **while the target is `h`** — the trailing `h` counts as a win rather
+  than being swallowed;
 - `backspace` / `tab` / `return` targets still match, and **Shift held during a
   `backspace` target does not knock**;
 - the Caps decal corrects itself after a Caps toggle the app did not observe —
