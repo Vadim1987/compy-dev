@@ -71,6 +71,21 @@ serves every scene that shows the Caps indicator (`press`, `find` via
 `findkey.lua`, `intro`), not just this one. Moving it into this subgame's
 judging would silently stop Caps re-estimation everywhere else.
 
+## The precondition this rests on: one target, one keystroke
+
+**Every target is a single character or a single non-printing key.** The subgame
+never assembles a string. Progression widens the alphabet rather than lengthening
+the answer — `ALT_NOTCH` 0 to 4 adds lowercase, then digits, then punctuation,
+space and capitals, then the three service keys (`config.lua`, `ALT_GROUPS` /
+`ALT_SERVICE`); every entry in every group is one character, and `ALT_SERVICE`'s
+three are key names matched through `keypressed`.
+
+This is what makes one remembered character sufficient. **If a later stage ever
+asks the player to type a word, this design must be revisited** — `lastText`
+would be deduplicating the letters of the answer against each other, and the
+block would need to span an entry rather than a keystroke. Stated here because
+it is the kind of premise that is invisible until it is violated.
+
 ## What the game actually requires
 
 These rules come from the game's own scoring (`gauge.lua`), not from input
@@ -141,11 +156,13 @@ target.
   changes an outcome is a repeat of the winning character, and rule 3 stops that
   one. This is the concession that removes the clock, the grace window and the
   claim table at once.
-- **Two identical consecutive targets need a different character between them.**
-  Rule 3 would suppress the second. The fix belongs to the game, not to input:
-  `gaugePick` should not present the same character twice in a row.
-  `gaugeWeight` already de-prioritises a recent target, so this is rare rather
-  than impossible today.
+- **Two identical consecutive targets would have their second suppressed by
+  rule 2 — and the game already prevents them.** `gaugeCandidates` collects
+  candidates *excluding* `st.cur`, and only falls back to the full list if that
+  leaves nothing. So the case survives solely where excluding the current target
+  empties the candidate set — a one-token notch. **No game-side change is
+  required**; this is a precondition the game already meets, recorded so that a
+  later change to candidate selection does not silently break judgement.
 - **Judgement adds no modifier guard of its own.** It does not need one: the
   shared handler already drops anything produced with Alt or Ctrl held, and
   Shift must pass, since Shift is how every capital in this game is typed. A
