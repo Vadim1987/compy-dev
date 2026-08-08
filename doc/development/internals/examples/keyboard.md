@@ -207,11 +207,14 @@ part is not the current target.** When it *is* the target, the trailing characte
 is let through and judged — a win, which is the ruling already given for reaching
 `h` by releasing Alt from `Alt+H`.
 
-**Residual, stated not solved.** Chords consumed at the platform's shortcuts tier
-(`alt+*`, `alt+p` — `input.lua`, `register_reserved`) never reach the scene, so
-the scene cannot record for them, and a character trailing one of those can still
-be judged. Narrower than the hint case: those chords carry no game meaning, and
-it needs the same held-across-release behaviour to occur at all.
+**Residual, stated not solved.** The reserved chords are registered on the
+**`keypressed`** channel only (`input.lua`, `register_reserved` —
+`compy.input.shortcuts.keypressed`), and `stop_here` consumes that keypress. So
+for `alt+*` and `alt+p` the scene never sees the chord's *keypress* and cannot
+record it. The shortcuts tier does not touch `textinput`, so a character trailing
+one of those chords arrives at the scene like any other and can be judged.
+Narrower than the hint case: those chords carry no game meaning, and it needs the
+same held-across-release behaviour to occur at all.
 
 **For the record, what the earlier versions do here** — read from the code, not
 from their comments. **A** dropped it, because `inputStale` rejects a character
