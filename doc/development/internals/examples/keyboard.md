@@ -39,13 +39,37 @@ judgement:
 |---|---|
 | `keypressed` | filter OS repeats at the source via `isrepeat`; toggle the Caps estimate; **feed** the non-printing targets (`backspace`, `tab`, `return`), which produce no `textinput`; drive the on-screen keyboard |
 | `keyreleased` | presentation only — release the key cap. **No judgement state whatsoever** |
-| `textinput` | judge; and, as a side duty, re-run the Caps estimate for highlighting |
+| `textinput` | judge |
 
 There is one judging function. What differs between a printable target and a
 non-printing one is only **which channel supplies the candidate** — `textinput`
 for a character, `keypressed` for a key that produces none. Exactly one of them
 feeds at a time, selected by the kind of the current target
 (`altIsKeyTarget`).
+
+### What happens before the scene sees a character
+
+Two things in `input.lua`'s shared `appTextinput` run **upstream of every
+scene**, not inside this subgame, and they are unchanged since the game's first
+version:
+
+- **the chord filter** — `if INPUT.alt then return end` / `if INPUT.ctrl then
+  return end`. A character produced with Alt or Ctrl held never reaches any
+  scene. Only Shift modifies a target;
+- **Caps reconciliation** — `capsReconcile(t, INPUT.shift)` for alphabetic
+  characters, before dispatch.
+
+Both read live modifier state, and both are **outside judgement**. This is what
+"`textinput` is the only judge" means precisely: the judging function consults
+nothing live, while the shared dispatch layer above it applies a filter and
+maintains an app-wide estimate. Keeping that distinction is the point — the
+original defect was judgement *inferring* a repeat from held state, not a
+dispatcher asking whether a modifier is down.
+
+**Caps reconciliation belongs to the shared handler and must stay there.** It
+serves every scene that shows the Caps indicator (`press`, `find` via
+`findkey.lua`, `intro`), not just this one. Moving it into this subgame's
+judging would silently stop Caps re-estimation everywhere else.
 
 ## What the game actually requires
 
@@ -83,16 +107,18 @@ thing worth modelling explicitly rather than leaving implicit in input plumbing.
 
 ## Rules
 
-On `textinput(text)`, in order:
+On `textinput(text)` reaching this scene — so after the shared chord filter and
+Caps reconciliation above — in order:
 
-1. **Reconcile Caps first, unconditionally.** For alphabetic `text`,
-   `CAPS_STATE.on = isUpper(text) ~= shiftHeld`. Before every suppression below,
-   because the estimate needs all available evidence — repeats and characters
-   arriving during a celebration are all valid evidence of the lock state. This
-   is presentation, not judgement.
-2. **If blocked, stop.**
-3. **If `text == lastText`, stop.**
-4. **Judge.** Set `lastText = text`; match → hit, else miss.
+1. **If blocked, stop.**
+2. **If `text == lastText`, stop.**
+3. **Judge.** Set `lastText = text`; match → hit, else miss.
+
+Caps is deliberately **not** a rule here. It is reconciled upstream for every
+scene, and it must keep running for characters this subgame ignores — repeats
+and characters arriving during a celebration are all valid evidence of the lock
+state, which is why the shared handler reconciles before it dispatches and
+before any suppression.
 
 **On a hit:** block, advance the target, release the block. While blocked,
 nothing is judged and `lastText` is not written — so the winning character
@@ -101,7 +127,12 @@ afterwards. Blocking the writes rather than clearing the field is what makes
 this hold even if a celebration or animation is ever inserted between targets.
 
 Non-printing targets are fed from `keypressed` into the same judging function;
-their repeats are already filtered by `isrepeat` at the source.
+their repeats are already filtered by `isrepeat` at the source. **One exemption
+carries over and must not be dropped:** a modifier or `capslock` pressed while a
+non-printing target is displayed does **not** count as a wrong answer
+(`alt.lua`'s `not isMod(k) and k ~= "capslock"`, and the same idiom in
+`findkey.lua` and `hunt.lua`). Holding Shift must never knock a `backspace`
+target.
 
 ## Consequences, accepted
 
@@ -115,19 +146,48 @@ their repeats are already filtered by `isrepeat` at the source.
   `gaugePick` should not present the same character twice in a row.
   `gaugeWeight` already de-prioritises a recent target, so this is rare rather
   than impossible today.
-- **A chord's character is an ordinary character.** If a chord produces a
-  `textinput`, it is judged like any other; a player who reaches `h` by
-  releasing Alt from `Alt+H` has typed `h`, and that is a win. There is **no
-  modifier guard**, deliberately: Shift is how every capital in this game is
-  typed, so a guard would need to exempt it, and an exemption list is precisely
-  the invented special case this design exists to avoid. (On desktop, Ctrl and
-  left-Alt generally produce no `textinput` at all; AltGr does, on layouts that
-  use it.)
+- **Judgement adds no modifier guard of its own.** It does not need one: the
+  shared handler already drops anything produced with Alt or Ctrl held, and
+  Shift must pass, since Shift is how every capital in this game is typed. A
+  guard inside judgement would therefore be a second filter with an exemption
+  list — the invented special case this design exists to avoid.
+- **A character produced after a chord's modifiers are released is an ordinary
+  character.** It passes the shared filter, because by then no modifier is held.
+  A player who reaches `h` by releasing Alt from `Alt+H` has typed `h`, and that
+  is a win (owner ruling, 2026-08-08). **The symmetric case is open — see
+  below.**
 - **A character whose `textinput` arrives after its own `keyreleased` is
   judged.** Nothing couples to `keyreleased`, so a fast tap cannot lose its
   character. Every shipped version of this game to date drops it.
 - **No test suite.** The repository has none, so this design is reasoned, not
   proven.
+
+## Open — the hint chord's trailing character
+
+Raised by review, 2026-08-08; **not decided, and no mechanism is proposed here.**
+
+`Ctrl+Alt+H` re-arms the hint. If the player lets go of Ctrl and Alt while `H` is
+still down, `H`'s repeats produce `h` characters that pass the shared chord
+filter — no modifier is held by then — and reach judgement. If `h` is not the
+current target, that is a **miss**, and it fumbles the very presentation the
+player just asked for a hint about.
+
+What the earlier versions do with it, from the code rather than from their
+comments:
+
+- **A** dropped it, because `inputStale` rejects a character whose key is held —
+  a side effect of the helper whose main use was the defect, but it did cover
+  this case.
+- **C** claims to cover it (`alt.lua`'s comment names `Alt+H` by example), but
+  the path does not obviously bear that out: while the modifiers are down the
+  character never reaches `altTextinput` at all, so no claim is recorded, and the
+  first character arriving after the release is unclaimed and would be judged.
+
+Whether any character is produced at all in that sequence depends on whether the
+OS emits repeats for a key held across a modifier release. That is not
+answerable by reading — it needs the device — and it decides whether this is a
+real defect in C today or only a theoretical one. **It is a game-rule question
+either way, and the owner's to settle.**
 
 ## Caps Lock
 
@@ -179,8 +239,13 @@ The second is the better shape if the rule is wanted.
   target;
 - holding a wrong key knocks once, not once per frame;
 - `Ctrl+Alt+H`, then typing the hinted letter — the letter registers;
-- `backspace` / `tab` / `return` targets still match;
-- the Caps decal corrects itself after a Caps toggle the app did not observe;
+- `Ctrl+Alt+H` **releasing the modifiers while `H` stays down** — settles the
+  open question above: does a stray `h` fumble the target?
+- `backspace` / `tab` / `return` targets still match, and **Shift held during a
+  `backspace` target does not knock**;
+- the Caps decal corrects itself after a Caps toggle the app did not observe —
+  check it in `press` or `find` too, not only here, since the estimate is
+  shared;
 - a very fast tap of the target character registers — the case the shipped code
   drops.
 
