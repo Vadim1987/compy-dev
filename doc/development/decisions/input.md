@@ -536,7 +536,7 @@ rules — it is the console route plus a choice of environment, and it matches t
 exactly (suspending a project restores all handlers to the console). The console running the paused
 project's environment makes it a live debugger console rather than a separate idle one.
 
-## Decision 13 — the held-key set is exposed read-only, callback-only
+## Decision 13 — the held-key set is exposed read-only, callback-only — SUPERSEDED by Decision 30
 
 **Decision.** Downstream consumers never touch the live held-key table. Every chain signature's
 second argument is a **read-only pressed-keys view**: reads pass through to the live set, writes
@@ -795,7 +795,7 @@ that, instead of relying on the warning as flow control.
 
 ---
 
-## Decision 20 — a project can read the held-key set outside an event
+## Decision 20 — a project can read the held-key set outside an event — SUPERSEDED by Decision 30
 
 
 **Status: implemented** (owner ruling, 2026-08-03).
@@ -1163,7 +1163,7 @@ project leaves dirty — belongs here when it is built
 project's behalf: a project that raises before reaching a clean state never runs its own teardown,
 because the raise ends the run rather than the stop.
 
-## Decision 29 — event-tracked keys are the framework's truth; combos are the project's tool
+## Decision 29 — event-tracked keys are the framework's truth; combos are the project's tool — SUPERSEDED by Decision 30
 
 **Decision.** Three statements, in force together.
 
@@ -1216,3 +1216,83 @@ so `pairs(compy.input.keys_pressed)` yields nothing. The view is index-only in p
 `../../input_api.md` states the limitation, so a reader is warned rather than misled — but the
 surface is a table that cannot be read as one. Whether to give it a real snapshot accessor or to
 declare it index-only by design is **unruled**, and recorded in `technical_debt/input.md`.
+
+## Decision 30 — modifier state is read from the device; `keys_pressed` is dissolved
+
+**Supersedes Decision 13, Decision 20 and Decision 29.** Those three are the held-key-set
+decisions: 13 exposed it read-only, 20 made it readable outside an event, 29 made it the
+framework's truth for event-time questions. All three are withdrawn. Decisions 8, 21, 26 and 27
+(combo serialisation, combo naming, LÖVE's own argument list, one combo vocabulary) **stand
+unchanged** — only the *source* the matcher reads from changes.
+
+**Decision.** Four statements, in force together.
+
+1. **Modifier state is read from the device.** `Key.ctrl()` / `Key.alt()` / `Key.shift()` —
+   i.e. `love.keyboard.isDown` — is the single source of held-modifier truth.
+   **`compy.input.keys_pressed` and `Controller.keys_pressed` are dissolved from all
+   occurrences**, production and test. This reverts an *implementation-time* decision: the
+   tracked set was never a requirement — no stakeholder requirement asks for it — and it is
+   reverted on that basis.
+2. **`Key.*` is legitimate inside the shortcut matcher.** The combo-string builder
+   (`combo_string` / `any_mod`, Decision 8) reads the device to name the modifiers it
+   serialises. This is the one place a direct read is not merely permitted but correct.
+3. **`Key.*` at a call site remains a smell.** In projects today, and eventually in
+   console/editor too, an imperative modifier test at a call site should be replaced by the
+   **shortcuts mechanism**. The **one standing exception** is the framework's own gate for
+   global, power-like combos, which sits upstream of route dispatch and is not expressible as a
+   route shortcut.
+4. **When a shortcut does not fit, the shortcut sets a flag — it does not grow.** Where the
+   logic cannot be carved into exactly one isolated shortcut function, the recommended shape is
+   a **tiny shortcut that sets a feature flag and does not consume its triggering event**. The
+   hook then runs the heavy logic against **feature flags** rather than against hardware state.
+   This keeps the declarative binding intact and moves the branching off the device entirely.
+
+**Why the tracked set is withdrawn — the core rationale.** It is a **stateful abstraction model
+over an entity we do not control**. Nothing prevents it drifting from reality, and nothing
+reconciles it once it has: a release that never arrives leaves an entry that no later event
+clears. The sharpest form of the objection is that **the only way to detect drift in the tracked
+model is to compare it against the device poll** — which makes the device the authority and the
+tracked set a cache of it. A cache that needs the authority to validate it is strictly more
+machinery than asking the authority.
+
+Polling is, by contrast, **stateless and self-healing**: there is no accumulated model, so there
+is nothing to go stale, nothing to reconcile, and no recovery path to design. Its errors are
+**ephemeral** — bounded by one frame's batch, and gone on the next read.
+
+**Why the combo mechanism survives the change intact.** The two questions were conflated for most
+of this feature's life and they are separable. Combos are a **dispatch** improvement:
+declarative binding instead of imperative branching; the cascade replaced by a table lookup;
+**introspectable** bindings that can be listed, documented, rebound and rendered into a help
+overlay, which a tree of `if`s can never be; and explicit precedence (exact before class,
+consumption by truthy return) where a cascade has precedence only by accident of line order.
+None of that depends on where the modifier answer comes from — `combo_string` takes the held
+state as a parameter. **The dispatch argument never implied the state-source argument.**
+
+**Corroborating evidence, recorded because it is easy to lose.** This codebase already contained
+**two** poll-shaped fakes of the input surface before the feature, and both survive it:
+`src/harmony/init.lua` `patch_isDown`, and `tests/mock.lua` `keystroke`, which sets `held[m]` for
+each modifier and emits no modifier event. The tracked set was the only source of truth in the
+system that neither of them could drive.
+
+**Consequence, accepted — the batch-skew error.** LÖVE pumps the whole event queue and then
+dispatches its events one at a time, so a device poll taken while dispatching the first of
+several queued events reports the state after the last. A combo can therefore be misread when
+two key events land in the same frame. This is **accepted**, on these grounds: it requires the
+user to act faster than a frame accumulates — an unusual hit-and-release, or input typed into an
+engine already stalled for seconds, where glitchy input is expected — and the error is
+**ephemeral and dissolved by ordinary user reaction** (release and repeat, hold the modifier
+longer). Its frequency is **unmeasured**; so was the staleness it replaces.
+
+**Consequence, accepted — the failure mode is no longer testable.** A poll fixture is always
+self-consistent, because SDL's batch timing is not modelled by the mock. The tracked set's
+staleness *was* expressible in a test; this is not. Accepted as the price of having no state.
+
+**Consequence — a prerequisite, not an option.** `tests/mock.lua`'s `isDown` is single-argument,
+so every variadic `Key.ctrl()` under test consults only the **left** key of the pair. It must
+become variadic (harmony's `patch_isDown` shape) before the suite can be trusted about modifiers
+at all.
+
+**Consequence — debt that ceases to exist.** The focus-loss staleness fix, the gateway's
+event-set migration, the harmony reconciliation that migration would have forced, and the open
+questions on recovery path, serialised form and repeat counting are **all** properties of the
+tracked set. They are withdrawn with it rather than deferred.
