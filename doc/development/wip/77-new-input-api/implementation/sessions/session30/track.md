@@ -317,3 +317,31 @@ so this is recurring in this workspace, not a one-off.
   itself when a route change reassigns it. Suite 955.
   The note **pre-registers** how to read the numbers, before data exists, so the
   reading cannot be fitted to the result afterwards.
+
+## 2026-08-09 — WRAPPED
+
+Suite **955 / 0 / 0 / 3** throughout — unchanged, because no production code
+moved. Four commits, all docs plus one diagnostic module. Nothing pushed.
+
+Wrapped at the owner's call, on the grounds that **research, evaluation+replanning
+and execution should not be mixed at this scale**. The session was commissioned as
+a design session, became research, and ruled on nothing — so the ruling goes to a
+cold successor. That directive is now a standing section in `agents/validation.md`
+("Operational modes"), together with the red-flag checklist replanning must open
+with: self-inflicted constraints, phantom problems, unratified terminology, scope
+expansion, deviation from intent/mandate, deviation from pre-feature functionality.
+
+Noted in the new section and left for the owner: they named **four** modes while
+enumerating **three**. The boundary matters more than the count.
+
+Distilled into `report.md`; successor commissioned as session31 (evaluation +
+replanning, **not** execution) and the pointer repointed. Track kept raw per
+`agents/sessions.md` §3.
+
+## Sub-agents
+
+**None spawned.** The session was a live discussion with the owner, and every
+unit of evidence was a cheap targeted lookup — a census, a base-check, a git
+history read — where the round trip of briefing a cold agent would have cost more
+than the lookup. Recorded because the standing hygiene rule prefers delegation,
+and the deviation is deliberate, not an oversight.

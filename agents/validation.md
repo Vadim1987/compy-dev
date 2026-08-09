@@ -29,13 +29,13 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **953 / 0 / 0 / 3** (the 3 pending are
+6. Confirm the baseline: `busted tests` → expect **955 / 0 / 0 / 3** (the 3 pending are
    intentional; do not "fix" them, and do not add a fourth without saying so). A different count is
    a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
    (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
    session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
-   session27 remark pass; **the current session's `prompt.md` carries the authoritative number**,
-   this line is the fallback.)
+   session27 remark pass, 955 after session29's two production fixes; **the current session's
+   `prompt.md` carries the authoritative number**, this line is the fallback.)
 
 ## Fixed pointers
 
@@ -103,6 +103,49 @@ concern**; when a unit of work contains two, it is two commits, and the smaller 
   explained there (added/removed/split tests reconcile arithmetically).
 - Same standing limits as before: unit-sized, conventional-commits style (`agents/rules.md`), each
   unit noted in track, **NEVER push**, never sweep the owner's unrelated working-tree changes in.
+
+## Operational modes — recommended boundaries, not a hard workflow (owner, 2026-08-09)
+
+A session drifts when it silently changes what kind of work it is doing. Session30
+began as a design discussion, became a research session, and produced a plan
+amendment and a diagnostic tool before anyone named the transition. That is how
+rabbit-holes and self-inflicted designs get made, and the owner's remedy is to
+**name the mode and watch its boundary**:
+
+- **Research + analysis** — gather evidence, verify claims in code, characterise a
+  problem. Produces findings, not commitments.
+- **Evaluation + replanning** — weigh the findings critically, then change the plan.
+- **Execution** — implement what the plan says.
+
+*(The owner named these as "four modes" while enumerating three; the boundary that
+matters is the transition, so the count is left for them to settle.)*
+
+These are **boundaries to watch, not gates to enforce**. Mixing them at small scale
+is normal; mixing them at large scale is what this rule exists to catch. When a
+session notices it has crossed one, say so and let the owner decide whether to
+continue or hand over cold — a fresh session is cheap next to a design built inside
+a long, heterogeneous context.
+
+### Replanning always starts with evaluation of the findings
+
+Never move findings straight into a plan. Assess them critically first, and flag
+each of these explicitly — **none is automatically a defect, several may be
+legitimate, and all deserve a stated judgement**:
+
+- **self-inflicted constraints** — a requirement the assistant introduced while
+  answering its own corner-case, later mistaken for a given;
+- **phantom problems** — a problem that exists in the analysis but not in the code
+  or in use;
+- **unratified terminology** — vocabulary the work minted for itself and began
+  reasoning on (check against the PR base: absent there means it is ours);
+- **solutions that significantly expand commitment scope** — the fix is larger than
+  the thing it fixes, or drags in subsystems nobody asked about;
+- **deviation from intent and the stakeholder mandate** — the strategic frame above;
+- **deviation from pre-feature functionality** — something that worked before and
+  would not after, whether or not anyone noticed it working.
+
+This list is the successor's opening checklist whenever the previous session was
+analysis-heavy.
 
 ## Comment References
 
@@ -221,7 +264,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session30/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session31/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
