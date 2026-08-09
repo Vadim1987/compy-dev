@@ -581,12 +581,12 @@ state dirty").
 | P9 | W11 — examples and nested repos, one commit per repo | P2–P5 | **[REV]** the three nested repos carry **no automated tests** — one static spec doc, no runnable suite. Committing is not verification: a smoke re-pass on the channels W1/W2/W3 touch is the gate, `examples/keyboard` at minimum. Never pushed. **[S28] PART DONE** — SM1/SM2 ruled no-change, SM3b explained, SM4 pinned by a suite row, SM5 fixed (`3a9d48c`); SM3a left open, needs one runtime check. Evidence: `../notes/S28-smoke-findings.md` |
 | **P9b** | **keyboard: judgement decoupled from delivery order** (owner design, 2026-08-07) — **NEXT TO EXECUTE**. **[S29] The design was rewritten on 2026-08-08 and the old one discarded** — see §7 amendment 3. Now: `textinput` is the **only** judge; two fields (`lastText`, `blocked`); writes blocked across the win transition; `keypressed` feeds the non-printing targets into the same judging function; `keyreleased` holds no judgement state; **no clock, no grace window, no held-set read**. Subtracts `spendGlyph`, `GLYPH_CLAIMED`, `INPUT.upRecent`, `INPUT_UP_GRACE` and `altPlayKey`'s judging path | P9 | design of record, in the **persistent** corpus: `doc/development/internals/examples/keyboard.md`. Nested repo, **no suite** — reasoned, not proven; smoke checklist is in the design note. No platform change, and **[S29] no game-side change either** — `gaugeCandidates` already excludes `st.cur`, so back-to-back identical targets are prevented today; the design records it as a precondition rather than asking for one |
 | **P9c** | **[S29] The two order-dependent rows this feature owns** (owner, 2026-08-08). Under `--shuffle`, `inbound events — Ctrl+Esc quits the app when nothing is left to go back to` and `inbound events — shortcuts and clicks — a shortcut fires but does not consume (#disputable)` fail. Find what state each depends on and who leaves it; fix or document per row | P9b | **before the PR.** The suite-wide order dependence is separate and pre-dates the branch — filed as persistent debt (`technical_debt/general.md`, "The test suite passes only in declaration order") and explicitly **not** in scope here. In scope: only rows this branch adds |
-| **P9d** | **[S29] Clear `keys_pressed` on focus loss** (owner, 2026-08-08). A key released while the window is unfocused never delivers its release, so the set goes stale and nothing clears it: a combo can carry a modifier nobody is holding, and a renderer polling the set draws a cap lit for ever. The gateway installs no focus handler — its callback table marks focus SKIPPED | — | **Before the PR.** Code, so it lands before P10's prose. Breaking test first; recorded meanwhile in `technical_debt/input.md`, "The held-key set is never cleared on focus loss", which is deleted when the fix lands |
-| **P9e** | **[S29] The gateway's own gates read the event set, not the device** (owner, 2026-08-08). `handlers.keypressed` / `keyreleased` gate power shortcuts on `Key.ctrl()` / `Key.alt()` / `Key.shift()` — a device poll — while `dispatch` beside them builds combos from `keys_pressed`. Decision 29 settles that an event-time question is answered from the event-tracked set; the gateway does not follow its own rule | P9d | **Before the PR.** Code, so before P10. Separate commit from P9d — same file, two concerns. Recorded meanwhile in `technical_debt/input.md`, "The gateway asks the device a question about an event". **[S30] This row breaks the `harmony` scripting mode** — harmony fakes modifiers by patching `love.keyboard.isDown` and never injects modifier *events*, and its `shortcuts.toggle = 'C-t'` drives precisely this `quickswitch` gate. Harmony is outside `busted` and outside CI, so **nothing signals the breakage**. Do not land P9e without reading §10 and sequencing P13 |
+| ~~P9d~~ **WITHDRAWN [S32]** — Decision 30 dissolves the set; see §11.3 | **[S29] Clear `keys_pressed` on focus loss** (owner, 2026-08-08). A key released while the window is unfocused never delivers its release, so the set goes stale and nothing clears it: a combo can carry a modifier nobody is holding, and a renderer polling the set draws a cap lit for ever. The gateway installs no focus handler — its callback table marks focus SKIPPED | — | **Before the PR.** Code, so it lands before P10's prose. Breaking test first; recorded meanwhile in `technical_debt/input.md`, "The held-key set is never cleared on focus loss", which is deleted when the fix lands |
+| ~~P9e~~ **WITHDRAWN [S32]** — premise inverted: gate polling is now correct; see §11.3 | **[S29] The gateway's own gates read the event set, not the device** (owner, 2026-08-08). `handlers.keypressed` / `keyreleased` gate power shortcuts on `Key.ctrl()` / `Key.alt()` / `Key.shift()` — a device poll — while `dispatch` beside them builds combos from `keys_pressed`. Decision 29 settles that an event-time question is answered from the event-tracked set; the gateway does not follow its own rule | P9d | **Before the PR.** Code, so before P10. Separate commit from P9d — same file, two concerns. Recorded meanwhile in `technical_debt/input.md`, "The gateway asks the device a question about an event". **[S30] This row breaks the `harmony` scripting mode** — harmony fakes modifiers by patching `love.keyboard.isDown` and never injects modifier *events*, and its `shortcuts.toggle = 'C-t'` drives precisely this `quickswitch` gate. Harmony is outside `busted` and outside CI, so **nothing signals the breakage**. Do not land P9e without reading §10 and sequencing P13 |
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it. **Tombstone decisions, never renumber**. **[S29]** Decision 29 and the `input_api.md` "Held keys" rewrite landed early by owner instruction — do not redo them |
 | P11 | W12 — comment sweep, slices, revalidation ×2 | P10 | the commission's (e)–(9) |
 | ~~P12~~ **PROMOTED [S32]** → `../plan.md` **Phase U** (owner, 2026-08-09); id kept, §8 stands | **[S29] Upstream reconciliation and downstream compatibility** (owner, 2026-08-08). Reconcile this branch against the advanced upstreams — the platform repo (and possibly an advanced fork of it) **and** each example repo — then land the coordinated set of PRs | P11 / close-out of the current snapshots | **Blocks the real PR, and needs its own plan.** Not attempted before the snapshots are stable: re-planning against a moving upstream while the design is still settling means doing it twice. See §8 |
-| **P13** | **[S30] Harmony reconciliation** (owner ruling, 2026-08-08). `src/harmony` is a scripted-automation mode carrying a **second implementation of the input surface** — its own `love.run`, its own held-modifier table, its own patched `love.keyboard.isDown`. It fakes modifiers to the *poll* and never puts them in the event stream, so every event-side change this feature makes is invisible to it. Inject real modifier `keypressed`/`keyreleased`, **keep** `patch_isDown`, retire the manual `release_keys()` discipline, and build the batch-skew reproduction rig | P9e (which breaks it); independent of P10–P12 | **Own phase, and in the release** — not a platform blocker, but shipping a platform input change that silently breaks the bug-reproduction harness is the loss this row exists to prevent. Like P12 it is **someone else's subsystem** (aldum) and eventually needs them in the loop. See §10 |
+| **P13** **[S32] PREMISE LARGELY DISSOLVES** — harmony can now drive combos; ruling owed, §11.3 | **[S30] Harmony reconciliation** (owner ruling, 2026-08-08). `src/harmony` is a scripted-automation mode carrying a **second implementation of the input surface** — its own `love.run`, its own held-modifier table, its own patched `love.keyboard.isDown`. It fakes modifiers to the *poll* and never puts them in the event stream, so every event-side change this feature makes is invisible to it. Inject real modifier `keypressed`/`keyreleased`, **keep** `patch_isDown`, retire the manual `release_keys()` discipline, and build the batch-skew reproduction rig | P9e (which breaks it); independent of P10–P12 | **Own phase, and in the release** — not a platform blocker, but shipping a platform input change that silently breaks the bug-reproduction harness is the loss this row exists to prevent. Like P12 it is **someone else's subsystem** (aldum) and eventually needs them in the loop. See §10 |
 
 **The ordering rule behind this:** code first, tests second, docs third,
 comments last. Every phase that moves code invalidates doc prose and comments
@@ -875,3 +875,167 @@ the release: the platform PR ships an input change that silently disables the
 project's bug-reproduction harness otherwise, and **no automated signal exists**
 to catch that — harmony is outside `busted` and outside CI. Like P12 it is
 someone else's subsystem and eventually needs aldum in the loop.
+
+---
+
+## 11. [S32] Amendments made in session32 — Decision 30 actualised
+
+### 11.1 Standing of the ruling
+
+Decision 30 was rechecked before anything was built on it, per session32's commission.
+Two cold checks, both with prompt of record and deliverable on disk:
+
+- `../outcomes/S32-decision30-evidence-bundle.md` (mechanical) — the gate, the
+  `3256aac` pre-existing checks, the dissolution counts.
+- `../reviews/S32-decision30-challenge-fable.md` (judgement) — **verdict: Decision 30
+  survives.** Its strongest leg is not the one the decision leads with: the tracked set's
+  two defects were *already documented in `technical_debt/input.md` before Decision 30
+  existed*, so the core rationale is the generalisation of two found-and-scheduled bugs,
+  not a fresh abstract argument.
+
+**Two corrections to the decision's own text**, neither reversing it:
+
+1. Its *"Consequence — a prerequisite, not an option"* paragraph is **overstated**. The
+   premise (single-arg `isDown` vs variadic `Key.*`) is true; the consequence is false —
+   no test can reach a state where left and right differ, so a variadic mock would change
+   **zero** test results, and the single-arg `isDown` is **pre-existing, untouched by this
+   branch**. It is not a blocker and does not have to land first.
+2. It does not name **two real consequences of rule 4**, and should (11.7).
+
+**One owner correction, recorded because it changes how rule 4 is judged (2026-08-09):** a
+project-owned flag is tracked state *"as any local state variable would be — but it is
+owned by the project, which can consume and alter it as needed. Platform-owned
+`keys_pressed` was global, long-living state, read-only for projects — a very different
+beast."* The structural critique bites on state that is long-lived, shared and
+**unrepairable by its reader**; the flag is none of those, and a project reading a phantom
+in `keys_pressed` had **no repair path at all**. The flag is better-positioned state than
+what it replaces, not the same bug scaled down.
+
+### 11.2 Ordering for this unit — owner ruling, 2026-08-09
+
+**Docs → tests → platform code → examples.** This **deliberately reverses §4's ordering
+rule** (*"code first, tests second, docs third, comments last"*).
+
+**Why the reversal is coherent here, and where it does not apply.** §4's rule exists
+because moving code invalidates prose written before it. That premise held while the code
+*shape* was still being decided. It does not hold now: Decision 30 settles the shape by
+ruling, so writing the doc first is **writing the specification**, and writing tests
+against that spec before implementing is `agents/development.md`'s own tests-first mandate.
+**Scope: this unit (P14) only.** §4's rule still governs P8, P10 and P11.
+
+**One refinement, proposed for the owner's ruling rather than applied silently:** the
+**technical-debt register is a record of state, not a specification.** Deleting "the
+held-key set is never cleared on focus loss" *before* the set is gone would make the
+register state something false. It is therefore placed **last** (P14e), after the code it
+describes has actually changed — an exception to docs-first, on the grounds that this
+particular document is not a spec.
+
+### 11.3 Item-by-item disposition of the §4 table
+
+The owner's instruction was that "likely dissolved" is a hypothesis **per item**, not a
+licence to discard the plan. Every row walked:
+
+| Row | Disposition under Decision 30 |
+|---|---|
+| **P0–P7b** | **Unaffected.** All DONE; none depended on the tracked set. Note P2/W1 *removed* `keys_pressed` from the hook payload — independent of Decision 30 and consistent with it |
+| **P8** | **Premise unaffected**, but its nine remaining ids (R057, R074, R078, R079, R047, R063, R064, R069, R075) sit in test-restructuring territory that **P14b now also touches**. **A per-id check against Decision 30 is owed before P14b starts** — not performed this session, and explicitly not assumed |
+| **P9** | **Unaffected.** SM3a's open runtime check is a pointer/click finding |
+| **P9b** | **UNAFFECTED, and reconfirmed as the reason the sprint exists.** The keyboard `textinput` ordering heal is not a `keys_pressed` problem; `textinput` carries no `isrepeat` and never did. Decision 30 does not touch it. **It must not be eclipsed by the dissolution work** |
+| **P9c** | **Unaffected in premise.** But P14b moves and deletes test cases, so **re-check both order-dependent cases after P14b**, not before |
+| **P9d** | **WITHDRAWN.** Clearing the set on focus loss is a property of a set that no longer exists |
+| **P9e** | **WITHDRAWN, and its premise is inverted.** P9e said the gateway violates its own rule by polling. Under Decision 30 **polling at the gate is the correct behaviour**; there is nothing to migrate |
+| **P10** | **Survives and GROWS.** Its Decision-30 slice is **pulled forward into P14a** under the new ordering; the remainder (W9 ledger work, W10 batches 1/2/4) stays here. New members: `doc/input_api.md` §"Held keys" needs **replacing, not purging**; rule 4 has **no corpus presence at all**; **Decision 21's worked example is stale** — it says a hook "receives the held-key view", which **Decision 26 already removed** |
+| **P11** | **Unaffected.** Comment sweep stays last. Gate currently failing: **22** markers in the platform, **5** in `src/examples/` |
+| ~~P12~~ | **PROMOTED** to the parent plan as **Phase U** |
+| **P13** | **Premise largely DISSOLVES — and in Decision 30's favour.** P13 existed because harmony fakes modifiers to the **poll** and never emits modifier *events*, so every event-side change was invisible to it and it could never exercise the combo mechanism. **Decision 30 makes the matcher read the device** — i.e. `love.keyboard.isDown`, which is exactly what harmony's `patch_isDown` replaces. **Harmony can now drive the combo mechanism it previously could not.** Proposed disposition: P13 reduces to a verification task (confirm harmony drives a real combo end-to-end) plus the retirement of the manual `release_keys()` discipline. **Owner's ruling owed** — this was not drawn by either cold check |
+
+### 11.4 New rows — the dissolution itself
+
+Sub-lettered to encode the owner's ordering. One concern per commit throughout; suite green
+and stated at each.
+
+| # | Phase | Contents |
+|---|---|---|
+| **P14a** | **Docs — the specification** | Rewrite `doc/input_api.md` §"Held keys" (`:365-395`) as combo-first / flag-shortcut / poll-for-decoration; **teach rule 4 for the first time in the corpus**; fix the false claim at `:268` (a hook does *not* receive the held table — `:390` and the code agree); update `internals/user_input.md` (10 occurrences); tombstone-correct **Decision 21**'s stale worked example. **Decisions are tombstoned, never renumbered** (§ W9 hard constraint) |
+| **P14b** | **Tests** | Breaking tests against P14a's spec. `keys_pressed_spec.lua:52-96` **delete**; **`:98-138` stays UNCHANGED** — it drives the source-blind matcher against a synthetic table, and needing zero edits there is the evidence the ruling is cleanly implementable. `input_nfr_mechanism_spec.lua:66-105` delete, `:123-165` keep. `input_events_spec.lua:781-905` delete; `:557,616,734,857-861` need individual rewrites — some assert a write-before-dispatch ordering that ceases to be meaningful. **Mock fix lands here, and which fix depends on 11.5** |
+| **P14c** | **Platform code** | The device-backed source at the **single** production call site `find_shortcut` (`projectInputController.lua:103-110`); then the write side and dead machinery — `controller.lua:788,906` (writes), `:498` (the field), `held_keys()` + proxy memoisation `:420-443,501`, and the sandbox field in `consoleController.lua:539-540` plus its `held` upvalue plumbing `:829-834`. **`combo_string`/`any_mod` need no change** — they are source-blind |
+| **P14d** | **Examples** | `src/examples/keyboard` — `input.lua`'s `INPUT.__index` held branch and `keyboard_view.lua:171,178` to direct polling. **Sort its reads into decoration/drawing (stays — legitimate, owner) vs judgement (converts to combos)** before touching any of them. Nested repo, no suite: smoke re-pass is the gate. **Never pushed** |
+| **P14e** | **Debt register** | Placed last by 11.2's exception. Contents enumerated in 11.6 |
+
+**Also placed, outside P14 because they are not the dissolution:**
+
+- **`src/probe/input_probe.lua` — DELETE.** Its own header: *"DIAGNOSTIC, TEMPORARY. Delete
+  when the polling-vs-tracking question is ruled on."* The question is ruled. Postdates
+  `3256aac`; opt-in; not on the dispatch chain. Its own commit.
+- **Rule 3's gate table — NOT this PR** (recommendation; owner's ruling owed). The gate's
+  polls are byte-identical to base and functionally uncontested, so nothing forces it now;
+  bundling it would mix "revert an implementation-time decision" with "add architecture" in
+  one diff, against the reviewability bar. If ever built it must be visibly a **second,
+  privileged table** with its non-overridability stated where it lives — otherwise
+  introspectability arrives with a false promise of override.
+- **`src/lib/error_explorer.lua:418` — out of scope**, pre-existing at base and outside the
+  dispatch chain entirely, but **named in the PR description** so a reviewer grepping
+  `love.keyboard.isDown` does not read it as a missed occurrence.
+
+### 11.5 The design fork — owner ruling owed before P14b
+
+`combo_string` looks its two modifier variants up **separately** (`keys_pressed[m[1]] or
+keys_pressed[m[2]]`), so the matcher's device-backed form can be either:
+
+- **(a) per-key device lookup** — a static proxy `__index = function(_, k) return
+  love.keyboard.isDown(k) end`. Matches the matcher's existing per-key indexing exactly.
+  The mock's single-arg `isDown` **never bites**; the prerequisite becomes adding
+  right-hand tokens to `tests/mock.lua`'s `mods` map (`:17-21`) — the `held` table
+  (`:5-15`) already has the slots. **Recommended.**
+- **(b) route through `Key.ctrl()/alt()/shift()`** for symmetry with the gate. Then the
+  variadic-`isDown` concern **reattaches for real** and the mock fix becomes load-bearing.
+
+**These need different mock fixes**, and Decision 30's text currently names the one for
+fork (b) while (a) is recommended. **Name the fork in the PR either way.**
+
+### 11.6 Technical-debt register — the update, enumerated (P14e)
+
+- **Dissolve** (the set is gone): `:29` "The held-key set is never cleared on focus loss";
+  `:61` "The gateway asks the device a question about an event"; `:81` "The held-key
+  surface is a table that cannot be iterated"; `:281` "`keys_pressed` can go stale on focus
+  loss"; `:442` "Held-key pressed-keys view iteration is index-only".
+- **Note while doing it:** `:29` and `:281` are **two entries for the same defect** — a
+  pre-existing duplicate in the register, worth stating in the commit so it does not read
+  as a miscount.
+- **Rework, do not delete** (RESOLVED entries whose resolution is now reversed): `:396`
+  "`compy.keys_pressed` is not exposed to projects" — its resolution reads *"owner ruled to
+  expose it"*; needs a superseded-by-Decision-30 note in place.
+- **Rework** (entries that name `keys_pressed` as the recommended answer): `:664` combo
+  triggers key-name-only (`:689`); `:738` modifier-class rule (`:731` — *"a project that
+  wants 'a and b held together' reads `compy.input.keys_pressed`"* → becomes rule 4);
+  `:775` keyboard-hooks-only interactivity (`:773`).
+- **Survives unchanged:** `:795` combo-string allocation (still allocates); `:178` dirty
+  global device state on raise. **`:988` "retired polling idiom" also survives and does
+  NOT invert** — checked: its retired idiom is the `r = user_input()` **poll-loop**
+  (polling a reference for results), not device polling.
+- **New entries to consider** (owner's call whether debt or documented-accepted): the
+  flag-shortcut modifier-sensitivity trap (11.7); batch-skew as an accepted unmeasured
+  risk.
+- **Also:** `:58`/`:77`'s "Scheduled: before the PR (plan phase P9d/P9e)" wording is now
+  **false** — both phases are withdrawn.
+
+### 11.7 What the PR description owes
+
+- **Removal, not deprecation** — no compatibility shim.
+- **Where device polling now lives**: the matcher (framework-internal) and
+  decoration/rendering reads (project-legal). Judgement code at a project call site stays
+  discouraged **style**, not a blocked capability — say so, because it never was blocked.
+- **The gate and `error_explorer.lua:418`** named as known, pre-existing, unchanged.
+- **Rule 4 stated as a complete mechanism**, so a reviewer does not rediscover the
+  strawman objection and conclude the API has a hole. Then its **two honest consequences**:
+  (1) a project flag is small tracked state that can go stale on focus loss — mitigated,
+  per the owner's correction, by being project-owned and repairable, unlike `keys_pressed`;
+  (2) **the genuinely new trap** — a flag-shortcut is filtered through the
+  **modifier-sensitive** matcher, so `shortcuts.keypressed['a']` silently fails to fire,
+  and the flag silently fails to update, whenever an unrelated modifier is held. Raw
+  `keys_pressed['a']` tracked unconditionally.
+- **The accepted regressions, plainly**: batch-skew is new, unmeasured and accepted; the
+  suite loses the ability to express the old failure mode as a test; `examples/keyboard`
+  needs a real migration and its adoption saving shrinks.
+- **Console/editor deferral needs a citation, not a justification** —
+  `design/requirements.md` FR-11/12: *"expressiveness targets, not a commitment to rewrite."*
