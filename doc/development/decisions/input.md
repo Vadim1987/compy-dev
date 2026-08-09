@@ -1236,6 +1236,16 @@ unchanged** — only the *source* the matcher reads from changes.
 2. **`Key.*` is legitimate inside the shortcut matcher.** The combo-string builder
    (`combo_string` / `any_mod`, Decision 8) reads the device to name the modifiers it
    serialises. This is the one place a direct read is not merely permitted but correct.
+   **Shape ruled in place, 2026-08-09 (owner):** the builder calls `Key.ctrl()`/`Key.alt()`/
+   `Key.shift()` **directly** — it does not keep its table parameter and receive a per-key
+   device lookup. The rejected alternative would have left the builder source-blind and
+   table-testable; the ruling prefers symmetry with the pre-dispatch gate, which already polls
+   this way, and one literal source of modifier truth over an adapter standing in front of it.
+   **Consequences, stated because they are costs and not side effects:** `combo_string` and
+   `any_mod` lose their parameter and every caller changes; the matcher can no longer be
+   driven by a synthetic table, so the test cases that do so are rewritten against a patched
+   `love.keyboard.isDown`; and the mock's variadic fix becomes a prerequisite (see the
+   amendment note below).
 3. **`Key.*` at a call site remains a smell.** In projects today, and eventually in
    console/editor too, an imperative modifier test at a call site should be replaced by the
    **shortcuts mechanism**. The one place this does not apply is **the gate** — the block in
@@ -1300,6 +1310,21 @@ staleness *was* expressible in a test; this is not. Accepted as the price of hav
 so every variadic `Key.ctrl()` under test consults only the **left** key of the pair. It must
 become variadic (harmony's `patch_isDown` shape) before the suite can be trusted about modifiers
 at all.
+
+> **Amended in place, 2026-08-09 (session33) — scope corrected, then reinstated by ruling.**
+> Session32 challenged this paragraph and was right on the facts as they then stood: no test can
+> reach a state where left and right differ (the mock's token map writes only `lctrl`/`lshift`/
+> `lalt`, and no test installs its own keyboard `isDown`), so making the mock variadic changes
+> **zero existing test results**, and the single-argument `isDown` is pre-existing and untouched
+> by this branch. "Before the suite can be trusted about modifiers at all" overstated it.
+>
+> **The owner has since ruled the matcher's shape (2026-08-09): the combo-string builder calls
+> `Key.ctrl()`/`Key.alt()`/`Key.shift()` directly** rather than being handed a per-key device
+> lookup. Under that shape all modifier truth in dispatch routes through the two-argument call,
+> so the fix is a genuine prerequisite again — precisely scoped: **not** that existing results
+> are wrong, but that **no test proving the new matcher can exercise a right-hand modifier
+> until the mock is variadic and its token map gains `rctrl`/`rshift`/`ralt`** (the `held` table
+> already has the slots). It lands first, as its own commit, ahead of the test rewrite.
 
 **Consequence — debt that ceases to exist.** The focus-loss staleness fix, the gateway's
 event-set migration, the harmony reconciliation that migration would have forced, and the open
