@@ -337,3 +337,61 @@ unassisted, the same bug the debt register scheduled to fix centrally." Under th
 correction that is **overstated** — it is not the same bug, because ownership, lifetime and
 mutability all differ. Its force reduces to: *a project author must think about clearing
 their own flag*, which is ordinary local-state discipline, not an inherited platform defect.
+
+## 2026-08-09 — plan actualised, then four rulings; §4 ordering deliberately reversed
+
+- §11 appended to `S27-triage-and-plan.md` (`24170aec`): item-by-item walk of every P row,
+  P9d/P9e withdrawn, P13's dissolution surfaced, P8's nine ids left explicitly
+  **un-dispositioned** rather than assumed, P14a–e created in the owner's ordering.
+- **Owner's ordering ruling: docs → tests → platform code → examples.** Deliberately
+  reverses §4's "code first, docs third". Coherent because §4's rule assumed a **moving
+  code shape**; the shape is settled by ruling, so docs-first = **spec-first**, and
+  tests-against-spec is `agents/development.md`'s own mandate. **Scoped to P14 only.**
+- **Owner asked for the plan in map form before ratifying** — presented as the nested
+  bullet list, then ruled on it. Good discipline: the plan was read as a whole before
+  being committed to, not accreted.
+- **Four rulings** (`d348b505`):
+  1. **Debt register rides with the docs step**, overruling my "place it last" — *debt
+     created by the spec is still debt, it can be dissolved later.* Better reasoning than
+     mine.
+  2. **The design fork becomes its own owner-gated step (P14b) and is DEFERRED** — *"check
+     it when it becomes a blocker; as long as we have non-blocked steps preceding it we can
+     clear them first, reducing friction."* Owner's framing of why it needed a step at all:
+     it is **tactical and a design decision, not planning**, so it must not be
+     rubber-stamped as a side effect of plan reconciliation.
+  3. **P13 → revalidation.**
+  4. **Rule 3's gate table → not this PR, maybe not at all.**
+- **Ledger tension I surfaced from ruling 4:** Decision 30 rule 3 said the gate *"can build
+  its own table, **and should**"* — a commitment the owner does not hold. Owner: soften now.
+  Done in `36de0eaa`, amended in place per the tombstone rule, suite re-run green first.
+
+## 2026-08-09 — WRAPPED
+
+Owner called the wrap and set the successor's nature: **revalidate the plan for
+sanity/consistency — including checking its intents against this session's report — then
+start execution.** Matches `agents/sessions.md` §5: this was cognitive-heavy, so the
+successor is a revalidation task.
+
+Suite **955 / 0 / 0 / 3** throughout, verified again before the decision edit. Five commits
+before the wrap: `541e10b1` (plan cross-links), `f42d0648` (collapse-framing correction),
+`24170aec` (plan actualised), `d348b505` (four rulings), `36de0eaa` (Decision 30 softened).
+Nothing pushed.
+
+Distilled into `report.md`; successor commissioned as session33 and the pointer repointed.
+Track kept raw per `agents/sessions.md` §3.
+
+## Sub-agents
+
+Two, both with prompt of record and deliverable on disk, both with explicit model:
+
+- **Sonnet** — Decision 30 evidence bundle → `validation/outcomes/S32-decision30-evidence-bundle.md`.
+  Refuted the "mock fix must land first" sequencing constraint this session was handed.
+- **Fable** — conceptual challenge → `validation/reviews/S32-decision30-challenge-fable.md`.
+  Verdict: the ruling survives; found that its strongest leg is the pre-existing documented
+  debt, not the argument it leads with. **Corrected mid-flight** when the owner showed my
+  framing of rule 4 was a strawman — it retested in code rather than re-arguing, and came
+  back with a narrower, real residual.
+
+Neither was taken at face value: every load-bearing claim was re-verified by me in code.
+One of my **own** hypotheses (that the register's "retired polling idiom" entry would
+invert) was checked and found **wrong** before it reached the plan.
