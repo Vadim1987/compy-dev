@@ -10,6 +10,33 @@ overridden wherever it disagrees.
 
 Every id is assigned to exactly one workstream (coverage table, Appendix A).
 
+---
+
+## 0. What this document is, and what it is NOT (added 2026-08-09, session32, owner ruling)
+
+**This is a spinoff sprint, not the release plan.** The release plan is
+[`../plan.md`](../plan.md) — the validation-phase plan that ends in **Phase G, PR
+assembly**. This document is the honest descendant of that plan's **Phase TF2**: the
+owner's human review of the split suite produced 187 remarks instead of the near-empty
+bucket TF3 predicted, and they were triaged here.
+
+It is also, in effect, the **collapsed B→C→D pass** that `../notes/post-R-replan-hypothesis.md`
+proposed and `S18-post-R-replan-reconciliation.md` gated on TF2/TF3 — which is why the parent
+plan's `convergence-check.md`, `principle-sheet.md` and `disposition-table.md` were never
+written under those names. The collapse happened; it was much larger than forecast.
+
+**The two plans are linked, never merged** (owner ruling, 2026-08-09) — they sit at different
+altitudes. The working discipline: **clear this sprint, then return to the parent at Phase F.**
+Nothing here overrides the parent; anything that turns out to be release-shaped rather than
+remark-shaped is **promoted up**, not carried here.
+
+**First promotion, 2026-08-09:** **P12** (upstream reconciliation) has moved to the parent as
+**Phase U**, between F and G. It was never a remark — it is a release precondition. §8's
+analysis stands and is not superseded, only re-parented. **P13** (harmony) is coupled to P9e
+and is an open disposition question for the session32 replan, not settled by that move.
+
+---
+
 **REVISED 2026-08-07** after two cold reviews —
 `../outcomes/S27-triage-factcheck.md` (fact-check against code) and
 `../outcomes/S27-plan-review.md` (plan quality). Both were run without sight of
@@ -550,7 +577,7 @@ state dirty").
 | **P9e** | **[S29] The gateway's own gates read the event set, not the device** (owner, 2026-08-08). `handlers.keypressed` / `keyreleased` gate power shortcuts on `Key.ctrl()` / `Key.alt()` / `Key.shift()` — a device poll — while `dispatch` beside them builds combos from `keys_pressed`. Decision 29 settles that an event-time question is answered from the event-tracked set; the gateway does not follow its own rule | P9d | **Before the PR.** Code, so before P10. Separate commit from P9d — same file, two concerns. Recorded meanwhile in `technical_debt/input.md`, "The gateway asks the device a question about an event". **[S30] This row breaks the `harmony` scripting mode** — harmony fakes modifiers by patching `love.keyboard.isDown` and never injects modifier *events*, and its `shortcuts.toggle = 'C-t'` drives precisely this `quickswitch` gate. Harmony is outside `busted` and outside CI, so **nothing signals the breakage**. Do not land P9e without reading §10 and sequencing P13 |
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary | P2–P9 | docs describe the final code, so they come after it. **Tombstone decisions, never renumber**. **[S29]** Decision 29 and the `input_api.md` "Held keys" rewrite landed early by owner instruction — do not redo them |
 | P11 | W12 — comment sweep, slices, revalidation ×2 | P10 | the commission's (e)–(9) |
-| **P12** | **[S29] Upstream reconciliation and downstream compatibility** (owner, 2026-08-08). Reconcile this branch against the advanced upstreams — the platform repo (and possibly an advanced fork of it) **and** each example repo — then land the coordinated set of PRs | P11 / close-out of the current snapshots | **Blocks the real PR, and needs its own plan.** Not attempted before the snapshots are stable: re-planning against a moving upstream while the design is still settling means doing it twice. See §8 |
+| ~~P12~~ **PROMOTED [S32]** → `../plan.md` **Phase U** (owner, 2026-08-09); id kept, §8 stands | **[S29] Upstream reconciliation and downstream compatibility** (owner, 2026-08-08). Reconcile this branch against the advanced upstreams — the platform repo (and possibly an advanced fork of it) **and** each example repo — then land the coordinated set of PRs | P11 / close-out of the current snapshots | **Blocks the real PR, and needs its own plan.** Not attempted before the snapshots are stable: re-planning against a moving upstream while the design is still settling means doing it twice. See §8 |
 | **P13** | **[S30] Harmony reconciliation** (owner ruling, 2026-08-08). `src/harmony` is a scripted-automation mode carrying a **second implementation of the input surface** — its own `love.run`, its own held-modifier table, its own patched `love.keyboard.isDown`. It fakes modifiers to the *poll* and never puts them in the event stream, so every event-side change this feature makes is invisible to it. Inject real modifier `keypressed`/`keyreleased`, **keep** `patch_isDown`, retire the manual `release_keys()` discipline, and build the batch-skew reproduction rig | P9e (which breaks it); independent of P10–P12 | **Own phase, and in the release** — not a platform blocker, but shipping a platform input change that silently breaks the bug-reproduction harness is the loss this row exists to prevent. Like P12 it is **someone else's subsystem** (aldum) and eventually needs them in the loop. See §10 |
 
 **The ordering rule behind this:** code first, tests second, docs third,

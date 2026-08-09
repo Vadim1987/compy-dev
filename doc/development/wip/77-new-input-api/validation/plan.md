@@ -77,6 +77,28 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 > **TF3** follows with a much smaller absorbed-by-redesign bucket, since most of what would
 > have landed there is executed rather than parked. Phase B's gate condition (below) gains R.
 
+> **STATUS BLOCK — added 2026-08-09 (session32), owner-ruled.** This plan had not been
+> written to since **session22** (`583fdcd8`, 2026-07-29) while ten sessions of work ran
+> against it, so a cold reader was being told the work sits at "TF2 pending". It does not.
+> Where the work actually is:
+>
+> - **A, DI, TF1 — done. R — CLOSED and accepted** (session18, see the note under Phase R).
+> - **TF2 — RAN** (session24 take-01 triage; the owner's smoke test, session26). Its output
+>   was **187 remarks**, not the near-empty bucket TF3 was predicted to hold.
+> - **That output became a spinoff sprint** —
+>   [`reviews/S27-triage-and-plan.md`](reviews/S27-triage-and-plan.md), the P0–P13 execution
+>   table, live since session27 and **still the operative plan at a lower altitude**. It is
+>   the honest descendant of TF2 (owner, 2026-08-09), and it is also **the collapsed
+>   B→C→D pass** that [`notes/post-R-replan-hypothesis.md`](notes/post-R-replan-hypothesis.md)
+>   proposed and [`reviews/S18-post-R-replan-reconciliation.md`](reviews/S18-post-R-replan-reconciliation.md)
+>   gated on TF2/TF3 — which is why Phase B's `convergence-check.md`, Phase C's
+>   `principle-sheet.md` / `disposition-table.md` were never produced under those names.
+>   The collapse happened; it was simply much larger than forecast.
+> - **The two plans are LINKED, not merged (owner ruling, 2026-08-09).** They sit at
+>   different altitudes. Clear the spinoff, then come back here for **F → U → G**. Do not
+>   fold the P-table into this document.
+> - **Baseline is now 955/0/0/3**, not the 854/0/0/4 recorded below.
+
 ## Phases
 
 Ordering is load-bearing: A3 (test fidelity) precedes any ruling that cites green tests
@@ -159,6 +181,14 @@ DI is what makes TF2 cheap).
   `validation/`; it is a PR-candidate shaping gate, not a second feature review. Only
   then regenerate the navigation batch and begin TF2, so the owner reviews the docs
   surface that will actually ship.
+  **[RAN — session24 take-01 triage; owner smoke test session26. SPUN OFF — 2026-08-09,
+  session32.]** TF2's human review produced **187 remarks**, far past the bucket TF3
+  anticipated. They were triaged into a **spinoff sprint** with its own execution table
+  (P0–P13): [`reviews/S27-triage-and-plan.md`](reviews/S27-triage-and-plan.md). That
+  sprint absorbs TF3 and **is** the collapsed B→C→D pass this plan's post-R hypothesis
+  gated on TF2/TF3. **It is still open.** This plan resumes at **Phase F** when the
+  spinoff closes — the two are **linked, never merged** (owner ruling, 2026-08-09). The
+  spinoff names this document as its parent in its own §0.
 - **TF3. Evaluate hints + triage** — hint-scoped fidelity re-check (NOT a re-audit;
   guardrail 1 stands): mechanical fixes land per hint; judgment items are **pooled with
   A2's two standing fixture-architecture questions** (wrap-native helper; play-mode
@@ -286,6 +316,27 @@ meta-requirements (clarity, stability, robustness, minimalism). Anything failed 
 back to Phase D as a named question, not silently patched.
 Output: `validation/reviews/final-revalidation.md`.
 
+### Phase U — Upstream reconciliation and downstream compatibility (INSERTED 2026-08-09,
+session32, by owner ruling; sits between F and G)
+
+**Promoted here from the spinoff sprint, where it was P12** (`reviews/S27-triage-and-plan.md`
+§8). It was always the wrong altitude for a remark-triage table: it is not a remark, it is a
+release precondition. Named `U` rather than a new letter in sequence because **B–G labels are
+load-bearing across frozen prompts and tracks** — the same reason DI, TF and R carry names.
+
+Reconcile this branch against the advanced upstreams — the platform repo (and possibly an
+advanced fork of it) **and** each of the three nested example repos (`balloons`, `maze`,
+`keyboard`, each with its own remote and its own PR) — then land the coordinated set of PRs.
+
+- **It blocks the real PR** and needs its own plan; the spinoff's §8 holds the analysis and
+  is not superseded by this promotion, only re-parented.
+- Not attempted before the snapshots are stable: re-planning against a moving upstream while
+  the design is still settling means doing it twice.
+- **Still to be dispositioned (session32):** the spinoff's **P13** (harmony reconciliation)
+  was coupled to P9e, and P9e's premise is affected by Decision 30. Whether P13 follows P12
+  up to this phase, survives in the spinoff, or dissolves is an **open item for the session32
+  replan** — it is not settled by this insertion.
+
 ### Phase G — PR assembly (per `implementation/pr-assembly-guide.md`)
 
 Slice regeneration **LAST**, after the tree settles. PR description structure: intent →
@@ -296,8 +347,9 @@ description must be able to review it. `wip/77` deletion: owner-gated, after PR 
 
 ## Standing constraints (inherited, listed for the orchestrator's convenience)
 
-- Suite baseline **854/0/0/4** as of session21 (was 815 when this plan was written, 841 after
-  Phase R); the only unprompted re-check. No sweep re-runs. The live number is the one in the
+- Suite baseline **955/0/0/3** as of session29 (815 when this plan was written, 841 after
+  Phase R, 854 at session21, 904 after session25, 923 after session26, 953 after session27);
+  the only unprompted re-check. No sweep re-runs. The live number is the one in the
   current `sessionNN/prompt.md`.
 - Anomalies to leave alone: `agents/validation.md` guardrail 3 list.
 - Verify factual claims (any oracle's, any sheet cell's) in code before acting: LSP for
