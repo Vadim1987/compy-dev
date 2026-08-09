@@ -273,3 +273,47 @@ Disregarded as spurious/possibly injected, and reported to the owner rather than
 silently obeyed. Noting because **`validation/outcomes/S28-mutation-checks.md`
 already carries a prior session's record of the same event and the same call** —
 so this is recurring in this workspace, not a one-off.
+
+## 2026-08-09 — owner scopes the work down; probe built
+
+- **Owner explained the git reminders**: consequence of checkouts/resets changing
+  inodes, especially when checking against a baseline where no `wip/` tree
+  existed. Accepted — the diffs were clean every time. Not an injection.
+- **Owner vocabulary directive:** say **"test cases"**, never "rows" — the vague
+  term costs them decoding effort on every read. (Yes, "rows" meant busted
+  `it(...)` blocks.) Persistent-corpus spread measured: ~19 uses
+  (`technical_debt/input.md` 9, `tests.md` 7, `general.md` 3) plus many in `wip/`.
+  **Not swept unasked** — offered to the owner as a P10 vocabulary item, since
+  unlike "wedge" this one may be established rather than assistant-minted.
+- **Owner's scoping question, and the answer is yes.** Console/editor may keep
+  polling for now. **The seam already exists in the code**: the project-facing
+  dispatch path (`projectInputController.find_shortcut`) reads only
+  `Controller.keys_pressed` and `Key.is_mod` (a pure name lookup) — **zero device
+  polls** — while all 70 `Key.ctrl/alt/shift()` sites are console/editor
+  internals, unchanged since before the feature. Deferring cannot make things
+  worse than today because it *is* today.
+- **Consequences of that scoping, stated to the owner:** P9e defers → **P13
+  defers with it** (P9e is what breaks harmony; leave the gates polling and
+  harmony keeps working). Once P9e is gone, P13 is a **capability gap, not a
+  regression** — harmony never could drive project shortcuts, because shortcuts
+  did not exist pre-feature. **P9d stays in scope** (stale set breaks
+  project-facing combos; a backgrounded Android app is the real case). **P9b is
+  Q0-independent** — the rewritten design has no held read, no clock, no grace.
+- **Q3/Q4/Q5 all resolve to no-change**, so the design mini-sprint can close
+  without adding surface. Q1 splits: P9d in module A, the general recovery path
+  deferred to module B as debt.
+- **Two debt entries go stale under this scoping:** `technical_debt/input.md:58`
+  and `:77` say "Scheduled: before the PR (plan phase P9d/P9e)". `:77` becomes
+  false if P9e defers. Not yet rewritten — pending the owner's go on the reshape.
+- **Probe built and proven** (`src/probe/input_probe.lua`, usage note
+  `../notes/S30-input-clock-probe.md`). Installs from the app's own console —
+  `require('probe.input_probe').install()` — so no source edit and no launch
+  argument, which matters on Android. Verified `project_require` is a
+  pass-through to the real `require`, so the console can reach it.
+  **Behaviour proven on a fake gateway under LuaJIT**, not assumed: return values
+  pass through, frame boundary counted at `love.update`, fast tap raises
+  self-skew, set/device disagreement raises modifier-skew, three events in one
+  frame count as one multi-event frame, and the `love.update` wrapper re-applies
+  itself when a route change reassigns it. Suite 955.
+  The note **pre-registers** how to read the numbers, before data exists, so the
+  reading cannot be fitted to the result afterwards.
