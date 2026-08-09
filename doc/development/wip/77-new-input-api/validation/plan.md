@@ -88,15 +88,21 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 > - **That output became a spinoff sprint** —
 >   [`reviews/S27-triage-and-plan.md`](reviews/S27-triage-and-plan.md), the P0–P13 execution
 >   table, live since session27 and **still the operative plan at a lower altitude**. It is
->   the honest descendant of TF2 (owner, 2026-08-09), and it is also **the collapsed
->   B→C→D pass** that [`notes/post-R-replan-hypothesis.md`](notes/post-R-replan-hypothesis.md)
->   proposed and [`reviews/S18-post-R-replan-reconciliation.md`](reviews/S18-post-R-replan-reconciliation.md)
->   gated on TF2/TF3 — which is why Phase B's `convergence-check.md`, Phase C's
->   `principle-sheet.md` / `disposition-table.md` were never produced under those names.
->   The collapse happened; it was simply much larger than forecast.
+>   the honest descendant of TF2 (owner, 2026-08-09).
+> - **We are therefore still clearing TF2** — TF2 *with* its spinoff findings. TF2 is not
+>   done, and the phases after it have not started.
+> - **The B→C→D collapse remains an OPEN, GATED DECISION** — it has *not* happened.
+>   [`notes/post-R-replan-hypothesis.md`](notes/post-R-replan-hypothesis.md) proposed it and
+>   [`reviews/S18-post-R-replan-reconciliation.md`](reviews/S18-post-R-replan-reconciliation.md)
+>   gated it on TF2/TF3. When TF2 closes we come back to that gate, and the likely finding
+>   is that B, C and D are **already satisfied by the code/architecture cleanup the spinoff
+>   performed** — in which case **points of THIS plan collapse.** That is a ruling to be
+>   made at the gate, not a fact established by the spinoff's existence. The absence of
+>   `convergence-check.md` / `principle-sheet.md` / `disposition-table.md` is a **pending
+>   question**, not a settled substitution.
 > - **The two plans are LINKED, not merged (owner ruling, 2026-08-09).** They sit at
->   different altitudes. Clear the spinoff, then come back here for **F → U → G**. Do not
->   fold the P-table into this document.
+>   different altitudes. Clear the spinoff, close TF2, **rule on the collapse**, then
+>   **F → U → G**. Do not fold the P-table into this document.
 > - **Baseline is now 955/0/0/3**, not the 854/0/0/4 recorded below.
 
 ## Phases
@@ -185,10 +191,13 @@ DI is what makes TF2 cheap).
   session32.]** TF2's human review produced **187 remarks**, far past the bucket TF3
   anticipated. They were triaged into a **spinoff sprint** with its own execution table
   (P0–P13): [`reviews/S27-triage-and-plan.md`](reviews/S27-triage-and-plan.md). That
-  sprint absorbs TF3 and **is** the collapsed B→C→D pass this plan's post-R hypothesis
-  gated on TF2/TF3. **It is still open.** This plan resumes at **Phase F** when the
-  spinoff closes — the two are **linked, never merged** (owner ruling, 2026-08-09). The
-  spinoff names this document as its parent in its own §0.
+  sprint absorbs TF3 and **is still open — so TF2 is still open with it.** The two plans
+  are **linked, never merged** (owner ruling, 2026-08-09); the spinoff names this document
+  as its parent in its own §0. **On closing TF2, return to the gated B→C→D collapse
+  decision** (post-R hypothesis, gated by `S18-post-R-replan-reconciliation.md`): the
+  spinoff's code/architecture cleanup may already have satisfied B, C and D, in which case
+  **those phases of this plan collapse**. That is the ruling the gate exists for — it is
+  not pre-empted by the spinoff having happened.
 - **TF3. Evaluate hints + triage** — hint-scoped fidelity re-check (NOT a re-audit;
   guardrail 1 stands): mechanical fixes land per hint; judgment items are **pooled with
   A2's two standing fixture-architecture questions** (wrap-native helper; play-mode

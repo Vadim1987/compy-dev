@@ -20,15 +20,23 @@ assembly**. This document is the honest descendant of that plan's **Phase TF2**:
 owner's human review of the split suite produced 187 remarks instead of the near-empty
 bucket TF3 predicted, and they were triaged here.
 
-It is also, in effect, the **collapsed B→C→D pass** that `../notes/post-R-replan-hypothesis.md`
-proposed and `S18-post-R-replan-reconciliation.md` gated on TF2/TF3 — which is why the parent
-plan's `convergence-check.md`, `principle-sheet.md` and `disposition-table.md` were never
-written under those names. The collapse happened; it was much larger than forecast.
+**So TF2 is not finished — it is being cleared through this sprint.** Nothing downstream of
+TF2 in the parent has started.
+
+**What this sprint is NOT: it is not the B→C→D collapse.** That collapse was proposed in
+`../notes/post-R-replan-hypothesis.md` and **gated on TF2/TF3** by
+`S18-post-R-replan-reconciliation.md`. The gate is still shut. When this sprint closes and TF2
+with it, the parent returns to that gate — and the likely finding is that the parent's Phase B
+(convergence check), Phase C (principle sheet + disposition table) and Phase D (ruling sitting)
+are **already satisfied by the code and architecture cleanup performed here**, in which case
+**points of the parent plan collapse**. That is a ruling made *at* the gate. The fact that
+`convergence-check.md`, `principle-sheet.md` and `disposition-table.md` do not exist is a
+**pending question for that ruling**, not evidence that they were silently replaced.
 
 **The two plans are linked, never merged** (owner ruling, 2026-08-09) — they sit at different
-altitudes. The working discipline: **clear this sprint, then return to the parent at Phase F.**
-Nothing here overrides the parent; anything that turns out to be release-shaped rather than
-remark-shaped is **promoted up**, not carried here.
+altitudes. The working discipline: **clear this sprint → close TF2 → rule on the collapse →
+Phase F onward.** Nothing here overrides the parent; anything that turns out to be
+release-shaped rather than remark-shaped is **promoted up**, not carried here.
 
 **First promotion, 2026-08-09:** **P12** (upstream reconciliation) has moved to the parent as
 **Phase U**, between F and G. It was never a remark — it is a release precondition. §8's
