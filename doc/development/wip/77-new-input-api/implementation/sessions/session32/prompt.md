@@ -35,21 +35,30 @@ earlier assertions.** Apply the same standard to the ruling itself:
 - **`Key.*` is variadic; `tests/mock.lua:30` `isDown` is single-argument.** Until
   that is fixed, **every** modifier assertion in the suite consults only the left
   key of the pair. Re-verify before trusting any suite result about modifiers.
-- **Rule 3's exception — "the framework's gate for global power-like combos" — is
-  under-specified.** Produce the precise list (candidates: Ctrl+T quickswitch,
-  Ctrl+Alt+R/P, the Ctrl+Shift+N debug hotkeys, Ctrl+Esc on keyreleased) and take
-  the owner's ruling on the boundary. An under-drawn exception erodes: every
-  awkward case will claim membership.
+- **Rule 3's "exception" was a naming problem, not a specification problem** —
+  corrected by the owner after the ruling was written, and Decision 30 now says so.
+  It is **the gate**: the block in `controller.lua` that runs *before* dispatch and
+  tests its own universal set of key combinations by direct polling, typically for
+  the non-overridable ones (shutdown, exit, quickswitch). It is **not an exempt
+  list of privileged combos** — it is a distinct layer, and what it lacks is a
+  *mechanism*, not a justification: no shortcuts table exists at that position.
+  **It can build its own, and should**, for the same introspectability reason the
+  rule exists. So the task is not "enumerate exempt combos" but "name the layer
+  and give it a table". Take the owner's ruling on whether that lands in this PR.
 - **"Pre-existing" is a claim to check against the PR base** — `git show
   3256aac:<file>`. It has now overturned conclusions in **seven** consecutive
   sessions, including twice in session31.
 
 ## Part 2 — replan
 
-The plan of record (`../../../validation/reviews/S27-triage-and-plan.md`, §4 table
-as amended) is **substantially void**: P9d, P9e, P13 and questions Q1/Q4/Q5 were
-**withdrawn, not deferred** — they were properties of the tracked set. Replan
-against what Decision 30 leaves, and take the owner's ruling on the shape.
+**Most** of the backlog inspired by the `keys_pressed` misfit is dissolved by
+Decision 30 — P9d, P9e, P13 and questions Q1/Q4/Q5 were properties of the tracked
+set, so they are **withdrawn, not deferred**. But the plan of record
+(`../../../validation/reviews/S27-triage-and-plan.md`, §4 table as amended) is
+**not** void wholesale: **go through it item by item and establish which entries
+actually depended on the tracked set.** "Likely dissolved" is a hypothesis to
+check per item, not a licence to discard the plan (owner, 2026-08-09). Replan
+against what survives, and take the owner's ruling on the shape.
 
 Known work, none of it ordered by you alone:
 
@@ -64,9 +73,25 @@ Known work, none of it ordered by you alone:
   shown, and maze is student-facing.**
 - **`doc/input_api.md:268` is false** — it claims a hook receives the held table as
   a second argument; `:390` and the code agree nothing is added.
-- **The keyboard example is the ruling's real casualty.** Its draw-time read
-  (`input.lua:47`, `keyboard_view.lua:171,178`) goes back to polling or to its own
-  mirror. The PR narrative must say so rather than hope nobody checks.
+- **The keyboard example's `textinput` bug must still be healed.** Decision 30 does
+  **not** touch it: it is the `keypressed`/`textinput` ordering problem in the
+  **alt** subgame, and it is the **one functional blocker the owner ever named**.
+  It was never a `keys_pressed` problem — the machinery that handles it
+  (`spendGlyph`, `GLYPH_CLAIMED`, `upRecent`, `INPUT_UP_GRACE`) predates API
+  adoption (`git show 4814407^:input.lua`), and `textinput` carries no `isrepeat`
+  to remove it. The owner's design: **compare against the previous textinput** —
+  *"honest enough"* on repeat. Do not let the dissolution work eclipse this; it is
+  the reason the sprint exists.
+- **If `keyboard` is polling-heavy it must become combo-heavy** — with one
+  exception the owner drew explicitly: **polling used for decoration or drawing
+  stays.** A key-cap renderer asking "what is physically held right now" is the
+  correct use of a poll; a *judgement* asking it is the smell Rule 3 names. Sort
+  its reads into those two piles before changing any of them.
+- **The keyboard example is otherwise the ruling's real casualty.** Its draw-time
+  read (`input.lua:47`, `keyboard_view.lua:171,178`) goes back to polling — which,
+  per the line above, is **legitimate** there rather than a regression. Its
+  adoption saving shrinks all the same. The PR narrative must say so rather than
+  hope nobody checks.
 - **Comment sweep** (`grep -rn 'INTERIM:\|REMARK:' src/ tests/` must return
   nothing — `examples/keyboard/input.lua:56` carries one), then slice
   regeneration, then close-out. **Upstream reconciliation (P12) blocks the real

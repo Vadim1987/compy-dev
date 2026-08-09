@@ -1238,9 +1238,14 @@ unchanged** — only the *source* the matcher reads from changes.
    serialises. This is the one place a direct read is not merely permitted but correct.
 3. **`Key.*` at a call site remains a smell.** In projects today, and eventually in
    console/editor too, an imperative modifier test at a call site should be replaced by the
-   **shortcuts mechanism**. The **one standing exception** is the framework's own gate for
-   global, power-like combos, which sits upstream of route dispatch and is not expressible as a
-   route shortcut.
+   **shortcuts mechanism**. The one place this does not apply is **the gate** — the block in
+   `controller.lua` that runs *before* dispatch and tests its own universal set of key
+   combinations by direct polling, typically for the non-overridable ones: shutdown, exit,
+   quickswitch. The gate is **not an exempt list of privileged combos**; it is a distinct layer,
+   and what it lacks is a *mechanism*, not a justification — no shortcuts table exists at that
+   position. **It can build its own table**, and should, for the same introspectability reason
+   the rule exists: bindings that can be listed, documented and rendered rather than read out of
+   a cascade.
 4. **When a shortcut does not fit, the shortcut sets a flag — it does not grow.** Where the
    logic cannot be carved into exactly one isolated shortcut function, the recommended shape is
    a **tiny shortcut that sets a feature flag and does not consume its triggering event**. The

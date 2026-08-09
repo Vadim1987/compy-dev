@@ -764,3 +764,33 @@ One census claim was **wrong** and corrected in-session (`compy.singleclick` as
 silently dead in paint/sapper — both had already migrated to
 `compy.input.hooks.singleclick`); the real finding underneath was out-of-tree
 projects failing silently. Sub-agent output was useful and not taken at face value.
+
+## 2026-08-09 — post-wrap: four owner corrections applied in place
+
+Session32's prompt was **not yet booted**, so amending it is in bounds (the
+immutable-prompt rule binds a *booted* prompt). Decision 30 amended too, since it
+is the live decision and one correction is substantive.
+
+1. **"Substantially void" was too strong.** Most of the `keys_pressed`-inspired
+   backlog dissolves, but the successor must walk `S27-triage-and-plan.md`
+   **item by item** and establish which entries actually depended on the tracked
+   set. "Likely dissolved" is a hypothesis per item, not a licence to discard.
+2. **The keyboard `textinput` bug still has to be healed.** Decision 30 does not
+   touch it — it is the `keypressed`/`textinput` ordering problem in the **alt**
+   subgame, and the **one functional blocker the owner ever named**. Added
+   explicitly so the dissolution work cannot eclipse it.
+3. **Polling for decoration/drawing stays legitimate.** If `keyboard` is
+   polling-heavy it must become combo-heavy — *unless* the poll feeds decoration
+   or drawing. A key-cap renderer asking "what is physically held now" is correct;
+   a **judgement** asking it is the smell. This also reclassifies the draw-time
+   read I had listed as the ruling's casualty: it is **legitimate**, not a
+   regression, though the adoption saving still shrinks.
+4. **Rule 3's "exception" was a NAMING problem, not a specification one.** It is
+   **the gate** — the block in `controller.lua` running *before* dispatch that
+   tests its own universal set of combinations by direct polling (shutdown, exit,
+   quickswitch). **Not an exempt list of privileged combos:** a distinct layer that
+   lacks a *mechanism*, not a justification — no shortcuts table exists at that
+   position, and **it can build its own, and should**, for the same
+   introspectability reason the rule exists. My "produce the precise list of exempt
+   combos" instruction was the wrong ask and is replaced by "name the layer and
+   give it a table". **Decision 30 rule 3 rewritten accordingly.**
