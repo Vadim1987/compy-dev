@@ -341,10 +341,14 @@ advanced fork of it) **and** each of the three nested example repos (`balloons`,
   is not superseded by this promotion, only re-parented.
 - Not attempted before the snapshots are stable: re-planning against a moving upstream while
   the design is still settling means doing it twice.
-- **Still to be dispositioned (session32):** the spinoff's **P13** (harmony reconciliation)
-  was coupled to P9e, and P9e's premise is affected by Decision 30. Whether P13 follows P12
-  up to this phase, survives in the spinoff, or dissolves is an **open item for the session32
-  replan** — it is not settled by this insertion.
+- **Dispositioned — P13 does NOT follow P12 here (owner ruling, 2026-08-09, `d348b505`).**
+  This bullet asked the question while it was open; the session32 replan answered it.
+  **P13 is REDUCED TO REVALIDATION and stays in the spinoff**: Decision 30 makes the matcher
+  read the device — which is exactly what harmony's `patch_isDown` replaces — so harmony can
+  now drive the combo mechanism it previously could not, and P13's build premise largely
+  dissolves. What remains is to confirm a real combo end-to-end under the device-read matcher
+  and retire the manual `release_keys()` discipline if it does. See
+  `reviews/S27-triage-and-plan.md` §11.3. **[Recorded S33.]**
 
 ### Phase G — PR assembly (per `implementation/pr-assembly-guide.md`)
 
