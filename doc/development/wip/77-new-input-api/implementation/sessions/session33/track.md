@@ -205,3 +205,43 @@ its `mods` map has only left variants while `held` already carries the right-han
 Commits: `2dddb8ff` (ledger), `0247cdb5` (rulings into §11 + new §12), `c65c2269` (step list).
 Suite 955/0/0/3 at every one. Nothing pushed. `S33-plan-revalidation.md` closed with a
 disposition table. **Part 1 complete. Part 2 (execution, starting at P9b) not yet begun.**
+
+## 2026-08-09 — MODE CROSSING: execution. Probe deleted, P8 walked, P9b scoped out
+
+Owner: run the probe deletion and the P8 walk; **P9b needs its own session or spinoff** —
+the fix requires a design decision *and* its validation, which does not belong inside a
+session already carrying the dissolution. Recorded in the plan (§12.5) so it reads as scoped
+out, not deprioritised.
+
+**Probe deleted (`ba5c94e4`).** Verified before removing, not after: zero refs in `src/`/
+`tests/`, zero in the persistent corpus (the three "probe" hits in `technical_debt/input.md`
+are the ordinary word, not the file), no directory-scanning loader, `src/probe/` empty
+otherwise, introduced by `f8c15c4e` so it postdates base. Suite green + **headless boot** —
+a deletion the suite cannot fail on needs the smoke check.
+
+**P8 walk (`../../../validation/reviews/S33-p8-walk.md`): all nine discharged, P8 is DONE.**
+Did the evidence-gathering inline rather than briefing an agent — 8 targeted greps tightly
+coupled to the judgement; a spawn would have cost more than the work.
+
+**And it overturned MY OWN claim.** I reported R079 "separately and explicitly held open" and
+recommended re-baselining P8 to it. Wrong: `S28-merge-plan.md:170`'s *"unchanged pending
+R079"* is a **merge-scoping** line saying that merge would not touch the file — R079 was
+discharged the same day in its own commit (`ae176dd1`), by rewrite, with a coverage gap filled
+and mutation-checked. **I inherited a planning table's phrase without checking the commits —
+inside a review whose subject was that exact failure.** Had the owner taken my recommendation,
+P8's sole remaining content would now be a phantom open ruling. The conservative ruling caught
+an error the confident recommendation would have shipped.
+
+**The walk's real product — three P14c interactions invisible from the id list:**
+1. **`tests/helpers/input_fixture.lua:272` — `Controller.keys_pressed = { }`**, live code in
+   the SHARED fixture reset, on every input test's path. P14c's cell named 35 of 38
+   occurrences; this is the consequential omission.
+2. `tests/helpers/input_session.lua:6` cites *"the `keys_pressed_spec` raw-handler pattern"* —
+   rots when P14c empties that spec.
+3. `input_widget_callbacks_spec.lua:537-541` documents driving **two distinct modifier
+   tracks** — which shape (b) **collapses into one**. Not merely stale: it is evidence the
+   ruled shape *simplifies* the test surface, which its cost accounting had not credited.
+Plus: deleting the held-key-set `describe` leaves `keys_pressed_spec.lua` misnamed for its
+only survivor (R057's surface vocabulary lives partly in that file).
+
+All folded into P14c's step. Suite 955/0/0/3 throughout. Nothing pushed.
