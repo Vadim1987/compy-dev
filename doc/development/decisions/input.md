@@ -1243,9 +1243,13 @@ unchanged** — only the *source* the matcher reads from changes.
    combinations by direct polling, typically for the non-overridable ones: shutdown, exit,
    quickswitch. The gate is **not an exempt list of privileged combos**; it is a distinct layer,
    and what it lacks is a *mechanism*, not a justification — no shortcuts table exists at that
-   position. **It can build its own table**, and should, for the same introspectability reason
-   the rule exists: bindings that can be listed, documented and rendered rather than read out of
-   a cascade.
+   position. **It could build its own table** — the introspectability reason the rule exists
+   applies to it too: bindings that can be listed, documented and rendered rather than read out
+   of a cascade. **That is not committed to** (owner, 2026-08-09): naming the layer does not
+   oblige the table, and building one is out of scope for this feature's PR and may never be
+   done. If it ever is, it must be visibly a **second, privileged table**, structurally separate
+   from a project's own and stating its non-overridability where it lives — otherwise the win
+   arrives with a false promise of override.
 4. **When a shortcut does not fit, the shortcut sets a flag — it does not grow.** Where the
    logic cannot be carved into exactly one isolated shortcut function, the recommended shape is
    a **tiny shortcut that sets a feature flag and does not consume its triggering event**. The
