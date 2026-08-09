@@ -939,7 +939,7 @@ licence to discard the plan. Every row walked:
 | Row | Disposition under Decision 30 |
 |---|---|
 | **P0–P7b** | **Unaffected.** All DONE; none depended on the tracked set. Note P2/W1 *removed* `keys_pressed` from the hook payload — independent of Decision 30 and consistent with it |
-| **P8** | **Premise unaffected**, but its nine remaining ids (R057, R074, R078, R079, R047, R063, R064, R069, R075) sit in test-restructuring territory that **P14c now also touches**. **A per-id check against Decision 30 is owed before P14c starts** — not performed this session, and explicitly not assumed. **[S33] The lettering here read `P14b` until 2026-08-09; it always meant the tests step, which `d348b505` re-lettered to P14c** |
+| **P8** | **Premise unaffected**, but its nine remaining ids (R057, R074, R078, R079, R047, R063, R064, R069, R075) sit in test-restructuring territory that **P14c now also touches**. **A per-id check against Decision 30 is owed before P14c starts** — not performed this session, and explicitly not assumed. **[S33] The lettering here read `P14b` until 2026-08-09; it always meant the tests step, which `d348b505` re-lettered to P14c.** **[S33] OWNER RULING (2026-08-09): all nine are walked, not re-baselined.** §6 amendment 1 says *"P8 marked done"* and names eight of these nine as discharged — but §4's row was never edited to match, so the two contradict each other and neither has been checked against the tree. The walk **starts from §6's claim as a hypothesis and confirms or refutes it per id**, rather than re-deriving from scratch; R079 is separately held open by `../reviews/S28-merge-plan.md:170` (*"unchanged pending R079 (open ruling)"*) and needs a ruling, not a check |
 | **P9** | **Unaffected.** SM3a's open runtime check is a pointer/click finding |
 | **P9b** | **UNAFFECTED, and reconfirmed as the reason the sprint exists.** The keyboard `textinput` ordering heal is not a `keys_pressed` problem; `textinput` carries no `isrepeat` and never did. Decision 30 does not touch it. **It must not be eclipsed by the dissolution work** |
 | **P9c** | **Unaffected in premise.** But P14c moves and deletes test cases, so **re-check both order-dependent cases after P14c**, not before. **[S33]** same re-lettering correction as the P8 row above |
@@ -957,10 +957,10 @@ and stated at each.
 
 | # | Phase | Contents |
 |---|---|---|
-| **P14a** | **Docs — the specification — AND the debt register** | Rewrite `doc/input_api.md` §"Held keys" (**[S33]** `:365-396`, not `:365-395`) as combo-first / flag-shortcut / poll-for-decoration; **teach rule 4 for the first time in the corpus**; fix the false claim at `:268` (a hook does *not* receive the held table — **[S33]** `:389-390` and the code agree; the negation is on `:389`); update `internals/user_input.md` (10 occurrences); tombstone-correct **Decision 21**'s stale worked example. **Decisions are tombstoned, never renumbered** (§ W9 hard constraint). **The debt-register update (11.6) rides here** by owner ruling. **Write internals prose to the level of "the matcher reads the device"** — if a passage cannot be written without the concrete shape, that is the trigger to raise P14b |
-| **P14b** | **DESIGN RULING — the matcher's device-read shape** · **OWNER-GATED, DEFERRED** | **Not a leading gate** (owner, 2026-08-09): raise it *when it actually blocks*, and clear unblocked work first to reduce friction. **It blocks P14c and P14d**, and only the one internals passage in P14a. Evidence and the two shapes are in 11.5 — it is a **design decision**, ruled by the owner in its own step, never adopted as a side effect of planning |
-| **P14c** | **Tests** | Breaking tests against P14a's spec. **[S33] every range below re-verified against the files; four were wrong and are corrected here** (`../outcomes/S33-p14-citation-verification.md`). `keys_pressed_spec.lua:52-90` **delete** (not `:52-96` — `:91-96` is an unrelated comment); **`:98-138` stays UNCHANGED** — it drives the source-blind matcher against a synthetic table, and needing zero edits there is the evidence the ruling is cleanly implementable (LSP-confirmed: all ten `keys_pressed` references in that file sit in the *first* describe). `input_nfr_mechanism_spec.lua:66-112` delete (not `:66-105` — **`:105` is the opening line of the fourth test; cutting there orphans its 7-line body**), `:123-165` keep. `input_events_spec.lua:781-901` delete (not `:781-905` — `:902-905` leads in to the next describe); `:557,616,734,857-861` need individual rewrites — some assert a write-before-dispatch ordering that ceases to be meaningful. **Mock fix lands here; which fix it is depends on P14b** |
-| **P14d** | **Platform code** | The device-backed source at the **single** production call site `find_shortcut` (`projectInputController.lua:103-110`); then the write side and dead machinery — `controller.lua:788,906` (writes), `:498` (the field), `held_keys()` + proxy memoisation `:420-443,501`, and the sandbox field in `consoleController.lua:539-540` plus its `held` upvalue plumbing **[S33]** `:829-830` (not `:829-834` — `:833-834` is an unrelated function's comment). **`combo_string`/`any_mod` need no change** — they are source-blind (re-verified: neither body calls `Key.*`). **[S33] Three sites no bullet above accounted for**, found by the citation audit: **`src/types.lua:251`** — `--- @field keys_pressed table` on the `CompyInput` type, which **lies about the API if left**; `src/controller/userInputController.lua:490` — a comment naming the set; and note the files are under **`src/controller/`**, not `src/model/` |
+| **P14a** | **Docs — the specification — AND the debt register** | Rewrite `doc/input_api.md` §"Held keys" (**[S33]** `:365-396`, not `:365-395`) as combo-first / flag-shortcut / poll-for-decoration; **teach rule 4 for the first time in the corpus**; fix the false claim at `:268` (a hook does *not* receive the held table — **[S33]** `:389-390` and the code agree; the negation is on `:389`); update `internals/user_input.md` (10 occurrences); tombstone-correct **Decision 21**'s stale worked example. **Decisions are tombstoned, never renumbered** (§ W9 hard constraint). **The debt-register update (11.6) rides here** by owner ruling. **[S33] Write the internals prose CONCRETELY** — the shape is ruled (P14b), so the deferral instruction *"write to the level of 'the matcher reads the device'"* is withdrawn along with the trigger it carried. §"Key state" (`internals/user_input.md:241-296`) is rewritten against the real shape: the builder calls `Key.*`, loses its table parameter, and the *"Why the event-tracked set and not `love.keyboard.isDown`"* subsection — the two-clocks argument, cited to Decision 29 — is replaced rather than trimmed. **[S33] NAMING (owner ruling, 2026-08-09): teach the flag-shortcut pattern under a plain descriptive heading — no "rule 4", no "Decision N", no ledger reference.** `doc/input_api.md` has never cited the ledger (zero occurrences of "Decision"), and *"rule 4"* is session shorthand that appears in no document; a stakeholder reading only this guide and the PR description must not meet a numbered rule with no visible list. The worked keycap example that teaches the superseded answer is replaced by one that teaches the flag shortcut |
+| ~~**P14b**~~ **RULED [S33]** (owner, 2026-08-09) | **DESIGN RULING — the matcher's device-read shape** | **Shape (b): `combo_string`/`any_mod` call `Key.ctrl()`/`Key.alt()`/`Key.shift()` directly.** Raised early rather than at its trigger, because the internals half of P14a turned out to be blocked from its first paragraph rather than in one corner (§11.5, [S33] note). **This step is closed; P14c and P14d are unblocked and P14a is unblocked in full.** Consequences carried into the rows below: the builder loses its table parameter and every caller changes; the matcher is no longer table-drivable; **the mock's variadic fix is a prerequisite again** and lands first |
+| **P14c** | **Tests** | Breaking tests against P14a's spec. **[S33] every range below re-verified against the files; four were wrong and are corrected here** (`../outcomes/S33-p14-citation-verification.md`). **[S33] The mock fix lands FIRST, as its own commit** — `tests/mock.lua`'s `isDown` becomes variadic and its `mods` token map gains `rctrl`/`rshift`/`ralt` (the `held` table already has the slots). Under the ruled shape every modifier assertion routes through the two-argument call, so without it no test can exercise a right-hand modifier at all. `keys_pressed_spec.lua:52-90` **delete** (not `:52-96` — `:91-96` is an unrelated comment); **[S33] `:98-138` must now be REWRITTEN, not kept.** Session32 recorded that these seven test cases need zero edits and read that as evidence the ruling is cleanly implementable; **that property belonged to the rejected shape.** They drive the matcher by passing it a synthetic table, which the ruled shape removes — they are rewritten to set device state through the mock instead. The "zero edits" claim is withdrawn as evidence. `input_nfr_mechanism_spec.lua:66-112` delete (not `:66-105` — **`:105` is the opening line of the fourth test; cutting there orphans its 7-line body**), `:123-165` keep. `input_events_spec.lua:781-901` delete (not `:781-905` — `:902-905` leads in to the next describe); `:557,616,734,857-861` need individual rewrites — some assert a write-before-dispatch ordering that ceases to be meaningful. **Mock fix lands here; which fix it is depends on P14b** |
+| **P14d** | **Platform code** | The device-backed source at the **single** production call site `find_shortcut` (`projectInputController.lua:103-110`); then the write side and dead machinery — `controller.lua:788,906` (writes), `:498` (the field), `held_keys()` + proxy memoisation `:420-443,501`, and the sandbox field in `consoleController.lua:539-540` plus its `held` upvalue plumbing **[S33]** `:829-830` (not `:829-834` — `:833-834` is an unrelated function's comment). **[S33] `combo_string`/`any_mod` DO change now** — this cell previously said they need none, which was true only of the rejected shape. Under the ruling they lose their `keys_pressed` parameter and call `Key.ctrl()`/`Key.alt()`/`Key.shift()` per `COMBO_MODS` triple (`controller.lua:395-418`; the triples already carry the generic name as `m[3]`), and **every caller changes** — inside `find_shortcut` that is three call sites (`any_mod`, and `combo_string` for both the trigger and the `'*'` class key). Cheaper per event as a side effect: an unmodified pointer motion now costs up to 4 device calls instead of 8. **[S33] Three sites no bullet above accounted for**, found by the citation audit: **`src/types.lua:251`** — `--- @field keys_pressed table` on the `CompyInput` type, which **lies about the API if left**; `src/controller/userInputController.lua:490` — a comment naming the set; and note the files are under **`src/controller/`**, not `src/model/` |
 | **P14e** | **Examples** | `src/examples/keyboard` — `input.lua`'s `INPUT.__index` held branch (`:54-62`, the branch itself `:57`) and `keyboard_view.lua:171,178` to direct polling. **[S33] Two more sites in the same file, not previously named:** `input.lua:109` — **`modHeld(a, b)` reads `compy.input.keys_pressed` and is a distinct site**, a top-level function the metamethod calls rather than the branch itself; and `:43`, header prose naming the set. **Sort its reads into decoration/drawing (stays — legitimate, owner) vs judgement (converts to combos)** before touching any of them. Nested repo, no suite: smoke re-pass is the gate. **Never pushed** |
 
 **Unblocked work that proceeds while P14b waits** (this is the point of deferring it):
@@ -1012,6 +1012,42 @@ fork is a **design decision and gets its own step** rather than being rubber-sta
 side effect of plan reconciliation — and that it should be raised **when it blocks**, not
 up front, so unblocked work clears first. What it blocks: **P14c** (which mock fix is the
 real one), **P14d** (it *is* the implementation), and a single internals passage in P14a.
+
+### **[S33] RULED — shape (b), and why it was raised early (owner, 2026-08-09)**
+
+**The trigger fired sooner than "a single internals passage" predicted.** §"Key state"
+(`internals/user_input.md:241-296`) documents the builder **by its signature**, including the
+parameter the two shapes disagree about, and carries the whole *"Why the event-tracked set and
+not `love.keyboard.isDown`"* subsection that Decision 30 reverses. It cannot be written
+shape-agnostically without omitting a signature from the one document whose job is signatures.
+That passage is the section's centre of gravity, not a corner of it — so the owner took the
+ruling up front rather than at the trigger, and the docs step is unblocked in full.
+
+**Ruled: shape (b) — `combo_string`/`any_mod` call `Key.ctrl()`/`Key.alt()`/`Key.shift()`
+directly.** Symmetry with the pre-dispatch gate, which already polls that way, and one literal
+source of modifier truth rather than an adapter standing in front of it. No proxy to defend in
+the PR — which matters, because this feature spends its narrative deleting one.
+
+**What the ruling costs, recorded so it is not rediscovered as a surprise.** Evidence gathered
+and verified in code before the ruling, not after:
+
+- **The seven matcher test cases stop being free.** `keys_pressed_spec.lua:98-138` needed zero
+  edits under shape (a) — a property session32 cited as evidence the ruling is cleanly
+  implementable. That property belonged to (a) alone. They are rewritten.
+- **The matcher stops being source-blind**, so it can no longer be driven by a synthetic table;
+  proving it works means patching `love.keyboard.isDown`.
+- **The mock fix is a prerequisite again**, precisely scoped (see `decisions/input.md`,
+  Decision 30's amended "prerequisite" note): existing results do not change, but no test can
+  exercise a right-hand modifier until `isDown` is variadic and `mods` gains `rctrl`/`rshift`/
+  `ralt`.
+- **Wider code diff** — the builder's parameter goes and every caller changes.
+- **Cheaper per event**, marginally: an unmodified pointer motion costs up to 4 device calls
+  instead of 8.
+
+**Verified and NOT a differentiator: harmony works under both shapes.** `patch_isDown`
+(`harmony/init.lua:242-253`) is `function(...)` and loops over every argument, so it answers a
+one-key lookup and a two-key `Key.*` call alike. This also **confirms the basis on which P13
+was reduced to revalidation** — the reduction does not depend on which shape was chosen.
 
 ### 11.6 Technical-debt register — the update, enumerated (rides with P14a)
 
@@ -1067,3 +1103,85 @@ real one), **P14d** (it *is* the implementation), and a single internals passage
   needs a real migration and its adoption saving shrinks.
 - **Console/editor deferral needs a citation, not a justification** —
   `design/requirements.md` FR-11/12: *"expressiveness targets, not a commitment to rewrite."*
+
+## 12. [S33] Amendments made in session33 — revalidation findings and five owner rulings
+
+Session33 revalidated §11 against `agents/rules/revalidation.md` before executing any of it.
+The review is `S33-plan-revalidation.md`; the citation audit behind it is
+`../outcomes/S33-p14-citation-verification.md`. **Verdict: sound in substance, defective in
+navigation** — no disposition in §11 was wrong on the merits, but §11 was written against a
+step list that had gone stale, re-lettered mid-session without a sweep, and never propagated
+back into the rows an executor reads.
+
+**Per Decision 2 below, the amendments are written INTO the rows; this section is the dated
+reasoning, not the place the change lives.**
+
+### 12.1 Corrections applied without a ruling (mechanical restorations)
+
+| # | What | Where |
+|---|---|---|
+| 1 | **The re-lettering residue.** `d348b505` re-lettered P14a–e and swept §11.4/§11.5 only. Four references in §11.3 kept the old lettering, all meaning the tests step, all reading as the deferred design ruling — so §11.3 gated P8's check on a deferred step while §11.4 listed the same check as unblocked | §11.3 P8, P9c |
+| 2 | **Six wrong citations.** Worst: `input_nfr_mechanism_spec.lua:66-105` stops at the **opening line** of the fourth test, so cutting there orphans a 7-line body. Also `keys_pressed_spec.lua:52-90`, `input_events_spec.lua:781-901`, `consoleController.lua:829-830`, `input_api.md:365-396`, the negation on `:389` | §11.4 |
+| 3 | **Two misattributed debt pairs, one missing entry.** `:731` belongs to the `:719` entry, not `:738`'s; `:775`'s body names `keys_pressed` nowhere. `:719` — where the *"a and b held together"* quotation actually lives — was absent from the rework list | §11.6 |
+| 4 | **Three unnamed code sites.** The 22-occurrence count is exact; the attribution was not. `src/types.lua:251` (`@field keys_pressed` on the `CompyInput` type — it lies about the API if left), `userInputController.lua:490`, and `examples/keyboard/input.lua:109` (`modHeld`, a distinct read site from the `INPUT.__index` branch) | §11.4 P14d/P14e |
+| 5 | **The parent plan's Phase U** still asked whether P13 follows P12 upward, which `d348b505` had answered | `../plan.md` |
+
+### 12.2 Owner rulings, 2026-08-09
+
+1. **P8: walk all nine ids; do not re-baseline to R079.** The revalidation found that §6
+   amendment 1 (session28) declared *"P8 marked done"* and named eight of the nine as
+   discharged, while §4's row — never edited, despite §6 asserting amendment *in place* —
+   still listed all nine. Session32 read the unamended row and carried nine forward, into
+   §11.3 **and into `../notes/S32-plan-map.md:74`, the map the ruling was taken from**. The
+   owner declined to trust the amendment over the row: **both are unverified against the
+   tree, so the walk settles it.** It starts from §6's claim as a hypothesis rather than
+   re-deriving, and R079 needs a ruling rather than a check.
+
+2. **The step list becomes the single operative list.** §4's table is rewritten so each step
+   states what it actually requires now, and gains the P14 steps and the probe deletion as
+   real rows. **Root cause named:** two failures found this session — session28's unapplied
+   amendment and session32's unswept re-lettering — are one failure, *a document amended in
+   one place and read from another*. Two lists that must agree is the arrangement that
+   produced both. **Working rule: when a step is amended, the amendment goes in the step.**
+
+3. **The design fork is ruled now, not at its trigger.** The deferral assumed it blocked "only
+   one internals passage"; the revalidation found the blocked passage is the internals
+   section's centre of gravity (§11.5 [S33]). Rather than split the docs step or write vague
+   prose and owe a backfill, the owner took the ruling up front. **The docs step is unblocked
+   in full and no backfill is owed.**
+
+4. **Matcher shape: (b) — the builder calls `Key.ctrl()`/`Key.alt()`/`Key.shift()` directly.**
+   Recorded in the ledger in place (`../../../decisions/input.md`, Decision 30 rule 2 and the
+   amended "prerequisite" note). Costs accepted knowingly: the seven matcher test cases are
+   rewritten rather than kept, the matcher stops being source-blind, the mock's variadic fix
+   becomes a prerequisite and lands first, and the diff widens. Harmony was checked and works
+   under either shape, so it did not bear on the choice — and that check independently
+   confirms P13's reduction to revalidation.
+
+5. **The flag-shortcut pattern is taught under a plain descriptive name** — no *"rule 4"*, no
+   *"Decision N"*, no ledger reference in `doc/input_api.md`. That guide has never cited the
+   ledger, and *"rule 4"* is session shorthand present in no document. Applies to the PR
+   description too.
+
+### 12.3 Still open after this session
+
+- **The ~50-id comment-bloat subset** inside W10's block of 92 is never separately enumerated
+  and must be re-derived before P11 — recorded here because session32's report carried it and
+  no step did.
+- **R079** — an open ruling on `project_open_liveness_spec.lua`, inside the P8 walk.
+- **The `:775` debt entry** — struck from §11.6's rework list because it names `keys_pressed`
+  nowhere. Whether it needs rework for some other reason is unexamined.
+
+### 12.4 Cleared on verification, recorded so it is not re-litigated
+
+- **`keys_pressed` appears nowhere in the tree at PR base `3256aac`** — whole-tree `git grep`,
+  machinery sanity-checked, base confirmed an ancestor of HEAD. The tracked set is entirely
+  feature-introduced, so **dissolving it cannot regress pre-feature behaviour.** Every
+  "pre-existing" check this phase has run overturned something; this one confirms.
+- The 22-occurrence / 7-file count, the 10 occurrences in `internals/user_input.md`, the
+  marker gate (22 platform + 5 examples, **disjoint**), the mock's ranges, the probe's
+  self-declared deletion header, and `error_explorer.lua:418`'s byte-identity at base — all
+  exact.
+- **LSP missed 4 of the 22 occurrences** (a type annotation, a comment, a computed-string-key
+  indirection, and the `compy.input.*` proxy path in the example). Grep as completeness
+  backstop was load-bearing, exactly as the standing rule says.
