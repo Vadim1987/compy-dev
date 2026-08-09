@@ -332,3 +332,30 @@ My own earlier note recorded that the controllers "live at `src/controller/` at 
 `src/model/` now". **Wrong** — they are at `src/controller/` in both; `src/model/` holds
 unrelated model files. The error reached the sub-agent's prompt, which caught it and said so.
 Corrected here and in the track.
+
+---
+
+## Disposition (added at the end of session33 — this review is CLOSED)
+
+All five mechanical corrections applied; all five owner-gated items ruled on 2026-08-09 and
+applied. Nothing in this document is outstanding.
+
+| Proposed | Outcome |
+|---|---|
+| 1–5, mechanical | **Applied** — `2eaa0163` (parent plan's Phase U) and `c54dc0e7` (lettering, six ranges, debt pairs, three unnamed sites) |
+| 6 — re-baseline P8 to R079 | **DECLINED.** Owner ruled: **walk all nine.** §6's "P8 marked done" and §4's row are both unverified against the tree, so the walk settles it rather than one document being trusted over the other. It starts from §6's claim as a hypothesis; R079 is a ruling, not a check |
+| 7 — annotate §4's rows | **Superseded by a stronger ruling:** §4 becomes the **single operative list** — four steps rewritten, P14a–e and the probe deletion added as rows, `c65c2269` |
+| 8 — schedule the internals backfill / the ~50-id re-derivation | **Backfill no longer owed** (see next row); the ~50-id re-derivation is now recorded in P11's own step |
+| 9 — split P14a into blocked and unblocked halves | **Superseded:** the owner **took the design ruling up front** instead, so the docs step is unblocked in full and neither the split nor the backfill is needed |
+| 10 — keep the "rule 4" label out of the project-facing guide | **Ruled as proposed** — plain descriptive name, no ledger reference, in the guide and the PR description alike |
+
+**One finding of this review was overtaken by its own ruling.** The document argues that
+`keys_pressed_spec.lua:98-138` needing zero edits is "the cheapest available evidence the
+ruling is cleanly implementable" — inherited from session32 and true when written. The owner
+chose **matcher shape (b)**, which removes the matcher's source-blindness, so those seven test
+cases are rewritten and the property is gone. **The claim is withdrawn as evidence** (see
+§11.4 P14c and §11.5's [S33] note). It was a real property of the rejected shape, not an error.
+
+**Carried into execution:** the mock's variadic fix lands first, as its own commit, ahead of
+the test rewrite — reinstated as a genuine prerequisite by shape (b), with the precise scope
+recorded in `decisions/input.md` (Decision 30's amended "prerequisite" note).

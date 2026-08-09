@@ -162,3 +162,46 @@ Review written to `../../../validation/reviews/S33-plan-revalidation.md`: verdic
 substance, defective in navigation**; 11 findings; 5 mechanical corrections ready to apply and
 5 owner-gated. Part 1 reported; **no correction applied and Part 2 not started** — awaiting
 the owner.
+
+## 2026-08-09 — owner walks the decisions; five rulings, two of them against my recommendation
+
+Mechanicals applied first (`2eaa0163`, `c54dc0e7`), then the owner asked to be walked through
+the judgement calls one at a time. **Behavioural note worth carrying: the owner rejected my
+first framing outright** — *"i do not understand this taxonomy, cannot reason over bare
+paragraphs and ref-ids… reference their essence not only identifiers."* Correct, and it is a
+standing lesson for this phase: P-ids and §-numbers are our filing system, not a language to
+reason in. Every subsequent decision was put in terms of *what step, what document, what
+changes* and each was answered immediately.
+
+**The five rulings:**
+
+1. **P8 — walk all nine ids; do NOT re-baseline to R079.** Against my recommendation, and the
+   reasoning is better than mine: §6's "P8 marked done" is *itself* an unverified claim, so
+   trusting it over the row would repeat the very failure I had just documented. Both are
+   unverified; the walk settles it. My contribution survives as method — start from §6's claim
+   as a hypothesis rather than re-deriving.
+2. **The step list becomes the truth.** Rows rewritten, P14 + probe added (`c65c2269`).
+3. **Take the design ruling NOW** rather than split the docs step — against my recommendation
+   (I proposed moving internals to the code step). Owner went to the root: the deferral's
+   premise was that the fork blocked one corner; once that was false, the deferral was not
+   worth its machinery.
+4. **Matcher shape (b)** — `Key.ctrl()/alt()/shift()` called directly. **Against my
+   recommendation of (a).** I argued test cost (7 cases rewritten, matcher stops being
+   source-blind, mock fix becomes load-bearing); the owner took symmetry with the gate and one
+   literal source of truth over an adapter, and accepted the costs knowingly. **Consequence I
+   had to reverse in the plan: session32's "zero edits needed" evidence was a property of the
+   REJECTED shape and is withdrawn.** Also reinstates, precisely scoped, the "prerequisite"
+   paragraph session32 refuted — recorded in the ledger in place (`2dddb8ff`).
+5. **Flag-shortcut pattern taught under a plain descriptive name** — as recommended.
+
+**Evidence gathered before ruling 4, verified by me in code, not inherited:** `combo_string`/
+`any_mod` index `keys_pressed[m[1]] or keys_pressed[m[2]]` over 4 triples and never call
+`Key.*`; `Key.ctrl/alt/shift` are `isDown(unpack(pair))`; `find_shortcut` is the single site
+and holds 3 call instances; **harmony's `patch_isDown` is `function(...)` and loops all
+arguments — so it works under BOTH shapes**, which removed it as a differentiator and
+independently confirms P13's reduction to revalidation; the mock's `isDown` is single-arg and
+its `mods` map has only left variants while `held` already carries the right-hand slots.
+
+Commits: `2dddb8ff` (ledger), `0247cdb5` (rulings into §11 + new §12), `c65c2269` (step list).
+Suite 955/0/0/3 at every one. Nothing pushed. `S33-plan-revalidation.md` closed with a
+disposition table. **Part 1 complete. Part 2 (execution, starting at P9b) not yet begun.**
