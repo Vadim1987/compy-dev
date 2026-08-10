@@ -199,7 +199,8 @@ handler and outside one alike — see "Held keys" below.
 A combo is its modifiers plus **one** trigger — `'ctrl+alt+s'`. The modifiers
 are optional: `'s'` is a valid combo and binds a bare unmodified S, the same
 way `'mouse2'` binds an unmodified right-click. Modifiers come first in a fixed
-order (ctrl, alt, shift, gui), left and right fold together, and the whole
+order (ctrl, alt, shift — there are three, and Super/Cmd is not one of
+them), left and right fold together, and the whole
 string is normalised when you assign it, so `'Ctrl+Alt+S'` and `'ctrl+alt+s'`
 are the same binding. A combo naming two triggers or none raises.
 
