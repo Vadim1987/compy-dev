@@ -79,13 +79,15 @@ Tags beyond the file-level `#input`:
 - `#history` (`history_spec`) — history recall, including the console's Up-at-the-top recall through the real key path.
 - `#disputable` (`input_shortcuts_click_spec`) — marks a contract whose *desirability* is contested even though the assertion is factually true. One group remains: global shortcuts fire without consuming the key. The second group — the console line receiving what a hidden widget declined — was retired on 2026-08-03 when the console route lost its widget step entirely (`../decisions/input.md`, Decision 1); those rows moved to the project route in `input_widget_control_spec`, where a hidden widget is a real decision, and the tag went with the dispute.
 
-**The 3 pending tests are named gaps, not failures.** `busted tests` reports them as pending, with no failures and no errors; the success count moves with the suite and is deliberately not quoted here. Each pending row documents a cell in the mode × channel routing grid that is either out of the input API's scope or not black-box observable today:
+**The pending tests are named gaps, not failures.** `busted tests` reports them as pending, with no failures and no errors; the success count moves with the suite and is deliberately not quoted here. Each pending row documents a cell in the mode × channel routing grid that is either out of the input API's scope or not black-box observable today:
 
 | Location | Row | Why it's pending, not red |
 |---|---|---|
 | `input_routing_spec.lua:68` | `routes the key release to the console` | A key release carries no text, so console delivery has no observable mutation to assert on — only the project-route release is directly witnessed |
 | `input_routing_spec.lua:144` | `routes the pointer to the editor` | The production editor widget disables selection, so pointer delivery has no observable outcome without extra scaffolding |
 | `input_routing_spec.lua:214` | `touch reaches the active route` | Touch has no gateway entry yet; both the widget and route touch handlers are no-ops, so delivery isn't black-box observable. Greens when a touch consumer lands |
+
+**A second kind of pending row, added deliberately: the reserved combos' own effects.** `input_global_shortcuts_spec.lua` asserts one property live — that a project cannot suppress a global shortcut by registering the same combo — and lists the remaining reserved combos (`ctrl+alt+r`, `ctrl+t`, the profiler pair, `f10`, `ctrl+s`, `ctrl+shift+r`, and `ctrl+escape` on release) as pending. Those are not unobservable like the rows above; they are simply **someone else's contract**. What each one *does* is the framework's own behaviour, worth asserting eventually and out of scope for the input API's suite, so the gap is named where a reader will meet it rather than left to be rediscovered. `ctrl+pause` and `ctrl+q` are absent from that list because their effects are asserted live.
 
 ---
 
