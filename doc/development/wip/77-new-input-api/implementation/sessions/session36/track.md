@@ -149,3 +149,23 @@ and maze each get their own 'deepfix' step with separate planning, and keyboard'
 - The old *"ordering NOT ruled"* flag is struck in place with the reason it no longer applies.
 - The register's revisit line updated to match the split, without naming wip ids — it is a
   persistent document and outlives them.
+
+## 2026-08-10 — owner corrects the split twice, and overrules my caveat
+
+- **Escalation belongs to the sweep only.** `keyboard` and `maze` **already are** the escalation
+  — each has its own step because design-heavy work was found in it — so a rule sending them to
+  their own deferred step is circular. Scoped to P16's own examples, with that reason stated.
+- **My caveat is overruled, and the owner's argument is the sprint's own.** I had required the
+  heal to land first inside P18, committable alone, with its design not reopened. Owner: *P9b and
+  P18 target the same shared code, it would be weird to run them independently if both can change
+  the internal architecture of keyboard; the healing design is not set in stone yet and could be
+  revised prior to update.*
+  - **Sequencing them inside the step re-creates what the absorption removes** — land the heal,
+    then restructure the same file — which is the churn the ordering rulings exist to prevent.
+    §13.1's *"fixing D against outdated logic is conceptually wrong"* was about this very file.
+  - **The design of record is an input, not a mandate.** It was written before the onboarding
+    facts existed; my rule would have forbidden exactly the revision those facts might warrant.
+  - **What survives is scheduling between steps, not inside one:** P18 blocks the sprint's
+    closure, so it precedes the optional P16/P17. Kept on that basis, not as an internal order.
+- Struck in place, not rewritten away: the caveat paragraph in §15.1b and the clause in P9b's
+  row carry the overruled text visibly with the reason.
