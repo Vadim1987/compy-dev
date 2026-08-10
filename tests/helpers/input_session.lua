@@ -3,9 +3,8 @@
 -- Every emitter fires a REAL event through the production
 -- gateway (love.handlers.*), never straight to a controller, so a
 -- test exercises the same path a keystroke takes from LÖVE.
--- Built on the keys_pressed_spec raw-handler pattern; NOT an
--- EditorSession generalisation (that helper bypasses the love
--- handlers and drives EditorController directly).
+-- NOT an EditorSession generalisation (that helper bypasses the
+-- love handlers and drives EditorController directly).
 
 require('controller.controller')
 

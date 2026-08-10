@@ -50,8 +50,7 @@ Each raw handler does exactly two jobs, in order:
 
 `setup_callback_handlers` is called **exactly once, at boot** (`src/main.lua:389`) and never
 re-invoked or swapped afterward — the fixed, permanent event pump for the process's lifetime.
-Tests reproduce this startup wiring directly: `tests/input/keys_pressed_spec.lua` and
-`tests/helpers/input_session.lua`.
+Tests reproduce this startup wiring directly: `tests/helpers/input_session.lua`.
 
 ---
 

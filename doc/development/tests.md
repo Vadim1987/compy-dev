@@ -42,7 +42,7 @@ declaration order".
 | Interpreter pipeline | `parser_spec`, `chunker_spec`, `analyzer_spec` (incl. `ast_to_src`), `ast_spec`, `eval_spec`, `error_spec`, `markdown_spec` |
 | Editor model + view | `buffer_spec`, `chunker_spec`, `editor_spec`, `visible_content_spec`, `visible_structured_content_spec` |
 | Input widget | `input_text_spec`, `cursor_spec`, `history_spec`, `input_spec`, `user_input_model_spec`, `user_input_view_spec` |
-| Input routing / dispatch contracts (Compy input API) | the `input_*_spec.lua` contract suite (`#input`; see Input Contract Suite below), `keys_pressed_spec` |
+| Input routing / dispatch contracts (Compy input API) | the `input_*_spec.lua` contract suite (`#input`; see Input Contract Suite below) |
 
 `analyzer_spec.lua` tests `parser.ast_to_src` — the pretty-printer central to the editor submit pipeline. It is the primary executable specification for that function's formatting behaviour.
 
