@@ -261,3 +261,26 @@ lives only in the plan is a rationale the PR does not carry. `83af97db`.
   all**. Written to name the gap (no vocabulary for keys that are neither modifiers nor ordinary
   characters) while **favouring none of the three open directions**, with no scheduled revisit.
   `c53251a1`; the `gui` entry's revisit line softened so it no longer reads as the only route.
+
+## 2026-08-10 — the tests step defined, and what the heal actually is
+
+`6a0a3613`. Both corrections the owner's.
+
+- **The heal is a defect in its own right, NOT part of the retirement.** The `textinput` ordering
+  bug predates Decision 30 and would need fixing if the dissolution had never been proposed. What
+  it blocks is **this sprint's closure** — a spinoff of the parent's Phase TF2, whose goal is
+  clearing known defects before release (§0) — not the dissolution's. The orderings sequence it
+  against the dissolution **without making it part of it**. Recorded in P9b's step and in the
+  P14a–e row (*the dissolution ends at P14e*), including that this document's own phrase
+  *"the reason the sprint exists"* **overstates it**: 187 remarks, of which this is one.
+- **P14c defined as §11.4.1**, opening from the owner's framing — a **mechanism change plus one
+  contract withdrawal**, so *"update the tests"* does not describe it. Governing principle stated
+  first (**observable, contractable behaviour only**), which is why the step adds almost nothing.
+- Two things it pins that are easy to get wrong: **the deletions are two kinds** — a withdrawn
+  project-facing contract whose tests *are* its spec, and internals guards that die because their
+  subject is gone (the one place the suite actually loses reach, which §11.7 owes the PR) — and
+  **the mock's `held` table being a tracked set is not a contradiction**: Decision 30 objects to a
+  model kept *beside* the device, and a mock **is** the device in tests.
+- §5 states **what the step must not do**, including the owner's declined gui cases: they test an
+  *instance* of a general rule, which argues for 105 more.
+- Sections renumbered to follow step order — **11.4.1 tests, 11.4.2 examples** — refs updated.
