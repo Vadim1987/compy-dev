@@ -949,6 +949,46 @@ Not commissioned for closure; each may never need action.
   runs them.
 - **Revisit:** Migrate or delete at will; not blocking anything.
 
+### PROPOSAL: `compy.input.keys`, a held-state surface that hides its implementation
+
+- **Status:** owner's proposal, 2026-08-10. **Not this release** — recorded so the shape is not
+  re-derived, and because it reframes a question this feature spent a long time on.
+- **The shape.** A proxy table on the input surface answering *"is this key held"*:
+  `compy.input.keys.h` resolves to `love.keyboard.isDown('h')`, and the foldable names —
+  `keys.shift` / `keys.ctrl` / `keys.alt` — resolve to `Key.shift()` / `Key.ctrl()` /
+  `Key.alt()`, so the left/right pair folds exactly as it does in a combo string. One vocabulary,
+  read the same way from a handler and from `love.draw`.
+- **Why it is worth having, in evidence rather than in principle.** Every input-heavy project
+  re-derives this. The keyboard example built a proxy of exactly this shape **twice** — first over
+  a mirror it maintained itself, then over the framework's tracked set — `maze` wrote
+  `is_shift_down()` by hand, and `turtle`, `clock` and `sapper` each spell out
+  `love.keyboard.isDown` or `Key.*` at their call sites. The convergence is the argument.
+- **The property that matters most: it makes polling-versus-tracking an implementation detail.**
+  Today it proxies straight to the device. If a mirror populated from `keypressed`/`keyreleased`
+  is ever genuinely needed, it can be swapped in **behind the same surface**, transparently to
+  every project — which is precisely what a bare `keys_pressed` table could not do, because the
+  table *was* the contract. Decision 30 removed a model kept beside the device; this proposal
+  removes the need to ever expose which one is in use.
+- **Two optional extensions, later and only if a need appears:**
+  - **An enumerator** — "list every key currently held". This is the one capability a device poll
+    genuinely cannot provide (you can ask about a key, not for the set), and providing it centrally
+    is cheaper than each project keeping its own bookkeeping to get it.
+  - **`compy.states`, a writable surface** — a project registers an arbitrary state-polling
+    function under a name and gets **on/off callbacks at the transitions** of that condition,
+    centrally evaluated. That generalises the held-chord gap below from keys to *any* condition,
+    and moves the evaluation loop out of project machinery into the framework.
+- **Design questions it would have to answer, named so they are not discovered late:**
+  - **Name space.** `keys.shift` means the fold, but `lshift`/`rshift` are also real LÖVE key
+    names — the surface must say which names are folds and which are keys, or the two collide.
+  - **Silent nil.** A proxy that returns nothing for an unknown name turns a typo (`keys.shfit`)
+    into "not held", with no error, in a value used directly in conditionals. A fixed key-name
+    vocabulary exists, so raising on an unknown name is available and probably right.
+  - **Property or call.** `keys.shift` reads as state, which is what makes it pleasant, and also
+    what hides that each read is a device call.
+- **Revisit:** when a project needs held-state vocabulary that today it must build for itself —
+  which, on the evidence above, is most input-heavy projects. See also the entry below, whose
+  on/off transition problem the `compy.states` half of this proposal is the general answer to.
+
 ### A chord that gates a state while it is held has no vocabulary
 
 - **Where:** the shortcuts mechanism generally (`src/controller/projectInputController.lua`,
