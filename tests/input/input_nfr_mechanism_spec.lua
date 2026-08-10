@@ -15,8 +15,8 @@
 -- keypressed fires for every physical key, textinput only for
 -- character-producing keys (doc/development/internals/user_input.md, "Data flow").
 
--- Guards on MECHANISM, not on behaviour: object identity,
--- allocation, and the held-key table's own shape. Nothing here
+-- Guards on MECHANISM, not on behaviour: object identity and
+-- allocation. Nothing here
 -- is a project-facing contract — those live in the other
 -- input_*_spec.lua files, and a row that turns out to be one
 -- belongs there instead.
@@ -45,72 +45,12 @@ describe('input contracts: NFR and mechanism guards #input',
   -- ====================================================
   -- Mechanism / NFR guards — not behaviour contracts.
   -- Labelled so no reader mistakes them for behaviour contracts. These
-  -- intentionally poke internals (identity, allocation, the held-key
-  -- table), which is exactly what an NFR guard is for.
+  -- intentionally poke internals (identity, allocation), which is
+  -- exactly what an NFR guard is for.
   -- (doc/development/tests.md, "Input Contract Suite")
   -- ====================================================
   describe('mechanism / NFR guards — not behaviour',
     function()
-
-      -- Held-key set lifecycle (mechanism). The set is dissolved by
-      -- doc/development/decisions/input.md, Decision 30, and the
-      -- internals guide no longer documents it — these guards go with
-      -- the set. Until then:
-      -- a key is added on press and removed on release
-      -- BEFORE dispatch, so the set already reflects the
-      -- event when a consumer runs. The route-observable form is the
-      -- read-only view delivered in the keypressed triple; delivery and
-      -- contents are covered in input_events_spec. These direct checks
-      -- remain mechanism/NFR guards because they protect the live backing
-      -- set and avoid an allocation on each dispatch, not a project
-      -- identity contract.
-      it('the pressed key is in the held set', function()
-        local seen
-        local orig = love.keypressed
-        love.keypressed = function(k)
-          seen = Controller.keys_pressed['x']
-          orig(k)
-        end
-        F.session.press('x')
-        love.keypressed = orig
-        assert.is_true(seen)
-      end)
-
-      it('the released key is gone before dispatch',
-        function()
-          Controller.keys_pressed['x'] = true
-          local seen = true
-          local orig = love.keyreleased
-          love.keyreleased = function(k)
-            seen = Controller.keys_pressed['x']
-            orig(k)
-          end
-          F.session.release('x')
-          love.keyreleased = orig
-          assert.is_nil(seen)
-        end)
-
-      it('reuses the held-key view for one backing table', function()
-        local first = Controller.held_keys()
-        assert.equal(first, Controller.held_keys())
-      end)
-
-      -- Folding lctrl/rctrl to 'ctrl' is combo_string's
-      -- job (doc/development/decisions/input.md, Decision 8, covered in
-      -- keys_pressed_spec),
-      -- not the held set's.
-      -- Both sides pressed, so the claim rests on what the set
-      -- CONTAINS (two raw names) and not only on what it lacks: a
-      -- bare absence of 'ctrl' would also hold if the set were
-      -- simply empty.
-      it('left/right names stay raw in the held set',
-        function()
-          F.session.press('lctrl')
-          F.session.press('rctrl')
-          assert.is_true(Controller.keys_pressed['lctrl'])
-          assert.is_true(Controller.keys_pressed['rctrl'])
-          assert.is_nil(Controller.keys_pressed['ctrl'])
-        end)
 
       -- Singleton identity across show/hide (NFR): today
       -- only the overlay widget is wired; wiring the

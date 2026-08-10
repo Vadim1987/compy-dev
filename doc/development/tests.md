@@ -70,7 +70,7 @@ The `#input` contract suite originally lived in one large file (`input_contracts
 Nearly every row is a behaviour contract, asserted live. Two kinds of row are not, and `input_nfr_mechanism_spec.lua` collects both under headings that say so, precisely so nobody reads them as promises:
 
 - **characterized behaviour** — factual today, with no stakeholder mandate to stay this way (e.g. compy declaring no `wheelmoved` gateway entry of its own). Asserted live, not pending, so an accidental change still fails the build while a deliberate one reads as expected.
-- **mechanism / NFR guards** — identity, allocation and held-key-table checks that deliberately poke internals, which is what an NFR guard is for.
+- **mechanism / NFR guards** — identity and allocation checks that deliberately poke internals, which is what an NFR guard is for.
 
 Tags beyond the file-level `#input`:
 
