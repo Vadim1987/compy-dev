@@ -949,6 +949,64 @@ Not commissioned for closure; each may never need action.
   runs them.
 - **Revisit:** Migrate or delete at will; not blocking anything.
 
+### Examples are not onboarded onto the new input API
+
+- **Where:** `src/examples/{maze,keyboard,turtle,clock}` — the sites listed
+  below. The three detached repos (`keyboard`, `maze`, `balloons`) have
+  their own remotes and no test suite; `balloons` reads no held state at
+  all and appears nowhere here.
+- **State:** The examples were reconciled with the removal of the tracked
+  held-key set and with the guide's recommendation ladder
+  (`doc/input_api.md`, "Held keys"): every read now sits at a rung that is
+  correct rather than one that is gone. Several of them are still a rung
+  below the one the API offers — a poll answering a question `shortcuts`
+  answers directly, or a modifier test that is a combo written out. Each
+  conversion below was **considered and declined during the reconciliation**
+  because it is a behaviour change, a control-flow restructure, or both, in
+  a repo where the only gate is running the app by hand.
+- **The sites, and what each would become:**
+  - `maze/main.lua:568` — `k == "escape" and not Key.shift()` inside
+    `love.keypressed` is two bindings: Shift+Escape quits, bare Escape is
+    ignored. The combo form moves `escape` out of `SYSTEM_KEYS` and depends
+    on shortcut-before-hook ordering.
+  - `maze/main.lua:514-526` — `poll_tab_progression` polls `tab` every
+    frame and keeps a `tab_was_down` mirror to derive an edge;
+    `shortcuts.keypressed['tab']` is the edge. It also carries the bug
+    class the platform just removed: a flag mirroring a key, with nothing
+    to reconcile it. The edge feeds two different actions depending on
+    game state, so the restructure is not a one-liner.
+  - `maze/macro.lua:74,89` — `macro_state.shift_held` is a held-modifier
+    mirror maintained across `keypressed`/`keyreleased`, the same shape.
+    It is not a pure read: the release runs `finish_recording()`, so
+    replacing the mirror with `Key.shift()` is not behaviour-preserving on
+    its own.
+  - `keyboard/alt.lua:203` — `k == "h" and INPUT.ctrl and INPUT.alt`
+    hand-matches the combo its own comment calls "Ctrl+Alt+H". Its natural
+    form is a shortcut registration; the scene's key routing is what the
+    `textinput` heal rewrites, so it waits for that.
+  - `keyboard/help.lua:16-19` — `helpHeld` spans frames (the overlay is up
+    while the chord is held), so the guide's flag-shortcut shape is the top
+    rung. The poll is the honest interim.
+  - `keyboard/input.lua:109` — `isMod` re-implements `Key.is_mod`. Not a
+    held-state read, so outside the reconciliation's sweep, but the same
+    duplication: it is used in `alt.lua`, `findkey.lua` and `hunt.lua`.
+  - `turtle/main.lua:34,92` — `Key.shift()` / `Key.ctrl()` inside
+    `love.keypressed` guarding one key each are `shift+r` and
+    `ctrl+escape`. **The second one may not want converting at all:** the
+    framework reserves Ctrl+Escape and quits on it (`controller.lua`, the
+    gateway's `keyreleased`), without consuming — so the project's handler
+    fires on the press and the framework quits on the release, to the same
+    end. The question for that site is deletion, not rung.
+  - `clock/main.lua:69,78` — `Key.shift()` inside `love.keyreleased`
+    guarding `space` and `r` are combos on the `keyreleased` channel.
+- **Why it stands:** Deliberate scope. The reconciliation's mandate was two
+  named platform changes; converting an example to the API's better shape is
+  a different job, and doing both at once turns a reconciliation into a
+  rewrite. Nothing here is broken — each site works as written.
+- **Revisit:** This section is the work list for the examples onboarding
+  sweep, which reads it entry by entry. A site may be declined again with
+  fuller reasoning; what it may not do is disappear silently.
+
 ### `compy.input` is rebuilt per project environment, not once at namespace setup
 
 - **Where:** `src/controller/consoleController.lua` — the function that
