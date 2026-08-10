@@ -26,91 +26,6 @@ action; revisit at the named point).
 
 ## Standing
 
-### The held-key set is never cleared on focus loss, so it can go stale
-
-> PENDING: dissolved with the held-key set (`../decisions/input.md`, Decision 30).
-> The platform step that removes the set deletes this entry.
-> Note when deleting: this entry and "`keys_pressed` can go stale on focus loss"
-> below are **two entries for the same defect**, a duplicate that predates the
-> dissolution — so the register loses two entries for one fix, not two fixes.
-
-- **State:** `compy.input.keys_pressed` is maintained purely from events — a key
-  is added on `keypressed` and removed on `keyreleased`. The gateway installs no
-  focus handler (`controller.lua`, the callback table marks focus **SKIPPED**),
-  so a key released while the window is unfocused never delivers its release and
-  stays in the set as held. Nothing clears it afterwards but a real press and
-  release of that same key.
-- **What it costs:** anything reading the set gets a stale `true`. A combo built
-  by `combo_string` can then carry a modifier the user is not holding, so a
-  shortcut misfires or a plain keystroke silently matches a combo; a renderer
-  polling the set draws a key cap lit indefinitely. The example most exposed to
-  it is `examples/keyboard`, whose own comments already describe `capslock`
-  going stale for the same reason and exempt it from a filter to compensate.
-- **Why it is not merely theoretical:** `Key.shift()` / `.ctrl()` / `.alt()` poll
-  `love.keyboard.isDown` and cannot drift, so the framework's own gates and the
-  project-facing table can disagree about whether a modifier is down. Two sources
-  of truth, one of which decays.
-- **Shape of the fix:** clear the set when the window loses focus. The gateway
-  already owns the callback table where the handler belongs, and the framework
-  now has a named seam for state it owns. No API change, and no project has to
-  know it happened.
-- **The wrong fix, named so it is not tried:** do **not** rebuild combos from
-  `Key.*` to dodge the staleness. Those poll the device, which answers "held
-  now"; LÖVE pumps the whole event queue and *then* dispatches, so a poll taken
-  while dispatching the first of several queued events already reflects the
-  last. The event-tracked set is the temporally correct source for an event-time
-  question, and the device poll is correct for a frame-time one. This would
-  trade a bounded, fixable staleness for an unbounded, unfixable one.
-- **Scheduled: before the PR** (plan phase P9d). If that slips, this entry is the
-  record; delete it when the fix lands.
-
-### The gateway asks the device a question about an event
-
-> PENDING: withdrawn rather than fixed (`../decisions/input.md`, Decision 30).
-> The gate was asking the right question all along: once the device is the single
-> source of modifier truth, `dispatch` polls the same way the gate always did and
-> the inconsistency this entry describes is what disappears. The platform step
-> deletes this entry.
-
-- **State:** Decision 29 settles that event-time questions are answered from the
-  event-tracked `Controller.keys_pressed`. The gateway's own gates do not follow
-  it: `handlers.keypressed` and `handlers.keyreleased` reach for `Key.ctrl()` /
-  `Key.alt()` / `Key.shift()`, which poll `love.keyboard.isDown` — the device,
-  now — while `dispatch` beside them builds combos from the event-tracked set.
-- **What it costs:** LÖVE pumps the whole event queue before dispatching it, so
-  a poll taken while handling the first of several queued events reflects the
-  last. A power shortcut gated that way can miss, or fire for a modifier the
-  user has already let go of. Rare, because it needs two events in one frame,
-  and invisible when it happens — the keystroke simply does something else.
-- **Why it stands:** no reported defect traces to it; it is a consistency gap
-  found by reading, not by failing.
-- **Shape of the fix:** the gates take the held set the handler already has,
-  as `dispatch` does. Same folding, one clock.
-- **Scheduled: before the PR** (plan phase P9e), alongside the focus-loss fix
-  above; both are the framework's own held-state handling. Delete this entry
-  when it lands.
-
-### The held-key surface is a table that cannot be iterated
-
-> PENDING: dissolved with the held-key set (`../decisions/input.md`, Decision 30).
-> The platform step that removes the set deletes this entry.
-
-- **State:** `compy.input.keys_pressed` is delivered as a read-only proxy — an
-  empty table whose metatable carries `__index` and `__pairs`
-  (`controller.lua`, `held_keys`). The shipping LuaJIT/Lua 5.1 runtime **ignores
-  `__pairs`**, so `pairs(compy.input.keys_pressed)` iterates the empty proxy and
-  yields nothing. Index-by-name works; nothing else does.
-- **What it costs:** "which keys are down" — filter the set, count it, render all
-  of it — cannot be written against this surface, and it is the natural thing to
-  want from something shaped like a table. `doc/input_api.md` states the
-  limitation, so a reader is warned rather than surprised.
-- **Why it stands:** `__pairs` was written for a future 5.2+ host, and no shipped
-  project has needed to iterate. The alternatives both cost something: a snapshot
-  accessor allocates per call, and a plain copied table would be writable or need
-  copying on every access.
-- **Revisit:** when a project needs the whole set rather than named keys, or if
-  the host runtime gains `__pairs`. Decision 29 records the question as unruled.
-
 ### The Web build has no coverage, and carried a feature-era regression unseen
 
 - **State:** nothing in `busted tests` exercises the `_G.web` branch, and the
@@ -293,22 +208,6 @@ action; revisit at the named point).
   the smell with fresh names or smuggle a behaviour-touching refactor into a
   rename commit — which is why it waited for a pass of its own.
 
-### `keys_pressed` can go stale on focus loss
-
-> PENDING: dissolved with the held-key set (`../decisions/input.md`, Decision 30).
-> The platform step that removes the set deletes this entry.
-
-- **Where:** `src/controller/controller.lua` — `keys_pressed` is maintained
-  from `keypressed`/`keyreleased` only.
-- **State:** If the window loses focus with a key held, `keyreleased` may
-  never fire and the entry lingers — a general limitation of any held-key
-  mirror built purely from press/release events.
-- **Why it stands:** No cheap, fully-correct fix; the consumer can defend
-  against it.
-- **Revisit:** Any consumer of `keys_pressed` (directly or via the
-  `held_keys()` read-only pressed-keys view) must not assume the set is leak-free across
-  focus changes; if it matters, clear the set on `love.focus(false)`.
-
 ### `love.handlers.userinput` is dead code (RESOLVED, 2026-08-07)
 
 Deleted, with the local `clear_user_input` that existed only to feed it. Both
@@ -462,24 +361,6 @@ question, not resolved here.
   hold-to-act binding, and it would leave the same hand-written check in
   `hooks.keypressed`, where commands are equally idiomatically bound. The
   wrapper has one signature and composes across all three tiers.
-
-### Held-key pressed-keys view iteration is index-only on the shipping runtime
-
-> PENDING: dissolved with the held-key set (`../decisions/input.md`, Decision 30).
-> The platform step that removes the set deletes this entry.
-
-- **Where:** `src/controller/controller.lua`, the `held_keys()` read-only
-  pressed-keys view over `Controller.keys_pressed`.
-- **State:** Under LuaJIT (the shipping Lua runtime), `pairs()` ignores
-  `__pairs`, so `pairs()` over this view yields nothing; only indexed reads
-  (`view['a']`) work. The read-through/write-raise contract holds; only
-  iteration is inert. `__pairs` is kept for a 5.2+ host, which this project
-  does not currently run on.
-- **Why it stands:** Open — accept indexing-only access as the permanent
-  shape, or add an explicit iteration helper (e.g. a snapshot-to-array
-  function) for consumers that need to enumerate held keys.
-- **Revisit:** If a real consumer needs to iterate the held set on the
-  shipping runtime.
 
 ### No public `is_active()`-shaped visibility query (RESOLVED, 2026-07-31)
 

@@ -195,10 +195,6 @@ love.handlers.keypressed (k, scancode, isrepeat)
          consumes (stop); falsey/hidden falls through.
 ```
 
-> PENDING: the gateway's first line still does held-key bookkeeping before the
-> global shortcuts; the platform step that removes the set removes it and this
-> marker. The widget signature above is LÖVE's own and is correct today.
-
 `app_state == 'starting'` is never observed by any input path: `main.lua`'s `love.load()` sets it, then flips it to `'ready'` a few lines later — both synchronously, before LÖVE's event pump runs, so no `love.handlers.*` entry point can ever see the `'starting'` value.
 
 Global shortcuts intercepted in `love.handlers.keypressed` (`controller.lua:797+`) before anything reaches the active route's controller: Ctrl+Pause suspends, Ctrl+Q quits project, Ctrl+S stops run or closes buffer, Ctrl+Shift+R resets application, Ctrl+Alt+R restarts project, Ctrl+T quick-switches between run and edit. Ctrl+Esc (quit) is the one exception living on the release side — `love.handlers.keyreleased` (`controller.lua:910-920`), not keypressed. None of these consume the key: it still reaches the active route afterward (§6.3 non-consuming shortcuts).
@@ -244,12 +240,6 @@ there is nothing left to guard against between events.
 
 ### Key state: modifier reads and `combo_string`
 
-> PENDING: **this whole section, every paragraph of it**, describes the ruled
-> shape rather than the tree as it stands — the tree still maintains
-> `Controller.keys_pressed` and still hands it to the builder. The narrower
-> marker further down does not end this one's scope. The platform step that
-> makes the builder read the device removes both.
-
 Modifier state is read from the device. `Key.ctrl()` / `Key.alt()` /
 `Key.shift()` (`util/key.lua`) are `love.keyboard.isDown` over the
 left/right pair of one modifier, and they are the single source of
@@ -290,7 +280,7 @@ device themselves. The matcher is consequently **not** source-blind
 it patches `love.keyboard.isDown` instead.
 
 Both surfaces are consumed by the free-function `dispatch`
-(`projectInputController.lua:74-86`, called from
+(`projectInputController.lua`, "the three-consumer walk", called from
 `ProjectInputController:_dispatch`), which serialises every
 project-route keyboard/text event with `Controller.combo_string`
 and looks the result up first against `compy.input.shortcuts.<event>`,
@@ -858,13 +848,9 @@ refusal (there is no active session to clear).
 | `src/model/input/selection.lua` | Selection range model |
 | `src/model/input/history.lua` | Command history (console) |
 | `src/view/input/userInputView.lua` | Renders the input strip and status line |
-| `src/controller/controller.lua` | Gateway (`love.handlers.*`), global shortcuts, `keys_pressed`/`combo_string`/`any_mod`/pressed-keys view, route management |
+| `src/controller/controller.lua` | Gateway (`love.handlers.*`), global shortcuts, `combo_string`/`any_mod`, route management |
 | `src/controller/projectInputController.lua` | The project route: the three-consumer dispatch walk (`shortcuts` → `hooks` → widget), hook seeding |
 | `src/controller/consoleController.lua` | Console/editor route dispatch, `compy` namespace + `compy.input` surface construction |
-
-> PENDING: `keys_pressed` and the pressed-keys view leave that row with the set
-> (`../decisions/input.md`, Decision 30); `combo_string`/`any_mod` stay. The
-> platform step edits the row and removes this marker.
 
 `controller.lua` is consumed from `main.lua` (constructs the widget instance, wires
 `set_default_handlers`) and `consoleController.lua` (calls into it on every mode

@@ -362,10 +362,6 @@ cannot be registered.
 
 ## Held keys
 
-> PENDING: this section documents the device read as the only held-key answer,
-> while `compy.input.keys_pressed` still exists in the tree. The platform step
-> that removes the field removes this marker.
-
 There are three ways to find out that a key is held, and they are **not
 equal alternatives** — the further down this list you go, the more likely it
 is that the logic wanted to be a binding and became a hardware question
