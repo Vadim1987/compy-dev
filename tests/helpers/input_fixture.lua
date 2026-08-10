@@ -270,6 +270,10 @@ function F.reset()
   love.state.user_input_controller = widget
   CC:stop_project_run()
   Controller.keys_pressed       = { }
+  -- The device outlives a test the way a keyboard outlives a
+  -- keystroke: a chord that never released leaves its modifier
+  -- down for the next test unless the reset lifts it.
+  mock.release_keys()
   love.state.app_state          = 'ready'
   love.state.editor             = nil
   -- Otherwise leaks into the next test's suspend(): a

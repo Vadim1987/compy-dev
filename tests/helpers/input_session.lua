@@ -8,6 +8,8 @@
 
 require('controller.controller')
 
+local mock = require('tests.mock')
+
 ---> REMARK: simplify comment. just tell it exposes API to invoke 'love' events via handlers. (providing a controllable imitation of love2d events emitting, which in production would be done in response to actions over physical hardware)
 -- Expose one emitter per gateway entry. `handlers` is the live
 -- love.handlers table, so combo drivers (tests.mock.keystroke)
@@ -15,9 +17,15 @@ require('controller.controller')
 local function emitters()
   local h = love.handlers
   return {
-    press         = function(k) h.keypressed(k, '', false) end,
-    repeat_press  = function(k) h.keypressed(k, '', true) end,
-    release       = function(k) h.keyreleased(k, '') end,
+    press         = function(k)
+      mock.hold(k); h.keypressed(k, '', false)
+    end,
+    repeat_press  = function(k)
+      mock.hold(k); h.keypressed(k, '', true)
+    end,
+    release       = function(k)
+      mock.unhold(k); h.keyreleased(k, '')
+    end,
     type          = function(t) h.textinput(t) end,
     mousepressed  = function(...) h.mousepressed(...) end,
     mousereleased = function(...) h.mousereleased(...) end,

@@ -66,6 +66,20 @@ local function release_keys()
   end
 end
 
+--- Physical key state, for drivers that emit raw events rather
+--- than whole combos: hardware has the key down before its
+--- keypressed arrives and up before its keyreleased does, so an
+--- event driver sets this itself.
+--- @param k string
+local function hold(k)
+  held[k] = true
+end
+
+--- @param k string
+local function unhold(k)
+  held[k] = false
+end
+
 --- @param s string
 --- @param press function?
 --- @param hold boolean?
@@ -108,4 +122,6 @@ return {
   keystroke    = keystroke,
   textinput    = textinput,
   release_keys = release_keys,
+  hold         = hold,
+  unhold       = unhold,
 }

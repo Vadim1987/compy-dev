@@ -244,14 +244,18 @@ describe('input surface: inbound events — dispatch #input',
   describe('shortcuts fire on the normalised combo', function()
     -- doc/development/decisions/input.md, Decision 8: each channel has its
     -- OWN combo sub-table
-    -- and keys normalise on assignment ('Ctrl+S' -> 'ctrl+s').
+    -- and keys normalise on assignment ('Ctrl+J' -> 'ctrl+j').
+    -- The trigger is deliberately NOT 's': the gateway's own power
+    -- shortcuts poll the device, and Ctrl+S stops a running project
+    -- before the route is ever reached, so a project binding on it
+    -- cannot fire. Normalisation is the subject here, not who wins.
     it('a keypressed combo fires on the normalised combo',
       function()
         local fired = false
         local input = F.activate_project()
-        input.shortcuts.keypressed['Ctrl+S'] =
+        input.shortcuts.keypressed['Ctrl+J'] =
             function() fired = true; return true end
-        chord('lctrl', 's')
+        chord('lctrl', 'j')
         assert.is_true(fired)
       end)
 
@@ -259,10 +263,10 @@ describe('input surface: inbound events — dispatch #input',
       function()
         local fired = false
         local input = F.activate_project()
-        input.shortcuts.textinput['Ctrl+S'] =
+        input.shortcuts.textinput['Ctrl+J'] =
             function() fired = true; return true end
         F.session.press('lctrl')
-        F.session.type('s')
+        F.session.type('j')
         assert.is_true(fired)
       end)
 
@@ -270,10 +274,10 @@ describe('input surface: inbound events — dispatch #input',
       function()
         local fired = false
         local input = F.activate_project()
-        input.shortcuts.keyreleased['Ctrl+S'] =
+        input.shortcuts.keyreleased['Ctrl+J'] =
             function() fired = true; return true end
-        chord('lctrl', 's')
-        F.session.release('s')
+        chord('lctrl', 'j')
+        F.session.release('j')
         assert.is_true(fired)
       end)
 
@@ -488,9 +492,9 @@ describe('input surface: inbound events — dispatch #input',
     it('a fresh press runs the wrapped function', function()
       local ran = 0
       local input = F.activate_project()
-      input.shortcuts.keypressed['ctrl+s'] =
+      input.shortcuts.keypressed['ctrl+j'] =
           input.fn.ignore_repeat(function() ran = ran + 1 end)
-      chord('lctrl', 's')
+      chord('lctrl', 'j')
       assert.equal(1, ran)
     end)
 

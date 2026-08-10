@@ -534,12 +534,10 @@ describe('input surface: widget callbacks #input', function()
     -- state of its own suppresses the newline); it says nothing about
     -- whether the event can be claimed before it arrives. It can, and
     -- the row below pins that.
-    -- Drives BOTH modifier tracks the production code reads:
-    -- F.session.press keeps Controller.keys_pressed (combo_
-    -- string) correct, mock.keystroke's 'S' token flips the
-    -- separate love.keyboard.isDown mock the widget's own
-    -- Key.shift() reads (tests/mock.lua — two distinct
-    -- tables).
+    -- F.session.press holds the modifier on the device as well as
+    -- feeding the gateway, so the keystroke below adds nothing but
+    -- the return key; it is kept as the combo driver rather than
+    -- unpicked into two presses.
     it('Shift+Return unconditionally adds a line without submitting',
       function()
         F.activate_project()
