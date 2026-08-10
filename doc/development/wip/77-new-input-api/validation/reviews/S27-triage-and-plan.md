@@ -586,6 +586,7 @@ state dirty").
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary. **[S33] REDUCED — its Decision-30 slice is pulled forward into P14a** (the project-facing "Held keys" rewrite, the flag-shortcut teaching, the `:268` false claim, the debt register, the Decision 21 tombstone). **What remains here:** the W9 ledger work and W10 batches 1 (retire "overlay"), 2 (no historical contrast) and 4 (vocabulary). **[S33] New members found by session32:** `doc/input_api.md` §"Held keys" needs **replacing, not purging**; Decision 21's worked example is stale — it says a hook "receives the held-key view", which Decision 26 already removed. **[S35] One more member, found while commissioning P15: the project-facing guide never says which combos the framework has already taken.** It teaches `shortcuts.keypressed['ctrl+s'] = ...` as an example while the gateway itself claims `ctrl+s`, and claims `f10` — a **bare, unmodified key** — whenever profiling is on. A project author reading only this guide cannot know which of their bindings will never fire. The reserved set is enumerated in the **P15** row; this step gives it a named section in the guide | P2–P9, **[S33] P14a–e** | docs describe the final code, so they come after it. **Tombstone decisions, never renumber**. **[S29]** Decision 29 and the `input_api.md` "Held keys" rewrite landed early by owner instruction — do not redo them |
 | P11 | W12 — comment sweep, slices, revalidation ×2. **[S33] W10 batch 3 (comment bloat, ~50 ids) belongs here, not P10** — deliberately deferred to a late pass so comments are cut after the code stops moving. **That subset is never separately enumerated inside W10's block of 92 and must be re-derived first** | P10, **[S33] P14a–e** | the commission's (e)–(9). **[S33] the gate is currently FAILING: `grep -rn 'INTERIM:\|REMARK:' src/ tests/` → 22 in the platform and 5 in `src/examples/` (disjoint sets, 27 total; zero `INTERIM:`). It must return nothing before slice regeneration.** **[S33] The gate also covers `PENDING` markers** — including in `doc/`, which the marker sweep has never had to scan before, because P14a puts them there deliberately |
 | **P14a–e** **[S33]** | **The dissolution itself** — docs/spec → tests → platform code → examples, enumerated in §11.4. **[S35] The dissolution ends at P14e.** P9b follows it by ruling but is **not a fifth part of it** — it is a defect of its own that blocks this sprint's closure (see P9b's step). **[S35] P14e is rescoped** to the **three detached example repos** (keyboard, maze, balloons) **and the in-repo examples**, reconciled with the removal and with the corrected recommendation ladder, and it **now precedes P9b** — sequencing **P14a → P14c → P14d → P14e → P9b**. **P14e's operative detail is §11.4.3**, factored out when its row outgrew the table; the dated reasoning for all of session35's amendments is §14. **[S35] The spec itself was corrected before the tests were written** (owner, 2026-08-10): `Key` is the project-facing answer and `love.keyboard` the last resort, and `gui` is removed outright rather than completed — so P14a is reopened for those two edits, and the `gui` decision P14d was carrying is **closed by removal**. **[S33] P14b is RULED** (matcher shape (b), owner 2026-08-09), so a–e are all unblocked. The mock's variadic fix lands first, inside P14c, as its own commit | P8's walk before P14c | §11.4 holds the contents; §11.5 holds the ruling and its costs. Ordering deliberately reverses this table's rule — see §11.2 |
+| **P16** **[S36]** | **The examples get onboarded onto the new API** (owner instruction, 2026-08-10). P14e converts only what the removal and the ladder force, and **writes every conversion it declines into the debt register with its reasoning; this step reads that section back and works it.** So the scope is not open-ended and is not the blanket example sweep that was ruled out: it is exactly the deferred list P14e leaves behind, in `technical_debt/input.md` §"Examples are not onboarded onto the new input API". **Operative detail: §15.2** | **P14e**, which writes this step's input | **Ordering NOT ruled.** The owner's word was *"very likely just the next step after"* — provisional, and it collides with a ruling: the argument that put P14e ahead of P9b (the examples step edits the very file the heal rewrites) applies to this step too. **Raise before it starts** |
 | ~~**P15**~~ **DONE [S35], 2026-08-10** | **The framework's own shortcuts get a suite** (owner, 2026-08-10) — **landed `46952e4c`**: two live cases (`ctrl+pause` route-preserving, `ctrl+q` route-destroying) plus **7 `pending`** outlines; suite 940 → **942 / 0 / 0 / 10**. The worker corrected the enumeration on one point: **`f10` has no modifier gate at all**, so it is claimed in every modifier combination, not only bare. — a coverage gap spotted while reviewing the tests step, and confirmed against the code: the gateway reserves ~9 keyboard combos and **three are tested**. `ctrl+pause` has one case, `ctrl+alt+r`/`ctrl+q` appear only as *play-mode narrowing*, `ctrl+escape` has two cases in `project_open_liveness_spec`. **Untested: quickswitch (`ctrl+t`, both app-state branches), `ctrl+s` (stop run / close buffer / `ctrl+shift+s` finish edit), `ctrl+q` in dev, `ctrl+shift+r` reset, `ctrl+alt+r` in dev, the profiler pair, and `f10`** — which is a **bare, unmodified key** the framework takes whenever `love.PROFILE` is on. Nothing anywhere asserts the second half: **that a project registering the same combo cannot take it away.** Additive, in a new `tests/input/input_global_shortcuts_spec.lua`; the four existing cases are **not moved or rewritten** (two of them are P9c's order-dependent pair). Commissioned to a Sonnet worker, prompt of record `../prompts/S35-global-shortcuts-suite.md`, report `../outcomes/S35-global-shortcuts-suite.md`. **The trap it must not fall into is written into the commission** — see §14.6. **[S35] SCOPED DOWN by the owner, 2026-08-10, and the reasoning changes what the step is:** the gateway does **not** suppress a project's binding at all — the only way a project handler fails to run is a **side effect** of a platform action (the route being torn down). So the one property that needs pinning is **that a project cannot suppress a platform combo by naming it**, and that is the whole live content of this suite (two or three representative combos, at least one route-preserving and one route-destroying). **Asserting each combo's own effect is the framework's business and is NOT this PR's duty** — those become **`pending` outlines**, one per reserved combo, each naming in one line the effect a later test would assert. **This deliberately raises the suite's pending count above 3** — a change the boot ritual otherwise treats as a finding, so it is stated here, in the commit, and in `doc/development/tests.md` | independent of P14; **runs before P14d** so the platform step has the net | **Owes a justification-table line** (§11.7): this is coverage the 187-remark mandate did not ask for, and a stakeholder will ask why the PR grows a suite — the answer is now smaller and easier to give, since what lands is one property plus a list of named gaps |
 | **PROBE** **[S33]** | **Delete `src/probe/input_probe.lua`.** Its own header: *"DIAGNOSTIC, TEMPORARY. Delete when the polling-vs-tracking question is ruled on."* Decision 30 ruled it. Postdates `3256aac`, opt-in, not on the dispatch chain | — | **its own commit.** Unblocked now; listed as a step because it was previously placed only in §11.4's prose, with no id and no row |
 | ~~P12~~ **PROMOTED [S32]** → `../plan.md` **Phase U** (owner, 2026-08-09); id kept, §8 stands | **[S29] Upstream reconciliation and downstream compatibility** (owner, 2026-08-08). Reconcile this branch against the advanced upstreams — the platform repo (and possibly an advanced fork of it) **and** each example repo — then land the coordinated set of PRs | P11 / close-out of the current snapshots | **Blocks the real PR, and needs its own plan.** Not attempted before the snapshots are stable: re-planning against a moving upstream while the design is still settling means doing it twice. See §8 |
@@ -1765,3 +1766,71 @@ the diff proportionate to a PR about the project-facing API.
 nobody parks failures there; this is the sanctioned exception, and it is recorded in the step, in
 the commit, and in `doc/development/tests.md`, whose pending table is the corpus's own record of
 named gaps.
+
+---
+
+## 15. [S36] Amendments made in session36
+
+### 15.1 Owner instruction, 2026-08-10 — the examples get an onboarding step, and P14e feeds it
+
+Stated at the top of session36, while agreeing the reconciliation stays small: *"we'll have to
+rewrite examples to onboard them into the new API. But I agree with starting small and sweeping
+later. So add another step (for sweeping) into the sprint plan, and it will read from the tech
+debt ledger section you fill in this step."*
+
+**What this changes, and what it deliberately does not.** It does **not** reopen the ruling
+against a blanket example sweep, and it does not widen P14e by a line. It settles what happens
+to everything P14e *declines*: instead of an unbounded "somebody should look at the examples one
+day", the declined conversions become an enumerated list in the persistent debt register, and a
+planned step reads that list back. The cap on P14e (*small and obviously behaviour-preserving
+conversions only*, §11.4.3) therefore gets a destination rather than a shrug — which is the whole
+reason it is safe to keep the cap tight.
+
+**Why the debt register and not this plan.** `wip/77` is transient and is not in the PR; the
+register is in the persistent corpus and survives the tree's deletion. A deferred-work list that
+lives only here would evaporate with the scratch, and the step that reads it would have nothing
+to read. The register is also stakeholder-visible, which is correct for this content: it says
+plainly that the examples were reconciled with a platform change but not yet re-taught by it.
+
+### 15.2 [S36] P16 in full — the examples onboarding sweep (OPERATIVE)
+
+**This section is the step, not reasoning about it.** Amendments to the onboarding sweep belong
+**here**; §15.1 is the dated record of why it exists and is never where a change lives.
+
+**Input, and the only input.** `doc/development/technical_debt/input.md`, the section
+*"Examples are not onboarded onto the new input API"*, written by P14e. Each entry names the
+example, the site, the shape it is written in today, the shape the new API offers, and **why
+P14e declined it** (too large, not obviously behaviour-preserving, or a behaviour question the
+owner has not ruled). The step works that list; it does not re-derive it and it does not search
+the examples afresh. **An example the register does not name is out of scope** — the same
+discipline P14e runs under.
+
+**What the step is for.** The examples are the API's worked demonstrations, and after the
+dissolution several of them still teach the mechanisms the framework now provides: a poll plus a
+mirrored flag where a `keypressed` shortcut answers directly, hand-written modifier matching
+where a combo or a class key says it, frame-time machinery for a discrete question. Onboarding
+them is what makes the examples agree with `doc/input_api.md`'s ladder rather than merely stop
+contradicting the removed surface.
+
+**Constraints carried from P14e**, because they are what keep this a sweep and not a rewrite:
+
+- **Per-entry, not per-file.** Each register entry is a unit of work and, where the behaviour
+  question is real, its own commit stating the deviation — the discipline `sapper` set.
+- **Behaviour deviations are stated up front, never discovered in the smoke pass.** The detached
+  repos carry **no test suite**; the app run is the only gate, so what changed must be written
+  down before it is run.
+- **The three detached repos commit on their own and are NEVER pushed** — `keyboard`, `maze`,
+  `balloons` (`pr-assembly-guide.md` §5).
+- **An entry may be declined again.** Re-declining is a legitimate outcome; it stays in the
+  register with the fuller reasoning this step can now give. What is not legitimate is silently
+  dropping it.
+
+**Gate.** Every touched example smoke-runs; the platform suite stays green and stated; each
+worked entry is either removed from the register (done) or amended (declined again, with why).
+
+**Ordering — OPEN, needs an owner ruling before the step starts.** The owner's placement was
+*"very likely just the next step after"* P14e, which is provisional. It collides with a standing
+ruling: P9b (the keyboard `textinput` heal) was ordered after P14e precisely because the examples
+step edits the file the heal rewrites (`examples/keyboard/input.lua`, §14.3), and this step edits
+it again. Either this step runs before P9b and the heal is designed against a twice-moved file,
+or it runs after and the register waits. **Raise it; do not assume the softer reading.**
