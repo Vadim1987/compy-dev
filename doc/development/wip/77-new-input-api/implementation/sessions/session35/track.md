@@ -311,3 +311,32 @@ lives only in the plan is a rationale the PR does not carry. `83af97db`.
   defect recorded twice; the `gui` and service-keys entries are **not** among them).
 - **Must-nots**: no seam left for the set, **no touching `src/harmony/`**, no example fixes here,
   and the `NOTE` above `combo_string` keeps its allocation half only.
+
+## 2026-08-10 — cold site enumeration run, and what it corrected
+
+Sonnet sub-agent, **model passed explicitly**, read-only, given **no plan and no prior site
+list** — so agreement is confirmation and disagreement is a finding. Prompt
+`../../../validation/prompts/S35-dissolution-site-enumeration.md`, deliverable
+`../../../validation/outcomes/S35-dissolution-site-enumeration.md`. `be7827f5`.
+
+Owner's reason for running it **now** rather than at the top of the executing session: *I* hold
+the context, so I can spot results that contradict intent — a cold session could not.
+
+- **Agreement where it counts:** its framework inventory matches the plan's **exactly**. Nothing
+  missed, nothing spurious. That is the result worth having before code moves.
+- **CORRECTION 1 — the mock's `lgui`/`rgui` slots STAY.** My §14.1 gui enumeration had listed
+  them for removal and was wrong: `tests/mock.lua` mocks the **device**, and a real keyboard still
+  has Super keys. Decision 31 removes `gui` from the *modifier set*, not from the set of keys that
+  exist; stripping the slots would leave the mock unable to represent a physically-held Super key,
+  which is now an ordinary bindable trigger.
+- **CORRECTION 2 — the examples step is smaller than it looked.** 11 read sites in the keyboard
+  example, **9 needing no edit**: they read `INPUT.shift`/`.ctrl`/`.alt` and are insulated once
+  the three proxy branches call `Key.*`. **The proxy is the seam.** Only `help.lua:11`
+  (`INPUT.held.h`) and `modHeld` are edits.
+- **CORRECTION 3 — `held` is a three-way homonym** here: the tracked set, the device mocks
+  (tests + harmony), and `model/input/selection.lua`'s text-selection drag state. P14d's must-nots
+  now say not to sweep on the word.
+- Also superseded the corrections review's stale line proposing harmony's gui tokens for removal.
+- **The LSP behaved exactly as the standing warning predicts:** every declared-symbol occurrence
+  found, and **zero** of the ~30 that route through metatable `__index` dispatch on string keys.
+  Grep was the only tool that saw those. Worth carrying forward as evidence, not folklore.
