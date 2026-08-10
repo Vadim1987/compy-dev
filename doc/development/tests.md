@@ -79,7 +79,7 @@ Tags beyond the file-level `#input`:
 - `#history` (`history_spec`) — history recall, including the console's Up-at-the-top recall through the real key path.
 - `#disputable` (`input_shortcuts_click_spec`) — marks a contract whose *desirability* is contested even though the assertion is factually true. One group remains: global shortcuts fire without consuming the key. The second group — the console line receiving what a hidden widget declined — was retired on 2026-08-03 when the console route lost its widget step entirely (`../decisions/input.md`, Decision 1); those rows moved to the project route in `input_widget_control_spec`, where a hidden widget is a real decision, and the tag went with the dispute.
 
-**The 3 pending tests are named gaps, not failures.** `busted tests` reports `861 successes / 0 failures / 0 errors / 3 pending` (confirmed by a live run). Each pending row documents a cell in the mode × channel routing grid that is either out of the input API's scope or not black-box observable today:
+**The 3 pending tests are named gaps, not failures.** `busted tests` reports them as pending, with no failures and no errors; the success count moves with the suite and is deliberately not quoted here. Each pending row documents a cell in the mode × channel routing grid that is either out of the input API's scope or not black-box observable today:
 
 | Location | Row | Why it's pending, not red |
 |---|---|---|

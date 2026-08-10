@@ -431,3 +431,22 @@ no count change) → 948 → 944 → 940 → 940. Arithmetic reconciled in every
 - **Delegated** the rename's blast-radius sweep to a Sonnet worker (model passed explicitly,
   read-only, prompt of record in `validation/prompts/`), rather than trusting my own three known
   citations as complete.
+
+## 2026-08-10 — the sweep reports: the rename is clean, and it found one unrelated lie
+
+Deliverable `../../../validation/outcomes/S35-keys-pressed-spec-citation-sweep.md`.
+
+- **No dangling citation of the renamed spec anywhere in the tracked tree.** The three I fixed in
+  `e3d94104` were the whole set; the four deleted case names and `kp_handler`/`kr_handler` occur
+  nowhere. Every `setup_callback_handlers` citation still resolves.
+- **Two stale entries in `.claude/settings.local.json`** naming the old path. Untracked harness
+  config, not repo content, and a stale allow-entry is inert — **reported to the owner, not
+  edited.** Their settings are not mine to sweep.
+- **`tests.md` quoted a live suite count (861) as fact** — pre-existing drift, wrong long before
+  this session and made worse by it. Fixed by removing the number rather than updating it: it is a
+  moving quantity in a persistent document, and the sentence's claim is about the **3 pending**
+  being named gaps, which needs no success count to stand.
+- **The LSP returned phantom references to the deleted file** and stale line content, plus two
+  nonexistent `.tmp.*` shadow paths — index lag after a `git mv`. Second session running in which
+  grep is the tool that told the truth; the worker cross-checked and did not report the phantoms as
+  findings, which is the behaviour the briefing asked for.
