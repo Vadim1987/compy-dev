@@ -949,6 +949,40 @@ Not commissioned for closure; each may never need action.
   runs them.
 - **Revisit:** Migrate or delete at will; not blocking anything.
 
+### A chord that gates a state while it is held has no vocabulary
+
+- **Where:** the shortcuts mechanism generally (`src/controller/projectInputController.lua`,
+  `find_shortcut`; `src/controller/controller.lua`, `combo_string`), and
+  `doc/input_api.md`, "Shortcuts that set a flag".
+- **The rule this rests on, stated because the API does not state it (owner, 2026-08-10):**
+  **a combo can only reliably serve an atomic transition — a one-off shot, stateless in
+  itself. It must not be used to toggle a long-lived state that depends on the combo still
+  being held.** The reason is mechanical, not stylistic: a combo is serialised from its
+  trigger plus the modifiers held **at that instant**, so the event that would *end* the
+  state may serialise differently from the one that began it, and the ending binding is
+  simply missed.
+- **The two ways it bites, both real:**
+  - *A modifier released first.* `keypressed['alt+h']` sets a flag; the player lets go of Alt
+    before `h`, so `keyreleased('h')` serialises as plain `'h'` and the `'alt+h'` binding never
+    fires. **No second binding closes it** — a modifier's own release has no expressible combo
+    at all (Decision 21: one trigger, so `'alt+lalt'` and bare `'lalt'` both raise).
+  - *An unrelated modifier pressed mid-hold.* The guide's own flag example binds bare
+    `'space'` on both channels; press Space, then press Ctrl, then release Space, and the
+    release serialises as `'ctrl+space'`, missing the `'space'` clearing binding. **The
+    documented pattern has the defect it is documented to solve.**
+  - Both leak the same way on focus loss, where no release is delivered at all.
+- **What is missing, sketched (owner, 2026-08-10):** an abstraction for *"this chord is
+  currently held"* — evaluated on update, with **two callbacks, on and off**, fired when the
+  condition starts and stops being true. Machinery and syntax could mirror shortcuts; only the
+  integration differs — instead of one callback on an event channel, a pair on a transition of
+  a *condition*. It would replace held-state `if` cascades sprawling through project code, and
+  the same shape serves *"Ctrl held during a drag"*, which today every project re-derives.
+- **Why it stands:** **not this release.** It is new API surface, and the feature's mandate is a
+  simpler and more robust input API, not a larger one. Recorded so the idea is not re-derived,
+  and so the rule above is available to anyone reaching for a combo to hold a state.
+- **Revisit:** when a project needs held-chord state and the honest answer is still a poll —
+  which is what the keyboard example's help overlay does today, deliberately.
+
 ### Examples are not onboarded onto the new input API
 
 - **Where:** `src/examples/{maze,keyboard,turtle,clock}` — the sites listed

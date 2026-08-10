@@ -195,3 +195,34 @@ updating synchronously. Checked rather than answered — four are, out of ~360.
   on, so the remark is now demonstrably right and the line it flags is likely already false.
   Docs step's, not this one's; recorded so it is met rather than grepped.
 - Markers in `src/`+`tests/` still **27**; nothing else was touched.
+
+## 2026-08-10 — the owner's question about helpHeld turns into a rule and a missing abstraction
+
+Owner asked why `helpHeld` polls rather than binding `alt+h` on press and release. Analysed
+before answering, and the answer generalised.
+
+- **The trap, verified in the matcher:** a combo serialises from its trigger plus the modifiers
+  held **at that instant**. Release `h` first → `'alt+h'`, binding fires. Release **Alt** first →
+  the modifier's own release is refused by `find_shortcut` (`Key.is_mod`), and the later `h`
+  release serialises as plain `'h'` — the `'alt+h'` binding is missed and **the overlay sticks**.
+  **No second binding closes it**: a modifier's own press/release has no expressible combo at all
+  (Decision 21). Focus loss leaks the same way. The poll self-heals from both.
+- **Owner's rule, and it is the general form of that:** *combos serve an atomic transition — a
+  one-off shot, stateless in itself; they must not toggle a long-lived state that depends on the
+  combo still being held.*
+- **THE GUIDE TEACHES THE TRAP.** §"Shortcuts that set a flag" binds bare `'space'` on both
+  channels; press Space, then Ctrl, then release Space → the release is `'ctrl+space'` and the
+  clearing binding misses. Milder than the modifier case only because a class binding *could*
+  catch it. **Filed as a new P10 member — a defect in a teaching passage, not wording.**
+- **Owner's forward sketch, recorded in the persistent register:** an abstraction for *"this
+  chord is held"* — evaluated on update, **two callbacks (on/off)** at the transitions of a
+  condition rather than one callback on an event channel. Same syntax as shortcuts, different
+  integration. Would replace held-state `if` cascades and serves *"Ctrl held during a drag"*.
+  **Explicitly not this release** — new surface, against a mandate to simplify.
+- **`INPUT` is ruled for dissolution** (owner intent): it is a pure alias for `Key` now. Ten
+  mechanical sites, written into P18 — with the note that `INPUT.upRecent` is the one genuinely
+  own member and that **the heal may delete it anyway**, since the ratified design subtracts it.
+  So the dissolution is sequenced *with* the heal, not before it.
+- Also answered plainly why `helpHeld` kept `INPUT.alt` while gaining a direct `isDown('h')`:
+  consistency with the nine other proxy reads, which the step forbade opening — a file-level
+  judgement, and the mixed-looking expression is its real cost.
