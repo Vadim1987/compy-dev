@@ -17,3 +17,66 @@
 - **Mode: execution** (P14e, the examples reconciliation). A design question appearing is a reason
   to stop and raise it, not to decide it.
 - Task restated to the owner before any work, at their request — awaiting their go.
+
+## 2026-08-10 — owner adjusts the frame before the go: the sweep becomes a step
+
+Owner: *"we'll have to rewrite examples to onboard them into the new API. But I agree with
+starting small and sweeping later. So add another step (for sweeping) into the sprint plan, and
+it will read from the tech debt ledger section you fill in this step."*
+
+- **Not a rescope of P14e** — the reconciliation stays exactly as specified. What changes is the
+  destination of everything it declines: an enumerated register section, and a planned step
+  (**P16**) that reads it. The cap now has somewhere to point.
+- Written as a §4 row + **§15.2 OPERATIVE** + §15.1 dated record. `775502b4`.
+- **Ordering deliberately left OPEN, not assumed:** the owner's *"very likely the next step
+  after"* collides with the ruling that put P9b after the examples step, since P16 edits the same
+  file the heal rewrites. Flagged in the row and the step for a ruling before it starts.
+
+## 2026-08-10 — EXECUTION: P14e, five commits across three repos
+
+Mode named at boot and held: execution. No design call arose.
+
+- `keyboard` (detached, `05cedec`) — **the proxy was the seam and the enumeration held**: three
+  branches now ask `Key`, and the nine reads through `INPUT.shift/.ctrl/.alt` needed no edit.
+  `modHeld` deleted; `helpHeld` asks the keyboard for `h` (last rung, legitimately — `Key` has no
+  answer for a non-modifier); header prose and the capslock reasoning brought in line.
+- **An uncommitted half-reword of that capslock comment was already in the repo's tree.** It is
+  the same concern as the step's prose work, so it was completed rather than reverted, and named
+  in the commit. Flagged to the owner rather than silently absorbed.
+- The three detached repos had **no git identity configured**; set locally to match their own
+  history (the owner's, as every prior commit there).
+- `maze` (`a045fdb`) — `is_shift_down()` → `Key.shift()`. The combo form (Shift+Escape vs Escape)
+  is the top rung and was declined to the register: it moves `escape` out of `SYSTEM_KEYS`.
+- `turtle` + `clock` (`5c3ca84b`) — **the step named one clock site; the local helper had two.**
+  Deleting it for the named one would have broken `k == "r" and shift()`. Caught by grepping
+  after the edit, which is the only gate an example has.
+- `sapper` (`cc434f9b`) — the four-site cascade became two consuming class shortcuts on the
+  derived single-click channel. Verified before writing: the shortcut is called with the payload
+  only (`(x, y)`), the derived channels have no trigger so the class key is the only form, and a
+  consuming shortcut stops the hook. Both accepted deviations stated in the commit.
+- Suite **942 / 0 / 0 / 10** at every commit — no platform code touched.
+
+## 2026-08-10 — the smoke gate was toothless, and the negative control is what found it
+
+- First pass: five examples "ran clean under `love src play`". **They produced no output at all**
+  — including the framework's own startup lines, which a failed load *had* printed earlier.
+- **Negative control**: a scratch copy of sapper with a deliberately illegal combo registration
+  printed nothing either. So the gate had no signal: LÖVE's stdout is block-buffered and
+  `timeout`'s kill discards it.
+- Under `stdbuf -oL` the bad registration raises visibly (*"bad combo '*'"*), and the five were
+  re-run under it — all load and run. **Written into the step**, because a successor smoking an
+  example without line-buffering is reading an empty file and calling it clean.
+- The keyboard example cannot be driven past its menu here (no key injection; harmony needs a
+  seeded project dir). Its proxy and `helpHeld` were exercised by loading the **real files**
+  against a fake device instead. The interactive checklist is still owed by a human.
+
+## 2026-08-10 — two findings outside the mandate
+
+- **`doc/input_api.md` still listed `gui` among the modifiers** after Decision 31 closed the set —
+  in the stakeholder-facing guide, in the one sentence a project author acts on. Own commit
+  `5d342bbe`; found by reading the sentence for its normalisation rule while converting sapper.
+- **`turtle` binds Ctrl+Escape**, which the gateway reserves and quits on **without consuming**
+  (`controller.lua` keyreleased) — so the project's handler fires on the press and the framework
+  quits on the release. Filed in the register as a question of deletion, not of rung. Checked in
+  code rather than assumed: an earlier draft of the entry said "may never have fired", which the
+  non-consuming gate makes wrong.
