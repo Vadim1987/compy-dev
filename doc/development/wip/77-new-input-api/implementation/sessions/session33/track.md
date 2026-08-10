@@ -245,3 +245,43 @@ Plus: deleting the held-key-set `describe` leaves `keys_pressed_spec.lua` misnam
 only survivor (R057's surface vocabulary lives partly in that file).
 
 All folded into P14c's step. Suite 955/0/0/3 throughout. Nothing pushed.
+
+## 2026-08-09 — three closing instructions, then WRAPPED
+
+**Owner, at the wrap — three instructions, all recorded in the plan (§12.6) and in the
+affected steps:**
+
+1. **The docs step runs BEFORE P9b's design substep.** Reasoning: *"P9b may include reasoning
+   which should better be done towards the currently approved design."* Otherwise P9b argues
+   against docs that still teach the tracked-set model the sprint is reversing. Sequencing is
+   now **P14a → P9b (own session) → the rest of P14**. Both rows updated.
+2. **Unimplemented prose is marked `PENDING`** until the code lands. This is the guard the
+   docs-first ordering needed and nobody had named: writing the spec before the tree behaves
+   that way means the document describes behaviour that does not exist. **P11's gate absorbs
+   `PENDING`** — and note that extends the marker sweep to `doc/`, which it has never scanned,
+   since `INTERIM:`/`REMARK:` only ever lived in `src/` and `tests/`.
+3. **`xvfb-run` sanctioned for SM3a**, conditional on availability and usefulness. **Both
+   confirmed and stated as fact, not assumption:** `/usr/bin/xvfb-run` and `/usr/bin/Xvfb`
+   exist, and `xvfb-run -a love src` was exercised earlier in this session to boot the app
+   after the probe deletion. It stays a **diagnostic** — the note's own warning is that fixing
+   state-reset code on an unreproduced hypothesis is how the `wrap_handler` mistake happened.
+
+**Wrapped per `agents/sessions.md` §5.** Report distilled to `report.md`; successor commissioned
+as session34 and the pointer repointed in `agents/validation.md`. Successor's shape follows the
+owner's instruction: **it opens with a choice they make with the session** — A the docs step
+(recommended), B SM3a's runtime check, C the tests + platform code, D P9b in its own session —
+each with its ordering constraints stated, rather than a single assigned task.
+
+Eleven commits, one of them a deletion, the rest docs. Suite **955 / 0 / 0 / 3** at every one.
+Nothing pushed. Track kept raw per §3.
+
+## Sub-agents
+
+One, Sonnet, explicit model, read-only, prompt of record and deliverable on disk:
+`validation/prompts/S33-p14-citation-verification.md` →
+`validation/outcomes/S33-p14-citation-verification.md`. It confirmed the counts the plan rests
+on and found eight wrong citations, six of them ranges a later session would have deleted.
+**Its most valuable output was a side note it flagged as outside its own remit** — the §6-vs-§4
+contradiction on P8, which became this session's largest finding. Every load-bearing claim was
+re-verified by me before use; the P8 walk was deliberately NOT delegated, being eight greps
+tightly coupled to judgement.
