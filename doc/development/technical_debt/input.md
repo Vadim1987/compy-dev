@@ -1047,6 +1047,35 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** when a project needs held-chord state and the honest answer is still a poll —
   which is what the keyboard example's help overlay does today, deliberately.
 
+### sapper's modifier click path is a touch fallback, and converting it needs the platform's help
+
+- **Where:** `src/examples/sapper/main.lua` — the two guarded click hooks and `love.mousepressed`.
+- **What it is.** Shift+press flags and Ctrl+press unlocks, each guarded as *this modifier and
+  none of the other two*; the plain click hooks act only when nothing is held. **Its purpose is
+  the timing** (author, 2026-08-10): on touch devices a single tap is often accidental and a
+  double tap unreliable, so the modifier-held **press** is the dependable route to both actions.
+  That rationale is not written in the code, and its absence already caused one wrong change.
+- **The obvious conversion is wrong, and was made and reverted (2026-08-10).** Moving the two
+  variants to `shortcuts.singleclick['shift+*']` / `['ctrl+*']` is faithful to the *shape* — a
+  class key means exactly "this modifier set and no other" — and destroys the *purpose*: derived
+  clicks are button 1 only, counted on release, resolved only after the double-click window, and
+  **discarded if the pointer drifts**, which is the mechanism the press path exists to bypass.
+- **What a correct conversion looks like, and the hole it still has.** Keep the press path as
+  `shortcuts.mousepressed['shift+*']` / `['ctrl+*']` — on a channel *with* a trigger the class key
+  falls back correctly, so this reproduces "any button, at press time" exactly — and **swallow the
+  derived echo** with `shortcuts.singleclick['shift+*'] = fn.stop_here()`, because **consuming a
+  press does not prevent the derived click**: the gateway counts clicks in its own
+  `mousereleased` handler, before and regardless of anything the project consumed.
+  **The residual hole:** a derived click's modifiers are sampled **at synthesis time**, after the
+  double-click window — so releasing the modifier during that window makes the echo serialise
+  unmodified, miss the swallow, reach the plain hook, and act a second time. On a touch device,
+  where the modifier is a key held in the other hand, that is a realistic sequence.
+- **Why it stands:** the honest fixes are a project-side "already handled" flag (the mirrored-flag
+  pattern this work exists to remove), or **the platform carrying the originating press's
+  modifiers into the derived event** — a platform change, outside this feature's mandate.
+- **Revisit:** in sapper's own step. **The example belongs to another author**; the conversion
+  changes behaviour they would be the first to notice, so it wants their eyes before it lands.
+
 ### Examples are not onboarded onto the new input API
 
 - **Where:** `src/examples/{maze,keyboard,turtle,clock}` — the sites listed
