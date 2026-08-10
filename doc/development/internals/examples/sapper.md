@@ -39,7 +39,7 @@ handler of its own. That is deliberate — the captured `love.*` path stays supp
 compatibility layer, and is demonstrated on purpose by `turtle`, but an example written today
 says what it means through hooks and shortcuts.
 
-`compy.input.hooks.singleclick` → flag cell. `compy.input.hooks.doubleclick` → unlock cell (or restart if game over). The modifier-held variants — the alternative input for touch devices with no double-click — are `compy.input.shortcuts.singleclick['shift+*']` → flag and `['ctrl+*']` → unlock, both `fn.stop_here`, so the plain-click hook does not fire as well.
+`compy.input.hooks.singleclick` → flag cell. `compy.input.hooks.doubleclick` → unlock cell (or restart if game over). The modifier-held variants are `compy.input.shortcuts.singleclick['shift+*']` → flag and `['ctrl+*']` → unlock, both `fn.stop_here`, so the plain-click hook does not fire as well. **Why they exist is not recorded anywhere** — not in the code, which mentions no rationale, and not in the import commit. An earlier revision of this document explained them as an alternative input for touch devices with no double-click; that explanation appears nowhere in the source and is not treated here as fact. The example's original author is the one who would know.
 
 Those four handlers used to be two guarded hooks plus a `love.mousepressed`, each spelling out *this modifier and none of the other two*. A class key already means exactly that — `combo_string` folds every held modifier, so `'shift+*'` matches Shift and nothing else — so the guards were re-implementing the matcher and were removed with it.
 

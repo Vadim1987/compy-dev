@@ -275,3 +275,25 @@ by me, since I authored the commits that depend on the answer. Prompt
   proposal is dropped or deferred indefinitely, the convergence evidence stops being addressed
   and Decision 30's standing should be re-examined then. Recorded as a **condition on the
   proposal**, in the persistent corpus, because reviews are transient.
+
+## 2026-08-10 — sapper's provenance, and an unverified rationale I propagated
+
+Owner did not recognise `single`/`doppel` and suspected an agent had invented them. Checked.
+
+- **Both are original**, from `918c87f6 aldum <aldum@artixlinux.org>, 2026-03-06, "feat: add
+  sapper"` — a single 710-line commit adding the file whole. **So is the four-site modifier
+  cascade**, `Key.*` calls included. The feature-era change to those lines before mine was only
+  the registration surface (`function compy.singleclick` → `compy.input.hooks.singleclick`).
+- **No pre-import history exists in this tree**, so the owner's recollection that their original
+  click machinery was straightforward and gained modifier dependencies on import cannot be
+  checked against the repo — said plainly rather than resolved.
+- **MY ERROR, and it is the kind this session keeps finding.** The *"alternative input for touch
+  devices with no double-click"* rationale exists **only** in `internals/examples/sapper.md`, a
+  doc whose own header says *authored By LLM; human-approved NOT YET*. **`touch` appears nowhere
+  in sapper's source.** I repeated that inference today while rewriting that very section, and it
+  quietly softened my deviation analysis — "it's for touch" makes losing Shift+right-click sound
+  cheaper. Corrected: the section now states the variants' behaviour and says the reason is not
+  recorded.
+- **Consequence for the PR:** sapper is a second example owned by someone else with no suite, and
+  my conversion accepted two behaviour changes in it. The person who would notice is its author.
+  Raised with the owner.
