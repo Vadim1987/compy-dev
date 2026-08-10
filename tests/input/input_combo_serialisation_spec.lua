@@ -71,12 +71,10 @@ describe('input surface: inbound events — combo serialisation'
     assert.equal('ctrl+alt+s', cs('s', held))
   end)
 
-  it('all modifiers: ctrl alt shift gui', function()
+  it('all modifiers: ctrl alt shift', function()
     local held = {
-      lgui = true, lshift = true,
-      lalt = true, lctrl = true,
+      lshift = true, lalt = true, lctrl = true,
     }
-    local expected = 'ctrl+alt+shift+gui+s'
-    assert.equal(expected, cs('s', held))
+    assert.equal('ctrl+alt+shift+s', cs('s', held))
   end)
 end)

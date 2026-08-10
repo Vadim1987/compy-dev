@@ -852,11 +852,6 @@ Not commissioned for closure; each may never need action.
 
 ### `gui` is supportable as a modifier, and deliberately not supported
 
-> PENDING: the row still exists in `src/util/key.lua`. The platform step that
-> removes it makes this entry true; it is **not** deleted with the five
-> dissolution entries, because it records a standing choice rather than a
-> defect.
-
 - **Not a defect, and not deferred work.** `gui` (super / cmd / win) is outside
   the modifier set by decision (`../decisions/input.md`, **Decision 31**), which
   carries the rationale: never requested, added only for symmetry with the

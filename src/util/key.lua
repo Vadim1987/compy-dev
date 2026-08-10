@@ -5,29 +5,27 @@ local unpack  = unpack or table.unpack
 local shift_k = { "lshift", "rshift" }
 local ctrl_k  = { "lctrl", "rctrl" }
 local alt_k   = { "lalt", "ralt" }
--- gui = super/cmd/win. Kept in the modifier set for parity with ctrl/alt/shift so
--- combo_string can serialise gui-combos; no shortcut registers one yet.
-local gui_k   = { "lgui", "rgui" }
 
 -- Single source of truth for left/right modifier folding. Each row is
 -- { left-key, right-key, generic-name }; combo_string folds e.g. lctrl|rctrl -> "ctrl"
--- (precedence order: ctrl, alt, shift, gui). This is the single
--- source shared by combo registration and dispatch.
+-- (precedence order: ctrl, alt, shift). The set is closed
+-- (doc/development/decisions/input.md, Decision 31): a key outside it is
+-- an ordinary trigger. This is the single source shared by combo
+-- registration and dispatch.
 local mod_triples = {
   { ctrl_k[1],  ctrl_k[2],  "ctrl" },
   { alt_k[1],   alt_k[2],   "alt" },
   { shift_k[1], shift_k[2], "shift" },
-  { gui_k[1],   gui_k[2],   "gui" },
 }
 
 -- Generic modifier names in combo-string precedence order
--- (doc/development/decisions/input.md, Decision 8: ctrl < alt < shift <
--- gui), and the l/r fold that maps held key-names onto
+-- (doc/development/decisions/input.md, Decision 8: ctrl < alt <
+-- shift), and the l/r fold that maps held key-names onto
 -- them ('lctrl' -> 'ctrl').
 local mod_rank = {
-  ctrl = 1, alt = 2, shift = 3, gui = 4,
+  ctrl = 1, alt = 2, shift = 3,
 }
-local mod_order = { 'ctrl', 'alt', 'shift', 'gui' }
+local mod_order = { 'ctrl', 'alt', 'shift' }
 local fold_mod = { }
 for _, row in ipairs(mod_triples) do
   fold_mod[row[1]] = row[3]
