@@ -163,12 +163,12 @@ the widget itself.
 
 ```
 love.handlers.keypressed (k, scancode, isrepeat)
-  → held-key bookkeeping + global shortcuts — controller.lua
+  → global shortcuts — controller.lua
     → love.keypressed — the active route
       ├─ console/editor (the default handler):
       │    → overlay widget shown (except inspect):
       │        UserInputController:keypressed
-      │          (k, keys_pressed, isrepeat)
+      │          (k, scancode, isrepeat)
       │    → else ConsoleController:keypressed
       │        → if editor state: EditorController:keypressed
       │        → else: console key handling
@@ -194,6 +194,10 @@ love.handlers.keypressed (k, scancode, isrepeat)
          Truthy at shortcuts/hooks, or shown at the widget,
          consumes (stop); falsey/hidden falls through.
 ```
+
+> PENDING: the gateway's first line still does held-key bookkeeping before the
+> global shortcuts; the platform step that removes the set removes it and this
+> marker. The widget signature above is LÖVE's own and is correct today.
 
 `app_state == 'starting'` is never observed by any input path: `main.lua`'s `love.load()` sets it, then flips it to `'ready'` a few lines later — both synchronously, before LÖVE's event pump runs, so no `love.handlers.*` entry point can ever see the `'starting'` value.
 
@@ -238,64 +242,73 @@ there is nothing left to guard against between events.
 
 **`inspect` mode overrides all of the above.** While `app_state == 'inspect'` (a paused/broken-into project), the console REPL owns every input channel and a project-set overlay is not honoured, regardless of the routing described above. The mechanism: `get_user_input()` (`controller.lua:21-24`) unconditionally returns `nil` while `app_state == 'inspect'`, so every `forward_*` call in this section reports "no widget" and every `love.handlers.*` entry point falls back to the console's own default handler — because `ConsoleController:suspend()` (`consoleController.lua:919-936`) physically swaps `love.keypressed`/`textinput`/`draw`/`update` back to the console's own functions via `set_default_handlers`, not merely short-circuiting them. The console additionally runs the *paused project's own* environment while inspecting: `get_effective_env()`/`evaluate_input()` select `project_env` (not the console env) when `app_state == 'inspect'`, so REPL input mutates the paused project's globals — a live debugger console, not a separate idle console. This behaviour is carried as characterized status quo, not a ratified contract — its shape under a future console/editor migration is an open call for the owner, not settled here.
 
-### Key state: `Controller.keys_pressed` and `combo_string`
+### Key state: modifier reads and `combo_string`
 
-`Controller.keys_pressed` is a `{keyname → true}` table maintained on
-the global `Controller`. It is updated at the very top of
-`love.handlers.keypressed` (add) and `love.handlers.keyreleased`
-(remove), before any downstream handler runs. Key names are LÖVE2D
-canonical (`"lctrl"`, `"rshift"`, `"return"`, etc.); left/right
-variants are stored without folding — `lctrl` and `rctrl` are two
-separate entries, not merged into `ctrl`.
+> PENDING: this section describes the ruled shape. The tree still maintains
+> `Controller.keys_pressed` and hands it to the builder; the platform step that
+> makes the builder read the device removes this marker.
 
-> REMARK: for pointer we will assemble combo strings without triggering keys
-**Why the event-tracked set and not `love.keyboard.isDown`**
-(`../decisions/input.md`, Decision 29). The two answer on different
-clocks. A device poll reports what is held *now*; this table reports
-what was held *at the event being dispatched*. LÖVE pumps the whole
-event queue and then dispatches its events one at a time, so with a
-press and a release queued in the same frame, a poll taken while
-dispatching the **press** already reports the key released. Every
-event-time question — combo serialisation above all — is therefore
-answered from this table, and the physical queries in `util/key.lua`
-are for frame-time questions, where "now" is the right clock. The
-two can disagree, and each is correct on its own.
+Modifier state is read from the device. `Key.ctrl()` / `Key.alt()` /
+`Key.shift()` (`util/key.lua`) are `love.keyboard.isDown` over the
+left/right pair of one modifier, and they are the single source of
+held-modifier truth in dispatch (`../decisions/input.md`, Decision
+30). The framework maintains no held-key table of its own: there is
+no accumulated model to go stale when a release never arrives, and
+so nothing to reconcile against the device afterwards.
 
-`Controller.combo_string(k, keys_pressed)` serialises a key event
-into a canonical combo string. It prepends any held modifiers in
-fixed precedence order — `ctrl`, `alt`, `shift`, `gui` — then
-appends the triggering key. Left/right variants are folded to the
-generic name at this point (`lctrl`/`rctrl` → `ctrl`, etc.). A key
-with no held modifiers serialises to just the key name.
+`Controller.combo_string(k)` serialises a key event into a canonical
+combo string. It asks the device about each modifier row of
+`Key.mod_triples` in fixed precedence order — `ctrl`, `alt`,
+`shift`, `gui` — prepends the generic name of every row that is
+held, then appends the triggering key. Left/right fold to the
+generic name here (`lctrl`/`rctrl` → `ctrl`, etc.), which is the
+only place the fold happens at dispatch. A key with no held
+modifiers serialises to just the key name.
 
 ```lua
--- lctrl held, s triggers     → "ctrl+s"
--- lalt + lshift held, f4     → "alt+shift+f4"
--- escape with nothing held   → "escape"
+-- left ctrl held, s triggers  → "ctrl+s"
+-- left alt + shift held, f4   → "alt+shift+f4"
+-- escape with nothing held    → "escape"
 ```
+
+> PENDING: `Key` exports no `gui()` alongside `ctrl`/`alt`/`shift`, so the
+> fourth row has no helper of its own. The platform step settles whether to add
+> one or to read that pair directly, and removes this marker.
+
+`Controller.any_mod()` answers "is any modifier held at all" and is
+the cheap pre-check the **triggerless** lookup runs first: a pointer
+event has no key to name, so its shortcut is a modifier class and is
+serialised with `'*'` in the trigger position — an unmodified
+`mousemoved` therefore builds no string and allocates nothing.
+
+Neither function takes a held-key table any more; both ask the
+device themselves. The matcher is consequently **not** source-blind
+— it cannot be driven by a synthetic table, and a test that proves
+it patches `love.keyboard.isDown` instead.
 
 Both surfaces are consumed by the free-function `dispatch`
 (`projectInputController.lua:74-86`, called from
 `ProjectInputController:_dispatch`), which serialises every
 project-route keyboard/text event with `Controller.combo_string`
 and looks the result up first against `compy.input.shortcuts.<event>`,
-then `compy.input.hooks[event]`. Downstream consumers (shortcuts,
-hooks, and the widget, project code included) never see the raw
-`Controller.keys_pressed` table directly — they receive a read-only
-pressed-keys view (`Controller.held_keys()`, `controller.lua:345-367`):
-reads pass through to the live set, writes raise. On the shipping
-LuaJIT/Lua 5.1 runtime `pairs()` ignores a table's `__pairs`
-metamethod, so iterating this view silently yields nothing — it
-is index-only in practice (`view['lctrl']` works, iterating over
-it does not); `__pairs` is kept for a future 5.2+ host. The same
-view is also readable outside a callback, as
-`compy.input.keys_pressed` (`../decisions/input.md`, Decision 20):
-`build_input_surface` resolves it through the surface's `__index`
-on every access, so it tracks a backing-table swap instead of
-capturing a proxy at namespace-build time. A project that renders
-held state — `examples/keyboard` draws shifted key labels — has no
-callback argument in `love.draw`, which is what the second access
-path is for.
+then `compy.input.hooks[event]`. Downstream consumers — shortcuts,
+hooks, and the widget, project code included — receive LÖVE's own
+argument list and nothing added (Decision 26); a consumer that wants
+modifier state asks the device for it, and so does a project that
+*renders* held state, since `love.draw` has no event argument to
+consult (`examples/keyboard` draws shifted key labels this way).
+
+**The clock this answers on, and the error it accepts.** A device
+poll reports what is held *now*. LÖVE pumps the whole event queue
+and then dispatches its events one at a time, so a poll taken while
+dispatching the first of several queued events reports the state
+after the last: with a press and a release queued in the same frame,
+the combo built for the **press** can already see the key released.
+That error is accepted (Decision 30). It is bounded by one frame's
+batch and gone on the next read, whereas a tracked set's staleness
+persists until some later event happens to correct it — and the only
+way to detect that drift is to compare the set against this same
+poll, which makes the poll the authority either way.
 
 > REMARK: there's no more 'DEFERRED' I think -- we do not guard shortcuts but provide guarding wrapper for convenience
 The whole keypressed path hands the widget LÖVE's own
@@ -406,8 +419,8 @@ combo-table owned by the widget would supersede the one-off flag — see `techni
 There is no `oneshot` flag any more, and no separate framework-owned submit path — there is no
 framework tier at all (Decision 2). Enter and Escape are ordinary keys handled at the end of
 this same shared method, **uniformly for every instance**: `Key.is_enter(k) and not Key.shift()`
-calls `self:submit_flow(keys_pressed)`; `k == 'escape' and not Key.ctrl()` calls
-`self:cancel_flow(keys_pressed)` — see "Submit and cancel" below. **The guard is "Enter without
+calls `self:submit_flow()`; `k == 'escape' and not Key.ctrl()` calls
+`self:cancel_flow()` — see "Submit and cancel" below. **The guard is "Enter without
 Shift", not "bare Enter": Ctrl+Enter and Alt+Enter submit too** (only Shift+Enter is carved out, as
 the newline); likewise Escape-without-Ctrl cancels. This is a de-facto contract (Decision 14,
 guard shape `return and not shift_held`), pinned by `tests/input/input_widget_callbacks_spec.lua`, the
@@ -531,10 +544,9 @@ event's hook exactly like keyboard/text (see "Keyboard Handling" above; the seed
 over every bindable channel, `controller.lua`); an explicit `compy.input.hooks.<event>` write
 still wins over the seed.
 
-Pointer payloads are exactly LÖVE's own arguments, unchanged — unlike keyboard/text, no held-key
-view is appended (`projectInputController.lua:30-39`); a project reads held modifier state via
-`compy.input.keys_pressed` instead, same as any pointer handler always could via
-`Key.ctrl()`/`Key.shift()`.
+Pointer payloads are exactly LÖVE's own arguments, unchanged (`projectInputController.lua:30-39`),
+as every other channel's are (Decision 26); a project that wants held modifier state inside a
+pointer handler asks the device for it, the same way the matcher above does.
 
 ### Framework-level click handling
 
@@ -843,7 +855,7 @@ refusal (there is no active session to clear).
 | `src/model/input/selection.lua` | Selection range model |
 | `src/model/input/history.lua` | Command history (console) |
 | `src/view/input/userInputView.lua` | Renders the input strip and status line |
-| `src/controller/controller.lua` | Gateway (`love.handlers.*`), global shortcuts, `keys_pressed`/`combo_string`/pressed-keys view, route management |
+| `src/controller/controller.lua` | Gateway (`love.handlers.*`), global shortcuts, `combo_string`/`any_mod`, route management |
 | `src/controller/projectInputController.lua` | The project route: the three-consumer dispatch walk (`shortcuts` → `hooks` → widget), hook seeding |
 | `src/controller/consoleController.lua` | Console/editor route dispatch, `compy` namespace + `compy.input` surface construction |
 

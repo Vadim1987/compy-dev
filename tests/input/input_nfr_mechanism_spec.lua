@@ -52,9 +52,10 @@ describe('input contracts: NFR and mechanism guards #input',
   describe('mechanism / NFR guards — not behaviour',
     function()
 
-      -- Held-key set lifecycle (doc/development/internals/user_input.md,
-      -- "Key state: `Controller.keys_pressed` and
-      -- `combo_string`", mechanism):
+      -- Held-key set lifecycle (mechanism). The set is dissolved by
+      -- doc/development/decisions/input.md, Decision 30, and the
+      -- internals guide no longer documents it — these guards go with
+      -- the set. Until then:
       -- a key is added on press and removed on release
       -- BEFORE dispatch, so the set already reflects the
       -- event when a consumer runs. The route-observable form is the
