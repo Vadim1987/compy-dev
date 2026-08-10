@@ -668,12 +668,7 @@ function single(x, y)
   end
 end
 
-compy.input.hooks.singleclick = function(x, y)
-  if not Key.shift() and not Key.alt() and not Key.ctrl()
-  then
-    single(x, y)
-  end
-end
+compy.input.hooks.singleclick = single
 
 function doppel(x, y)
   local game_won = (state.status == "won")
@@ -686,23 +681,19 @@ function doppel(x, y)
   end
 end
 
-compy.input.hooks.doubleclick = function(x, y)
-  if not Key.shift() and not Key.alt() and not Key.ctrl()
-  then
-    doppel(x, y)
-  end
-end
+compy.input.hooks.doubleclick = doppel
 
-function love.mousepressed(x, y)
-  if Key.shift() and not Key.alt() and not Key.ctrl()
-  then
-    single(x, y)
-  end
-  if Key.ctrl() and not Key.alt() and not Key.shift()
-  then
-    doppel(x, y)
-  end
-end
+-- Shift-click flags and Ctrl-click unlocks: the same two
+-- actions the plain clicks run, reached with a modifier held.
+-- A class key IS its modifier set exactly -- 'shift+*' means
+-- Shift and nothing else -- which is the test this file used to
+-- spell out at four call sites (doc/input_api.md, "Event hooks
+-- and shortcuts"). Both consume, so the plain-click hooks do
+-- not fire as well.
+local click = compy.input.shortcuts.singleclick
+local fn = compy.input.fn
+click["shift+*"] = fn.stop_here(single)
+click["ctrl+*"] = fn.stop_here(doppel)
 
 initModes()
 flowInitConfig(modes[1])
