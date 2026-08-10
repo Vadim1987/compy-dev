@@ -38,6 +38,12 @@ Each raw handler does exactly two jobs, in order:
    restart (`:928-932`), Ctrl+Alt+P / F10 profiler toggle (`:933-955`), Ctrl+Esc quit (on the
    *release* side, `handlers.keyreleased`, `:997-998`) — plus `Controller.keys_pressed`
    bookkeeping (`:877`, and the mirrored removal in `handlers.keyreleased` at `:995`).
+
+   > PENDING: the bookkeeping half of item 1 is dissolved
+   > (`../decisions/input.md`, Decision 30) — the raw handler keeps only the
+   > power hotkeys, and modifier state is read from the device where it is
+   > needed. The platform step that removes the set removes this clause and
+   > this marker.
 2. **Forward to the active route.** Once the framework-level concerns have run, the raw handler
    defers unconditionally to whatever route currently owns the corresponding `love.<event>`:
    `if love.keypressed then return love.keypressed(k, sc, isr) end` (`controller.lua:983-985`).
