@@ -1007,8 +1007,11 @@ Not commissioned for closure; each may never need action.
   named platform changes; converting an example to the API's better shape is
   a different job, and doing both at once turns a reconciliation into a
   rewrite. Nothing here is broken — each site works as written.
-- **Revisit:** This section is the work list for the examples onboarding
-  sweep, which reads it entry by entry. A site may be declined again with
+- **Revisit:** This section is the work list for the example onboarding work
+  that follows, which reads it entry by entry. That work is split by weight:
+  the in-repo examples are a sweep, while `keyboard` and `maze` each get their
+  own pass, since each holds conversions that need planning rather than
+  applying. A site may be declined again with
   fuller reasoning; what it may not do is disappear silently.
 
 ### `compy.input` is rebuilt per project environment, not once at namespace setup

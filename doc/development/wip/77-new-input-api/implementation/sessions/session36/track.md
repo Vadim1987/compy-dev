@@ -124,3 +124,28 @@ messages, the plan and this track are the author's **claims** and not evidence. 
   artifact of the prior state to diff against, which is the nature of an uncommitted change.
 - **What it could not determine:** the smoke claims — the same display and injection constraints
   that limited me. It said so rather than implying coverage it did not have.
+
+## 2026-08-10 — owner redefines the sweep: it splits three ways, and the heal is absorbed
+
+Prompted by what `maze` turned out to hold. Owner: *"in-repo and balloons get common sweeping
+step (if design-heavy decisions surface in any example, it gets its own deferred step). keyboard
+and maze each get their own 'deepfix' step with separate planning, and keyboard's one absorbs
+'healing textinput'."*
+
+- **Assessed before writing, not after.** It is better than the single step it replaces, for
+  three reasons now in §15.1b: the register's eight sites do not have one weight; the split
+  **dissolves** the ordering collision I had flagged rather than sequencing around it (the
+  contested file is the keyboard example's, which leaves the sweep entirely); and the detached
+  repos' gate — running the app by hand, no suite — is what their own planning pass costs.
+- **One caveat contested into the plan rather than left implicit:** the heal is the sprint's
+  **blocking** defect and onboarding is optional, so absorbing the first into the second must
+  move the session boundary, not the priority. §15.4 requires the heal to land **first inside
+  the step and committable alone**, and forbids reopening its ratified design
+  (`internals/examples/keyboard.md`). Stated in the §4 row too.
+- Written as three §4 rows (**P16** common sweep, **P17** maze deepfix, **P18** keyboard deepfix)
+  with operative sections §15.2–§15.4, and §15.1b as the dated record. **P9b's row is amended,
+  not deleted** — tombstone discipline: it keeps the heal's history, its dependency record and
+  the pointer to its design, and now says where the work happens.
+- The old *"ordering NOT ruled"* flag is struck in place with the reason it no longer applies.
+- The register's revisit line updated to match the split, without naming wip ids — it is a
+  persistent document and outlives them.
