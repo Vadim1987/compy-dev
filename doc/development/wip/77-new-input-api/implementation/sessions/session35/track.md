@@ -67,3 +67,24 @@ research/evaluation until the corrections are agreed; execution after.
 - Two behavioural consequences recorded rather than hidden: registering `'gui+s'` starts failing
   loudly (`gui` reads as a second trigger), and a Super press stops being modifier-shaped, so a
   registered `'ctrl+*'` class would now catch it.
+
+## 2026-08-10 — plan adjusted: the detached examples get a reconciliation step
+
+Owner: `modHeld` re-implements `Key.ctrl()`'s folding over the dissolved table, so it **goes**
+rather than being converted — and more generally the sprint owed a step reconciling the
+**detached** examples with the removal. **The step existed but was scoped to `keyboard` alone**,
+so it is rescoped, not added: amendment in P14e's own step (the plan's rule), reasoning in a new
+§14, and the §4 P14a–e row updated for both this and the spec corrections.
+
+- Swept the three repos to scope it rather than assert it: **`maze`'s `is_shift_down()`
+  (`main.lua:562-565`) is `Key.shift()` written out by hand** — the same duplication as `modHeld`,
+  in a second repo, which nobody had named; **`balloons` is clean** (overlay API only) and is
+  recorded as clean so the sweep is not re-derived; **`keyboard` gains `help.lua:11`**, the only
+  consumer of the `held` branch and not previously listed.
+- Guarded explicitly against reading as a reopened ruling: this is **not** the blanket example
+  sweep the owner ruled out — one named platform change is the trigger, and an empty repo is
+  closed, not searched.
+- `maze:517`'s `isDown('tab')` **stays** — a non-modifier key is the legitimate last rung.
+- Left open unchanged: whether the examples step must precede the heal. The rescope widens the
+  question (P14e now touches maze, which the heal does not) but does not settle it.
+- Suite 955/0/0/3, unchanged — plan-document edit only.
