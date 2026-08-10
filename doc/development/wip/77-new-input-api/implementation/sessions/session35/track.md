@@ -504,6 +504,42 @@ single assertion, because P14c had already pointed the fixture at the device.
   rule. Worth carrying: the rule is not self-enforcing, and the only thing that caught it was
   executing the step and asking where its instructions were.
 
+## 2026-08-10 — cold revalidation of both steps: sound, one stale figure
+
+Owner commissioned it before P14e: check the whole span — fixture tweaks through platform change —
+against mandate and intent. Sonnet, model passed explicitly, read-only, told plainly that **the
+commit messages in this range are the author's claims and not evidence**. Prompt
+`../../../validation/prompts/S35-p14cd-cold-revalidation.md`, report
+`../../../validation/outcomes/S35-p14cd-cold-revalidation.md`. `de390ab9`.
+
+- **Verdict: sound.** No omissions (every role in both inventories verified gone or rewired in the
+  code, zero `PENDING` left, the debt arithmetic re-derived independently), **no excess** (the
+  changed-file set matches the plan exactly; **no `REMARK:`/`INTERIM:` marker touched anywhere in
+  the range**, checked by grepping every `+`/`-` line, not by looking at the files).
+- **Both behavioural questions resolved by tracing code, not prose.** The guard hoist **is**
+  behaviour-identical — it traced `split_combo`/`check_combo` to show a modifier-triggered combo
+  cannot pass registration by any route. The fixture holding modifiers on the device makes
+  assertions **more** faithful, not weaker, and it is what surfaced the Ctrl+S shadowing rather than
+  hiding anything.
+- **All three declared deviations independently confirmed**, including the one I most wanted
+  challenged: it re-traced the power-shortcut gate and confirmed Ctrl+S really is intercepted before
+  route dispatch, so moving those cases to `ctrl+j` is correct rather than a way of making an
+  inconvenient failure disappear. It also recounted the pre-commit file to check the range
+  correction itself.
+- **Its one finding is real and is mine:** the plan's P14d cell said *"up to 4 device calls"* — a
+  figure written under `[S33]`, before Decision 31 dropped the `gui` row. Recomputed as **3**, which
+  is what the commit message says. Corrected in the cell.
+- **It said plainly what it could not determine** — the historical 13-failure figure, an exhaustive
+  sweep for tests relying on a modifier staying unheld, and re-deriving all nine reserved combos
+  from scratch (it re-verified three). That candour is why the clean verdict is worth something.
+
+**Interrupted mid-review by an expired login**, then resumed from its transcript rather than
+restarted — its tests-step analysis survived. It had saved nothing, so the resume instruction was
+**write the report now, update as you go**: partial-but-saved beats complete-but-lost. Worth
+carrying as standing sub-agent hygiene.
+
+## 2026-08-10 — P14d judgement, recorded with the step above
+
 **Judgement I made rather than delegating up:** the blanket "Key state" marker covered a section
 containing **pre-existing** citation rot. Removing the marker certifies the section, so I fixed the
 one falsehood I could verify cheaply (a line range off by ~60, replaced with a named anchor, which
