@@ -297,3 +297,35 @@ Owner did not recognise `single`/`doppel` and suspected an agent had invented th
 - **Consequence for the PR:** sapper is a second example owned by someone else with no suite, and
   my conversion accepted two behaviour changes in it. The person who would notice is its author.
   Raised with the owner.
+
+## 2026-08-10 — the owner supplies sapper's rationale; the conversion is reverted and escalated
+
+Owner: *"on touch devices single click is often accidental and double click may be unreliable, so
+he added a mousepressed path that triggers both effects on shift+touch and ctrl+touch."*
+
+- **This makes my conversion a regression, not a deviation.** The press path exists to bypass
+  click synthesis; I moved it onto that synthesis — button 1, on release, after the window,
+  **dropped on drift**, and a finger drifts. The commit stated the mechanics correctly and still
+  missed the point of the code. **The lesson is not "check the docs"** — the rationale was in no
+  doc; it existed only with the author.
+- **Owner's proposed correct shape, checked in the platform before agreeing:** press path as a
+  class shortcut on `mousepressed` (that channel HAS a trigger, so the class key is a correct
+  fallback and reproduces *any button, at press time* exactly), plus a **swallow** on the derived
+  channel. The swallow is genuinely required: **consuming a press does not stop the derived
+  click** — the gateway counts clicks in its own `mousereleased` handler, before and regardless
+  of project consumption.
+- **The hole I raised and the owner accepted:** derived clicks sample their modifiers **at
+  synthesis time**, so releasing the modifier inside the double-click window makes the echo
+  arrive unmodified, miss the swallow and act twice. Closing it needs a mirrored flag (the
+  pattern we remove) or a platform change (out of mandate).
+- **Ruled: revert (`f61ada67`), record, escalate.** Against aldum's import the file now differs
+  only in the two registration lines the feature changed API-wide. Docs put back to describe the
+  code that exists; the rationale is written into the internals doc so it stops living only in
+  one person's head.
+- **P19, the sapper deepfix — and the escalation rule fired on its first day.** P16's rule sends a
+  design-heavy example to its own step; sapper is in-repo and would otherwise have been swept.
+  The step is told the platform-fix branch is **release-shaped and gets promoted**, not done there.
+- **Third time this session an LLM-authored doc supplied a confident wrong claim** (the "touch
+  devices" line I repeated came from a doc marked *human-approved NOT YET*). Here the doc was
+  right in substance and I had just deleted it as unsourced — so the pattern cuts both ways:
+  unverified is unverified, whether it turns out true or false.
