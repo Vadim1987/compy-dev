@@ -94,3 +94,21 @@ the tree, deliberately **not** given my reasoning or the plan. Prompt of record
 - **Clean bills worth having:** heading-rename citations all resolve, `../` links resolve, the
   new code example's API verified against real code and 5.1-safe, ledger tombstone discipline
   intact.
+
+## 2026-08-10 — WRAPPED
+
+Owner asked what the plan says is next and whether it wants warm or cold context. **Cold, and
+for a substantive reason:** the tests are written against the spec this session wrote, so a
+warm session would fill spec gaps from memory instead of noticing them — a cold reader who
+cannot tell what to assert has found a defect in the spec. C also carries a decision (the `gui`
+row) and is the largest unit left. Context space was not the constraint (22% used);
+heterogeneity was — this session held docs, a runtime diagnostic and a review.
+
+Wrapped per `agents/sessions.md` §5. Report distilled; successor commissioned as session35 and
+the pointer repointed. **Successor shape: revalidation THEN execution** — this session was
+cognitive-heavy, which the workflow answers with a revalidation handover, and the revalidation
+target is exactly what the tests step needs first. Its gate is explicit: report and stop before
+any code moves. The owner's instruction to situate the successor in the **plan**, not only its
+step, is met by opening the prompt with the four-part order and what the sprint still owes.
+
+Eleven commits, all docs. Suite **955 / 0 / 0 / 3** at every one. Nothing pushed. Track kept raw.
