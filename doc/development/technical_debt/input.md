@@ -1072,7 +1072,15 @@ Not commissioned for closure; each may never need action.
     `shortcuts.keypressed['tab']` is the edge. It also carries the bug
     class the platform just removed: a flag mirroring a key, with nothing
     to reconcile it. The edge feeds two different actions depending on
-    game state, so the restructure is not a one-liner.
+    game state, so the restructure is not a one-liner. **A bare-key combo
+    is legal** — modifiers are optional and only a bare `'*'` is refused —
+    **but it narrows the trigger, and that is a behaviour change to state
+    rather than discover.** The poll fires on Tab whatever else is held;
+    a `'tab'` binding is an exact match on the serialised combo, so
+    Ctrl+Tab and Shift+Tab serialise as `'ctrl+tab'` / `'shift+tab'`,
+    miss it, and fall through to the hook. Probably an improvement here —
+    a stray modified Tab should not skip a level — but it is a decision,
+    not a detail.
   - `maze/macro.lua:74,89` — `macro_state.shift_held` is a held-modifier
     mirror maintained across `keypressed`/`keyreleased`, the same shape.
     **Listed by adjacency, not by the same trigger as the rest:** it reads
