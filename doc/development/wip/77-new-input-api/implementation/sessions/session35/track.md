@@ -284,3 +284,30 @@ lives only in the plan is a rationale the PR does not carry. `83af97db`.
 - §5 states **what the step must not do**, including the owner's declined gui cases: they test an
   *instance* of a general rule, which argues for 105 more.
 - Sections renumbered to follow step order — **11.4.1 tests, 11.4.2 examples** — refs updated.
+
+## 2026-08-10 — the platform step defined (§11.4.2), and one finding that moves work
+
+`cd4a30f5`. Written from the owner's commission. Sections renumbered again: **11.4.1 tests,
+11.4.2 platform, 11.4.3 examples**.
+
+- **Owner caught an overstatement of mine** in §11.4.1: *"deleting them **is** the dissolution"*.
+  It dissolves **the spec of that contract**; the mechanism is still standing. Read the other way
+  the tests step looks like the feature change. Corrected in place.
+- **Inventory written by ROLE, not by file** — role is what answers remove-vs-rewire. Remove when
+  the thing exists *because the set exists*; rewire when it has its own purpose and merely used
+  it (`find_shortcut` is for matching, `combo_string` for serialisation — both keep their jobs,
+  lose their argument).
+- **The owner's adjacent-code rule, with its sharpest case:** `held_keys()` goes, its two
+  memoisation upvalues go with it, and `build_input_surface` is rewired to **take no `get_keys`
+  parameter at all** rather than be handed something else. *A parameter kept alive to receive a
+  replacement is the mechanism surviving under a new name.*
+- **FINDING — work moves between steps.** The rewritten combo cases **cannot land green in
+  P14c**: they drive a patched `isDown` that today's table-reading builder ignores. Two standing
+  rules collide — *suite green at every commit* vs *a fix commits with its breaking test* — and
+  the second resolves it: **those cases belong in P14d**, as the breaking tests the change
+  answers. P14c keeps only what is green alone (deletions, mock fix, fixture change).
+- Docs obligations spelled out: `PENDING` → reality (**re-read the passage**, the §"Key state"
+  marker over-covers), deprecation → absence (the five entries **deleted**, two of them one
+  defect recorded twice; the `gui` and service-keys entries are **not** among them).
+- **Must-nots**: no seam left for the set, **no touching `src/harmony/`**, no example fixes here,
+  and the `NOTE` above `combo_string` keeps its allocation half only.
