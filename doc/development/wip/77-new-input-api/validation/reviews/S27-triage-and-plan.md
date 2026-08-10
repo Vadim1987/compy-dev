@@ -1215,11 +1215,31 @@ pushed** (`pr-assembly-guide.md` §5). Smoke re-pass is the gate.
   Arbitrary keys are the legitimate last rung, and the README snippet (`:254-255`) teaches the
   same, correctly.
 - **`tixy`** (`:197`) and **`paint`** (`:407`) — already at rung 2. No change.
-- **`sapper`** (`main.lua:672,690,697,701`) — **the one judgement call. Flagged, NOT converted.**
-  `not Key.shift() and not Key.alt() and not Key.ctrl()` repeated across four call sites is
-  precisely the cascade combos exist to replace, but it works, the conversion is a real refactor of
-  an example, and a sprint that removes a moving part should not add one in the same breath. If it
-  is declined, it goes to the debt register with that reasoning.
+- **`sapper`** (`main.lua:672,690,697,701`) — **[S35] CONVERTS. Owner ruling, 2026-08-10**, which
+  supersedes this entry's earlier *"flagged, NOT converted, debt register if declined"*. The
+  owner's reading: the machinery **is** a set of combos on the `singleclick`/`doubleclick`
+  channel, written out by hand. Verified against the code and the matcher before writing:
+  - **What it does today.** `hooks.singleclick`/`hooks.doubleclick` act only when nothing is
+    held; `love.mousepressed` adds shift → `single` and ctrl → `doppel`, each spelled as *this
+    modifier and none of the other two*.
+  - **Why it converts exactly, and this is the point.** The class key folds **every** held
+    modifier (`combo_string('*', …)`), so `'shift+*'` matches shift-and-nothing-else — the
+    cascade's own semantics, already in the framework and already the thing the guard
+    re-implements. Target shape: `shortcuts.singleclick['shift+*']` → `single` and
+    `['ctrl+*']` → `doppel`, both consuming; the two hooks lose their guard and become plain
+    `single`/`doppel`; `love.mousepressed` goes entirely.
+  - **Two deviations to state in the commit rather than discover in the smoke pass.** Derived
+    clicks are **button 1 only, counted on release, resolved after the double-click window and
+    discarded on drift** (`controller.lua:936-941`), where today's `love.mousepressed` acts on
+    **any** button at press time. And the cascade's implicit *"every other combination does
+    nothing"* has **no shortcut expression**: an unclaimed modified click (alt alone, ctrl+shift,
+    …) falls through to the hook and acts as a plain click, where today it is inert.
+    **Recommendation: accept the widening** — alt-click revealing a cell is harmless in this game,
+    and re-growing a guard in the hook to preserve inertness would keep the cascade this
+    conversion exists to remove. It is a behaviour change either way, so the commit says which.
+  - **Not a counter-example to the scope guard** (*small and obviously behaviour-preserving
+    conversions only*, above): this one is ruled in by name, and the reasoning it rests on — class
+    keys already mean "this set and no other" — is checked, not assumed.
 - **`guess`, `life`, `repl`, `sine`, `valid`** — clean, no held-state read.
 - **Not in scope:** `keyboard/input.lua:99`'s `love.keyboard.setTextInput` — an IME toggle, not a
   held-state read, and the kind of thing a pattern-driven sweep would wrongly collect.
@@ -1227,9 +1247,10 @@ pushed** (`pr-assembly-guide.md` §5). Smoke re-pass is the gate.
 ##### The leads — reads that are combos written out by hand (hint, owner 2026-08-10)
 
 **Leads, not a work list.** Take one only where the conversion is small and obviously
-behaviour-preserving; anything larger goes to the debt register with its reasoning, as `sapper`'s
-cascade does. **This must not turn a reconciliation into an example rewrite.** The discriminator
-and the reasoning are in §14.4.
+behaviour-preserving; anything larger goes to the debt register with its reasoning. **This must not
+turn a reconciliation into an example rewrite.** The discriminator and the reasoning are in §14.4.
+**[S35] `sapper` is no longer the exemplar of the deferred case** — it was ruled in on 2026-08-10
+(see its entry above); the cap stands on its own reasoning, without a standing instance.
 
 - **`maze/main.lua:514-526`** (`poll_tab_progression`) — polls `tab` per frame, keeps a
   `tab_was_down` mirror, derives an edge. A discrete question answered with frame-time machinery;
@@ -1624,9 +1645,16 @@ The sweep that scoped it found the in-repo half is small and mostly already corr
 correctly at the last rung because it polls arbitrary keys, and five examples read no held state
 at all. **`sapper` is the one judgement call** — four call sites repeating
 `not Key.shift() and not Key.alt() and not Key.ctrl()`, which is precisely the cascade the guide
-says combos exist to replace. It is flagged rather than converted: it works, the conversion is a
+says combos exist to replace. ~~It is flagged rather than converted: it works, the conversion is a
 real refactor of an example, and a sprint that removes a moving part should not add one in the
-same breath. If it is not taken, it belongs in the debt register with that reasoning.
+same breath. If it is not taken, it belongs in the debt register with that reasoning.~~
+**[S35] RULED IN, later the same day** — the owner's reading is that the machinery *is* a set of
+combos on the click channels, and the check that settles it is that a class key folds every held
+modifier, so `'shift+*'` already means *shift and nothing else* — the cascade is spelling out a
+match the framework performs. My deferral argument was weighed against that and does not survive
+it: this is not "a real refactor", it is deleting a hand-rolled copy of the matcher. **The step is
+§11.4.3**, including the two deviations the conversion accepts (derived clicks are left-button, on
+release, after the window; unclaimed modifier combinations stop being inert).
 
 **Note for the revalidation record:** `turtle` and `clock` were cited in `S35-spec-revalidation.md`
 as evidence the rewritten guide was right (*"ask the keyboard is proven in-tree"*). That clean bill
@@ -1657,7 +1685,9 @@ and the genuinely correct polls on the other, which are what keep the rule hones
 **Why it is capped.** A hint like this can quietly turn a reconciliation step into an example
 rewrite. The step's mandate remains the removal and the ladder; a lead is taken only where the
 conversion is small and obviously behaviour-preserving, and anything else is recorded in the debt
-register with its reasoning, exactly as `sapper`'s cascade is.
+register with its reasoning. **[S35] The example this paragraph originally used — `sapper`'s
+cascade — was ruled *into* the step later the same day, so the cap now carries no standing
+instance; §11.4.3 holds the ruling and the two behaviour deviations it accepts.**
 
 ### 14.5 [S35] Owner ruling, 2026-08-10 — a modifier's own press is accidental and unsupported
 
