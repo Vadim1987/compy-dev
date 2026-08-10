@@ -340,3 +340,53 @@ the context, so I can spot results that contradict intent — a cold session cou
 - **The LSP behaved exactly as the standing warning predicts:** every declared-symbol occurrence
   found, and **zero** of the ~30 that route through metatable `__index` dispatch on string keys.
   Grep was the only tool that saw those. Worth carrying forward as evidence, not folklore.
+
+## 2026-08-10 — re-entry after container restart (context cleared, same session)
+
+Re-entrance guardrail (sessions §2, row 2): `track.md` present, no `report.md` → **interrupted
+before wrap**. Reconciled against `git log` + tree rather than restarted: HEAD `3213b465`, working
+tree clean of tracked modifications (only the known untracked scratch + the three nested repos),
+**suite 955 / 0 / 0 / 3** — matches the last entry, so nothing was lost mid-flight.
+
+- **Where it stopped:** the spec corrections and the plan definitions are all landed and committed;
+  the cold site enumeration (`be7827f5`) was the last unit. **P14c has not started** — no test or
+  platform file has moved in this session.
+- **Doc marker state verified:** 11 `PENDING` in the persistent corpus (1 guide, 3 internals, 1
+  layers, 6 debt-register), as the last entry claims. `INTERIM:`/`REMARK:` still 27 in `src/`+`tests/`
+  (P11's gate, not this step's).
+- **Two loose ends confirmed unassigned to any step**, both from Part 1 and both still standing in
+  the corrections table: **F6** (`internals/examples/keyboard.md` names the dissolved surface in
+  four places, one of them *recommending* reading it — and it is P9b's design of record, read after
+  P14d lands) and **F7** (`doc/development/tests.md:73` describes the NFR guards as held-key-table
+  checks, unmarked). Raised with the owner before P14c starts.
+
+## 2026-08-10 — the owner rules the three open ends; sapper is the interesting one
+
+- **F6 — fixed in place, now** (`ffc21370`). Five sites, not the four the revalidation listed: the
+  shipped-code contrast paragraph names the set too. Four were phrasing (*"the held set"* → the
+  question actually being asked, true on both sides of Decision 30); the fifth is the one that
+  mattered — the suggested hold requirement *recommended* reading the set, and now names
+  `love.keyboard.isDown` with the reason it is the right rung, citing the guide's "Held keys".
+  **The Caps Lock bullet was re-reasoned rather than reworded**: its rationale blamed the tracked
+  set for something the set never did. What can go stale is the **device's** view — no release
+  delivered, so the next press arrives flagged as a repeat — and the `isrepeat` exemption is what
+  stops that freezing the estimate. **The example's own comment (`input.lua:162-167`) says the same
+  wrong thing**; it is in the file P14e edits and P9b rewrites, so it is left to them, not fixed
+  from here.
+- **F7 — actualized, not marked** (`959dcc0d`, into P14c's housekeeping). The passage is **true
+  today**; marking a true passage `PENDING` is exactly the noise Part 1 was asked to catch. It is
+  corrected in the commit that deletes the guards.
+- **sapper — RULED IN, and my deferral does not survive the owner's reading** (`2ebeb9ba`). Their
+  framing: the machinery *is* combos on the click channels. **The check that settles it:** the class
+  key folds **every** held modifier, so `'shift+*'` already means *shift and nothing else* — the
+  four-site cascade is spelling out a match the matcher performs. So nothing is added, a
+  hand-rolled copy of the matcher is deleted; "a real refactor" was the wrong description.
+- **Two deviations found while verifying, written into the step so they are stated not discovered:**
+  derived clicks are **button 1, counted on release, resolved after the window, dropped on drift**
+  (`controller.lua:936-941`) where `love.mousepressed` acts on any button at press time; and the
+  cascade's implicit *"every other combination does nothing"* has **no shortcut expression** — an
+  unclaimed modified click (alt alone, ctrl+shift) falls through to the hook and acts as a plain
+  click. Recommended accepting the widening; re-growing a guard would keep the cascade.
+- **Fourth instance of the sprint's recurring pattern**, now with a framework-level edge: `modHeld`
+  copies `Key.ctrl()`, `is_shift_down()` copies `Key.shift()`, the polls copy `keypressed`, and
+  sapper copies **class matching itself**.
