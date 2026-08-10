@@ -1146,6 +1146,11 @@ production call site first**, then the write side, then the dead machinery.
 - **Do not fix the examples here.** They are P14e, which follows.
 - **Do not treat the `NOTE` above `combo_string` as a debt to preserve.** The allocation question
   survives; the *"match on `keys_pressed` directly"* half does not.
+- **Do not sweep on the word `held`.** It has **three unrelated meanings** in this tree
+  (`../outcomes/S35-dissolution-site-enumeration.md`): the framework's tracked set, the *device
+  mocks* in `tests/mock.lua` and `src/harmony/init.lua` — whose `lgui`/`rgui` slots **stay**,
+  since a device still has those keys — and `model/input/selection.lua`'s text-selection drag
+  state. Only the first is this step's subject.
 
 #### 11.4.3 [S35] P14e in full — the examples reconciliation (OPERATIVE, factored out of the row above)
 
@@ -1178,7 +1183,13 @@ pushed** (`pr-assembly-guide.md` §5). Smoke re-pass is the gate.
   very table being dissolved, so its callers move to `Key.*` or to combos. **[S35] `help.lua:11`**
   (`INPUT.held.h and INPUT.alt and not INPUT.ctrl`) is the only consumer of the `held` branch and
   was not previously named. `keyboard_view.lua:171,178` consume `INPUT.shift` and need no edit of
-  their own once the proxy is fixed. **[S33] Sort its reads into decoration/drawing (stays —
+  their own once the proxy is fixed. **[S35] The proxy is the seam, worth knowing before the file
+  is opened:** the cold enumeration (`../outcomes/S35-dissolution-site-enumeration.md`) counts
+  **11 read sites** in this example and **9 need no edit at all** — `input.lua:192,193,195,197`,
+  `alt.lua:203,230,240` and `keyboard_view.lua:171,178` all read `INPUT.shift`/`.ctrl`/`.alt` and
+  are insulated the moment those three proxy branches call `Key.*`. Only **`help.lua:11`**
+  (`INPUT.held.h` — the one read that goes through the dissolved surface itself) and `modHeld`
+  are edits. **[S33] Sort its reads into decoration/drawing (stays —
   legitimate, owner) vs judgement (converts) before touching any of them.**
 - **`maze`** — **`is_shift_down()` (`main.lua:562-565`) is the same duplication in a second repo**:
   `d('lshift') or d('rshift')`, i.e. `Key.shift()` written out by hand. `main.lua:517`'s

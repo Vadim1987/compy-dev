@@ -96,13 +96,22 @@ the stakeholder ask without a justification.
 **Code**
 - `src/util/key.lua`: `gui_k` (`:10`), the fourth `mod_triples` row (`:20`), `mod_rank.gui`
   (`:28`), `mod_order` (`:30`), and the three comments naming it (`:8-9`, `:14`, `:25`).
-- `src/harmony/init.lua`: the `Super` / `Hyper` / `H` token map entries (`:170-172`) and the
-  `lgui`/`rgui` held slots (`:182-183`). **No scenario uses them** — `grep` over
-  `src/harmony/scenarios/` finds no `Super`, `Hyper` or `lgui` — so removing them is dead-code
-  removal, not a harness change.
+- ~~`src/harmony/init.lua`: the `Super` / `Hyper` / `H` token map entries (`:170-172`) and the
+  `lgui`/`rgui` held slots (`:182-183`).~~ **[S35 SUPERSEDED, owner 2026-08-10] Harmony is not
+  touched.** The later investigation established that these are **pre-existing** — byte-identical
+  at PR base `3256aac`, from harmony's own first commit — and that this feature's only obligation
+  to harmony is to stay compatible, which it does. They were inert before the feature and stay
+  inert under Decision 31. See the plan's §14 and `S27-triage-and-plan.md` §11.4.2's must-nots.
 
 **Tests**
-- `tests/mock.lua`: the `lgui`/`rgui` slots in `held` (`:13-14`).
+- **[S35 CORRECTION, 2026-08-10] `tests/mock.lua`'s `lgui`/`rgui` slots STAY.** This enumeration
+  first listed them for removal; the cold site enumeration
+  (`../outcomes/S35-dissolution-site-enumeration.md`) is right that that was wrong. That table
+  mocks the **device**, and a real keyboard still has Super keys — Decision 31 removes `gui` from
+  the *modifier set*, not from the set of keys that exist. Stripping the slots would leave the
+  mock unable to represent a physically-held Super key, which is now an ordinary bindable
+  trigger. The same reasoning covers harmony's `held` slots, already left alone for their own
+  reason.
 - `tests/input/keys_pressed_spec.lua`: the seventh combo case, *"all modifiers: ctrl alt shift
   gui"* — **deleted**, not rewritten.
 
