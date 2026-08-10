@@ -366,30 +366,55 @@ cannot be registered.
 > while `compy.input.keys_pressed` still exists in the tree. The platform step
 > that removes the field removes this marker.
 
-**Reach for a combo first.** To react to a *modified event* — a click with Ctrl,
-`Shift+Enter`, `alt+p` — register a shortcut and let the framework match it:
+There are three ways to find out that a key is held, and they are **not
+equal alternatives** — the further down this list you go, the more likely it
+is that the logic wanted to be a binding and became a hardware question
+instead.
+
+**1. Register a combo — the mechanism, and the first thing to reach for.** To
+react to a *modified event* — a click with Ctrl, `Shift+Enter`, `alt+p` —
+register a shortcut and let the framework match it:
 `shortcuts.keypressed['ctrl+s']`. That says it once, as data, in a vocabulary
 that is already folded and already the same on every channel. Asking about
 modifiers imperatively inside a handler turns into a cascade repeated at every
-call site.
+call site. When the logic spans several events, "Shortcuts that set a flag"
+below keeps the binding declarative without asking the hardware at all.
 
-For what a combo cannot express, **ask the keyboard**. `love.keyboard.isDown`
-takes any number of key names and answers about the device as it is right now:
+**2. Ask `Key` — allowed, and worth a second look.** `Key` is available to
+every project, like `compy`. `Key.shift()`, `Key.ctrl()` and `Key.alt()`
+answer whether that modifier is held right now, either side:
 
 ```lua
 function love.draw()
-  draw_keycaps(love.keyboard.isDown('lshift', 'rshift'))
+  draw_keycaps(Key.shift())
 end
 ```
 
-Key names are LÖVE's own, so left and right modifiers are two separate keys —
-name both when either will do. (Combo strings *are* folded:
-`shortcuts.keypressed['shift+a']` matches either shift.)
+Each folds its own left/right pair, so you never name `lshift` and `rshift`
+yourself — the same folding a combo string does. Nothing is wrong with these
+calls, but a project that reaches for them repeatedly is usually describing a
+binding it has not written yet; that is the cascade combos exist to replace.
 
-The call works anywhere: in a handler, and in `love.draw`, which is the point —
-a project that *draws* held state has no event argument to consult. Handlers
-need nothing added to their arguments for it, and get nothing added: every
-shortcut, hook and widget call receives LÖVE's own argument list.
+**3. Ask `love.keyboard.isDown` — the last resort.** It takes any number of
+key names and answers about the device as it is right now, for **any** key,
+not only a modifier:
+
+```lua
+function love.draw()
+  draw_keycap('space', love.keyboard.isDown('space'))
+end
+```
+
+This is the rung to use when `Key` has no answer — a key that is not a
+modifier at all, which is what drawing a keyboard and lighting its pressed
+caps needs. Names are LÖVE's own, so left and right modifiers are two
+separate keys and you name both when either will do; prefer `Key` whenever
+the question is about a modifier, and reach here when it is not.
+
+Every rung works anywhere: in a handler, and in `love.draw`, which is the
+point — a project that *draws* held state has no event argument to consult.
+Handlers need nothing added to their arguments for it, and get nothing added:
+every shortcut, hook and widget call receives LÖVE's own argument list.
 
 ## Shortcuts that set a flag
 
