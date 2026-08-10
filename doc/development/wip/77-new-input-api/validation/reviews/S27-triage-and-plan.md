@@ -2024,6 +2024,39 @@ rather than before it.** The marker is retired by the work. The other marker in 
 (`setTextInput`, an IME toggle) is a separate question and is not this step's unless the heal
 touches it.
 
+##### [S36] `INPUT.upRecent` — what the proxy's one real member does, traced
+
+Written down because the dissolution above hinges on it and because it is the one member that is
+not an alias. **It is a per-key table of the frame on which that key was last released**, and it
+serves the Alt-keys scene's glyph judging:
+
+- **Why it exists.** That scene judges what the player typed from `textinput`, and **`textinput`
+  carries no `isrepeat` flag** — only `keypressed` gets one, as its third argument. So while a key
+  is held the OS emits a stream of identical glyphs and the example must accept exactly one per
+  physical press. `GLYPH_CLAIMED[k]` does that: claimed on the first glyph, released on keyup.
+- **What `upRecent` adds:** the release boundary. A final repeat glyph can arrive *just after* the
+  keyup, when the claim has already been dropped, so it would read as a fresh press and be judged
+  as a keystroke nobody made. `spendGlyph` therefore drops any glyph landing within
+  `INPUT_UP_GRACE` (= 1) frames of the recorded keyup — a one-frame deadband per key.
+- **Its cost, already known:** a genuinely fast re-tap inside that window is dropped too. The
+  design note's smoke checklist names it (*"a very fast tap of the target character registers —
+  the case the shipped code drops"*).
+- **Its clock is `DBG_FRAME`** — a counter incremented in `main.lua`'s update whose other use is
+  timestamping debug log lines. A judgement mechanism keyed off a debug counter.
+- **Reach, verified rather than assumed:** created at `input.lua:56`, reset at `:101`, written in
+  exactly one place (`appKeyreleased`, `:176`), read in exactly one place (`spendGlyph`,
+  `:149-150`), and `spendGlyph` has a single production caller (`alt.lua:173`). No `INPUT[...]`
+  dynamic access exists anywhere in the repo, and `upRecent` is a **raw field**, so the
+  metatable's `__index` never fires for it — it cannot be reached by the string-keyed path that
+  serves `shift`/`ctrl`/`alt`. That matters here: string-keyed metatable dispatch is precisely
+  what the LSP does not see, so this was checked with grep.
+- **Consequence for this step:** the whole apparatus — `upRecent`, `INPUT_UP_GRACE`,
+  `GLYPH_CLAIMED`, `spendGlyph` — is one self-contained mechanism serving one scene, which is what
+  makes the ratified design's plan to **subtract it wholesale** credible rather than risky. It is
+  also a frame-time inference about a key's state, the shape this sprint removed everywhere else.
+  **So the proxy dissolution rides with the heal:** if the heal lands first, `upRecent` is gone and
+  the proxy has nothing of its own left to preserve.
+
 ##### [S36] `helpHeld` — the trap in the obvious conversion, and why it is not a rung swap
 
 The register lists `helpHeld` as *"spans frames, so the flag-shortcut shape is the top rung"*.

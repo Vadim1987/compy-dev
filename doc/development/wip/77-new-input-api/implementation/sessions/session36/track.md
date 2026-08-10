@@ -226,3 +226,19 @@ before answering, and the answer generalised.
 - Also answered plainly why `helpHeld` kept `INPUT.alt` while gaining a direct `isDown('h')`:
   consistency with the nine other proxy reads, which the step forbade opening — a file-level
   judgement, and the mixed-looking expression is its real cost.
+
+## 2026-08-10 — upRecent traced end to end, into P18's material
+
+Owner asked what it is for, then asked to confirm it serves nothing else.
+
+- **What it is:** a per-key table of the frame a key was last released, covering the release
+  boundary of the Alt scene's glyph judging — `textinput` carries no `isrepeat`, so the example
+  claims one glyph per press, and a final repeat arriving just after keyup would otherwise read
+  as a fresh press. One-frame deadband per key; its cost is that a very fast re-tap is dropped
+  too, which the design note's checklist already names.
+- **Reach verified, not assumed:** one writer, one reader, one caller of that reader, no dynamic
+  `INPUT[...]` access anywhere. `upRecent` is a **raw field**, so `__index` never fires for it —
+  which is why grep, not the LSP, is what settles this file.
+- **Why it matters to the step:** the apparatus is self-contained, which is what makes the heal's
+  plan to subtract it wholesale credible; and it is the only non-alias member of the proxy, so
+  the proxy dissolution rides with the heal rather than ahead of it.
