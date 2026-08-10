@@ -99,3 +99,28 @@ fits."*
   the debt register, the smoke-buffering lesson in the step, the `gui` correction in the guide.
 - Written into `agents/validation.md` under commit granularity as a standing rule, so it outlives
   this session.
+
+## 2026-08-10 — cold revalidation of this session: sound, with one entry of mine widening the register
+
+Owner commissioned it. Sonnet, model passed explicitly, read-only, told plainly that the commit
+messages, the plan and this track are the author's **claims** and not evidence. Prompt
+`../../../validation/prompts/S36-p14e-cold-revalidation.md`, report
+`../../../validation/outcomes/S36-p14e-cold-revalidation.md`.
+
+- **Verdict: sound-with-findings.** Every enumerated site checked against the tree rather than
+  the prose; the three detached repos reviewed in place; `balloons` independently re-verified
+  clean. Suite 942 / 0 / 0 / 10. No `REMARK:`/`INTERIM:` marker touched, no working-tree residue
+  in any of the four repos, LSP diagnostics clean on the touched in-repo files.
+- **It re-derived sapper's two deviations from the platform code** — `find_shortcut` and the
+  gateway's `mousereleased`/`keyreleased` — rather than accepting the commit's account, and
+  confirmed both. All eight register citations checked file:line against the live tree.
+- **Its finding, and it is right:** `maze/macro.lua`'s shift mirror is set from the **event's own
+  key name** against a static table — it reads no device and never touched the framework's set,
+  so it is outside the mandate's two-named-changes trigger. Documentation-only widening, but the
+  register read as if it arrived the same way as the rest. **Annotated in place** to say it is
+  listed by adjacency, so the sweep that reads it is not misled about its provenance.
+- Its second finding is honest about its own limit: the uncommitted half-reword I completed in
+  the keyboard repo cannot be confirmed from git alone. Nothing contradicts it; there is no
+  artifact of the prior state to diff against, which is the nature of an uncommitted change.
+- **What it could not determine:** the smoke claims — the same display and injection constraints
+  that limited me. It said so rather than implying coverage it did not have.

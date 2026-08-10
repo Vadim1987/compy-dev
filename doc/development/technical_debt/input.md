@@ -977,9 +977,13 @@ Not commissioned for closure; each may never need action.
     game state, so the restructure is not a one-liner.
   - `maze/macro.lua:74,89` — `macro_state.shift_held` is a held-modifier
     mirror maintained across `keypressed`/`keyreleased`, the same shape.
-    It is not a pure read: the release runs `finish_recording()`, so
-    replacing the mirror with `Key.shift()` is not behaviour-preserving on
-    its own.
+    **Listed by adjacency, not by the same trigger as the rest:** it reads
+    no device and never touched the framework's set — the flag is set from
+    the event's own key name against a static table (`SHIFT_KEYS`) — so it
+    was outside the reconciliation's mandate and is here because it is the
+    pattern that mandate kept meeting. It is also not a pure read: the
+    release runs `finish_recording()`, so replacing the mirror with
+    `Key.shift()` is not behaviour-preserving on its own.
   - `keyboard/alt.lua:203` — `k == "h" and INPUT.ctrl and INPUT.alt`
     hand-matches the combo its own comment calls "Ctrl+Alt+H". Its natural
     form is a shortcut registration; the scene's key routing is what the
