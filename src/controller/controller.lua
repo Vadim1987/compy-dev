@@ -791,7 +791,6 @@ Controller = {
     local handlers = love.handlers
 
     handlers.keypressed = function(k, sc, isr)
-      Controller.keys_pressed[k] = true
       --- Power shortcuts
       local function quickswitch()
         if Key.ctrl() and not Key.alt() and k == 't' then
@@ -909,7 +908,6 @@ Controller = {
     end
 
     handlers.keyreleased = function(k, sc)
-      Controller.keys_pressed[k] = nil
       if Key.ctrl() then
         if k == "escape" then
           love.event.quit()
