@@ -486,8 +486,7 @@ end
 -- No return value: the old limit-flag return channel is retired
 -- (Decision 5) — on_limit_reached is the sole notification
 -- path now (see "emit_limit" below).
--- Its editing logic reads modifiers via Key.* (love.keyboard);
--- the held set is compy.input.keys_pressed.
+-- Its editing logic reads modifiers via Key.* (love.keyboard).
 function UserInputController:keypressed(k, sc, isr)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end

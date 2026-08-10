@@ -248,7 +248,6 @@
 --- @field hooks InputHooks
 --- @field callbacks InputCallbacks
 --- @field fn InputFn
---- @field keys_pressed table
 
 --- @class Compy
 --- @field input CompyInput

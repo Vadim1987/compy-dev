@@ -514,17 +514,13 @@ local input_fn_surface = build_frozen_view(
 
 --- Assemble the compy.input surface: reads resolve the three frozen
 --- sub-tables (shortcuts / hooks / callbacks), the combinator
---- table, the live held-key view, or a callable method; every
---- write to the container itself is refused loudly (Decision 7
---- revised — frozen container, writable leaves).
---- `get_keys` is resolved on every read, never captured: the
---- view is rebuilt when its backing table identity changes
---- (Decision 13), so a reference taken at build time goes stale.
+--- table, or a callable method; every write to the container
+--- itself is refused loudly (Decision 7 revised — frozen
+--- container, writable leaves).
 --- @param state table
 --- @param methods table
---- @param get_keys fun(): table
 --- @return table
-local function build_input_surface(state, methods, get_keys)
+local function build_input_surface(state, methods)
   -- hooks and callbacks are handed over as themselves: only
   -- their IDENTITY is frozen, which the container's own refusal
   -- above already does, and every leaf inside them is writable.
@@ -537,7 +533,6 @@ local function build_input_surface(state, methods, get_keys)
     fn = input_fn_surface,
   }
   return build_frozen_view(function(k)
-    if k == 'keys_pressed' then return get_keys() end
     return resolve[k] or methods[k]
   end, tostring)
 end
@@ -822,12 +817,7 @@ local get_compy_input = function()
     function() return love.state.user_input_controller end,
     get_active,
     state)
-  -- doc/development/decisions/input.md, Decision 20: the
-  -- held-key view a project can read OUTSIDE an event. The same
-  -- read-only proxy the chain hands participants (Decision 13)
-  -- — a project cannot build one, its `love` being a clone.
-  local held = Controller.held_keys
-  return build_input_surface(state, methods, held)
+  return build_input_surface(state, methods)
 end
 
 -- Builds the `compy.*` table injected into a project's sandbox env (terminal, audio, graphics,

@@ -423,31 +423,6 @@ local function any_mod()
   return false
 end
 
--- Memoised read-only view over Controller.keys_pressed handed to
--- every chain consumer (doc/development/decisions/input.md, Decision 13):
--- reads pass through to the
--- live held set; assignment raises. Rebuilt only when the backing
--- identity changes (tests swap the table wholesale), so dispatch
--- allocates nothing per event. NOTE: under LuaJIT/Lua 5.1 `pairs`
--- ignores __pairs, so iterating this view yields nothing on this
--- platform; the load-bearing contract (read-through + write-raise)
--- holds, and __pairs is kept for 5.2+ hosts.
-local held_backing, held_proxy
-local function held_keys()
-  local backing = Controller.keys_pressed
-  if held_backing ~= backing then
-    held_backing = backing
-    held_proxy = setmetatable({ }, {
-      __index = backing,
-      __newindex = function()
-        error('keys_pressed is read-only', 2)
-      end,
-      __pairs = function() return pairs(backing) end,
-    })
-  end
-  return held_proxy
-end
-
 --- @class Controller
 --- @field _defaults Handlers
 --- @field _userhandler Handlers
@@ -501,10 +476,8 @@ Controller = {
   --- @private
   _userhandlers = {},
 
-  keys_pressed = { },
   combo_string = combo_string,
   any_mod = any_mod,
-  held_keys = held_keys,
 
   ----------------
   --  keyboard  --

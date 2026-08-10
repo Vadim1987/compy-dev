@@ -269,7 +269,6 @@ function F.reset()
   -- row-local one.
   love.state.user_input_controller = widget
   CC:stop_project_run()
-  Controller.keys_pressed       = { }
   -- The device outlives a test the way a keyboard outlives a
   -- keystroke: a chord that never released leaves its modifier
   -- down for the next test unless the reset lifts it.
