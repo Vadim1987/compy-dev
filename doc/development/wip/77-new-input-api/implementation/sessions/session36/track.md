@@ -242,3 +242,36 @@ Owner asked what it is for, then asked to confirm it serves nothing else.
 - **Why it matters to the step:** the apparatus is self-contained, which is what makes the heal's
   plan to subtract it wholesale credible; and it is the only non-alias member of the proxy, so
   the proxy dissolution rides with the heal rather than ahead of it.
+
+## 2026-08-10 — Decision 30 challenged by the owner, examined cold, and it stands
+
+Owner's challenge: the decision rested on *"nothing uses it"*, which is false — the biggest
+input-heavy example read that surface, and had **independently grown a model of the same shape**,
+which they read as a symptom that such a model was needed. Commissioned cold rather than answered
+by me, since I authored the commits that depend on the answer. Prompt
+`../../../validation/prompts/S36-decision30-standing.md`, report
+`../../../validation/outcomes/S36-decision30-standing.md`.
+
+- **Verdict: survives, with qualifications.** Two corrections matter more than the verdict.
+- **The ledger never made the premise.** Decision 30 says *"the tracked set was never a
+  requirement — no stakeholder requirement asks for it"* (`decisions/input.md:1247`, verified).
+  Narrower than *"nothing uses it"*, and still true. The recorded rationale therefore does not
+  lose its ground. (What the owner believed at the time is theirs to judge; the ledger is a
+  separate question and this note is only about the ledger.)
+- **The dependency was known when the decision was ruled, not discovered now.** Session31's track
+  shows the same session commissioned a per-example census and called the keyboard example *"the
+  real casualty"*. So this is a **known cost re-raised**, which changes what the challenge is.
+- **The convergence evidence cuts the other way, traced in the example's own history:** the mirror
+  existed for repeat/edge detection, that inference is what made the Alt scene deaf on hardware,
+  and **the fix reached for no held-state at all** — it introduced a per-key claimed flag. What
+  remains is the convenience need, which a stateless poll answers.
+- **My own framing was overstated** and the reviewer said so: I carried the owner's *"nothing uses
+  it"* into the commission as the decision's premise without checking the decision's text first.
+  Verified after the fact; the correction is theirs, the error mine.
+- **Reversal is dearer than I told the owner** — not "~16 commits mid-flight": the dissolution is
+  fully executed, `keys_pressed` matches zero files in `src/`+`tests/`, and a nested repo's own
+  history has moved on.
+- **Its forward caveat, now written into the register** (owner's go): if the `compy.input.keys`
+  proposal is dropped or deferred indefinitely, the convergence evidence stops being addressed
+  and Decision 30's standing should be re-examined then. Recorded as a **condition on the
+  proposal**, in the persistent corpus, because reviews are transient.

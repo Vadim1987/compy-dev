@@ -1000,6 +1000,18 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** when a project needs held-state vocabulary that today it must build for itself —
   which, on the evidence above, is most input-heavy projects. See also the entry below, whose
   on/off transition problem the `compy.states` half of this proposal is the general answer to.
+- **CONDITION — this proposal carries something for another decision, and dropping it silently
+  would leave that unanswered.** Decision 30 (`../decisions/input.md`) dissolved the framework's
+  tracked held-key set. It was challenged on the ground that the biggest input-heavy example had
+  *independently* grown a model of the same shape, which is evidence of an unmet need. The
+  challenge was examined and the decision stands: what that example's model was actually reaching
+  for was **edge detection** — answered by the `isrepeat` flag the API delivers, and its own fix
+  reached for no held-state at all — plus **foldable held-state convenience**, which a stateless
+  device poll answers and which *this proposal* is the durable answer to.
+  **So if this proposal is dropped, deferred indefinitely, or replaced by something that does not
+  answer the convenience half, that convergence evidence stops being addressed and Decision 30's
+  standing should be re-examined at that point.** Recorded here rather than in a review document
+  because reviews are transient and this is the condition, not the argument.
 
 ### A chord that gates a state while it is held has no vocabulary
 
