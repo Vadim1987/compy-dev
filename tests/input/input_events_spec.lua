@@ -554,11 +554,11 @@ describe('input surface: inbound events — dispatch #input',
         local input = F.activate_project()
         input.shortcuts.keypressed['alt+*'] =
             input.fn.ignore_repeat(function(k, _, isr)
-              seen = { k, isr, input.keys_pressed['lalt'] }
+              seen = { k, isr }
             end)
         F.session.press('lalt')
         F.session.press('q')
-        assert.same({ 'q', false, true }, seen)
+        assert.same({ 'q', false }, seen)
       end)
 
     -- Same signature everywhere, so it wraps a hook as readily as
@@ -613,11 +613,11 @@ describe('input surface: inbound events — dispatch #input',
         local input = F.activate_project()
         input.shortcuts.keypressed['alt+*'] =
             input.fn.stop_here(function(k, _, isr)
-              seen = { k, isr, input.keys_pressed['lalt'] }
+              seen = { k, isr }
             end)
         F.session.press('lalt')
         F.session.press('q')
-        assert.same({ 'q', false, true }, seen)
+        assert.same({ 'q', false }, seen)
       end)
 
     -- It knows nothing about repeats: a held key runs the action
@@ -707,20 +707,14 @@ describe('input surface: inbound events — dispatch #input',
       end)
   end)
 
-  -- ---- signatures + read-only proxy of pressed-keys table
-  -- (doc/development/decisions/input.md, Decision 26 and Decision 13) ---
+  -- ---- participant signatures
+  -- (doc/development/decisions/input.md, Decision 26) ---
 
-  describe('signatures and the read-only proxy', function()
-    -- The table's CONTENTS are asserted in this file's
-    -- 'the pressed-keys table' group below (what it holds after a
-    -- press, what it no longer holds after a release, and that a
-    -- participant cannot write to it); this group covers the
-    -- signature the participants are called with.
+  describe('participant signatures', function()
     -- keypressed participants receive LÖVE's own argument list,
-    -- unchanged: (key, scancode, isrepeat). The held-key set is
-    -- NOT threaded as an argument — it is read from
-    -- compy.input.keys_pressed, which is available everywhere,
-    -- including outside an event (doc/input_api.md, "Held keys").
+    -- unchanged: (key, scancode, isrepeat). Nothing about held
+    -- keys is threaded as an argument; a project that needs them
+    -- asks the keyboard (doc/input_api.md, "Held keys").
     -- Asserted over the WHOLE chain, not one participant: every
     -- step is configured pass-through (records what it got, returns
     -- false), so the event walks shortcut -> hook -> widget and
@@ -731,14 +725,14 @@ describe('input surface: inbound events — dispatch #input',
         local input = F.activate_project()
         local step  = function(who)
           return function(k, sc, isr)
-            seen[who] = { k, sc, isr, input.keys_pressed['a'] }
+            seen[who] = { k, sc, isr }
           end
         end
         input.shortcuts.keypressed['a'] = step('shortcut')
         input.hooks.keypressed         = step('hook')
         F.session.handlers.keypressed('a', 'scan-a', true)
-        assert.same({ 'a', 'scan-a', true, true }, seen.shortcut)
-        assert.same({ 'a', 'scan-a', true, true }, seen.hook)
+        assert.same({ 'a', 'scan-a', true }, seen.shortcut)
+        assert.same({ 'a', 'scan-a', true }, seen.hook)
       end)
 
     -- Discriminating on the MIDDLE argument, which is the one
@@ -771,95 +765,6 @@ describe('input surface: inbound events — dispatch #input',
       F.session.press('a')
       F.session.repeat_press('a')
       assert.same({ false, true }, seen)
-    end)
-
-    -- The held-key table as a participant sees it. It is no longer
-    -- handed over as an argument — a participant reads it from
-    -- compy.input.keys_pressed, the same table the project reads
-    -- outside an event (doc/development/internals/user_input.md,
-    -- "Key release").
-    describe('the pressed-keys table', function()
-
-      it('contains the pressed key', function()
-        local proxy
-        local input = F.activate_project()
-        input.hooks.keypressed = function()
-          proxy = input.keys_pressed; return true
-        end
-        F.session.press('a')
-        assert.is_table(proxy)
-        assert.is_true(proxy['a'])
-      end)
-
-      -- the key is removed at the gateway BEFORE dispatch, so a
-      -- keyreleased participant never sees it still held.
-      it('no longer contains a released key', function()
-        local present = true
-        local input = F.activate_project()
-        input.hooks.keyreleased = function(k)
-          present = input.keys_pressed[k]; return true
-        end
-        F.session.press('a')
-        F.session.release('a')
-        assert.is_nil(present)
-      end)
-
-      it('cannot be modified from a hook', function()
-        local proxy
-        local input = F.activate_project()
-        input.hooks.keypressed = function()
-          proxy = input.keys_pressed; return true
-        end
-        F.session.press('a')
-        assert.has_error(function() proxy['x'] = true end)
-      end)
-    end)
-
-    -- The same held set, readable OUTSIDE an event
-    -- (doc/development/decisions/input.md, Decision 20;
-    -- doc/input_api.md, "Held keys"). The participant argument
-    -- above cannot serve a project that RENDERS held state: a
-    -- per-frame draw runs between events, with no argument in
-    -- hand. examples/keyboard mirrored the whole set by hand for
-    -- exactly this reason.
-    describe('compy.input.keys_pressed', function()
-
-      it('reports a held key from outside any handler',
-        function()
-          local input = F.activate_project()
-          F.session.press('a')
-          assert.is_true(input.keys_pressed['a'])
-        end)
-
-      it('drops a released key', function()
-        local input = F.activate_project()
-        F.session.press('a')
-        F.session.release('a')
-        assert.is_nil(input.keys_pressed['a'])
-      end)
-
-      -- Read-only, by the same rule as the participant argument:
-      -- the project observes the held set, it does not own it.
-      it('cannot be written to', function()
-        local input = F.activate_project()
-        assert.has_error(function()
-          input.keys_pressed['x'] = true
-        end)
-      end)
-
-      -- It is the SAME view, not a snapshot taken at namespace
-      -- build time: what a handler is handed and what the project
-      -- reads afterwards agree.
-      it('agrees with the view a handler receives', function()
-        local from_handler
-        local input = F.activate_project()
-        input.hooks.keypressed = function()
-          from_handler = input.keys_pressed['a']; return true
-        end
-        F.session.press('a')
-        assert.equal(from_handler, input.keys_pressed['a'])
-        assert.is_true(input.keys_pressed['a'])
-      end)
     end)
 
     -- The WIDGET is included in the uniform signature — it
