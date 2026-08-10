@@ -977,6 +977,18 @@ Not commissioned for closure; each may never need action.
     function under a name and gets **on/off callbacks at the transitions** of that condition,
     centrally evaluated. That generalises the held-chord gap below from keys to *any* condition,
     and moves the evaluation loop out of project machinery into the framework.
+
+    **[Owner's remark, 2026-08-10] This half is not an input mechanism and should not be scoped
+    as one.** *"State-polling can be generally useful in a wider class of situations than just
+    key-state queries."* The pattern it replaces — *evaluate a predicate every frame, keep a
+    boolean mirroring it, and act on the moments it flips* — is what an input-heavy project
+    happens to need most visibly, but nothing about it is specific to keys: a pointer entering a
+    region, a value crossing a threshold, a game predicate becoming true are all the same shape,
+    and each is written out by hand today with its own mirrored flag. That is why the owner named
+    it **`compy.states`** rather than `compy.input.states`, and the naming should be read as the
+    scoping decision it is. It also means the mirrored-flag bug class this sprint spent its
+    length removing from the framework is, in projects, a *general* pattern with no vocabulary —
+    the keys case is one instance of it, not the whole of it.
 - **Design questions it would have to answer, named so they are not discovered late:**
   - **Name space.** `keys.shift` means the fold, but `lshift`/`rshift` are also real LÖVE key
     names — the surface must say which names are folds and which are keys, or the two collide.
