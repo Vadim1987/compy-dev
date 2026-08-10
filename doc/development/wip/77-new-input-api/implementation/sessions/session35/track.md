@@ -450,3 +450,26 @@ Deliverable `../../../validation/outcomes/S35-keys-pressed-spec-citation-sweep.m
   nonexistent `.tmp.*` shadow paths — index lag after a `git mv`. Second session running in which
   grep is the tool that told the truth; the worker cross-checked and did not report the phantoms as
   findings, which is the behaviour the briefing asked for.
+
+## 2026-08-10 — P15: the owner spots that the platform's own combos are untested
+
+- **Owner's question, checked against the gateway rather than answered:** ~9 reserved combos, and
+  the coverage was `ctrl+pause` plus play-mode narrowing. Recorded as **P15** with the dated
+  reasoning in **§14.6**, and the guide's missing reserved-combo list filed into **P10**.
+- **Owner scoped it down the same hour, and the reasoning is better than my framing.** The gateway
+  never suppresses; a project handler fails to run only as a **side effect** of a platform action.
+  So the route-teardown trap I had written into the commission is not something to test around —
+  it is *the reason there is nothing to test on that side*. One live property; every combo's own
+  effect becomes a **`pending` outline**, since effects are the framework's contract, not this
+  PR's. **Commission corrected in flight** rather than left to complete the wider brief.
+- **Landed `46952e4c`**, reviewed against the source before committing: 942 / 0 / 0 / **10**.
+  Pending 3 → 10 is deliberate and now has a home in `tests.md`, which distinguishes the two kinds
+  (the original three are not black-box observable; these seven are someone else's contract).
+- **The worker corrected my enumeration:** `f10` has **no modifier gate at all** — `ctrl+f10`
+  cycles the overlay too. Verified in `profile()`. That makes it the sharpest reserved case: a bare
+  key a project cannot have, in *every* modifier combination, whenever profiling is on.
+- **MY OWN ERROR, corrected here.** I told the owner `ctrl+escape` was covered by two cases in
+  `project_open_liveness_spec`. It is not: those cases call **`love.quit()` directly** and assert
+  the quit *callback's* decision (drop to console vs exit). **Nothing drives the gateway's
+  `keyreleased` ctrl+escape gate** — confirmed by grep, and the worker's pending row for it is
+  right. The lesson is the sprint's own: a test *named* for a combo is not a test *of* it.
