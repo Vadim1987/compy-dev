@@ -16,11 +16,11 @@ the key produces a character, `textinput(text)` — with **no guaranteed order
 between the two channels** (`../user_input.md`, "Data flow"). Desktop LÖVE sends
 `keypressed` first; the web build sends `textinput` first.
 
-Anything that reads held-key state at `textinput` time therefore answers *which
-build is running*, not *what the player did*. That is a defect the example has
-already shipped once: judging dropped every character whose key was held, and
-since desktop delivers `keypressed` first, a key is always held when its own
-`textinput` arrives — so no target was ever accepted.
+Anything that asks which keys are down at `textinput` time therefore answers
+*which build is running*, not *what the player did*. That is a defect the
+example has already shipped once: judging dropped every character whose key was
+held, and since desktop delivers `keypressed` first, a key is always held when
+its own `textinput` arrives — so no target was ever accepted.
 
 `textinput` also carries no repeat flag of its own, so an OS key-repeat and a
 deliberate press look identical on that channel.
@@ -28,9 +28,10 @@ deliberate press look identical on that channel.
 ## The paradigm: one channel judges
 
 **`textinput` is the only judge.** Judgement never consults `keypressed`,
-`keyreleased`, or the held set. The order the channels arrive in therefore cannot
-change a verdict — there is nothing to order. This dissolves the problem above
-rather than compensating for it, which is what every previous attempt did.
+`keyreleased`, or the keyboard's held-key state. The order the channels arrive
+in therefore cannot change a verdict — there is nothing to order. This dissolves
+the problem above rather than compensating for it, which is what every previous
+attempt did.
 
 The other channels keep the jobs that are theirs alone, and none of them is
 judgement:
@@ -236,8 +237,9 @@ The **key** arrives normally as `keypressed('capslock', …)`. Three things do n
   estimate the example maintains;
 - **the state at startup**, and any toggle made while the window was unfocused;
 - **`keyreleased('capslock')`, reliably** — which is why `capslock` is exempt
-  from the `isrepeat` filter in `keypressed`; a missing release would otherwise
-  leave it stuck in the held set, with nothing to clear it.
+  from the `isrepeat` filter in `keypressed`. With no release delivered, the
+  next press can arrive flagged as a repeat, and dropping it would freeze the
+  estimate on a lock the player has actually toggled.
 
 Correcting the estimate from `textinput` (rule 1) is the only way to observe a
 lock state nobody reported. It must therefore run before any suppression. It
@@ -263,11 +265,13 @@ Two ways it could be built, with their costs:
   condition would then vary by machine and be unreachable where repeat is
   disabled.
 - **Confirm the win from `love.update`.** Start a timer on a candidate hit and
-  confirm it if the key is still held. This does read the held set, and that is
-  legitimate: the rule's own question is *"is the player still holding the
-  key"*, which the held set answers **directly**. That is different in kind from
-  asking the held set to *infer* whether a character is a repeat, which is the
-  defect this design removes.
+  confirm it if the key is still held. This does poll the keyboard —
+  `love.keyboard.isDown(key)` — and that is legitimate: the rule's own question
+  is *"is the player still holding the key right now"*, a frame-time question
+  about an ordinary character key, which is exactly what the device answers and
+  what no shortcut or combo can (`../../../input_api.md`, "Held keys"). That is
+  different in kind from asking held state to *infer* whether a character is a
+  repeat, which is the defect this design removes.
 
 The second is the better shape if the rule is wanted.
 
@@ -294,8 +298,8 @@ The second is the better shape if the rule is wanted.
 
 `spendGlyph` (`input.lua`) claims one character per press and releases the claim
 on `keyreleased`, with `INPUT.upRecent` + `INPUT_UP_GRACE` covering the tail. It
-fixed the original defect — judgement no longer reads the held set — and it is
-correct for holds and for either order of `keypressed` and `textinput`.
+fixed the original defect — judgement no longer asks which keys are down — and
+it is correct for holds and for either order of `keypressed` and `textinput`.
 
 What it still costs: judgement depends on a release arriving, so a character
 delivered after its own `keyreleased` is dropped; non-printing targets are judged
