@@ -1041,6 +1041,13 @@ deleting them. The `gui` case among them is deleted, not rewritten (Decision 31)
   tracks**; after this step there is one.
 - `tests/helpers/input_session.lua:6` cites *"the `keys_pressed_spec` raw-handler pattern"* and
   rots with the rename.
+- **[S35] `doc/development/tests.md:73` — actualized here, by owner ruling, 2026-08-10** (F7 of
+  `S35-spec-revalidation.md`). It describes the NFR guards as *"identity, allocation and
+  **held-key-table** checks that deliberately poke internals"* — a three-member list whose third
+  member this step deletes. It is **true today**, so it takes no `PENDING` marker; it is corrected
+  in the same commit that removes the guards, which is what keeps the two in step. Persistent
+  corpus, so a stale enumeration here outlives `wip/77`. Note `tests.md:45` (above) is a *different*
+  obligation in the same file — the filename citation, which moves only if the file is renamed.
 
 ##### 5. What this step must NOT do
 
