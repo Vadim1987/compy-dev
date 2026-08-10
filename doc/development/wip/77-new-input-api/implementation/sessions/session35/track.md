@@ -109,3 +109,29 @@ so it is rescoped, not added: amendment in P14e's own step (the plan's rule), re
   an example with none is closed, not searched.
 - `keyboard/input.lua:99`'s `setTextInput` named as **out of scope** — an IME toggle, not a
   held-state read, and the kind of thing a later sweep would otherwise catch by pattern.
+
+## 2026-08-10 — owner hint: some of these reads are combos written out by hand
+
+Owner on maze's `tab` poll: *likely a combo equivalent, and there could be more, especially in
+maze and keyboard.* Recorded as **§14.4, a hint not a work list**. Scanned to make it useful.
+
+- **Third instance of one pattern.** `modHeld` re-implements `Key.ctrl()`'s folding;
+  `is_shift_down()` re-implements `Key.shift()`; now polls re-implement `keypressed`. The
+  examples keep rebuilding framework mechanisms over lower-level APIs.
+- **Discriminator recorded** so the hint stays falsifiable: *"is it held right now"* is a correct
+  poll (Decision 30's own argument); *"did it just happen"* / *"was it modified"* rebuilt from a
+  poll is an event or combo by hand.
+- **Found:** maze's `poll_tab_progression` (`:514-526`) keeps a `tab_was_down` mirror and derives
+  an edge — a discrete question on frame-time machinery, **and the same bug class the sprint is
+  removing**: a flag mirroring a key with nothing to reconcile it. maze's `love.keypressed` doing
+  `k == 'escape' and not is_shift_down()` is `shift+escape` vs `escape` — **this supersedes my own
+  earlier recommendation** to convert it to `Key.shift()`, which is only the middle rung. keyboard's
+  `alt.lua:203` hand-matches the combo its own comment calls *"Ctrl+Alt+H"*; `help.lua:11` spans
+  frames, so it is the flag-shortcut shape.
+- **Excluded on purpose, both directions:** `appTextinput`'s alt/ctrl refusal is **P9b's** to
+  redesign and `textinput` carries no key; pong's paddle polls and the keycap renderer are the
+  *correct* poll and are named as the counter-examples that keep the hint honest.
+- **Scope guard written in:** this could turn a reconciliation into an example rewrite. Small and
+  obviously behaviour-preserving conversions only; the rest goes to the debt register like
+  sapper's cascade.
+- Amended the step's earlier *"isDown('tab') stays"* line — it read as settled and is not.
