@@ -244,9 +244,11 @@ there is nothing left to guard against between events.
 
 ### Key state: modifier reads and `combo_string`
 
-> PENDING: this section describes the ruled shape. The tree still maintains
-> `Controller.keys_pressed` and hands it to the builder; the platform step that
-> makes the builder read the device removes this marker.
+> PENDING: **this whole section, every paragraph of it**, describes the ruled
+> shape rather than the tree as it stands — the tree still maintains
+> `Controller.keys_pressed` and still hands it to the builder. The narrower
+> marker further down does not end this one's scope. The platform step that
+> makes the builder read the device removes both.
 
 Modifier state is read from the device. `Key.ctrl()` / `Key.alt()` /
 `Key.shift()` (`util/key.lua`) are `love.keyboard.isDown` over the
@@ -855,9 +857,13 @@ refusal (there is no active session to clear).
 | `src/model/input/selection.lua` | Selection range model |
 | `src/model/input/history.lua` | Command history (console) |
 | `src/view/input/userInputView.lua` | Renders the input strip and status line |
-| `src/controller/controller.lua` | Gateway (`love.handlers.*`), global shortcuts, `combo_string`/`any_mod`, route management |
+| `src/controller/controller.lua` | Gateway (`love.handlers.*`), global shortcuts, `keys_pressed`/`combo_string`/`any_mod`/pressed-keys view, route management |
 | `src/controller/projectInputController.lua` | The project route: the three-consumer dispatch walk (`shortcuts` → `hooks` → widget), hook seeding |
 | `src/controller/consoleController.lua` | Console/editor route dispatch, `compy` namespace + `compy.input` surface construction |
+
+> PENDING: `keys_pressed` and the pressed-keys view leave that row with the set
+> (`../decisions/input.md`, Decision 30); `combo_string`/`any_mod` stay. The
+> platform step edits the row and removes this marker.
 
 `controller.lua` is consumed from `main.lua` (constructs the widget instance, wires
 `set_default_handlers`) and `consoleController.lua` (calls into it on every mode

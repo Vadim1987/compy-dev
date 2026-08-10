@@ -713,9 +713,9 @@ question, not resolved here.
   keyboard and text channels; they would widen the gap between them.
 - **Cost, if it is ever taken:** threading the scancode from the gateway
   through `forward_*` and the routes to the chain, and a scancode-keyed held
-  set — `combo_string` builds its modifier prefixes from key names it asks
-  the device about, so a scancode combo would otherwise be a hybrid
-  (modifiers by name, trigger by position).
+  set — `combo_string` builds its modifier prefixes from key names, so a
+  scancode combo would otherwise be a hybrid (modifiers by name, trigger by
+  position).
 - **Revisit:** when a project needs layout-independent positional keys.
 
 
@@ -858,14 +858,14 @@ Not commissioned for closure; each may never need action.
 - **State:** A defined modifier pair with no behavioural reader — could be
   a deliberate "ignore gui keys as a modifier" choice, or an expansion
   point left open for a future accessor.
-- **Why it stood:** Harmless and additive; parallels the established
+- **Why it stands:** Harmless and additive; parallels the established
   `*_k` pattern.
-- **It is no longer harmless** (`../decisions/input.md`, Decision 30): the
-  combo-string builder used to fold `gui` out of a table that carried every
-  held key, and now asks the device one modifier at a time through
+- **It stops being harmless** (`../decisions/input.md`, Decision 30): the
+  combo-string builder folds `gui` out of a table that carries every held key,
+  and under Decision 30 it asks the device one modifier at a time through
   `Key.ctrl()`/`Key.alt()`/`Key.shift()` — for which `gui` has no counterpart.
-  Nothing registers a `gui` combo today, so nothing breaks; but the fourth row
-  of `mod_triples` now has no way to be answered.
+  Nothing registers a `gui` combo, so nothing breaks either way; but the fourth
+  row of `mod_triples` then has no way to be answered.
 - **Revisit: at the platform step**, which cannot avoid the question — add
   `gui()`, read the pair directly for every row, or drop `gui` from the
   serialisation and say so.
