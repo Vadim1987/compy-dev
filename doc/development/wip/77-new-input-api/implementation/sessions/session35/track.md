@@ -155,3 +155,23 @@ lost its subject). Repaired first (`006acba1`), then the structural fix.
   the hint is capped; the leads themselves moved to §11.4.1. Cross-linked both ways, plus the §4
   row.
 - Suite 955/0/0/3 throughout.
+
+## 2026-08-10 — modifier's own press: ruled accidental, unsupported; guard-first hint into the step
+
+Owner: *"a corner case we never seriously considered — it became an accidental rule, we do not have
+to support it."* **This closes F3** by refusing its premise rather than answering it.
+
+- **Answer to the owner's question:** left Alt still builds **`alt+lalt`** — unchanged string, new
+  source (the device instead of the gateway's first line).
+- **The finding that makes it safe to ignore:** that string, *and* the bare `'lalt'` the
+  same-frame-release corner produces, are **both unregistrable** — `check_combo` folds every token,
+  finds no trigger and raises. So the lookup can never hit in either direction, and `is_mod` then
+  stops the class fallback.
+- **Placement, owner's instruction and my one addition.** They put the guard-first simplification
+  in the step spec as a tactical hint — correct, and it went into **P14d**. I added that the
+  *ruling* still needs a durable home (**§14.5**), or a later session rediscovers `alt+lalt` and
+  "fixes" it; the hint alone would not stop that. **P14c** carries the operative half: **no test
+  pins it** — pinning an accident is how it becomes a contract.
+- Also written into P14d: dropping `gui` makes `Key.is_mod('lgui')` false, so
+  `shortcuts.keypressed['lgui']` becomes a **registrable binding firing on a Super press**. New
+  reachable behaviour, named in the debt entry rather than left to be found.
