@@ -202,3 +202,28 @@ decisions corpus, and noted the two are connected.
   Also noted there that session33's *"the guide cites no ledger"* ruling is about the **guide
   standing alone**, not about the ledger being private — which is probably where I picked the idea
   up.
+
+## 2026-08-10 — Decision 31 written (owner: *"if they are made they have to be documented"*)
+
+Owner ruled to add/update the decisions, adding the decisive point I had inverted: **a reviewer
+will not see `wip/` docs at all** — they are transient and not in the PR — so a rationale that
+lives only in the plan is a rationale the PR does not carry. `83af97db`.
+
+- **Decision 31** — the modifier set is closed and is `ctrl`/`alt`/`shift`. Rationale: never
+  requested, added for symmetry with the table-driven builder Decision 30 dissolves, so the row
+  that was free becomes upkeep for a capability nobody asked for — Decision 30's own ground.
+- **Written as a boundary, not a gap**, because it is observable: `gui+s` is refused at
+  registration under Decision 21, and `lgui` becomes an ordinary bindable trigger. Stated there
+  as the connection the owner spotted — **membership of the set is what makes a token a modifier
+  rather than a trigger**, the same rule running both ways.
+- **Decision 8 amended in place** (serialisation rule unchanged, only the list's membership
+  moves); tombstone discipline, never renumbered.
+- **Debt register: pointer, not defect.** The `gui_k` entry became *"supportable and deliberately
+  not supported"*, naming Decision 31 as the authority, what re-adding takes, and *revisit when a
+  requirement asks — not for symmetry, which is what put it there the first time.* Marked
+  `PENDING` and **explicitly excluded from the five dissolution deletions**, since it records a
+  choice rather than a defect.
+- Internals precedence list dropped to three rows with the reason, inside the section's existing
+  blanket marker. Marker count still 11 (one question marker retired, one entry marker added).
+- **No new decision for the mod-only rule** — Decision 21 already states it verbatim. Minting one
+  would give a ratified rule two homes to drift between.
