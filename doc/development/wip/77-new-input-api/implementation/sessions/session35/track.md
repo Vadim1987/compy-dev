@@ -88,3 +88,24 @@ so it is rescoped, not added: amendment in P14e's own step (the plan's rule), re
 - Left open unchanged: whether the examples step must precede the heal. The rescope widens the
   question (P14e now touches maze, which the heal does not) but does not settle it.
 - Suite 955/0/0/3, unchanged — plan-document edit only.
+
+## 2026-08-10 — owner rules both open ends: the examples step precedes the heal, and reaches in-repo
+
+- **Ordering RULED.** §13's open question is closed: **P14a → P14c → P14d → P14e → P9b**. Third
+  application of one argument — the heal is designed against the approved design, then landed
+  code, now reconciled examples; sharpest here because the two steps edit the same file. Written
+  into P9b's step (old text struck, not deleted), P14e's step, the §4 row, and §14.3.
+- **Scope RULED wider: in-repo examples too.** Swept before writing, so the step is enumerated,
+  not open-ended: **`turtle` (2 sites) and `clock` (1)** are the only conversions; **`tixy`,
+  `paint`** already sit at the right rung; **`pong` stays** at the last rung — it polls arbitrary
+  keys, and its README teaches the same correctly; **`guess`, `life`, `repl`, `sine`, `valid`**
+  read no held state.
+- **`sapper` is the one judgement call** — four call sites repeating `not Key.shift() and not
+  Key.alt() and not Key.ctrl()`, exactly the cascade the guide says combos replace. **Flagged,
+  not converted**: it works, the conversion is a real refactor, and a sprint removing a moving
+  part should not add one in the same breath. Debt-register entry if declined.
+- Boundary restated in the plan so this does not read as reopening *"no blanket example sweep"*:
+  **only held-state reads are swept, triggered by two named changes** (the removal, the ladder);
+  an example with none is closed, not searched.
+- `keyboard/input.lua:99`'s `setTextInput` named as **out of scope** — an IME toggle, not a
+  held-state read, and the kind of thing a later sweep would otherwise catch by pattern.
