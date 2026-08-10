@@ -64,12 +64,9 @@ function cycle(c)
   return c + 1
 end
 
-local function shift()
-  return love.keyboard.isDown("lshift", "rshift")
-end
 local function color_cycle(k)
   if k == "space" then
-    if shift() then
+    if Key.shift() then
       bg_color = cycle(bg_color)
     else
       color = cycle(color)
@@ -78,7 +75,7 @@ local function color_cycle(k)
 end
 function love.keyreleased(k)
   color_cycle(k)
-  if k == "r" and shift() then
+  if k == "r" and Key.shift() then
     setTime()
   end
   if k == "p" then

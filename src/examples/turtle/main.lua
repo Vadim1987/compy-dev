@@ -31,7 +31,7 @@ function love.draw()
 end
 
 function love.keypressed(key)
-  if love.keyboard.isDown("lshift", "rshift") then
+  if Key.shift() then
     if key == "r" then
       tx, ty = midx, midy
     end
@@ -89,7 +89,7 @@ function love.keyreleased(key)
     return true
   end
 
-  if love.keyboard.isDown("lctrl", "rctrl") then
+  if Key.ctrl() then
     if key == "escape" then
       love.event.quit()
     end
