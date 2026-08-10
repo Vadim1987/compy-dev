@@ -34,7 +34,10 @@ end
 
 ## Click handling
 
-> REMARK: why not align the hooks assignment and set mousepressed via hooks or shortcuts? it makes sense to discourage using love.<event> path, while keeping it supported as backwards-compatibility layer
+Every entry point here is a `compy.input` registration; the example installs no `love.<event>`
+handler of its own. That is deliberate — the captured `love.*` path stays supported as a
+compatibility layer, and is demonstrated on purpose by `turtle`, but an example written today
+says what it means through hooks and shortcuts.
 
 `compy.input.hooks.singleclick` → flag cell. `compy.input.hooks.doubleclick` → unlock cell (or restart if game over). The modifier-held variants — the alternative input for touch devices with no double-click — are `compy.input.shortcuts.singleclick['shift+*']` → flag and `['ctrl+*']` → unlock, both `fn.stop_here`, so the plain-click hook does not fire as well.
 

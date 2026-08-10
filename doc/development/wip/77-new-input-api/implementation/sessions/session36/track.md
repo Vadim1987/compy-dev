@@ -169,3 +169,29 @@ and maze each get their own 'deepfix' step with separate planning, and keyboard'
     closure, so it precedes the optional P16/P17. Kept on that basis, not as an internal order.
 - Struck in place, not rewritten away: the caveat paragraph in §15.1b and the clause in P9b's
   row carry the overruled text visibly with the reason.
+
+## 2026-08-10 — owner challenges "no marker was touched", and the challenge lands
+
+Their point: during a platform change, some markers should be *about* that change and worth
+updating synchronously. Checked rather than answered — four are, out of ~360.
+
+- **What "no marker touched" actually measured.** Both cold reviewers checked for **scope creep**
+  (no marker swept into an unrelated commit). Neither was asked whether a marker became
+  *answerable* or *false* because of the change. Different question, and nobody had put it.
+- **The worst case is mine.** `internals/examples/sapper.md`'s remark asked *"why not set
+  mousepressed via hooks or shortcuts?"* — literally the conversion I made — and **I rewrote the
+  paragraph three lines below it and left it standing**, so the document asked for what the same
+  section describes as done. **Retired** (owner's go), with the principle it carried written into
+  the prose: registrations only, the captured `love.*` path stays supported and is demonstrated
+  on purpose by `turtle`.
+- **Two more are live and were wired into their steps rather than answered here** (owner's go):
+  `maze/main.lua`'s *"can we try using shortcuts/hooks and callbacks more actively?"* — the
+  onboarding question in the owner's own words — into **P17**; and
+  `keyboard/input.lua`'s *"WHY WOULD WE DO IT AND WHY USE custom 'INPUT' at all?"* into **P18**,
+  with the reason it is newly answerable: the proxy is now three branches returning `Key.*`, so
+  deleting it is a concrete option rather than a question about a framework surface.
+- **A fourth stays where it is:** `internals/user_input.md:14` (pointer shortcuts must exist and
+  be checked, modifier combo built without a trigger) — the mechanism sapper's conversion runs
+  on, so the remark is now demonstrably right and the line it flags is likely already false.
+  Docs step's, not this one's; recorded so it is met rather than grepped.
+- Markers in `src/`+`tests/` still **27**; nothing else was touched.

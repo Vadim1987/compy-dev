@@ -1955,6 +1955,12 @@ recorder's own `shift_held` mirror — **listed by adjacency, not by the reconci
 (it reads no device and never touched the framework's set), and not a pure read either, since its
 release side runs `finish_recording()`.
 
+**[S36] An owner `REMARK:` in that repo asks this step's question directly** —
+`maze/main.lua`, *"can we try using shortcuts/hooks and callbacks more actively?"*. It is the
+onboarding question in the owner's own words, standing in the file the step works. **The planning
+pass answers it and retires the marker** (markers must be zero before the PR); a second remark in
+the same file, about an over-verbose comment, is editorial and belongs to the comment sweep.
+
 **What its planning pass owes before it executes:** what each conversion changes for a player,
 whether the poll-to-shortcut moves are behaviour-preserving at frame boundaries, and what the
 smoke pass must exercise — because running the app by hand is the only gate this repo has.
@@ -1997,5 +2003,15 @@ comment calls Ctrl+Alt+H; `helpHeld`, which spans frames and is therefore the gu
 flag-shortcut shape rather than a poll; and `isMod`, which re-implements `Key.is_mod` and is used
 from three files. The heal rewrites the file all three live in, which is exactly why they are here
 and not in the common sweep.
+
+**[S36] And the design question the owner already wrote into the file: `input.lua`'s
+`REMARK: WHY WOULD WE DO IT AND WHY USE custom 'INPUT' at all?`**, sitting on the `INPUT` proxy
+itself. **The reconciliation is what made it answerable:** the proxy is now three branches
+returning `Key.shift()` / `Key.ctrl()` / `Key.alt()`, so "delete it and call `Key.*` at the nine
+read sites" is a concrete option where before it wrapped a framework surface that has since been
+dissolved. It was deliberately left standing — deciding it is design work, which is this step, not
+the reconciliation. **The planning pass answers it and retires the marker**; the other marker in
+that file (`setTextInput`, an IME toggle) is a separate question and is not this step's unless the
+heal touches it.
 
 **Independent of the maze step.** They share no file; either may go first.
