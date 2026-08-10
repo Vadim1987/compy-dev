@@ -690,6 +690,14 @@ compy.input.hooks.doubleclick = doppel
 -- spell out at four call sites (doc/input_api.md, "Event hooks
 -- and shortcuts"). Both consume, so the plain-click hooks do
 -- not fire as well.
+--
+-- These are DERIVED clicks: button 1, counted on release, and
+-- resolved only after the double-click window. The removed
+-- love.mousepressed acted on any button at press time. And a
+-- modified click nobody claims (alt, ctrl+shift) now reaches
+-- the hook and flags, where the old guards made it inert --
+-- both accepted, see doc/development/internals/examples/
+-- sapper.md, "Click handling".
 local click = compy.input.shortcuts.singleclick
 local fn = compy.input.fn
 click["shift+*"] = fn.stop_here(single)

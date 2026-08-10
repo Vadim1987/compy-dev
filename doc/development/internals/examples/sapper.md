@@ -6,7 +6,7 @@
 
 ## Architecture
 
-Single large file (~700 lines). No `love.draw` or `love.update` override. All game logic runs in `compy.input.hooks.singleclick` / `compy.input.hooks.doubleclick` handlers and `love.mousepressed` (for modifier-key variants). The terminal output is never used.
+Single large file (~700 lines). No `love.draw` or `love.update` override. All game logic runs in the `compy.input.hooks.singleclick` / `.doubleclick` handlers, with the modifier-held variants registered as class shortcuts on the single-click channel (see "Click handling"). The terminal output is never used.
 
 ## Draw model
 
@@ -36,7 +36,14 @@ end
 
 > REMARK: why not align the hooks assignment and set mousepressed via hooks or shortcuts? it makes sense to discourage using love.<event> path, while keeping it supported as backwards-compatibility layer
 
-`compy.input.hooks.singleclick` → flag cell. `compy.input.hooks.doubleclick` → unlock cell (or restart if game over). `love.mousepressed` → same actions when shift/ctrl held (alternative input for touch devices without double-click).
+`compy.input.hooks.singleclick` → flag cell. `compy.input.hooks.doubleclick` → unlock cell (or restart if game over). The modifier-held variants — the alternative input for touch devices with no double-click — are `compy.input.shortcuts.singleclick['shift+*']` → flag and `['ctrl+*']` → unlock, both `fn.stop_here`, so the plain-click hook does not fire as well.
+
+Those four handlers used to be two guarded hooks plus a `love.mousepressed`, each spelling out *this modifier and none of the other two*. A class key already means exactly that — `combo_string` folds every held modifier, so `'shift+*'` matches Shift and nothing else — so the guards were re-implementing the matcher and were removed with it.
+
+**Two behaviour differences that came with the conversion, accepted deliberately** (they are why this is written down rather than left to the diff):
+
+- **The modified clicks are now derived clicks.** They are button 1 only, counted on release, resolved after the double-click window has passed, and discarded if the pointer drifts between presses — the framework's own click synthesis. The removed `love.mousepressed` acted on **any** button, at press time, immediately.
+- **An unclaimed modified click is no longer inert.** The old cascade's implicit *"every other combination does nothing"* has no shortcut expression: Alt-click, or Ctrl+Shift-click, now misses both class bindings and falls through to the plain-click hook, flagging a cell. Harmless in this game, and the alternative — re-growing a guard inside the hook — would keep the cascade the conversion exists to remove.
 
 Mine placement uses probabilistic streaming: iterate all mineable positions once, at each position place a mine with probability `mines_remaining / cells_remaining`. No shuffle needed.
 
