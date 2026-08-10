@@ -585,7 +585,7 @@ state dirty").
 | ~~P9e~~ **WITHDRAWN [S32]** — premise inverted: gate polling is now correct; see §11.3 | **[S29] The gateway's own gates read the event set, not the device** (owner, 2026-08-08). `handlers.keypressed` / `keyreleased` gate power shortcuts on `Key.ctrl()` / `Key.alt()` / `Key.shift()` — a device poll — while `dispatch` beside them builds combos from `keys_pressed`. Decision 29 settles that an event-time question is answered from the event-tracked set; the gateway does not follow its own rule | P9d | **Before the PR.** Code, so before P10. Separate commit from P9d — same file, two concerns. Recorded meanwhile in `technical_debt/input.md`, "The gateway asks the device a question about an event". **[S30] This row breaks the `harmony` scripting mode** — harmony fakes modifiers by patching `love.keyboard.isDown` and never injects modifier *events*, and its `shortcuts.toggle = 'C-t'` drives precisely this `quickswitch` gate. Harmony is outside `busted` and outside CI, so **nothing signals the breakage**. Do not land P9e without reading §10 and sequencing P13 |
 | P10 | W9 + W10 (1,2,4) — docs, ledger, vocabulary. **[S33] REDUCED — its Decision-30 slice is pulled forward into P14a** (the project-facing "Held keys" rewrite, the flag-shortcut teaching, the `:268` false claim, the debt register, the Decision 21 tombstone). **What remains here:** the W9 ledger work and W10 batches 1 (retire "overlay"), 2 (no historical contrast) and 4 (vocabulary). **[S33] New members found by session32:** `doc/input_api.md` §"Held keys" needs **replacing, not purging**; Decision 21's worked example is stale — it says a hook "receives the held-key view", which Decision 26 already removed | P2–P9, **[S33] P14a–e** | docs describe the final code, so they come after it. **Tombstone decisions, never renumber**. **[S29]** Decision 29 and the `input_api.md` "Held keys" rewrite landed early by owner instruction — do not redo them |
 | P11 | W12 — comment sweep, slices, revalidation ×2. **[S33] W10 batch 3 (comment bloat, ~50 ids) belongs here, not P10** — deliberately deferred to a late pass so comments are cut after the code stops moving. **That subset is never separately enumerated inside W10's block of 92 and must be re-derived first** | P10, **[S33] P14a–e** | the commission's (e)–(9). **[S33] the gate is currently FAILING: `grep -rn 'INTERIM:\|REMARK:' src/ tests/` → 22 in the platform and 5 in `src/examples/` (disjoint sets, 27 total; zero `INTERIM:`). It must return nothing before slice regeneration.** **[S33] The gate also covers `PENDING` markers** — including in `doc/`, which the marker sweep has never had to scan before, because P14a puts them there deliberately |
-| **P14a–e** **[S33]** | **The dissolution itself** — docs/spec → tests → platform code → examples, enumerated in §11.4. **[S35] P14e is rescoped** to the **three detached example repos** (keyboard, maze, balloons) **and the in-repo examples**, reconciled with the removal and with the corrected recommendation ladder, and it **now precedes P9b** — sequencing **P14a → P14c → P14d → P14e → P9b**; see its row and §14. **[S35] The spec itself was corrected before the tests were written** (owner, 2026-08-10): `Key` is the project-facing answer and `love.keyboard` the last resort, and `gui` is removed outright rather than completed — so P14a is reopened for those two edits, and the `gui` decision P14d was carrying is **closed by removal**. **[S33] P14b is RULED** (matcher shape (b), owner 2026-08-09), so a–e are all unblocked. The mock's variadic fix lands first, inside P14c, as its own commit | P8's walk before P14c | §11.4 holds the contents; §11.5 holds the ruling and its costs. Ordering deliberately reverses this table's rule — see §11.2 |
+| **P14a–e** **[S33]** | **The dissolution itself** — docs/spec → tests → platform code → examples, enumerated in §11.4. **[S35] P14e is rescoped** to the **three detached example repos** (keyboard, maze, balloons) **and the in-repo examples**, reconciled with the removal and with the corrected recommendation ladder, and it **now precedes P9b** — sequencing **P14a → P14c → P14d → P14e → P9b**. **P14e's operative detail is §11.4.1**, factored out when its row outgrew the table; the dated reasoning for all of session35's amendments is §14. **[S35] The spec itself was corrected before the tests were written** (owner, 2026-08-10): `Key` is the project-facing answer and `love.keyboard` the last resort, and `gui` is removed outright rather than completed — so P14a is reopened for those two edits, and the `gui` decision P14d was carrying is **closed by removal**. **[S33] P14b is RULED** (matcher shape (b), owner 2026-08-09), so a–e are all unblocked. The mock's variadic fix lands first, inside P14c, as its own commit | P8's walk before P14c | §11.4 holds the contents; §11.5 holds the ruling and its costs. Ordering deliberately reverses this table's rule — see §11.2 |
 | **PROBE** **[S33]** | **Delete `src/probe/input_probe.lua`.** Its own header: *"DIAGNOSTIC, TEMPORARY. Delete when the polling-vs-tracking question is ruled on."* Decision 30 ruled it. Postdates `3256aac`, opt-in, not on the dispatch chain | — | **its own commit.** Unblocked now; listed as a step because it was previously placed only in §11.4's prose, with no id and no row |
 | ~~P12~~ **PROMOTED [S32]** → `../plan.md` **Phase U** (owner, 2026-08-09); id kept, §8 stands | **[S29] Upstream reconciliation and downstream compatibility** (owner, 2026-08-08). Reconcile this branch against the advanced upstreams — the platform repo (and possibly an advanced fork of it) **and** each example repo — then land the coordinated set of PRs | P11 / close-out of the current snapshots | **Blocks the real PR, and needs its own plan.** Not attempted before the snapshots are stable: re-planning against a moving upstream while the design is still settling means doing it twice. See §8 |
 | **P13** **[S32] REDUCED TO REVALIDATION** (owner ruling, 2026-08-09) — harmony can now drive combos; §11.3 | **[S30] Harmony reconciliation** (owner ruling, 2026-08-08). `src/harmony` is a scripted-automation mode carrying a **second implementation of the input surface** — its own `love.run`, its own held-modifier table, its own patched `love.keyboard.isDown`. It fakes modifiers to the *poll* and never puts them in the event stream, so every event-side change this feature makes is invisible to it. Inject real modifier `keypressed`/`keyreleased`, **keep** `patch_isDown`, retire the manual `release_keys()` discipline, and build the batch-skew reproduction rig | P9e (which breaks it); independent of P10–P12 | **Own phase, and in the release** — not a platform blocker, but shipping a platform input change that silently breaks the bug-reproduction harness is the loss this row exists to prevent. Like P12 it is **someone else's subsystem** (aldum) and eventually needs them in the loop. See §10 |
@@ -970,7 +970,89 @@ and stated at each.
 | ~~**P14b**~~ **RULED [S33]** (owner, 2026-08-09) | **DESIGN RULING — the matcher's device-read shape** | **Shape (b): `combo_string`/`any_mod` call `Key.ctrl()`/`Key.alt()`/`Key.shift()` directly.** Raised early rather than at its trigger, because the internals half of P14a turned out to be blocked from its first paragraph rather than in one corner (§11.5, [S33] note). **This step is closed; P14c and P14d are unblocked and P14a is unblocked in full.** Consequences carried into the rows below: the builder loses its table parameter and every caller changes; the matcher is no longer table-drivable; **the mock's variadic fix is a prerequisite again** and lands first |
 | **P14c** | **Tests** | Breaking tests against P14a's spec. **[S33] every range below re-verified against the files; four were wrong and are corrected here** (`../outcomes/S33-p14-citation-verification.md`). **[S33] The mock fix lands FIRST, as its own commit** — `tests/mock.lua`'s `isDown` becomes variadic and its `mods` token map gains `rctrl`/`rshift`/`ralt` (the `held` table already has the slots). Under the ruled shape every modifier assertion routes through the two-argument call, so without it no test can exercise a right-hand modifier at all. `keys_pressed_spec.lua:52-90` **delete** (not `:52-96` — `:91-96` is an unrelated comment); **[S33] `:98-138` must now be REWRITTEN, not kept.** Session32 recorded that these seven test cases need zero edits and read that as evidence the ruling is cleanly implementable; **that property belonged to the rejected shape.** They drive the matcher by passing it a synthetic table, which the ruled shape removes — they are rewritten to set device state through the mock instead. The "zero edits" claim is withdrawn as evidence. `input_nfr_mechanism_spec.lua:66-112` delete (not `:66-105` — **`:105` is the opening line of the fourth test; cutting there orphans its 7-line body**), `:123-165` keep. `input_events_spec.lua:781-901` delete (not `:781-905` — `:902-905` leads in to the next describe); `:557,616,734,857-861` need individual rewrites. **[S33] Three `tests/` occurrences this cell did not name, found by P8's walk** (`../reviews/S33-p8-walk.md`) — the cell covered 35 of 38: **`tests/helpers/input_fixture.lua:272` — `Controller.keys_pressed = { }`, live code in the SHARED fixture reset, on the path of every input test**, which goes with the field; `tests/helpers/input_session.lua:6`, a comment citing *"the `keys_pressed_spec` raw-handler pattern"* that rots when this rewrite empties that spec; and `input_widget_callbacks_spec.lua:537-541`, a comment explaining that the test drives **two distinct modifier tracks** — which the ruled shape collapses into one, so it documents a duplication the ruling removes. **[S33] Also: `keys_pressed_spec.lua` holds two of the three surface `describe`s** (R057's outcome) — deleting the held-key-set one leaves the file's name a misnomer for its only survivor, so the surviving block moves or the file is renamed — some assert a write-before-dispatch ordering that ceases to be meaningful. **Mock fix lands here; which fix it is depends on P14b**. **[S34] Three citation obligations the docs step created or exposed.** `input_nfr_mechanism_spec.lua`'s deleted block is headed by a **comment block immediately above it** (the "Held-key set lifecycle" note, rewritten in `90935e2c` when the internals heading was renamed) — it goes with the test cases it heads, so the deletion starts at that comment, not at the first `it`. **`doc/development/tests.md` and `internals/event_dispatch_layers.md` both name `keys_pressed_spec` by filename** — if this step renames the file (it leaves it misnamed for its survivor, see above), both citations move with it, and they sit in the **persistent** corpus where a dangling one outlives `wip/77`. **This step removes no `PENDING` markers** — the docs markers are keyed to the platform change, not to the tests |
 | **P14d** | **Platform code** | The device-backed source at the **single** production call site `find_shortcut` (`projectInputController.lua:103-110`); then the write side and dead machinery — `controller.lua:788,906` (writes), `:498` (the field), `held_keys()` + proxy memoisation `:420-443,501`, and the sandbox field in `consoleController.lua:539-540` plus its `held` upvalue plumbing **[S33]** `:829-830` (not `:829-834` — `:833-834` is an unrelated function's comment). **[S33] `combo_string`/`any_mod` DO change now** — this cell previously said they need none, which was true only of the rejected shape. Under the ruling they lose their `keys_pressed` parameter and call `Key.ctrl()`/`Key.alt()`/`Key.shift()` per `COMBO_MODS` triple (`controller.lua:395-418`; the triples already carry the generic name as `m[3]`), and **every caller changes** — inside `find_shortcut` that is three call sites (`any_mod`, and `combo_string` for both the trigger and the `'*'` class key). Cheaper per event as a side effect: an unmodified pointer motion now costs up to 4 device calls instead of 8. **[S33] Three sites no bullet above accounted for**, found by the citation audit: **`src/types.lua:251`** — `--- @field keys_pressed table` on the `CompyInput` type, which **lies about the API if left**; `src/controller/userInputController.lua:490` — a comment naming the set; and note the files are under **`src/controller/`**, not `src/model/`. **[S34] `Key` exports no `gui()`** beside `ctrl`/`alt`/`shift`, and the ruled shape calls those helpers per modifier row — so this step decides the fourth row of `mod_triples`: add `gui()`, read each pair directly, or drop `gui` from the serialisation and say so. Nothing registers a `gui` combo today, so it is a decision, not a bug. Recorded in the debt register's `gui_k` entry, which no longer reads "harmless". **[S34] This step clears the docs `PENDING` markers** — `input_api.md` "Held keys", the three in `internals/user_input.md`, the one in `event_dispatch_layers.md` — and **deletes** the five marked debt entries rather than editing them |
-| **P14e** | **[S35] Examples — reconciliation with the removal, detached *and* in-repo** (was: "Examples", keyboard only) | **[S35] PRECEDES P9b (owner ruling, 2026-08-10)** — settling what §13 left open. Sequencing is now **P14a → P14c → P14d → P14e → P9b**: the heal is designed against examples already reconciled with the platform, not against the file mid-move. **[S35] RESCOPED TWICE (owner, 2026-08-10).** The step covers **all three detached example repos** — `keyboard`, `maze`, `balloons` — **and the in-repo examples**, reconciled against the `keys_pressed` removal *and* against the corrected recommendation ladder (§14). The detached three were each updated once to work with the new input API and are **detached**: own repos, own remotes, own history, **no suite**, and nothing re-checks them when the platform moves. **This is NOT the blanket example sweep** the owner ruled out — the trigger is one named platform change, and a repo with nothing to reconcile is recorded as such and closed. **Per-repo scope, swept and enumerated [S35]:** **(a) `keyboard`** — the four sites below, plus **`help.lua:11`** (`INPUT.held.h and INPUT.alt and not INPUT.ctrl`), the only consumer of the `held` branch and **not previously named**; `keyboard_view.lua:171,178` consume `INPUT.shift` and need no edit of their own once the proxy is fixed. **`modHeld` is DELETED, not converted** (owner, 2026-08-10): it re-implements `Key.ctrl()`'s l/r folding over the very table being dissolved, so its callers move to `Key.*` or to combos. **(b) `maze`** — **`is_shift_down()` (`main.lua:562-565`) is the same duplication in a second repo**: `d('lshift') or d('rshift')`, i.e. `Key.shift()` written out by hand. `main.lua:517`'s `isDown('tab')` uses the right *API* for a non-modifier key, **but the poll itself is likely a combo in disguise — see the hint in §14.4, which supersedes the earlier "stays" reading**. **(c) `balloons`** — **nothing to do**, verified: it touches only the overlay API (`terminal.lua:26-38`) and reads no held state. Recorded so the sweep is not re-derived later. **Each repo commits on its own, and NONE is ever pushed** (`pr-assembly-guide.md` §5). **[S35] In-repo scope, swept and enumerated:** **`turtle`** (`main.lua:34` → `Key.shift()`, `:92` → `Key.ctrl()`) and **`clock`** (`main.lua:68` → `Key.shift()`) are rung 3 doing rung 2's job — the two the revalidation had wrongly cited as *evidence* the guide was right. **`pong`** stays: `main.lua:330` polls a variable key and `strategy.lua:35,37` poll `up`/`down` — arbitrary keys are the legitimate last rung, and its README's snippet (`:254-255`) teaches the same and is correct. **`tixy`** (`:197`) and **`paint`** (`:407`) already sit at rung 2 — no change. **`sapper`** (`main.lua:672,690,697,701`) is the one case where rung 2 is visibly doing what the guide calls a symptom: `not Key.shift() and not Key.alt() and not Key.ctrl()` repeated across four call sites, i.e. the cascade combos exist to replace. **Flagged, NOT converted** — it is a real refactor of a working example and wants its own decision; record it in the debt register if it is not taken. **`guess`, `life`, `repl`, `sine`, `valid`: clean**, no held-state read. Not in scope: `keyboard/input.lua:99`'s `love.keyboard.setTextInput` — an IME toggle, not a held-state read. **[S35] HINT (owner, 2026-08-10) — several of these reads are not ladder questions at all but combos written out by hand; leads in §14.4, examined when this step runs, each conversion its own call.** Original keyboard-only scope, still accurate for that repo: | `src/examples/keyboard` — `input.lua`'s `INPUT.__index` held branch (`:54-62`, the branch itself `:57`) and `keyboard_view.lua:171,178` — **[S35] to `Key.*` or combos, not "direct polling"**; the ladder in §14 governs which rung. **[S33] Two more sites in the same file, not previously named:** `input.lua:109` — **`modHeld(a, b)` reads `compy.input.keys_pressed` and is a distinct site**, a top-level function the metamethod calls rather than the branch itself; and `:43`, header prose naming the set. **Sort its reads into decoration/drawing (stays — legitimate, owner) vs judgement (converts to combos)** before touching any of them. Nested repo, no suite: smoke re-pass is the gate. **Never pushed** |
+| **P14e** | **[S35] Examples — reconciliation with the removal, detached *and* in-repo** (was: "Examples", keyboard only) | **[S35] PRECEDES P9b (owner ruling, 2026-08-10)**, settling what §13 left open — sequencing is **P14a → P14c → P14d → P14e → P9b**. **[S35] RESCOPED TWICE (owner, 2026-08-10):** from `keyboard` alone to **all three detached repos** and then to **the in-repo examples too**, reconciled against the `keys_pressed` removal *and* the corrected recommendation ladder (§14.1). **The step outgrew this cell; its operative detail is §11.4.1** — per-repo and per-example scope, what converts and what stays, the one flagged judgement call, and the hint's leads. Nested repos have **no suite**: smoke re-pass is the gate. **Each repo commits on its own; NONE is ever pushed** (`pr-assembly-guide.md` §5) |
+
+#### 11.4.1 [S35] P14e in full — the examples reconciliation (OPERATIVE, factored out of the row above)
+
+**This section is the step, not reasoning about it.** It was factored out of §11.4's table when
+the row reached 600 words; the row now points here. Amendments to the examples step belong **in
+this section**. Provenance and the arguments behind these rulings are in §14 — the dated record —
+and specifically §14.1 (the ladder), §14.3 (ordering + in-repo scope) and §14.4 (the hint).
+
+**Order.** `P14a → P14c → P14d → P14e → P9b`. The heal runs after this step (owner, 2026-08-10),
+because the two edit the same file and P9b must not be designed around code that is mid-move.
+
+**Mandate.** Reconcile the examples with **two named changes**: the removal of the tracked
+held-key set, and the corrected recommendation ladder. **Held-state reads are what is swept, and
+nothing else.** An example with none is recorded as clean and closed, not searched. This is not the
+blanket example sweep the owner ruled out.
+
+**The ladder** (§14.1), which decides what each read becomes: shortcuts/combos first; `Key.*` in
+project code is permitted but a symptom; `love.keyboard.isDown` is the last resort, legitimate
+where `Key` has no answer (a key that is not a modifier).
+
+##### The three detached repos
+
+Separate repos, own remotes, own history, **no suite**, and nothing re-checks them when the
+platform moves — which is why they need a step at all. **Each commits on its own; none is ever
+pushed** (`pr-assembly-guide.md` §5). Smoke re-pass is the gate.
+
+- **`keyboard`** — `input.lua`'s `INPUT.__index` held branch (`:54-62`, the branch itself at
+  `:57`), the header prose naming the set (`:43`), and **`modHeld` (`:108-114`), which is DELETED,
+  not converted** (owner, 2026-08-10): it re-implements `Key.ctrl()`'s left/right folding over the
+  very table being dissolved, so its callers move to `Key.*` or to combos. **[S35] `help.lua:11`**
+  (`INPUT.held.h and INPUT.alt and not INPUT.ctrl`) is the only consumer of the `held` branch and
+  was not previously named. `keyboard_view.lua:171,178` consume `INPUT.shift` and need no edit of
+  their own once the proxy is fixed. **[S33] Sort its reads into decoration/drawing (stays —
+  legitimate, owner) vs judgement (converts) before touching any of them.**
+- **`maze`** — **`is_shift_down()` (`main.lua:562-565`) is the same duplication in a second repo**:
+  `d('lshift') or d('rshift')`, i.e. `Key.shift()` written out by hand. `main.lua:517`'s
+  `isDown('tab')` uses the right *API* for a non-modifier key, but **the poll itself is likely a
+  combo in disguise** — see the leads below.
+- **`balloons`** — **nothing to do**, verified: it touches only the overlay API
+  (`terminal.lua:26-38`) and reads no held state. Recorded so the sweep is not re-derived later.
+
+##### The in-repo examples
+
+- **`turtle`** (`main.lua:34` → `Key.shift()`, `:92` → `Key.ctrl()`) and **`clock`**
+  (`main.lua:68` → `Key.shift()`) — rung 3 doing rung 2's job. These two were wrongly cited in
+  `S35-spec-revalidation.md` as *evidence* the rewritten guide was right; that clean bill is
+  withdrawn and they are work items.
+- **`pong` stays** — `main.lua:330` polls a variable key, `strategy.lua:35,37` poll `up`/`down`.
+  Arbitrary keys are the legitimate last rung, and the README snippet (`:254-255`) teaches the
+  same, correctly.
+- **`tixy`** (`:197`) and **`paint`** (`:407`) — already at rung 2. No change.
+- **`sapper`** (`main.lua:672,690,697,701`) — **the one judgement call. Flagged, NOT converted.**
+  `not Key.shift() and not Key.alt() and not Key.ctrl()` repeated across four call sites is
+  precisely the cascade combos exist to replace, but it works, the conversion is a real refactor of
+  an example, and a sprint that removes a moving part should not add one in the same breath. If it
+  is declined, it goes to the debt register with that reasoning.
+- **`guess`, `life`, `repl`, `sine`, `valid`** — clean, no held-state read.
+- **Not in scope:** `keyboard/input.lua:99`'s `love.keyboard.setTextInput` — an IME toggle, not a
+  held-state read, and the kind of thing a pattern-driven sweep would wrongly collect.
+
+##### The leads — reads that are combos written out by hand (hint, owner 2026-08-10)
+
+**Leads, not a work list.** Take one only where the conversion is small and obviously
+behaviour-preserving; anything larger goes to the debt register with its reasoning, as `sapper`'s
+cascade does. **This must not turn a reconciliation into an example rewrite.** The discriminator
+and the reasoning are in §14.4.
+
+- **`maze/main.lua:514-526`** (`poll_tab_progression`) — polls `tab` per frame, keeps a
+  `tab_was_down` mirror, derives an edge. A discrete question answered with frame-time machinery;
+  `shortcuts.keypressed['tab']` answers it directly. It also carries **the same bug class the
+  sprint is removing**: a flag mirroring a key, with nothing to reconcile it.
+- **`maze/main.lua:568-571`** — `love.keypressed(k)` doing `k == 'escape' and not is_shift_down()`
+  is `shift+escape` versus `escape`, two bindings. **This supersedes the entry above** that
+  converts `is_shift_down()` to `Key.shift()`: that is the middle rung, the combo is the top one.
+- **`keyboard/alt.lua:203`** — `k == 'h' and INPUT.ctrl and INPUT.alt`, hand-matching the combo its
+  own comment calls *"Ctrl+Alt+H"*.
+- **`keyboard/help.lua:11`** — spans frames rather than one event, so the shape is the guide's
+  **flag shortcut**, not a plain combo.
+- **Excluded on purpose:** `keyboard/input.lua:191-192` (`appTextinput`'s alt/ctrl refusal) is
+  **P9b's** to redesign and `textinput` carries no key; `pong`'s paddle polls and the keycap
+  renderer are the *correct* poll and are the counter-examples that keep the hint honest.
+
 
 **Unblocked work that proceeds while P14b waits** (this is the point of deferring it):
 **P9b** (the keyboard `textinput` heal — the reason the sprint exists), **P9**'s SM3a
@@ -1351,47 +1433,26 @@ step.
 
 ### 14.4 [S35] HINT (owner, 2026-08-10) — some of these reads are combos written out by hand
 
-Recorded as a **hint, not a work list**: leads to examine when P14e runs, each conversion its own
-call. The owner's observation was about `maze`'s `tab` poll; the scan it prompted found the same
-shape in several places, and it is a **third instance of one pattern this sprint keeps meeting** —
-an example re-implementing a framework mechanism over a lower-level API, exactly as `modHeld`
+**The leads themselves are operative and live in §11.4.1**, with the examples step. This section is
+the dated record: where the hint came from, the rule that makes it falsifiable, and why it is
+capped.
+
+The owner's observation was about `maze`'s `tab` poll. The scan it prompted found the same shape in
+several places, and it is a **third instance of one pattern this sprint keeps meeting** — an
+example re-implementing a framework mechanism over a lower-level API, exactly as `modHeld`
 re-implements `Key.ctrl()`'s folding and `is_shift_down()` re-implements `Key.shift()`.
 
-**The discriminator.** *"Is it held right now"* — continuous, per-frame, no beginning or end — is a
-correct poll, and the device is the right source for it; that is Decision 30's own argument.
-*"Did it just happen"* or *"was it modified"*, reconstructed from a poll, is an **event or a combo
-written out by hand**.
+**The discriminator, so the hint stays falsifiable and does not decay into "polling is bad".**
+*"Is it held right now"* — continuous, per-frame, no beginning or end — is a **correct** poll, and
+the device is the right source for it; that is Decision 30's own argument. *"Did it just happen"*
+or *"was it modified"*, reconstructed from a poll, is an **event or a combo written out by hand**.
 
-**Shape 1 — poll plus hand-rolled edge detection = `keypressed` by hand.**
-`maze/main.lua:514-526`, `poll_tab_progression`: polls `tab` every frame, keeps `tab_was_down`,
-derives `edge = down and not tab_was_down`. This is a discrete question answered with frame-time
-machinery, and the framework already answers it — `shortcuts.keypressed['tab']`, or a keypressed
-hook. **It also carries the bug class the whole sprint is about:** a state flag mirroring a key,
-with nothing to reconcile it if a frame is missed.
+Two shapes follow from it: a poll plus hand-rolled edge detection is `keypressed` by hand, and a
+modifier test inside an event handler is a combo by hand. Both are enumerated in §11.4.1, together
+with the reads deliberately **excluded** in each direction — the heal's own territory on one side,
+and the genuinely correct polls on the other, which are what keep the rule honest.
 
-**Shape 2 — a modifier test inside an event handler = a combo by hand.**
-
-- `maze/main.lua:568-571` — `love.keypressed(k)` doing `if k == 'escape' and not is_shift_down()`.
-  The trigger is already in hand, so this is `shift+escape` versus `escape` as two bindings.
-  **This supersedes the plan's earlier recommendation** to convert `is_shift_down()` to
-  `Key.shift()`: that is the intermediate rung, and the combo is the top one.
-- `keyboard/alt.lua:203` — `if k == 'h' and INPUT.ctrl and INPUT.alt`. The comment above it
-  literally calls the binding *"Ctrl+Alt+H"*, so the code names the combo it is hand-matching.
-- `keyboard/help.lua:11` — `INPUT.held.h and INPUT.alt and not INPUT.ctrl`. Spans frames rather
-  than one event, so the shape is the guide's **flag shortcut** (a tiny non-consuming binding sets
-  a flag) rather than a plain combo.
-
-**Deliberately excluded from the hint.**
-
-- `keyboard/input.lua:191-192` — `appTextinput` refusing while Alt or Ctrl is held. `textinput`
-  carries no key, so this is not a combo rewrite, and the judging path is **P9b's** to redesign.
-  Naming it here is a boundary marker, not a lead.
-- `pong/main.lua:329-331` and `pong/strategy.lua:35-37` — paddle movement, polled per frame with
-  `dt`. The textbook *correct* poll: continuous, frame-time, device-answered. Likewise the keycap
-  renderer in `keyboard`. **These are the counter-examples that keep the hint honest** — "it polls"
-  is not the defect; "it polls a discrete event" is.
-
-**Scope guard.** This hint could quietly turn a reconciliation step into an example rewrite. It
-must not: the step's mandate is still the removal and the ladder. A lead is taken only where the
-conversion is small and obviously behaviour-preserving; anything else is recorded in the debt
+**Why it is capped.** A hint like this can quietly turn a reconciliation step into an example
+rewrite. The step's mandate remains the removal and the ladder; a lead is taken only where the
+conversion is small and obviously behaviour-preserving, and anything else is recorded in the debt
 register with its reasoning, exactly as `sapper`'s cascade is.

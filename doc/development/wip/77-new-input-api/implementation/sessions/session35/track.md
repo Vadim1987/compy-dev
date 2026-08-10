@@ -135,3 +135,23 @@ maze and keyboard.* Recorded as **§14.4, a hint not a work list**. Scanned to m
   obviously behaviour-preserving conversions only; the rest goes to the debt register like
   sapper's cascade.
 - Amended the step's earlier *"isDown('tab') stays"* line — it read as settled and is not.
+
+## 2026-08-10 — the examples step factored out of the table (owner-approved)
+
+Caught by the owner asking where I had written the hint: my two rescopes were inserted **ahead of**
+the original cell text, orphaning the sentence that followed (*"They were each updated once…"* had
+lost its subject). Repaired first (`006acba1`), then the structural fix.
+
+- The P14e cell had reached **639 words in one table row** — an ordering ruling, two rescopes,
+  three repos, seven examples, a flagged call and a hint pointer, run together. Exactly what the
+  owner has said twice they cannot reason over.
+- **Kept in the plan as §11.4.1, not moved to a separate doc.** The owner left the choice to me;
+  a second document is a second place a change could live, which is precisely the failure the
+  plan's *"the amendment goes in the step"* rule exists to prevent — and that failure cost two
+  sessions. §11.4.1 is inside the operative contents section, so the rule holds trivially.
+- Row is now **117 words** and points down. §11.4.1 is headed **OPERATIVE** and says amendments
+  belong in it, so it cannot be mistaken for the reasoning sections.
+- **§14.4 trimmed to its dated-record role** — provenance, the falsifiable discriminator, and why
+  the hint is capped; the leads themselves moved to §11.4.1. Cross-linked both ways, plus the §4
+  row.
+- Suite 955/0/0/3 throughout.
