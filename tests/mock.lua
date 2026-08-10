@@ -14,10 +14,15 @@ local held = {
   rgui = false,
 }
 
+-- Emacs notation for the left-hand modifiers. The right-hand keys
+-- have no letter in it, so a test names the key itself: 'rctrl-x'.
 local mods = {
   C = 'lctrl',
   S = 'lshift',
   M = 'lalt',
+  rctrl  = 'rctrl',
+  rshift = 'rshift',
+  ralt   = 'ralt',
 }
 
 local W = 1024
@@ -27,7 +32,16 @@ local H = 600
 local function mock_love(t)
   local love = {
     keyboard = {
-      isDown = function(k) return held[k] end
+      -- Variadic, as LÖVE's is: Key.ctrl() asks
+      -- isDown('lctrl', 'rctrl'), so a one-argument mock silently
+      -- answers for the left key alone and no test can hold a
+      -- right-hand modifier.
+      isDown = function(...)
+        for _, k in ipairs({ ... }) do
+          if held[k] then return true end
+        end
+        return false
+      end
     },
     graphics = {
       mock = true,
