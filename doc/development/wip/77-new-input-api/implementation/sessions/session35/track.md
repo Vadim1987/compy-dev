@@ -175,3 +175,30 @@ to support it."* **This closes F3** by refusing its premise rather than answerin
 - Also written into P14d: dropping `gui` makes `Key.is_mod('lgui')` false, so
   `shortcuts.keypressed['lgui']` becomes a **registrable binding firing on a Super press**. New
   reachable behaviour, named in the debt entry rather than left to be found.
+
+## 2026-08-10 — where the two non-supports belong, and an error of mine about the ledger
+
+Owner asked whether *"no gui as modifier"* and *"no mod-only combos"* belong in the persistent
+decisions corpus, and noted the two are connected.
+
+- **They are the same rule from two sides:** membership of the modifier set is what makes a token a
+  **modifier** rather than a **trigger**. Decision 21's one-trigger rule is why `alt+lalt` and bare
+  `lalt` are unregistrable; dropping `gui` moves `lgui` across that same boundary the other way, so
+  `shortcuts.keypressed['lgui']` starts working and `'gui+s'` starts raising.
+- **Mod-only: already ruled, needs nothing.** Decision 21 says it verbatim — *"two triggers, or
+  none, raises at registration"* — **and** rules the class guard. **This corrected §14.5**
+  (`4258681c`), which had implied `is_mod` was emergent behaviour I found by reading. The guard is
+  designed; only the `alt+lalt` string is debris, and debris stays out of the ledger.
+- **`gui`: the ledger is not optional** — Decision 8 *states* the four-name precedence order, so
+  removal retracts ratified text. Recommended a new decision (the modifier set is closed and is
+  exactly ctrl/alt/shift) carrying the rationale, with Decision 8 amended to point at it. Also
+  raised that filing a deliberate choice in the **debt** register misreads it as something someone
+  should fix. **Not written — a new decision is ruling-shaped; awaiting the owner.**
+- **My error, owner-corrected.** I claimed the ledger is not part of the stakeholder review
+  surface. The frame says the PR must be **reviewable from the guide + description alone** — a
+  sufficiency claim, so nobody is forced into `wip/77`; I read it as exclusivity. The ledger is in
+  the persistent corpus and in the diff, and stakeholders will read it. Recorded in **§11.7**, with
+  the consequence: a decision this sprint mints or retracts **owes a justification-table line**.
+  Also noted there that session33's *"the guide cites no ledger"* ruling is about the **guide
+  standing alone**, not about the ledger being private — which is probably where I picked the idea
+  up.

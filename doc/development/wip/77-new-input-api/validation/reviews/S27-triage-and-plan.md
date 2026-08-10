@@ -1194,6 +1194,15 @@ was reduced to revalidation** — the reduction does not depend on which shape w
   needs a real migration and its adoption saving shrinks.
 - **Console/editor deferral needs a citation, not a justification** —
   `design/requirements.md` FR-11/12: *"expressiveness targets, not a commitment to rewrite."*
+- **[S35] The decisions ledger IS stakeholder-visible, and the frame never said otherwise**
+  (owner, 2026-08-10). *"Reviewable from `doc/input_api.md` + the PR description alone"* is a
+  statement of **sufficiency** — a reviewer must never be forced into `wip/77` — not a statement
+  that nothing else is read. `doc/development/decisions/input.md` is in the persistent corpus and
+  in this PR's diff, so a stakeholder will open it whenever they feel like it. Two consequences:
+  **(a)** any decision this sprint **mints or retracts** is review surface and owes a line in the
+  justification table, on the same footing as a new moving part; **(b)** session33's naming ruling
+  — the project guide cites no ledger — is about **the guide standing alone**, not about the
+  ledger being private, and must not be read as the latter.
 
 ## 12. [S33] Amendments made in session33 — revalidation findings and five owner rulings
 
