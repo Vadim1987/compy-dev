@@ -87,7 +87,10 @@ ProjectInputController.EVENTS = EVENTS
 --- (doc/development/decisions/input.md, Decision 21): 'alt+*' is
 --- every Alt chord. The class key needs no parsing — it is the
 --- same serialisation with '*' as the trigger. A modifier's own
---- press dispatches e.g. 'alt+lalt' and must not match 'alt+*'.
+--- press names no shortcut at all: no combo with a modifier as
+--- its trigger is registrable (check_combo folds every token,
+--- finds no trigger and raises), so the guard comes first and
+--- neither lookup is built.
 ---
 --- A channel with no trigger to name (mousemoved, wheel, touch,
 --- the derived clicks) can only have the class key: 'ctrl+*' is
@@ -100,14 +103,14 @@ ProjectInputController.EVENTS = EVENTS
 --- @return function?
 local function find_shortcut(tbl, trigger)
   if not tbl then return end
-  local keys = Controller.keys_pressed
   if not trigger then
-    if not Controller.any_mod(keys) then return end
-    return tbl[Controller.combo_string('*', keys)]
+    if not Controller.any_mod() then return end
+    return tbl[Controller.combo_string('*')]
   end
-  local sc = tbl[Controller.combo_string(trigger, keys)]
-  if sc or Key.is_mod(trigger) then return sc end
-  return tbl[Controller.combo_string('*', keys)]
+  if Key.is_mod(trigger) then return end
+  local sc = tbl[Controller.combo_string(trigger)]
+  if sc then return sc end
+  return tbl[Controller.combo_string('*')]
 end
 
 --- The three-consumer walk: shortcuts[event][combo] →

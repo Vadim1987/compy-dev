@@ -382,20 +382,27 @@ end
 local COMBO_MODS = Key.mod_triples
 
 
+-- The device question behind each modifier row. Key exports one
+-- helper per generic name and each folds its own l/r pair, so a
+-- row is answered by one call rather than two lookups.
+local MOD_HELD = {
+  ctrl  = Key.ctrl,
+  alt   = Key.alt,
+  shift = Key.shift,
+}
+
 --- Serialise a key event into a canonical combo string ("ctrl+s", "alt+shift+f4").
---- Held modifiers are prepended in COMBO_MODS precedence, l/r folded to generic names.
---- NOTE: the per-keypress table allocation here, and
---- whether dispatch should match on keys_pressed directly
---- instead of serialising, is an open design question
---- (doc/development/technical_debt/input.md, "Combo-string dispatch
+--- Held modifiers are prepended in COMBO_MODS precedence, l/r folded to generic names,
+--- and come from the keyboard itself (doc/development/decisions/input.md, Decision 30).
+--- NOTE: the per-keypress table allocation here is an open design
+--- question (doc/development/technical_debt/input.md, "Combo-string dispatch
 --- allocates a table per call").
 --- @param k string            triggering key (raw LÖVE name)
---- @param keys_pressed table  { keyname -> true } live held-key set
 --- @return string             canonical combo string
-local function combo_string(k, keys_pressed)
+local function combo_string(k)
   local parts = { }
   for _, m in ipairs(COMBO_MODS) do
-    if keys_pressed[m[1]] or keys_pressed[m[2]] then
+    if MOD_HELD[m[3]]() then
       parts[#parts + 1] = m[3]
     end
   end
@@ -406,11 +413,10 @@ end
 --- Is any modifier held? The cheap pre-check the triggerless
 --- (pointer) shortcut lookup runs before building a combo
 --- string, so an unmodified motion event allocates nothing.
---- @param keys_pressed table
 --- @return boolean
-local function any_mod(keys_pressed)
+local function any_mod()
   for _, m in ipairs(COMBO_MODS) do
-    if keys_pressed[m[1]] or keys_pressed[m[2]] then
+    if MOD_HELD[m[3]]() then
       return true
     end
   end

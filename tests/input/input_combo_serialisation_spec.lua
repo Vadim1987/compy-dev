@@ -43,38 +43,47 @@ describe('input surface: inbound events — combo serialisation'
   .. ' #input', function()
   local cs = Controller.combo_string
 
+  -- The modifiers come from the keyboard, so a case holds them
+  -- on the device rather than handing over a table
+  -- (doc/development/decisions/input.md, Decision 30).
+  before_each(function() mock.release_keys() end)
+
   it('bare key escape', function()
-    assert.equal('escape', cs('escape', { }))
+    assert.equal('escape', cs('escape'))
   end)
 
   it('bare key s', function()
-    assert.equal('s', cs('s', { }))
+    assert.equal('s', cs('s'))
   end)
 
   it('ctrl+s from lctrl held', function()
-    local held = { lctrl = true }
-    assert.equal('ctrl+s', cs('s', held))
+    mock.hold('lctrl')
+    assert.equal('ctrl+s', cs('s'))
   end)
 
+  -- The right-hand key folds to the same generic name. This is
+  -- the case the one-argument mock could not express at all.
   it('ctrl+s from rctrl held', function()
-    local held = { rctrl = true }
-    assert.equal('ctrl+s', cs('s', held))
+    mock.hold('rctrl')
+    assert.equal('ctrl+s', cs('s'))
   end)
 
   it('alt+shift+f4 ordering', function()
-    local held = { lalt = true, lshift = true }
-    assert.equal('alt+shift+f4', cs('f4', held))
+    mock.hold('lalt')
+    mock.hold('lshift')
+    assert.equal('alt+shift+f4', cs('f4'))
   end)
 
   it('ctrl before alt precedence', function()
-    local held = { lalt = true, lctrl = true }
-    assert.equal('ctrl+alt+s', cs('s', held))
+    mock.hold('lalt')
+    mock.hold('lctrl')
+    assert.equal('ctrl+alt+s', cs('s'))
   end)
 
   it('all modifiers: ctrl alt shift', function()
-    local held = {
-      lshift = true, lalt = true, lctrl = true,
-    }
-    assert.equal('ctrl+alt+shift+s', cs('s', held))
+    mock.hold('lctrl')
+    mock.hold('lalt')
+    mock.hold('lshift')
+    assert.equal('ctrl+alt+shift+s', cs('s'))
   end)
 end)
