@@ -1470,8 +1470,11 @@ the raw trigger is appended — `'alt+lalt'`. **It matches nothing, and cannot.*
 refuses to register `'alt+lalt'` (every token folds to a modifier, so it *"names no trigger"*), and
 it refuses bare `'lalt'` for the same reason — which is also what the same-frame-release corner
 produces when the poll already answers false. Both candidate strings are unregistrable, so the
-lookup misses in every direction, and `Key.is_mod(trigger)` then stops the class fallback so a
-registered `'alt+*'` does not fire on Alt's own press.
+lookup misses in every direction. **The class fallback is stopped by a ratified rule, not by an
+accident:** Decision 21's own last sentence is *"a class never matches when the trigger is itself a
+modifier"*, which `Key.is_mod(trigger)` implements. **[S35 correction]** What is accidental is only
+that dispatch builds `'alt+lalt'` at all — that fell out of the gateway writing the set before
+dispatch, and nothing ever ruled it.
 
 **Consequences, placed where they act.** The corpus says nothing about this and **no test pins it**
 (P14c) — pinning an accident is how it becomes a contract, and this feature has paid for that
