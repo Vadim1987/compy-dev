@@ -878,8 +878,16 @@ not fire while Alt is held. Extending that to ordinary keys would make every
 binding conditional on nothing else being held: hold `a` for movement, press
 `space`, and the `space` binding stops firing because the combo is now
 `a+space`. Multi-key chords therefore stay out of the combo grammar. A project
-that wants them uses a hook, which receives the held-key view on **all three**
-keyboard/text channels, and `compy.input.keys_pressed` (Decision 20) elsewhere.
+that wants them uses a hook, which sees every event on its channel, and asks
+the device for the key state it needs.
+
+> **Amended in place, 2026-08-10 (session34).** The paragraph above named the
+> held-key view as a hook argument and `compy.input.keys_pressed` as the
+> out-of-event path. The first was already wrong — Decision 26 gives every
+> consumer LÖVE's own argument list and nothing added — and the second is
+> dissolved by Decision 30. **The decision itself is unchanged:** one trigger,
+> and a hook for everything past exact-or-class matching. Only where the hook
+> gets its key state has moved.
 
 **Consequence.** `shortcuts` stays the easy, predictable mechanism: exact
 match, one optional class marker, no corner cases to design against. Anything
@@ -1038,9 +1046,9 @@ keyboard and text, with the same error boundary and the same lifetime. Concretel
   enters the walk at the hook tier, and `find_shortcut` answers nil for a missing table rather
   than each channel special-casing itself. A pointer combo grammar is deliberately not invented
   here.
-- **Payloads are exactly LÖVE's arguments.** No held-key view is appended: a project reads that
-  through `compy.input.keys_pressed` (Decision 20), and appending it would change the signature
-  every existing pointer handler was written against.
+- **Payloads are exactly LÖVE's arguments.** No modifier state is appended: a project that wants
+  it asks the device (Decision 30), and appending it would change the signature every existing
+  pointer handler was written against.
 - **Derived clicks are events, not a bespoke surface.** The click timer only decides *which*
   event the raw presses amount to and applies the drift check, then emits through
   `love.handlers.singleclick(x, y)` like any native event. `compy.singleclick` /
@@ -1072,8 +1080,8 @@ gain a combo vocabulary — is answered: it did, and it needed no vocabulary of 
 **Decision.** Shortcuts, hooks and the widget receive exactly the arguments LÖVE delivers for the
 event, unchanged and in LÖVE's order: `keypressed(key, scancode, isrepeat)`,
 `mousepressed(x, y, button, istouch, presses)`, and so on. No argument is added, removed or
-reordered on the way through the chain. The held-key set is not among them: a consumer reads
-`compy.input.keys_pressed`, which works inside a handler and outside one alike (Decision 20).
+reordered on the way through the chain. Modifier state is not among them: a consumer asks the
+device, which works inside a handler and outside one alike (Decision 30).
 
 **Why.** The chain used to hand keyboard and text consumers a `(k, keys_pressed, isrepeat)` triple
 of its own invention while pointer channels got LÖVE's arguments untouched — so the "uniform
