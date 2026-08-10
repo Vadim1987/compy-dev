@@ -390,3 +390,44 @@ tree clean of tracked modifications (only the known untracked scratch + the thre
 - **Fourth instance of the sprint's recurring pattern**, now with a framework-level edge: `modHeld`
   copies `Key.ctrl()`, `is_shift_down()` copies `Key.shift()`, the polls copy `keypressed`, and
   sapper copies **class matching itself**.
+
+## 2026-08-10 — EXECUTION: P14c, the tests step, in five commits
+
+Mode transition named and taken on the owner's go. Suite at each commit, in order: 955 (mock fix,
+no count change) → 948 → 944 → 940 → 940. Arithmetic reconciled in every message.
+
+- `d630d12f` **mock fix, alone.** `isDown` variadic + `rctrl`/`rshift`/`ralt` tokens. The
+  left-hand tokens are Emacs letters and the right-hand keys have none, so a test names the key.
+- `6ea411ab` **the withdrawn contract's spec** — 7 cases. **The step's range was WRONG and I did
+  not inherit it:** it said `:781-901`; the contract ends at `:863` and `:865-899` are the two
+  **widget uniform-signature** cases, Decision 26's own contract, live and unrelated. The planned
+  cut would have deleted them silently. Session33 "re-verified" this range — a re-verification
+  that checked the start and not the end.
+- `8fd6d589` **the dead NFR guards** — 4 cases, deliberately a separate commit: this is the one
+  place the suite loses reach, and the PR owes a reader that distinction. F7's `tests.md` line
+  actualized in the same commit, plus the same enumeration inside the spec file, which nobody had
+  listed.
+- `e3d94104` **rename + citations.** `keys_pressed_spec.lua` → `input_combo_serialisation_spec.lua`
+  (matches the documented `input_*_spec.lua` convention; the survivor keeps Decision 8). Deleting
+  the block also killed the **startup-wiring preamble**, which falsifies `event_dispatch_layers.md`
+  **independently of the rename** — the plan predicted exactly this and it held.
+- `2aaf07c1` **the fixture holds modifiers on the device.** `mock.hold/unhold`, wired into
+  `press`/`repeat_press`/`release` in the order hardware guarantees, and lifted in `F.reset()`.
+
+**Two findings from the fixture change, and the second is the one that matters.**
+
+- **13 cases failed on device leakage** before the reset was added: `chord()` never releases, so a
+  modifier stayed down into the next test. The tracked set had `F.reset()`; the device had nothing.
+- **A real, pre-existing shadowing became testable for the first time.** Three cases registered a
+  project shortcut on **Ctrl+S** and asserted it fires. The gateway's power shortcuts **poll the
+  device**, and Ctrl+S stops a running project *before* dispatch reaches the route — so in
+  production that binding never fires. They passed only because the fixture's device was blank.
+  Moved to `ctrl+j` with the reason in a comment; their subject is normalisation, not who wins.
+  **Not this step's business to fix** — P9e is withdrawn and the gates' polling is settled — but it
+  is a fixture-fidelity defect of the class S7 was about, found by making the fixture honest.
+- `Controller.keys_pressed = { }` **stays** in `F.reset()`: it goes with the field, in P14d.
+  Removing the reset while the field still exists would leak set state between tests, and this
+  branch owns two order-dependent cases already.
+- **Delegated** the rename's blast-radius sweep to a Sonnet worker (model passed explicitly,
+  read-only, prompt of record in `validation/prompts/`), rather than trusting my own three known
+  citations as complete.
