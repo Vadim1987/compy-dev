@@ -193,8 +193,8 @@ delivers for that event** — `keypressed(key, scancode, isrepeat)`,
 `mousepressed(x, y, button, istouch, presses)`, and so on. A handler you
 already wrote as `love.keypressed` works unchanged when it becomes a hook,
 because it is the same signature. Held modifiers are not among the arguments:
-read `compy.input.keys_pressed`, which works inside a handler and outside one
-alike.
+ask the keyboard for them with `love.keyboard.isDown`, which works inside a
+handler and outside one alike — see "Held keys" below.
 
 A combo is its modifiers plus **one** trigger — `'ctrl+alt+s'`. The modifiers
 are optional: `'s'` is a valid combo and binds a bare unmodified S, the same
@@ -259,14 +259,12 @@ All three wrap a hook the same way, but think before you do: a whole-channel
 hook wrapped in `stop_here(ignore_repeat(...))` swallows every repeat on that
 channel, so held backspace and held arrows stop repeating in the overlay too.
 
-> REMARK: "not expressible as shortcuts and should be processed inside hook, if needed"
-> REMARK: we may decide not to deliver keys_pressed as an argument, expecting project to access it via compy.input.keys_pressed instead (already available) -- lets popularize that way
 Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else
 being held, so holding a movement key would silently break unrelated
-shortcuts. For that, and for anything else beyond exact-or-class matching, use
-a hook: it receives the held-key table as its second argument on all three
-channels, and `compy.input.keys_pressed` is readable anywhere.
+shortcuts. Anything beyond exact-or-class matching belongs in a hook, which
+sees every event on its channel; "Shortcuts that set a flag" below is the shape
+to reach for when the two have to work together.
 
 `compy.input.hooks.keypressed`, `.keyreleased`, and `.textinput` are one
 fallback function per event. At activation, an existing project `love.*`
@@ -364,36 +362,66 @@ cannot be registered.
 
 ## Held keys
 
+> PENDING: this section documents the device read as the only held-key answer,
+> while `compy.input.keys_pressed` still exists in the tree. The platform step
+> that removes the field removes this marker.
+
 **Reach for a combo first.** To react to a *modified event* — a click with Ctrl,
 `Shift+Enter`, `alt+p` — register a shortcut and let the framework match it:
 `shortcuts.keypressed['ctrl+s']`. That says it once, as data, in a vocabulary
 that is already folded and already the same on every channel. Asking about
 modifiers imperatively inside a handler turns into a cascade repeated at every
-call site. The held set below is for what a combo cannot express.
+call site.
 
-`compy.input.keys_pressed` is a read-only table of the keys held right now,
-keyed by LÖVE key name: `compy.input.keys_pressed['lshift']` is `true` while
-**the left** shift is down and `nil` otherwise. Reading it is allowed anywhere,
-including from `love.draw` — which is the point, since a project that *draws*
-held state has no event argument to consult.
+For what a combo cannot express, **ask the keyboard**. `love.keyboard.isDown`
+takes any number of key names and answers about the device as it is right now:
 
 ```lua
 function love.draw()
-  local shifted = compy.input.keys_pressed['lshift']
-      or compy.input.keys_pressed['rshift']
-  draw_keycaps(shifted)
+  draw_keycaps(love.keyboard.isDown('lshift', 'rshift'))
 end
 ```
 
-Writing to it raises: the project observes the held set, it does not own it. It
-is **not** passed to handlers — every shortcut, hook and widget call receives
-LÖVE's own arguments and nothing added, so a handler that wants held state reads
-`compy.input.keys_pressed` the same way a `love.draw` does.
+Key names are LÖVE's own, so left and right modifiers are two separate keys —
+name both when either will do. (Combo strings *are* folded:
+`shortcuts.keypressed['shift+a']` matches either shift.)
 
-Left and right modifiers are **not** folded here — this is the raw held set,
-so test `lshift` and `rshift` separately. (Combo strings *are* folded:
-`shortcuts.keypressed['shift+a']` matches either.) Iterating the table yields
-nothing on the shipping runtime; index it by name.
+The call works anywhere: in a handler, and in `love.draw`, which is the point —
+a project that *draws* held state has no event argument to consult. Handlers
+need nothing added to their arguments for it, and get nothing added: every
+shortcut, hook and widget call receives LÖVE's own argument list.
+
+## Shortcuts that set a flag
+
+Some logic does not fit inside one shortcut function — it needs to know a key is
+held *while something else happens*, or it spans several events on different
+channels. Growing the shortcut is the wrong move: it ends up asking the keyboard
+the same question at every call site, which is the cascade shortcuts exist to
+replace.
+
+Let a tiny shortcut record the fact instead, and let the hook read it. The
+shortcut sets a flag and **does not consume** its event, so everything
+downstream still sees the key; the real logic then branches on your project's
+own state rather than on the hardware:
+
+```lua
+local fn = compy.input.fn
+local drawing = false
+
+compy.input.shortcuts.keypressed['space'] = fn.side_run(function()
+  drawing = true
+end)
+compy.input.shortcuts.keyreleased['space'] = fn.side_run(function()
+  drawing = false
+end)
+
+compy.input.hooks.mousemoved = function(x, y)
+  if drawing then paint(x, y) end
+end
+```
+
+The binding stays declarative and listable, the hook stays a plain function of
+state you own, and nothing in between has to ask which keys are down.
 
 ## Callback assignments
 
