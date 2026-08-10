@@ -227,3 +227,37 @@ lives only in the plan is a rationale the PR does not carry. `83af97db`.
   blanket marker. Marker count still 11 (one question marker retired, one entry marker added).
 - **No new decision for the mod-only rule** — Decision 21 already states it verbatim. Minting one
   would give a ratified rule two homes to drift between.
+
+## 2026-08-10 — the guide's ladder landed; harmony investigated; the debt reframed
+
+- **Ladder correction applied** (`aa38dafa`): `doc/input_api.md` §"Held keys" now teaches three
+  rungs and says outright they are not equal. `Key` introduced as something a project has. Still
+  **zero** ledger citations in that guide (session33's naming ruling).
+- **No gui tests** (owner): they would test an *instance* of a general rule — `check_combo`'s
+  one-trigger check and "an ordinary key binds" — which is the 105-cases-for-105-characters trap.
+- **Harmony, investigated at the owner's request.** Two hypotheses tested against base
+  `3256aac`:
+  - **The decisive find is not about harmony.** Base `key.lua` is 53 lines with **three**
+    modifier pairs — **no `gui_k`, no `mod_triples`, no combo machinery**. `gui` entered in
+    `c7083dda` (M2a), **this feature's own commit**. So Decision 31 reverts our own addition, in
+    scope, and its rationale is now **verified rather than argued**.
+  - **Harmony's gui is pre-existing** — byte-identical at base, from `4203de7f`, an ancestor of
+    the PR base.
+  - **Hypothesis (b), right shape wrong author:** the token map is **Emacs notation** — `C`/`M`/
+    `S`/`A`/`H` is exactly Emacs's modifier alphabet. The tell is the collapsing: `Meta` *and*
+    `Alt` → `lalt`, `Hyper` *and* `Super` → `lgui`, distinct modifiers upstream. Borrowed
+    vocabulary, not an intended compy capability. Extends session30's §10 (*harmony is a statement
+    of what the input interface used to be*) rather than contradicting it.
+  - **Hypothesis (a), inverted:** the tokens have always been inert, and **Decision 30 alone would
+    have activated them** — once the matcher reads the device, `Super-s` would serialise as
+    `gui+s` for the first time ever. Decision 31 prevents that. It takes nothing from harmony.
+  - **Retracted my own proposal** to remove harmony's tokens in the platform step: pre-existing
+    code, swept into our PR, for no correctness gain.
+- **Owner reframed the debt, and the reframing is the point.** Not *"harmony has misleading
+  tokens"* — that implies harmony is broken and someone owes a fix, when **the feature's only
+  obligation to harmony is to stay compatible**. Instead a framework-level observation:
+  `capslock`, `tab`, `lgui`/`rgui` get **no special treatment** from shortcuts or `Key.is_mod`.
+  Verified stronger than claimed — **no code outside `src/examples/` mentions capslock or tab at
+  all**. Written to name the gap (no vocabulary for keys that are neither modifiers nor ordinary
+  characters) while **favouring none of the three open directions**, with no scheduled revisit.
+  `c53251a1`; the `gui` entry's revisit line softened so it no longer reads as the only route.
