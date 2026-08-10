@@ -102,6 +102,11 @@ concern**; when a unit of work contains two, it is two commits, and the smaller 
 - **A production fix is always its own commit**, never folded into the docs/tests/marker work that
   surfaced it. Its message carries the evidence: what was broken, how it is reachable, and why the
   breaking test proves it (`agents/development.md`: start with a breaking test, then implement).
+- **A deviation is never documented in the commit message alone (owner directive, 2026-08-10).**
+  Stating it there is necessary and not sufficient: a commit message is not part of the
+  workspace a reader has open. Every accepted behaviour change, widening or trade-off lands in
+  a document that fits — the persistent internals doc, the debt register, the guide — and in a
+  code comment where no document fits. The commit then says the same thing for the reviewer.
 - **A batch is not a commit unit.** A mop-up batch of N markers may land as several commits if it
   contains separable concerns; one commit per batch is a coincidence, not the rule.
 - **Suite green at every commit** — the count is stated in the message, and any change to it is

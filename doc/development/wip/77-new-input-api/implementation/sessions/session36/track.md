@@ -80,3 +80,22 @@ Mode named at boot and held: execution. No design call arose.
   quits on the release. Filed in the register as a question of deletion, not of rung. Checked in
   code rather than assumed: an earlier draft of the entry said "may never have fired", which the
   non-consuming gate makes wrong.
+
+## 2026-08-10 — owner directive: a deviation in a commit message is not documented
+
+Owner, on reviewing the landed work: *"do not store deviations in commit messages -- they should
+be documented somewhere inside workspace/codebase -- at least as comments in code, if no doc
+fits."*
+
+- **The point, restated:** a commit message is not part of the workspace a reader has open.
+  Necessary, not sufficient.
+- Sapper's two accepted differences were the only ones living solely in a commit. They now sit in
+  `internals/examples/sapper.md` §"Click handling" — the doc that fits — with the short form in
+  the code beside the registrations, pointing there (`f71f5630`). The stale summary line and the
+  index row went with them: the doc still advertised `love.mousepressed`.
+- Also fixed while there: turtle's internals doc **quoted a poll the example no longer makes**,
+  and put `shift+r` on the wrong channel (`bd3ad646`).
+- Everything else this session already lived in the workspace — the turtle Ctrl+Escape finding in
+  the debt register, the smoke-buffering lesson in the step, the `gui` correction in the guide.
+- Written into `agents/validation.md` under commit granularity as a standing rule, so it outlives
+  this session.
