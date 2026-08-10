@@ -28,6 +28,12 @@ action; revisit at the named point).
 
 ### The held-key set is never cleared on focus loss, so it can go stale
 
+> PENDING: dissolved with the held-key set (`../decisions/input.md`, Decision 30).
+> The platform step that removes the set deletes this entry.
+> Note when deleting: this entry and "`keys_pressed` can go stale on focus loss"
+> below are **two entries for the same defect**, a duplicate that predates the
+> dissolution — so the register loses two entries for one fix, not two fixes.
+
 - **State:** `compy.input.keys_pressed` is maintained purely from events — a key
   is added on `keypressed` and removed on `keyreleased`. The gateway installs no
   focus handler (`controller.lua`, the callback table marks focus **SKIPPED**),
@@ -60,6 +66,12 @@ action; revisit at the named point).
 
 ### The gateway asks the device a question about an event
 
+> PENDING: withdrawn rather than fixed (`../decisions/input.md`, Decision 30).
+> The gate was asking the right question all along: once the device is the single
+> source of modifier truth, `dispatch` polls the same way the gate always did and
+> the inconsistency this entry describes is what disappears. The platform step
+> deletes this entry.
+
 - **State:** Decision 29 settles that event-time questions are answered from the
   event-tracked `Controller.keys_pressed`. The gateway's own gates do not follow
   it: `handlers.keypressed` and `handlers.keyreleased` reach for `Key.ctrl()` /
@@ -79,6 +91,9 @@ action; revisit at the named point).
   when it lands.
 
 ### The held-key surface is a table that cannot be iterated
+
+> PENDING: dissolved with the held-key set (`../decisions/input.md`, Decision 30).
+> The platform step that removes the set deletes this entry.
 
 - **State:** `compy.input.keys_pressed` is delivered as a read-only proxy — an
   empty table whose metatable carries `__index` and `__pairs`
@@ -280,6 +295,9 @@ action; revisit at the named point).
 
 ### `keys_pressed` can go stale on focus loss
 
+> PENDING: dissolved with the held-key set (`../decisions/input.md`, Decision 30).
+> The platform step that removes the set deletes this entry.
+
 - **Where:** `src/controller/controller.lua` — `keys_pressed` is maintained
   from `keypressed`/`keyreleased` only.
 - **State:** If the window loses focus with a key held, `keyreleased` may
@@ -415,6 +433,12 @@ question, not resolved here.
   hands participants, resolved per access so it cannot go stale. Placed on
   `compy.input` rather than at the top of `compy`: it is input state, and the
   input guide is where a reader looks for it.
+- **Resolution superseded** (`../decisions/input.md`, Decision 30): the view is
+  dissolved and no held-key surface is exposed. **The need this entry recorded
+  is still met, by a different answer** — the renderer that ruled out
+  callback-arg access asks the device instead (`love.keyboard.isDown`), which a
+  per-frame draw can do as freely as a handler can. The entry stays RESOLVED;
+  only what resolves it has changed.
 
 ### Shortcuts key-repeat semantics are shipped unsettled (RESOLVED, 2026-08-03)
 
@@ -440,6 +464,9 @@ question, not resolved here.
   wrapper has one signature and composes across all three tiers.
 
 ### Held-key pressed-keys view iteration is index-only on the shipping runtime
+
+> PENDING: dissolved with the held-key set (`../decisions/input.md`, Decision 30).
+> The platform step that removes the set deletes this entry.
 
 - **Where:** `src/controller/controller.lua`, the `held_keys()` read-only
   pressed-keys view over `Controller.keys_pressed`.
@@ -686,9 +713,9 @@ question, not resolved here.
   keyboard and text channels; they would widen the gap between them.
 - **Cost, if it is ever taken:** threading the scancode from the gateway
   through `forward_*` and the routes to the chain, and a scancode-keyed held
-  set — `Controller.keys_pressed` is key-name-keyed, and `combo_string`
-  builds its modifier prefixes from it, so a scancode combo would otherwise
-  be a hybrid (modifiers by name, trigger by position).
+  set — `combo_string` builds its modifier prefixes from key names it asks
+  the device about, so a scancode combo would otherwise be a hybrid
+  (modifiers by name, trigger by position).
 - **Revisit:** when a project needs layout-independent positional keys.
 
 
@@ -728,8 +755,9 @@ Not commissioned for closure; each may never need action.
   only the four modifier classes, so a held non-modifier key never enters the
   combo string at all (measured: `a` and `b` held, `b` pressed → `ctrl+alt+b`,
   no trace of `a`). Multi-key chords are outside the grammar; a project that
-  wants "a and b held together" reads `compy.input.keys_pressed`
-  (Decision 20).
+  wants "a and b held together" gives each key a shortcut that sets a flag
+  without consuming its event and reads the flags in a hook (`doc/input_api.md`,
+  "Shortcuts that set a flag"), or asks the device directly.
 - **Resolution:** registration now **raises** on a combo naming more than one
   trigger, or none (`../decisions/input.md`, Decision 21) — the same treatment
   `show`/`configure` give an unrecognised key. `a+b+*` no longer registers the
@@ -770,7 +798,7 @@ Not commissioned for closure; each may never need action.
   about a *modifier* class. Combos of ordinary keys (`a+b`) remain outside the
   grammar by design, since including held non-modifiers would make every
   binding conditional on nothing else being held. That case is a hook plus
-  `compy.input.keys_pressed`.
+  flag-setting shortcuts (`doc/input_api.md`, "Shortcuts that set a flag").
 
 ### A keyboard-hooks-only project does not count as interactive
 
@@ -830,10 +858,17 @@ Not commissioned for closure; each may never need action.
 - **State:** A defined modifier pair with no behavioural reader — could be
   a deliberate "ignore gui keys as a modifier" choice, or an expansion
   point left open for a future accessor.
-- **Why it stands:** Harmless and additive; parallels the established
+- **Why it stood:** Harmless and additive; parallels the established
   `*_k` pattern.
-- **Revisit:** When it is decided whether `gui` is a first-class modifier —
-  add `gui()`/`is_gui()`, or record that `gui` is intentionally ignored.
+- **It is no longer harmless** (`../decisions/input.md`, Decision 30): the
+  combo-string builder used to fold `gui` out of a table that carried every
+  held key, and now asks the device one modifier at a time through
+  `Key.ctrl()`/`Key.alt()`/`Key.shift()` — for which `gui` has no counterpart.
+  Nothing registers a `gui` combo today, so nothing breaks; but the fourth row
+  of `mod_triples` now has no way to be answered.
+- **Revisit: at the platform step**, which cannot avoid the question — add
+  `gui()`, read the pair directly for every row, or drop `gui` from the
+  serialisation and say so.
 
 ### Overlay-shape test exercises a stub, not the real draw wiring
 
