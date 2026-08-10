@@ -473,3 +473,40 @@ Deliverable `../../../validation/outcomes/S35-keys-pressed-spec-citation-sweep.m
   the quit *callback's* decision (drop to console vs exit). **Nothing drives the gateway's
   `keyreleased` ctrl+escape gate** — confirmed by grep, and the worker's pending row for it is
   right. The lesson is the sprint's own: a test *named* for a combo is not a test *of* it.
+
+## 2026-08-10 — EXECUTION: P14d, the platform step, in five commits
+
+Owner's go after the briefing, with the condition I set myself: **any design call and I stop**.
+None arose — the step was fully specified. Suite **942 / 0 / 0 / 10 at every commit**, unchanged
+throughout, which is itself the result worth noting: the mechanism came down without moving a
+single assertion, because P14c had already pointed the fixture at the device.
+
+- `ac33ccb5` **the modifier set closes** (Decision 31). First, because the ruled shape calls a
+  helper per `mod_triples` row and `Key` has no `gui()` — a fourth row would have forced an
+  accessor for a capability being removed.
+- `b0130412` **the matcher asks the keyboard.** `combo_string`/`any_mod` lose the parameter and
+  ask `Key.*`; `find_shortcut` rewired, three call sites; the guard hoisted. **The rewritten combo
+  cases landed here as the breaking tests** — the commit-shape finding from §11.4.2, and it held
+  exactly as predicted.
+- `91fbf07e` **the gateway stops bookkeeping**, `9cb5b636` **the surface goes, seam and all** —
+  `build_input_surface` takes no `get_keys` at all, the adjacent-code rule's sharpest case.
+- `c6d05685` **the docs become true.** Zero `PENDING` in the persistent corpus; five debt entries
+  **deleted** — four defects, one recorded twice.
+
+**Two deviations, both deliberate, both in the commits and now in the step.**
+
+- **The `gui` test case was rewritten, not deleted** as the step said. Its subject is the complete
+  precedence fold and it is the only case pinning all modifiers in order at once; deleting it
+  would have lost that. No case names `gui`, which is what the ruling actually required.
+- **The guard hint was in the WRONG CELL** — written into P14e (examples) while being entirely
+  about `find_shortcut`. Found while executing, moved to P14d (`9e241aaf`). **This is the exact
+  drift the table's own rule exists to prevent**, and it happened in the session that wrote the
+  rule. Worth carrying: the rule is not self-enforcing, and the only thing that caught it was
+  executing the step and asking where its instructions were.
+
+**Judgement I made rather than delegating up:** the blanket "Key state" marker covered a section
+containing **pre-existing** citation rot. Removing the marker certifies the section, so I fixed the
+one falsehood I could verify cheaply (a line range off by ~60, replaced with a named anchor, which
+cannot drift the same way) and **left the `DEFERRED` claim alone** — it carries the owner's own
+`REMARK` questioning it, and belongs to the comment sweep. Recorded so the next session does not
+read the certification as covering it.
