@@ -391,6 +391,11 @@ Held keys and combo strings use two deliberately different representations:
 - **combo serialisation** folds left/right and orders modifiers in fixed precedence
   (`ctrl`, `alt`, `shift`, `gui`), `+`-joined — `"ctrl+s"`, `"alt+shift+f4"`, bare `"escape"`.
 
+> **Amended by Decision 31, 2026-08-10.** `gui` is withdrawn from the modifier set: the
+> precedence order is `ctrl`, `alt`, `shift`. The serialisation rule itself — fold left/right,
+> fixed precedence, `+`-joined, trigger last — is unchanged; only the membership of the list
+> moves.
+
 `shortcuts` tables normalise assigned keys to canonical form on assignment, and dispatch matches
 through an overloadable matcher (default exact match), left as a marked seam for future
 glob/prefix needs.
@@ -1338,3 +1343,42 @@ at all.
 event-set migration, the harmony reconciliation that migration would have forced, and the open
 questions on recovery path, serialised form and repeat counting are **all** properties of the
 tracked set. They are withdrawn with it rather than deferred.
+
+---
+
+## Decision 31 — the modifier set is closed, and it is `ctrl`, `alt`, `shift`
+
+**Amends Decision 8**, whose serialisation rule named a fourth modifier row. Decisions 21 and 30
+stand unchanged and are the reason this one is small: 21 already rules what a combo may name, and
+30 already rules where modifier state is read from.
+
+**Decision.** The framework recognises exactly three modifiers — `ctrl`, `alt`, `shift`, each a
+left/right pair folded to its generic name. `gui` (super / cmd / win) is **not** a modifier.
+Combo serialisation orders the three in that fixed precedence; `Key` exports an accessor per
+modifier and no more; and `lgui`/`rgui` are ordinary key names.
+
+**Why `gui` is withdrawn rather than completed.** No stakeholder requirement asks for it and no
+shortcut has ever registered one. It was added for **symmetry** with a builder that folded
+whatever held-key table it was handed — a shape where a fourth row cost one line and answered
+itself. Decision 30 dissolves that shape: the builder now asks the device through a named accessor
+per modifier, and `gui` has none, so the row that was free becomes a thing to build and maintain
+for a capability nobody requested. This is the same ground Decision 30 gives for the tracked set
+itself: an implementation-time addition, reverted on the basis that it was never a requirement, in
+a change whose purpose is to leave the input API simpler than it found it.
+
+**What "not supported" means concretely** — it is a boundary, not a gap, and it is observable:
+
+- **A `gui` combo is refused at registration.** With `gui` outside the modifier set, `gui+s` names
+  two triggers, so `shortcuts.keypressed['gui+s']` raises Decision 21's registration error. A
+  project asking for the capability is told so, rather than binding something that never fires.
+- **`lgui` becomes an ordinary trigger.** `shortcuts.keypressed['lgui']` is a valid binding and
+  fires on the Super key, exactly as `shortcuts.keypressed['f5']` does. Membership of the modifier
+  set is precisely what makes a token a modifier rather than a trigger, and this is that same rule
+  running the other way.
+- **Nothing else observes it.** No shipped project or example registers a `gui` combo, so the
+  withdrawal removes no working behaviour.
+
+**Supportable in principle.** Re-adding it is a bounded change — a `gui()` accessor beside the
+other three, the row restored to the fold table, and the precedence list extended — and it should
+be done **if a requirement ever asks for it**, not for symmetry. The technical-debt register
+carries the pointer so the option stays discoverable from that side too.

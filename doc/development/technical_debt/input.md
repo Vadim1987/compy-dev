@@ -850,25 +850,26 @@ Not commissioned for closure; each may never need action.
   trigger; if a framework mechanism is adopted instead, a wildcard one-shot
   needs no combo lookup and this stays a corner.
 
-### `gui_k` modifier pair has no consumer
+### `gui` is supportable as a modifier, and deliberately not supported
 
-- **Where:** `src/util/key.lua` — `gui_k = { "lgui", "rgui" }` feeds only
-  `mod_triples`; there is no `gui()`/`is_gui()` accessor paralleling
-  `shift()`/`is_shift()`.
-- **State:** A defined modifier pair with no behavioural reader — could be
-  a deliberate "ignore gui keys as a modifier" choice, or an expansion
-  point left open for a future accessor.
-- **Why it stands:** Harmless and additive; parallels the established
-  `*_k` pattern.
-- **It stops being harmless** (`../decisions/input.md`, Decision 30): the
-  combo-string builder folds `gui` out of a table that carries every held key,
-  and under Decision 30 it asks the device one modifier at a time through
-  `Key.ctrl()`/`Key.alt()`/`Key.shift()` — for which `gui` has no counterpart.
-  Nothing registers a `gui` combo, so nothing breaks either way; but the fourth
-  row of `mod_triples` then has no way to be answered.
-- **Revisit: at the platform step**, which cannot avoid the question — add
-  `gui()`, read the pair directly for every row, or drop `gui` from the
-  serialisation and say so.
+> PENDING: the row still exists in `src/util/key.lua`. The platform step that
+> removes it makes this entry true; it is **not** deleted with the five
+> dissolution entries, because it records a standing choice rather than a
+> defect.
+
+- **Not a defect, and not deferred work.** `gui` (super / cmd / win) is outside
+  the modifier set by decision (`../decisions/input.md`, **Decision 31**), which
+  carries the rationale: never requested, added only for symmetry with the
+  table-driven builder Decision 30 dissolves. This entry exists so the option is
+  discoverable from the debt side; the decision is the authority.
+- **What it costs today:** nothing observable. No shipped project or example
+  registers a `gui` combo. `gui+s` is refused at registration (it names two
+  triggers, Decision 21) and `lgui` is bindable as an ordinary trigger.
+- **What re-adding takes:** a `gui()` accessor beside `ctrl()`/`alt()`/`shift()`
+  in `src/util/key.lua`, the pair restored to `mod_triples` and the fold table,
+  and the precedence list extended. Bounded and additive.
+- **Revisit: when a requirement asks for it** — not for symmetry, which is what
+  put it there the first time.
 
 ### Overlay-shape test exercises a stub, not the real draw wiring
 

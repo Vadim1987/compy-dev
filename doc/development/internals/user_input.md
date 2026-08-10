@@ -261,7 +261,7 @@ so nothing to reconcile against the device afterwards.
 `Controller.combo_string(k)` serialises a key event into a canonical
 combo string. It asks the device about each modifier row of
 `Key.mod_triples` in fixed precedence order — `ctrl`, `alt`,
-`shift`, `gui` — prepends the generic name of every row that is
+`shift` — prepends the generic name of every row that is
 held, then appends the triggering key. Left/right fold to the
 generic name here (`lctrl`/`rctrl` → `ctrl`, etc.), which is the
 only place the fold happens at dispatch. A key with no held
@@ -273,9 +273,10 @@ modifiers serialises to just the key name.
 -- escape with nothing held    → "escape"
 ```
 
-> PENDING: `Key` exports no `gui()` alongside `ctrl`/`alt`/`shift`, so the
-> fourth row has no helper of its own. The platform step settles whether to add
-> one or to read that pair directly, and removes this marker.
+There are three rows, not four: `gui` is not a modifier
+(`../decisions/input.md`, Decision 31), so `lgui`/`rgui` are
+ordinary key names and reach the builder as triggers like any
+other key.
 
 `Controller.any_mod()` answers "is any modifier held at all" and is
 the cheap pre-check the **triggerless** lookup runs first: a pointer
