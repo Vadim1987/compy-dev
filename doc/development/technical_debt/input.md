@@ -869,7 +869,35 @@ Not commissioned for closure; each may never need action.
   in `src/util/key.lua`, the pair restored to `mod_triples` and the fold table,
   and the precedence list extended. Bounded and additive.
 - **Revisit: when a requirement asks for it** — not for symmetry, which is what
-  put it there the first time.
+  put it there the first time. Whether the answer is a modifier at all is the
+  wider question in "Service keys have no special treatment" below; this entry
+  states only what re-adding `gui` *as a modifier* would cost.
+
+### Service keys have no special treatment: `capslock`, `tab`, `lgui`/`rgui`
+
+- **Where:** `src/util/key.lua` — `Key.is_mod` recognises exactly the `ctrl`,
+  `alt` and `shift` pairs, and the combo grammar (`split_combo`/`check_combo`)
+  treats every other token as a trigger. Verified: **no code outside
+  `src/examples/` mentions `capslock` or `tab` at all**, and `lgui`/`rgui`
+  appear nowhere in the framework's own dispatch.
+- **State:** these keys therefore bind and dispatch exactly like `a` or `f5`.
+  Each of them is unlike an ordinary key on real hardware, in a different way:
+  `capslock` carries a lock state the framework cannot query and whose release
+  is not reliably delivered; `tab` is a traversal key that a UI layer may want
+  to claim before a binding sees it; `lgui`/`rgui` are owned in part by the
+  desktop environment, which may consume a chord before the app is told.
+- **Why it stands:** nothing is broken by it, and nothing has needed it. No
+  shipped project or example binds any of the three as anything but a plain
+  key.
+- **Why it is written down:** the framework has **no vocabulary** for this
+  group — they are neither modifiers nor ordinary character keys, and the
+  input model currently has only those two categories. That is the observation;
+  the shape of any answer is deliberately left open.
+- **Revisit: worth one review, at no scheduled point.** At least three
+  directions are open and this entry favours none of them — widen the modifier
+  set, keep it deliberately narrow (which is the standing position,
+  `../decisions/input.md`, Decision 31), or introduce a distinct class for
+  service keys with its own rules.
 
 ### Overlay-shape test exercises a stub, not the real draw wiring
 
