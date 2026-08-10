@@ -70,3 +70,27 @@ dispatch-layers. Suite 955/0/0/3 at each.
   note for P13.
 - Tree restored: instrumentation reverted, scenario deleted, the four moved-aside scenarios
   moved back. `git status` clean but for the known scratch.
+
+## 2026-08-10 — cold review of the docs step (owner-requested), three fixes
+
+Sub-agent: **Sonnet, model passed explicitly**, read-only, briefed cold — given the diffs and
+the tree, deliberately **not** given my reasoning or the plan. Prompt of record
+`../../../validation/prompts/S34-docs-cold-review.md`, report
+`../../../validation/outcomes/S34-docs-cold-review.md`. Fixes in `13f6df5b`.
+
+- **It caught a real regression I introduced.** Two debt-register bullets asserted in the
+  **present tense** that the builder asks the device. It does not — `controller.lua:395` still
+  takes the table. Worse: the sentence one of them replaced was **true** before my edit. The
+  docs-ahead-of-code discipline is exactly where this fails, and I failed it in the one file
+  whose sibling entries all carry markers.
+- **The key-files table** had silently lost `keys_pressed`/pressed-keys view from the gateway
+  row while both are live exports — an omission with no marker reads as a description of today.
+- **Marker scope** made explicit: a narrower marker inside a marked section could be read as
+  ending the outer one's coverage.
+- **Two declined, with reasons recorded in the commit:** the `gui` entry's placement under
+  *"Anticipated — revisit at the named point"* is right, since naming the point is what that
+  section is for; and its two non-findings (the nested repo's absent history, the mock's
+  single-arg `isDown`) are known and already recorded elsewhere.
+- **Clean bills worth having:** heading-rename citations all resolve, `../` links resolve, the
+  new code example's API verified against real code and 5.1-safe, ledger tombstone discipline
+  intact.
