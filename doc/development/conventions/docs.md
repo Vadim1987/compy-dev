@@ -54,3 +54,20 @@ reviewed: none | <name>, <YYYY-MM-DD>
 - Cite canonical docs (`doc/…`), never a feature's ephemeral working tree
   (`doc/development/wip/…`), and cite a **named section** rather than a
   paragraph number.
+
+## Vocabulary: "de-facto behaviour" has a boundary (owner ruling, 2026-08-11)
+
+**"De-facto behaviour" names what preceded a feature and is being canonicalised by it.** It must
+**never** describe behaviour the feature itself introduced.
+
+A *decision* is a choice made during a feature's design or development. Behaviour that predates
+the feature and is merely being written down is **documentation of de-facto behaviour** — it may
+well deserve a place in an internals guide, and it does **not** deserve a ledger entry, because
+nothing was decided.
+
+**Why the rule is written down rather than assumed.** The confusion is characteristic of an
+assistant reading the current tree: a shape that has been in the code for twenty minutes reads
+exactly like a shape that has been there for a year, and calling the former *de-facto* turns a
+choice the team made — and could revisit — into an inherited fact nobody owns. The test is
+mechanical and cheap: **compare against the pre-feature base.** If the behaviour is there, it is
+de-facto; if it arrived with the work, it is a decision, however obvious it now looks.

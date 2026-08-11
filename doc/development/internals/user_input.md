@@ -75,8 +75,7 @@ The input view height is `input_max = 14` lines. This is a display limit only �
 
 Text selection works across lines. `Shift+arrow` extends selection; releasing shift releases it. `UserInputController.disable_selection` (set to `true` in editor mode's input instance) suppresses selection — the editor uses its own block-level selection model, not character-level selection in the input.
 
-> REMARK: does this translation stay true for project's input widget (or was it ever true for project?)
-Mouse click on the input widget (translated from screen coordinates to input grid via `_translate_to_input_grid`) sets the cursor position. Drag extends selection. The coordinate translation is bottom-relative: line 0 is the bottom line of the input, which is non-obvious.
+Mouse click on the input widget (translated from screen coordinates to input grid via `_translate_to_input_grid`) sets the cursor position. **This is uniform across console, editor and a project's own widget** — there is one `UserInputController` class and the project route passes that same instance (`love.state.user_input_controller`) as its widget, so there is no project-specific translation path. The one exception is per-instance, not per-mode: an instance constructed with `disable_selection` skips the whole mouse path, which is what editor mode does. Drag extends selection. The coordinate translation is bottom-relative: line 0 is the bottom line of the input, which is non-obvious.
 
 ### Error state
 
