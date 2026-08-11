@@ -274,3 +274,33 @@ Listed so the replanning has a starting point, not as decisions:
 - **A new primitive is new API surface**, which the strategic frame requires to be justified in the
   PR description — or deliberately deferred past this release. **That question is unruled and is
   the biggest open one:** the principles are documentation, but P5.1 is code.
+
+
+---
+
+## 4. What this is, for the PR (owner's framing, corrected 2026-08-11)
+
+**Do not say "we replaced a tracked mirror".** There was **no tracked mirror before this PR** —
+verified: zero occurrences of `keys_pressed` in `src/` at the base `3256aac`, entering in
+`2a156025`, the feature's own first milestone.
+
+**The accurate account, in the owner's terms.** The tracked mirror was introduced out of an early
+*feeling* that polling needed to be a legitimate, centralised method — a feeling that was **never
+analysed at the time**. The analysis was effectively deferred to *"we will see how it is used"*.
+**Now we see**, and this document is that deferred analysis arriving: four examples, three
+independent re-implementations of the left/right fold, and three defects of the shape P2 names.
+
+**So the shape of the episode is: the feature introduced a surface, use disclosed what was
+actually needed, and the surface was withdrawn in favour of stating the need properly.** The
+mirror came and went **inside the branch**. On that axis the diff is net-zero, and the residue is
+not code but understanding — the principles, plus a filed proposal for the primitive the original
+feeling was groping toward.
+
+**The consequence for the PR description, which is not net-zero and needs saying.** The *code*
+leaves no trace, but the **ledger does**: Decisions 13, 20 and 29 established the surface, and 30
+and 31 withdrew it, and all five are in the persistent corpus and therefore in the diff. A
+stakeholder reading the decision log will meet five decisions about a surface that **never
+ships**. Tombstone discipline says they stay — so the justification table owes a line that says
+plainly what happened: *an implementation-time surface was introduced, its need was tested against
+real use, and it was withdrawn; the decisions are kept because the reasoning is the durable part.*
+Without that line, the ledger reads as churn rather than as a question asked and answered.

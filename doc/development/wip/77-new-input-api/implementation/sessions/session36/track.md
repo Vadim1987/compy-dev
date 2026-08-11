@@ -406,3 +406,21 @@ Report `../../../validation/reviews/S36-fable-principles-review.md`, prompt in `
   **never raises**, so the loud-failure property P5.1's safety rests on **would not be exercised
   by the suite at all** — only by the real engine. Same for `love.mouse.isDown`, which does not
   raise on an out-of-range button, so pass-through would not fail loudly for mouse tokens.
+
+## 2026-08-11 — owner corrects the PR framing: nothing was "replaced"
+
+- **My phrasing overstated.** *"We replaced a tracked mirror"* implies the mirror pre-existed. It
+  did not: zero `keys_pressed` at base `3256aac`, introduced at `2a156025` by this feature's own
+  first milestone.
+- **Owner's accurate account:** the mirror was introduced on an early **feeling** that polling
+  needed to be a legitimate centralised method — a feeling **never analysed at the time**, with
+  the analysis deferred to *"we will see how it is used"*. **Now we see**, and the principles
+  document *is* that deferred analysis arriving.
+- **So the episode's shape is:** surface introduced → use disclosed the real need → surface
+  withdrawn, need stated properly. The mirror came and went **inside the branch**; on that axis
+  the diff is net-zero and the residue is understanding, not code.
+- **What is NOT net-zero, and I raised it:** the **ledger**. Decisions 13/20/29 established the
+  surface, 30/31 withdrew it, and all five are persistent and therefore in the diff — a
+  stakeholder meets five decisions about a surface that never ships. Tombstones stay, so the
+  justification table owes a line saying a question was asked and answered, or the log reads as
+  churn. Written into the proposal as §4.
