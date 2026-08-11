@@ -133,3 +133,48 @@ describing/explaining the defect is fine."*
   ten→eight sites, `isMod` six call sites, `bubble` recommended out of scope, the relative-mode
   item), and the parent plan's Phase U records the example half as done for `keyboard` with the
   local-branch trap. **`maze` still owes both steps** — the input reading, then the merge.
+
+## 2026-08-11 — owner opens P18 with three instructions, and corrects my vocabulary
+
+Owner: focus on P18; **cascading step ids** (`P-18-01`, `P-18-02`…, with `-00` deliberately
+marking the initial analysis/planning pass), so `P-17-00` is maze's merge+evaluate+plan; the
+**agenda stored on disk**, not in chat; walk through **every** decision rather than rubber-stamp
+one ("not touching bubble" named as the example); and the heal is **not mechanical** — they need to
+see how `textinput` is used in the second project before design.
+
+- **Terminology correction, and it is a real one.** *"Using the word 'judge' as a load-bearing term
+  confuses me — I would speak in well-defined non-ambiguous terminology: code, functions, calls,
+  variables. 'Glyph' is also vague — let's speak in terms of specific LÖVE2D events and their
+  payloads."* Both words came from the example's own comments and the design note, and I had
+  carried them into planning prose. The exposition is written in `love.textinput(text)` /
+  `love.keypressed(key, scancode, isrepeat)` and named functions; `spendGlyph` / `GLYPH_CLAIMED`
+  appear **as identifiers only**. Checklist item "unratified terminology" — caught by the owner,
+  not by me.
+- **Mode named and raised before starting:** this session has run research → execution (the merge)
+  → and now analysis+design, which is the transition their own discipline says to name. Recommended
+  continuing here rather than handing cold, on the grounds that the design's central input is the
+  upstream code I have just read and they have not; the risk (a design built inside a long
+  heterogeneous context) stated rather than hidden. They said go.
+- **THE FINDING, and it decides the heal's shape.** The ratified design's rule 2 is a **content**
+  test (`text == lastText`), and its own document states the precondition it rests on — *"every
+  target is a single character… if a later stage ever asks the player to type a word, this design
+  must be revisited, `lastText` would be deduplicating the letters of the answer against each
+  other"*. **`words.lua` is exactly that, and the merge put it in the tree.** Typing `"all"` loses
+  its second `l`; the player unsticks it only by typing a wrong character, which knocks and costs
+  the word its gauge unit. Measured, not asserted: **224 corpus words carry a doubled letter** and
+  the generator is order-2 over that corpus.
+- **`spendGlyph` is a press-identity test** — has this KEY had one `love.textinput` accepted since
+  its last `love.keyreleased` — and does not have that failure. Its cost is the one the design
+  document names: a `love.textinput` arriving after its own `love.keyreleased` is rejected, so a
+  very fast tap is lost. So the first open question is which property the shared layer provides,
+  and it is genuinely open — the design note was right about Alt and is wrong about the tree it now
+  lives in.
+- **Second-order consequences enumerated in the document, not decided:** `ALT_JUDGE` is named and
+  scoped for one scene; `blocked` exists for a target transition Words does not have (its advance
+  is `WORDS.pos + 1`, within a line); `wordsBad` has **no** idempotence guard where `altWrong` has
+  `ALT.fumbled`; `words.lua` uses `love.keypressed` **only on its end screen**, so it has no
+  key-name targets at all.
+- Written: `../../../validation/reviews/P-18-00-keyboard-deepfix-design.md` (agenda §0, exposition
+  §2–§7, open questions §8, nothing decided). Plan amended in the steps that act on it: the
+  numbering convention under §4, `P-17-00` as a minimal note in §15.3, and a `P-18-00` block in
+  §15.4 pointing at the document.

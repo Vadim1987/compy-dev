@@ -519,6 +519,22 @@ Stated explicitly so declining is a decision rather than an omission:
 Each phase ends green, stated, and committed. Production fixes are their own
 commits with their breaking test first.
 
+### [S37] Step numbering — cascading, not sibling (owner directive, 2026-08-11)
+
+A step that turns out to hold several tasks **keeps its number and gains
+children**: `P18` decomposing into five tasks makes them **P-18-01 … P-18-05**,
+not five new sibling steps. **`-00` is reserved for the step's own initial
+analysis/planning pass.**
+
+The point is that the hierarchy expands without spawning isolated cycles: five
+siblings would each need their own ordering ruling against the others, which has
+been this sprint's recurring cost. A child inherits its parent's ordering and its
+dependencies; only what differs is stated on the child.
+
+Existing single-level ids (`P9b`, `P14e`, …) are **not renumbered** — they are
+cited in frozen prompts, tracks and commit messages. The scheme applies going
+forward.
+
 **Status, 2026-08-07 (P0–P6 complete).** The P1 gate was resolved without
 escalating, per the owner's standing instruction to escalate only what advisors
 cannot settle: W2's vocabulary by the owner's own R115, `before_exit` by the
@@ -2002,6 +2018,13 @@ a line about it either way (§11.7).
 
 **This section is the step.** Amendments belong here.
 
+**[S37] P-17-00 — merge, evaluate, plan.** The maze upstream (`dsent/dsent/dev`) is fetched and
+not merged. Before any of this step is designed: **merge it, evaluate what it changed about input,
+and plan from the merged tree** — the same three moves `keyboard` had, in that order, and for the
+reason that one proved: there, the reading came first and the merge then landed a defect the
+design would otherwise have met afterwards. Precedent and method:
+`P-18-00-keyboard-deepfix-design.md` and `S37-keyboard-upstream-input-assessment.md`.
+
 **What it is.** `src/examples/maze` (detached repo, own remote, **no suite**, never pushed) needs
 more than a rung correction, which is what the reconciliation found and what prompted the split.
 **It gets its own planning pass before any code moves** — this section is the step's charter, not
@@ -2146,6 +2169,23 @@ keep the poll and say why in the file; adopt the flag with a hook-based clearing
 such; or wait for the general mechanism the owner has sketched (`technical_debt/input.md`, *"A
 chord that gates a state while it is held has no vocabulary"*), which is explicitly **not this
 release**.
+
+##### [S37] P-18-00 — the step's own analysis and design pass, IN PROGRESS
+
+**Document: `../P-18-00-keyboard-deepfix-design.md`** (same directory as this plan's siblings under
+`validation/reviews/`). It carries **the agenda for the whole step** — the seven items and the one
+explicitly not reopened — and the exposition the owner asked for before any shape is proposed: the
+**two `love.textinput` consumers** (`alt.lua` and `words.lua`) read side by side in terms of events,
+payloads and named functions. Decisions are recorded there one at a time as the owner takes them;
+nothing in it is settled by drafting.
+
+**Its headline, because it decides item 2:** the ratified design's rule *"if `text == lastText`,
+stop"* is a **content** test, valid only under the precondition its own document states — *"every
+target is a single character… if a later stage ever asks the player to type a word, this design
+must be revisited"*. **`words.lua` is that violation and it is now in the tree**: typing `"all"`
+would have its second `l` discarded. `spendGlyph` is a **press-identity** test and does not have
+that failure, at the cost the document also names. Which property the shared layer provides is
+open.
 
 ##### [S37] The upstream merge landed first, and it moved this step's material
 
