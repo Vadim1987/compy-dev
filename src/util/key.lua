@@ -121,6 +121,23 @@ local function is_enter(k)
   return k == "return" or k == 'kpenter'
 end
 
+--- Is any of the named keys held? The project-facing way to ask
+--- the keyboard about a key `Key` has no accessor for — a key
+--- that is not a modifier — so project code has one surface for
+--- held state instead of reaching for love.keyboard beside it.
+--- Multi-argument is OR, exactly like the device call it wraps.
+--- Named `any_pressed` because of that OR: a future richer
+--- predicate over a whole chord is a different question and
+--- takes a different name.
+--- @param ... string
+--- @return boolean
+local function any_pressed(...)
+  if select('#', ...) == 0 then
+    error('Key.any_pressed needs at least one key name', 2)
+  end
+  return love.keyboard.isDown(...)
+end
+
 --- Whether a key name is any modifier, l/r alike. A combo class
 --- (Decision 21) must not match its own modifier: holding Alt
 --- alone dispatches 'alt+lalt', the modifier prepended to itself
@@ -166,6 +183,7 @@ Key = {
   normalize_combo = normalize_combo,
   new_handler_table = new_handler_table,
   is_enter    = is_enter,
+  any_pressed = any_pressed,
   is_mod      = is_mod,
   shift       = shift,
   is_shift    = is_shift,
