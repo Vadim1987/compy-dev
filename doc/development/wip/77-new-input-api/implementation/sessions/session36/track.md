@@ -513,3 +513,27 @@ the rule this plan exists to enforce.
   where meeting it after designing is a redesign.
 - P10 marked part-done (the flag-shortcut member is discharged by the guide rewrite); it still
   owes the reserved-combo section, W9/W10, and its share of the marker question.
+
+## 2026-08-11 — owner corrects a conflation of mine; disposition pass commissioned
+
+- **The correction, and it is against my replan.** §16.3 listed **parent-plan phases inside the
+  sprint's own sequence** — exactly the conflation §0 exists to prevent. *"Do not confuse defects
+  removal with release."* The section is rewritten in two halves: **owned by this sprint** (P18,
+  P17, P19, P16's ruling, P10, PROBE/P9c/P13, P11's code markers — and **the sprint closes when
+  those are done, not when the PR is up**) and **owned by the parent** (both halves of Phase U,
+  Phase L, the persistent-doc prose sweep, Phase G and the N+1 PRs). The one crossing point is
+  named as such: the example-repo pull is parent work that **gates** sprint work.
+- **The doc markers are mostly the parent's, not ours.** A crude sample says ~15 are one
+  archaeology complaint, ~9 the `overlay` vocabulary sweep, ~12 prose size — and prose size has
+  its own sweep upstream. Only markers flagging something factually wrong about input behaviour
+  are this sprint's.
+- **Disposition pass commissioned** (Sonnet, model explicit, read-only). Prompt of record
+  `../../../validation/prompts/S36-marker-disposition.md`, deliverable
+  `../../../validation/outcomes/S36-marker-disposition.md`. Its headline is the **cluster count** —
+  how many *distinct moves* 111 markers actually represent — and its `owner` column binds each
+  marker to sprint / parent / neither, with **UNSURE** allowed, since a wrong binding misleads
+  worse than a flagged one.
+- **Owner's own note, recorded because it is a standing discipline they named:** we have been
+  mixing planning, design and execution in this session, justified so far by integral context.
+  Worth carrying into the wrap — the successor should re-separate, and the next execution step
+  (P18) is exactly the kind that wants a cold session of its own.

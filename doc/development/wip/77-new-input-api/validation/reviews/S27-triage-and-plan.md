@@ -2195,25 +2195,48 @@ decided):
   dev-facing docs everything factual cleared and the editorial remainder deferred **as a named
   list**, not as silence.
 
-### 16.3 The sequence
+### 16.3 The sequence — and which plan owns each part
 
-1. **Phase U's example half first, for the two detached repos** (parent plan). The owner intends
-   to pull their current upstream versions. **This must precede P17/P18**: a deepfix planned
-   against a stale base is designed twice — the argument that already ordered this file's work
-   three times — and upstream may have moved in the very file the heal rewrites.
-2. **P18 — the keyboard deepfix, absorbing the heal.** Still what blocks the sprint's closure.
+**[S36] Corrected 2026-08-11 (owner).** An earlier draft of this section listed parent-plan phases
+inside the sprint's own sequence. That is the conflation §0 exists to prevent: **this document is
+the spinoff sprint — removing known defects and driving adoption. `../plan.md` is the release
+plan.** Both may be altered; neither absorbs the other. What follows is split accordingly.
+
+#### Owned by THIS sprint (defect removal and adoption)
+
+1. **The upstream pull for the two detached example repos comes first** — see the note under
+   *Owned by the parent* below. It is the parent's work, but it **gates** steps 2 and 3 here.
+2. **P18 — the keyboard deepfix, absorbing the heal.** Still what blocks this sprint's closure.
 3. **P17 — maze deepfix** and **P19 — sapper**: independent of each other and of P18. P19 also
    owns a **live defect** found 2026-08-11 (shift-click un-flags itself if Shift is released
    inside the 0.4 s click window).
 4. **P16 — closes on one ruling**: whether `turtle`'s `ctrl+escape` binding is deleted as
-   redundant, the framework reserving and acting on that combo without consuming it. Nothing else
-   remains in it.
-5. **P10 — docs and ledger**, now carrying the reserved-combo section the guide still owes, W10's
-   batches, and whatever §16.2 is ruled.
-6. **PROBE**; **P9c** (the two order-dependent cases, re-checked after the suite moves);
-   **P13** (harmony revalidation).
-7. **P11 — comment sweep, then slice regeneration**, gated on the marker count agreed in §16.2.
-8. **Parent Phase L — ledger compaction**, then **Phase G — PR assembly**. Regeneration stays last.
+   redundant, the framework reserving and acting on that combo without consuming it.
+5. **P10 — docs and ledger**: the reserved-combo section the guide has never had, W9's ledger
+   work, W10 batches 1/2/4, and this sprint's share of the marker question (§16.2).
+6. **PROBE** — delete the diagnostic whose own header says to delete it once the polling question
+   is ruled. **P9c** — the two order-dependent test cases, now that the suite moves have landed.
+   **P13** — harmony revalidation, which matters because harmony is outside `busted` and outside
+   CI, so a regression there **ships silently**.
+7. **P11 — the comment sweep over `src/` and `tests/`**, which is this sprint's half of the marker
+   work: 27 markers, and the gate for them is unambiguous.
+
+**The sprint closes when the above are done.** It does not close on the PR.
+
+#### Owned by the PARENT plan (the release)
+
+- **Phase U, example half — pull and reconcile the two detached repos.** Positioned before this
+  sprint's P17/P18 by the owner's intent and the stale-base argument; it is parent work that gates
+  sprint work, which is the only crossing point in either direction.
+- **Phase U, platform half** — upstream reconciliation of the framework repo, after the tree
+  settles.
+- **Phase L — ledger compaction** (inserted 2026-08-11).
+- **The prose sweep over the persistent docs.** The 84 markers in the doc corpus are largely
+  *editorial* — one vocabulary sweep, one archaeology sweep, prose-size complaints — and prose
+  size has its own sweep in the parent. **They are the parent's, not this sprint's**, except where
+  a marker flags something factually wrong about input behaviour, which is P10's.
+- **Phase G — PR assembly**, slice regeneration last, then review and smoke pass. **N+1 PRs**: each
+  detached repo opens its own alongside the platform's, and their only gate is a human smoke pass.
 
 ### 16.4 What the PR description now owes that it did not before
 
