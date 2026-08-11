@@ -260,3 +260,38 @@ speculation of little value."*
   **R1 and R2 hold in the merged tree today; what remains open is R3 and R4.** The deafness is what
   motivated the heal, not what the heal still has to fix — worth being exact about, since "the heal
   fixes a deaf game" would overstate the remaining work.
+
+## 2026-08-11 — the derivation pass: an impossibility result, and three mechanisms
+
+Owner asked for a derivation from R1–R5 rather than a choice between the two candidates. Written as
+§9 of the design document.
+
+- **The result that shapes everything: R1 + R2 + R4 cannot be satisfied by a decision taken at the
+  moment each `love.textinput` arrives.** Proof by indistinguishability — in the `textinput`-first
+  order, with a release missing, the event history before a *repeat* character and before the
+  *first character of the next press* is identical (`keypressed(k,false)` then zero or more
+  `keypressed(k,true)`), yet the required decisions are opposite. **So R4 forces deferral**, and
+  that is why every previous attempt patched an edge instead of solving it.
+- **Ruled out before someone proposes it:** `love.keyboard.setKeyRepeat(false)` during play. LÖVE's
+  flag governs `love.keypressed` only, so it would remove `isrepeat` — the one authoritative signal
+  — while leaving the OS producing repeat `love.textinput`. **And the repeats exist because the
+  framework enables them** (`src/main.lua:297`, for the console and editor); LÖVE's own default is
+  off.
+- **Three mechanisms, scored against R1–R5:**
+  - **A**, the status quo: claim cleared at `love.keyreleased` + the frame-stamp grace. Fails R3
+    (the grace window rejects exactly the character R3 is about) and R4 (bounded, self-healing).
+  - **A″**, the same claim **cleared at the frame boundary** instead of inside the release handler.
+    **Deletes `INPUT.upRecent`, `INPUT_UP_GRACE` and the `DBG_FRAME` dependency**, and **fixes R3 as
+    a side effect** rather than as an addition. Still fails R4.
+  - **B**, pairing `love.textinput` events with fresh `love.keypressed` events **once per frame** —
+    the deferral the impossibility result points at. Satisfies all five and deletes the claim table
+    too, at the cost of a dispatch-architecture change (scene `textinput` runs at update time,
+    same frame, before draw — invisible to a player but real).
+- **Recommended A″, with R4 taken as its own decision** — its size matches the defect, and R4 may
+  have a cheaper mitigation than B: `controller.lua:731` lists focus/mousefocus as **SKIPPED** by
+  the framework, which suggests a project may define `love.focus` itself and clear its claims there.
+  **Not verified** that a project-defined `love.focus` survives the framework's handler management,
+  and said so rather than assumed.
+- **The ratified design is revised, not implemented, either way** — its rule is content-scoped and
+  fails R1 in Words. A″ and B both keep its intent (subtract the apparatus, stop inferring) while
+  keying on the press rather than the character.

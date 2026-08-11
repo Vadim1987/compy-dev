@@ -3,8 +3,9 @@
 **Step:** P-18-00, the initial analysis/planning pass of P18 (`S27-triage-and-plan.md` §15.4).
 **Opened:** 2026-08-11, session37, after the upstream merge landed (`keyboard` @ `ca6d5df`).
 **Status: NOTHING HERE IS DECIDED.** §2–§7 are exposition — what the code does, read from the
-merged tree. §8 lists the open questions. Decisions are the owner's and are recorded, one at a
-time, as they are taken.
+merged tree. §7.1 states the requirements, §8 the open questions, §9 the derivation from those
+requirements and the options it leaves. Decisions are the owner's and are recorded, one at a time,
+as they are taken.
 
 ---
 
@@ -394,3 +395,101 @@ its first line. A second consumer either widens it or splits it.
 **Not verified by running anything.** This repository has no test suite, and the container cannot
 inject keystrokes; every statement above is read from the code in the merged tree. The doubled-letter
 claim in §5 is measured from `words_corpus.lua`; the behaviour it implies in §7 is reasoned.
+
+## 9. Derivation from R1–R5 (2026-08-11, at the owner's instruction)
+
+### 9.1 What the three channels can and cannot tell us
+
+- **`isrepeat` is the only authoritative per-press signal in the system.** It comes from the OS
+  through LÖVE, on `love.keypressed`'s third argument. A physical press is exactly a
+  `love.keypressed` with `isrepeat == false`.
+- **`love.textinput` carries neither a key nor a repeat flag** — only `text`. The key it came from
+  is *inferred* (`altBaseKey` / `wordsBaseKey`, which agree: `" "` → `"space"`, a letter → its
+  lowercase, otherwise the character itself).
+- **`love.keyreleased` may never arrive** — focus lost mid-hold, and `capslock`, whose unreliable
+  release already forced a hand-written exemption in `appKeypressed`.
+- **The repeats exist because the framework turns them on.** `src/main.lua:297` calls
+  `love.keyboard.setKeyRepeat(true)` for the console and editor; LÖVE's own default is off.
+
+**One "obvious" fix, ruled out before anyone proposes it:** having the game call
+`love.keyboard.setKeyRepeat(false)` while it plays. LÖVE's flag governs **`love.keypressed` only**
+— by its own documentation — so this would remove the `isrepeat` signal, the one authoritative
+input we have, while (needing measurement, but almost certainly) leaving the OS still producing
+repeat `love.textinput`. It makes the problem strictly harder, and it mutates global state the
+project must then restore.
+
+### 9.2 The impossibility: immediate decisions cannot satisfy R1 + R2 + R4 together
+
+Suppose the accept/drop decision is made **at the moment each `love.textinput` arrives**, from the
+event history alone. Consider the `textinput`-first order (R2 forbids assuming it away), and a
+press whose `love.keyreleased` was never delivered (R4's case). Compare two moments:
+
+| | history for key *k* since the last accepted `love.textinput` |
+|---|---|
+| a **repeat** `textinput` of press *n* | `keypressed(k, false)`, then zero or more `keypressed(k, true)` |
+| the **first** `textinput` of press *n+1*, release of *n* missing | `keypressed(k, false)`, then zero or more `keypressed(k, true)` |
+
+**The histories are identical**, and the required decisions are opposite — drop the first, accept
+the second. No function of the history can be right in both cases. **Therefore R1 + R2 + R4 forces
+the decision to be deferred** until the press's own `love.keypressed` has been seen; nothing else
+distinguishes them.
+
+This is why every previous attempt patched an edge instead of solving it, and it is the result that
+makes the choice below a real one rather than a matter of taste.
+
+### 9.3 The three mechanisms this leaves
+
+**A — the status quo (`spendGlyph`): claim per key, cleared at `love.keyreleased`, plus a frame-stamp
+grace window.**
+R1 ✓ R2 ✓ R5 ✓. **R3 ✗** — the grace window (`INPUT.upRecent` + `INPUT_UP_GRACE`, measured in
+`DBG_FRAME`, the *debug logger's* counter) rejects precisely the character whose `love.textinput`
+trails its own `love.keyreleased`. **R4 ✗**, bounded: a missing release leaves the claim set, the
+next press of that key produces nothing, and its release then clears it — one press lost,
+self-healing.
+
+**A″ — the same claim, cleared at the FRAME BOUNDARY instead of inside `love.keyreleased`.**
+The release queues the key; the queue is drained once per frame, after events and before
+`sceneUpdate`. A trailing repeat `love.textinput` arriving in the same batch as the release still
+meets a set claim and is dropped — which is the only thing the grace window ever bought.
+**This deletes `INPUT.upRecent`, `INPUT_UP_GRACE` and the dependency on `DBG_FRAME` outright.**
+R1 ✓ R2 ✓ **R3 ✓** (no window to reject the trailing character — it is the *first* of its press, so
+no claim is set) R5 ✓. **R4 ✗**, same bounded residue as A.
+
+**B — pair `love.textinput` events with fresh `love.keypressed` events, once per frame.**
+The deferral §9.2 proves is necessary. `appKeypressed` counts fresh presses per key for this frame;
+`appTextinput` applies the shared filters and the Caps estimate immediately (both must stay where
+they are) and **queues** the character; a resolve step at the top of `love.update` dispatches a
+queued character to the scene only if a fresh press of its key was seen this frame, then discards
+the leftovers. R1 ✓ R2 ✓ R3 ✓ **R4 ✓** — `love.keyreleased` is not consulted at all, so it cannot be
+missed. R5 ✓ via one shared `textBaseKey`, which the two scenes' own helpers already agree on.
+**It deletes the claim table as well**, leaving one per-frame count.
+
+Its costs, stated rather than discovered: scene `textinput` handlers stop running inside the event
+and run at update time — the same frame, before `draw`, so nothing a player can see, **but it is a
+dispatch-architecture change**, and the relative order of a scene's `keypressed` and `textinput`
+handling changes for any press that fires both. It also assumes a press's two events land in the
+same event batch; a one-frame carry of unconsumed press counts is cheap insurance if that is not
+guaranteed.
+
+### 9.4 What I would recommend, and why it is not obvious
+
+**A″, plus a decision on R4 taken separately.** The reasoning:
+
+- A″ is a **small** change that removes the two things the ratified design most objected to — the
+  frame stamp and the grace constant — and it fixes R3 as a side effect rather than as an addition.
+  It is the only option whose size matches the defect it removes.
+- **R4 has a cheaper mitigation than B**, if it works: `controller.lua:731` records focus and
+  mousefocus as **SKIPPED** by the framework, which suggests a project may define `love.focus`
+  itself. Clearing the claims on focus loss addresses the dominant cause of a missing release, and
+  is three lines. **Needs verification** that a project-defined `love.focus` survives the
+  framework's handler management — not yet checked.
+- **B is the only complete answer**, and it is the one the impossibility result points at. If the
+  owner weighs R4 as a correctness requirement rather than a robustness nicety, B is the honest
+  choice and A″ is a half-measure. What argues against it is the strategic frame's question — does
+  this make the system more predictable, or merely more elaborate? — applied to a dispatch change
+  in an example nobody has reported R4 against.
+
+**Against the ratified design:** none of the three is what that document specifies, because its rule
+is content-scoped and fails R1 in Words (§8.1). A″ and B both keep its *intent* — subtract the
+apparatus, stop inferring — while keying on the press rather than the character. **The document is
+therefore revised in this step, not merely implemented**, which is what the step was told it may do.
