@@ -362,6 +362,14 @@ sharpest here: upstream may have moved in `examples/keyboard/input.lua`, the fil
 heal rewrites and the file the reconciliation just edited. Meeting that divergence as a merge,
 before designing, is cheap; meeting it after designing is a redesign.
 
+**[S36] Mechanic, owner 2026-08-11: pull each upstream into its OWN branch.** Do not merge
+upstream into the working branch as the first move. Fetch it to a separate branch per repo so the
+reconciler can **switch between them, compare, and rule each merge deliberately** — which is the
+difference between reconciliation as an inspectable operation and reconciliation as a conflict
+storm resolved under pressure. It also leaves the pre-merge state reachable for the whole
+exercise, which matters most in `examples/keyboard`, where our own edits and the heal both land in
+the file most likely to have moved upstream.
+
 The platform half of Phase U (upstream reconciliation of the framework repo itself) is untouched
 by this and keeps its original placement.
 
@@ -397,6 +405,22 @@ numbers that no longer resolve, and an assistant meeting *"Decision 20"* will fi
 invent a reading. **Mitigation: do the excision in ONE commit whose message names each removed
 decision and its subject**, so `git log -S 'Decision 20'` answers the question in one step. That is
 cheaper than a tombstone and does not put dead text in front of stakeholders.
+
+**[S36] Three items, not one — settled 2026-08-11.**
+
+1. **Excise the collapsed decisions** — 13, 20, 29 established the tracked held-key set and 30/31
+   withdrew it. Cited nowhere in code (verified).
+2. **Remove Decision 11's withdrawn-rationale audit trail.** A doc marker asks for it, and it was
+   held back only because that trail *was* the file's own tombstone precedent. With tombstone
+   discipline reversed for the release, the tension dissolves and it goes with the rest.
+3. **Demote Decision 12 (`inspect` is a mode-to-route line).** Under the owner's boundary
+   (`../../../conventions/docs.md`, *"de-facto behaviour has a boundary"*) it is **not a
+   decision**: the `app_state == 'inspect'` routing exists **unchanged at the PR base**
+   (`controller.lua:20` there, `:22` now), so the entry canonicalises behaviour that predates the
+   feature. Its content belongs in an internals guide if it is not already there; the ledger entry
+   goes. **Checked, not assumed** — and the same check cleared Decisions 6, 7 and 15, which are
+   choices this feature made: base carried `oneshot` auto-close on submit (removed by 6), and
+   `compy.input` does not exist at base at all, so 7 and 15 are about surface the feature invented.
 
 **Gate.** After excision: every `Decision N` citation in `src/`, `tests/` and `doc/` (outside
 `wip/`) resolves to a heading that exists. That check is mechanical and should be run, not assumed.
