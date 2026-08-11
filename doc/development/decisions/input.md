@@ -1259,7 +1259,14 @@ unchanged** — only the *source* the matcher reads from changes.
    driven by a synthetic table, so the test cases that do so are rewritten against a patched
    `love.keyboard.isDown`; and the mock's variadic fix becomes a prerequisite (see the
    amendment note below).
-3. **`Key.*` at a call site remains a smell.** In projects today, and eventually in
+3. **`Key.*` at a call site remains a smell.**
+   > **AMENDED by Decision 32, 2026-08-11.** This is **withdrawn as a general claim**. An
+   > imperative modifier test is the correct answer for **continuous state** — "is this held
+   > right now" — and is a smell only when it answers a *transition* that a binding should have
+   > expressed, or when it re-implements the fold. Decision 32 states the boundary. The rest of
+   > this point stands unchanged.
+
+   In projects today, and eventually in
    console/editor too, an imperative modifier test at a call site should be replaced by the
    **shortcuts mechanism**. The one place this does not apply is **the gate** — the block in
    `controller.lua` that runs *before* dispatch and tests its own universal set of key
@@ -1382,3 +1389,59 @@ a change whose purpose is to leave the input API simpler than it found it.
 other three, the row restored to the fold table, and the precedence list extended — and it should
 be done **if a requirement ever asks for it**, not for symmetry. The technical-debt register
 carries the pointer so the option stays discoverable from that side too.
+
+## Decision 32 — how the input API is meant to be used: transitions, state, and no reconstruction
+
+**Amends Decision 30 point 3** (`Key.*` at a call site is a smell), which is withdrawn as a
+general claim and replaced by the boundary below. Decisions 8, 21, 26, 30 and 31 stand unchanged:
+this decision is about **use**, not about mechanism.
+
+**Why it exists.** The feature introduced a framework-tracked held-key set on an early sense that
+polling needed to be a legitimate, centralised method — and deferred the analysis of that sense to
+*"we will see how it is used"*. Use has now been seen, across the example corpus: the same
+left/right fold re-implemented independently in three projects, a poll-plus-mirror rebuilding an
+edge the event channel already delivers, and three separate defects of one shape (a state opened
+by one event and closed by another that never matched). The set was withdrawn (Decision 30); this
+decision is the deferred analysis arriving, and it is stated as guidance because the mechanism was
+never the problem.
+
+**Decision — five statements, in force together.**
+
+1. **A shortcut is for a one-off transition of the project's own state.** Start, end, mode change,
+   open a prompt: an independent change that stands on its own once made. Its purpose is
+   **decomposition** — one binding per thing, listable as data — not capability. It is *not* the
+   instrument for holding a state that stops being true when the triggering condition dissolves.
+2. **Interdependent shortcuts are an architectural smell.** Specifically, a state opened on
+   `keypressed` and closed on `keyreleased` with the same combo is an **antipattern**: a combo
+   serialises from its trigger plus the modifiers held *at that instant*, so the closing event can
+   serialise differently from the opening one and never match. A modifier's own press or release
+   has no expressible combo at all (Decision 21), so for some chords the closing half **cannot be
+   written**. Window focus loss removes the closing event entirely.
+3. **Choosing the release channel is legitimate; pairing it is not.** Reacting on `keyreleased` is
+   a fair UX choice and sidesteps key repeat without filtering. `fn.ignore_repeat` answers the
+   same need on the press channel. Note that a *modified* combo can be missed on release when a
+   modifier comes up first, so prefer the release channel for bare keys.
+4. **Polling the device is the right paradigm for continuous state** — is this held right now,
+   what should this key cap look like, is Ctrl down during this drag. The state is
+   **self-correcting**, and the abstraction masks nothing. `Key` answers both kinds of question:
+   the folded accessors for a modifier, `Key.any_pressed` for any other key, so project code has
+   one surface rather than two.
+5. **Held state is not reconstructed from events.** A project does not rebuild "what is down" from
+   `keypressed`/`keyreleased` — nor the mouse equivalent — **unless it is a deliberate,
+   project-specific decision taken in awareness of the trap**: it is virtual mutable state with no
+   path back to the truth, and its drift is invisible, surviving whatever caused it. The framework
+   maintains no such table, deliberately (Decision 30).
+
+**What this does NOT say.** It does not deprecate `Key.*`, and it does not ask projects to convert
+working code. An imperative modifier test answering a continuous question is correct; the smells
+are the **chain** (a fold or an exclusion re-implemented at each call site) and the **depth**
+(hardware consulted inside logic that is otherwise a pure function of project state). The
+recommended remedy for depth is to read the keyboard early, into names with game meaning, and run
+the logic on those.
+
+**If event-sourced held state ever proves genuinely required**, it belongs to the framework rather
+than to each project — maintained centrally, exposed for reads, and kept **separate from the
+physical polling surface**, so a reader always knows which question they are asking: what the
+events say is held, or what the device says. Conflating those two is the "two clocks" problem this
+feature spent its length removing. Recorded as a direction, not a commitment; the register carries
+the proposal.
