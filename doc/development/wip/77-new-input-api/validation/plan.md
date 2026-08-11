@@ -373,6 +373,31 @@ the file most likely to have moved upstream.
 The platform half of Phase U (upstream reconciliation of the framework repo itself) is untouched
 by this and keeps its original placement.
 
+**[S37] `keyboard` is DONE, 2026-08-11; `maze` is still owed.** The owner ruled the merge to
+session37 with the shape kept deliberate: **a true merge, ancestry preserved**, because upstream is
+expected to move again and every later re-merge is cheap only while `dsent/dev` stays an ancestor.
+(The eventual delivery is separate and unaffected: the owner prepares a diff against upstream and
+opens a fresh branch off it carrying a commit or two — so ancestry here serves re-merging, not the
+PR's shape.)
+
+- **Merge `17289e9`**, upstream snapshot on its own branch `upstream-dsent-dev-20260811`, pre-merge
+  state `05cedec`, correction `ca6d5df`. Nothing pushed. 36 commits, 24 files, +5227/−804.
+- **The stale-base argument was vindicated, though not where it was aimed.** Upstream never touched
+  `input.lua`; it moved in `alt.lua`, `keyboard_view.lua` and `main.lua`, and it added five games.
+  The merge was textually clean **and semantically broken**: the new `words.lua` judges typing
+  through `textinput` guarded by `inputStale`, the held-key filter this branch deleted, so the
+  game raised on the first glyph typed and no hunk touched both files. Had P18 been designed
+  first, that would have arrived after the design.
+- **The reading of upstream's input model, done before the merge** at the owner's instruction:
+  `reviews/S37-keyboard-upstream-input-assessment.md`. Its consequences for the deepfix are bound
+  into `reviews/S27-triage-and-plan.md` §15.4.
+- **A local-branch trap, recorded so the maze pull does not repeat it:** the branch named
+  `dsent/dev` in the keyboard repo is **not** a tracking mirror of upstream — it carries the first
+  eight of this feature's own migration commits. The upstream snapshot was taken from
+  `origin/dsent/dev` directly. Check what a local branch actually holds before treating its name
+  as its content.
+- **`maze` needs the same two steps** — the input reading first, then the merge — before P17.
+
 ### Phase L — Ledger compaction (INSERTED 2026-08-11, owner) — runs before release, after the tree settles
 
 **The rule this reverses.** The sprint has run under *"tombstone decisions, never renumber"*

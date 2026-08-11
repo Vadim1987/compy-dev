@@ -92,3 +92,44 @@ before any merges."* Written to disk on their instruction.
 - **`maze` was not examined** — its own upstream, its own pull, gating P17; it needs the same pass.
 - Nothing was run: no smoke, no keystrokes. Said in the document's limits section rather than left
   to be assumed.
+
+## 2026-08-11 — owner rules the merge shape; EXECUTION: the merge lands, with its correction
+
+Owner, on the ancestry question: *"in practice at the end I would prepare a diff against upstream
+and will create a brand new branch off upstream with a single new commit or two. Given that, let's
+still do a traditional merge, because I may want re-merges if upstream updates again — so better
+preserve ancestry for now. Separate correction commit after merge with a comment
+describing/explaining the defect is fine."*
+
+- **The delivery shape and the working shape are decoupled**, and that is the ruling's substance:
+  ancestry here buys cheap **re-merges**, not the PR's shape, which is assembled fresh off upstream
+  regardless. So the usual argument against merge commits does not apply.
+- **Mode: execution.**
+- **A correction to my own boot entry:** the local branch named `dsent/dev` is **not** a tracking
+  mirror of upstream — I read `8 36` as "8 behind" and it is a **divergence**: those 8 commits are
+  the first eight of our own migration. The upstream snapshot was therefore taken from
+  `origin/dsent/dev` directly, onto a new branch `upstream-dsent-dev-20260811`. Recorded in the
+  parent plan so the maze pull does not repeat it.
+- **Merge `17289e9`** (`--no-ff`, message carries the known defect and the reason for merging
+  rather than rebasing/squashing). **Verified the merged tree is byte-identical to the trial tree
+  `c0a1e100`** computed before the owner ruled — so the analysis they ruled on describes the tree
+  that exists.
+- **Correction `ca6d5df`** — `words.lua` routed from the deleted `inputStale` to `spendGlyph`. The
+  comment carries what the commit cannot: why restoring the call is not restoring the intent (the
+  held-key premise is order-dependent and is what made the Alt scene deaf), and that the line is
+  **expected to be deleted** by the heal rather than preserved. Deliberately not marked with the
+  `INTERIM:` token — the marker gate greps `src/`, and the nested repos live under it.
+- **Smoke, line-buffered per the standing constraint:** `timeout 25 xvfb-run -a stdbuf -oL -eL love
+  src play src/examples/keyboard` → *"Running 'play'"*, no raise, killed by the timeout (exit 124).
+  The channel is known to carry errors: an earlier run with a wrong path surfaced its failure on
+  the same pipe. **The Words scene itself was NOT exercised** — reaching it needs keystrokes this
+  container cannot inject, so the judge is reasoned and read, not run.
+- **Completeness backstop beyond the one known orphan:** extracted every defined function name and
+  every called identifier across the merged tree and diffed them; the only unresolved names are
+  method/field calls (`SOUND.match`, `s.keypressed`, `fn.stop_here`). No second orphan hid behind
+  the first.
+- **Bound into the plans, per the rule that an amendment lives in the step that acts on it:**
+  §15.4 gains an [S37] block (two `textinput` judges now, the interim call to delete, `INPUT`
+  ten→eight sites, `isMod` six call sites, `bubble` recommended out of scope, the relative-mode
+  item), and the parent plan's Phase U records the example half as done for `keyboard` with the
+  local-branch trap. **`maze` still owes both steps** — the input reading, then the merge.

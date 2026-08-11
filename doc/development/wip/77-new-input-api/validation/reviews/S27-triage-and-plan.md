@@ -2147,6 +2147,47 @@ such; or wait for the general mechanism the owner has sketched (`technical_debt/
 chord that gates a state while it is held has no vocabulary"*), which is explicitly **not this
 release**.
 
+##### [S37] The upstream merge landed first, and it moved this step's material
+
+The gating pull (parent plan, Phase U example half) was ruled to session37 and **executed
+2026-08-11**, before any of this step was designed. The full reading of what upstream did to the
+input model is `../../validation/reviews/S37-keyboard-upstream-input-assessment.md`; what follows
+is only what changes **this step**.
+
+- **`keyboard` @ `17289e9`** — a true merge of `origin/dsent/dev` (36 commits, 24 files,
+  +5227/−804), ancestry preserved deliberately so later re-merges stay cheap; the upstream
+  snapshot is on its own branch `upstream-dsent-dev-20260811`, and the pre-merge state is
+  `05cedec`. No textual conflict: upstream never touched `input.lua` or `help.lua`.
+- **THE HEAL NOW HAS TWO `textinput` JUDGES, NOT ONE.** Upstream's new `words.lua` judges typing
+  through `textinput`, exactly as `alt.lua` does. The design of record
+  (`internals/examples/keyboard.md`) was written when Alt was the only judge and its subtraction
+  list (`spendGlyph`, `GLYPH_CLAIMED`, `INPUT.upRecent`, `INPUT_UP_GRACE`) is stated in those
+  terms. **Whatever replaces the claim must serve both scenes, or each must carry its own
+  judgement state and the document must say so.** This is the revision the step was told it may
+  make; it lands in that document, with its reasoning, before the code assumes it.
+- **`words.lua` carries an interim call this step is expected to DELETE, not preserve.** It
+  arrived calling `inputStale` — the held-key filter this branch removed — so the clean merge
+  produced a tree that raised on the first glyph typed. Corrected at **`ca6d5df`** by routing it
+  to `spendGlyph`, with the reasoning in the file above the call and the deletion announced
+  there. Do not treat that line as settled shape.
+- **Counts moved.** The `INPUT` dissolution is **eight sites, not ten** — upstream's `619c8cf`
+  deleted the board's shift-label read, taking `keyboard_view.lua`'s second site with it.
+  `isMod` is **six call sites across five scene files** (`findkey`, `astrocore`, `hide`, `train`,
+  `bubble`, plus `alt`), each paired with a hand-written `k ~= "capslock"` test — one decision to
+  make, six places to apply it.
+- **`bubble.lua` is new material and is recommended OUT of scope.** It judges a key by **how long
+  it is held** (press sets, release scores, update accumulates, timeout pops). It is
+  event-derived held state, but with bounded drift, and **it cannot be expressed with anything
+  the API offers** — it is an independent second use case for the register's *"a chord that gates
+  a state while it is held has no vocabulary"*, found by the example's author. Cite it there;
+  do not convert it.
+- **One new item, owner's call whether it is this step's:** upstream added
+  `love.mouse.setRelativeMode(true)` at boot, commented *"the runner restores it on exit"*, which
+  is **false against this branch** — `stop_project_run` makes no `love.mouse` call. The
+  example-side half (restore it in a `before_exit`, or stop claiming) is small and fits here; the
+  question of whether the framework should tear down device modes is release-shaped and is
+  promoted, not answered.
+
 **Independent of the maze step.** They share no file; either may go first.
 
 ---
