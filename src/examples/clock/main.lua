@@ -64,6 +64,14 @@ function cycle(c)
   return c + 1
 end
 
+-- These stay in the hook rather than becoming shortcuts, though
+-- 'space' / 'shift+space' / 'shift+r' name themselves like
+-- combos. A shortcut matches its modifier set EXACTLY, so a
+-- 'space' binding would stop firing while any unrelated
+-- modifier is held, where the hook fires whatever else is down.
+-- Nobody asked for that narrowing, and it is not visible in the
+-- diff that would introduce it (doc/input_api.md, "Event hooks
+-- and shortcuts").
 local function color_cycle(k)
   if k == "space" then
     if Key.shift() then
