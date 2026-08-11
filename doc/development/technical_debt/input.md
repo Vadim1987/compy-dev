@@ -636,9 +636,10 @@ Not commissioned for closure; each may never need action.
   only the four modifier classes, so a held non-modifier key never enters the
   combo string at all (measured: `a` and `b` held, `b` pressed → `ctrl+alt+b`,
   no trace of `a`). Multi-key chords are outside the grammar; a project that
-  wants "a and b held together" gives each key a shortcut that sets a flag
-  without consuming its event and reads the flags in a hook (`doc/input_api.md`,
-  "Shortcuts that set a flag"), or asks the device directly.
+  wants "a and b held together" asks the device for the second key inside the
+  hook or shortcut that handles the first (`doc/input_api.md`, "Choosing the
+  mechanism"). Reconstructing it from a pair of flag-setting shortcuts is
+  **not** the answer — that shape is now named as an antipattern there.
 - **Resolution:** registration now **raises** on a combo naming more than one
   trigger, or none (`../decisions/input.md`, Decision 21) — the same treatment
   `show`/`configure` give an unrecognised key. `a+b+*` no longer registers the
@@ -678,8 +679,9 @@ Not commissioned for closure; each may never need action.
 - **Still true, and now documented rather than implicit:** the class form is
   about a *modifier* class. Combos of ordinary keys (`a+b`) remain outside the
   grammar by design, since including held non-modifiers would make every
-  binding conditional on nothing else being held. That case is a hook plus
-  flag-setting shortcuts (`doc/input_api.md`, "Shortcuts that set a flag").
+  binding conditional on nothing else being held. That case is a hook that
+  asks the device for the rest of the chord (`doc/input_api.md`, "Choosing the
+  mechanism").
 
 ### A keyboard-hooks-only project does not count as interactive
 
@@ -1017,7 +1019,7 @@ Not commissioned for closure; each may never need action.
 
 - **Where:** the shortcuts mechanism generally (`src/controller/projectInputController.lua`,
   `find_shortcut`; `src/controller/controller.lua`, `combo_string`), and
-  `doc/input_api.md`, "Shortcuts that set a flag".
+  `doc/input_api.md`, "Choosing the mechanism".
 - **The rule this rests on, stated because the API does not state it (owner, 2026-08-10):**
   **a combo can only reliably serve an atomic transition — a one-off shot, stateless in
   itself. It must not be used to toggle a long-lived state that depends on the combo still
@@ -1131,9 +1133,13 @@ Not commissioned for closure; each may never need action.
     hand-matches the combo its own comment calls "Ctrl+Alt+H". Its natural
     form is a shortcut registration; the scene's key routing is what the
     `textinput` heal rewrites, so it waits for that.
-  - `keyboard/help.lua:16-19` — `helpHeld` spans frames (the overlay is up
-    while the chord is held), so the guide's flag-shortcut shape is the top
-    rung. The poll is the honest interim.
+  - ~~`keyboard/help.lua:16-19`~~ — **RESOLVED 2026-08-11: the poll is
+    correct and stays.** This entry previously called the flag-shortcut shape
+    its top rung; the usage principles invert that. The overlay is up while a
+    chord is *held*, which is continuous state, and a mirrored
+    press/release pair cannot close reliably here at all — a modifier's own
+    release has no bindable combo. See `doc/input_api.md`, "Choosing the
+    mechanism".
   - `keyboard/input.lua:109` — `isMod` re-implements `Key.is_mod`. Not a
     held-state read, so outside the reconciliation's sweep, but the same
     duplication: it is used in `alt.lua`, `findkey.lua` and `hunt.lua`.

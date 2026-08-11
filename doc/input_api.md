@@ -265,8 +265,8 @@ Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else
 being held, so holding a movement key would silently break unrelated
 shortcuts. Anything beyond exact-or-class matching belongs in a hook, which
-sees every event on its channel; "Shortcuts that set a flag" below is the shape
-to reach for when the two have to work together.
+sees every event on its channel; "Choosing the mechanism" below covers what to
+do when a binding and a held key have to work together.
 
 `compy.input.hooks.keypressed`, `.keyreleased`, and `.textinput` are one
 fallback function per event. At activation, an existing project `love.*`
@@ -375,8 +375,8 @@ register a shortcut and let the framework match it:
 `shortcuts.keypressed['ctrl+s']`. That says it once, as data, in a vocabulary
 that is already folded and already the same on every channel. Asking about
 modifiers imperatively inside a handler turns into a cascade repeated at every
-call site. When the logic spans several events, "Shortcuts that set a flag"
-below keeps the binding declarative without asking the hardware at all.
+call site. When a binding and a held key have to work together, see "Choosing
+the mechanism" below.
 
 **2. Ask `Key` — allowed, and worth a second look.** `Key` is available to
 every project, like `compy`. `Key.shift()`, `Key.ctrl()` and `Key.alt()`
@@ -420,37 +420,78 @@ point — a project that *draws* held state has no event argument to consult.
 Handlers need nothing added to their arguments for it, and get nothing added:
 every shortcut, hook and widget call receives LÖVE's own argument list.
 
-## Shortcuts that set a flag
+## Choosing the mechanism: transitions, state, and what not to build
 
-Some logic does not fit inside one shortcut function — it needs to know a key is
-held *while something else happens*, or it spans several events on different
-channels. Growing the shortcut is the wrong move: it ends up asking the keyboard
-the same question at every call site, which is the cascade shortcuts exist to
-replace.
+The API offers three ways to reach input, and they answer different questions.
+Choosing by question rather than by taste is what keeps a project predictable.
 
-Let a tiny shortcut record the fact instead, and let the hook read it. The
-shortcut sets a flag and **does not consume** its event, so everything
-downstream still sees the key; the real logic then branches on your project's
-own state rather than on the hardware:
+**A shortcut is for a one-off transition of your own state** — start the game,
+end it, switch mode, open the prompt. It is an *independent* change that stands
+on its own once made. Its purpose is decomposition: one binding per thing,
+listable as data, instead of one hook demultiplexing a dozen combos by hand.
+
+**Polling is for continuous state** — is the paddle key down, is Ctrl held
+while this drag happens, which caps to light while drawing. Ask `Key` at the
+moment you need the answer. This is not a lesser rung: the device is
+self-correcting, and asking it costs nothing but the call.
+
+**Do not use a pair of shortcuts to hold a state.** Setting a flag on
+`keypressed` and clearing it on `keyreleased` for the same combo looks tidy and
+is not reliable, because the closing event is not guaranteed to arrive in the
+shape the opening one expects:
 
 ```lua
-local fn = compy.input.fn
-local drawing = false
+-- DON'T: the flag can outlive the key.
+compy.input.shortcuts.keypressed['alt+h']  = fn.side_run(function() peek = true end)
+compy.input.shortcuts.keyreleased['alt+h'] = fn.side_run(function() peek = false end)
+```
 
-compy.input.shortcuts.keypressed['space'] = fn.side_run(function()
-  drawing = true
-end)
-compy.input.shortcuts.keyreleased['space'] = fn.side_run(function()
-  drawing = false
-end)
+Release Alt before `H` and the second event serialises as plain `'h'`, so the
+clearing binding never runs and `peek` stays true. Hold an unrelated modifier
+while releasing and a bare `'space'` binding misses the same way. Lose the
+window to a notification and no release arrives at all. **A modifier's own
+release cannot even be bound**, so for some chords the closing half is not
+writable.
+
+Ask instead, at the moment the answer matters:
+
+```lua
+-- DO: a question with no state to go stale.
+local function peeking()
+  return Key.any_pressed('h') and Key.alt() and not Key.ctrl()
+end
 
 compy.input.hooks.mousemoved = function(x, y)
-  if drawing then paint(x, y) end
+  if Key.shift() then paint(x, y) end
 end
 ```
 
-The binding stays declarative and listable, the hook stays a plain function of
-state you own, and nothing in between has to ask which keys are down.
+Reacting on `keyreleased` is still a fine *choice* — it is a natural fit for
+"act once when the key comes up", and it sidesteps key repeat without any
+filtering. What it must not be is the closing half of a mirrored pair. (For
+"act once on press", `fn.ignore_repeat` does the same job on the press
+channel.)
+
+**Do not rebuild "what is held" from the event stream.** Keeping your own table
+of keys currently down — or a boolean mirroring one key — is virtual state with
+no path back to the truth: a release lost to focus change or a hiccup leaves it
+lying, and nothing corrects it afterwards. If your project has a reason to do
+it anyway, make that an explicit decision taken in awareness of the drift, not
+a default. The framework does not maintain such a table, and deliberately so.
+
+**Lift the hardware to the top.** When logic gets complex, read the keyboard
+early — at the top of the handler or `update` — into names that mean something
+in your game, then let the rest of the logic run on those:
+
+```lua
+local fast   = Key.shift()          -- one place asks the hardware
+local precise = Key.ctrl()
+
+move(fast, precise)                  -- everything below is deterministic
+```
+
+It keeps the non-deterministic part visible in one place instead of scattered
+through code that is otherwise a pure function of your own state.
 
 ## Callback assignments
 
