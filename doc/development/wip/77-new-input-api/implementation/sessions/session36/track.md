@@ -424,3 +424,20 @@ Report `../../../validation/reviews/S36-fable-principles-review.md`, prompt in `
   stakeholder meets five decisions about a surface that never ships. Tombstones stay, so the
   justification table owes a line saying a question was asked and answered, or the log reads as
   churn. Written into the proposal as §4.
+
+## 2026-08-11 — adoption rules written as question→action, and an arity trap caught
+
+Owner asked for the principles in operational form, **explicitly because they will be reused when
+the editor and console are evaluated later**. Written as §5 of the proposal: ten
+question→action rules, each marked **[universal]** or **[project surface]** so a framework-side
+migration translates them rather than copying project-surface advice that does not apply.
+
+- Rules of restraint attached, including the two this session paid for: **purpose beats shape**
+  (sapper's touch fallback looked exactly like a hand-rolled cascade), and **an example that
+  demonstrates a path is not a candidate for converting off it** (turtle keeps the captured
+  `love.*` path by owner ruling).
+- **C8 — the trap in the owner's minimal wrapper.** `love.keyboard.isDown('a','b')` means **OR**;
+  §P5.1's `Key.pressed('ctrl','h')` means **AND**. Shipping a plain pass-through now would claim
+  the name for OR semantics and force the later primitive to break compatibility or rename.
+  **Recommended: single-argument only, raise on a second** — identical under both readings, so the
+  multi-argument meaning stays unclaimed.

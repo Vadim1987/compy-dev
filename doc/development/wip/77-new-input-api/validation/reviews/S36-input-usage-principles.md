@@ -190,6 +190,18 @@ which is itself a moving part the frame asks us to justify. `'!*'` / `'nothing'`
 defined vocabulary, a documented list, and a story for what `[a-z]` means on a non-Latin layout.
 **Recommendation: ship exclusivity, defer classes until something asks.**
 
+**C8 — the minimal `Key.pressed(k)` wrapper has an arity trap, and it would poison the name.**
+`love.keyboard.isDown('a','b')` means **OR** — *either* is down. §P5.1's proposed
+`Key.pressed('ctrl','h')` means **AND** — *both*, with negation. So a wrapper shipped now as a
+plain pass-through would establish **OR** semantics under the very name the proposal needs for
+**AND**, and the later primitive would have to either break compatibility or take a worse name.
+
+**Recommendation: ship it single-argument only, and raise on a second.** `Key.pressed('h')` is
+then exactly `isDown('h')`, the multi-argument meaning stays **unclaimed**, and the proposal can
+later extend it compatibly — single-argument behaviour is identical under both readings. This
+costs one guard clause and preserves the design space; the alternative is a name collision we
+would meet at the worst moment.
+
 **C3b — three boundary cases the signature should answer before it ships**, each cheap now:
 
 - **Zero arguments.** `Key.pressed()` should raise, not return true or false.
@@ -304,3 +316,84 @@ ships**. Tombstone discipline says they stay — so the justification table owes
 plainly what happened: *an implementation-time surface was introduced, its need was tested against
 real use, and it was withdrawn; the decisions are kept because the reasoning is the durable part.*
 Without that line, the ledger reads as churn rather than as a question asked and answered.
+
+
+---
+
+## 5. Adoption rules — the operational form of the principles (2026-08-11)
+
+Written as **question → action** so they can be applied to code by someone who has not read the
+reasoning, and **reused when the editor and the console are evaluated later**. Each rule is marked
+**[universal]** (true of any code that reads input, framework included) or **[project surface]**
+(depends on `compy.input`, so a framework-side migration must translate rather than copy it).
+
+### The questions
+
+**Q1 [universal] — Does it keep its own copy of held state?** A boolean mirroring a key, a table
+of keys currently down, a `*_was_down` companion.
+→ **Delete it and ask at the point of use.** A mirror has no reconciliation path: focus loss, a
+missed release, or an unexpected event order leaves it lying, and nothing corrects it.
+
+**Q2 [universal] — Does it re-implement the left/right fold?** `isDown('lshift','rshift')`,
+`is_shift_down()`, `modHeld(a, b)`, or any helper meaning "either of the pair".
+→ **Call `Key.shift()` / `Key.ctrl()` / `Key.alt()`.** The fold already ships; a local copy also
+hard-codes which keys are modifiers, and that set has changed once already (Decision 31).
+
+**Q3 [universal] — Does one expression mix `Key.*` with raw `love.keyboard.isDown`?**
+→ **Route both through `Key`.** Two spellings of one question in one line reads as two mechanisms.
+(Requires `Key` to answer non-modifier keys — see the note under "What this needs" below.)
+
+**Q4 [universal] — Does it answer *"did this just happen"* by polling plus edge detection?** A
+per-frame poll with a previous-value companion, deriving a transition.
+→ **That is an event.** Use the channel — a hook, or a shortcut if it names a combo. The poll and
+its companion both go.
+
+**Q5 [universal] — Does it answer *"is this held right now"*?** Drawing a pressed key cap, a
+modifier gating a drag, a paddle held down.
+→ **Poll the device, and leave it alone.** This is the correct shape, not a rung to climb.
+
+**Q6 [universal] — Does it enable a state on one channel and disable it on the mirrored one with
+the same combo?** `keypressed['alt+h']` sets, `keyreleased['alt+h']` clears.
+→ **Antipattern — replace it.** Poll the condition instead, or restructure so the ending does not
+depend on a matching event arriving in the shape its sibling expects. A modifier's own release
+cannot be bound at all, so the closing half is sometimes not even writable.
+
+**Q7 [universal] — Is physical keyboard state consulted deep inside game logic?**
+→ **Lift it.** Read the keyboard early — top of the hook, shortcut, or `update` — into named flags
+carrying game semantics, then run the logic on the flags. Keeps the non-deterministic input at a
+visible level instead of scattered through deterministic code.
+
+**Q8 [project surface] — Does one hook demultiplex several orthogonal combos by hand?** A chain of
+`if key == … and modifier …` branches.
+→ **Split into shortcuts, one per combo.** This is what shortcuts are *for*: decomposition, not
+capability.
+
+**Q9 [project surface] — Is a binding on the release channel?**
+→ **Legitimate, if it is a choice.** Reacting on release is a fair UX decision and removes any need
+to filter repeats. Two cautions: `fn.ignore_repeat` on press does the same job, and a *modified*
+combo can be missed on release when a modifier comes up first — so prefer the release channel for
+bare keys.
+
+**Q10 [project surface] — Does it re-implement *"this modifier and none of the others"*?**
+→ **For a binding, use the class key** (`'shift+*'`): it means exactly that, folded over every
+modifier the framework knows. **For a query**, spell the exclusion explicitly and accept that it
+hard-codes the modifier set until a query primitive exists.
+
+### Rules of restraint, which apply to every answer above
+
+- **Behaviour-preserving or recorded.** If a conversion is not obviously behaviour-preserving, it
+  is not a sweep item: record it with its reasoning and defer it to a step that can rule on it.
+- **A deviation is stated in the workspace**, in the document or the code — not only in a commit.
+- **Purpose beats shape.** Code whose *shape* matches an antipattern may exist for a reason nobody
+  wrote down. Ask the author before converting; sapper's touch fallback looked exactly like a
+  hand-rolled cascade and was not one.
+- **An example that demonstrates a path is not a candidate for converting off it.** `turtle`
+  deliberately keeps its handlers on the captured `love.*` path (owner ruling, 2026-07-31) because
+  it is the only example showing that path works.
+
+### What this needs that does not exist yet
+
+**Q3 assumes `Key` can answer a non-modifier key**, which today it cannot — `Key` exposes the three
+folds, and everything else goes to `love.keyboard.isDown` directly. The minimal addition is a
+**single-key** wrapper (`Key.pressed(k)`), deliberately *without* the token language of §P5.1.
+**It must accept exactly one argument** — see §2.2 C8.
