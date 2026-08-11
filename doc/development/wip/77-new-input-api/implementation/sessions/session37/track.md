@@ -209,3 +209,31 @@ mechanisms, trying to find exact fit."* (Self-corrected in the same breath from 
   character and the player does not get it. Fixing that is fit, not rule change.
 - Precedent named in the document: sapper's reverted conversion — mechanically faithful, purpose
   destroyed. This ruling is that lesson generalised to the whole example.
+
+## 2026-08-11 — owner attestation: deaf on nodejs/linux; and the principle that outranks it
+
+Owner: *"well, game is deaf on nodejs/linux. I suspect it's fine on Android. But relying on the
+order the library does not guarantee is wrong anyway (any release of love2d could break both games,
+irrecoverably)."*
+
+- **First-hand evidence this session cannot reproduce** — no device, no keystroke injection — so it
+  is recorded as an attestation in §1.2 rather than folded in as if I had measured it.
+- **The principle is the stronger half and it is now a hard constraint (R2):** a mechanism that
+  produces the authored rule on one delivery order is not correct, it is lucky, and the luck is
+  held by someone else's release notes. **"Irrecoverably" is precise** — the failure is total
+  silence, with no player-side workaround, and it hits BOTH scenes at once since they share the
+  helper.
+- **A discrepancy I flagged rather than resolved:** the design of record says *"desktop LÖVE sends
+  `keypressed` first; the web build sends `textinput` first"* and the sprint's record says the Alt
+  scene was *"deaf on hardware"* while working in the IDE. The owner's attestation orients it the
+  other way (deaf on desktop Linux, suspected fine on Android). Both cannot be right as written.
+  Nothing in the step may rest on either orientation — which is the principle itself — but the
+  design document makes a platform claim, and if this step revises that document the sentence must
+  be settled or struck, not copied forward.
+- **Consequence: the requirements are now derivable, and I wrote them as §7.1 (R1–R5).** One
+  character per physical press; order-agnostic; no loss when `textinput` trails its own
+  `keyreleased`; survives a MISSED `keyreleased` (focus loss, and `capslock` whose release is
+  already exempted by hand); serves both scenes without either carrying the other's special cases.
+- **No candidate on the table satisfies all five.** `inputStale` fails R1+R2; `spendGlyph` fails R3
+  and R4; the ratified `lastText` fails R1 in Words. Stated plainly instead of picking the least
+  bad and calling it a design — the mechanism should now be derived from R1–R5, which is §8.2.

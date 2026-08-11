@@ -87,6 +87,33 @@ session and someone reading only the outcome would wonder why they are absent:
 still destroyed the feature's purpose, and was reverted. The lesson recorded then — *purpose beats
 shape*, and *ask the author* — is this ruling's ancestor.
 
+## 1.2 The order between the two channels is not guaranteed — attestation and principle
+
+**Owner attestation, 2026-08-11 (observed, not inferred):** *"the game is deaf on nodejs/linux. I
+suspect it's fine on Android."* Recorded here because it is first-hand evidence this session cannot
+reproduce — the container has no device and cannot inject keystrokes.
+
+**Owner principle, same message, and it is the stronger half:** *"relying on the order the library
+does not guarantee is wrong anyway — any release of LÖVE2D could break both games,
+irrecoverably."*
+
+This is a **hard constraint on the mechanism, independent of which platform currently works**. A
+mechanism that happens to produce the authored rule on one delivery order is not correct; it is
+lucky, and the luck is held by a third party's release notes. "Irrecoverably" is precise: the
+failure mode is total — nothing can be typed, and the player has no way around it.
+
+**Both games are exposed today.** `alt.lua` and `words.lua` sit behind the same helper, so a flip
+in delivery order does not degrade them, it silences them.
+
+**One discrepancy, flagged rather than resolved.** The design of record
+(`internals/examples/keyboard.md`) states *"Desktop LÖVE sends `keypressed` first; the web build
+sends `textinput` first"*, and elsewhere the sprint's record says the Alt scene was *"deaf on
+hardware"* while working in the IDE. The owner's attestation orients it the other way — deaf on
+desktop Linux, suspected fine on Android. Both cannot be right as stated. **Nothing in this step
+should rest on either orientation**, which is exactly the principle above; but the design document
+makes a factual claim about platforms and, if it is revised here, that sentence needs settling or
+striking rather than copying forward.
+
 ## 2. The shared layer both scenes sit behind (`input.lua`)
 
 All three events arrive as `compy.input.hooks.*`, registered in `inputInit`. The scene sees only
@@ -284,6 +311,27 @@ explicitly permitted to revise the document.
   `INPUT.upRecent`, `INPUT_UP_GRACE` now have two callers, and `INPUT.upRecent` is the last
   non-alias member of the `INPUT` table, which is why the table's dissolution is sequenced with
   this and not before it.
+
+## 7.1 The requirements, as they now stand
+
+Assembled from §1.1, §1.2 and §6 so the mechanism can be **derived** rather than chosen between two
+candidates. Each is sourced; none is invented here.
+
+| # | requirement | source |
+|---|---|---|
+| **R1** | One `love.textinput` accepted per **physical press** of a key; OS repeats produce nothing | authored rule, §1.1 — stated in both scenes' own comments |
+| **R2** | The mechanism must not depend on the **relative order** of `love.keypressed` and `love.textinput` | owner principle, §1.2 — the order is not guaranteed and a LÖVE release could flip it |
+| **R3** | A character produced by a press must not be lost when its `love.textinput` arrives **after that key's `love.keyreleased`** | §1.1's fit test — the press produced a character and the player does not get it; named in the design note's smoke checklist |
+| **R4** | A **missed** `love.keyreleased` (focus loss mid-hold; `capslock`, whose release is unreliable) must not silence the key afterwards | robustness; `capslock` is already exempted by hand in `appKeypressed`, which is the same problem met once already |
+| **R5** | Both scenes are served without either one carrying the other's special cases | §5, §7 — two consumers with different target models |
+
+**How the two candidates score.** `inputStale` fails R1 and R2 outright (it is the order dependence).
+`spendGlyph` satisfies R1, R2 and R5; it fails R3 (the `INPUT_UP_GRACE` window rejects exactly that
+character) and R4 (a claim that is never cleared silences the key). The ratified `lastText` rule
+satisfies R2, R3 and R4 but fails R1 in Words, where it is a rule change (§8.1).
+
+**No candidate on the table satisfies all five**, which is the honest state of the design and the
+reason §8.2 is a real question rather than a formality.
 
 ## 8. Open questions — to be decided with the owner, one at a time
 
