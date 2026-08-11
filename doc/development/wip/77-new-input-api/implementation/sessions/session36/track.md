@@ -329,3 +329,30 @@ he added a mousepressed path that triggers both effects on shift+touch and ctrl+
   devices" line I repeated came from a doc marked *human-approved NOT YET*). Here the doc was
   right in substance and I had just deleted it as unsourced — so the pattern cuts both ways:
   unverified is unverified, whether it turns out true or false.
+
+## 2026-08-11 — owner states five usage principles; proposal written, assessment attached
+
+Owner expanded the sapper correction into a general set of principles for *using* the input API,
+to be discussed here, reviewed cold by Fable, promoted to the persistent docs if they survive,
+and then used to **replan — possibly reverting done work and discarding upcoming steps**. Written
+to `../../../validation/reviews/S36-input-usage-principles.md` with strict provenance: §1 theirs,
+§2 mine, §3 consequences.
+
+- **P2 (mirrored shortcuts are an antipattern) is the load-bearing one** and it is already paid
+  for: three defects found *before* it was written are instances of it — the `alt+h` pair, the
+  guide's own `'space'` flag example, and sapper's derived-echo swallow.
+- **Contests raised, six of substance.** Separator `-` collides with the hyphen key AND with the
+  API's own `+` vocabulary; **the same string would mean different things on two surfaces**
+  (shortcut `'shift+*'` is exclusive, a permissive query would not be) — recommended keeping `*`
+  exclusive in both; *"nothing held"* is the commonest query and the ugliest to spell;
+  **`compy.input.keys` is already claimed by yesterday's held-state-table proposal** and the two
+  must reconcile (recommend module wins, table dropped — the query subsumes it and has no
+  silent-nil); `pressed` reads as an event where `held` would not; P3 needs the release-channel
+  miss stated, and its relation to `fn.ignore_repeat`.
+- **The consequence nobody had stated: P5.1 dissolves sapper without touching its timing.** Four
+  chains become four queries, the press path stays exactly where it is, no behaviour change at
+  all — strictly better than both options weighed yesterday. Available only because the diagnosis
+  moved from *"the call is a symptom"* to *"the chain is the symptom"*.
+- **Biggest open question, flagged as unruled:** the principles are documentation, but P5.1 is
+  **code** — new API surface, which the strategic frame obliges us to justify in the PR
+  description or defer past this release.
