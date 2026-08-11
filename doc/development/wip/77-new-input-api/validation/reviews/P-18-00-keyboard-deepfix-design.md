@@ -547,27 +547,83 @@ typed again in that session.
 today: scenes are lazy-loaded, and a Words-only session would find it nil. `SHIFT_MAP` lives in
 `config.lua`, which loads before `input.lua`, so the inversion can be built there safely.
 
+### 9.5c Closing the release-loss hole — the owner's two extra clears, assessed
+
+**Owner, 2026-08-11:** *"It's still vulnerable to `keyreleased` loss. But `keypressed` of anything
+else than last-won could do the same. Plus a timer after win."*
+
+The diagnosis is right — R4 is exactly that vulnerability, and one clearing path is not enough.
+Both proposed clears are assessed below, and a third is recommended in their place.
+
+**Clear #2 — a `love.keypressed` for any key other than the watched one.** It works for the case it
+targets: a stranded field is freed by the very next keystroke, which in a typing game is immediate.
+Its cost is that it **widens the rollover hole rather than leaving it alone**: while a key is held
+and repeating, *any* other press — including `lshift` or `capslock`, which produce no text —
+clears the field, so the held key's next repeat is accepted as a fresh character. How reachable
+that is depends on whether the OS keeps repeating the first key after a second is pressed, which is
+the unguaranteed behaviour R2 refuses to lean on. **Not recommended if the third clear below is
+adopted, because that one covers the same case without touching the hole.**
+
+**Clear #3 — a timer after a win.** This one has a failure that cannot be tuned away. To free a
+stranded field the timeout must be short; but while it runs, **the key may still be legitimately
+held**, and any timeout shorter than the hold clears the field and lets the next OS repeat through
+as a new character. A child leaning on a key holds it for seconds; a repeat arrives every few tens
+of milliseconds. So the timer either fires too late to be useful or **breaks R1 — a rule change by
+§1.1's test**, since holding a key would start typing again. It also reintroduces a clock, which is
+the one thing the ratified design was proud of not having.
+
+**Recommended instead — clear #3′: ask the device whether the watched key is still down, once per
+frame.**
+
+```
+on accept:            lastText = text;  watch = textBaseKey(text)
+on keyreleased(watch): clear                      -- precise, immediate
+each update, if watch and not Key.any_pressed(watch): clear   -- backstop
+```
+
+Why this is the right shape and not a fourth patch:
+
+- **It closes R4 completely.** The backstop consults no event at all, so no event can be lost. A
+  release that never arrives, a focus change, a `capslock` that never reports up — all resolve on
+  the next frame.
+- **It is not `inputStale` returning.** That defect asked *"is this key held?"* **at
+  `love.textinput` time**, where the answer depends on which channel arrived first. This asks
+  *"is the key of the character I already accepted still down?"* **at frame time**, about a key
+  whose press is already history. There is no ordering for it to depend on. The distinction is the
+  one the sprint has already ruled on twice: a poll answering a frame-time question about physical
+  state is the sanctioned mechanism (Decision 32), and inference *inside* judgement is not.
+- **The precedent is in the same file family and already ruled correct:** `helpHeld` polls the
+  keyboard for `h` and Decision 32 confirmed it. This is the same question about a different key.
+- **It lands the new platform surface where it belongs.** `Key.any_pressed(watch)` is the ladder's
+  last rung for a non-modifier key (`doc/input_api.md`, "Held keys"), which is also P18's onboarding
+  half — the poll and the migration are the same edit rather than two.
+- **Clear #1 stays and is not redundant.** The release clears *immediately*, which matters for a
+  re-tap inside one frame: release and re-press in the same event batch would otherwise meet a field
+  the frame-end poll has not yet cleared, and the second character would be lost.
+
+**What it does not fix:** the rollover hole (§9.5b) is untouched — it is a property of the single
+slot, not of the clearing paths. That decision stands on its own.
+
 ### 9.6 What I recommend, now that Option C is on the table
 
 **Option C, armed on every accepted character (§9.5a), with the slot-versus-table question
 (§9.5b) decided deliberately and the shared `textBaseKey` landing with it.**
 
-- It satisfies R1, R2, R3, R5 and has the smallest R4 residue of any option, while **deleting more
-  apparatus than any of them** — the claim table, the frame stamp, the grace constant, the debug
-  counter, and the ratified design's own `blocked` field.
+- **With the frame-time backstop of §9.5c it satisfies R1, R2, R3, R4 and R5** — every requirement,
+  which no option had before — while **deleting more apparatus than any of them**: the claim table,
+  the frame stamp, the grace constant, the debug counter, and the ratified design's own `blocked`
+  field. Without the backstop it still carries R4's residue, the smallest of any option.
 - **It supersedes A″**, which was my recommendation before this: A″ is Option C with a per-key table
   and without the content test. The remaining live question between them is §9.5b, which is narrow
   and answerable on its own.
-- **B stays the only complete answer to R4**, and the impossibility result is why. It is not
-  recommended, because R4's residue under C is *one stranded character freed by the next different
-  keystroke* — against a dispatch-architecture change in an example where nobody has reported R4
-  at all. If the owner weighs R4 as correctness rather than robustness, B is the honest choice and
-  C is a good approximation.
-- **R4 may also have a three-line mitigation** worth checking before B is ever considered:
-  `controller.lua:731` records focus and mousefocus as **SKIPPED** by the framework, which suggests
-  a project may define `love.focus` itself and clear the field on focus loss — the dominant cause of
-  a missing release. **Unverified**: whether a project-defined `love.focus` survives the framework's
-  handler management has not been checked.
+- **B is no longer needed.** The impossibility result (§9.2) says R1+R2+R4 cannot be settled *at
+  the moment a character arrives* — and §9.5c does not try to: it decides acceptance on content and
+  resolves the press boundary **later**, from the device. That is deferral of a different kind, and
+  it costs one poll rather than a dispatch-architecture change. B remains the answer if the poll is
+  ever ruled out.
+- **The `love.focus` mitigation is superseded** and need not be verified: a frame-time poll covers
+  focus loss along with every other cause of a missing release, without depending on whether a
+  project-defined `love.focus` survives the framework's handler management.
 
 **Against the ratified design:** its *rule* is replaced (content-scoped fails R1 in Words) while its
 *shape and intent* survive intact — one remembered character, no table, no counter, judgement that

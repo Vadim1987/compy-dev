@@ -330,3 +330,38 @@ itself."*
   in the session**. The shared `textBaseKey` must live in `input.lua`, not `alt.lua`: `ALT_BASE` is
   built in a **lazy-loaded** scene file, so a Words-only session would find it nil — the exact bug
   class upstream hit at `6d14723`. `SHIFT_MAP` is in `config.lua`, which loads first.
+
+## 2026-08-11 — owner pushes on release loss; the timer is declined, a poll replaces it
+
+Owner: *"it's still vulnerable to `keyreleased` loss. But `keypressed` of anything else than
+last-won could do the same. Plus a timer after win."*
+
+- **The diagnosis is right and is R4.** One clearing path is not enough. Both proposed extra clears
+  assessed in §9.5c rather than adopted.
+- **Clear #2 (any other `keypressed` clears) works for its case but WIDENS the rollover hole:**
+  while a key is held and repeating, any other press — `lshift` and `capslock` included, which
+  produce no text — frees the field, so the held key's next repeat is taken as a fresh character.
+  Reachability rests on whether the OS keeps repeating the first key after a second is pressed —
+  the unguaranteed behaviour R2 refuses to lean on.
+- **Clear #3 (a timer after a win) has a failure that cannot be tuned away, so I declined it.** To
+  free a stranded field the timeout must be short; while it runs the key may still be legitimately
+  held; any timeout shorter than the hold lets the next OS repeat through as a new character. **That
+  is a rule change by §1.1's own test** — holding a key would start typing again. It also
+  reintroduces a clock, the one thing the ratified design was proud of not having.
+- **Recommended in their place — ask the device once per frame:** `if watch and not
+  Key.any_pressed(watch) then clear end`, keeping the release-clear as the immediate path (needed
+  for a re-tap inside one event batch).
+  - **R4 closes completely** — the backstop consults no event, so no event can be lost.
+  - **It is NOT `inputStale` returning.** That asked *"is this key held?"* at `love.textinput` time,
+    where the answer depends on which channel arrived first. This asks *"is the key of the character
+    I already accepted still down?"* at frame time, about a press that is already history — no
+    ordering for it to depend on. Decision 32's own distinction, and `helpHeld` is the precedent it
+    already ruled correct.
+  - **It lands `Key.any_pressed` in the example**, which is P18's onboarding half — the poll and the
+    migration become one edit rather than two.
+- **Consequence: Option C + the poll satisfies R1–R5 in full**, which no option managed before, and
+  **B is no longer needed** — the impossibility result forbids settling it *at character arrival*,
+  and this resolves the press boundary later, from the device, for the cost of one poll. The
+  `love.focus` mitigation is superseded and needs no verification.
+- **Untouched: the rollover hole** (§9.5b, one slot vs per-key). It is a property of the slot, not of
+  the clearing paths, and still wants a deliberate decision.
