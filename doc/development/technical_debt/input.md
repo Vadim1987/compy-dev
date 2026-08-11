@@ -1070,6 +1070,14 @@ Not commissioned for closure; each may never need action.
   double-click window — so releasing the modifier during that window makes the echo serialise
   unmodified, miss the swallow, reach the plain hook, and act a second time. On a touch device,
   where the modifier is a key held in the other hand, that is a realistic sequence.
+- **THE HOLE IS ALREADY IN THE SHIPPED EXAMPLE — it is not a property of any conversion**
+  (verified 2026-08-11). Shift+press flags the cell immediately; the gateway synthesises the
+  single click **0.4 s later** (`controller.lua`, `click_delay`); if Shift is released inside that
+  window the derived click serialises with **no modifiers**, passes the hook's own *"nothing
+  held"* guard, and runs the action a second time — and because flagging **toggles**
+  (`actionFlag` → `flowToggleFlag`), the second run **un-flags the cell**. **Net effect:
+  shift-click appears to do nothing if the player lets go of Shift promptly.** A live,
+  user-visible defect in the example as written, predating this feature entirely.
 - **Why it stands:** the honest fixes are a project-side "already handled" flag (the mirrored-flag
   pattern this work exists to remove), or **the platform carrying the originating press's
   modifiers into the derived event** — a platform change, outside this feature's mandate.

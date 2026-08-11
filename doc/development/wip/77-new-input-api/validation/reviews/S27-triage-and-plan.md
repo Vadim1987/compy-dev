@@ -1958,6 +1958,14 @@ fallback** — on touch devices a single tap is often accidental and a double ta
 reverted** (`f61ada67`); against the example's original import the file now differs only in the
 two registration lines the feature changed API-wide.
 
+**[S36] IT ALSO OWNS A LIVE DEFECT, found while reviewing the principles proposal.** Shift-click
+flags at press; the derived single click arrives 0.4 s later; if Shift is released inside that
+window the derived click is unmodified, passes the hook's own guard, and runs the action again —
+and flagging **toggles**, so the cell is un-flagged. **Shift-click appears to do nothing if the
+player lets go of Shift promptly.** This is in the example as written, predates the feature, and
+is independent of any conversion: it is not a reason to convert, and converting does not fix it.
+Enumerated in the register entry below.
+
 **What this step owes.** The full analysis is in the persistent register —
 `technical_debt/input.md`, *"sapper's modifier click path is a touch fallback, and converting it
 needs the platform's help"* — and it is the input, not this summary:

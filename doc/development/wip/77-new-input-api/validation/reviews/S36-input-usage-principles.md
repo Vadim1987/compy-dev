@@ -229,16 +229,31 @@ cross-linked rather than left to look like rivals.** P5.2 is the discipline that
 **`compy.states` is the safe form of what P2 forbids**: a condition polled and reported at its
 transitions, self-correcting per P4, instead of a mirrored pair of events.
 
-### 2.3 The consequence nobody has stated yet, and it is large
+### 2.3 RETRACTED — my sapper claim was self-contradictory (Fable, 2026-08-11)
 
-**P5.1 dissolves sapper's problem without touching its timing.** The four guards become one query
-each — the press path stays exactly where it is, on `love.mousepressed`, at press time, on any
-button. No derived-click channel, no swallow, no synthesis-time modifier hole, **no behaviour
-change at all**, and the owner's actual objection (reinvented folding, horizontal sprawl) is fully
-answered. That is strictly better than both options considered yesterday, and it is available only
-because the diagnosis moved from "the call is a symptom" to "the chain is the symptom".
+I wrote that P5.1 "dissolves sapper's problem without touching its timing… **no synthesis-time
+modifier hole, no behaviour change at all**". **Those two halves cannot both be true**, and the
+oracle was right to kill it: respelling four boolean chains as four queries, at the same call
+sites, evaluated at the same moments, changes nothing — so it cannot remove a defect that is part
+of what it preserves.
 
----
+**What is true, and is worse than what I claimed — verified in code, 2026-08-11:** the hole is
+**in the shipped example already**, and always was.
+
+- `love.mousepressed` flags the cell at press when Shift is held.
+- The gateway counts the release and synthesises a single-click **0.4 s later**
+  (`controller.lua`, `click_delay`).
+- If Shift is released inside that window, the derived click serialises with **no modifiers**,
+  passes the hook's own *"nothing held"* guard, and runs `single` again.
+- `actionFlag` → `flowToggleFlag` **toggles**, so the second run **un-flags the cell**.
+
+**Net effect: shift-click appears to do nothing if you let go of Shift promptly** — a plausible
+human timing, in the example's original code, unrelated to anything this feature did.
+
+So the honest statement of P5.1's value for sapper is narrower and still real: **it answers the
+owner's actual complaint** — reinvented folding and chained conditions — **at zero behavioural
+risk**, and it neither causes nor cures the toggle defect. The defect is sapper's own and belongs
+to its step. Recorded in the persistent register so it is not lost with this document.
 
 ## 3. What ratification would change elsewhere
 

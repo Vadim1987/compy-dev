@@ -376,3 +376,33 @@ to `../../../validation/reviews/S36-input-usage-principles.md` with strict prove
 - **Fable is mid-review of this document**, so the amendment was sent to it directly rather than
   left to be missed — it is judging the exclusivity question and was about to weigh a contest I
   had already dropped.
+
+## 2026-08-11 — Fable reports: principles ratify, the primitive does not, and my sapper claim dies
+
+Report `../../../validation/reviews/S36-fable-principles-review.md`, prompt in `../prompts/`.
+
+- **Principles P1–P4 + P5.2: RATIFY**, with one required addition — they partially **reverse**
+  Decision 30 point 3 (`Key.*` in project code "is a smell"), so that needs an **amendment stated
+  in the ledger**, not silent supersession. It tried and failed to construct counterexamples (a
+  safe mirrored pair, a legitimate continuous-state shortcut) against the real matcher.
+- **P5.1: DO NOT ratify this release.** Ship the diagnosis as prose, defer the code. Its precedent
+  is the owner's own *"not this release"* on the sibling `compy.input.keys` proposal one day
+  earlier, on the same mandate; *"it is cheap"* and *"better than the table"* are true but
+  orthogonal to the axis that ruling turned on.
+- **Exclusivity: agrees with permissive default + `*`**, on the coupling argument.
+- **MY ERROR, and it is the load-bearing finding.** §2.3 claimed the query respelling *"dissolves
+  sapper's problem… no synthesis-time hole, no behaviour change at all"*. Self-contradictory: a
+  pure respelling cannot both preserve behaviour and remove a defect that is part of it.
+  **Retracted.**
+- **Verified while retracting, and it is worse than I claimed: the hole is in the SHIPPED example.**
+  Shift-click flags at press; the derived click lands 0.4 s later (`click_delay`); release Shift
+  inside that window and it arrives unmodified, passes the hook's own guard, and runs again — and
+  `actionFlag` **toggles**, so the cell un-flags. **Shift-click appears to do nothing.** Live,
+  user-visible, predates the feature. Recorded in the register and in P19.
+- **Other corrections of mine it named:** `any_mod` lives on `Controller`, not `Key`, so "expose
+  it" means moving it; and I gave equal weight to two live defects and one illustrative doc
+  example when arguing P2's evidence.
+- **A finding neither of us had:** `tests/mock.lua`'s `isDown` is a plain table lookup and
+  **never raises**, so the loud-failure property P5.1's safety rests on **would not be exercised
+  by the suite at all** — only by the real engine. Same for `love.mouse.isDown`, which does not
+  raise on an out-of-range button, so pass-through would not fail loudly for mouse tokens.
