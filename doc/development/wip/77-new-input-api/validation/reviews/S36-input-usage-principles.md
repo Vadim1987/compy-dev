@@ -165,14 +165,30 @@ shift **and no other modifier**. My recommendation stands in the variadic shape 
 and `*` carries exclusivity, with one meaning per symbol across both surfaces. The alternative,
 exclusive-by-default, makes the common case longer and gives `!` nothing to do.
 
-**C3 — "nothing held" is the most common query in the tree and is still the ugliest to write.**
-Under permissive-plus-negation it is `Key.pressed('!ctrl','!alt','!shift')` — the horizontal
-sprawl P5 exists to remove, merely relocated, and sapper alone needs it twice. Under C2's `*` it
-would be `Key.pressed('*')`, but note **bare `'*'` is deliberately *refused* in shortcut
-registration** (Decision 21, because it would be "every unmodified key" spelled like a narrow
-binding) — so allowing it as a *query* is a deliberate asymmetry that must be written down, not
-slipped in. The cheapest alternative is exposing what the matcher already has internally:
-`not Key.any_mod()`.
+**C3 — WITHDRAWN as framed (owner, 2026-08-11), and replaced by a different objection.**
+I called `Key.pressed('!ctrl','!alt','!shift')` "horizontal sprawl merely relocated". The owner's
+correction is right and the distinction matters: **it is ONE call**. P5's complaint was never
+verbosity — it was *chained* conditions composed with `and`/`not` across call sites, and physical
+state consulted fifty lines from the condition that motivated it. A single call listing three
+negations is one place, one evaluation, atomic and readable. Verbosity is not sprawl, and I
+conflated them.
+
+**What survives is a coupling objection, not a style one — and it is sharper.** Writing
+`'!ctrl','!alt','!shift'` asserts *"these are all the modifiers there are"*. That is **the fold
+reinvented one level up**: the project now hard-codes the framework's modifier-set membership.
+It is true today and was false eight days ago — Decision 31 closed the set and removed `gui`, so
+the same call written before that ruling would have been silently incomplete. The framework's own
+class key never has this problem, because `'shift+*'` delegates set membership to the matcher.
+**So an exclusivity token is worth having for correctness, not for brevity**, and that is a better
+argument for C2's `*` than the one I originally gave.
+
+**[Owner, 2026-08-11] Further labels are available if wanted** — `'!*'`, `'nothing'`, `'![mod]'`,
+`'![a-z]'` and the like — added only if a real call site needs them. **Assistant's caution, for
+the record:** each label is individually cheap, but together they become a **query mini-language**,
+which is itself a moving part the frame asks us to justify. `'!*'` / `'nothing'` are one concept
+(exclusivity) and are cheap; `'![a-z]'` is a different concept (classes of keys) and would need a
+defined vocabulary, a documented list, and a story for what `[a-z]` means on a non-Latin layout.
+**Recommendation: ship exclusivity, defer classes until something asks.**
 
 **C3b — three boundary cases the signature should answer before it ships**, each cheap now:
 

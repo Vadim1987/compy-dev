@@ -356,3 +356,23 @@ to `../../../validation/reviews/S36-input-usage-principles.md` with strict prove
 - **Biggest open question, flagged as unruled:** the principles are documentation, but P5.1 is
   **code** — new API surface, which the strategic frame obliges us to justify in the PR
   description or defer past this release.
+
+## 2026-08-11 — owner corrects my sprawl objection; the real objection is coupling
+
+- **Conceded: `Key.pressed('!ctrl','!alt','!shift')` is NOT sprawl.** It is one call. P5's
+  complaint was chained conditions across call sites and physical state consulted at depth, not
+  verbosity — I conflated the two.
+- **What survives is stronger than what I withdrew:** enumerating the negations asserts *"these
+  are all the modifiers there are"*, hard-coding framework set membership into project code — the
+  fold reinvented one level up. **True today, false eight days ago:** Decision 31 closed the set
+  and removed `gui`, so the same call written before that ruling would have been silently
+  incomplete. `'shift+*'` never has this problem because it delegates membership to the matcher.
+  So the case for an exclusivity token is **correctness, not brevity**.
+- Owner offered further labels (`'!*'`, `'nothing'`, `'![mod]'`, `'![a-z]'`) if a call site needs
+  them. Recorded with one caution: exclusivity is one cheap concept, key-classes are a different
+  one that grows a **query mini-language** — a moving part the frame asks us to justify, needing a
+  defined vocabulary and an answer for non-Latin layouts. Recommend shipping exclusivity,
+  deferring classes.
+- **Fable is mid-review of this document**, so the amendment was sent to it directly rather than
+  left to be missed — it is judging the exclusivity question and was about to weigh a contest I
+  had already dropped.
