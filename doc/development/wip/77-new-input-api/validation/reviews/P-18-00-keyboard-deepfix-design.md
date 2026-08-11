@@ -471,25 +471,106 @@ handling changes for any press that fires both. It also assumes a press's two ev
 same event batch; a one-frame carry of unconsumed press counts is cheap insurance if that is not
 guaranteed.
 
-### 9.4 What I would recommend, and why it is not obvious
+### 9.5 Option C — the owner's correction (2026-08-11), and it is the best of the four
 
-**A″, plus a decision on R4 taken separately.** The reasoning:
+**The owner's framing first:** *"Words looks like a series of Alt levels with minor adjustment. Can
+we take the approach suggested for Alt, with one correction: as soon as a win is registered we start
+listening to `keyreleased`; the `keyreleased` of the last won character just clears `lastText` and
+deactivates itself."*
 
-- A″ is a **small** change that removes the two things the ratified design most objected to — the
-  frame stamp and the grace constant — and it fixes R3 as a side effect rather than as an addition.
-  It is the only option whose size matches the defect it removes.
-- **R4 has a cheaper mitigation than B**, if it works: `controller.lua:731` records focus and
-  mousefocus as **SKIPPED** by the framework, which suggests a project may define `love.focus`
-  itself. Clearing the claims on focus loss addresses the dominant cause of a missing release, and
-  is three lines. **Needs verification** that a project-defined `love.focus` survives the
-  framework's handler management — not yet checked.
-- **B is the only complete answer**, and it is the one the impossibility result points at. If the
-  owner weighs R4 as a correctness requirement rather than a robustness nicety, B is the honest
-  choice and A″ is a half-measure. What argues against it is the strategic frame's question — does
-  this make the system more predictable, or merely more elaborate? — applied to a dispatch change
-  in an example nobody has reported R4 against.
+**Stated as a mechanism:** accept a character iff `text ~= lastText`. On accepting, set
+`lastText = text` and arm a release watch for `textBaseKey(lastText)`. On
+`love.keyreleased(key)`, if `key` is that watched key, clear `lastText` and disarm.
 
-**Against the ratified design:** none of the three is what that document specifies, because its rule
-is content-scoped and fails R1 in Words (§8.1). A″ and B both keep its *intent* — subtract the
-apparatus, stop inferring — while keying on the press rather than the character. **The document is
-therefore revised in this step, not merely implemented**, which is what the step was told it may do.
+**Why it is better than the three above, and not a compromise between them.** It keeps the ratified
+design's shape — one remembered character, no table, no counter — and **replaces the content test's
+broken premise with a press boundary**. `"all"` now works: the first `l` is accepted, its repeats
+are blocked by content, the release clears the field, and the second press is accepted because there
+is nothing to match against. **The precondition the design document rests on — one target, one
+keystroke — is dissolved rather than worked around**, which is what its own text asked for.
+
+**Scored against R1–R5:**
+
+| | |
+|---|---|
+| **R1** | ✓ for a single key: repeats blocked by content, the next press freed by the release |
+| **R2** | ✓ the accept decision reads only `lastText`; the clear happens on `love.keyreleased`, which always follows both of the press's other events in either order |
+| **R3** | ✓ **no grace window exists to reject anything** — a character trailing its own release meets an already-cleared field |
+| **R4** | ✗ but with the **smallest residue of any option**: a missed release strands one character, and *any different character* overwrites the field and frees it — where the claim table strands that key until it is pressed and released again |
+| **R5** | ✓ one mechanism, no per-scene special cases |
+
+**It also deletes more than A″ does:** `INPUT.upRecent`, `INPUT_UP_GRACE`, the `DBG_FRAME`
+dependency, `GLYPH_CLAIMED` **and** — on inspection — the ratified design's own `blocked` field,
+whose job (stop the winning character being re-judged as the target advances) is already done by the
+content test. One field and one watched key replace all of it.
+
+**Two questions it raises, both real:**
+
+**(a) Arm on a win only, or on any accepted character?** The owner said *"as soon as win is
+registered"*. Arming only on wins changes Words' behaviour: press a wrong key, release, press it
+again — the field still holds that character, so the second press is silent where the authored game
+knocks again. `alt.lua` would not notice (its `ALT.fumbled` already makes repeated wrong answers
+no-ops), but `words.lua` would, and §1.1 forbids it. **Recommendation: arm on every accepted
+character, win or miss.** The mechanism is unchanged; only the arming point moves.
+
+**(b) One slot, or one per key?** This is the only substantive difference between Option C and A″ —
+they are the same idea at different capacities. A single slot has a **rollover hole**: hold `a`
+(accepted, field = `"a"`), press `b` while still holding it (accepted, field = `"b"`), and `a`'s
+repeats no longer match the field, so they would be accepted as new characters. Whether that hole is
+reachable depends on OS auto-repeat following the most recently pressed key and not resuming on the
+earlier one — **behaviour no one guarantees**, which is the same class of assumption R2 exists to
+refuse. A per-key table closes it and costs a table. **Not recommended either way here; it is a
+decision, and it is the one worth taking deliberately.**
+
+**A finding this turned up, which affects every option including the status quo.** The mechanism
+needs the character → physical key inference to be correct, and **`wordsBaseKey` is incomplete**:
+
+```lua
+function wordsBaseKey(ch)          function altBaseKey(item)
+  if ch == " " then                  ...
+    return "space" end               if ALT_BASE[item] then
+  if isAlphaChar(ch) then              return ALT_BASE[item] end   -- SHIFT_MAP inverted
+    return string.lower(ch) end      if isAlphaChar(item) then
+  return ch                            return string.lower(item) end
+end                                  return item
+                                   end
+```
+
+`altBaseKey` inverts `SHIFT_MAP`, so `"!"` maps to `"1"` — the key whose release actually arrives.
+`wordsBaseKey` does not, so any shifted symbol typed in Words maps to itself and its release never
+matches. Words' own *targets* are unaffected (rung 4 adds only `,` and `.`, unshifted), but a player
+who types a shifted symbol by mistake strands it. **The same defect exists today under `spendGlyph`**,
+which my `ca6d5df` inherited: the claim on `"!"` is never cleared, so that character can never be
+typed again in that session.
+
+**So one shared `textBaseKey` belongs in `input.lua`** — not in `alt.lua`, where `ALT_BASE` is built
+today: scenes are lazy-loaded, and a Words-only session would find it nil. `SHIFT_MAP` lives in
+`config.lua`, which loads before `input.lua`, so the inversion can be built there safely.
+
+### 9.6 What I recommend, now that Option C is on the table
+
+**Option C, armed on every accepted character (§9.5a), with the slot-versus-table question
+(§9.5b) decided deliberately and the shared `textBaseKey` landing with it.**
+
+- It satisfies R1, R2, R3, R5 and has the smallest R4 residue of any option, while **deleting more
+  apparatus than any of them** — the claim table, the frame stamp, the grace constant, the debug
+  counter, and the ratified design's own `blocked` field.
+- **It supersedes A″**, which was my recommendation before this: A″ is Option C with a per-key table
+  and without the content test. The remaining live question between them is §9.5b, which is narrow
+  and answerable on its own.
+- **B stays the only complete answer to R4**, and the impossibility result is why. It is not
+  recommended, because R4's residue under C is *one stranded character freed by the next different
+  keystroke* — against a dispatch-architecture change in an example where nobody has reported R4
+  at all. If the owner weighs R4 as correctness rather than robustness, B is the honest choice and
+  C is a good approximation.
+- **R4 may also have a three-line mitigation** worth checking before B is ever considered:
+  `controller.lua:731` records focus and mousefocus as **SKIPPED** by the framework, which suggests
+  a project may define `love.focus` itself and clear the field on focus loss — the dominant cause of
+  a missing release. **Unverified**: whether a project-defined `love.focus` survives the framework's
+  handler management has not been checked.
+
+**Against the ratified design:** its *rule* is replaced (content-scoped fails R1 in Words) while its
+*shape and intent* survive intact — one remembered character, no table, no counter, judgement that
+infers nothing. **So the document is revised in this step rather than merely implemented**, which is
+what the step was told it may do, and the revision is small enough to state as an amendment rather
+than a rewrite.

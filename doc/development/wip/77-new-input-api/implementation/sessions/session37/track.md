@@ -295,3 +295,38 @@ Owner asked for a derivation from R1–R5 rather than a choice between the two c
 - **The ratified design is revised, not implemented, either way** — its rule is content-scoped and
   fails R1 in Words. A″ and B both keep its intent (subtract the apparatus, stop inferring) while
   keying on the press rather than the character.
+
+## 2026-08-11 — the owner's correction, and it is better than anything I derived
+
+Owner: *"Words looks like a series of Alt levels with minor adjustment. Can we take the approach
+suggested for Alt, with one correction: as soon as a win is registered we start listening to
+`keyreleased`; the `keyreleased` of the last won character just clears `lastText` and deactivates
+itself."*
+
+- **Assessed before agreeing, and it wins on the scoring.** Accept iff `text ~= lastText`; on
+  accepting, arm a release watch for that character's key; the release clears the field. It keeps
+  the ratified design's shape — one remembered character, no table, no counter — and **replaces the
+  content test's broken premise with a press boundary**, so `"all"` works and the *"one target, one
+  keystroke"* precondition is dissolved rather than worked around. R1 ✓ R2 ✓ R3 ✓ R5 ✓, and R4's
+  residue is the **smallest of any option**: one stranded character, freed by the next *different*
+  keystroke, where the claim table strands the whole key.
+- **It deletes more than my A″ did:** `INPUT.upRecent`, `INPUT_UP_GRACE`, the `DBG_FRAME`
+  dependency, `GLYPH_CLAIMED`, **and the ratified design's own `blocked` field** — whose job the
+  content test already does. Recommendation moved from A″ to C; A″ is C with a table and without the
+  content test.
+- **Two questions raised rather than assumed, both real:**
+  - **(a) arm on wins only, or on every accepted character?** Arming on wins alone changes Words:
+    a wrong key pressed twice would knock once, where the authored game knocks twice (`alt.lua`
+    would not notice — `ALT.fumbled` already makes repeated wrong answers no-ops). §1.1 forbids
+    that, so **arm on every accepted character**; only the arming point moves.
+  - **(b) one slot or one per key?** The single slot has a **rollover hole** — hold `a`, press `b`,
+    and `a`'s repeats no longer match the field. Reachability depends on OS auto-repeat following
+    the most recent key and not resuming on the earlier one, **which nobody guarantees** — the same
+    class of assumption R2 refuses. Left as the decision worth taking deliberately.
+- **A finding that affects EVERY option including the status quo:** `wordsBaseKey` is incomplete
+  where `altBaseKey` is not — it lacks the `SHIFT_MAP` inversion, so a shifted symbol maps to itself
+  and its release never matches. Under `spendGlyph` today (which `ca6d5df` routed Words to) typing
+  `"!"` claims key `"!"`, the release delivers `"1"`, and **that character can never be typed again
+  in the session**. The shared `textBaseKey` must live in `input.lua`, not `alt.lua`: `ALT_BASE` is
+  built in a **lazy-loaded** scene file, so a Words-only session would find it nil — the exact bug
+  class upstream hit at `6d14723`. `SHIFT_MAP` is in `config.lua`, which loads first.
