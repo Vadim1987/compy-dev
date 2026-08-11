@@ -492,3 +492,24 @@ code**, six prose references need repair, and **removal is safe while renumberin
 citations by number). **Answered the owner's question about assistant confusion:** mild and
 manageable — the risk is historical commit messages citing numbers that no longer resolve, so the
 excision lands in **one commit naming each removed decision**, which `git log -S` can answer.
+
+## 2026-08-11 — REPLAN after Decision 32
+
+Written as §16 of the sprint plan, with every consequence pushed into the §4 rows themselves —
+the rule this plan exists to enforce.
+
+- **Examples are dispositioned, not pending.** P16 is spent except **one ruling**: delete
+  `turtle`'s `ctrl+escape` as redundant (the framework reserves it and acts without consuming).
+- **Decision 32 inverted a filed recommendation:** `helpHeld`'s poll is correct, so P18's
+  onboarding half shrank to Ctrl+Alt+H, `isMod`, and the `INPUT` dissolution.
+- **The measured truth of the endgame: the dominant cost is prose.** 27 markers in `src/`+`tests/`
+  and **84 in the persistent corpus** (33 internals, 30 ledger, 8 guide) — 111 against a gate that
+  demands zero. **That is bigger than everything else left combined**, and until it is ruled, P11's
+  size is unknown. Three readings put to the owner; recommended: code and guide fully cleared,
+  everything **factual** cleared in dev-facing docs, editorial remainder deferred **as a named
+  list**.
+- **Upstream pull ordered BEFORE the two deepfixes**, written into the parent plan's Phase U:
+  upstream may have moved in the very file the heal rewrites, and meeting that as a merge is cheap
+  where meeting it after designing is a redesign.
+- P10 marked part-done (the flag-shortcut member is discharged by the guide rewrite); it still
+  owes the reserved-combo section, W9/W10, and its share of the marker question.

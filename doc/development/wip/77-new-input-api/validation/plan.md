@@ -350,6 +350,21 @@ advanced fork of it) **and** each of the three nested example repos (`balloons`,
   and retire the manual `release_keys()` discipline if it does. See
   `reviews/S27-triage-and-plan.md` §11.3. **[Recorded S33.]**
 
+### Phase U ordering — the example half comes FIRST (owner intent, 2026-08-11)
+
+The owner intends to **pull the current upstream versions of the two detached example repos**
+(`keyboard`, `maze`) and reconcile them. That half of Phase U now **precedes** the sprint's
+deepfix steps for those repos (`S27-triage-and-plan.md` P17, P18), rather than following them.
+
+**Why the order matters more than the labelling.** A deepfix planned against a stale base is
+planned twice — the argument that has already ordered this feature's work three times — and it is
+sharpest here: upstream may have moved in `examples/keyboard/input.lua`, the file the `textinput`
+heal rewrites and the file the reconciliation just edited. Meeting that divergence as a merge,
+before designing, is cheap; meeting it after designing is a redesign.
+
+The platform half of Phase U (upstream reconciliation of the framework repo itself) is untouched
+by this and keeps its original placement.
+
 ### Phase L — Ledger compaction (INSERTED 2026-08-11, owner) — runs before release, after the tree settles
 
 **The rule this reverses.** The sprint has run under *"tombstone decisions, never renumber"*
