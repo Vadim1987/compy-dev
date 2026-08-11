@@ -951,6 +951,22 @@ Not commissioned for closure; each may never need action.
   runs them.
 - **Revisit:** Migrate or delete at will; not blocking anything.
 
+### An `update_prompt` endpoint was asked for and declined; `configure` already is one
+
+- **Where:** `src/examples/balloons/terminal.lua` — an in-file remark asks the API to expose an
+  *"update-prompt"* endpoint so a game can write its own welcome message when its mode switches.
+- **Declined, 2026-08-11 (owner).** It is sugar over `compy.input.configure{ prompt = … }`, and a
+  second path to a decorative change costs the surface's orthogonality, which is not ideal
+  already. *At best it is a pattern to recommend, not a function to add.*
+- **And the project already has it**, which is the part worth recording: `terminal_write(msg)` in
+  that same file is one line over one `configure` call, exposed to the game as `write`. So the
+  recommended shape is not hypothetical — it exists, in the example that asked for the endpoint.
+- **The remark's other half — "three functions juggling each other" — is not the win it looks.**
+  Two of the three are load-bearing: the handler slot is late-bound because `ui.lua` requires this
+  file, and so activates the session, before `main.lua`'s router exists. Inlining the third
+  (`deliver`, which joins submitted lines into the one string the game's handlers take) saves a
+  function and costs the comment explaining why the join happens. Left alone deliberately.
+
 ### PROPOSAL: if event-sourced held state is ever needed, it belongs to the framework
 
 - **Status:** owner's direction, 2026-08-11. **Not a commitment**, and explicitly not this
