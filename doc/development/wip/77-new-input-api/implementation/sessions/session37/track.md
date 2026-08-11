@@ -178,3 +178,34 @@ see how `textinput` is used in the second project before design.
   §2–§7, open questions §8, nothing decided). Plan amended in the steps that act on it: the
   numbering convention under §4, `P-17-00` as a minimal note in §15.3, and a `P-18-00` block in
   §15.4 pointing at the document.
+
+## 2026-08-11 — owner ruling: the game's rules are not ours to change
+
+Owner, after I described what a wrong character does in Words: *"we are **never** changing game
+rules in 'keyboard'. What we do is tweaking the **implementation** to use appropriate underlying
+mechanisms, trying to find exact fit."* (Self-corrected in the same breath from "tweaking them" to
+"tweaking implementation" — the distinction is the whole point.)
+
+- **The test it imposes:** would a player notice a difference? Yes → rule change, out of scope.
+  No → implementation fit, which is what the step is for.
+- **It kills two proposals of mine, and it is right to.** "Words could take the OS repeat as
+  typing" is a rule change — a held `l` would show `lll` where the authored game shows one — and
+  the knock guard in `wordsBad` existed only to mitigate that. Both withdrawn **in the document**,
+  with the reason, so a reader of the outcome does not wonder why they are absent.
+- **The authored rule, read from the code rather than assumed:** both scenes accept **one character
+  per physical press** with OS repeat suppressed. `alt.lua` states it (*"a held wrong key … cannot
+  knock continuously"*), `words.lua` states it by reference to Alt, and upstream's `inputStale`
+  implements it under the delivery order the author develops on. **So repeat-suppression is a rule,
+  not an artifact.** What IS an artifact — and in scope — is the dependence on delivery order, the
+  dependence on a release arriving, and the frame counter borrowed from the debug logger.
+- **It nearly settles §8.1.** Content-identity (`lastText`) is not a trade-off under this ruling but
+  a rule change: `"all"` becomes untypeable without an intervening wrong character. What remains
+  live is (a) keep press-identity and fix its two artifacts, or (b) revise the ratified design so
+  its rule is press-scoped rather than content-scoped, keeping its virtue of no frame counter and
+  no claim table — if such a formulation exists without consulting held state or delivery order.
+  Written into §8.1 as pending the owner's confirmation, not as taken.
+- **The one place the current implementation FAILS the authored rule:** a very fast tap, where
+  `love.textinput` arrives after its own `love.keyreleased` and is dropped. A press produced a
+  character and the player does not get it. Fixing that is fit, not rule change.
+- Precedent named in the document: sapper's reverted conversion — mechanically faithful, purpose
+  destroyed. This ruling is that lesson generalised to the whole example.

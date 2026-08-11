@@ -43,6 +43,50 @@ Where the code's own identifiers contain the words *glyph* or *judge* (`spendGly
 `GLYPH_CLAIMED`), they are used **as identifiers only**, never as concepts. No claim in this
 document rests on either word.
 
+## 1.1 The governing constraint (owner ruling, 2026-08-11) — the rules are not ours
+
+> *"We are **never** changing game rules in `keyboard`. What we do is tweaking the
+> **implementation** to use appropriate underlying mechanisms, trying to find an exact fit."*
+
+**This governs every item on the agenda**, and it is a boundary rather than a preference: what the
+player experiences is the author's, and the step's whole licence is to change *how* it is produced.
+
+**The test it imposes**, and the one every proposal below is measured against: *would a player
+notice a difference?* If yes, it is a rule change and it is out of scope, however well-motivated.
+If no, it is an implementation fit and it is exactly what this step is for.
+
+**What the authored rules are here, read from the code rather than assumed.** Both scenes were
+written to accept **one character per physical press**, with OS key-repeat suppressed:
+
+- `alt.lua`'s own comment states the intent directly — *"a held wrong key (its `textinput` repeats
+  every frame) cannot knock continuously"*, and a held correct key must not bleed onto the next
+  target.
+- `words.lua`'s states it by reference — *"the `inputStale` guard drops a held/released or chord
+  glyph, exactly as Alt does"*.
+- Upstream's `inputStale` implements exactly that under the delivery order the author develops on
+  (`love.textinput` first): the key is not yet held at its own first character, so that one is
+  accepted, and the repeats arriving while it is held are dropped.
+
+So **repeat-suppression is a rule, not an artifact**. What is an artifact — and therefore in scope
+— is everything about *how* that rule is enforced: the dependence on delivery order (which is what
+made the same code deaf on the device), the dependence on a release event arriving, and the frame
+counter borrowed from the debug logger.
+
+**Two proposals of mine are withdrawn under this ruling**, recorded because they were argued in the
+session and someone reading only the outcome would wonder why they are absent:
+
+1. **"Words could take the OS repeat as typing"** — that a held key types repeatedly, as it would
+   in a text editor. It is a rule change: a player holding `l` would see `lll` where the authored
+   game shows one `l`. Out of scope, whatever its merits as game design.
+2. **"Guard the knock in `wordsBad` so a held wrong key does not knock per repeat"** — proposed
+   only as a mitigation for (1). With repeat-suppression correctly implemented the knock already
+   fires once per press, which is the authored behaviour, so the guard is unnecessary as well as
+   forbidden.
+
+**Precedent, same category:** `sapper`'s conversion in session36 was mechanically faithful and
+still destroyed the feature's purpose, and was reverted. The lesson recorded then — *purpose beats
+shape*, and *ask the author* — is this ruling's ancestor.
+
 ## 2. The shared layer both scenes sit behind (`input.lua`)
 
 All three events arrive as `compy.input.hooks.*`, registered in `inputInit`. The scene sees only
@@ -248,6 +292,28 @@ Press-identity (`spendGlyph`) serves both scenes today and costs what the design
 `love.textinput` arriving after its own `love.keyreleased` is rejected, so a very fast tap is lost.
 Content-identity (`lastText`) removes that cost and the frame counter with it, but is only sound
 where consecutive targets cannot repeat — which Words breaks.
+
+**[2026-08-11] §1.1's ruling narrows this to one answer, pending the owner's confirmation.**
+Content-identity is not a trade-off here, it is a **rule change**: under `lastText`, typing `"all"`
+loses its second `l` and the player cannot enter a word the game is showing them without first
+typing something wrong. A player would notice, so it fails the test §1.1 imposes — **unless the
+rule is revised to key on something other than the character's content**, which is what the design
+document itself asked for when its precondition broke.
+
+That leaves two live directions rather than one, and they are not the same:
+
+- **Keep press-identity, fix its two artifacts.** `spendGlyph` already produces the authored
+  behaviour in both scenes; what it costs is the fast tap (it consults `INPUT.upRecent`, a frame
+  stamp read from the debug counter) and its dependence on `love.keyreleased` arriving. Both are
+  implementation, so both are in scope.
+- **Revise the ratified design so its rule is press-scoped rather than content-scoped**, keeping
+  its virtue — no frame counter, no grace window, no claim table — if a formulation exists that
+  does not consult held state or delivery order. Whether one exists is §8.2, and it is not yet
+  answered.
+
+The fast tap is worth naming precisely, because it is the one place where the current
+implementation **fails to deliver the authored rule**: a press produces a character, and the
+implementation drops it. Fixing that is not a rule change; it is the fit this step is for.
 
 **8.2 Is there a third mechanism that has neither cost?** `love.keypressed` carries `isrepeat` and
 `love.textinput` does not; the two channels have no guaranteed order, which is what rules out
