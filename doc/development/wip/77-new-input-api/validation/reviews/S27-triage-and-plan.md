@@ -1903,6 +1903,17 @@ to `keyboard` or `maze`: those two **already are** the escalation — each has i
 own planning pass precisely because design-heavy work was found in them. Escalating out of a step
 that exists to do design-heavy work would be circular.
 
+> **[S36] PARTLY EXECUTED, 2026-08-11, under the adoption rules** (the principles proposal, §5),
+> because the owner reopened this session's example work rather than leaving it to the sweep:
+> `bd536eea` adds `Key.any_pressed` (breaking test first; suite 942 → 946) so a project has one
+> surface for held state; `c04cbedf` moves `pong`'s three polls and its README snippet onto it;
+> `dad70c30` records in `clock` **why its bindings stay in the hook** — converting them narrows
+> the trigger and nobody asked for that; `f55ff340` teaches the new rung in the project guide,
+> since new public API must not ship undocumented.
+> **What remains for this step:** `turtle` (no change — it is the standing demonstration of the
+> captured `love.*` path), the widget/validator-surface examples (out of the principles' scope,
+> recorded as such), and any example the register still names.
+
 **Input, and the only input.** `doc/development/technical_debt/input.md`, the section
 *"Examples are not onboarded onto the new input API"*, written by P14e. Each entry names the
 example, the site, the shape it is written in today, the shape the new API offers, and **why

@@ -1144,8 +1144,13 @@ Not commissioned for closure; each may never need action.
     gateway's `keyreleased`), without consuming — so the project's handler
     fires on the press and the framework quits on the release, to the same
     end. The question for that site is deletion, not rung.
-  - `clock/main.lua:69,78` — `Key.shift()` inside `love.keyreleased`
-    guarding `space` and `r` are combos on the `keyreleased` channel.
+  - ~~`clock/main.lua:69,78`~~ — **RESOLVED 2026-08-11 by deciding not to
+    convert, with the reason written into the file.** `space`,
+    `shift+space` and `shift+r` name themselves like combos, but a
+    shortcut matches its modifier set exactly, so a `'space'` binding
+    would stop firing while any unrelated modifier is held, where the
+    hook fires regardless. The narrowing is invisible in the diff that
+    would introduce it and nobody asked for it.
 - **Why it stands:** Deliberate scope. The reconciliation's mandate was two
   named platform changes; converting an example to the API's better shape is
   a different job, and doing both at once turns a reconciliation into a

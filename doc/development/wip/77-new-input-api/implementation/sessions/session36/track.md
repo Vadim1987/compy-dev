@@ -441,3 +441,23 @@ migration translates them rather than copying project-surface advice that does n
   the name for OR semantics and force the later primitive to break compatibility or rename.
   **Recommended: single-argument only, raise on a second** — identical under both readings, so the
   multi-argument meaning stays unclaimed.
+
+## 2026-08-11 — the wrapper lands, and the non-deepfix examples are dispositioned
+
+Owner ruled the name should state the OR: **`Key.any_pressed(...)`**, multi-arg like LÖVE's, its
+purpose being to move projects off the `love.` surface — and `pressed` stays reserved for the
+future rich predicate, which is AND-shaped. That closes C8 by naming rather than by arity.
+
+- `bd536eea` **`Key.any_pressed`**, breaking test first — the module had **no spec at all**, so
+  one was created (4 cases). Zero args raises. Suite 942 → **946**.
+- `c04cbedf` **pong** — three polls plus the README snippet that teaches them. The polls are
+  *correct* (continuous state, arbitrary keys) so this changes the surface, not the paradigm.
+- `dad70c30` **clock — decided NOT to convert, reason written into the file.** Under the owner's
+  no-regression rule this is the honest outcome: `'space'` as a shortcut stops firing while any
+  unrelated modifier is held, where the hook fires regardless. **The same is true of `shift+r`**,
+  so the whole set stays. Register entry closed accordingly.
+- `f55ff340` **the guide** — the ladder's last rung is now `Key.any_pressed`, with "several names
+  mean ANY of them" stated, and `love.keyboard.isDown` named as still working and as what it
+  calls. New public API must not ship undocumented, which is why this did not wait for P10.
+- **turtle: no change**, and that is a ruling not an omission — it is the standing demonstration
+  of the captured `love.*` path.
