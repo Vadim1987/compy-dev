@@ -89,9 +89,11 @@ shape*, and *ask the author* — is this ruling's ancestor.
 
 ## 1.2 The order between the two channels is not guaranteed — attestation and principle
 
-**Owner attestation, 2026-08-11 (observed, not inferred):** *"the game is deaf on nodejs/linux. I
-suspect it's fine on Android."* Recorded here because it is first-hand evidence this session cannot
-reproduce — the container has no device and cannot inject keystrokes.
+**Owner attestation, 2026-08-11.** Attested: **the game is deaf on desktop Linux — the nodejs
+setup, run as `love src`.** Suspected, and labelled as such by the owner: it works as intended on
+Android from an assembled `.apk`, on the grounds that **the author uses it there**. Recorded here
+because it is first-hand evidence this session cannot reproduce: the container has no device and
+cannot inject keystrokes.
 
 **Owner principle, same message, and it is the stronger half:** *"relying on the order the library
 does not guarantee is wrong anyway — any release of LÖVE2D could break both games,
@@ -105,14 +107,23 @@ failure mode is total — nothing can be typed, and the player has no way around
 **Both games are exposed today.** `alt.lua` and `words.lua` sit behind the same helper, so a flip
 in delivery order does not degrade them, it silences them.
 
-**One discrepancy, flagged rather than resolved.** The design of record
-(`internals/examples/keyboard.md`) states *"Desktop LÖVE sends `keypressed` first; the web build
-sends `textinput` first"*, and elsewhere the sprint's record says the Alt scene was *"deaf on
-hardware"* while working in the IDE. The owner's attestation orients it the other way — deaf on
-desktop Linux, suspected fine on Android. Both cannot be right as stated. **Nothing in this step
-should rest on either orientation**, which is exactly the principle above; but the design document
-makes a factual claim about platforms and, if it is revised here, that sentence needs settling or
-striking rather than copying forward.
+**The platform prose in the corpus is unsourced and is to be struck, not reconciled.** The design of
+record (`internals/examples/keyboard.md`) asserts *"Desktop LÖVE sends `keypressed` first; the web
+build sends `textinput` first"*, and the sprint's record elsewhere speaks of the Alt scene being
+*"deaf on hardware"* while working in "the IDE". **Owner, 2026-08-11: those claims about what
+"hardware" and "device" were are speculation of little value.** Only the attestation above is
+evidence. When this step revises the design document, that sentence is **removed rather than
+corrected** — R2 makes the platform question irrelevant to the mechanism, and an unsourced platform
+claim in a persistent document is worse than no claim, because it reads as measurement.
+
+**What the attestation does and does not change about the work.** It confirms the failure is real
+and reachable in the environment we actually run in. It does **not** describe the tree as it now
+stands: both scenes are already order-agnostic here — `alt.lua` since this branch's `3a9d48c`
+(*"accept the first glyph of a press, whatever order it arrives in"*), and `words.lua` since
+`ca6d5df`, which routed it to the same mechanism. **So R1 and R2 are satisfied in the merged tree
+today, and what remains open is R3 and R4** — the trailing `love.textinput` after `love.keyreleased`,
+and a `love.keyreleased` that never arrives. The deafness is the defect that motivated the heal; it
+is not the defect the heal still has to fix.
 
 ## 2. The shared layer both scenes sit behind (`input.lua`)
 

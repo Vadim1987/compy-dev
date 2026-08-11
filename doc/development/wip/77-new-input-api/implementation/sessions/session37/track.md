@@ -237,3 +237,26 @@ irrecoverably)."*
 - **No candidate on the table satisfies all five.** `inputStale` fails R1+R2; `spendGlyph` fails R3
   and R4; the ratified `lastText` fails R1 in Words. Stated plainly instead of picking the least
   bad and calling it a design — the mechanism should now be derived from R1–R5, which is §8.2.
+
+## 2026-08-11 — the attestation is made precise, and the corpus's platform prose is struck
+
+Owner: *"'deaf on desktop Linux' — which is nodejs setup, run as `love src`. I attest that. I also
+suspect game code should work as intended on Android (run from assembled .apk), because author uses
+it on Android. Whatever else was hallucinated before (about what 'hardware' and 'device' are) is a
+speculation of little value."*
+
+- **Attested vs suspected, kept apart in the document.** Attested: deaf on desktop Linux under
+  `love src`. Suspected, and labelled so with its ground: Android from an `.apk` works, because the
+  author uses it there.
+- **The design of record's platform sentence is now to be STRUCK, not reconciled.** I had filed it
+  as a discrepancy to settle; the owner's ruling is that the "hardware"/"IDE" claims never had
+  provenance. R2 makes the platform question irrelevant to the mechanism anyway, and an unsourced
+  platform claim in a persistent document is worse than none because it reads as measurement.
+  Corrected in §1.2 — my "both cannot be right, settle it" framing granted the claim a standing it
+  never had.
+- **A distinction I had let blur, and it changes what is left to do.** The attested deafness is a
+  property of the `inputStale` code, not of the tree as it stands: `alt.lua` has been order-agnostic
+  since this branch's `3a9d48c`, and `words.lua` since `ca6d5df` routed it to the same mechanism.
+  **R1 and R2 hold in the merged tree today; what remains open is R3 and R4.** The deafness is what
+  motivated the heal, not what the heal still has to fix — worth being exact about, since "the heal
+  fixes a deaf game" would overstate the remaining work.
