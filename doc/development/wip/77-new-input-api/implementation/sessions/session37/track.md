@@ -365,3 +365,34 @@ last-won could do the same. Plus a timer after win."*
   `love.focus` mitigation is superseded and needs no verification.
 - **Untouched: the rollover hole** (§9.5b, one slot vs per-key). It is a property of the slot, not of
   the clearing paths, and still wants a deliberate decision.
+
+## 2026-08-11 — the task-tagged cache is a near-miss; and the poll already asks what they wanted
+
+Owner: *"can we use a 'cache-busting technique' by storing 'last seen' (or some other caches) per
+task number? I feel it could help some rearming. Also not sure why should we poll `any_pressed`
+instead of asking 'that specific last one, is it still pressed'?"*
+
+- **The generation trick fails on the one repeat the games care about, and the failure is a rule
+  change.** Hold `l` while typing `"all"`: the first `l` is accepted at `WORDS.pos == 2`, the
+  position advances to 3 — a NEW task — so a task-tagged cache no longer matches the still-held
+  key's next repeat and accepts it. **The player has typed `"ll"` by holding one key**, which is the
+  withdrawn "repeat as typing" outcome arriving by another road. Alt has the same shape one level
+  up: the design document's own text says a repeat of the winning character arrives with a
+  *different target displayed*, which is what `blocked` exists for. **The block must survive the
+  task change; a task tag invalidates exactly when the state is most needed.**
+- **The general form, and it is worth keeping:** §9.2 proves that identifying *which press a
+  character belongs to* AT ARRIVAL is impossible under R2 + R4. Every tagging scheme — by task, by
+  press counter, by generation — is an attempt at that identification and inherits the proof. A
+  per-key press counter fails most directly: in the `textinput`-first order the character arrives
+  before the `keypressed` that would increment its generation.
+- **Where a task number IS the right tool, and is already used:** idempotence per presentation —
+  `ALT.fumbled` / `st.fumbled`, several wrong answers reading as one miss, reset when the target
+  advances. That cache exists; it is not the state under discussion.
+- **The poll already asks their question.** `Key.any_pressed` is variadic over
+  `love.keyboard.isDown`, whose multi-name form is an OR; with one name it *is* "is that specific
+  key still down". The OR lives in the name because session36 ruled it there — `pressed` stays
+  reserved for a future AND-shaped chord predicate, and shipping the wrapper as `pressed` would have
+  claimed the name for the wrong semantics. **The single-key case reading oddly is a real wart**,
+  recorded as such: the alternatives are `love.keyboard.isDown` directly (keeps the example on the
+  surface the migration removes) or a new single-key alias (new API against a mandate to simplify).
+  Flagged for the console/editor migration, which will read it the same way.

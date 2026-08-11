@@ -604,6 +604,69 @@ Why this is the right shape and not a fourth patch:
 **What it does not fix:** the rollover hole (§9.5b) is untouched — it is a property of the single
 slot, not of the clearing paths. That decision stands on its own.
 
+### 9.5d Task-tagged caches — the generation trick, and why this state resists it
+
+**Owner, 2026-08-11:** *"Can we use a cache-busting technique by storing 'last seen' (or some other
+caches) per task number? I feel it could help some rearming."*
+
+The idea is sound in general — tag the cached value with the generation it belongs to, and a
+generation change invalidates it for free, with no clearing path to lose. Applied here the "task"
+would be the presentation: `gaugeCurrent(ALT)` advancing in Alt, `WORDS.pos` advancing in Words.
+
+**It fails on the one repeat the games actually care about, and the failure is a rule change.**
+
+Take `"all"`, and hold the `l` key. The first `l` is accepted at `WORDS.pos == 2`, and the position
+advances to 3 — a new task. The next OS repeat of that still-held key arrives carrying the same
+character, but now under a **different task number**, so a task-tagged cache does not match it and
+the character is accepted. **The player has typed `"ll"` by holding one key**, which is precisely
+the behaviour §1.1 rules out — and it is the same outcome as the "repeat as typing" proposal already
+withdrawn.
+
+Alt has the identical shape one level up: the design document's own analysis says *"a correct
+character advances the target immediately, so a repeat of the winning character would arrive with a
+**different** target displayed and fumble it"* — the case its `blocked` field exists for. **So the
+block must survive the task change, which is exactly what a task-tagged cache cannot do.** The
+generation trick invalidates at the moment the state most needs to persist.
+
+**The deeper reason, and it generalises past this proposal:** §9.2 proves that identifying *which
+press a character belongs to*, at the moment the character arrives, is impossible under R2 + R4.
+Every tagging scheme is an attempt at that identification — by task, by press counter, by
+generation — and each inherits the proof. A per-key press counter fails it most directly: in the
+`textinput`-first order the character arrives *before* the `love.keypressed` that would have
+incremented its generation, so it is attributed to the previous press and dropped.
+
+**The two escapes remain the ones already on the table:** decide on content and resolve the press
+boundary **later** from the device (Option C + §9.5c), or defer the decision to the frame boundary
+(B). Tagging is a third route only if the tag can be known at arrival time, and it cannot.
+
+**Where a task number would genuinely help — and is already there.** Idempotence *per
+presentation* is a real requirement and both scenes already implement it where they want it:
+`ALT.fumbled` / `st.fumbled` make several wrong answers read as one miss, reset when the target
+advances. That is the task-scoped cache this game needed, it exists, and it is not the state under
+discussion.
+
+### 9.5e Why the poll is written `Key.any_pressed(watch)`
+
+**Owner, 2026-08-11:** *"Not sure why we should poll `any_pressed` instead of asking 'that specific
+last one, is it still pressed'."*
+
+**It does ask exactly that.** `Key.any_pressed` is variadic and wraps `love.keyboard.isDown(...)`,
+whose several-name form is an **OR**; called with one name — `Key.any_pressed(watch)` — it is the
+single question *"is `watch` down right now"*. There is no OR in the call.
+
+The name carries the OR because of a trap ruled on in session36: `love.keyboard.isDown('a','b')`
+means **any of them**, while a future richer predicate over a chord (`Key.pressed('ctrl','h')`)
+would mean **all of them**. Shipping the wrapper as `pressed` would have claimed that name for OR
+semantics and forced the later predicate to rename or break compatibility, so the owner ruled the
+OR into the name and left `pressed` reserved.
+
+**The cost is that the single-key case reads oddly**, which is what prompted the question. The
+alternatives, neither recommended here: call `love.keyboard.isDown(watch)` directly — legitimate,
+it is the ladder's last rung, but it keeps the example on the `love.` surface the migration exists
+to move it off; or add a single-key alias, which is new public API against a mandate to simplify.
+**Recorded as a wart, not a defect** — worth the owner's attention when the console and editor are
+migrated, since they will hit the same reading.
+
 ### 9.6 What I recommend, now that Option C is on the table
 
 **Option C, armed on every accepted character (§9.5a), with the slot-versus-table question
