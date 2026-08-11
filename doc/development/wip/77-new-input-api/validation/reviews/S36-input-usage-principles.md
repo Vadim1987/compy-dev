@@ -76,6 +76,20 @@ as `leftalt`), supports **negative** checks, and answers **single-key** cases to
 module can be exposed as **`compy.input.keys`**, giving a controlled surface and removing the need
 for a separate import.
 
+**[Owner, 2026-08-11] Justification, for the PR's justification table.** It **reduces boilerplate
+every example keeps reinventing** and **encourages fewer moving parts** in the code that uses it.
+It is syntactic sugar, and valuable sugar; **the addition itself is extra cheap — a few lines**.
+
+**[Owner, 2026-08-11] SYNTAX RULED IN FAVOUR OF VARIADIC TOKENS — no serialised separators at
+all:**
+
+```lua
+Key.pressed('ctrl', '!shift', 'h')
+```
+
+Reasons given: it **saves string splitting**, and it is **less ambiguous** — the only special case
+left is a **leading `!`**. This supersedes the `'ctrl-leftalt-!shift-h'` spelling above.
+
 #### P5.2 — The vertical problem is met with a recommendation, not a mechanism
 
 It cannot be prohibited technically — nothing stops a call to the keyboard from deep inside an
@@ -118,47 +132,72 @@ symptom is the *chain*, not the call.
 
 ### 2.2 Contests
 
-**C1 — the separator collides with a real key name, and with the API's own vocabulary.**
-`'ctrl-leftalt-!shift-h'` uses `-`, while every combo elsewhere uses `+` (`'ctrl+alt+s'`,
-`'alt+*'`, `'ctrl+mouse1'`), normalised by Decision 8. Two spellings for one concept is a cost the
-guide will pay forever. Worse, **`-` is itself a LÖVE key name** (the hyphen key), so
-`Key.pressed('ctrl--')` is ambiguous where `Key.pressed('ctrl+-')` is not. **Recommendation: `+`
-as separator, `!` for negation** — `'ctrl+leftalt+!shift+h'`. If the intent of `-` was to signal
-"this is a query, not a binding", the function name already does that.
+**C1 — WITHDRAWN by the owner's variadic ruling, and the ruling is better than my counter.**
+I had objected that `-` collides with the hyphen key (a real LÖVE key name) and that a second
+separator competes with the API's `+` vocabulary, and recommended `+`. **Variadic tokens beat
+both spellings**, and for a reason neither of us had stated — **verified in the engine, not
+argued**:
 
-**C2 — the same string would mean two different things on two surfaces. This is the sharpest
-risk.** In shortcuts, `'shift+*'` is **exclusive**: shift and nothing else. If `Key.pressed` is
-**permissive** by default (`'ctrl+h'` = "ctrl and h are down, don't care what else"), then two
-surfaces read similar strings with opposite defaults, and the difference is invisible at the call
-site. Three ways out, and one is clearly best:
+```
+love.keyboard.isDown('shfit')  →  error: Invalid key constant: shfit
+love.keyboard.isDown('ctrl')   →  error: Invalid key constant: ctrl
+love.keyboard.isDown('lctrl', 'rctrl')  →  false
+```
 
-- **(a) Keep `*` meaning the same in both.** `Key.pressed('shift+*')` = shift and no other
-  modifier — identical to the shortcut class key. Then `!` handles explicit negatives and `*`
-  handles exclusivity, with **one vocabulary and no contradiction**. *Recommended.*
-- (b) Make the query exclusive by default — then "don't care" needs new syntax, and the common
-  case gets longer.
-- (c) Accept the divergence and document it — cheapest now, most expensive later.
+So an implementation that resolves the fold names it knows (`ctrl`/`alt`/`shift`) and **passes
+every other token straight through to the device** inherits **loud failure on a typo for free**:
+`Key.pressed('shfit')` raises, where a proxy-table read (`keys.shfit`) would have quietly meant
+"not held". That is the strongest available argument against the table form of C4 as well, and it
+exists only in the variadic shape — a separator-joined string would have to split and validate by
+hand to get the same behaviour, which is precisely the string work the owner's ruling avoids.
 
-**C3 — "nothing held" is the most common query in the tree and is the ugliest to write.** Under
-permissive-plus-negation it is `Key.pressed('!ctrl+!alt+!shift')` — which is the horizontal sprawl
-P5 exists to remove, merely relocated. sapper alone needs it twice. Under (a) it may be spellable
-as `Key.pressed('*')`, but note that **bare `'*'` is currently *refused* in shortcut registration**
-(Decision 21) — so this either needs a deliberate exception for queries or a named helper. The
-matcher already has `any_mod()` internally; exposing it (`not Key.any_mod()`) is close to free.
+**One consequence to state deliberately rather than inherit:** the query vocabulary now *differs*
+from the binding vocabulary (`shortcuts.keypressed['ctrl+h']` versus `Key.pressed('ctrl','h')`).
+That divergence is **a feature under this ruling** — passing a whole combo string into the query
+by mistake (`Key.pressed('ctrl+h')`) raises rather than silently answering the wrong question —
+but the guide must say so explicitly, or it reads as an inconsistency someone will later "fix".
 
-**C4 — `compy.input.keys` is already claimed by a different proposal, with a different shape.**
-Yesterday's register entry proposes `compy.input.keys` as a **held-state table** (`keys.h`,
-`keys.shift`). P5.1 proposes the same name for the **`Key` module**. They must be reconciled, and
-I think the collision is fortunate: **the query function subsumes the table.** `keys.pressed('h')`
-answers everything `keys.h` would, in one vocabulary, and avoids the silent-nil hazard the table
-form has (a typo in a table read is `nil`, i.e. "not held", with no error). **Recommendation: keep
-the module, drop the table.** The other half of that entry — swapping the implementation from
+**C2 — exclusivity is still unanswered, and the variadic form does not settle it.** Is
+`Key.pressed('ctrl','h')` *"ctrl and h are down, don't care what else"* (permissive) or *"ctrl and
+h and nothing else"* (exclusive)? The shortcut vocabulary answers this with `*`: `'shift+*'` means
+shift **and no other modifier**. My recommendation stands in the variadic shape —
+**`Key.pressed('shift','*')` = shift and no other modifier**, so `!` carries explicit negatives
+and `*` carries exclusivity, with one meaning per symbol across both surfaces. The alternative,
+exclusive-by-default, makes the common case longer and gives `!` nothing to do.
+
+**C3 — "nothing held" is the most common query in the tree and is still the ugliest to write.**
+Under permissive-plus-negation it is `Key.pressed('!ctrl','!alt','!shift')` — the horizontal
+sprawl P5 exists to remove, merely relocated, and sapper alone needs it twice. Under C2's `*` it
+would be `Key.pressed('*')`, but note **bare `'*'` is deliberately *refused* in shortcut
+registration** (Decision 21, because it would be "every unmodified key" spelled like a narrow
+binding) — so allowing it as a *query* is a deliberate asymmetry that must be written down, not
+slipped in. The cheapest alternative is exposing what the matcher already has internally:
+`not Key.any_mod()`.
+
+**C3b — three boundary cases the signature should answer before it ships**, each cheap now:
+
+- **Zero arguments.** `Key.pressed()` should raise, not return true or false.
+- **Mouse buttons.** Combos name them (`'ctrl+mouse1'`), so someone will write
+  `Key.pressed('ctrl','mouse1')`. Either support it via `love.mouse.isDown` or refuse it
+  explicitly; silently passing `mouse1` to the keyboard would raise with a confusing message.
+- **The pass-through contract.** "Unknown tokens go to the device, which raises" is the property
+  C1 rests on, so it is a **documented behaviour**, not an implementation accident.
+
+**C4 — `compy.input.keys` is already claimed by a different proposal, with a different shape, and
+the variadic ruling settles which one should win.** Yesterday's register entry proposes
+`compy.input.keys` as a **held-state table** (`keys.h`, `keys.shift`); P5.1 proposes the same name
+for the **`Key` module**. The query subsumes the table — `keys.pressed('h')` answers everything
+`keys.h` would — and C1's verified property decides it: **a table read cannot fail loudly.**
+`keys.shfit` is `nil`, i.e. "not held", silently, in a boolean position; `keys.pressed('shfit')`
+raises. **Recommendation: keep the module, drop the table.** The other half of that entry — swapping the implementation from
 polling to a mirror behind the same surface — survives either way and is worth preserving in the
 promoted text.
 
-**C5 — naming.** `Key.pressed` reads like an *event* (`keypressed`), but it answers *physical
-state*. `Key.held(...)` matches the guide's existing "Held keys" vocabulary and cannot be
-misread as edge semantics. Cheap now, expensive after it ships.
+**C5 — naming, weakened to a preference.** `Key.pressed` reads like an *event*
+(`keypressed`), while it answers *physical state*; `Key.held(...)` matches the guide's existing
+"Held keys" heading and cannot be misread as edge semantics. In the variadic spelling the reading
+is less strained (`Key.pressed('ctrl','h')` — "ctrl and h are pressed"), so this is a preference,
+not a contest. Cheap now, expensive after it ships.
 
 **C6 — P3 carries a caveat it does not state.** A release-channel binding serialises with the
 modifiers held **at release**, so `shortcuts.keyreleased['ctrl+s']` is missed when Ctrl comes up
