@@ -537,3 +537,30 @@ the rule this plan exists to enforce.
   mixing planning, design and execution in this session, justified so far by integral context.
   Worth carrying into the wrap — the successor should re-separate, and the next execution step
   (P18) is exactly the kind that wants a cold session of its own.
+
+## 2026-08-11 — the six loose rulings materialised, then WRAP
+
+Owner: materialise what we settled and make sure the actionable parts are referenced from a plan;
+then the successor moves on with execution.
+
+- **`412c9f90`** — the **"de-facto" boundary** into `conventions/docs.md` (it names what preceded
+  the feature; never what the feature introduced; the test is a comparison against base), and the
+  internals guide's **mouse-click-to-cursor** marker answered and removed: uniform across console,
+  editor and the project widget — one `UserInputController` class, the same instance passed as the
+  project route's widget — with the real exception being per-instance `disable_selection`.
+- **`83435011`** — balloons' **`update_prompt` endpoint declined** as API (sugar over one
+  `configure` call; a second path for a decorative change costs orthogonality) **and already
+  present in the project** as `terminal_write`. Its "three functions juggling" recorded as examined
+  and left: two of the three are load-bearing.
+- **`a08afbca`** — the plan bindings. **Phase L** gains its full scope: excise the collapsed
+  decisions, remove Decision 11's audit trail (the tension dissolved when tombstone discipline was
+  reversed), and **demote Decision 12** — `inspect` routing is unchanged at base, so it
+  canonicalises pre-feature behaviour and is not a decision; the same check **cleared 6, 7 and 15**.
+  **Phase U** gains the owner's mechanic: pull each upstream into **its own branch** so merges are
+  ruled deliberately and the pre-merge state stays reachable. **P16** gains `paint` as a named
+  ready item with its caveat, and records balloons as inspected-and-deferred. **§16.2's marker
+  question marked resolved in practice** — the disposition table is the ruling.
+- **Wrap:** report written, `session37/prompt.md` written (execution, P18, with the mode-discipline
+  warning and the upstream-pull prerequisite stated as a blocker to confirm), pointer repointed,
+  and the boot ritual's baseline updated **942 → 946** with the reason, since a successor is told
+  to treat a different count as a finding.

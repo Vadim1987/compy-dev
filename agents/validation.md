@@ -29,13 +29,14 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **942 / 0 / 0 / 10**. A different count is
+6. Confirm the baseline: `busted tests` → expect **946 / 0 / 0 / 10**. A different count is
    a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
    (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
    session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
    session27 remark pass, 955 after session29's two production fixes, 942 after session35's
-   dissolution of the held-key set, which deleted more test cases than it added; **the current
-   session's `prompt.md` carries the authoritative number**, this line is the fallback.)
+   dissolution of the held-key set, which deleted more test cases than it added, 946 after
+   session36 added `Key.any_pressed` with its own spec; **the current session's `prompt.md`
+   carries the authoritative number**, this line is the fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
    routing-grid cells that are not black-box observable, and 7 are the framework's reserved
    combos, whose own effects are the framework's contract rather than the input API's and are
@@ -274,7 +275,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session36/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session37/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
