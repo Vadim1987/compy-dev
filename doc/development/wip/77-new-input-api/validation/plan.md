@@ -350,6 +350,42 @@ advanced fork of it) **and** each of the three nested example repos (`balloons`,
   and retire the manual `release_keys()` discipline if it does. See
   `reviews/S27-triage-and-plan.md` §11.3. **[Recorded S33.]**
 
+### Phase L — Ledger compaction (INSERTED 2026-08-11, owner) — runs before release, after the tree settles
+
+**The rule this reverses.** The sprint has run under *"tombstone decisions, never renumber"*
+(`reviews/S27-triage-and-plan.md`, the W9 hard constraint). The owner reverses the first half for
+the release: **decisions that were established and then collapsed within this feature are removed
+before the PR**, rather than shipped as tombstones. The second half stands until the owner
+discloses their final renumbering algorithm — **do not renumber in this phase**.
+
+**Why.** A stakeholder reading the ledger currently meets five decisions about a surface that
+never ships: 13, 20 and 29 established the tracked held-key set, 30 and 31 withdrew it. That reads
+as churn, and the strategic frame asks the PR to carry nothing beyond the ask without a
+justification. The reasoning is not lost — it is in git, and in the register where it is load
+bearing.
+
+**Scope, verified 2026-08-11 rather than assumed.**
+
+- **The three collapsed decisions are cited nowhere in code.** `grep` over `src/` and `tests/`
+  finds citations of Decisions 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 14, 15, 18, 21, 23, 26, 30 and 31
+  — **not** 13, 20 or 29. Removing them breaks no comment.
+- **Six references need repair**, all in prose: five inside `decisions/input.md` itself (including
+  Decision 30's own "supersedes" line and two passages in Decisions 26 and 29's neighbourhood),
+  and one in `technical_debt/input.md` naming Decision 20's read-only view.
+- **Renumbering is what would be dangerous, not removal.** There are ~150 citations by number in
+  code; leaving gaps at 13/20/29 costs nothing, while shifting numbers would invalidate all of
+  them at once.
+
+**On the owner's question — does this confuse an LLM assistant?** Mildly, and manageably. The risk
+is not the gaps: it is that historical commit messages and any surviving external notes cite
+numbers that no longer resolve, and an assistant meeting *"Decision 20"* will find nothing and may
+invent a reading. **Mitigation: do the excision in ONE commit whose message names each removed
+decision and its subject**, so `git log -S 'Decision 20'` answers the question in one step. That is
+cheaper than a tombstone and does not put dead text in front of stakeholders.
+
+**Gate.** After excision: every `Decision N` citation in `src/`, `tests/` and `doc/` (outside
+`wip/`) resolves to a heading that exists. That check is mechanical and should be run, not assumed.
+
 ### Phase G — PR assembly (per `implementation/pr-assembly-guide.md`)
 
 Slice regeneration **LAST**, after the tree settles. PR description structure: intent →

@@ -53,6 +53,24 @@ For **continuous mutable states** and for checking the **physical state of the k
 the device is the right paradigm: the state is **self-correcting**, and the abstraction is honest
 and minimal — it masks nothing.
 
+### P6 — Do not reconstruct held state from events (owner, 2026-08-11)
+
+**Abstain from rebuilding "what is held" out of `keypressed`/`keyreleased`** — and the same for
+the mouse — **unless it is a justified, project-specific decision made in full awareness of the
+traps it introduces**: it is virtual mutable state, unprotected from **invisible drift** when the
+window loses focus or the event stream hiccups.
+
+The bar is deliberately not "never": a project may have a reason. The bar is that the reason is
+**explicit and informed**, because the failure is silent — nothing reports that the reconstruction
+has diverged from the hardware, and the divergence outlives the moment that caused it.
+
+**If it ever proves genuinely required, it belongs to the framework, not to each project.** The
+shape would be an **event-sourced virtual state maintained at framework level and exposed for
+reads** — and kept **separate from the physical polling surface**, so that a reader always knows
+which of the two questions they are asking: *what the events say is held*, or *what the device
+says is held*. Conflating them is what produced the two-clocks problem this feature spent its
+length removing.
+
 ### P5 — The real problem with today's `Key.shift()` chains
 
 The owner's objection was never that projects ask the device. It is threefold:

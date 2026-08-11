@@ -951,6 +951,26 @@ Not commissioned for closure; each may never need action.
   runs them.
 - **Revisit:** Migrate or delete at will; not blocking anything.
 
+### PROPOSAL: if event-sourced held state is ever needed, it belongs to the framework
+
+- **Status:** owner's direction, 2026-08-11. **Not a commitment**, and explicitly not this
+  release; recorded so that the day someone needs it, they do not each build their own.
+- **The rule it follows from** (`../decisions/input.md`, Decision 32.5): a project does not
+  reconstruct "what is held" from `keypressed`/`keyreleased`, nor the mouse equivalent, unless it
+  is a deliberate decision taken in awareness of the drift — virtual mutable state with no path
+  back to the truth, wrong after a focus change or a processing hiccup, and silently so.
+- **The shape, if the need is ever demonstrated.** One **event-sourced** view maintained
+  centrally by the framework and **exposed for reads** to projects — so the bookkeeping, and its
+  reconciliation problem, exists once rather than per project.
+- **The constraint that matters most: it stays SEPARATE from the physical polling surface.** A
+  reader must always know which question they are asking — *what the event stream says is held*,
+  or *what the device says is held*. The two answers legitimately differ, and conflating them is
+  the "two clocks" problem this feature spent its length removing (Decisions 29 → 30). One
+  surface answering both, or silently switching between them, would rebuild it under a new name.
+- **What would have to be true first.** A real consumer that cannot be served by a device poll —
+  which is *not* what the example corpus showed: every held-state read in it is a "right now"
+  question the device answers. Until such a consumer exists, this stays a direction.
+
 ### PROPOSAL: `compy.input.keys`, a held-state surface that hides its implementation
 
 - **Status:** owner's proposal, 2026-08-10. **Not this release** — recorded so the shape is not

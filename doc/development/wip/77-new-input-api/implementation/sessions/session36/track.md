@@ -461,3 +461,34 @@ future rich predicate, which is AND-shaped. That closes C8 by naming rather than
   calls. New public API must not ship undocumented, which is why this did not wait for P10.
 - **turtle: no change**, and that is a ruling not an omission — it is the standing demonstration
   of the captured `love.*` path.
+
+## 2026-08-11 — the principles are PROMOTED, and the ledger compaction is placed upstream
+
+Owner added **P6** — do not reconstruct held state from events (mouse included) unless it is a
+justified project-specific decision made knowing the drift is invisible; and if it is ever
+genuinely required it belongs to the **framework**, event-sourced, exposed for reads, **separate
+from the physical polling surface**. Recorded in the proposal, then promoted with the rest.
+
+Promotion landed in four commits, one concern each:
+
+- `563b937f` **the project guide.** §"Shortcuts that set a flag" — which taught the mirrored pair
+  P2 forbids — is **replaced** by §"Choosing the mechanism": which question each mechanism
+  answers, the failing pair shown as a DON'T with its reason, the release channel kept as a
+  legitimate choice, the no-reconstruction rule, and lifting the hardware to the top. **Six
+  citations of the old heading repaired**, one of which the principles *invert* — the register had
+  recommended the flag shape for the keyboard example's help overlay; that poll is correct.
+- `81e97bab` **Decision 32**, the decision-shaped half, with **Decision 30 point 3 amended in
+  place** as Fable required: *"`Key.*` at a call site is a smell"* is withdrawn as a general
+  claim — it is correct for continuous state, and a smell only as a chain or at depth.
+- `82979e55` **`conventions/input_adoption.md`** — the question→action checklist, marked
+  universal vs project-surface for the console/editor reuse, plus the rules of restraint. Added to
+  the rule chain's doc index so a successor finds it.
+- register: **event-sourced held state** filed as a direction with its hard constraint (separate
+  from the polling surface, or the two-clocks problem returns under a new name).
+
+**Ledger compaction placed in the PARENT plan as Phase L**, not here — it is release-shaped.
+Verified before writing rather than asserted: **the three collapsed decisions are cited nowhere in
+code**, six prose references need repair, and **removal is safe while renumbering is not** (~150
+citations by number). **Answered the owner's question about assistant confusion:** mild and
+manageable — the risk is historical commit messages citing numbers that no longer resolve, so the
+excision lands in **one commit naming each removed decision**, which `git log -S` can answer.
