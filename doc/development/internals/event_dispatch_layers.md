@@ -103,7 +103,7 @@ lifetime.
 literally sets up `love.handlers`, which is what LÖVE calls that table. There is no second,
 Compy-specific sense of *handler* to collide with it — the input API's vocabulary
 ([`../decisions/input.md`](../decisions/input.md#vocabulary--hook-callback-handler)) names two
-> REMARK/nitpick -- project vocabulary introduces *three* terms (also a 'shortcut') -- maybe its worth mentioning here too
+> REMARK: nitpick -- project vocabulary introduces *three* terms (also a 'shortcut') -- maybe its worth mentioning here too
 *other* things, **hook** and **callback**, and leaves "handler" to LÖVE.
 
 What does need saying is what happens to a project's own `love.*` functions, because a project

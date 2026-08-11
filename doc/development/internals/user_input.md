@@ -677,7 +677,7 @@ run_callback(self, 'after_submit', lines)               -- DEFAULT: no-op — wi
 ```
 
 > REMARK: and there was no implicit hide so 'anymore' is improper and whole reference can be removed. or just say -- "there's no implicit hide". asme abot 'no longer auto-closes' -- it never was unless configured with 'one-shot' flag (now replaced by callbacks).
-> REMARK "unbuild, R9" should not be . it should be built at that moment. absolutely cheap change. 
+> REMARK: "unbuild, R9" should not be . it should be built at that moment. absolutely cheap change. 
 
 `on_text_entered` fires **while the widget is still active** — there is no implicit hide any more.
 `after_submit` DEFAULTS to a no-op, so **a successful submit no longer auto-closes the widget** —

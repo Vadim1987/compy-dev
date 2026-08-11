@@ -280,7 +280,7 @@ cancel_flow:  before_cancel()  →  clear (hardwired, unless vetoed)         →
 Three substantive changes from the original framework-tier shape:
 
 - **`before_cancel` may veto.** A truthy return from `before_cancel` skips the clear step
-  entirely — symmetric with the (still-reserved, unbuilt) `before_submit` veto below.
+  entirely — symmetric with the `before_submit` veto below.
 - **Auto-close default flips to OFF.** `after_submit` and `after_cancel` default to no-ops — the
   widget **stays open** unless a project explicitly hides it. There is deliberately no keep-open
   flag (that would be the old one-shot mechanism reborn with its polarity flipped); a project
