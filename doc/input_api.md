@@ -193,8 +193,9 @@ delivers for that event** — `keypressed(key, scancode, isrepeat)`,
 `mousepressed(x, y, button, istouch, presses)`, and so on. A handler you
 already wrote as `love.keypressed` works unchanged when it becomes a hook,
 because it is the same signature. Held modifiers are not among the arguments:
-ask the keyboard for them with `love.keyboard.isDown`, which works inside a
-handler and outside one alike — see "Held keys" below.
+ask `Key` for them — `Key.shift()` for a modifier, `Key.any_pressed(k)` for
+any other key — which works inside a handler and outside one alike; see
+"Held keys" below.
 
 A combo is its modifiers plus **one** trigger — `'ctrl+alt+s'`. The modifiers
 are optional: `'s'` is a valid combo and binds a bare unmodified S, the same
@@ -392,21 +393,27 @@ yourself — the same folding a combo string does. Nothing is wrong with these
 calls, but a project that reaches for them repeatedly is usually describing a
 binding it has not written yet; that is the cascade combos exist to replace.
 
-**3. Ask `love.keyboard.isDown` — the last resort.** It takes any number of
-key names and answers about the device as it is right now, for **any** key,
-not only a modifier:
+**3. Ask `Key.any_pressed` — for a key that is not a modifier.** It takes any
+number of key names and answers about the device as it is right now, for
+**any** key:
 
 ```lua
 function love.draw()
-  draw_keycap('space', love.keyboard.isDown('space'))
+  draw_keycap('space', Key.any_pressed('space'))
 end
 ```
 
-This is the rung to use when `Key` has no answer — a key that is not a
-modifier at all, which is what drawing a keyboard and lighting its pressed
-caps needs. Names are LÖVE's own, so left and right modifiers are two
-separate keys and you name both when either will do; prefer `Key` whenever
-the question is about a modifier, and reach here when it is not.
+This is the rung to use when the folded accessors have no answer — an
+ordinary key, which is what drawing a keyboard and lighting its pressed caps
+needs. Names are LÖVE's own, so left and right modifiers are two separate
+keys here and you name both when either will do — `Key.any_pressed('lshift',
+'rshift')` is what `Key.shift()` already says. **Several names mean *any* of
+them**, exactly like the device call it wraps. Prefer the folded accessors
+whenever the question is about a modifier, and reach here when it is not.
+
+`love.keyboard.isDown` still works and is what this calls; using `Key` for
+both kinds of question just keeps one surface in your code instead of two
+spellings of the same question in one expression.
 
 Every rung works anywhere: in a handler, and in `love.draw`, which is the
 point — a project that *draws* held state has no event argument to consult.
