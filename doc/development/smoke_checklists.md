@@ -35,7 +35,7 @@ run** — a row that fails against a state nobody recorded costs a bisect.
 
 *(Re-pinned 2026-08-12 after P-18-19/20 — the last three behavioural differences against upstream
 closed, and the tidy batch. **At this head the gesture-parity diff against upstream is zero** across
-105 fresh-press stimuli and 105 repeats. The platform id is this pin's parent; the pin commit changes
+108 fresh-press stimuli and 108 repeats. The platform id is this pin's parent; the pin commit changes
 nothing but this table.)*
 
 ### How to launch

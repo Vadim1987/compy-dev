@@ -151,3 +151,18 @@ to these changes.)
 - `/repo/doc/development/smoke_checklists.md`
 
 All left uncommitted in both repos, per instruction.
+
+---
+
+## Parent's note (2026-08-12) — one edit was moved, so this report quotes a comment that no longer exists
+
+The worker reduced `main.lua`'s trailing comment to one line. **The parent deleted it instead** and
+folded its one real claim — that `love.*` globals would work, since the framework captures them into
+the same hooks (`projectInputController.lua`, `seed_hooks`) — into `input.lua`'s header, where the
+registration choice is described. An orphan comment at end of file is not where a reader looks for
+it. Everything the worker wrote about `main.lua` above therefore describes an intermediate state, not
+the tree: see `f09f1e7`. The other three corrections landed as written.
+
+Recorded here because a narrow review found this report quoting text that is not in the repository,
+and a result file that describes a state nobody can reach is worse than one that says it was
+superseded.

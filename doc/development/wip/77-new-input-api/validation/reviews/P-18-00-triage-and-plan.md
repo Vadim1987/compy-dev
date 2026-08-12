@@ -535,8 +535,9 @@ here and in `d9ecdb0`'s own message.
 ## 11. P-18-19 … P-18-21 — the third pass's children (session38, 2026-08-12)
 
 The third cold pass (`../reviews/S38-P18-final-revalidation-3.md`) returned **sound**, and proved the
-question it was commissioned for: a parity harness replayed **105 fresh-press stimuli** (8 modifier
-subsets × 15 triggers) and the same 105 as repeats through the real dispatcher against upstream's
+question it was commissioned for: a parity harness replayed **108 fresh-press stimuli** (8 modifier
+subsets × 15 triggers, less the self-presses) and the same 108 as repeats through the real dispatcher
+against upstream's
 unmodified `input.lua`. **There is no seventh dropped gesture.** The whole parity diff is three lines.
 
 **Owner rulings, 2026-08-12:**
@@ -556,13 +557,13 @@ unmodified `input.lua`. **There is no seventh dropped gesture.** The whole parit
 | **P-18-21** | **The narrow review.** An independent cold pass over **only** the commits P-18-19 and P-18-20 produced, judged against `S38-P18-final-revalidation-3.md`'s findings: did each disposition land, and did closing the deltas introduce anything? Not a fourth full re-read of the delta | closes the step | Same rules: Opus, explicit, read-only, measure rather than reason, its own report on disk |
 
 **After P-18-21 the step has nothing left that this container can settle.** What remains is the human
-smoke pass — thirteen `[new]` rows, and **nothing in this work has ever run in a game scene, at any
+smoke pass — **eighteen** `[new]` rows, and **nothing in this work has ever run in a game scene, at any
 head, by anyone**.
 
 ### Execution of the third batch
 
 | step | commit(s) | note |
 |---|---|---|
-| **P-18-19** the bare-modifier deltas | `80bca7b` | One line: the unconditional bare-Alt swallow becomes *a modifier's own press, while Alt is held and Ctrl is not* — which is what upstream's `appChord` did and what the classes cannot express. **Verified with the third review's own parity harness**: the diff over 105 fresh-press stimuli goes **3 rows → 0**, and on 105 repeats the only effect any stimulus produces is `capsToggle` for capslock, as upstream |
+| **P-18-19** the bare-modifier deltas | `80bca7b` | One line: the unconditional bare-Alt swallow becomes *a modifier's own press, while Alt is held and Ctrl is not* — which is what upstream's `appChord` did and what the classes cannot express. **Verified with the third review's own parity harness**: the diff over 108 fresh-press stimuli goes **3 rows → 0**, and on 108 repeats the only effect any stimulus produces is `capsToggle` for capslock, as upstream |
 | **P-18-20** the tidy batch | `f09f1e7` + platform `f09f1e7-docs` | Delegated (Sonnet, prompt `../prompts/P-18-20-tidy.md`, report `../outcomes/P-18-20-tidy.md`, no git state touched). Diff reviewed site by site; **one edit moved** — `main.lua`'s trailing orphan was deleted and its one real claim folded into `input.lua`'s header, where the registration choice is described. The stale `wordsBaseKey` comment, the debt entry's eleven → twelve, smoke row `D10`, and two comment-economy cuts |
 
