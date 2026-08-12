@@ -166,11 +166,12 @@ revisited"*. Words is that stage, and it arrived from upstream.
   `H` is still down produces nothing; one who releases `H` and presses it again has typed `h`, and
   that is a win (owner ruling, 2026-08-08).
 - **`bubble.lua` keeps judging on `keyreleased`, and that is a ruling, not an omission** (owner,
-  2026-08-12). It measures how *long* a key was held — a duration, which no device poll answers — so
-  it is the one judge that legitimately keys on the event. Its failure mode is a release lost to a
-  focus change, and `bubbleGrow`'s own timeout pops the bubble a moment later: the child retries.
-  An inconvenience, not a wedge, and not a reason to change working code. The caution is written
-  where the handler is.
+  2026-08-12). **Not because the API cannot express it** — a frame poll measures a hold just as well,
+  by accumulating while the device still reports the key down. It stays because the channel is the
+  **author's** decision to make: they may have reasons for tracking the event, and a migration should
+  not quietly redesign what it was asked to carry across. Its failure mode is a release lost to a
+  focus change, and `bubbleGrow`'s own timeout pops the bubble a moment later: the child retries — an
+  inconvenience, not a wedge. The caution is written where the handler is.
 - **No test suite.** The repository has none, so everything here is reasoned or exercised by hand.
 
 ## Caps Lock
