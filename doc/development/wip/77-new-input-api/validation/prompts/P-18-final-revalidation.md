@@ -3,6 +3,14 @@
 **Commissioned:** 2026-08-12, session38, by the owner. **Model:** Opus, passed explicitly.
 **Mode:** read-only review. **Deliverable:** `../reviews/S38-P18-final-revalidation.md`.
 
+**RUN TWICE.** The first pass (range `025e858..646674b`) returned *mechanism sound, adoption not
+clean* — 4 defects, 7 observations — and reopened the step as `P-18-07 … P-18-13`. The second pass
+runs the **same framing** against the range those children produced, `025e858..1498f46`, and reviews
+the whole delta again rather than only what changed since. Its deliverable is
+`../reviews/S38-P18-final-revalidation-2.md`; the first pass's report is left untouched. Both are
+pinned by the four-commit anchor in `doc/development/smoke_checklists.md`, re-pinned before this
+run.
+
 **Why this exists:** P-18 (the keyboard deepfix) is fully landed across two sessions. The owner
 commissioned a cold pass over the *whole* delta against upstream — not the individual commits —
 because the reviewer of one's own work cannot see what it assumed. The predecessor commissioned the
