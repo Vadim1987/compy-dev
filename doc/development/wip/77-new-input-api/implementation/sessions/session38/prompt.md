@@ -40,6 +40,9 @@ Three corrections followed and they are the most important thing to read before 
 - **`42d1a8b`** — a chord claims its trigger for **every** chord, not just the swallowed Alt class,
   and `alt+shift+*` restores a fourth narrowing.
 - **`ece2c1b`** — `indicators.lua`'s comment no longer says the Shift state is "edge-tracked".
+- **`1f415c8`** — the `capslock` exemption's comment no longer states the reason that died with the
+  held set. **A caution worth inheriting:** I reported that comment corrected when only the *document*
+  had been. If you fix a comment and the document it cites, check both.
 
 **And the design of record is rewritten** — `doc/development/internals/examples/keyboard.md` now
 describes the shipped mechanism, both consumers, and a smoke checklist of cases only a human can

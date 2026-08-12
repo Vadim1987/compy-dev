@@ -880,3 +880,17 @@ a specific smoke-testing scenario for keyboard… literally a checklist for me t
   expectation-over-measurement fault fired twice in one session); `session38/prompt.md` gains the
   checklist as the successor's gate with the rule that a mechanism change updates it in the same
   commit; `keyboard` is at **`ece2c1b`**, not `c3388de`.
+
+## 2026-08-12 — a correction of my own report: the capslock COMMENT was still false
+
+While re-wrapping I checked a claim I had made in chat — that the capslock comment was corrected. It
+was not: **only the design note had been.** `input.lua`'s comment still said the exemption exists
+"because its release may not arrive, so its next press can come in flagged as a repeat", which
+reasons about the held set this branch deleted, and it **cited the design note for authority** — so a
+live comment pointed at a document that now contradicted it. Fixed in `1f415c8`.
+
+- **The reviewer had flagged exactly this** ("it is still false *and* it cites the note"), and I
+  relayed it as done. Two artifacts, one of them missed. Carried into the successor prompt as a
+  caution: if you fix a comment and the document it cites, check both.
+- Report bullets corrected with it, and the tree line moved to `1f415c8`. What a human owes is no
+  longer "three items in the triage" but the ten `[new]` rows of the smoke checklist.

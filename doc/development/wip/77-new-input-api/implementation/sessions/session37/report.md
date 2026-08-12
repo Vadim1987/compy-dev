@@ -5,7 +5,7 @@
 and design pass with the owner, then execution of four of the six children it produced.
 
 **Tree at wrap:** suite **946 / 0 / 0 / 10** throughout — no platform code was touched this session.
-Nested repos: `keyboard` at **`ece2c1b`**, clean; `maze` at `a045fdb`, clean. **Nothing pushed, in
+Nested repos: `keyboard` at **`1f415c8`**, clean; `maze` at `a045fdb`, clean. **Nothing pushed, in
 any repo.**
 
 **This session was wrapped once and then reopened** — the owner questioned one of the landed edits and
@@ -66,12 +66,16 @@ dissolution (by a supervised Sonnet worker, diff reviewed site by site). Then th
   typed — which is what `INPUT_UP_GRACE` existed to swallow.
 - **`bubble.lua` is deliberately untouched**, and that is a ruling, not an omission: its only failure
   is a lost release and its own timeout absorbs it. P-18-06 owes it a comment.
-- **The capslock exemption is identical to upstream's**, so there is no deviation to accept — only a
-  comment stating a reason that died with the held set.
+- **The capslock exemption is identical to upstream's**, so there is no deviation to accept. Its
+  comment stated a reason that died with the held set and **cited the design note, which taught the
+  same false reason**; both are corrected (`1f415c8` and the note's rewrite). Whether a held capslock
+  flickers the decal is row **E3** of the smoke checklist — a question, not a defect.
 - **`love.keyboard.isDown` in the poll is deliberate** (owner, for minimising the change), with the
   comment naming `Key.any_pressed` as the platform's form.
 - **Nothing was verified in a game scene.** Every smoke pass reached the intro; the container cannot
-  inject keystrokes. Three items are owed by a human and are listed in the triage's §4.
+  inject keystrokes. What a human owes is now a written run sheet —
+  `doc/development/smoke_checklists.md`, `keyboard`'s section, with **ten cases marked `[new]`** that
+  have never been run.
 - **`agents/validation.md`'s baseline line is still right at 946** — the suite never moved, because
   the whole session's code work was in a nested repo with no tests.
 
@@ -131,7 +135,7 @@ That is discharged now — the note is rewritten.
 
 ## What the addendum changes about the handover
 
-**`keyboard` is at `ece2c1b`, not `c3388de`.** P-18-06 **shrank** — the capslock comment and
+**`keyboard` is at `1f415c8`, not `c3388de`.** P-18-06 **shrank** — the capslock comment and
 `indicators.lua` are done. The remaining children are unchanged: **P-18-04**, **P-18-05**, and
 P-18-06's two remaining comments.
 
