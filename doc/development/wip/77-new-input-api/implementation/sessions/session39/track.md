@@ -233,3 +233,44 @@ Three instructions, all materialized rather than left in chat.
   already on disk** — the catalogue was delivered as `P-17-01-practice-catalogue.md` before the
   numbering existed, so `P-17-01` is assigned to it rather than reused, and nothing is renamed.
   §15.3's [S39] block carries the same list.
+
+## 2026-08-12 — P-17-03: the adoption analysis, written
+
+`../../../validation/reviews/P-17-03-adoption-analysis.md`. Ordered as the owner specified —
+**regressions the new platform introduces → duplicated machinery → gains, with the no-gain sites
+reported rather than converted.**
+
+- **Three regressions named ahead of any adoption**, because a migration landing on top of an
+  unnoticed one buries it. **R1** the overlay gate is gone, so the game's handlers now run while the
+  field is up (inert by reading in both programs; owed a smoke row, because *inert by reading is not
+  inert by measurement*). **R2** `to_menu`/`toDrawMenu` hide nothing, so an exit that leaves the
+  field shown is now a two-consumer collision on the menu — **and it is doubly required once `G1`
+  lands**. **R3** a naive per-tick re-`show()` warns every frame and *cannot change the prompt*,
+  which is what upstream's reject path calls it for.
+- **Five conversions with the gain stated on its own terms:** `E1` the editor onto `compy.input`
+  (required — without it the editor does not run at all, in either program), `E2` the two
+  `is_shift_down` copies, `E3` the `shift_held` mirror, `E4` `plan_held` → `isrepeat`, `E5` the two
+  Tab pollers. Plus **`G1`**, `shift+escape` as a shortcut — the capability the author asked for,
+  with `<` kept per the owner.
+- **`E3` is the strongest case in the step and it is not the one I expected.** The mirror's third
+  consumer is a *display* (`maze_render.lua:221` dims the screen while Shift is held), so a lost
+  release does not merely drop an event — it leaves the screen **permanently dimmed until restart**.
+  That is a stuck visible UI state, which is a different animal from calibration (a)'s
+  focus-shaped risk, and it is what makes the conversion justified rather than tidy.
+- **A correction of the cold inventory, stated rather than silently applied:** it called M12/M13 a
+  Q6 pair *needing restructuring*. That rests on assuming a shortcut must bind the closing half — but
+  `release_shift` is reached from the game's own `love.keyreleased`, which does receive modifier
+  releases. Remove the mirror and **no Q6 shape remains**; nothing is restructured.
+- **`E5` carries the step's one narrowing and it is stated, not smuggled:** a bare `tab` binding
+  stops matching `Shift+Tab`/`Ctrl+Tab`, which advance the level today. Neither is documented nor in
+  `TEST-PLAN.md`, but *"nobody meant it"* is not *"nobody does it"* — `P-17-04` gets the option of
+  binding the `'*+tab'` class instead.
+- **Seven sites reported as NO GAIN** with reasons, so the omissions are not read as oversights —
+  chiefly the pointer binding (the framework already seeds captured `love.*` handlers as hooks, so
+  rewriting it changes the spelling and nothing else) and the four key→meaning dispatch tables, which
+  have Q8's shape but not its problem: they demultiplex by game mode, not by combo.
+- **The echo guard is a lookup, not a ruling:** `doc/input_api.md`, "Opening the overlay from a key",
+  documents the one-shot `textinput` shortcut and its two constraints, both satisfied here.
+- **`Key.is_shift` exists and is exported but is UNDOCUMENTED** — the same P-10 gap `Key.is_mod` and
+  `Key.is_alt` sit in. Precedent (session37, owner): use the platform predicate; the doc gap is
+  P-10's problem, not a reason to keep a local copy. It should join that list.

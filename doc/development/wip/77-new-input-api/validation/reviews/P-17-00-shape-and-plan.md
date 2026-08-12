@@ -85,7 +85,7 @@ project) — measured working.** (The platform's error path there is its own
 small finding — it feeds the *message* "main.lua does not exist" into the Lua compiler and reports
 the syntax error of that sentence. Not this step's business; worth someone's.)
 
-### P-17-03 — The analysis, driven by `input_adoption.md`
+### P-17-03 — The analysis, driven by `input_adoption.md`  ✅ **DONE**
 
 The primary instrument is **`doc/development/conventions/input_adoption.md`** — Decision 32's
 operational form, Q1–Q10 plus five rules of restraint. The catalogue from `P-17-01` is a **secondary**
@@ -106,8 +106,11 @@ The analysis answers three questions per site, and the owner's phrasing fixes th
    test (2026-08-12): *"is the replacement justified on its own terms"*, not *"can the project avoid
    the API"*. **Where there is no gain, that is an outcome to write down, not a site to convert.**
 
-Deliverable: `validation/reviews/P-17-00-adoption-analysis.md` — site by site, each carrying its
-checklist question, its verdict, and, where it is a behaviour change, the words that say so.
+Deliverable: **`validation/reviews/P-17-03-adoption-analysis.md` — DONE, 2026-08-12.** Site by
+site, each carrying its checklist question, its verdict, and, where it is a behaviour change, the
+words that say so. Five conversions (`E1`–`E5`) and one capability (`G1`); seven sites reported as
+**no gain** rather than converted; three regressions of the platform's own (`R1`–`R3`) named ahead
+of any of it.
 
 ### P-17-04 — The triage: turn the analysis into execution substeps
 
