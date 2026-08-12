@@ -142,3 +142,41 @@ construction, so the slice is exactly our change from day one.
   container has **`luajit` only** (shim `lua`/`luac` on PATH, and **not** in the scratchpad — it is
   `noexec`), and **`BUILD.md`'s own counts are stale** (8/2 vs the actual 10/3), which is theirs and
   harmless but reads as a regression to the next person.
+
+## 2026-08-12 — step C's evidence half (mine), then the catalogue returns and is corrected
+
+**Mine, while the worker ran** — deliberately on files it does not touch, and written up as
+`../../../validation/notes/P-17-00-platform-facts-for-the-editor-migration.md` (`143c067a`):
+
+- **`show()` over a shown widget is a no-op that WARNS, and cannot change the prompt** even with
+  `force` (only `text` applies). Upstream's `reject_program` and per-tick `rearm_input` call
+  `input_text(input_prompt(), …)` **precisely to change the prompt** — a syntax error *is* the
+  prompt. So the replacement is `configure{prompt}` + `set_text`. **This repo already paid for it
+  once**: `790ac19`'s message records `show()` re-issued every tick, warning each time.
+- **At the PR base a second `input_text()` while shown was a SILENT no-op** (*"there can be only
+  one"*), so the behaviour to reproduce is *leave the field alone*, not *re-open it*.
+- **The overlay gate is the one real change**, and it lands both ways: `shift+escape` can now reach
+  the program (the author's request), and **`to_menu()`/`toDrawMenu()` hide nothing**, so they owe a
+  teardown they never needed.
+- **The menu-digit question has a documented answer** — `doc/input_api.md`, "Opening the overlay from
+  a key": a one-shot `shortcuts.textinput` guard. **A ruling turned into a lookup.**
+- **A correction I made before asserting it, not after:** I nearly filed *"the overlay no longer
+  closes on submit"* as a platform regression. It is not — that claim is from `d2ce7a0`'s message
+  describing an **intermediate state of the feature's own development**, not the PR base, where
+  submit did not hide either. Same trap as session37 §2.1: judge against the PR base.
+
+**The catalogue returned (276 lines) and I reviewed it against its sources rather than its report.**
+Substantively sound — 9 rulings, 11 mechanism practices, 5 process traps, and a *"what this does NOT
+establish"* section that is the most useful part (it names the `keyboard` mechanisms that have no
+maze analogue, which is exactly the anchoring risk the shape doc worried about). **Two defects, both
+in the binding-ruling section**, both the same class:
+
+- **§1.4 truncated an owner quotation before its operative half** — *"just leave a comment with a
+  warning"*. The ruling does not say *do nothing*; it says *comment instead*. Restored.
+- **§1.5 attributed the triage's own prose to the owner as a quotation.** The ruling is right, the
+  words are not theirs. Replaced with what they actually said. **An assistant's paraphrase promoted
+  to an owner quotation is how a ruling drifts**, and this catalogue is written to be cited.
+
+Both corrected in place with the error named, per the standing practice. The worker was otherwise
+clean: read-only, no git state touched, and it **declined to invent** a trap the prompt had offered
+as an example when it could not find the attestation — which is the behaviour the prompt asked for.
