@@ -40,6 +40,10 @@ table, which changes nothing else.)*
 
 - **Desktop / nodejs:** from the repo root, `love src play src/examples/keyboard`.
 - **Device:** the assembled `.apk`.
+- **The exit rows (D9, G1) need the IDE, not play mode.** Under `love src play …` the console is
+  disabled (`consoleController.lua`, the `cfg.mode == 'play'` branches), so `Ctrl+Esc` has nothing to
+  return to and neither row can be *observed* — the code under test runs either way. Start the
+  console with `love src`, launch the game from it (`run(<project>)`), and come back to it.
 - The **menu** lists eight games in this order: **1** Press the key · **2** Find the key ·
   **3** Asteroids · **4** Alt characters · **5** Words & phrases · **6** Blow the bubble ·
   **7** Hide and seek · **8** Load the train. Press the digit to enter; `Shift+Esc` returns.
@@ -97,7 +101,7 @@ table, which changes nothing else.)*
 | D7 | `Ctrl+Alt+Shift+Up` | **[new]** also moves the notch |
 | D8 | in a timed game, `Alt+P`, then `Alt+P` again | pause on, pause off — once per press, and the pause survives a held key |
 | D8b | in a timed game, `Alt+Shift+P`, then `Alt+Shift+P` again | **[new]** also pauses and resumes. *(It stopped working during the migration and was restored — the fifth gesture of that family.)* |
-| D9 | `Ctrl+Esc` | quits the project back to the console (the framework's own chord) |
+| D9 | `Ctrl+Esc` | quits the project back to the console (the framework's own chord). **Needs the IDE launch** — see "How to launch" |
 
 ### E — Caps Lock and the decals
 
@@ -119,7 +123,7 @@ table, which changes nothing else.)*
 
 | | do | expect |
 |---|---|---|
-| G1 | leave the game with `Ctrl+Esc` and use the console | **[new]** the pointer behaves as it did before the game was started — the project puts relative mode back in `compy.before_exit`. *(Stop paths only: if the project ever crashes to the error screen the mode stays set, which is known platform debt, not this fix's scope.)* |
+| G1 | leave the game with `Ctrl+Esc` and use the console (**IDE launch**, as D9) | **[new]** the pointer behaves as it did before the game was started — the project puts relative mode back in `compy.before_exit`. *(Stop paths only: if the project ever crashes to the error screen the mode stays set, which is known platform debt, not this fix's scope.)* |
 
 ### What a failure here means
 
