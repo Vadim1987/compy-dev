@@ -609,3 +609,32 @@ Owner: *"'main.lua forwards love.keypressed(k)' — but we fixed it in the featu
 - **For the eventual patch:** the two commits cancel out, so a branch assembled off upstream as "one
   commit or two" carries neither — noted so the intermediate state is not preserved in the name of
   history.
+
+## 2026-08-12 — the best evidence of the step: the author's own header lists the platform's gaps
+
+Owner: *"the receiving side in the upstream game does not expect `isr` to be delivered, right? If we
+deliver it now, would it remove any machinery built exclusively to work around the lack of the
+flag?"*
+
+- **Yes, and upstream's `input.lua` header SAYS SO** — *"The IDE keeps key-repeat enabled and strips
+  the isrepeat flag before calling the game, so repeats are filtered here by edge tracking: a key
+  already in `INPUT.held` is a repeat and is ignored completely."* **Verified at the PR base rather
+  than trusted:** `3256aac:src/controller/controller.lua:162` is `local function keypressed(k)` —
+  one parameter. The platform did strip it.
+- **This corrects §2.2's tone, and fairly.** The inter-channel assumption was **not an oversight**:
+  the same header documents it (*"the IDE delivers textinput BEFORE the matching keypress"*), reasons
+  about it, and **rejects the gate scheme for exactly the reason this session re-derived**. What made
+  it a defect is that the behaviour was never guaranteed — and the platform it was true of is the one
+  this feature changes.
+- **Attribution table written into §2.3**, because "what the flag removes" is narrower than "what
+  the feature removes": the flag retires the **keypressed-side edge tracking** outright;
+  `Key.shift/ctrl/alt` retires the modifier mirror; shortcuts retire `reservedChord`/`appChord`;
+  `Key.is_mod` retires `isMod`; a poll retires `help.lua`'s held read; `compy.before_exit` answers
+  the header's own complaint that the runner had no exit hook to restore key-repeat.
+- **And the row that justifies this whole step:** `INPUT.upRecent` + `INPUT_UP_GRACE` exist because
+  **`love.textinput` carries no repeat flag in ANY LÖVE version**. No platform change can retire
+  them — only the new mechanism can. That is why the heal is separable from the migration and why
+  delivering `isr` does not make it unnecessary.
+- **For the PR description:** the example's header is a list of six gaps in the pre-feature platform,
+  written by the author who worked around each one deliberately. **Four are closed by this feature.**
+  That is stronger testimony than anything the sprint could write about itself.

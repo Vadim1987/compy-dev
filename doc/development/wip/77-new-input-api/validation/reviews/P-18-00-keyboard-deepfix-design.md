@@ -302,6 +302,59 @@ to filter OS repeats. There the reader and the state are on the *same* channel: 
 release that cleared the flag. No ordering between channels is involved, so that call is sound
 (§2.1).
 
+## 2.3 What the example built because the platform withheld it — and what the feature gives back
+
+**Owner, 2026-08-12:** *"The receiving side in the upstream game does not expect `isr` to be
+delivered, right? If we deliver it now, would it remove any machinery built exclusively to work
+around the lack of the flag?"*
+
+**Yes — and the author says so in the file's own header, which is the best evidence this step has
+found.** Upstream `input.lua`, first lines:
+
+> *"The IDE keeps key-repeat enabled and **strips the isrepeat flag before calling the game**, so
+> repeats are filtered here by **edge tracking**: a key already in `INPUT.held` is a repeat and is
+> ignored completely."*
+>
+> *"Ordering: the IDE delivers `textinput` BEFORE the matching keypress (the reverse of desktop
+> LOVE). So a 'fresh keypress arms a gate, its textinput consumes it' scheme cannot work […] So
+> textinput is judged directly, with no gate. […] A held key emits textinput; since textinput
+> precedes the fresh keypress, the producing key is in `INPUT.held` when a repeat arrives, so the
+> scene drops it."*
+
+**Verified at the PR base rather than taken on trust:** `3256aac:src/controller/controller.lua:162`
+defines `local function keypressed(k)` — **one parameter**. The platform discarded `scancode` and
+`isrepeat` before any project handler ran. The author's account is exact.
+
+**This changes how §2.2 should be read.** The inter-channel assumption was **not an oversight**: it
+was a documented dependency on a platform behaviour, reasoned about in writing, with the alternative
+(a gate armed by the keypress) explicitly considered and rejected for the same reason this document
+re-derived later. What made it a defect is that **the behaviour it depends on was never guaranteed**
+— and the platform it was true of is the one this feature is changing.
+
+**Attribution of each piece, since "what the flag removes" is narrower than "what the feature
+removes":**
+
+| upstream machinery | exists because | retired by |
+|---|---|---|
+| `INPUT.held` **as a repeat detector**, via `inputStale` inside `appKeypressed` | the platform stripped `isrepeat` | **the flag** — `if isr` replaces the edge tracking outright |
+| `INPUT.held` **as modifier state**, via `modHeld` + `inputUpdateMods` | no held-modifier query existed for a project | the feature's `Key.shift/ctrl/alt` |
+| `reservedChord`, `appChord` | no combo mechanism existed | the feature's `shortcuts` + `alt+*` class |
+| `isMod` | no `Key.is_mod` existed | the feature's `Key.is_mod` (P18's onboarding half) |
+| `help.lua`'s `INPUT.held.h` | no held-key query existed | a poll — Decision 32 ruled it correct |
+| *"does NOT disable global key-repeat (the runner exposes no project-exit cleanup hook…)"* | no exit hook existed | the feature's `compy.before_exit` |
+| `INPUT.upRecent` + `INPUT_UP_GRACE` | **`love.textinput` carries no repeat flag — in any LÖVE version** | **nothing the platform can give** — only the new mechanism (§9.5) |
+
+**The last row is the point, and it is why this step exists at all.** Delivering `isrepeat` retires
+the *keypressed*-side workaround completely and cleanly. It does **nothing** for the textinput side,
+because that channel has no such flag to deliver and never has: a character carries no indication of
+whether the key that produced it was repeating. That is why the heal needs a mechanism of its own,
+and why it is separable from the migration (§2.1).
+
+**Read together, the example's header is a list of gaps in the pre-feature platform**, written by
+someone who worked around each one deliberately and said so. Four of the six are closed by this
+feature. That is a stronger sentence for the PR description than anything the sprint has written for
+itself, and it is the author's testimony rather than ours.
+
 ## 3. `alt.lua` — what it does with the events
 
 **Target:** `gaugeCurrent(ALT)` — **one item at a time**, either a single character (`"a"`, `"7"`,
