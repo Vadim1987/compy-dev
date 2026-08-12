@@ -480,3 +480,39 @@ meaningless if anything lands after it.
 | **P-18-09** D4, the exit rows | platform `eb798ce0` | The IDE launch named for `D9`/`G1`; no expectation changed. The code under test runs under either launch — what `play` mode makes impossible is the observation |
 | **P-18-12** O1, O6, the ruling | platform `8a22ed24` | The citation ruling into `agents/rules/commenting.md` (it binds every example repo); the sub-frame re-press residue into the design of record's accepted consequences; `Key.is_alt` joins `Key.is_mod` in P10's doc-gap member |
 
+
+---
+
+## 10. P-18-14 … P-18-18 — the second cold pass's children (session38, 2026-08-12)
+
+The re-review of `025e858..1498f46` (`../reviews/S38-P18-final-revalidation-2.md`) returned
+**mechanism sound, adoption nearly clean**: the three code defects of the first pass are fixed, and
+**one player-visible regression survives**. Both substantive findings were re-verified here before
+being planned on.
+
+**Owner ruling that governs this batch (2026-08-12), and it retires an earlier one:**
+
+> *"The whole point of the sprint is adoption, so I would not consider 'dragging in the new API' a
+> sin. The concern is softer — merely renaming all function calls into their API equivalents would be
+> a migration without gain. But artificial preserving of old syntax where replacement is justified
+> also makes no sense."*
+
+So the test for each remaining `love.*` input call is **not** "can the game do without the API" but
+**"is the replacement justified on its own terms?"** This **supersedes the session37 ruling** that
+the release poll stays `love.keyboard.isDown` "for minimising the change": that ruling's stated
+ground was that the example is a standalone LÖVE program, and **it is not** — `config.lua:42` reads
+the platform global `Color`, in this branch **and in upstream**, so the game has never run outside
+the IDE. The premise is false, and the comments that repeated it are the batch's second defect.
+
+| id | task | addresses | notes |
+|---|---|---|---|
+| **P-18-14** | **`Ctrl+Alt+Shift+H` re-arms the hint again.** Bind it to the same handler value as `ctrl+alt+h` | **F1** | The **sixth** member of the family this branch has restored four of, and the second found by a cold pass after a fix of mine restored the fifth without asking whether the binding I had just written had the same hole. Upstream matched `k == "h" and INPUT.ctrl and INPUT.alt` with **Shift unconstrained** (`025e858:alt.lua:217`); a combo is its modifier set exactly, so the Shift variant falls through to the hook, loses the re-arm, and knocks when the live target is `backspace`/`tab`/`return`. **F3 dissolves with it** — `alt.lua`'s *"this scene sees no chord at all"* becomes true again. Smoke row |
+| **P-18-15** | **The two device polls adopt `Key.any_pressed`** — `inputTick`'s claim release, `pollable`'s probe, and `helpHeld` | the ruling above, **F2** | `Key.any_pressed` is a thin wrapper over `love.keyboard.isDown` (`src/util/key.lua:134`), so behaviour is identical, including the raise on an invalid key constant that `pollable` probes for. The replacement is justified on its own terms: this is the API's documented rung for a held **non-modifier** key, the file already asks `Key` for every modifier, and one surface beats two spellings of one question. **It also deletes the false justification rather than rewording it** |
+| **P-18-16** | **The comments the sweep got wrong or missed.** Every *"so this file also runs standalone"* claim goes with the code that motivated it; **`words.lua` is swept** — P-18-10 skipped it, and it carries a 14-line history narration over an 11-line function | **F2, O1** | O1 is the sweep failing its own gate: the history ban and the size rule were applied to six files and not to the seventh. `words.lua`'s comment keeps what a reader needs (one claim per press, as Alt does) and loses the account of the filter it replaced |
+| **P-18-17** | **Docs.** (i) **O2** — the release boundary is marginally *narrower* than upstream's one-frame grace in the direction upstream guarded; it belongs in the design of record's "Consequences, accepted", where the other residues are. (ii) **O5** — six tolerant gestures now cost **eleven** registrations, which is where F1 came from: recorded as **platform feedback** in the debt register and as a line the PR description owes, since a project author restoring one tolerant gesture pays two registrations and a five-gesture review still missed the sixth | **O2, O5** | Platform repo only. O5 is not a defect of the example; it is the combo model's cost, observed twice from the same place |
+| **P-18-18** | **Re-pin, then re-review** — the anchor to the new heads, then the **third** cold pass under the same framing, with its own report | closes the batch | Same rules: Opus, explicit, read-only, measure rather than reason, deliverable on disk |
+
+**O4 is declined** (Ctrl held, then Alt pressed, no longer finishes the intro typewriter): reaching
+it requires holding Ctrl and then pressing Alt during the intro, it costs a keystroke the player can
+repeat, and closing it would mean a second bare-modifier guard for a gesture nobody has. Recorded
+here rather than fixed. **Owner's to overturn.**
