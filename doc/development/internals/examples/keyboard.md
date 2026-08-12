@@ -179,6 +179,14 @@ revisited"*. Words is that stage, and it arrived from upstream.
   not quietly redesign what it was asked to carry across. Its failure mode is a release lost to a
   focus change, and `bubbleGrow`'s own timeout pops the bubble a moment later: the child retries — an
   inconvenience, not a wedge. The caution is written where the handler is.
+- **The window in which a trailing repeat is swallowed is one frame, and it is measured from the
+  frame boundary rather than from the keyup.** The mechanism this replaced stamped a grace window
+  from the keyup itself, so in the direction it guarded — a repeat character arriving just after its
+  release — the old window could be marginally longer than the new one. Reaching the difference needs
+  a repeat that lands after the frame's poll but within a frame of the release, and the cost is one
+  character accepted that the player did not intend to type. Weighed against what the grace window
+  cost — a genuinely fast tap, in ordinary play — this is the cheaper residue, which is why the
+  boundary moved.
 - **A release and a re-press inside the same frame lose the second character.** Claims are cleared
   only by `inputTick`, once per `love.update`, so a re-press with no update in between finds its
   claim still standing. That is ~16 ms — below a deliberate keystroke, and the smoke row it would

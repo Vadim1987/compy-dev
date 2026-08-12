@@ -77,6 +77,7 @@ this table. The same range is what the second cold review reads.)*
 | B10 | press `Alt+Shift+`*any letter* | **[new]** ignored — no knock, no miss |
 | B11 | **hold** `Ctrl+Alt+H` for ~2 seconds | **[new]** the hint re-arms **once** — one blip, one finger sweep from the start, not one per repeat frame |
 | B12 | `Alt+P` to pause, press `Ctrl+Alt+H`, then `Alt+P` again | **[new]** the pause screen ignores it: no blip while paused |
+| B13 | press `Ctrl+Alt+Shift+H` | **[new]** re-arms the hint exactly as `Ctrl+Alt+H` does. *(It stopped working during the migration and was restored — the sixth gesture of that family.)* |
 
 ### C — Words & phrases (game 5): the second judging scene
 
@@ -128,7 +129,7 @@ this table. The same range is what the second cold review reads.)*
 
 ### What a failure here means
 
-- **A2, A4, B2, B6, B9, B10, B11, B12, C2, C5, D3, D5, D7, D8b, G1** are the new mechanism and its restorations. A failure is
+- **A2, A4, B2, B6, B9, B10, B11, B12, B13, C2, C5, D3, D5, D7, D8b, G1** are the new mechanism and its restorations. A failure is
   a defect in the 2026-08-12 work — report it against
   `wip/77-new-input-api/validation/reviews/P-18-00-triage-and-plan.md`.
 - **E3** is a question, not a test: either answer closes it.

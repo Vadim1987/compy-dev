@@ -1493,3 +1493,33 @@ works, and this is about how easy it is to keep working.
 
 Points 1 and 3 are independent: naming the layers is worth doing even if the gesture never
 changes.
+
+### A gesture that tolerates a modifier costs one registration per variant
+
+- **Where:** `compy.input.shortcuts` and the combo grammar (`src/util/key.lua`,
+  `split_combo`/`check_combo`). A combo is its modifier set **exactly**
+  (Decision 21), and the `'*'` class key is a class of one modifier set too —
+  `'alt+*'` does not match `alt+shift+key`.
+- **State:** a project that wants *"Ctrl+Alt+Up, and I do not care whether
+  Shift is also down"* must register `ctrl+alt+up` **and**
+  `ctrl+alt+shift+up`. `examples/keyboard` needs six such tolerant gestures
+  and pays **eleven** registrations for them (`input.lua`,
+  `register_reserved`). Nothing is broken by this and every binding is
+  explicit, which is the model's virtue.
+- **Why it is written down (2026-08-12):** the cost is not the typing, it is
+  that *a missing variant is silent and looks exactly like the code being
+  right*. Converting this one example's hand-written modifier tests to combos
+  dropped **six** gestures; four were caught by one cold review, the fifth by
+  a second, and the sixth by a third — each time after a fix for the previous
+  one had been written by someone who had just read the rule and the bindings
+  together. That is three independent reviews to converge on one file's
+  eleven lines, and the register should say so before the next project
+  migrates.
+- **Shape, if it is ever answered:** a tolerance marker in the combo grammar
+  (something like `'ctrl+alt+shift?+up'`), or a registration helper that
+  expands one gesture into its variants. **Neither is proposed here** — the
+  explicitness of the current model is a deliberate property and a tolerance
+  syntax trades it away.
+- **Revisit:** when a second project hits it, or when the input guide gains
+  its reserved-combo section (P10) and has to explain the double binding
+  anyway.
