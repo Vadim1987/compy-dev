@@ -529,3 +529,32 @@ here rather than fixed. **Owner's to overturn.**
 **A correction that history cannot carry:** `1498f46`'s commit message states the *"so this file also
 runs standalone"* claim that `d9ecdb0` retires. The branch is not rewritten, so the correction lives
 here and in `d9ecdb0`'s own message.
+
+---
+
+## 11. P-18-19 … P-18-21 — the third pass's children (session38, 2026-08-12)
+
+The third cold pass (`../reviews/S38-P18-final-revalidation-3.md`) returned **sound**, and proved the
+question it was commissioned for: a parity harness replayed **105 fresh-press stimuli** (8 modifier
+subsets × 15 triggers) and the same 105 as repeats through the real dispatcher against upstream's
+unmodified `input.lua`. **There is no seventh dropped gesture.** The whole parity diff is three lines.
+
+**Owner rulings, 2026-08-12:**
+
+1. **Close the bare-modifier deltas** — all three, rather than documenting them. This **overturns the
+   plan's own decline of `O4`** (§10) and settles the third pass's `O1` the same way: the parity diff
+   goes to zero instead of being explained.
+2. **The tidy batch runs as a delegated worker** (Sonnet, prompt of record on disk, never touches git
+   state), not in the parent session.
+3. **The review that follows is narrow:** it reads *these commits only*, against the third pass's
+   outcome — not the whole delta a fourth time.
+
+| id | task | addresses | notes |
+|---|---|---|---|
+| **P-18-19** | **Close the three bare-modifier deltas.** `appKeypressed`'s unconditional `if Key.is_alt(k) then return end` becomes the condition upstream's `appChord` actually had: swallow a **modifier's own press while Alt is held without Ctrl**. That restores `Ctrl`+`Alt` and `Ctrl+Shift`+`Alt` reaching the scene (the declined `O4`) **and** re-swallows `Alt`+`Shift` (the third pass's `O1`), in one line | **O4**, third pass's **O1** | Parent session's own work — it is the mechanism's last behavioural line. **Verified by re-running the reviewer's parity harness**, which is on disk: the diff must go to **zero**. `intro.lua`'s comment about the asymmetry is then true without a qualifier, and the smoke rows that test lone presses stay as they are |
+| **P-18-20** | **The tidy batch, delegated.** (a) `words.lua:144-146` — `wordsBaseKey`'s comment says *"else the glyph itself"* while the body forwards to `glyphBaseKey`, which inverts `SHIFT_MAP`; that branch is what keeps smoke row `C5` from crashing. (b) the debt entry's **eleven → twelve** registrations, in both places. (c) the missing smoke row: `Ctrl+Alt+H` in a **non-teaching** game does nothing (the accepted deviation from P-18-04 that no row covers). (d) comment economy: `bubble.lua`'s block ships review dialogue into a third party's file — keep the caution, drop the argument; `main.lua`'s trailing comment repeats its own header; `input.lua`'s `setTextInput` rationale says the line is needed and then that it is not, on a ragged wrap | third pass's **D1, O2, O3(b), O4-O6** | **Sonnet, model passed explicitly**, prompt of record in `../prompts/`, told about the `lua-lsp` server, forbidden from touching git state in any repository, and told the platform-doc citation ban. **The parent reviews the diff site by site and commits** |
+| **P-18-21** | **The narrow review.** An independent cold pass over **only** the commits P-18-19 and P-18-20 produced, judged against `S38-P18-final-revalidation-3.md`'s findings: did each disposition land, and did closing the deltas introduce anything? Not a fourth full re-read of the delta | closes the step | Same rules: Opus, explicit, read-only, measure rather than reason, its own report on disk |
+
+**After P-18-21 the step has nothing left that this container can settle.** What remains is the human
+smoke pass — thirteen `[new]` rows, and **nothing in this work has ever run in a game scene, at any
+head, by anyone**.
