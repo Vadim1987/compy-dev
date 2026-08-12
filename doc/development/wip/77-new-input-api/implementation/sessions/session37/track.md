@@ -425,3 +425,40 @@ only answered in chat.
   physical key (IME, dead keys, AltGr), so an entry may be keyed by a name no `keyreleased` matches.
   **The poll rescues it** next frame, at the cost that such a character, if truly held, could repeat
   once per frame. Neither game has such a target, and the alternative — no poll — strands it forever.
+
+## 2026-08-12 — owner's filter/judgement split, and the mechanism collapses again (§9.5g)
+
+Owner: *"I see how it can become a filtering mechanism separate from judgement. The filter judges
+whether new text was already registered. If it was — noop. If not: register and fire
+`on_new_text()` — the hook of judgement, different on two games. Registration activates a watcher
+that polls the keyboard (and caps lock state?) to understand when registered text stops being sent.
+The `keyreleased` event may fill its own track with timestamps, that could be consulted by the
+poller."*
+
+- **The architecture is right and costs NO new surface.** `on_new_text` already exists: it is the
+  scene descriptor's `textinput` entry that `input.lua` already dispatches to. The filter moves
+  ABOVE the scene handlers instead of being called BY them, so `altTextinput` and `wordsTextinput`
+  each lose their first line and are otherwise untouched.
+- **Taking the watcher seriously made `love.keyreleased` drop out of the mechanism entirely** — not
+  as an optimisation but because clear-on-release is **worse**: a release followed by a trailing
+  repeat and a release followed by a re-press are the same shape, so clearing at the release admits
+  a **phantom character** (the exact case `INPUT_UP_GRACE` was invented for). Clearing only in the
+  watcher blocks it. The one thing clear-on-release buys is a release-and-re-press inside a single
+  frame — under 16 ms, not a human act. **R4 is then satisfied by construction: an event never
+  consulted cannot be missed.**
+- **The timestamp track is declined with its reason:** it distinguishes trailing repeat from
+  deliberate re-press by AGE, which works and is `INPUT_UP_GRACE` rebuilt — a duration constant tuned
+  against timings nobody guarantees, deciding judgement. The frame boundary gives the same protection
+  and is a boundary we already have rather than a number we had to pick.
+- **Caps Lock: the watcher does not need it, and it is a SECOND independent argument for per-key.**
+  Hold `a`, toggle Caps mid-hold: repeats now carry `"A"`, whose base key is still `"a"`, so they
+  stay registered and stay ignored — matching upstream, which also keyed on the held key. **The
+  single-slot content variant leaks here**: `"A"` ~= `"a"`, so holding one key types a second
+  character. Alongside rollover, that is two independent leaks the slot has and the table does not.
+- **What Caps Lock still requires is unchanged:** `capsReconcile` runs ABOVE the filter, on every
+  character including discarded ones — repeats are valid evidence of a lock state nobody reported.
+  It is the one line in the mechanism whose position is load-bearing.
+- **The whole thing in one sentence:** a key whose character has been delivered to the scene stays
+  registered until the device says it is no longer down. One table, one frame-time poll, one hook —
+  no content test, no timestamps, no clock, no grace constant, no release handler, no ordering
+  assumption anywhere.

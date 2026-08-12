@@ -758,6 +758,105 @@ keeps a structure that already exists and replaces only how it is cleared. The s
 more elegant sentence and the less predictable mechanism — and the strategic frame's question is
 predictability, not elegance.
 
+### 9.5g The filter/judgement separation (owner, 2026-08-12) — and it collapses further
+
+**The owner's reading, which is the right architecture:** *"I see how it can become a filtering
+mechanism separate from judgement. The filter judges whether new text was already registered. If it
+was — noop. If it was not: register and fire `on_new_text()` — the hook of judgement, which is
+different on the two games. Registration activates a watcher that polls the keyboard (and caps lock
+state?) to understand when registered text stops being sent. The `keyreleased` event may fill its own
+track with timestamps, that could be consulted by the poller."*
+
+Two things fall out of taking this seriously: the separation is already available in the code with
+**no new registration surface**, and once the watcher exists, **`love.keyreleased` drops out of the
+mechanism entirely**.
+
+#### The shape
+
+```lua
+-- input.lua, shared: the FILTER
+function appTextinput(t)                    -- unchanged prologue
+  ...PAUSED / Alt / Ctrl / help guards...
+  if isAlphaChar(t) then capsReconcile(t, INPUT.shift) end   -- MUST stay above the filter
+  local k = textBaseKey(t)
+  if CONSUMED[k] then return end            -- already registered: noop
+  CONSUMED[k] = true                        -- register, and the watcher is live by that fact
+  local s = SCENES[ACTIVE]
+  if s and s.textinput then s.textinput(t) end   -- on_new_text: judgement, per game
+end
+
+-- input.lua, shared: the WATCHER, once per frame
+function inputWatch()
+  for k in pairs(CONSUMED) do
+    if not Key.any_pressed(k) then CONSUMED[k] = nil end
+  end
+end
+```
+
+`inputWatch` runs at the top of `love.update`, before `sceneUpdate`. Nothing else is needed.
+
+**The judgement hook already exists.** `on_new_text` is the scene descriptor's own `textinput`
+entry, which `input.lua` already dispatches to. `altTextinput` and `wordsTextinput` each lose their
+first line and otherwise stay exactly as their authors wrote them — the filter moves *above* them
+instead of being called *by* them. **No new API, no new registration, two lines deleted.**
+
+#### `love.keyreleased` drops out — and that is the point, not a side effect
+
+The step's earlier drafts kept a release-clear alongside the poll. Working the cases shows it is not
+merely unnecessary but **actively worse**, because a release and a trailing repeat are
+indistinguishable in shape:
+
+| sequence | with clear-on-release | with clear-in-watcher only |
+|---|---|---|
+| press, character, **release**, trailing repeat character | claim gone → **phantom character judged** | still registered → correctly ignored |
+| press, **release**, character (the character trails its own release) | no claim was ever set → accepted ✓ | accepted ✓ |
+| press, character, release … next frame … press again | freed at release ✓ | freed by the watcher ✓ |
+| release and re-press **inside one frame** | freed ✓ | **the second character is lost** |
+
+The last row is the only thing clear-on-release buys, and it requires a human to release and
+re-press within a single frame — under 16 ms at 60 fps. The first row is the case
+`INPUT_UP_GRACE` was invented for. **So the watcher alone is the better of the two, and the whole
+`love.keyreleased` dependency goes with it** — which is R4 satisfied by construction rather than by
+mitigation: an event that is never consulted cannot be missed.
+
+The residue, stated: a repeat character arriving a **full frame after its key is physically up**
+would find the entry cleared and be judged. The current grace window has the same exposure at the
+same size (one frame), so this is not a regression, and the OS stops repeating a key that is up.
+
+#### The timestamp track, assessed
+
+The owner's suggestion that `love.keyreleased` fill a timestamped track for the watcher to consult
+is a way to distinguish those two indistinguishable sequences by *age* — trailing repeats arrive
+within milliseconds of the release, a deliberate re-press does not. **It works, and it is
+`INPUT_UP_GRACE` rebuilt**: a duration constant, tuned against timings nobody guarantees, deciding
+judgement. Clearing in the watcher gets the same protection from the frame boundary, which is a
+boundary we already have and did not have to choose a number for. **Recommended: no track, no
+timestamps, and no `keyreleased` handler at all.**
+
+#### Caps Lock: the watcher does not need it, and this is where per-key wins again
+
+The owner's question — should the watcher also poll the Caps Lock state? — has a clean answer under
+per-key registration: **no, because the registry is keyed by the physical key and Caps changes only
+the character.** Hold `a`, toggle Caps mid-hold: the OS's repeats now carry `"A"`, whose
+`textBaseKey` is still `"a"`, so they are still registered and still ignored. That is also the
+authored behaviour (upstream's `inputStale` keyed on the held **key** too).
+
+Under the single-slot content variant the same sequence **leaks**: the remembered text is `"a"`, the
+arriving text is `"A"`, they differ, and the character is accepted — a repeat typed by holding one
+key. So Caps Lock is a second, independent argument for per-key registration, alongside rollover.
+
+**What Caps Lock still needs, unchanged:** `capsReconcile` must run **above** the filter, on every
+character including the ones the filter discards. Repeats and characters arriving mid-celebration are
+all valid evidence of a lock state nobody reported, and the design of record is explicit that
+reconciliation precedes all suppression. The sketch above preserves that ordering, and it is the one
+line in this mechanism whose position is load-bearing.
+
+#### What the whole mechanism is, in one sentence
+
+**A key whose character has been delivered to the scene stays registered until the device says it is
+no longer down.** One table, one frame-time poll, one hook. No content comparison, no timestamps, no
+clock, no grace constant, no release handler, and no dependence on the order of anything.
+
 ### 9.6 What I recommend, now that Option C is on the table
 
 **Option C, armed on every accepted character (§9.5a), with the slot-versus-table question
