@@ -667,6 +667,97 @@ to move it off; or add a single-key alias, which is new public API against a man
 **Recorded as a wart, not a defect** — worth the owner's attention when the console and editor are
 migrated, since they will hit the same reading.
 
+### 9.5f The two remaining decisions, in full (2026-08-12)
+
+#### (a) When is the field written and the watch armed?
+
+**The mechanism has one write point per accepted character.** The question is which accepted
+characters write it. Three readings, and only one preserves the authored behaviour:
+
+**(a-i) Write only on a win** *(the literal reading of "as soon as win is registered")*.
+A wrong character then leaves no trace, so a **held wrong key knocks on every repeat**:
+`wordsBad` calls `SOUND.reject()` with no guard, so a child leaning on a wrong key hears a knock
+every few tens of milliseconds. `alt.lua` would mask it — `ALT.fumbled` silences repeated wrong
+answers per target — but Words would not. **Rule change, excluded.**
+
+**(a-ii) Write the field on every judged character, arm the watch only on a win.**
+Repeats of a wrong key are blocked by the content test ✓, but nothing ever clears that field except
+the next *different* character. So: press a wrong key, release it, press it again — **the second
+press is silent where the authored game knocks**. Again invisible in Alt, visible in Words.
+**Rule change, excluded.**
+
+**(a-iii) Write the field and arm the watch together, at every write.** Hit, miss, and the chord
+record (`Ctrl+Alt+H` writing `h` without judging it) all behave the same: the character is
+remembered, its key is watched, and the watch releases it. A wrong key repeats → blocked; released →
+freed; pressed again → knocks again, as authored. **This is the only reading that preserves both
+scenes**, and it is also the simplest to state: *the field and its watch move together, always.*
+
+It improves the chord record as a side effect. The ratified design had to argue that a recorded `h`
+would be cleaned up *"because the next judged character overwrites `lastText` anyway"*; under (a-iii)
+the recorded character is released when its key comes up, like any other.
+
+#### (b) One slot, or one entry per key?
+
+The two variants are the same mechanism at different capacities, but they differ in **what
+identifies a press**, and that changes how much machinery is needed.
+
+**(b-i) Single slot — identity is the character.**
+
+```lua
+LAST = { text = nil, key = nil }        -- one field, predeclared
+accept iff  text ~= LAST.text
+on accept:  LAST.text, LAST.key = text, textBaseKey(text)
+clear on:   keyreleased(LAST.key)  |  update: not Key.any_pressed(LAST.key)
+```
+
+**The rollover hole, concretely.** Hold `a` — accepted, `LAST = {"a","a"}`, its repeats blocked.
+Press `b` while `a` is still down — `"b" ~= "a"`, so it is accepted and **the slot moves to `b`**.
+`a`'s repeats now match nothing and are accepted as fresh characters. Whether that is reachable
+depends on the OS: auto-repeat normally follows the most recently pressed key, so pressing `b`
+usually stops `a` repeating, and releasing `b` usually does not resume it. **"Usually" is the whole
+problem** — it is the same class of unguaranteed platform behaviour R2 refuses to rest on.
+
+**(b-ii) One entry per key — identity is the key.**
+
+```lua
+HELD_TEXT = { }                         -- key -> true, one predeclared table
+accept iff  not HELD_TEXT[textBaseKey(text)]
+on accept:  HELD_TEXT[textBaseKey(text)] = true
+clear on:   keyreleased(k) -> HELD_TEXT[k] = nil
+            update: for k in HELD_TEXT do if not Key.any_pressed(k) then clear end
+```
+
+**The content test disappears.** The key *is* the identity, so `"all"` works because the release
+clears the entry, the winning character's repeats are blocked because its key is still consumed, and
+rollover is correct because `a` and `b` are separate entries. **One concept — a key stays consumed
+while it is held — replaces two** (a remembered character plus a watched key).
+
+It also retires the ratified design's most delicate invariant: that document has a whole paragraph
+arguing `lastText` *"can never equal the live target"*, and why a chord record must not violate it.
+With per-key entries there is no such interaction to protect — claiming a key says nothing about
+what the target is.
+
+**What (b-ii) costs.** A table rather than a field, and a per-frame loop over it (at most a handful
+of entries — the keys physically down). It is also, structurally, `GLYPH_CLAIMED` **kept** rather
+than deleted — with its clearing rule corrected from *release plus a frame-stamp grace window* to
+*release plus a device poll*. The subtraction the ratified design promised is then smaller than
+advertised: `INPUT.upRecent`, `INPUT_UP_GRACE`, `DBG_FRAME` and `blocked` still go; the table stays.
+
+**One behaviour both variants share, stated so it is not discovered later.** `textBaseKey` cannot
+always name the physical key — a character from an IME, a dead key, or an AltGr composition may map
+to itself. Under either variant the entry is then keyed by a name that no `love.keyreleased` will
+ever match; **the frame poll rescues it** (`Key.any_pressed("é")` is false, so it clears on the next
+frame) at the cost that such a character, if genuinely held, could repeat once per frame. Neither
+game has such a target, and the alternative — no poll — strands the character permanently, which is
+strictly worse.
+
+**Recommendation: (b-ii), the per-key entry.** Three reasons, in order of weight: it removes the hole
+instead of betting on auto-repeat semantics; it needs *one* concept rather than two, and drops the
+invariant the ratified design had to defend in prose; and the diff is smaller than it looks, since it
+keeps a structure that already exists and replaces only how it is cleared. The single slot is the
+more elegant sentence and the less predictable mechanism — and the strategic frame's question is
+predictability, not elegance.
+
 ### 9.6 What I recommend, now that Option C is on the table
 
 **Option C, armed on every accepted character (§9.5a), with the slot-versus-table question

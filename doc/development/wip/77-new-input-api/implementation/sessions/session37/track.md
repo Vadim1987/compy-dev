@@ -396,3 +396,32 @@ instead of asking 'that specific last one, is it still pressed'?"*
   recorded as such: the alternatives are `love.keyboard.isDown` directly (keeps the example on the
   surface the migration removes) or a new single-key alias (new API against a mandate to simplify).
   Flagged for the console/editor migration, which will read it the same way.
+
+## 2026-08-12 — the two remaining decisions written out in full (§9.5f)
+
+Owner asked for the options in more detail before ruling. Written into the document rather than
+only answered in chat.
+
+- **(a) When the field is written and the watch armed — three readings, one survives.** Writing only
+  on a win leaves a held WRONG key knocking every repeat (`wordsBad` has no guard); writing the field
+  but arming only on wins makes a wrong key pressed twice silent the second time. **Both are rule
+  changes visible in Words and masked in Alt** (`ALT.fumbled` hides them there), which is why the
+  second scene keeps earning its place in this analysis. **Survivor: field and watch move together,
+  always** — hit, miss, and the chord record alike. It also improves the chord record, which no
+  longer needs the ratified design's argument that *"the next judged character overwrites it anyway"*.
+- **(b) One slot vs one entry per key — the real difference is WHAT IDENTIFIES A PRESS.** With a
+  single slot the identity is the character, and the rollover hole follows: hold `a`, press `b`, the
+  slot moves to `b`, `a`'s repeats match nothing. Reachability rests on auto-repeat following the
+  most recent key — *"usually"*, which is the class of assumption R2 refuses.
+  **With per-key entries the identity is the key, and the content test disappears entirely**: one
+  concept (a key stays consumed while held) replaces two, and the ratified design's delicate
+  invariant — `lastText` must never equal the live target — has nothing left to protect.
+- **Recommended (b-ii)**, on predictability rather than elegance: it removes the hole instead of
+  betting on OS behaviour, needs one concept, and is a **smaller diff than it looks** since it keeps
+  `GLYPH_CLAIMED`'s structure and replaces only its clearing rule (release + frame-stamp grace →
+  release + device poll). Honest cost stated: the promised subtraction shrinks — `upRecent`,
+  `INPUT_UP_GRACE`, `DBG_FRAME` and `blocked` still go, the table stays.
+- **Shared by both variants, recorded before it is discovered:** `textBaseKey` cannot always name the
+  physical key (IME, dead keys, AltGr), so an entry may be keyed by a name no `keyreleased` matches.
+  **The poll rescues it** next frame, at the cost that such a character, if truly held, could repeat
+  once per frame. Neither game has such a target, and the alternative — no poll — strands it forever.
