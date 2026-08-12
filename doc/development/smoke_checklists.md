@@ -20,6 +20,22 @@ has is worse than none, because it passes.
 registered shortcut instead of a hand-matched combo — see `internals/examples/keyboard.md`. Cases marked **[new]** exercise that mechanism and have never been
 run by a human; the rest are regression checks against behaviour the example already had.
 
+### The four commits a result should be reported against
+
+A smoke result is only investigable if the four states it ran on are named. Quote these with any
+finding, and **refresh them (`git -C <repo> rev-parse --short HEAD`) if the tree has moved before you
+run** — a row that fails against a state nobody recorded costs a bisect.
+
+| what | ref | commit |
+|---|---|---|
+| `keyboard`, the branch under test | `newinput` (local, unpushed) | **`646674b`** |
+| `keyboard` upstream it is diffed against | `origin/dsent/dev` | **`025e858`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`fd0e2c21`** |
+| platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
+
+*(Recorded 2026-08-12, at the end of P-18. The platform id is the commit before the one adding this
+table, which changes nothing else.)*
+
 ### How to launch
 
 - **Desktop / nodejs:** from the repo root, `love src play src/examples/keyboard`.
