@@ -1107,8 +1107,7 @@ game tries to *not* depend on the flag, assuming it could be disabled in OS sett
 `(k, sc, isr)` signature — `consoleController.lua:486` — and hooks receive exactly that, so
 `compy.input.hooks.keypressed = fn.ignore_repeat(appKeypressed)` is a legal registration.
 
-**But repeat filtering is not universal in this game, and the exception is authored, not ours.**
-Both baselines carry it:
+**There is an exemption in both baselines, and its stated reason does not survive the migration.**
 
 ```lua
 -- upstream                                    -- merged tree
@@ -1116,18 +1115,48 @@ if inputStale(k) and k ~= "capslock" then       if isr and k ~= "capslock" then
   return end                                      return end
 ```
 
-`capslock`'s release is not reliably delivered, so its **next press can arrive flagged as a
-repeat**; dropping that press would freeze `CAPS_STATE.on` on a lock the player actually toggled,
-and the decal would then lie for the rest of the session. A blanket wrapper on the hook removes the
-exemption and breaks the Caps estimate — **for every scene at once**, since the estimate is
-app-wide.
+**[2026-08-12] Corrected after an owner challenge.** An earlier draft of this section asserted that
+*"`capslock`'s release is not reliably delivered"* as the reason. That phrase is the **author's**,
+from upstream's own comment — *"capslock is exempt from the stale filter (its release may not
+arrive, wedging the set and freezing Caps)"* — and **it describes a failure of the held-set
+mechanism specifically**: if the release never arrives, `INPUT.held['capslock']` stays true forever,
+so every later press is stale, `capsToggle` never runs again, and the estimate freezes for the rest
+of the session. Sound reasoning about **upstream's** filter.
 
-**So the wrapper needs the exemption to move somewhere else first.** It could: `capslock` is not a
-modifier by `Key.is_mod`, so a bare `shortcuts.keypressed['capslock'] = fn.side_run(capsToggle)`
-is expressible and would run ahead of the hooks, leaving the hook free to be wrapped. That is a
-restructuring rather than a minimisation, it moves an app-wide estimate onto a different mechanism,
-and it is **not recommended inside this step** — recorded so the option is on file rather than
-rediscovered.
+**The owner's reading is the purpose underneath it, and it is the better statement:** *capslock is
+tracked because it toggles the caps state on every new press.* The exemption exists so the repeat
+filter cannot **eat a toggle**. Upstream's filter genuinely could: through a wedged `held` flag, and
+through the one-frame `upRecent` window on a fast re-press.
+
+**Under `isrepeat` the filter cannot eat a toggle at all**, because a fresh press is never flagged as
+a repeat — the OS knows the key is up regardless of what events reached us. So this branch's comment
+(*"its next press can come in flagged as a repeat"*) re-justifies an inherited exemption with a claim
+the new mechanism does not support. **That comment is wrong and must be corrected whatever else is
+decided.**
+
+**And the exemption's effect has inverted.** It no longer protects a toggle; the only thing it now
+decides is what happens to capslock **repeats**. If the OS emits them while the key is held and does
+*not* toggle the lock on each one, then letting them through makes `capsToggle` flip the estimate
+every repeat — **the exemption would now cause the drift it was written to prevent**.
+
+**Which way it behaves needs one observation, not an argument** — hold `capslock` down for a second
+on the target platform and watch whether the OS lock and the Caps decal flicker. This container
+cannot inject keystrokes, so it is owed by a human, and it is a minute's work. Both outcomes are
+cheap: if the OS does not repeat lock keys the exemption is inert and can go for tidiness; if it does
+repeat without toggling, the exemption is a live defect and **must** go.
+
+**This is what actually gates the wrapper.** If the exemption is dropped, `appKeypressed`'s first
+line disappears and `fn.ignore_repeat(appKeypressed)` becomes exactly equivalent to it — the owner's
+suggestion lands, with the filter stated at the registration instead of inside the handler. If the
+exemption is kept, the wrapper cannot be used as-is, and the escape is to move `capsToggle` onto its
+own registration: `capslock` is not a modifier by `Key.is_mod`, so a bare
+`shortcuts.keypressed['capslock'] = fn.side_run(capsToggle)` is expressible and runs ahead of the
+hooks. **That is restructuring rather than minimisation and is not recommended inside this step** —
+recorded so the option is on file.
+
+**Scope note:** all of this is on the `keypressed` channel and therefore **outside the heal**, which
+is confined to `textinput` (§2.2). The comment correction is owed regardless; the exemption's fate is
+a separate decision that the observation above settles.
 
 **On the second half of the question — no, the game is not avoiding the flag deliberately.**
 Upstream never *received* it: `main.lua` forwards `love.keypressed(k)` with one argument, discarding

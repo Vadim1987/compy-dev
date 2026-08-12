@@ -559,3 +559,34 @@ Three owner questions, all answered from code and written up (§2.2, §9.5h, §9
   `f938fbc` widened the signature. **And the OS-settings worry does not bite:** if repeat is
   disabled no repeat events are generated, so `isrepeat` is never true and the filter is a no-op —
   the flag does not become unreliable, the events stop existing.
+
+## 2026-08-12 — owner challenges the capslock reason, and the challenge lands on a live question
+
+Owner: *"'capslock's release isn't reliably delivered' — why such a conclusion? I think the reason is
+different: capslock is tracked because it TOGGLES caps state on every new press."*
+
+- **Provenance checked rather than defended.** The phrase is the **author's**, from upstream's own
+  comment — *"capslock is exempt from the stale filter (its release may not arrive, wedging the set
+  and freezing Caps)"* — and it is **sound about upstream's mechanism**: a release that never arrives
+  leaves `INPUT.held['capslock']` true forever, so every later press is stale, `capsToggle` never
+  runs again, and the estimate freezes for the session.
+- **The owner's reading is the purpose underneath it and is the better statement:** the exemption
+  exists so the repeat filter cannot **eat a toggle**. Upstream's filter genuinely could — via the
+  wedged flag, and via the one-frame `upRecent` window on a fast re-press.
+- **Under `isrepeat` the filter cannot eat a toggle at all** — a fresh press is never flagged as a
+  repeat, whatever events were missed. **So this branch's comment re-justifies an inherited exemption
+  with a claim the new mechanism does not support** (*"its next press can come in flagged as a
+  repeat"*). That comment is wrong and is owed a correction regardless of what else is decided.
+- **And the exemption's effect has INVERTED.** It no longer protects a toggle; all it now decides is
+  what happens to capslock **repeats**. If the OS emits them while the key is held and does not
+  toggle the lock on each one, letting them through makes `capsToggle` flip the estimate every
+  repeat — **the exemption would now cause the drift it was written to prevent**.
+- **Settled by one observation, not by argument:** hold `capslock` for a second on the target
+  platform and watch the OS lock and the decal. Owed by a human — this container cannot inject
+  keystrokes. Either outcome is cheap: inert → drop it for tidiness; repeating without toggling →
+  it is a live defect and must go.
+- **This is what actually gates the owner's `ignore_repeat` idea**, so my earlier "blocked" verdict
+  is revised: drop the exemption and `fn.ignore_repeat(appKeypressed)` becomes exactly equivalent to
+  the handler's first line, which is the owner's suggestion landing.
+- **Scope: all of it is on the `keypressed` channel, outside the heal** (which is confined to
+  `textinput`). Recorded so the step does not absorb it by proximity.
