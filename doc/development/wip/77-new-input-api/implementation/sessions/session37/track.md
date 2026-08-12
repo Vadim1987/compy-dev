@@ -638,3 +638,32 @@ flag?"*
 - **For the PR description:** the example's header is a list of six gaps in the pre-feature platform,
   written by the author who worked around each one deliberately. **Four are closed by this feature.**
   That is stronger testimony than anything the sprint could write about itself.
+
+## 2026-08-12 — the Alt+H concern, cleared: the leak is live, and the fix lands where the chord is eaten
+
+Owner's precondition before commissioning the cold agent: *"how does the current feature process 'h'
+from Alt-H? I'd expect it to claim the glyph (without judgement) from within the handler that opens
+the help widget. And for closing of the help widget — I'd close when either or all of its initiating
+keys are unpressed physically."*
+
+- **Closing already works exactly as they describe, and it is ruled.** `helpHeld()` polls
+  `love.keyboard.isDown("h")` and `Key.alt()` (through the proxy) — the overlay is up for exactly as
+  long as **both** keys are, and vanishes when **either** goes up. Upstream did the same with
+  `INPUT.held.h`, an event mirror; ours asks the device. Decision 32 ruled this poll correct.
+- **Nothing claims 'h' today, and the leak is live.** `sc["alt+*"] = fn.stop_here()` swallows the
+  chord's keypress and runs nothing. Alt+H produces no character while Alt is held (the chord filter
+  in `appTextinput` drops any that appear), but **release Alt while keeping H down** and the OS
+  repeats now produce plain `'h'`, which passes the filter and is judged as a typed answer — a miss
+  in Alt, a wrong character in Words. The ratified design named this as a residual it did not solve,
+  precisely because the scene never sees a swallowed chord's keypress.
+- **The new mechanism fixes it at the swallow point, in one line**, and the API already carries what
+  is needed: a class handler **receives the actual key as its first argument** (`doc/input_api.md`,
+  "Event hooks and shortcuts"). So `sc["alt+*"] = fn.stop_here(function(k) spendGlyph(k) end)` claims
+  the trigger without judging it, and the claim is released when the key physically comes up. Same
+  for `alt+p`, and for `Ctrl+Alt+H` wherever that ends up being handled.
+- **Which yields a rule worth stating in the design:** *whoever consumes a chord claims its trigger
+  key.* It is strictly better than the ratified design's version — that one asked the SCENE to record
+  the character, which is impossible for chords the scene never sees. The claim belongs where the
+  knowledge is, and the device releases it.
+- **The owner's expectation was right on both halves**, and the one they were unsure about is the one
+  that was missing.
