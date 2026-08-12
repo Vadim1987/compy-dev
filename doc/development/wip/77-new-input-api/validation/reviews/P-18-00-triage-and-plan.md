@@ -415,3 +415,56 @@ written from expectation rather than measurement; this one cost nothing because 
 on it.
 
 Smoke row `G1` moves from **KNOWN OPEN** to a `[new]` case in the same change set.
+
+---
+
+## 9. P-18-07 … P-18-13 — the children the final cold pass produced (session38, 2026-08-12)
+
+The cold revalidation of the whole delta (`../reviews/S38-P18-final-revalidation.md`, prompt
+`../prompts/P-18-final-revalidation.md`) returned **mechanism sound, adoption not clean**: four
+defects and seven observations. Every headline claim was **re-verified in code here** before being
+planned on; all four defects hold. The step is therefore **not closed** — these children close it.
+
+**Three owner rulings govern this batch (2026-08-12):**
+
+1. **No comment in an example repo may cite a platform doc.** A `doc/…` path is unresolvable from a
+   repository that does not contain it, and shipping one into a third party's tree is an **integrity
+   violation**, not a broken link. It outranks the "cite a canonical doc" clause of
+   `agents/rules/commenting.md`, which was written for platform sources; the rule file is amended by
+   **P-18-12** so the constraint binds every example repo, not just this one.
+2. **The owner's own `REMARK:` is reviewed, not swept.** Resolved → removed; unresolved → escalated
+   to them. It is not deleted because it is inconvenient (**P-18-11**).
+3. **The batch ends in a new cold review under the same framing**, with the four-commit anchor
+   re-pinned to the new `keyboard` head first (**P-18-13**).
+
+### The children
+
+| id | task | addresses | notes |
+|---|---|---|---|
+| **P-18-07** | **The menu digit claims its key.** `spendGlyph(k)` before `gotoScene(id)` in `menu.lua`, so the digit's own `textinput` cannot be judged by the scene it just opened | **D1** | **A production fix and its own commit.** Start with the breaking case written down: enter game 4 or 5 by its digit on a keypress-first build → an immediate knock and a lost gauge unit. Upstream was protected *by accident* (`INPUT.held[k]` was set before the menu dispatch); the protection left with the held set. The general form belongs in the design of record: **a key consumed by a scene transition owns its key**, which is "a chord owns its trigger" one level up. **A smoke row is part of the same change set** |
+| **P-18-08** | **`Alt+Shift+P` pauses again.** Bind `alt+shift+p` to the same handler value as `alt+p`, as the four other members of the family already are | **D2** | The **fifth** narrowing of the family `c1ee63c` and `42d1a8b` restored four of — the only one carrying an *action*, which is why it costs a function rather than a swallow. **The comment above the block is what hid it** (*"Each gesture is therefore bound twice"* — false of `alt+p`) and is corrected in the same commit. Smoke row with it |
+| **P-18-11** | **The owner's `REMARK:` at `input.lua:130`** (`what is it for? (setTextInput)`, from `6eb7919`): answer it from code, then **resolve into a payload-carrying comment or delete it** — or **escalate to the owner** if the answer is not conclusive | **O4**, the marker gate | Runs **before** the comment sweep so that sweep sees the disposition. The marker gate (`grep -rn 'INTERIM:\|REMARK:' src/ tests/` empty before the PR) covers nested repos, so this cannot ship as-is either way |
+| **P-18-10** | **The comment sweep of `keyboard`** — the step's own dedicated pass, against `agents/rules/commenting.md`: the gate, the four payloads, the size rule, and the ≤64-column mechanic | **O2, O3, D3**, ruling 1 | Four concerns, in one place because they are one editing pass over the same lines: **(a)** every platform-doc citation removed — 8 sites in 4 files, all introduced by this branch (`bubble.lua:164`, `help.lua:14`, `input.lua:3,19,166,233,254`, `main.lua:96`); the author's own `docs/…` references (`help.lua:5`, `keyboard_view.lua:195`) are **untouched**; **(b)** the 26 lines over 64 columns wrapped (upstream has **0** across ~1300 lines, and this branch already committed one such wrap, so the convention was known); **(c)** compaction — `input.lua` is 114 code / 177 comment, and the argument's durable home is the platform design note, not a third party's file; **(d)** `help.lua`'s claim that *"Key has no answer"* for a non-modifier key, which the API contradicts (`Key.any_pressed` is exactly that rung) — the **code** stays as ruled, only the reason is rewritten |
+| **P-18-09** | **The smoke checklist becomes runnable.** Its own launch line makes rows `D9` and `G1` unobservable: under `love src play <path>` the console is disabled (`consoleController.lua:1420`), so there is no console to return to | **D4** | Not a code defect — the hook fires; the *observation* is impossible. Give the exit rows their own launch (`love src`, open the project from the console, then `Ctrl+Esc` back to it) rather than changing the whole list's |
+| **P-18-12** | **Platform-side documents.** (i) the design of record gains the sub-frame residue (**O1**: a release and a re-press inside one frame lose the second character, ~16 ms, unreachable by a child — its "Consequences, accepted" lists four smaller ones and not this); (ii) **O6**: `Key.is_alt` joins `Key.is_mod` in P10's undocumented-member item — `is_alt` was added by `c1ee63c` and recorded nowhere; (iii) **ruling 1 written into `agents/rules/commenting.md`**, under "Citations", so no future example work repeats it | **O1, O6**, ruling 1 | Platform repo only; the suite is untouched by all of it |
+| **P-18-13** | **Re-pin, then re-review.** Update the four-commit anchor in `doc/development/smoke_checklists.md` to the new `keyboard` head and the new platform head, **then** commission the cold pass again with `../prompts/P-18-final-revalidation.md`'s framing and the new range | closes the batch | Same rules as this one: Opus, model passed explicitly, read-only, told to measure rather than reason, deliverable on disk. It reviews **this batch and everything before it**, not only the delta |
+
+**Ordering:** 07 → 08 → 11 → 10, then 09 and 12 in any order, and **13 last** — the anchor is
+meaningless if anything lands after it.
+
+### Declined, with the reason, so it is not silently dropped
+
+- **O5 — `claimChord` as a wrapper for `spendGlyph`.** The reviewer is right that this branch deleted
+  a similar alias (`9a20433`'s `isMod`), and calls the finding weak itself. The difference is that
+  `isMod` hid a *platform* predicate behind a project name for no gain, while `claimChord` names
+  **intent** at four call sites — "this chord owns its trigger" — where the bare call reads as a
+  discard of a return value. Kept. **Owner's to overturn.**
+
+### What is NOT in this batch, deliberately
+
+- **O7's clause about a dirty mode surviving a crash** rides in **P-18-10**, not its own step: it is
+  one clause in a comment the sweep is already rewriting. The behaviour is right and stays.
+- **Nothing here reopens the mechanism.** The cold pass called it sound, measured it in both delivery
+  orders, and reached the strategic frame's answer independently: **+16 net code lines in `input.lua`
+  retire an order-dependent stale filter, a frame counter and two bookkeeping handlers.** These
+  children are adoption hygiene and two regressions, not a redesign.

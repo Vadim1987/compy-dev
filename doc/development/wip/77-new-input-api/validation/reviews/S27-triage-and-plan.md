@@ -2201,6 +2201,21 @@ not answered:** whether the platform should tear down device modes a project cha
 it named a `setKeyRepeat(false)` in `examples/keyboard` that has never existed in that repo. Smoke
 row `G1` moves from KNOWN OPEN to `[new]`.
 
+##### [S38] THE STEP IS NOT CLOSED — the final cold pass reopened it with seven children 2026-08-12
+
+A cold Opus pass over the **whole** delta against upstream (`025e858..646674b`, prompt and report in
+`../prompts/P-18-final-revalidation.md` / `../reviews/S38-P18-final-revalidation.md`) returned
+**mechanism sound, adoption not clean**: 4 defects, 7 observations, every headline claim re-verified
+in code before being planned on. **Two are live regressions against upstream** — the menu digit is
+judged by the game it opens (a knock on entering games 4 and 5, protected upstream only by the held
+set this branch deleted), and `Alt+Shift+P` stopped pausing (the fifth member of a family four of
+which were already restored). **P-18-07 … P-18-13 close them**, plus a dedicated comment sweep of the
+example against `agents/rules/commenting.md`, the owner's `REMARK:` disposed of rather than swept, and
+a re-pinned four-commit anchor followed by a second cold review. Owner ruling that governs the sweep:
+**no comment in an example repo may cite a platform doc** — a `doc/…` path is unresolvable in a
+repository that does not contain it, and shipping one into a third party's tree is an integrity
+violation. The children and their ordering: §9 of `../P-18-00-triage-and-plan.md`.
+
 **The analysis pass is complete and the step is now decomposed.** Its two halves:
 `../P-18-00-keyboard-deepfix-design.md` (the design: exposition, requirements R1–R5, the derivation,
 and the mechanism the owner and this session settled) and
