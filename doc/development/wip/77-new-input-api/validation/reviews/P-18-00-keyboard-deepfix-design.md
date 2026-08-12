@@ -857,6 +857,98 @@ line in this mechanism whose position is load-bearing.
 no longer down.** One table, one frame-time poll, one hook. No content comparison, no timestamps, no
 clock, no grace constant, no release handler, and no dependence on the order of anything.
 
+### 9.5h Minimising the change, and keeping the project's own names (owner, 2026-08-12)
+
+**Owner:** *"Can we minimize changes to `keyboard` — let bubble drive on keypressed/keyreleased, let
+alt judge 'play keys' on keypressed/keyreleased, and only change textinput processing in both alt and
+words, to surgically eliminate the inter-channel dependency assumption… I would even keep the names
+the original uses, as long as the machinery stays the project's own."*
+
+**Adopted.** The mechanism is confined to the `love.textinput` path; every other channel keeps the
+shape its author gave it.
+
+**One correction to the premise:** `alt.lua` registers **`keypressed` and `textinput` only** — it has
+no `keyreleased` handler at all. The **only** scene in the game with one is `bubble.lua`, for its
+hold judge. So "alt judges play keys on keypressed/keyreleased" is really "on `keypressed`", via
+`altPlayKey`, and that path is already correct: `appKeypressed` drops OS repeats at source using
+`isrepeat`, so the play-key channel has never had the inter-channel problem.
+
+**What is NOT touched, stated so the step cannot creep:**
+
+| | |
+|---|---|
+| `bubble.lua`'s hold judge | untouched — `keypressed` + `keyreleased`, its own state, its own timing |
+| `altPlayKey` and `ALT_KEYTARGET` | untouched — `backspace`, `tab`, `return` stay judged on `keypressed` |
+| the nine `keypressed`-only scenes | untouched — they never see `love.textinput` |
+| `appKeypressed`'s `isrepeat` filter and `capslock` exemption | untouched |
+| `capsReconcile`'s position above everything | untouched, and load-bearing |
+| every scene's judging logic | untouched — the filter sits beside it, not inside it |
+
+**Names: the project's, not ours.** The register already exists and is already called
+`GLYPH_CLAIMED`; the filter already exists and is already called `spendGlyph`. **Both keep their
+names and their meaning** — a key whose character has been taken is *claimed*, and the claim is
+*spent* by the character that takes it. What changes is only **how a claim is released**. The
+working names used earlier in this document (`CONSUMED`, `textBaseKey`, `on_new_text`) were
+descriptive scaffolding and are dropped.
+
+#### The diff, in full
+
+```lua
+-- input.lua
+GLYPH_CLAIMED = { }                       -- unchanged name, unchanged meaning
+
+function spendGlyph(k)                    -- unchanged name and signature
+  if GLYPH_CLAIMED[k] then return true end
+  GLYPH_CLAIMED[k] = true                 -- the upRecent branch is GONE
+  return false
+end
+
+function inputTick()                      -- new: called from love.update
+  for k in pairs(GLYPH_CLAIMED) do
+    if not Key.any_pressed(k) then GLYPH_CLAIMED[k] = nil end
+  end
+end
+```
+
+- **deleted:** `INPUT.upRecent`, `INPUT_UP_GRACE`, their reset in `inputInit`, and the two lines in
+  `appKeyreleased` that maintained the claim — that handler keeps only its debug line and its scene
+  dispatch, which `bubble.lua` needs;
+- **`main.lua`:** one call to `inputTick()` in `updateStep`, **above** the `PAUSED` and
+  `helpOverlayShown` returns — beside `pastelTick`, which is already there for the same reason: a
+  key can be released while the game is frozen behind an overlay;
+- **the shifted-symbol map moves down** from `alt.lua` (where `ALT_BASE` inverts `SHIFT_MAP` at load)
+  into `input.lua`, because `alt.lua` is lazy-loaded and a Words-only session must not find it nil.
+  `altBaseKey` keeps its name and its key-target branch and delegates the rest; `wordsBaseKey` keeps
+  its name and delegates, which is also what fixes its missing shifted-symbol case.
+
+**Whether the filter stays at the two call sites or moves above the dispatch is a real choice, and
+the smaller diff is to leave it.** Today `altTextinput` and `wordsTextinput` each open with
+`if spendGlyph(baseKey(ch)) then return end`. Leaving those lines means **no scene file changes at
+all** beyond the delegation above, and each scene stays explicit about its own filtering. Moving the
+call into `appTextinput` expresses the filter/judgement separation structurally and makes it
+impossible for a future scene to forget it, at the cost of two deletions and of registering
+characters typed in scenes that ignore text. **Recommended: leave the call sites** — the register's
+correctness does not depend on where it is called from, and this is the reading of "minimize
+changes" that keeps the authors' code recognisable.
+
+#### The delayed poll, assessed — the owner's own doubt is right
+
+**Owner:** *"probably augmenting this register with a timestamp — so that we only start polling e.g.
+0.1 second (or 5 frames) after textinput registered 'pressed' — to eliminate uncertainty on short
+time ranges… hm, probably the last suggestion makes no sense."*
+
+**It does not, and the structural reason is worth recording** so it is not re-derived: **the poll
+cannot run between a `love.keyreleased` and a `love.textinput` that trails it.** LÖVE drains the
+whole event queue before it calls `love.update`, so every event of a batch — press, character,
+release, trailing repeat — is delivered *before* the frame's poll. The uncertainty the delay would
+guard against is therefore only *"a repeat character generated after its key is physically up"*,
+which is not a thing the OS does.
+
+And the delay has a cost that is not theoretical: for its whole window, a key that was genuinely
+released stays claimed, so a **deliberate re-press of the same character inside 0.1 s is swallowed** —
+doubled letters in Words are exactly that keystroke. It also puts back a tuned constant, which is
+the thing being removed. **Declined, on the owner's own instinct.**
+
 ### 9.6 What I recommend, now that Option C is on the table
 
 **Option C, armed on every accepted character (§9.5a), with the slot-versus-table question

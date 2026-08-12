@@ -462,3 +462,37 @@ poller."*
   registered until the device says it is no longer down. One table, one frame-time poll, one hook —
   no content test, no timestamps, no clock, no grace constant, no release handler, no ordering
   assumption anywhere.
+
+## 2026-08-12 — owner scopes the change down, and keeps the project's vocabulary (§9.5h)
+
+Owner: minimize changes to `keyboard` — bubble keeps its keypressed/keyreleased, alt keeps judging
+play keys on its own channel, and **only textinput processing changes** in alt and words, to
+surgically remove the inter-channel assumption. *"I would even keep the names the original uses, as
+long as machinery stays project's own."*
+
+- **Correction to the premise, recorded because it narrows the step:** `alt.lua` has **no
+  `keyreleased` handler at all** — it registers `keypressed` + `textinput`. The only scene in the
+  game with a release handler is `bubble.lua`. So alt's play-key path is `keypressed` alone, and it
+  was never exposed to the inter-channel problem: `appKeypressed` drops OS repeats at source via
+  `isrepeat`.
+- **Names are the project's.** The register already exists as `GLYPH_CLAIMED` and the filter as
+  `spendGlyph`; both keep name and meaning — **only how a claim is RELEASED changes**. My working
+  names (`CONSUMED`, `textBaseKey`, `on_new_text`) were scaffolding and are dropped from the design.
+- **The whole diff:** `spendGlyph` loses its `upRecent` branch; a new `inputTick()` clears claims
+  whose key the device reports up; `INPUT.upRecent`, `INPUT_UP_GRACE`, their reset and the two claim
+  lines in `appKeyreleased` are deleted (that handler keeps its scene dispatch, which bubble needs);
+  `main.lua` calls `inputTick()` in `updateStep` **above** the PAUSED/help returns, beside
+  `pastelTick`, which is already there for the same reason; and the `SHIFT_MAP` inversion moves from
+  lazy-loaded `alt.lua` down to `input.lua`, with `altBaseKey`/`wordsBaseKey` keeping their names and
+  delegating — which is also what fixes Words' missing shifted-symbol case.
+- **A real choice, and I recommended the smaller side:** leave `spendGlyph`'s call at the two scene
+  call sites rather than hoisting it into `appTextinput`. Hoisting expresses the filter/judgement
+  separation structurally and stops a future scene forgetting it; leaving it means **no scene-file
+  changes at all** and keeps the authors' code recognisable, which is the reading of "minimize
+  changes" that matches the owner's naming instruction.
+- **The delayed poll is declined, and the owner doubted it themselves.** The structural reason is
+  worth keeping: **the poll cannot run between a release and a `textinput` trailing it** — LÖVE
+  drains the whole event queue before `love.update`, so the entire batch lands before the frame's
+  poll. The delay would guard a case the OS does not produce, while swallowing a **deliberate
+  re-press inside its window** — which is exactly the doubled-letter keystroke in Words — and it puts
+  back a tuned constant.
