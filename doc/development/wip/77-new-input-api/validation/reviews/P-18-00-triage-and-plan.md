@@ -516,3 +516,16 @@ the IDE. The premise is false, and the comments that repeated it are the batch's
 it requires holding Ctrl and then pressing Alt during the intro, it costs a keystroke the player can
 repeat, and closing it would mean a second bare-modifier guard for a gesture nobody has. Recorded
 here rather than fixed. **Owner's to overturn.**
+
+### Execution of the second batch
+
+| step | commit(s) | note |
+|---|---|---|
+| **P-18-14** F1, the sixth gesture | `7b0d542` + platform `a05a3829` (row `B13`) | `ctrl+alt+shift+h` bound to the same handler value. **Measured** before and after with a scene recording `onHint`: before, NOT REGISTERED; after, one re-arm per fresh press, none on the repeat, `h` claimed either way. **F3 dissolved with it** |
+| **P-18-15** the polls | `d9ecdb0` | `inputTick`, the `pollable` probe and `helpHeld` ask `Key.any_pressed`. **Measured against the real platform `Key` module over the real `input.lua`**: first character accepted, repeat dropped, poll releases, re-claim works, `spendGlyph('~')` takes no claim and raises nothing. The false *"runs standalone"* justification is deleted rather than reworded |
+| **P-18-16** the sweep's misses | `1033252` | `words.lua` swept — 14 comment lines over an 11-line function, all history — and `input.lua`'s header stops calling the device build "standalone" |
+| **P-18-17** the two doc items | platform `a05a3829` | O2 into the design of record's accepted consequences, with the trade that justifies it; **O5 as a new debt entry** — a tolerant gesture costs one registration per variant and a missing variant is *silent*, which took three cold reviews to converge on in eleven lines |
+
+**A correction that history cannot carry:** `1498f46`'s commit message states the *"so this file also
+runs standalone"* claim that `d9ecdb0` retires. The branch is not rewritten, so the correction lives
+here and in `d9ecdb0`'s own message.
