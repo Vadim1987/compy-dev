@@ -1159,10 +1159,30 @@ is confined to `textinput` (§2.2). The comment correction is owed regardless; t
 a separate decision that the observation above settles.
 
 **On the second half of the question — no, the game is not avoiding the flag deliberately.**
-Upstream never *received* it: `main.lua` forwards `love.keypressed(k)` with one argument, discarding
-`scancode` and `isrepeat`, and `appKeypressed`'s signature takes one parameter. It filtered repeats
-by held state instead, which is a filter of the same intent by a worse means. This branch's
-`f938fbc` is what widened the signature.
+Upstream never *received* it: `main.lua` defines `love.keypressed(k)` and forwards **one** argument,
+discarding `scancode` and `isrepeat`, and `appKeypressed`'s signature takes one parameter. It
+filtered repeats by held state instead — the same intent by a worse means.
+
+**This branch fixed that, in three moves and with one wrong turn**, recorded because the middle one
+would have been a live defect:
+
+- `4814407` (the migration) deletes `main.lua`'s three forwarding wrappers outright; the game
+  registers `compy.input.hooks.keypressed = appKeypressed` and the framework calls it with LÖVE's
+  own arguments;
+- `5de5a6d` **narrowed** the signature from `(k, _, isr)` to `(k, isr)`, on the assumption that the
+  hook delivers `(key, isrepeat)`. It does not — so `isr` bound to `scancode`, which is always
+  truthy, and `if isr and k ~= "capslock" then return end` would have dropped **every** non-capslock
+  keypress: deaf on that channel;
+- `f938fbc` restored `(k, _, isr)` the same day, citing LÖVE's real signature.
+
+**The contract that settles it is documented**, so no future session needs to re-derive it:
+*"Every shortcut, hook and callback receives exactly the arguments LÖVE delivers for that event —
+`keypressed(key, scancode, isrepeat)`"* (`doc/input_api.md`, "Event hooks and shortcuts"). The
+current `(k, _, isr)` is correct.
+
+**Consequence for the eventual patch:** those two commits cancel out. A branch assembled off upstream
+as *"one commit or two"* carries neither — worth knowing so nobody preserves the intermediate state
+in the name of history.
 
 **And the OS-settings worry does not bite.** If key repeat is disabled — by the user, or because
 `love.keyboard.setKeyRepeat(false)` was called — then no repeat `love.keypressed` events are

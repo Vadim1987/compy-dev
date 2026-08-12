@@ -590,3 +590,22 @@ different: capslock is tracked because it TOGGLES caps state on every new press.
   the handler's first line, which is the owner's suggestion landing.
 - **Scope: all of it is on the `keypressed` channel, outside the heal** (which is confined to
   `textinput`). Recorded so the step does not absorb it by proximity.
+
+## 2026-08-12 — owner checks the signature fix; confirmed, with one wrong turn in its history
+
+Owner: *"'main.lua forwards love.keypressed(k)' — but we fixed it in the feature, correct?"*
+
+- **Correct.** `4814407` (the migration) deleted `main.lua`'s three forwarding wrappers entirely;
+  the game registers `compy.input.hooks.keypressed = appKeypressed` and the framework calls it with
+  LÖVE's own arguments. My statement was about **upstream** and stands there.
+- **The signature took two further commits, and the middle one was wrong** — recorded because it
+  would have been a live defect: `5de5a6d` narrowed `(k, _, isr)` to `(k, isr)`, assuming the hook
+  delivers `(key, isrepeat)`; it delivers LÖVE's three, so `isr` bound to **`scancode`**, always
+  truthy, and `if isr and k ~= "capslock" then return end` would have dropped **every** non-capslock
+  keypress. `f938fbc` restored `(k, _, isr)` the same day.
+- **The contract is documented** so nobody re-derives it: *"Every shortcut, hook and callback
+  receives exactly the arguments LÖVE delivers for that event — `keypressed(key, scancode,
+  isrepeat)`"* (`doc/input_api.md`, "Event hooks and shortcuts"). Current signature is right.
+- **For the eventual patch:** the two commits cancel out, so a branch assembled off upstream as "one
+  commit or two" carries neither — noted so the intermediate state is not preserved in the name of
+  history.
