@@ -2018,7 +2018,23 @@ a line about it either way (§11.7).
 
 **This section is the step.** Amendments belong here.
 
-**[S37] P-17-00 — merge, evaluate, plan.** The maze upstream (`dsent/dsent/dev`) is fetched and
+**[S39] P-17-00 IS RESHAPED — there is no merge. Read `P-17-00-shape-and-plan.md` first; the
+[S37] paragraph below is superseded and kept as the reason the new shape exists.** The assessment
+ran as [S37] specified (`S39-maze-upstream-input-assessment.md`) and found the merge inapplicable:
+`main.lua` is a modify/delete conflict, our whole migration lives in the file upstream deleted, and
+**48 of the 53 globals our `main.lua` defines are redefined by upstream's split files** — the
+conservative resolution neither raises nor works. **Owner ruling, 2026-08-12 (ratified):** fork a
+new branch off `dsent/dsent/dev` and make it the working branch; the four commits on `newinput`
+become *evidence*, not the deliverable. The step is now **A** catalogue the practices (ours + P-18's)
+as guidance only · **B** fork the edge · **C** analyse against
+`doc/development/conventions/input_adoption.md`, ordered *regressions the new platform introduces →
+locally-duplicated machinery → migrations where the gain is real, and a written report where it is
+not* · **D** triage into `P-17-01…`. Two [S36] facts below are now **stale**: this repo **has a
+suite** (three `spec/` files + `verify.sh`) and a second program (`draw`), and the owner `REMARK:`s
+sit in a file the new branch does not contain — their disposition is owed, not automatic.
+
+**[S37] P-17-00 — merge, evaluate, plan.** *(SUPERSEDED by [S39] above.)* The maze upstream
+(`dsent/dsent/dev`) is fetched and
 not merged. Before any of this step is designed: **merge it, evaluate what it changed about input,
 and plan from the merged tree** — the same three moves `keyboard` had, in that order, and for the
 reason that one proved: there, the reading came first and the merge then landed a defect the

@@ -143,10 +143,10 @@ Set 4 (nested example repos — invisible to the parent `git diff`, become PRs i
 #   git -C src/examples/<repo> merge-base --is-ancestor <ref> HEAD
 git -C src/examples/balloons diff origin/main..HEAD \
   > "$OUT/4a-balloons.patch"
-# [S37] maze: origin/v3.4 is the PRE-PULL base and is correct only until
-# P-17-00 merges dsent/dsent/dev. Then this becomes dsent/dsent/dev. Do not
-# switch it early — see §5.1.
-git -C src/examples/maze diff origin/v3.4..HEAD \
+# [S39] maze: SWITCHED. The working branch is now `newinput-edge`, forked
+# from dsent/dsent/dev — there was no merge, see §5.1. The ref is an
+# ancestor by construction, so this diff is exactly our change.
+git -C src/examples/maze diff dsent/dsent/dev..HEAD \
   > "$OUT/4b-maze.patch"
 # [S37] keyboard: origin/dsent/dev is now an ancestor (merge 17289e9), so this
 # diff is exactly our change. Before that merge the same line would have
@@ -175,7 +175,7 @@ git -C src/examples/<repo> merge-base --is-ancestor <ref> HEAD && echo safe
 | repo | slice ref | ancestor of HEAD? | note |
 |---|---|---|---|
 | `balloons` | `origin/main` | yes | untouched by Phase U |
-| `maze` | `origin/v3.4` **for now** | yes | 4 ahead of it. Upstream `dsent/dsent/dev` is **26 commits ahead** of the merge-base `12f675f` and **not merged** — that is **P-17-00**. When it lands, change this ref to `dsent/dsent/dev` |
+| `maze` **[S39]** | `dsent/dsent/dev` | **yes, by construction** | **There was no merge.** P-17-00 was reshaped (`validation/reviews/P-17-00-shape-and-plan.md`): the merge was found inapplicable (`main.lua` modify/delete; 48 of our 53 globals redefined by upstream's split), so the owner ratified **forking** `newinput-edge` off `dsent/dsent/dev` @ `b8cc436` as the working branch. The old `newinput` @ `a045fdb` (based on `origin/v3.4`) is kept as the record of the previous attempt and is **not** the slice. Note the maze source root **no longer emits a runnable project** — `.compy/build` produces `maze/` and `draw/` — so what the slice *delivers* is a question the step still owes |
 | `keyboard` | `origin/dsent/dev` | **yes, since `17289e9`** | the merge landed 36 upstream commits (24 files, +5227/−804); the pre-merge state is `05cedec` and the upstream snapshot is on branch `upstream-dsent-dev-20260811` |
 
 **Why the patch, not `format-patch`, is still the right artifact** (owner, 2026-08-11): the delivery

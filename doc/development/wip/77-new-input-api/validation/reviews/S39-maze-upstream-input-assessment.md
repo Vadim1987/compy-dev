@@ -24,6 +24,12 @@ that, and reports the merge facts that answering it turned up.
   and there is no third-party divergence to reason about.
 - **Divergence:** `newinput` is **4 ahead / 26 behind**. Upstream since the base is **37 files,
   +4920 / −1208**. Ours since the base is **2 files, +52 / −20**.
+- **Two authors, and the split matters when a question needs asking.** 15 of the 26 commits are
+  **dsent** — *the same author as `keyboard`'s upstream* — and 11 are **Vadim**. The division is
+  clean by kind: **dsent owns the input behaviour** (the plan mode, the Shift+Esc convention
+  alignment, the `<` workaround, the level/navigation commands); **Vadim owns the restructure** (the
+  `main.lua` split, `core_editor.lua`, `.compy/build`, the `spec/` suites). So §2.1(a) and §2.2 are
+  addressed to the author this sprint has already been reading for two sessions, and §2.3 is not.
 - **Method.** All 26 commit messages read in full; then the code, on the ref rather than a checkout
   (`git show dsent/dsent/dev:<file>`, `git grep … dsent/dsent/dev`) — nothing was checked out,
   merged or modified. Every claim below is from a tree, not from a commit message; where a commit
@@ -70,8 +76,16 @@ function plan_key_up(k)
 end
 ```
 
-**Assessment — this is `keyboard`'s `INPUT.held` again, in a second repository, written independently
-by a different author.** It is an event-derived held-key set whose only job is to **filter OS key
+**Assessment — this is `keyboard`'s `INPUT.held` again, in a second repository, and it is the SAME
+author's recurring idiom** (owner, 2026-08-12: *dsent* authored this version of `maze` and is
+`keyboard`'s upstream author; `git log` confirms `6121349` is theirs). **An earlier draft of this
+document called it independent corroboration and that was wrong** — it is not two authors converging,
+it is one author reaching for the same construction twice. That weakens it as *evidence* and
+strengthens it as *practice*: the pattern is this author's default, so the debt entry
+(`technical_debt/input.md`, the tolerant-gesture / held-set family) is addressed to a known
+correspondent, and the conversion is a conversation rather than a discovery.
+
+It is an event-derived held-key set whose only job is to **filter OS key
 repeat**, because the pre-feature platform stripped `isrepeat` before calling a project
 (verified at the PR base: `3256aac:src/controller/controller.lua:162` is `local function
 keypressed(k)`, one parameter). It has the same failure mode as the set this feature deleted from
@@ -158,7 +172,9 @@ gesture the gateway keeps for itself needs Ctrl, or is `f10` (`controller.lua:76
 **So the feature closes, by construction, the gap the author documented and asked to have closed.**
 This is the `maze` counterpart of `keyboard`'s *"the example's header is a list of six gaps in the
 pre-feature platform, four of them closed by this feature"* — and it is stronger testimony, because
-the author wrote a removal condition rather than a complaint. **It is also the best single line the
+the author wrote a removal condition rather than a complaint. **It is also literally the same
+witness**: dsent wrote both (§1), so the sprint now has one informed author documenting the
+pre-feature platform's input gaps across two independent examples, in two different registers. **It is also the best single line the
 PR description can carry about the examples**, and it costs the sprint nothing to claim: the code to
 delete is the author's own workaround.
 

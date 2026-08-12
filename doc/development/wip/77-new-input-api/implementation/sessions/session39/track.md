@@ -96,3 +96,49 @@ trial merge was computed **in memory only**. The one thing run was the pre-merge
 its shape; what replaces the smoke command / whether `.compy/build` is wanted; whether `draw` is in
 scope; the `keyboard`-D1-class menu-digit question (raised as *needs driving*, not asserted); and the
 disposition of the two `REMARK:`s.
+
+## 2026-08-12 — owner reshapes P-17-00: NO merge, fork the edge, adopt by checklist
+
+**Owner correction first, and it is a fact I got wrong:** *"dsent is author of this version, so it's
+the same author as in keyboard upstream."* Verified: 15 of the 26 commits are dsent, 11 are Vadim,
+and the split is clean by kind — **dsent owns the input behaviour** (plan mode, the Shift+Esc
+convention, the `<` workaround), **Vadim owns the restructure** (`core_editor`, the split,
+`.compy/build`, the specs). **So `plan_held` is not independent corroboration of `INPUT.held`; it is
+one author's recurring idiom.** Weaker as evidence, stronger as practice — the debt entry is
+addressed to a known correspondent. Corrected in the assessment in place, with the error named.
+
+**The owner's alternative shape, ratified, written to
+`../../../validation/reviews/P-17-00-shape-and-plan.md`:**
+
+- **A** — inventory our four commits *and* what P-18 already learned, as a **catalogue of practices
+  that may be used… or not**. Explicitly not a mandate, and explicitly not re-derived from scratch:
+  P-18's review material already holds it.
+- **B** — **fork a brand-new branch off maze's dsent edge; it becomes the working branch.** *"I
+  especially ratify that move."*
+- **C** — analyse on that branch against **`doc/development/conventions/input_adoption.md`** (Q1–Q10 +
+  the rules of restraint), with the catalogue as a **secondary** source. Ordered: regressions the new
+  platform may introduce → locally-duplicated machinery → migrations where the gain is real, **and a
+  written report where it is not**.
+- **D** — triage into `P-17-01…`, using the suite as a regression fence. **Open, named by the owner:**
+  whether the platform's behavioural-observable testing preference transfers to a project suite.
+
+**Why the shape is better and not merely different:** the merge was never the useful part. And the
+fork dissolves `pr-assembly-guide.md` §5.1 — a branch *forked from* the ref has it as an ancestor by
+construction, so the slice is exactly our change from day one.
+
+**Executed immediately (step B):**
+
+- **`newinput-edge` forked from `dsent/dsent/dev` @ `b8cc436`.** `newinput` @ `a045fdb` and its backup
+  untouched. Ancestor check **safe**, `diff dsent/dsent/dev..HEAD` empty. Guide §5.1 + the Set-4
+  command updated to the new ref; `S27-triage-and-plan.md` §15.3 gains an **[S39]** block marking the
+  [S37] paragraph superseded and its two stale facts ("no suite", the `REMARK:`s' file).
+- **The smoke question answered by measurement, not prediction:** `love src play src/examples/maze`
+  now prints `[string "main.lua does not exist"]:1: '=' expected near 'does'`. `BUILD.md` was right —
+  the source root is not a runnable project. **This sprint's maze smoke command is dead** until the
+  owner rules. (Side finding, not ours: the platform feeds the *message* into the Lua compiler and
+  reports the syntax error of that sentence.)
+- **The suite runs here, and it is a real fence: `verify.sh` → `== OK: build verified ==`.** Specs
+  **29 + 10 + 3 = 42 / 0 / 0**. Two environment facts recorded so nobody rediscovers them: this
+  container has **`luajit` only** (shim `lua`/`luac` on PATH, and **not** in the scratchpad — it is
+  `noexec`), and **`BUILD.md`'s own counts are stale** (8/2 vs the actual 10/3), which is theirs and
+  harmless but reads as a regression to the next person.
