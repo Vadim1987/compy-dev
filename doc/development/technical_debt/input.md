@@ -116,8 +116,12 @@ action; revisit at the named point).
   global state in top-level code and then raises therefore never restores it:
   `run_project`'s failed-run branch drops to `project_open` without ever
   calling `stop_project_run`, so nothing fires, and the dirty state bleeds
-  into the next run. `examples/keyboard` is the canonical mutator
-  (`setKeyRepeat(false)` at startup).
+  into the next run. `examples/keyboard` is the canonical mutator — it calls
+  `love.keyboard.setTextInput(true)` and `love.mouse.setRelativeMode(true)`
+  at startup. *(This entry used to name `setKeyRepeat(false)` there; that
+  call has never existed in that repo's history — checked with `git log -S`
+  across all refs. The platform's `src/main.lua:297` is the only
+  `setKeyRepeat` caller and it turns repeat **on**, corrected 2026-08-12.)*
 - **Why it stands:** two separate rulings, both deliberate. The hook is scoped
   to stop paths by design — crash/hard-kill was called out as a later layer,
   not an oversight. And firing a *partially initialised* project's teardown
@@ -132,6 +136,15 @@ action; revisit at the named point).
   wrong instrument here.
 - **Revisit:** owner ruled 2026-08-03 to record it and implement the
   force-reset later; revisit when that work is scheduled.
+- **The stop path is project-by-project until then (2026-08-12).**
+  `examples/keyboard` now restores relative mode in its own
+  `compy.before_exit` (P-18-05), which closes the leak for that project on
+  every stop path and for no other. The framework-side question — should the
+  platform tear down device modes a project changed, rather than trusting
+  each project to — is the "Shape" bullet above, and is not answered by that
+  fix. It is worth noting that the example's comment asserted for months that
+  *"the runner restores it on exit"*: a project author's reasonable
+  assumption about a platform that in fact restores nothing.
 - **Where it goes when built (2026-08-07):** `framework_before_exit`
   (`consoleController.lua`) is now the framework's own teardown function and
   the only caller of a project's hook (Decision 28). It is the seam this entry

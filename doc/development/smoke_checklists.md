@@ -101,11 +101,11 @@ run by a human; the rest are regression checks against behaviour the example alr
 
 | | do | expect |
 |---|---|---|
-| G1 | leave the game with `Ctrl+Esc` and use the console | **KNOWN OPEN:** the pointer may still be in relative mode. The example sets it at boot and does not yet restore it — that fix is **P-18-05** and is not landed. Note whether it bites you |
+| G1 | leave the game with `Ctrl+Esc` and use the console | **[new]** the pointer behaves as it did before the game was started — the project puts relative mode back in `compy.before_exit`. *(Stop paths only: if the project ever crashes to the error screen the mode stays set, which is known platform debt, not this fix's scope.)* |
 
 ### What a failure here means
 
-- **A2, B2, B6, B9, B10, B11, B12, C2, C5, D3, D5, D7** are the new mechanism and its restorations. A failure is
+- **A2, B2, B6, B9, B10, B11, B12, C2, C5, D3, D5, D7, G1** are the new mechanism and its restorations. A failure is
   a defect in the 2026-08-12 work — report it against
   `wip/77-new-input-api/validation/reviews/P-18-00-triage-and-plan.md`.
 - **E3** is a question, not a test: either answer closes it.

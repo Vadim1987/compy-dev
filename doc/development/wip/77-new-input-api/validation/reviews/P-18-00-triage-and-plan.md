@@ -379,6 +379,7 @@ document had to strike. **Measuring took one throwaway LÖVE script and 20 secon
 | step | commit | note |
 |---|---|---|
 | **P-18-04** `Ctrl+Alt+H` | `e6c8f97` | `sc["ctrl+alt+h"]` dispatched through a new `onHint` descriptor entry (only `alt.lua` defines one), the shape `onNotch` already has; `fn.ignore_repeat` wraps the action, `claimChord` sits outside it; the hand match leaves `altKeypressed` |
+| **P-18-05** the pointer mode | `6e58419` | `compy.before_exit` restores what `love.mouse.getRelativeMode()` reported at boot — measured in real LÖVE first, rather than restoring a hardcoded `false`; the comment claiming *"the runner restores it on exit"* is replaced by what actually happens |
 
 **Two behaviour changes accepted with P-18-04**, both written into
 `doc/development/internals/examples/keyboard.md` ("A chord owns its trigger key") and the code
@@ -396,3 +397,20 @@ comments, not only into the commit message:
 **Smoke rows added in the same change set:** `B11` (hold the chord — it must re-arm once, not once
 per repeat frame) and `B12` (press it while paused — nothing). Both `[new]`; the platform-side doc
 commit carries them.
+
+**P-18-05 promoted rather than answered, as the prompt required:** the framework-side question is
+*should the platform tear down device modes a project changed?* It is recorded in
+`doc/development/technical_debt/input.md` under "A project that raises leaves global device state
+dirty", whose "Shape" bullet already describes the framework-owned force-reset. The example's fix
+closes the leak for **one project on stop paths only** — a crash still leaves the mode set, by the
+hook's ratified contract.
+
+**A false claim found in that debt entry and corrected while there:** it named `examples/keyboard`'s
+`setKeyRepeat(false)` as the canonical mutation. **That call has never existed in that repo** —
+`git log -S setKeyRepeat --all` across all refs returns nothing, and the platform's
+`src/main.lua:297` is the only caller, turning repeat *on*. The real mutations are
+`setTextInput(true)` and `setRelativeMode(true)`. Third instance this sprint of a platform claim
+written from expectation rather than measurement; this one cost nothing because nothing was built
+on it.
+
+Smoke row `G1` moves from **KNOWN OPEN** to a `[new]` case in the same change set.

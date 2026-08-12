@@ -2189,7 +2189,17 @@ the trigger claim sits outside it. **Two behaviour changes accepted and written 
 record**, not just the commit message: a shortcut is swallowed in *every* scene (the hand match let a
 bare `h` knock in the key-target games), and the dispatcher keeps the pause gate the scene handler
 gave it for free. Smoke rows `B11`/`B12` added with it. Execution record: §8 of
-`../P-18-00-triage-and-plan.md`. **Still owed: `P-18-05`, `P-18-06`.**
+`../P-18-00-triage-and-plan.md`. **Still owed: `P-18-06`.**
+
+##### [S38] P-18-05 LANDED 2026-08-12
+
+`compy.before_exit` restores the pointer mode (`6e58419`, nested repo, nothing pushed) — the boot
+value read from `love.mouse.getRelativeMode()`, not a hardcoded `false`. The comment claiming *"the
+runner restores it on exit"* is gone; it was never true. **The framework-side question is promoted,
+not answered:** whether the platform should tear down device modes a project changed lives in
+`doc/development/technical_debt/input.md`, whose entry also **had a false claim corrected here** —
+it named a `setKeyRepeat(false)` in `examples/keyboard` that has never existed in that repo. Smoke
+row `G1` moves from KNOWN OPEN to `[new]`.
 
 **The analysis pass is complete and the step is now decomposed.** Its two halves:
 `../P-18-00-keyboard-deepfix-design.md` (the design: exposition, requirements R1–R5, the derivation,
