@@ -85,8 +85,8 @@ Two consequences you should apply, not question:
 - **Whoever consumes a chord claims its trigger key**, without judging it — otherwise a chord's
   trigger, still held after its modifier is released, produces characters that reach the scene as a
   typed answer.
-- **`love.keyboard.isDown` is kept in the game rather than `Key.any_pressed`**, so the mechanism
-  stays portable to the standalone program; a comment points at the platform's form.
+- **`love.keyboard.isDown` is kept in the game rather than `Key.any_pressed`** — the owner's call,
+  **for minimising the change**; a comment points at the platform's form as the recommended one.
 
 **Where your judgement IS wanted on this:** every *other* place in the upstream game where the same
 class of assumption appears — one channel's state consulted from another, an event mirrored into a
