@@ -28,13 +28,14 @@ run** — a row that fails against a state nobody recorded costs a bisect.
 
 | what | ref | commit |
 |---|---|---|
-| `keyboard`, the branch under test | `newinput` (local, unpushed) | **`646674b`** |
+| `keyboard`, the branch under test | `newinput` (local, unpushed) | **`1498f46`** |
 | `keyboard` upstream it is diffed against | `origin/dsent/dev` | **`025e858`** |
-| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`fd0e2c21`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`8a22ed24`** |
 | platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
 
-*(Recorded 2026-08-12, at the end of P-18. The platform id is the commit before the one adding this
-table, which changes nothing else.)*
+*(Re-pinned 2026-08-12 after P-18-07 … P-18-12 — two regression fixes, the marker's answer, the
+comment sweep, and the docs. The platform id is this pin's parent; the pin commit changes nothing but
+this table. The same range is what the second cold review reads.)*
 
 ### How to launch
 
