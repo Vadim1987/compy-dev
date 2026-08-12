@@ -25,10 +25,25 @@ documents you must read before touching code:
   record.
 
 **Landed in `src/examples/keyboard` (nothing pushed):** the upstream merge `17289e9` and its
-correction `ca6d5df`; then **P-18-01** `c60b818` (the heal — a glyph claim is released by a device
-poll in `love.update`, not by an event), **P-18-01b** `c1ee63c` (three restorations of gestures the
-combo conversion had narrowed), **P-18-02 + P-18-03** `c3388de` (the `INPUT` proxy dissolved, `isMod`
-gains `Key.is_mod`'s body).
+correction `ca6d5df`; **P-18-01** `c60b818` (the heal — a glyph claim is released by a device poll in
+`love.update`, not by an event); **P-18-01b** `c1ee63c` (three restorations of gestures the combo
+conversion had narrowed); **P-18-02 + P-18-03** `c3388de` (the `INPUT` proxy dissolved) and
+`9a20433` (the `isMod` alias deleted, its six call sites ask `Key.is_mod`).
+
+**Then a cold Opus revalidation was commissioned and returned *sound in design, unsound as landed*.**
+Three corrections followed and they are the most important thing to read before you touch this code
+(§7 of the triage, and `../../../validation/reviews/S37-P18-revalidation.md`):
+
+- **`52a8d69`** — the claim poll could **raise**: `love.keyboard.isDown` errors on a string that is
+  not a LÖVE key constant, so a shifted symbol typed in Words crashed the game on the next frame.
+  `glyphBaseKey` now lives in `input.lua` and a claim that cannot be polled is never taken.
+- **`42d1a8b`** — a chord claims its trigger for **every** chord, not just the swallowed Alt class,
+  and `alt+shift+*` restores a fourth narrowing.
+- **`ece2c1b`** — `indicators.lua`'s comment no longer says the Shift state is "edge-tracked".
+
+**And the design of record is rewritten** — `doc/development/internals/examples/keyboard.md` now
+describes the shipped mechanism, both consumers, and a smoke checklist of cases only a human can
+reach. §15.4 wanted that revision *before* the code; it arrived after, which is recorded.
 
 ## Your task — the last three children, then stop and ask
 
@@ -51,11 +66,10 @@ and the only `setRelativeMode(false)` in the platform is `error_explorer.lua`, o
 project can close it itself now. The framework-side question (should the platform tear down device
 modes a project changed?) is **promoted, not answered here**.
 
-**P-18-06 — comments only.** `bubble.lua` gets the focus-loss caution its hold judge earns (owner
-ruling: do not convert it — its own timeout absorbs the failure). The capslock exemption's comment
-states a reason that died with the held set; correct it, and say the exemption is inherited from
-upstream and kept deliberately. Note the Shift/Alt asymmetry that `P-18-01b`'s intro guard leaves in
-place on purpose.
+**P-18-06 — comments only, and it SHRANK.** The capslock comment and `indicators.lua` are already
+done (`ece2c1b` and the design-note rewrite). What remains: **`bubble.lua` gets the focus-loss caution
+its hold judge earns** (owner ruling: do not convert it — its own timeout absorbs the failure), and a
+line noting the **Shift/Alt asymmetry** that `P-18-01b`'s intro guard leaves in place on purpose.
 
 **Then stop.** The sprint's remaining steps are the owner's to sequence: **P-17-00** (maze: merge,
 evaluate, plan — the same three moves keyboard had, and `pr-assembly-guide.md` §5.1 says its slice

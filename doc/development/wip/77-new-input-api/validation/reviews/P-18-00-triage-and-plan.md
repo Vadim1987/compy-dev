@@ -328,3 +328,46 @@ reason no longer holds, the Shift/Alt asymmetry the intro guard leaves).
 debug `pcall` so a fault in it would crash the run. **No game scene was reached** — the container
 cannot inject keystrokes — so §4's three human items still stand, and the two most valuable are the
 fast tap of a target character and `Ctrl+Alt+H` with the modifiers released while `H` stays down.
+
+---
+
+## 7. Cold revalidation, and what it cost (2026-08-12)
+
+Commissioned by the owner before handover: Opus, explicit, read-only, judging the landed commits
+against mandate and intent. Prompt `../prompts/P-18-revalidation.md`, report
+`S37-P18-revalidation.md`. **Verdict: sound in design, unsound as landed** — 9 findings, and the
+three that mattered were all mine.
+
+**F1, critical — the poll could raise, and one keystroke in Words crashed the game.**
+`love.keyboard.isDown` raises on a string that is not a LÖVE key constant, which I had asserted the
+opposite of in the design document (§9.5f, now corrected in place). `wordsBaseKey` returned the
+produced character itself, so a shifted symbol claimed `"~"` and the next `love.update` errored
+outside any `pcall`. Fixed in **`52a8d69`**: `glyphBaseKey` moves into `input.lua` — the one item of
+§9.5h's "diff, in full" that had not landed — and a claim that cannot be polled is never taken.
+**Measured in real LÖVE, both the fault and the fix.**
+
+**F2, high — a false claim in `c60b818`'s message.** It said the chord claim closes a leak the game
+"has always had". Upstream had no such leak: `appKeypressed` marked the trigger held *before*
+`appChord` swallowed it, so the held set suppressed the trailing characters for **every** chord. The
+leak is this branch's, introduced when the held set went. And the claim only covered the swallowed
+Alt class. Fixed in **`42d1a8b`**, which claims the trigger whenever Ctrl or Alt is down.
+
+**F3, high — a fourth narrowing of the same family as the three `c1ee63c` restored.** `alt+*` cannot
+match `alt+shift+key`, where the hand-written test said only "Alt and not Ctrl" — so Alt+Shift+key
+had started counting as a wrong key in six scenes. `alt+shift+*` registered in **`42d1a8b`**.
+
+**Also acted on:** the `capslock` comment was still false *and* cited the design note, whose Caps Lock
+section taught the same false reason — both corrected, the note in its rewrite. And
+`indicators.lua`'s comment said the Shift state is *"edge-tracked, not isDown"* when its caller now
+passes `Key.shift()`, i.e. exactly `isDown` (**`ece2c1b`**).
+
+**The design of record is rewritten** (`doc/development/internals/examples/keyboard.md`), which
+§15.4 required *before* the code and which I had not done — disclosed to the revalidator rather than
+left for it to find. It now describes the shipped mechanism, covers both consumers, drops the
+unsourced platform sentence, states the unpollable-character residue, and carries a smoke checklist
+naming the cases only a human can reach.
+
+**The lesson worth carrying, because it is the session's second instance:** a claim about a
+library's behaviour, written from expectation rather than measurement, propagated from a design
+document into code and cost a crash. The earlier instance was the platform sentence this same
+document had to strike. **Measuring took one throwaway LÖVE script and 20 seconds.**

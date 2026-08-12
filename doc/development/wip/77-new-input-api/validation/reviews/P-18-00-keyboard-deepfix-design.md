@@ -930,10 +930,22 @@ advertised: `INPUT.upRecent`, `INPUT_UP_GRACE`, `DBG_FRAME` and `blocked` still 
 **One behaviour both variants share, stated so it is not discovered later.** `textBaseKey` cannot
 always name the physical key — a character from an IME, a dead key, or an AltGr composition may map
 to itself. Under either variant the entry is then keyed by a name that no `love.keyreleased` will
-ever match; **the frame poll rescues it** (`Key.any_pressed("é")` is false, so it clears on the next
-frame) at the cost that such a character, if genuinely held, could repeat once per frame. Neither
-game has such a target, and the alternative — no poll — strands the character permanently, which is
-strictly worse.
+ever match.
+
+**[CORRECTED 2026-08-12, and this error cost a crash.]** This paragraph said *"the frame poll rescues
+it (`Key.any_pressed("é")` is false, so it clears on the next frame)"*. **That is false.**
+`love.keyboard.isDown` **raises** on a string that is not a LÖVE key constant — measured in LÖVE
+11.5: `isDown("~")` → *"Invalid key constant: ~"*, likewise `"é"` and `"|"`; `"a"`, `"space"` and
+`"!"` are fine. So the poll does not rescue such a key, it **crashes the frame**, and because
+`inputTick` runs outside the debug `pcall` the child is dropped to an error screen. It was reachable
+with one keystroke: `wordsBaseKey` returned the character itself for anything non-alphabetic, so a
+shifted symbol typed in Words claimed `"~"`.
+
+I wrote a guess as a fact, and the missing safeguard followed from it. **The mechanism now refuses to
+claim a key it cannot poll** (`spendGlyph` asks `isDown` once per name under `pcall` and remembers),
+so such a character is accepted and a held one would repeat — the residue this paragraph should have
+described in the first place. Landed in `52a8d69` with the shared `glyphBaseKey`, which was the one
+item of §9.5h's "diff, in full" that had not landed and is what made the case reachable.
 
 **Recommendation: (b-ii), the per-key entry.** Three reasons, in order of weight: it removes the hole
 instead of betting on auto-repeat semantics; it needs *one* concept rather than two, and drops the

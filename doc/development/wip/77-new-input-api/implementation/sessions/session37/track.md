@@ -817,3 +817,42 @@ is why two more children landed than planned.
   proved it, and one environment serves all of a project's files.
 - **WRAP:** report written; `session38/prompt.md` written (P-18-04/05/06, the two traps in P-18-04,
   the human smoke items, and the Sonnet-worker pattern that worked); pointer repointed.
+
+## 2026-08-12 — the isMod alias goes; then a cold revalidation finds a crash of mine
+
+Owner: *"'gave isMod Key.is_mod's body' — why not just use Key.is_mod, given Key is already widely
+used? Exact code duplication for no reason other than minimizing intervention feels wrong."*
+
+- **Conceded, and it was an inconsistency in my own reasoning**: I deleted the `INPUT` proxy *because*
+  it was a pure alias for `Key`, then kept a one-line function that was a pure alias for
+  `Key.is_mod`. `9a20433` deletes the wrapper; the six call sites ask the platform predicate. The one
+  real argument for the wrapper — confining an undocumented member to a single line — is a
+  documentation gap (P10's), not a reason to keep an alias.
+
+Then the owner commissioned a **cold Opus revalidation** of the landed work against mandate and
+intent, *"asking you because you would be able to handle objections/corrections if they arise"*.
+Prompt `../../../validation/prompts/P-18-revalidation.md`, report
+`../../../validation/reviews/S37-P18-revalidation.md`. **Verdict: sound in design, unsound as
+landed.** 9 findings. Details in §7 of the triage; the three that mattered were mine.
+
+- **I disclosed the stale design note to it up front** rather than let it judge code against a
+  superseded document: §15.4 requires the design-of-record revision to land *before* the code, and I
+  had not done it. That was a real process slip and it is now discharged — the note is rewritten.
+- **F1 was a live crash and its root cause was a sentence I wrote.** The design document claimed the
+  frame poll "rescues" an unnameable key because `isDown` returns false for it. **It raises.** I
+  measured it: `isDown("~")` → *"Invalid key constant: ~"*, same for `"é"` and `"|"`. So a shifted
+  symbol typed in Words claimed `"~"` and the next `love.update` errored outside any `pcall`. Fixed
+  in `52a8d69`, **verified by loading the real `input.lua` in real LÖVE against stubs** — the
+  strongest verification of the session, and it took one throwaway script.
+- **F2 caught a false statement in my own commit message** (`c60b818` called the trailing-character
+  leak one the game "has always had" — upstream's held set suppressed it for every chord, so the leak
+  is this branch's), and **F3 a fourth narrowing** of the family `c1ee63c` restored three of. Both
+  fixed in `42d1a8b`, with the message correction recorded in the workspace since history is not
+  rewritten.
+- **The reviewer's two extra observations were both live and both acted on**: the `capslock` comment
+  was still false and cited the design note, which taught the same false reason; and
+  `indicators.lua`'s *"edge-tracked, not isDown"* had become the opposite of what happens
+  (`ece2c1b`).
+- **The pattern to carry:** twice this session a claim about library or platform behaviour, written
+  from expectation instead of measurement, propagated into code or documents. Both were cheap to
+  measure. The revalidation earned its cost several times over.

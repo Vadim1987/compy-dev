@@ -1,311 +1,217 @@
-# keyboard — input judgement (Alt-keys subgame)
+# keyboard — how typed characters are accepted
 
 <!-- authored By LLM; human-approved NOT YET -->
 
-**Scope:** how the keyboard example decides that a typed character matched its
-target. The example's other subsystems (scenes, gauge, layout, sound) are not
-covered here. `src/examples/keyboard` is a separate repository.
+**Scope:** how the keyboard example decides that a character the player produced counts, and how it
+keeps one physical press from counting twice. Two of its subgames judge typed characters — the
+Alt-keys scene and Words — and this is the mechanism both use. The example's other subsystems
+(scenes, gauge, layout, sound) are not covered. `src/examples/keyboard` is a separate repository.
 
-**Status: recommended design, not the shipped code.** The shipped code carries an
-interim fix and is described at the end.
+**Status: this describes the shipped code.** An earlier revision of this document described a
+*recommended* design that was never implemented and has been superseded — see "What changed, and
+why" at the end.
 
 ## The problem
 
-For one physical key LÖVE delivers `keypressed(key, scancode, isrepeat)` and, if
-the key produces a character, `textinput(text)` — with **no guaranteed order
-between the two channels** (`../user_input.md`, "Data flow"). Desktop LÖVE sends
-`keypressed` first; the web build sends `textinput` first.
+For one physical key LÖVE delivers `keypressed(key, scancode, isrepeat)` and, if the key produces a
+character, `textinput(text)` — with **no guaranteed order between the two channels**
+(`../user_input.md`, "Data flow").
 
-Anything that asks which keys are down at `textinput` time therefore answers
-*which build is running*, not *what the player did*. That is a defect the
-example has already shipped once: judging dropped every character whose key was
-held, and since desktop delivers `keypressed` first, a key is always held when
-its own `textinput` arrives — so no target was ever accepted.
+Anything that asks which keys are down at `textinput` time therefore answers *which build is
+running*, not *what the player did*. That is a defect this example shipped: acceptance dropped every
+character whose key was held, so wherever `keypressed` arrives first — the key is always held by the
+time its own character arrives — nothing was ever accepted and the game was **deaf**. Attested on
+desktop Linux, run as `love src`; the owner's expectation is that Android from an assembled `.apk`
+worked, on the grounds that the author uses it there.
 
-`textinput` also carries no repeat flag of its own, so an OS key-repeat and a
-deliberate press look identical on that channel.
+**No claim is made here about which platform delivers which order.** The order is not a guarantee, a
+LÖVE release could change it, and a mechanism that is correct only under one of them is not correct.
+That is the whole reason for the shape below.
 
-## The paradigm: one channel judges
+`textinput` also carries **no repeat flag of its own** — `keypressed` gets one, as its third
+argument — so on that channel an OS key-repeat and a deliberate press look identical.
 
-**`textinput` is the only judge.** Judgement never consults `keypressed`,
-`keyreleased`, or the keyboard's held-key state. The order the channels arrive
-in therefore cannot change a verdict — there is nothing to order. This dissolves
-the problem above rather than compensating for it, which is what every previous
-attempt did.
+## The paradigm: the character claims its key, and the device releases the claim
 
-The other channels keep the jobs that are theirs alone, and none of them is
-judgement:
+**One `textinput` is accepted per physical press.** The mechanism is one table and one poll, in
+`input.lua`:
 
-| event | job |
-|---|---|
-| `keypressed` | filter OS repeats at the source via `isrepeat`; toggle the Caps estimate; **feed** the non-printing targets (`backspace`, `tab`, `return`), which produce no `textinput`; **record** a handled chord's textual part (below); drive the on-screen keyboard |
-| `keyreleased` | presentation only — release the key cap. **No judgement state whatsoever** |
-| `textinput` | judge |
+- **`GLYPH_CLAIMED`** — the keys whose character has been delivered to a scene.
+- **`spendGlyph(k)`** — returns true (drop this character) if `k` is already claimed; otherwise
+  claims it and returns false. Called by each judging scene as the first line of its `textinput`
+  handler.
+- **`inputTick()`** — runs once per frame from `love.update` and clears any claim whose key
+  `love.keyboard.isDown` reports **up**.
 
-There is one judging function. What differs between a printable target and a
-non-printing one is only **which channel supplies the candidate** — `textinput`
-for a character, `keypressed` for a key that produces none. Exactly one of them
-feeds at a time, selected by the kind of the current target
-(`altIsKeyTarget`).
+**Nothing consults the other channel, and nothing consults a clock.** The question a claim answers —
+*has a character for this key been taken since the key was last down* — has the same answer in either
+delivery order, because neither half of it is an event.
 
-### What happens before the scene sees a character
+**Why the release is a poll and not `keyreleased`.** On the release channel, a genuine release and a
+trailing repeat character are the same shape: clearing the claim when the release arrives lets a
+repeat character that trails it through **as a fresh one** — a wrong answer nobody typed. The
+previous mechanism swallowed that with a one-frame grace window stamped from `DBG_FRAME`, the debug
+logger's counter, and paid for it by discarding a genuinely fast tap. Asking the keyboard needs
+neither: whether a key is down is a frame-time question about physical state, which is what a poll is
+for (`../../../input_api.md`, "Held keys"). `keyreleased` holds **no** acceptance state at all; its
+only remaining job is dispatch, which `bubble.lua`'s hold judge needs.
 
-Two things in `input.lua`'s shared `appTextinput` run **upstream of every
-scene**, not inside this subgame, and they are unchanged since the game's first
-version:
+**`inputTick` runs in `love.update`, not in `updateStep`.** `updateStep` returns early before the
+first draw, while paused, and while the help overlay is shown — and that overlay is **held** Alt+H,
+so a claim would outlive its key in ordinary use rather than in a corner case.
 
-- **the chord filter** — `if INPUT.alt then return end` / `if INPUT.ctrl then
-  return end`. A character produced with Alt or Ctrl held never reaches any
-  scene. Only Shift modifies a target;
-- **Caps reconciliation** — `capsReconcile(t, INPUT.shift)` for alphabetic
-  characters, before dispatch.
+### The character → key inference, and its limit
 
-Both read live modifier state, and both are **outside judgement**. This is what
-"`textinput` is the only judge" means precisely: the judging function consults
-nothing live, while the shared dispatch layer above it applies a filter and
-maintains an app-wide estimate. Keeping that distinction is the point — the
-original defect was judgement *inferring* a repeat from held state, not a
-dispatcher asking whether a modifier is down.
+A claim is keyed by the **physical key**, so a produced character must be mapped back to one:
+`glyphBaseKey` (`input.lua`) sends `" "` to `"space"`, a shifted symbol through `SHIFT_MAP` inverted
+(`"~"` → `` "`" ``), a letter to its lowercase key, and anything else to itself. It lives in
+`input.lua` because both judging scenes need it and scene files are lazy-loaded; `config.lua`, which
+holds `SHIFT_MAP`, is loaded long before.
 
-**Caps reconciliation belongs to the shared handler and must stay there.** It
-serves every scene that shows the Caps indicator (`press`, `find` via
-`findkey.lua`, `intro`), not just this one. Moving it into this subgame's
-judging would silently stop Caps re-estimation everywhere else.
+**The inference cannot always succeed**, and the failure matters because
+**`love.keyboard.isDown` raises on a string that is not a LÖVE key constant** — *"Invalid key
+constant: ~"*, measured, not assumed. A character from an IME or a dead-key composition may name no
+key this keyboard has. So a claim that cannot be polled is **never taken**: `spendGlyph` asks
+`isDown` once per key name under `pcall`, remembers the answer, and refuses to claim an unpollable
+name. **The stated residue:** such a character is accepted, and holding one would repeat it. No
+scene targets one, and the alternative is a per-frame loop that can raise — which is exactly the
+crash this cost before the guard existed.
 
-## The precondition this rests on: one target, one keystroke
+### A chord owns its trigger key
 
-**Every target is a single character or a single non-printing key.** The subgame
-never assembles a string. Progression widens the alphabet rather than lengthening
-the answer — `ALT_NOTCH` 0 to 4 adds lowercase, then digits, then punctuation,
-space and capitals, then the three service keys (`config.lua`, `ALT_GROUPS` /
-`ALT_SERVICE`); every entry in every group is one character, and `ALT_SERVICE`'s
-three are key names matched through `keypressed`.
+A chord's trigger keeps producing characters if its modifier is released while the key stays down —
+Alt+H, then letting go of Alt, leaves `H` repeating and those characters are not a typed answer. So
+**whoever takes a chord claims its trigger**, without judging it:
 
-This is what makes one remembered character sufficient. **If a later stage ever
-asks the player to type a word, this design must be revisited** — `lastText`
-would be deduplicating the letters of the answer against each other, and the
-block would need to span an entry rather than a keystroke. Stated here because
-it is the kind of premise that is invisible until it is violated.
+- the swallowing classes do it — `alt+*` and `alt+shift+*`, two of them because a class is its
+  modifier set *exactly* while the hand-written test they replaced said only "Alt and not Ctrl";
+- `alt+p`, an exact binding that wins over the class, claims for itself;
+- and `appKeypressed` claims the trigger whenever Ctrl or Alt is down, which covers the chords that
+  are **not** swallowed and reach the scene by design.
+
+The claim is released by the same poll as any other, so the suppression lasts exactly as long as the
+key is held.
+
+## What happens before a scene sees a character
+
+Two things in `input.lua`'s shared `appTextinput` run **upstream of every scene**:
+
+- **the chord filter** — a character produced with Alt or Ctrl held never reaches any scene. Only
+  Shift modifies a target;
+- **Caps reconciliation** — `capsReconcile(t, Key.shift())` for alphabetic characters, **before**
+  dispatch and therefore before any suppression. Repeats and characters arriving during a
+  celebration are all valid evidence of a lock state nobody reported, and the estimate serves every
+  scene that shows the Caps decal, not just the judging ones.
+
+Both read live modifier state, and both are **outside acceptance**. That distinction is the point:
+the original defect was acceptance *inferring* a repeat from held state, not a dispatcher asking
+whether a modifier is down.
 
 ## What the game actually requires
 
-These rules come from the game's own scoring (`gauge.lua`), not from input
-theory, and they are what makes the design small:
+These rules come from the game's own scoring (`gauge.lua`), not from input theory, and they are what
+keeps the mechanism small:
 
-1. **A repeated wrong character changes nothing.** `gaugeOnWrong` is already
-   idempotent per presentation — `if st.fumbled then return end`. Several wrong
-   keys read as one miss, by design.
-2. **A correct character advances the target immediately.** `gaugeOnCorrect`
-   calls `gaugeNext` synchronously, so a repeat of the *winning* character would
-   arrive with a **different** target displayed and fumble it.
+1. **A repeated wrong character changes nothing** in the Alt scene — `gaugeOnWrong` is idempotent per
+   presentation (`if st.fumbled then return end`). Several wrong keys read as one miss, by design.
+   **Words is different:** `wordsBad` plays its knock every time and has no such flag, so a repeat
+   reaching it is audible.
+2. **A correct character advances the target immediately.** In the Alt scene `gaugeOnCorrect` calls
+   `gaugeNext` synchronously; in Words `WORDS.pos` advances by one. Either way a repeat of the
+   *winning* character would be matched against a target the player has not answered yet.
 
-So of all the repeat cases input plumbing has historically tried to suppress,
-exactly one changes an outcome. The input layer owes the game one thing: **the
-winning character must not be judged twice.**
+So of all the repeat cases input plumbing has historically tried to suppress, the ones that change an
+outcome are covered by a single property: **one accepted character per physical press.**
 
-## State
+## Two consumers, and why that is what the mechanism is keyed on
 
-One predeclared table, mutated in place — never reassigned:
+`alt.lua` presents **one item at a time** — a character, or a key name (`backspace`, `tab`, `return`)
+matched on `keypressed` instead, selected by `altIsKeyTarget`. `words.lua` presents **a position in a
+string**: `WORDS.pos` walks a generated line, typed strictly left to right, and **consecutive
+identical targets are ordinary** — 224 words in its corpus carry a doubled letter.
 
-```lua
-ALT_JUDGE = {
-  lastText = nil,    -- the character most recently judged
-  blocked  = false,  -- judgement and writes suspended across a win
-}
-```
+That difference is why acceptance is keyed on the **press**, not on the character's content. A
+content test — *drop it if it repeats the last accepted character* — is sound only where consecutive
+targets cannot repeat. In Words it would make the word `"all"` untypeable: the second `l` would be
+discarded, and the player could only unstick it by typing something wrong.
 
-Predeclared because the per-event path must allocate nothing. A **table** rather
-than loose scalars for two reasons: blocking writes to a container is more
-reliable than freezing an isolated scalar, and the game's judgement state is a
-thing worth modelling explicitly rather than leaving implicit in input plumbing.
-
-`CAPS_STATE` stays separate: it is app-wide, not scene-scoped.
-
-## Rules
-
-On `textinput(text)` reaching this scene — so after the shared chord filter and
-Caps reconciliation above — in order:
-
-1. **If blocked, stop.**
-2. **If `text == lastText`, stop.**
-3. **Judge.** Set `lastText = text`; match → hit, else miss.
-
-Caps is deliberately **not** a rule here. It is reconciled upstream for every
-scene, and it must keep running for characters this subgame ignores — repeats
-and characters arriving during a celebration are all valid evidence of the lock
-state, which is why the shared handler reconciles before it dispatches and
-before any suppression.
-
-**On a hit:** block, advance the target, release the block. While blocked,
-nothing is judged and `lastText` is not written — so the winning character
-survives the transition, and its trailing repeats are stopped by rule 3
-afterwards. Blocking the writes rather than clearing the field is what makes
-this hold even if a celebration or animation is ever inserted between targets.
-
-Non-printing targets are fed from `keypressed` into the same judging function;
-their repeats are already filtered by `isrepeat` at the source. **One exemption
-carries over and must not be dropped:** a modifier or `capslock` pressed while a
-non-printing target is displayed does **not** count as a wrong answer
-(`alt.lua`'s `not isMod(k) and k ~= "capslock"`, and the same idiom in
-`findkey.lua` and `hunt.lua`). Holding Shift must never knock a `backspace`
-target.
+**This is the premise an earlier revision of this document rested on, and it named the trigger for
+its own revision:** *"if a later stage ever asks the player to type a word, this design must be
+revisited"*. Words is that stage, and it arrived from upstream.
 
 ## Consequences, accepted
 
-- **An OS repeat and a deliberate re-press of the same character are not
-  distinguished, and need not be.** By the game's own rules the only repeat that
-  changes an outcome is a repeat of the winning character, and rule 3 stops that
-  one. This is the concession that removes the clock, the grace window and the
-  claim table at once.
-- **Two identical consecutive targets would have their second suppressed by
-  rule 2 — and the game already prevents them.** `gaugeCandidates` collects
-  candidates *excluding* `st.cur`, and only falls back to the full list if that
-  leaves nothing. So the case survives solely where excluding the current target
-  empties the candidate set — a one-token notch. **No game-side change is
-  required**; this is a precondition the game already meets, recorded so that a
-  later change to candidate selection does not silently break judgement.
-- **Judgement adds no modifier guard of its own.** It does not need one: the
-  shared handler already drops anything produced with Alt or Ctrl held, and
-  Shift must pass, since Shift is how every capital in this game is typed. A
-  guard inside judgement would therefore be a second filter with an exemption
-  list — the invented special case this design exists to avoid.
-- **A character produced after a chord's modifiers are released is an ordinary
-  character.** It passes the shared filter, because by then no modifier is held.
-  A player who reaches `h` by releasing Alt from `Alt+H` has typed `h`, and that
-  is a win (owner ruling, 2026-08-08). The losing half of that — a trailing
-  character that is *not* the target — is handled by the chord record below,
-  without adding state.
-- **A character whose `textinput` arrives after its own `keyreleased` is
-  judged.** Nothing couples to `keyreleased`, so a fast tap cannot lose its
-  character. Every shipped version of this game to date drops it.
-- **No test suite.** The repository has none, so this design is reasoned, not
-  proven.
-
-## A handled chord records its character without judging it
-
-`Ctrl+Alt+H` re-arms the hint. If the player lets go of Ctrl and Alt while `H` is
-still down, `H`'s repeats produce `h` characters that pass the shared chord
-filter — no modifier is held by then — and reach judgement. If `h` is not the
-current target that is a **miss**, and it fumbles the presentation the player
-just asked for help with: `gaugeOnWrong` decrements that target's `learn[].n`
-and the eventual correct answer then scores nothing.
-
-**Resolution (owner, 2026-08-08).** When the scene handles a chord, it writes the
-chord's textual part into `lastText` **without judging it**. The trailing
-character then meets rule 2 and is ignored. If it never arrives, nothing is owed:
-the next judged character overwrites `lastText` anyway. No new state, no timing,
-no held read — the field that already exists is told what the player has
-effectively produced.
-
-**One invariant this must not break.** In normal play `lastText` can never equal
-the live target: it is written only by judging, and after a hit the target
-advances away from it (`gaugeCandidates` excludes `st.cur`), while after a miss
-the character written is by definition not the target. A chord write is the first
-thing that could violate that — hinting while the target *is* `h` would suppress
-the player's own correct `h`, and keep suppressing it, since only a judged
-character clears the field. **So the record is made only when the chord's textual
-part is not the current target.** When it *is* the target, the trailing character
-is let through and judged — a win, which is the ruling already given for reaching
-`h` by releasing Alt from `Alt+H`.
-
-**Residual, stated not solved.** The reserved chords are registered on the
-**`keypressed`** channel only (`input.lua`, `register_reserved` —
-`compy.input.shortcuts.keypressed`), and `stop_here` consumes that keypress. So
-for `alt+*` and `alt+p` the scene never sees the chord's *keypress* and cannot
-record it. The shortcuts tier does not touch `textinput`, so a character trailing
-one of those chords arrives at the scene like any other and can be judged.
-Narrower than the hint case: those chords carry no game meaning, and it needs the
-same held-across-release behaviour to occur at all.
-
-**For the record, what the earlier versions do here** — read from the code, not
-from their comments. **A** dropped it, because `inputStale` rejects a character
-whose key is held: a side effect of the helper whose main use was the defect, but
-it did cover this. **C** claims to cover it (`alt.lua`'s comment names `Alt+H` by
-example) and the path does not bear that out — while the modifiers are down the
-character never reaches `altTextinput`, so no claim is recorded, and the first
-character after the release is unclaimed and would be judged. Whether any
-character is produced at all depends on whether the OS emits repeats for a key
-held across a modifier release, which needs the device to settle; it decides
-whether C has a live defect here or a theoretical one, but not what this design
-does.
+- **An OS repeat and a deliberate re-press of the same character are distinguished by the key going
+  up**, which is the only thing that separates them. Nothing measures time.
+- **A character whose `textinput` arrives after its own `keyreleased` is accepted.** Nothing couples
+  to that channel, so a fast tap cannot lose its character. Every version of this game before this
+  one dropped it.
+- **A release that never arrives costs nothing.** The poll resolves it on the next frame, so a focus
+  change mid-hold leaves no stranded claim. This is a property, not a motive: focus-shaped risks are
+  tolerable in this example, and a risk cleared by repeating a gesture is an inconvenience.
+- **Acceptance adds no modifier guard of its own.** It does not need one: the shared handler already
+  drops anything produced with Alt or Ctrl held, and Shift must pass, since Shift is how every
+  capital is typed.
+- **A character produced after a chord's modifiers are released is an ordinary character** unless the
+  chord claimed its key — which it does. A player who reaches `h` by releasing Alt from `Alt+H` while
+  `H` is still down produces nothing; one who releases `H` and presses it again has typed `h`, and
+  that is a win (owner ruling, 2026-08-08).
+- **No test suite.** The repository has none, so everything here is reasoned or exercised by hand.
 
 ## Caps Lock
 
 The **key** arrives normally as `keypressed('capslock', …)`. Three things do not:
 
-- **the lock state** — LÖVE 11.5 has no API to query it, so `CAPS_STATE.on` is an
-  estimate the example maintains;
+- **the lock state** — LÖVE 11.5 has no API to query it, so `CAPS_STATE.on` is an estimate the
+  example maintains;
 - **the state at startup**, and any toggle made while the window was unfocused;
-- **`keyreleased('capslock')`, reliably** — which is why `capslock` is exempt
-  from the `isrepeat` filter in `keypressed`. With no release delivered, the
-  next press can arrive flagged as a repeat, and dropping it would freeze the
-  estimate on a lock the player has actually toggled.
+- **`keyreleased('capslock')`, reliably.**
 
-Correcting the estimate from `textinput` (rule 1) is the only way to observe a
-lock state nobody reported. It must therefore run before any suppression. It
-remains presentation: it decorates the keyboard and never decides a target.
+**`capslock` is exempt from the repeat filter in `appKeypressed`** (`if isr and k ~= "capslock"`).
+That exemption is **inherited from upstream, where it was exempt from the held-set staleness test for
+a reason that no longer applies** — a release that never arrived would wedge the held set and freeze
+the estimate for the session. Under an `isrepeat` filter a fresh press is never flagged as a repeat,
+so nothing can eat a toggle, and the exemption's only remaining effect is that capslock **repeats**
+reach `capsToggle`. It is kept deliberately, to preserve upstream's behaviour exactly; if a platform
+repeats lock keys the estimate flickers while the key is held, which is upstream's property and not
+this feature's. Correcting the estimate from `textinput` is what recovers either way.
 
-## Suggested, not adopted — a hold requirement
+## Smoke checklist — owed by a human
 
-Owner suggestion, 2026-08-08, recorded here for the game's owner to rule on. It
-is a change to the **game's rules**, not to input judgement, and is deliberately
-not part of the design above.
-
-Count a win only for a character sustained for roughly half a second, so that
-storming the keyboard with an open palm is not a winning strategy. The concern is
-real: today a mash whose *first* hit happens to be the correct key scores
-cleanly, because `gaugeOnCorrect` counts while the presentation is not yet
-fumbled.
-
-Two ways it could be built, with their costs:
-
-- **Stamp the frame at each `textinput`.** Cheap, and it gives the age of the
-  current character directly. But the cadence it measures is the OS key-repeat
-  rate — a user setting, and one that can be switched off entirely. The win
-  condition would then vary by machine and be unreachable where repeat is
-  disabled.
-- **Confirm the win from `love.update`.** Start a timer on a candidate hit and
-  confirm it if the key is still held. This does poll the keyboard —
-  `love.keyboard.isDown(key)` — and that is legitimate: the rule's own question
-  is *"is the player still holding the key right now"*, a frame-time question
-  about an ordinary character key, which is exactly what the device answers and
-  what no shortcut or combo can (`../../../input_api.md`, "Held keys"). That is
-  different in kind from asking held state to *infer* whether a character is a
-  repeat, which is the defect this design removes.
-
-The second is the better shape if the rule is wanted.
-
-## Smoke checklist
+Nothing below can be exercised where this code is developed: the container cannot inject keystrokes
+and has no device.
 
 - a target character is accepted on the first press;
-- holding the right key scores one hit and does not bleed a miss onto the next
-  target;
-- holding a wrong key knocks once, not once per frame;
+- **a very fast tap of the target character registers** — the case every earlier version dropped;
+- holding the right key scores one hit and does not bleed a miss onto the next target;
+- holding a wrong key knocks once, not once per frame — check in **Words**, whose knock has no
+  idempotence flag;
+- typing a word with a **doubled letter** in Words: both letters register;
+- typing a **shifted symbol** in Words (`~`, `|`) does not raise — it once crashed the game;
 - `Ctrl+Alt+H`, then typing the hinted letter — the letter registers;
-- `Ctrl+Alt+H` **releasing the modifiers while `H` stays down** — no stray `h`
-  reaches the target, and the target is not fumbled;
-- the same, **while the target is `h`** — the trailing `h` counts as a win rather
-  than being swallowed;
-- `backspace` / `tab` / `return` targets still match, and **Shift held during a
-  `backspace` target does not knock**;
-- the Caps decal corrects itself after a Caps toggle the app did not observe —
-  check it in `press` or `find` too, not only here, since the estimate is
-  shared;
-- a very fast tap of the target character registers — the case the shipped code
-  drops.
+- `Ctrl+Alt+H` **releasing the modifiers while `H` stays down** — no stray `h` reaches the target;
+- **Alt+Shift+key** is ignored by a scene rather than counting as a wrong key;
+- Alt+Shift+Esc still leaves a game, and Ctrl+Alt+Shift+Up still moves the notch;
+- `backspace` / `tab` / `return` targets still match, and **Shift held during a `backspace` target
+  does not knock**;
+- the Caps decal corrects itself after a toggle the app did not observe — check it in `press` or
+  `find` too, since the estimate is shared;
+- **hold `capslock`** and watch whether the decal flickers.
 
-## The shipped code, for contrast
+## What changed, and why
 
-`spendGlyph` (`input.lua`) claims one character per press and releases the claim
-on `keyreleased`, with `INPUT.upRecent` + `INPUT_UP_GRACE` covering the tail. It
-fixed the original defect — judgement no longer asks which keys are down — and
-it is correct for holds and for either order of `keypressed` and `textinput`.
+The revision this replaces specified a different mechanism: `textinput` as the only judge, a
+scene-local `ALT_JUDGE` table with `lastText` and `blocked`, and the subtraction of the claim table
+outright. It was written when the Alt scene was the only consumer, and it was never implemented.
 
-What it still costs: judgement depends on a release arriving, so a character
-delivered after its own `keyreleased` is dropped; non-printing targets are judged
-on a second path (`altPlayKey`); and the mechanism is a claim table plus a frame
-stamp plus a grace constant, where the game needs one remembered character.
+Two things retired it. **Words** arrived from upstream as a second consumer, and its targets can
+repeat — which the content test cannot serve, and which that revision had itself named as the
+condition for revisiting. And the **release boundary** turned out to be answerable by the device
+rather than by an event, which removed the grace window, the frame counter and the `blocked` field
+together, and closed the release-loss case that a `lastText` design still had.
 
-The design above therefore **subtracts**: `spendGlyph`, `GLYPH_CLAIMED`,
-`INPUT.upRecent`, `INPUT_UP_GRACE` and `altPlayKey`'s judging path all go.
-`altIsKeyTarget` stays — it is what selects the feeding channel.
+The reasoning is recorded in
+`doc/development/wip/77-new-input-api/validation/reviews/P-18-00-keyboard-deepfix-design.md` — the
+requirements it was derived from, an impossibility result that rules out deciding acceptance at the
+moment a character arrives, and the options weighed. **That document is ephemeral**; this one is the
+design of record.
