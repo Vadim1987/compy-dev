@@ -180,3 +180,31 @@ in the binding-ruling section**, both the same class:
 Both corrected in place with the error named, per the standing practice. The worker was otherwise
 clean: read-only, no git state touched, and it **declined to invent** a trap the prompt had offered
 as an example when it could not find the attestation — which is the behaviour the prompt asked for.
+
+## 2026-08-12 — the cold inventory returns; verified, and it found something I had missed
+
+Second worker (Sonnet, model explicit, **sequential — launched only after the first finished**),
+prompt of record `../../../validation/prompts/P-17-00-adoption-inventory.md`, deliverable
+`../../../validation/outcomes/P-17-00-adoption-inventory.md` (987 lines). Told to be **cold**:
+forbidden from reading the catalogue, the assessment or the shape doc, so the checklist got its say
+before the sprint's own history did.
+
+- **29 sites: 2 CORE, 19 MAZE, 8 DRAW.** Matches only in Q1/Q2/Q4/Q6/Q7/Q8; **Q3, Q5, Q9, Q10 are
+  zero** in both programs. Counts recomputed from its own table, with the double-matching caveat
+  stated rather than hidden.
+- **Its best find, and I had missed it: `ctrl_pressed` is structurally always `nil` in DRAW**, so
+  `drawGameKey`'s fallback is **dead code**. **Verified two ways** before relaying: `ctrl_pressed`
+  is assigned non-`nil` in exactly two places, both in `controls.lua`; and `controls.lua` is neither
+  in `draw_main.lua`'s requires nor in `.compy/build`'s DRAW set — it is MAZE-only. So **draw's whole
+  in-game keyboard surface is the editor field, the Escape branch and the Tab poll**, nothing else.
+- **`Key.*` is used nowhere in the repo** — confirmed independently.
+- **Read-only honoured**: `maze` still on `newinput-edge`, clean, no commits.
+- **My one addition, appended as a marked parent-review section rather than edited into its
+  entries:** the `shift_held` mirror has a **third** consumer and it is a **display** —
+  `maze_render.lua:221`'s `draw_macro_ui` dims the screen while Shift is held. The inventory files
+  `maze_render.lua` under "swept, no site", which is defensible (one mirror = one site) but
+  **understates the conversion**: the two consumers ask different questions (*was it down when this
+  key arrived* vs *is it down now*), and the failure differs — a lost `keyreleased` leaves the screen
+  **permanently dimmed**, a stuck visible UI state rather than a missed event. That weakens
+  calibration (a)'s "just leave a comment" answer for this site specifically. **Evidence, not a
+  verdict.**
