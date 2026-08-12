@@ -667,3 +667,47 @@ keys are unpressed physically."*
   knowledge is, and the device releases it.
 - **The owner's expectation was right on both halves**, and the one they were unsure about is the one
   that was missing.
+
+## 2026-08-12 — the cold inventory returns; its headline claims verified in code
+
+Commissioned per the owner: Opus, model passed explicitly, read-only, baselined on
+`origin/dsent/dev` and told nothing about what landed. Prompt of record
+`../../../validation/prompts/P-18-00-adoption-inventory.md`, deliverable
+`../../../validation/outcomes/P-18-00-adoption-inventory.md` (701 lines).
+
+- **It stayed cold and said so where it mattered:** it noticed `GLYPH_CLAIMED`/`spendGlyph` **do not
+  exist upstream** (they are this branch's names) and named the upstream sites instead of assuming
+  our shape. **No tree was touched** — nested repo still clean at `ca6d5df`, no `.lua` edited.
+- **Counts:** 26 sites across 11 files; 7 platform gaps (4 closed by the feature); 14 leave-alone;
+  9 raised-not-recommended; 5 ordering waves plus 4 smoke items.
+- **Verified myself before relaying, per the charter:**
+  - `isrepeat` **is** delivered end to end — `controller.lua:766` is
+    `handlers.keypressed = function(k, sc, isr)` and `:872` forwards all three. (Consistent with the
+    base being different: `3256aac`'s handler took one parameter.)
+  - **The platform does not reorder the channels** — `handlers.textinput` (`:877-881`) forwards
+    straight through. So the author's *"the IDE delivers textinput BEFORE the matching keypress"* was
+    an assumption about the environment, **never a platform guarantee**. That is the fault the
+    settled fix exists for, stated better than I had it.
+  - Shortcuts see every repeat (the guide says so), so `fn.ignore_repeat` is **mandatory** on
+    converted chords — which is what this branch already does.
+- **Findings that bear on what LANDED, i.e. the triage's raw material:**
+  - **Two narrowings nobody ruled**, both already in the tree since `ced8f40`/`e00430b`:
+    `'alt+*'` cannot swallow a **bare Alt press** (a modifier's own press names no combo), so Alt
+    alone now finishes the intro typewriter as lone Shift already did; and `shift+escape` /
+    `ctrl+alt+up` are **exact** modifier sets, so **Alt+Shift+Esc and Ctrl+Alt+Shift+Up stopped
+    working**. Agent recommends accepting the first and says the second must be stated. **Owner's
+    word on both.**
+  - **`help.lua:11` is the highest-value line in the game**, and it gives our change a far better
+    justification than the consistency argument we used: upstream, a release for `h` lost to a focus
+    change **wedges the overlay ON**, and `main.lua` freezes the game behind it with no recovery but
+    a fresh press-and-release. A poll cannot wedge.
+  - **The capslock exemption is vestigial and currently harmful** — it lets every repeat reach
+    `capsToggle`, so a *held* capslock flickers the estimate. Same conclusion I reached from the
+    other side; the agent read the path rather than waiting on the observation.
+  - **A constraint I had missed, and it blocks agenda item 5:** `compy.input.shortcuts` is
+    **project-global** while `Ctrl+Alt+H` is **scene-local**, and `scene.lua`'s registry has `enter`
+    but **no `leave`** — so there is nowhere to unregister. Converting it needs a restructuring, and
+    the same question governs every scene-scoped binding in the game.
+  - **`Key.is_mod` is exported but undocumented** in `doc/input_api.md` — a platform doc gap, P10's.
+- **Sequencing honoured (owner's insistence):** no triage started while the agent ran, and none
+  begun yet. Part 2 is next and is mine.
