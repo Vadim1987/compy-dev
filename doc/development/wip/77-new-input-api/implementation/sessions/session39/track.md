@@ -208,3 +208,28 @@ before the sprint's own history did.
   **permanently dimmed**, a stuck visible UI state rather than a missed event. That weakens
   calibration (a)'s "just leave a comment" answer for this site specifically. **Evidence, not a
   verdict.**
+
+## 2026-08-12 — owner: compact once at the end, refine the citation ban, and number the substeps
+
+Three instructions, all materialized rather than left in chat.
+
+- **Comments stay verbose while the work is live; compaction is its own substep at the end**, on the
+  `P-18-10` model. Owner's reason, and it is the part worth keeping: *"mid-development, verbose
+  comments help assistants to get oriented in a fragile and unstable codebase; it's only before
+  release we need to compact them, drying up history/obituaries and intermediate rulings."* Landed as
+  §5 of the shape doc **and** in `agents/rules/commenting.md` ("Where this is enforced"), so it binds
+  beyond this step — the file previously said this only about `INTERIM:`/`REMARK:` markers, never
+  about verbosity.
+- **The citation ban is NARROWED, and I had over-read it.** *"What is prohibited are links to files
+  not reachable from detached repos. Merely referencing the platform guide by header is tolerable if
+  it happens only in places where it's really needed."* So a `doc/…` **path** and platform-internal
+  identifiers stay banned; **naming the guide and its section is tolerable where the alternative is
+  restating a contract the platform owns.** This **revises my own §4.5 instruction from an hour ago**:
+  the old `main.lua` block committed one fault (length), not two — its *"Compy Input API, 'Submit
+  lifecycle'"* reference is exactly the tolerated form. Corrected in both documents.
+- **The substeps get ids**, so a crash mid-session costs a successor nothing: **`P-17-01`** catalogue
+  [done] · **`P-17-02`** fork [done] · **`P-17-03`** analysis writeup · **`P-17-04`** triage · then
+  **`P-17-05…`** execution, ending in compaction. A/B/C/D are retired. **The ids honour what is
+  already on disk** — the catalogue was delivered as `P-17-01-practice-catalogue.md` before the
+  numbering existed, so `P-17-01` is assigned to it rather than reused, and nothing is renamed.
+  §15.3's [S39] block carries the same list.

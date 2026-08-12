@@ -68,14 +68,20 @@ is deleted:
 
 - cite a **canonical doc** under `doc/` — never a path under
   `doc/development/wip/…`, which rots on deletion;
-- **never cite a platform doc from inside an example repository** (owner ruling,
-  2026-08-12). `src/examples/*` are separate repositories with their own
-  remotes and their own PRs: a `doc/…` path cannot be followed from a tree
-  that does not contain it, and shipping one into a third party's file is an
-  integrity problem, not a broken link. The same goes for platform-internal
-  identifiers — a decision number means nothing there. Say the thing in
-  place, briefly, or leave it out; the durable argument belongs in the
-  platform's own docs, which that repo's reader never sees. This outranks
+- **never write an unreachable LINK from inside an example repository** (owner
+  ruling 2026-08-12, **refined 2026-08-12**). `src/examples/*` are separate
+  repositories with their own remotes and their own PRs. **What is prohibited
+  is a pointer to a file that repo does not contain** — a `doc/…` path, which
+  cannot be followed from a tree that does not have it, and which ships a
+  dangling reference into a third party's file. The same goes for
+  platform-internal identifiers: a decision number means nothing there.
+  **What is tolerable is naming the platform guide and its section** —
+  *"Compy Input API, 'Submit lifecycle'"* rather than
+  `doc/input_api.md, "Submit lifecycle"` — **and only where it is really
+  needed**, i.e. where the comment would otherwise have to restate a contract
+  the platform owns. A name a reader can search for is not a broken link; a
+  path they cannot open is. Prefer saying the thing in place, briefly; the
+  durable argument still belongs in the platform's own docs. This outranks
   the clause above, which was written for platform sources;
 - cite a **named section**, never "paragraph 3" or a line number;
 - when you rename or remove a heading, **grep `src/` and `tests/` for the old
@@ -111,3 +117,13 @@ code has stabilised and before the delivery slices are assembled — see
 [`../validation.md`](../validation.md), "Comment References". Doing it earlier
 wastes the interim markers that are still load-bearing; doing it later ships
 them.
+
+**And the same holds for verbosity, not only for markers** (owner, 2026-08-12).
+Mid-development, a verbose comment is doing real work: it orients the next
+reader — human or assistant — in a codebase that is fragile and still moving,
+where the reasoning is not yet settled enough to be obvious from the code.
+**Do not compact as you go.** Compaction is its own substep near the end of a
+step, taken once, over stabilised code: it dries up history and obituaries,
+intermediate rulings, and second phrasings, keeping only the reasons. `P-18-10`
+is the worked example — one dedicated pass that took `keyboard`'s `input.lua`
+from 177 comment lines to 101 without losing an argument.

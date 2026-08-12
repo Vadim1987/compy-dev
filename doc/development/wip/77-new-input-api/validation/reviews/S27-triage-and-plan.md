@@ -2025,11 +2025,13 @@ ran as [S37] specified (`S39-maze-upstream-input-assessment.md`) and found the m
 **48 of the 53 globals our `main.lua` defines are redefined by upstream's split files** — the
 conservative resolution neither raises nor works. **Owner ruling, 2026-08-12 (ratified):** fork a
 new branch off `dsent/dsent/dev` and make it the working branch; the four commits on `newinput`
-become *evidence*, not the deliverable. The step is now **A** catalogue the practices (ours + P-18's)
-as guidance only · **B** fork the edge · **C** analyse against
-`doc/development/conventions/input_adoption.md`, ordered *regressions the new platform introduces →
-locally-duplicated machinery → migrations where the gain is real, and a written report where it is
-not* · **D** triage into `P-17-01…`. Two [S36] facts below are now **stale**: this repo **has a
+become *evidence*, not the deliverable. The step's substeps carry ids (2026-08-12), so a
+successor picks them up without re-deriving the shape: **`P-17-01`** catalogue the practices (ours +
+P-18's) as guidance only **[done]** · **`P-17-02`** fork the edge **[done]** · **`P-17-03`** analyse
+against `doc/development/conventions/input_adoption.md`, ordered *regressions the new platform
+introduces → locally-duplicated machinery → migrations where the gain is real, and a written report
+where it is not* · **`P-17-04`** triage that analysis into execution substeps **`P-17-05…`**, the
+last of which is always the comment-compaction pass (the `P-18-10` model). Two [S36] facts below are now **stale**: this repo **has a
 suite** (three `spec/` files + `verify.sh`) and a second program (`draw`), and the owner `REMARK:`s
 sit in a file the new branch does not contain — their disposition is owed, not automatic.
 

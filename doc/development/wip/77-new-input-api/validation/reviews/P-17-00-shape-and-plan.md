@@ -1,7 +1,7 @@
 # P-17-00 — the new shape: fork the edge, adopt by checklist, plan from the analysis
 
 **Session:** 39. **Date:** 2026-08-12. **Status:** shape **ratified by the owner**; the analysis
-(step C) is the work; the substeps (step D) do not exist yet.
+(`P-17-03`) is the work; the execution substeps (`P-17-05`…) do not exist yet.
 
 **Supersedes** the shape P-17-00 carried until now — *"the same three moves `keyboard` had: assess,
 merge, plan"* (`session39/prompt.md`, and `S27-triage-and-plan.md` §15.3). The assessment was
@@ -34,14 +34,14 @@ dissolves. A branch **forked from** `dsent/dsent/dev` has that ref as an ancesto
 remember and no reversal-of-26-commits trap to fall into.
 
 **What it costs, stated plainly:** the four commits on `newinput` stop being the deliverable. They
-are not deleted and not wasted — step A promotes them to *evidence*. `newinput` and
+are not deleted and not wasted — `P-17-01` promotes them to *evidence*. `newinput` and
 `newinput-backup-copy-20260811` stay where they are; nothing is rewritten.
 
 ---
 
-## 1. The shape, in four steps (owner, 2026-08-12)
+## 1. The shape, as numbered substeps (owner, 2026-08-12; ids assigned 2026-08-12)
 
-### A — Inventory the practices, as a catalogue and nothing more
+### P-17-01 — Inventory the practices, as a catalogue and nothing more  ✅ **DONE**
 
 Two sources, both **guidance, not mandate** — the owner's word is that they *"serve merely as a
 catalogue of practices that **may** be used for maze… or not"*:
@@ -61,7 +61,7 @@ Deliverable: **one catalogue document**, `validation/reviews/P-17-01-practice-ca
 states each practice, where it came from, and *whether maze's code presents the shape it applies to*
 — with "does not apply here" as a first-class, expected answer.
 
-### B — Fork the working branch off the edge  ✅ **ratified — and DONE**
+### P-17-02 — Fork the working branch off the edge  ✅ **ratified — and DONE**
 
 **`newinput-edge`, forked from `dsent/dsent/dev` @ `b8cc436`, 2026-08-12.** It is the working branch;
 `newinput` (`a045fdb`) and `newinput-backup-copy-20260811` are untouched as the record of the old
@@ -85,10 +85,10 @@ project) — measured working.** (The platform's error path there is its own
 small finding — it feeds the *message* "main.lua does not exist" into the Lua compiler and reports
 the syntax error of that sentence. Not this step's business; worth someone's.)
 
-### C — The analysis, driven by `input_adoption.md`
+### P-17-03 — The analysis, driven by `input_adoption.md`
 
 The primary instrument is **`doc/development/conventions/input_adoption.md`** — Decision 32's
-operational form, Q1–Q10 plus five rules of restraint. The catalogue from step A is a **secondary**
+operational form, Q1–Q10 plus five rules of restraint. The catalogue from `P-17-01` is a **secondary**
 source, consulted after the checklist has had its say, so that maze is read on its own terms rather
 than through `keyboard`'s.
 
@@ -109,14 +109,15 @@ The analysis answers three questions per site, and the owner's phrasing fixes th
 Deliverable: `validation/reviews/P-17-00-adoption-analysis.md` — site by site, each carrying its
 checklist question, its verdict, and, where it is a behaviour change, the words that say so.
 
-### D — The substeps
+### P-17-04 — The triage: turn the analysis into execution substeps
 
-From the analysis, a triage into `P-17-01`, `P-17-02`, … dependency-ordered, each its own commit,
-with **the rulings the owner owes named before any child starts**.
+From the analysis, a triage into **`P-17-05`, `P-17-06`, …** — dependency-ordered, each its own
+commit, with any remaining owner rulings named before a child starts. **The last of them is always
+the comment-compaction pass** (§5).
 
 ---
 
-## 2. Tests — a real asset, and one open question
+## 2. Tests — a real asset, and the ruling on growing it
 
 Unlike `keyboard`, this repo **has a suite**: `spec/script_spec.lua`, `spec/draw_levels_spec.lua`,
 `spec/draw_mode_spec.lua`, run by plain `lua` from the repo root, plus `verify.sh` (compile check +
@@ -208,7 +209,7 @@ overkill."*
 stay a **regression fence** (run `./verify.sh` at every commit — it is free and it is theirs), but
 **no input behaviour will be covered by any suite**. So **input correctness rests entirely on the
 human smoke pass**, exactly as it did for `keyboard`. That makes `doc/development/smoke_checklists.md`
-the only gate this step has, and writing maze's section is therefore **step-D work, not a nicety** —
+the only gate this step has, and writing maze's section is therefore **`P-17-04`'s to schedule, not a nicety** —
 with the launch commands from §4.3, since the old one no longer works.
 
 ### 4.5 The two `REMARK:`s — both discharged, neither re-planted
@@ -225,3 +226,39 @@ with nothing to sweep. Their content:
   as a marker to re-plant — and it agrees with `agents/rules/commenting.md`'s size rule. Note the
   same block also referenced the platform guide by title, which the 2026-08-12 citation ruling now
   forbids in an example repo: **do not reproduce either fault in `core_editor.lua`.**
+
+---
+
+## 5. Comments: verbose while the work is live, compacted once at the end (owner, 2026-08-12)
+
+**Ruling:** *"the session of P-18 ended in a comment compaction substep. Here we just can do the
+same. Reason: mid-development, verbose comments help assistants to get oriented in a fragile and
+unstable codebase; it's only before release we need to compact them, drying up history/obituaries
+and intermediate rulings."*
+
+**So: do not compact as you go.** While `P-17-05…` are landing, a comment that over-explains is
+doing real work — it orients the next reader in code whose reasoning is not settled yet, and this
+step in particular is re-deriving a migration on a codebase none of us wrote. **The last execution
+substep is a dedicated compaction pass**, taken once over stabilised code, on the `P-18-10` model:
+dry up history, obituaries, intermediate rulings and second phrasings; keep the reasons. That pass
+took `keyboard`'s `input.lua` from 177 comment lines to 101 without losing an argument.
+
+Carried into `agents/rules/commenting.md` ("Where this is enforced"), so it binds beyond this step.
+
+## 6. The citation rule, refined (owner, 2026-08-12)
+
+The 2026-08-12 ban read as *"never cite a platform doc from inside an example repository"*. The
+owner has narrowed it to what it was actually protecting:
+
+> *"what is prohibited are links to files not reachable from detached repos. Merely referencing the
+> platform guide by header is tolerable if it happens only in places where it's really needed."*
+
+- **Prohibited:** a pointer to a file the repo does not contain — a `doc/…` path — and
+  platform-internal identifiers such as decision numbers, which mean nothing to that reader.
+- **Tolerable, where really needed:** naming the guide and its section — *"Compy Input API,
+  'Submit lifecycle'"* — when the alternative is restating a contract the platform owns. A name a
+  reader can search for is not a broken link; a path they cannot open is.
+
+**This revises §4.5's closing instruction.** Our old `main.lua` block committed **one** fault worth
+avoiding (its length), not two: its *"Compy Input API, 'Submit lifecycle'"* reference is exactly the
+tolerated form. Carried into `agents/rules/commenting.md`, "Citations".
