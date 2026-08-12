@@ -249,6 +249,59 @@ those lines — `isrepeat` in place of the stale test, `Key.*` in place of `INPU
 shortcuts in place of `reservedChord`/`appChord`, a poll in place of `help.lua`'s `INPUT.held.h` — is
 feature #77's migration and is reviewed as such.
 
+## 2.2 The inter-channel assumption, stated exactly
+
+**Owner, 2026-08-12:** *"What exactly was the inter-channel assumption in upstream?"*
+
+**The assumption is one line of `inputStale`, read from the wrong channel:**
+
+```lua
+function inputStale(k)
+  if INPUT.held[k] then return true end        -- <= THIS
+  ...
+end
+```
+
+`INPUT.held` is owned by the **`love.keypressed` channel** — set in `appKeypressed`, cleared in
+`appKeyreleased`. The two scenes call `inputStale` from their **`love.textinput`** handler. So a
+decision about a character is taken from state maintained by a different channel, and it is only
+correct if that channel has already run for *this* press.
+
+Written as the proposition the code needs to be true:
+
+> **At the moment `love.textinput(t)` arrives, `INPUT.held[baseKey(t)]` is false if this is the
+> first character of a press and true if it is a repeat.**
+
+That holds **iff `love.textinput` is delivered before its own `love.keypressed`**, which LÖVE does
+not define. Under the other order every press marks the key held first, so the very first character
+of every press reads as stale and is dropped — **nothing is ever accepted, the game is deaf**, which
+is the state the owner attested on desktop Linux (§1.2).
+
+**There is a second, smaller assumption in the same function, and it is about timing rather than
+order:**
+
+```lua
+  local up = INPUT.upRecent[k]
+  if not up then return false end
+  return DBG_FRAME - up <= INPUT_UP_GRACE      -- <= AND THIS
+```
+
+> **A repeat character trailing a release arrives within `INPUT_UP_GRACE` (1) frames of it, and
+> nothing the player does deliberately arrives that fast.**
+
+The first half is a guess about the OS's timing; the second is what makes it a defect in the other
+direction — a genuine press whose character lands inside that window is discarded (R3).
+
+**Both are removed by the same change, and neither is replaced by another assumption.** A claim is
+taken by the character itself, on its own channel, and released when the **device** reports the key
+up. Nothing reads state owned by another channel, and nothing is compared against a duration.
+
+**One place the same read is legitimate, for contrast** — `appKeypressed`'s own use of `inputStale`
+to filter OS repeats. There the reader and the state are on the *same* channel: a repeat
+`love.keypressed` necessarily arrives while its key is held, and a fresh one necessarily follows the
+release that cleared the flag. No ordering between channels is involved, so that call is sound
+(§2.1).
+
 ## 3. `alt.lua` — what it does with the events
 
 **Target:** `gaugeCurrent(ALT)` — **one item at a time**, either a single character (`"a"`, `"7"`,
@@ -999,6 +1052,23 @@ end
   `altBaseKey` keeps its name and its key-target branch and delegates the rest; `wordsBaseKey` keeps
   its name and delegates, which is also what fixes its missing shifted-symbol case.
 
+#### The poll's surface: `love.keyboard.isDown`, with a comment pointing at `Key.any_pressed`
+
+**Owner, 2026-08-12:** *"I would leave `love.keyboard.isDown` in the example code, for minimizing
+changes — but could add a comment recommending the switch."* **Adopted**, and there is a second
+argument for it the owner did not need to make: **upstream's `keyboard` is a standalone LÖVE
+program**, so a heal written in plain LÖVE can be offered to its author independently of feature
+#77's migration. A poll written as `Key.any_pressed` would carry the platform into a bugfix that
+does not need it.
+
+It is also consistent with the nearest precedent in the same file family: `help.lua`'s `helpHeld`
+already polls `love.keyboard.isDown("h")` directly, as the ladder's last rung, and Decision 32 ruled
+that poll correct. The new poll reads the same way.
+
+The comment carries what the code cannot: that `Key.any_pressed(k)` is the platform's form of this
+question, that it is what a Compy project should reach for, and that the plain call is kept here so
+the mechanism stays portable to the upstream program.
+
 **Whether the filter stays at the two call sites or moves above the dispatch is a real choice, and
 the smaller diff is to leave it.** Today `altTextinput` and `wordsTextinput` each open with
 `if spendGlyph(baseKey(ch)) then return end`. Leaving those lines means **no scene file changes at
@@ -1026,6 +1096,51 @@ And the delay has a cost that is not theoretical: for its whole window, a key th
 released stays claimed, so a **deliberate re-press of the same character inside 0.1 s is swallowed** —
 doubled letters in Words are exactly that keystroke. It also puts back a tuned constant, which is
 the thing being removed. **Declined, on the owner's own instinct.**
+
+### 9.5i `fn.ignore_repeat` on the keypressed hook — blocked by one exemption, and worth recording why
+
+**Owner, 2026-08-12:** *"`keypressed` taking no `isrepeat` argument caught my eye — could be a good
+candidate for an `ignore_repeat` wrapper on the hook (if repeat filtering is universal) — unless the
+game tries to *not* depend on the flag, assuming it could be disabled in OS settings?"*
+
+**The wrapper would work mechanically.** `compy.input.fn.ignore_repeat` wraps any handler with the
+`(k, sc, isr)` signature — `consoleController.lua:486` — and hooks receive exactly that, so
+`compy.input.hooks.keypressed = fn.ignore_repeat(appKeypressed)` is a legal registration.
+
+**But repeat filtering is not universal in this game, and the exception is authored, not ours.**
+Both baselines carry it:
+
+```lua
+-- upstream                                    -- merged tree
+if inputStale(k) and k ~= "capslock" then       if isr and k ~= "capslock" then
+  return end                                      return end
+```
+
+`capslock`'s release is not reliably delivered, so its **next press can arrive flagged as a
+repeat**; dropping that press would freeze `CAPS_STATE.on` on a lock the player actually toggled,
+and the decal would then lie for the rest of the session. A blanket wrapper on the hook removes the
+exemption and breaks the Caps estimate — **for every scene at once**, since the estimate is
+app-wide.
+
+**So the wrapper needs the exemption to move somewhere else first.** It could: `capslock` is not a
+modifier by `Key.is_mod`, so a bare `shortcuts.keypressed['capslock'] = fn.side_run(capsToggle)`
+is expressible and would run ahead of the hooks, leaving the hook free to be wrapped. That is a
+restructuring rather than a minimisation, it moves an app-wide estimate onto a different mechanism,
+and it is **not recommended inside this step** — recorded so the option is on file rather than
+rediscovered.
+
+**On the second half of the question — no, the game is not avoiding the flag deliberately.**
+Upstream never *received* it: `main.lua` forwards `love.keypressed(k)` with one argument, discarding
+`scancode` and `isrepeat`, and `appKeypressed`'s signature takes one parameter. It filtered repeats
+by held state instead, which is a filter of the same intent by a worse means. This branch's
+`f938fbc` is what widened the signature.
+
+**And the OS-settings worry does not bite.** If key repeat is disabled — by the user, or because
+`love.keyboard.setKeyRepeat(false)` was called — then no repeat `love.keypressed` events are
+generated at all, so `isrepeat` is simply never true and the filter is a no-op. The flag does not
+become *unreliable*; the events it describes stop existing. What varies by environment is whether
+repeats occur, and the filter is correct either way. (In Compy they do occur: `src/main.lua:297`
+enables key repeat globally for the console and editor.)
 
 ### 9.6 What I recommend, now that Option C is on the table
 

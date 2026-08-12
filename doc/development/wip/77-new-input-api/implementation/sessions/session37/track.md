@@ -525,3 +525,37 @@ patch towards upstream would look."*
   `inputUpdateMods`, `inputStale`, `INPUT.upRecent` and `INPUT_UP_GRACE` out; `GLYPH_CLAIMED`,
   `spendGlyph` and `inputTick` in; one line changed in each of the two scenes; the release handler
   reduced to dispatch. **Two tables and a tuned constant become one table cleared by the device.**
+
+## 2026-08-12 — the assumption named exactly; the poll stays plain LÖVE; ignore_repeat is blocked
+
+Three owner questions, all answered from code and written up (§2.2, §9.5h, §9.5i).
+
+- **What the inter-channel assumption WAS, exactly:** `inputStale` reads `INPUT.held[k]` — state
+  owned by the **keypressed** channel — while being called from the **textinput** handler. The
+  proposition the code needs is *"at `love.textinput` time, `INPUT.held[baseKey(t)]` is false for the
+  first character of a press and true for a repeat"*, which holds **iff `textinput` is delivered
+  before its own `keypressed`**. Under the other order the first character of every press reads as
+  stale and is dropped — total deafness, which is what the owner attested. **A second, smaller
+  assumption sits in the same function and is about TIMING, not order:** `upRecent` +
+  `INPUT_UP_GRACE` assumes a trailing repeat lands within one frame of the keyup and that nothing
+  deliberate arrives that fast — the half that produces R3's dropped press. **Both go, and neither
+  is replaced by another assumption:** the claim is taken by the character on its own channel and
+  released by the device.
+- **The poll stays `love.keyboard.isDown`, with a comment recommending `Key.any_pressed`** (owner).
+  A second argument for it, which I had not made: **upstream's `keyboard` is a standalone LÖVE
+  program**, so a heal written in plain LÖVE can be offered to its author independently of the #77
+  migration — writing the poll as `Key.any_pressed` would drag the platform into a bugfix that does
+  not need it. It also matches the nearest precedent: `helpHeld` already polls
+  `love.keyboard.isDown("h")` and Decision 32 ruled that correct.
+- **`fn.ignore_repeat` on the keypressed hook: mechanically legal, blocked by one exemption.** The
+  wrapper takes `(k, sc, isr)` and hooks receive exactly that. But repeat filtering is **not
+  universal here** — `capslock` is exempt in BOTH baselines (`k ~= "capslock"`), because its release
+  is unreliable, so its next press can arrive flagged as a repeat and dropping it would freeze the
+  app-wide Caps estimate. A blanket wrapper breaks the decal for every scene. It could be unblocked
+  by moving `capsToggle` to a bare `shortcuts.keypressed['capslock']` (legal — `capslock` is not a
+  modifier), but that is restructuring, not minimisation; **recorded, not recommended in this step.**
+- **No, the game is not avoiding `isrepeat` deliberately** — upstream never received it
+  (`main.lua` forwards `love.keypressed(k)`, one argument), and filtered by held state instead;
+  `f938fbc` widened the signature. **And the OS-settings worry does not bite:** if repeat is
+  disabled no repeat events are generated, so `isrepeat` is never true and the filter is a no-op —
+  the flag does not become unreliable, the events stop existing.
