@@ -105,6 +105,7 @@ reads.)*
 | D8 | in a timed game, `Alt+P`, then `Alt+P` again | pause on, pause off — once per press, and the pause survives a held key |
 | D8b | in a timed game, `Alt+Shift+P`, then `Alt+Shift+P` again | **[new]** also pauses and resumes. *(It stopped working during the migration and was restored — the fifth gesture of that family.)* |
 | D9 | `Ctrl+Esc` | quits the project back to the console (the framework's own chord). **Needs the IDE launch** — see "How to launch" |
+| D10 | in game 1 or 6 (no `onHint`), press `Ctrl+Alt+H` | **[new]** nothing happens: no knock, no miss, no sound |
 
 ### E — Caps Lock and the decals
 
@@ -130,7 +131,7 @@ reads.)*
 
 ### What a failure here means
 
-- **A2, A4, B2, B6, B9, B10, B11, B12, B13, C2, C5, D3, D5, D7, D8b, G1** are the new mechanism and its restorations. A failure is
+- **A2, A4, B2, B6, B9, B10, B11, B12, B13, C2, C5, D3, D5, D7, D8b, D10, G1** are the new mechanism and its restorations. A failure is
   a defect in the 2026-08-12 work — report it against
   `wip/77-new-input-api/validation/reviews/P-18-00-triage-and-plan.md`.
 - **E3** is a question, not a test: either answer closes it.

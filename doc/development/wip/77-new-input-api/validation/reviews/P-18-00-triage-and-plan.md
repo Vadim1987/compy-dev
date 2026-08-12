@@ -558,3 +558,11 @@ unmodified `input.lua`. **There is no seventh dropped gesture.** The whole parit
 **After P-18-21 the step has nothing left that this container can settle.** What remains is the human
 smoke pass — thirteen `[new]` rows, and **nothing in this work has ever run in a game scene, at any
 head, by anyone**.
+
+### Execution of the third batch
+
+| step | commit(s) | note |
+|---|---|---|
+| **P-18-19** the bare-modifier deltas | `80bca7b` | One line: the unconditional bare-Alt swallow becomes *a modifier's own press, while Alt is held and Ctrl is not* — which is what upstream's `appChord` did and what the classes cannot express. **Verified with the third review's own parity harness**: the diff over 105 fresh-press stimuli goes **3 rows → 0**, and on 105 repeats the only effect any stimulus produces is `capsToggle` for capslock, as upstream |
+| **P-18-20** the tidy batch | `f09f1e7` + platform `f09f1e7-docs` | Delegated (Sonnet, prompt `../prompts/P-18-20-tidy.md`, report `../outcomes/P-18-20-tidy.md`, no git state touched). Diff reviewed site by site; **one edit moved** — `main.lua`'s trailing orphan was deleted and its one real claim folded into `input.lua`'s header, where the registration choice is described. The stale `wordsBaseKey` comment, the debt entry's eleven → twelve, smoke row `D10`, and two comment-economy cuts |
+

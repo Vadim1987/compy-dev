@@ -1503,7 +1503,7 @@ changes.
 - **State:** a project that wants *"Ctrl+Alt+Up, and I do not care whether
   Shift is also down"* must register `ctrl+alt+up` **and**
   `ctrl+alt+shift+up`. `examples/keyboard` needs six such tolerant gestures
-  and pays **eleven** registrations for them (`input.lua`,
+  and pays **twelve** registrations for them (`input.lua`,
   `register_reserved`). Nothing is broken by this and every binding is
   explicit, which is the model's virtue.
 - **Why it is written down (2026-08-12):** the cost is not the typing, it is
@@ -1513,7 +1513,7 @@ changes.
   a second, and the sixth by a third — each time after a fix for the previous
   one had been written by someone who had just read the rule and the bindings
   together. That is three independent reviews to converge on one file's
-  eleven lines, and the register should say so before the next project
+  twelve lines, and the register should say so before the next project
   migrates.
 - **Shape, if it is ever answered:** a tolerance marker in the combo grammar
   (something like `'ctrl+alt+shift?+up'`), or a registration helper that
