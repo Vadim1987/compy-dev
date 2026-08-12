@@ -2170,7 +2170,13 @@ such; or wait for the general mechanism the owner has sketched (`technical_debt/
 chord that gates a state while it is held has no vocabulary"*), which is explicitly **not this
 release**.
 
-##### [S37] P-18-00 — DONE 2026-08-12; the step's children are P-18-01 … P-18-06
+##### [S37] P-18-00 DONE, and FOUR OF SIX CHILDREN LANDED 2026-08-12
+
+**Progress, so the table is read and not the memory:** `P-18-01` (`c60b818`), `P-18-01b`
+(`c1ee63c`), `P-18-02` + `P-18-03` (`c3388de`) are **done** in the nested repo, nothing pushed,
+platform suite untouched at 946 / 0 / 0 / 10. **Still owed: `P-18-04`, `P-18-05`, `P-18-06`** — all
+independent of each other, and each small. The execution record is §6 of
+`../P-18-00-triage-and-plan.md`.
 
 **The analysis pass is complete and the step is now decomposed.** Its two halves:
 `../P-18-00-keyboard-deepfix-design.md` (the design: exposition, requirements R1–R5, the derivation,

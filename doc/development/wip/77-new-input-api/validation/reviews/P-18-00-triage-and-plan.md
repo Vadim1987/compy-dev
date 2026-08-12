@@ -145,10 +145,10 @@ this repository has no tests.
 
 | id | task | depends on | notes |
 |---|---|---|---|
-| **P-18-01** | **The heal.** `spendGlyph` loses its grace branch; `INPUT.upRecent`, `INPUT_UP_GRACE` and the release-handler bookkeeping go; a once-per-frame release poll lands in `love.update`; `alt+*` claims its trigger; the header is rewritten to describe the adopted model | — | the sprint-blocking defect. **The chord claim is part of it**, not a follow-up: it is the same mechanism |
-| **P-18-02** | **Dissolve the `INPUT` proxy.** The table goes; its 8 readers ask `Key` directly — `appTextinput` ×3, `helpHeld` ×2, `keyboard_view` ×1, `alt.lua` ×2 | P-18-01 (which deletes `upRecent`, the proxy's only non-alias member) | mechanical once the heal has landed |
-| **P-18-03** | **`isMod` gains `Key.is_mod`'s body.** One line; five other files unaffected | — | independent |
-| **P-18-01b** | **The three restorations (§5).** The two extra combo bindings, and `Key.is_alt(k)` in the hook for the bare-Alt press | — | separable from the heal; one concern, one commit — behaviour restored, not changed |
+| ~~**P-18-01**~~ **DONE `c60b818`** | **The heal.** `spendGlyph` loses its grace branch; `INPUT.upRecent`, `INPUT_UP_GRACE` and the release-handler bookkeeping go; a once-per-frame release poll lands in `love.update`; `alt+*` claims its trigger; the header is rewritten to describe the adopted model | — | the sprint-blocking defect. **The chord claim is part of it**, not a follow-up: it is the same mechanism |
+| ~~**P-18-02**~~ **DONE `c3388de`** | **Dissolve the `INPUT` proxy.** The table goes; its 8 readers ask `Key` directly — `appTextinput` ×3, `helpHeld` ×2, `keyboard_view` ×1, `alt.lua` ×2 | P-18-01 (which deletes `upRecent`, the proxy's only non-alias member) | mechanical once the heal has landed |
+| ~~**P-18-03**~~ **DONE `c3388de`, same concern** | **`isMod` gains `Key.is_mod`'s body.** One line; five other files unaffected | — | independent |
+| ~~**P-18-01b**~~ **DONE `c1ee63c`** | **The three restorations (§5).** The two extra combo bindings, and `Key.is_alt(k)` in the hook for the bare-Alt press | — | separable from the heal; one concern, one commit — behaviour restored, not changed |
 | **P-18-04** | **`Ctrl+Alt+H` becomes a shortcut** with an `onHint` scene-descriptor entry (§0.1) — **RULED (A), owner 2026-08-12**. `fn.ignore_repeat` is mandatory; the handler claims its trigger | — | independent once ruled: the `Key` form it replaces is no longer on the table, so it no longer waits on P-18-02 |
 | **P-18-05** | **`compy.before_exit` restores relative mode**, and the false comment goes | — | independent; the platform-side question stays promoted, not answered here |
 | **P-18-06** | **Comments only.** `bubble.lua`'s focus caution (§0(a)); the capslock comment, whose stated reason no longer holds (RULE 3); the Shift-vs-Alt asymmetry the intro guard deliberately leaves (RULE 2) | — | the "deviation lives in the workspace" rule, discharged. **Shrunk by §5:** the two narrowings and the bare-Alt delta are now *restored* rather than documented |
@@ -305,3 +305,26 @@ proposal's `shown / closing / invisible` machine collapses into "the key is down
 up", asked of the device. Recorded because the reasoning matters more than the outcome: the flag
 version is not wrong, it is the same behaviour with a state machine standing where a device read
 does.
+
+---
+
+## 6. Execution record (session37, 2026-08-12)
+
+**Four of the six children landed**, in the nested repo, nothing pushed. Suite untouched throughout at
+**946 / 0 / 0 / 10** (no platform code); the app loads and runs under `love src play` after each.
+
+| step | commit | note |
+|---|---|---|
+| **P-18-01** the heal | `c60b818` | claim released by `inputTick`'s device poll in `love.update`; `upRecent`, `INPUT_UP_GRACE` and the release bookkeeping gone; `alt+*` and `alt+p` claim their trigger; header rewritten; two stale comments in `alt.lua`/`words.lua` corrected with the mechanism they describe |
+| **P-18-01b** the restorations | `c1ee63c` | `alt+shift+escape`, `ctrl+alt+shift+up/down` bound to the same hoisted handlers; `Key.is_alt(k)` restores the bare-Alt swallow. **No new behaviour — all three work as before the conversion** |
+| **P-18-02 + P-18-03** | `c3388de` | nine reads call `Key` directly, the proxy and its `REMARK` are gone, `isMod` gains `Key.is_mod`'s body. Delegated to a supervised Sonnet worker against `../prompts/P-18-02-03-proxy-and-ismod.md`; diff reviewed site by site here, its report in `../outcomes/P-18-02-03-execution.md` |
+
+**Left for the successor:** **P-18-04** (`Ctrl+Alt+H` → shortcut + `onHint`; `fn.ignore_repeat`
+mandatory; the handler claims its trigger), **P-18-05** (`compy.before_exit` restores relative mode,
+false comment goes), **P-18-06** (comments: `bubble.lua`'s focus caution, the capslock comment whose
+reason no longer holds, the Shift/Alt asymmetry the intro guard leaves).
+
+**Verification honestly stated:** every commit was smoked for load, and `inputTick` runs ahead of the
+debug `pcall` so a fault in it would crash the run. **No game scene was reached** — the container
+cannot inject keystrokes — so §4's three human items still stand, and the two most valuable are the
+fast tap of a target character and `Ctrl+Alt+H` with the modifiers released while `H` stays down.

@@ -787,3 +787,33 @@ preserve — and exactly the type of construction we want to get rid of."*
   is no longer on the table.
 - **All four rulings closed.** The plan is unblocked end to end: 01, 01b, 03, 04, 05, 06 can start
   immediately; 02 waits only on 01 (which deletes `upRecent`).
+
+## 2026-08-12 — EXECUTION: four children land, one of them delegated
+
+Owner approved the recommendation (do P-18-01 and P-18-01b here, then wrap), and mid-flight reminded
+me that **cold Sonnet workers are available for mechanical work, one at a time, supervised** — which
+is why two more children landed than planned.
+
+- **`c60b818` — P-18-01, the heal.** `spendGlyph` loses its grace branch; `INPUT.upRecent`,
+  `INPUT_UP_GRACE` and the release bookkeeping are gone; `inputTick` polls the claims once a frame in
+  **`love.update`** (not `updateStep` — it returns early while the help overlay is *held*, which is
+  ordinary use); `alt+*` and `alt+p` **claim their trigger key**, closing the Alt+H leak the game has
+  always had. Two comments in `alt.lua`/`words.lua` that described the old release rule were corrected
+  in the same commit — they explain the mechanism it changes.
+- **`c1ee63c` — P-18-01b, the restorations.** `alt+shift+escape` and `ctrl+alt+shift+up/down` bound to
+  the same hoisted handler values, and `Key.is_alt(k)` restores the bare-Alt swallow. **No new
+  behaviour: all three gestures work as they did before the combo conversion.** The Shift/Alt
+  asymmetry is left alone deliberately and says so in the comment.
+- **`c3388de` — P-18-02 + P-18-03, delegated.** Sonnet, model explicit, prompt of record
+  `../../../validation/prompts/P-18-02-03-proxy-and-ismod.md`, forbidden from touching git state, told
+  to leave the edits uncommitted. It did exactly the nine sites, deleted the proxy, retired **only**
+  the marker inside it, and gave `isMod` `Key.is_mod`'s body. **I reviewed the diff site by site
+  before committing** and checked the marker set and the residual greps myself. Its report is in
+  `../../../validation/outcomes/P-18-02-03-execution.md`.
+- **Committed as one concern**, with the reason stated: the proxy and `isMod` were both local copies
+  of what `Key` answers.
+- **A verification limit I did not paper over:** every smoke run reaches the intro and no further, so
+  the scene-level paths are reasoned. That `Key` resolves from project code is not new — the proxy
+  proved it, and one environment serves all of a project's files.
+- **WRAP:** report written; `session38/prompt.md` written (P-18-04/05/06, the two traps in P-18-04,
+  the human smoke items, and the Sonnet-worker pattern that worked); pointer repointed.
