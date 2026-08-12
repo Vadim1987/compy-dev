@@ -68,6 +68,15 @@ is deleted:
 
 - cite a **canonical doc** under `doc/` — never a path under
   `doc/development/wip/…`, which rots on deletion;
+- **never cite a platform doc from inside an example repository** (owner ruling,
+  2026-08-12). `src/examples/*` are separate repositories with their own
+  remotes and their own PRs: a `doc/…` path cannot be followed from a tree
+  that does not contain it, and shipping one into a third party's file is an
+  integrity problem, not a broken link. The same goes for platform-internal
+  identifiers — a decision number means nothing there. Say the thing in
+  place, briefly, or leave it out; the durable argument belongs in the
+  platform's own docs, which that repo's reader never sees. This outranks
+  the clause above, which was written for platform sources;
 - cite a **named section**, never "paragraph 3" or a line number;
 - when you rename or remove a heading, **grep `src/` and `tests/` for the old
   name**. A citation that no longer resolves is worse than none, because it

@@ -179,6 +179,11 @@ revisited"*. Words is that stage, and it arrived from upstream.
   not quietly redesign what it was asked to carry across. Its failure mode is a release lost to a
   focus change, and `bubbleGrow`'s own timeout pops the bubble a moment later: the child retries — an
   inconvenience, not a wedge. The caution is written where the handler is.
+- **A release and a re-press inside the same frame lose the second character.** Claims are cleared
+  only by `inputTick`, once per `love.update`, so a re-press with no update in between finds its
+  claim still standing. That is ~16 ms — below a deliberate keystroke, and the smoke row it would
+  threaten (`B5`, "press it again immediately") is a human *immediately* of 50-100 ms. It is the one
+  residue of clearing from the device rather than from an event.
 - **No test suite.** The repository has none, so everything here is reasoned or exercised by hand.
 
 ## Caps Lock
