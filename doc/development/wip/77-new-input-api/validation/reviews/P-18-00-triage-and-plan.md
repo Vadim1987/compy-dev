@@ -468,3 +468,9 @@ meaningless if anything lands after it.
   orders, and reached the strategic frame's answer independently: **+16 net code lines in `input.lua`
   retire an order-dependent stale filter, a frame counter and two bookkeeping handlers.** These
   children are adoption hygiene and two regressions, not a redesign.
+
+### Execution of the batch
+
+| step | commit(s) | note |
+|---|---|---|
+| **P-18-07** D1, the menu digit | `4d2c881` + platform `0b16d0b0` | `spendGlyph(k)` before `gotoScene(id)`. **Measured, fault and fix**, under real LÖVE against the real `menu.lua`/`scene.lua`/`input.lua` with the platform surface stubbed: keypressed-first order judged `"5"` before and nothing after; textinput-first was harmless before and stays so. Smoke row `A4`; the design of record gains the general rule (*whoever consumes a key owns it*) |

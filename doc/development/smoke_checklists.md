@@ -54,6 +54,7 @@ table, which changes nothing else.)*
 | A1 | launch; while the intro is still typing, press a **letter** | the typewriter jumps to the end |
 | A2 | relaunch; while it types, press **Alt alone** (nothing else) | **[new]** it keeps typing — Alt does *not* skip it |
 | A3 | relaunch; while it types, press **Shift alone** | it *does* skip. Known asymmetry, deliberate: upstream behaves this way |
+| A4 | from the menu press `4` to enter Alt characters; `Shift+Esc` back; press `5` to enter Words | **[new]** neither entry knocks — the first target of each is untouched, and Words' first word keeps its gauge unit. *(The digit used to be judged by the game it opened.)* |
 
 ### B — Alt characters (game 4): the main judging scene
 
@@ -121,7 +122,7 @@ table, which changes nothing else.)*
 
 ### What a failure here means
 
-- **A2, B2, B6, B9, B10, B11, B12, C2, C5, D3, D5, D7, G1** are the new mechanism and its restorations. A failure is
+- **A2, A4, B2, B6, B9, B10, B11, B12, C2, C5, D3, D5, D7, G1** are the new mechanism and its restorations. A failure is
   a defect in the 2026-08-12 work — report it against
   `wip/77-new-input-api/validation/reviews/P-18-00-triage-and-plan.md`.
 - **E3** is a question, not a test: either answer closes it.

@@ -93,6 +93,13 @@ Alt+H, then letting go of Alt, leaves `H` repeating and those characters are not
 The claim is released by the same poll as any other, so the suppression lasts exactly as long as the
 key is held.
 
+**The rule is not only about chords: whoever *consumes* a key owns it.** A scene transition consumes
+one too — `menuKeypressed` opens a game with `gotoScene` *inside the handler*, so on a
+keypress-first build the digit's own character arrives at the game just opened, whose first target is
+already live, and is judged as a typed answer. The menu therefore claims the digit before it
+switches. Upstream had no such leak only because its held set was written before the menu dispatch;
+the protection was incidental, and it left with the set.
+
 **`Ctrl+Alt+H`, the teacher chord, is one of these exact bindings** — it re-arms the active scene's
 hint through an `onHint` scene-descriptor entry, the way `Ctrl+Alt+Up` reaches `onNotch`, and only
 the Alt scene defines one. It was a hand-written three-key match inside that scene's `keypressed`.
