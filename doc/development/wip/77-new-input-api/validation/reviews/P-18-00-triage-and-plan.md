@@ -104,7 +104,7 @@ apply, and the same answer is available to every other scene-scoped binding the 
 - **1.26 — `bubble.lua`.** The cold pass recommends a polling conversion; **§0(a) overrides it.**
   Comment only.
 
-### Owner rulings needed before the work — RULE (4)
+### Owner rulings needed before the work — RULE (4) — **all four answered in §5**
 
 1. **The two narrowings that already landed and were never ruled** (inventory 1.8, §4.5). Combos are
    exact modifier sets, so **Alt+Shift+Esc no longer goes back** and **Ctrl+Alt+Shift+Up no longer
@@ -148,9 +148,10 @@ this repository has no tests.
 | **P-18-01** | **The heal.** `spendGlyph` loses its grace branch; `INPUT.upRecent`, `INPUT_UP_GRACE` and the release-handler bookkeeping go; a once-per-frame release poll lands in `love.update`; `alt+*` claims its trigger; the header is rewritten to describe the adopted model | — | the sprint-blocking defect. **The chord claim is part of it**, not a follow-up: it is the same mechanism |
 | **P-18-02** | **Dissolve the `INPUT` proxy.** The table goes; its 8 readers ask `Key` directly — `appTextinput` ×3, `helpHeld` ×2, `keyboard_view` ×1, `alt.lua` ×2 | P-18-01 (which deletes `upRecent`, the proxy's only non-alias member) | mechanical once the heal has landed |
 | **P-18-03** | **`isMod` gains `Key.is_mod`'s body.** One line; five other files unaffected | — | independent |
+| **P-18-01b** | **The three restorations (§5).** The two extra combo bindings, and `Key.is_alt(k)` in the hook for the bare-Alt press | — | separable from the heal; one concern, one commit — behaviour restored, not changed |
 | **P-18-04** | **`Ctrl+Alt+H` becomes a shortcut** with an `onHint` scene-descriptor entry (§0.1), or the minimal `Key` edit if the owner rules that way | RULE 4; P-18-02 for the `Key` form | |
 | **P-18-05** | **`compy.before_exit` restores relative mode**, and the false comment goes | — | independent; the platform-side question stays promoted, not answered here |
-| **P-18-06** | **Comments only.** `bubble.lua`'s focus caution (§0(a)); the two narrowings and the bare-Alt delta stated at their sites (RULE 1, 2); the capslock note or its removal (RULE 3) | RULE 1–3 | the "deviation lives in the workspace" rule, discharged |
+| **P-18-06** | **Comments only.** `bubble.lua`'s focus caution (§0(a)); the capslock comment, whose stated reason no longer holds (RULE 3); the Shift-vs-Alt asymmetry the intro guard deliberately leaves (RULE 2) | — | the "deviation lives in the workspace" rule, discharged. **Shrunk by §5:** the two narrowings and the bare-Alt delta are now *restored* rather than documented |
 
 **Not in P-18, recorded so it is not lost:** disabling global key repeat now that `before_exit`
 exists (inventory §4.1 — it changes *which events arrive* and would confound the smoke pass);
@@ -169,3 +170,131 @@ The cold pass named four; with §0's calibration the list is three, and one of t
    code drops); `Ctrl+Alt+H` then typing the hinted letter; and `Ctrl+Alt+H` **releasing the
    modifiers while H stays down** — no stray `h` reaches the target. That last one is the chord
    claim, and it is the only case in the game where the new mechanism is directly visible.
+
+---
+
+## 5. The four rulings, answered (owner, 2026-08-12) — three dissolve, one is a choice
+
+### RULE 1 — the two narrowings: **just register the extra combos.** No blocker exists.
+
+The owner asked whether the combos can simply be bound, and what it would take if not. **Nothing is
+in the way**, verified rather than assumed:
+
+- **There is no trigger blacklist.** `find_shortcut`
+  (`src/controller/projectInputController.lua:104-114`) refuses exactly one thing — a trigger that is
+  itself a modifier (`Key.is_mod(trigger)`, line 110). `escape` and `up` are ordinary triggers.
+- **`combo_string`** (`src/controller/controller.lua:402-411`) prepends whatever modifiers are held,
+  in `Key.mod_triples` order — **ctrl < alt < shift** (Decision 8). So the strings are
+  `'alt+shift+escape'` and `'ctrl+alt+shift+up'` / `'…+down'`, and `Key.normalize_combo` is exported,
+  so order and case are normalised on assignment anyway.
+- **The framework claims neither.** `escape` handling in `editorController`/`userInputController`
+  belongs to those routes, not to a running project; the game already binds `shift+escape` and it
+  works.
+
+**The exact restoration of upstream's two predicates is three more registrations:**
+
+```lua
+sc['shift+escape']      = back        -- } upstream: shift and NOT ctrl,
+sc['alt+shift+escape']  = back        -- } alt unconstrained
+sc['ctrl+alt+up']       = notch_up    -- } upstream: ctrl and alt,
+sc['ctrl+alt+shift+up'] = notch_up    -- } shift unconstrained
+sc['ctrl+alt+down']     = notch_down
+sc['ctrl+alt+shift+down'] = notch_down
+```
+
+(the handlers are the same values, bound twice — no new code, and `fn.stop_here(fn.ignore_repeat(…))`
+wraps each as before). **Resolved: bind them; the narrowings disappear rather than being accepted.**
+The cost is three lines of registration table; the gain is that no player-visible gesture changes.
+
+### RULE 2 — the bare-Alt delta: **restorable exactly, in one line, with no hand-rolled fold**
+
+*What it is, since the owner had not met it:* `intro.lua`'s typewriter animation finishes early on
+**any** keypress (`intro.lua:58-66`). Upstream, `appChord` swallowed a **bare Alt press** before the
+scene saw it, so Alt alone did not skip the intro. A combo class cannot swallow it — a modifier's own
+press names no combo (Decision 21, and `find_shortcut:110` is where it returns) — so after the
+conversion Alt alone skips the intro. Lone **Shift** already did, upstream and now.
+
+The cold pass said preserving it needs a hand-written `k == "lalt" or k == "ralt"`, which
+re-implements the fold. **That is out of date: `Key.is_alt(k)` exists and is exported**
+(`src/util/key.lua:171-173`, `:198`). So the guard is one line in `appKeypressed`, using the
+platform's own l/r fold:
+
+```lua
+if Key.is_alt(k) then return end   -- upstream's appChord swallowed a bare Alt press
+```
+
+**Resolved: restore it.** It is a regression, it is one line, and the line hard-codes nothing.
+Note what it deliberately does **not** do: it leaves lone Shift skipping the intro, because that is
+what upstream does — the asymmetry is the author's, not ours, and a comment says so rather than a
+second delta "fixing" it.
+
+### RULE 3 — capslock: **keep the current behaviour; only the comment is wrong**
+
+The owner asked to keep it, and that turns out to cost nothing at all: **the landed behaviour is
+identical to upstream's.** Upstream exempts `capslock` from its stale filter
+(`input.lua:124`), so every repeat already reaches `capsToggle` (`:130`); this branch exempts it from
+the `isrepeat` filter, so every repeat still reaches it. **There is no deviation to accept** — the
+flicker, if a platform repeats lock keys at all, is an upstream property that this feature neither
+introduces nor removes.
+
+**What must change is the comment**, which now states a reason that does not hold (§9.5i of the
+design document): the held set it protected is gone. The replacement says what is true — the
+exemption is inherited from upstream and preserved deliberately, and the estimate is corrected from
+`textinput` anyway (`capsReconcile`). **No observation is owed any more**; it moves from a blocking
+question to a curiosity.
+
+### RULE 4 — `Ctrl+Alt+H`, and the owner's help-overlay proposal (two different chords)
+
+**First, a distinction that the answer turns on**, because the two are easy to merge:
+
+| chord | what it does | where it lives |
+|---|---|---|
+| **Alt+H** | shows the **help overlay** while held | `help.lua`'s `helpHeld`, polled |
+| **Ctrl+Alt+H** | re-arms the **hint** in the Alt-keys scene | `alt.lua`'s hand-matched `if k == "h" and …` |
+
+RULE 4 was about the second. The owner's *"display on shortcut, closure on polling"* answers the
+first. Both are worth answering.
+
+**Ctrl+Alt+H — the two options.**
+
+- **(A) A real shortcut, dispatched per scene** — now unblocked by §0.1:
+  ```lua
+  sc['ctrl+alt+h'] = fn.stop_here(fn.ignore_repeat(function(k)
+    claim(k)                                   -- a chord owns its trigger
+    local s = SCENES[ACTIVE]
+    if s and s.onHint then s.onHint() end
+  end))
+  ```
+  plus `onHint = altHintReenable` in `alt.lua`'s descriptor — **exactly the shape `onNotch` already
+  has in this file**. It removes the game's last hand-matched combo (checklist Q8) and needs no
+  `leave` hook.
+- **(B) The minimal edit** — keep the hand-match in `altKeypressed`, and change only its two modifier
+  reads to `Key.ctrl()` / `Key.alt()`. Three characters of behaviour change, none of shape.
+
+**Recommendation: (A).** It is barely larger, it deletes the last hand-matched combo, and it uses a
+pattern already proven in the same file. (B) remains defensible under "minimise", and the owner's
+word settles it.
+
+**Alt+H — the owner's flag/state-machine proposal, assessed.** *"Display on shortcut, closure on
+polling… a feature flag `showHelp` set by the shortcut, checked and set to false by polling;
+`textinput` also checks it, rejecting `h` while active and maybe a few frames later."*
+
+The proposal is sound and cannot wedge (the poll always closes it). **But the claim mechanism from
+P-18-01 already delivers its every effect, with no flag, no states and no frame count:**
+
+- *"reject `h` while help is active"* — while the overlay is up, `appTextinput` already drops
+  **everything** (`helpOverlayShown()` gate). Nothing to add.
+- *"…and maybe a few frames later"* — this is the real problem: Alt released first, `H` still down,
+  its repeats now arriving as plain `h`. **The claim covers it exactly**: the `alt+*` handler claims
+  `h` when the chord is pressed, and the claim is released **when the device says `h` is up** — not
+  after *n* frames. A frame count here would be `INPUT_UP_GRACE` rebuilt, which is what P-18-01
+  deletes.
+- *"display on shortcut"* — the shortcut would fire (Alt+H is an Alt chord, so `alt+*` catches it),
+  but the display itself is **continuous state**, which Decision 32 answers with a poll; the landed
+  `helpHeld` is one line, holds no state, and self-heals.
+
+**Recommendation: keep the poll for display, and let P-18-01's chord claim do the rest** — the
+proposal's `shown / closing / invisible` machine collapses into "the key is down" and "the key is
+up", asked of the device. Recorded because the reasoning matters more than the outcome: the flag
+version is not wrong, it is the same behaviour with a state machine standing where a device read
+does.
