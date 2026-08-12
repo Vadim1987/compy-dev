@@ -380,6 +380,7 @@ document had to strike. **Measuring took one throwaway LÖVE script and 20 secon
 |---|---|---|
 | **P-18-04** `Ctrl+Alt+H` | `e6c8f97` | `sc["ctrl+alt+h"]` dispatched through a new `onHint` descriptor entry (only `alt.lua` defines one), the shape `onNotch` already has; `fn.ignore_repeat` wraps the action, `claimChord` sits outside it; the hand match leaves `altKeypressed` |
 | **P-18-05** the pointer mode | `6e58419` | `compy.before_exit` restores what `love.mouse.getRelativeMode()` reported at boot — measured in real LÖVE first, rather than restoring a hardcoded `false`; the comment claiming *"the runner restores it on exit"* is replaced by what actually happens |
+| **P-18-06** the comments | `c076e5f` | `bubble.lua`'s hold judge gets the focus-loss caution and the ruling that its timeout absorbs the failure; `intro.lua` gets the Shift/Alt asymmetry, in the scene whose behaviour it is (the hook already carried it at the guard). The capslock comment and `indicators.lua` had landed in `1f415c8` / `ece2c1b` |
 
 **Two behaviour changes accepted with P-18-04**, both written into
 `doc/development/internals/examples/keyboard.md` ("A chord owns its trigger key") and the code
