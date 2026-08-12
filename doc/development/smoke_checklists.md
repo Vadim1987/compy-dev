@@ -28,9 +28,9 @@ run** — a row that fails against a state nobody recorded costs a bisect.
 
 | what | ref | commit |
 |---|---|---|
-| `keyboard`, the branch under test | `newinput` (local, unpushed) | **`f09f1e7`** |
+| `keyboard`, the branch under test | `newinput` (local, unpushed) | **`e568961`** |
 | `keyboard` upstream it is diffed against | `origin/dsent/dev` | **`025e858`** |
-| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`7e009536`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`534bd174`** |
 | platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
 
 *(Re-pinned 2026-08-12 after P-18-19/20 — the last three behavioural differences against upstream
