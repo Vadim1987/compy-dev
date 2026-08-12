@@ -856,3 +856,27 @@ landed.** 9 findings. Details in §7 of the triage; the three that mattered were
 - **The pattern to carry:** twice this session a claim about library or platform behaviour, written
   from expectation instead of measurement, propagated into code or documents. Both were cheap to
   measure. The revalidation earned its cost several times over.
+
+## 2026-08-12 — the human gate gets a written form, and the wrap is redone
+
+Owner, on finding no smoke doc existed: *"find the step where I will be smoke-testing examples; write
+a specific smoke-testing scenario for keyboard… literally a checklist for me to run."*
+
+- **Nothing existed** — searched: no smoke checklist anywhere, only `tests.md`'s coverage map and the
+  design note's design-flavoured list. The step that owns the owner's smoke testing is **Phase G**
+  (PR assembly, then review and smoke pass) and **§16.3**, where each detached repo's PR *"only gate
+  is a human smoke pass"*.
+- **Created `doc/development/smoke_checklists.md`** — **persistent**, so it outlives `wip/77`, one
+  section per example. `keyboard`'s is a literal run sheet: launch commands, the eight menu entries
+  **by number**, then A intro · B Alt characters · C Words · D reserved chords and help overlay ·
+  E Caps Lock · F untouched scenes as regression · G on the way out. **Ten cases marked `[new]`** —
+  the acceptance mechanism, never run by a human. Two rows are honest about not being tests: the
+  capslock flicker (a question either answer closes) and the pointer mode (known-open, P-18-05).
+- **Referenced from four places so it cannot be lost:** `tests.md` (what no suite here reaches),
+  Phase G, the P-18 step, and the design note — whose own checklist became a **pointer plus the four
+  cases the design turns on**, so there is one list to keep current instead of two that drift.
+- **Wrap redone:** the report gains an addendum (the `isMod` fix, the revalidation and its three
+  corrections, the rewritten design of record, the smoke doc, and the lesson that the same
+  expectation-over-measurement fault fired twice in one session); `session38/prompt.md` gains the
+  checklist as the successor's gate with the rule that a mechanism change updates it in the same
+  commit; `keyboard` is at **`ece2c1b`**, not `c3388de`.

@@ -79,10 +79,16 @@ order-dependent cases, **P-13** harmony revalidation, and **P-11**'s comment swe
 
 ## What a human owes, and you cannot do it
 
-Three items, in the triage's §4. This container cannot inject keystrokes and has no device, so every
-smoke pass so far verified **loading**, never a game scene. The two that matter most: **a fast tap of
-a target character registers** (the case the old code dropped), and **`Ctrl+Alt+H` with the modifiers
-released while `H` stays down** — no stray `h` reaches the target. Ask for them; do not claim them.
+**The checklist exists now: `doc/development/smoke_checklists.md`, `keyboard`'s section.** It is
+persistent (it outlives `wip/77`), it lists the eight menu entries by number, and **ten cases are
+marked `[new]`** — they exercise the acceptance mechanism and have never been run by a human. This
+container cannot inject keystrokes and has no device, so every smoke pass so far verified **loading**,
+never a game scene. Ask the owner to run it; do not claim any of it.
+
+**If you change an example's input mechanism, update its list in the same commit** — that rule is
+written into the document, and a checklist that tests a mechanism the code no longer has is worse than
+none, because it passes. **P-18-04 and P-18-05 both add cases**: the hint re-arm through its new
+shortcut, and the pointer mode being restored on exit (row G1 is currently written as *known open*).
 
 ## Standing constraints
 
