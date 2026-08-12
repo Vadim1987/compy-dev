@@ -80,7 +80,8 @@ Press Ctrl-Esc to exit
 ```
 
 `BUILD.md` was right: the source root is not a runnable project, and **this sprint's smoke command
-for maze is dead until the owner rules §4's first item.** (The platform's error path there is its own
+for maze is dead, and §4.3 records the replacement the owner ruled (build, then play the emitted
+project) — measured working.** (The platform's error path there is its own
 small finding — it feeds the *message* "main.lua does not exist" into the Lua compiler and reports
 the syntax error of that sentence. Not this step's business; worth someone's.)
 
@@ -147,11 +148,9 @@ promise. Two environment facts a successor must not rediscover:
   not ours; noted because a count in a document is a claim like any other, and the next reader will
   otherwise think something regressed.
 
-**Still open, and the owner names it so:** whether the platform's testing philosophy transfers.
-Feature #77 preferred **behavioural, observable** tests over structural ones; whether that is right
-for a project suite that today characterises a *command core* (a pure function over text) is not
-self-evident, and input is exactly the part that is hardest to observe headlessly. Decide it in step
-C, with the analysis in hand, rather than now.
+**Settled by the owner, 2026-08-12 — the suite does NOT grow (§4.4).** The 42 assertions stay a
+regression fence; no input behaviour gets suite coverage, so the human smoke pass is the only gate
+this step has.
 
 ---
 
@@ -166,17 +165,63 @@ C, with the analysis in hand, rather than now.
 - **NEVER push**, this repo or the nested three. Commit locally, one concern per commit, suite stated
   in every message even when untouched.
 
-## 4. The rulings still owed, carried from the assessment §4.3
+## 4. The rulings — ANSWERED (owner, 2026-08-12)
 
-The fork settles ruling 1 (the merge). Four remain, and none is taken here:
+The fork settled the merge. The rest were put to the owner and answered:
 
-- **What replaces the smoke command.** `BUILD.md`: *"the source root has no `main.lua`, so it is not
-  itself a runnable project."* `love src play src/examples/maze` will not work on the new branch.
-  And `.compy/build` appears nowhere in `/repo/src` or `/repo/doc` — it is upstream's convention.
-- **Is `draw` in scope?** It shares `core_editor.lua`, so the required editor migration reaches it
-  whether or not anyone rules it in; its own `is_shift_down`, its Tab poll and its slice are a
-  deliberate widening.
-- **The menu-digit question** (`keyboard`'s D1 class) — needs driving in the real tree, not asserting.
-- **The two owner `REMARK:`s**, both in the deleted `main.lua`; one of them —
-  *"can we try using shortcuts/hooks and callbacks more actively?"* — is answered by this step's own
-  output, and the marker gate reaches nested repos.
+### 4.1 `<` STAYS. We add the capability; we do not delete the author's command.
+
+**Ruled: agreed.** The author's `TEMPORARY` comment asks for `<` to be removed once Shift+Esc
+reaches a program from an active field, and this feature makes that true — but `<` is a **command in
+the game's language**, so deleting it is a change a child would notice, and §1.1 forbids it. We
+**register `shift+escape`** (pure added capability, breaks nothing) and **leave `<` in place**; the
+PR reports to the author that their stated condition is now met. **The deletion is theirs to make in
+their own repo.**
+
+### 4.2 `draw` IS in scope
+
+**Ruled: yes.** Cheaper than it looked: the cold inventory established that **`ctrl_pressed` is
+structurally always `nil` in DRAW** (`controls.lua` is MAZE-only, and is the only file that assigns
+it), so `drawGameKey`'s fallback is dead code and draw's whole in-game keyboard surface is the editor
+field, the Escape branch and the Tab poll. Its 8 sites are mostly duplicates of maze's.
+
+### 4.3 The smoke path — build and play the emitted project. MEASURED, works.
+
+```sh
+cd src/examples/maze && ./.compy/build /abs/scratch/emit
+cd /repo && timeout 25 xvfb-run -a stdbuf -oL -eL love src play /abs/scratch/emit/maze
+```
+
+Both programs load and run this way — *"Project play opened" / "Running 'play'"*, no raise
+(2026-08-12). **The source root itself stays unplayable, by upstream's design.** The larger
+question — *should the platform implement the `.compy/build` convention?* — is **promoted, not
+answered here**: the string appears nowhere in `/repo/src` or `/repo/doc`, so today it is upstream's
+own convention (or the `dsent` fork's), and adopting it is a packaging decision, not an input one.
+
+### 4.4 The suite does NOT grow (owner)
+
+**Ruled:** *"let's not grow the suite — if the author wanted to test input they would drop in at
+least some tests. Adding them just during development and deleting before the PR would likely be an
+overkill."*
+
+**What follows, and it must be stated because it is a real consequence:** the existing 42 assertions
+stay a **regression fence** (run `./verify.sh` at every commit — it is free and it is theirs), but
+**no input behaviour will be covered by any suite**. So **input correctness rests entirely on the
+human smoke pass**, exactly as it did for `keyboard`. That makes `doc/development/smoke_checklists.md`
+the only gate this step has, and writing maze's section is therefore **step-D work, not a nicety** —
+with the launch commands from §4.3, since the old one no longer works.
+
+### 4.5 The two `REMARK:`s — both discharged, neither re-planted
+
+Both lived in `main.lua`, which `newinput-edge` does not contain, so the marker gate is satisfied
+with nothing to sweep. Their content:
+
+- *"can we try using shortcuts/hooks and callbacks more actively?"* — **owner: a hint of direction,
+  now superseded by the adoption guide.** `input_adoption.md` is the instrument that answers it, and
+  step C runs on it. Nothing further owed.
+- *"comment `*tooo*` verbose. simplify/compress"* — editorial, and it pointed at **our own** ~21-line
+  comment block above `open_editor_input`/`rearm_input` (written by `790ac19`, rewritten by
+  `d2ce7a0`). **It survives the fork as a constraint on the comments the new migration writes**, not
+  as a marker to re-plant — and it agrees with `agents/rules/commenting.md`'s size rule. Note the
+  same block also referenced the platform guide by title, which the 2026-08-12 citation ruling now
+  forbids in an example repo: **do not reproduce either fault in `core_editor.lua`.**
