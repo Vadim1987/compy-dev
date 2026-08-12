@@ -3,6 +3,11 @@
 **Commissioned:** 2026-08-12, session37, by the owner. **Model: Opus, passed explicitly.**
 **Mode: read-only research.** The agent writes exactly one file and changes nothing else.
 
+**HARD SAFETY RULE:** do not `checkout`, `switch`, `stash`, `merge`, `reset` or otherwise touch the
+working tree of **any** repository, here or in the nested example repos. Both this repo and
+`src/examples/keyboard` are mid-work on live branches, and moving either would destroy work. Read
+history with `git show` / `git grep` against a ref, which needs no checkout.
+
 **Why cold:** this branch has already migrated the example once. That work must not anchor the
 answer. The question is *"what would we do if none of it had happened"*, so the agent works from
 **upstream** and from the platform's current API, and is told nothing about what landed.
@@ -51,8 +56,10 @@ then every file that touches input — `git grep -nE "love\.(keyboard|mouse|text
    raised for the owner" list.
 2. **Minimise the change.** Prefer the smallest edit that adopts the mechanism. Do not restructure,
    rename, or tidy. Keep the project's own names and vocabulary; do not introduce yours.
-3. **The example must keep working as a standalone LÖVE program where it already does.** Where a
-   change would make it depend on Compy unnecessarily, say so and weigh it.
+3. **Soft preference, not a requirement:** where two adoptions are otherwise equal, the one that
+   leaves the game working as a plain LÖVE program is mildly preferable. **Nobody has asked for
+   standalone-ness** — it was invented in-session as a tie-breaker for one call and is recorded here
+   at that weight. Never trade a clearer adoption for it, and do not let it shape the inventory.
 4. **Verify in code.** Every claim names a file and a line at the upstream ref. Do not infer
    behaviour from comments — the comments are the author's claims, and at least one of them
    describes a platform that has since changed.
