@@ -711,3 +711,40 @@ Commissioned per the owner: Opus, model passed explicitly, read-only, baselined 
   - **`Key.is_mod` is exported but undocumented** in `doc/input_api.md` — a platform doc gap, P10's.
 - **Sequencing honoured (owner's insistence):** no triage started while the agent ran, and none
   begun yet. Part 2 is next and is mine.
+
+## 2026-08-12 — the triage, and P-18 decomposes into six children
+
+Owner cleared the way with two calibrations and a technique, then said run it. Written to
+`../../../validation/reviews/P-18-00-triage-and-plan.md`.
+
+- **Calibration (a): focus loss is not catastrophic, and is not on its own a reason to change code**
+  — *"many examples tolerate this risk … if the said risk is the only reason, I'd rather leave a
+  comment with a warning."* **Calibration (b): a risk cleared by repeating the chord is an
+  inconvenience, not a harmful degradation.**
+- **They move exactly one item and re-justify two.** `bubble.lua`'s hold judge is **downgraded from
+  convert to comment-only** — its only failure is a lost release, and `bubbleGrow`'s timeout pops the
+  bubble by itself, so the cost is a pop the child can retry. `helpHeld` **keeps its change but loses
+  the wedge argument**: it stands because `INPUT.held` is deleted by the adoption and a poll is the
+  sanctioned answer, not because of focus. And **the heal must NOT be argued from focus at all** —
+  its case is ordinary typing, where clearing a claim on release admits a trailing repeat as a
+  **wrong answer the player did not type**, which is exactly what `INPUT_UP_GRACE` was built for.
+- **The scene-scoping blocker dissolves, and the precedent is in the file itself.** The owner named
+  the technique (balloons swaps handlers by mode); balloons does it as `game_state_router` →
+  `map[game_state](...)`, pong as `key_actions[S.state][k]` — and **`notchAdjust` in this very
+  `input.lua` already does it**: a globally-registered shortcut whose action is looked up on the
+  active scene through `onNotch`. So `Ctrl+Alt+H` needs no `leave` hook and no restructuring: register
+  globally, dispatch through an `onHint` descriptor entry. §4.3's objection does not apply.
+- **Triage verdicts:** 7 KEEP, 5 COMPLETE, 6 DO, 2 REVISE, 4 RULE. The cold pass **independently
+  reproduced** what landed for the reserved chords — same three shortcuts, same
+  `stop_here(ignore_repeat(...))` — which is the strongest evidence yet that the migration's shape
+  was right.
+- **A correction to my own §9.5h:** the release poll belongs in `love.update`, **not** in
+  `updateStep` beside `pastelTick`. `updateStep` returns early on `PAUSED` and on
+  `helpOverlayShown()`, and the help overlay is *held* Alt+H — so a claim would outlive its key in
+  the ordinary way that overlay is used, not in a corner case. The cold pass caught it.
+- **P-18 now has six children**, dependency-ordered: **01** the heal (with the chord claim, which is
+  the same mechanism and not a follow-up) · **02** dissolve the proxy (8 readers) · **03** `isMod` ·
+  **04** `Ctrl+Alt+H` · **05** `before_exit` · **06** comments. Bound into §15.4.
+- **Four rulings wanted before P-18-01 starts:** the two landed-but-unruled narrowings (Alt+Shift+Esc
+  and Ctrl+Alt+Shift+Up stopped working), the bare-Alt delta in the intro, the capslock exemption
+  (settled by one observation), and whether Ctrl+Alt+H becomes a shortcut.

@@ -2170,7 +2170,21 @@ such; or wait for the general mechanism the owner has sketched (`technical_debt/
 chord that gates a state while it is held has no vocabulary"*), which is explicitly **not this
 release**.
 
-##### [S37] P-18-00 — the step's own analysis and design pass, IN PROGRESS
+##### [S37] P-18-00 — DONE 2026-08-12; the step's children are P-18-01 … P-18-06
+
+**The analysis pass is complete and the step is now decomposed.** Its two halves:
+`../P-18-00-keyboard-deepfix-design.md` (the design: exposition, requirements R1–R5, the derivation,
+and the mechanism the owner and this session settled) and
+`../P-18-00-triage-and-plan.md` (the triage: a cold Opus inventory of what upstream needs, from
+`../outcomes/P-18-00-adoption-inventory.md`, set against what this branch already landed, and the
+task list). **Four owner rulings are named there and are wanted before P-18-01 starts.**
+
+The children, dependency-ordered: **P-18-01** the heal (claim released by a device poll; the chord
+claims its trigger; header rewritten) · **P-18-02** dissolve the `INPUT` proxy, 8 readers ask `Key` ·
+**P-18-03** `isMod` gains `Key.is_mod`'s body · **P-18-04** `Ctrl+Alt+H` becomes a shortcut ·
+**P-18-05** `compy.before_exit` restores relative mode · **P-18-06** the comment work.
+
+##### [S37] P-18-00 — the step's own analysis and design pass — the record of the pass
 
 **Document: `../P-18-00-keyboard-deepfix-design.md`** (same directory as this plan's siblings under
 `validation/reviews/`). It carries **the agenda for the whole step** — the seven items and the one

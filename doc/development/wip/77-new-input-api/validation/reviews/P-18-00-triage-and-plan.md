@@ -1,0 +1,171 @@
+# P-18-00 part 2 — triage: the cold inventory against what landed, and the P-18 task list
+
+**Written:** 2026-08-12, session37, after the cold inventory returned
+(`../outcomes/P-18-00-adoption-inventory.md`, 26 sites). **Sequential by the owner's insistence:**
+no triage was begun while the agent ran, because you cannot judge what landed without first knowing
+what is minimally needed.
+
+**Baselines.** The inventory is against **upstream** (`origin/dsent/dev`). "Landed" below means the
+merged tree at `ca6d5df`, i.e. upstream plus this branch's 13 migration commits plus the merge's
+correction. **Verdicts** are: **KEEP** (landed and right), **COMPLETE** (landed halfway, finish it),
+**REVISE** (landed and wrong or superseded), **DO** (not landed), **RULE** (owner's, before the work).
+
+---
+
+## 0. Two owner calibrations applied throughout (2026-08-12)
+
+**(a) Focus loss is not a catastrophe, and is not on its own a reason to change code.** *"Many
+examples tolerate this risk. If the said risk is the only reason for some change, I'd rather not
+enforce the change — just leave a comment with a warning."*
+
+**(b) A risk cleared by repeating the chord is an inconvenience, not a harmful degradation.**
+
+Applied, these move exactly one item and re-justify two:
+
+- **1.26 (`bubble.lua`'s hold judge) is downgraded from "convert" to "comment only."** Its only
+  failure is a release lost to focus change, and `bubbleGrow`'s timeout pops the bubble by itself —
+  a child who let go inside the band gets a pop, which is an inconvenience cleared by trying again.
+  **Do not convert it**; leave a comment naming the risk. This also keeps `bubble.lua` — the owner's
+  "let bubble drive on its own channels" — untouched, and preserves the game's only `keyreleased`
+  consumer.
+- **1.17 (`helpHeld`) keeps its change but loses that justification.** The wedge the inventory calls
+  the highest-value line is focus-shaped, and it is cleared by pressing and releasing `h` again — an
+  inconvenience by (b). **The change stands on a different ground and would stand without the
+  wedge:** `INPUT.held` is deleted by the adoption, so this reader must ask something else, and a
+  poll is the sanctioned answer for continuous state (Decision 32).
+- **The settled claim fix does NOT rest on focus loss and must not be argued that way.** Its
+  load-bearing case is ordinary typing: clearing a claim on `love.keyreleased` admits a trailing
+  repeat character as a fresh one — **a wrong answer the player did not type**, in normal play, and
+  precisely what upstream's `INPUT_UP_GRACE` was built to prevent. The device poll is what lets that
+  window go without admitting the phantom. Focus loss is a bonus, not the case.
+
+## 0.1 The scene-scoping blocker dissolves — the owner named the technique, and this game already uses it
+
+The inventory blocked `Ctrl+Alt+H` as a shortcut (§1.21, §4.3) because `compy.input.shortcuts` is
+project-global while the binding is scene-local, and `scene.lua` has `enter` but no `leave`.
+
+**The owner's pointer is right and the precedent is closer than either of us said.** `balloons`
+registers once and dispatches through a state-indexed table (`game_state_router`, `main.lua:71-78`:
+`map[game_state](...)`); `pong` does the same with `key_actions[S.state][k]` (`main.lua:315-320`).
+**And this very file already does it:** `notchAdjust` (`input.lua`) is a globally-registered
+`ctrl+alt+up/down` shortcut whose action is looked up on the active scene —
+`local s = SCENES[ACTIVE]; if s and s.onNotch then s.onNotch(delta) end`.
+
+So nothing needs unregistering and no `leave` hook is required: **register globally, dispatch
+per-scene through the descriptor**, exactly as `onNotch` does. `Ctrl+Alt+H` becomes a shortcut whose
+handler calls an `onHint` entry that only `alt.lua` defines. §4.3's restructuring objection does not
+apply, and the same answer is available to every other scene-scoped binding the inventory listed.
+
+---
+
+## 1. The triage, site by site
+
+### Already landed and right — KEEP (7)
+
+| site | what landed | note |
+|---|---|---|
+| **1.5** `modHeld` | deleted | P14e |
+| **1.7** `inputUpdateMods` | deleted | P14e |
+| **1.8** `reservedChord` → three shortcuts | landed **exactly** as the cold pass specifies, `fn.stop_here(fn.ignore_repeat(...))` and all | independent confirmation: the wrapper is **mandatory**, not decoration — shortcuts see every repeat |
+| **1.11** repeat filter | `if isr and k ~= "capslock" then return end` | the cold pass reaches the same minimal edit, exemption verbatim |
+| **1.11** mirror lines | `INPUT.held`, `inputUpdateMods`, `reservedChord`, `appChord` calls deleted | |
+| **1.19 / 1.24** the two `textinput` guards | both call the claim check | mechanism still changes under them (P-18-01); the **sites** are right |
+| **1.9** Alt class | `alt+*` + exact `alt+p`, both `stop_here` | the cold pass calls the split "legitimate"; it is what landed |
+
+### Landed halfway — COMPLETE (5)
+
+| site | landed | what is missing |
+|---|---|---|
+| **1.2** the `INPUT` table | became a **metatable proxy** returning `Key.shift/ctrl/alt` | the table itself, and its 8 remaining read sites, still exist. The proxy is a halfway house — it was always meant to be dissolved (P18's own material) |
+| **1.10 / 1.3 / 1.4 / 1.12** the claim machinery | `GLYPH_CLAIMED` + `spendGlyph` exist and are called from both scenes | **the release rule is still the old one**: `INPUT.upRecent`, `INPUT_UP_GRACE`, the frame stamp and the release-handler bookkeeping are all still there. This is the heal |
+| **1.13** `appTextinput` | reads go through the proxy | direct `Key.alt()/ctrl()/shift()` when the proxy dies |
+| **1.17** `helpHeld` | polls `love.keyboard.isDown("h")` | its two modifier reads still go through the proxy |
+| **1.1** the header | rewritten once for the migration | must be rewritten **again** for the settled fix, which contradicts parts of it |
+
+### Not landed — DO (6)
+
+| site | edit |
+|---|---|
+| **1.6** `isMod` | replace the body with `Key.is_mod(k)`; the game keeps its own name and the five other call sites (1.25) do not move |
+| **1.9** the chord claim | `alt+*` must **claim its trigger key** — this is the Alt+H leak, live today |
+| **1.14** `setRelativeMode` | add `compy.before_exit` restoring it; the comment claiming the runner does it is **false** |
+| **1.16** the release poll | once per frame — and see the correction in §2 |
+| **1.18 / 1.22 / 1.23** three draw-time `INPUT.shift` reads | `Key.shift()` — rides with the proxy dissolution |
+| **1.21** `Ctrl+Alt+H` | now a real shortcut, per §0.1 |
+
+### Landed differently, or superseded — REVISE (2)
+
+- **1.15 — `main.lua`'s three `love.*` wrappers.** The cold pass recommends **keeping** them (they
+  are auto-seeded as hooks; smallest edit; keeps the game plain-LÖVE). This branch **deleted** them
+  and registers the hooks explicitly in `input.lua`. Both work. The landed form is more explicit and
+  is already documented in the file header; the cold form is smaller and preserves the soft
+  standalone preference the owner has since demoted. **Recommendation: keep what landed**, and note
+  that the choice was made — no revert. *(Listed as REVISE only because the two passes disagree.)*
+- **1.26 — `bubble.lua`.** The cold pass recommends a polling conversion; **§0(a) overrides it.**
+  Comment only.
+
+### Owner rulings needed before the work — RULE (4)
+
+1. **The two narrowings that already landed and were never ruled** (inventory 1.8, §4.5). Combos are
+   exact modifier sets, so **Alt+Shift+Esc no longer goes back** and **Ctrl+Alt+Shift+Up no longer
+   notches**. Upstream both worked. Neither gesture is documented anywhere in the game. *My
+   recommendation: accept, and state it in the file — a narrowing is a change; say it or do not do
+   it.*
+2. **The bare-Alt delta** (inventory 1.9, §4.4). `'alt+*'` cannot swallow a lone Alt press, so Alt
+   alone now finishes the intro typewriter — as lone Shift already did upstream. Preserving it would
+   need a hand-written `k == "lalt" or k == "ralt"` test, which re-implements the fold and hard-codes
+   the modifier set. *Recommendation: accept and state it; do not write the test.*
+3. **The capslock exemption** (inventory §4.2). Its stated reason dies with the held set, and it now
+   lets every repeat reach `capsToggle`, so a **held** capslock flickers the estimate. Settled by one
+   observation a human can make in a minute: hold `capslock` and watch the decal. *Recommendation:
+   drop the exemption if the observation shows repeats; otherwise drop it as vestigial anyway — but
+   it is player-visible in a pathological case, so it is yours.*
+4. **`Ctrl+Alt+H` as a shortcut, now that §0.1 unblocks it** — versus the minimal `Key.ctrl()/alt()`
+   edit that keeps the hand-match. *Recommendation: the shortcut with an `onHint` descriptor entry,
+   mirroring `onNotch`, because it removes the last hand-matched combo in the game and uses the
+   game's own pattern.*
+
+---
+
+## 2. One correction to my own earlier recommendation
+
+§9.5h of the design document put the claim-release poll in `updateStep`, "beside `pastelTick`". **The
+cold pass is right that it belongs in `love.update` instead** (inventory 1.10, 1.16): `updateStep`
+returns early on `not DREW_ONCE`, on `PAUSED` and on `helpOverlayShown()`, and a claim that is not
+released while the help overlay is up would outlive its key — the overlay is *held* Alt+H, so this
+is not a corner case, it is the ordinary way that overlay is used.
+
+---
+
+## 3. The plan: P-18-01 … P-18-06
+
+Ordering is dependency-driven, not preference. Each is one commit unless it says otherwise; the suite
+is not affected (no platform code), and the gate for every one of them is a human smoke pass, because
+this repository has no tests.
+
+| id | task | depends on | notes |
+|---|---|---|---|
+| **P-18-01** | **The heal.** `spendGlyph` loses its grace branch; `INPUT.upRecent`, `INPUT_UP_GRACE` and the release-handler bookkeeping go; a once-per-frame release poll lands in `love.update`; `alt+*` claims its trigger; the header is rewritten to describe the adopted model | — | the sprint-blocking defect. **The chord claim is part of it**, not a follow-up: it is the same mechanism |
+| **P-18-02** | **Dissolve the `INPUT` proxy.** The table goes; its 8 readers ask `Key` directly — `appTextinput` ×3, `helpHeld` ×2, `keyboard_view` ×1, `alt.lua` ×2 | P-18-01 (which deletes `upRecent`, the proxy's only non-alias member) | mechanical once the heal has landed |
+| **P-18-03** | **`isMod` gains `Key.is_mod`'s body.** One line; five other files unaffected | — | independent |
+| **P-18-04** | **`Ctrl+Alt+H` becomes a shortcut** with an `onHint` scene-descriptor entry (§0.1), or the minimal `Key` edit if the owner rules that way | RULE 4; P-18-02 for the `Key` form | |
+| **P-18-05** | **`compy.before_exit` restores relative mode**, and the false comment goes | — | independent; the platform-side question stays promoted, not answered here |
+| **P-18-06** | **Comments only.** `bubble.lua`'s focus caution (§0(a)); the two narrowings and the bare-Alt delta stated at their sites (RULE 1, 2); the capslock note or its removal (RULE 3) | RULE 1–3 | the "deviation lives in the workspace" rule, discharged |
+
+**Not in P-18, recorded so it is not lost:** disabling global key repeat now that `before_exit`
+exists (inventory §4.1 — it changes *which events arrive* and would confound the smoke pass);
+`Key.is_mod` being undocumented in `doc/input_api.md` (§4.6 — **P10's**, a platform doc gap); and
+`main.lua`'s own `TODO(root-access)`, which is the author's.
+
+## 4. What the smoke pass owes a human
+
+The cold pass named four; with §0's calibration the list is three, and one of them is new:
+
+1. **Caps reconciliation after the source change** (inventory 1.13). `capsReconcile` will read the
+   device *now* where the mirror read the edge; press and release Shift quickly while typing letters
+   and watch whether the decal and the keycap case ever disagree with what was typed.
+2. **Hold `capslock`** and watch the decal (RULE 3) — settles the exemption.
+3. **The Alt scene end to end**: a fast tap of the target character registers (the case the shipped
+   code drops); `Ctrl+Alt+H` then typing the hinted letter; and `Ctrl+Alt+H` **releasing the
+   modifiers while H stays down** — no stray `h` reaches the target. That last one is the chord
+   claim, and it is the only case in the game where the new mechanism is directly visible.
