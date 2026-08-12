@@ -28,15 +28,15 @@ run** — a row that fails against a state nobody recorded costs a bisect.
 
 | what | ref | commit |
 |---|---|---|
-| `keyboard`, the branch under test | `newinput` (local, unpushed) | **`1033252`** |
+| `keyboard`, the branch under test | `newinput` (local, unpushed) | **`f09f1e7`** |
 | `keyboard` upstream it is diffed against | `origin/dsent/dev` | **`025e858`** |
-| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`a05a3829`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`7e009536`** |
 | platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
 
-*(Re-pinned 2026-08-12 after P-18-14 … P-18-17 — the sixth restored gesture, the polls adopting
-`Key.any_pressed`, the comments the first sweep missed, and the docs. The platform id is this pin's
-parent; the pin commit changes nothing but this table. The same range is what the third cold review
-reads.)*
+*(Re-pinned 2026-08-12 after P-18-19/20 — the last three behavioural differences against upstream
+closed, and the tidy batch. **At this head the gesture-parity diff against upstream is zero** across
+105 fresh-press stimuli and 105 repeats. The platform id is this pin's parent; the pin commit changes
+nothing but this table.)*
 
 ### How to launch
 
