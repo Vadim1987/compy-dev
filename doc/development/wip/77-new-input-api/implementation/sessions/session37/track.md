@@ -770,3 +770,20 @@ Owner asked for it while planning, so the knowledge lands before the slices are 
   off upstream carrying one commit or two, so the local graph is working state — and a `format-patch`
   would ship churn including commits that cancel out, of which `keyboard` has a pair (`5de5a6d` /
   `f938fbc`).
+
+## 2026-08-12 — ruling 4 settled: Ctrl+Alt+H becomes a shortcut; all four rulings are closed
+
+Owner: *"I see no reason to lean to B. The existing code is clear boilerplate, nothing unique to
+preserve — and exactly the type of construction we want to get rid of."*
+
+- **P-18-04 is option (A):** `sc['ctrl+alt+h']` with an `onHint` scene-descriptor entry that only
+  `alt.lua` defines, mirroring `onNotch`; `altKeypressed` loses its first four lines and the game
+  keeps no hand-matched combo.
+- **Recorded as the trap to avoid in that step:** `fn.ignore_repeat` is **mandatory**. The hand-match
+  inherited the hook's `isrepeat` filter for free; shortcuts see every repeat, so an unwrapped binding
+  would re-arm the hint every repeat frame — a rule change hiding inside a mechanical conversion,
+  which is exactly what the cold pass caught in the reserved chords.
+- **P-18-04 also stops depending on P-18-02**, since the `Key.ctrl()/alt()` form it would have needed
+  is no longer on the table.
+- **All four rulings closed.** The plan is unblocked end to end: 01, 01b, 03, 04, 05, 06 can start
+  immediately; 02 waits only on 01 (which deletes `upRecent`).

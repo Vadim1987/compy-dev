@@ -104,7 +104,7 @@ apply, and the same answer is available to every other scene-scoped binding the 
 - **1.26 — `bubble.lua`.** The cold pass recommends a polling conversion; **§0(a) overrides it.**
   Comment only.
 
-### Owner rulings needed before the work — RULE (4) — **all four answered in §5**
+### Owner rulings needed before the work — RULE (4) — **all four RESOLVED, see §5**
 
 1. **The two narrowings that already landed and were never ruled** (inventory 1.8, §4.5). Combos are
    exact modifier sets, so **Alt+Shift+Esc no longer goes back** and **Ctrl+Alt+Shift+Up no longer
@@ -149,7 +149,7 @@ this repository has no tests.
 | **P-18-02** | **Dissolve the `INPUT` proxy.** The table goes; its 8 readers ask `Key` directly — `appTextinput` ×3, `helpHeld` ×2, `keyboard_view` ×1, `alt.lua` ×2 | P-18-01 (which deletes `upRecent`, the proxy's only non-alias member) | mechanical once the heal has landed |
 | **P-18-03** | **`isMod` gains `Key.is_mod`'s body.** One line; five other files unaffected | — | independent |
 | **P-18-01b** | **The three restorations (§5).** The two extra combo bindings, and `Key.is_alt(k)` in the hook for the bare-Alt press | — | separable from the heal; one concern, one commit — behaviour restored, not changed |
-| **P-18-04** | **`Ctrl+Alt+H` becomes a shortcut** with an `onHint` scene-descriptor entry (§0.1), or the minimal `Key` edit if the owner rules that way | RULE 4; P-18-02 for the `Key` form | |
+| **P-18-04** | **`Ctrl+Alt+H` becomes a shortcut** with an `onHint` scene-descriptor entry (§0.1) — **RULED (A), owner 2026-08-12**. `fn.ignore_repeat` is mandatory; the handler claims its trigger | — | independent once ruled: the `Key` form it replaces is no longer on the table, so it no longer waits on P-18-02 |
 | **P-18-05** | **`compy.before_exit` restores relative mode**, and the false comment goes | — | independent; the platform-side question stays promoted, not answered here |
 | **P-18-06** | **Comments only.** `bubble.lua`'s focus caution (§0(a)); the capslock comment, whose stated reason no longer holds (RULE 3); the Shift-vs-Alt asymmetry the intro guard deliberately leaves (RULE 2) | — | the "deviation lives in the workspace" rule, discharged. **Shrunk by §5:** the two narrowings and the bare-Alt delta are now *restored* rather than documented |
 
@@ -271,9 +271,16 @@ first. Both are worth answering.
 - **(B) The minimal edit** — keep the hand-match in `altKeypressed`, and change only its two modifier
   reads to `Key.ctrl()` / `Key.alt()`. Three characters of behaviour change, none of shape.
 
-**Recommendation: (A).** It is barely larger, it deletes the last hand-matched combo, and it uses a
-pattern already proven in the same file. (B) remains defensible under "minimise", and the owner's
-word settles it.
+**RULED (A), owner, 2026-08-12:** *"I see no reason to lean to B. The existing code is clear
+boilerplate, nothing unique to preserve — and exactly the type of construction we want to get rid
+of."*
+
+So `Ctrl+Alt+H` becomes `sc['ctrl+alt+h']`, dispatched through an `onHint` descriptor entry that only
+`alt.lua` defines, and `altKeypressed` loses its first four lines. **The one thing this must not get
+wrong:** `fn.ignore_repeat` is required. Shortcuts see every repeat, where the hand-match inherited
+the hook's `isrepeat` filter for free — an unwrapped binding would re-arm the hint on every repeat
+frame, which is a rule change hiding inside a mechanical conversion (the same trap the cold pass
+found in the reserved chords).
 
 **Alt+H — the owner's flag/state-machine proposal, assessed.** *"Display on shortcut, closure on
 polling… a feature flag `showHelp` set by the shortcut, checked and set to false by polling;
