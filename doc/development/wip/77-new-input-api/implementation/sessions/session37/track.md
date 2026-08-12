@@ -496,3 +496,32 @@ long as machinery stays project's own."*
   poll. The delay would guard a case the OS does not produce, while swallowing a **deliberate
   re-press inside its window** — which is exactly the doubled-letter keystroke in Words — and it puts
   back a tuned constant.
+
+## 2026-08-12 — owner challenges the baseline; §2.1 added, and the answer holds either way
+
+Owner: *"are you judging against current patched form or upstream form? I am not interested in
+analysing our half-done machinery applied before we saw updated upstream. I am analysing how a clean
+patch towards upstream would look."*
+
+- **The specific claim holds in both baselines, verified rather than asserted:** upstream's
+  `alt.lua` registers `keypressed` + `textinput` only (`origin/dsent/dev:alt.lua:308-317`); it has no
+  `keyreleased` handler, exactly as the merged tree. `bubble.lua` is the only scene with one, in
+  both.
+- **But the challenge lands on the document's method**, and §2.1 now fixes it: §2 described the
+  MERGED tree, which is what P18 edits, while the deliverable is a **diff against upstream**. Both
+  baselines are now stated, and claims about *authored behaviour* are checked at
+  `origin/dsent/dev`. Files this branch never touched (`words.lua`, `bubble.lua`, `findkey.lua`,
+  `gauge.lua`, `config.lua`) are identical in both, so only `alt.lua`, `help.lua`, `input.lua` and
+  `main.lua` needed re-checking.
+- **A finding that came out of doing it: `inputStale` has TWO callers upstream and only one is
+  broken.** Inside `appKeypressed` it filters OS repeats and is **sound** — a repeat `keypressed`
+  always arrives while its key is genuinely held, and a fresh press always follows the release that
+  cleared `held`, so no delivery order can confuse it (its only flaw is the `upRecent` tail dropping
+  a fresh press within a frame of a release). The defect lives **only** in the two scenes'
+  `textinput` guard. **So the heal is confined to that one call and does not depend on the
+  migration**; replacing upstream's repeat filter with the API's `isrepeat` is feature #77's work,
+  not the heal's — two changes that happen to touch the same file.
+- **The mechanism as an upstream-relative delta** is now tabulated in §2.1: `INPUT.held`,
+  `inputUpdateMods`, `inputStale`, `INPUT.upRecent` and `INPUT_UP_GRACE` out; `GLYPH_CLAIMED`,
+  `spendGlyph` and `inputTick` in; one line changed in each of the two scenes; the release handler
+  reduced to dispatch. **Two tables and a tuned constant become one table cleared by the device.**

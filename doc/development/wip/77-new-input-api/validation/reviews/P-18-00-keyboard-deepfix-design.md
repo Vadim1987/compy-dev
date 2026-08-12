@@ -3,7 +3,8 @@
 **Step:** P-18-00, the initial analysis/planning pass of P18 (`S27-triage-and-plan.md` §15.4).
 **Opened:** 2026-08-11, session37, after the upstream merge landed (`keyboard` @ `ca6d5df`).
 **Status: NOTHING HERE IS DECIDED.** §2–§7 are exposition — what the code does, read from the
-merged tree. §7.1 states the requirements, §8 the open questions, §9 the derivation from those
+merged tree; **§2.1 states the same layer at UPSTREAM**, which is the baseline the eventual patch is
+measured against, and every claim about *authored* behaviour is checked there. §7.1 states the requirements, §8 the open questions, §9 the derivation from those
 requirements and the options it leaves. Decisions are the owner's and are recorded, one at a time,
 as they are taken.
 
@@ -170,6 +171,83 @@ It answers **"has a `love.textinput` for this key already been accepted since th
 `GLYPH_CLAIMED[k]` is cleared in `appKeyreleased`; `INPUT_UP_GRACE` (= 1 frame, measured in
 `DBG_FRAME`) additionally rejects a `love.textinput` arriving just after that key's
 `love.keyreleased`.
+
+## 2.1 The same layer at UPSTREAM, and why this document must say which baseline it means
+
+**Owner, 2026-08-12:** *"Are you judging against the current patched form or the upstream form? I am
+not interested in analysing our half-done machinery applied before we saw updated upstream. I am
+analysing how a clean patch towards upstream would look."*
+
+**The correction is accepted and it applies to this whole document.** §2 above describes the **merged
+tree** — upstream plus this branch's migration — which is the tree P18 edits. But the deliverable is
+a **diff against upstream**, so every claim about *authored behaviour* has to hold at
+`origin/dsent/dev`, not merely here. Where the two differ, both are now stated.
+
+**Upstream's shared layer**, read at `origin/dsent/dev:input.lua`:
+
+```lua
+INPUT = { held = { }, upRecent = { }, shift = false, ctrl = false, alt = false }
+
+function inputStale(k)                       -- held, OR released within GRACE frames
+  if INPUT.held[k] then return true end
+  local up = INPUT.upRecent[k]
+  if not up then return false end
+  return DBG_FRAME - up <= INPUT_UP_GRACE
+end
+
+function appKeypressed(k)                    -- love.keypressed(k) forwarded from main.lua
+  if inputStale(k) and k ~= "capslock" then return end   -- (a) OS-repeat filter
+  INPUT.held[k] = true ; inputUpdateMods()
+  if reservedChord(k) then return end
+  if appChord(k) then return end
+  ...capslock / PAUSED / help... ; dispatch to SCENES[ACTIVE].keypressed(k)
+end
+
+function appKeyreleased(k)
+  INPUT.held[k] = nil ; INPUT.upRecent[k] = DBG_FRAME ; inputUpdateMods()
+  dispatch to SCENES[ACTIVE].keyreleased(k)
+end
+
+function appTextinput(t)                     -- identical in shape to the merged tree's
+  ...PAUSED / INPUT.alt / INPUT.ctrl / help...
+  if isAlphaChar(t) then capsReconcile(t, INPUT.shift) end
+  dispatch to SCENES[ACTIVE].textinput(t)    -- the scenes call inputStale themselves
+end
+```
+
+**`inputStale` has two callers upstream, and only one of them is broken.**
+
+- **(a) inside `appKeypressed`** — filtering OS repeats. **This one is sound.** A repeat
+  `love.keypressed` always arrives while its key is genuinely held, and a fresh press always arrives
+  after the release cleared `INPUT.held`, so no delivery order can confuse it. Its only flaw is the
+  `upRecent` tail, which can drop a fresh press within one frame of a release.
+- **(b) inside `altTextinput` and `wordsTextinput`** — this is the defect, and it is the *only*
+  place the inter-channel assumption lives.
+
+That matters for the shape of the patch: **the fix is confined to (b)**, and it does not depend on
+the migration. Upstream's repeat filtering for `love.keypressed` is replaced by the API's `isrepeat`
+as part of feature #77's migration, not as part of this heal — two changes that happen to touch the
+same file.
+
+**Upstream's `alt.lua` registers `keypressed` and `textinput` only** — verified at
+`origin/dsent/dev:alt.lua:308-317`, the same as the merged tree. `bubble.lua` remains the game's only
+scene with a `keyreleased` handler, in both baselines. Every other claim in §3–§7 is about files this
+branch never touched (`words.lua`, `bubble.lua`, `findkey.lua`, `gauge.lua`, `config.lua`), where the
+merged tree **is** upstream.
+
+**The mechanism as an upstream-relative delta**, which is the form the eventual patch takes:
+
+| | upstream | after |
+|---|---|---|
+| removed | `INPUT.held`, `inputUpdateMods`, `inputStale`, `INPUT.upRecent`, `INPUT_UP_GRACE` | — |
+| added | — | `GLYPH_CLAIMED`, `spendGlyph`, `inputTick` and its call in `updateStep` |
+| the two scenes | `if inputStale(baseKey(ch)) then return end` | `if spendGlyph(baseKey(ch)) then return end` |
+| the release handler | maintains `held`, `upRecent`, mods; dispatches | dispatches only |
+
+Two tables and a tuned constant become one table cleared by the device. The rest of the delta at
+those lines — `isrepeat` in place of the stale test, `Key.*` in place of `INPUT.shift/ctrl/alt`,
+shortcuts in place of `reservedChord`/`appChord`, a poll in place of `help.lua`'s `INPUT.held.h` — is
+feature #77's migration and is reviewed as such.
 
 ## 3. `alt.lua` — what it does with the events
 
