@@ -2174,7 +2174,9 @@ release**.
 
 **Progress, so the table is read and not the memory:** `P-18-01` (`c60b818`), `P-18-01b`
 (`c1ee63c`), `P-18-02` + `P-18-03` (`c3388de`) are **done** in the nested repo, nothing pushed,
-platform suite untouched at 946 / 0 / 0 / 10. **Still owed: `P-18-04`, `P-18-05`, `P-18-06`** — all
+platform suite untouched at 946 / 0 / 0 / 10. **The human smoke pass is written down**: `doc/development/smoke_checklists.md`, `keyboard`'s
+section — every case the container cannot reach, with the ten `[new]` ones flagged as never yet run
+by a human. **Still owed: `P-18-04`, `P-18-05`, `P-18-06`** — all
 independent of each other, and each small. The execution record is §6 of
 `../P-18-00-triage-and-plan.md`.
 

@@ -178,25 +178,16 @@ this feature's. Correcting the estimate from `textinput` is what recovers either
 
 ## Smoke checklist — owed by a human
 
-Nothing below can be exercised where this code is developed: the container cannot inject keystrokes
-and has no device.
+Nothing in this mechanism can be exercised where the code is developed: the container cannot inject
+keystrokes and has no device. **The runnable checklist lives in
+[`../../smoke_checklists.md`](../../smoke_checklists.md)**, `keyboard`'s section — one list, kept
+beside the other examples', so it does not drift from a second copy here. It marks which cases
+exercise this mechanism rather than pre-existing behaviour.
 
-- a target character is accepted on the first press;
-- **a very fast tap of the target character registers** — the case every earlier version dropped;
-- holding the right key scores one hit and does not bleed a miss onto the next target;
-- holding a wrong key knocks once, not once per frame — check in **Words**, whose knock has no
-  idempotence flag;
-- typing a word with a **doubled letter** in Words: both letters register;
-- typing a **shifted symbol** in Words (`~`, `|`) does not raise — it once crashed the game;
-- `Ctrl+Alt+H`, then typing the hinted letter — the letter registers;
-- `Ctrl+Alt+H` **releasing the modifiers while `H` stays down** — no stray `h` reaches the target;
-- **Alt+Shift+key** is ignored by a scene rather than counting as a wrong key;
-- Alt+Shift+Esc still leaves a game, and Ctrl+Alt+Shift+Up still moves the notch;
-- `backspace` / `tab` / `return` targets still match, and **Shift held during a `backspace` target
-  does not knock**;
-- the Caps decal corrects itself after a toggle the app did not observe — check it in `press` or
-  `find` too, since the estimate is shared;
-- **hold `capslock`** and watch whether the decal flickers.
+The cases this design turns on, for a reader who wants them without leaving this page: a **fast tap**
+of the target character registers; a **doubled letter** in Words registers twice; a **shifted symbol**
+in Words does not raise; and `Ctrl+Alt+H` with **the modifiers released while `H` stays down** puts no
+stray character into the scene.
 
 ## What changed, and why
 

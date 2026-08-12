@@ -91,6 +91,14 @@ Tags beyond the file-level `#input`:
 
 ---
 
+## Manual smoke — what no suite here can reach
+
+The nested example repositories (`src/examples/{keyboard,maze,balloons}`) have **no test suite**, and
+nothing in CI can press a key. Their gate is a human, and the checklists they are gated on live in
+**[`smoke_checklists.md`](smoke_checklists.md)** — written to be run top-to-bottom with the expected
+result stated, and kept current with the code by whoever changes the mechanism. A checklist that
+tests a mechanism the code no longer has is worse than none, because it passes.
+
 ## Gaps — Areas Worth Filling
 
 **SearchModel** narrowing (`Search:narrow` with case-insensitive substring match) and selection scroll could be unit-tested similarly to `history_spec`.

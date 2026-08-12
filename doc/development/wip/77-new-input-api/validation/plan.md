@@ -458,6 +458,14 @@ disposition table — this is where every surviving "keep + justify" gets its on
 open questions. Reviewability gate: a stakeholder with only `doc/input_api.md` + the PR
 description must be able to review it. `wip/77` deletion: owner-gated, after PR is up.
 
+**[S37] The human smoke pass has a written checklist, and it is the gate for the detached
+repos' own PRs** (§16.3: *"their only gate is a human smoke pass"*). It is
+**`doc/development/smoke_checklists.md`** — persistent, so it outlives `wip/77`, with one
+list per example, each case naming what to press and what to expect. `keyboard`'s is
+complete and marks the cases that exercise the 2026-08-12 acceptance mechanism and have
+**never been run by a human**; `maze` and `sapper` owe theirs when their steps land.
+Whoever changes an example's input mechanism updates its list in the same commit.
+
 ## Standing constraints (inherited, listed for the orchestrator's convenience)
 
 - Suite baseline **955/0/0/3** as of session29 (815 when this plan was written, 841 after
