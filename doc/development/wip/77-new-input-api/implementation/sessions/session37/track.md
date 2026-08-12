@@ -748,3 +748,25 @@ Owner cleared the way with two calibrations and a technique, then said run it. W
 - **Four rulings wanted before P-18-01 starts:** the two landed-but-unruled narrowings (Alt+Shift+Esc
   and Ctrl+Alt+Shift+Up stopped working), the bare-Alt delta in the intro, the capslock exemption
   (settled by one observation), and whether Ctrl+Alt+H becomes a shortcut.
+
+## 2026-08-12 — the PR-assembly guide learns about the detached repos' upstreams
+
+Owner asked for it while planning, so the knowledge lands before the slices are regenerated.
+
+- **New §5.1 in `pr-assembly-guide.md`**, plus warnings at the three Set-4 commands. The rule it
+  states is a trap otherwise: **`diff <upstream>..HEAD` is a reviewable change only while
+  `<upstream>` is an ANCESTOR of `HEAD`.** If upstream has moved and is unmerged, the patch also
+  contains the *reversal* of everything upstream added — it reads as *"and delete the author's last
+  26 commits"*. The check is one line: `git merge-base --is-ancestor <ref> HEAD`.
+- **Measured, not assumed:** `keyboard`'s `origin/dsent/dev` **is** an ancestor since the merge
+  `17289e9`, so that line was already right and is now also *meaningful* — before the merge the same
+  command would have emitted a patch deleting 36 upstream commits' work. `maze` is 4 ahead of
+  `origin/v3.4` (its current, correct, pre-pull base) and **26 behind `dsent/dsent/dev`** from
+  merge-base `12f675f` — so the guide keeps `origin/v3.4` and says **switch to `dsent/dsent/dev` only
+  when P-17-00 merges it**. `balloons` is untouched by Phase U.
+- **`repos.txt` is named as the source** for which upstream matters per repo, including the detail
+  that maze's is the **`dsent`** remote and not `origin` (which is `nagydani/Compy-maze`).
+- **Recorded why the patch, not `format-patch`, remains the artifact:** the delivery is a fresh branch
+  off upstream carrying one commit or two, so the local graph is working state — and a `format-patch`
+  would ship churn including commits that cancel out, of which `keyboard` has a pair (`5de5a6d` /
+  `f938fbc`).

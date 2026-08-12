@@ -136,13 +136,54 @@ Set 4 (nested example repos — invisible to the parent `git diff`, become PRs i
 # not format-patch of the local commits, which is what "sliced the same way"
 # means: each repo's PR is one reviewable change, and the intermediate churn
 # (a migration, then its own corrections) does not reach the reviewer.
+#
+# [S37] THE REF MUST BE THE UPSTREAM THAT REPO WILL PR TO, AND IT IS ONLY SAFE
+# ONCE THAT UPSTREAM IS AN ANCESTOR OF HEAD. See §5.1 before touching these
+# three lines. Check first, per repo:
+#   git -C src/examples/<repo> merge-base --is-ancestor <ref> HEAD
 git -C src/examples/balloons diff origin/main..HEAD \
   > "$OUT/4a-balloons.patch"
+# [S37] maze: origin/v3.4 is the PRE-PULL base and is correct only until
+# P-17-00 merges dsent/dsent/dev. Then this becomes dsent/dsent/dev. Do not
+# switch it early — see §5.1.
 git -C src/examples/maze diff origin/v3.4..HEAD \
   > "$OUT/4b-maze.patch"
+# [S37] keyboard: origin/dsent/dev is now an ancestor (merge 17289e9), so this
+# diff is exactly our change. Before that merge the same line would have
+# produced a patch that DELETED 36 upstream commits' work — see §5.1.
 git -C src/examples/keyboard diff origin/dsent/dev..HEAD \
   > "$OUT/4c-keyboard.patch"
 ```
+
+### 5.1 [S37] The detached repos have upstreams now, and the slice base follows them
+
+**The upstreams that matter** are named in the untracked `repos.txt` at the repo root: `keyboard`'s is
+**`origin/dsent/dev`**, `maze`'s is **`dsent/dsent/dev`** (the `dsent` remote, not `origin`, which is
+`nagydani/Compy-maze`). `balloons` has no new upstream and was not part of Phase U's example half.
+
+**The rule, and it is a trap otherwise:** a `diff <upstream>..HEAD` is a *reviewable change* only
+while `<upstream>` is an **ancestor** of `HEAD`. If it is not — if upstream has moved and has not been
+merged — the diff also contains the *reversal* of everything upstream added, so the patch reads as
+"and delete the author's last 26 commits". Always check first:
+
+```sh
+git -C src/examples/<repo> merge-base --is-ancestor <ref> HEAD && echo safe
+```
+
+**State at 2026-08-12:**
+
+| repo | slice ref | ancestor of HEAD? | note |
+|---|---|---|---|
+| `balloons` | `origin/main` | yes | untouched by Phase U |
+| `maze` | `origin/v3.4` **for now** | yes | 4 ahead of it. Upstream `dsent/dsent/dev` is **26 commits ahead** of the merge-base `12f675f` and **not merged** — that is **P-17-00**. When it lands, change this ref to `dsent/dsent/dev` |
+| `keyboard` | `origin/dsent/dev` | **yes, since `17289e9`** | the merge landed 36 upstream commits (24 files, +5227/−804); the pre-merge state is `05cedec` and the upstream snapshot is on branch `upstream-dsent-dev-20260811` |
+
+**Why the patch, not `format-patch`, is still the right artifact** (owner, 2026-08-11): the delivery
+for each detached repo is *"a diff against upstream, on a brand-new branch off upstream, carrying a
+single new commit or two"*. The local branches keep their ancestry deliberately so later re-merges
+stay cheap — so the local commit graph is working state, and the **patch** is the deliverable. A
+`format-patch` of the local commits would ship the churn, including commits that cancel each other
+out (in `keyboard`, `5de5a6d` and `f938fbc` do exactly that).
 
 Apply each in its own repo, from that repo's remote branch:
 `git -C src/examples/<repo> apply "$OUT/4<x>-<repo>.patch"`. Paths inside the
