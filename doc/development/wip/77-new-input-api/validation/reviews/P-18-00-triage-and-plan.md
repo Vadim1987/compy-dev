@@ -371,3 +371,28 @@ naming the cases only a human can reach.
 library's behaviour, written from expectation rather than measurement, propagated from a design
 document into code and cost a crash. The earlier instance was the platform sentence this same
 document had to strike. **Measuring took one throwaway LÖVE script and 20 seconds.**
+
+---
+
+## 8. Execution record (session38, 2026-08-12)
+
+| step | commit | note |
+|---|---|---|
+| **P-18-04** `Ctrl+Alt+H` | `e6c8f97` | `sc["ctrl+alt+h"]` dispatched through a new `onHint` descriptor entry (only `alt.lua` defines one), the shape `onNotch` already has; `fn.ignore_repeat` wraps the action, `claimChord` sits outside it; the hand match leaves `altKeypressed` |
+
+**Two behaviour changes accepted with P-18-04**, both written into
+`doc/development/internals/examples/keyboard.md` ("A chord owns its trigger key") and the code
+comments, not only into the commit message:
+
+- **A shortcut is swallowed in every scene.** The hand match let a bare `h` reach the games that
+  judge key targets (Press, Find, Blow the bubble), where the teacher chord knocked as a wrong key.
+  Incidental, and the other reserved chords behave this way already. It is the one item in this step
+  that touches §1.1's *"would a player notice a difference?"* test, which is why it is stated rather
+  than absorbed.
+- **The dispatcher keeps the pause gate** the scene handler gave it for free (`hintReenable` returns
+  while `PAUSED`), so the chord stays inert behind the pause screen. The notch deliberately does not
+  — upstream ran `reservedChord` above its own `PAUSED` check, so that exemption is the author's.
+
+**Smoke rows added in the same change set:** `B11` (hold the chord — it must re-arm once, not once
+per repeat frame) and `B12` (press it while paused — nothing). Both `[new]`; the platform-side doc
+commit carries them.

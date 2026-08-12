@@ -85,12 +85,21 @@ Alt+H, then letting go of Alt, leaves `H` repeating and those characters are not
 
 - the swallowing classes do it — `alt+*` and `alt+shift+*`, two of them because a class is its
   modifier set *exactly* while the hand-written test they replaced said only "Alt and not Ctrl";
-- `alt+p`, an exact binding that wins over the class, claims for itself;
+- `alt+p` and `ctrl+alt+h`, exact bindings (an exact combo wins over the class), claim for
+  themselves;
 - and `appKeypressed` claims the trigger whenever Ctrl or Alt is down, which covers the chords that
   are **not** swallowed and reach the scene by design.
 
 The claim is released by the same poll as any other, so the suppression lasts exactly as long as the
 key is held.
+
+**`Ctrl+Alt+H`, the teacher chord, is one of these exact bindings** — it re-arms the active scene's
+hint through an `onHint` scene-descriptor entry, the way `Ctrl+Alt+Up` reaches `onNotch`, and only
+the Alt scene defines one. It was a hand-written three-key match inside that scene's `keypressed`.
+**Accepted with it:** a shortcut is swallowed in *every* scene, where the hand match let a bare `h`
+reach the games that judge key targets (Press, Find, Blow the bubble) and knock there. The dispatch
+also keeps the pause gate the scene handler gave it for free, so the chord stays inert behind the
+pause screen — unlike the notch, which upstream deliberately handled above that gate.
 
 ## What happens before a scene sees a character
 

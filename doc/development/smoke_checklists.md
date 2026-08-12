@@ -16,8 +16,8 @@ has is worse than none, because it passes.
 ## keyboard
 
 **Repository:** `src/examples/keyboard` (separate remote, own PR). **Last mechanism change:**
-2026-08-12, the way a typed character is accepted — see
-`internals/examples/keyboard.md`. Cases marked **[new]** exercise that mechanism and have never been
+2026-08-12, the way a typed character is accepted, and the teacher chord `Ctrl+Alt+H` becoming a
+registered shortcut instead of a hand-matched combo — see `internals/examples/keyboard.md`. Cases marked **[new]** exercise that mechanism and have never been
 run by a human; the rest are regression checks against behaviour the example already had.
 
 ### How to launch
@@ -53,6 +53,8 @@ run by a human; the rest are regression checks against behaviour the example alr
 | B8 | press `Ctrl+Alt+H`, then type the letter the hint points at | the hint re-arms and the letter registers |
 | B9 | press `Ctrl+Alt+H`, then **release Ctrl and Alt while keeping H down** | **[new]** nothing happens: no knock, no miss, the target is not fumbled. *(This is the case the mechanism was rebuilt for.)* |
 | B10 | press `Alt+Shift+`*any letter* | **[new]** ignored — no knock, no miss |
+| B11 | **hold** `Ctrl+Alt+H` for ~2 seconds | **[new]** the hint re-arms **once** — one blip, one finger sweep from the start, not one per repeat frame |
+| B12 | `Alt+P` to pause, press `Ctrl+Alt+H`, then `Alt+P` again | **[new]** the pause screen ignores it: no blip while paused |
 
 ### C — Words & phrases (game 5): the second judging scene
 
@@ -103,7 +105,7 @@ run by a human; the rest are regression checks against behaviour the example alr
 
 ### What a failure here means
 
-- **A2, B2, B6, B9, B10, C2, C5, D3, D5, D7** are the new mechanism and its restorations. A failure is
+- **A2, B2, B6, B9, B10, B11, B12, C2, C5, D3, D5, D7** are the new mechanism and its restorations. A failure is
   a defect in the 2026-08-12 work — report it against
   `wip/77-new-input-api/validation/reviews/P-18-00-triage-and-plan.md`.
 - **E3** is a question, not a test: either answer closes it.

@@ -2175,10 +2175,21 @@ release**.
 **Progress, so the table is read and not the memory:** `P-18-01` (`c60b818`), `P-18-01b`
 (`c1ee63c`), `P-18-02` + `P-18-03` (`c3388de`) are **done** in the nested repo, nothing pushed,
 platform suite untouched at 946 / 0 / 0 / 10. **The human smoke pass is written down**: `doc/development/smoke_checklists.md`, `keyboard`'s
-section — every case the container cannot reach, with the ten `[new]` ones flagged as never yet run
+section — every case the container cannot reach, with the `[new]` ones flagged as never yet run
 by a human. **Still owed: `P-18-04`, `P-18-05`, `P-18-06`** — all
 independent of each other, and each small. The execution record is §6 of
 `../P-18-00-triage-and-plan.md`.
+
+##### [S38] P-18-04 LANDED 2026-08-12
+
+`Ctrl+Alt+H` is `sc["ctrl+alt+h"]` (`e6c8f97`, nested repo, nothing pushed), dispatched through a
+new **`onHint`** descriptor entry that only `alt.lua` defines — the shape `onNotch` already had,
+so no `leave` hook and no scene-scoped registry were needed. `fn.ignore_repeat` wraps the action and
+the trigger claim sits outside it. **Two behaviour changes accepted and written into the design of
+record**, not just the commit message: a shortcut is swallowed in *every* scene (the hand match let a
+bare `h` knock in the key-target games), and the dispatcher keeps the pause gate the scene handler
+gave it for free. Smoke rows `B11`/`B12` added with it. Execution record: §8 of
+`../P-18-00-triage-and-plan.md`. **Still owed: `P-18-05`, `P-18-06`.**
 
 **The analysis pass is complete and the step is now decomposed.** Its two halves:
 `../P-18-00-keyboard-deepfix-design.md` (the design: exposition, requirements R1–R5, the derivation,
