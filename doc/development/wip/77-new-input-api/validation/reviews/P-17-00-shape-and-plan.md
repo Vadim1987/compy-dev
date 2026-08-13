@@ -112,11 +112,13 @@ words that say so. Five conversions (`E1`–`E5`) and one capability (`G1`); sev
 **no gain** rather than converted; three regressions of the platform's own (`R1`–`R3`) named ahead
 of any of it.
 
-### P-17-04 — The triage: turn the analysis into execution substeps
+### P-17-04 — The triage: turn the analysis into execution substeps  ✅ **DONE**
 
-From the analysis, a triage into **`P-17-05`, `P-17-06`, …** — dependency-ordered, each its own
-commit, with any remaining owner rulings named before a child starts. **The last of them is always
-the comment-compaction pass** (§5).
+Written as **`validation/reviews/P-17-04-triage-and-substeps.md`, 2026-08-13.** `P-17-05` is a
+**gate** — the owner walks the seven no-gain sites and may overrule, which would replan what follows.
+Then `P-17-06`…`P-17-11` execute (`E1`, `G1`+`R2`, `E2`, `E3`, `E4`, `E5`), `P-17-12` writes the
+smoke section — **the step's only gate, with the suite frozen** — and `P-17-13` is the
+comment-compaction pass, last, always (§5).
 
 ---
 

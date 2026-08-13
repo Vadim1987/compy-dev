@@ -44,7 +44,7 @@ inert-by-measurement, and this is the first time this project's handler and its 
 same instant. `P-17-04` owes a checklist row: *type a long command on an editor level; every
 character appears once and nothing else happens.*
 
-### R2 — with R1, an exit that leaves the field shown is now a two-consumer collision
+### R2 — an exit that leaves the field shown; PRE-EXISTING, and R1 changes its shape
 
 `to_menu()` (`maze_main.lua:92-96`) and `toDrawMenu()` (`draw_main.lua:219-228`) drop
 `ctrl_update`/`ctrl_pressed` and **hide nothing** — there is no `compy.input.hide()` in either. That
@@ -53,14 +53,35 @@ menu that came up could not receive keys anyway. Under R1 it is not: on the menu
 field shown, `menu_key(k)` **and** the field both receive the digit — the track starts *and* the
 digit lands in a field the player cannot see the purpose of.
 
-**Verdict: the exit paths owe `compy.input.hide()`.** This is a consequence of a change *we* are
-making, not a defect of theirs, so it lands in our patch with its reason in a comment. Note it is
-**doubly required** once G1 lands, because `shift+escape` makes those paths reachable from inside the
-field deliberately.
+**Verdict: the exit paths owe `compy.input.hide()`**, and it is **mandatory** once G1 lands, because
+`shift+escape` routes a new gesture into that path deliberately. ~~This is a consequence of a change
+*we* are making, not a defect of theirs~~ — **that sentence was wrong; see the correction below.**
 
-**Honest limit:** the pre-existing half — that `<` already left the field shown on the base — is
-**upstream's** and predates us. We are not fixing their bug; we are not allowed to introduce a worse
-version of it.
+**[Corrected 2026-08-13, on the owner's question "are these recoverable?"] The filing above was
+wrong and the correction matters, because it changes whose defect this is.** R2 is **not a
+regression this feature introduces**. The stuck overlay is upstream's and predates us: `<` →
+`exit_to_menu` → `to_menu()` (`maze_logic.lua:341-348`) and `next_level()` running off the end of a
+track (`maze_logic.lua:274-278`) both reach `to_menu()` from an editor level, on the base platform,
+with the field shown and nothing hiding it.
+
+**What changes is the severity, and it changes for the better:**
+
+| | overlay after the exit | menu usable? | recovery |
+|---|---|---|---|
+| PR base | stuck shown | **no** — the widget consumed the whole keyboard | leave the project |
+| HEAD, unfixed | stuck shown | **yes** — the game's hook runs first (R1) | leave the project |
+| HEAD, with our `hide()` | closed | yes | n/a |
+
+So R1 **partially masks** an upstream defect rather than creating one. Our obligation is narrower and
+firmer: **G1 makes that path deliberate**, so we ship `compy.input.hide()` on it rather than
+knowingly routing a new gesture into a known stuck state.
+
+**Recoverability, since it was asked: unfixed, this is NOT recoverable inside the run.** Verified in
+code — `cancel_flow` (`userInputController.lua:421-427`) clears the model and runs `after_cancel` but
+never touches `self.shown`; **only `hide()` closes a project-opened overlay, and no built-in gesture
+calls it.** Escape clears the field and leaves it up. The only ways out are the framework's own
+project exits (`Ctrl+Esc`, `Ctrl+S`, `Ctrl+Q`) — i.e. leaving the game. By calibration (b)'s test
+that is a **harmful degradation, not an inconvenience**.
 
 ### R3 — a naive port of the per-tick re-arm warns once per frame
 
@@ -161,8 +182,25 @@ expired with the platform change, which is the same shape as the `<` finding in 
 matches only when no modifier is held, where the poll fired regardless. So `Shift+Tab` and
 `Ctrl+Tab`, which advance the level today, would stop. Neither is a documented gesture and neither
 appears in `TEST-PLAN.md`, but *"nobody meant it"* is not the same as *"nobody does it"*.
-**Recommended: convert, state the narrowing in the comment, and give `P-17-04` the option of also
-binding the `'*+tab'` class if the owner would rather lose nothing.**
+**Ruled (owner, 2026-08-13): restore the variants explicitly, one registration each — the
+`keyboard` approach.** *"It looks ugly but may clearly hint author about which combos they are really
+supporting (and maybe deciding to suppress or ignore some)."*
+
+**And my `'*+tab'` suggestion was invalid, not merely inferior — the syntax does not exist.** Verified
+in `src/util/key.lua`: `check_combo` allows `*` **only in the trigger position, and only with
+modifiers** (`alt+*`); `'*+tab'` splits into two triggers and **raises** at registration
+(*"names more than one trigger"*), and a bare `'*'` is refused outright because it is what
+`hooks[event]` already is. The wildcard means *"these modifiers, any key"* — never *"any modifiers,
+this key"*. That asymmetry is precisely why `keyboard` multiplied its registrations, and it is the
+debt entry's whole subject.
+
+**So faithful preservation costs one registration per modifier subset.** The framework knows three
+modifiers (`shift`, `ctrl`, `alt`), so the poll's behaviour is exactly **8** combos: `tab`,
+`shift+tab`, `ctrl+tab`, `alt+tab`, `ctrl+shift+tab`, `ctrl+alt+tab`, `alt+shift+tab`,
+`ctrl+alt+shift+tab`. Writing them out is the point: it puts in front of the author, in one visible
+list, which gestures this game actually claims — and lets them **suppress** the ones they never
+meant. (`alt+tab` in particular is usually taken by the window manager before any application sees
+it; worth a word in the comment rather than a silent omission.)
 
 ---
 

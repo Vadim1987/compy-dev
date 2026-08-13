@@ -274,3 +274,54 @@ reported rather than converted.**
 - **`Key.is_shift` exists and is exported but is UNDOCUMENTED** — the same P-10 gap `Key.is_mod` and
   `Key.is_alt` sit in. Precedent (session37, owner): use the platform predicate; the doc gap is
   P-10's problem, not a reason to keep a local copy. It should join that list.
+
+## 2026-08-13 — owner's two corrections, then P-17-04
+
+**(1) "Are the three named regressions recoverable?" — the question found a misfiling of mine.**
+
+- **R1**: no manifestation in either program (inert by construction); if one existed it would be one
+  stray action per keystroke — recoverable. Static reading only, hence the smoke row.
+- **R2**: **NOT recoverable inside the run**, and **not ours**. Verified in code: `cancel_flow`
+  (`userInputController.lua:421-427`) clears the model and runs `after_cancel` but **never touches
+  `self.shown`** — only `hide()` closes a project-opened overlay and **no built-in gesture calls
+  it**. Escape clears the field and leaves it up. The only ways out are the framework's project
+  exits. By calibration (b) that is a **harmful degradation, not an inconvenience**.
+  **But I had filed it as a regression WE introduce, and that was wrong.** The stuck overlay is
+  upstream's and predates us: `<` → `exit_to_menu` → `to_menu()` and `next_level()` running off the
+  end of a track both reach it from an editor level on the base platform. What R1 changes is the
+  **severity, downward**: at the base the widget ate the whole keyboard so the menu was unusable; at
+  HEAD the game's hook runs first, so the menu works and the digit merely also lands in the leftover
+  field. **R1 partially masks an upstream defect rather than creating one.** Our obligation is
+  narrower and firmer: `G1` routes a new gesture into that path deliberately, so we ship the
+  `hide()`. Corrected in place, with the superseded sentence struck rather than deleted.
+- **R3**: not player-facing at all — a log warning per frame, and a constraint on how E1 is written
+  rather than a defect that can ship if we obey it.
+
+**(2) The `'*+tab'` idea was invalid, not merely inferior.** Owner: the platform has no such class,
+and that is why `keyboard` multiplied its combos. **Verified in `src/util/key.lua`:** `check_combo`
+allows `*` **only in the trigger position and only with modifiers** (`alt+*`); `'*+tab'` splits into
+two triggers and **raises** at registration, and a bare `'*'` is refused outright because it is what
+`hooks[event]` already is. The wildcard means *"these modifiers, any key"* — never *"any modifiers,
+this key"*. **Ruled: multiply the registrations, the `keyboard` way** — *"it looks ugly but may
+clearly hint author about which combos they are really supporting (and maybe deciding to suppress or
+ignore some)."* Faithful preservation of the Tab poll is therefore **8 combos**, in both programs;
+`alt+tab` is registered **and** commented as usually taken by the window manager, rather than quietly
+omitted.
+
+**(3) P-17-04 written** — `../../../validation/reviews/P-17-04-triage-and-substeps.md`.
+
+- **`P-17-05` is a GATE, per the owner's instruction**: walk them through the seven no-gain sites,
+  one at a time, before any execution. *"I may overrule or contest, and it may lead to replanning,
+  but having base plan first is more important."* Named as a gate rather than a footnote because
+  **four of the seven decline on the same argument** — Q8's shape but not Q8's problem — so if that
+  argument is wrong it is wrong four times, and each is a substep this plan does not contain.
+- Then `P-17-06` (E1, required first — nothing smokes before it), `P-17-07` (G1+R2 as **one** commit,
+  because the gesture and the teardown it makes necessary are one concern), `P-17-08`…`P-17-11`
+  (E2–E5, mutually independent, ordered adjacently by file), `P-17-12` the smoke section — **the
+  step's only gate with the suite frozen** — and `P-17-13` compaction, last.
+- **Three rulings left open and named**, including E1's re-arm question (event-driven vs tick), with
+  a recommendation rather than a decision.
+- **§5 says what the plan deliberately does NOT contain**, so a successor does not read an omission
+  as an oversight: no test work, no deletion of upstream code (`<`, and draw's dead fallback), nothing
+  about `.compy/build` as a platform convention, and no fix for upstream's pre-existing stuck-overlay
+  paths beyond the one `G1` makes deliberate.
