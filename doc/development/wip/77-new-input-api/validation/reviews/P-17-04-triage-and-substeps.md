@@ -267,7 +267,7 @@ built from reading the runtime will agree with me if I read it wrong.
 Prompt of record: `../prompts/P-17-15-cold-review.md`. Deliverable:
 `../reviews/S39-P17-cold-review.md`.
 
-### `P-17-16` — preserve the Shift+Escape modifier family
+### `P-17-16` — preserve the Shift+Escape modifier family  ✅ **DONE `da9d1c2`**
 
 P-17-15 found an unstated, player-visible narrowing: the old
 `is_shift_down()` accepted Escape with Shift held alongside Ctrl or Alt, while
