@@ -272,17 +272,18 @@ Prompt of record: `../prompts/P-17-15-cold-review.md`. Deliverable:
 P-17-15 found an unstated, player-visible narrowing: the old
 `is_shift_down()` accepted Escape with Shift held alongside Ctrl or Alt, while
 the exact `shift+escape` shortcut accepts only Shift. The key hook then consumes
-the unmatched Escape, so `alt+shift+escape` and `ctrl+shift+escape` cannot exit.
+the unmatched Escape, so three modifier variants cannot exit.
 
 **Owner ruling, 2026-08-13:** register the variants so their supported gestures
 are visible and the author can rule on them. In both `maze_main.lua` and
 `draw_main.lua`, add `alt+shift+escape` and `ctrl+shift+escape` registrations
-using the same consuming `on_escape` handler. This restores the old predicate;
-it does not decide which variants the author should retain later.
+and `ctrl+alt+shift+escape`, all using the same consuming `on_escape` handler.
+This restores the old predicate; it does not decide which variants the author
+should retain later.
 
-**Owes the checklist:** Alt+Shift+Esc and Ctrl+Shift+Esc leave a direct-control
-level just as Shift+Esc does; with a live editor field they exit without clearing
-the draft.
+**Owes the checklist:** each Shift+Escape modifier variant leaves a direct-control
+level just as Shift+Esc does; with a live editor field it exits without clearing the
+draft.
 
 ### ~~`P-17-13` — the comment-compaction pass~~ · **REMOVED from this step (owner, 2026-08-13)**
 
