@@ -243,6 +243,30 @@ ambiguity the rule exists to remove is not there.
 
 **Owes the checklist:** nothing new — same handler, same channel. `verify.sh` and both smokes gate it.
 
+### `P-17-15` — a cold review of the whole step  · **the last thing this container can do**
+
+Added on the owner's instruction, 2026-08-13. **Id 15, not 13** — `P-17-13` is a tombstone and ids
+are not reused.
+
+**Why it earns its cost, from this step's own record rather than from principle:** three claims of
+mine were wrong on first writing and every one was caught by *measuring*, never by re-reading — the
+PR base's widget dismissal, the `show`-over-shown bug I had predicted an hour before writing it, and
+the triage's own "four declines rest on one argument". Session38's four passes found a live
+regression each time until the fourth built an instrument instead of inspecting.
+
+**Shape**, following the P-18 model: a cold reviewer, model passed explicitly, **read-only**, given
+the delta `dsent/dsent/dev..HEAD` as a whole rather than commit by commit, told to form its own view
+**before** reading this step's documents, and told to **measure rather than reason** — it can run
+`verify.sh`, build and play both programs, and write its own throwaway drivers.
+
+**What it must not take on trust:** the platform claims this step rests on (the overlay gate, that a
+`show` over a shown field cannot change the prompt, that the base dismissed the widget on submit,
+that a load-time shortcut registration survives activation), and the harness I wrote — a stub I
+built from reading the runtime will agree with me if I read it wrong.
+
+Prompt of record: `../prompts/P-17-15-cold-review.md`. Deliverable:
+`../reviews/S39-P17-cold-review.md`.
+
 ### ~~`P-17-13` — the comment-compaction pass~~ · **REMOVED from this step (owner, 2026-08-13)**
 
 Compaction is not P-17's to do. It belongs to the sprint's own late pass, **`P11`**, which exists
@@ -271,6 +295,7 @@ P-17-05  gate: the seven no-gain sites            [CLOSED 2026-08-13]
                └── P-17-14  Q11  love.keypressed → hooks.keypressed
                      │            [AFTER 07 and 11 — that is what makes the rule bite]
                      └── P-17-12  smoke checklist          [written; a HUMAN must now run it]
+                           └── P-17-15  cold review of the whole step
 ```
 
 **P-17-13 was removed** (owner, 2026-08-13): comment compaction is `P11`'s, and it runs after the

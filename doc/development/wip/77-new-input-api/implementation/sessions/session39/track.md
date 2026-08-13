@@ -438,3 +438,28 @@ cleanly, so both were amended rather than confirmed.
 - The closing line is the one that matters and it is now in the release plan: **nothing in this work
   has been run in a game scene by anyone, at any commit, in any example.** For input behaviour this
   pass is not a formality on top of testing — it *is* the testing.
+
+## 2026-08-13 — P-17-15 commissioned: a cold review of the whole step
+
+Owner: add a P-17 substep for a cold review and run it. **Id 15, not 13** — `P-17-13` is a tombstone
+and ids are not reused.
+
+- **Commissioned on the P-18 model:** Opus, **model passed explicitly**, read-only, given the delta
+  `dsent/dsent/dev..HEAD` **as a whole** rather than commit by commit, and told to **form its own
+  view before reading any of this step's documents** — it is run separately precisely so its reading
+  is independent, and a disagreement is the output, not a problem.
+- **Told to measure, not reason**, with the recipes: `verify.sh` (and the `luajit`-only shim, and
+  that the scratchpad is `noexec`), `.compy/build` + `love src play <out>/maze|draw`, why `stdbuf`
+  matters, and that it may write its own throwaway drivers.
+- **Given four platform claims it must NOT take on trust** — the overlay gate, `show`-over-shown
+  being unable to change the prompt, the base destroying the widget on submit, and a load-time
+  shortcut surviving activation — each to be checked in `/repo/src` and at the PR base where the
+  claim is about a change.
+- **And pointed at the weakest link in my own evidence, explicitly:** the editor flow was verified
+  against a **stub of `compy.input` I wrote from reading the runtime**, so if I read it wrong the
+  stub agrees with me. Told to attack that directly.
+- Told what NOT to report: comment verbosity is deliberate until `P11`'s pass (owner ruling), so a
+  verbose comment is not a defect — a *wrong* one is.
+
+Prompt of record `../../../validation/prompts/P-17-15-cold-review.md`; deliverable
+`../../../validation/reviews/S39-P17-cold-review.md`. Running.
