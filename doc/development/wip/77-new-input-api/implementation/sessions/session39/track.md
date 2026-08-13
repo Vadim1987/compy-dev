@@ -474,3 +474,9 @@ Prompt of record `../../../validation/prompts/P-17-15-cold-review.md`; deliverab
 - da9d1c2 (nested maze): all three exact variants registered in both emitted programs. verify.sh
   42 / 0 / 0, platform busted tests 946 / 0 / 0 / 10, and both emitted-program smokes reached
   Project play opened before their expected timeouts. Nothing pushed.
+
+## 2026-08-13 — wrap
+
+- User requested a successor to clear the remaining sprint with human smoke and comment compaction
+  postponed to its end. Wrote report and session40 prompt: it carries both plan locations and the
+  recommended order P16 → P19 → P13 → P10 → P11; P9 is closure/accounting, not new code.
