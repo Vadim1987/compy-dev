@@ -368,3 +368,44 @@ gave.
   `reject_program` (from the submit callback), `finish_run`. `ctrl_update` keeps only the *game*
   state poll (has the queue drained?). **`R3`'s hazard disappears by construction**: nothing is
   issued per frame, so there is nothing to warn about.
+
+## 2026-08-13 — EXECUTION: P-17-06 … P-17-14, seven commits, all landed
+
+All in the nested repo on `newinput-edge`; **nothing pushed**. Gate at every commit: `verify.sh`
+(**42 assertions, unchanged — no test added or removed**) plus a build-and-play smoke of **both**
+emitted programs.
+
+- **`ca7210d` P-17-06 — the editor onto `compy.input`.** Preceded by a **correction of my own note**
+  (`cc0e1870`): the PR base **destroyed the widget on every successful submit** (oneshot → a
+  `'userinput'` event → the gateway nils `love.state.user_input`), so upstream's per-tick re-arm was
+  never dead code — it was re-creating the prompt after every run. My §2 had read `input()`'s early
+  return and stopped. **Third instance this session of the same fault: a mechanism read at one end is
+  not a mechanism.** The owner's ruling survived and was strengthened.
+  **The throwaway harness earned its keep immediately** — driving the real file against a recording
+  stub caught a bug I had *just written and had predicted in the correction an hour earlier*:
+  `rearm_editor` called `show{}` over a shown field, which warns and drops both text and prompt. Now
+  every prompt write goes through one branch. Five paths measured, all correct after the fix.
+- **`522d860` P-17-07 — `shift+escape` as a combo + `hide()` on the menu exits.** The capability the
+  author asked for; `<` kept per the owner. **Verified rather than assumed** that a load-time
+  registration survives: the runtime runs the project's top level inside `pcall(f)` *first*, then
+  `set_user_handlers` → `occupy_input`, which seeds **hooks** and never touches **shortcuts**.
+- **`3468f1f` P-17-08 — `is_shift_down` deleted, not converted.** `P-17-07` orphaned both copies. The
+  plan said *check before deleting*; the check said dead.
+- **`e2dacb0` P-17-09 — the `shift_held` mirror → polls**, plus `SHIFT_KEYS` → `Key.is_shift`, plus
+  the render consumer. **One stated widening**: both Shift keys held, release one, next key now names
+  a macro where it used to run. Platform-side, `Key.is_shift` joined P10's undocumented-members gap.
+- **`569204e` P-17-10 — `plan_held` → `isrepeat`**, threading the press through `game_key`.
+  Direct-control levels keep repeating deliberately — that is how holding a direction queues moves.
+- **`bef4258` P-17-11 — the Tab pollers → 8 combos each**, per the owner's ruling. `side_run` not
+  `stop_here`, so the press still reaches the field as before; `ignore_repeat` mandatory or a held
+  Tab walks the levels. **No `love.keyboard.isDown` remains anywhere in either program.**
+- **`37b996a` P-17-14 — `love.keypressed` → `hooks.keypressed`**, both programs, because combos now
+  guard that channel. **Only that channel** — key releases and mouse presses keep their callbacks,
+  and the distinction is the rule, not an oversight.
+- **`1ac4398f` P-17-12 — the smoke checklist**, 27 rows in six sections, **all `[new]`**. It carries
+  the new launch commands (the old one now fails: the source root is not a runnable project) and
+  names three rows that are questions rather than tests.
+
+**What is left: `P-17-13`, the comment compaction — and I am NOT doing it yet.** Raised to the owner:
+the plan orders it last, but the human smoke pass is the gate that can still send code back, and
+compacting comments the gate's findings would rewrite wastes the pass. Sequencing is theirs.

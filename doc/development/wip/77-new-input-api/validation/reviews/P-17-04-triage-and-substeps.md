@@ -100,7 +100,7 @@ compliant is the ruling's best evidence** — it is what we did when we thought 
 
 Ordered by dependency. Each is one commit unless stated.
 
-### `P-17-06` — `E1`: `core_editor.lua` onto `compy.input`  · **first, and nothing can be smoked before it**
+### `P-17-06` — `E1`: `core_editor.lua` onto `compy.input`  ✅ **DONE `ca7210d`**
 
 Six legacy calls in one CORE file, shared by both programs. Without it **neither program's editor
 runs at all** — this is repair, not adoption.
@@ -147,7 +147,7 @@ structure, and only the prompt work moves out of the tick.
 **Owes the checklist:** type a valid program → it runs; type an invalid one → the error becomes the
 prompt and **the text stays for correction**; run to completion → the prompt returns empty.
 
-### `P-17-07` — `G1` + `R2`: `shift+escape` as a shortcut, with the teardown it makes necessary
+### `P-17-07` — `G1` + `R2`: `shift+escape` + the teardown  ✅ **DONE `522d860`**
 
 **One commit, because they are one concern:** the gesture and the cleanup that gesture requires.
 
@@ -164,13 +164,13 @@ prompt and **the text stays for correction**; run to completion → the prompt r
 **Owes the checklist:** Shift+Esc from inside an active editor field returns to the menu, the field
 is gone, and the draft was not silently wiped on the way.
 
-### `P-17-08` — `E2`: the two `is_shift_down` copies → `Key.shift()`
+### `P-17-08` — `E2`: the two `is_shift_down` copies  ✅ **DONE `3468f1f`** — deleted, not converted: `P-17-07` orphaned both, as the plan asked us to check rather than assume
 
 `maze_main.lua:145-148`, `draw_main.lua:305-308`. Behaviour identical. After `P-17-07` the only
 caller left is whatever `G1` did not absorb — **check before deleting the function**, do not assume
 it is dead.
 
-### `P-17-09` — `E3`: the `shift_held` mirror → `Key.shift()`  · **the strongest case in the step**
+### `P-17-09` — `E3`: the `shift_held` mirror → `Key.shift()`  ✅ **DONE `e2dacb0`** (+ the `Key.is_shift` doc gap into P10)
 
 Reads become polls: `handle_key`'s `elseif`, and **`maze_render.lua:221`'s `draw_macro_ui`**, which
 is a *display* consumer — a lost release leaves the screen **permanently dimmed until restart**, a
@@ -186,7 +186,7 @@ edit, so it is a second commit in `/repo`, not in the example).
 **Owes the checklist:** hold Shift → the screen dims; release → it undims; Shift+key names a macro as
 before.
 
-### `P-17-10` — `E4`: `plan_held` → `isrepeat`
+### `P-17-10` — `E4`: `plan_held` → `isrepeat`  ✅ **DONE `569204e`**
 
 Deletes a wedge-able held-key set (a lost release kills one direction for the session). **Cost, and
 it is visible:** `love.keypressed(k)` must thread `isrepeat` through `game_key(k)` → `ctrl_pressed(k)`
@@ -196,7 +196,7 @@ shrinks to `release_shift(k)`.
 **Owes the checklist:** hold a direction key on a Track-2 level → **one** tile is appended, not a run
 of them.
 
-### `P-17-11` — `E5`: the two Tab pollers → explicit combo registrations
+### `P-17-11` — `E5`: the two Tab pollers → 8 combos each  ✅ **DONE `bef4258`**
 
 **Ruled (owner, 2026-08-13): multiply the combos, the `keyboard` way** — *"it looks ugly but may
 clearly hint author about which combos they are really supporting (and maybe deciding to suppress or
@@ -215,7 +215,7 @@ claims, and invites them to drop the ones they never meant.
 
 **Owes the checklist:** Tab advances as before; Shift+Tab and Ctrl+Tab still advance.
 
-### `P-17-12` — the smoke checklist section for `maze` and `draw`
+### `P-17-12` — the smoke checklist for `maze` and `draw`  ✅ **DONE `1ac4398f`**
 
 `doc/development/smoke_checklists.md` (platform-side, persistent — outlives `wip/77`). **With the
 suite frozen, this is the step's only gate**, so it is a substep and not a nicety.
@@ -233,7 +233,7 @@ Rows owed by the substeps above, plus three from `P-17-03` that no code change c
 **Launch commands go in the section**, because the old one no longer works: the source root is not a
 runnable project; build, then play the emitted folder.
 
-### `P-17-14` — `Q11`: `love.keypressed` → `compy.input.hooks.keypressed`, both programs
+### `P-17-14` — `Q11`: `love.keypressed` → `hooks.keypressed`  ✅ **DONE `37b996a`**
 
 From the walkthrough's universal ruling. **Sequenced after `G1` and `E5`**, because the rule's
 trigger is *"the project registers shortcuts on that channel"* — before those two land, it does not.
