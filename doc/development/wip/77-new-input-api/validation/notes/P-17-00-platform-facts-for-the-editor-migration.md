@@ -116,3 +116,55 @@ driven rather than asserted** — but the ruling it needed has turned into a loo
 
 `rearm_input` does **two** jobs and only one of them is the editor's: it also detects run completion
 (`if GS.running then finish_run() end`). That half is a genuine per-tick state poll and stays.
+
+---
+
+## 6. CORRECTION (2026-08-13) — §2's conclusion was wrong: the base DID dismiss the widget on submit
+
+Found while implementing `P-17-06`, by asking the question §2 never asked: *if a second `input_text()`
+is a no-op while a widget is shown, when is upstream's per-tick re-arm ever effective?* The answer is
+that **the widget is not shown at that moment**, because the base destroys it on every successful
+submit.
+
+**The mechanism, at the PR base:**
+
+- the project overlay is built as a **`oneshot`** widget (`3256aac:consoleController.lua:571`,
+  `UserInputController(ui_model, input_ref, true)`);
+- a successful evaluate on a oneshot pushes a LÖVE **`'userinput'`** event
+  (`3256aac:userInputModel.lua:812-819`);
+- the gateway's `handlers.userinput` calls `clear_user_input()`, i.e.
+  **`love.state.user_input = nil`** (`3256aac:controller.lua:521-523, 709-713`).
+
+**At HEAD that machinery is gone entirely** — the string `userinput` appears nowhere in the
+controllers or the input model, which is the other side of the guide's *"The overlay remains shown by
+default"*.
+
+**So §2's facts were right and its conclusion was wrong.** *"There can be only one"* is real; what I
+failed to check is that after a submit **there is none**. Consequences, and they are the substance of
+`E1`:
+
+- **Upstream's per-tick `input_text` in `rearm_input` is not dead code** — it is what **re-creates**
+  the prompt after every run, with `string.lines(GS.program or "")` restoring the last program so
+  the child can edit and re-run. Reading it as a no-op made it look like scaffolding; it is the
+  re-arm.
+- **`reject_program`'s `input_text(input_prompt(), lines)` is likewise effective**: the widget is
+  gone at that point, so it genuinely re-opens with the **error as the prompt** and the typed text
+  restored. That is how a syntax error is shown, and my §1 was right about the mechanism for the
+  wrong reason.
+- **`rearm_editor` → `arm_editor(GS.program)` (from `reset_after_fail`) also re-created the widget.**
+  Under `compy.input` the overlay is very likely **still shown** there, so a bare `show{}` would warn
+  and no-op — it needs `is_shown()`-branching or `configure` + `set_text`.
+
+**The owner's `P-17-06` ruling survives intact, and is strengthened.** *"Update the prompt only on a
+genuine state change; the call site is the signal"* was ruled on the merits, not on this fact — and
+with the widget no longer destroyed per submit, a per-tick call is **pure waste** rather than
+merely redundant.
+
+**What the migration must reproduce, restated correctly:** not *"leave the field alone"* but
+**"put the prompt back where upstream would have re-created it"** — at `arm_editor`, at
+`reject_program`, and after `finish_run` — while relying on the field's *text* surviving a submit,
+which is exactly what the base achieved by re-supplying it and HEAD achieves by not clearing it.
+
+**The lesson, and it is this session's third instance:** a mechanism read at one end is not a
+mechanism. §2 read `input()`'s early return and stopped; the dismissal was two files away, behind an
+event name.
