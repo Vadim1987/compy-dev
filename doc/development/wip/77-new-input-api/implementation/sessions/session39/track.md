@@ -325,3 +325,46 @@ omitted.
   as an oversight: no test work, no deletion of upstream code (`<`, and draw's dead fallback), nothing
   about `.compy/build` as a platform convention, and no fix for upstream's pre-existing stuck-overlay
   paths beyond the one `G1` makes deliberate.
+
+## 2026-08-13 — P-17-05: the walkthrough runs, and it produces a UNIVERSAL ruling
+
+Ran as a conversation, seven sites, code in front of us. **First I corrected my own triage claim**
+that four of the seven declined on one argument — preparing the walkthrough showed they rest on
+**three** arguments, two of them weak. The gate was still worth having, for a better reason than I
+gave.
+
+- **Five upheld, and the owner's reason is better than mine.** *"Early translation from keyboard
+  coordinates into game semantics is exactly what I advocated for. Provided examples **are** game
+  semantics, already decoupled from triggering input events — i.e. a good thing."* That reframes the
+  dispatch tables from *"nothing worth converting"* to ***"already in the desired end state"*** — a
+  key-to-meaning table is **Q7 being satisfied**, not Q8 being ignored. Carried into
+  `doc/development/conventions/input_adoption.md` as a clause under Q8, so the next reader does not
+  mistake every key-keyed table for a combo demultiplexer.
+- **A NEW UNIVERSAL RULING, and it decides 1 and 3 differently from each other:** *"we should use
+  `compy.input.hooks` **when** the project uses `compy.input.shortcuts` **on the same channel**.
+  Otherwise it's unobvious to users that what they consider to be a native `love.*` callback
+  (= receiving all events) is instead a hook that could be guarded by shortcuts (= some events not
+  reaching)."* Landed as **Q11** in the checklist.
+  - `love.keypressed` **converts** (G1 and E5 put shortcuts on that channel) → new substep
+    **`P-17-14`**, sequenced *after* 07 and 11 because that is what makes the rule bite.
+  - `love.mousepressed` **stays** — no shortcut on any pointer channel, so nothing guards it.
+    **Flagged to the owner**: they named "1+3" as a pair, and their own rule applied faithfully
+    leaves #1 declined. Their call to widen it if that was not the intent.
+- **The platform-wide recheck the ruling calls for: done, nothing in breach.** Cross-tabulated
+  shortcuts-per-channel against captured `love.*`-per-channel across every tracked example and the
+  three nested repos. `turtle` has `shortcuts.textinput` with captured `keypressed`/`keyreleased` —
+  **different channels, compliant**. `paint`/`sapper` pair `hooks.singleclick/doubleclick` with a
+  captured `love.mousepressed`, but those are hooks, not shortcuts, so the rule is silent.
+  **`keyboard` is already fully compliant** — `shortcuts.keypressed` + `hooks.keypressed`, zero
+  captured `love.*` — which is the ruling's best evidence: it is what we did when we thought hardest.
+- **E1 ruled, and it overturns my recommendation on a point I had missed.** Owner: update the prompt
+  **only on a genuine state change, with the call site as the signal** — a timeout needs its own
+  counter, and a "did input land?" test needs a `lastInput` sentinel, which is new state kept solely
+  to answer *"has anything changed since last frame?"*. **The trap was in my own words** *"only on an
+  actual state change"*: a per-tick updater that acts only on a change must **store the previous
+  value to compare against**. `keyboard` could afford such a sentinel because its claim table earned
+  its keep elsewhere; here it would earn nothing.
+  **So the prompt is written at exactly three sites, each already an event** — `arm_editor`,
+  `reject_program` (from the submit callback), `finish_run`. `ctrl_update` keeps only the *game*
+  state poll (has the queue drained?). **`R3`'s hazard disappears by construction**: nothing is
+  issued per frame, so there is nothing to warn about.

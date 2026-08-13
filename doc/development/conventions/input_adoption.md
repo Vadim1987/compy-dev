@@ -62,6 +62,14 @@ one place instead of scattered through deterministic code.
 **Q8 [project surface] — Does one hook demultiplex several orthogonal combos by hand?**
 → **Split into shortcuts, one per combo.** That is what they are for: decomposition, not
 capability (Decision 32.1).
+→ **But a key-to-MEANING table is not this** (owner, 2026-08-13). A lookup that turns a key name
+into a domain action — `PLAN_ACTS[k]`, `SYSTEM_KEYS[k]`, a menu's `key == k` scan — is **early
+translation from keyboard coordinates into game semantics**, which is what Q7 asks for. It is
+already decoupled from the triggering event, and that is the desired end state, not an
+antipattern. Q8 is about **combos** demultiplexed by hand, not about every table keyed by a key
+name. Two further reasons such a table usually should not become shortcuts: shortcuts are
+**project-global** while these tables are typically **mode- or screen-scoped**, and the table is
+often **data-driven** (built from level data), which no per-combo registration can express.
 
 **Q9 [project surface] — Is a binding on the release channel?**
 → **Legitimate if it is a choice** (Decision 32.3) — it sidesteps key repeat with no filtering.
@@ -73,6 +81,18 @@ can be missed on release when a modifier comes up first, so prefer release for b
 modifier the framework knows. **For a query**, spell the exclusion out and accept that it
 hard-codes the modifier set; a query primitive that would delegate it is proposed but not built
 (`../technical_debt/input.md`).
+
+**Q11 [project surface] — Does the project keep a captured `love.*` callback on a channel where
+it also registers shortcuts?**
+→ **Declare it as `compy.input.hooks.<event>` instead** (owner ruling, 2026-08-13). The framework
+seeds a captured `love.*` handler as the hook automatically, so both spellings *work* — but they
+do not read the same. A reader of `function love.keypressed(k)` reasonably believes they are
+looking at a native callback that receives every event; once a shortcut exists on that channel,
+they are not — the shortcut runs first and can consume the event before the handler sees it.
+Spelling it `hooks.keypressed` puts the handler on the same surface as the thing that guards it,
+where the relationship is visible. **The condition is per channel:** a `textinput` shortcut says
+nothing about a `mousepressed` callback, and a project with no shortcuts on a channel may keep
+its captured callback there.
 
 ---
 

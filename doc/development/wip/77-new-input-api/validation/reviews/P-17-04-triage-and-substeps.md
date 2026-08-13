@@ -47,10 +47,52 @@ framework already seeds captured `love.*` handlers as hooks, so a rewrite change
 and the specific reason the replacement is not justified on its own terms. **Not a document to
 approve — a conversation to have.** Its outcome is recorded here as an amendment.
 
-**Why it is a gate and not a footnote:** four of the seven are declined on the same argument (*"Q8's
-shape but not Q8's problem — they demultiplex by game mode or command meaning, not by combo"*). If
-that argument is wrong, it is wrong four times, and every one of them is a substep this plan does not
-currently contain.
+**Why it is a gate and not a footnote:** the declines rest on three different arguments, not one — a
+correction of this document's first draft, made while preparing the walkthrough — and two of them
+were weak enough to expect an overrule.
+
+### The walkthrough's outcome (owner, 2026-08-13)
+
+**Five declines upheld, on a better reason than the one I gave.** Owner: *"early translation from
+keyboard coordinates into game semantics is exactly what I advocated for. Provided examples **are**
+game semantics, already decoupled from triggering input events — i.e. a good thing."*
+
+That reframes M6/D6, M18, M19/D8 — and M9/M10, M14 by extension — from *"nothing worth converting"*
+to ***"already in the desired end state"***. A key-to-meaning table is **Q7 being satisfied**, not Q8
+being ignored. Carried into `doc/development/conventions/input_adoption.md` as a clause under **Q8**,
+so the next reader of the checklist does not mistake every key-keyed table for a combo demultiplexer.
+
+**M7/D7 overruled, M3/D3 upheld — by a new universal ruling, not by taste.** Owner:
+
+> *"We should use `compy.input.hooks` **when** the project uses `compy.input.shortcuts` **on the same
+> channel**. Otherwise it's unobvious to users that what they consider to be a native `love.*`
+> callback (= receiving all events) is instead a hook that could be guarded by shortcuts (= some
+> events not reaching)."*
+
+Applied here, the condition splits the pair I had bundled:
+
+- **`love.keypressed` → `compy.input.hooks.keypressed`, in both programs.** `G1` puts
+  `shift+escape` on that channel and `E5` puts eight `tab` combos there, so the handler becomes
+  guardable and must say so. **This is `P-17-14`.**
+- **`love.mousepressed` stays as it is.** No shortcut exists on any pointer channel in either
+  program, so nothing guards it and the confusion the rule prevents cannot arise. *Flagged because
+  the owner named "1+3" as a pair: their own rule, applied faithfully, leaves #1 declined.*
+
+**The platform-wide recheck the ruling calls for: done, and nothing is in breach.** Every tracked
+example plus the three nested ones, cross-tabulated (shortcuts per channel x captured `love.*` per
+channel):
+
+| repo | shortcuts | captured `love.*` | verdict |
+|---|---|---|---|
+| `turtle` | `textinput` | `keypressed`, `keyreleased` | compliant — **different channels** |
+| `keyboard` | `keypressed` | none — `hooks.keypressed/keyreleased/textinput` | **already compliant** |
+| `clock`, `life`, `paint`, `pong`, `sapper`, `tixy`, `balloons` | none | various | the rule does not bite |
+
+`paint` and `sapper` keep `hooks.singleclick`/`doubleclick` beside a captured `love.mousepressed`,
+but those are **hooks, not shortcuts**, so the rule is silent on them. **`keyboard` arriving already
+compliant is the ruling's best evidence** — it is what we did when we thought hardest about it.
+
+**Q11** in `input_adoption.md` now carries the rule.
 
 ---
 
@@ -67,15 +109,40 @@ runs at all** — this is repair, not adoption.
   the `ctrl_update = process_user_input` poll both go.
 - `reject_program` → **`configure{ prompt = input_prompt() }` + `set_text`**, never a re-`show`
   (`R3`: a re-show cannot change the prompt, and a syntax error *is* the prompt).
-- `rearm_input` → its re-arm half becomes `configure`/`set_text` **only on an actual state change**;
-  **its `finish_run()` half stays on `ctrl_update`**, because that is a genuine per-tick state poll
+- `rearm_input` → **its re-arm half leaves the tick entirely** (see the ruling below); **its
+  `finish_run()` half stays on `ctrl_update`**, because that is a genuine per-tick *game* state poll
   (has the queue drained?) and not editor business.
 
-**The one open design choice inside this substep** — whether the re-arm becomes event-driven (from
-`on_text_entered`) or stays a tick that notices — **is named here rather than decided**: it has a
-behavioural edge on a run that ends mid-frame. Recommendation: keep the tick, because that is what
-upstream does and this substep is already the largest change in the step; revisit only if smoke shows
-a visible lag.
+**RULED (owner, 2026-08-13): update the prompt only on a genuine state change, and let the call site
+be the signal — no per-tick prompt call at all.** Their reasoning overturns my "keep the tick"
+recommendation on a point I had missed:
+
+> *"Updating the prompt on timeout has no choice but maintain its own time counter. Updating the
+> prompt because new input landed would require maintaining `lastInput` and tracking its changes. If
+> we do **not** use `lastInput` for another purpose (the way keyboard uses glyph claims), a shortcut
+> provides the same effect — fire on state change — without maintaining another state."*
+
+The trap was hiding in my own words *"only on an actual state change"*: a per-tick updater that acts
+only on a change **must store the previous value to compare against**, and that stored value is new
+state — precisely what this migration exists to delete. `keyboard` could afford such a sentinel
+because its claim table earned its keep on other grounds; here it would exist solely to answer *"has
+anything changed since last frame?"*, which the call sites already know.
+
+**So the prompt is written at exactly three sites, each already an event:**
+
+| when | where | what |
+|---|---|---|
+| a level arms its editor | `arm_editor` | `show{ prompt = "Commands:", text, on_text_entered }` |
+| a submitted program is rejected | `reject_program`, reached from the submit callback | `configure{ prompt = bad.msg }` + `set_text` |
+| a run finishes | `finish_run` | `configure{ prompt = "Commands:" }` + `set_text(GS.program)` |
+
+**And `R3`'s hazard disappears with it.** No `show{}` or `configure` is ever issued per frame, so
+there is nothing to warn about — the failure our own `790ac19` hit becomes unreachable by
+construction rather than avoided by care.
+
+**What stays on `ctrl_update` is the game's own state poll**, not the prompt's: *has the queue
+drained?* → `finish_run()`. That is animation state with no event behind it, it is upstream's own
+structure, and only the prompt work moves out of the tick.
 
 **Owes the checklist:** type a valid program → it runs; type an invalid one → the error becomes the
 prompt and **the text stays for correction**; run to completion → the prompt returns empty.
@@ -166,6 +233,16 @@ Rows owed by the substeps above, plus three from `P-17-03` that no code change c
 **Launch commands go in the section**, because the old one no longer works: the source root is not a
 runnable project; build, then play the emitted folder.
 
+### `P-17-14` — `Q11`: `love.keypressed` → `compy.input.hooks.keypressed`, both programs
+
+From the walkthrough's universal ruling. **Sequenced after `G1` and `E5`**, because the rule's
+trigger is *"the project registers shortcuts on that channel"* — before those two land, it does not.
+Mechanical: the function body is unchanged, only its binding site. **`love.mousepressed` is left
+alone**, deliberately, with the reason in a comment: no shortcut guards the pointer channel, so the
+ambiguity the rule exists to remove is not there.
+
+**Owes the checklist:** nothing new — same handler, same channel. `verify.sh` and both smokes gate it.
+
 ### `P-17-13` — the comment-compaction pass  · **last, always**
 
 One pass over stabilised code, on the `P-18-10` model: dry up history, obituaries, intermediate
@@ -177,15 +254,17 @@ rulings and second phrasings; keep the reasons. Also the marker gate
 ## 3. Sequencing, and what is independent
 
 ```
-P-17-05  (gate: the seven no-gain sites, with the owner)
+P-17-05  gate: the seven no-gain sites            [CLOSED 2026-08-13]
    └── P-17-06  E1   editor onto compy.input        [required; unblocks all smoke]
          ├── P-17-07  G1+R2  shift+escape + hide()
          ├── P-17-08  E2     is_shift_down ×2        ─┐
          ├── P-17-09  E3     shift_held mirror        ├─ independent of each other
-         ├── P-17-10  E4     plan_held → isrepeat     │  (08→09 share macro/maze_main;
-         └── P-17-11  E5     tab pollers             ─┘   10→11 share maze_main)
-               └── P-17-12  smoke checklist
-                     └── P-17-13  comment compaction
+         ├── P-17-10  E4     plan_held → isrepeat     │  (08+09 share macro/maze_main;
+         └── P-17-11  E5     tab pollers             ─┘   10+11 share maze_main)
+               └── P-17-14  Q11  love.keypressed → hooks.keypressed
+                     │            [AFTER 07 and 11 — that is what makes the rule bite]
+                     └── P-17-12  smoke checklist
+                           └── P-17-13  comment compaction
 ```
 
 `P-17-08`…`P-17-11` are mutually independent; run them **adjacently by file** to reduce churn
@@ -194,10 +273,12 @@ P-17-05  (gate: the seven no-gain sites, with the owner)
 
 ## 4. Rulings still owed
 
-1. **The seven no-gain sites** — `P-17-05`, the gate above.
-2. **`P-17-06`'s re-arm question** — event-driven or tick. Recommendation stated, not taken.
+1. ~~The seven no-gain sites~~ — **closed 2026-08-13** (`P-17-05`): five upheld, `M7/D7` overruled
+   into `P-17-14`, `M3/D3` upheld by the new rule's own condition.
+2. ~~`P-17-06`'s re-arm question~~ — **closed 2026-08-13**: no per-tick prompt call; the three call
+   sites are the signal.
 3. **Anything a substep turns up that a player would notice.** By standing rule that stops the
-   substep, it does not get absorbed into it.
+   substep, it does not get absorbed into it. **The only one still open.**
 
 ## 5. What this plan deliberately does NOT contain
 
