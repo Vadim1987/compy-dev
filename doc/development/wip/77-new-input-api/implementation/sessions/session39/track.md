@@ -463,3 +463,14 @@ and ids are not reused.
 
 Prompt of record `../../../validation/prompts/P-17-15-cold-review.md`; deliverable
 `../../../validation/reviews/S39-P17-cold-review.md`. Running.
+
+## 2026-08-13 — P-17-15 returns one narrowing; P-17-16 restores it
+
+- Cold Terra review delivered S39-P17-cold-review.md: one medium, player-visible narrowing. The
+  exact Shift+Escape combo omitted Shift held with Alt, Ctrl, or both; upstream accepted all three.
+- Owner ruled as for keyboard: make every supported variant visible, so the author can rule on it.
+  P-17-16 was recorded before code, then corrected before execution when I verified that the
+  Ctrl+Alt+Shift form was also in the upstream predicate.
+- da9d1c2 (nested maze): all three exact variants registered in both emitted programs. verify.sh
+  42 / 0 / 0, platform busted tests 946 / 0 / 0 / 10, and both emitted-program smokes reached
+  Project play opened before their expected timeouts. Nothing pushed.
