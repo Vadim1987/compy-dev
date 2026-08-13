@@ -137,3 +137,114 @@ nothing but this table.)*
 - **E3** is a question, not a test: either answer closes it.
 - Everything else is a regression check. A failure there means the migration changed behaviour it was
   not supposed to touch, which is the thing that ruling exists to prevent.
+
+---
+
+## maze (and draw)
+
+**Repository:** `src/examples/maze` (separate remote, own PR). **Last mechanism change:** 2026-08-13
+— the command editor moved onto the project input API, `Shift+Esc` became a registered combo, and
+three pieces of remembered keyboard state were replaced by asking the keyboard. Plan and reasoning:
+`wip/77-new-input-api/validation/reviews/P-17-04-triage-and-substeps.md`.
+
+**This repo now ships TWO programs**, `maze` and `draw`, built from one source tree. Both share the
+command editor, so **section C must be run in both**.
+
+**Everything in this section is [new].** Nothing in this work has been run by a human, in either
+program, at any commit — no level has been reached and no key pressed. The automated suite covers the
+command *core* (42 assertions) and does not touch input at all, by ruling: this list is the only gate.
+
+### The four commits a result should be reported against
+
+Quote these with any finding, and refresh them (`git -C <repo> rev-parse --short HEAD`) if the tree
+moved before you run.
+
+| what | ref | commit |
+|---|---|---|
+| `maze`, the branch under test | `newinput-edge` (local, unpushed) | **`37b996a`** |
+| `maze` upstream it is diffed against | `dsent/dsent/dev` | **`b8cc436`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`f76ddb14`** |
+| platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
+
+### How to launch — this changed, and the old command no longer works
+
+The source root **is not a runnable project** any more: it emits `maze/` and `draw/` as separate
+projects (`BUILD.md`). `love src play src/examples/maze` now fails with *"main.lua does not exist"*.
+
+```sh
+cd src/examples/maze && ./.compy/build /abs/path/out
+cd <repo root> && love src play /abs/path/out/maze     # and .../draw
+```
+
+- **The exit row (E1) needs the IDE, not play mode** — under `play` the console is disabled, so
+  `Ctrl+Esc` has nothing to return to. Start with `love src`, open the project from the console.
+- **maze's menu** offers three tracks: **1** Drive the robot (direct keys) · **2** Plan a path (tile
+  buffer) · **3** All mazes (the sandbox, which is where the **command editor** levels are).
+- **draw's menu** offers Free draw and the picture tasks. **Free draw keeps its command field open
+  the whole time**, which is what makes section C and row B1 matter there.
+
+### A — the command editor (run in **maze track 3** and in **draw**)
+
+| | do | expect |
+|---|---|---|
+| A1 | enter an editor level | the command field is open, **empty**, prompting `Commands:` |
+| A2 | type a valid program and press Enter | it runs; the robot moves |
+| A3 | after that run ends without winning | the prompt returns **once**, with the program still in the field to edit |
+| A4 | type an invalid command (e.g. `FFX`) and Enter | the **error message replaces the prompt** and the typed text stays for correction |
+| A5 | correct it and Enter | it runs; the prompt goes back to `Commands:` |
+| A6 | in maze: crash into a wall, then press Tab | the robot goes home and the **kept program** is back in the field |
+| A7 | type a long command, watching each character | each character appears **once** — the game now also sees every keystroke, and should do nothing with it |
+
+### B — Shift+Esc, the gesture this work adds
+
+| | do | expect |
+|---|---|---|
+| B1 | on an **editor level with the field active**, press `Shift+Esc` | you return to the menu. **This is the new capability** — it previously could not reach the program at all |
+| B2 | look at the screen after B1 | **no command field is left over the menu** |
+| B3 | immediately press a menu digit | the track starts, and **the digit does not also land in a field** |
+| B4 | on a **direct-control** level, press `Shift+Esc` | returns to the menu, as before |
+| B5 | at the menu, press `Shift+Esc` | **nothing happens** — the menu is the top level; `Ctrl+Esc` is how you leave to the console |
+| B6 | type a draft, then `Shift+Esc` | you leave — the draft is not silently wiped *and then* the game left, which is what one keystroke doing both would look like |
+| B7 | in **draw**, `<` typed as a command | still exits to the draw menu. **It was deliberately kept** |
+
+### C — the menu digit and its echo (run in **maze**, entering track 3)
+
+| | do | expect |
+|---|---|---|
+| C1 | from the menu press `3` to enter the sandbox | the command field opens **empty** — no stray `3` in it |
+
+*(If a `3` appears, the fix is the documented one-shot `textinput` guard, and the row becomes a
+defect against `P-17-03` §5, not a mystery.)*
+
+### D — the keyboard state that stopped being remembered
+
+| | do | expect |
+|---|---|---|
+| D1 | on a **direct-control** level, hold `Shift` | the screen dims — "you are about to name a macro" |
+| D2 | still holding `Shift`, press a letter, then release `Shift` | a macro is recorded under that letter, as before |
+| D3 | hold `Shift`, then **click away to another window and back**, then press a letter | the letter **runs as a command** and the screen is **not** stuck dim. *(Before this work the lost release wedged it: every key started a recording and the dim never cleared until restart.)* |
+| D4 | hold **both** Shift keys, release one, press a letter | it names a macro. **Stated widening**: this used to run as a command |
+| D5 | on a **Track 2 (plan)** level, hold a direction key | **one** tile is appended, not a run of them |
+| D6 | on a **direct-control** level, hold a direction key | the robot queues a **run** of moves — unchanged, this one is supposed to repeat |
+| D7 | on a plan level, hold a direction, click away and back, press it again | it still works. *(A lost release used to kill that direction for the session.)* |
+
+### E — Tab, and on the way out
+
+| | do | expect |
+|---|---|---|
+| E1 | leave with `Ctrl+Esc` (**IDE launch**) | you are back in the console |
+| E2 | win a level, press `Tab` | the next level starts |
+| E3 | **hold** `Tab` | the level advances **once**, not repeatedly |
+| E4 | press `Shift+Tab`, then `Ctrl+Tab` | each still advances/resets as a bare Tab does — these were preserved deliberately, one registration each |
+| E5 | on an **editor level**, press `Tab` | the level acts **and** a tab reaches the field, as it did before. *(Odd, pre-existing, deliberately not changed.)* |
+| E6 | in **draw**, complete a picture and press `Tab` | the next picture starts |
+
+### What a failure here means
+
+- **A1–A5, B1–B3, D3–D5, D7, E3** are the new mechanisms. A failure is a defect in the 2026-08-13
+  work — report it against `wip/77-new-input-api/validation/reviews/P-17-04-triage-and-substeps.md`.
+- **D4** is a **stated behaviour change**, not a bug: confirm it reads acceptably rather than whether
+  it differs.
+- **E5** and **B7** are deliberate preservations. A failure there means the migration changed
+  something it promised not to.
+- Everything else is a regression check against behaviour the example already had.
