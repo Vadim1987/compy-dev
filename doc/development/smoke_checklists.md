@@ -8,6 +8,12 @@ top-to-bottom in one sitting, with the expected result stated so a failure is un
 `wip/77-new-input-api/validation/plan.md` Phase G (the PR's own gate) and its §16.3 (each detached
 example repo's PR gate is a human smoke pass), and the step that last changed the code.
 
+**Which examples owe a list** (measured 2026-08-13; Phase G carries the full reasoning): this
+feature changed code in twelve examples — nine tracked and three detached. **Written so far:
+`keyboard`, `maze`+`draw`.** **Owed: `balloons`** (detached, so its PR's only gate is this pass) and
+**`sapper`** (tracked, but its input mechanism changed materially and it carries a live defect —
+P19's). The remaining tracked examples ride the platform PR's review pass.
+
 **Keep this document current with the code.** A checklist that tests a mechanism the code no longer
 has is worse than none, because it passes.
 

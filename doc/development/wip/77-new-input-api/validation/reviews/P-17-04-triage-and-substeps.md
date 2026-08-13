@@ -18,8 +18,8 @@ three platform-behaviour findings (`R1`–`R3`), seven sites reported as **no ga
   cd src/examples/maze && ./.compy/build /abs/scratch/emit
   cd /repo && timeout 25 xvfb-run -a stdbuf -oL -eL love src play /abs/scratch/emit/maze   # and /draw
   ```
-- **Comments stay verbose while the work is live**; compaction is `P-17-13`, once, at the end
-  (`P-17-00-shape-and-plan.md` §5).
+- **Comments stay verbose while the work is live**; compaction is **`P11`**'s late pass, not this
+  step's (`P-17-00-shape-and-plan.md` §5, and the owner's removal of `P-17-13`, 2026-08-13).
 - **Citations:** no `doc/…` path and no platform-internal identifier inside this repo; naming the
   guide and its section is tolerable where it is really needed
   (`agents/rules/commenting.md`, "Citations", as refined 2026-08-13).
@@ -243,13 +243,20 @@ ambiguity the rule exists to remove is not there.
 
 **Owes the checklist:** nothing new — same handler, same channel. `verify.sh` and both smokes gate it.
 
-### `P-17-13` — the comment-compaction pass  · **last, always**
+### ~~`P-17-13` — the comment-compaction pass~~ · **REMOVED from this step (owner, 2026-08-13)**
 
-One pass over stabilised code, on the `P-18-10` model: dry up history, obituaries, intermediate
-rulings and second phrasings; keep the reasons. Also the marker gate
-(`grep -rn 'INTERIM:\|REMARK:' src/ tests/` empty) and the citation rule as refined.
+Compaction is not P-17's to do. It belongs to the sprint's own late pass, **`P11`**, which exists
+precisely so comments are cut **after the code stops moving** — and P-17's code cannot be called
+final while the human smoke pass can still send it back.
 
----
+**Where it went, so it is not lost:** `S27-triage-and-plan.md`'s `P11` row now names the example
+repos' comment compaction explicitly, with `maze`/`draw` as the outstanding one (`keyboard`'s was
+done inside its own step as `P-18-10`, which is the model). The marker gate
+(`grep -rniE 'INTERIM|REMARK'` over `src/` and `tests/`, which reaches the nested repos) was already
+P11's.
+
+**What P-17 leaves for it:** the comments this step wrote are deliberately full — mid-development
+verbosity is the owner's ruling of 2026-08-13 — so there is real work here, not a formality.
 
 ## 3. Sequencing, and what is independent
 
@@ -263,9 +270,11 @@ P-17-05  gate: the seven no-gain sites            [CLOSED 2026-08-13]
          └── P-17-11  E5     tab pollers             ─┘   10+11 share maze_main)
                └── P-17-14  Q11  love.keypressed → hooks.keypressed
                      │            [AFTER 07 and 11 — that is what makes the rule bite]
-                     └── P-17-12  smoke checklist
-                           └── P-17-13  comment compaction
+                     └── P-17-12  smoke checklist          [written; a HUMAN must now run it]
 ```
+
+**P-17-13 was removed** (owner, 2026-08-13): comment compaction is `P11`'s, and it runs after the
+code stops moving — which it has not, while the smoke pass can still send code back.
 
 `P-17-08`…`P-17-11` are mutually independent; run them **adjacently by file** to reduce churn
 (`08`+`09` touch `macro.lua`/`maze_render.lua`/`maze_main.lua`; `10`+`11` touch `maze_main.lua` and

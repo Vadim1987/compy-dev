@@ -461,10 +461,29 @@ description must be able to review it. `wip/77` deletion: owner-gated, after PR 
 **[S37] The human smoke pass has a written checklist, and it is the gate for the detached
 repos' own PRs** (§16.3: *"their only gate is a human smoke pass"*). It is
 **`doc/development/smoke_checklists.md`** — persistent, so it outlives `wip/77`, with one
-list per example, each case naming what to press and what to expect. `keyboard`'s is
-complete and marks the cases that exercise the 2026-08-12 acceptance mechanism and have
-**never been run by a human**; `maze` and `sapper` owe theirs when their steps land.
+list per example, each case naming what to press and what to expect.
 Whoever changes an example's input mechanism updates its list in the same commit.
+
+**[S39] The scope, measured rather than assumed (2026-08-13), because "the examples" is
+vaguer than it sounds.** This feature changed code in **twelve** examples: nine tracked
+(`clock`, `guess`, `paint`, `pong`, `repl`, `sapper`, `tixy`, `turtle`, `valid` —
+`git diff 3256aac..HEAD -- src/examples/`) and three detached (`keyboard`, `maze` which
+now also emits `draw`, and `balloons`). `life` was not touched.
+
+**Every one of them is smoked before the PRs land. What differs is the gate, not the
+requirement:**
+
+- **The three detached repos each open their own PR whose ONLY gate is that pass**, so each
+  needs a written list. **Written: `keyboard` (2026-08-12), `maze`+`draw` (2026-08-13).
+  OWED: `balloons`.**
+- **The nine tracked examples ride the platform PR** and are smoked as part of its review
+  pass. A written list is owed only where the input *mechanism* changed materially rather
+  than a call being renamed — **`sapper` is the clear case** (P19 owns it, and it carries a
+  live defect older than this feature), and `turtle` is the other candidate, being the only
+  tracked example that registers a shortcut.
+- **Nothing in this work has been run in a game scene by anyone**, at any commit, in any
+  example: no container in this project can inject a keystroke. So this pass is not a
+  formality on top of testing — for input behaviour it **is** the testing.
 
 ## Standing constraints (inherited, listed for the orchestrator's convenience)
 

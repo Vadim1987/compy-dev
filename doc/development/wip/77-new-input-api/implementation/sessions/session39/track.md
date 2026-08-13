@@ -409,3 +409,32 @@ emitted programs.
 **What is left: `P-17-13`, the comment compaction — and I am NOT doing it yet.** Raised to the owner:
 the plan orders it last, but the human smoke pass is the gate that can still send code back, and
 compacting comments the gate's findings would rewrite wastes the pass. Sequencing is theirs.
+
+## 2026-08-13 — P-17-13 removed, and both successors checked rather than assumed
+
+Owner: drop `P-17-13`, and **make sure comment compaction and the smoke pass of all examples are
+still carried by the sprint plan or the release plan.** Neither would have survived the removal
+cleanly, so both were amended rather than confirmed.
+
+- **`P-17-13` removed** from `P-17-04`, struck in place with where the work went. The reason is the
+  one I raised: compaction runs **after the code stops moving**, and P-17's code is not final while
+  the human smoke pass can still send it back.
+- **`P11` did NOT already own the example repos' comment compaction** — it owns the *marker* sweep
+  (27 markers, unambiguous gate) and the doc-corpus prose is explicitly the *parent's*. Example-repo
+  comment **bloat** was carried inside each example's own step (`P-18-10` for `keyboard`). So
+  removing `P-17-13` would have dropped `maze`/`draw`'s compaction on the floor. **P11's row and
+  §16.3 item 7 now name it**, with `P-18-10` as the model and `balloons` + the tracked examples in
+  the same pass.
+- **Phase G's smoke coverage was narrower than "all examples"** — it named the detached repos'
+  gate and said *"`maze` and `sapper` owe theirs"*. **Measured the real scope** rather than
+  restating it: `git diff 3256aac..HEAD -- src/examples/` gives **nine tracked** examples with code
+  changes (`clock`, `guess`, `paint`, `pong`, `repl`, `sapper`, `tixy`, `turtle`, `valid`; `life`
+  untouched) plus **three detached** (`keyboard`, `maze`→also `draw`, `balloons`) = **twelve**.
+  Phase G now states that all twelve are smoked and that **the gate differs, not the requirement**:
+  the three detached each need a written list because their PR has no other gate — **`balloons` is
+  OWED** — while the nine tracked ride the platform PR's review pass, with a written list where the
+  mechanism changed materially (**`sapper`**, P19's, and `turtle` as the other candidate, being the
+  only tracked example that registers a shortcut).
+- The closing line is the one that matters and it is now in the release plan: **nothing in this work
+  has been run in a game scene by anyone, at any commit, in any example.** For input behaviour this
+  pass is not a formality on top of testing — it *is* the testing.
