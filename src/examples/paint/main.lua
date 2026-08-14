@@ -361,7 +361,7 @@ compy.input.hooks.doubleclick = function(x, y)
   point(x, y, 2)
 end
 
-function love.mousemoved(x, y, dx, dy)
+compy.input.hooks.mousemoved = function(x, y, dx, dy)
   if inCanvasRange(x, y)
   then
     for btn = 1, 2 do
@@ -384,7 +384,7 @@ colorkeys = {
   ['7'] = 6,
   ['8'] = 7,
 }
-function love.keypressed(k)
+compy.input.hooks.keypressed = function(k)
   if k == 'tab' then
     if tool >= n_t then
       tool = 1
