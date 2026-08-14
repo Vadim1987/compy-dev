@@ -1192,13 +1192,8 @@ Not commissioned for closure; each may never need action.
   - `keyboard/input.lua:109` — `isMod` re-implements `Key.is_mod`. Not a
     held-state read, so outside the reconciliation's sweep, but the same
     duplication: it is used in `alt.lua`, `findkey.lua` and `hunt.lua`.
-  - `turtle/main.lua:34,92` — `Key.shift()` / `Key.ctrl()` inside
-    `love.keypressed` guarding one key each are `shift+r` and
-    `ctrl+escape`. **The second one may not want converting at all:** the
-    framework reserves Ctrl+Escape and quits on it (`controller.lua`, the
-    gateway's `keyreleased`), without consuming — so the project's handler
-    fires on the press and the framework quits on the release, to the same
-    end. The question for that site is deletion, not rung.
+  - `turtle/main.lua:34` — `Key.shift()` inside `love.keypressed` guards
+    `shift+r`. It remains because turtle demonstrates captured callbacks.
   - ~~`clock/main.lua:69,78`~~ — **RESOLVED 2026-08-11 by deciding not to
     convert, with the reason written into the file.** `space`,
     `shift+space` and `shift+r` name themselves like combos, but a

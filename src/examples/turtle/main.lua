@@ -89,11 +89,6 @@ function love.keyreleased(key)
     return true
   end
 
-  if Key.ctrl() then
-    if key == "escape" then
-      love.event.quit()
-    end
-  end
 end
 
 function love.update()
