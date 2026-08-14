@@ -1926,8 +1926,7 @@ that exists to do design-heavy work would be circular.
 > `dad70c30` records in `clock` **why its bindings stay in the hook** — converting them narrows
 > the trigger and nobody asked for that; `f55ff340` teaches the new rung in the project guide,
 > since new public API must not ship undocumented.
-> **What remains for this step:** `turtle` (no change — it is the standing demonstration of the
-> captured `love.*` path), the widget/validator-surface examples (out of the principles' scope,
+> **P16 complete [S40]:** turtle keeps the captured `love.*` path, but its redundant Ctrl+Escape press binding was removed; the widget/validator-surface examples (out of the principles' scope,
 > recorded as such), and any example the register still names.
 
 **Input, and the only input.** `doc/development/technical_debt/input.md`, the section
@@ -2366,8 +2365,8 @@ plan.** Both may be altered; neither absorbs the other. What follows is split ac
 3. **P17 — maze deepfix** and **P19 — sapper**: independent of each other and of P18. P19 also
    owns a **live defect** found 2026-08-11 (shift-click un-flags itself if Shift is released
    inside the 0.4 s click window).
-4. **P16 — closes on one ruling**: whether `turtle`'s `ctrl+escape` binding is deleted as
-   redundant, the framework reserving and acting on that combo without consuming it.
+4. **P16 — complete [S40]**: turtle’s `ctrl+escape` binding was deleted as
+   redundant; the framework reserves and acts on that combo without consuming it.
 5. **P10 — docs and ledger**: the reserved-combo section the guide has never had, W9's ledger
    work, W10 batches 1/2/4, and this sprint's share of the marker question (§16.2).
 6. **PROBE** — delete the diagnostic whose own header says to delete it once the polling question

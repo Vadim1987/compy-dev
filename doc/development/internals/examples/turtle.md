@@ -16,7 +16,7 @@ Dual input: typed commands via `compy.input.*` **(supported since 1.0.0-rc202607
 
 > REMARK: remove 'owner ruling' provisional reference, just say its done on purpsoe
 
-Turtle also keeps its keyboard on `love.keypressed`/`love.keyreleased` **on purpose** (owner ruling, 2026-07-31). The framework captures a project's own `love.*` keyboard functions and runs them as hooks, and this is the example that demonstrates that path — everything below would behave identically written as `compy.input.hooks.keyreleased` or, for `i` and `ctrl+escape`, as `compy.input.shortcuts.keyreleased` combos. Keeping one example on the captured path is what makes the path visible at all.
+Turtle also keeps its keyboard on `love.keypressed`/`love.keyreleased` **on purpose** (owner ruling, 2026-07-31). The framework captures a project's own `love.*` keyboard functions and runs them as hooks, and this is the example that demonstrates that path — its keyboard handlers would behave identically written as `compy.input.hooks.*`. Keeping one example on the captured path is what makes the path visible at all.
 
 ```lua
 compy.input.callbacks.after_submit = function()
@@ -36,12 +36,6 @@ function love.keyreleased(key)
     }
     return true
   end
-
-  if Key.ctrl() then
-    if key == "escape" then
-      love.event.quit()
-    end
-  end
 end
 ```
 
@@ -49,7 +43,7 @@ end
 
 "Re-arm" was the pre-feature vocabulary: because submit used to close the overlay, a project that wanted another line had to re-open it. That is reversed now — the overlay stays open after submit (Decision 6), so a *one-shot* prompt is the shape that needs the extra line, and turtle's `after_submit` is it. And yes: the missing close is exactly why typed commands used to pile up in the field (report A2, "input is not cleared after Enter") — a one-shot prompt that never closed kept the previous command.
 
-`love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. It also quits on `ctrl+escape`, asking `Key` for the modifier. `shift+r`, which resets the turtle position, is on `love.keypressed` and asks `Key` the same way.
+`love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. `shift+r`, which resets the turtle position, is on `love.keypressed` and asks `Key` for the modifier.
 
 That guard is about *later* `i`s. The **opening** `i` is a separate problem: LÖVE delivers a `keypressed` and a `textinput` for it in no guaranteed order, so the trigger's own echo can land in the field it just opened. `arm_echo_guard` handles it — a one-shot `compy.input.shortcuts.textinput["i"]` that consumes the echo and unregisters itself, re-armed by `after_submit` alongside the `hide()` ([Compy Input API](../../../input_api.md), "Opening the overlay from a key"). Two guards, one line apart, for two different problems.
 

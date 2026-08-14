@@ -1423,7 +1423,7 @@ would be verifiable only by a human smoke test. Revisit if a project owner asks.
 `src/examples/paint/main.lua` calls `useCanvas(x, y, btn)` from two places, and `btn` means
 something different in each:
 
-- **the drag path** — `love.mousemoved` polls `love.mouse.isDown(btn)` for `btn = 1, 2` and
+- **the drag path** — `compy.input.hooks.mousemoved` polls `love.mouse.isDown(btn)` for `btn = 1, 2` and
   passes the held button through. Here `btn` is a real LÖVE mouse button.
 - **the click path** — `point(x, y, btn)`, reached from `hooks.singleclick` and
   `hooks.doubleclick`. Here the number is **paint's own action selector, written as a literal

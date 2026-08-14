@@ -20,7 +20,7 @@ the terminal via `print`.
 | [guess](guess.md) | Number guessing game with per-character validation | terminal only (no drawing) | `compy.input.show{ validator = LineValidators(...) }` continuous session |
 | [keyboard](keyboard.md) | Typing tutor — separate repo; doc covers its input judgement only | real-time `love.draw` | `compy.input.hooks.{keypressed,keyreleased,textinput}` + shortcut combos |
 | [life](life.md) | Conway's Game of Life with mouse and keyboard controls | real-time `love.draw` + `love.update` | `love.keypressed`, `love.mousepressed` |
-| [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.input.hooks.singleclick`, `love.mousemoved`, `love.keypressed` |
+| [paint](paint.md) | Pixel paint app with palette, brush/eraser, and line weight | real-time `love.draw`, draws to own canvas | `compy.input.hooks.singleclick`, `compy.input.hooks.mousemoved`, `compy.input.hooks.keypressed` |
 | [pong](pong.md) | Full Pong game with AI opponent and fixed-timestep physics | real-time `love.draw` + `love.update` | keyboard + mouse; selectable AI strategy |
 | [repl](repl.md) | Minimal input loop — prints each submitted line back; does not evaluate it | terminal only (no drawing) | `compy.input.show{}` continuous session |
 | [sapper](sapper.md) | Minesweeper (pen-and-paper) with click-driven board | pen-and-paper | `compy.input.hooks.singleclick`, `compy.input.hooks.doubleclick`, `love.mousepressed` (modifier-held touch fallback) |

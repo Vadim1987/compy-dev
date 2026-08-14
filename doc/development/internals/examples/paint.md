@@ -25,7 +25,7 @@ Brush and eraser icons are drawn with `gfx.push()`/`gfx.pop()`, `gfx.translate()
 
 ## Points of attention
 
-- `compy.input.hooks.singleclick` is for discrete color selection / tool selection. `hooks.mousemoved` handles continuous paint strokes (checks `love.mouse.isDown` to require held button).
+- `compy.input.hooks.singleclick` is for discrete color selection / tool selection. `compy.input.hooks.mousemoved` handles continuous paint strokes (checks `love.mouse.isDown` to require held button).
 - Right-click (`btn == 2`) sets background color in the palette and paints with background color on canvas — the `compy.input.hooks.doubleclick` is mapped here rather than a true double-click.
 - The `goose` color (a teal `{0.303, 0.431, 0.431}`) used for the weight selector highlight is a named constant for historical/whimsical reasons.
 
