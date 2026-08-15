@@ -231,6 +231,35 @@ local function utils()
     held[key] = false
   end
 
+  local release_modifiers = function(pressed)
+    for i = #pressed, 1, -1 do
+      release_modifier(pressed[i])
+    end
+  end
+
+  local love_keypress = function(key)
+    love_event('keypressed', key)
+    debug_print('key ' .. key)
+    love_event('keyreleased', key)
+  end
+
+  local love_chord = function(keys, pressed)
+    local ks = string.split(keys, '-')
+    debug_print()
+    for _, v in ipairs(ks) do
+      local m = mods[v]
+      if m then
+        debug_print(m .. ' held')
+        press_modifier(m)
+        pressed[#pressed + 1] = m
+      else
+        love_event('keypressed', v)
+        debug_print('\tkey ' .. v)
+        love_event('keyreleased', v)
+      end
+    end
+  end
+
   --- @class HarmonyUtils
   --- @field patch_isDown function
   --- @field patch_setTitle function
@@ -273,28 +302,11 @@ local function utils()
     love_key = function(keys)
       local pressed = { }
       if string.matches(keys, '-') then
-        local ks = string.split(keys, '-')
-        debug_print()
-        for _, v in ipairs(ks) do
-          local m = mods[v]
-          if m then
-            debug_print(m .. ' held')
-            press_modifier(m)
-            pressed[#pressed + 1] = m
-          else
-            love_event('keypressed', v)
-            debug_print('\tkey ' .. v)
-            love_event('keyreleased', v)
-          end
-        end
+        love_chord(keys, pressed)
       else
-        love_event('keypressed', keys)
-        debug_print('key ' .. keys)
-        love_event('keyreleased', keys)
+        love_keypress(keys)
       end
-      for i = #pressed, 1, -1 do
-        release_modifier(pressed[i])
-      end
+      release_modifiers(pressed)
     end,
 
     shortcuts = shortcuts,
