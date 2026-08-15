@@ -43,6 +43,7 @@ describe('input surface: inbound events — a project stays live'
   end
 
   before_each(function()
+    F.reset()
     saved_stop = F.cc.stop_project_run
     love.state.user_input = nil
     love.state.app_state = 'ready'

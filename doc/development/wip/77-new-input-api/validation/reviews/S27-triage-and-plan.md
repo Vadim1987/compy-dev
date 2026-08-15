@@ -834,6 +834,15 @@ text untouched, everything session30 changes marked `[S30]`.
 
 Owner ruling, 2026-08-08: **its own phase, but worth inclusion in the release.**
 
+### [S42] P9c status and sequencing amendment
+
+The owner directed P9c before P13. Both named shuffled cases reproduced: the
+liveness fixture retained `user_pointer`, and the play-mode case overwrote the
+shared `love.handlers` table retained by `F.session`. Each now restores its
+fixture state. Eight shuffled runs per file pass, as does the full suite
+(946 / 0 / 0 / 10). P9c is complete; no production behaviour changed.
+
+P13 now follows P9c. No other dependency changes.
 ### What harmony is (nobody's context carried this)
 
 A scripted UI-automation and screenshot harness that drives the real app —

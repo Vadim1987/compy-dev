@@ -70,7 +70,7 @@ describe('input surface: inbound events — shortcuts and clicks'
             stop_project_run = function() end,
             keypressed = function() end,
           }
-          local saved    = love.handlers
+          local saved    = table.clone(love.handlers)
           local saved_kp = love.keypressed
           love.keypressed = function() end
           love.state.app_state = 'running'
@@ -78,7 +78,8 @@ describe('input surface: inbound events — shortcuts and clicks'
           local kp = love.handlers.keypressed
           mock.keystroke('C-M-r', kp, false)
           mock.keystroke('C-q', kp, false)
-          love.handlers, love.keypressed = saved, saved_kp
+          for k, v in pairs(saved) do love.handlers[k] = v end
+          love.keypressed = saved_kp
           assert.is_true(calls.restart)
           assert.is_nil(calls.quit)
         end)
