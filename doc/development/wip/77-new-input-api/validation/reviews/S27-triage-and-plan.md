@@ -845,6 +845,14 @@ fixture state. Eight shuffled runs per file pass, as does the full suite
 P13 now follows P9c. No other dependency changes.
 ### What harmony is (nobody's context carried this)
 
+### [S42] P13 revalidation result
+
+Harmony now emits modifier press and release events while retaining `held` and
+`patch_isDown`. A focused Ctrl+T test proves the device-read matcher observes
+the simulated Ctrl state and that it is cleared afterward. The manual release
+function and all scenario calls are gone. Full suite: 947 / 0 / 0 / 10.
+
+
 A scripted UI-automation and screenshot harness that drives the real app —
 **not** part of `busted tests`. Written entirely by **aldum**, Apr–Nov 2025;
 ~1150 lines across `src/harmony/init.lua` and four scenario files. Launched by

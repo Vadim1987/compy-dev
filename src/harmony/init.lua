@@ -221,12 +221,14 @@ local function utils()
     end)
   end
 
-  local release_keys = function()
-    for k, v in pairs(held) do
-      if v then
-        held[k] = false
-      end
-    end
+  local press_modifier = function(key)
+    held[key] = true
+    love_event('keypressed', key)
+  end
+
+  local release_modifier = function(key)
+    love_event('keyreleased', key)
+    held[key] = false
   end
 
   --- @class HarmonyUtils
@@ -236,7 +238,6 @@ local function utils()
   --- @field love_key function
   --- @field love_text function
   --- @field screenshot function
-  --- @field release_keys function
   --- @field shortcuts table
   return {
     patch_isDown = function()
@@ -270,7 +271,7 @@ local function utils()
       end)
     end,
     love_key = function(keys)
-      local key = keys
+      local pressed = { }
       if string.matches(keys, '-') then
         local ks = string.split(keys, '-')
         debug_print()
@@ -278,22 +279,23 @@ local function utils()
           local m = mods[v]
           if m then
             debug_print(m .. ' held')
-            held[m] = true
+            press_modifier(m)
+            pressed[#pressed + 1] = m
           else
             love_event('keypressed', v)
             debug_print('\tkey ' .. v)
             love_event('keyreleased', v)
-            -- release_keys()
           end
         end
       else
-        love_event('keypressed', key)
-        debug_print('key ' .. key)
-        love_event('keyreleased', key)
+        love_event('keypressed', keys)
+        debug_print('key ' .. keys)
+        love_event('keyreleased', keys)
+      end
+      for i = #pressed, 1, -1 do
+        release_modifier(pressed[i])
       end
     end,
-
-    release_keys = release_keys,
 
     shortcuts = shortcuts,
 
@@ -328,7 +330,6 @@ local function runner()
 
   function hm_done(label)
     done = true
-    love.harmony.utils.release_keys()
     local ctxl = (function()
       local c = _G.context
       if type(c) == 'table' then

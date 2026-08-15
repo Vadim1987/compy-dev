@@ -23,3 +23,11 @@
   restores handler entries in the captured table. Eight shuffled runs of each
   file pass, and the full suite remains 946 / 0 / 0 / 10.
 
+
+## 2026-08-15 — P13
+
+- The focused test began red: Harmony delivered only `t` events, although its
+  patched device poll let Ctrl+T work.
+- Harmony now emits and mirrors modifier press/release pairs, so Ctrl+T reaches
+  the device-read matcher and leaves no simulated modifier held. `patch_isDown`
+  and the held table remain; the manual release function and scenario calls are
