@@ -1129,11 +1129,27 @@ Not commissioned for closure; each may never need action.
   (`actionFlag` → `flowToggleFlag`), the second run **un-flags the cell**. **Net effect:
   shift-click appears to do nothing if the player lets go of Shift promptly.** A live,
   user-visible defect in the example as written, predating this feature entirely.
-- **Why it stands:** the honest fixes are a project-side "already handled" flag (the mirrored-flag
-  pattern this work exists to remove), or **the platform carrying the originating press's
-  modifiers into the derived event** — a platform change, outside this feature's mandate.
-- **Revisit:** in sapper's own step. **The example belongs to another author**; the conversion
-  changes behaviour they would be the first to notice, so it wants their eyes before it lands.
+- **Ruling, 2026-08-15:** retain the fallback. The rare delayed echo is
+  accepted without a project-side guard: the damage is negligible and a flag
+  would add more machinery than it removes.
+- **Revisit:** only if user reports show the echo is material. A platform
+  change preserving the originating press's modifiers remains outside this
+  feature's scope.
+
+### Modified shortcut families need explicit fall-through policy
+
+- **Where:** project `compy.input.shortcuts` beside ordinary hooks or captured
+  `love.keypressed` / `love.textinput` handlers.
+- **State:** shortcuts match one exact modifier set. A project that wants a
+  shortcut family to claim every modified form must register every meaningful
+  and meaningless combination; otherwise an unclaimed combination reaches its
+  ordinary keyboard or text-input handling.
+- **Why it stands:** the explicit registrations make every claimed combo
+  visible, but example grooming has shown that redundant no-op combinations
+  quickly become noise.
+- **Revisit:** after embedded-example grooming. Evaluate an opt-in wrapper
+  such as `compy.input.fn.if_no_modkeys(fn)` that suppresses an event whenever
+  a modifier is held, against the risk of hiding a deliberately modified input.
 
 ### Examples are not onboarded onto the new input API
 

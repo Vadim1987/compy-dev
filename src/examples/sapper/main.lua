@@ -669,6 +669,7 @@ function single(x, y)
 end
 
 compy.input.hooks.singleclick = function(x, y)
+  -- Delayed clicks sample modifiers on arrival, not press.
   if not Key.shift() and not Key.alt() and not Key.ctrl()
   then
     single(x, y)
