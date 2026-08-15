@@ -4,12 +4,24 @@ local function event_name(name)
   return string.sub(name, string.len('sazed_') + 1)
 end
 
+local function stub_view()
+  package.loaded['view.view'] = nil
+  package.preload['view.view'] = function()
+    View = {
+      clear_snapshot = function() end,
+      draw = function() end,
+      drawFPS = function() end,
+    }
+  end
+end
+
 local function setup_harmony()
   package.loaded['harmony.init'] = nil
   _G.Harmony = nil
   mock.mock_love({
     event = { },
     handlers = { },
+    state = { app_state = 'running' },
     window = {
       getTitle = function() return 'test' end,
       setTitle = function() end,
@@ -20,25 +32,34 @@ local function setup_harmony()
     events[#events + 1] = event_name(name) .. ':' .. key
     love.handlers[event_name(name)](key)
   end
+  stub_view()
   require('util.key')
+  require('controller.controller')
   local harmony = require('harmony.init')
   harmony(true)
   harmony.load()
   return harmony, events
 end
 
+local function gateway()
+  local calls = { }
+  local cc = {
+    cfg = { mode = 'dev' },
+    edit = function() calls.edit = true end,
+    stop_project_run = function() calls.stop = true end,
+  }
+  Controller.setup_callback_handlers(cc)
+  return calls
+end
+
 describe('harmony input', function()
   it('drives Ctrl+T through the device-read matcher', function()
     local harmony, events = setup_harmony()
-    local toggled = false
-    love.handlers.keypressed = function(key)
-      toggled = key == 't' and Key.ctrl()
-    end
-    love.handlers.keyreleased = function() end
+    local calls = gateway()
 
     harmony.utils.love_key('C-t')
 
-    assert.is_true(toggled)
+    assert.same({ edit = true, stop = true }, calls)
     assert.same({
       'keypressed:lctrl',
       'keypressed:t',
