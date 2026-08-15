@@ -27,3 +27,9 @@
 - Independent read-only review completed: `../../../validation/outcomes/S40-P16-cold-review.md`. It found no runtime or code-style defect. Focused input checks: 7 / 0 / 0 / 7 sanctioned pending.
 - Three S2/S3 documentation findings were verified and repaired: turtle’s internals page no longer describes its deleted Ctrl+Escape handler; the live P16 detail and summary now state completion; paint’s internals page, index, and debt entry use its explicit hook spellings. Commit `1f371d2d`; full suite remains 946 / 0 / 0 / 10.
 - P16 is complete. No follow-up code is outstanding. Await owner instruction before choosing the next sprint task.
+
+## 2026-08-15 — wrap
+
+- Owner approved P16 and requested session wrap. P16 is complete through commits `d77be355`, `b33f9521`, and `1f371d2d`; the cold-review prompt and report are durable validation artifacts.
+- Full suite at close: 946 / 0 / 0 / 10. Known untracked scratch and nested example repositories remain untouched.
+- Wrote `report.md`, a session41 wait-for-human prompt, repointed `agents/validation.md`, and will commit these wrap artifacts as one docs unit.
