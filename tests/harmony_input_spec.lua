@@ -108,4 +108,12 @@ describe('harmony input', function()
     local ctrl = Key.ctrl()
     assert.is_falsy(ctrl)
   end)
+
+  it('answers false, not nothing, for an unheld modifier', function()
+    local harmony = setup_harmony()
+
+    local isDown = love.keyboard.isDown('lctrl')
+    assert.is_boolean(isDown)
+    assert.is_false(isDown)
+  end)
 end)

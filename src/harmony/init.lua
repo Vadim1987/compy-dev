@@ -256,6 +256,7 @@ local function utils()
         if not lock then
           return down(...)
         end
+        return false
       end
       love.keyboard.isDown = isDown
     end,
