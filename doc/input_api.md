@@ -1,5 +1,5 @@
 ---
-description: Project-author guide to compy.input — the overlay, its config table, the submit lifecycle, hooks and shortcuts
+description: Project-author guide to compy.input — the input widget, its config table, the submit lifecycle, hooks and shortcuts
 status: active
 audience: project author
 authored: llm
@@ -11,7 +11,7 @@ reviewed: none
 > REMARK: rewrite intro completely, be dev-friendly. Vague statements do not help. Just tell its an API for configuring and interacting with text solicitation subsystem, and for reacting to user input events (all of them). Tell that even when widget is not shown or used, still it can be used to manage hotkeys, combos etc.
 
 This guide is for projects running inside Compy. `compy.input` is the
-project-facing input surface: it opens one shared text overlay and delivers
+project-facing input surface: it opens one shared text input widget and delivers
 submissions through callbacks. There is no polling API or compatibility shim.
 
 > REMARK: would it help readability if we conceptually split API into three surfaces (and say so): a) dispatching/intercepting inbound events via shortcuts and hooks b) altering the soliciting widget state (hide/show/cursor/reconfigure) c) handling events generated inside widget via callbacks (submit, cancel, limit...)
@@ -31,12 +31,12 @@ compy.input.show{
 }
 ```
 
-The overlay stays open after a successful submit. `after_submit` clears the
+The input widget stays open after a successful submit. `after_submit` clears the
 next draft; it is assigned on `callbacks`, not passed to `show`.
 
 ## `show(config)`
 
-`compy.input.show(config)` activates the overlay. All keys are optional.
+`compy.input.show(config)` activates the input widget. All keys are optional.
 
 | Key | Meaning |
 |---|---|
@@ -49,11 +49,11 @@ next draft; it is assigned on `callbacks`, not passed to `show`.
 | `on_limit_reached` | Called when cursor movement reaches a boundary. |
 | `force` | `show` only: while active, replace `text` instead of warning. |
 
-`show` on an active overlay warns and does nothing unless `force = true`.
+`show` on an active input widget warns and does nothing unless `force = true`.
 
 A key outside this table **raises**. The config table is closed, so an
 unrecognised key can only be a mistake, and a mistake you can see beats one
-that leaves the overlay quietly not doing what you asked. This includes
+that leaves the input widget quietly not doing what you asked. This includes
 lifecycle callbacks such as `after_submit`: assign those to
 `compy.input.callbacks` instead.
 
@@ -80,10 +80,10 @@ order is:
 
 `lines` is always a list of line strings. A rejecting validator returns
 `false, errors`, where `errors` is a list of positioned `Error` values; the
-overlay displays the error and steps 3–4 do not run. A highlighter has no
+input widget displays the error and steps 3–4 do not run. A highlighter has no
 submit or validation authority: it only controls how the current text looks.
 
-The overlay remains shown by default. To close it after a submit, make that
+The input widget remains shown by default. To close it after a submit, make that
 choice explicit:
 
 ```lua
@@ -103,7 +103,7 @@ shapes. The helpers are globals in the project environment:
 
 | Helper | Use |
 |---|---|
-| `LuaHighlighter(lines)` | Lua syntax coloring for the overlay. |
+| `LuaHighlighter(lines)` | Lua syntax coloring for the input widget. |
 | `LuaSyntaxValidator(lines)` | Accepts valid Lua or returns positioned parse errors. |
 | `LineValidators(filters)` | Adapts one filter or a list of line filters into a validator. |
 
@@ -142,14 +142,14 @@ compy.input.show{
 
 ## Live changes
 
-`compy.input.configure(config)` updates an active overlay. It accepts the
+`compy.input.configure(config)` updates an active input widget. It accepts the
 same documented configuration keys except `force`, and raises on anything
 else by the same rule as `show`; active `text` and `cursor`
 are not changed by `configure`, so use `set_text`, `set_cursor`, or `clear`.
 When hidden, `configure` retains `prompt`, `text`, and `cursor` for one later
 `show`.
 
-`compy.input.is_shown()` tells you whether the overlay is up. Use it when a
+`compy.input.is_shown()` tells you whether the input widget is up. Use it when a
 project must not act twice — opening the prompt from a key that is also
 typed *into* the prompt, for example:
 
@@ -169,11 +169,11 @@ Do not read `love.state` for this: a project runs in a sandboxed copy of
 
 That guard stops *later* presses of `i` from re-opening the prompt. It does
 not stop the `i` that opened it from being typed into it — see "Opening the
-overlay from a key" below.
+input widget from a key" below.
 
 `compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
 empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
-it. Mutating calls warn and do nothing while the overlay is hidden.
+it. Mutating calls warn and do nothing while the input widget is hidden.
 
 `col` is a **caret position between characters**, not a character index: it
 ranges over `1 .. #line + 1`, where `1` is before the first character and
@@ -259,7 +259,7 @@ knowledge wherever it is reused.
 
 All three wrap a hook the same way, but think before you do: a whole-channel
 hook wrapped in `stop_here(ignore_repeat(...))` swallows every repeat on that
-channel, so held backspace and held arrows stop repeating in the overlay too.
+channel, so held backspace and held arrows stop repeating in the input widget too.
 
 Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else
@@ -295,9 +295,9 @@ so it arrives slightly late — that wait is what makes the two
 distinguishable. Moving the pointer between the presses invalidates both.
 
 Being ordinary chain participants, pointer hooks **consume on a truthy
-return** like keyboard ones: return truthy and a shown overlay does not see
-the event. Return nothing and it carries on to the overlay, which is what
-you want while an overlay is up for its own reasons.
+return** like keyboard ones: return truthy and a shown input widget does not see
+the event. Return nothing and it carries on to the input widget, which is what
+you want while an input widget is up for its own reasons.
 
 Pointer events take shortcuts too, and the vocabulary is the same one: the
 button is the trigger, written `mouse1` (left), `mouse2` (right), `mouse3`
@@ -322,7 +322,7 @@ is a ctrl-drag and an unmodified move goes straight to the hook.
 > REMARK: not 'overlay', but 'input widget'
 > REMARK: frame this whole paragraph as example of solving non-conventional challenge (preventing modifier-based hotkey from echoing into the input widget), not say "if you open with 'i'" as if it was some common or recommended convention
 
-## Opening the overlay from a key
+## Opening the input widget from a key
 
 LÖVE delivers a `keypressed` **and** a `textinput` for one physical key, and
 does not promise their order. So a prompt opened from `i` can come up with an
@@ -331,7 +331,7 @@ channel either side of the open. The `is_shown()` guard does not help: it is
 about the *next* press, not this one.
 
 Guard the trigger with a one-shot shortcut on the `textinput` channel.
-Shortcuts run before the overlay, so it swallows the echo whichever side of
+Shortcuts run before the input widget, so it swallows the echo whichever side of
 the open it lands on, and it unregisters itself so the character is typable
 as content afterwards:
 
@@ -352,7 +352,7 @@ end
 
 > REMARK: term 're-arm' is invented -- if you use it, make sure its explained or defined in the same doc, upfront.
 
-Re-arm wherever you close the overlay: one that is closed without re-arming
+Re-arm wherever you close the input widget: one that is closed without re-arming
 takes the echo on its next open. Only your own `hide()` calls need this —
 Escape *clears* the field without closing, so the spent one-shot is still
 correct.

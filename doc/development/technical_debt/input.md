@@ -282,9 +282,9 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   `update`/`draw` hooked) always dropped to `'project_open'` with
   the project route unconditionally released
   (`release_keyboard_route`). For a project whose entire UI was
-  the input overlay (`examples/guess`) or a pointer handler
+  the input widget (`examples/guess`) or a pointer handler
   (`examples/sapper`), this meant (1) submit was dead — typing
-  still reached the overlay but Enter never fired, because
+  still reached the widget but Enter never fired, because
   submit/cancel (then a non-overridable framework tier, since
   retired — Decision 2) lives in the *project*
   route, which `project_open` disconnected — and (2) Ctrl+Esc quit the whole
@@ -311,7 +311,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   (`'project_open'`, nothing interactive) still lets the app
   quit.
 - **Carried-forward limitation:** a non-blocking project with
-  *no* interaction surface at all (no overlay shown, no pointer
+  *no* interaction surface at all (no widget shown, no pointer
   handler, no update/draw) still gets `release_keyboard_route` —
   the keyboard goes back to the console. This is intended, not a
   gap: such a project has nothing left to be interactive with.
@@ -387,7 +387,7 @@ question, not resolved here.
   from inside a project is always `nil` — the framework writes the real
   global, the project sees its copy. `examples/maze/main.lua:497` guards a
   re-show with exactly that read: dead code that never fires, which is why
-  maze re-shows the overlay on every tick.
+  maze re-shows the widget on every tick.
 - **Resolution:** owner ruled to expose it —
   `compy.input.is_shown()` (`../decisions/input.md`, Decision 18), returning
   the widget's own flag so it cannot drift from the one the dispatch walk
@@ -428,7 +428,7 @@ question, not resolved here.
 - **Reachability:** No leak path through a *running* project is known today
   — the running case is Decision 11's, and the `project_open` case is
   narrowed by ruling (a) above (`user_is_interactive`), which keeps the
-  project route for any project with an overlay or a pointer handler. The
+  project route for any project with a widget or a pointer handler. The
   open question is therefore a contract question first: two routes, two
   answers to the same question, only one of them written down.
 - **Revisit:** At the next ruling pass over route symmetry — either sanction
@@ -474,13 +474,13 @@ question, not resolved here.
 - **State:** to a user this is a freeze with no stated exit. It is what
   smoke reports 1 (guess, "froze after entering a symbol") and 9 (valid,
   "entering '1' stops processing any input") describe. The error band itself
-  IS rendered and, since the overlay-paint fix, IS visible; nothing in it says
+  IS rendered and, since the `input_widget_overlay` paint fix, IS visible; nothing in it says
   which keys resume.
 - **Pre-feature check (asked for at the ruling):** nothing to reproduce. At
   the PR base `3256aac` the same lock exists and is **stricter** — only Enter,
   Up and Down cleared it, where today's also accepts Left, Right and Space.
   The band's invisibility was equally pre-existing (same render path, same
-  unpainted overlay). The input API neither introduced the lock nor narrowed
+  unpainted `input_widget_overlay`). The input API neither introduced the lock nor narrowed
   its exits; it widened them.
 - **Is the widening drift? No — it is the ratified behaviour, and it also
   matches what the docs already claimed.** The frozen design (`§10 Edge
@@ -514,7 +514,7 @@ question, not resolved here.
   record the UX concern for stakeholder review.
 - **Where:** `src/examples/repl/main.lua`.
 - **State:** the example prints each submitted line back — `on_text_entered`
-  pipes lines to `print`, and the overlay runs the plain-text evaluator
+  pipes lines to `print`, and the widget runs the plain-text evaluator
   (`InputEvalText`), which has no parser. `x = 2 + 3` returns the characters,
   not a binding.
 - **Pre-feature check (asked for at the ruling):** the same. At `3256aac` the
@@ -523,7 +523,7 @@ question, not resolved here.
   exactly.
 - **Why it is a concern anyway:** evaluating Lua and printing a result is what
   the **console** does, and until the two fixes of 2026-07-31 (a refused
-  overlay after a project stop, and an overlay that was never painted at all)
+  widget after a project stop, and an `input_widget_overlay` that was never painted at all)
   a project's input surface was visually indistinguishable from the console —
   same input line, no signal. An author testing `repl` could reasonably
   believe it evaluated, having been typing at the console. Both causes are
@@ -537,10 +537,10 @@ question, not resolved here.
   stakeholders' ask, and to leave them room to contest the suggested fix —
   a glitch may have had a reason nobody here can see.
 
-### An overlay opened from a key can receive that key's own echo
+### A widget opened from a key can receive that key's own echo
 
 - **Status:** answered by a **documented project idiom**, not by a framework
-  mechanism (owner, 2026-08-03) — `../../input_api.md`, *"Opening the overlay
+  mechanism (owner, 2026-08-03) — `../../input_api.md`, *"Opening the input widget
   from a key"*, pinned by `tests/input/input_widget_control_spec.lua`, group
   *"the documented echo guard"*, and used by `src/examples/turtle`. A
   framework fix was implemented and then reverted (2026-08-01) because its
@@ -551,17 +551,17 @@ question, not resolved here.
   show path and the three widget handlers).
 - **State:** LÖVE delivers a `keypressed` **and** a `textinput` for one
   physical key and guarantees nothing about their order. A project that opens
-  the overlay from a key therefore races its own trigger: measured — open on
+  the widget from a key therefore races its own trigger: measured — open on
   `keypressed('i')`, and the `textinput('i')` of the same press lands in the
-  field, so the overlay comes up already containing `i`. Opening on
+  field, so the widget comes up already containing `i`. Opening on
   `keyreleased` (what `examples/turtle` does) is safe only because the echo
   usually arrives first; with the `textinput` delivered last it fails
   identically.
 - **Why a project cannot fix it for itself:** it would have to consume a
   `textinput` whose text it cannot derive from the key name (`space` → `" "`,
-  `shift+i` → `"I"`, anything an IME emits), and every project that opens an
-  overlay from a key would re-implement it.
-- **Options:** (a) seal the overlay for the rest of the event batch that
+  `shift+i` → `"I"`, anything an IME emits), and every project that opens a
+  widget from a key would re-implement it.
+- **Options:** (a) seal the widget for the rest of the event batch that
   opened it, released at the start of `love.update` — order-independent and
   needs no key→text mapping, but it also swallows an unrelated key typed
   within the same frame and assumes the stock run loop is the only pump;
@@ -572,7 +572,7 @@ question, not resolved here.
   **paired shortcut**: register the trigger on both channels, where
   `shortcuts.keypressed[combo]` opens and `shortcuts.textinput[combo]`
   swallows the echo and unregisters itself, re-armed by whatever closes the
-  overlay. Verified in both delivery orders. Its two limits: the re-arm has no
+  widget. Verified in both delivery orders. Its two limits: the re-arm has no
   single home (Escape clears without hiding, and there is no close callback),
   and it is confined to **bare** combos by the case defect recorded under
   *"`combo_string` does not normalise the case of a textinput token"*.
@@ -702,10 +702,10 @@ Not commissioned for closure; each may never need action.
   `user_is_interactive()`, consulted by `ConsoleController:run_project` after
   the project's top-level code runs.
 - **State:** the route is kept when the project replaced `love.update` or
-  `love.draw` (blocking), or when it has an overlay or a pointer handler
+  `love.draw` (blocking), or when it has a widget or a pointer handler
   (interactive). Keyboard hooks are neither. So a project whose only
   interaction surface is `love.keypressed`/`keyreleased`/`textinput` — no
-  draw, no update, no overlay, no pointer — hands the keyboard back to the
+  draw, no update, no widget, no pointer — hands the keyboard back to the
   console, and the hooks the framework captured for it (Decision 10) can
   never fire. `examples/keyboard` is *not* an instance: it defines
   `love.update` and `love.draw`, so it is blocking and keeps the route.
@@ -714,7 +714,7 @@ Not commissioned for closure; each may never need action.
   console text.
 - **Revisit:** if a keyboard-only project appears, or when ruling (a)'s
   "interaction surface" definition is next revisited; the fix would be to
-  count seeded hooks alongside the overlay and pointer tests.
+  count seeded hooks alongside the widget and pointer tests.
 
 ### Combo-string dispatch allocates a table per call — RESOLVED 2026-08-16
 
@@ -746,7 +746,7 @@ Not commissioned for closure; each may never need action.
   The slot is therefore **unreachable**, not merely awkward — the handler can
   be written but can never fire. Bare lower-case tokens are unaffected.
 - **Why it stands:** No *adopted* consumer yet — but the revisit condition
-  below has now fired. The paired-shortcut idiom recorded under *"An overlay
+  below has now fired. The paired-shortcut idiom recorded under *"A widget
   opened from a key can receive that key's own echo"* is a real textinput-combo
   consumer, and this defect is exactly what confines it to bare triggers.
 - **Revisit:** now — together with the ruling on that entry. If the idiom is
@@ -798,9 +798,9 @@ Not commissioned for closure; each may never need action.
   `../decisions/input.md`, Decision 31), or introduce a distinct class for
   service keys with its own rules.
 
-### Overlay-shape test exercises a stub, not the real draw wiring
+### The `input_widget_overlay` shape test exercises a stub, not the real draw wiring
 
-- **Where:** the overlay handle is asserted only for shape — that
+- **Where:** the `input_widget_overlay` handle is asserted only for shape — that
   `love.state.user_input` is set and callable while the widget is shown
   (e.g. `tests/input/input_widget_callbacks_spec.lua`). The dedicated
   `overlay_spec.lua` that built an ad-hoc controller over a `draw`-only
@@ -808,13 +808,13 @@ Not commissioned for closure; each may never need action.
   what survived it, not the file.
 - **State:** Guards against the handle being re-narrowed, but does not
   exercise the app's startup widget-instance wiring or the real
-  `set_love_draw` overlay wrapper in `controller.lua` — the exact path a
+  `set_love_draw` `input_widget_overlay` wrapper in `controller.lua` — the exact path a
   past regression faulted at. Runtime spot-checks have covered that path
   manually; the automated suite has not.
-- **Why it stands:** Driving the real overlay draw wrapper from a unit
+- **Why it stands:** Driving the real `input_widget_overlay` draw wrapper from a unit
   test needs app-bootstrap wiring the input suite does not currently stand
   up.
-- **Revisit:** When a change next touches the overlay/dispatch wiring — add
+- **Revisit:** When a change next touches the widget/dispatch wiring — add
   a test that drives the actual draw wrapper against the widget instance.
 
 ### `Esc` clears the input in place without hiding the terminal (turtle)
@@ -889,7 +889,7 @@ Not commissioned for closure; each may never need action.
   hard limit.
 - **Resolution:** The native-slot restores the entry names are gone: the
   helper delegates to production teardown (`CC:stop_project_run()`) and clears
-  only what production does not own. Nine code lines as of the overlay-shown
+  only what production does not own. Nine code lines as of the widget-shown
   fix, which removed the last compensating assignment (`widget.shown = false`).
   Nothing to extract.
 
@@ -935,7 +935,7 @@ Not commissioned for closure; each may never need action.
 
 - **Where:** `src/controller/userInputController.lua` — was `submit()` (calls
   `deliver(self, text)` then unconditionally `hide()`s); now `submit_flow`.
-- **Old state:** `on_text_entered` fired while the overlay was still active, and
+- **Old state:** `on_text_entered` fired while the widget was still active, and
   a trailing `hide()` ran right after (auto-close). A project wanting to "reshow with
   the same text on invalid input" could not call `compy.input.show{...}`
   synchronously from inside its own callback — a re-entry guard
@@ -1392,12 +1392,12 @@ be silently narrowed later (any change is a separate, owner-gated decision):
 
 - **Non-shift Enter submits** — Ctrl+Enter and Alt+Enter submit, not only bare
   Enter (guard is `is_enter and not shift`; also consistent with
-  `doc/development/decisions/input.md` Decision 6). Pinned for overlay + console.
+  `doc/development/decisions/input.md` Decision 6). Pinned for widget + console.
 - **`SearchController:keypressed` returns a jump target** (`{block, line}`) up its
   caller on Enter — the same "keypress return carries a domain result" shape the
   shared widget's limit-flag return was retired for (Decision 5). Left as
   is because `SearchController` is a different class, out of scope here.
-- **The overlay's input view skips the per-frame `update_view()` workaround by
+- **The `input_widget_overlay`'s view skips the per-frame `update_view()` workaround by
   widget *identity*** (`userInputView.lua:draw`, `self.controller ~=
   love.state.user_input_controller`) — an identity check standing in for the old
   `oneshot` flag. Its survival under a console/editor re-plug remains a

@@ -13,7 +13,7 @@ reviewed: none
 > REMARK: "both now run" is related to project only -- refactoring console/editor management same way is suggested for the future, when project input controller will be battle-tested
 > REMARK: in recent implementation pointer 'no shortcuts for pointer' should not be true -- the table must exist and be checked; combo of mods just constructed without 'trigger key'
 
-Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget shared across console, editor, and project overlays) and **mouse/pointer input** (mouse/touch channels a project can hook, plus mouse interaction with the input widget itself). Both now run through the same project-route dispatch chain (`ProjectInputController`, "Keyboard Handling" below) while a project runs; what differs per channel is only which argument names the combo trigger (see "Mouse Input" below). This doc covers both, with mode-specific notes where the behavior differs.
+Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget instances used across console, editor, and projects) and **mouse/pointer input** (mouse/touch channels a project can hook, plus mouse interaction with the input widget itself). Both now run through the same project-route dispatch chain (`ProjectInputController`, "Keyboard Handling" below) while a project runs; what differs per channel is only which argument names the combo trigger (see "Mouse Input" below). This doc covers both, with mode-specific notes where the behavior differs.
 
 For the project-facing usage guide (examples, the `show()` config table, the submit lifecycle from a project author's point of view), see [Compy Input API](../../input_api.md). This doc is the "how it works under the hood" narrative — routing, the dispatch chain, and the mechanism behind each guarantee. For the two-layer `love.handlers.*` vs `love.<event>` wiring underneath the gateway (§"Dispatch chain" below), see [Event Dispatch Layers](event_dispatch_layers.md).
 
@@ -24,7 +24,7 @@ For the project-facing usage guide (examples, the `show()` config table, the sub
 > REMARK: 'and project text solicitation'. "overlay" is a vague word, I want to avoid it. if we need to keep it let's say "project text solicitation (widget drawn as overlay)"
 > "What differs is the configuration: decoration (prompt), initial text and callbacks responsible for evaluation, highlighting, and actions on submit/cancel"
 
-`UserInputModel` / `UserInputController` / `UserInputView` form a shared widget reused in three contexts: the console REPL, the editor input strip, and project-created overlays. The widget is always the same code; what differs is the host evaluator and the controller handling the submission.
+`UserInputModel` / `UserInputController` / `UserInputView` form a shared widget reused in three contexts: the console REPL, the editor input strip, and project-created widgets. The widget is always the same code; what differs is the host evaluator and the controller handling the submission.
 
 ### Data flow
 
@@ -67,7 +67,7 @@ Shortcuts dispatch (the `compy.input.shortcuts` combo tables) does not gate on `
 
 The input is not single-line. `Shift+Enter` inserts a newline (`line_feed()`). The cursor model tracks both line and column. Lines are stored as a `Dequeue<string>` in `InputText`. The view wraps long lines at `drawableChars` width (same wrap machinery as the editor's `VisibleContent`).
 
-LÖVE has no multiline-text concept of its own; it only delivers discrete `textinput`/`keypressed` events, one character or one key at a time. Assembly is entirely compy's own: `UserInputController:keypressed`'s `newline()` local (`userInputController.lua:568-574`) calls `input:line_feed()` whenever Shift+Enter is detected — **unconditionally**. There is also no separate "keystroke assembly" buffer: `textinput` mutates the model's persistent text immediately and continuously, and Enter (a `keypressed`, not a `textinput`) is a purely discrete control signal that reads whatever the *current* buffer state is (`get_text()`) at the moment it fires. Nothing replays or buffers a keystroke history to reconstruct the submitted text; the live model state *is* the submitted text. True uniformly for console, editor, and the project overlay (all three read `get_text()` at submit time); search has no evaluator/submit concept at all — its Enter jumps to the currently-selected result, not the typed query.
+LÖVE has no multiline-text concept of its own; it only delivers discrete `textinput`/`keypressed` events, one character or one key at a time. Assembly is entirely compy's own: `UserInputController:keypressed`'s `newline()` local (`userInputController.lua:568-574`) calls `input:line_feed()` whenever Shift+Enter is detected — **unconditionally**. There is also no separate "keystroke assembly" buffer: `textinput` mutates the model's persistent text immediately and continuously, and Enter (a `keypressed`, not a `textinput`) is a purely discrete control signal that reads whatever the *current* buffer state is (`get_text()`) at the moment it fires. Nothing replays or buffers a keystroke history to reconstruct the submitted text; the live model state *is* the submitted text. True uniformly for console, editor, and the project's input widget (all three read `get_text()` at submit time); search has no evaluator/submit concept at all — its Enter jumps to the currently-selected result, not the typed query.
 
 The input view height is `input_max = 14` lines. This is a display limit only — the model can hold more lines, and scrolling within the input works normally. In the editor context this becomes relevant when loading a monster block: the editor's buffer viewport is `LINES = 16`, a **separate** limit from `input_max`, so a block can exceed the 14-line input strip — all content stays in the model, but only 14 lines are visible at once. **Open:** `input_max` (14) and `LINES` (16) currently differ, and whether 14 or 16 is the correct monster-block threshold is **not yet settled** — reconciling them is a pending review item (see `editor.md` — *`input_max` vs `LINES`* and *Monster Blocks*).
 
@@ -88,12 +88,12 @@ When an error is set on the model (`set_error()`), the input is visually locked:
 Each `UserInputModel` has an `Evaluator` that runs on submit:
 - **Console**: `LuaEval` — metalua parse, validates Lua syntax before accepting the submit
 - **Editor input (Lua file)**: `LuaEditorEval` — same as LuaEval but adds 64-char line length validator
-- **Project overlays**: the internal plain evaluator plus project callbacks for
+- **Project widgets**: the internal plain evaluator plus project callbacks for
   validation and display. Projects cannot install evaluator objects.
 - **Search**: `nil` evaluator (search input is free text, no validation)
 
 > REMARK: again, "overlay" -> "widget"
-Host evaluators can validate during editing. The project overlay's public
+Host evaluators can validate during editing. The project widget's public
 validator runs at submit and receives `string[]`; it returns `true` or
 `false, Error[]`. `LuaHighlighter`, `LuaSyntaxValidator`, and
 `LineValidators` are the only evaluator-derived helpers exported to a project.
@@ -107,7 +107,7 @@ arrow/Home/End. **Controller** (`UserInputController`) exposes a narrower passth
 clamped 2D mover: `get_cursor_info`/`get_cursor_pos`/`set_cursor(Cursor)`/`jump_home`/
 `set_cursor_pos(line, col)` — the last one (`userInputController.lua:124-139`) computes its own
 clamp against line/text length rather than relying on `move_cursor`'s fallback-to-previous-position
-behaviour. **`compy` (project-facing)** now has its own surface on the overlay widget:
+behaviour. **`compy` (project-facing)** now has its own surface on the input widget:
 `compy.input.get_cursor()` / `set_cursor(line, col)` / `set_text(text[, keep_cursor])`
 (`consoleController.lua:487-510`) — `get_cursor` returns `nil` while hidden (a plain "nothing to
 report" read, not a refusal); `set_cursor`/`set_text` no-op **and warn** while hidden.
@@ -139,7 +139,7 @@ console's own Ctrl+L (terminal-only) vs. Escape (content-reset, history preserve
 (content-only, with Escape repurposed for `load_selection` instead of a reset); search's own
 `clear()`, which reaches past its own controller straight into `self.model.input:clear_input()`,
 skipping `clear_error()` (currently harmless — search has no evaluator, so no error can ever be
-set); and the project overlay, which has no "reset the session" surface of its own — only
+set); and the project widget, which has no "reset the session" surface of its own — only
 `compy.input.clear()`, which empties content and cursor but isn't a full reset. Carried as-is; not
 touched by this pass.
 
@@ -205,7 +205,7 @@ Ctrl+S in the **editor** shows both halves of that. The chord reaches the gate l
 > REMARK: "no longer routes on widget presence" is historical reference nobody is interested in -- it does not bear any information about current system for a cold reader ; in the past nobody relied on this occasional behaviour, its removal was one of the goals of new input API. So -- just strip this referencing-to-the-ancient-past part.
 > REMARK: console routing also was updated and no more consults widget shownness() -- could be stated as a matter of fact no refefences to the past 
 
-The gateway (`love.handlers.*`) no longer routes on widget presence — the overlay gate is removed. The active route's controller always receives the event. The project route runs the three-consumer walk above: the project's captured `love.*` handler auto-provisions as the seeded hook (once, at activation — seen even while the widget is shown, only when the project set no explicit `hooks[event]`; an explicit hook always wins), and the widget is the terminal consumer with its hidden-check *internal* (`is_shown()` reads a strictly-internal `self.shown` flag; the widget no-ops while hidden, so a hidden widget mutates nothing without any external gate). The console-route default handlers still forward to the widget when `love.state.user_input` is set (except under `inspect`). The widget is never a routing destination of the gateway and never the active route. `Controller._keyboard_route` records which controller is the active route (the `ConsoleController` by default, the `ProjectInputController` during a run) — bookkeeping with no reader beyond its own two assignment sites (`controller.lua:209`, `:434`) today.
+The gateway (`love.handlers.*`) no longer routes on widget presence — the widget gate is removed. The active route's controller always receives the event. The project route runs the three-consumer walk above: the project's captured `love.*` handler auto-provisions as the seeded hook (once, at activation — seen even while the widget is shown, only when the project set no explicit `hooks[event]`; an explicit hook always wins), and the widget is the terminal consumer with its hidden-check *internal* (`is_shown()` reads a strictly-internal `self.shown` flag; the widget no-ops while hidden, so a hidden widget mutates nothing without any external gate). The console-route default handlers still forward to the widget when `love.state.user_input` is set (except under `inspect`). The widget is never a routing destination of the gateway and never the active route. `Controller._keyboard_route` records which controller is the active route (the `ConsoleController` by default, the `ProjectInputController` during a run) — bookkeeping with no reader beyond its own two assignment sites (`controller.lua:209`, `:434`) today.
 
 > REMARK: "no longer" relates to self-inflicted-then-dissolved behaviour, which never was characteristical of any stable release; remove referece and 'now-vs-then' vibe
 > REMARK: paragraph below is overall too big and unreadable -- simplify/compress or even dissolve?
@@ -216,7 +216,7 @@ at the project's stop.** A non-blocking project that returns (no `update`/`draw`
 drops `app_state` to `'project_open'`, but `ConsoleController:run_project` releases nothing at
 that transition (`consoleController.lua:300-311`): `occupy_keyboard` (`controller.lua:236-268`)
 installed keyboard, text, pointer, and derived-click handlers together at run start, and
-`ProjectInputController` keeps occupying all of them — the overlay's submit/cancel and any
+`ProjectInputController` keeps occupying all of them — the widget's submit/cancel and any
 pointer hook keep working — until `stop_project_run` reinstalls the console's own handlers
 (`consoleController.lua:1276-1289`, via `set_default_handlers`). The asymmetric design this
 replaced — keyboard released at `running` → `project_open` while pointer stayed hooked so a
@@ -232,14 +232,14 @@ disconnect; it is not a normal lifecycle step any more. `Controller.user_is_inte
 `set_default_handlers`) still gates one thing, unchanged: `love.quit` (`controller.lua:790-821`)
 treats `'project_open'` + `user_is_interactive()` the same as `'running'`, stopping to console on
 Ctrl+Esc rather than letting the app quit — an idle console reached via `'project_open'` with
-neither an overlay nor a pointer hook falls through, and the app really quits.
+neither a widget nor a pointer hook falls through, and the app really quits.
 `ProjectInputController` itself still has no per-event "am I still running?" forward: the route is
 unreachable the moment `stop_project_run` re-points `love.keypressed` etc. back at the console, so
 there is nothing left to guard against between events.
 
 > REMARK: there's no more forward_-calls (self-inflicted-then-dissolved), actualize towards actual behaviour and pre-feature behaviour (if changed)
 
-**`inspect` mode overrides all of the above.** While `app_state == 'inspect'` (a paused/broken-into project), the console REPL owns every input channel and a project-set overlay is not honoured, regardless of the routing described above. The mechanism: `get_user_input()` (`controller.lua:21-24`) unconditionally returns `nil` while `app_state == 'inspect'`, so every `forward_*` call in this section reports "no widget" and every `love.handlers.*` entry point falls back to the console's own default handler — because `ConsoleController:suspend()` (`consoleController.lua:919-936`) physically swaps `love.keypressed`/`textinput`/`draw`/`update` back to the console's own functions via `set_default_handlers`, not merely short-circuiting them. The console additionally runs the *paused project's own* environment while inspecting: `get_effective_env()`/`evaluate_input()` select `project_env` (not the console env) when `app_state == 'inspect'`, so REPL input mutates the paused project's globals — a live debugger console, not a separate idle console. This behaviour is carried as characterized status quo, not a ratified contract — its shape under a future console/editor migration is an open call for the owner, not settled here.
+**`inspect` mode overrides all of the above.** While `app_state == 'inspect'` (a paused/broken-into project), the console REPL owns every input channel and a project-set widget is not honoured, regardless of the routing described above. The mechanism: `get_user_input()` (`controller.lua:21-24`) unconditionally returns `nil` while `app_state == 'inspect'`, so every `forward_*` call in this section reports "no widget" and every `love.handlers.*` entry point falls back to the console's own default handler — because `ConsoleController:suspend()` (`consoleController.lua:919-936`) physically swaps `love.keypressed`/`textinput`/`draw`/`update` back to the console's own functions via `set_default_handlers`, not merely short-circuiting them. The console additionally runs the *paused project's own* environment while inspecting: `get_effective_env()`/`evaluate_input()` select `project_env` (not the console env) when `app_state == 'inspect'`, so REPL input mutates the paused project's globals — a live debugger console, not a separate idle console. This behaviour is carried as characterized status quo, not a ratified contract — its shape under a future console/editor migration is an open call for the owner, not settled here.
 
 ### Key state: modifier reads and `combo_string`
 
@@ -349,13 +349,13 @@ independently computes boundary state via `inputView:is_at_limit(...)` at the vi
 
 **FR-6 (project notification of key events): the keyboard exclusion is resolved as of 1.0.0-rc20260712.**
 Historically, while `love.state.user_input` was set, `controller.lua`'s
-`handlers.keypressed`/`handlers.textinput` called *only* the overlay — the project's own
+`handlers.keypressed`/`handlers.textinput` called *only* the widget — the project's own
 `love.keypressed`/`love.textinput` were not called at all (binary, not partial). With the gate
 removed, project key/text events always reach the project route (`ProjectInputController`); which
-surface consumes them (the overlay widget while shown, the project's handler — seeded as a
+surface consumes them (the widget while shown, the project's handler — seeded as a
 hook — while hidden) is the route's internal delegation, no longer a gateway drop. Mouse had no
-such gate to begin with: at the time, `handlers.mousepressed`/`mousereleased` called the overlay
-conditionally but called the project's own handler **unconditionally**, regardless of overlay
+such gate to begin with: at the time, `handlers.mousepressed`/`mousereleased` called the widget
+conditionally but called the project's own handler **unconditionally**, regardless of widget
 state — which is why touch/mouse needed no separate FR-6 scope item; only keyboard was ever
 exclusively gated. That mouse-specific shape is itself now retired: pointer channels (mouse and
 touch alike) have since been folded into this very same project-route dispatch chain as
@@ -393,9 +393,9 @@ at all (see "Search" below and reorg's own `_reorg_mode_keys`), so they need no 
 Console's own always-shown instance is not blocked and does run the uniform `submit_flow`/`cancel_flow`
 on its own Enter/Escape — harmlessly, since console sets no `before_submit`/`after_submit`/
 `before_cancel`/`after_cancel` callbacks, so they are no-ops alongside console's own `evaluate_input`/
-history handling. The project overlay runs the flows for real (that IS its submit/cancel). So the
+history handling. The project widget runs the flows for real (that IS its submit/cancel). So the
 per-context behaviour that the old `app_state` fork encoded is now expressed honestly: the editor
-consumes upstream, console/overlay set (or don't set) callbacks — no instance interrogates global state.
+consumes upstream, console/project set (or don't set) callbacks — no instance interrogates global state.
 
 ### UserInputController keypressed (shared)
 
@@ -405,7 +405,7 @@ The body is a **single uniform sequence** (no `love.state.app_state` branch sinc
 `removers → vertical → horizontal → newline → (modify if enabled) → copypaste → selection`, then
 the lifecycle keys. **`modify` (Ctrl+D duplicate-line) is gated on a per-instance `allow_modify`
 flag**, a constructor parameter (`UserInputController(model, disable_selection, allow_modify)`),
-set only by the editor's main input; console and the overlay leave it off. This is the honest
+set only by the editor's main input; console and the project widget leave it off. This is the honest
 replacement for the old "editor branch runs `modify`" gate — a widget capability the owner enables at
 construction, like `disable_selection`, not something the widget reads from global mode. (A future
 combo-table owned by the widget would supersede the one-off flag — see `technical_debt/input.md`.)
@@ -520,7 +520,7 @@ newly adopted mode before replacing its current handler.
 Pointer events — `mousepressed`, `mousereleased`, `mousemoved`, `wheelmoved`, `touchpressed`,
 `touchreleased`, `touchmoved` — now run through the very same project-route dispatch chain as
 keyboard/text (`ProjectInputController`, "Keyboard Handling" above), not a broadcast. Previously
-the gateway (`controller.lua`) called the overlay widget unconditionally when present, then called
+the gateway (`controller.lua`) called the widget unconditionally when present, then called
 the project's own handler unconditionally as well — neither delivery order nor consumption could
 be affected by the other, and nothing could stop the other from also seeing the event. Now the
 project's *hook* runs first; the widget is the walk's terminal consumer, reached only if nothing
@@ -605,13 +605,13 @@ regardless of what the stub body does).
 
 > REMARK: retire 'overlay' completely as terminology . it can be used only contextually (when we want to emphasize the fact how project input widget is drawn)
 
-## The `user_input` Overlay — Input Perspective
+## The `user_input` Widget — Input Perspective
 
 ### Widget lifecycle (introduced in an earlier build)
 
-`UserInputController` for the project overlay is a single instance created once in `love.load()`
+`UserInputController` for the project widget is a single instance created once in `love.load()`
 (in `src/main.lua`) and stored in `love.state.user_input_controller`.
-The same model, controller, and view are reused across every overlay
+The same model, controller, and view are reused across every widget
 session; per-session allocation is eliminated.
 
 Activation: `compy.input.show(config)` calls
@@ -628,7 +628,7 @@ project environment, an ordinary `nil` field, no shim.
 
 `show()` on an already-active widget is a no-op unless
 `{ force = true }` is passed — and the suppression **warns**
-(`Log.warn('UserInputController:show ignored — overlay already
+(`Log.warn('UserInputController:show ignored — widget already
 active...')`, `userInputController.lua:319-320`), matching the
 framework's warn-don't-swallow convention. With `force`, the text
 is replaced if a `text` field is in the config; otherwise the
@@ -644,7 +644,7 @@ of the main controller" special case any more. In short: the gateway always call
 route's occupant; the console/editor route's default handler goes straight to its own surface
 (the console line, or the editor fork) with no widget test in front of it — widget visibility is
 state on the widget, never a routing condition (`../decisions/input.md`, Decision 1); the project
-route always reaches the widget as its walk's terminal consumer. The overlay view is drawn via `user_input.V:draw()` inside
+route always reaches the widget as its walk's terminal consumer. The widget view is drawn via `user_input.V:draw()` inside
 the framework's `love.update` wrapping of the project draw function (`controller.lua`,
 `set_love_update`).
 
@@ -706,7 +706,7 @@ the field but the widget stays open, same flipped default as submit.
 absent → no-op + debug-log. `self.callbacks` is the widget's own table, seeded at construction with
 `DEFAULT_CALLBACKS` (`after_submit`/`after_cancel`/`on_limit_reached` = stay-open no-ops) and
 re-seeded — never wiped to `nil` — on project teardown (Decision 11; a nil'd `after_cancel` must
-not silently mean "stays open forever" for the next project). For the **project overlay**,
+not silently mean "stays open forever" for the next project). For the **project widget**,
 `compy.input.callbacks` **is this exact same table** (owner ruling 2026-07-20; captured once in
 `get_compy_input`, `consoleController.lua:601-635`) — a project's `compy.input.callbacks.after_submit
 = fn` write lands directly on `self.callbacks.after_submit`, no copy, no bridging. Console/editor set
@@ -749,7 +749,7 @@ For a project-author usage guide with examples, see
 freely writable. It exposes:
 - `compy.input.show(config)` — activates the widget
 - `compy.input.hide()` — deactivates without firing the cancel sequence
-- `compy.input.is_shown()` — whether the overlay is up (Decision 18); the one
+- `compy.input.is_shown()` — whether the widget is up (Decision 18); the one
   state query, and the only way a project can learn this — its own
   `love.state.user_input` is a sandbox clone and never set
   (`project_sandbox_env.md`)
@@ -860,7 +860,7 @@ refusal (there is no active session to clear).
 transition — run, stop, suspend, inspect). `projectInputController.lua` is used
 only by `controller.lua` (the single `Controller.project_input` instance) and is
 never referenced by console/editor code directly. `userInputController.lua`
-instances are constructed by `main.lua` (the project overlay's widget),
+instances are constructed by `main.lua` (the project's widget),
 `editorController.lua` (its own main input and its `search` sub-widget), and
 implicitly by console (`consoleModel`/`consoleController`) — see "Search" above
 for the third, less obvious instance.

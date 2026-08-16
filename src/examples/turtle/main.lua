@@ -45,7 +45,7 @@ function love.keypressed(key)
 end
 
 -- The `i` that opens the prompt must not also be typed into
--- it (doc/input_api.md, "Opening the overlay from a key"):
+-- it (doc/input_api.md, "Opening the input widget from a key"):
 -- LÖVE delivers a keypressed and a textinput for one physical
 -- key in no guaranteed order. This one-shot eats that echo
 -- whichever side of the open it lands on, then unregisters so

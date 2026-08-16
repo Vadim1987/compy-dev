@@ -93,7 +93,7 @@ produced the keyboard lockout above: the widget's mere presence diverted events 
 project. Making the *mode* the sole routing authority means showing or hiding a prompt is a
 state change with no routing consequence — the project route stays connected and keeps
 receiving key events whether or not its widget is up. This is the single structural change the
-whole subsystem hangs off of: the overlay gate is gone.
+whole subsystem hangs off of: the widget gate is gone.
 
 **Consequence.** The three routes are siblings. Today the editor is still reached through the
 console route's internal fork rather than as a fully independent third sibling; converging the
@@ -191,7 +191,7 @@ whose show/hide are pure state changes has nothing to reconnect.
 
 >REMARK: "same code" (which is kinda true? check) does not mean "same instance" -- and there are reason to limit 'singleton' to project widgets only. prose below was a pre-implementation vision -- but implementation at least currently ended with the different instances (console needs to maintain its own). So the prose below should be recalibrated to reality
 **Consequence.** The same widget code backs the console REPL, the editor input strip, and
-project overlays; what differs between them is the evaluator attached and which route handles
+project widgets; what differs between them is the evaluator attached and which route handles
 the result — not the widget. `show()` on an already-active session is a no-op (it *warns*
 rather than swallowing — see Decision 7's discipline) unless `{force = true}` is passed.
 
@@ -314,7 +314,7 @@ interrogating global state:
   the editor sets no callbacks;
 - **console** sets no `before_*`/`after_*` callbacks, so its own instance's flows run and are
   no-ops alongside its real work (`evaluate_input`, history navigation);
-- the **project overlay** sets callbacks for real — that *is* its submit/cancel.
+- the **project widget** sets callbacks for real — that *is* its submit/cancel.
 
 The editor-only Ctrl+D duplicate-line (`modify`) follows the same principle: it is a per-instance
 **`allow_modify`** constructor flag (`UserInputController(model, disable_selection,
@@ -323,7 +323,7 @@ capability the owner enables at construction, not something the widget reads fro
 
 **Why.** The original framework-tier shape existed to solve a problem that no longer exists in
 the same form: the pre-redesign widget served two incompatible roles (self-owned submit for the
-project overlay vs. controller-owned submit for console/editor) with no shared dispatch layer
+project widget vs. controller-owned submit for console/editor) with no shared dispatch layer
 between them, encoded in a static `oneshot` flag — deliver-and-close and dismiss were
 session-lifecycle acts placed above the widget's pay grade, and an earlier limitation where
 Escape cleared content but could not actually dismiss came precisely from the widget owning
@@ -511,7 +511,7 @@ stayed installed until suspend or stop. There was no asymmetry to inherit. `rele
 was introduced *by this feature*, keyboard-only, and pointer then had to be exempted from a release
 that had not previously existed — so the exemption was a consequence of the new mechanism, not a
 constraint on it. The asymmetry was also unreachable in practice: the release fired only when
-`user_is_interactive()` was false, and that predicate is "an overlay or a pointer handler exists",
+`user_is_interactive()` was false, and that predicate is "a widget or a pointer handler exists",
 so at the only moment it ran there were no pointer handlers to exempt.
 
 **Changed baseline behaviour.** Before this API, a running project without its own keyboard/text
@@ -579,7 +579,7 @@ and test-pinning it makes the implicit explicit. Changing any of it is a **separ
 decision**, never a side effect of a refactor or cleanup.
 
 **Why.** This subsystem reached its shipped shape partly by accretion — successive consumers (the
-project overlay, console, editor, inspect) were integrated by local additions rather than by
+project widget, console, editor, inspect) were integrated by local additions rather than by
 extending a shared abstraction, so real, live behaviours existed that no decision named.
 Reverse-engineering during validation surfaced them. Altering them opportunistically while "tidying"
 would smuggle behaviour changes in under the banner of cleanup — the exact failure mode this
@@ -590,7 +590,7 @@ system does* (now pinned and reviewable) from *what we choose to change* (explic
 explicitly ("discovered as existing behaviour, no mandate to alter — de-facto standard per the
 implementation"). Current members include: the submit guard being *Enter-without-Shift* (so Ctrl+Enter
 and Alt+Enter submit, not only bare Enter); `SearchController:keypressed` returning a jump target up
-its caller; and the overlay input view's per-frame-render workaround keyed by widget identity. Each is
+its caller; and the `input_widget_overlay` view's per-frame-render workaround keyed by widget identity. Each is
 individually revisable — but only by a named ruling, not by drift. See
 [`../technical_debt/input.md`](../technical_debt/input.md) for the live list.
 
@@ -624,7 +624,7 @@ is the rule, not a new one.
 **Scope — violations raise, runtime states do not.** A raise means *the project
 asked for something that does not exist*. A call that is a no-op because of the
 runtime **state** is not that, and keeps warning per Decision 3: `show` on an
-already-active overlay without `force`, and `set_text` / `set_cursor` / `clear`
+already-active widget without `force`, and `set_text` / `set_cursor` / `clear`
 while hidden. Those are legitimate calls at an inconvenient moment, not
 mistakes in the project's source.
 
@@ -719,8 +719,8 @@ refactors:
   project-facing wrapper *over* it, not the mechanism itself.
 - **The widget-method surface as a factory.** The methods `compy.input` exposes
   (`show`/`hide`/`configure`/`set_cursor`/`set_text`/`get_cursor`/`clear`) were hardwired to the one
-  global project-overlay instance. A `build_widget_api(get_widget, get_active_flag)` factory,
-  parameterized by instance, lets any adopter — not only the project overlay — get the same
+  global project-widget instance. A `build_widget_api(get_widget, get_active_flag)` factory,
+  parameterized by instance, lets any adopter — not only the project widget — get the same
   ergonomics over its own instance.
 
 Multiple `UserInputController` instances remain required — console's REPL state must persist
@@ -770,13 +770,13 @@ objects used by console and editor remain implementation details.
 
 ---
 
-## Decision 18 — the overlay answers one state question: `is_shown()`
+## Decision 18 — the widget answers one state question: `is_shown()`
 
 > REMARK: let's fully retire ambiguous 'overlay' from everywhere. Its input widget.
 
 **Status: implemented** (owner ruling, 2026-07-31).
 
-**Decision.** `compy.input.is_shown()` returns whether the overlay is
+**Decision.** `compy.input.is_shown()` returns whether the widget is
 currently up. It is the only state query on the surface, and it is read-only.
 
 **Why.** A project cannot determine this any other way. Its `love` is a
@@ -784,17 +784,17 @@ sandboxed deep clone (`../internals/project_sandbox_env.md`), so
 `love.state.user_input` read from inside a project is **always** `nil` — the
 framework writes the real global, the project sees its copy. Two examples had
 already written that read as a guard; it silently never fired, and one of them
-therefore re-showed the overlay on every tick.
+therefore re-showed the widget on every tick.
 
 **Why only this one.** Everything else a project might poll — content, cursor,
 error state — it already receives through callbacks, which is Decision 4's
 whole point. Shownness is different: it is the one fact the framework changes
-without telling the project (a stop tears the overlay down, a hide from another
+without telling the project (a stop tears the widget down, a hide from another
 callback lowers it), so a project that must not act twice has nothing to read.
 The internal flag it exposes is the widget's own `is_shown()`, so the answer
 cannot drift from the one the dispatch walk uses.
 
-**Consequence.** `show` on an already-active overlay stays a warn-and-no-op
+**Consequence.** `show` on an already-active widget stays a warn-and-no-op
 (Decision 3): a project that wants "open it only if it is closed" now writes
 that, instead of relying on the warning as flow control.
 

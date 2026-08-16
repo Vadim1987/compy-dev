@@ -544,7 +544,7 @@ describe('input surface: widget control #input', function()
     end)
   end)
 
-  -- doc/input_api.md, "Opening the overlay from a key". LÖVE
+  -- doc/input_api.md, "Opening the input widget from a key". LÖVE
   -- delivers a keypressed AND a textinput for one physical key
   -- and guarantees nothing about their order, so the trigger's
   -- own echo can land in the field it just opened. The API's

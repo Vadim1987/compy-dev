@@ -88,7 +88,7 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
 
 ### Stopping vs suspending vs quitting
 
-**`stop_project_run()`**: Clears user handlers, calls `evacuate_required()` to remove project modules from `package.loaded`, restores default draw, resets overlay input. State → `project_open`. The project's global state persists in `project_env` (can be inspected at the REPL).
+**`stop_project_run()`**: Clears user handlers, calls `evacuate_required()` to remove project modules from `package.loaded`, restores default draw, resets widget input. State → `project_open`. The project's global state persists in `project_env` (can be inspected at the REPL).
 
 **`suspend_run(msg)`**: Requests a snapshot. State → `snapshot` → `inspect` on next tick. Handlers saved; default handlers restored temporarily. User can inspect and continue.
 
@@ -102,7 +102,7 @@ The custom loader is stored in `self.loaders[name]` so it can be removed on clos
 
 ---
 
-## The `user_input` Overlay
+## The `user_input` Widget
 
 Projects can request live text input mid-run via `compy.input.*`
 **(supported since 1.0.0-rc20260712)**
@@ -110,12 +110,12 @@ Projects can request live text input mid-run via `compy.input.*`
 `on_text_entered`/`after_submit`/etc. — the full surface is in
 [`user_input.md`](user_input.md), and the project-author usage guide
 is [`../../input_api.md`](../../input_api.md)). This creates a second
-`UserInputModel` overlaid on top of the console. Calling `show`
+`UserInputModel`, drawn as the `input_widget_overlay` on top of the console. Calling `show`
 creates/reuses the singleton `UserInputController`/`UserInputView`
 and stores the triplet in `love.state.user_input`. The event
 dispatch in `love.handlers.keypressed` checks this: if set, key
-events go to the overlay controller, not the main console input.
-Only one overlay can exist at a time
+events go to the widget controller, not the main console input.
+Only one widget can exist at a time
 (`if love.state.user_input then return end`).
 
 Source: `prepare_project_env` (`consoleController.lua`),
@@ -151,7 +151,7 @@ Projects receive a `compy` table with:
 
 | File | Role |
 |---|---|
-| `src/controller/consoleController.lua` | Everything: env setup, project lifecycle, REPL eval, overlay input API |
+| `src/controller/consoleController.lua` | Everything: env setup, project lifecycle, REPL eval, widget input API |
 | `src/model/consoleModel.lua` | Model aggregate (input, editor, output canvas, project service) |
 | `src/model/project/project.lua` | `ProjectService` and `Project` — open/run/close, file I/O, filesystem mount |
 | `src/model/io/redirect.lua` | Redirects `print()` output to the terminal |
