@@ -428,3 +428,22 @@
   `controller.lua` line numbers that were **already stale before this session**
   — reported, not fixed; line-number citations are what the conventions
   discourage, and a sweep belongs with the docs rows, not here.
+
+## 2026-08-16 — P-24-00: the only_mods API question
+
+- Owner flagged the positional-boolean API as non-intuitive. Reach measured:
+  **seven call sites, all file-local, introduced today** — nothing outside
+  `controller.lua` names it, so the change is cheap now and gets dearer.
+- Weighed the owner's two forms and a third: **drop the predicate entirely and
+  compare `combo_string(k)`**, the serialiser the project already ratified.
+  Probed it against live code first — `f10`, `ctrl+s`, `ctrl+shift+s`,
+  `ctrl+alt+shift+r` all come out exactly as the gate would need.
+- The argument that decided it for me: exactness stops being a rule someone
+  must remember and becomes a property of string equality — the P-21 bug class
+  cannot recur. Plus one vocabulary with project bindings, and 21 device reads
+  per keypress drop to 3.
+- Stated the cost rather than burying it: one table allocation per keypress,
+  the same one the register already names for dispatch.
+- Owner chooses; P-24-01 is written either way, with the standing rule that no
+  existing test may need editing — a changed test would mean the rewrite is not
+  equivalent.
