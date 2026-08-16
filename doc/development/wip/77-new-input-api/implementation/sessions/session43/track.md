@@ -533,3 +533,24 @@
 - Added the third PR paragraph to `validation/notes/S43-pr-lines-owed.md`,
   including the two rejected alternatives — a stakeholder asking "why not just
   share the combo" deserves the answer in the description, not in a review file.
+
+## 2026-08-16 — P9 closed, P10 started
+
+- Owner: the nested repo commits exist; close P9 and take P10 now. P11 will run
+  cold with their own planning changes.
+- Verified rather than assumed: all three repos carry local, unpushed history —
+  `maze` 10 ahead of `dsent/dsent/dev`, `keyboard` on `newinput` with no
+  upstream at all, `balloons` 4 ahead of `origin/main`.
+- Closed P9 with two things named rather than absorbed: the **human smoke gate
+  is not discharged** by the closure (it is the same pass P17/P18 wait on, with
+  `examples/keyboard` as P9's named minimum), and **SM3a is unreproduced, not
+  disproved** — the note says what stabilises the font is a consequence of the
+  return path rather than a guarantee, so it must not authorise a state-reset
+  fix.
+- P10 decomposed from its row: the reserved-combo section, the flag-shortcut
+  teaching defect, W9(a) ledger prune, W9(b) accuracy items, W10 batches 1 and
+  4. W10 batch 3 (comment bloat) and the §16.2 marker question stay with P11,
+  which the owner runs cold.
+- P-10-05 (W10 batch 1, "overlay" → "input widget") commissioned to Sonnet,
+  scoped to the **persistent corpus only** — `src/`+`tests/` comments are P11's,
+  and touching them here would collide with it.
