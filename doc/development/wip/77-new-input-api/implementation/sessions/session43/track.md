@@ -108,3 +108,22 @@
   the error wrapping a seeded `love.*` handler gets — is answered no by
   `controller.lua:155-171`: the boundary is applied at route entry and names
   that exact case.
+
+## 2026-08-16 — P-20-01 evaluated
+
+- Worker returned: parity claim SOUND, not the P13 mode — the harness
+  short-circuits the loop but **discloses it** in three Limits sections. Two
+  findings: `e568961` landed after the last independent review yet `84b6e0c5`
+  calls it "the reviewed head" (S2); the report headline oversells (S3).
+- Checked myself rather than relaying: re-ran the harness at `e568961` — 108
+  stimuli, **zero diff**. Re-derived F1 on git timestamps (20:51:45 code,
+  20:52:10 review, 20:52:28 close-out) since the worker used file mtimes.
+- **My own finding, S2, that the worker did not draw:** the harness existed only
+  in a 2026-08-12 `/tmp` scratchpad. The step's strongest claim rested on an
+  instrument one cleanup from gone — hygiene (c) squarely. Preserved to
+  `validation/notes/S38-parity-harness/`, paths made relative, README stating
+  what it proves and what it does not.
+- Also caught: `drive_new.lua` **copies** `combo_string`/`any_mod` instead of
+  calling production. Verified identical to `controller.lua:382-424` today, so
+  sound — but it is where the next fidelity gap opens. Recorded in the README.
+- P-20-02 still running.
