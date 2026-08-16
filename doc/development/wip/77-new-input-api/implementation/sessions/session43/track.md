@@ -468,3 +468,27 @@
   without the gate (tests drive PIC directly; the walk is deliberately reusable
   by other adopters). Passing it down as a parameter is separately ruled out by
   Decision 27's payload clause.
+
+## 2026-08-16 — Decision 34, and P-24 commissioned
+
+- **Owner corrected my reading, and they are right:** Decision 30 point 3
+  declines to *commit* to the gate's table and guards against **confusing** it
+  with a project's — it does not prohibit one. Recorded as **Decision 34**,
+  which amends only the "not committed to" and keeps the separateness
+  requirement as a build instruction.
+- The owner's chain is the decision's own reasoning: exclusivity at the gate →
+  combo strings as its natural expression → the table as the natural form of a
+  set of string keys. Each step made the next available; Decision 33 is the
+  prerequisite, because while `ctrl+alt+shift+r` matched two gates there was no
+  well-defined single entry for it.
+- **Device reads, their question:** roughly right. Today the cascade asks once
+  per predicate, up to ~20 per keypress (fewer in practice — `and` chains
+  short-circuit). After: 3 at the gate. In the route it is 3 **or 6** —
+  `find_shortcut` builds the exact combo and then the `'*'` class on a miss, so
+  the honest answer is 3 unless that second build can reuse the first read. Put
+  that in the commission as a question, not an assumption.
+- Folded the string-comparison step into the table step: landing a cascade of
+  string comparisons we would replace immediately is churn, not increments.
+- Commissioned as two commits — the allocation first, then the table — with the
+  Decision 33 live cases as the equivalence proof and the standing rule that a
+  test needing an edit is a finding.

@@ -1496,3 +1496,61 @@ are **sorted out when those routes are adopted onto the combo mechanism**, not h
 a feature whose mandate is the project-facing input API, and it owes the PR description
 a justification line. The ground for it is that this feature made every other layer
 exact and left the one layer with the most power tolerant.
+
+## Decision 34 — the gate's reservations are combo strings in a privileged table
+
+**Owner ruling, 2026-08-16.** **Amends Decision 30 point 3**, which named this
+table, declined to commit to it, and required that if it were ever built it be
+"visibly a second, privileged table, structurally separate from a project's own".
+That requirement stands and is now a build instruction rather than a condition on
+a hypothetical. What is withdrawn is only the *not committed to*.
+
+**Decision.** The pre-dispatch gate expresses each reservation as a **canonical
+combo string**, matched **exactly**, in a table keyed per event —
+`reserved.keypressed['ctrl+t']`, `reserved.keyreleased['ctrl+escape']` — rather
+than as a cascade of modifier predicates and `if k == …` branches.
+
+**Why this follows rather than being a new idea.** Each step made the next one
+available:
+
+1. Decision 33 made reservations exact, so a chord maps to **one** action. While
+   `ctrl+alt+shift+r` matched both the reset and restart gates, a combo-keyed
+   table had no well-defined entry for it; exactness is what makes the table
+   possible at all.
+2. Exactness is most naturally *expressed* as the canonical combo string the
+   project already builds (`combo_string`, Decision 8's precedence) — and a
+   string equality cannot tolerate an unnamed modifier, so the rule of Decision
+   33 becomes a property of the representation instead of a discipline to
+   remember.
+3. Once every reservation is a string, the cascade **is** a table written the
+   long way. Writing it as a table is the smaller form, not the more elaborate
+   one.
+
+It also serves the reason Decision 30 point 3 gave for wanting it: the reserved
+set becomes listable, documentable and renderable rather than read out of a
+cascade — which is what the input guide's reserved-combo section owes.
+
+**The two tables are distinguished, and this is the load-bearing part.** They
+share a shape and differ in both directions:
+
+- **Override.** A project cannot take a reserved combo; the reservation table is
+  consulted before any route exists. This is the property already pinned by the
+  framework-shortcuts suite.
+- **Consumption — the opposite of a project's rule.** A project's shortcut
+  consumes by returning truthy. **A reservation never consumes**: the key
+  continues to the route afterwards, exactly as it does today. Same shape,
+  opposite contract, and the more misleading of the two — so it is stated **at
+  the table**, in the code, not only here.
+
+**What does not change.** Which combos are reserved, what each does, when each
+applies, and the gate's position in the flow. This is representation, not
+behaviour: the live cases from Decision 33's sweep are the proof, and **none of
+them should need editing**.
+
+**Device reads.** Incidental, but it is the reason the shape is also cheaper: the
+cascade asks the device once per predicate — up to about twenty per keypress —
+where a single canonical string per event asks three. The route asks three of its
+own; sharing one answer between the two layers was considered and **rejected** —
+a cached combo is a model of device state with no path back to the truth, the
+shape Decision 30 dissolved `keys_pressed` for, and the dispatch walk is
+deliberately reachable without the gate.
