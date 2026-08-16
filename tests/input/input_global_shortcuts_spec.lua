@@ -205,6 +205,45 @@ describe('input surface: inbound events — global platform'
           assert.is_true(project_ran)
         end)
 
+      -- Shift stays meaningful in the editor branch: ctrl+s
+      -- closes the buffer, ctrl+shift+s finishes the edit
+      -- instead (S43-P-21-05 finding S2). Exactness excludes
+      -- Alt only, so a stray `not Key.shift()` here would be
+      -- wrong. CC's own methods are stubbed so the branch
+      -- taken is observable without EditorController's real
+      -- save/close machinery — same avoidance the
+      -- running-state pair above already takes.
+      it('ctrl+shift+s finishes the edit in the editor'
+        .. ' branch', function()
+          local called
+          love.state.app_state = 'editor'
+          F.cc.editor:open('t.lua', '', function()
+            return true
+          end)
+          local orig = F.cc.finish_edit
+          F.cc.finish_edit = function() called = true end
+          F.session.press('lctrl')
+          F.session.press('lshift')
+          F.session.press('s')
+          F.cc.finish_edit = orig
+          assert.is_true(called)
+        end)
+
+      it('ctrl+s closes the buffer in the editor branch',
+        function()
+          local called
+          love.state.app_state = 'editor'
+          F.cc.editor:open('t.lua', '', function()
+            return true
+          end)
+          local orig = F.cc.close_buffer
+          F.cc.close_buffer = function() called = true end
+          F.session.press('lctrl')
+          F.session.press('s')
+          F.cc.close_buffer = orig
+          assert.is_true(called)
+        end)
+
       -- love.PROFILE is restored to false BEFORE asserting: the
       -- module-load-time guard in controller.profiler.lua
       -- captures love.PROFILE once, so leaving it truthy past a
