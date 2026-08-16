@@ -391,18 +391,6 @@ local MOD_HELD = {
   shift = Key.shift,
 }
 
--- A reservation matches its modifier set exactly: the named
--- modifiers held, and no other (doc/development/decisions/
--- input.md, Decision 33).
--- `not not` normalises: `Key`'s own `@return boolean` is not
--- enforced for every isDown patcher (technical_debt/input.md,
--- "A modifier accessor answers truthy/falsy, not a boolean").
-local function only_mods(ctrl, alt, shift)
-  return (not not Key.ctrl()) == ctrl
-      and (not not Key.alt()) == alt
-      and (not not Key.shift()) == shift
-end
-
 --- Serialise a key event into a canonical combo string ("ctrl+s", "alt+shift+f4").
 --- Held modifiers are prepended in COMBO_MODS precedence, l/r folded to generic names,
 --- and come from the keyboard itself (doc/development/decisions/input.md, Decision 30).
@@ -432,6 +420,18 @@ local function any_mod()
   end
   return false
 end
+
+-- FPS-corner overlay cycle (love.PROFILE.fpsc), in display
+-- order. Absent from the table = left alone, not wrapped to
+-- 'off': matches the if-elseif chain this replaces, which did
+-- nothing on an unlisted value.
+local FPSC_CYCLE = {
+  off   = 'T_L_B',
+  T_L_B = 'T_R_B',
+  T_R_B = 'T_L',
+  T_L   = 'T_R',
+  T_R   = 'off',
+}
 
 --- @class Controller
 --- @field _defaults Handlers
@@ -773,96 +773,108 @@ Controller = {
     --- @diagnostic disable-next-line: undefined-field
     local handlers = love.handlers
 
-    handlers.keypressed = function(k, sc, isr)
-      --- Power shortcuts
-      local function quickswitch()
-        if only_mods(true, false, false) and k == 't' then
-          if love.state.app_state == 'running'
-              or love.state.app_state == 'inspect'
-              or love.state.app_state == 'project_open'
-          then
-            CC:stop_project_run()
-            local st = love.state.editor
-            if st then
-              CC:edit(st.buffer.filename, st)
-            else
-              CC:edit()
-            end
-          elseif love.state.app_state == 'editor' then
-            if CC.editor:is_normal_mode() then
-              local ed_state = CC:finish_edit()
-              love.state.editor = ed_state
-              CC:run_project()
-            end
-          end
-        end
+    -- Reservations below run unconditionally in dev mode; in
+    -- playback (cfg.mode == 'play') only restart/profile stay
+    -- live (doc/development/decisions/input.md, Decision 1) —
+    -- each project/console-management one checks it and no-ops.
+    local function reserved_quickswitch()
+      if playback then return end
+      local st = love.state.app_state
+      if st == 'running' or st == 'inspect'
+          or st == 'project_open' then
+        CC:stop_project_run()
+        local ed = love.state.editor
+        if ed then CC:edit(ed.buffer.filename, ed)
+        else CC:edit() end
+      elseif st == 'editor'
+          and CC.editor:is_normal_mode() then
+        local ed_state = CC:finish_edit()
+        love.state.editor = ed_state
+        CC:run_project()
       end
-      local function project_state_change()
-        if only_mods(true, false, false) then
-          if k == "pause" then
-            CC:suspend_run(messages.user_break)
-          end
-          if k == "q" then
-            CC:quit_project()
-          end
-        end
-        if only_mods(true, false, false) and k == "s" then
-          if love.state.app_state == 'running' then
-            CC:stop_project_run()
-          end
-        end
-        if only_mods(true, false, true) then
-          --- Ensure the user can get back to the console
-          if k == "r" then
-            CC:reset()
-          end
-        end
-      end
-      local function restart()
-        if only_mods(true, true, false) and k == "r" then
-          CC:restart()
-        end
-      end
-      local function profile()
-        if Key.ctrl() and Key.alt() and k == "p" then
-          if Key.shift() then
-            Prof.stop_profiler()
-          else
-            -- Prof.start_profiler()
-            Prof.start_oneshot()
-          end
-        end
-        if k == "f10" and only_mods(false, false, false) then
-          if love.PROFILE.fpsc == 'off' then
-            love.PROFILE.fpsc = 'T_L_B'
-          elseif love.PROFILE.fpsc == 'T_L_B' then
-            love.PROFILE.fpsc = 'T_R_B'
-          elseif love.PROFILE.fpsc == 'T_R_B' then
-            love.PROFILE.fpsc = 'T_L'
-          elseif love.PROFILE.fpsc == 'T_L' then
-            love.PROFILE.fpsc = 'T_R'
-          elseif love.PROFILE.fpsc == 'T_R' then
-            love.PROFILE.fpsc = 'off'
-          end
-        end
-      end
+    end
 
-      if playback then
-        if love.state.app_state == 'shutdown' then
-          love.event.quit()
-        end
-        restart()
-        if love.PROFILE then
-          profile()
-        end
-      else
-        restart()
-        quickswitch()
-        if love.PROFILE then
-          profile()
-        end
-        project_state_change()
+    local function reserved_suspend()
+      if playback then return end
+      CC:suspend_run(messages.user_break)
+    end
+
+    local function reserved_quit()
+      if playback then return end
+      CC:quit_project()
+    end
+
+    local function reserved_stop_run()
+      if playback then return end
+      if love.state.app_state == 'running' then
+        CC:stop_project_run()
       end
+    end
+
+    local function reserved_reset()
+      if playback then return end
+      CC:reset()
+    end
+
+    -- Restart stays live in playback too (matches the old
+    -- restart() call, made in both branches).
+    local function reserved_restart()
+      CC:restart()
+    end
+
+    local function reserved_profile_start()
+      if not love.PROFILE then return end
+      Prof.start_oneshot()
+    end
+
+    local function reserved_profile_stop()
+      if not love.PROFILE then return end
+      Prof.stop_profiler()
+    end
+
+    local function reserved_overlay()
+      if not love.PROFILE then return end
+      local nxt = FPSC_CYCLE[love.PROFILE.fpsc]
+      if nxt then love.PROFILE.fpsc = nxt end
+    end
+
+    -- The gate's own reservations
+    -- (doc/development/decisions/input.md, Decision 34): a
+    -- SECOND, PRIVILEGED table, structurally separate from a
+    -- project's own compy.input.shortcuts — consulted before
+    -- any route exists, and never overridable by one.
+    -- Opposite contract from a project's shortcut table: a
+    -- project's entry CONSUMES the key by returning truthy: a
+    -- reservation NEVER CONSUMES, so the key still reaches the
+    -- route afterward exactly as it did before this table.
+    local RESERVED = {
+      keypressed = {
+        ['ctrl+t']           = reserved_quickswitch,
+        ['ctrl+pause']       = reserved_suspend,
+        ['ctrl+q']           = reserved_quit,
+        ['ctrl+s']           = reserved_stop_run,
+        ['ctrl+shift+r']     = reserved_reset,
+        ['ctrl+alt+r']       = reserved_restart,
+        ['ctrl+alt+p']       = reserved_profile_start,
+        ['ctrl+alt+shift+p'] = reserved_profile_stop,
+        ['f10']              = reserved_overlay,
+      },
+      -- Ctrl+Escape lives on release, matching the key it quits
+      -- on (doc/development/decisions/input.md, Decision 34).
+      keyreleased = {
+        ['ctrl+escape'] = function() love.event.quit() end,
+      },
+    }
+
+    handlers.keypressed = function(k, sc, isr)
+      -- Not a reservation: this fires on ANY key in playback
+      -- while shutting down, not on one combo, so it cannot be
+      -- a table entry.
+      if playback and love.state.app_state == 'shutdown' then
+        love.event.quit()
+      end
+      local reservation = RESERVED.keypressed[combo_string(k)]
+      if reservation then reservation() end
 
       -- This is `love.handlers.keypressed`, the raw
       -- event-pump entry; `love.keypressed` below holds the
@@ -885,9 +897,8 @@ Controller = {
     end
 
     handlers.keyreleased = function(k, sc)
-      if only_mods(true, false, false) and k == "escape" then
-        love.event.quit()
-      end
+      local reservation = RESERVED.keyreleased[combo_string(k)]
+      if reservation then reservation() end
       if love.keyreleased then
         return love.keyreleased(k, sc)
       end
