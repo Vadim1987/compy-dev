@@ -517,3 +517,19 @@
   have silently changed that.
 - Debt entry "Combo-string dispatch allocates a table per call" closed, with the
   `find_shortcut` remainder named.
+
+## 2026-08-16 — P-24-03: representation-only, clean
+
+- No findings at any severity. It did the playback partition properly —
+  guarded set {quickswitch, suspend, quit, stop_run, reset} against unguarded
+  {restart, profile_start, profile_stop, overlay}, matching the old branch
+  split exactly — and confirmed the `f10` no-`else` property survived.
+- Verified two of its claims myself rather than relaying: `setup_callback_handlers`
+  is called once, at `main.lua:385`, and the old closures really were declared
+  inside `handlers.keypressed`, so they were rebuilt on **every keypress**. The
+  table therefore allocates strictly less than the cascade it replaced — the
+  opposite of the cost I warned about in P-24-00.
+- Also re-measured `reserved_quickswitch`: 14 body lines, at the limit, not over.
+- Added the third PR paragraph to `validation/notes/S43-pr-lines-owed.md`,
+  including the two rejected alternatives — a stakeholder asking "why not just
+  share the combo" deserves the answer in the description, not in a review file.
