@@ -17,7 +17,34 @@
 -- doc/development/tests.md, "Input Contract Suite" for the
 -- pending-row convention this suite already follows.
 
-local F = require('tests.helpers.input_fixture')
+local F    = require('tests.helpers.input_fixture')
+local mock = require('tests.mock')
+
+-- restart/reset reach real project execution (run_project) or
+-- console history teardown -- machinery this file's fixture
+-- does not stand up. A minimal stub records which of the two
+-- the raw gate invoked, isolating the modifier-exactness
+-- question from project loading (doc/development/decisions/
+-- input.md, Decision 17's named-seam exception; same technique
+-- as input_shortcuts_click_spec.lua's play-mode row).
+-- @param combo string  mock.keystroke syntax, e.g. 'C-M-r'
+-- @return table  {restart = true?, reset = true?}
+local function drive_stub(combo)
+  local calls = { }
+  local stub  = {
+    cfg     = { mode = 'dev' },
+    restart = function() calls.restart = true end,
+    reset   = function() calls.reset = true end,
+  }
+  local saved    = table.clone(love.handlers)
+  local saved_kp = love.keypressed
+  love.keypressed = function() end
+  Controller.setup_callback_handlers(stub)
+  mock.keystroke(combo, love.handlers.keypressed, false)
+  for k, v in pairs(saved) do love.handlers[k] = v end
+  love.keypressed = saved_kp
+  return calls
+end
 
 describe('input surface: inbound events — global platform'
   .. ' shortcuts #input', function()
@@ -101,6 +128,142 @@ describe('input surface: inbound events — global platform'
           love.event.quit = orig
           assert.equal(0, quits)
           assert.is_true(project_ran)
+        end)
+
+      it('ctrl+t still quickswitches while running', function()
+        F.activate_project()
+        love.state.app_state = 'running'
+        F.session.press('lctrl')
+        F.session.press('t')
+        assert.are_not.equal('running', love.state.app_state)
+      end)
+
+      it('ctrl+shift+t no longer quickswitches; the project'
+        .. ' binding runs instead', function()
+          local project_ran = false
+          local input = F.activate_project()
+          input.shortcuts.keypressed['ctrl+shift+t'] =
+              function() project_ran = true; return true end
+          love.state.app_state = 'running'
+          F.session.press('lctrl')
+          F.session.press('lshift')
+          F.session.press('t')
+          assert.equal('running', love.state.app_state)
+          assert.is_true(project_ran)
+        end)
+
+      it('ctrl+alt+pause no longer suspends; the project'
+        .. ' binding runs instead', function()
+          local project_ran = false
+          local input = F.activate_project()
+          input.shortcuts.keypressed['ctrl+alt+pause'] =
+              function() project_ran = true; return true end
+          love.state.app_state = 'running'
+          F.session.press('lctrl')
+          F.session.press('lalt')
+          F.session.press('pause')
+          assert.equal('running', love.state.app_state)
+          assert.is_true(project_ran)
+        end)
+
+      it('ctrl+shift+q no longer quits; the project'
+        .. ' binding runs instead', function()
+          local project_ran = false
+          local input = F.activate_project()
+          input.shortcuts.keypressed['ctrl+shift+q'] =
+              function() project_ran = true; return true end
+          F.session.press('lctrl')
+          F.session.press('lshift')
+          F.session.press('q')
+          assert.equal('running', love.state.app_state)
+          assert.is_true(project_ran)
+        end)
+
+      -- Shift stays meaningful in the editor branch (finish
+      -- edit vs close buffer); exactness excludes Alt only.
+      -- Exercised through the simpler running-state branch,
+      -- which shares the same outer condition.
+      it('ctrl+s still stops a running project', function()
+        F.activate_project()
+        love.state.app_state = 'running'
+        F.session.press('lctrl')
+        F.session.press('s')
+        assert.equal('project_open', love.state.app_state)
+      end)
+
+      it('ctrl+alt+s no longer stops the run; the project'
+        .. ' binding runs instead', function()
+          local project_ran = false
+          local input = F.activate_project()
+          input.shortcuts.keypressed['ctrl+alt+s'] =
+              function() project_ran = true; return true end
+          love.state.app_state = 'running'
+          F.session.press('lctrl')
+          F.session.press('lalt')
+          F.session.press('s')
+          assert.equal('running', love.state.app_state)
+          assert.is_true(project_ran)
+        end)
+
+      -- love.PROFILE is restored to false BEFORE asserting: the
+      -- module-load-time guard in controller.profiler.lua
+      -- captures love.PROFILE once, so leaving it truthy past a
+      -- failed assertion here breaks Controller.report() in
+      -- every later test's F.reset().
+      it('f10 still cycles the FPS overlay unmodified',
+        function()
+          love.PROFILE = { fpsc = 'off' }
+          F.session.press('f10')
+          local fpsc = love.PROFILE.fpsc
+          love.PROFILE = false
+          assert.equal('T_L_B', fpsc)
+        end)
+
+      it('ctrl+f10 no longer cycles; the project binding'
+        .. ' runs instead', function()
+          love.PROFILE = { fpsc = 'off' }
+          local project_ran = false
+          local input = F.activate_project()
+          input.shortcuts.keypressed['ctrl+f10'] =
+              function() project_ran = true; return true end
+          F.session.press('lctrl')
+          F.session.press('f10')
+          local fpsc = love.PROFILE.fpsc
+          love.PROFILE = false
+          assert.equal('off', fpsc)
+          assert.is_true(project_ran)
+        end)
+
+      it('ctrl+alt+r still restarts', function()
+        local calls = drive_stub('C-M-r')
+        assert.is_true(calls.restart)
+      end)
+
+      it('ctrl+alt+shift+r no longer restarts', function()
+        local calls = drive_stub('C-M-S-r')
+        assert.is_nil(calls.restart)
+      end)
+
+      it('ctrl+shift+r still resets', function()
+        local calls = drive_stub('C-S-r')
+        assert.is_true(calls.reset)
+      end)
+
+      it('ctrl+alt+shift+r no longer resets', function()
+        local calls = drive_stub('C-M-S-r')
+        assert.is_nil(calls.reset)
+      end)
+
+      -- The defect this closes (blast-radius review, rows 5/6):
+      -- pre-fix, ctrl+alt+shift+r satisfied both the tolerant
+      -- reset gate (ctrl+shift) and the tolerant restart gate
+      -- (ctrl+alt), so ONE event ran BOTH. Exactness makes the
+      -- two gates mutually exclusive by construction.
+      it('ctrl+alt+shift+r fires neither restart nor reset',
+        function()
+          local calls = drive_stub('C-M-S-r')
+          assert.is_nil(calls.restart)
+          assert.is_nil(calls.reset)
         end)
     end)
 

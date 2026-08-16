@@ -394,9 +394,12 @@ local MOD_HELD = {
 -- A reservation matches its modifier set exactly: the named
 -- modifiers held, and no other (doc/development/decisions/
 -- input.md, Decision 33).
+-- `not not` normalises: some isDown patches (Harmony's lock
+-- mode) return no value at all for an unheld key, not `false`.
 local function only_mods(ctrl, alt, shift)
-  return Key.ctrl() == ctrl and Key.alt() == alt
-      and Key.shift() == shift
+  return (not not Key.ctrl()) == ctrl
+      and (not not Key.alt()) == alt
+      and (not not Key.shift()) == shift
 end
 
 --- Serialise a key event into a canonical combo string ("ctrl+s", "alt+shift+f4").
@@ -774,7 +777,7 @@ Controller = {
     handlers.keypressed = function(k, sc, isr)
       --- Power shortcuts
       local function quickswitch()
-        if Key.ctrl() and not Key.alt() and k == 't' then
+        if only_mods(true, false, false) and k == 't' then
           if love.state.app_state == 'running'
               or love.state.app_state == 'inspect'
               or love.state.app_state == 'project_open'
@@ -796,34 +799,36 @@ Controller = {
         end
       end
       local function project_state_change()
-        if Key.ctrl() then
+        if only_mods(true, false, false) then
           if k == "pause" then
             CC:suspend_run(messages.user_break)
           end
           if k == "q" then
             CC:quit_project()
           end
-          if k == "s" then
-            if love.state.app_state == 'running' then
-              CC:stop_project_run()
-            elseif love.state.app_state == 'editor' then
-              if Key.shift() then
-                CC:finish_edit()
-              else
-                CC:close_buffer()
-              end
+        end
+        --- Shift stays meaningful here (finish edit vs close
+        --- buffer); exactness excludes Alt only.
+        if Key.ctrl() and not Key.alt() and k == "s" then
+          if love.state.app_state == 'running' then
+            CC:stop_project_run()
+          elseif love.state.app_state == 'editor' then
+            if Key.shift() then
+              CC:finish_edit()
+            else
+              CC:close_buffer()
             end
           end
-          if Key.shift() then
-            --- Ensure the user can get back to the console
-            if k == "r" then
-              CC:reset()
-            end
+        end
+        if only_mods(true, false, true) then
+          --- Ensure the user can get back to the console
+          if k == "r" then
+            CC:reset()
           end
         end
       end
       local function restart()
-        if Key.ctrl() and Key.alt() and k == "r" then
+        if only_mods(true, true, false) and k == "r" then
           CC:restart()
         end
       end
@@ -836,7 +841,7 @@ Controller = {
             Prof.start_oneshot()
           end
         end
-        if k == "f10" then
+        if k == "f10" and only_mods(false, false, false) then
           if love.PROFILE.fpsc == 'off' then
             love.PROFILE.fpsc = 'T_L_B'
           elseif love.PROFILE.fpsc == 'T_L_B' then
