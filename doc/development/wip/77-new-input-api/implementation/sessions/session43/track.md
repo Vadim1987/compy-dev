@@ -234,3 +234,17 @@
   proving none is affected, since `_scroll` only tests `warp` for truthiness.
 - Also confirmed against the tree: `scenarios/examples.lua` has no explicit
   `release_keys()` and does not need one — `hm_done` releases (`init.lua:331`).
+
+## 2026-08-16 — P-13-03 ruled: no emission, one comment
+
+- Owner: combo checking depends on device polling and harmony plumbs it, so
+  nothing to do. Leave a comment warning that code counting events to mirror
+  held keys would break silently under harmony. No debt entry — no such code
+  exists, and a record would have to warn about a parity limitation rather
+  than blame harmony.
+- Comment placed at the `held` table (`src/harmony/init.lua:174-180`), citing
+  Decision 30 by name in the canonical doc, not a wip path. Seven lines.
+- **Consequence worth naming:** `git diff 3256aac -- src/harmony/` is no longer
+  empty — +7 lines. The subsystem was byte-identical to the PR base as of the
+  revert; this is a deliberate, minimal exception, and it is the only thing
+  this feature leaves in aldum's code.
