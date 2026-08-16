@@ -45,6 +45,24 @@ semantics.
   each of those turns this from dormant into a source of false failures. Also worth a pass
   whenever a subsystem's fixtures are next reworked, since the leaks are fixture-shaped.
 
+## The console's terminal self-test is unreachable
+
+- **Where:** `src/controller/consoleController.lua` — `terminal_test`'s opening guard,
+  `love.state.app_state ~= 'ready' or love.state.app_state ~= 'project_open'`. A state
+  cannot be both, so the disjunction holds for every value and the function always returns
+  before its body.
+- **State:** the whole feature is dormant. `Ctrl+Alt+T` in DEBUG does nothing;
+  `util/test_terminal.lua` is never called, so `love.state.testing` is never set and its
+  readers — the `'running'` / `'waiting'` branches in `ConsoleController:keypressed` and
+  `src/view/input/statusline.lua` — cannot fire. Present at the PR base `3256aac`, so it
+  pre-dates the input-API branch and no current work touches it. The intent reads as `and`.
+- **Why it stands:** a developer-facing self-test with no caller in normal use; nothing
+  observable regressed when it stopped running, which is why it went unnoticed. Fixing the
+  operator re-animates a display path nobody has exercised in months — worth doing
+  deliberately, with a look at the output it paints, rather than as a drive-by.
+- **Revisit:** when the console's debug affordances or the terminal widget are next worked
+  on. Fix is one operator; the work is confirming the revived path still renders sensibly.
+
 ## `table.protect(love.handlers)` is a no-op on the passed table
 
 - **Where:** `src/controller/controller.lua` — end of `setup_callback_handlers`.

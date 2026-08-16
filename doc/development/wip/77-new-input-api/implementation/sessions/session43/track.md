@@ -57,3 +57,16 @@
   projects see — toward real hardware, which emits modifier events too.
 - Incidental, not ours: the dead terminal test is recorded in §10 for the owner
   to route to the debt register or to aldum. Not fixed.
+
+## 2026-08-16 — owner rulings on the correction
+
+- **Terminal self-test → debt ledger, no-blame framing.** Landed in
+  `technical_debt/general.md` ("The console's terminal self-test is
+  unreachable"): mechanism, dormancy, present at PR base `3256aac`, no author
+  named, revisit tied to the next console/terminal pass.
+- **Spec: keep and rewrite, not delete.** Owner frames it as a late instance of
+  **canonicalizing de-facto behaviour** — the move the feature opened with.
+  Harmony's press/hold/release contract was real but unwritten, and that gap is
+  what let P13's synchronous-push fixture pass as proof. P-13-02 recut as RULED.
+- Still open: P-13-03 (emission — default skip). **Execution not started by
+  explicit instruction**; P-13-01 and P-13-02 land together (suite green).
