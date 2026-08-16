@@ -148,3 +148,22 @@
 - Not a regression `da9d1c2` introduced — the teardown pre-dated it. Owner
   ruling needed: accept and document, drop the two ctrl registrations, or open
   the gate's reservation as a design question (out of PR scope).
+
+## 2026-08-16 — P-20-04 opened (the gate's tolerance)
+
+- Owner pressed on the maze case: fragile, needs a solution if true. It is
+  true, with two corrections: (a) not the framework *exit* — in dev the project
+  is stopped back to the console; it is an exit only in `play` mode; (b) not
+  order-fragile but order-*conditional* — release Escape first and it fires,
+  lift Ctrl first and it does not, so one gesture behaves two ways.
+- **Pre-existing:** the release gate has this shape at PR base `3256aac`. Maze
+  always ran under the gateway; the migration changed visibility, not
+  behaviour.
+- Systemic, all verified: `quickswitch` ignores Shift; `f10` names no modifier;
+  **Ctrl+Alt+Shift+R fires `restart` AND `reset`** (probe, both true).
+- Documented in `technical_debt/input.md` ("The gate reserves tolerantly;
+  projects must register exactly"). Options doc:
+  `validation/reviews/S43-reserved-combo-tolerance.md` — A tighten the gate
+  (recommended), B privileged table (recommend against; Decision 30 declines
+  it), C document + drop maze's two ctrl registrations (fallback).
+- Nothing in `controller.lua` touched. Awaiting the ruling.

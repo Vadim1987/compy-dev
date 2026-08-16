@@ -1505,6 +1505,47 @@ works, and this is about how easy it is to keep working.
 Points 1 and 3 are independent: naming the layers is worth doing even if the gesture never
 changes.
 
+### The gate reserves tolerantly; projects must register exactly
+
+- **Where:** the pre-dispatch gate in `src/controller/controller.lua` —
+  `handlers.keyreleased`'s Ctrl+Escape (`:882-890`) and the `keypressed` power
+  shortcuts (`:766-864`). Each tests only the modifiers it names and ignores the
+  rest: `Key.ctrl() and k == 'escape'` matches Ctrl+**Shift**+Escape and
+  Ctrl+Alt+Escape too; `quickswitch` excludes Alt but not Shift; `f10` names no
+  modifier at all and is therefore claimed in every combination (already noted
+  in the P15 suite).
+- **State:** this is the exact inverse of the rule projects live under. A combo
+  is its modifier set **exactly** (Decision 21), so a project registering
+  `ctrl+shift+escape` gets a chord the gate also answers — and the gate runs
+  first, at the raw pump entry, before any route is forwarded to. The project's
+  binding fires, and the platform's reservation fires too. **Observed in
+  `examples/maze`:** Ctrl+Shift+Escape returns the game to its own menu on the
+  press, then the project is stopped back to the console on the release, because
+  the gate reads the chord as Ctrl+Escape. `examples/draw` is the same. Probe:
+  `../wip/77-new-input-api/validation/notes/S43-ctrl-shift-escape-probe.lua`.
+  A related consequence of the same looseness, reproduced the same way
+  (`.../validation/notes/S43-ctrl-alt-shift-r-probe.lua`): Ctrl+Alt+Shift+R
+  fires `restart` **and** `reset` in one event, since one gate tests ctrl+alt
+  and the other ctrl+shift, and both run.
+- **Not introduced by the input feature.** The release gate has this shape at
+  the PR base `3256aac` (`git show 3256aac:src/controller/controller.lua`, the
+  `handlers.keyreleased` block). What the feature changed is visibility: a
+  project that once tested modifiers by hand now registers a combo and thereby
+  states the intent the platform overrides.
+- **Why it stands:** narrowing the gate is a framework behaviour change, and the
+  gate's own shape is an open design question — Decision 30 point 3 names the
+  gate a distinct layer that *could* carry its own privileged combo table and
+  explicitly does not commit to building one. Nothing is silently wrong today;
+  the gestures the gate claims all work.
+- **Shape, if it is answered:** the surgical form is to make each reservation
+  exact — for the release gate, `Key.ctrl() and not Key.alt() and not Key.shift()`,
+  which is the idiom `quickswitch` already uses for Alt. The larger form is the
+  privileged table Decision 30 declines. Either way the plain Ctrl+Escape escape
+  hatch is untouched, so the safety property is preserved.
+- **Revisit:** when a project needs a chord that extends a reserved one — maze
+  and draw need it now — or when the input guide gains its reserved-combo
+  section (P10) and has to state what a reservation actually claims.
+
 ### A gesture that tolerates a modifier costs one registration per variant
 
 - **Where:** `compy.input.shortcuts` and the combo grammar (`src/util/key.lua`,
