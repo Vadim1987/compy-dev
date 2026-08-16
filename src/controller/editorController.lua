@@ -809,6 +809,18 @@ function EditorController:_normal_mode_keys(k)
   end
 end
 
+--- @private
+--- @param k string
+function EditorController:_save_keys(k)
+  if k == "s" and not Key.alt() then
+    if Key.shift() then
+      self.console:finish_edit()
+    else
+      self.console:close_buffer()
+    end
+  end
+end
+
 --- @param k string
 function EditorController:keypressed(k)
   self.input:update_view()
@@ -821,13 +833,7 @@ function EditorController:keypressed(k)
     if k == "f" then
       self:set_mode('search')
     end
-    if k == "s" and not Key.alt() then
-      if Key.shift() then
-        self.console:finish_edit()
-      else
-        self.console:close_buffer()
-      end
-    end
+    self:_save_keys(k)
   end
 
   if mode == 'reorder' then
