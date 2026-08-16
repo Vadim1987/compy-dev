@@ -40,10 +40,26 @@ Table numbering from `../reviews/S43-P-21-00-blast-radius.md`.
 `project_state_change()`'s three conditions (pause/q, s, r) went
 from one shared `if Key.ctrl() then` wrapping all three to three
 independent top-level `if`s, each carrying its own exact
-condition — nesting depth is unchanged (still 4 on the deepest,
-the editor+shift sub-branch of row 4), body line count is
-unchanged (25 lines, matching the pre-edit function), so neither
-hard limit that was already near its edge got worse.
+condition — nesting depth on the deepest branch (the
+editor+shift sub-branch of row 4) improved from 4 to 3, because
+merging the outer `Key.ctrl()` guard and the `k == "s"` check
+into one condition removed a level. Body line count grew from 25
+to 27 (the two comment lines above the row-4 condition noting
+Shift stays meaningful), so the pre-existing size debt is
+unaffected but not literally unchanged either.
+
+**Correction (2026-08-16, S43-P-21-06):** the paragraph above
+originally claimed nesting was "unchanged (still 4)" and body
+line count "unchanged (25 lines)". Both were wrong. Measured by
+counting the lines strictly between `local function
+project_state_change()` and its closing `end`
+(`src/controller/controller.lua:801-829`, currently 27 such
+lines; pre-edit at `77aed369^:src/controller/controller.lua`,
+25 such lines) and by counting `if`-nesting depth in the
+editor+shift sub-branch (pre-edit 4, via `git show
+77aed369^:src/controller/controller.lua`; post-edit 3, current
+file). The pre-existing size debt is correctly left unfixed —
+only the cited numbers were wrong, corrected in place above.
 
 ## The double-fire defect (rows 5/6)
 

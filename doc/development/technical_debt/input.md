@@ -1535,7 +1535,16 @@ changes.
 - **Revisit:** when `Key`'s accessors are next touched, or the first time a
   third comparison site is written.
 
-### The gate reserves tolerantly; projects must register exactly
+### The gate reserves tolerantly; projects must register exactly — RESOLVED 2026-08-16
+
+**Resolved by Decision 33** (`../decisions/input.md`, "a framework reservation matches
+its modifier set exactly"): every pre-dispatch reservation now excludes the modifiers it
+does not name, the Ctrl+Alt+Shift+R double-fire is gone, and fifteen live cases in
+`tests/input/input_global_shortcuts_spec.lua` assert what each reservation does **not**
+claim. Kept rather than deleted because it records why the asymmetry existed and what it
+cost. **Still open, deliberately:** the console and editor route handlers, which
+Decision 33's scope clause leaves to whenever those routes are adopted onto the combo
+mechanism. The entry below describes the state before the fix.
 
 - **Where:** the pre-dispatch gate in `src/controller/controller.lua` —
   `handlers.keyreleased`'s Ctrl+Escape (`:882-890`) and the `keypressed` power

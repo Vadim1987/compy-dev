@@ -291,3 +291,25 @@
   sites; P-21 had it break a comparison). Framed as our annotation being
   unenforced rather than as harmony's fault, with the one-line fix in `Key`
   named as the shape if it is ever answered.
+
+## 2026-08-16 — P-21 closed out (bar P10's section)
+
+- P-21-06 landed `2b89bba8`: two cases pin Shift as meaningful on `ctrl+s`,
+  and the worker proved them by temporarily adding `not Key.shift()` and
+  showing only the shift case failed. Suite **966 / 0 / 0 / 10**, pendings
+  untouched, `controller.lua` left exactly as reviewed.
+- Checked the new cases for the P9c failure mode myself — `session.press`
+  holds without releasing — and the file's `before_each(F.reset)` calls
+  `mock.release_keys()`, so nothing leaks between cases.
+- P-21-03: maze note removed (`c23cb59`), specs 42/0/0, and **the original
+  defect probe now passes** — shortcut fires, platform never asks to quit,
+  project not stopped. That is the end-to-end confirmation, not a claim.
+- P-21-04 part done: the tolerance debt entry is marked RESOLVED against
+  Decision 33 rather than deleted (it records why the asymmetry existed), with
+  the route-level half named as deliberately still open. PR paragraphs drafted
+  in `validation/notes/S43-pr-lines-owed.md` for the regeneration step rather
+  than written into the stale `pr-description.md`.
+- **Scope call:** did not write the guide's reserved-combo section. That is
+  P10's row, unstarted and large; writing it inside P-21 would preempt it.
+  Flagged on P10 instead that the section must now state what a reservation
+  *claims*, not just which combos are reserved.
