@@ -272,3 +272,22 @@
   production code, which raises whether it deserves a debt entry.
 - P-21-05 cold review commissioned; P-21-03 (maze note) and -04 (docs) wait on
   its verdict.
+
+## 2026-08-16 — P-21-05 verdict: sound, two real findings
+
+- Cold review: sweep complete, exact, defended. Nine rows match the table, row 7
+  byte-identical, `not not` confirmed a genuine fix (it traced `patch_isDown`
+  and proved bare `nil` under lock), blast radius clean by grep of examples.
+- **Both findings verified by me before acting.** No test in the tree presses
+  `ctrl+shift+s` — confirmed. And `project_state_change` did change size
+  (27 → 29 lines by my count, header to `end`), so the report's "unchanged"
+  was wrong; nesting improved rather than held.
+- The S2 is the good kind of finding: every *other* row drops Shift, so row 4 is
+  where a well-meaning edit would break something, and nothing guarded it.
+- P-21-06 commissioned to close both, with the case proved by temporarily
+  breaking row 4. Production code explicitly off limits.
+- Debt entry written: "A modifier accessor answers truthy/falsy, not a boolean"
+  — the zero-value quirk, now seen from both sides (P-13-04 found six call
+  sites; P-21 had it break a comparison). Framed as our annotation being
+  unenforced rather than as harmony's fault, with the one-line fix in `Key`
+  named as the shape if it is ever answered.

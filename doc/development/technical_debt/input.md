@@ -1505,6 +1505,36 @@ works, and this is about how easy it is to keep working.
 Points 1 and 3 are independent: naming the layers is worth doing even if the gesture never
 changes.
 
+### A modifier accessor answers truthy/falsy, not a boolean
+
+- **Where:** `src/util/key.lua` — `ctrl`/`alt`/`shift` return
+  `love.keyboard.isDown(...)` straight through, and are annotated
+  `@return boolean`. Real LÖVE honours that. A **patched** `isDown` need not:
+  harmony's lock-mode patch returns **no value** for an unheld key rather than
+  `false` (`src/harmony/init.lua`, `patch_isDown`), and Lua adjusts that to
+  `nil` at the call site.
+- **State:** harmless to every `if Key.ctrl() then` in the tree, since `nil` and
+  `false` are both falsy. It bites the moment a device read is **compared**
+  rather than tested: `Key.ctrl() == false` is `false` under harmony, and
+  `Key.ctrl()` spliced as a call's last argument contributes **no argument at
+  all**. Both have been observed — the first while writing `only_mods`
+  (Decision 33), the second at six call sites that pass a modifier read as a
+  trailing argument (`editorController.lua:466,470,772,776`,
+  `searchController.lua:101,105`), none of which is affected today because the
+  callee only tests the value for truthiness.
+- **Why it stands:** nothing is wrong under a real device, and the one place
+  that compares normalises with `not not` and says why. Changing the accessors
+  is a small edit with a wide blast radius — every caller's return type would
+  become guaranteed, which is desirable but wants its own pass and its own
+  tests.
+- **Shape, if it is answered:** normalise inside `Key` — `return not not
+  love.keyboard.isDown(...)` in each of the three accessors — so the
+  `@return boolean` annotation becomes true for every consumer, and the `not
+  not` at comparison sites can go. Prefer that to asking each caller to
+  remember.
+- **Revisit:** when `Key`'s accessors are next touched, or the first time a
+  third comparison site is written.
+
 ### The gate reserves tolerantly; projects must register exactly
 
 - **Where:** the pre-dispatch gate in `src/controller/controller.lua` —
