@@ -447,3 +447,24 @@
 - Owner chooses; P-24-01 is written either way, with the standing rule that no
   existing test may need editing — a changed test would mean the rewrite is not
   equivalent.
+
+## 2026-08-16 — P-24-00b: three follow-ups answered
+
+- **Shortcuts table for the gate:** agreed on merits, and Decision 33 is what
+  made it possible — while reservations tolerated unnamed modifiers,
+  `ctrl+alt+shift+r` matched two of them and a combo→fn table had no
+  well-defined entry. But it is **exactly what Decision 30 point 3 declined**,
+  so it is a ruling to amend, not a refactor to slip in. Scoped as P-24-03,
+  owner-gated, with the non-consumption contract named as part of the
+  deliverable — same table shape as a project's, opposite consumption rule, and
+  that is the most misleading thing about the design.
+- **The allocation** is `parts = {}` in `combo_string`; the concat result is an
+  interned string, so the table is the garbage and the string mostly is not.
+  Already up to **two** per event in dispatch, not one. Recommended no table at
+  all over a reused buffer — same win without the shared-mutable-state footgun.
+- **Sharing the combo: recommended against, on the feature's own ground.** A
+  per-event cache of device state with no path back to the truth is the
+  `keys_pressed` shape Decision 30 dissolved, and `_dispatch` is reachable
+  without the gate (tests drive PIC directly; the walk is deliberately reusable
+  by other adopters). Passing it down as a parameter is separately ruled out by
+  Decision 27's payload clause.
