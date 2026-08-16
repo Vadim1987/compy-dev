@@ -394,8 +394,9 @@ local MOD_HELD = {
 -- A reservation matches its modifier set exactly: the named
 -- modifiers held, and no other (doc/development/decisions/
 -- input.md, Decision 33).
--- `not not` normalises: some isDown patches (Harmony's lock
--- mode) return no value at all for an unheld key, not `false`.
+-- `not not` normalises: `Key`'s own `@return boolean` is not
+-- enforced for every isDown patcher (technical_debt/input.md,
+-- "A modifier accessor answers truthy/falsy, not a boolean").
 local function only_mods(ctrl, alt, shift)
   return (not not Key.ctrl()) == ctrl
       and (not not Key.alt()) == alt
