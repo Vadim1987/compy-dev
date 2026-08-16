@@ -191,3 +191,24 @@
   console debug hotkeys (`controller.lua:493,510`), which are route-level and
   outside Decision 33's scope clause as written.
 - **No `controller.lua` edit yet** — P-21-01 awaits the go.
+
+## 2026-08-16 — P-13 executed
+
+- Owner: pre-dispatch only for Decision 33 (recorded); execute P-13; cold
+  review after every execution step; orchestrate rather than hand-code.
+- Judged a cold session unnecessary and said why: the analysis is already on
+  disk, so a cold session would rebuild it; the self-review risk lives in the
+  review, which P-13-04 covers.
+- Sonnet worker executed P-13-01/-02 → `3befd556`. Verified myself: revert is
+  exact (`git diff 5b580661^ -- src/harmony/` empty), commit staged only the
+  two paths, trailer present, tree otherwise untouched, suite **949/0/0/10**
+  (947 + 2 as the spec grew 1 case to 3).
+- Read the spec rather than trusting the digest: the fixture genuinely queues
+  and drains separately, and case 1 asserts the gateway saw **nothing** before
+  the drain — which is the property the old fixture destroyed.
+- Worker's incidental find, pre-existing at the baseline: harmony's
+  `patch_isDown` has no explicit return on its default path, so `Key.ctrl()`
+  yields **zero values**, not `nil`, under a locked run — splices badly into a
+  call argument. Test ergonomics today; noted, not fixed.
+- P-13-04 cold review commissioned (Sonnet, read-only, prompt of record on
+  disk). P-13-03 (emission) remains the owner's open call; default skip.
