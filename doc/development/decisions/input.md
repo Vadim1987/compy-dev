@@ -1486,11 +1486,11 @@ producing an outright defect. Plain Ctrl+Escape is untouched, so the recovery pa
 of a running project is exactly as it was: the safety property does not depend on
 tolerance, and never did.
 
-**Scope.** The rule binds the **pre-dispatch gate** — the block that runs before a route
-is forwarded to, and whose power is non-overridable. Console and editor key handling is
-route-level: it competes with no project, since no project is running while the console
-owns the route. Whether the same exactness is worth applying there is a separate
-question and is not ruled here.
+**Scope — confirmed by the owner, 2026-08-16.** The rule binds the **pre-dispatch gate**
+and nothing else: the block that runs before a route is forwarded to, and whose power is
+non-overridable. Console and editor key handling is route-level — it competes with no
+project, since no project is running while the console owns the route — and its combos
+are **sorted out when those routes are adopted onto the combo mechanism**, not here.
 
 **Cost, stated because it is a cost.** This is a framework behaviour change made inside
 a feature whose mandate is the project-facing input API, and it owes the PR description
