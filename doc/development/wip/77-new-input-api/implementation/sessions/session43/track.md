@@ -335,3 +335,19 @@
 - Scoping call: `ctrl+s` stays scoped to `running` exactly as today, and the
   shortcut-syntax migration the owner floated is recorded as a later option,
   not folded in.
+
+## 2026-08-16 — P-22-01 landed
+
+- Patch is one line (`return false` on the locked, not-held path), test
+  type-asserts so a regression to `nil` fails loudly rather than passing as
+  falsy, and `only_mods`'s comment now cites the debt entry instead of the
+  harmony instance it no longer describes. Verified all three myself; suite
+  **967 / 0 / 0 / 10**.
+- Worker split it into two commits on its own judgement — code+test, then the
+  unrelated comment in another file. That is the granularity rule applied
+  correctly without being told.
+- Debt entry narrowed rather than closed: the known offender is fixed, the
+  general exposure (`Key`'s `@return boolean` is unenforced for any patcher)
+  stands, with the fix shape still recorded.
+- Harmony is now `+8` lines against the PR base — the seven-line comment and
+  this one-line return, both deliberate and both owner-ruled.

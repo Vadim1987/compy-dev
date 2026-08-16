@@ -1509,10 +1509,14 @@ changes.
 
 - **Where:** `src/util/key.lua` — `ctrl`/`alt`/`shift` return
   `love.keyboard.isDown(...)` straight through, and are annotated
-  `@return boolean`. Real LÖVE honours that. A **patched** `isDown` need not:
-  harmony's lock-mode patch returns **no value** for an unheld key rather than
-  `false` (`src/harmony/init.lua`, `patch_isDown`), and Lua adjusts that to
-  `nil` at the call site.
+  `@return boolean`. Real LÖVE honours that; the annotation is **not enforced**
+  for anything that replaces `isDown`.
+- **The one known offender is fixed (2026-08-16).** Harmony's lock-mode patch
+  used to fall off its own end for an unheld key, returning **no value** rather
+  than `false`, and Lua adjusts that to `nil` at a call site. It now returns a
+  boolean on every path (`src/harmony/init.lua`, `patch_isDown`), on the ground
+  that a mock matches the signature of the thing it mocks. What remains is the
+  general exposure below, not a live instance.
 - **State:** harmless to every `if Key.ctrl() then` in the tree, since `nil` and
   `false` are both falsy. It bites the moment a device read is **compared**
   rather than tested: `Key.ctrl() == false` is `false` under harmony, and
@@ -1522,8 +1526,8 @@ changes.
   trailing argument (`editorController.lua:466,470,772,776`,
   `searchController.lua:101,105`), none of which is affected today because the
   callee only tests the value for truthiness.
-- **Why it stands:** nothing is wrong under a real device, and the one place
-  that compares normalises with `not not` and says why. Changing the accessors
+- **Why it stands:** nothing is wrong under a real device, no patcher offends
+  today, and the one place that compares normalises with `not not` and says why. Changing the accessors
   is a small edit with a wide blast radius — every caller's return type would
   become guaranteed, which is desirable but wants its own pass and its own
   tests.
