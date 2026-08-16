@@ -351,3 +351,25 @@
   stands, with the fix shape still recorded.
 - Harmony is now `+8` lines against the PR base — the seven-line comment and
   this one-line return, both deliberate and both owner-ruled.
+
+## 2026-08-16 — P-23-00b: two findings, one changes the step's shape
+
+- Owner asked for the pen-and-paper and canvas/error analysis before -01.
+  Relettered the feasibility pass to P-23-00a (committed as P-23-00) rather
+  than renumbering committed references.
+- **Finding 1.** A non-blocking project keeps the route in `project_open`, and
+  in that state `ctrl+s` today falls through to the project's own binding. The
+  obvious implementation — check at the top of PIC's walk — would apply in
+  `project_open` too and stop pen-and-paper projects on a key that is theirs.
+  The `running` scope is load-bearing; it gets a live test.
+- **Finding 2, and it changes the shape.** The route boundary's error handler
+  is `user_error_handler` → **`CC:suspend_run`**. A raise inside
+  `stop_project_run` running inside the boundary would suspend the run
+  mid-teardown and label it a project error — in the one path whose whole
+  purpose is recovery. Recommendation: PIC decides and consumes; the gateway
+  performs the action after the route returns, where it runs today.
+- Also found: `use_canvas` binds and unbinds unconditionally with no
+  save/restore, so it does not nest. Latent today (teardown calls it nowhere),
+  a trap once teardown lives inside a bound canvas.
+- Not a problem, checked: the project's own `before_exit` is already pcalled
+  inside `framework_before_exit`, so its error handling is unaffected.
