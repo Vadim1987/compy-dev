@@ -15,9 +15,7 @@ local function stub_view()
   end
 end
 
-local function setup_harmony()
-  package.loaded['harmony.init'] = nil
-  _G.Harmony = nil
+local function mock_state()
   mock.mock_love({
     event = { },
     handlers = { },
@@ -27,18 +25,39 @@ local function setup_harmony()
       setTitle = function() end,
     },
   })
-  local events = { }
+end
+
+--- Real LOVE semantics: push only enqueues; drain()
+--- later calls the handlers, mirroring main_loop's poll
+--- step, which runs a frame before love.update.
+local function queue_recorder()
+  local events, queue = { }, { }
   love.event.push = function(name, key)
-    events[#events + 1] = event_name(name) .. ':' .. key
-    love.handlers[event_name(name)](key)
+    local n = event_name(name)
+    events[#events + 1] = n .. ':' .. key
+    queue[#queue + 1] = { n, key }
   end
+  local function drain()
+    for _, e in ipairs(queue) do
+      love.handlers[e[1]](e[2])
+    end
+    queue = { }
+  end
+  return events, drain
+end
+
+local function setup_harmony()
+  package.loaded['harmony.init'] = nil
+  _G.Harmony = nil
+  mock_state()
+  local events, drain = queue_recorder()
   stub_view()
   require('util.key')
   require('controller.controller')
   local harmony = require('harmony.init')
   harmony(true)
   harmony.load()
-  return harmony, events
+  return harmony, events, drain
 end
 
 local function gateway()
@@ -53,21 +72,40 @@ local function gateway()
 end
 
 describe('harmony input', function()
-  it('drives Ctrl+T through the device-read matcher', function()
-    local harmony, events = setup_harmony()
+  it('queues on push, drains before the app sees it', function()
+    local harmony, _, drain = setup_harmony()
     local calls = gateway()
 
     harmony.utils.love_key('C-t')
+    assert.same({ }, calls)
 
+    drain()
     assert.same({ edit = true, stop = true }, calls)
+  end)
+
+  it('puts only the trigger key on the event stream', function()
+    local harmony, events, drain = setup_harmony()
+    gateway()
+
+    harmony.utils.love_key('C-t')
+    drain()
+
     assert.same({
-      'keypressed:lctrl',
       'keypressed:t',
       'keyreleased:t',
-      'keyreleased:lctrl',
     }, events)
+  end)
+
+  it('keeps the modifier held until release_keys', function()
+    local harmony, _, drain = setup_harmony()
+    gateway()
+
+    harmony.utils.love_key('C-t')
+    drain()
+    assert.is_true(Key.ctrl())
+
+    harmony.utils.release_keys()
     local ctrl = Key.ctrl()
     assert.is_falsy(ctrl)
   end)
 end)
-

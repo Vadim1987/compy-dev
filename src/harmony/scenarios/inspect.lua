@@ -11,6 +11,7 @@ local function inspect()
     wait(.3)
     h.love_key('C-pause')
     wait(.1)
+    h.release_keys()
     wait(.1)
     h.screenshot('paused')
 
