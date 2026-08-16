@@ -389,3 +389,22 @@
 - Told the worker to stop rather than restructure if the addition would breach
   a limit in `EditorController:keypressed`, which is already long — the
   standing rule against reshaping code we are only passing through.
+
+## 2026-08-16 — P-23-02 landed, and the seven lines came back out
+
+- `cb6b867e`: gate keeps one exact run-stop `ctrl+s`; editor's two meanings move
+  to `EditorController`. Verified the diff myself — semantics preserved branch
+  for branch, `ProjectInputController` untouched, failing-first evidence real.
+- **The prediction held:** both P-21-06 editor cases passed byte-identical
+  across the move. They assert behaviour through `CC` stubs, so they were
+  written at the right level and the move proved it.
+- Sent back one thing the worker had correctly refused to fix on its own: our
+  7-line addition sat in a function already 28 lines against a 14-line limit.
+  A function that *arrives* long stays long; one **we** bloat is ours. Hence
+  `5e6ad8c2` — `_save_keys`, following the file's own `_reorg_mode_keys` /
+  `_search_mode_keys` idiom, leaving `keypressed` at 29 (28 + our one call).
+  The worker left `Key.ctrl()` at the call site so the new call reads parallel
+  to `ctrl+m` and `ctrl+f`; that is the right call.
+- P-23-03 cold review commissioned, pointed at the one question that matters:
+  is there a *second* behaviour change nobody intended, including in **when** a
+  branch is reached rather than what it does.
