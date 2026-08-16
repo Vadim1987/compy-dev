@@ -70,3 +70,18 @@
   what let P13's synchronous-push fixture pass as proof. P-13-02 recut as RULED.
 - Still open: P-13-03 (emission — default skip). **Execution not started by
   explicit instruction**; P-13-01 and P-13-02 land together (suite green).
+
+## 2026-08-16 — authorship audit (owner request)
+
+- Owner: session42 was Codex and showed ignorance of project constraints; asked
+  which recent consecutive sessions were not Claude-run, stopping at the first
+  Claude report.
+- Signal: `Co-Authored-By: Claude` trailer (git author is the owner throughout,
+  so `%an` says nothing). Boundary `a1842a2f`; corroborated by literal `\n`
+  escapes in several untrailered commit bodies.
+- Run: 42, 41, 40 not Claude; **39 mixed** (Claude to `a1842a2f`, tail not); 38
+  not Claude; **37 Claude → stop**.
+- Recorded `validation/notes/S43-agent-authorship-audit.md` with a re-review
+  ranking. session38 ranks first — largest footprint, and its upstream-parity
+  claim rests on its own harness, the same class of thing that made P13's proof
+  false.
