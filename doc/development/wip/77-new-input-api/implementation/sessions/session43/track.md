@@ -373,3 +373,19 @@
   a trap once teardown lives inside a bound canvas.
 - Not a problem, checked: the project's own `before_exit` is already pcalled
   inside `framework_before_exit`, so its error handling is unaffected.
+
+## 2026-08-16 — owner leans A; P-23-02 commissioned
+
+- Owner picked **A** after I withdrew the overengineered recommendation. So:
+  the editor's two meanings move to `EditorController`, the gate keeps an
+  **exact** run-stop `ctrl+s`, and `ProjectInputController` is not touched at
+  all. P-23-01 withdrawn.
+- One intended behaviour change: **Ctrl+Shift+S no longer stops a running
+  project** — the wrinkle P-21 had to leave loose, now closed by exactness.
+  Commissioned tests-first so it fails against the current tree.
+- Prediction written into the commission rather than assumed: the P-21-06
+  editor cases assert behaviour, not layering, so they should survive the move
+  untouched. If they break, the worker reports why instead of weakening them.
+- Told the worker to stop rather than restructure if the addition would breach
+  a limit in `EditorController:keypressed`, which is already long — the
+  standing rule against reshaping code we are only passing through.
