@@ -127,3 +127,24 @@
   calling production. Verified identical to `controller.lua:382-424` today, so
   sound — but it is where the next fidelity gap opens. Recorded in the README.
 - P-20-02 still running.
+
+## 2026-08-16 — P-20-02 evaluated
+
+- Worker verdict SOUND, and correct within what it checked: `da9d1c2`
+  implements the ruling exactly, combos canonical, teardown shared, numbers
+  reproduce. Confirmed the load-bearing parts myself, and added the
+  exhaustiveness argument it only implied (`mod_triples` names ctrl/alt/shift
+  only, so four registrations cover the whole expressible family).
+- **Finding the revalidation did not reach (S2):** the gateway reserves
+  Ctrl+Escape on **keyreleased** at the raw pump entry, so `ctrl+shift+escape`
+  and `ctrl+alt+shift+escape` fire the game's menu on press and then have the
+  project stopped on release. Two of the four restored variants are cosmetic.
+  Upstream had no such gate. **This is P15's ruled property — a project cannot
+  suppress a platform combo by naming it — biting a real project.**
+- Probe preserved: `validation/notes/S43-ctrl-shift-escape-probe.lua`. First
+  run proved nothing (the mock stubs `love.event.quit`); re-run modelling the
+  real loop's quit handling: shortcut 1, quit asked 1, aborted true,
+  `stop_project_run` 1.
+- Not a regression `da9d1c2` introduced — the teardown pre-dated it. Owner
+  ruling needed: accept and document, drop the two ctrl registrations, or open
+  the gate's reservation as a design question (out of PR scope).
