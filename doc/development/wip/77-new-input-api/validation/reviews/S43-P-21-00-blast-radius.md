@@ -76,12 +76,22 @@ being right. Its name should say "exactly these", not "no others".
 
 | Step | Content | Gate |
 |---|---|---|
-| **P-21-01** | The predicate + **row 9** (the release gate) — the case that motivated the decision. Converts the `ctrl+escape` pending outline (`tests/input/input_global_shortcuts_spec.lua:95`) into a live pair: plain fires, Ctrl+Shift+Escape does not | breaking test first; suite green |
+| **P-21-01** | The predicate + **row 9** (the release gate) — the case that motivated the decision | breaking test first; suite green |
 | **P-21-02** | Rows 1–6 and 8, the `keypressed` gate, one commit | includes a live case for the Ctrl+Alt+Shift+R double-fire, which is a defect fix and states so in its message |
 | **P-21-03** | Remove maze/draw's risk note and confirm the four-variant family end to end; the note's own removal condition is now met | nested repo commit, never pushed |
 | **P-21-04** | Docs: the reserved-combo section owed by P10 states what a reservation claims; the debt entry "The gate reserves tolerantly…" is closed and points at Decision 33; PR justification line drafted | last, after behaviour settles |
 
 Sequenced, not parallel: 01 and 02 touch the same handler block.
+
+**Correction to an earlier draft of this step (S43, before execution):** it proposed
+converting the `ctrl+escape` **pending** outline
+(`tests/input/input_global_shortcuts_spec.lua:95`) into a live case. That is wrong and
+would breach P15's ruling — those seven pendings name *each reserved combo's own effect*,
+which is the framework's contract and explicitly **not** this PR's duty, and the count of
+10 is an owner ruling the boot ritual checks. What Decision 33 makes ours is the
+**boundary**, not the effect: that a reservation does **not** claim an extension of
+itself. So the new cases are **additive and live**, the pendings stay untouched, and the
+pending count stays **10**.
 
 ## What this step did not decide
 
