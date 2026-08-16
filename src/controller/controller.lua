@@ -406,20 +406,18 @@ end
 --- Serialise a key event into a canonical combo string ("ctrl+s", "alt+shift+f4").
 --- Held modifiers are prepended in COMBO_MODS precedence, l/r folded to generic names,
 --- and come from the keyboard itself (doc/development/decisions/input.md, Decision 30).
---- NOTE: the per-keypress table allocation here is an open design
---- question (doc/development/technical_debt/input.md, "Combo-string dispatch
---- allocates a table per call").
+--- No buffer table: three concatenations, not an allocation
+--- per call, and nothing here to make reentrancy-unsafe.
 --- @param k string            triggering key (raw LÖVE name)
 --- @return string             canonical combo string
 local function combo_string(k)
-  local parts = { }
+  local combo = ''
   for _, m in ipairs(COMBO_MODS) do
     if MOD_HELD[m[3]]() then
-      parts[#parts + 1] = m[3]
+      combo = combo .. m[3] .. '+'
     end
   end
-  parts[#parts + 1] = k
-  return table.concat(parts, '+')
+  return combo .. k
 end
 
 --- Is any modifier held? The cheap pre-check the triggerless
