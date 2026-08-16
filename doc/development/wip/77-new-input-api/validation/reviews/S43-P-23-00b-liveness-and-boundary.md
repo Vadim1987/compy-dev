@@ -125,3 +125,56 @@ belongs in the debt register rather than only in a commit message.
    with the error-path test and a debt entry.
 3. Leave Ctrl+Escape alone; it is the pen-and-paper exit and nothing here
    touches it.
+
+---
+
+## Amendment (2026-08-16) — the owner asked whether this is overengineered. It is.
+
+Re-examined on that challenge. The analysis above stands; **the recommendation
+does not.** Three things were wrong with it.
+
+**The deferral channel is machinery for a framework-bug-only path.** For the
+error scenario to matter, `stop_project_run` itself must raise — and everything
+in it is framework code, with the one piece of project code (`before_exit`)
+already `pcall`ed separately. So the failure mode is "a framework bug degrades
+from a visible crash to a suspended run". That is a real degradation and worth a
+line in the register; it is **not** worth a new channel between the route and the
+gateway. Building one to protect a path that only opens when we have already
+shipped a bug is the definition of elaborate over predictable.
+
+**A reservations table for a single entry was the same mistake**, and I said so
+about option (b) while proposing its sibling.
+
+**The bigger miss: Ctrl+S-while-running is not anomalous where it is.** It is one
+of a family — Ctrl+Escape, Ctrl+Q, Ctrl+T all stop or tear down a run, all
+non-overridable, all in the gate. Moving one member out splits the family across
+two layers. What is genuinely anomalous is that **one key carries two unrelated
+meanings**, and that the *editor's* meaning is adjudicated before any route
+exists. That is the thing worth fixing, and it is the cheap half.
+
+### The options, honestly ranked by simplicity
+
+**A — move the editor half only.** `ctrl+s` / `ctrl+shift+s` go to
+`EditorController:keypressed`, beside the existing `ctrl+m` and `ctrl+f`. The
+gate keeps a plain run-stop reservation with no state switch inside it, made
+exclusive. **No PIC change, no state read, no deferral, no boundary question, no
+pen-and-paper risk.** One insertion, one deletion, and the gate stops
+interpreting a key on behalf of a route.
+*Cost:* the run-stop half stays at pre-dispatch — which is contrary to the
+owner's literal instruction, and is the reason this is a question rather than a
+decision.
+
+**B — both halves, PIC calls `stop_project_run` directly**, scoped by one
+`app_state == 'running'` read. One `if` in PIC, the block deleted from the gate.
+*Cost:* PIC learns one lifecycle fact; a raise during teardown suspends instead
+of crashing — recorded in the register, and tested.
+
+**C — both halves plus a deferral channel.** What was recommended above.
+**Withdrawn.**
+
+### Recommendation
+
+**A if the goal is "no route's business is decided at pre-dispatch"; B if the
+goal is literally "PIC owns the run-stop reservation".** Both are small. Neither
+needs new machinery, and the pen-and-paper test from finding 1 is owed by B, not
+by A — under A nothing about `project_open` changes at all.
