@@ -31,3 +31,12 @@
 - Harmony now emits and mirrors modifier press/release pairs, so Ctrl+T reaches
   the device-read matcher and leaves no simulated modifier held. `patch_isDown`
   and the held table remain; the manual release function and scenario calls are
+- gone. P13's focused test and the full suite passed at 947 / 0 / 0 / 10.
+
+## 2026-08-16 — review and wrap
+
+- Two cold reviews were materialized. Their follow-up finds P9c complete and
+  the P13 production refactor within limits, but leaves the 23-line
+  `setup_harmony` test helper as S2.
+- Owner directed wrap with that finding preserved; no further sprint task is
+  selected. Session43 waits for owner direction.
