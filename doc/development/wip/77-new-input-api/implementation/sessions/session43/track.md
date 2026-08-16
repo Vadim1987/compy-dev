@@ -212,3 +212,25 @@
   call argument. Test ergonomics today; noted, not fixed.
 - P-13-04 cold review commissioned (Sonnet, read-only, prompt of record on
   disk). P-13-03 (emission) remains the owner's open call; default skip.
+
+## 2026-08-16 — the split question, and P-13-04
+
+- Owner: prefer not splitting a long function in another author's zone. Asked
+  which one; answer was harmony's `love_key` (production), and the test helper
+  may stay split since the spec is ours (`5b580661` created it, not aldum).
+- Rechecked as asked — **did we bloat it?** No. `git diff 3256aac --
+  src/harmony/` is now **empty**: the subsystem is byte-identical to the PR
+  base. `love_key` is 23 lines at the PR base and 25 at harmony's first commit,
+  so it arrived long. `b31e99a9`'s split is gone with the revert and must not
+  return. Nothing to change.
+- Standing preference recorded on the P-13-01 plan row and in agent memory: no
+  size refactors inside another author's subsystem unless our own work bloated
+  the function; measure against the PR base before deciding.
+- **P-13-04 cold review: sound, no findings at any severity.** It did the sharp
+  check properly — traced each of the three cases and confirmed each fails if
+  the defect returns — and went past its brief on the `Key.ctrl()` zero-value
+  return, finding six production call sites where it lands as a last argument
+  (`editorController.lua:466,470,772,776`, `searchController.lua:101,105`) and
+  proving none is affected, since `_scroll` only tests `warp` for truthiness.
+- Also confirmed against the tree: `scenarios/examples.lua` has no explicit
+  `release_keys()` and does not need one — `hm_done` releases (`init.lua:331`).
