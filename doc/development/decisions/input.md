@@ -1479,8 +1479,8 @@ held.
    permission granted with a wildcard.
 
 **What this changes.** The reserved gestures keep working as named; what stops is their
-claim on **extensions** of themselves. Ctrl+Shift+Escape, Ctrl+Shift+T and
-Ctrl+Alt+Shift+R stop being the framework's — the first two become the project's, and
+claim on **extensions** of themselves. Ctrl+Shift+Escape, Ctrl+Shift+T,
+Ctrl+Shift+S and Ctrl+Alt+Shift+R stop being the framework's — the first two become the project's, and
 the third stops firing `restart` and `reset` in one event, which is the same looseness
 producing an outright defect. Plain Ctrl+Escape is untouched, so the recovery path out
 of a running project is exactly as it was: the safety property does not depend on

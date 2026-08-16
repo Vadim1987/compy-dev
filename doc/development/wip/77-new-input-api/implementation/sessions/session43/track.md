@@ -408,3 +408,23 @@
 - P-23-03 cold review commissioned, pointed at the one question that matters:
   is there a *second* behaviour change nobody intended, including in **when** a
   branch is reached rather than what it does.
+
+## 2026-08-16 — P-23-03: faithful move, three drift findings
+
+- Verdict: exactly one intended behaviour change, verified across the full
+  four-chord × five-state matrix. `ProjectInputController` has zero diff and
+  `project_open` is untouched, so the pen-and-paper property that justified
+  option A actually holds rather than being assumed.
+- All three findings were documentation/comment drift **adjacent to the diff** —
+  the class the workflow warns about, where a stale claim reads as
+  authoritative. Verified each, then fixed all three myself (docs are parent
+  work): `internals/user_input.md` said the gate closes buffers; a spec comment
+  said the running and editor branches share an outer condition, which stopped
+  being true when the running branch became exact; Decision 33's example list
+  omitted Ctrl+Shift+S.
+- While fixing, swept for other Ctrl+S claims. `internals/editor.md` is still
+  correct (Ctrl+S closes a buffer — it just lives elsewhere now).
+  `internals/project_sandbox_env.md:81` is correct in substance but cites
+  `controller.lua` line numbers that were **already stale before this session**
+  — reported, not fixed; line-number citations are what the conventions
+  discourage, and a sweep belongs with the docs rows, not here.

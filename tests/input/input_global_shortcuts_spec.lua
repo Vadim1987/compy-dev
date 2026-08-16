@@ -179,10 +179,9 @@ describe('input surface: inbound events — global platform'
           assert.is_true(project_ran)
         end)
 
-      -- Shift stays meaningful in the editor branch (finish
-      -- edit vs close buffer); exactness excludes Alt only.
-      -- Exercised through the simpler running-state branch,
-      -- which shares the same outer condition.
+      -- The gate's run-stop reservation is exact; the editor's
+      -- own Ctrl+S pair lives in EditorController and is
+      -- exercised by the two editor cases below.
       it('ctrl+s still stops a running project', function()
         F.activate_project()
         love.state.app_state = 'running'
