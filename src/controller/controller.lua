@@ -808,17 +808,9 @@ Controller = {
             CC:quit_project()
           end
         end
-        --- Shift stays meaningful here (finish edit vs close
-        --- buffer); exactness excludes Alt only.
-        if Key.ctrl() and not Key.alt() and k == "s" then
+        if only_mods(true, false, false) and k == "s" then
           if love.state.app_state == 'running' then
             CC:stop_project_run()
-          elseif love.state.app_state == 'editor' then
-            if Key.shift() then
-              CC:finish_edit()
-            else
-              CC:close_buffer()
-            end
           end
         end
         if only_mods(true, false, true) then

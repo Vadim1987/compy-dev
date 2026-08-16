@@ -205,6 +205,24 @@ describe('input surface: inbound events — global platform'
           assert.is_true(project_ran)
         end)
 
+      -- The one behaviour P-23-02 changes: the run-stop
+      -- reservation becomes exact (only_mods), so Shift now
+      -- takes this combo out of it. Was 'still stops', like
+      -- ctrl+s above, before the move.
+      it('ctrl+shift+s no longer stops the run; the'
+        .. ' project binding runs instead', function()
+          local project_ran = false
+          local input = F.activate_project()
+          input.shortcuts.keypressed['ctrl+shift+s'] =
+              function() project_ran = true; return true end
+          love.state.app_state = 'running'
+          F.session.press('lctrl')
+          F.session.press('lshift')
+          F.session.press('s')
+          assert.equal('running', love.state.app_state)
+          assert.is_true(project_ran)
+        end)
+
       -- Shift stays meaningful in the editor branch: ctrl+s
       -- closes the buffer, ctrl+shift+s finishes the edit
       -- instead (S43-P-21-05 finding S2). Exactness excludes
