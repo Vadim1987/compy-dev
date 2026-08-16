@@ -45,4 +45,15 @@
   triggers) and **not free** (`consoleController.lua:1449-1462` reacts to any
   key while testing is `waiting`). Recommendation recorded: revert and stop.
   Pre-P13 harmony was already correct under the device-read matcher.
-- Execution not started — P13a is a plan entry awaiting the owner's go.
+- Execution not started — the correction is a plan entry awaiting the go.
+- Owner: use **numeric** substeps as for P17/P18. Re-cut as `P-13-00`
+  (finding+plan, done) / `-01` (revert) / `-02` (spec, ruling pending) /
+  `-03` (emission, conditional, default skip). `P13a` retired.
+- **Self-correction, same turn:** my "not free" bullet was a phantom. The
+  `terminal_test` path is unreachable — its guard is `~= 'ready' or ~=
+  'project_open'`, true for every value (`99941d1f`, Nov 2025, pre-branch).
+  Real consequence found instead: `find_shortcut` drops a modifier trigger but
+  `dispatch` still runs the project's **hook**, so emission does change what
+  projects see — toward real hardware, which emits modifier events too.
+- Incidental, not ours: the dead terminal test is recorded in §10 for the owner
+  to route to the debt register or to aldum. Not fixed.
