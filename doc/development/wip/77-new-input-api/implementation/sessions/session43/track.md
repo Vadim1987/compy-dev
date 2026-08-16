@@ -85,3 +85,26 @@
   ranking. session38 ranks first — largest footprint, and its upstream-parity
   claim rests on its own harness, the same class of thing that made P13's proof
   false.
+
+## 2026-08-16 — P-20 opened and running
+
+- Owner: open a revalidation step, most attention on session39 (Claude-run then
+  handed over mid-flight); session38 at least an outcome review — owner recalls
+  it as Claude-run and pedantic. Subagents review, I evaluate.
+- **Attribution correction owed to the owner:** my flat "session38 = not Claude"
+  overstated it. Trailer absence is the *only* evidence there; the positive
+  foreign fingerprint (literal `\n` in commit bodies, 8 commits) appears in the
+  39-tail/40/41/42 block and **not once** in session38's 22 commits. Owner's
+  recollection is consistent with the evidence.
+- Plan: `P-20-00` audit+plan (done), `-01` session38 outcome review, `-02`
+  session39 tail full revalidation (priority), `-03` sessions 40+41 sweep.
+- Two Sonnet workers commissioned, models passed explicitly, read-only, prompts
+  of record on disk, each writing its own deliverable path. **Run concurrently,
+  not sequenced** — the charter's rule (d) prohibits *worktree isolation*; these
+  are read-only, in the shared tree, on different repos (keyboard vs maze), with
+  disjoint outputs, so none of the costs that rule exists to prevent apply.
+- `P-20-03` done in-session rather than delegated (three small diffs): clean.
+  The one real question — whether paint's move to directly-assigned hooks lost
+  the error wrapping a seeded `love.*` handler gets — is answered no by
+  `controller.lua:155-171`: the boundary is applied at route entry and names
+  that exact case.
