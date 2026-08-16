@@ -167,3 +167,27 @@
   (recommended), B privileged table (recommend against; Decision 30 declines
   it), C document + drop maze's two ctrl registrations (fallback).
 - Nothing in `controller.lua` touched. Awaiting the ruling.
+
+## 2026-08-16 — owner rules option A; P-21 opened
+
+- Ruling: tighten, **all framework cases**, with the reasoning ratified as a
+  decision. Written as **Decision 33** — a framework reservation matches its
+  modifier set exactly. Both owner reasons recorded: a project's richer combo
+  must not dissolve into a framework one, and (stronger) framework shortcuts
+  are non-overridable, so unlimited power gets the narrowest condition —
+  least privilege.
+- Maze/draw: risk note added at the registrations, self-contained (nested repo
+  standalone has no access to compy docs), with the removal condition stated.
+  Committed in the maze repo `7947ac3`, not pushed. Maze specs 42/0/0.
+- **Correction to the P-20-02 worker's evidence:** it reported the maze suite
+  via `verify.sh`; that script cannot run in this container (`lua`/`luac`
+  absent, only `luajit`) and exits 1 silently. The 42/0/0 number is right —
+  10+3+29 running the three specs directly — but the instrument named was not.
+- P-21-00 done as analysis: nine reservations tabulated, row 7 (profiler)
+  already exact and must not be touched, rows 5+6 are the Ctrl+Alt+Shift+R
+  double-fire, no existing test depends on tolerant matching, only maze/draw
+  are affected downstream and in their favour. Substeps P-21-01..04 proposed.
+- Open question put to the owner: whether "all framework cases" includes the
+  console debug hotkeys (`controller.lua:493,510`), which are route-level and
+  outside Decision 33's scope clause as written.
+- **No `controller.lua` edit yet** — P-21-01 awaits the go.

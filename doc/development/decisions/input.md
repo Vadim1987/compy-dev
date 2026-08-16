@@ -1445,3 +1445,54 @@ physical polling surface**, so a reader always knows which question they are ask
 events say is held, or what the device says. Conflating those two is the "two clocks" problem this
 feature spent its length removing. Recorded as a direction, not a commitment; the register carries
 the proposal.
+
+## Decision 33 — a framework reservation matches its modifier set exactly
+
+**Owner ruling, 2026-08-16.** Amends nothing; it states for the **gate** the rule
+Decision 21 already states for everyone else. Decisions 21, 30 and 31 stand unchanged —
+21 rules that a combo *is* its modifier set exactly, 30 rules where modifier state is
+read from, 31 closes the set at three.
+
+**Decision.** Every combination the framework reserves for itself matches **exactly**:
+the modifiers it names are held, and **no other modifier is**. A reservation written as
+a device poll must therefore exclude the modifiers it does not name — `Key.ctrl() and
+not Key.alt() and not Key.shift() and k == 'escape'` — which is the form `quickswitch`
+already uses for Alt. A reservation that names no modifier is claimed only when none is
+held.
+
+**Why — two reasons, the second the stronger.**
+
+1. **A project's exact combo must not dissolve into a framework one.** A project may
+   register a richer combination that contains a reserved one: `ctrl+shift+escape`
+   contains `ctrl+escape`. Under a tolerant reservation the project's binding fires
+   *and* the framework's does, so the richer gesture decays into the poorer one and the
+   project cannot express it at all. `examples/maze` hit exactly this: its restored
+   Shift+Escape family returns the game to its menu on the press and is torn down on the
+   release, because the gate reads the chord as Ctrl+Escape.
+
+2. **Framework shortcuts are not overridable, so they must be narrow — least
+   privilege.** A project cannot take a reserved combo back (the property `P15` pinned);
+   the gate runs at the raw pump entry, before any route. That is unlimited power over
+   the input surface, and unlimited power is exactly what should be granted on the
+   narrowest possible condition. A reservation that claims chords it does not name is
+   privilege taken by accident rather than by design — the input equivalent of a
+   permission granted with a wildcard.
+
+**What this changes.** The reserved gestures keep working as named; what stops is their
+claim on **extensions** of themselves. Ctrl+Shift+Escape, Ctrl+Shift+T and
+Ctrl+Alt+Shift+R stop being the framework's — the first two become the project's, and
+the third stops firing `restart` and `reset` in one event, which is the same looseness
+producing an outright defect. Plain Ctrl+Escape is untouched, so the recovery path out
+of a running project is exactly as it was: the safety property does not depend on
+tolerance, and never did.
+
+**Scope.** The rule binds the **pre-dispatch gate** — the block that runs before a route
+is forwarded to, and whose power is non-overridable. Console and editor key handling is
+route-level: it competes with no project, since no project is running while the console
+owns the route. Whether the same exactness is worth applying there is a separate
+question and is not ruled here.
+
+**Cost, stated because it is a cost.** This is a framework behaviour change made inside
+a feature whose mandate is the project-facing input API, and it owes the PR description
+a justification line. The ground for it is that this feature made every other layer
+exact and left the one layer with the most power tolerant.
