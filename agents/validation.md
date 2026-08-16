@@ -35,8 +35,12 @@ owner and revisable, not a frozen mandate.
    session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
    session27 remark pass, 955 after session29's two production fixes, 942 after session35's
    dissolution of the held-key set, which deleted more test cases than it added, 946 after
-   session36 added `Key.any_pressed` with its own spec; **the current session's `prompt.md`
-   carries the authoritative number**, this line is the fallback.)
+   session36 added `Key.any_pressed` with its own spec, and **968 after session43** — 949 once
+   P13's harmony spec was reverted and rewritten as three cases, 964 after the Decision 33 sweep
+   added the first cases asserting what a reservation does *not* claim, 966 with the
+   `ctrl+shift+s` pair, 967 with harmony's boolean `isDown`, 968 with the Ctrl+S relocation;
+   **the current session's `prompt.md` carries the authoritative number**, this line is the
+   fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
    routing-grid cells that are not black-box observable, and 7 are the framework's reserved
    combos, whose own effects are the framework's contract rather than the input API's and are
