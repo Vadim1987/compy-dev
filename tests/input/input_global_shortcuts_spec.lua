@@ -68,6 +68,42 @@ describe('input surface: inbound events — global platform'
         end)
     end)
 
+  -- A reservation matches its modifier set exactly
+  -- (doc/development/decisions/input.md, Decision 33): the
+  -- named modifiers held, and no other. Each pair below proves
+  -- the boundary, not the reserved combo's own effect (that
+  -- stays a named pending gap, per P15).
+  describe('a reservation matches its modifier set exactly',
+    function()
+
+      it('ctrl+escape (release) still asks love to quit',
+        function()
+          local quits = 0
+          local orig  = love.event.quit
+          love.event.quit = function() quits = quits + 1 end
+          F.session.press('lctrl')
+          F.session.release('escape')
+          love.event.quit = orig
+          assert.equal(1, quits)
+        end)
+
+      it('ctrl+shift+escape no longer quits; the project'
+        .. ' binding runs instead', function()
+          local quits, project_ran = 0, false
+          local orig = love.event.quit
+          love.event.quit = function() quits = quits + 1 end
+          local input = F.activate_project()
+          input.shortcuts.keyreleased['ctrl+shift+escape'] =
+              function() project_ran = true; return true end
+          F.session.press('lctrl')
+          F.session.press('lshift')
+          F.session.release('escape')
+          love.event.quit = orig
+          assert.equal(0, quits)
+          assert.is_true(project_ran)
+        end)
+    end)
+
   -- Reserved combos, own effect not yet asserted here (named
   -- gaps, not failures — doc/development/tests.md, "Input
   -- Contract Suite"). ctrl+pause and ctrl+q are omitted: their

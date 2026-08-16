@@ -391,6 +391,14 @@ local MOD_HELD = {
   shift = Key.shift,
 }
 
+-- A reservation matches its modifier set exactly: the named
+-- modifiers held, and no other (doc/development/decisions/
+-- input.md, Decision 33).
+local function only_mods(ctrl, alt, shift)
+  return Key.ctrl() == ctrl and Key.alt() == alt
+      and Key.shift() == shift
+end
+
 --- Serialise a key event into a canonical combo string ("ctrl+s", "alt+shift+f4").
 --- Held modifiers are prepended in COMBO_MODS precedence, l/r folded to generic names,
 --- and come from the keyboard itself (doc/development/decisions/input.md, Decision 30).
@@ -881,10 +889,8 @@ Controller = {
     end
 
     handlers.keyreleased = function(k, sc)
-      if Key.ctrl() then
-        if k == "escape" then
-          love.event.quit()
-        end
+      if only_mods(true, false, false) and k == "escape" then
+        love.event.quit()
       end
       if love.keyreleased then
         return love.keyreleased(k, sc)
