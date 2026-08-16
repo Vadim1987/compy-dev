@@ -272,6 +272,48 @@ do when a binding and a held key have to work together.
 fallback function per event. At activation, an existing project `love.*`
 handler seeds the matching hook when no explicit hook was supplied.
 
+## Combos the framework keeps
+
+A few combinations belong to the platform. They are answered before your
+project's route exists, so **a project cannot take one by naming it** — but the
+platform does not swallow the key either: **your binding still runs**, and the
+platform's action happens as well.
+
+That combination is worth reading twice, because it is the opposite of how your
+own shortcuts behave. Yours consume by returning truthy. A reserved combo never
+consumes; it acts *and* passes the key on.
+
+The practical consequence is only visible for the ones that end a run: your
+handler runs, and then the project is stopped anyway. Nothing suppressed you —
+the route you were bound to was taken down underneath you.
+
+**A reservation is its modifier set exactly.** It does not extend to chords it
+does not name, so `ctrl+shift+escape` is yours to bind even though `ctrl+escape`
+is not, and `ctrl+shift+t` is yours even though `ctrl+t` is not. Adding a
+modifier to a reserved combo is a reliable way to get a nearby chord for
+yourself.
+
+| Combo | What the platform does | When |
+|---|---|---|
+| `ctrl+escape` (on **release**) | stops the run; quits when there is nothing to go back to | always |
+| `ctrl+alt+r` | restarts the project | always |
+| `ctrl+t` | switches between running and the editor | development only |
+| `ctrl+s` | stops a running project | development only |
+| `ctrl+q` | quits the project | development only |
+| `ctrl+pause` | suspends the run | development only |
+| `ctrl+shift+r` | resets: quits and wipes the console | development only |
+| `ctrl+alt+p` / `ctrl+alt+shift+p` | starts / stops the profiler | profiling builds |
+| `f10` | cycles the FPS overlay corner | profiling builds |
+
+"Development only" means the combo is inert in a packaged build, where the
+console it returns you to is not there to return to. Note `f10` is the one
+reservation with no modifier at all: bare F10 is the platform's in a profiling
+build, and F10 with any modifier is yours.
+
+Ctrl+S and Ctrl+Shift+S also do something in the **editor** — close the buffer
+and finish the edit — but that is the editor's own handling, not a reservation:
+it applies when you are editing, not while your project runs.
+
 ## Pointer and click hooks
 
 Pointer events run the same chain as keyboard ones, so they are hooks like

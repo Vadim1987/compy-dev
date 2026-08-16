@@ -554,3 +554,25 @@
 - P-10-05 (W10 batch 1, "overlay" → "input widget") commissioned to Sonnet,
   scoped to the **persistent corpus only** — `src/`+`tests/` comments are P11's,
   and touching them here would collide with it.
+
+## 2026-08-16 — P10: the guide's missing section, and batch 1
+
+- **W10 batch 1 landed** (`9254b524`): 96 of 130 sites changed, 34 left with a
+  reason each. Verified the trap I warned about: four headings were renamed and
+  their citations fixed in the same commit, including two in `src/`/`tests/`
+  that are pure citation edits. Checked the remaining stale references to the
+  old heading — **all 14 are inside `wip/`** (session records and the stale
+  pr-slices patches), none in the persistent corpus or code. No marker lines
+  touched. Suite unchanged.
+- The worker also caught a stale quotation: a doc quoted a `Log.warn` string as
+  "overlay already active" when the code says "widget already active".
+- **Wrote the reserved-combo section myself** — `doc/input_api.md`, "Combos the
+  framework keeps", placed where combos are introduced rather than in an
+  appendix, because it answers a question the reader has exactly there.
+- It could not have been written this well yesterday: Decision 33 gave it the
+  exactness rule with a **usable corollary** (add a modifier and the nearby
+  chord is yours), and Decision 34 gave it the never-consumes contract stated
+  as the opposite of a project's own shortcut rule.
+- Also stated the thing a project author would otherwise hit blind: for the
+  run-ending reservations your handler *does* run, and then the project stops —
+  nothing suppressed you, the route was taken down underneath you.
