@@ -610,6 +610,7 @@ state dirty").
 | ~~**PROBE**~~ **DONE [S33]** | Deleted `src/probe/input_probe.lua` in `ba5c94e4`: its polling-vs-tracking question was ruled, and the opt-in file had no code or persistent-doc references. | — | Its own commit; suite green and headless boot verified |
 | ~~P12~~ **PROMOTED [S32]** → `../plan.md` **Phase U** (owner, 2026-08-09); id kept, §8 stands | **[S29] Upstream reconciliation and downstream compatibility** (owner, 2026-08-08). Reconcile this branch against the advanced upstreams — the platform repo (and possibly an advanced fork of it) **and** each example repo — then land the coordinated set of PRs | P11 / close-out of the current snapshots | **Blocks the real PR, and needs its own plan.** Not attempted before the snapshots are stable: re-planning against a moving upstream while the design is still settling means doing it twice. See §8 |
 | ~~**P13**~~ **DONE [S42]** (`5b580661`) (owner ruling, 2026-08-09) — harmony can now drive combos; §11.3 | **[S30] Harmony reconciliation** (owner ruling, 2026-08-08). `src/harmony` is a scripted-automation mode carrying a **second implementation of the input surface** — its own `love.run`, its own held-modifier table, its own patched `love.keyboard.isDown`. It fakes modifiers to the *poll* and never puts them in the event stream, so every event-side change this feature makes is invisible to it. Inject real modifier `keypressed`/`keyreleased`, **keep** `patch_isDown`, retire the manual `release_keys()` discipline, and build the batch-skew reproduction rig | P9e (which breaks it); independent of P10–P12 | **Own phase, and in the release** — not a platform blocker, but shipping a platform input change that silently breaks the bug-reproduction harness is the loss this row exists to prevent. Like P12 it is **someone else's subsystem** (aldum) and eventually needs them in the loop. See §10 |
+| **P13a** **[S43] CORRECTION — P13 broke harmony** | **Revert the harmony change; re-add only the non-disruptive part, if any.** P13 retired `release_keys()` on a confirmation that never held: `love_key` clears `held` synchronously, `love.event.push` only enqueues, and the queue drains a frame later — so `patch_isDown` answers false when the app handles the key and **every scripted chord arrives as a bare key** (`../notes/S43-harmony-p13-timing-finding.md`; A/B probes in `../notes/S43-harmony-probes/`). Session42's spec passes only because its fixture dispatches on push. **Step 1: revert `src/harmony/init.lua` and the scenario `release_keys()` calls to `5b580661^`** — that tree is *already correct* under the device-read matcher (§11.3: "Harmony can now drive the combo mechanism it previously could not"), so the revert alone closes the regression. **Step 2 is a question, not a task (owner, 2026-08-16): is modifier-event emission wanted at all?** Evidence says it is neither needed nor free — see §10's [S43] amendment. **Step 3: replace the spec** — the fixture must queue and drain, never dispatch on push, or it will bless the next regression too | P13 (reverts it); nothing depends on P13a | **Before the PR** — harmony is outside `busted` and outside CI, so nothing else signals this. Suite green at each commit; the revert and any re-addition are separate commits (production fix first). The 23-line `setup_harmony` S2 finding is **dissolved by step 3**, not fixed separately |
 
 | ~~**P-19-00**~~ **DONE [S41]** | Owner ruled to retain sapper's modifier-held touch fallback and accept the rare delayed derived-click echo without a special guard. | P14e | No behaviour change |
 | ~~**P-19-01**~~ **DONE [S41]** | Record the echo disposition in the global input debt ledger and its timing constraint in sapper. | P-19-00 | No behaviour change |
@@ -851,6 +852,50 @@ Harmony now emits modifier press and release events while retaining `held` and
 `patch_isDown`. A focused Ctrl+T test proves the device-read matcher observes
 the simulated Ctrl state and that it is cleared afterward. The manual release
 function and all scenario calls are gone. Full suite: 947 / 0 / 0 / 10.
+
+### [S43] That result is WRONG — P13 is reverted by P13a
+
+The owner contested their own ruling on 2026-08-16 and was right. The
+"revalidation" above confirmed nothing: its fixture replaces `love.event.push`
+with a synchronous dispatcher, which is the one arrangement where a released
+modifier still reads as held. Under the real loop the modifier is cleared a
+frame before the app sees the key, and **every scripted chord is delivered
+bare**. Full finding, mechanism and A/B reproduction:
+`../notes/S43-harmony-p13-timing-finding.md`.
+
+Note the 2026-08-09 ruling was **conditional** — retire the discipline *if that
+confirms*. The condition was never met, so the retirement was never ratified.
+
+### [S43] Is modifier-event emission wanted at all? — evidence for the owner
+
+The question is the owner's (2026-08-16) and the ruling is theirs. What the code
+says:
+
+- **Not needed.** Decision 30 makes modifier state device-only (`keys_pressed`
+  dissolved); `Key.ctrl()`/`shift()`/`alt()` are `love.keyboard.isDown`
+  (`src/util/key.lua:156-178`), which is precisely what `patch_isDown` replaces.
+  The combo builder reads the device too (Decision 30 point 2). **No framework
+  consumer reads a modifier's press *event* for modifier state.** The project
+  dispatcher goes further and **drops modifier triggers outright** —
+  `if Key.is_mod(trigger) then return end`
+  (`src/controller/projectInputController.lua:110`) — so an injected `lctrl`
+  event cannot fire a project shortcut. This is why §11.3 already concluded
+  harmony can drive combos *as it stood*: the pre-P13 tree needs no change.
+- **Not free.** Injected modifier events still reach the active route as
+  `keypressed('lctrl')`. `ConsoleController:keypressed` runs `terminal_test()`
+  on **any** key while `love.state.testing == 'waiting'`
+  (`src/controller/consoleController.lua:1449-1462`), so emission can drive a
+  state transition that no pre-P13 scenario ever produced.
+- **The one thing it would buy** is fidelity to real hardware, which does emit
+  modifier events — relevant only to the batch-skew reproduction rig (P13's
+  deliverable 3), which the 2026-08-09 reduction to revalidation already
+  dropped and which nothing currently asks for.
+
+Reading these together: the defensible default is **revert and stop** — no
+emission — and to reopen it only if the batch-skew rig is ever commissioned. If
+emission is nevertheless wanted, it must be **additive**: press events only,
+`held` still cleared by an explicit release, so the poll keeps answering across
+frames.
 
 
 A scripted UI-automation and screenshot harness that drives the real app —

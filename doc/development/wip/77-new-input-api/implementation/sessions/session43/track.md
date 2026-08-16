@@ -36,3 +36,13 @@
   was never met.
 - Materialized: `validation/notes/S43-harmony-p13-timing-finding.md` +
   `validation/notes/S43-harmony-probes/`. No code changed; awaiting ruling.
+- Owner directed a correction step: revert harmony, re-add only the
+  non-disruptive part — and asked whether emission is needed at all given
+  device polling. Added **P13a** to the operative table + two `[S43]`
+  subsections in §10.
+- Answer to the owner's question, from code: emission is **not needed**
+  (Decision 30 = device-only; `projectInputController.lua:110` drops modifier
+  triggers) and **not free** (`consoleController.lua:1449-1462` reacts to any
+  key while testing is `waiting`). Recommendation recorded: revert and stop.
+  Pre-P13 harmony was already correct under the device-read matcher.
+- Execution not started — P13a is a plan entry awaiting the owner's go.
