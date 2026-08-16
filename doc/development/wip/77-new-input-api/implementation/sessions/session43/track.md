@@ -248,3 +248,27 @@
   empty — +7 lines. The subsystem was byte-identical to the PR base as of the
   revert; this is a deliberate, minimal exception, and it is the only thing
   this feature leaves in aldum's code.
+
+## 2026-08-16 — P-21-01/-02 executed
+
+- Judged the session fit to continue and said why: Decision 33 and the nine-row
+  table are already on disk, so what remains is execution against a written
+  spec, delegated and cold-reviewed. Boundary set in the commission: a design
+  question inside the step goes to the owner, not the worker.
+- **Corrected my own plan before commissioning:** the blast radius had proposed
+  converting the `ctrl+escape` pending into a live case. Wrong — the seven
+  pendings name each combo's own *effect* (P15, the framework's contract, not
+  this PR's), and 10 is an owner ruling the boot ritual checks. Decision 33
+  makes the **boundary** ours, not the effect. New cases are additive; pendings
+  stayed at 10.
+- Worker landed `b20a4c35` + `77aed369`. Verified myself: predicate correct,
+  row 4 excludes Alt only with the reason in a comment, row 7 untouched, no
+  added line over 64 chars, pendings intact, suite **964 / 0 / 0 / 10**.
+- **The thing the table did not anticipate**, and it is a good catch: the
+  worker's first `only_mods` used `==` and broke the harmony spec, because a
+  patched `isDown` returns *no value* rather than `false`. Fixed with `not not`
+  normalisation, reason stated in the predicate's comment. This is the same
+  zero-value quirk P-13-04 found from the other side — it has now bitten real
+  production code, which raises whether it deserves a debt entry.
+- P-21-05 cold review commissioned; P-21-03 (maze note) and -04 (docs) wait on
+  its verdict.
