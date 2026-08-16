@@ -576,3 +576,17 @@
 - Also stated the thing a project author would otherwise hit blind: for the
   run-ending reservations your handler *does* run, and then the project stops —
   nothing suppressed you, the route was taken down underneath you.
+
+## 2026-08-16 — wrap
+
+- Owner asked whether to go cold. Recommended yes, on one specific ground:
+  P10's remainder is a **ledger prune** asking "was this ever a decision?", and
+  I spent today adding two decisions. That is the anchoring a cold session
+  exists to avoid — not session length, which is not the constraint here.
+- Wrapped per `agents/sessions.md`: report distilled from this track, session44
+  prompt written, pointer repointed. Also corrected the boot ritual's stale
+  fallback count (946 → 968) with the arithmetic, since booting against a stale
+  number cost me a paragraph this morning.
+- Successor's first task is a revalidation of **Decisions 33 and 34** — the one
+  thing nobody outside this session has checked, since every execution step got
+  its own cold review but the decisions themselves did not.
