@@ -313,3 +313,25 @@
   P10's row, unstarted and large; writing it inside P-21 would preempt it.
   Flagged on P10 instead that the section must now state what a reservation
   *claims*, not just which combos are reserved.
+
+## 2026-08-16 — two owner rulings: harmony signature parity, Ctrl+S relocation
+
+- **P-22-01** commissioned (Sonnet): harmony's patched `isDown` returns a real
+  boolean. Owner's rationale is signature parity with the thing it mocks, which
+  makes it a justified exception to the standing rule against touching aldum's
+  subsystem — so the prompt insists on the smallest edit and forbids any
+  restructuring. It also has to restate `only_mods`'s comment, whose stated
+  reason the patch makes false.
+- **P-23-00** done by me (design analysis, parent tier). Verdict: the move is
+  feasible and small. The load-bearing fact is that `occupy_input` installs the
+  project route **unconditionally** on every successful run, so `running` always
+  means PIC owns the keyboard — the relocation has a guaranteed owner. The
+  failure path releases the route but also leaves `running`, and the window
+  before `occupy_input` is not observable because top-level code completes
+  inside one `love.update`.
+- Named the risks rather than waving at them: teardown would now run **inside**
+  `with_canvas_and_errors` rather than outside it; `project_open` must not be
+  widened into; and P-21's row-4 cases must be re-pointed rather than deleted.
+- Scoping call: `ctrl+s` stays scoped to `running` exactly as today, and the
+  shortcut-syntax migration the owner floated is recorded as a later option,
+  not folded in.
