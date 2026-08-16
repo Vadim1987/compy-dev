@@ -716,15 +716,23 @@ Not commissioned for closure; each may never need action.
   "interaction surface" definition is next revisited; the fix would be to
   count seeded hooks alongside the overlay and pointer tests.
 
-### Combo-string dispatch allocates a table per call
+### Combo-string dispatch allocates a table per call — RESOLVED 2026-08-16
 
-- **Where:** `src/controller/controller.lua` — `combo_string` builds a
-  `parts` table and `table.concat`s it on every call; it runs on the
-  per-keystroke combo-dispatch path.
-- **Why it stands:** Keystroke dispatch is not a per-frame hot path, so the
-  allocation is acceptable for now.
-- **Revisit:** If combo dispatch ever lands somewhere genuinely hot, switch
-  to a reused buffer or a concat-free comparison.
+- **Where:** `src/controller/controller.lua` — `combo_string` built a `parts`
+  table and `table.concat`ed it on every call, on the per-keystroke dispatch
+  path.
+- **Resolved** (`737d8316`): it now accumulates the string directly, so no table
+  is allocated. A reused module-level buffer was the other candidate and was
+  **declined** — it trades the allocation for shared mutable state in a function
+  that would then have to never be called re-entrantly.
+- **What remains, and it is smaller:** `find_shortcut`
+  (`src/controller/projectInputController.lua`) calls `combo_string` **twice** on
+  a miss — once for the exact combo, once for the `'*'` class — so one event can
+  ask the device six times instead of three. Reusing the first walk needs either
+  a parameter on `combo_string`, cached state, or a second copy of Decision 8's
+  precedence logic; all three were judged worse than the cost.
+- **Revisit:** with the `'*'`-class lookup, if combo dispatch ever lands
+  somewhere genuinely hot.
 
 ### `combo_string` does not normalise the case of a textinput token
 

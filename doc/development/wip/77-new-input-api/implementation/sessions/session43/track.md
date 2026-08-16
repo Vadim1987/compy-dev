@@ -492,3 +492,28 @@
 - Commissioned as two commits — the allocation first, then the table — with the
   Decision 33 live cases as the equivalence proof and the standing rule that a
   test needing an edit is a finding.
+
+## 2026-08-16 — P-24 landed; the table is in
+
+- `737d8316` (no allocation) and `f31bd312` (the table). Verified myself:
+  handlers are now a lookup plus a forward, every reservation is a named
+  function, the never-consumes contract is stated at the table, no test was
+  edited, suite 968 / 0 / 0 / 10.
+- **Device reads counted, not estimated: 23 → 3 at the gate** per event. Route
+  unchanged: 3, or 6 when the exact combo misses and the `'*'` class is built.
+  So the owner's "3 and 3" is the hit case; 6 is the miss case, and closing it
+  needs a parameter, cached state, or a second copy of Decision 8's precedence —
+  all worse than the cost, so it stays and is written into the debt entry.
+- **The thing both my analyses missed**, found by the worker and worth
+  recording: `cfg.mode == 'play'` was a **fourth** state condition. The old
+  gate ran restart and profile in both branches and quickswitch /
+  project_state_change in dev only; that split had to move into per-reservation
+  guards. Neither P-24-00 nor -00b mentioned playback at all. It was caught by
+  `input_shortcuts_click_spec.lua`'s play-mode case — the one test in the suite
+  that exercises it — which is exactly why the proof rule was "no test may need
+  editing" rather than "the tests pass".
+- Second trap the worker avoided: the f10 chain has no `else`, so an
+  unrecognised `fpsc` is left alone; a lookup with an `or 'off'` fallback would
+  have silently changed that.
+- Debt entry "Combo-string dispatch allocates a table per call" closed, with the
+  `find_shortcut` remainder named.
