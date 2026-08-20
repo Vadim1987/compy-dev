@@ -100,7 +100,8 @@ function Serial:onLine(fn, env)
   self.dispatcher:add('line', env or 'program', fn)
 end
 
---- Terminator is appended here
+--- Sent as given: the terminator, if the other end wants
+--- one, belongs to the caller
 --- @param line string
 --- @return boolean? ok
 --- @return string? err
@@ -108,7 +109,7 @@ function Serial:send(line)
   if not self.connected then
     return nil, 'no device connected'
   end
-  return self.backend:send(line .. '\n')
+  return self.backend:send(line)
 end
 
 --- @return boolean

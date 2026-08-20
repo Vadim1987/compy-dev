@@ -20,14 +20,6 @@ local function hex_of(chunk)
   return table.concat(out, ' ')
 end
 
---- The Lua REPL on the micro:bit ends a line with CR, while
---- the API sends LF, so the probe writes through the backend.
---- @param port Serial
---- @param line string
-local function send_cr(port, line)
-  return port.backend:send(line .. '\r')
-end
-
 --- @param arg string|boolean|nil
 function serial_probe(arg)
   if arg == false then
@@ -47,7 +39,7 @@ function serial_probe(arg)
     if info and info.acm then
       print('probe: acm refused, ' .. info.acm)
     end
-    local ok, err = send_cr(SerialPort, line)
+    local ok, err = SerialPort:send(line .. '\r')
     print('probe: sent ' .. line .. ' -> ' ..
       tostring(ok) .. ' ' .. tostring(err))
   end, 'console')
