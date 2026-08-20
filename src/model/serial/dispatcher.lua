@@ -21,6 +21,13 @@ local EVENTS = {
 
 local ENVS = { console = true, program = true }
 
+--- @param env SerialEnv
+local function check_env(env)
+  if not ENVS[env] then
+    error('no such environment: ' .. tostring(env))
+  end
+end
+
 --- @return Dispatcher
 function Dispatcher.new()
   local self = setmetatable({}, Dispatcher)
@@ -42,9 +49,7 @@ function Dispatcher:add(event, env, fn)
   if not EVENTS[event] then
     error('no such event: ' .. tostring(event))
   end
-  if not ENVS[env] then
-    error('no such environment: ' .. tostring(env))
-  end
+  check_env(env)
   if type(fn) ~= 'function' then
     error('handler is not a function')
   end
@@ -55,15 +60,14 @@ end
 --- Keep handlers registered, stop delivering to them
 --- @param env SerialEnv
 function Dispatcher:suspend_env(env)
-  if not ENVS[env] then
-    error('no such environment: ' .. tostring(env))
-  end
+  check_env(env)
   self.suspended[env] = true
 end
 
 --- Deliver again, from now on. No replay of the gap.
 --- @param env SerialEnv
 function Dispatcher:resume_env(env)
+  check_env(env)
   self.suspended[env] = nil
 end
 
