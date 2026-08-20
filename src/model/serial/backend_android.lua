@@ -8,8 +8,10 @@ require('util.jni')
 --- THREADING: JNIEnv is thread-local and cached here, so
 --- the backend must be created and polled on one thread.
 ---
---- BLIND-CODED against the new API: the JNI calls come from
---- working code, the state machine around them does not.
+--- Verified on the device: scan, permission, open, write,
+--- detach on unplug and a clean reconnect all run. Nothing
+--- has come back from the board yet, so the read path is
+--- exercised but not confirmed.
 
 --- @class AndroidBackend
 --- @field new function
