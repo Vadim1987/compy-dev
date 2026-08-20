@@ -1,0 +1,83 @@
+require('model.serial.dispatcher')
+
+describe('Dispatcher', function()
+  it('keeps event order', function()
+    local d = Dispatcher.new()
+    local got = {}
+    d:add('line', 'console', function(l) got[#got + 1] = l end)
+    d:push('line', 'A')
+    d:push('line', 'B')
+    d:pump()
+    assert.same({ 'A', 'B' }, got)
+  end)
+
+  it('waits for pump', function()
+    local d = Dispatcher.new()
+    local got = {}
+    d:add('line', 'console', function(l) got[#got + 1] = l end)
+    d:push('line', 'A')
+    assert.same({}, got)
+  end)
+
+  it('clears one env only', function()
+    local d = Dispatcher.new()
+    local con, prg = 0, 0
+    d:add('line', 'console', function() con = con + 1 end)
+    d:add('line', 'program', function() prg = prg + 1 end)
+    d:clear_env('program')
+    d:push('line', 'X')
+    d:pump()
+    assert.same(1, con)
+    assert.same(0, prg)
+  end)
+
+  it('suspends without unregistering', function()
+    local d = Dispatcher.new()
+    local prg = 0
+    d:add('line', 'program', function() prg = prg + 1 end)
+    d:suspend_env('program')
+    d:push('line', 'X')
+    d:pump()
+    assert.same(0, prg)
+    d:resume_env('program')
+    d:push('line', 'Y')
+    d:pump()
+    assert.same(1, prg)
+  end)
+
+  it('survives a failing handler', function()
+    local d = Dispatcher.new()
+    local reached = false
+    d:add('line', 'program', function() error('boom') end)
+    d:add('line', 'console', function() reached = true end)
+    d:push('line', 'X')
+    local errors = d:pump()
+    assert.is_true(reached)
+    assert.same(1, #errors)
+    assert.same('program', errors[1].env)
+  end)
+
+  it('defers what a handler pushes', function()
+    local d = Dispatcher.new()
+    local got = {}
+    d:add('line', 'console', function(l)
+      got[#got + 1] = l
+      if l == 'A' then d:push('line', 'B') end
+    end)
+    d:push('line', 'A')
+    d:pump()
+    assert.same({ 'A' }, got)
+    d:pump()
+    assert.same({ 'A', 'B' }, got)
+  end)
+
+  it('rejects unknown names', function()
+    local d = Dispatcher.new()
+    assert.has_error(function()
+      d:add('noise', 'console', function() end)
+    end)
+    assert.has_error(function()
+      d:add('line', 'kernel', function() end)
+    end)
+  end)
+end)
