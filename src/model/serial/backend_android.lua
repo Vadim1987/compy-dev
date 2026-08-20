@@ -1,39 +1,418 @@
---- USB CDC-ACM over the Android USB host API, through the
---- LuaJIT FFI the platform already uses.
+require('util.jni')
+
+--- USB CDC-ACM over the Android USB host API, driven from
+--- Lua through the LuaJIT FFI. Ported from the robot USB
+--- prototype, which runs this sequence on the device; the
+--- blocking parts are now steps of poll().
 ---
---- Not ported yet. The sequence to bring over from the robot
---- prototype, where it runs on the device:
----   match VID 0x0D28, requestPermission if needed,
----   openDevice, claim control and data interfaces,
----   SET_LINE_CODING (may fail here, not fatal),
----   bulk read per tick into sink.bytes,
----   one close path releasing both interfaces.
---- First device wins; a second one is reported and ignored;
---- rescan on detach of the active one.
+--- THREADING: JNIEnv is thread-local and cached here, so
+--- the backend must be created and polled on one thread.
+---
+--- BLIND-CODED against the new API: the JNI calls come from
+--- working code, the state machine around them does not.
 
 --- @class AndroidBackend
 --- @field new function
 --- @field start function
+--- @field poll function
 --- @field send function
 --- @field stop function
 AndroidBackend = {}
 AndroidBackend.__index = AndroidBackend
 
-local MICROBIT_VID = 0x0D28
-local NOT_PORTED = 'android backend not ported yet'
+local VID_MICROBIT = 0x0D28
+local CDC_COMM = 2
+local CDC_DATA = 10
+local EP_BULK = 2
+local DIR_IN = 0x80
+local RX_SIZE = 64
+local READ_MS = 5
+local WRITE_MS = 1000
+local CTRL_MS = 1000
+--- PendingIntent.FLAG_IMMUTABLE, required on Android 12+
+local PI_IMMUTABLE = 0x04000000
+local ACM_CLASS_IFACE = 0x21
+local ACM_LINE_CODING = 0x20
+local ACM_LINE_STATE = 0x22
+local ACM_DTR_AND_RTS = 0x03
+local PERMISSION_S = 60
+local SCAN_S = 1
+local PRESENCE_S = 1
+
+local function now()
+  if love and love.timer then return love.timer.getTime() end
+  return os.time()
+end
 
 --- @return AndroidBackend
 function AndroidBackend.new()
-  return setmetatable({ vid = MICROBIT_VID }, AndroidBackend)
+  local self = setmetatable({}, AndroidBackend)
+  self.state = 'idle'
+  self.sink = nil
+  self.port = nil
+  self.dev = nil
+  self.due = 0
+  self.extras_told = false
+  return self
 end
 
-function AndroidBackend:start()
-  error(NOT_PORTED)
+function AndroidBackend:start(sink)
+  self.sink = sink
+  jniSelfCheck()
+  self.env = jniEnv()
+  self.activity = jniActivity()
+  self.manager = self:usbManager()
+  self.state = 'idle'
+  self.due = 0
 end
 
-function AndroidBackend:send()
-  return nil, NOT_PORTED
+--- android.content.Context.getSystemService('usb')
+function AndroidBackend:usbManager()
+  local env = self.env
+  local ctx = jniClass(env, 'android/content/Context')
+  local gss = jniMethod(env, ctx, 'getSystemService',
+    '(Ljava/lang/String;)Ljava/lang/Object;')
+  local m = jniCallObj(env, self.activity, gss,
+    jniStr(env, 'usb'))
+  assert(m ~= nil, 'no UsbManager')
+  return jniGlobal(env, m)
+end
+
+--- Every micro:bit currently on the bus, in bus order
+--- @return table[] list of { dev, name }
+function AndroidBackend:scan()
+  local env = self.env
+  local mgr = jniClass(env, 'android/hardware/usb/UsbManager')
+  local dl = jniMethod(env, mgr, 'getDeviceList',
+    '()Ljava/util/HashMap;')
+  local map = jniCallObj(env, self.manager, dl)
+  local mapCls = jniClass(env, 'java/util/HashMap')
+  local values = jniMethod(env, mapCls, 'values',
+    '()Ljava/util/Collection;')
+  local coll = jniCallObj(env, map, values)
+  local collCls = jniClass(env, 'java/util/Collection')
+  local itm = jniMethod(env, collCls, 'iterator',
+    '()Ljava/util/Iterator;')
+  local it = jniCallObj(env, coll, itm)
+  local itCls = jniClass(env, 'java/util/Iterator')
+  local hasNext = jniMethod(env, itCls, 'hasNext', '()Z')
+  local nextM = jniMethod(env, itCls, 'next',
+    '()Ljava/lang/Object;')
+  local devCls = jniClass(env, 'android/hardware/usb/UsbDevice')
+  local getVid = jniMethod(env, devCls, 'getVendorId', '()I')
+  local getName = jniMethod(env, devCls, 'getDeviceName',
+    '()Ljava/lang/String;')
+  local found = {}
+  while jniCallBool(env, it, hasNext) do
+    local dev = jniCallObj(env, it, nextM)
+    if jniCallInt(env, dev, getVid) == VID_MICROBIT then
+      found[#found + 1] = {
+        dev = jniGlobal(env, dev),
+        name = jniText(env, jniCallObj(env, dev, getName)),
+      }
+    end
+    jniDropLocal(env, dev)
+  end
+  return found
+end
+
+--- @return boolean granted
+function AndroidBackend:hasPermission(dev)
+  local env = self.env
+  local mgr = jniClass(env, 'android/hardware/usb/UsbManager')
+  local has = jniMethod(env, mgr, 'hasPermission',
+    '(Landroid/hardware/usb/UsbDevice;)Z')
+  return jniCallBool(env, self.manager, has, dev)
+end
+
+--- Fire the permission dialog. The answer is not waited for;
+--- poll() checks hasPermission on later ticks.
+function AndroidBackend:askPermission(dev)
+  local env = self.env
+  local intCls = jniClass(env, 'android/content/Intent')
+  local ctor = jniMethod(env, intCls, '<init>',
+    '(Ljava/lang/String;)V')
+  local intent = jniNewObj(env, intCls, ctor,
+    jniStr(env, 'net.compy.USB_PERMISSION'))
+  local piCls = jniClass(env, 'android/app/PendingIntent')
+  local getB = jniStaticMethod(env, piCls, 'getBroadcast',
+    '(Landroid/content/Context;ILandroid/content/Intent;I)' ..
+    'Landroid/app/PendingIntent;')
+  local pi = jniCallStaticObj(env, piCls, getB,
+    self.activity, 0, intent, PI_IMMUTABLE)
+  local mgr = jniClass(env, 'android/hardware/usb/UsbManager')
+  local req = jniMethod(env, mgr, 'requestPermission',
+    '(Landroid/hardware/usb/UsbDevice;' ..
+    'Landroid/app/PendingIntent;)V')
+  jniCallVoid(env, self.manager, req, dev, pi)
+end
+
+--- CDC control interface id, data interface, bulk endpoints
+--- @return table
+function AndroidBackend:endpoints(dev)
+  local env = self.env
+  local devCls = jniClass(env, 'android/hardware/usb/UsbDevice')
+  local ifCount = jniMethod(env, devCls,
+    'getInterfaceCount', '()I')
+  local getIf = jniMethod(env, devCls, 'getInterface',
+    '(I)Landroid/hardware/usb/UsbInterface;')
+  local ifCls = jniClass(env,
+    'android/hardware/usb/UsbInterface')
+  local ifClass = jniMethod(env, ifCls,
+    'getInterfaceClass', '()I')
+  local ifId = jniMethod(env, ifCls, 'getId', '()I')
+  local epCount = jniMethod(env, ifCls,
+    'getEndpointCount', '()I')
+  local getEp = jniMethod(env, ifCls, 'getEndpoint',
+    '(I)Landroid/hardware/usb/UsbEndpoint;')
+  local epCls = jniClass(env,
+    'android/hardware/usb/UsbEndpoint')
+  local epType = jniMethod(env, epCls, 'getType', '()I')
+  local epDir = jniMethod(env, epCls, 'getDirection', '()I')
+  local found = {}
+  for i = 0, jniCallInt(env, dev, ifCount) - 1 do
+    local iface = jniCallObj(env, dev, getIf, i)
+    local cls = jniCallInt(env, iface, ifClass)
+    if cls == CDC_COMM and not found.commId then
+      found.commId = jniCallInt(env, iface, ifId)
+      found.comm = jniGlobal(env, iface)
+    elseif cls == CDC_DATA and not found.data then
+      found.data = jniGlobal(env, iface)
+      for j = 0, jniCallInt(env, iface, epCount) - 1 do
+        local ep = jniCallObj(env, iface, getEp, j)
+        if jniCallInt(env, ep, epType) == EP_BULK then
+          if jniCallInt(env, ep, epDir) == DIR_IN then
+            found.epIn = jniGlobal(env, ep)
+          else
+            found.epOut = jniGlobal(env, ep)
+          end
+        end
+      end
+    end
+  end
+  return found
+end
+
+--- 115200 baud, 8N1, then DTR/RTS. Both requests address the
+--- control interface, which is why it is claimed too. A
+--- refusal is recorded, not fatal: the interface chip already
+--- runs the target UART at the protocol rate.
+--- @return string? refusal
+function AndroidBackend:configureAcm(port)
+  local env = self.env
+  local coding = string.char(0x00, 0xC2, 0x01, 0x00, 0, 0, 8)
+  local arr = jniBytes(env, coding)
+  local rc = jniCallInt(env, port.conn, port.ctrlM,
+    ACM_CLASS_IFACE, ACM_LINE_CODING, 0, port.commId,
+    arr, #coding, CTRL_MS)
+  local rc2 = jniCallInt(env, port.conn, port.ctrlM,
+    ACM_CLASS_IFACE, ACM_LINE_STATE, ACM_DTR_AND_RTS,
+    port.commId, nil, 0, CTRL_MS)
+  jniDropLocal(env, arr)
+  if rc < 0 or rc2 < 0 then
+    return 'line coding ' .. rc .. ', dtr ' .. rc2
+  end
+end
+
+--- Connection, interface claims, ACM setup
+--- @return table? port
+--- @return string? fault
+function AndroidBackend:openDevice(entry)
+  local env = self.env
+  local mgr = jniClass(env, 'android/hardware/usb/UsbManager')
+  local openM = jniMethod(env, mgr, 'openDevice',
+    '(Landroid/hardware/usb/UsbDevice;)' ..
+    'Landroid/hardware/usb/UsbDeviceConnection;')
+  local conn = jniCallObj(env, self.manager, openM, entry.dev)
+  if conn == nil then
+    return nil, 'openDevice returned null'
+  end
+  local eps = self:endpoints(entry.dev)
+  if not (eps.comm and eps.data and eps.epIn and eps.epOut
+      and eps.commId) then
+    return nil, 'CDC interface set incomplete'
+  end
+  local connCls = jniClass(env,
+    'android/hardware/usb/UsbDeviceConnection')
+  local port = {
+    conn = jniGlobal(env, conn),
+    comm = eps.comm,
+    data = eps.data,
+    epIn = eps.epIn,
+    epOut = eps.epOut,
+    commId = eps.commId,
+    claimM = jniMethod(env, connCls, 'claimInterface',
+      '(Landroid/hardware/usb/UsbInterface;Z)Z'),
+    releaseM = jniMethod(env, connCls, 'releaseInterface',
+      '(Landroid/hardware/usb/UsbInterface;)Z'),
+    closeM = jniMethod(env, connCls, 'close', '()V'),
+    bulkM = jniMethod(env, connCls, 'bulkTransfer',
+      '(Landroid/hardware/usb/UsbEndpoint;[BII)I'),
+    ctrlM = jniMethod(env, connCls, 'controlTransfer',
+      '(IIII[BII)I'),
+  }
+  port.rx = jniGlobal(env, env[0].NewByteArray(env, RX_SIZE))
+  if not jniCallBool(env, port.conn, port.claimM,
+      port.comm, true) then
+    self:release(port)
+    return nil, 'control interface refused'
+  end
+  if not jniCallBool(env, port.conn, port.claimM,
+      port.data, true) then
+    self:release(port)
+    return nil, 'data interface refused'
+  end
+  port.acm = self:configureAcm(port)
+  return port
+end
+
+--- The one close path: interfaces, connection, refs
+function AndroidBackend:release(port)
+  local env = self.env
+  if port.claimed ~= false then
+    pcall(jniCallBool, env, port.conn, port.releaseM,
+      port.comm)
+    pcall(jniCallBool, env, port.conn, port.releaseM,
+      port.data)
+  end
+  pcall(jniCallVoid, env, port.conn, port.closeM)
+  jniDropGlobal(env, port.rx)
+  jniDropGlobal(env, port.epIn)
+  jniDropGlobal(env, port.epOut)
+  jniDropGlobal(env, port.comm)
+  jniDropGlobal(env, port.data)
+  jniDropGlobal(env, port.conn)
+end
+
+--- One bulk-in slice; '' when the slice brought nothing
+--- @return string
+function AndroidBackend:read()
+  local env = self.env
+  local port = self.port
+  local n = jniCallInt(env, port.conn, port.bulkM,
+    port.epIn, port.rx, RX_SIZE, READ_MS)
+  if n <= 0 then return '' end
+  return jniReadBytes(env, port.rx, n)
+end
+
+--- @param data string
+--- @return boolean? ok
+--- @return string? err
+function AndroidBackend:send(data)
+  if self.state ~= 'open' then
+    return nil, 'no device connected'
+  end
+  local env = self.env
+  local port = self.port
+  local arr = jniBytes(env, data)
+  local n = jniCallInt(env, port.conn, port.bulkM,
+    port.epOut, arr, #data, WRITE_MS)
+  jniDropLocal(env, arr)
+  if n ~= #data then
+    return nil, 'bulk write sent ' .. n .. ' of ' .. #data
+  end
+  return true
+end
+
+--- Is the open device still on the bus?
+function AndroidBackend:present()
+  for _, e in ipairs(self:scan()) do
+    if e.name == self.dev.name then return true end
+  end
+  return false
+end
+
+function AndroidBackend:dropDevice()
+  self.port = nil
+  self.dev = nil
+  self.state = 'idle'
+  self.extras_told = false
+end
+
+--- Called on detach and on stop
+function AndroidBackend:closePort(notify)
+  if self.port then self:release(self.port) end
+  jniDropGlobal(self.env, self.dev and self.dev.dev)
+  self:dropDevice()
+  if notify then self.sink.detach() end
+end
+
+--- Nothing on the bus yet, or a candidate to open
+--- @return string? fault
+function AndroidBackend:pollIdle()
+  if now() < self.due then return end
+  self.due = now() + SCAN_S
+  local found = self:scan()
+  if #found == 0 then return end
+  self.dev = found[1]
+  for i = 2, #found do
+    jniDropGlobal(self.env, found[i].dev)
+  end
+  if #found > 1 then
+    self.extras_told = true
+  end
+  if not self:hasPermission(self.dev.dev) then
+    self:askPermission(self.dev.dev)
+    self.state = 'permission'
+    self.due = now() + PERMISSION_S
+    return
+  end
+  return self:openReady()
+end
+
+--- Permission is in hand; open and announce
+--- @return string? fault
+function AndroidBackend:openReady()
+  local port, fault = self:openDevice(self.dev)
+  if not port then
+    jniDropGlobal(self.env, self.dev.dev)
+    self:dropDevice()
+    self.due = now() + SCAN_S
+    return fault
+  end
+  self.port = port
+  self.state = 'open'
+  self.sink.attach({ name = self.dev.name, acm = port.acm })
+  if self.extras_told then
+    return 'extra micro:bit ignored'
+  end
+end
+
+--- @return string? fault
+function AndroidBackend:pollPermission()
+  if self:hasPermission(self.dev.dev) then
+    return self:openReady()
+  end
+  if now() < self.due then return end
+  jniDropGlobal(self.env, self.dev.dev)
+  self:dropDevice()
+  self.due = now() + SCAN_S
+  return 'permission not granted'
+end
+
+--- @return string? fault
+function AndroidBackend:pollOpen()
+  local chunk = self:read()
+  if chunk ~= '' then self.sink.bytes(chunk) end
+  if now() < self.due then return end
+  self.due = now() + PRESENCE_S
+  if not self:present() then
+    self:closePort(true)
+  end
+end
+
+--- One step of device work; call once per update loop
+--- @return string? fault
+function AndroidBackend:poll()
+  if self.state == 'open' then return self:pollOpen() end
+  if self.state == 'permission' then
+    return self:pollPermission()
+  end
+  return self:pollIdle()
 end
 
 function AndroidBackend:stop()
+  if self.state ~= 'idle' then self:closePort(false) end
+  jniDropGlobal(self.env, self.manager)
+  self.manager = nil
 end

@@ -4,6 +4,7 @@
 --- @class FakeBackend
 --- @field new function
 --- @field start function
+--- @field poll function
 --- @field send function
 --- @field stop function
 FakeBackend = {}
@@ -21,6 +22,13 @@ end
 function FakeBackend:start(sink)
   self.sink = sink
   self.started = true
+end
+
+--- @return string? fault
+function FakeBackend:poll()
+  local f = self.fault
+  self.fault = nil
+  return f
 end
 
 --- @param data string
@@ -51,4 +59,10 @@ end
 --- @param bytes string
 function FakeBackend:rx(bytes)
   self.sink.bytes(bytes)
+end
+
+--- Report a fault on the next poll
+--- @param text string
+function FakeBackend:breaks(text)
+  self.fault = text
 end

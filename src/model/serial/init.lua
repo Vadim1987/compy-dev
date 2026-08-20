@@ -4,11 +4,13 @@ require('model.serial.dispatcher')
 --- Backend contract:
 ---   backend:start(sink)  sink.attach(info), sink.detach(),
 ---                        sink.bytes(chunk)
+---   backend:poll() -> nil | fault, one step per update
 ---   backend:send(data) -> true | nil, err
 ---   backend:stop()
 
 --- @class Serial
 --- @field new function
+--- @field fault function
 --- @field onConnect function
 --- @field onDisconnect function
 --- @field onBytes function
@@ -56,6 +58,13 @@ function Serial:sink()
   }
 end
 
+--- Record something that failed outside a handler
+--- @param err string?
+function Serial:fault(err)
+  if not err then return end
+  self.faults[#self.faults + 1] = { env = 'serial', err = err }
+end
+
 --- Raw chunk first, then the lines it completed
 --- @param chunk string
 function Serial:receive(chunk)
@@ -64,9 +73,7 @@ function Serial:receive(chunk)
   for _, l in ipairs(lines) do
     self.dispatcher:push('line', l)
   end
-  if err then
-    self.faults[#self.faults + 1] = { env = 'serial', err = err }
-  end
+  self:fault(err)
 end
 
 --- @param fn function handler(device_info)
@@ -127,6 +134,7 @@ end
 --- Call once per update loop
 --- @return table[] errors
 function Serial:update()
+  self:fault(self.backend:poll())
   local errors = self.dispatcher:pump()
   for _, f in ipairs(self.faults) do
     errors[#errors + 1] = f
