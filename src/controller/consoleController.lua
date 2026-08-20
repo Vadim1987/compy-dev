@@ -521,6 +521,10 @@ function ConsoleController.prepare_env(cc)
   prepared.quit             = function()
     love.event.quit()
   end
+
+  require('model.serial.probe')
+
+  prepared.serial_probe     = serial_probe
 end
 
 --- API functions for the user
@@ -608,7 +612,6 @@ function ConsoleController.prepare_project_env(cc)
 
   require('model.serial.probe')
 
-  prepared.serial_probe       = serial_probe
   project_env.serial_probe    = serial_probe
 
   local ui_model, ui_con, input_ref
