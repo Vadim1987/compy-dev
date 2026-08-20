@@ -82,7 +82,11 @@ end
 
 --- Every micro:bit currently on the bus, in bus order
 --- @return table[] list of { dev, name }
-function AndroidBackend:scan()
+--- Walk the micro:bits on the bus and drop every local ref
+--- this makes. The device handed to fn is a local reference,
+--- valid only inside the call.
+--- @param fn function
+function AndroidBackend:eachDevice(fn)
   local env = self.env
   local mgr = jniClass(env, 'android/hardware/usb/UsbManager')
   local dl = jniMethod(env, mgr, 'getDeviceList',
@@ -104,17 +108,37 @@ function AndroidBackend:scan()
   local getVid = jniMethod(env, devCls, 'getVendorId', '()I')
   local getName = jniMethod(env, devCls, 'getDeviceName',
     '()Ljava/lang/String;')
-  local found = {}
   while jniCallBool(env, it, hasNext) do
     local dev = jniCallObj(env, it, nextM)
     if jniCallInt(env, dev, getVid) == VID_MICROBIT then
-      found[#found + 1] = {
-        dev = jniGlobal(env, dev),
-        name = jniText(env, jniCallObj(env, dev, getName)),
-      }
+      local js = jniCallObj(env, dev, getName)
+      fn(dev, jniText(env, js))
+      jniDropLocal(env, js)
     end
     jniDropLocal(env, dev)
   end
+  jniDropLocal(env, it)
+  jniDropLocal(env, coll)
+  jniDropLocal(env, map)
+  jniDropLocal(env, devCls)
+  jniDropLocal(env, itCls)
+  jniDropLocal(env, collCls)
+  jniDropLocal(env, mapCls)
+  jniDropLocal(env, mgr)
+end
+
+--- Devices to choose from; each holds a global ref the
+--- caller owns and must drop
+--- @return table
+function AndroidBackend:scan()
+  local env = self.env
+  local found = {}
+  self:eachDevice(function(dev, name)
+    found[#found + 1] = {
+      dev = jniGlobal(env, dev),
+      name = name,
+    }
+  end)
   return found
 end
 
@@ -124,7 +148,9 @@ function AndroidBackend:hasPermission(dev)
   local mgr = jniClass(env, 'android/hardware/usb/UsbManager')
   local has = jniMethod(env, mgr, 'hasPermission',
     '(Landroid/hardware/usb/UsbDevice;)Z')
-  return jniCallBool(env, self.manager, has, dev)
+  local granted = jniCallBool(env, self.manager, has, dev)
+  jniDropLocal(env, mgr)
+  return granted
 end
 
 --- Fire the permission dialog. The answer is not waited for;
@@ -134,8 +160,9 @@ function AndroidBackend:askPermission(dev)
   local intCls = jniClass(env, 'android/content/Intent')
   local ctor = jniMethod(env, intCls, '<init>',
     '(Ljava/lang/String;)V')
-  local intent = jniNewObj(env, intCls, ctor,
-    jniStr(env, 'net.compy.USB_PERMISSION'))
+  local action = jniStr(env, 'net.compy.USB_PERMISSION')
+  local intent = jniNewObj(env, intCls, ctor, action)
+  jniDropLocal(env, action)
   local piCls = jniClass(env, 'android/app/PendingIntent')
   local getB = jniStaticMethod(env, piCls, 'getBroadcast',
     '(Landroid/content/Context;ILandroid/content/Intent;I)' ..
@@ -147,6 +174,11 @@ function AndroidBackend:askPermission(dev)
     '(Landroid/hardware/usb/UsbDevice;' ..
     'Landroid/app/PendingIntent;)V')
   jniCallVoid(env, self.manager, req, dev, pi)
+  jniDropLocal(env, pi)
+  jniDropLocal(env, intent)
+  jniDropLocal(env, mgr)
+  jniDropLocal(env, piCls)
+  jniDropLocal(env, intCls)
 end
 
 --- CDC control interface id, data interface, bulk endpoints
@@ -189,9 +221,14 @@ function AndroidBackend:endpoints(dev)
             found.epOut = jniGlobal(env, ep)
           end
         end
+        jniDropLocal(env, ep)
       end
     end
+    jniDropLocal(env, iface)
   end
+  jniDropLocal(env, epCls)
+  jniDropLocal(env, ifCls)
+  jniDropLocal(env, devCls)
   return found
 end
 
@@ -226,16 +263,21 @@ function AndroidBackend:openDevice(entry)
     '(Landroid/hardware/usb/UsbDevice;)' ..
     'Landroid/hardware/usb/UsbDeviceConnection;')
   local conn = jniCallObj(env, self.manager, openM, entry.dev)
+  jniDropLocal(env, mgr)
   if conn == nil then
     return nil, 'openDevice returned null'
   end
+  local connCls = jniClass(env,
+    'android/hardware/usb/UsbDeviceConnection')
   local eps = self:endpoints(entry.dev)
   if not (eps.comm and eps.data and eps.epIn and eps.epOut
       and eps.commId) then
+    jniCallVoid(env, conn,
+      jniMethod(env, connCls, 'close', '()V'))
+    jniDropLocal(env, conn)
+    jniDropLocal(env, connCls)
     return nil, 'CDC interface set incomplete'
   end
-  local connCls = jniClass(env,
-    'android/hardware/usb/UsbDeviceConnection')
   local port = {
     conn = jniGlobal(env, conn),
     comm = eps.comm,
@@ -253,7 +295,11 @@ function AndroidBackend:openDevice(entry)
     ctrlM = jniMethod(env, connCls, 'controlTransfer',
       '(IIII[BII)I'),
   }
-  port.rx = jniGlobal(env, env[0].NewByteArray(env, RX_SIZE))
+  jniDropLocal(env, conn)
+  jniDropLocal(env, connCls)
+  local rx = env[0].NewByteArray(env, RX_SIZE)
+  port.rx = jniGlobal(env, rx)
+  jniDropLocal(env, rx)
   if not jniCallBool(env, port.conn, port.claimM,
       port.comm, true) then
     self:release(port)
@@ -316,12 +362,14 @@ function AndroidBackend:send(data)
   return true
 end
 
---- Is the open device still on the bus?
+--- Is the open device still on the bus? Takes no global
+--- refs: this runs every second for as long as a port is open
 function AndroidBackend:present()
-  for _, e in ipairs(self:scan()) do
-    if e.name == self.dev.name then return true end
-  end
-  return false
+  local here = false
+  self:eachDevice(function(_, name)
+    if name == self.dev.name then here = true end
+  end)
+  return here
 end
 
 function AndroidBackend:dropDevice()
