@@ -3,11 +3,30 @@ require('model.serial.backend_android')
 
 --- Device check for the serial API. Not part of the API and
 --- not meant to survive review: it opens a port, prints what
---- the four callbacks report, and sends PING once connected.
+--- the callbacks report, and sends one line once connected.
 ---
---- serial_probe()      start, print events, send PING
---- serial_probe('M 40 40 500')  same, then drive the robot
---- serial_probe(false) stop and release
+--- serial_probe()            start, print events, send PING
+--- serial_probe('print(1)')  same, but send that line
+--- serial_probe(false)       stop and release
+
+--- Byte values, so an unprintable reply is still readable
+--- @param chunk string
+--- @return string
+local function hex_of(chunk)
+  local out = {}
+  for i = 1, #chunk do
+    out[i] = string.format('%02X', string.byte(chunk, i))
+  end
+  return table.concat(out, ' ')
+end
+
+--- The Lua REPL on the micro:bit ends a line with CR, while
+--- the API sends LF, so the probe writes through the backend.
+--- @param port Serial
+--- @param line string
+local function send_cr(port, line)
+  return port.backend:send(line .. '\r')
+end
 
 --- @param arg string|boolean|nil
 function serial_probe(arg)
@@ -28,7 +47,7 @@ function serial_probe(arg)
     if info and info.acm then
       print('probe: acm refused, ' .. info.acm)
     end
-    local ok, err = SerialPort:send(line)
+    local ok, err = send_cr(SerialPort, line)
     print('probe: sent ' .. line .. ' -> ' ..
       tostring(ok) .. ' ' .. tostring(err))
   end, 'console')
@@ -37,6 +56,9 @@ function serial_probe(arg)
   end, 'console')
   SerialPort:onLine(function(l)
     print('probe: line [' .. l .. ']')
+  end, 'console')
+  SerialPort:onBytes(function(chunk)
+    print('probe: bytes ' .. #chunk .. ' ' .. hex_of(chunk))
   end, 'console')
   print('probe: started, plug the micro:bit in')
 end
