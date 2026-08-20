@@ -440,14 +440,32 @@ function AndroidBackend:pollPermission()
   return 'permission not granted'
 end
 
+--- A detached device answers no control request, while the
+--- bus list can keep the entry for minutes: the framework
+--- holds it as long as this process keeps the connection
+--- open, and this process waits for the entry to go.
+--- Skipped when the board refused ACM setup, since then a
+--- refusal says nothing about presence.
+--- @return boolean
+function AndroidBackend:answers()
+  if self.port.acm then return true end
+  local rc = jniCallInt(self.env, self.port.conn,
+    self.port.ctrlM, ACM_CLASS_IFACE, ACM_LINE_STATE,
+    ACM_DTR_AND_RTS, self.port.commId, nil, 0, CTRL_MS)
+  return rc >= 0
+end
+
 --- @return string? fault
 function AndroidBackend:pollOpen()
   local chunk = self:read()
   if chunk ~= '' then self.sink.bytes(chunk) end
   if now() < self.due then return end
   self.due = now() + PRESENCE_S
-  if not self:present() then
-    self:closePort(true)
+  local listed = self:present()
+  if listed and self:answers() then return end
+  self:closePort(true)
+  if listed then
+    return 'device stopped answering, still on the bus'
   end
 end
 
