@@ -606,6 +606,11 @@ function ConsoleController.prepare_project_env(cc)
     close_project(cc)
   end
 
+  require('model.serial.probe')
+
+  prepared.serial_probe       = serial_probe
+  project_env.serial_probe    = serial_probe
+
   local ui_model, ui_con, input_ref
   local create_input_handle   = function()
     input_ref = table.new_reftable()
