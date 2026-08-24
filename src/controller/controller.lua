@@ -348,6 +348,16 @@ Controller = {
             tostring(f.err))
         end
       end
+      if RobotPort then
+        for _, f in ipairs(RobotPort.serial:update()) do
+          print('robot fault [' .. f.env .. ']: ' ..
+            tostring(f.err))
+        end
+        local fault = RobotPort:update()
+        if fault then
+          print('robot fault: ' .. fault)
+        end
+      end
       if click_timer > 0 then
         click_timer = click_timer - dt
       end

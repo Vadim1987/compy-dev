@@ -523,8 +523,10 @@ function ConsoleController.prepare_env(cc)
   end
 
   require('model.serial.probe')
+  require('model.robot.probe')
 
   prepared.serial_probe     = serial_probe
+  prepared.robot_probe      = robot_probe
 end
 
 --- API functions for the user
@@ -611,8 +613,10 @@ function ConsoleController.prepare_project_env(cc)
   end
 
   require('model.serial.probe')
+  require('model.robot.probe')
 
   project_env.serial_probe    = serial_probe
+  project_env.robot_probe     = robot_probe
 
   local ui_model, ui_con, input_ref
   local create_input_handle   = function()
