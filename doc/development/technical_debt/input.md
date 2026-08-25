@@ -1547,6 +1547,37 @@ changes.
 - **Revisit:** when `Key`'s accessors are next touched, or the first time a site
   compares a modifier read rather than testing it.
 
+### Console and editor route handlers bind by hand-written modifier tests
+
+- **Where:** `editorController.lua` (~33 tests), `searchController.lua` (5) and
+  `consoleController.lua` (4) — `if Key.ctrl() and not Key.shift() and not
+  Key.alt() and Key.is_enter(k)`, and the same shape for Escape, paste, scroll
+  and the debug toggles. Six further reads are **not** this debt: `_scroll('up',
+  Key.ctrl())` passes a held modifier as continuous state, which Decision 32
+  rules correct.
+- **State:** these are combos written the long way, at the one layer the feature
+  did not convert. Two costs, and the second is the live one:
+  - **Nothing can list them.** A combo table is enumerable — that is why the
+    input guide can print what the platform reserves. A cascade of `if`s can
+    only be read.
+  - **Each test claims every modifier it does not name.** The editor's `load()`
+    tests Ctrl and Shift but not Alt, so **Alt+Escape loads the selection**; the
+    console's `if Key.ctrl() then if k == "l"` makes **Ctrl+Shift+L and
+    Ctrl+Alt+L clear the output**. This is exactly the tolerance Decision 33
+    outlawed for the pre-dispatch gate, still present one layer down — and the
+    same handlers write the exact form (`not Key.shift() and not Key.alt()`)
+    elsewhere, so the inconsistency is within a single file.
+- **Why it stands:** no project competes for these keys — the console owns the
+  route precisely when no project runs — so nothing is broken today, and
+  Decision 33's scope clause deliberately left this layer out. It is soft debt:
+  a consistency and legibility cost, not a defect.
+- **Shape, if it is answered:** register these as combo tables on the
+  controllers, the way a project registers its own. That is the console/editor
+  adoption Decision 1 defers, and it subsumes the debug-toggle entry above.
+- **Revisit:** with the console/editor migration, or the first time one of these
+  handlers has to state what it claims — a tolerant test is invisible until a
+  chord that extends it is wanted.
+
 ### A gesture that tolerates a modifier costs one registration per variant
 
 - **Where:** `compy.input.shortcuts` and the combo grammar (`src/util/key.lua`,
