@@ -123,23 +123,17 @@ channel — the keyboard trio (`keypressed`, `textinput`, `keyreleased`) and the
 channels alike, which reach it through the same dispatch with a combo vocabulary of their own
 (Decisions 25 and 27); a component with no participant simply falls through.
 
-> REMARK: "there was once" is irrelevant -- a history of hallucination, self-inflicted and dissolved during implementation. Does not have to be mentioned
-**No framework tier.** There was once a fourth, leading component — `framework handlers` —
-non-overridable and not exposed to project code, that claimed Enter/Escape unconditionally while
-the widget was shown. It is deleted outright, code and tests: it existed solely to give
-Enter/Escape special handling inside the route, and that job is now done by the widget's own
-default behaviour (Decision 6) plus the gateway's power keys, which were never part of
-this chain and are unaffected. A project shortcut can now be registered on Enter/Escape and win,
-exactly as it can on any other combo — the DOM-style "handled stops propagation" convention below
-now applies without a carve-out.
-
-> REMARK: 'old four-component shape' was pure hallucination, remove its mentions from here
+**Three components, and no fourth.** Nothing above the chain claims Enter or Escape: their
+default behaviour is the widget's own (Decision 6), and the gateway's power keys sit outside
+this chain entirely. So a project shortcut registered on Enter or Escape wins exactly as it
+does on any other combo, and the DOM-style "handled stops propagation" convention below
+applies without a carve-out.
 
 **Why.** One uniform shape on every channel is the predictability meta-rule made concrete:
 nothing "special" gets its own routing rule; a released key and a typed character travel the
 same path a pressed key does. The truthy-consume convention is the familiar DOM-style
-"handled-stops-propagation" that projects already understand. The old four-component shape
-special-cased exactly two keys (Enter, Escape) at a component that existed for no other purpose;
+"handled-stops-propagation" that projects already understand. A tier that special-cased
+exactly two keys (Enter, Escape) would be a rule to remember at every reading;
 removing it doesn't lose capability — it removes a component that was purpose-built for a job the
 widget can now do itself, uniformly, like any other chain participant.
 
@@ -155,14 +149,6 @@ order-*independent* — strictly safer than depending on an order the platform n
 The corollary for tests is binding: a spec must **not** bake a canonical
 `keypressed`→`textinput` order in as an invariant, or a synchronous harness goes green while
 the device fails.
-
-> REMARK: 'consuming-is-not-removing' is an artifact of self-reasoning across hallucinations. nothing nowhere required 'consuming' to be 'removing', so defending against it makes no sense. I'd remove whole paragraph -- it speaks about what is *not* supported, while this not-supported was also never-requested or never-assumed
-**A load-bearing distinction: consuming is not removing.** A component consuming an event
-for *this* keystroke never removes a lower component from the configuration. Configuration is
-permanent; flow is decided per-event. There is no replace-semantics anywhere in the chain —
-assigning a hook replaces *that hook only*, it does not detach the widget beneath
-it. This is what lets the widget be a permanent terminal fixture rather than something the project
-wires up and can accidentally unwire.
 
 > REMARK: this is proper approach and it contradicts with  formula few paragraphs before (supposedly stale) that says widget state is "checked at the end of chain, and bypassed if not shown" -- which was fully unnecessary complication hopefully dissolved since then
 **A load-bearing decision about the widget: its hidden-check is internal.** The terminal widget is
@@ -409,26 +395,20 @@ which is the wrapper that replaced the deferred marker this entry once pointed a
 
 ## Decision 10 — one `hooks[event]` table, seeded once at activation
 
-> REMARK: these 'no' sound like protecting against alternatives not-requested-and-not-considered 
 > REMARK: lets reframe the decision as "new api has more appropriate place for hooks -- so we silently re-wire old 'project-installed callbacks' there -- encouraging new usage but not disabling old one, if it's ever needed for pedagogical purposes 
 
 **Decision.** A project's own `love.*` handler for **any** bindable channel — the keyboard trio,
 the seven pointer channels, and the two derived click events alike — auto-provisions into
-`hooks[event]` (Decision 2's second chain component) — no widget-aware
-gating, no lifecycle split, no custom logic. `hooks[event]` is a single table and the single
+`hooks[event]` (Decision 2's second chain component), where it is an ordinary chain
+participant. `hooks[event]` is a single table and the single
 source of truth: at project activation, any event for which the project has not already set an
 explicit hook gets seeded once with its captured project handler (if any); after that moment the
 table **is** the whole story — nil-ing a hook clears it, full stop, with no fallback
 resurrection.
 
-> REMARK: nobody cares which exactly original intermittent shape decision had once if it was rewritten since and dissolved form never materialized in release/contract/doc
-**Substance changed from the original pure-wrap.** The original decision resolved the hook
-by precedence on **every event**: an explicit `compy.input.on_*` assignment won; otherwise the
-captured handler seeded the hook; otherwise a no-op — nil-ing the explicit assignment resurrected
-the handler. That two-store precedence rule, re-resolved live, is gone. "Read the handler once at
-activation, never re-consult" — the part that matters for correctness — is unchanged; only the
-fallback mechanics moved from per-event resolution to a one-time seed, and this is recorded as a
-genuine semantic change, not a pure rename.
+**One-time seed, never re-resolved.** The hook is read from the project's captured handler
+**once, at activation**, and never re-consulted: `hooks[event]` is thereafter the whole story,
+so nil-ing a hook clears it with no fallback and no resurrection.
 
 **Why.** Treating project handlers as ordinary chain participants keeps the model uniform (they consume on
 truthy, fall through on falsey, like anything else) and is what makes the keyboard-lockout fix
@@ -639,15 +619,11 @@ runner is inappropriate for an isolated handler test, with that reason stated.
 
 ---
 
-> REMARK: is it an artifact block describing history which passed? (afaik now 'dispatch'  *is* reusable function) -- review and recheck if it belongs here
-
 ## Implementation note — making the mechanism reusable (non-normative, no project-facing contract change)
 
-Two structural extractions rode this redesign, closing a gap between an earlier stated intent and
-what had shipped: the roadmap promised a *shared* `dispatch()` reusable by console/editor "later,"
-but the dispatch that had shipped was a `ProjectInputController` method reading its own instance
-fields, not actually reusable. Neither extraction changes project-facing behaviour — both are pure
-refactors:
+Two structural extractions ride this redesign, so that the mechanism a future console/editor
+adoption (Decision 1) needs is reusable rather than bound to one controller's instance fields.
+Neither changes project-facing behaviour — both are pure refactors:
 
 - **Dispatch as a free function.** `dispatch(shortcuts, hooks, widget, event, trigger, ...)`
   operates over plain tables and a widget reference; `compy.input`'s guarded surface is a thin
@@ -706,8 +682,6 @@ objects used by console and editor remain implementation details.
 ---
 
 ## Decision 18 — the widget answers one state question: `is_shown()`
-
-> REMARK: let's fully retire ambiguous 'overlay' from everywhere. Its input widget.
 
 **Status: implemented** (owner ruling, 2026-07-31).
 
