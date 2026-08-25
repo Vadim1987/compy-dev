@@ -2527,3 +2527,71 @@ plan.** Both may be altered; neither absorbs the other. What follows is split ac
   question was asked and answered, rather than leaving five decisions about a withdrawn surface to
   read as churn.
 - **`sapper`'s live defect** and whatever P19 rules, since that example belongs to another author.
+
+## 17. [S44] Amendments made in session44
+
+### 17.1 W10 batch 2 stays in P11 — the disposition, so it stops resurfacing
+
+The P10 row's [S33] text lists batches **1, 2 and 4** as remaining; session44's
+prompt lists only **4**. Session36's marker disposition had already routed the
+batch-2 material into P11's marker work, but nobody wrote the ruling down, so
+the plan contradicted its own handover. **Ruled with the owner, 2026-08-25:
+batch 2 belongs to P11**, on evidence rather than convenience:
+
+- **Outcome is identical either way.** Both P10 and P11 precede slice
+  regeneration, so the corpus a stakeholder reads is the same corpus.
+- **Inference accuracy is not at risk where it would matter.** The
+  project-facing guide (`doc/input_api.md`) has **zero** historical-contrast
+  prose — its single grep hit is inside a `REMARK:`, which is P11's to clear
+  anyway. The exposure is 23 sites in `internals/user_input.md` plus 9 in the
+  ledger, and the ledger's are mostly legitimate: a decision explaining its own
+  supersession is what a decision ledger is *for*. Batch 2's rule targets
+  contrast against **intermediate shapes that never shipped**, not against
+  history as such.
+- **Splitting it costs a re-derivation.** The batch-2 sites are already
+  enumerated as marker clusters in `../outcomes/S36-marker-disposition.md`.
+  Pulling them back into P10 means re-deriving which remark is batch-2 and which
+  is P11's — the same "never separately enumerated, must be re-derived" tax the
+  plan already flags for batch 3.
+
+This is the same reasoning the "wedge" fix (§9, row 4) *rejected* — and the
+difference is the point: vocabulary the work minted for itself becomes
+load-bearing in current reasoning, whereas a stale "no longer" narrates history
+nobody is reasoning from.
+
+### 17.2 P10's flag-shortcut member was already discharged — verified, not assumed
+
+Session44's prompt carried the flag-shortcut teaching defect as P10's first
+task. **It is done, and was done in session36** (`563b937f`): §"Shortcuts that
+set a flag" no longer exists, the bare-`'space'` mirrored pair is gone, and
+§"Choosing the mechanism: transitions, state, and what not to build" teaches the
+boundary in both directions — a shortcut is for a one-off transition, *"Do not
+use a pair of shortcuts to hold a state"*, with the `alt+h` DON'T, the missed
+`'space'` release, the lost-focus case, and *"a modifier's own release cannot
+even be bound"*. Nothing was owed.
+
+The row said so ([S36] PART DONE) and the handover prompt re-listed it from the
+row's older text. **The standing rule earned its keep again:** verify a prompt's
+factual claims in code before acting on them.
+
+### 17.3 Executed in session44
+
+- **P10 / W9(b) — both accuracy items closed** (`55aa0ce8`). R134: the
+  click-to-cursor translation never applied to a project's widget and did not at
+  the PR base either — `disable_selection` is a constructor argument and the
+  console's instance is the only one without it. R127: the "what it cannot
+  guarantee" prose already existed; what was wrong was where it pointed (the
+  register entry is in `technical_debt/input.md`, not `general.md`) and six
+  stale line anchors, now symbol names.
+- **P10 / W10 batch 4 — done** (`f3dba7d9`). R010 (`reserved binding` → the
+  combination most bindings want; the word had since acquired a precise
+  conflicting meaning in Decisions 33/34), R013 (`widget-output` retired),
+  R062 (75 of 82 "row" sites in `tests/` → "test case", seven kept with reasons;
+  prompt and outcome under `../prompts|outcomes/S44-W10-batch4-rows.md`).
+- **The S43 decisions revalidated and their seven inconsistencies resolved**
+  (`a4389731`, `b52e217f`) — see `S44-decisions-33-34-revalidation.md` §6.
+- **P10 / W9(a) — verdicts prepared, owner-gated**:
+  `S44-W9a-ledger-prune-verdicts.md`. One clean tombstone (16, inverted by
+  Decisions 25/27), one "not a decision" (12, de-facto behaviour confirmed at
+  the base), three keeps with compression (6, 7, 15). **P10 closes on that
+  ruling** — nothing else in the row is outstanding.

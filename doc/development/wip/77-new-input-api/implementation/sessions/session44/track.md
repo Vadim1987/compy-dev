@@ -71,3 +71,30 @@
   it means, and Decision 6 is a W9(a) prune candidate.
 - No wip path remains in the persistent corpus (`grep -rn P15` over doc/ minus
   wip → clean).
+
+## 2026-08-25 — P10 worked down to its one gate
+
+- Owner: keep steps where they belong, move on, no ceremony. Batch-2
+  disposition answered on evidence (plan §17.1): guide has ZERO
+  historical-contrast prose, exposure is one dev doc P11 sweeps anyway,
+  re-splitting costs a re-derivation. Stays in P11.
+- **Flag-shortcut member was already discharged** (session36) — checked the
+  guide before acting on the prompt's claim. The prompt inherited it from the
+  row's older text. Second time this rule has paid this session.
+- W9(b) closed (`55aa0ce8`). R134's answer is "no, and never" — `main.lua:371`
+  constructs the project's widget with `disable_selection`, at base too, so the
+  doc's "uniform across console, editor and a project's own widget" was
+  backwards. R127 was mostly written already; what was wrong was the register
+  pointer (general.md → input.md) and six drifted line anchors.
+- W10 batch 4 closed (`f3dba7d9`). Delegated the 82-site tests/ sweep to Sonnet
+  with a prompt of record; kept R010/R013 myself (two comments, judgment).
+  Worker's own numbers verified independently: suite, marker count, kept-site
+  reasons, and >64 lines introduced (3, fixed by me).
+- **Worker did a `git stash`/`pop` round-trip in the shared tree with my
+  uncommitted edits live.** Nothing lost — verified all four files by content,
+  not by trusting the report — but the sub-agent prompt should forbid git
+  entirely next time, not just "do not commit".
+- W9(a) verdicts on disk, owner-gated: 16 tombstone (inverted by 25/27), 12
+  tombstone (de-facto, confirmed at base), 6/7/15 keep-and-compress. 15 also
+  carries a stale "Status: in-flight" — it is implemented (`check_keys`).
+- P10 now has exactly one thing left in it: that ruling.
