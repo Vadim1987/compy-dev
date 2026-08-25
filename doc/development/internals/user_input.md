@@ -403,8 +403,9 @@ consumes upstream, console/project set (or don't set) callbacks — no instance 
 
 The body is a **single uniform sequence** (no `love.state.app_state` branch since 2026-07-21):
 `removers → vertical → horizontal → newline → (modify if enabled) → copypaste → selection`, then
-the lifecycle keys. **`modify` (Ctrl+D duplicate-line) is gated on a per-instance `allow_modify`
-flag**, a constructor parameter (`UserInputController(model, disable_selection, allow_modify)`),
+the lifecycle keys. **`modify` (Ctrl+D duplicate-line) is gated on a per-instance
+`allow_duplicate_line` flag**, a constructor parameter
+(`UserInputController(model, disable_selection, allow_duplicate_line)`),
 set only by the editor's main input; console and the project widget leave it off. This is the honest
 replacement for the old "editor branch runs `modify`" gate — a widget capability the owner enables at
 construction, like `disable_selection`, not something the widget reads from global mode. (A future

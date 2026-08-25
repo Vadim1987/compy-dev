@@ -1370,13 +1370,13 @@ Not commissioned for closure; each may never need action.
   `doc/development/decisions/input.md` Decision 6.
 - **Resolution:** The branch is deleted; `keypressed` runs one uniform path. The
   two real differences moved to honest homes: (1) `modify` (Ctrl+D) is a
-  per-instance `allow_modify` constructor flag, set only by the editor's input,
+  per-instance `allow_duplicate_line` constructor flag, set only by the editor's input,
   mirroring `disable_selection`; (2) the editor consumes Enter/Escape **upstream**
   (`block_input()` in `EditorController:_normal_mode_keys`' `submit()`/`load()`),
   so the widget's uniform `submit_flow`/`cancel_flow` never runs for the keys the
   editor owns. No instance reads global mode. Suite green
   (`tests/input/input_widget_callbacks_spec.lua`, the `the same lifecycle on every route` group).
-- **Revisit:** `allow_modify` is a one-off flag; the widget owning its own
+- **Revisit:** `allow_duplicate_line` is a one-off flag; the widget owning its own
   **combo table** (Ctrl+D and the lifecycle keys as registered combos an editor or
   project extends) is the better end-state the owner named — deferred with the
   console/editor migration (Decision 1), not this pass. The former inline question

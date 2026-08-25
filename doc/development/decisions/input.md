@@ -299,7 +299,7 @@ exactly the chords it names (Decision 33) — non-overridable, not indiscriminat
 `love.state.app_state`. A context that must not run the flows arranges it at its own layer: the
 editor consumes Enter/Escape upstream through `block_input()`, the console sets no lifecycle
 callbacks so its flows are no-ops, and the project widget sets them for real. Per-instance
-capability flags (`disable_selection`, `allow_modify`) work the same way — the owner enables them
+capability flags (`disable_selection`, `allow_duplicate_line`) work the same way — the owner enables them
 at construction; the widget never reads a mode. Branching inside the widget instead would leave a
 reusable component that cannot be reasoned about, or migrated, without knowing it is "the editor",
 which is the leak a framework tier was covering for in the first place.
