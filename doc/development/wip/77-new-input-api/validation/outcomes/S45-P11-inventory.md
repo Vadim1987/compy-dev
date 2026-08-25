@@ -56,7 +56,7 @@ durable record.
 | `src/controller/consoleController.lua:180` | V | retire "overlay"; `input_widget_overlay` if the console context needs the word |
 | `src/controller/consoleController.lua:181` | B | prose is 5× the length of the code it describes |
 | `src/controller/consoleController.lua:473` | F | not *where the event goes* but *whether it propagates* |
-| `src/controller/controller.lua:527` | F | **unmarked** (§5) — the comment says what the code does *not* do; delete unless it carries positive information |
+| `src/controller/controller.lua:527` | F+V | **unmarked** (§5) — the comment says what the code does *not* do. **Not a deletion:** its second clause is a *prohibition* (visibility is never a routing condition), which is payload under the owner's 2026-08-25 distinction — absence is waste, prohibition is a constraint on every future edit. Rewrite to the rule, drop the absence framing and the word "overlay" |
 | `src/examples/balloons/terminal.lua:4` | Q | can the deliver-handler setup be one function instead of three? (its second half — an `update_prompt` endpoint — is **already ruled and recorded** in `technical_debt/input.md`, "An `update_prompt` endpoint was asked for and declined") |
 | `tests/editor/editor_spec.lua:715` | B+F | "later" is not relevant once the feature is delivered; simplify |
 | `tests/helpers/input_fixture.lua:200` | F | "console route forwards…" is no longer true; only the rendering half is |

@@ -56,6 +56,22 @@ the size rule as well.
   infinitely many things. Admissible only when a competent reader could
   plausibly conclude otherwise *and* no change of naming or structure prevents
   the confusion — and then it states the confusion, not a list of absences.
+
+  **An absence is waste; a prohibition is a payload** (owner ruling,
+  2026-08-25). *"This does not check X"* describes what happens to be missing —
+  the code already says that, and it says it more reliably. *"X must never be
+  checked here"* is a **constraint on every future edit**, which is payload 1
+  and cannot be read off the code at all: the next author's reasonable-looking
+  addition is exactly what it forbids. Write the rule, not the gap:
+
+  ```lua
+  -- WASTE: an absence. The code below already shows it.
+  -- Straight to the console, with no widget test in front of it.
+
+  -- PAYLOAD: a prohibition the next edit could violate.
+  -- Widget visibility is state on the widget, never a routing
+  -- condition (decisions/input.md, Decision 1).
+  ```
 - **Narrate history** — "this used to…", "we removed…", "previously the
   handler…" — outside an interim marker. Git holds history.
 - **Restate the identifier in prose.** `-- the handler that handles the event`
