@@ -191,7 +191,9 @@ describe('input surface: inbound events — dispatch #input',
   -- consuming, or leave them undefined; `seen` is the mnemonic
   -- trace and the widget's text is the observable terminal
   -- (backspace edits 'ab' -> 'a' exactly when the widget runs).
-  --> REMARK: this is kind of a matrix test I've thought of -- does it supersede dispatching tests above?
+  -- One channel, one press per case — anything needing a second
+  -- event or another channel is pinned in the groups above, which
+  -- is why they are not folded in here.
   describe('the interception matrix', function()
 
     local CONSUME, PASS = 'consume', 'pass'
