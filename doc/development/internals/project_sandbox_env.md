@@ -71,16 +71,17 @@ lives in a global subsystem nobody snapshots.
 > REMARK: Update 'exists, not a proposal' with concrete avaiability reference -- "since version..."
 
 It exists and is wired; it is **not** a proposal. `compy.before_exit` is a slot on the injected
-`compy` namespace, defaulting to a no-op (`consoleController.lua:697`), assignable by the project
-through the namespace metatable (`:715–721`) — assign a function to it and the framework calls it
-**once, first thing, when the project stops** (`ConsoleController:stop_project_run`, `:1193`), before
-any handler teardown. The slot is then reset to the default (`:1200`), so the next project starts
-clean and cannot inherit the previous one's teardown.
+`compy` namespace, defaulting to a no-op (`default_before_exit`, `consoleController.lua`), assignable
+by the project through the namespace metatable (`build_project_env`'s `before_exit_slot`) — assign a
+function to it and the framework calls it **once, first thing, when the project stops**
+(`ConsoleController:stop_project_run` → `framework_before_exit`), before any handler teardown. The
+slot is then reset to the default in the same function, so the next project starts clean and cannot
+inherit the previous one's teardown.
 
 Every stop path that runs a project reaches `stop_project_run`, so the hook fires on all of them:
-`Ctrl+Q` and `Ctrl+S` (`controller.lua:899`, `:903`), `Ctrl+T` into the editor (`:877`), and the
-`Ctrl+Esc` / `love.quit` path (`controller.lua:751–779`, which stops the project instead of quitting
-whenever one is running or the console is still interactive). The only exit that runs no project code
+`Ctrl+Q`, `Ctrl+S` and `Ctrl+T` into the editor (the gate's `RESERVED` table, `controller.lua`), and
+the `Ctrl+Esc` / `love.quit` path (`Controller.set_love_quit`, which stops the project instead of
+quitting whenever one is running or the console is still interactive). The only exit that runs no project code
 is quitting with **no** project running, where there is nothing to tear down.
 
 What it is for: **project-internal** teardown — save a score, flush a memo, stop a timer. It is not a
@@ -95,8 +96,13 @@ continues, and a project cannot refuse to stop, defer the stop, or break it by f
 plan around is the one this cannot fix: **a project that raises before reaching a clean state never
 gets to run its teardown at all**, because the raise, not the stop, is what ends the run. That gap is
 the failure mode the "proposed robust fix" above is a counter-measure for — identified and
-registered, not implemented. See `doc/development/technical_debt/general.md` for the register entry,
-and `doc/development/decisions/input.md`, Decision 11, for the teardown invariant itself.
+registered, not implemented. The register entry is
+`doc/development/technical_debt/input.md`, "A project that raises leaves global device state dirty;
+no force-reset exists", which names the same crash path from the other side:
+`run_project`'s failed-run branch drops to `project_open` without ever calling `stop_project_run`,
+so the hook is uninstalled but never fired. See `doc/development/decisions/input.md`, Decision 28,
+for the hook's contract (framework-owned teardown, called from inside it, return value unread) and
+Decision 11 for the teardown invariant itself.
 
 > REMARK: make pointer annotations more useful for reader, and also check their completeness/consistency and whther they are actual
 ## Pointers
