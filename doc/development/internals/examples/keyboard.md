@@ -237,8 +237,7 @@ condition for revisiting. And the **release boundary** turned out to be answerab
 rather than by an event, which removed the grace window, the frame counter and the `blocked` field
 together, and closed the release-loss case that a `lastText` design still had.
 
-The reasoning is recorded in
-`doc/development/wip/77-new-input-api/validation/reviews/P-18-00-keyboard-deepfix-design.md` — the
-requirements it was derived from, an impossibility result that rules out deciding acceptance at the
-moment a character arrives, and the options weighed. **That document is ephemeral**; this one is the
-design of record.
+The result both alternatives ran into is §"The problem" above: with no guaranteed order between
+`keypressed` and `textinput`, acceptance cannot be decided at the moment a character arrives —
+whatever is asked then answers which build is running. That is what rules out a `textinput`-only
+judge, and it is the whole argument this design is derived from.
