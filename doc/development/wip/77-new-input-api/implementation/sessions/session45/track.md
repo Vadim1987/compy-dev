@@ -87,3 +87,26 @@
 - F10 clause written into `doc/input_api.md` §reserved combos (`bd2c327d`),
   with the F11/F12 claim narrowed to "untested" — the hardware table marks them
   `-`, not `✓`.
+
+## 2026-08-25 — step 1: the inventory (`165542aa`, `74776ade`)
+
+- `validation/outcomes/S45-P11-inventory.md` — six parts, two never sized before.
+- **THE finding: P10 closed over 20 markers of its own.** Named members all
+  genuinely discharged, but the row's scope included "this sprint's share of the
+  marker question", and S36's binding table assigns `doc/input_api.md` (8, every
+  kind) + the factual dev-doc markers (12, verified present today) to P10.
+  Recommendation: P11 absorbs. **Owner ruling pending.**
+- Batch 3 re-derived by Sonnet (prompt + deliverable on disk): 23 ids, 13 live in
+  src/tests and **all 13 already in Part A** — the two derivations agree, which is
+  the strongest evidence either has. 8 are dev-doc prose-size → named list. So the
+  never-enumerated part turned out to add **nothing**.
+- Worker also found: **W10 is 85 ids, not 92** (label never recomputed), and
+  **the gate was blind a third time** — `controller.lua:527` is an owner review
+  remark with no marker word. Gate now also matches the arrow form; verified it
+  returns the 22 markers + that comment + the balloons continuation, nothing else.
+- maze/draw measured against the migration base: **157 comment lines in 5 files,
+  56% of everything our ten commits wrote there**. Only ours — the repo's other
+  authors' comments are not in scope.
+- Three sites in `tests/` are test work, not comment work (highlight_regression
+  ×2 asking for a behavioural assertion; input_cursor_text's three-group suite
+  proposal) — raised, not swept. Two more are owner questions.
