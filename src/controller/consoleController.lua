@@ -132,11 +132,6 @@ local function run_user_code(f, cc, project_path)
   return true
 end
 
----> REMARK: comment does not match code and is too verbose
--- Project lifecycle callback. It is intentionally separate from
--- compy.input's keyboard/text dispatch surface. Declared up
--- here with hide_overlay because both ends of a run reset it:
--- the stop path, and the failed-run path in run_project.
 local function default_before_exit()
   Log.debug('compy.before_exit noop')
 end
@@ -177,21 +172,14 @@ local function framework_before_exit(compy)
   compy.before_exit = default_before_exit
 end
 
----> REMARK: word 'overlay' is strongly opposed. if its needed in console context (the only context where its meaningful), let use something like 'input_widget_overlay'
----> REMARK: too verbose comment. just briefly tell in which contexts function is supposed to be invoked instead of reexplaining how it works (prose length is x5 longer than code length!)
---- Take the overlay down THROUGH the widget when a run ends,
---- so its own `shown` flag comes down together with the
---- published handle. Clearing love.state.user_input alone left
---- the widget believing it was still active, and the next
---- project's show() was then refused as a repeat by the
---- already-active guard (doc/development/decisions/input.md,
---- Decision 3) — a stopped project's overlay silently
---- swallowing the next project's.
---- hide() fires no cancel chain (Decision 6), which is what
---- teardown wants: this is not a user-facing dismiss.
---- Declared here rather than beside stop_project_run because
---- the failed-run path in run_project below needs it too.
-local function hide_overlay()
+--- Called at both ends of a run — the stop path and the
+--- failed-run path. Down THROUGH the widget, never by clearing
+--- `love.state.user_input`: the widget's own `shown` flag has to
+--- fall with the handle, or the next project's show() is refused
+--- as a repeat (doc/development/decisions/input.md, Decision 3).
+--- `hide()` fires no cancel flow (Decision 6) — teardown is not
+--- a user-facing dismiss.
+local function hide_input_widget()
   local widget = love.state.user_input_controller
   if widget then return widget:hide() end
   love.state.user_input = nil
@@ -311,7 +299,7 @@ function ConsoleController:run_project(name)
         -- inactive goes unhonoured, and a shown one is not
         -- (doc/development/decisions/input.md, Decision 11).
         self.main_ctrl.release_keyboard_route(self)
-        hide_overlay()
+        hide_input_widget()
         -- ...and the participants it installed before raising.
         -- Same invariant, same reason: nothing survives the
         -- project that installed it. before_exit is uninstalled
@@ -470,14 +458,13 @@ local function build_shortcuts_surface(shortcuts)
     function(event) return 'shortcuts.' .. tostring(event) end)
 end
 
----> REMARK: fix prose -- not "where the event GOES" but "whether event PROPAGATES by returning hardcoded true/false"
 --- The dispatch combinators (doc/development/decisions/input.md,
 --- Decisions 22 and 24), reached as compy.input.fn.*. Stateless
 --- and orthogonal: `ignore_repeat` decides whether the handler
---- RUNS, `stop_here`/`side_run` decide where the event GOES, and
---- neither knows about the other. Named for their effect on the
---- event, which is what a reader of a registration table needs.
---- The combination most bindings want is
+--- RUNS, `stop_here`/`side_run` decide whether the event
+--- PROPAGATES — each returns a fixed truthy/falsy in place of
+--- whatever the handler returned — and neither knows about the
+--- other. The combination most bindings want is
 --- `stop_here(ignore_repeat(fn))`: act once per press, and let
 --- nothing downstream see the key.
 local INPUT_FN = {
@@ -1343,7 +1330,7 @@ function ConsoleController:stop_project_run()
   framework_before_exit(compy)
   self.main_ctrl.set_default_handlers(self, self.view)
   self.main_ctrl.set_love_update(self)
-  hide_overlay()
+  hide_input_widget()
   View.clear_snapshot()
   self.main_ctrl.set_love_draw(self, self.view)
   self.main_ctrl.clear_user_handlers(self)

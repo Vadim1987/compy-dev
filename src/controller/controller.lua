@@ -524,11 +524,9 @@ Controller = {
           end
         end
       end
-      ---> comment describing what code does NOT do is absolutely of no use; delete if it has no positive info
-      -- Straight to the console, with no widget test in front of
-      -- it: widget visibility is state on the widget, never a
+      -- Widget visibility is state on the widget, never a
       -- routing condition (doc/development/decisions/input.md,
-      -- Decision 1). A project overlay is reached inside the
+      -- Decision 1): a project's widget is reached inside the
       -- PROJECT route's chain, and the console never holds the
       -- slot while one is up.
       CC:keypressed(k)

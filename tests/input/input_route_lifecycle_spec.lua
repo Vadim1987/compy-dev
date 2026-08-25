@@ -230,11 +230,10 @@ describe('input surface: inbound events — route lifetime #input',
         P.current, P.run = prev_current, prev_run
       end
 
-      -- Both halves, deliberately: hide_overlay exists because
-      -- clearing the published handle alone left the widget
-      -- believing it was still active
-      -- (consoleController.lua hide_overlay).
-      it('leaves no overlay behind', function()
+      -- Both halves, deliberately: clearing the published handle
+      -- alone leaves the widget believing it is still active
+      -- (consoleController.lua, hide_input_widget).
+      it('leaves no input widget behind', function()
         run_raising_project()
         assert.is_false(F.is_widget_visible())
         assert.is_false(F.widget:is_shown())
