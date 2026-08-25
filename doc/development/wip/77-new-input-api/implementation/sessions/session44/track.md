@@ -53,3 +53,21 @@
   depended on the deleted code was not.
 - Nothing edited outside the report — the prompt says report, don't touch the
   ledger without the owner.
+
+## 2026-08-25 — F1–F7 resolved
+
+- Owner (after a gap): these are inconsistencies with unambiguous resolutions,
+  not decisions to make — resolve and report. Wants the story finished, no
+  ceremony, nothing important omitted.
+- All seven applied in one commit; resolutions tabulated in §6 of the review.
+  Docs only, suite still 968/0/0/10, no marker added (`git diff | grep '^+'`
+  → zero INTERIM/REMARK).
+- F1's note also disposes of F4's second half — one blockquote states both that
+  the table is built and that the cascade the point describes is gone.
+- Fixed one item beyond the seven and said so in the review: Decision 33 blamed
+  maze's whole "Shift+Escape family" where only its two Ctrl-bearing members
+  ever reached the reservation.
+- Left Decision 6's "unconditional and unshadowable" alone — true in the sense
+  it means, and Decision 6 is a W9(a) prune candidate.
+- No wip path remains in the persistent corpus (`grep -rn P15` over doc/ minus
+  wip → clean).

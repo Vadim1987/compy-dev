@@ -196,3 +196,30 @@ non-consumption in the same terms.
 **Verdict: sound, with five wording/citation corrections owed to the ledger (F1–F5,
 owner-gated) and two corpus items owed to the docs rows (F6, F7).** F1 is the one
 that would mislead a reader today.
+
+## 6. Resolution — all seven applied, 2026-08-25
+
+**Owner ruling:** these are inconsistencies with unambiguous resolutions, not
+calls to make; resolve them and report. Executed in one commit; no ruling was
+needed and none was assumed. Suite unchanged at 968 / 0 / 0 / 10 (docs only).
+
+| # | Resolution |
+|---|---|
+| **F1** | Blockquote added at Decision 30 point 3, in the file's established amend-in-place form: the table **is built**, only the *not committed to* is withdrawn, the separateness requirement stands as a build instruction `RESERVED` satisfies. It also disposes of F4's second half by stating that the predicate cascade the point describes is gone |
+| **F2** | "the first **three** become the project's, and the **fourth** stops firing `restart` and `reset`" |
+| **F3** | `P15` → the framework-shortcuts suite by path, in the decision **and** at the debt register's "already noted in the P15 suite". No wip path remains in the persistent corpus |
+| **F4** | The `quickswitch` clause dropped; the poll form kept as an illustration of the rule, which is what it was for |
+| **F5** | "three of its own, **or six** when the exact combo misses and the class key is built after it" |
+| **F6** | The truthy/falsy entry re-grounded on the six splice sites that are live. The comparison form is now stated as observed **once**, in the deleted `only_mods`, with the consequence spelled out — *no site in the tree compares a modifier read today* — and "Why it stands" / "Shape" / "Revisit" re-worded off the vanished `not not` site |
+| **F7** | `internals/user_input.md` §gate rewritten: `RESERVED` named as the second privileged table with its Decision 34 citation, the enumeration completed (the profiler pair and bare `f10` were missing), the two stale line anchors replaced by symbol names, exactness restated as a property of the representation, and the per-entry state conditions (playback, profiling build) named |
+
+**One item fixed beyond the seven,** same paragraph class, disclosed rather than
+folded in: Decision 33's reason 1 said `examples/maze`'s "restored Shift+Escape
+family" was torn down, where only its **two Ctrl-bearing members** ever reached
+the reservation (`draw_main.lua:361-368`, `maze_main.lua:217-224` register four:
+`shift+escape`, `alt+shift+escape`, `ctrl+shift+escape`, `ctrl+alt+shift+escape`).
+Narrowed to the two.
+
+**Not changed, and why:** Decision 6's "unconditional and unshadowable" (§4)
+stays as it is — it is true in the sense it means, and Decision 6 is a W9(a)
+prune candidate whose wording is settled there or not at all.

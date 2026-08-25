@@ -1529,23 +1529,23 @@ changes.
   `false` are both falsy. It bites the moment a device read is **compared**
   rather than tested: `Key.ctrl() == false` is `false` under harmony, and
   `Key.ctrl()` spliced as a call's last argument contributes **no argument at
-  all**. Both have been observed — the first while writing `only_mods`
-  (Decision 33), the second at six call sites that pass a modifier read as a
-  trailing argument (`editorController.lua:466,470,772,776`,
+  all**. The live exposure is the second, at six call sites that pass a modifier
+  read as a trailing argument (`editorController.lua:466,470,772,776`,
   `searchController.lua:101,105`), none of which is affected today because the
-  callee only tests the value for truthiness.
+  callee only tests the value for truthiness. The comparison form was observed
+  once, in the gate's `only_mods` helper, which normalised with `not not`; that
+  helper no longer exists (Decision 34 replaced the predicate cascade with a
+  combo-string table), so **no site in the tree compares a modifier read today**.
 - **Why it stands:** nothing is wrong under a real device, no patcher offends
-  today, and the one place that compares normalises with `not not` and says why. Changing the accessors
-  is a small edit with a wide blast radius — every caller's return type would
-  become guaranteed, which is desirable but wants its own pass and its own
-  tests.
+  today, and no caller compares. Changing the accessors is a small edit with a
+  wide blast radius — every caller's return type would become guaranteed, which
+  is desirable but wants its own pass and its own tests.
 - **Shape, if it is answered:** normalise inside `Key` — `return not not
   love.keyboard.isDown(...)` in each of the three accessors — so the
-  `@return boolean` annotation becomes true for every consumer, and the `not
-  not` at comparison sites can go. Prefer that to asking each caller to
-  remember.
-- **Revisit:** when `Key`'s accessors are next touched, or the first time a
-  third comparison site is written.
+  `@return boolean` annotation becomes true for every consumer, and no future
+  caller has to remember `not not` to compare safely.
+- **Revisit:** when `Key`'s accessors are next touched, or the first time a site
+  compares a modifier read rather than testing it.
 
 ### The gate reserves tolerantly; projects must register exactly — RESOLVED 2026-08-16
 
@@ -1564,7 +1564,8 @@ mechanism. The entry below describes the state before the fix.
   rest: `Key.ctrl() and k == 'escape'` matches Ctrl+**Shift**+Escape and
   Ctrl+Alt+Escape too; `quickswitch` excludes Alt but not Shift; `f10` names no
   modifier at all and is therefore claimed in every combination (already noted
-  in the P15 suite).
+  in the framework-shortcuts suite,
+  `tests/input/input_global_shortcuts_spec.lua`).
 - **State:** this is the exact inverse of the rule projects live under. A combo
   is its modifier set **exactly** (Decision 21), so a project registering
   `ctrl+shift+escape` gets a chord the gate also answers — and the gate runs

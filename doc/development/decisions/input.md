@@ -1280,6 +1280,15 @@ unchanged** — only the *source* the matcher reads from changes.
    done. If it ever is, it must be visibly a **second, privileged table**, structurally separate
    from a project's own and stating its non-overridability where it lives — otherwise the win
    arrives with a false promise of override.
+
+   > **Amended by Decision 34, 2026-08-16.** The table is **built**. What is withdrawn is only
+   > the *not committed to* — the separateness requirement above stands unchanged and is now a
+   > build instruction it satisfies (`RESERVED`, `controller.lua`, which states both its
+   > non-overridability and its opposite consumption rule where it lives). The cascade of
+   > modifier predicates this point describes is therefore gone: the gate builds one canonical
+   > combo string per event and matches it, so exactness is a property of the representation
+   > rather than a discipline at each branch. Decision 33 is the prerequisite that made a
+   > combo-keyed entry well-defined.
 4. **When a shortcut does not fit, the shortcut sets a flag — it does not grow.** Where the
    logic cannot be carved into exactly one isolated shortcut function, the recommended shape is
    a **tiny shortcut that sets a feature flag and does not consume its triggering event**. The
@@ -1456,9 +1465,8 @@ read from, 31 closes the set at three.
 **Decision.** Every combination the framework reserves for itself matches **exactly**:
 the modifiers it names are held, and **no other modifier is**. A reservation written as
 a device poll must therefore exclude the modifiers it does not name — `Key.ctrl() and
-not Key.alt() and not Key.shift() and k == 'escape'` — which is the form `quickswitch`
-already uses for Alt. A reservation that names no modifier is claimed only when none is
-held.
+not Key.alt() and not Key.shift() and k == 'escape'`. A reservation that names no
+modifier is claimed only when none is held.
 
 **Why — two reasons, the second the stronger.**
 
@@ -1466,12 +1474,14 @@ held.
    register a richer combination that contains a reserved one: `ctrl+shift+escape`
    contains `ctrl+escape`. Under a tolerant reservation the project's binding fires
    *and* the framework's does, so the richer gesture decays into the poorer one and the
-   project cannot express it at all. `examples/maze` hit exactly this: its restored
-   Shift+Escape family returns the game to its menu on the press and is torn down on the
-   release, because the gate reads the chord as Ctrl+Escape.
+   project cannot express it at all. `examples/maze` hit exactly this: of its restored
+   Shift+Escape family, the two Ctrl-bearing members return the game to its menu on the
+   press and are torn down on the release, because the gate reads the chord as
+   Ctrl+Escape.
 
 2. **Framework shortcuts are not overridable, so they must be narrow — least
-   privilege.** A project cannot take a reserved combo back (the property `P15` pinned);
+   privilege.** A project cannot take a reserved combo back — the property the
+   framework-shortcuts suite pins (`tests/input/input_global_shortcuts_spec.lua`);
    the gate runs at the raw pump entry, before any route. That is unlimited power over
    the input surface, and unlimited power is exactly what should be granted on the
    narrowest possible condition. A reservation that claims chords it does not name is
@@ -1480,9 +1490,9 @@ held.
 
 **What this changes.** The reserved gestures keep working as named; what stops is their
 claim on **extensions** of themselves. Ctrl+Shift+Escape, Ctrl+Shift+T,
-Ctrl+Shift+S and Ctrl+Alt+Shift+R stop being the framework's — the first two become the project's, and
-the third stops firing `restart` and `reset` in one event, which is the same looseness
-producing an outright defect. Plain Ctrl+Escape is untouched, so the recovery path out
+Ctrl+Shift+S and Ctrl+Alt+Shift+R stop being the framework's — the first three become the
+project's, and the fourth stops firing `restart` and `reset` in one event, which is the same
+looseness producing an outright defect. Plain Ctrl+Escape is untouched, so the recovery path out
 of a running project is exactly as it was: the safety property does not depend on
 tolerance, and never did.
 
@@ -1550,7 +1560,8 @@ them should need editing**.
 **Device reads.** Incidental, but it is the reason the shape is also cheaper: the
 cascade asks the device once per predicate — up to about twenty per keypress —
 where a single canonical string per event asks three. The route asks three of its
-own; sharing one answer between the two layers was considered and **rejected** —
+own, or six when the exact combo misses and the class key is built after it;
+sharing one answer between the two layers was considered and **rejected** —
 a cached combo is a model of device state with no path back to the truth, the
 shape Decision 30 dissolved `keys_pressed` for, and the dispatch walk is
 deliberately reachable without the gate.
