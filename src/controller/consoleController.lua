@@ -516,8 +516,8 @@ local input_fn_surface = build_frozen_view(
 --- Assemble the compy.input surface: reads resolve the three frozen
 --- sub-tables (shortcuts / hooks / callbacks), the combinator
 --- table, or a callable method; every write to the container
---- itself is refused loudly (Decision 7 revised — frozen
---- container, writable leaves).
+--- itself is refused loudly (Decision 7 — frozen container,
+--- writable leaves).
 --- @param state table
 --- @param methods table
 --- @return table
@@ -800,8 +800,8 @@ local get_compy_input = function()
   local state = {
     -- shortcuts: per-event combo tables (Decision 8, normalising).
     -- hooks: one fn per event, seeded once at activation (Decision
-    -- 10 revised). callbacks: the widget's own table (Decision 7
-    -- revised). shortcuts/hooks start empty (leaves fill on project
+    -- 10). callbacks: the widget's own table (Decision 7).
+    -- shortcuts/hooks start empty (leaves fill on project
     -- write); callbacks carries the widget's stay-open defaults.
     shortcuts = shortcut_tables,
     hooks = { },
