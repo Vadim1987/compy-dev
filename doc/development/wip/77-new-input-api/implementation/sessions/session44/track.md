@@ -98,3 +98,24 @@
   tombstone (de-facto, confirmed at base), 6/7/15 keep-and-compress. 15 also
   carries a stale "Status: in-flight" — it is implemented (`check_keys`).
 - P10 now has exactly one thing left in it: that ruling.
+
+## 2026-08-25 — W9(a) executed; P10 closed
+
+- Owner: "go" on all five verdicts. Order held: 16, 12, 15, 7, 6.
+- Checked citations BEFORE tombstoning, not after: Decision 16 has zero
+  citations in src/tests (clean), Decision 12 has seven (all still resolve —
+  the reason tombstoning beats deleting).
+- Decision 6: 81 → 44 lines. First pass only reached 30% and the owner asked
+  for 2-3×, so I tightened again — and the second pass is what caught the
+  dangling "the before_submit veto below" my own first edit had created.
+- **Second stale before_submit claim found**, in Decision 6's consequence:
+  "a deliberately reserved extension — ignored today", contradicting its own
+  bullet. Verified live at `userInputController.lua:406` before removing.
+  Session36 fixed one instance; nobody had swept for others.
+- Settled the "unconditional power keys" watch item inside the rewrite rather
+  than as its own edit, and fixed the internals doc's copy of the phrase in the
+  same commit — the two are read together.
+- Ledger 1556 → 1500; ledger REMARKs 30 → 24, all six answered rather than
+  deferred.
+- P10 CLOSED (plan §17.4). Sprint owes: P11 (owner, cold), the human smoke
+  pass, then slices + PR assembly.

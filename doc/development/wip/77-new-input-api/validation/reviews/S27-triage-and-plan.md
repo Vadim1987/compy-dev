@@ -2590,8 +2590,20 @@ factual claims in code before acting on them.
   prompt and outcome under `../prompts|outcomes/S44-W10-batch4-rows.md`).
 - **The S43 decisions revalidated and their seven inconsistencies resolved**
   (`a4389731`, `b52e217f`) — see `S44-decisions-33-34-revalidation.md` §6.
-- **P10 / W9(a) — verdicts prepared, owner-gated**:
-  `S44-W9a-ledger-prune-verdicts.md`. One clean tombstone (16, inverted by
-  Decisions 25/27), one "not a decision" (12, de-facto behaviour confirmed at
-  the base), three keeps with compression (6, 7, 15). **P10 closes on that
-  ruling** — nothing else in the row is outstanding.
+- **P10 / W9(a) — RULED AND DONE** (`4add9897`, owner ruled all five,
+  2026-08-25). Decisions 16 and 12 tombstoned in place, 15's stale status and
+  superseded half removed, 7 and 6 compressed. Ledger **1556 → 1500 lines**,
+  every number still resolving; six answered `REMARK:`s went with the work
+  (ledger 30 → 24). Detail and the two defects it surfaced:
+  `S44-W9a-ledger-prune-verdicts.md` §Executed.
+
+### 17.4 P10 is CLOSED
+
+Every member of the row is discharged: the reserved-combo section (S43), W10
+batch 1 (S43), the flag-shortcut teaching defect (S36, verified in S44), W9(a),
+W9(b) and W10 batch 4 (S44). Batch 2 is P11's by §17.1 and batch 3 was always
+P11's. **Nothing in P10 is outstanding.**
+
+**What the sprint still owes:** P11 (cold, with the owner's planning changes —
+its size still gated on the §16.2 marker ruling), the human smoke pass owed by
+P9/P17/P18, and slice regeneration plus PR assembly, which stay last.
