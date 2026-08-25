@@ -31,8 +31,9 @@ the size rule as well.
    expressible through naming: why this order, why this bound, what breaks if
    it changes.
 2. **Non-local context** — a concept, contract or decision that lives
-   elsewhere (another module, a design decision, a doc section). The comment's
-   job is the pointer, not a summary of what it points at.
+   elsewhere (another module, a design decision, a doc section). The comment
+   carries the pointer **plus the one thing the reader needs here**; it does not
+   reproduce what it points at. See "A reference is not an annotation" below.
 3. **Availability** — `supported since <version>`, `deprecated since
    <version>`.
 4. **An interim development marker** — temporary by construction, see below.
@@ -88,6 +89,36 @@ is deleted:
   name**. A citation that no longer resolves is worse than none, because it
   still reads as authoritative. One heading rename in this feature left 31
   dangling citations, two of them naming a retired design model.
+
+## A reference is not an annotation (owner ruling, 2026-08-25)
+
+**Compaction must not turn comments into an index of reference ids.** A comment
+reduced to `-- Decision 21` or `-- see input_api.md, "Held keys"` has been
+deleted, not compacted: it tells the reader that something governs this code
+without telling them **what**, so the only way to find out is to leave the file.
+A reader skimming for orientation gets nothing, and an assistant reading the
+module in isolation gets nothing.
+
+**The rule.** Every citation carries **at least a clause of its own** — the
+claim, constraint or reason that applies *here*. The reference is where the
+argument lives for whoever digs deeper; the clause is what makes digging
+optional.
+
+```lua
+-- BAD: an index entry. What is true here?
+-- (doc/development/decisions/input.md, Decision 33)
+local reservation = RESERVED.keypressed[combo_string(k)]
+
+-- GOOD: the claim, then where it is argued.
+-- A reservation matches its modifier set exactly, so an
+-- unnamed modifier misses (decisions/input.md, Decision 33).
+local reservation = RESERVED.keypressed[combo_string(k)]
+```
+
+This does not license restating the source. One clause, not a précis: if the
+comment is long enough to argue the point, the argument belongs in the doc and
+the comment belongs shorter. The size rule still governs — this rule sets the
+**floor**, the size rule sets the ceiling, and a comment lives between them.
 
 ## Interim comments — allowed while the tree is in motion, gone at release
 

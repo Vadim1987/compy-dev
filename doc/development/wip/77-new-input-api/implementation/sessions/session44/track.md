@@ -137,3 +137,18 @@
   row rather than in chat, with a rule that costs nothing: any rationale a
   compaction removes must already be in the persistent corpus, or lands there
   first. Also named the fact that keyboard's 177→101 pass was self-assessed.
+
+## 2026-08-25 — wrap
+
+- Owner: wrap per workflow, commission session45 to run P11 starting with an
+  inventory of the un-enumerated gap, and fold the reference-vs-annotation
+  guardrail into the commenting rule now (done first, so the successor reads a
+  rule rather than a prompt paragraph).
+- `agents/rules/commenting.md`: new section "A reference is not an annotation",
+  plus payload 2 amended — it said the comment's job is "the pointer, not a
+  summary", which read as licensing exactly what the owner is warning against.
+  Floor (this rule) and ceiling (the size rule) now stated as a pair.
+- Report + session45 prompt written, pointer repointed to session45.
+- Left the parent plan's stale status block alone deliberately — offered, owner
+  left it; the collapse ruling rewrites that block anyway. Said so in the
+  successor prompt so it is not "fixed" in passing.
