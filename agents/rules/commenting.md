@@ -132,9 +132,24 @@ mandatory:
    distinct from `TODO`. Review remarks (`REMARK:`) count as interim comments
    and are subject to the same gate.
 2. **Removed completely before release.** Not thinned, not "mostly" — the
-   release check is `grep -rn 'INTERIM:\|REMARK:' src/ tests/` returning
-   nothing. Each marker is either resolved into a payload-carrying comment, or
-   acted on and deleted, or promoted to a durable record (see next).
+   release check is
+
+   ```
+   grep -rniE 'INTERIM|REMARK' src/ tests/ --exclude-dir=lib \
+        --exclude=words_corpus.lua
+   ```
+
+   returning nothing. Each marker is either resolved into a payload-carrying
+   comment, or acted on and deleted, or promoted to a durable record (see next).
+
+   **Why this form.** The `-i` and the missing colons are deliberate: two
+   markers once hid from the colon-only pattern by being spelled `REMARK`
+   without it, and a gate that cannot see a marker is worse than no gate. The
+   two exclusions are content we do not author — vendored libraries under
+   `src/lib/`, and `words_corpus.lua`, an English prose corpus the `keyboard`
+   example types against, where "remarked" is a word in a story (owner ruling,
+   2026-08-25). Nothing else is excluded: a hit in our own prose is read, not
+   filtered.
 
 **`INTERIM:` is not `TODO`.** A `TODO` is a durable backlog item: it survives
 release, and once it is substantial it belongs in
