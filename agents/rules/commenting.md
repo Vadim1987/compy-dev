@@ -151,29 +151,29 @@ mandatory:
    release check is
 
    ```
-   grep -rniE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/ \
-        --exclude-dir=lib --exclude=words_corpus.lua
+   grep -rnE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/
    ```
 
    returning nothing. Each marker is either resolved into a payload-carrying
    comment, or acted on and deleted, or promoted to a durable record (see next).
 
-   **The third alternative is the arrow form** (`-->`, `--->` at the start of a
-   comment), added 2026-08-25 after a live review comment was found that carries
-   no marker word at all — *"comment describing what code does NOT do is
-   absolutely of no use"* (`controller.lua`). A reviewer writing in the margin
-   does not always type `REMARK:`, and the arrow is what they type instead. It
-   costs nothing: over `src/` and `tests/` it matches the marked comments and
-   the unmarked review ones, and nothing else.
+   **Three alternatives, and no exclusions — each part is there for a reason
+   found the hard way:**
 
-   **Why this form.** The `-i` and the missing colons are deliberate: two
-   markers once hid from the colon-only pattern by being spelled `REMARK`
-   without it, and a gate that cannot see a marker is worse than no gate. The
-   two exclusions are content we do not author — vendored libraries under
-   `src/lib/`, and `words_corpus.lua`, an English prose corpus the `keyboard`
-   example types against, where "remarked" is a word in a story (owner ruling,
-   2026-08-25). Nothing else is excluded: a hit in our own prose is read, not
-   filtered.
+   - **No colons.** Two markers once hid from the colon-only pattern by being
+     spelled `REMARK` without one. A gate that cannot see a marker is worse
+     than no gate.
+   - **The arrow form** (`-->`, `--->` opening a comment) — a reviewer writing
+     in the margin does not always type `REMARK:`, and this is what they type
+     instead. One such comment was live in `controller.lua` for the whole
+     feature, invisible to every sweep.
+   - **Case-sensitive.** Markers are uppercase by convention; that is what
+     makes them tokens rather than words. Matching case-insensitively drags in
+     ordinary English — "she remarked" in a prose corpus, "the interim help
+     chord" in an example's comment — and one such phrase belongs to another
+     author, so the gate could never reach zero while it stood. Case
+     sensitivity removes the false positives without hiding a single real
+     marker, and with them the need for any exclusion list.
 
 **`INTERIM:` is not `TODO`.** A `TODO` is a durable backlog item: it survives
 release, and once it is substantial it belongs in
