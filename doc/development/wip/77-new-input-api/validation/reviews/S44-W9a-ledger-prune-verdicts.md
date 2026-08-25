@@ -42,8 +42,12 @@ number still resolving.
 
 ## Executed, 2026-08-25 — owner ruled "go" on all five
 
-Applied in the recommended order. Ledger **1556 → 1500 lines**, every decision
+Applied in the recommended order. Ledger **1567 → 1500 lines**, every decision
 number still resolving, suite untouched at 968 / 0 / 0 / 10.
+
+> **Corrected in session45.** This said *1556 → 1500*. 1556 was measured earlier
+> in session44, before `b52e217f` added the F1–F7 resolutions to the same file;
+> at `4add9897`'s parent the ledger is 1567 lines, so the prune removed 67.
 
 | # | What landed |
 |---|---|

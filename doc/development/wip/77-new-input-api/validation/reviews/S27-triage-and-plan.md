@@ -2592,7 +2592,9 @@ factual claims in code before acting on them.
   (`a4389731`, `b52e217f`) — see `S44-decisions-33-34-revalidation.md` §6.
 - **P10 / W9(a) — RULED AND DONE** (`4add9897`, owner ruled all five,
   2026-08-25). Decisions 16 and 12 tombstoned in place, 15's stale status and
-  superseded half removed, 7 and 6 compressed. Ledger **1556 → 1500 lines**,
+  superseded half removed, 7 and 6 compressed. Ledger **1567 → 1500 lines**
+  (**[S45]** was recorded as 1556 → 1500; 1556 predated the same session's
+  F1–F7 edits to the file),
   every number still resolving; six answered `REMARK:`s went with the work
   (ledger 30 → 24). Detail and the two defects it surfaced:
   `S44-W9a-ledger-prune-verdicts.md` §Executed.
