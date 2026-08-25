@@ -9,11 +9,8 @@ reviewed: none
 # User Input — Implementation Overview
 
 
-> REMARK: input widget is actualy not shared (as instance), so let's say "input widget instances used across". Word 'overlay' I'd prefer to not see anywhere -- just across "console, editor and projects"
-> REMARK: "both now run" is related to project only -- refactoring console/editor management same way is suggested for the future, when project input controller will be battle-tested
-> REMARK: in recent implementation pointer 'no shortcuts for pointer' should not be true -- the table must exist and be checked; combo of mods just constructed without 'trigger key'
 
-Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget instances used across console, editor, and projects) and **mouse/pointer input** (mouse/touch channels a project can hook, plus mouse interaction with the input widget itself). Both now run through the same project-route dispatch chain (`ProjectInputController`, "Keyboard Handling" below) while a project runs; what differs per channel is only which argument names the combo trigger (see "Mouse Input" below). This doc covers both, with mode-specific notes where the behavior differs.
+Input handling in Compy has two mostly independent layers: **text/keyboard input** (the input widget instances used across console, editor, and projects) and **mouse/pointer input** (mouse/touch channels a project can hook, plus mouse interaction with the input widget itself). Both run through the same project-route dispatch chain (`ProjectInputController`, "Keyboard Handling" below) while a project runs; what differs per channel is only which argument names the combo trigger (see "Mouse Input" below). This doc covers both, with mode-specific notes where the behavior differs.
 
 For the project-facing usage guide (examples, the `show()` config table, the submit lifecycle from a project author's point of view), see [Compy Input API](../../input_api.md). This doc is the "how it works under the hood" narrative — routing, the dispatch chain, and the mechanism behind each guarantee. For the two-layer `love.handlers.*` vs `love.<event>` wiring underneath the gateway (§"Dispatch chain" below), see [Event Dispatch Layers](event_dispatch_layers.md).
 
@@ -45,11 +42,10 @@ LÖVE2D textinput event
             UserInputController:textinput/add_text path
 ```
 
-> REMARK: say that "defining its own" is compatibility layer, these functions are reinstalled as hooks 
-
 A project hooks `textinput` either via `compy.input.shortcuts.textinput[combo]` /
 `compy.input.hooks.textinput` (the shortcuts/hooks consumers of the chain) or by
-defining its own `love.textinput`, which auto-provisions as the seeded hook when
+defining its own `love.textinput` — the pre-API shape, kept working by a
+compatibility path that reinstalls the captured function as the seeded hook when
 no explicit `hooks.textinput` is set (see "Keyboard Handling" below) — reaching
 the widget is what happens only when nothing upstream consumes the event.
 
@@ -132,16 +128,18 @@ via `set_cursor_pos` immediately after construction, after `text` is applied. `s
 path over an **already-active** session still only patches the `text` subset and ignores `cursor` —
 repositioning an active session's cursor is `compy.input.set_cursor`'s job, not `force`'s.
 
-> REMARK: "project overlay" -> "project input widget". This paragraph has to be rewritten into more readable form and actualized (i.e. project now can set prompt)
 "Reset the prompt" is four bespoke, mutually inconsistent mechanisms, not one shared primitive:
-console's own Ctrl+L (terminal-only) vs. Escape (content-reset, history preserved) vs. Ctrl+Q
-(content, history preserved) vs. Ctrl+Shift+R (content + history wiped); editor's own Ctrl+W
-(content-only, with Escape repurposed for `load_selection` instead of a reset); search's own
-`clear()`, which reaches past its own controller straight into `self.model.input:clear_input()`,
-skipping `clear_error()` (currently harmless — search has no evaluator, so no error can ever be
-set); and the project widget, which has no "reset the session" surface of its own — only
-`compy.input.clear()`, which empties content and cursor but isn't a full reset. Carried as-is; not
-touched by this pass.
+
+- **console** — Escape and Ctrl+Q reset content and keep history, Ctrl+Shift+R wipes both, and
+  Ctrl+L clears the terminal only;
+- **editor** — Ctrl+W, content only, with Escape repurposed for `load_selection`;
+- **search** — its own `clear()`, which reaches past its controller straight into
+  `self.model.input:clear_input()` and skips `clear_error()`. Harmless while search has no
+  evaluator, so no error can be set in the first place;
+- **a project** — no single call. `compy.input.clear()` empties content and cursor and
+  `configure{ prompt = … }` sets the prompt, but nothing combines them into a session reset.
+
+Carried as-is; not touched by this pass.
 
 ---
 
@@ -237,9 +235,7 @@ neither a widget nor a pointer hook falls through, and the app really quits.
 unreachable the moment `stop_project_run` re-points `love.keypressed` etc. back at the console, so
 there is nothing left to guard against between events.
 
-> REMARK: there's no more forward_-calls (self-inflicted-then-dissolved), actualize towards actual behaviour and pre-feature behaviour (if changed)
-
-**`inspect` mode overrides all of the above.** While `app_state == 'inspect'` (a paused/broken-into project), the console REPL owns every input channel and a project-set widget is not honoured, regardless of the routing described above. The mechanism: `get_user_input()` (`controller.lua:21-24`) unconditionally returns `nil` while `app_state == 'inspect'`, so every `forward_*` call in this section reports "no widget" and every `love.handlers.*` entry point falls back to the console's own default handler — because `ConsoleController:suspend()` (`consoleController.lua:919-936`) physically swaps `love.keypressed`/`textinput`/`draw`/`update` back to the console's own functions via `set_default_handlers`, not merely short-circuiting them. The console additionally runs the *paused project's own* environment while inspecting: `get_effective_env()`/`evaluate_input()` select `project_env` (not the console env) when `app_state == 'inspect'`, so REPL input mutates the paused project's globals — a live debugger console, not a separate idle console. This behaviour is carried as characterized status quo, not a ratified contract — its shape under a future console/editor migration is an open call for the owner, not settled here.
+**`inspect` mode overrides all of the above.** While `app_state == 'inspect'` (a paused/broken-into project), the console REPL owns every input channel and a project-set widget is not honoured, regardless of the routing described above. The mechanism is two things at once. Events: `ConsoleController:suspend()` physically swaps `love.keypressed`/`textinput`/`draw`/`update` back to the console's own functions through `set_default_handlers`, rather than short-circuiting them, so every `love.handlers.*` entry point reaches the console's default handler. Drawing: `get_user_input()` (`controller.lua`) returns `nil` unconditionally while `app_state == 'inspect'`, and both of its call sites are draw paths, so the widget is not painted either. The console additionally runs the *paused project's own* environment while inspecting: `get_effective_env()`/`evaluate_input()` select `project_env` (not the console env) when `app_state == 'inspect'`, so REPL input mutates the paused project's globals — a live debugger console, not a separate idle console. This behaviour is carried as characterized status quo, not a ratified contract — its shape under a future console/editor migration is an open call for the owner, not settled here.
 
 ### Key state: modifier reads and `combo_string`
 
@@ -306,16 +302,15 @@ persists until some later event happens to correct it — and the only
 way to detect that drift is to compare the set against this same
 poll, which makes the poll the authority either way.
 
-> REMARK: there's no more 'DEFERRED' I think -- we do not guard shortcuts but provide guarding wrapper for convenience
 The whole keypressed path hands the widget LÖVE's own
 `(key, scancode, isrepeat)` — the widget is included by design
 (one signature across the path) — but only on the project route;
-see "Data flow" above for what the console route narrows. Shortcuts dispatch itself does not gate on `isrepeat`:
-shortcuts fire on **every** repeat, not just fresh presses — an
-in-code `DEFERRED` marker above `ProjectInputController:keypressed`
-(`projectInputController.lua:134-138`) records this as an unruled,
-provisional leaning (fresh-only for shortcuts was considered, never
-adopted) rather than a settled design.
+see "Data flow" above for what the console route narrows. Dispatch
+never gates on `isrepeat`, so a shortcut fires on **every** repeat
+and not only on a fresh press. A binding that wants fresh-only
+wraps itself: `compy.input.fn.ignore_repeat`
+(`../decisions/input.md`, Decision 22) is a convenience for the
+binding to apply, deliberately not a rule the tier enforces.
 
 ### Console-specific keys
 
@@ -556,19 +551,21 @@ next expires (`controller.lua:685-704`): `click_count == 1` synthesises a single
 native one**, `love.handlers.singleclick(x, y)` / `love.handlers.doubleclick(x, y)`
 (`controller.lua:700`). From there it runs the same route as every other pointer channel above.
 
-> REMARK: do not just say they are removed -- say they are repositioned -- firing happens on the `love.handlers.*` surface, mimicing the native love2d events. Project consumption lives in compy.input.hooks/compy.input.shortcuts. (at least its how I expect things to be)
-> REMARK: we can support seeding them from projects userlove -- as well as other events. We just do not encourage doing it in new and old projects, to avoid confusion
 
 `compy.singleclick` and `compy.doubleclick` — fields on the project's `compy` table that the old
-framework code looked up and called directly — are **REMOVED**. Single/double clicks are ordinary
-events now: a project reaches them as `compy.input.hooks.singleclick` /
+framework code looked up and called directly — are **repositioned, not merely removed**. The firing
+moved onto the `love.handlers.*` surface, where the click timer emits the derived event through the
+gateway exactly as a native one arrives (`controller.lua`, the synthesis block); project consumption
+moved to `compy.input.hooks` / `compy.input.shortcuts`. So they are ordinary
+events: a project reaches them as `compy.input.hooks.singleclick` /
 `compy.input.hooks.doubleclick`, through the identical dispatch chain as every other pointer
-channel (`projectInputController.lua:203-213`). One difference from every other channel:
-`singleclick`/`doubleclick` are never auto-seeded from a project's own handler, because there is
-no native `love.singleclick`/`love.doubleclick` for a project to have defined in the first place —
-the framework's `_derived` list is deliberately excluded from the auto-seed pass
-(`controller.lua:70-79`) — so a project must assign `compy.input.hooks.singleclick = fn` (etc.)
-explicitly to receive it.
+channel (`projectInputController.lua`, `dispatch`). **They are auto-seeded like every other
+channel**: `_bindable` (`controller.lua`) and the seeder's own `EVENTS`
+(`projectInputController.lua`) both carry the derived pair, so a project that defines
+`love.singleclick` gets it seeded as `hooks.singleclick`, exactly as `love.mousepressed` is.
+Keeping three hand-maintained subsets in step is precisely what failed before — a project
+writing `love.singleclick` got nothing while the same project writing `love.mousepressed` got a
+seeded hook — which is why seeding, teardown and dispatch now read one list.
 
 The 0.4s delay means single clicks are always confirmed after a short wait — there is no "instant single click" path. This is a deliberate tradeoff for double-click detection consistency.
 

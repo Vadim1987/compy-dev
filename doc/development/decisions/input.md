@@ -117,11 +117,11 @@ components, in order:
    reports consumed; hidden → the widget is skipped and the chain reports not-consumed (Decision
    5 explains why the widget's own return stays chain-meaningless).
 
-> REMARK: now its more than three components, we are sending pointer events the same way!
 A **truthy return at any component consumes** the event: it travels no further, the widget
-included. A falsey return falls through. The same three-component shape runs on all three
-channels (`keypressed`, `textinput`, `keyreleased`); a component with no participant simply
-falls through.
+included. A falsey return falls through. The same three-component shape runs on **every**
+channel — the keyboard trio (`keypressed`, `textinput`, `keyreleased`) and the pointer
+channels alike, which reach it through the same dispatch with a combo vocabulary of their own
+(Decisions 25 and 27); a component with no participant simply falls through.
 
 > REMARK: "there was once" is irrelevant -- a history of hallucination, self-inflicted and dissolved during implementation. Does not have to be mentioned
 **No framework tier.** There was once a fourth, leading component — `framework handlers` —
@@ -170,18 +170,19 @@ always invoked; it decides for itself to no-op when it is hidden. There is no ex
 "is it shown?" wrapper gating the call. This is why widget visibility carries no routing weight
 (Decision 1) — the branch lives inside the widget, where it mutates nothing and only debug-logs.
 
-> REMARK: its really not exactly this way -- we still use 'ifs' because we decided not to plumb tables with 'no-ops' default. so this paragraph could be recalibrated to reality or removed
-**Consequence.** Dispatch is the uniform short-circuit shape this design always aimed at:
-`shortcuts(...) or hooks(...) or widget(...)`, because the widget's participation now derives
-from a boolean (shown?) rather than needing a special nil-guard the way a sparse combo table
-does.
+**Consequence.** Dispatch is a short-circuit walk — the first truthy return wins — written as
+three guarded `if`s rather than as `shortcuts(...) or hooks(...) or widget(...)`
+(`projectInputController.lua`, `dispatch`). Every tier is sparse: an unregistered shortcut or
+hook is **absent**, not a no-op, and plumbing no-op defaults through the tables to buy the
+one-line form was declined. So each tier is tested for presence before it is called, and the
+widget's own test is `is_shown()`.
 
-## Decision 3 — one boot-provisioned shared widget, not per-session construction
+## Decision 3 — a boot-provisioned widget per surface, not per-session construction
 
-**Decision.** The input widget is a **shared instance, created once at load** and reused across
-every session — one boot-provisioned widget, not per-session construction. Projects reach it
-through the `compy.input.*` surface and never hold the widget object.
-`show()` / `hide()` are state flips on that one instance, not construction and teardown.
+**Decision.** A surface's input widget is **created once at load** and reused across every
+session on it — boot-provisioned, never constructed per session. Projects reach the
+project-facing one through the `compy.input.*` surface and never hold the widget object;
+`show()` / `hide()` are state flips on that instance, not construction and teardown.
 
 **Why.** A non-functional requirement forbids allocating a fresh object graph per input
 session — the device is memory-constrained and the common pattern is repeated prompting. A
@@ -189,10 +190,11 @@ shared instance also makes the "hide and bring back with state intact" requireme
 free: the state was never destroyed. And it is what makes Decision 1 cheap — a shared surface
 whose show/hide are pure state changes has nothing to reconnect.
 
->REMARK: "same code" (which is kinda true? check) does not mean "same instance" -- and there are reason to limit 'singleton' to project widgets only. prose below was a pre-implementation vision -- but implementation at least currently ended with the different instances (console needs to maintain its own). So the prose below should be recalibrated to reality
-**Consequence.** The same widget code backs the console REPL, the editor input strip, and
-project widgets; what differs between them is the evaluator attached and which route handles
-the result — not the widget. `show()` on an already-active session is a no-op (it *warns*
+**Consequence.** Four instances exist, not one, and what they share is the widget **code**, not
+the object: the project's (`main.lua`), the console's REPL line (`consoleController.lua`), and
+the editor's input and search strips (`editorController.lua`). What differs between them is the
+evaluator attached, the capability flags set at construction, and which route handles the
+result — never the widget's own behaviour. `show()` on an already-active session is a no-op (it *warns*
 rather than swallowing — see Decision 7's discipline) unless `{force = true}` is passed.
 
 ## Decision 4 — callbacks replace polling
@@ -408,11 +410,11 @@ which is the wrapper that replaced the deferred marker this entry once pointed a
 ## Decision 10 — one `hooks[event]` table, seeded once at activation
 
 > REMARK: these 'no' sound like protecting against alternatives not-requested-and-not-considered 
-> REMARK:  now 'all' events are shaped this way
 > REMARK: lets reframe the decision as "new api has more appropriate place for hooks -- so we silently re-wire old 'project-installed callbacks' there -- encouraging new usage but not disabling old one, if it's ever needed for pedagogical purposes 
 
-**Decision.** A project's own `love.keypressed` / `love.textinput` / `love.keyreleased` handlers
-auto-provision into `hooks[event]` (Decision 2's second chain component) — no widget-aware
+**Decision.** A project's own `love.*` handler for **any** bindable channel — the keyboard trio,
+the seven pointer channels, and the two derived click events alike — auto-provisions into
+`hooks[event]` (Decision 2's second chain component) — no widget-aware
 gating, no lifecycle split, no custom logic. `hooks[event]` is a single table and the single
 source of truth: at project activation, any event for which the project has not already set an
 explicit hook gets seeded once with its captured project handler (if any); after that moment the
@@ -835,8 +837,6 @@ more sophisticated is a hook, with no capability lost.
 
 ## Decision 22 — `compy.input.fn.ignore_repeat`
 
-> REMARK: ignore_repeat appears to be keypressed-specific wrapper, because its not passed anywhere else? worth mentioning.
-
 **Status: implemented** (owner ruling, 2026-08-03).
 
 **Decision.** Dispatch does **not** gate on `isrepeat`: a held combo fires on
@@ -848,6 +848,11 @@ act once per physical press wraps its handler in
 whatever `fn` returned; a skipped repeat returns nothing, so the event carries
 on down the chain exactly as an unhandled one would. Consumption is declared
 separately (Decision 24) — the two are orthogonal and compose.
+
+**It only bites on `keypressed`.** `isrepeat` is the third argument LÖVE gives
+that one channel and no other, so a `textinput` or pointer participant wrapped
+in `ignore_repeat` reads `nil` there and always runs. Harmless, and worth
+knowing before wrapping a hook that is not a key press.
 
 **Why not a dispatch rule.** Filtering repeats inside the shortcut tier was
 weighed and rejected: it suppresses with no way to recover a hold-to-act
