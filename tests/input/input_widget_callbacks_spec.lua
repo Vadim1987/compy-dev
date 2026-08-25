@@ -4,8 +4,8 @@
 
 -- The OUTPUTS half of the dispatch chain: Decision 5's four
 -- widget output fields, the highlighter / on_limit_reached
--- boundary, and the submit/cancel call-order chains of Decision 6
--- (doc/development/decisions/input.md). The mechanics half —
+-- boundary, and the submit/cancel call-order chains of Decision
+-- 6 (doc/development/decisions/input.md). The mechanics half —
 -- order, consume, fall-through, combo tables, signatures — is
 -- input_events_spec.lua.
 
@@ -13,13 +13,14 @@ local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
 local TU   = require('tests.testutil')
 
--- Every case drives the REAL project route: F.activate_project()
--- installs the ProjectInputController through the same
--- Controller.set_user_handlers path a run calls, and returns the
--- project-facing compy.input surface. Assertions are on the
--- widget's text and the project's own callbacks — never a spy on
--- an internal method, except the one widget-signature case, which
--- patches the shared widget and restores it.
+-- Every case drives the REAL project route:
+-- F.activate_project() installs the ProjectInputController
+-- through the same Controller.set_user_handlers path a run
+-- calls, and returns the project-facing compy.input surface.
+-- Assertions are on the widget's text and the project's own
+-- callbacks — never a spy on an internal method, except the one
+-- widget-signature case, which patches the shared widget and
+-- restores it.
 
 describe('input surface: widget callbacks #input', function()
   setup(function() F.setup() end)
@@ -27,9 +28,9 @@ describe('input surface: widget callbacks #input', function()
   before_each(function() F.reset() end)
 
   describe('the callback fields', function()
-    -- doc/development/decisions/input.md, Decision 5: the four widget
-    -- outputs are project-assignable
-    -- fields on compy.input (same boundary, widened allowlist).
+    -- doc/development/decisions/input.md, Decision 5: the four
+    -- widget outputs are project-assignable fields on
+    -- compy.input (same boundary, widened allowlist).
     it('the four widget output fields are assignable',
       function()
         local input = F.compy_input()
@@ -41,9 +42,9 @@ describe('input surface: widget callbacks #input', function()
         end)
       end)
 
-    -- doc/development/decisions/input.md, Decision 5: show(config) keys and
-    -- field assignment hit
-    -- the same underlying callbacks.
+    -- doc/development/decisions/input.md, Decision 5:
+    -- show(config) keys and field assignment hit the same
+    -- underlying callbacks.
     it('show(config) and fields share one output field',
       function()
         local input = F.compy_input()
@@ -56,10 +57,9 @@ describe('input surface: widget callbacks #input', function()
         assert.equal(hl, input.callbacks.highlighter)
       end)
 
-    -- doc/development/decisions/input.md, Decision 5 cont.: on_text_entered
-    -- and validator also
-    -- reach the same callback via config key and via
-    -- field write
+    -- doc/development/decisions/input.md, Decision 5 cont.:
+    -- on_text_entered and validator also reach the same
+    -- callback via config key and via field write
     -- (settable-only here; firing/gating is decisions/
     -- input.md, Decision 6).
     it('show(config) shares on_text_entered callback',
@@ -98,9 +98,9 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   describe('highlighter', function()
-    -- doc/development/decisions/input.md, Decision 5: a custom highlighter
-    -- transforms live text and
-    -- the queried highlight reflects that transformed output.
+    -- doc/development/decisions/input.md, Decision 5: a custom
+    -- highlighter transforms live text and the queried
+    -- highlight reflects that transformed output.
     it('a custom highlighter transforms queried highlight',
       function()
         local input = F.activate_project()
@@ -125,10 +125,10 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   describe('navigation boundaries', function()
-    -- doc/development/decisions/input.md, Decision 5, boundary half:
-    -- crossing attempts fire
-    -- on_limit_reached(direction, scope) and its return value
-    -- is ignored (observational only; widget still runs).
+    -- doc/development/decisions/input.md, Decision 5, boundary
+    -- half: crossing attempts fire on_limit_reached(direction,
+    -- scope) and its return value is ignored (observational
+    -- only; widget still runs).
     it('up boundary fires direction up with input scope',
       function()
         local seen = { }
@@ -175,8 +175,8 @@ describe('input surface: widget callbacks #input', function()
         assert.same({ { 'left', 'input' } }, seen)
       end)
 
-    -- doc/development/decisions/input.md, Decision 5: line-scope boundary
-    -- in multiline text.
+    -- doc/development/decisions/input.md, Decision 5:
+    -- line-scope boundary in multiline text.
     it('left line boundary fires scope line', function()
       local seen = { }
       local input = F.activate_project()
@@ -244,8 +244,8 @@ describe('input surface: widget callbacks #input', function()
   describe('submit', function()
     -- A truthy before_submit VETOES the submit, the mirror of
     -- before_cancel below: nothing downstream runs and the text
-    -- stays in the field, so a project can refuse a submission it
-    -- is not ready for without having to undo one.
+    -- stays in the field, so a project can refuse a submission
+    -- it is not ready for without having to undo one.
     it('a truthy before_submit vetoes the whole submit',
       function()
         local input = F.activate_project()
@@ -284,9 +284,9 @@ describe('input surface: widget callbacks #input', function()
         assert.same({ 'abc' }, entered)
       end)
 
-    -- doc/development/decisions/input.md, Decision 6: the full submit
-    -- call-order chain on a real Enter keypress. Every project
-    -- callback receives the widget's native line array.
+    -- doc/development/decisions/input.md, Decision 6: the full
+    -- submit call-order chain on a real Enter keypress. Every
+    -- project callback receives the widget's native line array.
     it('Enter runs the full submit call-order chain',
       function()
         local order = { }
@@ -317,10 +317,10 @@ describe('input surface: widget callbacks #input', function()
           }, order)
       end)
 
-    -- Decision 6: submit does not auto-close. The
-    -- default after_submit is a no-op, so BOTH on_text_entered and
-    -- after_submit see the session still active — the widget stays
-    -- open unless a callback hides it (AC3).
+    -- Decision 6: submit does not auto-close. The default
+    -- after_submit is a no-op, so BOTH on_text_entered and
+    -- after_submit see the session still active — the widget
+    -- stays open unless a callback hides it (AC3).
     it('on_text_entered and after_submit both see the ' ..
       'session still active (stays open)', function()
       local seen = { }
@@ -425,10 +425,10 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   describe('cancel — the Escape chain', function()
-    -- Decision 6: Escape runs the
-    -- cancel call-order chain (before_cancel → clear → after_cancel)
-    -- and CLEARS content, but the default after_cancel is a no-op —
-    -- the widget stays shown unless a callback hides it.
+    -- Decision 6: Escape runs the cancel call-order chain
+    -- (before_cancel → clear → after_cancel) and CLEARS
+    -- content, but the default after_cancel is a no-op — the
+    -- widget stays shown unless a callback hides it.
     it('Escape runs the cancel chain, clears, and stays shown',
       function()
         local order = { }
@@ -488,11 +488,11 @@ describe('input surface: widget callbacks #input', function()
         assert.same({ 'return', 'escape' }, seen)
       end)
 
-    -- Decision 6: Enter/Escape are
-    -- ordinary chain participants — a project shortcut on 'return'
-    -- runs first and consumes, so the widget's submit never fires
-    -- (the withdrawn non-overridable guarantee; the gateway power
-    -- keys remain the unshadowable safety net, not this).
+    -- Decision 6: Enter/Escape are ordinary chain participants
+    -- — a project shortcut on 'return' runs first and consumes,
+    -- so the widget's submit never fires (the withdrawn
+    -- non-overridable guarantee; the gateway power keys remain
+    -- the unshadowable safety net, not this).
     it('a shortcut on return shadows the widget submit',
       function()
         local shadowed = false
@@ -518,11 +518,10 @@ describe('input surface: widget callbacks #input', function()
     -- own internal claim (no state of its own suppresses the
     -- newline); it says nothing about whether the event can be
     -- claimed before it arrives. It can, and the case below
-    -- pins that.
-    -- F.session.press holds the modifier on the device as well as
-    -- feeding the gateway, so the keystroke below adds nothing but
-    -- the return key; it is kept as the combo driver rather than
-    -- unpicked into two presses.
+    -- pins that. F.session.press holds the modifier on the
+    -- device as well as feeding the gateway, so the keystroke
+    -- below adds nothing but the return key; it is kept as the
+    -- combo driver rather than unpicked into two presses.
     it('Shift+Return unconditionally adds a line without submitting',
       function()
         F.activate_project()
@@ -534,12 +533,13 @@ describe('input surface: widget callbacks #input', function()
       end)
 
     -- The interceptability half of the case above. Shift+Return
-    -- reaches the widget only because nothing upstream claimed it:
-    -- it is an ordinary combo, so a project shortcut on
-    -- 'shift+return' consumes it like any other key and no newline
-    -- is inserted (doc/development/decisions/input.md, Decision 2 —
-    -- the route holds no unshadowable keys; the gateway power keys
-    -- are the only ones a project cannot reach).
+    -- reaches the widget only because nothing upstream claimed
+    -- it: it is an ordinary combo, so a project shortcut on
+    -- 'shift+return' consumes it like any other key and no
+    -- newline is inserted (doc/development/decisions/input.md,
+    -- Decision 2 — the route holds no unshadowable keys; the
+    -- gateway power keys are the only ones a project cannot
+    -- reach).
     it('a shortcut on shift+return intercepts the newline',
       function()
         local fired = false
@@ -556,10 +556,10 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   describe('hide() and force fire no cancel', function()
-    -- doc/development/decisions/input.md, Decision 6 ("hide() ... fires no
-    -- cancel chain"): hide() and a force=true reconfigure
-    -- fire no
-    -- cancel chain (the user-facing dismiss is Escape only).
+    -- doc/development/decisions/input.md, Decision 6 ("hide()
+    -- ... fires no cancel chain"): hide() and a force=true
+    -- reconfigure fire no cancel chain (the user-facing dismiss
+    -- is Escape only).
     it('hide() fires no cancel chain', function()
       local fired = false
       local input = F.activate_project()
@@ -599,10 +599,10 @@ describe('input surface: widget callbacks #input', function()
         assert.equal(2, hits)
       end)
 
-    -- Decision 6: absent callbacks
-    -- default to no-ops — submit and cancel both complete without
-    -- error and the widget STAYS OPEN. Submit preserves content
-    -- (no auto-clear); cancel clears it.
+    -- Decision 6: absent callbacks default to no-ops — submit
+    -- and cancel both complete without error and the widget
+    -- STAYS OPEN. Submit preserves content (no auto-clear);
+    -- cancel clears it.
     it('submit and cancel complete with no callbacks set ' ..
       '(stays open)', function()
         F.activate_project()
@@ -710,11 +710,11 @@ describe('input surface: widget callbacks #input', function()
 
   -- One lifecycle — `submit_flow` / `cancel_flow` — serves the
   -- console line, the editor's input and the project's widget
-  -- alike, and no instance reads the screen mode to decide what a
-  -- key does (doc/development/decisions/input.md, Decision 6).
-  -- A surface that needs to differ says so locally: the editor
-  -- consumes Enter/Escape upstream, Ctrl+D is the per-instance
-  -- `allow_duplicate_line` flag.
+  -- alike, and no instance reads the screen mode to decide what
+  -- a key does (doc/development/decisions/input.md, Decision
+  -- 6). A surface that needs to differ says so locally: the
+  -- editor consumes Enter/Escape upstream, Ctrl+D is the
+  -- per-instance `allow_duplicate_line` flag.
   --
   -- The repetition below IS the claim — same two keys, same
   -- lifecycle, three surfaces — and it guards against that
@@ -898,10 +898,10 @@ describe('input surface: widget callbacks #input', function()
     -- editor cases above, the console and the project widget
     -- are driven through the same Enter and Escape. Their
     -- subject-matter contracts (the full submit call-order
-    -- chain, the cancel chain, validators) belong to this file's
-    -- 'submit' and 'cancel — the Escape chain' groups; what is
-    -- asserted here is only that each surface runs the one
-    -- lifecycle at all.
+    -- chain, the cancel chain, validators) belong to this
+    -- file's 'submit' and 'cancel — the Escape chain' groups;
+    -- what is asserted here is only that each surface runs the
+    -- one lifecycle at all.
     describe('console: the same Enter and Escape', function()
       it('Enter evaluates the line exactly once, text intact',
         function()
@@ -951,10 +951,10 @@ describe('input surface: widget callbacks #input', function()
     -- Line-duplication is the one behaviour that genuinely
     -- differs between surfaces, and it is carried by a
     -- constructor flag on the instance that wants it —
-    -- `allow_duplicate_line`, alongside `disable_selection` — not by
-    -- the screen mode. Each case still sets app_state, to the
-    -- value the real caller would have, precisely to show the
-    -- flag and not the mode is what decides
+    -- `allow_duplicate_line`, alongside `disable_selection` —
+    -- not by the screen mode. Each case still sets app_state,
+    -- to the value the real caller would have, precisely to
+    -- show the flag and not the mode is what decides
     -- (doc/development/decisions/input.md, Decision 6).
     describe('the modify flag alone gates Ctrl+D', function()
       it('with the flag: Ctrl+D duplicates the line', function()

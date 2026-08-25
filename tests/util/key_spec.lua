@@ -2,9 +2,10 @@ require('util.key')
 
 local mock = require("tests.mock")
 
---- `Key.any_pressed` is the project-facing way to ask the keyboard about a key
---- that is not a modifier — the one question `Key` could not answer, which sent
---- every project to `love.keyboard` directly. Its multi-argument form is OR, the
+--- `Key.any_pressed` is the project-facing way to ask the
+--- keyboard about a key that is not a modifier — the one
+--- question `Key` could not answer, which sent every project to
+--- `love.keyboard` directly. Its multi-argument form is OR, the
 --- same as the device call it wraps: "is any of these down".
 describe('Key.any_pressed', function()
   ---@diagnostic disable-next-line: missing-fields

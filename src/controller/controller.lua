@@ -33,21 +33,20 @@ local user_draw
 -- Together with a shown input widget it marks a non-blocking
 -- project (one that overrides no update/draw, e.g. a
 -- pen-and-paper game) as still "live"
--- (doc/development/technical_debt/input.md, "Input-only / pointer-only
--- projects stay live in `project_open` (RESOLVED, ruling
--- a)"): keep the project route, Ctrl+Esc -> console.
+-- (doc/development/technical_debt/input.md, "Input-only /
+-- pointer-only projects stay live in `project_open` (RESOLVED,
+-- ruling a)"): keep the project route, Ctrl+Esc -> console.
 local user_pointer
 
 -- One lifetime, several names for subsets of it. Every channel
--- installs the same way, runs the same chain, and is released at
--- the same moment: the project's stop. The split that existed
--- here (keyboard released at running->project_open, pointer
--- exempted so pen-and-paper projects survived it) came with
--- this feature and is gone: at the PR base nothing was
--- released before suspend or stop.
--- The subsets below name what a group CARRIES, never how it is
--- routed: keyboard/text events have a combo trigger and
--- therefore a shortcuts tier.
+-- installs the same way, runs the same chain, and is released
+-- at the same moment: the project's stop. The split that
+-- existed here (keyboard released at running->project_open,
+-- pointer exempted so pen-and-paper projects survived it) came
+-- with this feature and is gone: at the PR base nothing was
+-- released before suspend or stop. The subsets below name what
+-- a group CARRIES, never how it is routed: keyboard/text events
+-- have a combo trigger and therefore a shortcuts tier.
 local _keyboard = {
   'keypressed',
   'keyreleased',
@@ -223,16 +222,16 @@ end
 --- @param CC ConsoleController
 -- `userlove`: the project's sandboxed `love` table. `occupy`:
 -- take over the keyboard/text handlers for the project route's
--- run (doc/development/decisions/input.md Decision 11 uses
--- this verb). Giving the project route
--- its own connect path — not a generic route swap — is
--- deliberate: the three routes are not yet fully symmetric
--- (the editor is still reached via the console fork), so PIC
--- is wired explicitly here. See doc/development/decisions/input.md #1
--- "route-centric routing" + #11 "route connects only while
--- running". It installs even with no project handlers: an
--- unhandled event must stop in the project route, never reach the
--- hidden console. (`userlove` rename: technical_debt.)
+-- run (doc/development/decisions/input.md Decision 11 uses this
+-- verb). Giving the project route its own connect path — not a
+-- generic route swap — is deliberate: the three routes are not
+-- yet fully symmetric (the editor is still reached via the
+-- console fork), so PIC is wired explicitly here. See
+-- doc/development/decisions/input.md #1 "route-centric routing"
+-- + #11 "route connects only while running". It installs even
+-- with no project handlers: an unhandled event must stop in the
+-- project route, never reach the hidden console. (`userlove`
+-- rename: technical_debt.)
 local function occupy_input(userlove, CC)
   local pic = Controller.project_input
   local compy = CC:get_project_env().compy
@@ -317,30 +316,30 @@ local function wipe_table(t)
 end
 
 --- Teardown of the project's compy.input registrations
---- (doc/development/decisions/input.md, Decision 11): clears the
---- project's shortcuts and hooks. The callbacks table lives on the
---- widget and is re-seeded by reset_widget_outputs (below), so it
---- is not touched here. Reaches through the frozen container's
---- sub-tables — the container itself refuses direct writes
---- (Decision 7).
+--- (doc/development/decisions/input.md, Decision 11): clears
+--- the project's shortcuts and hooks. The callbacks table lives
+--- on the widget and is re-seeded by reset_widget_outputs
+--- (below), so it is not touched here. Reaches through the
+--- frozen container's sub-tables — the container itself refuses
+--- direct writes (Decision 7).
 --- @param CC ConsoleController
 local function reset_compy_input(CC)
   local input = CC:get_project_env().compy.input
   -- Driven by the channel lists, not by iterating the surface:
   -- `shortcuts` and `hooks` are metatable proxies over private
-  -- state, so `pairs` on them yields nothing. Every channel that
-  -- can hold something is named in a list, and the list is what
-  -- teardown walks.
+  -- state, so `pairs` on them yields nothing. Every channel
+  -- that can hold something is named in a list, and the list is
+  -- what teardown walks.
   for _, ev in ipairs(_bindable) do
     wipe_table(input.shortcuts[ev])
   end
   for _, ev in ipairs(HOOK_EVENTS) do input.hooks[ev] = nil end
 end
 
---- Teardown of the widget's own output/callback state on project
---- stop (Decision 11): re-seed the callbacks to their stay-open
---- defaults (AC10 — not a wipe-to-nil) and clear the evaluator's
---- highlighter.
+--- Teardown of the widget's own output/callback state on
+--- project stop (Decision 11): re-seed the callbacks to their
+--- stay-open defaults (AC10 — not a wipe-to-nil) and clear the
+--- evaluator's highlighter.
 local function reset_widget_outputs()
   local ui = love.state.user_input_controller
   if not ui then return end
@@ -377,8 +376,9 @@ local function no_drift(prev, cur)
   return false
 end
 
--- Shared l/r modifier-fold table (see util/key.lua mod_triples): rows of
--- { left-key, right-key, generic-name } in precedence order.
+-- Shared l/r modifier-fold table (see util/key.lua
+-- mod_triples): rows of { left-key, right-key, generic-name }
+-- in precedence order.
 local COMBO_MODS = Key.mod_triples
 
 
@@ -391,11 +391,13 @@ local MOD_HELD = {
   shift = Key.shift,
 }
 
---- Serialise a key event into a canonical combo string ("ctrl+s", "alt+shift+f4").
---- Held modifiers are prepended in COMBO_MODS precedence, l/r folded to generic names,
---- and come from the keyboard itself (doc/development/decisions/input.md, Decision 30).
---- No buffer table: three concatenations, not an allocation
---- per call, and nothing here to make reentrancy-unsafe.
+--- Serialise a key event into a canonical combo string
+--- ("ctrl+s", "alt+shift+f4"). Held modifiers are prepended in
+--- COMBO_MODS precedence, l/r folded to generic names, and come
+--- from the keyboard itself
+--- (doc/development/decisions/input.md, Decision 30). No buffer
+--- table: three concatenations, not an allocation per call, and
+--- nothing here to make reentrancy-unsafe.
 --- @param k string            triggering key (raw LÖVE name)
 --- @return string             canonical combo string
 local function combo_string(k)
@@ -478,10 +480,10 @@ end
 
 Controller = {
   --- @private
-  -- Console defaults, per channel. The derived clicks have none:
-  -- nothing occupies them outside a project run, so anything a
-  -- project's sandboxed love table holds there is the project's
-  -- own and seeds a hook (project_handler).
+  -- Console defaults, per channel. The derived clicks have
+  -- none: nothing occupies them outside a project run, so
+  -- anything a project's sandboxed love table holds there is
+  -- the project's own and seeds a hook (project_handler).
   _defaults = { },
   --- @private
   _userhandlers = {},
@@ -496,10 +498,11 @@ Controller = {
   --- @param CC ConsoleController
   set_love_keypressed = function(CC)
     local function keypressed(k, _, isr)
-      -- TODO(debt): these debug-hotkey if-blocks predate combos;
-      -- migrate onto the combo-table mechanism
+      -- TODO(debt): these debug-hotkey if-blocks predate
+      -- combos; migrate onto the combo-table mechanism
       -- (doc/development/decisions/input.md, Decision 8). See
-      -- doc/development/technical_debt/input.md "Console debug hotkeys are ad-hoc".
+      -- doc/development/technical_debt/input.md "Console debug
+      -- hotkeys are ad-hoc".
       if Key.ctrl() and Key.shift() then
         if love.DEBUG then
           if k == "1" then
@@ -627,14 +630,16 @@ Controller = {
   --- @param CC ConsoleController
   --- @param CV ConsoleView
   set_love_draw = function(CC, CV)
-    -- The widget is painted on top of the console frame, mirroring
-    -- what set_love_update's wrapper does on top of a PROJECT frame.
-    -- Both paths are needed: the wrapper installs only when a project
-    -- replaces love.draw, so a project that hooks no draw at all (an
-    -- input-only one — technical_debt/input.md, ruling (a)) would
-    -- otherwise show a widget that takes keystrokes and paints
-    -- nothing. get_user_input() carries the inspect gate, so the
-    -- suspended project's widget stays unhonoured (Decision 12).
+    -- The widget is painted on top of the console frame,
+    -- mirroring what set_love_update's wrapper does on top of a
+    -- PROJECT frame. Both paths are needed: the wrapper
+    -- installs only when a project replaces love.draw, so a
+    -- project that hooks no draw at all (an input-only one —
+    -- technical_debt/input.md, ruling (a)) would otherwise show
+    -- a widget that takes keystrokes and paints nothing.
+    -- get_user_input() carries the inspect gate, so the
+    -- suspended project's widget stays unhonoured (Decision
+    -- 12).
     local function draw()
       View.draw(CC, CV)
       local ui = get_user_input()
@@ -677,10 +682,11 @@ Controller = {
       -- A running project stops to the console. So does the
       -- corner case: a paper-and-pen style project that is
       -- still interactive (input widget shown or pointer
-      -- handlers installed — doc/development/technical_debt/input.md,
-      -- "Input-only / pointer-only projects stay live in
-      -- `project_open` (RESOLVED, ruling a)"). An idle
-      -- console in project_open falls through: the app quits.
+      -- handlers installed —
+      -- doc/development/technical_debt/input.md, "Input-only /
+      -- pointer-only projects stay live in `project_open`
+      -- (RESOLVED, ruling a)"). An idle console in project_open
+      -- falls through: the app quits.
       if love.state.app_state == 'running'
           or (love.state.app_state == 'project_open'
               and Controller.user_is_interactive()) then
@@ -695,10 +701,11 @@ Controller = {
   ---  public  ---
   ----------------
   --- Hand keyboard/text back to the console at the moment a
-  --- project's code finishes running but the project stays
-  --- open (the 'running' -> 'project_open' state change —
-  --- doc/development/decisions/input.md, Decision 11). Pointer handlers
-  --- stay hooked until the project stops (same decision).
+  --- project's code finishes running but the project stays open
+  --- (the 'running' -> 'project_open' state change —
+  --- doc/development/decisions/input.md, Decision 11). Pointer
+  --- handlers stay hooked until the project stops (same
+  --- decision).
   --- @param CC ConsoleController
   release_keyboard_route = function(CC)
     Controller.project_input:deactivate()
@@ -720,11 +727,11 @@ Controller = {
   set_default_handlers = function(CC, CV)
     -- When the project route lets go of the keyboard/text
     -- callbacks they always return to the console: it is the
-    -- default/restore route (doc/development/decisions/input.md #1), so the
-    -- release must precede reinstalling the console below.
-    -- The only console/PIC tie is this restore ordering +
-    -- inspect suppression (doc/development/decisions/input.md #11/#12) — not
-    -- a special-case beyond that.
+    -- default/restore route (doc/development/decisions/input.md
+    -- #1), so the release must precede reinstalling the console
+    -- below. The only console/PIC tie is this restore ordering
+    -- + inspect suppression (doc/development/decisions/input.md
+    -- #11/#12) — not a special-case beyond that.
     Controller.project_input:deactivate()
 
     -- SKIPPED textedited - IME support, TODO?
@@ -1016,9 +1023,9 @@ Controller = {
     return (user_update or user_draw)
   end,
 
-  --- A non-blocking project is still "live" while it
-  --- has an active input widget or a pointer/click handler — it
-  --- keeps the project route and Ctrl+Esc returns to the console.
+  --- A non-blocking project is still "live" while it has an
+  --- active input widget or a pointer/click handler — it keeps
+  --- the project route and Ctrl+Esc returns to the console.
   user_is_interactive = function()
     return (love.state.user_input ~= nil) or user_pointer
   end,

@@ -28,12 +28,14 @@ local F = require('tests.helpers.input_fixture')
 
 describe('input surface: inbound events — a project stays live'
   .. ' without update or draw #input', function()
-  -- Fixture is built in setup (not at module load); busted 2 insulates
-  -- _G/package.loaded per file, so this file runs standalone too.
+  -- Fixture is built in setup (not at module load); busted 2
+  -- insulates _G/package.loaded per file, so this file runs
+  -- standalone too.
   setup(function() F.setup() end)
   teardown(function() F.teardown() end)
 
-  -- Captured after the fixture is built (F.cc is nil before setup).
+  -- Captured after the fixture is built (F.cc is nil before
+  -- setup).
   local saved_stop
 
   local function stub_stop()
@@ -86,10 +88,11 @@ describe('input surface: inbound events — a project stays live'
       assert.is_truthy(Controller.user_is_interactive())
     end)
 
-  -- The other half of the rule, and the case the ruling is named
-  -- after: a project that shows no widget at all but installs a
-  -- pointer handler — a clickable sheet of paper. Untested until
-  -- now, though it is the first case the doc entry lists.
+  -- The other half of the rule, and the case the ruling is
+  -- named after: a project that shows no widget at all but
+  -- installs a pointer handler — a clickable sheet of paper.
+  -- Untested until now, though it is the first case the doc
+  -- entry lists.
   it('so is a pointer handler, with no widget anywhere',
     function()
       local calls = stub_stop()

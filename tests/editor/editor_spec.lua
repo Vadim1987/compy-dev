@@ -486,11 +486,12 @@ describe('Editor #editor', function()
         end)
 
         -- A typed query arrives one character at a time
-        -- (doc/development/internals/user_input.md, "Data flow"),
-        -- which is what a search box gets in practice; handing the
-        -- controller the whole string was a shortcut the device
-        -- never takes. mock.textinput with an explicit handler is
-        -- exactly that handler call, so it buys nothing here.
+        -- (doc/development/internals/user_input.md, "Data
+        -- flow"), which is what a search box gets in practice;
+        -- handing the controller the whole string was a
+        -- shortcut the device never takes. mock.textinput with
+        -- an explicit handler is exactly that handler call, so
+        -- it buys nothing here.
         local function type_search(text)
           for ch in text:gmatch('.') do
             controller:textinput(ch)
@@ -712,11 +713,11 @@ describe('Editor #editor', function()
 
       end)
 
-      -- Block navigation at the buffer limit: with block #3 open in
-      -- the input, 'down' and the first 'up' stay inside it; the
-      -- next 'up' crosses out to the previous block. Guards block
-      -- navigation against the widget's own line-scope limit
-      -- handling (is_at_limit).
+      -- Block navigation at the buffer limit: with block #3
+      -- open in the input, 'down' and the first 'up' stay
+      -- inside it; the next 'up' crosses out to the previous
+      -- block. Guards block navigation against the widget's own
+      -- line-scope limit handling (is_at_limit).
       describe("navigation at the block limit", function()
         it('up at the top limit navigates blocks', function()
           local f1 = mock_func_snippet("one")

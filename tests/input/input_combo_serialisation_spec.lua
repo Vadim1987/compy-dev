@@ -3,9 +3,11 @@
 -- the shortcut behaviour it drives is asserted in
 -- input_shortcuts_click_spec.lua.
 
--- Stub view.view before anything requires it: the real module (src/view/view.lua) calls
--- gfx.newFont() at load time (gfx = love.graphics), which needs a graphics context absent in
--- tests. This minimal stub mirrors the fields the controller path touches.
+-- Stub view.view before anything requires it: the real module
+-- (src/view/view.lua) calls gfx.newFont() at load time (gfx =
+-- love.graphics), which needs a graphics context absent in
+-- tests. This minimal stub mirrors the fields the controller
+-- path touches.
 package.preload['view.view'] = function()
   View = {
     prev_draw = nil,
@@ -17,8 +19,9 @@ package.preload['view.view'] = function()
   }
 end
 
--- combo_string is a free function over the device, but requiring the
--- controller pulls the module graph that reads love at load time.
+-- combo_string is a free function over the device, but
+-- requiring the controller pulls the module graph that reads
+-- love at load time.
 local mock = require('tests.mock')
 mock.mock_love({
   state = {
@@ -28,17 +31,18 @@ mock.mock_love({
   },
   DEBUG = false,
   PROFILE = false,
-  -- quit is a no-op: we assert the handlers don't crash, not quit behaviour.
+  -- quit is a no-op: we assert the handlers don't crash, not
+  -- quit behaviour.
   event = { quit = function() end },
 })
 
 require('controller.controller')
 
--- (serialize-vs-match): proposal to
--- replace per-keypress combo_string serialisation with
--- registration-time dispatcher closures — same open item
--- as doc/development/technical_debt/input.md, "Combo-string dispatch
--- allocates a table per call".
+-- (serialize-vs-match): proposal to replace per-keypress
+-- combo_string serialisation with registration-time dispatcher
+-- closures — same open item as
+-- doc/development/technical_debt/input.md, "Combo-string
+-- dispatch allocates a table per call".
 describe('input surface: inbound events — combo serialisation'
   .. ' #input', function()
   local cs = Controller.combo_string

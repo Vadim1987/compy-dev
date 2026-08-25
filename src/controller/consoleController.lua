@@ -174,11 +174,11 @@ end
 
 --- Called at both ends of a run — the stop path and the
 --- failed-run path. Down THROUGH the widget, never by clearing
---- `love.state.user_input`: the widget's own `shown` flag has to
---- fall with the handle, or the next project's show() is refused
---- as a repeat (doc/development/decisions/input.md, Decision 3).
---- `hide()` fires no cancel flow (Decision 6) — teardown is not
---- a user-facing dismiss.
+--- `love.state.user_input`: the widget's own `shown` flag has
+--- to fall with the handle, or the next project's show() is
+--- refused as a repeat (doc/development/decisions/input.md,
+--- Decision 3). `hide()` fires no cancel flow (Decision 6) —
+--- teardown is not a user-facing dismiss.
 local function hide_input_widget()
   local widget = love.state.user_input_controller
   if widget then return widget:hide() end
@@ -403,27 +403,27 @@ end
 
 -- Builds the `compy.input` sub-namespace — the input
 -- solicitation surface, complementary to compy.terminal
--- (above): compy.terminal is the always-present console
--- OUTPUT grid the project writes to; compy.input is the
--- transient input widget the project pops up to ask the
--- user for text and get a value back. The two "cursor"
--- notions differ: terminal.gotoxy moves the console grid
--- cursor, input.get_cursor/set_cursor address the caret
--- WITHIN the input field.
--- By architectural contract these wrappers are the ONLY
--- project-facing surface for the input widget: they wrap
+-- (above): compy.terminal is the always-present console OUTPUT
+-- grid the project writes to; compy.input is the transient
+-- input widget the project pops up to ask the user for text and
+-- get a value back. The two "cursor" notions differ:
+-- terminal.gotoxy moves the console grid cursor,
+-- input.get_cursor/set_cursor address the caret WITHIN the
+-- input field. By architectural contract these wrappers are the
+-- ONLY project-facing surface for the input widget: they wrap
 -- UserInputController (love.state.user_input_controller);
 -- projects never touch the controller directly. Namespace +
 -- lifecycle docs: doc/development/internals/user_input.md.
--- compy.input's write boundary (doc/development/decisions/input.md,
--- Decision 7): the container and the IDENTITY of its
--- three sub-tables (shortcuts / hooks / callbacks) are frozen — a
--- project cannot replace them (compy.input.shortcuts = {} raises).
--- Every LEAF inside is freely writable: shortcuts[event][combo] = fn
--- (through the combo table's own normalising __newindex, Decision 8),
+-- compy.input's write boundary
+-- (doc/development/decisions/input.md, Decision 7): the
+-- container and the IDENTITY of its three sub-tables (shortcuts
+-- / hooks / callbacks) are frozen — a project cannot replace
+-- them (compy.input.shortcuts = {} raises). Every LEAF inside
+-- is freely writable: shortcuts[event][combo] = fn (through the
+-- combo table's own normalising __newindex, Decision 8),
 -- hooks[event] = fn, callbacks[name] = fn. One structural rule
--- replaces the old enumerated 11-name allowlist — nothing to keep in
--- sync with the API surface.
+-- replaces the old enumerated 11-name allowlist — nothing to
+-- keep in sync with the API surface.
 --- @param k any
 local function unassignable_error(k)
   error("compy.input: '" .. tostring(k)
@@ -458,13 +458,14 @@ local function build_shortcuts_surface(shortcuts)
     function(event) return 'shortcuts.' .. tostring(event) end)
 end
 
---- The dispatch combinators (doc/development/decisions/input.md,
---- Decisions 22 and 24), reached as compy.input.fn.*. Stateless
---- and orthogonal: `ignore_repeat` decides whether the handler
---- RUNS, `stop_here`/`side_run` decide whether the event
---- PROPAGATES — each returns a fixed truthy/falsy in place of
---- whatever the handler returned — and neither knows about the
---- other. The combination most bindings want is
+--- The dispatch combinators
+--- (doc/development/decisions/input.md, Decisions 22 and 24),
+--- reached as compy.input.fn.*. Stateless and orthogonal:
+--- `ignore_repeat` decides whether the handler RUNS,
+--- `stop_here`/`side_run` decide whether the event PROPAGATES —
+--- each returns a fixed truthy/falsy in place of whatever the
+--- handler returned — and neither knows about the other. The
+--- combination most bindings want is
 --- `stop_here(ignore_repeat(fn))`: act once per press, and let
 --- nothing downstream see the key.
 local INPUT_FN = {
@@ -477,16 +478,16 @@ local INPUT_FN = {
       return fn(k, sc, isr)
     end
   end,
-  --- Run `fn` if given, then consume. With no `fn` the binding's
-  --- only job is to swallow the event.
+  --- Run `fn` if given, then consume. With no `fn` the
+  --- binding's only job is to swallow the event.
   stop_here = function(fn)
     return function(...)
       if fn then fn(...) end
       return true
     end
   end,
-  --- Run `fn` if given, and let the event carry on regardless of
-  --- what it returned — the binding is a side effect, not a
+  --- Run `fn` if given, and let the event carry on regardless
+  --- of what it returned — the binding is a side effect, not a
   --- claim on the key.
   side_run = function(fn)
     return function(...)
@@ -500,11 +501,11 @@ local input_fn_surface = build_frozen_view(
   function(k) return INPUT_FN[k] end,
   function(k) return 'fn.' .. tostring(k) end)
 
---- Assemble the compy.input surface: reads resolve the three frozen
---- sub-tables (shortcuts / hooks / callbacks), the combinator
---- table, or a callable method; every write to the container
---- itself is refused loudly (Decision 7 — frozen container,
---- writable leaves).
+--- Assemble the compy.input surface: reads resolve the three
+--- frozen sub-tables (shortcuts / hooks / callbacks), the
+--- combinator table, or a callable method; every write to the
+--- container itself is refused loudly (Decision 7 — frozen
+--- container, writable leaves).
 --- @param state table
 --- @param methods table
 --- @return table
@@ -621,11 +622,11 @@ local function merge_callback_keys(state, cfg)
 end
 
 --- Consume the hidden-configure pending prompt/text/cursor
---- (doc/development/internals/user_input.md, "configure(config)"): spent
---- on this show() regardless of whether it
---- ends up used (an explicit cfg value at this same show() call
---- wins) — a later bare show() must not keep re-injecting a
---- stale draft.
+--- (doc/development/internals/user_input.md,
+--- "configure(config)"): spent on this show() regardless of
+--- whether it ends up used (an explicit cfg value at this same
+--- show() call wins) — a later bare show() must not keep
+--- re-injecting a stale draft.
 --- @param pending table
 --- @param cfg table
 local function consume_pending(pending, cfg)
@@ -637,10 +638,11 @@ end
 
 --- Stash configure()'s provided prompt/text/cursor into the
 --- pending store for consumption by the next show()
---- (doc/development/internals/user_input.md, "configure(config)");
---- output-callback fields go through the same sticky `state`
---- fields show() already reads — persisted, never applied
---- live (there is no active session to apply them to).
+--- (doc/development/internals/user_input.md,
+--- "configure(config)"); output-callback fields go through the
+--- same sticky `state` fields show() already reads — persisted,
+--- never applied live (there is no active session to apply them
+--- to).
 --- @param state table
 --- @param cfg table
 local function stash_hidden_configure(state, cfg)
@@ -674,20 +676,20 @@ end
 -- Builds the compy.input surface: the three-consumer dispatch
 -- surface (doc/development/decisions/input.md, Decision 2) a
 -- project registers against. `shortcuts[event]` are the
--- doc/development/decisions/input.md, Decision 8 per-event combo
--- sub-tables (normalising); `hooks[event]` is the one seeded hook
--- per event (Decision 10). show/hide drive the widget
--- (resolved from love.state, never held by the project).
+-- doc/development/decisions/input.md, Decision 8 per-event
+-- combo sub-tables (normalising); `hooks[event]` is the one
+-- seeded hook per event (Decision 10). show/hide drive the
+-- widget (resolved from love.state, never held by the project).
 -- The widget-method surface a project drives (show/hide/
--- configure/set_text/set_cursor/get_cursor/clear), parameterized
--- by instance: any
--- adopter — not only the project widget — gets the same
--- ergonomics over ITS OWN widget by supplying its own resolvers.
--- `get_widget` resolves the UserInputController; `get_active_flag`
--- reports shown-ness (truthy = shown); `state` is the sticky
--- output/pending store show()/configure() read. The project
--- widget closes the two resolvers over the love.state globals —
--- behaviour-identical to the pre-factory inline shape.
+-- configure/set_text/set_cursor/get_cursor/clear),
+-- parameterized by instance: any adopter — not only the project
+-- widget — gets the same ergonomics over ITS OWN widget by
+-- supplying its own resolvers. `get_widget` resolves the
+-- UserInputController; `get_active_flag` reports shown-ness
+-- (truthy = shown); `state` is the sticky output/pending store
+-- show()/configure() read. The project widget closes the two
+-- resolvers over the love.state globals — behaviour-identical
+-- to the pre-factory inline shape.
 --- @param get_widget fun(): UserInputController?
 --- @param get_active_flag fun(): table?
 --- @param state table
@@ -734,13 +736,14 @@ local function build_widget_api(get_widget, get_active_flag, state)
       end
       get_widget():set_text(text, keep_cursor)
     end,
-    -- doc/development/internals/user_input.md, "configure(config)": live
-    -- update on an active session (only
-    -- the Contract's live-updatable set — prompt/highlighter/
-    -- validator/widget outputs; text/cursor inert there); safe
-    -- + un-warned while hidden — provided fields persist (via
-    -- state/pending, same fields show() reads) for the very next
-    -- show(). Never a partial/silent apply either way.
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": live update on an active session
+    -- (only the Contract's live-updatable set —
+    -- prompt/highlighter/ validator/widget outputs; text/cursor
+    -- inert there); safe + un-warned while hidden — provided
+    -- fields persist (via state/pending, same fields show()
+    -- reads) for the very next show(). Never a partial/silent
+    -- apply either way.
     configure = function(cfg)
       local next_cfg = cfg or { }
       check_keys(next_cfg, 'compy.input.configure',
@@ -752,11 +755,11 @@ local function build_widget_api(get_widget, get_active_flag, state)
       merge_callback_keys(state, next_cfg)
       get_widget():configure(next_cfg)
     end,
-    -- doc/development/internals/user_input.md, "clear()": empty content +
-    -- cursor to start, no callback;
-    -- no-op + warn while hidden. Refreshes the view directly
-    -- (no re-show) — reuses the controller's existing clear()
-    -- (content + error state).
+    -- doc/development/internals/user_input.md, "clear()": empty
+    -- content + cursor to start, no callback; no-op + warn
+    -- while hidden. Refreshes the view directly (no re-show) —
+    -- reuses the controller's existing clear() (content + error
+    -- state).
     clear = function()
       if not get_active_flag() then
         Log.warn('compy.input.clear ignored — hidden')
@@ -772,10 +775,10 @@ end
 local get_compy_input = function()
   -- callbacks IS the widget's OWN table (owner ruling
   -- 2026-07-20: compy.input.callbacks === the widget's
-  -- self.callbacks). The widget is provisioned before the console
-  -- (main.lua reorder), so it exists here. NEVER reassign this
-  -- table — only mutate it — since the surface holds this exact
-  -- reference (teardown re-seeds in place).
+  -- self.callbacks). The widget is provisioned before the
+  -- console (main.lua reorder), so it exists here. NEVER
+  -- reassign this table — only mutate it — since the surface
+  -- holds this exact reference (teardown re-seeds in place).
   local widget = love.state.user_input_controller
   -- One combo table per channel, from the list the route
   -- dispatches on — not a copy of it, so a channel cannot exist
@@ -785,11 +788,12 @@ local get_compy_input = function()
     shortcut_tables[ev] = Key.new_handler_table()
   end
   local state = {
-    -- shortcuts: per-event combo tables (Decision 8, normalising).
-    -- hooks: one fn per event, seeded once at activation (Decision
-    -- 10). callbacks: the widget's own table (Decision 7).
-    -- shortcuts/hooks start empty (leaves fill on project
-    -- write); callbacks carries the widget's stay-open defaults.
+    -- shortcuts: per-event combo tables (Decision 8,
+    -- normalising). hooks: one fn per event, seeded once at
+    -- activation (Decision 10). callbacks: the widget's own
+    -- table (Decision 7). shortcuts/hooks start empty (leaves
+    -- fill on project write); callbacks carries the widget's
+    -- stay-open defaults.
     shortcuts = shortcut_tables,
     hooks = { },
     callbacks = widget.callbacks,
@@ -808,8 +812,9 @@ local get_compy_input = function()
   return build_input_surface(state, methods)
 end
 
--- Builds the `compy.*` table injected into a project's sandbox env (terminal, audio, graphics,
--- fonts, input); called while preparing the project environment.
+-- Builds the `compy.*` table injected into a project's sandbox
+-- env (terminal, audio, graphics, fonts, input); called while
+-- preparing the project environment.
 local get_compy_namespace = function(terminal)
   require("util.namespace.fonts")
   -- Two members are held as upvalues rather than fields, and
@@ -1467,8 +1472,8 @@ function ConsoleController:keypressed(k)
       input:history_fwd()
     end
     -- History navigation at the vertical boundary is driven by
-    -- the widget's on_limit_reached callback (set at construction),
-    -- not by keypressed's return value (retired,
+    -- the widget's on_limit_reached callback (set at
+    -- construction), not by keypressed's return value (retired,
     -- doc/development/decisions/input.md, Decision 5).
     -- keypressed still runs for its editing side effects; its
     -- return is unused.

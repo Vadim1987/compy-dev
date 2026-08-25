@@ -2,8 +2,8 @@
 -- (1.0.0-rc20260712) — covers the compy.input surface.
 
 -- Widget lifecycle: activation and reset through the public
--- compy.input surface, and the rule that a hidden widget consumes
--- nothing (doc/input_api.md, "`show(config)`";
+-- compy.input surface, and the rule that a hidden widget
+-- consumes nothing (doc/input_api.md, "`show(config)`";
 -- doc/development/decisions/input.md, Decision 2).
 
 local F  = require('tests.helpers.input_fixture')
@@ -14,20 +14,19 @@ describe('input surface: widget control #input', function()
   before_each(function() F.reset() end)
 
   -- Widget activation / reset (doc/input_api.md,
-  -- "`show(config)`"), driven through
-  -- the public project surface. F.compy_input() resolves
-  -- project_env.compy.input — exactly what a project sees.
-  -- show({ text = ... }) seeds the widget's CONTENT (the
-  -- editable text) and show({ prompt = ... }) its label — a separate
-  -- config key, one case each (same section). The
-  -- "no cancel chain" facts are stable-now.
+  -- "`show(config)`"), driven through the public project
+  -- surface. F.compy_input() resolves project_env.compy.input —
+  -- exactly what a project sees. show({ text = ... }) seeds the
+  -- widget's CONTENT (the editable text) and show({ prompt =
+  -- ... }) its label — a separate config key, one case each
+  -- (same section). The "no cancel chain" facts are stable-now.
   describe('show(): activation and reset', function()
 
-    -- Prompt LABELLING at activation. Re-labelling on an already
-    -- active session is the reconfigure concern and is covered in
-    -- this file's 'configure(): the live session' group ('updates
-    -- the prompt on an active session'), so this case only
-    -- pins the show() half.
+    -- Prompt LABELLING at activation. Re-labelling on an
+    -- already active session is the reconfigure concern and is
+    -- covered in this file's 'configure(): the live session'
+    -- group ('updates the prompt on an active session'), so
+    -- this case only pins the show() half.
     it('a fresh activation applies the prompt label', function()
       local input = F.compy_input()
       input.show({ text = 'hi', prompt = 'name?' })
@@ -184,9 +183,9 @@ describe('input surface: widget control #input', function()
   -- ====================================================
 
   describe('configure(): the live session', function()
-    -- doc/development/internals/user_input.md, "configure(config)": prompt
-    -- updates live on an active session;
-    -- content/cursor/callbacks stay untouched.
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": prompt updates live on an active
+    -- session; content/cursor/callbacks stay untouched.
     it('updates the prompt on an active session',
       function()
         local input = F.compy_input()
@@ -201,9 +200,10 @@ describe('input surface: widget control #input', function()
         assert.equal(cb, input.callbacks.on_text_entered)
       end)
 
-    -- doc/development/internals/user_input.md, "configure(config)":
-    -- validator — the NEXT submit uses the new fn,
-    -- not the one set at show() (exercised, not just read).
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": validator — the NEXT submit uses the
+    -- new fn, not the one set at show() (exercised, not just
+    -- read).
     it('swaps the live validator', function()
       local input = F.activate_project()
       input.show({
@@ -222,9 +222,9 @@ describe('input surface: widget control #input', function()
       assert.is_true(F.is_widget_visible())
     end)
 
-    -- doc/development/internals/user_input.md, "configure(config)":
-    -- highlighter — the NEXT keystroke's highlight
-    -- uses the new fn.
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": highlighter — the NEXT keystroke's
+    -- highlight uses the new fn.
     it('swaps the live highlighter', function()
       local input = F.activate_project()
       local marker = { { 'x' } }
@@ -239,9 +239,10 @@ describe('input surface: widget control #input', function()
       assert.equal(marker, got.hl)
     end)
 
-    -- doc/development/internals/user_input.md, "configure(config)":
-    -- on_text_entered — the swapped fn fires on the
-    -- next submit; the old one set at show() does not.
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": on_text_entered — the swapped fn
+    -- fires on the next submit; the old one set at show() does
+    -- not.
     it('swaps the live on_text_entered', function()
       local old_called, new_text = false, nil
       local input = F.activate_project()
@@ -257,9 +258,9 @@ describe('input surface: widget control #input', function()
       assert.same({ 'ab' }, new_text)
     end)
 
-    -- doc/development/internals/user_input.md, "configure(config)":
-    -- on_limit_reached — the swapped fn fires on the
-    -- next boundary; the old one does not.
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": on_limit_reached — the swapped fn
+    -- fires on the next boundary; the old one does not.
     it('swaps the live on_limit_reached', function()
       local old_called, new_dir = false, nil
       local input = F.activate_project()
@@ -276,11 +277,12 @@ describe('input surface: widget control #input', function()
       assert.equal('left', new_dir)
     end)
 
-    -- doc/development/internals/user_input.md, "configure(config)":
-    -- text/cursor are inert on an active session
-    -- — even mixed with a live field, the live one applies
-    -- and the inert ones are untouched (no partial/silent
-    -- application: each field's own rule holds exactly).
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": text/cursor are inert on an active
+    -- session — even mixed with a live field, the live one
+    -- applies and the inert ones are untouched (no
+    -- partial/silent application: each field's own rule holds
+    -- exactly).
     it('leaves text/cursor untouched on an ' ..
       'active session, even mixed with a live field',
       function()
@@ -301,10 +303,9 @@ describe('input surface: widget control #input', function()
   end)
 
   describe('configure(): while hidden', function()
-    -- doc/development/internals/user_input.md, "configure(config)":
-    -- configure while hidden is safe
-    -- (no warn —
-    -- it is not a refusal) and text/cursor apply on the
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": configure while hidden is safe (no
+    -- warn — it is not a refusal) and text/cursor apply on the
     -- very next show().
     it('applies text and cursor on the ' ..
       'next show', function()
@@ -322,10 +323,10 @@ describe('input surface: widget control #input', function()
       assert.same(2, c)
     end)
 
-    -- doc/development/internals/user_input.md, "configure(config)": a
-    -- hidden configure of a live field
-    -- (prompt,
-    -- validator) applies cleanly on the next show() too.
+    -- doc/development/internals/user_input.md,
+    -- "configure(config)": a hidden configure of a live field
+    -- (prompt, validator) applies cleanly on the next show()
+    -- too.
     it('applies prompt and validator on ' ..
       'the next show', function()
       local input = F.compy_input()
@@ -356,9 +357,9 @@ describe('input surface: widget control #input', function()
   end)
 
   describe('clear()', function()
-    -- doc/development/internals/user_input.md, "clear()": on an active
-    -- session empties content,
-    -- cursor to start, no callback fires.
+    -- doc/development/internals/user_input.md, "clear()": on an
+    -- active session empties content, cursor to start, no
+    -- callback fires.
     it('empties an active session with no callback',
       function()
         local input = F.compy_input()
@@ -375,9 +376,9 @@ describe('input surface: widget control #input', function()
         assert.is_false(called)
       end)
 
-    -- doc/development/internals/user_input.md, "clear()": while hidden is
-    -- a no-op + warn —
-    -- unlike configure(), this call IS refused.
+    -- doc/development/internals/user_input.md, "clear()": while
+    -- hidden is a no-op + warn — unlike configure(), this call
+    -- IS refused.
     it('while hidden warns and no-ops', function()
       local input = F.compy_input()
       local warned = 0
@@ -390,9 +391,8 @@ describe('input surface: widget control #input', function()
   end)
 
   describe('the mutable boundary', function()
-    -- doc/development/decisions/input.md, Decision 7: the mutable boundary
-    -- is unchanged for the two
-    -- new callables.
+    -- doc/development/decisions/input.md, Decision 7: the
+    -- mutable boundary is unchanged for the two new callables.
     it('assigning configure/clear raises', function()
       local input = F.compy_input()
       assert.has_error(function()
@@ -404,13 +404,14 @@ describe('input surface: widget control #input', function()
     end)
   end)
 
-  -- Hidden widget does not consume (doc/development/decisions/input.md,
-  -- Decision 2: "its hidden-check is internal"): an event arriving while the
-  -- widget is hidden never mutates widget state — it
-  -- reaches the active route instead. Inter-route dispatch is unchanged.
-  -- One case per channel: the pair differs only in which
-  -- channel the event arrives on (textinput vs keypressed), so
-  -- they are named for that and nothing else.
+  -- Hidden widget does not consume
+  -- (doc/development/decisions/input.md, Decision 2: "its
+  -- hidden-check is internal"): an event arriving while the
+  -- widget is hidden never mutates widget state — it reaches
+  -- the active route instead. Inter-route dispatch is
+  -- unchanged. One case per channel: the pair differs only in
+  -- which channel the event arrives on (textinput vs
+  -- keypressed), so they are named for that and nothing else.
   --
   -- These ran on the CONSOLE route while it still had a widget
   -- step, and were tagged #disputable because the second half
@@ -474,10 +475,11 @@ describe('input surface: widget control #input', function()
     end)
   end)
 
-  -- doc/input_api.md, "Live changes": the widget answers whether it
-  -- is up. A project cannot read this from love.state — its `love` is
-  -- a sandboxed clone, so `love.state.user_input` is always nil inside
-  -- a project (project_sandbox_env.md, T1) — which is why the query is
+  -- doc/input_api.md, "Live changes": the widget answers
+  -- whether it is up. A project cannot read this from
+  -- love.state — its `love` is a sandboxed clone, so
+  -- `love.state.user_input` is always nil inside a project
+  -- (project_sandbox_env.md, T1) — which is why the query is
   -- part of the surface rather than an idiom.
   describe('is_shown()', function()
 
@@ -491,8 +493,9 @@ describe('input surface: widget control #input', function()
         assert.is_false(input.is_shown())
       end)
 
-    -- The guard the ruling asks an example to write: act only when
-    -- the widget is down, and leave the key to it when it is up.
+    -- The guard the ruling asks an example to write: act only
+    -- when the widget is down, and leave the key to it when it
+    -- is up.
     it('lets a project skip a redundant show', function()
       local shows = 0
       local input = F.activate_project()
@@ -533,17 +536,17 @@ describe('input surface: widget control #input', function()
     end)
   end)
 
-  -- doc/input_api.md, "Opening the input widget from a key". LÖVE
-  -- delivers a keypressed AND a textinput for one physical key
-  -- and guarantees nothing about their order, so the trigger's
-  -- own echo can land in the field it just opened. The API's
-  -- answer is a project idiom, not a mechanism: a one-shot
-  -- shortcut on the textinput channel eats the echo and
-  -- unregisters itself, re-armed wherever the project closes.
-  -- These cases pin the idiom the guide documents. It is only
-  -- as good as the seams it rests on: shortcuts run before the
-  -- widget on every channel, and a handler may clear its own
-  -- slot mid-flight.
+  -- doc/input_api.md, "Opening the input widget from a key".
+  -- LÖVE delivers a keypressed AND a textinput for one physical
+  -- key and guarantees nothing about their order, so the
+  -- trigger's own echo can land in the field it just opened.
+  -- The API's answer is a project idiom, not a mechanism: a
+  -- one-shot shortcut on the textinput channel eats the echo
+  -- and unregisters itself, re-armed wherever the project
+  -- closes. These cases pin the idiom the guide documents. It
+  -- is only as good as the seams it rests on: shortcuts run
+  -- before the widget on every channel, and a handler may clear
+  -- its own slot mid-flight.
   describe('the documented echo guard', function()
 
     local function arm(input)
@@ -600,7 +603,8 @@ describe('input surface: widget control #input', function()
       end)
 
     -- The re-arm the guide insists on: without it the second
-    -- open takes the echo, which is the whole cost of the idiom.
+    -- open takes the echo, which is the whole cost of the
+    -- idiom.
     it('a re-armed guard protects the next open too', function()
       local input = open_on('keypressed')
       F.session.press('i')
@@ -646,9 +650,9 @@ describe('input surface: widget control #input', function()
       assert.equal(0, painted)
     end)
 
-    -- doc/development/decisions/input.md, Decision 12: under inspect
-    -- the console owns the surface and the project's widget is
-    -- unhonoured — including on screen.
+    -- doc/development/decisions/input.md, Decision 12: under
+    -- inspect the console owns the surface and the project's
+    -- widget is unhonoured — including on screen.
     it('a widget is not painted under inspect', function()
       local painted = 0
       F.widget.view.draw = function() painted = painted + 1 end
@@ -660,10 +664,11 @@ describe('input surface: widget control #input', function()
   end)
 
   -- Editor block navigation at the buffer limit lives in
-  -- tests/editor/editor_spec.lua ("with blocks:" → "navigation at the
-  -- block limit"): it is editor-INTERNAL behaviour driven below the
-  -- gate, not a routing contract of the kind
-  -- doc/development/decisions/input.md, Decision 1, asserts. This suite
-  -- asserts only that the keystrokes reach the editor route
-  -- (input_routing_spec.lua, "routing: editor mode").
+  -- tests/editor/editor_spec.lua ("with blocks:" → "navigation
+  -- at the block limit"): it is editor-INTERNAL behaviour
+  -- driven below the gate, not a routing contract of the kind
+  -- doc/development/decisions/input.md, Decision 1, asserts.
+  -- This suite asserts only that the keystrokes reach the
+  -- editor route (input_routing_spec.lua, "routing: editor
+  -- mode").
 end)

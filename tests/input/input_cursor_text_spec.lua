@@ -1,4 +1,8 @@
---> REMARK: what if we organize tests by three groups named explicitly: a) interception of inbound key/mouse events b) management of input widget c) reacting to input widget events (limits, submission, cancellation) -- but we'll need good names for describe, aligned with documentation
+-- > REMARK: what if we organize tests by three groups named
+-- explicitly: a) interception of inbound key/mouse events b)
+-- management of input widget c) reacting to input widget events
+-- (limits, submission, cancellation) -- but we'll need good
+-- names for describe, aligned with documentation
 
 -- Availability: introduced with the Compy input API
 -- (1.0.0-rc20260712) — covers the compy.input surface.
@@ -6,9 +10,10 @@
 -- Cursor and text surface: get_cursor / set_cursor / set_text,
 -- driven through F.compy_input() — exactly what a project sees
 -- (doc/input_api.md, "Live changes";
--- doc/development/internals/user_input.md, "Cursor
--- manipulation and \"reset\""). Implementation:
--- model/input/userInputModel.lua, controller/userInputController.lua.
+-- doc/development/internals/user_input.md, "Cursor manipulation
+-- and \"reset\""). Implementation:
+-- model/input/userInputModel.lua,
+-- controller/userInputController.lua.
 
 local F = require('tests.helpers.input_fixture')
 
@@ -56,17 +61,18 @@ describe('input surface: widget control — cursor and text #input',
         assert.same({ 1, 3 }, { input.get_cursor() })
       end)
 
-    -- Multiline: the LINE half of the pair has to move too, or a
-    -- single-line-only report would pass every case above.
+    -- Multiline: the LINE half of the pair has to move too, or
+    -- a single-line-only report would pass every case above.
     it('reports the line on multiline text', function()
       local input = F.compy_input()
       input.show({ text = { 'ab', 'cd' } })
       assert.same({ 2, 3 }, { input.get_cursor() })
     end)
 
-    -- Shown-with-text first, THEN hidden: without that setup a nil
-    -- return would be indistinguishable from "the widget was empty
-    -- and never active", which is not the claim being made.
+    -- Shown-with-text first, THEN hidden: without that setup a
+    -- nil return would be indistinguishable from "the widget
+    -- was empty and never active", which is not the claim being
+    -- made.
     it('returns nil when hidden', function()
       local input = F.compy_input()
       input.show({ text = 'hello' })
@@ -161,8 +167,8 @@ describe('input surface: widget control — cursor and text #input',
           assert.same(1, l)
           assert.same(3, c)
           -- Seated for real, across the text swap: typing lands
-          -- at the caret, which sits between 'o' and 'r'
-          -- (caret positions, doc/input_api.md, "Live changes").
+          -- at the caret, which sits between 'o' and 'r' (caret
+          -- positions, doc/input_api.md, "Live changes").
           F.session.type('X')
           assert.same({ 'woXrld' }, F.widget:get_text())
         end)

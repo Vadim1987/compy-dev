@@ -85,8 +85,8 @@ local function enrich_gfx()
   gfx.captureScreenshot = function() end
 end
 
--- A monospace font is a leaf dependency of the terminal; stub the
--- metrics it queries at construction.
+-- A monospace font is a leaf dependency of the terminal; stub
+-- the metrics it queries at construction.
 local font_stub = setmetatable({
   getHeight     = function() return 32 end,
   getWidth      = function() return 16 end,
@@ -126,9 +126,9 @@ local function build_console(cfg)
   return CC
 end
 
--- The persistent widget (main.lua: one instance,
--- published to love.state.user_input_controller; the compy.input
--- wrappers resolve it from there).
+-- The persistent widget (main.lua: one instance, published to
+-- love.state.user_input_controller; the compy.input wrappers
+-- resolve it from there).
 local function build_widget(cfg)
   local m = UserInputModel(cfg, InputEvalText)
   local c = UserInputController(m, true)
@@ -137,16 +137,18 @@ local function build_widget(cfg)
   return c
 end
 
--- The world below is built from each spec file's busted `setup()`
--- (via F.setup), NOT at module-load time. NOTE: busted 2 already
--- insulates _G and package.loaded per spec file (envmode='insulate'),
--- so this is not guarding a live cross-file collision — it makes the
--- fixture explicit and every (split) spec file runnable standalone.
--- F.reset still runs per-test; setup/teardown bracket the whole file.
+-- The world below is built from each spec file's busted
+-- `setup()` (via F.setup), NOT at module-load time. NOTE:
+-- busted 2 already insulates _G and package.loaded per spec
+-- file (envmode='insulate'), so this is not guarding a live
+-- cross-file collision — it makes the fixture explicit and
+-- every (split) spec file runnable standalone. F.reset still
+-- runs per-test; setup/teardown bracket the whole file.
 local cfg, CC, widget, session
 
--- F for Fixture. Fields (F.cc/console/editor/widget/session/cfg) are
--- nil until F.setup runs; reading them at describe-body scope is a bug.
+-- F for Fixture. Fields
+-- (F.cc/console/editor/widget/session/cfg) are nil until
+-- F.setup runs; reading them at describe-body scope is a bug.
 local F = {}
 
 function F.setup()
@@ -177,10 +179,11 @@ function F.setup()
   F.cfg       = cfg
 end
 
--- Symmetric partner to F.setup, deliberately shallow: require-cached
--- class globals cannot be un-required, and busted 2's per-file
--- insulation reverts _G/package.loaded anyway — so we only undo the
--- fixture's own semantic state and the two globals mock_love writes.
+-- Symmetric partner to F.setup, deliberately shallow:
+-- require-cached class globals cannot be un-required, and
+-- busted 2's per-file insulation reverts _G/package.loaded
+-- anyway — so we only undo the fixture's own semantic state and
+-- the two globals mock_love writes.
 function F.teardown()
   if Controller and Controller.project_input then
     Controller.project_input:deactivate()
@@ -198,11 +201,12 @@ function F.compy_input()
 end
 
 -- Is an input widget visible to the framework? Reads
--- love.state.user_input rather than the widget's own is_shown():
--- the draw loop paints for exactly as long as that field is set
--- (controller.lua, both get_user_input() sites), so this is the
--- observable "the user sees an input field" rather than the
--- widget's self-report, and it stays honest if the two disagree.
+-- love.state.user_input rather than the widget's own
+-- is_shown(): the draw loop paints for exactly as long as that
+-- field is set (controller.lua, both get_user_input() sites),
+-- so this is the observable "the user sees an input field"
+-- rather than the widget's self-report, and it stays honest if
+-- the two disagree.
 function F.is_widget_visible()
   return love.state.user_input ~= nil
 end
@@ -239,9 +243,10 @@ end
 
 -- A selection-enabled widget seeded with multi-line text, so a
 -- pointer event lands an OBSERVABLE selection (the production
--- the widget disables selection, making pointer delivery a no-op —
--- doc/development/internals/user_input.md, "Input widget mouse"). Witnesses
--- pointer delivery to the widget half.
+-- the widget disables selection, making pointer delivery a
+-- no-op — doc/development/internals/user_input.md, "Input
+-- widget mouse"). Witnesses pointer delivery to the widget
+-- half.
 function F.show_selectable_widget(lines)
   local m = UserInputModel(cfg, InputEvalText)
   local w = UserInputController(m, false)
@@ -258,9 +263,10 @@ function F.show_selectable_widget(lines)
   return w
 end
 
--- Production stop owns route/output teardown, the widget's shownness
--- included. What remains here is either fixture-owned state production
--- never creates, or content production keeps on purpose between runs.
+-- Production stop owns route/output teardown, the widget's
+-- shownness included. What remains here is either fixture-owned
+-- state production never creates, or content production keeps
+-- on purpose between runs.
 function F.reset()
   -- Undo a show_selectable_widget swap before teardown runs, so
   -- stop_project_run tears down the shared widget rather than a
@@ -281,10 +287,11 @@ function F.reset()
   love.update(1.0)
   CC.input:clear()
   CC.editor.input:clear()
-  -- Only the widget's CONTENT: production teardown hides the widget
-  -- but deliberately keeps its text. `widget.shown = false` used to be
-  -- forced here too, which quietly compensated for stop_project_run
-  -- not lowering the flag — and hid that bug from the whole suite.
+  -- Only the widget's CONTENT: production teardown hides the
+  -- widget but deliberately keeps its text. `widget.shown =
+  -- false` used to be forced here too, which quietly
+  -- compensated for stop_project_run not lowering the flag —
+  -- and hid that bug from the whole suite.
   widget:clear()
 end
 

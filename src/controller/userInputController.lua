@@ -5,15 +5,16 @@ require("util.string.string")
 require("util.lua")
 
 -- Stay-open defaults for the submit/cancel lifecycle
--- after_submit/after_cancel default to
--- no-ops, so a widget stays open unless a callback hides it. on_limit_
--- reached defaults to a no-op so the navigation-boundary emit is an
+-- after_submit/after_cancel default to no-ops, so a widget
+-- stays open unless a callback hides it. on_limit_ reached
+-- defaults to a no-op so the navigation-boundary emit is an
 -- unconditional call. Re-seeded (not wiped) on teardown (AC10).
 -- before_submit/before_cancel are deliberately absent: their
 -- return is READ as a veto, and an unset one must be
 -- distinguishable from one that declines to veto
--- (doc/development/decisions/input.md, Decision 23). run_callback
--- already answers nil for an absent name, which is no veto.
+-- (doc/development/decisions/input.md, Decision 23).
+-- run_callback already answers nil for an absent name, which is
+-- no veto.
 local function default_callbacks()
   return {
     on_limit_reached = noop,
@@ -34,9 +35,9 @@ local new = function(model, disable_selection,
     -- is_shown() reads this, never love.state (owner ruling
     -- 2026-07-20).
     shown = false,
-    -- For the project widget this table IS compy.input.callbacks,
-    -- the same table (owner ruling 2026-07-20); console and
-    -- editor set their own directly.
+    -- For the project widget this table IS
+    -- compy.input.callbacks, the same table (owner ruling
+    -- 2026-07-20); console and editor set their own directly.
     callbacks = default_callbacks(),
   }
 end
@@ -260,7 +261,8 @@ end
 --- Re-show over an already-shown widget: the secondary path,
 --- and deliberately the narrow one. Only the text subset of cfg
 --- applies; a full live reconfigure is configure()
---- (doc/development/internals/user_input.md, "configure(config)").
+--- (doc/development/internals/user_input.md,
+--- "configure(config)").
 --- @param self UserInputController
 --- @param cfg table
 local re_show = function(self, cfg)
@@ -295,12 +297,12 @@ local open_widget = function(self, cfg)
   if cfg.cursor ~= nil then
     self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
   end
-  -- love.state.user_input is the widget CONTRACT: its
-  -- presence is the flag the draw loop (controller.lua)
-  -- checks to paint V:draw() each frame, and it carries the
-  -- { M, C, V } handle the legacy poll idiom reads. Drivers
-  -- change but the flag persists (doc/development/internals/user_input.md,
-  -- "Widget lifecycle").
+  -- love.state.user_input is the widget CONTRACT: its presence
+  -- is the flag the draw loop (controller.lua) checks to paint
+  -- V:draw() each frame, and it carries the { M, C, V } handle
+  -- the legacy poll idiom reads. Drivers change but the flag
+  -- persists (doc/development/internals/user_input.md, "Widget
+  -- lifecycle").
   love.state.user_input = {
     M = self.model,
     C = self,
@@ -330,16 +332,16 @@ function UserInputController:hide()
   love.state.user_input = nil
 end
 
---- Live-reconfigure an active session (compy.input.
---- configure; doc/development/internals/user_input.md, "configure(config)"
---- — the boundary decision closed here): only
---- the Contract's live-updatable set reaches apply_config —
---- the prompt, the highlighter, and the validator /
---- on_text_entered / on_limit_reached callbacks. text/
---- cursor never reaches it from here — accepted but
---- inert on an active session (use set_text/set_cursor, or
---- clear()+show()); no partial/silent path exists because this
---- filtered table is the only thing configure() ever applies.
+--- Live-reconfigure an active session (compy.input. configure;
+--- doc/development/internals/user_input.md, "configure(config)"
+--- — the boundary decision closed here): only the Contract's
+--- live-updatable set reaches apply_config — the prompt, the
+--- highlighter, and the validator / on_text_entered /
+--- on_limit_reached callbacks. text/ cursor never reaches it
+--- from here — accepted but inert on an active session (use
+--- set_text/set_cursor, or clear()+show()); no partial/silent
+--- path exists because this filtered table is the only thing
+--- configure() ever applies.
 --- @param cfg table
 function UserInputController:configure(cfg)
   local live = { prompt = cfg.prompt, highlighter = cfg.highlighter }
@@ -355,12 +357,12 @@ end
 ----------------------
 
 -- Submit/cancel are the widget's OWN default behaviour
--- (doc/development/decisions/input.md, Decision 6): the
--- widget runs them on Enter/Escape as an ordinary consumer
--- (never a routing concern)
--- and signals out through its callbacks. before_/after_submit and
--- before_/after_cancel are read off self.callbacks — the same
--- table a project populates via compy.input.callbacks.
+-- (doc/development/decisions/input.md, Decision 6): the widget
+-- runs them on Enter/Escape as an ordinary consumer (never a
+-- routing concern) and signals out through its callbacks.
+-- before_/after_submit and before_/after_cancel are read off
+-- self.callbacks — the same table a project populates via
+-- compy.input.callbacks.
 
 --- Run the project's validator, if it set one, and record its
 --- errors on the model — which is what locks the session until
@@ -396,12 +398,11 @@ local function run_callback(self, name, ...)
   debug_noop(name)
 end
 
---- Submit flow (doc/development/decisions/input.md, Decision 6):
---- the widget's own Enter behaviour. A truthy
---- before_submit VETOES; otherwise empty guard → validate →
---- deliver (fires on_text_entered) → after_submit. after_submit
---- defaults to a no-op, so the widget stays open unless a
---- callback hides it.
+--- Submit flow (doc/development/decisions/input.md, Decision
+--- 6): the widget's own Enter behaviour. A truthy before_submit
+--- VETOES; otherwise empty guard → validate → deliver (fires
+--- on_text_entered) → after_submit. after_submit defaults to a
+--- no-op, so the widget stays open unless a callback hides it.
 function UserInputController:submit_flow()
   if run_callback(self, 'before_submit') then return end
   if self.model:get_text():is_empty() then return end
@@ -414,11 +415,11 @@ function UserInputController:submit_flow()
   run_callback(self, 'after_submit', lines)
 end
 
---- Cancel flow (Decision 6): the
---- widget's own Escape behaviour. A truthy before_cancel VETOES
---- (skips the clear); otherwise clear (hardwired) → after_cancel.
---- after_cancel defaults to a no-op — Escape clears but the widget
---- stays open unless a callback hides it.
+--- Cancel flow (Decision 6): the widget's own Escape behaviour.
+--- A truthy before_cancel VETOES (skips the clear); otherwise
+--- clear (hardwired) → after_cancel. after_cancel defaults to a
+--- no-op — Escape clears but the widget stays open unless a
+--- callback hides it.
 function UserInputController:cancel_flow()
   if run_callback(self, 'before_cancel') then
     return
@@ -463,9 +464,9 @@ end
 --- PLACE — never reassign the table, the compy.input surface
 --- holds this exact reference. Teardown between project runs
 --- (doc/development/decisions/input.md, Decision 11 — "re-seed,
---- don't wipe"): clears a stopped project's
---- callbacks and restores defaults, so a nil'd after_cancel never
---- silently means "stays open forever" for the next project.
+--- don't wipe"): clears a stopped project's callbacks and
+--- restores defaults, so a nil'd after_cancel never silently
+--- means "stays open forever" for the next project.
 function UserInputController:reset_callbacks()
   local c = self.callbacks
   for k in pairs(c) do c[k] = nil end
@@ -493,9 +494,11 @@ function UserInputController:keypressed(k, sc, isr)
     if love.DEBUG then Log.debug('input: hidden no-op') end
     return
   end
-  -- Defensive render-on-entry: guarantees the view catches up to the model even if a prior
-  -- branch returned without re-rendering. Mutating branches below re-render at their end,
-  -- so this is belt-and-suspenders, not the primary update.
+  -- Defensive render-on-entry: guarantees the view catches up
+  -- to the model even if a prior branch returned without
+  -- re-rendering. Mutating branches below re-render at their
+  -- end, so this is belt-and-suspenders, not the primary
+  -- update.
   self:update_view()
   -- _G.web: web/love.js build flag. On web, space may not emit
   -- textinput, so synthesise it here.
@@ -504,11 +507,12 @@ function UserInputController:keypressed(k, sc, isr)
   end
   local input = self.model
 
-  -- Navigation-boundary output (doc/development/decisions/input.md,
-  -- Decision 5): the widget signals a hit limit ONLY
-  -- through on_limit_reached — the keypressed return value no
-  -- longer carries a limit flag (retired; console reads history
-  -- via its own on_limit_reached callback).
+  -- Navigation-boundary output
+  -- (doc/development/decisions/input.md, Decision 5): the
+  -- widget signals a hit limit ONLY through on_limit_reached —
+  -- the keypressed return value no longer carries a limit flag
+  -- (retired; console reads history via its own
+  -- on_limit_reached callback).
   local function emit_limit(dir, scope)
     local cb = self.callbacks.on_limit_reached
     if cb then cb(dir, scope) end
@@ -520,10 +524,10 @@ function UserInputController:keypressed(k, sc, isr)
     return 'line'
   end
 
-  -- (combo serialisation lives in controller.lua; this
-  -- handler only sees the raw key.)
-  -- doc/development/internals/user_input.md, "Error state": locked-on-reject
-  -- unlocks on Enter/Space/arrows.
+  -- (combo serialisation lives in controller.lua; this handler
+  -- only sees the raw key.)
+  -- doc/development/internals/user_input.md, "Error state":
+  -- locked-on-reject unlocks on Enter/Space/arrows.
   if input:has_error() then
     if Key.is_enter(k)
         or k == "up" or k == "down"
@@ -686,11 +690,12 @@ function UserInputController:keypressed(k, sc, isr)
   copypaste()
   selection()
 
-  -- The widget's own submit/cancel flow (Decision 6): plain Enter
-  -- submits, plain Escape cancels — ordinary widget behaviour, out through
-  -- callbacks. Shift+Enter is a newline (newline() above); Ctrl+Escape is not a
-  -- cancel. Editor/console callers that must not run these consume the key
-  -- upstream (editor) or set no callbacks (console no-op).
+  -- The widget's own submit/cancel flow (Decision 6): plain
+  -- Enter submits, plain Escape cancels — ordinary widget
+  -- behaviour, out through callbacks. Shift+Enter is a newline
+  -- (newline() above); Ctrl+Escape is not a cancel.
+  -- Editor/console callers that must not run these consume the
+  -- key upstream (editor) or set no callbacks (console no-op).
   if Key.is_enter(k) and not Key.shift() then
     self:submit_flow()
   elseif k == 'escape' and not Key.ctrl() then
@@ -718,7 +723,8 @@ function UserInputController:textinput(t)
 end
 
 --- @param k string
---- @param sc string?    scancode; LÖVE's second argument, unread
+--- @param sc string?    scancode; LÖVE's second argument,
+---                    unread
 function UserInputController:keyreleased(k, sc)
   if not self.shown then
     if love.DEBUG then Log.debug('input: hidden no-op') end
@@ -830,9 +836,9 @@ function UserInputController:wheelmoved(x, y)
   --- TODO
 end
 
--- The derived clicks are the framework's synthesis, for projects to
--- bind; text editing has no use for them. Present because the chain
--- calls every channel on its terminal tier.
+-- The derived clicks are the framework's synthesis, for
+-- projects to bind; text editing has no use for them. Present
+-- because the chain calls every channel on its terminal tier.
 function UserInputController:singleclick()
 end
 

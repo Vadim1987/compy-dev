@@ -386,12 +386,14 @@ function UserInputModel:highlight()
     end
 
     -- hl stays indexable even with no highlighter (parser but
-    -- no colouring): the view indexes highlight.hl unconditionally.
+    -- no colouring): the view indexes highlight.hl
+    -- unconditionally.
     self._memo.highlight = { hl = hl or {}, parse_err = parse_err }
   else
     if ev.highlighter then
-      -- same invariant as the parser branch above: a highlighter that
-      -- returns nil must not leave `.hl` nil for the view to index
+      -- same invariant as the parser branch above: a
+      -- highlighter that returns nil must not leave `.hl` nil
+      -- for the view to index
       self._memo.highlight = { hl = ev.highlighter(text) or {} }
     else
       self._memo.highlight = ev:validation_hl(text)

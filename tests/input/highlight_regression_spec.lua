@@ -1,14 +1,20 @@
----> REMARK: simplify prose and desctibe *behavioural* test which raises exception (so, the real bug path -- i.e. project that supplies <some configuration> gets exception on <someinput>). Current checks read as testing seomthing purely internal.
----> REMARK: acceptance criteria: code does not break the way it used to . 'highlight must stay indexable' is implementation details, not acceptance criteria
+--- > REMARK: simplify prose and desctibe *behavioural* test
+--- which raises exception (so, the real bug path -- i.e.
+--- project that supplies <some configuration> gets exception on
+--- <someinput>). Current checks read as testing seomthing
+--- purely internal.
+--- > REMARK: acceptance criteria: code does not break the way
+--- it used to . 'highlight must stay indexable' is
+--- implementation details, not acceptance criteria
 -- INTERIM: both remarks above are P25 — the reframing needs a
 -- ruling, not an edit. The behavioural path they ask for cannot
 -- fail on its own: the fix that made `.hl` indexable
--- (userInputModel.lua) gave the view its own `if hl and …` guard
--- in the same commit, so a case driven through the project
--- surface passes even when the model half regresses.
+-- (userInputModel.lua) gave the view its own `if hl and …`
+-- guard in the same commit, so a case driven through the
+-- project surface passes even when the model half regresses.
 
--- The bug: a project supplies a highlighter that returns nil for
--- some input, and the render path indexes a nil field —
+-- The bug: a project supplies a highlighter that returns nil
+-- for some input, and the render path indexes a nil field —
 -- "attempt to index upvalue hl (a nil value)".
 --
 -- Asserted at the MODEL seam: get_highlight(), whenever it
@@ -17,10 +23,10 @@
 -- regression would actually break.
 --
 -- `highlight()` has two branches, each taught the invariant
--- separately — with a parser and without — so the cases below are
--- that matrix: [lua parser || plain text] x [highlighter returning
--- nil || absent], plus the empty/non-empty text split on the
--- standard lua evaluator.
+-- separately — with a parser and without — so the cases below
+-- are that matrix: [lua parser || plain text] x [highlighter
+-- returning nil || absent], plus the empty/non-empty text split
+-- on the standard lua evaluator.
 
 require("model.input.userInputModel")
 require("model.interpreter.eval.evaluator")
@@ -45,20 +51,21 @@ describe("highlight nil-index regression #input", function()
     assert.has_no.errors(function() return h.hl[1] and h.hl[1][1] end)
   end
 
-  -- One row per highlighter condition that decides whether `.hl` is a
-  -- crash-prone plain literal or indexable:
-  --   1. Lua parser present, highlighter returns nil — the original
-  --      regression path. Uses the LuaEval() FACTORY (a fresh
-  --      instance) so it can override .highlighter to nil without
-  --      mutating the shared InputEvalLua singleton.
+  -- One row per highlighter condition that decides whether
+  -- `.hl` is a crash-prone plain literal or indexable:
+  --   1. Lua parser present, highlighter returns nil — the
+  --    original regression path. Uses the LuaEval() FACTORY (a
+  --    fresh instance) so it can override .highlighter to nil
+  --    without mutating the shared InputEvalLua singleton.
   --   2. Standard Lua eval (InputEvalLua singleton, real
-  --      highlighter) — normal colouring, one row for empty text and
-  --      one for non-empty.
-  --   3. Text eval (no parser), highlighter returns nil — the same
-  --      hole on the other branch, and the one a project actually
-  --      reaches through show({ highlighter = … }).
-  --   4. Text eval, no highlighter at all — the validation-highlight
-  --      path, a different production scenario (text, not Lua).
+  --    highlighter) — normal colouring, one row for empty text
+  --    and one for non-empty.
+  --   3. Text eval (no parser), highlighter returns nil — the
+  --    same hole on the other branch, and the one a project
+  --    actually reaches through show({ highlighter = … }).
+  --   4. Text eval, no highlighter at all — the
+  --    validation-highlight path, a different production
+  --    scenario (text, not Lua).
   it('lua eval, highlighter returns nil -> hl still indexable',
     function()
       local ev = LuaEval()
@@ -68,9 +75,10 @@ describe("highlight nil-index regression #input", function()
       assert_indexable_hl(m)
     end)
 
-  -- "empty" and "non-empty" are the model's TEXT, split into their own
-  -- rows so each states which one it covers: a freshly built model
-  -- holds no text, and the highlight is memoised on first query.
+  -- "empty" and "non-empty" are the model's TEXT, split into
+  -- their own rows so each states which one it covers: a
+  -- freshly built model holds no text, and the highlight is
+  -- memoised on first query.
   it('lua eval, empty text -> hl indexable', function()
     assert_indexable_hl(UserInputModel(mockConf, InputEvalLua))
   end)
@@ -81,16 +89,18 @@ describe("highlight nil-index regression #input", function()
     assert_indexable_hl(m)
   end)
 
-  -- The non-parser branch's own nil-highlighter cell — the missing
-  -- square of [lua || text] x [highlighter absent || returning nil].
-  -- Reachable from the public API: the project widget is built on a
-  -- parser-less evaluator (`UserInputModel(baseconf, InputEvalText)`,
-  -- src/main.lua) and `show({ highlighter = f })` assigns f straight
-  -- onto that evaluator (src/controller/userInputController.lua), so a
-  -- highlighter returning nil for some input — e.g. one that returns
-  -- nothing for empty text — lands here. A fresh ValidatedTextEval
-  -- stands in for it so the shared InputEvalText singleton is not
-  -- mutated.
+  -- The non-parser branch's own nil-highlighter cell — the
+  -- missing square of [lua || text] x
+  -- [highlighter absent || returning nil].
+  -- Reachable from the public API: the project widget is built
+  -- on a parser-less evaluator (`UserInputModel(baseconf,
+  -- InputEvalText)`, src/main.lua) and `show({ highlighter = f
+  -- })` assigns f straight onto that evaluator
+  -- (src/controller/userInputController.lua), so a highlighter
+  -- returning nil for some input — e.g. one that returns
+  -- nothing for empty text — lands here. A fresh
+  -- ValidatedTextEval stands in for it so the shared
+  -- InputEvalText singleton is not mutated.
   it('text eval, highlighter returns nil -> hl still indexable',
     function()
       local ev = ValidatedTextEval({ function() return true end })

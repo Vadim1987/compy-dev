@@ -6,12 +6,13 @@ local shift_k = { "lshift", "rshift" }
 local ctrl_k  = { "lctrl", "rctrl" }
 local alt_k   = { "lalt", "ralt" }
 
--- Single source of truth for left/right modifier folding. Each row is
--- { left-key, right-key, generic-name }; combo_string folds e.g. lctrl|rctrl -> "ctrl"
--- (precedence order: ctrl, alt, shift). The set is closed
--- (doc/development/decisions/input.md, Decision 31): a key outside it is
--- an ordinary trigger. This is the single source shared by combo
--- registration and dispatch.
+-- Single source of truth for left/right modifier folding. Each
+-- row is { left-key, right-key, generic-name }; combo_string
+-- folds e.g. lctrl|rctrl -> "ctrl" (precedence order: ctrl,
+-- alt, shift). The set is closed
+-- (doc/development/decisions/input.md, Decision 31): a key
+-- outside it is an ordinary trigger. This is the single source
+-- shared by combo registration and dispatch.
 local mod_triples = {
   { ctrl_k[1],  ctrl_k[2],  "ctrl" },
   { alt_k[1],   alt_k[2],   "alt" },
@@ -32,11 +33,12 @@ for _, row in ipairs(mod_triples) do
   fold_mod[row[2]] = row[3]
 end
 
---- Split a combo string into a generic-modifier set, the trigger
---- token, and how many triggers were seen. Tokens fold l/r to
---- generic names; anything that is not a modifier is a trigger.
---- The count is what lets registration refuse a combo naming two
---- of them — dispatch itself only ever splits its own output.
+--- Split a combo string into a generic-modifier set, the
+--- trigger token, and how many triggers were seen. Tokens fold
+--- l/r to generic names; anything that is not a modifier is a
+--- trigger. The count is what lets registration refuse a combo
+--- naming two of them — dispatch itself only ever splits its
+--- own output.
 --- @param combo string
 --- @return table mods
 --- @return string? trigger
@@ -54,11 +56,12 @@ local function split_combo(combo)
   return mods, trigger, n
 end
 
---- Canonicalise a combo string (doc/development/decisions/input.md,
---- Decision 8): lower-cased, l/r folded, modifiers in
---- fixed precedence, trigger last, '+'-joined. 'Ctrl+S' ->
---- 'ctrl+s'; bare 'S' -> 's'. Matches what combo_string()
---- (controller.lua) emits at dispatch.
+--- Canonicalise a combo string
+--- (doc/development/decisions/input.md, Decision 8):
+--- lower-cased, l/r folded, modifiers in fixed precedence,
+--- trigger last, '+'-joined. 'Ctrl+S' -> 'ctrl+s'; bare 'S' ->
+--- 's'. Matches what combo_string() (controller.lua) emits at
+--- dispatch.
 --- @param combo string
 --- @return string
 local function normalize_combo(combo)
@@ -72,12 +75,12 @@ local function normalize_combo(combo)
 end
 
 --- A combo names modifiers plus exactly ONE trigger
---- (doc/development/decisions/input.md, Decision 21). Refused at
---- registration rather than silently canonicalised, because the
---- canonical form used to keep the LAST trigger and drop the
---- rest: 'ctrl+a+b' became 'ctrl+b', and 'a+b+*' became a bare
---- '*' — the widest binding there is, from a string written to
---- mean the narrowest.
+--- (doc/development/decisions/input.md, Decision 21). Refused
+--- at registration rather than silently canonicalised, because
+--- the canonical form used to keep the LAST trigger and drop
+--- the rest: 'ctrl+a+b' became 'ctrl+b', and 'a+b+*' became a
+--- bare '*' — the widest binding there is, from a string
+--- written to mean the narrowest.
 ---
 --- A bare '*' is refused for a different reason: it satisfies
 --- the one-trigger rule but is the class of "no modifiers
@@ -99,12 +102,13 @@ local function check_combo(combo)
     .. ' or ctrl+alt+*)', 4)
 end
 
---- A project handlers sub-table (doc/development/decisions/input.md,
---- Decision 8): assigned combo keys normalise on
---- registration, so handlers.keypressed['Ctrl+S'] is
---- stored (and dispatch-matched) as 'ctrl+s'.
---- The matcher uses exact canonical lookup (O(1)), plus one
---- class lookup on a miss (Decision 21).
+--- A project handlers sub-table
+--- (doc/development/decisions/input.md, Decision 8): assigned
+--- combo keys normalise on registration, so
+--- handlers.keypressed['Ctrl+S'] is stored (and
+--- dispatch-matched) as 'ctrl+s'. The matcher uses exact
+--- canonical lookup (O(1)), plus one class lookup on a miss
+--- (Decision 21).
 --- @return table
 local function new_handler_table()
   return setmetatable({ }, {
@@ -140,8 +144,8 @@ end
 
 --- Whether a key name is any modifier, l/r alike. A combo class
 --- (Decision 21) must not match its own modifier: holding Alt
---- alone dispatches 'alt+lalt', the modifier prepended to itself
---- as the trigger, which 'alt+*' would otherwise catch.
+--- alone dispatches 'alt+lalt', the modifier prepended to
+--- itself as the trigger, which 'alt+*' would otherwise catch.
 --- @param k string
 --- @return boolean
 local function is_mod(k)

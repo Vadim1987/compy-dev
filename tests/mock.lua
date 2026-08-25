@@ -14,8 +14,9 @@ local held = {
   rgui = false,
 }
 
--- Emacs notation for the left-hand modifiers. The right-hand keys
--- have no letter in it, so a test names the key itself: 'rctrl-x'.
+-- Emacs notation for the left-hand modifiers. The right-hand
+-- keys have no letter in it, so a test names the key itself:
+-- 'rctrl-x'.
 local mods = {
   C = 'lctrl',
   S = 'lshift',
@@ -32,10 +33,10 @@ local H = 600
 local function mock_love(t)
   local love = {
     keyboard = {
-      -- Variadic, as LÖVE's is: Key.ctrl() asks
-      -- isDown('lctrl', 'rctrl'), so a one-argument mock silently
-      -- answers for the left key alone and no test can hold a
-      -- right-hand modifier.
+      -- Variadic, as LÖVE's is: Key.ctrl() asks isDown('lctrl',
+      -- 'rctrl'), so a one-argument mock silently answers for
+      -- the left key alone and no test can hold a right-hand
+      -- modifier.
       isDown = function(...)
         for _, k in ipairs({ ... }) do
           if held[k] then return true end
@@ -104,8 +105,8 @@ end
 
 --- Emit a textinput(t) event through the installed handler.
 --- Independently orderable relative to keypressed
---- (doc/development/internals/user_input.md, "Data flow": no ordering
---- guarantee between keypressed and textinput on real
+--- (doc/development/internals/user_input.md, "Data flow": no
+--- ordering guarantee between keypressed and textinput on real
 --- devices).
 --- @param t string
 --- @param press function?  defaults to love.handlers.textinput

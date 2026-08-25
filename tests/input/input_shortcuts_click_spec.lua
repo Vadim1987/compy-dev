@@ -19,8 +19,8 @@ describe('input surface: inbound events — shortcuts and clicks'
   before_each(function() F.reset() end)
 
   -- Global shortcuts are non-consuming
-  -- (doc/development/internals/user_input.md, "Dispatch chain": "None of
-  -- these consume the key: it still reaches the active
+  -- (doc/development/internals/user_input.md, "Dispatch chain":
+  -- "None of these consume the key: it still reaches the active
   -- route afterward"): a framework shortcut fires its effect
   -- and the key still reaches its route.
   describe('global shortcuts do not consume the key (#disputable)',
@@ -37,17 +37,16 @@ describe('input surface: inbound events — shortcuts and clicks'
         assert.equal(1, n)
       end)
 
-      -- cfg.mode is a global framework state: 'play' means
-      -- the framework runs on an end device for a player,
-      -- 'dev' that a developer runs it to work on it.
-      -- 'play' narrows the shortcut set so a player cannot
-      -- manage projects: restart/profile stay live,
-      -- quit/stop/quickswitch do not (doc/development/decisions/input.md,
-      -- Decision 1; doc/development/internals/user_input.md, "Dispatch
+      -- cfg.mode is a global framework state: 'play' means the
+      -- framework runs on an end device for a player, 'dev'
+      -- that a developer runs it to work on it. 'play' narrows
+      -- the shortcut set so a player cannot manage projects:
+      -- restart/profile stay live, quit/stop/quickswitch do not
+      -- (doc/development/decisions/input.md, Decision 1;
+      -- doc/development/internals/user_input.md, "Dispatch
       -- chain"). The shared fixture is built in dev mode, so
-      -- this test wires a private play-mode stub controller
-      -- and saves/restores the shared love.handlers around
-      -- it.
+      -- this test wires a private play-mode stub controller and
+      -- saves/restores the shared love.handlers around it.
       it('#play mode narrows the active shortcut set', function()
           local calls = { }
           local stub = {
@@ -107,9 +106,10 @@ describe('input surface: inbound events — shortcuts and clicks'
         assert.is_true(reached_hook)
       end)
 
-    -- The button is the trigger the channel names, serialised as
-    -- 'mouseN' — so an unmodified right-click is bindable, which
-    -- is what a project reaching for a context action wants.
+    -- The button is the trigger the channel names, serialised
+    -- as 'mouseN' — so an unmodified right-click is bindable,
+    -- which is what a project reaching for a context action
+    -- wants.
     it('the button is the trigger: mouse2 is a right-click',
       function()
         local hits = { }
@@ -136,8 +136,8 @@ describe('input surface: inbound events — shortcuts and clicks'
         assert.is_true(reached_hook)
       end)
 
-    -- Modifiers compose with the button exactly as they do with a
-    -- key, and exact beats the class (Decision 21) — the same
+    -- Modifiers compose with the button exactly as they do with
+    -- a key, and exact beats the class (Decision 21) — the same
     -- rule the keyboard channels follow.
     it('exact modifier+button wins over the modifier class',
       function()
@@ -153,9 +153,9 @@ describe('input surface: inbound events — shortcuts and clicks'
       end)
 
     -- A channel with no discrete trigger to name stays
-    -- modifier-only: mousemoved has no button, so its combos are
-    -- classes and an unmodified move never consults the tier at
-    -- all (which is also why it allocates nothing).
+    -- modifier-only: mousemoved has no button, so its combos
+    -- are classes and an unmodified move never consults the
+    -- tier at all (which is also why it allocates nothing).
     it('a channel with no trigger matches on modifiers alone',
       function()
         local hits = { }
@@ -184,12 +184,12 @@ describe('input surface: inbound events — shortcuts and clicks'
       end)
   end)
 
-  -- Framework click detection (doc/development/internals/user_input.md,
-  -- "Framework-level click handling"): a derived
-  -- path over raw pointer delivery, asserted on outcomes
-  -- against the project-defined handlers (default no-ops).
-  -- The 0.4s / 2.5px constants are mechanism; this is a
-  -- regression surface, not a routing rule.
+  -- Framework click detection
+  -- (doc/development/internals/user_input.md, "Framework-level
+  -- click handling"): a derived path over raw pointer delivery,
+  -- asserted on outcomes against the project-defined handlers
+  -- (default no-ops). The 0.4s / 2.5px constants are mechanism;
+  -- this is a regression surface, not a routing rule.
   describe('framework click detection', function()
 
     it('a single click confirms after the window',
@@ -240,11 +240,11 @@ describe('input surface: inbound events — shortcuts and clicks'
   end)
 
   -- Project stop returns input to the console
-  -- (doc/development/decisions/input.md, Decision 11): a project's
-  -- the project handler is installed while
-  -- it runs; after stop it receives nothing and typing
-  -- lands in the console again. Asserted end-to-end on
-  -- behaviour — who receives — not on handler identity.
+  -- (doc/development/decisions/input.md, Decision 11): a
+  -- project's the project handler is installed while it runs;
+  -- after stop it receives nothing and typing lands in the
+  -- console again. Asserted end-to-end on behaviour — who
+  -- receives — not on handler identity.
   describe('project stop returns input to the console',
     function()
 

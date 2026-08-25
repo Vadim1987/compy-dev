@@ -1,15 +1,16 @@
--- Keypress-level driver. Every emitter fires a REAL event through
--- the production gateway (love.handlers.*), never straight to a
--- controller, so a test walks the path a keystroke takes from LÖVE.
+-- Keypress-level driver. Every emitter fires a REAL event
+-- through the production gateway (love.handlers.*), never
+-- straight to a controller, so a test walks the path a
+-- keystroke takes from LÖVE.
 
 require('controller.controller')
 
 local mock = require('tests.mock')
 
 -- One emitter per gateway entry: the controllable stand-in for
--- the events hardware would raise. `handlers` is the live table,
--- so combo drivers (tests.mock.keystroke) can hold modifiers and
--- call .keypressed directly.
+-- the events hardware would raise. `handlers` is the live
+-- table, so combo drivers (tests.mock.keystroke) can hold
+-- modifiers and call .keypressed directly.
 local function emitters()
   local h = love.handlers
   return {

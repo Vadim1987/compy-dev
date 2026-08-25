@@ -2,18 +2,22 @@
 -- (1.0.0-rc20260712) — route connect/disconnect, stop teardown
 -- and the compy.before_exit hook.
 
--- route connection lifecycle.
--- Routing invariant (doc/development/decisions/input.md, Decision 1): inter-route
--- dispatch is EXCLUSIVE — each event reaches exactly ONE route, fixed by
--- the active screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch
--- chain"): ROUTE = the controller an event is dispatched to; WIDGET =
--- the route-managed input surface and terminal of the chain. Tests assert
--- observable outcomes at public seams, never method-name spies.
--- keypressed fires for every physical key, textinput only for
--- character-producing keys (doc/development/internals/user_input.md, "Data flow").
--- Connect/disconnect at the 'running' boundary, full teardown at stop,
--- inspect's project-route disconnect, and the compy.before_exit stop hook
--- (doc/development/decisions/input.md, Decision 11 and Decision 12).
+-- route connection lifecycle. Routing invariant
+-- (doc/development/decisions/input.md, Decision 1): inter-route
+-- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
+-- fixed by the active screen mode. Vocabulary
+-- (doc/development/internals/user_input.md, "Dispatch chain"):
+-- ROUTE = the controller an event is dispatched to; WIDGET =
+-- the route-managed input surface and terminal of the chain.
+-- Tests assert observable outcomes at public seams, never
+-- method-name spies. keypressed fires for every physical key,
+-- textinput only for character-producing keys
+-- (doc/development/internals/user_input.md, "Data flow").
+-- Connect/disconnect at the 'running' boundary, full teardown
+-- at stop, inspect's project-route disconnect, and the
+-- compy.before_exit stop hook
+-- (doc/development/decisions/input.md, Decision 11 and Decision
+-- 12).
 
 local F = require('tests.helpers.input_fixture')
 
@@ -24,20 +28,16 @@ describe('input surface: inbound events — route lifetime #input',
   before_each(function() F.reset() end)
 
   -- ====================================================
-  -- Route connection lifecycle (doc/development/decisions/input.md,
-  -- Decision 11): connect/disconnect at the 'running'
-  -- boundary
-  -- (same decision), pointer excluded from that
-  -- disconnect
-  -- (same decision), full teardown at stop (same
-  -- decision), inspect
+  -- Route connection lifecycle
+  -- (doc/development/decisions/input.md, Decision 11):
+  -- connect/disconnect at the 'running' boundary (same
+  -- decision), pointer excluded from that disconnect (same
+  -- decision), full teardown at stop (same decision), inspect
   -- (doc/development/decisions/input.md, Decision 12), and the
-  -- compy.before_exit stop hook.
-  -- All cases drive the
-  -- REAL
-  -- production functions (Controller.release_keyboard_
-  -- route, ConsoleController:stop_project_run/:suspend),
-  -- not a simulation of them.
+  -- compy.before_exit stop hook. All cases drive the REAL
+  -- production functions (Controller.release_keyboard_ route,
+  -- ConsoleController:stop_project_run/:suspend), not a
+  -- simulation of them.
   -- ====================================================
 
   describe('route connection lifecycle', function()
@@ -94,10 +94,10 @@ describe('input surface: inbound events — route lifetime #input',
     end)
 
     describe('stop teardown', function()
-      -- doc/development/decisions/input.md, Decision 11 (teardown
-      -- invariant): stop clears every
-      -- compy.input participant a project installed --
-      -- combo handlers and every project-mutable field.
+      -- doc/development/decisions/input.md, Decision 11
+      -- (teardown invariant): stop clears every compy.input
+      -- participant a project installed -- combo handlers and
+      -- every project-mutable field.
       it('clears every project-installed handler ' ..
           'and hook', function()
         local input = F.activate_project()
@@ -132,12 +132,12 @@ describe('input surface: inbound events — route lifetime #input',
         assert.equal(0, cancelled)
       end)
 
-      -- doc/development/decisions/input.md, Decision 11: the widget's OWN
-      -- mirrored output fields
+      -- doc/development/decisions/input.md, Decision 11: the
+      -- widget's OWN mirrored output fields
       -- (userInputController.apply_config) persist across a
       -- hide/re-show within one run (doc/input_api.md,
-      -- "Callback assignments") but must not
-      -- leak into the next project.
+      -- "Callback assignments") but must not leak into the next
+      -- project.
       it('resets the widget\'s own output fields',
         function()
           F.activate_project()
@@ -177,13 +177,13 @@ describe('input surface: inbound events — route lifetime #input',
         end)
 
       -- doc/development/decisions/input.md, Decision 11: the
-      -- case above starts its first project WITHOUT an input widget,
-      -- so it cannot see whether stop leaves the widget re-
-      -- showable. This one does: project one shows, is stopped,
-      -- and project two shows again. The widget must come up
-      -- with the SECOND project's text — the widget's shown
-      -- flag is part of what teardown resets, not merely the
-      -- published love.state handle.
+      -- case above starts its first project WITHOUT an input
+      -- widget, so it cannot see whether stop leaves the widget
+      -- re- showable. This one does: project one shows, is
+      -- stopped, and project two shows again. The widget must
+      -- come up with the SECOND project's text — the widget's
+      -- shown flag is part of what teardown resets, not merely
+      -- the published love.state handle.
       it('a second project gets its input widget after the first ' ..
           'is stopped', function()
         local first = F.activate_project()
@@ -208,12 +208,12 @@ describe('input surface: inbound events — route lifetime #input',
     -- not unhonoured.
     describe('teardown after a top-level raise', function()
       -- Drives the REAL ConsoleController:run_project. Only the
-      -- loader is stubbed, because a chunk that shows an
-      -- input widget and then raises is the one part of this path a
-      -- unit test cannot supply from disk.
-      -- `extra` runs after the widget is up and before the
-      -- raise, so a case can install participants the way a
-      -- real project's top-level code would.
+      -- loader is stubbed, because a chunk that shows an input
+      -- widget and then raises is the one part of this path a
+      -- unit test cannot supply from disk. `extra` runs after
+      -- the widget is up and before the raise, so a case can
+      -- install participants the way a real project's top-level
+      -- code would.
       local function run_raising_project(extra)
         local P = F.cc.model.projects
         local prev_current, prev_run = P.current, P.run
@@ -230,9 +230,9 @@ describe('input surface: inbound events — route lifetime #input',
         P.current, P.run = prev_current, prev_run
       end
 
-      -- Both halves, deliberately: clearing the published handle
-      -- alone leaves the widget believing it is still active
-      -- (consoleController.lua, hide_input_widget).
+      -- Both halves, deliberately: clearing the published
+      -- handle alone leaves the widget believing it is still
+      -- active (consoleController.lua, hide_input_widget).
       it('leaves no input widget behind', function()
         run_raising_project()
         assert.is_false(F.is_widget_visible())
@@ -300,9 +300,10 @@ describe('input surface: inbound events — route lifetime #input',
     end)
 
     describe('inspect', function()
-      -- doc/development/decisions/input.md, Decision 12: inspect is the console
-      -- bound over the project env -- the project route
-      -- disconnects and its widget goes unhonoured.
+      -- doc/development/decisions/input.md, Decision 12:
+      -- inspect is the console bound over the project env --
+      -- the project route disconnects and its widget goes
+      -- unhonoured.
       it('disconnects the project route and its ' ..
           'widget goes unhonoured', function()
         F.activate_project()
@@ -312,11 +313,12 @@ describe('input surface: inbound events — route lifetime #input',
         F.session.type('a')
         assert.same({ 'a' }, F.console:get_text())
         assert.same({ 'x' }, F.widget:get_text())
-        -- Unhonoured is not hidden: suspend disconnects the route,
-        -- so the widget receives nothing, while its own shown flag
-        -- and the widget handle the draw path reads are both left
-        -- standing. Asserted because the two are easy to conflate
-        -- and only the first is what Decision 12 promises.
+        -- Unhonoured is not hidden: suspend disconnects the
+        -- route, so the widget receives nothing, while its own
+        -- shown flag and the widget handle the draw path reads
+        -- are both left standing. Asserted because the two are
+        -- easy to conflate and only the first is what Decision
+        -- 12 promises.
         assert.is_true(F.widget:is_shown())
         assert.is_true(F.is_widget_visible())
       end)
@@ -443,9 +445,9 @@ describe('input surface: inbound events — route lifetime #input',
         assert.equal('running', state_at_fire)
       end)
 
-      -- The hook resets to its noop default on stop
-      -- -- same lifecycle as compy.input's before_/after_
-      -- hooks (doc/development/decisions/input.md, Decision 11).
+      -- The hook resets to its noop default on stop -- same
+      -- lifecycle as compy.input's before_/after_ hooks
+      -- (doc/development/decisions/input.md, Decision 11).
       it('resets to noop after stop',
         function()
           local calls = 0
