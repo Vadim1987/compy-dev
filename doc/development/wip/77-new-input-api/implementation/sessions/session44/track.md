@@ -119,3 +119,21 @@
   deferred.
 - P10 CLOSED (plan §17.4). Sprint owes: P11 (owner, cold), the human smoke
   pass, then slices + PR assembly.
+
+## 2026-08-25 — P11's row corrected
+
+- Owner asked what "planning changes" and "size is gated" actually referred to.
+  Both traced and both stale, which is why they could not answer it themselves:
+  - "planning changes" = one line in session43's track, nothing written behind
+    it. Owner does not recall a specific change and does not treat it as
+    blocking → P11 waits on nobody. Cold session kept as hygiene, not a gate.
+  - "size is gated on §16.2" = the row was never updated after session36
+    RESOLVED that question in practice (reading (c) with (b)'s floor, binding
+    table in S36-marker-disposition.md).
+- Row edited in place + §17.5 added: the ruling restated in three lines, a
+  fresh census (100 markers, was 113), and what is NOT in the census (W10
+  batch 3's ~50, never enumerated; maze/draw compaction).
+- Owner's question about compaction harming future rework is answered in the
+  row rather than in chat, with a rule that costs nothing: any rationale a
+  compaction removes must already be in the persistent corpus, or lands there
+  first. Also named the fact that keyboard's 177→101 pass was self-assessed.
