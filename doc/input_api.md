@@ -310,6 +310,14 @@ console it returns you to is not there to return to. Note `f10` is the one
 reservation with no modifier at all: bare F10 is the platform's in a profiling
 build, and F10 with any modifier is yours.
 
+It is also the only F-key worth binding at all. On the current hardware the
+function row is the keyboard's Fn layer — Insert is Fn+F12, Scroll Lock is
+Fn+F10, mute and the media keys are Fn+F5 through Fn+F8 — so **F1 to F9 never
+reach your project**; the firmware answers them. F10 does arrive, which is why
+the platform could take it; F11 and F12 are untested. Bind help, pause and debug
+gestures to letter chords instead: an example that wants a held help overlay
+uses Alt+H (`doc/development/keyboard.md` is the per-key availability table).
+
 Ctrl+S and Ctrl+Shift+S also do something in the **editor** — close the buffer
 and finish the edit — but that is the editor's own handling, not a reservation:
 it applies when you are editing, not while your project runs.
