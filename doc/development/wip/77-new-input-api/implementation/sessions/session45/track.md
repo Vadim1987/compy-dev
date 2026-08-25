@@ -69,3 +69,21 @@
   is a hardware key table where F1–F9 are ✗ on the current device (the F-row is
   the Fn layer: Insert=Fn+F12, ScrollLock=Fn+F10, Mute=Fn+F5, media on F6/7/8).
   F10 is ✓, which is why the platform can reserve bare `f10` at all.
+
+## 2026-08-25 — owner correction: the route-level `if`s ARE debt
+
+- Owner overruled my "nothing actionable was lost": ~42 hand-written modifier
+  tests in editor/console/search **are** soft debt in that form. Entry written
+  (`ca0749b3`) — reframed off "tolerant reservation" onto what is checkable:
+  a cascade cannot be listed, and each test claims the modifiers it does not
+  name (`load()` ignores Alt → **Alt+Escape loads the selection**; the console's
+  Ctrl branch → **Ctrl+Shift+L clears output**). Verified there is no upstream
+  modifier guard in `_normal_mode_keys`. The six `_scroll(..., Key.ctrl())` reads
+  are excluded by name — Decision 32 rules those correct.
+- **Lesson to carry:** I inferred "no live exposure" from Decision 33's scope
+  clause instead of reading the handlers. The scope clause explains why nobody
+  *hits* it; it says nothing about whether the shape is debt. Reading the code
+  first would have produced the entry, not the deletion.
+- F10 clause written into `doc/input_api.md` §reserved combos (`bd2c327d`),
+  with the F11/F12 claim narrowed to "untested" — the hardware table marks them
+  `-`, not `✓`.
