@@ -295,7 +295,7 @@ local open_widget = function(self, cfg)
   if cfg.cursor ~= nil then
     self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
   end
-  -- love.state.user_input is the overlay CONTRACT: its
+  -- love.state.user_input is the widget CONTRACT: its
   -- presence is the flag the draw loop (controller.lua)
   -- checks to paint V:draw() each frame, and it carries the
   -- { M, C, V } handle the legacy poll idiom reads. Drivers

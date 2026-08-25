@@ -177,14 +177,14 @@ describe('input surface: inbound events — route lifetime #input',
         end)
 
       -- doc/development/decisions/input.md, Decision 11: the
-      -- case above starts its first project WITHOUT an overlay,
+      -- case above starts its first project WITHOUT an input widget,
       -- so it cannot see whether stop leaves the widget re-
       -- showable. This one does: project one shows, is stopped,
-      -- and project two shows again. The overlay must come up
+      -- and project two shows again. The widget must come up
       -- with the SECOND project's text — the widget's shown
       -- flag is part of what teardown resets, not merely the
       -- published love.state handle.
-      it('a second project gets its overlay after the first ' ..
+      it('a second project gets its input widget after the first ' ..
           'is stopped', function()
         local first = F.activate_project()
         first.show({ text = 'one' })
@@ -202,16 +202,16 @@ describe('input surface: inbound events — route lifetime #input',
     -- teardown invariant): a project whose TOP-LEVEL code
     -- raises never reaches the route installer, so run_project
     -- tears the route down instead of connecting it. An
-    -- overlay the project already showed is part of that
+    -- input widget the project already showed is part of that
     -- teardown — the invariant says a widget whose owning
     -- route is inactive goes unhonoured, and a shown one is
     -- not unhonoured.
     describe('teardown after a top-level raise', function()
       -- Drives the REAL ConsoleController:run_project. Only the
       -- loader is stubbed, because a chunk that shows an
-      -- overlay and then raises is the one part of this path a
+      -- input widget and then raises is the one part of this path a
       -- unit test cannot supply from disk.
-      -- `extra` runs after the overlay is up and before the
+      -- `extra` runs after the widget is up and before the
       -- raise, so a case can install participants the way a
       -- real project's top-level code would.
       local function run_raising_project(extra)
@@ -241,9 +241,9 @@ describe('input surface: inbound events — route lifetime #input',
 
       -- The user-visible consequence of the case above, and the
       -- control that proves it is not vacuous: show() is a
-      -- no-op over an active overlay (Decision 3), so a
+      -- no-op over an active widget (Decision 3), so a
       -- surviving widget would silently swallow the next run's.
-      it('lets the next run show its own overlay', function()
+      it('lets the next run show its own input widget', function()
         run_raising_project()
         local second = F.activate_project()
         second.show({ text = 'two' })
@@ -314,7 +314,7 @@ describe('input surface: inbound events — route lifetime #input',
         assert.same({ 'x' }, F.widget:get_text())
         -- Unhonoured is not hidden: suspend disconnects the route,
         -- so the widget receives nothing, while its own shown flag
-        -- and the overlay handle the draw path reads are both left
+        -- and the widget handle the draw path reads are both left
         -- standing. Asserted because the two are easy to conflate
         -- and only the first is what Decision 12 promises.
         assert.is_true(F.widget:is_shown())
@@ -411,7 +411,7 @@ describe('input surface: inbound events — route lifetime #input',
 
       -- A raise aborts the WALK. Previously the wrapper caught
       -- per-participant, answered falsey, and the walk carried
-      -- on — so a crashed project's overlay edited the very
+      -- on — so a crashed project's widget edited the very
       -- event that crashed it.
       it('a raise stops the walk before the widget',
         function()

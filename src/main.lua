@@ -373,7 +373,7 @@ function love.load()
   -- init_view binds the view to the controller (self.view = v); it is NOT an activation/show.
   ui_c:init_view(ui_v)
   -- App-wide handle for the widget: the compy.input
-  -- wrappers and the overlay draw path resolve the
+  -- wrappers and the widget draw path resolve the
   -- controller through love.state (service-locator pattern).
   love.state.user_input_controller = ui_c
 

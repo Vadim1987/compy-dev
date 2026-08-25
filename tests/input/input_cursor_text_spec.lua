@@ -42,7 +42,7 @@ describe('input surface: widget control — cursor and text #input',
     -- than being a constant that happens to match the opening
     -- state.
     -- activate_project, not compy_input alone: this case TYPES,
-    -- so it needs the route a real project's overlay is fed
+    -- so it needs the route a real project's widget is fed
     -- through. Reading the surface needs no route; delivery
     -- does.
     it('keeps reporting the cursor as the text is edited',
@@ -181,7 +181,7 @@ describe('input surface: widget control — cursor and text #input',
     -- doc/development/internals/user_input.md, "Cursor
     -- manipulation and \"reset\"": the view reflects the
     -- change WITHOUT a re-show
-    -- (the overlay handle is not re-published; the widget's
+    -- (the widget handle is not re-published; the widget's
     -- own view render fires via the controller's update_view).
     it('updates the view without a re-show',
       function()

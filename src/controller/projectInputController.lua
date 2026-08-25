@@ -120,7 +120,7 @@ end
 --- skipped when hidden — so the walk reports consumed iff a
 --- consumer fired or the widget was shown. A free function over
 --- plain tables + a widget reference, so any adopter (not only
---- the project overlay) can reuse it over its own instance.
+--- the project widget) can reuse it over its own instance.
 --- The nil guards are deliberate (Decision 23): whether a hook
 --- is set is information a project reads, so an unset one stays
 --- nil rather than defaulting to a callable noop. Nothing is

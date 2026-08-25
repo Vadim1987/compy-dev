@@ -115,7 +115,7 @@ describe('input surface: widget callbacks #input', function()
         assert.equal(marker, got.hl)
       end)
 
-    it('LuaHighlighter colors Lua overlay text', function()
+    it('LuaHighlighter colors Lua input widget text', function()
       local input = F.activate_project()
       input.show({ highlighter = LuaHighlighter })
       F.session.type('return 1')
@@ -895,7 +895,7 @@ describe('input surface: widget callbacks #input', function()
     -- ---- 6. the same two keys in the other two surfaces ----
 
     -- The uniformity claim in its plainest form: after the
-    -- editor cases above, the console and the project overlay
+    -- editor cases above, the console and the project widget
     -- are driven through the same Enter and Escape. Their
     -- subject-matter contracts (the full submit call-order
     -- chain, the cancel chain, validators) belong to this file's
@@ -928,7 +928,7 @@ describe('input surface: widget callbacks #input', function()
       end)
     end)
 
-    describe('project overlay: the same Enter and Escape',
+    describe('project widget: the same Enter and Escape',
       function()
       it('Enter submits, Escape cancels', function()
         local input = F.activate_project()
@@ -991,7 +991,7 @@ describe('input surface: widget callbacks #input', function()
     -- the breadth is not narrowed to bare Enter by accident —
     -- narrowing it is a deliberate spec change, not a tidy-up.
     describe('every non-Shift Enter submits', function()
-        it('overlay: Ctrl+Enter submits', function()
+        it('input widget: Ctrl+Enter submits', function()
           local input = F.activate_project()
           local got
           input.show({
@@ -1002,7 +1002,7 @@ describe('input surface: widget callbacks #input', function()
           assert.same({ 'hi' }, got)
         end)
 
-        it('overlay: Alt+Enter submits', function()
+        it('input widget: Alt+Enter submits', function()
           local input = F.activate_project()
           local got
           input.show({

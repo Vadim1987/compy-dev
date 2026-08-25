@@ -627,7 +627,7 @@ Controller = {
   --- @param CC ConsoleController
   --- @param CV ConsoleView
   set_love_draw = function(CC, CV)
-    -- The overlay is painted on top of the console frame, mirroring
+    -- The widget is painted on top of the console frame, mirroring
     -- what set_love_update's wrapper does on top of a PROJECT frame.
     -- Both paths are needed: the wrapper installs only when a project
     -- replaces love.draw, so a project that hooks no draw at all (an
@@ -1017,7 +1017,7 @@ Controller = {
   end,
 
   --- A non-blocking project is still "live" while it
-  --- has an active input overlay or a pointer/click handler — it
+  --- has an active input widget or a pointer/click handler — it
   --- keeps the project route and Ctrl+Esc returns to the console.
   user_is_interactive = function()
     return (love.state.user_input ~= nil) or user_pointer

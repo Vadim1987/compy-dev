@@ -293,7 +293,7 @@ function ConsoleController:run_project(name)
       local rok, run_err = run_user_code(f, self, path)
       if not rok then
         -- Top-level code raised, so the route was never
-        -- connected. Release, then take down any overlay the
+        -- connected. Release, then take down any widget the
         -- project managed to show first: Decision 11's teardown
         -- invariant says a widget whose owning route is
         -- inactive goes unhonoured, and a shown one is not
@@ -594,8 +594,8 @@ end
 --- the project stop at the typo instead of running on in a
 --- shape nobody asked for. Level 3 puts the trace on the
 --- project's own show()/configure() line.
---- Runtime STATE no-ops (an active overlay, a hidden widget)
---- are NOT this: they keep warning, per Decision 3.
+--- Runtime STATE no-ops (the widget already active, or
+--- hidden) are NOT this: they keep warning, per Decision 3.
 --- @param cfg table
 --- @param fname string
 --- @param allowed table
@@ -681,12 +681,12 @@ end
 -- The widget-method surface a project drives (show/hide/
 -- configure/set_text/set_cursor/get_cursor/clear), parameterized
 -- by instance: any
--- adopter — not only the project overlay — gets the same
+-- adopter — not only the project widget — gets the same
 -- ergonomics over ITS OWN widget by supplying its own resolvers.
 -- `get_widget` resolves the UserInputController; `get_active_flag`
 -- reports shown-ness (truthy = shown); `state` is the sticky
 -- output/pending store show()/configure() read. The project
--- overlay closes the two resolvers over the love.state globals —
+-- widget closes the two resolvers over the love.state globals —
 -- behaviour-identical to the pre-factory inline shape.
 --- @param get_widget fun(): UserInputController?
 --- @param get_active_flag fun(): table?
@@ -697,7 +697,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
     show = function(cfg) api_show(get_widget, state, cfg) end,
     hide = function() api_hide(get_widget) end,
     -- doc/development/decisions/input.md, Decision 18: the one
-    -- state question a project may ask the overlay. It cannot
+    -- state question a project may ask the widget. It cannot
     -- read this itself — a project's `love` is a sandboxed
     -- clone, so `love.state.user_input` is always nil inside a
     -- project (internals/project_sandbox_env.md).
@@ -770,7 +770,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
 end
 
 local get_compy_input = function()
-  -- callbacks IS the overlay widget's OWN table (owner ruling
+  -- callbacks IS the widget's OWN table (owner ruling
   -- 2026-07-20: compy.input.callbacks === the widget's
   -- self.callbacks). The widget is provisioned before the console
   -- (main.lua reorder), so it exists here. NEVER reassign this
@@ -795,7 +795,7 @@ local get_compy_input = function()
     callbacks = widget.callbacks,
     pending = { },
   }
-  -- get_active resolves the overlay's OWN shown flag (is_shown),
+  -- get_active resolves the widget's OWN shown flag (is_shown),
   -- never love.state directly.
   local function get_active()
     local w = love.state.user_input_controller

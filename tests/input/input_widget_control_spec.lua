@@ -109,7 +109,7 @@ describe('input surface: widget control #input', function()
       end)
 
     -- force is a show()-only key; configure() has no inactive
-    -- overlay to force, so passing it is the same mistake.
+    -- widget to force, so passing it is the same mistake.
     it('configure raises on force',
       function()
         local input = F.compy_input()
@@ -474,14 +474,14 @@ describe('input surface: widget control #input', function()
     end)
   end)
 
-  -- doc/input_api.md, "Live changes": the overlay answers whether it
+  -- doc/input_api.md, "Live changes": the widget answers whether it
   -- is up. A project cannot read this from love.state — its `love` is
   -- a sandboxed clone, so `love.state.user_input` is always nil inside
   -- a project (project_sandbox_env.md, T1) — which is why the query is
   -- part of the surface rather than an idiom.
   describe('is_shown()', function()
 
-    it('reports the overlay state across a show/hide cycle',
+    it('reports the widget state across a show/hide cycle',
       function()
         local input = F.compy_input()
         assert.is_false(input.is_shown())
@@ -492,7 +492,7 @@ describe('input surface: widget control #input', function()
       end)
 
     -- The guard the ruling asks an example to write: act only when
-    -- the overlay is down, and leave the key to it when it is up.
+    -- the widget is down, and leave the key to it when it is up.
     it('lets a project skip a redundant show', function()
       local shows = 0
       local input = F.activate_project()
@@ -566,7 +566,7 @@ describe('input surface: widget control #input', function()
       return input
     end
 
-    it('the echo does not reach an overlay it opened',
+    it('the echo does not reach an input widget it opened',
       function()
         open_on('keypressed')
         F.session.press('i')
@@ -576,7 +576,7 @@ describe('input surface: widget control #input', function()
       end)
 
     -- The order LÖVE does not promise: the echo arrives BEFORE
-    -- the open and is eaten while the overlay is still closed,
+    -- the open and is eaten while the widget is still closed,
     -- which is why the idiom needs no ordering guarantee.
     it('holds when the echo precedes the open', function()
       open_on('keyreleased')
@@ -613,22 +613,22 @@ describe('input surface: widget control #input', function()
     end)
   end)
 
-  -- A shown overlay must be PAINTED, whatever the project does.
+  -- A shown widget must be PAINTED, whatever the project does.
   -- Two draw paths exist and they are not interchangeable: a
   -- project that hooks love.draw is wrapped by set_love_update,
-  -- which paints the overlay after the project's own frame; a
+  -- which paints the widget after the project's own frame; a
   -- project that hooks nothing keeps the console's draw, which
   -- is the path these cases pin. Consuming input the user
   -- cannot see is the failure mode
   -- (doc/development/internals/user_input.md, "Widget
-  -- lifecycle"), and the overlay's own view is the only surface
+  -- lifecycle"), and the widget's own view is the only surface
   -- that shows it — the console's input line below it belongs
   -- to the console. The view is the fixture's stub, so what is
-  -- asserted is the WIRING (the frame reaches the overlay's
+  -- asserted is the WIRING (the frame reaches the widget's
   -- view), never pixels.
-  describe('a shown overlay is painted', function()
+  describe('a shown widget is painted', function()
 
-    it('the console draw path paints a shown overlay', function()
+    it('the console draw path paints a shown widget', function()
       local painted = 0
       F.widget.view.draw = function() painted = painted + 1 end
       F.compy_input().show({ text = 'x' })
@@ -636,7 +636,7 @@ describe('input surface: widget control #input', function()
       assert.equal(1, painted)
     end)
 
-    it('a hidden overlay is not painted', function()
+    it('a hidden widget is not painted', function()
       local painted = 0
       F.widget.view.draw = function() painted = painted + 1 end
       local input = F.compy_input()
@@ -649,7 +649,7 @@ describe('input surface: widget control #input', function()
     -- doc/development/decisions/input.md, Decision 12: under inspect
     -- the console owns the surface and the project's widget is
     -- unhonoured — including on screen.
-    it('an overlay is not painted under inspect', function()
+    it('a widget is not painted under inspect', function()
       local painted = 0
       F.widget.view.draw = function() painted = painted + 1 end
       F.compy_input().show({ text = 'x' })

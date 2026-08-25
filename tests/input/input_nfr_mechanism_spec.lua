@@ -53,7 +53,7 @@ describe('input contracts: NFR and mechanism guards #input',
     function()
 
       -- Singleton identity across show/hide (NFR): today
-      -- only the overlay widget is wired; wiring the
+      -- only the input widget is wired; wiring the
       -- console/editor/search widgets to it is a future
       -- consideration, deliberately out of scope (see
       -- doc/development/internals/user_input.md: "Key
