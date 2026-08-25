@@ -266,8 +266,6 @@ exists — editor's search widget reads its own, unrelated return contract and i
 
 ## Decision 6 — submit and cancel are widget-owned callback-driven flows, not a framework tier
 
-> REMARK: if it does not differ from pre-feature behaviour, there's no decision to record at all.  Why this decision arrived -- attempt to combat design hallucination which assigned special roles. If as a result we just got back to normal platform behaviour, there was no decision worth standing in this register. IF we did de-facto change the behaviour -- the whole 'decision' block should be compressed 2-3 times and explain only change and why it was necessary/useful. Right now block of decision 6 is overbloated and its not clear which exact decision it describes and what was its rationale/consequences.
-
 **Decision.** Enter and Escape are ordinary chain participants (Decision 2), not a framework
 tier. The widget provides their *default* behaviour as callback-driven flows of its own, not
 framework-owned ones:
@@ -277,77 +275,40 @@ submit_flow:  before_submit() → validator → on_text_entered → after_submit
 cancel_flow:  before_cancel()  →  clear (hardwired, unless vetoed)         →  after_cancel()
 ```
 
-Three substantive changes from the original framework-tier shape:
+Three substantive changes, and they are what this entry is for:
 
-- **`before_cancel` may veto.** A truthy return from `before_cancel` skips the clear step
-  entirely — symmetric with the `before_submit` veto below.
-- **Auto-close default flips to OFF.** `after_submit` and `after_cancel` default to no-ops — the
-  widget **stays open** unless a project explicitly hides it. There is deliberately no keep-open
-  flag (that would be the old one-shot mechanism reborn with its polarity flipped); a project
-  that wants the old "prompt once, then close" behaviour opts in with one line:
+- **Either `before_` callback may veto.** A truthy return skips the step it guards — the clear in
+  the cancel flow, the whole delivery in the submit flow.
+- **Auto-close defaults to OFF.** `after_submit`/`after_cancel` are no-ops, so the widget stays
+  open unless a project hides it. No keep-open flag — that is the old one-shot mechanism with its
+  polarity flipped; a project wanting "prompt once, then close" writes
   `after_submit = function() compy.input.hide() end`.
-- **Enter/Escape are shadowable.** A project shortcut registered on `'return'` or `'escape'` now
-  wins over the widget's default, same as any other combo — a named, deliberate withdrawal of the
-  old guarantee (below).
+- **Enter and Escape are shadowable.** A project shortcut on `'return'` or `'escape'` wins over
+  the widget's default, like any other combo.
 
-**Withdrawn guarantee — recorded explicitly, not left implicit.** Nothing any longer prevents a
-project shortcut from shadowing Enter's submit or Escape's cancel while the widget is shown, and
-a project overriding `after_submit`/`after_cancel` owns the lifecycle act itself. This was never
-a stakeholder requirement: the round of requirements gathering that preceded this feature left
-the cancel/dismiss notification explicitly unresolved, recorded verbatim as *"may be expected —
-to be confirmed"*, and it was never confirmed. The non-overridable shape was a design-team fix
-for an earlier `oneshot` two-role problem (below), not an external mandate. Withdrawing it is acceptable specifically because it is not the only safety
-net: the gateway's **power keys** (Ctrl+Q, Ctrl+Break, etc. — `controller.lua`, pre-dating this
-feature) remain unconditional and unshadowable, running before any route dispatch, chain
-included. That is the actual, permanent escape hatch; the framework tier was never it.
+**Withdrawn guarantee — recorded explicitly, not left implicit.** Nothing prevents a project from
+shadowing submit or cancel while the widget is shown, and one that overrides
+`after_submit`/`after_cancel` owns the lifecycle act itself. No stakeholder requirement asked for
+the old guarantee — cancel/dismiss notification was left *"may be expected — to be confirmed"* and
+never confirmed — and it was never the safety net either: the gateway's power keys (`RESERVED`,
+`controller.lua`, pre-dating this feature) run before any route and cannot be shadowed by a
+project, a chain participant or a widget. That is the permanent escape hatch, and it answers
+exactly the chords it names (Decision 33) — non-overridable, not indiscriminate.
 
-**Uniform across every instance — no context reads global state to suppress the flows.**
-`UserInputController:keypressed` runs **one** path regardless of caller: there is no
-`love.state.app_state` branch inside the widget deciding whether submit/cancel run. A context
-that must not run the flows arranges it itself, at its own layer, rather than the widget
-interrogating global state:
+**One path for every instance.** `UserInputController:keypressed` never branches on
+`love.state.app_state`. A context that must not run the flows arranges it at its own layer: the
+editor consumes Enter/Escape upstream through `block_input()`, the console sets no lifecycle
+callbacks so its flows are no-ops, and the project widget sets them for real. Per-instance
+capability flags (`disable_selection`, `allow_modify`) work the same way — the owner enables them
+at construction; the widget never reads a mode. Branching inside the widget instead would leave a
+reusable component that cannot be reasoned about, or migrated, without knowing it is "the editor",
+which is the leak a framework tier was covering for in the first place.
 
-- the **editor** consumes Enter/Escape **upstream** — each handled branch of its own `submit()`
-  (plain Enter, Ctrl+Enter) and `load()` (plain/Shift Escape) calls `block_input()`, so the
-  shared widget's `submit_flow`/`cancel_flow` never run for the keys the editor owns; the one
-  Enter variant it does not handle (Alt+Enter) falls through to the widget harmlessly, because
-  the editor sets no callbacks;
-- **console** sets no `before_*`/`after_*` callbacks, so its own instance's flows run and are
-  no-ops alongside its real work (`evaluate_input`, history navigation);
-- the **project widget** sets callbacks for real — that *is* its submit/cancel.
-
-The editor-only Ctrl+D duplicate-line (`modify`) follows the same principle: it is a per-instance
-**`allow_modify`** constructor flag (`UserInputController(model, disable_selection,
-allow_modify)`), set only by the editor's own input and mirroring `disable_selection` — a widget
-capability the owner enables at construction, not something the widget reads from global mode.
-
-**Why.** The original framework-tier shape existed to solve a problem that no longer exists in
-the same form: the pre-redesign widget served two incompatible roles (self-owned submit for the
-project widget vs. controller-owned submit for console/editor) with no shared dispatch layer
-between them, encoded in a static `oneshot` flag — deliver-and-close and dismiss were
-session-lifecycle acts placed above the widget's pay grade, and an earlier limitation where
-Escape cleared content but could not actually dismiss came precisely from the widget owning
-Escape. Once a uniform chain exists (Decision 2), that problem dissolves without needing a
-reserved tier — the "widget owns detection, context owns lifecycle" separation that originally
-fixed the Escape-can't-dismiss bug is preserved by making dismissal the callback's job, not the
-framework's. A later refinement — briefly, the widget reading `app_state` to suppress its own
-flows specifically in editor mode — reintroduced the same abstraction leak in a smaller shape: a
-reusable input widget branching on global app-mode cannot be reasoned about, or migrated, without
-knowing it is "the editor." Moving the suppression to the editor's own upstream interception
-instead removes the fork from the widget entirely; the context owner decides interception, and
-the widget stays unaware that interception can even happen.
-
-**Consequence.** Deactivate-on-submit is no longer even a route-level policy question — it is
-per-*callback* configuration, one level more granular, and console/editor inherit "stay open" for
-free without fighting a hardcoded hide. Because `UserInputController:keypressed` is genuinely
-uniform across every instance, a future editor migration (Decision 1) extends the same seam the
-editor already uses for `disable_selection`/`allow_modify`, rather than having to rip out a
-mode-read. `hide()` (the programmatic path) fires **no** cancel flow — cancel is the user-facing
-Escape path only. A `before_submit` veto return remains a deliberately reserved extension —
-ignored today, but not precluded; blocking bad input at submit is already the validator's job.
+**Consequence.** Deactivate-on-submit is per-*callback* configuration rather than route policy, so
+console and editor inherit "stay open" for free and a future editor migration (Decision 1) extends
+an existing seam. `hide()` fires **no** cancel flow — cancel is the user-facing Escape path only.
 
 ## Decision 7 — freeze the container and its sub-table identities; leaves are writable
-> REMARK: the decision is very trivial, I do not think its worth documenting, or should be literally few lines
 
 **Decision.** `compy.input` itself, and the *identity* of each of its three sub-tables
 (`shortcuts`, `hooks`, `callbacks`), are frozen — a project cannot do
@@ -362,21 +323,16 @@ that **errors loudly on assignment**.
 widget itself invokes**, whether on a lifecycle trigger, at submit-time validation, or at render
 for highlighting.
 
-**Why.** The surface has to be simultaneously configurable (projects wire callbacks by plain
-assignment, LÖVE-style) and tamper-resistant (a project must not be able to replace `show`, or
-replace a whole sub-table wholesale). The original rule drew that line by hand-enumerating exactly
-11 writable field names and refusing everything else — loudly, never a silent swallow, per the
-house warn-don't-swallow discipline — which required keeping the list in sync with the API
-surface. The current rule is one sentence and self-enforcing structurally: refuse all
-direct-container and sub-table-identity writes; nothing to enumerate. The guard's *purpose* —
-tamper-resistance against a project replacing callable API — is undiminished; it just moved from
-a flat allowlist to a shape rule. The guard lives in the surface's metatable (one level down for
-each sub-table), so a stray or mistyped assignment fails at the point of the mistake rather than
-corrupting the API.
+**Why.** The surface must be configurable (projects wire callbacks by plain assignment,
+LÖVE-style) and tamper-resistant (a project must not replace `show`, or swap a whole sub-table) at
+once. A shape rule does both with nothing to keep in sync: refuse every direct-container and
+sub-table-identity write, permit every leaf. The guard lives in the surface's metatable, one level
+down per sub-table, so a mistyped assignment fails at the point of the mistake rather than
+corrupting the API — loudly, never a silent swallow.
 
-**Consequence.** `shortcuts.keypressed`'s normalising behaviour (Decision 8) must stay reachable
-only through its combo-keyed leaves, never through wholesale sub-table replacement — the
-frozen-identities clause exists specifically to protect that invariant.
+**Consequence.** `shortcuts.keypressed`'s normalising behaviour (Decision 8) stays reachable only
+through its combo-keyed leaves; protecting that invariant is what the frozen-identities clause is
+for.
 
 ## Decision 8 — per-event combo tables and canonical combo serialisation
 
@@ -527,19 +483,21 @@ never act outside its creator's window: a disconnected route's participants rece
 a widget whose owning route is inactive goes unhonoured. `inspect` mode is the model case of the
 latter (Decision 12).
 
-## Decision 12 — `inspect` is a mode-to-route line, nothing more
+## Decision 12 — `inspect` is a mode-to-route line — NOT A DECISION, de-facto behaviour
 
-> REMARK: if its the behaviour system had and keeps having, its not a decision -- its documented de-facto standard
+**Retired in place, 2026-08-25**, against the rule that behaviour the platform
+always had was never a decision to record. Suspending a project restored every
+handler to the console before this feature and still does. The number is kept
+because decisions are cited by number — seven comments cite this one — and the
+description is kept because it is worth having; it just is not a ruling.
 
-**Decision.** `inspect` (a paused or broken-into project) is simply **the console route active,
-bound over the project's environment**. The project route is disconnected exactly as the
-connection rule (Decision 11) describes, and the project's own widget is unhonoured because its
-owning route is inactive.
-
-**Why.** Framing inspect as a routing state rather than a bespoke mode means it needs zero special
-rules — it is the console route plus a choice of environment, and it matches the implementation
-exactly (suspending a project restores all handlers to the console). The console running the paused
-project's environment makes it a live debugger console rather than a separate idle one.
+**The behaviour.** `inspect` (a paused or broken-into project) is **the console
+route active, bound over the project's environment**. The project route is
+disconnected exactly as the connection rule (Decision 11) describes, and the
+project's own widget is unhonoured because its owning route is inactive. That
+makes it a live debugger console rather than a separate idle one, and it needs
+no rules of its own. The narrative belongs to
+`internals/user_input.md`; this entry exists for the citations.
 
 ## Decision 13 — the held-key set is exposed read-only, callback-only — SUPERSEDED by Decision 30
 
@@ -598,11 +556,8 @@ individually revisable — but only by a named ruling, not by drift. See
 
 ## Decision 15 — unrecognised show/configure configuration raises
 
-> REMARK: its quite trivial and obvious tactical decision, is it even worth documenting?
-
-
-**Status: in-flight (owner ruling, 2026-07-30); supersedes the warn-and-ignore
-form below.**
+**Status: implemented** (owner ruling, 2026-07-30). Enforced by `check_keys` /
+`bad_key_message` in `consoleController.lua`, which cite this decision back.
 
 **Decision.** A key outside the documented config table, supplied to
 `show(config)` or `configure(config)`, **raises**. A recognised field that is
@@ -635,47 +590,25 @@ from a `love.*` handler it suspends the run with the message. The project guide
 names the accepted keys, and the retired `eval` / `result` keys now raise
 instead of warning.
 
-> REMARK: no need to describe interim forms, invented and dissolved in-flight
-### Superseded — the original warn-and-ignore form
-
-**Decision.** An unrecognised key supplied to show(config) will emit a
-warning and be ignored. A recognised field that is only writable by direct
-assignment is also unrecognised in this table and warns with the same rule.
-
-**Why.** Silent configuration typos have no visible effect and make an
-otherwise simple API needlessly difficult to use. A warning gives the project
-author an immediate, actionable explanation and follows the subsystem's
-existing warn-don't-swallow discipline.
-
-**Why it was revised.** The rationale above argues against silence, and a
-warning is the weakest answer to it that still counts as "not silent". It also
-left `configure` inconsistent: it dropped unknown keys with no signal at all,
-so the same typo behaved differently depending on which function received it.
-
 ---
 
-## Decision 16 — defer future input unification
-> REMARK: this decision was fully overwritten and de-facto input was unified across events axis (to not be confused with postponed unification of routing mechanisms across cosnole/editor/project which is still deferred). So this block should be removed
+## Decision 16 — defer future input unification — SUPERSEDED by Decisions 25 and 27
 
-**Status: owner-ratified in validation; not implemented in 1.0.0-rc20260712.**
+**Retired in place, 2026-08-25.** The number is kept because decisions are cited
+by number; the content below no longer describes the system.
 
-**Decision.** Keep the existing asymmetry: derived singleclick and doubleclick
-remain concise compy callbacks, while keyboard/text use the project input
-hooks. Do not add click entries to the hooks table and do not route pointer
-events through keyboard/text dispatching merely for symmetry.
+This entry deferred pointer unification and said, in as many words, *do not add
+click entries to the hooks table and do not route pointer events through
+keyboard/text dispatching*. The feature does both: `hooks.singleclick` and
+`hooks.doubleclick` are ordinary events (Decision 25), and every pointer channel
+runs the same dispatch with a shortcuts tier of its own (Decision 27).
 
-**Why.** The present pointer system has no requested or feasibility-tested
-unified target, combo, interception, or widget contract. Derived clicks are
-primary-button timer notifications; raw mouse, drag, selection, touch, and
-modifier behaviour follow separate live paths. A superficial shared table
-would imply shared dispatch semantics and constrain a future design before a
-real demand exists. Preserving the pre-feature split contains this API's scope and
-does not worsen the current behaviour.
-
-**Future trigger.** Reconsider only when a concrete demand and a feasible
-design exist for unified pointer/click handling, such as modifier gestures,
-pointer combos, interceptors, or common pointer-aware widgets. That work must
-define raw versus synthetic timing and preserve drag, selection, and touch.
+**Which unification, though — the distinction this entry is kept for.** The
+**event axis** is unified: one channel list, one dispatch, one combo vocabulary
+with the button as a trigger. **Routing** across console, editor and project is
+**still deferred** — three controllers still own their own wiring, and that
+migration is Decision 1's, not this one's. A reader who takes "unification is
+deferred" from the heading alone gets the wrong half.
 
 ---
 

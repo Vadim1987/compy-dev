@@ -659,8 +659,9 @@ Enter and Escape are **ordinary keys handled by the widget itself** (Decision 6)
 no framework tier any more, and no non-overridable interception above the widget: a project
 shortcut registered on `'return'`/`'escape'` (`compy.input.shortcuts.keypressed['return']`, etc.)
 wins over the widget's default, same as any other combo (**withdrawn guarantee**, deliberate — see
-Decision 6's "Withdrawn guarantee" note in `decisions/input.md`; the gateway's unconditional power keys, Ctrl+Q etc.,
-remain the real, permanent escape hatch, unaffected by any shortcut). Only once no shortcut/hook
+Decision 6's "Withdrawn guarantee" note in `decisions/input.md`; the gateway's power keys, Ctrl+Q etc.,
+remain the real, permanent escape hatch, non-overridable by any shortcut — though only for the
+chords they name exactly, per Decision 33). Only once no shortcut/hook
 consumes the key does the widget's own `UserInputController:keypressed` reach its lifecycle guard
 (`Key.is_enter(k) and not Key.shift()` → submit; `k == 'escape' and not Key.ctrl()` → cancel — so
 Ctrl+Enter and Alt+Enter submit too, only Shift+Enter is the newline), and only while the widget is

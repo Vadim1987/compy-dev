@@ -39,3 +39,36 @@ stays readable underneath.
 
 **Estimated effect on the ledger:** ~1556 lines → ~1400, with every decision
 number still resolving.
+
+## Executed, 2026-08-25 — owner ruled "go" on all five
+
+Applied in the recommended order. Ledger **1556 → 1500 lines**, every decision
+number still resolving, suite untouched at 968 / 0 / 0 / 10.
+
+| # | What landed |
+|---|---|
+| **16** | Tombstoned in place: heading keeps the number, gains *SUPERSEDED by Decisions 25 and 27*, body states that the entry says the opposite of what shipped and carries the distinction it is kept for — event axis unified, routing across console/editor/project still deferred (Decision 1). **No comment in `src/` or `tests/` cites Decision 16**, so nothing downstream moved |
+| **12** | Tombstoned as *NOT A DECISION, de-facto behaviour*, with the base evidence named. Its **seven citations keep resolving**, which is the whole reason for tombstoning rather than deleting; the description is kept and points at `internals/user_input.md` for the narrative |
+| **15** | Status corrected — **"in-flight" → "implemented"**, naming `check_keys` / `bad_key_message`, which cite the decision back. §"Superseded — the original warn-and-ignore form" deleted (17 lines): an in-flight shape that never shipped |
+| **7** | "Why" compressed to the shape rule and the metatable's placement; the 11-name-allowlist history removed |
+| **6** | **81 → 44 lines**, prose roughly halved, the flow diagrams and every claim its ~20 citations rest on kept: both flows, the veto, auto-close OFF, shadowability, `hide()` fires no cancel flow, the one-path-per-instance rule |
+
+**Two defects the compression surfaced, both fixed in passing:**
+
+1. **Decision 6 still contained the `before_submit` claim session36 corrected elsewhere.** Its
+   consequence read *"a `before_submit` veto return remains a deliberately reserved extension —
+   ignored today"*, while the bullet above it described the veto as live. The veto **is** built:
+   `submit_flow` opens with `if run_callback(self, 'before_submit') then return end`
+   (`userInputController.lua:406`). Session36 fixed one instance of this claim; this was a second,
+   in the same entry, contradicting its own bullet. Removed.
+2. **A dangling cross-reference created mid-edit** — the `before_cancel` bullet said "symmetric
+   with the `before_submit` veto below" after the paragraph it pointed at was gone. Both vetoes are
+   now stated in one bullet.
+
+**Also settled here rather than separately:** the "unconditional and unshadowable" wording flagged
+as a watch item in `S44-decisions-33-34-revalidation.md` §4. Decision 6 now says
+**non-overridable, not indiscriminate**, naming Decision 33 — and `internals/user_input.md`'s copy
+of the same phrase was corrected with it, since the two are read together.
+
+**Marker side-effect:** six `REMARK:`s in the ledger were answered by this work and removed with
+it (30 → 24), which is a real reduction in P11's backlog rather than a deferral.
