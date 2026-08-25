@@ -15,7 +15,7 @@
 -- Each reserved combo's OWN effect (not the suppression claim)
 -- is left as a named pending gap below — see
 -- doc/development/tests.md, "Input Contract Suite" for the
--- pending-row convention this suite already follows.
+-- pending-case convention this suite already follows.
 
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
@@ -26,7 +26,7 @@ local mock = require('tests.mock')
 -- the raw gate invoked, isolating the modifier-exactness
 -- question from project loading (doc/development/decisions/
 -- input.md, Decision 17's named-seam exception; same technique
--- as input_shortcuts_click_spec.lua's play-mode row).
+-- as input_shortcuts_click_spec.lua's play-mode case).
 -- @param combo string  mock.keystroke syntax, e.g. 'C-M-r'
 -- @return table  {restart = true?, reset = true?}
 local function drive_stub(combo)

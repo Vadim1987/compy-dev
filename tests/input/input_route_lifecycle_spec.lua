@@ -33,7 +33,7 @@ describe('input surface: inbound events — route lifetime #input',
   -- decision), inspect
   -- (doc/development/decisions/input.md, Decision 12), and the
   -- compy.before_exit stop hook.
-  -- All rows drive the
+  -- All cases drive the
   -- REAL
   -- production functions (Controller.release_keyboard_
   -- route, ConsoleController:stop_project_run/:suspend),
@@ -176,13 +176,14 @@ describe('input surface: inbound events — route lifetime #input',
           assert.is_true(F.widget:is_empty())
         end)
 
-      -- doc/development/decisions/input.md, Decision 11: the row
-      -- above starts its first project WITHOUT an overlay, so it
-      -- cannot see whether stop leaves the widget re-showable. This
-      -- one does: project one shows, is stopped, and project two
-      -- shows again. The overlay must come up with the SECOND
-      -- project's text — the widget's own shown flag is part of what
-      -- teardown resets, not merely the published love.state handle.
+      -- doc/development/decisions/input.md, Decision 11: the
+      -- case above starts its first project WITHOUT an overlay,
+      -- so it cannot see whether stop leaves the widget re-
+      -- showable. This one does: project one shows, is stopped,
+      -- and project two shows again. The overlay must come up
+      -- with the SECOND project's text — the widget's shown
+      -- flag is part of what teardown resets, not merely the
+      -- published love.state handle.
       it('a second project gets its overlay after the first ' ..
           'is stopped', function()
         local first = F.activate_project()
@@ -211,8 +212,8 @@ describe('input surface: inbound events — route lifetime #input',
       -- overlay and then raises is the one part of this path a
       -- unit test cannot supply from disk.
       -- `extra` runs after the overlay is up and before the
-      -- raise, so a row can install participants the way a real
-      -- project's top-level code would.
+      -- raise, so a case can install participants the way a
+      -- real project's top-level code would.
       local function run_raising_project(extra)
         local P = F.cc.model.projects
         local prev_current, prev_run = P.current, P.run
@@ -239,7 +240,7 @@ describe('input surface: inbound events — route lifetime #input',
         assert.is_false(F.widget:is_shown())
       end)
 
-      -- The user-visible consequence of the row above, and the
+      -- The user-visible consequence of the case above, and the
       -- control that proves it is not vacuous: show() is a
       -- no-op over an active overlay (Decision 3), so a
       -- surviving widget would silently swallow the next run's.
@@ -251,7 +252,7 @@ describe('input surface: inbound events — route lifetime #input',
         assert.same({ 'two' }, F.widget:get_text())
       end)
 
-      -- Same invariant as the stop-teardown row above, on the
+      -- Same invariant as the stop-teardown case above, on the
       -- other end of a run: top-level code that raises has
       -- usually installed participants first, and Decision 11
       -- lets none of them outlive the project that installed
@@ -331,8 +332,8 @@ describe('input surface: inbound events — route lifetime #input',
     -- the screenshot callback that completes the move to
     -- 'inspect' needs a real graphics context, so 'snapshot'
     -- is the observable this far.
-    -- Each row asserts the handler RAN before it raised, so a
-    -- silently-skipped handler cannot pass the row by never
+    -- Each case asserts the handler RAN before it raised, so a
+    -- silently-skipped handler cannot pass the case by never
     -- reaching its error.
     describe('a raise in a project handler suspends', function()
       it('from a pointer handler', function()
@@ -363,7 +364,7 @@ describe('input surface: inbound events — route lifetime #input',
 
       -- The control: this channel already worked, because the
       -- keyboard chain's wrapper binds CC in a closure. Kept
-      -- as the row that shows the other two are not asserting
+      -- as the case that shows the other two are not asserting
       -- something impossible.
       it('from a keyboard hook', function()
         local ran = 0
@@ -384,7 +385,7 @@ describe('input surface: inbound events — route lifetime #input',
     -- boundary belongs where the chain is INVOKED, on the
     -- controller side, so that it covers every tier rather than
     -- whichever participants happened to be wrapped on the way
-    -- in. These rows pin all three tiers and the abort.
+    -- in. These cases pin all three tiers and the abort.
     describe('the chain is error-bounded at entry', function()
       it('a raising shortcut does not escape the chain',
         function()
@@ -489,7 +490,7 @@ describe('input surface: inbound events — route lifetime #input',
       -- Fires exactly once per stop. The framework owns the
       -- teardown and calls the project's hook from inside it,
       -- so there is one invocation point by construction; this
-      -- row is what would notice a second one growing.
+      -- case is what would notice a second one growing.
       it('fires exactly once per stop', function()
         local n = 0
         F.activate_project()
@@ -504,7 +505,7 @@ describe('input surface: inbound events — route lifetime #input',
       -- fixes the ORDER: uninstalling after the call, never
       -- before, is the only arrangement a parting
       -- reinstallation cannot escape. Mutation-checked:
-      -- moving the uninstall above the call fails this row.
+      -- moving the uninstall above the call fails this case.
       it('a hook reassigned during teardown does not survive',
         function()
           local leaked = false

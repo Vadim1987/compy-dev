@@ -30,15 +30,15 @@ describe('input surface: widget control #input', function()
   -- project_env.compy.input — exactly what a project sees.
   -- show({ text = ... }) seeds the widget's CONTENT (the
   -- editable text) and show({ prompt = ... }) its label — a separate
-  -- config key, one row each (same section). The
+  -- config key, one case each (same section). The
   -- "no cancel chain" facts are stable-now.
   describe('show(): activation and reset', function()
 
     -- Prompt LABELLING at activation. Re-labelling on an already
     -- active session is the reconfigure concern and is covered in
     -- this file's 'configure(): the live session' group ('updates
-    -- the prompt on an active session'), so this row only pins the
-    -- show() half.
+    -- the prompt on an active session'), so this case only
+    -- pins the show() half.
     it('a fresh activation applies the prompt label', function()
       local input = F.compy_input()
       input.show({ text = 'hi', prompt = 'name?' })
@@ -174,7 +174,7 @@ describe('input surface: widget control #input', function()
     -- After hide the widget stops being the surface the
     -- route forwards to: typed text lands in the console,
     -- not the widget (whose non-mutation is asserted in
-    -- the hidden-widget row below). That the CONSOLE is
+    -- the hidden-widget case below). That the CONSOLE is
     -- where it lands is the disputed half — see the group
     -- below for where that is recorded.
     it('hide deactivates the widget', function()
@@ -419,9 +419,9 @@ describe('input surface: widget control #input', function()
   -- Decision 2: "its hidden-check is internal"): an event arriving while the
   -- widget is hidden never mutates widget state — it
   -- reaches the active route instead. Inter-route dispatch is unchanged.
-  -- One row per channel: the pair differs only in which channel the
-  -- event arrives on (textinput vs keypressed), so they are named for
-  -- that and nothing else.
+  -- One case per channel: the pair differs only in which
+  -- channel the event arrives on (textinput vs keypressed), so
+  -- they are named for that and nothing else.
   --
   -- These ran on the CONSOLE route while it still had a widget
   -- step, and were tagged #disputable because the second half
@@ -429,14 +429,14 @@ describe('input surface: widget control #input', function()
   -- widget declined -- rested on a fallback nobody had ruled
   -- on. That fallback is gone: the console route has no widget
   -- step at all now (Decision 1, "widget visibility is never a
-  -- routing condition"), which would leave these rows passing
+  -- routing condition"), which would leave these cases passing
   -- for a reason unrelated to their claim -- a SHOWN widget
   -- would satisfy them there just as well.
   --
   -- Re-sited on the project route, where a hidden widget is a
   -- real decision: the walk skips it and reports not-consumed.
   -- What discriminates hidden from shown is the WIDGET's own
-  -- text, and the third row is the control that says so. The
+  -- text, and the third case is the control that says so. The
   -- hook assertion is not a discriminator -- hooks run BEFORE
   -- the widget, so it fires either way; it proves the event
   -- reached the chain at all rather than being dropped
@@ -457,7 +457,7 @@ describe('input surface: widget control #input', function()
         assert.equal(1, seen)
       end)
 
-    -- The keypressed sibling of the row above.
+    -- The keypressed sibling of the case above.
     it('a pressed key while hidden leaves it alone',
       function()
       local input = F.activate_project()
@@ -470,10 +470,10 @@ describe('input surface: widget control #input', function()
       assert.equal(1, seen)
     end)
 
-    -- THE CONTROL for both rows above: the identical keystroke,
-    -- with the widget shown, DOES edit it. Without this the
-    -- two could pass against a widget that never receives
-    -- anything under any condition.
+    -- THE CONTROL for both cases above: the identical
+    -- keystroke, with the widget shown, DOES edit it. Without
+    -- this the two could pass against a widget that never
+    -- receives anything under any condition.
     it('shown, the same key edits the widget', function()
       local input = F.activate_project()
       local seen = 0
@@ -533,8 +533,8 @@ describe('input surface: widget control #input', function()
     end)
 
     -- The control: an ordinary widget hides normally, so the
-    -- row above pins the always_shown property and not a hide()
-    -- that stopped working.
+    -- case above pins the always_shown property and not a
+    -- hide() that stopped working.
     it('an ordinary widget still hides', function()
       local m = UserInputModel(F.cfg, InputEvalText)
       local w = UserInputController(m, true)
@@ -551,8 +551,8 @@ describe('input surface: widget control #input', function()
   -- answer is a project idiom, not a mechanism: a one-shot
   -- shortcut on the textinput channel eats the echo and
   -- unregisters itself, re-armed wherever the project closes.
-  -- These rows pin the idiom the guide documents. It is only as
-  -- good as the seams it rests on: shortcuts run before the
+  -- These cases pin the idiom the guide documents. It is only
+  -- as good as the seams it rests on: shortcuts run before the
   -- widget on every channel, and a handler may clear its own
   -- slot mid-flight.
   describe('the documented echo guard', function()
@@ -625,16 +625,18 @@ describe('input surface: widget control #input', function()
   end)
 
   -- A shown overlay must be PAINTED, whatever the project does.
-  -- Two draw paths exist and they are not interchangeable: a project
-  -- that hooks love.draw is wrapped by set_love_update, which paints
-  -- the overlay after the project's own frame; a project that hooks
-  -- nothing keeps the console's draw, which is the path these rows
-  -- pin. Consuming input the user cannot see is the failure mode
-  -- (doc/development/internals/user_input.md, "Widget lifecycle"),
-  -- and the overlay's own view is the only surface that shows it —
-  -- the console's input line below it belongs to the console.
-  -- The view is the fixture's stub, so what is asserted is the
-  -- WIRING (the frame reaches the overlay's view), never pixels.
+  -- Two draw paths exist and they are not interchangeable: a
+  -- project that hooks love.draw is wrapped by set_love_update,
+  -- which paints the overlay after the project's own frame; a
+  -- project that hooks nothing keeps the console's draw, which
+  -- is the path these cases pin. Consuming input the user
+  -- cannot see is the failure mode
+  -- (doc/development/internals/user_input.md, "Widget
+  -- lifecycle"), and the overlay's own view is the only surface
+  -- that shows it — the console's input line below it belongs
+  -- to the console. The view is the fixture's stub, so what is
+  -- asserted is the WIRING (the frame reaches the overlay's
+  -- view), never pixels.
   describe('a shown overlay is painted', function()
 
     it('the console draw path paints a shown overlay', function()

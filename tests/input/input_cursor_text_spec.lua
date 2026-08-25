@@ -36,11 +36,12 @@ describe('input surface: widget control — cursor and text #input',
         assert.same({ 1, 6 }, { input.get_cursor() })
       end)
 
-    -- The pair above proves the report is 1-based ONCE. This row
-    -- proves it keeps TRACKING: the reported position follows real
-    -- edits (a typed character, a deletion) rather than being a
-    -- constant that happens to match the opening state.
-    -- activate_project, not compy_input alone: this row TYPES,
+    -- The pair above proves the report is 1-based ONCE. This
+    -- case proves it keeps TRACKING: the reported position
+    -- follows real edits (a typed character, a deletion) rather
+    -- than being a constant that happens to match the opening
+    -- state.
+    -- activate_project, not compy_input alone: this case TYPES,
     -- so it needs the route a real project's overlay is fed
     -- through. Reading the surface needs no route; delivery
     -- does.
@@ -56,7 +57,7 @@ describe('input surface: widget control — cursor and text #input',
       end)
 
     -- Multiline: the LINE half of the pair has to move too, or a
-    -- single-line-only report would pass every row above.
+    -- single-line-only report would pass every case above.
     it('reports the line on multiline text', function()
       local input = F.compy_input()
       input.show({ text = { 'ab', 'cd' } })
@@ -81,7 +82,7 @@ describe('input surface: widget control — cursor and text #input',
     -- manipulation and \"reset\"": move; out-of-range
     -- clamps to the valid range.
     
-    -- activate_project: the row types to prove the caret is
+    -- activate_project: the case types to prove the caret is
     -- seated, so it needs the project route to deliver.
     it('moves the cursor', function()
       local input = F.activate_project()

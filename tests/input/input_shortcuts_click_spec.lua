@@ -105,8 +105,8 @@ describe('input surface: inbound events — shortcuts and clicks'
     end)
 
     -- The control: an unmatched combo falls through untouched.
-    -- Without this row a shortcut tier that fired on EVERY
-    -- pointer event would pass the row above.
+    -- Without this case a shortcut tier that fired on EVERY
+    -- pointer event would pass the case above.
     it('an unmatched pointer combo reaches the hook',
       function()
         local fired, reached_hook = false, false
@@ -133,9 +133,9 @@ describe('input surface: inbound events — shortcuts and clicks'
         assert.same({ 'right' }, hits)
       end)
 
-    -- Discriminating: the same binding must be SILENT for another
-    -- button. A tier that keyed on the channel alone would pass
-    -- the row above and fail this one.
+    -- Discriminating: the same binding must be SILENT for
+    -- another button. A tier that keyed on the channel alone
+    -- would pass the case above and fail this one.
     it('a button trigger is silent for another button',
       function()
         local fired, reached_hook = false, false

@@ -334,7 +334,8 @@ end
 --- configure; doc/development/internals/user_input.md, "configure(config)"
 --- — the boundary decision closed here): only
 --- the Contract's live-updatable set reaches apply_config —
---- prompt/highlighter/validator/widget-output callbacks. text/
+--- the prompt, the highlighter, and the validator /
+--- on_text_entered / on_limit_reached callbacks. text/
 --- cursor never reaches it from here — accepted but
 --- inert on an active session (use set_text/set_cursor, or
 --- clear()+show()); no partial/silent path exists because this

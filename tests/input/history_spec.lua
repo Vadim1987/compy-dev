@@ -77,8 +77,8 @@ end)
 -- console's handler turns it
 -- into history_back (doc/development/decisions/input.md,
 -- Decision 5). The retired mechanism -- the console reading
--- keypressed's return value -- is why this is an end-to-end row
--- and not another model one.
+-- keypressed's return value -- is why this is an end-to-end
+-- case and not another model one.
 describe('console history navigation #input #history',
   function()
   setup(function() F.setup() end)

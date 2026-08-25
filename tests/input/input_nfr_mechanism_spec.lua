@@ -18,12 +18,12 @@
 -- Guards on MECHANISM, not on behaviour: object identity and
 -- allocation. Nothing here
 -- is a project-facing contract — those live in the other
--- input_*_spec.lua files, and a row that turns out to be one
+-- input_*_spec.lua files, and a case that turns out to be one
 -- belongs there instead.
 --
--- The file has been narrowed twice on that test. A wheel row
+-- The file has been narrowed twice on that test. A wheel case
 -- went to input_events_spec.lua when it became one case of
--- "every channel reaches the route"; a characterisation row
+-- "every channel reaches the route"; a characterisation case
 -- went entirely, having stopped discriminating.
 
 local F = require('tests.helpers.input_fixture')
@@ -36,11 +36,11 @@ describe('input contracts: NFR and mechanism guards #input',
 
   -- ====================================================
   -- Characterized behaviour (no stakeholder mandate). De-facto
-  -- behaviour that predates the Compy input API,
-  -- reverse-engineered and canonicalized here. Each row asserts
-  -- only what is verifiably true today, so a deliberate change
-  -- reads as expected while an accidental one still fails the
-  -- build. (doc/development/tests.md, "Input Contract Suite")
+  -- behaviour that predates the Compy input API, reverse-
+  -- engineered and canonicalized here. Each case asserts only
+  -- what is verifiably true today, so a deliberate change reads
+  -- as expected while an accidental one still fails the build.
+  -- (doc/development/tests.md, "Input Contract Suite")
   -- ====================================================
   -- ====================================================
   -- Mechanism / NFR guards — not behaviour contracts.
@@ -84,7 +84,7 @@ describe('input contracts: NFR and mechanism guards #input',
 
   -- ====================================================
   -- Teardown, seen from the LÖVE side. The project-facing half
-  -- of Decision 11 is input_route_lifecycle_spec.lua; this row
+  -- of Decision 11 is input_route_lifecycle_spec.lua; this case
   -- watches the same stop from below, where the wiring actually
   -- lives. ====================================================
   describe('teardown leaves the love.* wiring at defaults',

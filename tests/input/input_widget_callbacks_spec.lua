@@ -27,7 +27,7 @@ local TU   = require('tests.testutil')
 ---> REMARK: artifact prose from elsewhere? distill to only relevant
 -- ====================================================
 -- The dispatch chain (doc/development/decisions/input.md, Decision 2).
--- All rows drive the REAL project route: F.activate_
+-- All cases drive the REAL project route: F.activate_
 -- project() installs the ProjectInputController as the
 -- the active route (app_state='running') via the same
 -- Controller.set_user_handlers path a run calls, and
@@ -35,7 +35,7 @@ local TU   = require('tests.testutil')
 -- observable results are the widget's text
 -- and
 -- the callbacks a project registers — never a spy on an
--- internal method (except the one widget-signature row,
+-- internal method (except the one widget-signature case,
 -- which patches the shared widget and restores it).
 -- ====================================================
 
@@ -286,9 +286,9 @@ describe('input surface: widget callbacks #input', function()
         assert.same({ 'abc' }, F.widget:get_text())
       end)
 
-    -- The control for the row above: a FALSEY before_submit must
-    -- not veto anything. Without it, a submit broken outright
-    -- would satisfy the veto assertion just as well.
+    -- The control for the case above: a FALSEY before_submit
+    -- must not veto anything. Without it, a submit broken
+    -- outright would satisfy the veto assertion just as well.
     it('a falsey before_submit lets the submit through',
       function()
         local input = F.activate_project()
@@ -357,13 +357,15 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(seen.after)
     end)
 
-    -- The validator is a step OF the submit chain, which is why it
-    -- is documented with it (doc/development/internals/user_input.md,
-    -- "Submit and cancel — widget-owned callback sequences") — the
-    -- section reference is not a mismatch. What this row pins is not
-    -- the chain order (the first row of this group does that) but the
-    -- argument: a custom validator receives the widget's live line
-    -- array, not joined or stale text.
+    -- The validator is a step OF the submit chain, which is why
+    -- it is documented with it
+    -- (doc/development/internals/user_input.md, "Submit and
+    -- cancel — widget-owned callback sequences") — that
+    -- section
+    -- reference is not a mismatch. What this case pins is not
+    -- the chain order (the first case of this group does that)
+    -- but the argument: a custom validator receives the
+    -- widget's live line array, not joined or stale text.
     it('a custom validator receives the live lines',
       function()
         local seen
@@ -527,13 +529,14 @@ describe('input surface: widget callbacks #input', function()
         assert.is_true(F.is_widget_visible())
       end)
 
-    -- doc/development/internals/user_input.md, "Multiline input":
-    -- what the WIDGET does with Shift+Return once the event reaches
-    -- it — insert a newline unconditionally, do not submit, stay
-    -- open. "Unconditionally" is the widget's own internal claim (no
-    -- state of its own suppresses the newline); it says nothing about
-    -- whether the event can be claimed before it arrives. It can, and
-    -- the row below pins that.
+    -- doc/development/internals/user_input.md, "Multiline
+    -- input": what the WIDGET does with Shift+Return once the
+    -- event reaches it — insert a newline unconditionally, do
+    -- not submit, stay open. "Unconditionally" is the widget's
+    -- own internal claim (no state of its own suppresses the
+    -- newline); it says nothing about whether the event can be
+    -- claimed before it arrives. It can, and the case below
+    -- pins that.
     -- F.session.press holds the modifier on the device as well as
     -- feeding the gateway, so the keystroke below adds nothing but
     -- the return key; it is kept as the combo driver rather than
@@ -548,7 +551,7 @@ describe('input surface: widget callbacks #input', function()
         assert.is_true(F.is_widget_visible())
       end)
 
-    -- The interceptability half of the row above. Shift+Return
+    -- The interceptability half of the case above. Shift+Return
     -- reaches the widget only because nothing upstream claimed it:
     -- it is an ordinary combo, so a project shortcut on
     -- 'shift+return' consumes it like any other key and no newline
@@ -636,7 +639,7 @@ describe('input surface: widget callbacks #input', function()
 
     -- Submit leaves the widget open, so closing is the
     -- project's to do and after_submit is where it does it.
-    -- Asserted in that direction on purpose: the row that
+    -- Asserted in that direction on purpose: the case that
     -- asserted the OPPOSITE — re-show from after_submit, then
     -- check the widget is shown — could not fail, because a
     -- submit no longer hides and the assertion held whether or
@@ -658,7 +661,7 @@ describe('input surface: widget callbacks #input', function()
     end)
 
     -- The control the pair needs: WITHOUT a closing callback
-    -- the widget stays up. Together the two rows pin the
+    -- the widget stays up. Together the two cases pin the
     -- default and the override; either alone pins neither.
     it('and without it the widget stays open', function()
       local input = F.activate_project()
@@ -749,7 +752,7 @@ describe('input surface: widget callbacks #input', function()
   -- the call itself (the console's evaluate_input call count, and
   -- model:cancel not running under the editor's Escape) — the
   -- same technique input_events_spec.lua uses for its one
-  -- widget-signature row.
+  -- widget-signature case.
   describe('the same lifecycle on every route #lifecycle', function()
     -- A standalone widget, NOT the persistent/overlay — direct
     -- construction, like user_input_view_spec.lua.
@@ -883,8 +886,9 @@ describe('input surface: widget callbacks #input', function()
     -- the editor assigns no on_text_entered or after_submit, so
     -- a submit with no callbacks delivers to nobody and leaves
     -- the loaded text alone — the same harmless no-op the
-    -- console relies on. The row exists so an unclaimed variant
-    -- can never grow into a real, unintended editor submit.
+    -- console relies on. The case exists so an unclaimed
+    -- variant can never grow into a real, unintended editor
+    -- submit.
     describe('editor Alt+Enter, an unclaimed variant',
       function()
       it('submits to nobody and leaves the text alone',
@@ -922,7 +926,7 @@ describe('input surface: widget callbacks #input', function()
     -- ---- 6. the same two keys in the other two surfaces ----
 
     -- The uniformity claim in its plainest form: after the
-    -- editor rows above, the console and the project overlay
+    -- editor cases above, the console and the project overlay
     -- are driven through the same Enter and Escape. Their
     -- subject-matter contracts (the full submit call-order
     -- chain, the cancel chain, validators) belong to this file's

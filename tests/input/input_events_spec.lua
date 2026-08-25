@@ -22,11 +22,13 @@
 
 local F = require('tests.helpers.input_fixture')
 
--- All rows drive the REAL project route: F.activate_project() installs the
--- ProjectInputController as the active route (app_state='running') via the
--- production Controller.set_user_handlers path, and returns the project-facing
--- compy.input surface. Assertions read the widget's text and the callbacks a
--- project registers — except the one widget-signature row, which patches the
+-- All cases drive the REAL project route:
+-- F.activate_project() installs the ProjectInputController as
+-- the active route (app_state='running') via the production
+-- Controller.set_user_handlers path, and returns the
+-- project-facing compy.input surface. Assertions read the
+-- widget's text and the callbacks a project registers —
+-- except the one widget-signature case, which patches the
 -- shared widget and restores it.
 
 describe('input surface: inbound events — dispatch #input',
@@ -53,7 +55,7 @@ describe('input surface: inbound events — dispatch #input',
   -- because a class needs modifiers to be a class of.
 
   -- Every declared channel reaches the route. Written as a
-  -- sweep over the list rather than a row per channel: the
+  -- sweep over the list rather than a case per channel: the
   -- gateway declares twelve entries and the route installs
   -- twelve handlers, and the thing worth asserting is that
   -- those two lists agree — which a hand-picked sample cannot
@@ -106,7 +108,7 @@ describe('input surface: inbound events — dispatch #input',
     -- Order, consumption and fall-through are the interception
     -- matrix below — it walks every permutation of present /
     -- absent / consuming, which is strictly more than a handful
-    -- of hand-written rows could state. What is left here is
+    -- of hand-written cases could state. What is left here is
     -- the one property the matrix does not carry: a matrix case
     -- fires once, so nothing in it can show that consuming an
     -- event does not spend the registration.
@@ -180,13 +182,14 @@ describe('input surface: inbound events — dispatch #input',
       end)
   end)
 
-  -- doc/development/decisions/input.md, Decision 2: the interception
-  -- matrix. Two things at once — each participant intercepts for
-  -- itself only (a consumer stops the walk exactly where it sits), and
-  -- a MISSING participant is not a barrier: the walk skips it and the
-  -- ones below still run. Rows configure (shortcut, hook) as
-  -- pass-through or consuming, or leave them undefined; `seen` is the
-  -- mnemonic trace and the widget's text is the observable terminal
+  -- doc/development/decisions/input.md, Decision 2: the
+  -- interception matrix. Two at once — each participant
+  -- intercepts for itself only (a consumer stops the walk
+  -- exactly where it sits), and a MISSING participant is not a
+  -- barrier: the walk skips it and the ones below still run.
+  -- Cases configure (shortcut, hook) as pass-through or
+  -- consuming, or leave them undefined; `seen` is the mnemonic
+  -- trace and the widget's text is the observable terminal
   -- (backspace edits 'ab' -> 'a' exactly when the widget runs).
   --> REMARK: this is kind of a matrix test I've thought of -- does it supersede dispatching tests above?
   describe('the interception matrix', function()
@@ -370,7 +373,7 @@ describe('input surface: inbound events — dispatch #input',
     end)
 
     -- The control: a class is legal the moment it has modifiers
-    -- to be a class OF, which is what the row above is not.
+    -- to be a class OF, which is what the case above is not.
     it('accepts a class with modifiers', function()
       local input = F.activate_project()
       assert.has_no.errors(function()
@@ -403,7 +406,7 @@ describe('input surface: inbound events — dispatch #input',
     end)
 
     -- An EXACT two-modifier combo, which nothing else in the
-    -- suite drove: the rows around this one bind one modifier
+    -- suite drove: the cases around this one bind one modifier
     -- plus a trigger, or two modifiers plus the class marker.
     -- Both halves of a smoke finding live here — two modifiers
     -- serialising in canonical order, and a non-character
@@ -411,7 +414,7 @@ describe('input surface: inbound events — dispatch #input',
     -- exactly this shape (examples/keyboard registers
     -- 'ctrl+alt+up' for its difficulty notch) and was reported
     -- as doing nothing; the platform half of that report is
-    -- what this row answers.
+    -- what this case answers.
     it('a two-modifier combo fires on the real chord', function()
       local input = F.activate_project()
       local seen = { }
@@ -741,9 +744,9 @@ describe('input surface: inbound events — dispatch #input',
 
     -- Discriminating on the MIDDLE argument, which is the one
     -- that changed identity: it is LÖVE's scancode, not the
-    -- held-key table it used to be. A row reading position 2 for
-    -- a truthy value would pass under either, so this one reads
-    -- the value and pins the arity.
+    -- held-key table it used to be. A case reading position 2
+    -- for a truthy value would pass under either, so this one
+    -- reads the value and pins the arity.
     it('the middle argument is the scancode, not a table',
       function()
         local seen, count
@@ -813,10 +816,11 @@ describe('input surface: inbound events — dispatch #input',
   -- Decision 10 and Decision 2)
 
   describe('defaults and the hidden widget', function()
-    -- The non-defined-participant permutations the symmetry calls
-    -- for (none defined, shortcut missing, hook missing) are the
-    -- missing-participant rows of the interception matrix above; this
-    -- group covers what the DEFAULTS do once the event arrives.
+    -- The non-defined-participant permutations the symmetry
+    -- calls for (none defined, shortcut missing, hook missing)
+    -- are the missing-participant cases of the interception
+    -- matrix above; this group covers what the DEFAULTS do once
+    -- the event arrives.
 
     -- doc/development/decisions/input.md, Decision 10: the default hook neither
     -- edits nor
@@ -847,7 +851,7 @@ describe('input surface: inbound events — dispatch #input',
 
     -- doc/development/decisions/input.md, Decision 2: whether
     -- the route reports the event as consumed follows from ONE
-    -- fact -- is the widget shown. The rows above observe that
+    -- fact -- is the widget shown. The cases above observe that
     -- through mutations; this one reads the route's own answer,
     -- because a shown widget consumes even keys it does nothing
     -- with (so a 'did it change anything' test cannot witness
@@ -886,10 +890,11 @@ describe('input surface: inbound events — dispatch #input',
 
   describe('the per-event hook', function()
 
-    -- The keypressed counterpart is not missing, it is upstream: the
-    -- interception matrix and the delivered-triple row both drive
-    -- hooks.keypressed. What is specific to textinput, and is why
-    -- this row exists, is the PER-CHARACTER cadence.
+    -- The keypressed counterpart is not missing, it is
+    -- upstream: the interception matrix and the
+    -- delivered-triple case both drive hooks.keypressed. What
+    -- is specific to textinput, and is why this case exists, is
+    -- the PER-CHARACTER cadence.
     -- doc/development/decisions/input.md, Decision 5: the textinput hook
     -- fires PER-CHARACTER (distinct from the submit output on_text_entered)
     it('the textinput hook fires per character as text arrives',
@@ -986,11 +991,10 @@ describe('input surface: inbound events — dispatch #input',
         assert.same({ 'ab' }, F.widget:get_text())
       end)
 
-    -- doc/development/decisions/input.md, Decision 10, project-handler
-    -- path: a falsey handler falls through to
-    -- the widget (asserted on the textinput channel too, so all
-    -- three channels are covered across the handler
-    -- rows).
+    -- doc/development/decisions/input.md, Decision 10, project-
+    -- handler path: a falsey handler falls through to the
+    -- widget (asserted on the textinput channel too, so all
+    -- three channels are covered across the handler cases).
     it('a falsey handler textinput falls through to the widget',
       function()
         F.activate_project({
@@ -1012,13 +1016,14 @@ describe('input surface: inbound events — dispatch #input',
         local handler_hits, cb_hits = 0, 0
         local function bump() handler_hits = handler_hits + 1 end
     -- Audited: BOTH paths are exercised in this file, not one.
-    -- F.activate_project({ keypressed = f }) is the legacy path — f
-    -- is the project's sandboxed love.keypressed, seeded into
-    -- hooks[event] once at activation (seed_hooks,
-    -- projectInputController.lua) — while every row that assigns
-    -- input.hooks.<event> directly (the interception matrix, the
-    -- delivered-triple row, the textinput rows) drives the explicit
-    -- path. This row is the one that pins how they INTERACT.
+    -- F.activate_project({ keypressed = f }) is the legacy path
+    -- — f is the project's sandboxed love.keypressed, seeded
+    -- into hooks[event] once at activation (seed_hooks,
+    -- projectInputController.lua) — while every case that
+    -- assigns input.hooks.<event> directly (the interception
+    -- matrix, the delivered-triple case, the textinput cases)
+    -- drives the explicit path. This case is the one that pins
+    -- how they INTERACT.
         local input = F.activate_project({ keypressed = bump })
         input.hooks.keypressed =
             function() cb_hits = cb_hits + 1; return true end
@@ -1075,13 +1080,13 @@ describe('input surface: inbound events — dispatch #input',
 
     -- The clause the group above states and never asserted: a
     -- project "can neither replace nor shadow" the surface. The
-    -- rows above all go THROUGH compy.input's own metatable, so
-    -- they cannot reach the one write that replaces the whole
-    -- container -- `compy.input = {}`, which is a write to
-    -- `compy`, one table up. Swallowed, that leaves the widget,
-    -- the seeded hooks and the combo tables all still live and
-    -- still receiving, while the project holds a plain table it
-    -- believes is the API.
+    -- cases above all go THROUGH compy.input's own metatable,
+    -- so they cannot reach the one write that replaces the
+    -- whole container -- `compy.input = {}`, which is a write
+    -- to `compy`, one table up. Swallowed, that leaves the
+    -- widget, the seeded hooks and the combo tables all still
+    -- live and still receiving, while the project holds a plain
+    -- table it believes is the API.
     it('replacing compy.input itself raises', function()
       F.activate_project()
       local compy = F.cc:get_project_env().compy
@@ -1089,7 +1094,7 @@ describe('input surface: inbound events — dispatch #input',
     end)
 
     -- The control: `compy` is not frozen wholesale. A project
-    -- may still add its own fields there, so the row above is
+    -- may still add its own fields there, so the case above is
     -- pinning one protected name and not a blanket refusal.
     it('other compy fields stay writable', function()
       F.activate_project()

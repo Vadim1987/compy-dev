@@ -50,7 +50,7 @@ local function mock_runtime()
     -- isDown is real production input: the widget's drag-select
     -- consults it on every mousemoved
     -- (userInputModel, "mouse_drag"). Driven by
-    -- F.set_mouse_down so a row can hold a button over a move.
+    -- F.set_mouse_down so a case can hold a button over a move.
     mouse      = {
       getPosition = function() return mx, my end,
       isDown      = function() return mouse_down end,
@@ -80,7 +80,7 @@ local function enrich_gfx()
   -- project raise sets 'snapshot', so this has to exist. It is
   -- a no-op that never invokes its callback, modelling "the
   -- screenshot has not been delivered yet" — the state a run
-  -- sits in between suspend_run and suspend. Rows wanting the
+  -- sits in between suspend_run and suspend. Cases wanting the
   -- far side of that boundary call CC:suspend() themselves.
   gfx.captureScreenshot = function() end
 end
@@ -230,9 +230,10 @@ function F.show_widget(opts)
   return widget
 end
 
--- This is the narrow activation seam: the full runner also loads and
--- executes a project file, but these rows need controlled handlers. It
--- invokes the real route installer; events still use love.handlers.
+-- This is the narrow activation seam: the full runner also
+-- loads and executes a project file, but these cases need
+-- controlled handlers. It invokes the real route installer;
+-- events still use love.handlers.
 function F.activate_project(handlers)
   love.state.app_state = 'running'
   Controller.set_user_handlers(handlers or { }, CC)
@@ -252,7 +253,7 @@ function F.show_selectable_widget(lines)
   love.state.user_input = { M = m, C = w, V = w.view }
   -- The dispatch chain resolves its terminal consumer from
   -- love.state.user_input_controller, not from the published
-  -- handle, so a row that wants this widget to receive chain
+  -- handle, so a case that wants this widget to receive chain
   -- traffic has to stand it up there too. F.reset puts the
   -- shared widget back.
   w:always_shown()
@@ -266,7 +267,7 @@ end
 function F.reset()
   -- Undo a show_selectable_widget swap before teardown runs, so
   -- stop_project_run tears down the shared widget rather than a
-  -- row-local one.
+  -- case-local one.
   love.state.user_input_controller = widget
   CC:stop_project_run()
   -- The device outlives a test the way a keyboard outlives a
@@ -278,7 +279,7 @@ function F.reset()
   -- Otherwise leaks into the next test's suspend(): a
   -- stale message from an earlier suspend_run() would set
   -- an unrelated console error (discovered via the route-
-  -- lifecycle inspect row, m5c chunk 4).
+  -- lifecycle inspect case, m5c chunk 4).
   love.state.suspend_msg        = nil
   love.update(1.0)
   CC.input:clear()

@@ -477,8 +477,9 @@ end
 --- RUNS, `stop_here`/`side_run` decide where the event GOES, and
 --- neither knows about the other. Named for their effect on the
 --- event, which is what a reader of a registration table needs.
----> REMARK: what you mean by 'reserved binding'? Its maybe 'recommended' or 'often used'?
---- A reserved binding is `stop_here(ignore_repeat(fn))`.
+--- The combination most bindings want is
+--- `stop_here(ignore_repeat(fn))`: act once per press, and let
+--- nothing downstream see the key.
 local INPUT_FN = {
   --- Skip the handler on an OS key repeat. Says nothing about
   --- propagation: a fresh press returns what the handler
