@@ -33,11 +33,11 @@ corpus holds **70** markers, which confirms plan §17.5's census exactly.
 
 | # | Part | Size | Sized before today? |
 |---|---|---|---|
-| A | Markers in `src/` + `tests/` | **22** | yes (§17.5) |
+| A | Markers in `src/` + `tests/` | **23** (22 markers + 1 unmarked, §5) | as 22, yes (§17.5) |
 | B | Markers in `doc/input_api.md` | **8** | yes — but assigned to **P10**, which closed without them |
 | C | Factual markers in the dev-facing docs | **12** | no — derived here from the S36 table |
 | D | W10 batch 2 — historical contrast | **~22 sites** | as a cluster, not as a list |
-| E | W10 batch 3 — comment bloat | re-derivation running | **no** |
+| E | W10 batch 3 — comment bloat | **23 ids, 13 already in A, 8 parent's** | **no** — re-derived here |
 | F | Example-repo comment compaction | **157 comment lines** in `maze`/`draw` | **no** |
 
 Parts B and C are the finding of this inventory and are argued in §3.
@@ -56,6 +56,7 @@ durable record.
 | `src/controller/consoleController.lua:180` | V | retire "overlay"; `input_widget_overlay` if the console context needs the word |
 | `src/controller/consoleController.lua:181` | B | prose is 5× the length of the code it describes |
 | `src/controller/consoleController.lua:473` | F | not *where the event goes* but *whether it propagates* |
+| `src/controller/controller.lua:527` | F | **unmarked** (§5) — the comment says what the code does *not* do; delete unless it carries positive information |
 | `src/examples/balloons/terminal.lua:4` | Q | can the deliver-handler setup be one function instead of three? (its second half — an `update_prompt` endpoint — is **already ruled and recorded** in `technical_debt/input.md`, "An `update_prompt` endpoint was asked for and declined") |
 | `tests/editor/editor_spec.lua:715` | B+F | "later" is not relevant once the feature is delivered; simplify |
 | `tests/helpers/input_fixture.lua:200` | F | "console route forwards…" is no longer true; only the rendering half is |
@@ -165,17 +166,61 @@ binding table is the list, and re-deriving it would be the exact tax §17.1
 refused to pay. The rule is the owner's: **if it was not in a released version,
 write as if it never existed.**
 
-## 5. Part E — W10 batch 3, comment bloat
+## 5. Part E — W10 batch 3, comment bloat: **re-derived, and it adds nothing new**
 
-Never enumerated by anyone; the "~50 ids" figure is a guess inherited from the
-S27 triage. Re-derivation commissioned to a Sonnet worker
-(`../prompts/S45-W10-batch3-rederivation.md`), deliverable
-`S45-W10-batch3-rederivation.md`. **Numbers land here when it returns.**
+Full result: `S45-W10-batch3-rederivation.md` (Sonnet worker, prompt of record
+`../prompts/S45-W10-batch3-rederivation.md`). Its numbers were spot-checked
+against the tree before being accepted here, and its line numbers land exactly.
 
-The expectation to hold lightly: most of those ids' markers are already gone
-from the tree — only 22 markers survive in `src/`+`tests/` — so batch 3's live
-remainder is likely far smaller than 50, and the value of the pass is knowing
-*which* remainder, not the count.
+**"~50 ids" was never a count of anything.** Batch 3 is **23 ids**, of which
+**21 still have a live site**:
+
+| where those 21 live | count | whose |
+|---|---|---|
+| `src/` + `tests/` | **13** | **P11** — and every one is already a row of Part A |
+| `decisions/input.md` (4) + `internals/user_input.md` (4) | **8** | editorial prose-size → the **named list**, per §17.5 and the S36 split |
+
+**So batch 3 contributes no site P11 did not already own.** The 13 code-side ids
+(R001, R003, R034, R050, R051, R052, R054, R056, R065, R071, R072, R076, R077)
+are the same comments Part A enumerates from the other direction — two
+independent derivations agreeing, which is the strongest evidence either has.
+The remaining 2 are discharged (`R032`, `R046`: comment rewritten, marker gone).
+
+**An ownership contradiction, resolved.** The plan assigns *batch 3* to P11,
+while S36's per-marker rule sends *prose-size in the dev-facing docs* to the
+parent. §17.5's ruling decides it — dev-facing docs clear what is factually
+wrong and defer the purely editorial remainder as a named list — so those 8 are
+the parent's, named here so they are deferred rather than lost.
+
+### Two bookkeeping findings from the re-derivation
+
+**1. W10 holds 85 ids, not 92.** The appendix line reads `W10 every id not
+listed above (92):` and its own token list contains 85 distinct ids. Verified
+independently: 85 by direct extraction, and 187 total minus 102 across every
+other workstream = 85. The label was never recomputed. Nothing is lost — the
+list is the universe, the label is decoration — but any future statement of
+W10's size should say 85.
+
+**2. The gate could not see a live review comment.** `controller.lua:527` reads
+*"---> comment describing what code does NOT do is absolutely of no use; delete
+if it has no positive info"* — an owner review remark with **no marker word at
+all**, so `grep -niE 'INTERIM|REMARK'` misses it. This is the third time this
+gate has been proven blind (session36: colon-less `REMARK`s; this session: the
+`-i` false positives). The fix is the arrow form, which is what a reviewer types
+when they do not type `REMARK:`; the gate is now
+
+```
+grep -rniE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/ \
+     --exclude-dir=lib --exclude=words_corpus.lua
+```
+
+which over `src/` and `tests/` matches the 22 markers, this unmarked comment,
+and the second line of the balloons remark — **and nothing else**. Recorded in
+`agents/rules/commenting.md`.
+
+**Part A is therefore 23 sites, not 22:** the 22 markers plus
+`controller.lua:527`, whose ask is a **F** — a comment stating what the code does
+*not* do, which `agents/rules/commenting.md` independently forbids.
 
 ## 6. Part F — the example repos, measured for the first time
 

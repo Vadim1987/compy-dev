@@ -135,12 +135,20 @@ mandatory:
    release check is
 
    ```
-   grep -rniE 'INTERIM|REMARK' src/ tests/ --exclude-dir=lib \
-        --exclude=words_corpus.lua
+   grep -rniE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/ \
+        --exclude-dir=lib --exclude=words_corpus.lua
    ```
 
    returning nothing. Each marker is either resolved into a payload-carrying
    comment, or acted on and deleted, or promoted to a durable record (see next).
+
+   **The third alternative is the arrow form** (`-->`, `--->` at the start of a
+   comment), added 2026-08-25 after a live review comment was found that carries
+   no marker word at all — *"comment describing what code does NOT do is
+   absolutely of no use"* (`controller.lua`). A reviewer writing in the margin
+   does not always type `REMARK:`, and the arrow is what they type instead. It
+   costs nothing: over `src/` and `tests/` it matches the marked comments and
+   the unmarked review ones, and nothing else.
 
    **Why this form.** The `-i` and the missing colons are deliberate: two
    markers once hid from the colon-only pattern by being spelled `REMARK`

@@ -271,9 +271,11 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
   (c) commit the wrap (track + successor prompt + repointed pointer) as one `docs` commit.
 - **Comment gate before slice regeneration.** Comments in slice scope are swept against
   `agents/rules/commenting.md` once the code has stabilised and before the slices are
-  regenerated — `grep -rniE 'INTERIM|REMARK' src/ tests/ --exclude-dir=lib
-  --exclude=words_corpus.lua` must return nothing. The pattern and the two exclusions are
-  ruled in `agents/rules/commenting.md`, "Interim comments"; do not narrow it further.
+  regenerated — `grep -rniE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/
+  --exclude-dir=lib --exclude=words_corpus.lua` must return nothing. The three patterns and
+  the two exclusions are ruled in `agents/rules/commenting.md`, "Interim comments"; do not
+  narrow it further. The arrow alternative exists because a live review comment carried no
+  marker word at all.
 - The phase is DONE when: rulings collected, approved corrections executed, slices regenerated,
   PR assembled (description = intent → design → ratified deviations → justification table → open
   questions), and the owner has ruled on deleting `wip/77`. Then record the close-out in the
