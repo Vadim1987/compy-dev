@@ -474,13 +474,13 @@ question, not resolved here.
 - **State:** to a user this is a freeze with no stated exit. It is what
   smoke reports 1 (guess, "froze after entering a symbol") and 9 (valid,
   "entering '1' stops processing any input") describe. The error band itself
-  IS rendered and, since the `input_widget_overlay` paint fix, IS visible; nothing in it says
+  IS rendered and, since the widget-paint fix, IS visible; nothing in it says
   which keys resume.
 - **Pre-feature check (asked for at the ruling):** nothing to reproduce. At
   the PR base `3256aac` the same lock exists and is **stricter** — only Enter,
   Up and Down cleared it, where today's also accepts Left, Right and Space.
   The band's invisibility was equally pre-existing (same render path, same
-  unpainted `input_widget_overlay`). The input API neither introduced the lock nor narrowed
+  unpainted widget). The input API neither introduced the lock nor narrowed
   its exits; it widened them.
 - **Is the widening drift? No — it is the ratified behaviour, and it also
   matches what the docs already claimed.** The frozen design (`§10 Edge
@@ -523,7 +523,7 @@ question, not resolved here.
   exactly.
 - **Why it is a concern anyway:** evaluating Lua and printing a result is what
   the **console** does, and until the two fixes of 2026-07-31 (a refused
-  widget after a project stop, and an `input_widget_overlay` that was never painted at all)
+  widget after a project stop, and a project widget that was never painted at all)
   a project's input surface was visually indistinguishable from the console —
   same input line, no signal. An author testing `repl` could reasonably
   believe it evaluated, having been typing at the console. Both causes are
@@ -798,9 +798,9 @@ Not commissioned for closure; each may never need action.
   `../decisions/input.md`, Decision 31), or introduce a distinct class for
   service keys with its own rules.
 
-### The `input_widget_overlay` shape test exercises a stub, not the real draw wiring
+### The widget-handle shape test exercises a stub, not the real draw wiring
 
-- **Where:** the `input_widget_overlay` handle is asserted only for shape — that
+- **Where:** the `love.state.user_input` handle is asserted only for shape — that
   `love.state.user_input` is set and callable while the widget is shown
   (e.g. `tests/input/input_widget_callbacks_spec.lua`). The dedicated
   `overlay_spec.lua` that built an ad-hoc controller over a `draw`-only
@@ -808,10 +808,10 @@ Not commissioned for closure; each may never need action.
   what survived it, not the file.
 - **State:** Guards against the handle being re-narrowed, but does not
   exercise the app's startup widget-instance wiring or the real
-  `set_love_draw` `input_widget_overlay` wrapper in `controller.lua` — the exact path a
+  draw wrapper `set_love_draw` installs in `controller.lua` — the exact path a
   past regression faulted at. Runtime spot-checks have covered that path
   manually; the automated suite has not.
-- **Why it stands:** Driving the real `input_widget_overlay` draw wrapper from a unit
+- **Why it stands:** Driving that real draw wrapper from a unit
   test needs app-bootstrap wiring the input suite does not currently stand
   up.
 - **Revisit:** When a change next touches the widget/dispatch wiring — add
@@ -1397,7 +1397,7 @@ be silently narrowed later (any change is a separate, owner-gated decision):
   caller on Enter — the same "keypress return carries a domain result" shape the
   shared widget's limit-flag return was retired for (Decision 5). Left as
   is because `SearchController` is a different class, out of scope here.
-- **The `input_widget_overlay`'s view skips the per-frame `update_view()` workaround by
+- **The project widget's view skips the per-frame `update_view()` workaround by
   widget *identity*** (`userInputView.lua:draw`, `self.controller ~=
   love.state.user_input_controller`) — an identity check standing in for the old
   `oneshot` flag. Its survival under a console/editor re-plug remains a

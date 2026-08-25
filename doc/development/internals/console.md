@@ -110,13 +110,15 @@ Projects can request live text input mid-run via `compy.input.*`
 `on_text_entered`/`after_submit`/etc. — the full surface is in
 [`user_input.md`](user_input.md), and the project-author usage guide
 is [`../../input_api.md`](../../input_api.md)). This creates a second
-`UserInputModel`, drawn as the `input_widget_overlay` on top of the console. Calling `show`
+`UserInputModel`, painted over the console frame by the draw wrapper
+`Controller.set_love_draw` installs. Calling `show`
 creates/reuses the singleton `UserInputController`/`UserInputView`
-and stores the triplet in `love.state.user_input`. The event
-dispatch in `love.handlers.keypressed` checks this: if set, key
-events go to the widget controller, not the main console input.
-Only one widget can exist at a time
-(`if love.state.user_input then return end`).
+and stores the triplet in `love.state.user_input`, which is the
+**drawing** contract: the draw path paints for exactly as long as it is
+set. Events do not read it — the gateway routes on the active route,
+and the widget is reached inside that route's own chain
+([`user_input.md`](user_input.md), "Dispatch chain"). `show` on an
+already-active widget warns and no-ops unless `force = true`.
 
 Source: `prepare_project_env` (`consoleController.lua`),
 `love.state.user_input` handling in `controller.lua` handlers.

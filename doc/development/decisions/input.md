@@ -530,7 +530,7 @@ system does* (now pinned and reviewable) from *what we choose to change* (explic
 explicitly ("discovered as existing behaviour, no mandate to alter — de-facto standard per the
 implementation"). Current members include: the submit guard being *Enter-without-Shift* (so Ctrl+Enter
 and Alt+Enter submit, not only bare Enter); `SearchController:keypressed` returning a jump target up
-its caller; and the `input_widget_overlay` view's per-frame-render workaround keyed by widget identity. Each is
+its caller; and the input widget view's per-frame-render workaround keyed by widget identity. Each is
 individually revisable — but only by a named ruling, not by drift. See
 [`../technical_debt/input.md`](../technical_debt/input.md) for the live list.
 
