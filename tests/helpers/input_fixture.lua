@@ -197,15 +197,12 @@ function F.compy_input()
   return CC:get_project_env().compy.input
 end
 
----> REMARK: "console route forwards..." is not true any more. only rendering part is true
--- Is an overlay visible to the framework? Reads love.state.user_input
--- rather than the widget's own is_shown(): that field IS the overlay
--- contract (userInputController.lua, open_fresh/hide) — the draw loop
--- paints the widget for exactly as long as it is set, and the console
--- route forwards events to the widget for exactly as long as it is
--- set. So this is the observable "the user sees an input field", not
--- the widget's self-report, and it stays honest if the two ever
--- disagree.
+-- Is an input widget visible to the framework? Reads
+-- love.state.user_input rather than the widget's own is_shown():
+-- the draw loop paints for exactly as long as that field is set
+-- (controller.lua, both get_user_input() sites), so this is the
+-- observable "the user sees an input field" rather than the
+-- widget's self-report, and it stays honest if the two disagree.
 function F.is_widget_visible()
   return love.state.user_input ~= nil
 end

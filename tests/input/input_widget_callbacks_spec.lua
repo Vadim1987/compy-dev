@@ -2,42 +2,24 @@
 -- (1.0.0-rc20260712) — the widget output fields are new with
 -- it, and it is what set today's submit/cancel defaults.
 
----> REMARK: remove copypasted irrelevant prose below
--- dispatch chain: widget outputs and submit/cancel.
--- Routing invariant (doc/development/decisions/input.md,
--- Decision 1): inter-route dispatch is EXCLUSIVE — each event reaches
--- exactly ONE route, fixed by the active screen mode. Vocabulary
--- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
--- an event is dispatched to; WIDGET = the route-managed input surface
--- and terminal of the chain. Tests assert observable outcomes at public
--- seams, never
--- method-name spies. keypressed fires for every physical key, textinput
--- only for character-producing keys (doc/development/internals/user_input.md, "Data
--- flow").
--- Outputs half of the dispatch chain (Decision 5's four widget
--- output fields, the highlighter/on_limit_reached boundary, and the full
--- submit/cancel call-order chains of Decision 6). The mechanics half
--- (order/consume/fall-through, combo tables, signatures) is
+-- The OUTPUTS half of the dispatch chain: Decision 5's four
+-- widget output fields, the highlighter / on_limit_reached
+-- boundary, and the submit/cancel call-order chains of Decision 6
+-- (doc/development/decisions/input.md). The mechanics half —
+-- order, consume, fall-through, combo tables, signatures — is
 -- input_events_spec.lua.
 
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
 local TU   = require('tests.testutil')
 
----> REMARK: artifact prose from elsewhere? distill to only relevant
--- ====================================================
--- The dispatch chain (doc/development/decisions/input.md, Decision 2).
--- All cases drive the REAL project route: F.activate_
--- project() installs the ProjectInputController as the
--- the active route (app_state='running') via the same
--- Controller.set_user_handlers path a run calls, and
--- returns the project-facing compy.input surface. The
--- observable results are the widget's text
--- and
--- the callbacks a project registers — never a spy on an
--- internal method (except the one widget-signature case,
--- which patches the shared widget and restores it).
--- ====================================================
+-- Every case drives the REAL project route: F.activate_project()
+-- installs the ProjectInputController through the same
+-- Controller.set_user_handlers path a run calls, and returns the
+-- project-facing compy.input surface. Assertions are on the
+-- widget's text and the project's own callbacks — never a spy on
+-- an internal method, except the one widget-signature case, which
+-- patches the shared widget and restores it.
 
 describe('input surface: widget callbacks #input', function()
   setup(function() F.setup() end)
@@ -726,35 +708,22 @@ describe('input surface: widget callbacks #input', function()
     end)
   end)
 
-  ---> REMARK: dry up the prose and consider making test cases more readable and self-evident
-  ---> REMARK: I'd avoid word 'overlay' fully -- can be 'project input widget'
-  -- Enter and Escape mean the same thing in every input surface.
-  -- A single lifecycle — `submit_flow` / `cancel_flow` in
-  -- UserInputController — serves the console line, the editor's
-  -- input and the project overlay alike; no widget instance reads
-  -- the global screen mode to decide what a key does. Where a
-  -- surface needs different behaviour it says so locally: the
-  -- editor consumes Enter/Escape upstream before the widget sees
-  -- them, and Ctrl+D line-duplication is a per-instance
-  -- `allow_duplicate_line` flag set at construction.
+  -- One lifecycle — `submit_flow` / `cancel_flow` — serves the
+  -- console line, the editor's input and the project's widget
+  -- alike, and no instance reads the screen mode to decide what a
+  -- key does (doc/development/decisions/input.md, Decision 6).
+  -- A surface that needs to differ says so locally: the editor
+  -- consumes Enter/Escape upstream, Ctrl+D is the per-instance
+  -- `allow_duplicate_line` flag.
   --
-  -- This file is the guard against that uniformity being quietly
-  -- re-conditioned on global state. Each group drives one surface
-  -- through the same two keys and states what it must produce;
-  -- the ones that look repetitive ARE the claim — same keys, same
-  -- lifecycle, three surfaces.
-  --
-  -- Rationale: doc/development/decisions/input.md, Decision 6.
-  -- Mechanism: doc/development/internals/user_input.md.
-  --
-  -- Assertions are on observable seams (widget text, fired
-  -- callbacks), plus two narrow method patches where the seam IS
-  -- the call itself (the console's evaluate_input call count, and
-  -- model:cancel not running under the editor's Escape) — the
-  -- same technique input_events_spec.lua uses for its one
-  -- widget-signature case.
+  -- The repetition below IS the claim — same two keys, same
+  -- lifecycle, three surfaces — and it guards against that
+  -- uniformity being quietly re-conditioned on global state.
+  -- Two narrow method patches stand where the seam IS the call:
+  -- the console's evaluate_input count, and model:cancel not
+  -- running under the editor's Escape.
   describe('the same lifecycle on every route #lifecycle', function()
-    -- A standalone widget, NOT the persistent/overlay — direct
+    -- A standalone widget, not the shared one — direct
     -- construction, like user_input_view_spec.lua.
     local function bare_uic()
       local m = UserInputModel(F.cfg, InputEvalText)

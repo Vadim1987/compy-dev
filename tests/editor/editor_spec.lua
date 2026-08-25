@@ -712,15 +712,11 @@ describe('Editor #editor', function()
 
       end)
 
-      --> REMARK: rewrite and simplify prose: "later" is no more relevant when feature is delivered. Just "guards compatibility of block navigation with widget's internal limits processing"
-      -- Block navigation at the buffer limit: with block #3 open in the
-      -- input, 'down' and the first 'up' stay inside it; the next 'up'
-      -- crosses out to the previous block. Guards the later is_at_limit
-      -- line-scope rewrite from regressing whole-input block navigation.
-      -- Relocated here from the input contract suite (tests/input/):
-      -- this is editor-internal behaviour, not an input
-      -- routing contract — the input suite asserts only that keys reach
-      -- the editor route (tests/input/input_routing_spec.lua).
+      -- Block navigation at the buffer limit: with block #3 open in
+      -- the input, 'down' and the first 'up' stay inside it; the
+      -- next 'up' crosses out to the previous block. Guards block
+      -- navigation against the widget's own line-scope limit
+      -- handling (is_at_limit).
       describe("navigation at the block limit", function()
         it('up at the top limit navigates blocks', function()
           local f1 = mock_func_snippet("one")

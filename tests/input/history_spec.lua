@@ -69,16 +69,11 @@ describe('history #history', function()
   end)
 end)
 
----> REMARK: is comment even needed here? code is quite self-explanatory 
--- Recall the way a user reaches it, through the real console.
--- The console input is single-line, so Up hits the vertical
--- limit at once and the widget reports that through the
--- on_limit_reached callback wired at construction; the
--- console's handler turns it
--- into history_back (doc/development/decisions/input.md,
--- Decision 5). The retired mechanism -- the console reading
--- keypressed's return value -- is why this is an end-to-end
--- case and not another model one.
+-- End-to-end, the way a user reaches it: the console input is
+-- single-line, so Up hits the vertical limit at once and the
+-- widget reports that through on_limit_reached, which the
+-- console maps to history_back
+-- (doc/development/decisions/input.md, Decision 5).
 describe('console history navigation #input #history',
   function()
   setup(function() F.setup() end)

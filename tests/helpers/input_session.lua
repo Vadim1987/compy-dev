@@ -1,19 +1,15 @@
----> REMARK: simplify comment, do not tell what it is noe
--- Keypress-level driver over the installed love.handlers.* gate.
--- Every emitter fires a REAL event through the production
--- gateway (love.handlers.*), never straight to a controller, so a
--- test exercises the same path a keystroke takes from LÖVE.
--- NOT an EditorSession generalisation (that helper bypasses the
--- love handlers and drives EditorController directly).
+-- Keypress-level driver. Every emitter fires a REAL event through
+-- the production gateway (love.handlers.*), never straight to a
+-- controller, so a test walks the path a keystroke takes from LÖVE.
 
 require('controller.controller')
 
 local mock = require('tests.mock')
 
----> REMARK: simplify comment. just tell it exposes API to invoke 'love' events via handlers. (providing a controllable imitation of love2d events emitting, which in production would be done in response to actions over physical hardware)
--- Expose one emitter per gateway entry. `handlers` is the live
--- love.handlers table, so combo drivers (tests.mock.keystroke)
--- can hold modifiers and call .keypressed directly.
+-- One emitter per gateway entry: the controllable stand-in for
+-- the events hardware would raise. `handlers` is the live table,
+-- so combo drivers (tests.mock.keystroke) can hold modifiers and
+-- call .keypressed directly.
 local function emitters()
   local h = love.handlers
   return {
@@ -36,16 +32,13 @@ local function emitters()
   }
 end
 
----> REMARK: simplify comment. just tell it invokes production function connectinng controller to love2d
--- Install the real gate into a fresh love.handlers and return the
--- emitters. Call AFTER mock.mock_love() + the view.view stub are
--- set up. @param CC ConsoleController  (read for cfg + shortcuts)
+-- Run the production wiring (the `setup_callback_handlers` call
+-- main.lua makes) onto a fresh love.handlers, and return the
+-- emitters. Call AFTER mock.mock_love() and the view.view stub.
+--- @param CC ConsoleController?  read for cfg + shortcuts; the
+--- default lets a bare driver stand up without one
 local function new(CC)
   love.handlers = { }
-  -- Installs the production gateway (controller.lua
-  -- setup_callback_handlers, the love.run wiring main.lua
-  -- performs) onto a fresh love.handlers. The `or` default lets
-  -- a bare driver stand up without a ConsoleController.
   Controller.setup_callback_handlers(
     CC or { cfg = { mode = 'dev' } }
   )

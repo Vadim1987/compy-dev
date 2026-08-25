@@ -3,19 +3,6 @@
 -- combo normalisation they read arrived with it, and the legacy
 -- text solicitation globals were removed by it.
 
----> REMARK: is the prose below copied from elsewhere? it seems it recites the routing rules while suite tests something else? also its very excessive...
-
--- shortcuts and click detection. Routing invariant
--- (doc/development/decisions/input.md, Decision 1): inter-route
--- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
--- fixed by the active screen mode. Vocabulary
--- (doc/development/internals/user_input.md, "Dispatch chain"):
--- ROUTE = the controller an event is dispatched to; WIDGET =
--- the route-managed input surface and terminal of the chain.
--- Tests assert observable outcomes at public seams, never
--- method-name spies. keypressed fires for every physical key,
--- textinput only for character-producing keys
--- (doc/development/internals/user_input.md, "Data flow").
 -- Non-consuming global shortcuts, framework click detection,
 -- project-stop console handback, and the legacy poll-idiom
 -- removal (doc/development/internals/user_input.md, "Dispatch

@@ -1,21 +1,10 @@
 -- Availability: introduced with the Compy input API
 -- (1.0.0-rc20260712) — covers the compy.input surface.
 
----> REMARK: prose below seems to be copied from elsewhere without much relevance to test suite content
--- widget lifecycle. Routing
--- invariant (doc/development/decisions/input.md, Decision 1): inter-route dispatch is
--- EXCLUSIVE — each event reaches exactly ONE route, fixed by the active
--- screen mode. Vocabulary (doc/development/internals/user_input.md, "Dispatch chain"):
--- ROUTE = the controller an event is dispatched to; WIDGET = the
--- route-managed input surface and terminal of the chain. Tests assert
--- observable outcomes
--- at public seams, never method-name spies. keypressed fires for every
--- physical key, textinput only for character-producing keys
--- (doc/development/internals/user_input.md, "Data flow").
--- Widget activation/reset via the public compy.input surface and the
--- hidden-widget non-consumption rule (doc/input_api.md,
--- "`show(config)`"; doc/development/decisions/input.md,
--- Decision 2).
+-- Widget lifecycle: activation and reset through the public
+-- compy.input surface, and the rule that a hidden widget consumes
+-- nothing (doc/input_api.md, "`show(config)`";
+-- doc/development/decisions/input.md, Decision 2).
 
 local F  = require('tests.helpers.input_fixture')
 

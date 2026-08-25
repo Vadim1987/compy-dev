@@ -1,17 +1,10 @@
 -- Availability: predates the Compy input API (introduced in
 -- 1.0.0-rc20260712).
 
--- routing. Routing invariant
--- (doc/development/decisions/input.md, Decision 1): inter-route dispatch is EXCLUSIVE —
--- each event reaches exactly ONE route, fixed by the active screen mode. Vocabulary
--- (doc/development/internals/user_input.md, "Dispatch chain"): ROUTE = the controller
--- an event is dispatched to; WIDGET = the route-managed input surface and terminal of
--- the chain. Tests
--- assert observable outcomes at public seams, never method-name spies. keypressed fires
--- for every physical key, textinput only for character-producing keys
--- (doc/development/internals/user_input.md, "Data flow").
--- Mode x channel routing grid: console, editor, editor search, project run
--- (doc/development/internals/user_input.md, "Dispatch chain").
+-- The mode x channel routing grid — console, editor, editor
+-- search, project run — against the rule that each event reaches
+-- exactly ONE route (doc/development/decisions/input.md,
+-- Decision 1).
 
 local F = require('tests.helpers.input_fixture')
 
