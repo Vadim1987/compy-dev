@@ -2668,3 +2668,80 @@ removes must already exist in the persistent corpus, or it lands there first.**
 That turns a deletion into a doc edit, which is the same shape as the standing
 deviation rule. Note also that `keyboard`'s 177 → 101 pass was **self-assessed**
 — no cold reader has checked that no argument was lost.
+
+## 18. [S45] Two new rows, and P11's clearing rule
+
+### 18.1 The ids: P25 and P26, not P12 and P13
+
+The owner named "P12" and "P13" for these; both are taken. **P12** was promoted
+to the parent plan's Phase U in session32 (id kept, struck in the table), and
+**P13** (harmony reconciliation) was done in session42 with its `P-13-*` steps
+closed in session43. The `P-20`…`P-24` families are used as well. The next free
+id in this namespace is **P25**, so the two rows below take **P25** and **P26**.
+The substance is the owner's; only the numbering is corrected.
+
+### 18.2 P11's clearing rule (owner ruling, 2026-08-25)
+
+**Clear in this step what can be cleared — but a marker is removed only when its
+ask was genuinely met.** Per marker:
+
+1. **Check it was actually solved.** Not "the code moved on" — the thing the
+   remark asked for is done, verified against the tree.
+2. **If it was not solved and the fix is trivial** — solve it in place, in P11.
+3. **If it was not solved and the fix is not trivial** — **keep the marker** and
+   record the site in **P25**, below. A marker that survives P11 survives by a
+   named decision, not by being missed.
+
+This inverts the usual gate pressure deliberately: the gate demands zero markers
+before slice regeneration, so anything P25 holds is a **release blocker by
+construction**, and P25 has to close before the slices are cut.
+
+### 18.3 P25 — escalation: what P11 could not clear
+
+**Opened [S45], 2026-08-25.** Holds every marker P11 kept under 18.2 rule 3,
+each with the reason it was not trivial and what closing it needs. Empty at
+creation; P11 fills it as it sweeps. Its members are expected to be the small
+number of remarks that ask for a **behavioural** change rather than a comment
+change — the inventory already names three candidates
+(`highlight_regression_spec.lua:2` and `:3`, which ask the test to assert the
+behavioural bug path rather than an internal invariant, and
+`input_cursor_text_spec.lua:1`, which proposes reorganising a suite into three
+named groups) plus two owner questions (`input_events_spec.lua:194`,
+`src/examples/balloons/terminal.lua:4`).
+
+**Gate:** closes when the marker gate passes without any P25 member outstanding.
+
+### 18.4 P26 — the project guide's two structural remarks
+
+**Opened [S45], 2026-08-25, in this sprint** (owner ruling) **because it has a
+specific reviewable outcome** — a rewritten guide, not a sweep. Members:
+
+- **`doc/input_api.md:11`** — rewrite the intro to be developer-facing: an API
+  for configuring and interacting with the text-solicitation subsystem and for
+  reacting to input events, usable for hotkeys and combos **even when the widget
+  is never shown**.
+- **`doc/input_api.md:17`** — decide whether the guide states the API as **three
+  surfaces**: (a) dispatching/intercepting inbound events via shortcuts and
+  hooks, (b) altering the soliciting widget's state, (c) handling events the
+  widget itself generates, via callbacks. Matches **R172**, accepted in
+  principle in the S27 triage.
+
+**Why it is not P11:** these are authored prose with a structure decision inside
+them, not marker clearing, and this is the one document the PR must be
+reviewable from. **Why it is not the parent:** the same reason — the PR promise
+is this sprint's.
+
+The remaining six `doc/input_api.md` markers stay in **P11** (two "overlay"
+retirements, the "re-arm" definition, the section reframing, the `love.state`
+question, and one S36 verified as already answered — a deletion).
+
+### 18.5 The rest of the marker share P10 closed over
+
+`../outcomes/S45-P11-inventory.md` §3 records it: 8 markers in the project guide
+and 12 factual ones in the dev-facing docs, all assigned to P10 by
+`../outcomes/S36-marker-disposition.md` and none cleared when the row closed.
+**P10's closure stands** — every *named* member of it was genuinely discharged
+(re-verified in session45) — and the share is absorbed by P11, minus the two
+that became P26. Two of the twelve describe mechanisms the tree does not have
+(`internals/user_input.md:240`, `forward_*`; `:309`, an in-code `DEFERRED`
+marker), which is the defect class this phase exists to catch.
