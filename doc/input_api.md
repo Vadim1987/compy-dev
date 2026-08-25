@@ -157,15 +157,10 @@ typed *into* the prompt, for example:
 compy.input.hooks.keyreleased = function(key)
   if key == 'i' and not compy.input.is_shown() then
     compy.input.show{ prompt = 'command' }
-    return true -- consumed; while it is open, 'i' belongs to the overlay
+    return true -- consumed; while it is open, 'i' is the widget's
   end
 end
 ```
-
-> REMARK: why developer would even think of reading love.state?
-
-Do not read `love.state` for this: a project runs in a sandboxed copy of
-`love`, so that field is always `nil` from inside a project.
 
 That guard stops *later* presses of `i` from re-opening the prompt. It does
 not stop the `i` that opened it from being typed into it — see "Opening the
@@ -242,7 +237,7 @@ local fn = compy.input.fn
 sc['ctrl+alt+up'] = fn.stop_here(fn.ignore_repeat(function() notch(1) end))
 -- swallow a whole class, with nothing to run
 sc['alt+*'] = fn.stop_here()
--- a side effect: acts once, and the key still reaches the overlay
+-- a side effect: acts once, and the key still reaches the widget
 sc['backspace'] = fn.side_run(fn.ignore_repeat(note_deleting))
 ```
 
@@ -254,8 +249,6 @@ of declaring it there.
 Without them you would end handlers with `return true`, which makes a function
 that merely toggles a pause know what happens after it returns, and carry that
 knowledge wherever it is reused.
-
-> REMARK: retire word 'overlay' -- "stop reaching the input widget too" is a proper formula 
 
 All three wrap a hook the same way, but think before you do: a whole-channel
 hook wrapped in `stop_here(ignore_repeat(...))` swallows every repeat on that
@@ -369,16 +362,17 @@ discrete trigger — `mousemoved`, `wheelmoved`, the touch events, and the
 derived clicks — take modifier classes only, so `shortcuts.mousemoved['ctrl+*']`
 is a ctrl-drag and an unmodified move goes straight to the hook.
 
-> REMARK: not 'overlay', but 'input widget'
-> REMARK: frame this whole paragraph as example of solving non-conventional challenge (preventing modifier-based hotkey from echoing into the input widget), not say "if you open with 'i'" as if it was some common or recommended convention
+## Worked example: a plain key that opens the input widget
 
-## Opening the input widget from a key
+Not a recommended shape — a **worked example of an awkward case**, and of how
+the pieces above combine to solve one. Most projects open the widget from a
+modified combo, where nothing below arises.
 
-LÖVE delivers a `keypressed` **and** a `textinput` for one physical key, and
-does not promise their order. So a prompt opened from `i` can come up with an
-`i` already in the field — the trigger's own echo, arriving on the other
-channel either side of the open. The `is_shown()` guard does not help: it is
-about the *next* press, not this one.
+Bind a bare character key to open a prompt and the prompt comes up with that
+character already in the field. LÖVE delivers a `keypressed` **and** a
+`textinput` for one physical key and does not promise their order, so the
+trigger's own echo arrives on the other channel, either side of the open. The
+`is_shown()` guard does not help: it is about the *next* press, not this one.
 
 Guard the trigger with a one-shot shortcut on the `textinput` channel.
 Shortcuts run before the input widget, so it swallows the echo whichever side of
@@ -400,10 +394,9 @@ compy.input.callbacks.after_submit = function()
 end
 ```
 
-> REMARK: term 're-arm' is invented -- if you use it, make sure its explained or defined in the same doc, upfront.
-
-Re-arm wherever you close the input widget: one that is closed without re-arming
-takes the echo on its next open. Only your own `hide()` calls need this —
+**Re-arming** is registering that one-shot again, and it is needed wherever you
+close the input widget: one closed without a fresh guard takes the echo on its
+next open. Only your own `hide()` calls need this —
 Escape *clears* the field without closing, so the spent one-shot is still
 correct.
 
@@ -568,8 +561,6 @@ compy.before_exit = function()
   love.keyboard.setKeyRepeat(true)
 end
 ```
-
-> REMARK: it should be able to suprress/defer the stop?  or if its not allowed purposefully -- that it should not be announced as 'deferred' functionality in other part of documentation
 
 - **Signature:** no arguments — the project knows its own state.
 - **Return value:** ignored. It cannot suppress or defer the stop.
