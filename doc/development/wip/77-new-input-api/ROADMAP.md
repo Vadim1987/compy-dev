@@ -15,8 +15,8 @@ the sequence**. Updated 2026-08-26.
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
 | upstream | **86 commits behind the edge** (a floor: our view is 23 days old) |
 
-**The spinoff sprint is closed and TF2 with it.** What remains is acceptance, four defect sprints,
-reconciliation, and assembly.
+**The spinoff sprint is closed and TF2 with it.** What remains is one structural row, acceptance,
+four defect sprints, reconciliation, and assembly.
 
 ---
 
@@ -29,6 +29,84 @@ reconciliation, and assembly.
 
 Detail: [`validation/reviews/ACC-01-02-findings-triage.md`](validation/reviews/ACC-01-02-findings-triage.md) ·
 report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/ACC-01-02-cold-pr-review.md)
+
+---
+
+## ⬜ ARC-01 — the project widget gets a run lifetime — **runs FIRST**
+
+*(New KIND: `ARC` — structural work that dissolves a defect class. Filing it as a `BUG` row would
+hide from a reader that it removes machinery rather than patching it. Owner-ruled 2026-08-26.)*
+
+**Leads everything, and dissolves work rather than adding it.** Two defects fixed today
+(`bd2a5d49`, `8a9022ec`) were the same shape: a store on an application-lifetime object holding
+something a project put there. Both fixes are hand-maintained wipes, and a third store was missed
+for months precisely because the wipe list is maintained by hand. **This row removes the need for
+the list.**
+
+### The finding that unlocked it (owner, 2026-08-26)
+
+Decision 3 is read as "the input widget is a singleton, forever". **Its NFR does not say that:**
+
+> *"A non-functional requirement forbids allocating a fresh object graph **per input session** — the
+> device is memory-constrained and the common pattern is **repeated prompting**."*
+
+**Per input SESSION — not per project RUN.** Repeated prompting is a within-run pattern; a project
+run is a human-scale event already doing far more expensive work. The NFR was applied one boundary
+wider than it states, and that boundary was never examined. **Decision 3 is therefore not withdrawn
+— it is implemented at the boundary it specifies** (owner: *"we do not even have to withdraw it —
+just implement it properly"*).
+
+Its own guards agree: `input_nfr_mechanism_spec.lua` asserts identity across **show/hide cycles**
+(`the widget keeps identity across cycles`, `no widget model is reallocated`) — both pass unchanged
+under a per-run lifetime.
+
+**Provenance, recorded because it bears on the ratification question:** the NFR was the owner's own,
+not a stakeholder ask — stakeholders agreed *reluctantly*, and real feasibility was never computed.
+There is no show-and-hide-many-times-per-second pattern in this codebase.
+
+### Measured blast radius — production is net deletion
+
+| site | change |
+|---|---|
+| `main.lua:379` | construction moves to the run seam |
+| `consoleController.lua:782` | **the one real coupling** — `state.callbacks` / `state.pending` are captured **by reference**; must resolve dynamically |
+| `consoleController.lua:183/809/813`, `projectInputController.lua:158` | already resolve dynamically — no change |
+| `userInputView.lua:294` | self-identity guard — unaffected |
+| `controller.lua:349` | `reset_widget_outputs` **deletes**, and with it `reset_callbacks`, `clear_pending`, and both of today's fixes |
+
+**Tests:** 101 `F.widget` touchpoints across 8 files, but **every one of those files also calls
+`activate_project`** — so none is structurally incompatible, and the fix is one fixture seam
+(re-point `F.widget` at activation). Then 5 local aliases and 26 `F.show_widget` uses need eyes.
+
+### Steps
+
+| id | step | note |
+|---|---|---|
+| ARC-01-01 | choose the seam — project **open** vs project **run** — and audit nil-handling at all four dynamic consumers | **decides the shape; do first, no code** |
+| ARC-01-02 | `state.callbacks` / `state.pending` resolve dynamically instead of being captured | behaviour-identical; a pass-through proxy over these was tried before and *"reproduced plain table behaviour exactly"* |
+| ARC-01-03 | construction + destruction move to the seam | |
+| ARC-01-04 | delete the teardown machinery the lifetime replaces | the payoff commit |
+| ARC-01-05 | fixture seam + the spec fallout | the churn lives here |
+
+### Risks, stated before starting
+
+1. **Nil between runs** — `love.state.user_input_controller` is nil when no project runs. Three of
+   four consumers appear to guard already; **confirm, do not assume** (ARC-01-01).
+2. **Owner ruling 2026-07-20 softens** — *"`compy.input.callbacks` IS the widget's table"* becomes
+   *"resolves to the current widget's table"*. Observably identical to a project; still the owner's
+   ruling to re-make.
+3. **Test churn is moderate, not trivial** — sized at the fixture seam, not before it.
+
+### What it dissolves
+
+- **`BUG-01-02`** loses its teardown half; only the within-run design call (sentinel vs
+  `clear_highlighter`) survives for the owner to rule on. **Which is why ARC-01 runs first.**
+- **`FIX-02-21`**'s cross-run dimension is already gone (`8a9022ec`) and stays gone structurally.
+- The debt entry's revisit trigger (*"a third run-scoped store here should move `state` to a per-run
+  lifetime"*) is **this row**, arriving early.
+
+**Nothing a project can observe changes, except that the leaks stop** — which is the PR story: the
+NFR implemented at the boundary it specifies, deleting the machinery that existed to fake it.
 
 ---
 
@@ -57,7 +135,7 @@ unsettled surface is sizing twice.
 | id | defect | blast radius |
 |---|---|---|
 | ~~**BUG-01-01**~~ ✅ | `state.pending` survives a project stop | **CLOSED, fixed** — `bd2a5d49` (fix + breaking test + behaviour docs), `abadf244` (the false-premise debt entry). No shipped example reaches it, but the path is public API. **Its siblings were then swept** (owner-scoped: `compy.input` + the widget singleton) and one more was found and fixed — the prompt label, `8a9022ec`. Evidence: [`validation/notes/BUG-01-01-pending-lifetime.md`](validation/notes/BUG-01-01-pending-lifetime.md) |
-| **BUG-01-02** | a highlighter cannot be turned off | **design escalation** — sentinel vs a new `clear_highlighter` member; either changes the public surface |
+| **BUG-01-02** | a highlighter cannot be turned off | **design escalation** — sentinel vs a new `clear_highlighter` member; either changes the public surface. **Wait for ARC-01**, which removes this row's teardown half and leaves only the within-run call |
 | **BUG-01-03** | `turtle` double-handles its own keys | **may implicate every migrated example** — it is a finding about the migration. Fix with FIX-02-11 |
 | **BUG-01-04** | a `textinput` shortcut cannot bind an upper-case character | **deep** — the fix is in combo serialisation, which every shortcut match runs through |
 | **BUG-01-05** | `set_cursor` clamps bytes, boundary event measures characters | medium — two functions disagree; which is right is a small design call |
@@ -339,4 +417,7 @@ Not open questions to chase — each has a trigger:
 
 ## The one-line sequence
 
-**ACC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+
+*`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
+other rows would otherwise be sized against — the ordering principle firing exactly as written.*
