@@ -9,7 +9,7 @@ the sequence**. Updated 2026-08-26.
 | | |
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
-| suite | **968 / 0 / 0 / 10** — the 10 pending are an owner ruling, an 11th is a finding |
+| suite | **969 / 0 / 0 / 10** — 968 + BUG-01-01's case; the 10 pending are an owner ruling, an 11th is a finding |
 | marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
@@ -56,7 +56,7 @@ unsettled surface is sizing twice.
 
 | id | defect | blast radius |
 |---|---|---|
-| **BUG-01-01** | `state.pending` survives a project stop | **UNKNOWN** — reachability untraced; `shortcuts`/`hooks`/`callbacks` may share the hole; the debt entry covering it rests on a false premise; ships with a test |
+| ~~**BUG-01-01**~~ ✅ | `state.pending` survives a project stop | **CLOSED, fixed** — `bd2a5d49` (fix + breaking test + behaviour docs), `abadf244` (the false-premise debt entry). Siblings do **not** share the hole; no shipped example reaches it, but the path is public API. Evidence: [`validation/notes/BUG-01-01-pending-lifetime.md`](validation/notes/BUG-01-01-pending-lifetime.md) |
 | **BUG-01-02** | a highlighter cannot be turned off | **design escalation** — sentinel vs a new `clear_highlighter` member; either changes the public surface |
 | **BUG-01-03** | `turtle` double-handles its own keys | **may implicate every migrated example** — it is a finding about the migration. Fix with FIX-02-11 |
 | **BUG-01-04** | a `textinput` shortcut cannot bind an upper-case character | **deep** — the fix is in combo serialisation, which every shortcut match runs through |
