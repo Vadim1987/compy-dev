@@ -4,7 +4,8 @@ describe('Dispatcher', function()
   it('keeps event order', function()
     local d = Dispatcher.new()
     local got = {}
-    d:add('line', 'console', function(l) got[#got + 1] = l end)
+    local t = d:table_for('console')
+    t.onLine = function(l) got[#got + 1] = l end
     d:push('line', 'A')
     d:push('line', 'B')
     d:pump()
@@ -14,16 +15,36 @@ describe('Dispatcher', function()
   it('waits for pump', function()
     local d = Dispatcher.new()
     local got = {}
-    d:add('line', 'console', function(l) got[#got + 1] = l end)
+    d:table_for('console').onLine = function(l)
+      got[#got + 1] = l
+    end
     d:push('line', 'A')
     assert.same({}, got)
+  end)
+
+  it('reads the field at delivery, not at assignment',
+  function()
+    local d = Dispatcher.new()
+    local t = d:table_for('console')
+    local got = {}
+    t.onLine = function() got[#got + 1] = 'old' end
+    d:push('line', 'X')
+    t.onLine = function() got[#got + 1] = 'new' end
+    d:pump()
+    assert.same({ 'new' }, got)
+  end)
+
+  it('a nil field delivers nothing', function()
+    local d = Dispatcher.new()
+    d:push('line', 'X')
+    assert.same({}, d:pump())
   end)
 
   it('clears one env only', function()
     local d = Dispatcher.new()
     local con, prg = 0, 0
-    d:add('line', 'console', function() con = con + 1 end)
-    d:add('line', 'program', function() prg = prg + 1 end)
+    d:table_for('console').onLine = function() con = con + 1 end
+    d:table_for('program').onLine = function() prg = prg + 1 end
     d:clear_env('program')
     d:push('line', 'X')
     d:pump()
@@ -31,10 +52,20 @@ describe('Dispatcher', function()
     assert.same(0, prg)
   end)
 
-  it('suspends without unregistering', function()
+  it('clearing keeps the non-handler fields', function()
+    local d = Dispatcher.new()
+    local t = d:table_for('program')
+    t.send = function() return true end
+    t.onLine = function() end
+    d:clear_env('program')
+    assert.is_nil(t.onLine)
+    assert.is_function(t.send)
+  end)
+
+  it('suspends without touching the table', function()
     local d = Dispatcher.new()
     local prg = 0
-    d:add('line', 'program', function() prg = prg + 1 end)
+    d:table_for('program').onLine = function() prg = prg + 1 end
     d:suspend_env('program')
     d:push('line', 'X')
     d:pump()
@@ -48,8 +79,8 @@ describe('Dispatcher', function()
   it('survives a failing handler', function()
     local d = Dispatcher.new()
     local reached = false
-    d:add('line', 'program', function() error('boom') end)
-    d:add('line', 'console', function() reached = true end)
+    d:table_for('program').onLine = function() error('boom') end
+    d:table_for('console').onLine = function() reached = true end
     d:push('line', 'X')
     local errors = d:pump()
     assert.is_true(reached)
@@ -60,10 +91,10 @@ describe('Dispatcher', function()
   it('defers what a handler pushes', function()
     local d = Dispatcher.new()
     local got = {}
-    d:add('line', 'console', function(l)
+    d:table_for('console').onLine = function(l)
       got[#got + 1] = l
       if l == 'A' then d:push('line', 'B') end
-    end)
+    end
     d:push('line', 'A')
     d:pump()
     assert.same({ 'A' }, got)
@@ -73,12 +104,8 @@ describe('Dispatcher', function()
 
   it('rejects unknown names', function()
     local d = Dispatcher.new()
-    assert.has_error(function()
-      d:add('noise', 'console', function() end)
-    end)
-    assert.has_error(function()
-      d:add('line', 'kernel', function() end)
-    end)
+    assert.has_error(function() d:push('noise') end)
+    assert.has_error(function() d:table_for('kernel') end)
   end)
 end)
 

@@ -34,23 +34,24 @@ function serial_probe(arg)
   end
   local line = type(arg) == 'string' and arg or 'PING'
   SerialPort = Serial.new(AndroidBackend.new())
-  SerialPort:onConnect(function(info)
+  local cs = SerialPort:table_for('console')
+  cs.onConnect = function(info)
     print('probe: connected ' .. tostring(info and info.name))
     if info and info.acm then
       print('probe: acm refused, ' .. info.acm)
     end
-    local ok, err = SerialPort:send(line .. '\r')
+    local ok, err = cs.send(line .. '\r')
     print('probe: sent ' .. line .. ' -> ' ..
       tostring(ok) .. ' ' .. tostring(err))
-  end, 'console')
-  SerialPort:onDisconnect(function()
+  end
+  cs.onDisconnect = function()
     print('probe: disconnected')
-  end, 'console')
-  SerialPort:onLine(function(l)
+  end
+  cs.onLine = function(l)
     print('probe: line [' .. l .. ']')
-  end, 'console')
-  SerialPort:onBytes(function(chunk)
+  end
+  cs.onBytes = function(chunk)
     print('probe: bytes ' .. #chunk .. ' ' .. hex_of(chunk))
-  end, 'console')
+  end
   print('probe: started, plug the micro:bit in')
 end

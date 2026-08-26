@@ -11,10 +11,7 @@ require('model.serial.dispatcher')
 --- @class Serial
 --- @field new function
 --- @field fault function
---- @field onConnect function
---- @field onDisconnect function
---- @field onBytes function
---- @field onLine function
+--- @field table_for function
 --- @field send function
 --- @field isConnected function
 --- @field programPaused function
@@ -35,6 +32,15 @@ function Serial.new(backend, max_line)
   self.dispatcher = Dispatcher.new()
   self.faults = {}
   self.connected = false
+  for _, env in ipairs({ 'console', 'program' }) do
+    local t = self.dispatcher:table_for(env)
+    t.send = function(line)
+      return self:send(line)
+    end
+    t.isConnected = function()
+      return self:isConnected()
+    end
+  end
   backend:start(self:sink())
   return self
 end
@@ -76,28 +82,15 @@ function Serial:receive(chunk)
   self:fault(err)
 end
 
---- @param fn function handler(device_info)
---- @param env SerialEnv?
-function Serial:onConnect(fn, env)
-  self.dispatcher:add('connect', env or 'program', fn)
-end
-
---- @param fn function handler()
---- @param env SerialEnv?
-function Serial:onDisconnect(fn, env)
-  self.dispatcher:add('disconnect', env or 'program', fn)
-end
-
---- @param fn function handler(chunk)
---- @param env SerialEnv?
-function Serial:onBytes(fn, env)
-  self.dispatcher:add('bytes', env or 'program', fn)
-end
-
---- @param fn function handler(line), no terminator
---- @param env SerialEnv?
-function Serial:onLine(fn, env)
-  self.dispatcher:add('line', env or 'program', fn)
+--- The environment's compy.serial table. Handlers are its
+--- fields, assigned by the code running there: onConnect,
+--- onDisconnect, onBytes, onLine. send and isConnected live
+--- in the same table. Delivery reads the current field
+--- value; a field left nil means nothing is delivered.
+--- @param env SerialEnv
+--- @return table
+function Serial:table_for(env)
+  return self.dispatcher:table_for(env)
 end
 
 --- Sent as given: the terminator, if the other end wants

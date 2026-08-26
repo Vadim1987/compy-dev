@@ -18,7 +18,7 @@ describe('Serial', function()
   it('connects on attach, fires on update', function()
     local s, b = make()
     local info
-    s:onConnect(function(i) info = i end, 'console')
+    s:table_for('console').onConnect = function(i) info = i end
     b:attach({ name = 'mb' })
     assert.is_true(s:isConnected())
     assert.is_nil(info)
@@ -43,7 +43,7 @@ describe('Serial', function()
   it('assembles lines across reads', function()
     local s, b = make()
     local got = {}
-    s:onLine(function(l) got[#got + 1] = l end, 'console')
+    s:table_for('console').onLine = function(l) got[#got + 1] = l end
     b:attach()
     b:rx('ACK ')
     b:rx('41\nACK 42\n')
@@ -54,7 +54,7 @@ describe('Serial', function()
   it('passes raw chunks through', function()
     local s, b = make()
     local got = {}
-    s:onBytes(function(c) got[#got + 1] = c end, 'console')
+    s:table_for('console').onBytes = function(c) got[#got + 1] = c end
     b:attach()
     b:rx('AC')
     b:rx('K 41\n')
@@ -65,8 +65,8 @@ describe('Serial', function()
   it('sends bytes before the lines built from them', function()
     local s, b = make()
     local order = {}
-    s:onBytes(function() order[#order + 1] = 'b' end, 'console')
-    s:onLine(function() order[#order + 1] = 'l' end, 'console')
+    s:table_for('console').onBytes = function() order[#order + 1] = 'b' end
+    s:table_for('console').onLine = function() order[#order + 1] = 'l' end
     b:attach()
     b:rx('OK\n')
     s:update()
@@ -76,7 +76,7 @@ describe('Serial', function()
   it('drops a partial line on detach', function()
     local s, b = make()
     local got = {}
-    s:onLine(function(l) got[#got + 1] = l end, 'console')
+    s:table_for('console').onLine = function(l) got[#got + 1] = l end
     b:attach()
     b:rx('PART')
     b:detach()
@@ -89,7 +89,7 @@ describe('Serial', function()
   it('reports disconnect', function()
     local s, b = make()
     local down = false
-    s:onDisconnect(function() down = true end, 'console')
+    s:table_for('console').onDisconnect = function() down = true end
     b:attach()
     b:detach()
     s:update()
@@ -100,8 +100,8 @@ describe('Serial', function()
   it('mutes a paused program, not the console', function()
     local s, b = make()
     local con, prg = {}, {}
-    s:onLine(function(l) con[#con + 1] = l end, 'console')
-    s:onLine(function(l) prg[#prg + 1] = l end)
+    s:table_for('console').onLine = function(l) con[#con + 1] = l end
+    s:table_for('program').onLine = function(l) prg[#prg + 1] = l end
     b:attach()
     s:programPaused()
     b:rx('A\n')
@@ -113,7 +113,7 @@ describe('Serial', function()
   it('resumes without replaying the gap', function()
     local s, b = make()
     local prg = {}
-    s:onLine(function(l) prg[#prg + 1] = l end)
+    s:table_for('program').onLine = function(l) prg[#prg + 1] = l end
     b:attach()
     s:programPaused()
     b:rx('MISSED\n')
@@ -127,10 +127,10 @@ describe('Serial', function()
   it('clears a paused program that ended', function()
     local s, b = make()
     local n = 0
-    s:onLine(function() n = n + 1 end)
+    s:table_for('program').onLine = function() n = n + 1 end
     s:programPaused()
     s:programEnded()
-    s:onLine(function() n = n + 10 end)
+    s:table_for('program').onLine = function() n = n + 10 end
     b:attach()
     b:rx('X\n')
     s:update()
@@ -140,8 +140,8 @@ describe('Serial', function()
   it('keeps delivering after a handler fails', function()
     local s, b = make()
     local reached = false
-    s:onLine(function() error('boom') end)
-    s:onLine(function() reached = true end, 'console')
+    s:table_for('program').onLine = function() error('boom') end
+    s:table_for('console').onLine = function() reached = true end
     b:attach()
     b:rx('X\n')
     local errors = s:update()
