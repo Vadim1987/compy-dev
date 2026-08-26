@@ -835,3 +835,44 @@ version question the remark raises (1.0.0-rc vs the scale of the change).
 
 **Wrote "write it once" into both plan and roadmap** — 3 rows feed this one
 file; assembled separately they will duplicate and disagree.
+
+## 2026-08-26 — FIX-02-01 triage COMPLETE (all 37). Owner was right.
+
+Owner directed the remark triage to LEAD the roadmap, on the reasoning it may
+reveal overlooked defects. **It did.** Ran it in-session; all 37 now triaged.
+
+**My honest context call, stated to the owner:** enumeration is mechanical and
+reliable; the risk was the 10 files I had not opened. Did it, marked the
+boundary rather than pretending. (Also caught a THIRD grep error mid-task:
+`grep -rhoE ... | grep -v '/wip/'` — with `-h` there is no path to filter on,
+so the exclusion silently did nothing and inflated FR-id counts to 72. Redid
+with paths. **Three grep errors this session; all three from not thinking
+about what the pipeline actually emits.**)
+
+**5 NEW defect rows (FIX-02-16..20):**
+- **16 — `tixy` may drop the legend on submit** = possible UNRATIFIED change
+  to PRE-FEATURE behaviour in a migrated example. The plan's own "deviation
+  from pre-feature functionality" category. **Highest value.**
+- **17 — `on_text_entered` vs `after_submit` are two ways to set one
+  callback.** Owner flagged it TWICE in repl.md (:15, :39). **The cold
+  reviewer missed this entirely.** Bears on the strategic frame.
+- **18 — technical_debt/general.md carries a non-defect** (gfx/sfx aliases are
+  a convention). Same shape as Decision 12. Feeds FIX-02-15.
+- **19 — the A-doc's 3 FACTUAL claims** (:79 evaluator objects, :675 "unlike
+  submit", :650 veto-ing callback) may misstate the API. A stakeholder-facing
+  doc that is WRONG is worse than one that is unreadable.
+- **20 — pointer annotations completeness never checked** (verification task).
+
+**THREE-WAY COLLAPSE:** `event_dispatch_layers.md:112` is FIX-02-14 again in a
+second doc, and very probably the other half of FIX-02-05. One defect, three
+places. **Fix as one** — the surviving copy re-seeds the others, which is how
+it spread.
+
+**New sites of open rows:** guess.md:5 → FIX-02-07 (overlay, docs half) ·
+turtle.md:17 → FIX-01-01 · **FR-1/FR-6/R9 in the A-doc → FIX-01-01, a
+namespace it did not cover** (verified: 5 hits, 2 ids, used in the A-doc,
+defined only in wip/design → resolve nowhere a stakeholder can reach) ·
+:470 + project_sandbox_env.md:71 → CHG-01 version question, now 3 askers ·
+event_dispatch_layers.md:106 → FIX-02-06.
+
+Counts: FIX-02 15→20, total 21→26.

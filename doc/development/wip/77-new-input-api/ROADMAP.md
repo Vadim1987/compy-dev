@@ -25,7 +25,7 @@ reconciliation, and assembly.
 | id | step | result |
 |---|---|---|
 | ACC-01-01 | slice regeneration, the review cut | found **5 files outside every pathspec**, one production code |
-| ACC-01-02 | cold PR review vs the original stakeholder ask | **merge with changes — 21 defects** (19 from the review, 2 the owner found reading it) |
+| ACC-01-02 | cold PR review vs the original stakeholder ask | **merge with changes — 26 defects** (19 from the review, 2 the owner found reading it, 5 from the remark triage) |
 
 Detail: [`validation/reviews/ACC-01-02-findings-triage.md`](validation/reviews/ACC-01-02-findings-triage.md) ·
 report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/ACC-01-02-cold-pr-review.md)
@@ -34,8 +34,13 @@ report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/
 
 ## ⬜ The six defect sprints — **the current work**
 
-Mostly unordered, with three constraints: **DEC-01 and CHG-01 must both finish before any slice is
-cut**, **CHG-01 also gates ACC-02**, and **FIX-03 runs last** — it is the sweep that catches what FIX-02 and DEC-01 miss, and running it
+**FIX-02-01 leads (owner, 2026-08-26)** — the remark triage runs *first*, before the other rows are
+sized, because **37 unresolved remarks across 12 shipping files are the largest untriaged surface
+left, and triaging them may reveal defects nobody has counted.** Two of this session's findings
+arrived that way. Sizing the rest before it is sizing against an unknown.
+
+Then, mostly unordered, with three constraints: **DEC-01 and CHG-01 must both finish before any
+slice is cut**, **CHG-01 also gates ACC-02**, and **FIX-03 runs last** — it is the sweep that catches what FIX-02 and DEC-01 miss, and running it
 first means three brooms over one floor. Within BUG-01, `01`
 and `02` are the majors.
 
@@ -50,11 +55,16 @@ and `02` are the majors.
 | BUG-01-05 | `turtle` double-handles its own keys | **check the other migrated examples for siblings** · symptom of FIX-02-09 |
 | BUG-01-06 | a `textinput` shortcut cannot bind an upper-case character | |
 
-### FIX-02 — docs, vocabulary, process (15)
+### FIX-02 — docs, vocabulary, process (20)
 
 | id | defect | note |
 |---|---|---|
-| FIX-02-01 | **37** `> REMARK:` blocks across **12 shipping files**, incl. **11 in the A-doc** — gate covers only `src/`+`tests/` | **major** · [triage](validation/reviews/FIX-02-01-remark-triage.md) · **23 untriaged** · none stale |
+| FIX-02-01 | **37** `> REMARK:` blocks across **12 shipping files**, incl. **11 in the A-doc** — gate covers only `src/`+`tests/` | **major** · **[triage COMPLETE](validation/reviews/FIX-02-01-remark-triage.md)** — all 37, none stale |
+| FIX-02-16 | **`tixy` may drop the legend on submit — an unratified change to pre-feature behaviour** | **verify against base, then ratify or revert** — highest-value of the triage |
+| FIX-02-17 | **`on_text_entered` and `after_submit` are two ways to set one callback** | API-shape question the cold review missed; bears on the strategic frame |
+| FIX-02-18 | `technical_debt/general.md` carries an entry that is **not debt** (a convention) | same shape as Decision 12; feeds FIX-02-15 |
+| FIX-02-19 | the A-doc's **three factual claims** (`:79`, `:650`, `:675`) may misstate the API | a stakeholder-facing doc that is wrong is worse than one that is unreadable |
+| FIX-02-20 | pointer annotations in `project_sandbox_env.md` — **completeness never checked** | a verification task, not an edit |
 | FIX-02-02 | provenance front matter | **3 files only**, by ruling |
 | FIX-02-03 | `pong/README.md` — 316-line diff, 2-line change | |
 | FIX-02-04 | CHANGELOG omits the breaking change | |
@@ -67,7 +77,7 @@ and `02` are the majors.
 | FIX-02-11 | `hide()` vs teardown — the singleton is never stated | |
 | FIX-02-12 | the channel list exists twice | |
 | FIX-02-13 | a `pending()` routing case deferred in the hardest-read area | |
-| FIX-02-14 | **`release_keyboard_route` — name, comment and cited decision all describe retired behaviour** | **check with FIX-02-05**, likely its source |
+| FIX-02-14 | **`release_keyboard_route` — name, comment and cited decision all describe retired behaviour** | **one defect in three places** with FIX-02-05 and `event_dispatch_layers.md:112` — **fix as one**, or the surviving copy re-seeds the others |
 | FIX-02-15 | **debt ledger is 34% resolved entries** (547/1610 lines), many about scaffolding this feature invented | test each against the PR base; rot goes, pre-existing fixes need a ruling |
 
 ### FIX-01 — pre-existing citation hygiene (3)

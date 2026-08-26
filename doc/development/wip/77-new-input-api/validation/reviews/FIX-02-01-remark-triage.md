@@ -19,8 +19,9 @@
 | `doc/development/technical_debt/general.md` | 1 | **untriaged** |
 | `doc/development/internals/examples/{tixy,balloons,turtle,guess}.md` | 1 each | **untriaged** |
 
-**All twelve ship** — in slice `3a` or Set 1. **23 of the 37 are not yet triaged**; the detail below
-covers `decisions/input.md` and `tests.md` only.
+**All twelve ship** — in slice `3a` or Set 1. **All 37 are now triaged**: `decisions/input.md` and
+`tests.md` in the sections below, the remaining 23 in
+[**the section at the end**](#the-other-23-triaged-2026-08-26), which is where the new findings are.
 
 **The gate's blind spot is wider than `doc/`.** It greps `src/` and `tests/`, so it misses
 *everything else in the tree* — including `CHANGELOG.md` at the repo root, which no `doc/` sweep
@@ -181,3 +182,68 @@ tombstoned. **Do not let "strip the history" delete the supersession trail.**
 4. **The 8 editorial rows** — one pass, cheap.
 5. **`:429` + `:749`** — with the parent plan's collapsed-decisions row, not separately.
 6. **R080** — record the standing ruling, drop the block. Owner's to reaffirm.
+
+
+---
+
+## The other 23, triaged 2026-08-26
+
+Run at the owner's direction, ahead of the rest of the roadmap, on the reasoning that *"triaging
+remarks may reveal more unaddressed and overlooked defects."* **It did — four new candidates, three
+new sites of existing rows, and one three-way collapse.**
+
+### New defect candidates
+
+| where | what it says | why it matters |
+|---|---|---|
+| **`internals/examples/tixy.md:35`** | *"did we decide to change preexisting behaviour by dropping legend on submit? maybe do not do it?"* | **A possibly unratified change to pre-feature behaviour in a migrated example** — the plan's own "deviation from pre-feature functionality" category. **Verify against base `3256aac`, then ratify or revert.** Highest-value of the 23 |
+| **`internals/examples/repl.md:15` + `:39`** | *"`on_text_entered` and `after_submit` are obviously duplicates which may be a small architectural smell"* · *"config installs callback, which raises a question of API shape — why not have a separate callbacks interface as the only way to set callbacks"* | **Two remarks converging on one API-shape question: there are two ways to set a callback.** The cold reviewer did not raise this. It bears directly on the strategic frame — moving parts beyond the ask |
+| **`technical_debt/general.md:16`** | *"it's not a defect, but convention — `gfx` is alias for `love.graphics`, `sfx` for `compy.audio`"* | **A debt entry that is not debt** — the same shape as Decision 12 in the decisions ledger. Ledger hygiene; feeds FIX-02-15 |
+| **`internals/project_sandbox_env.md:107`** | *"check their completeness/consistency and whether they are actual"* | **A verification task, not an edit.** The pointer annotations may be stale; nobody has checked |
+
+### A three-way collapse — `event_dispatch_layers.md:112`
+
+> *"this needs actualization, because the routing was recently unified and there's no more
+> artificial divergence between keyboard/pointer?"*
+
+**This is FIX-02-14 again, in a second document** — and it is very probably the other half of
+**FIX-02-05** (*"two docs disagree about whether the route is released at `running → project_open`"*).
+
+So three rows are likely **one defect in three places**: the stale claim in
+`controller.lua`'s `release_keyboard_route` comment, its propagation into `event_dispatch_layers.md`,
+and whichever second doc FIX-02-05 found. **Fix them as one**, or the surviving copy re-seeds the
+others — which is precisely how this claim spread in the first place.
+
+### New sites of rows already open
+
+| where | feeds |
+|---|---|
+| `internals/examples/guess.md:5` — *"can we avoid the ambiguous word 'overlay'?"* | **FIX-02-07** — the docs half of the overlay quartet, which session45 closed in `src`/`tests` only |
+| `internals/examples/turtle.md:17` — *"remove 'owner ruling' provisional reference"* | **FIX-01-01** — ephemeral citation in a persistent doc |
+| `user_input.md:118`, `:331`, `:650` — **`FR-1`, `FR-6`, `R9`** | **FIX-01-01**, a namespace it did not cover. **Verified: 5 hits, 2 ids, used in the A-doc but defined only in `wip/design/`** — they resolve nowhere a stakeholder can reach |
+| `user_input.md:470`, `project_sandbox_env.md:71` — *"reference a specific version"* | **CHG-01** — the version question, which now has three independent askers |
+| `event_dispatch_layers.md:106` — *"project vocabulary introduces three terms (also 'shortcut')"* | **FIX-02-06** |
+
+### The A-doc's eleven, and why they rank
+
+`internals/user_input.md` is the document `agents/validation.md` calls the one *"stakeholders are
+pointed at from the PR"*. Three of its eleven allege **factual error**, not style:
+
+- **`:79`** — *"'projects cannot install evaluator objects' is not correct now? we allow them to
+  configure evaluator function"* — **verify in code**; if right, the A-doc misstates the API.
+- **`:675`** — *"'unlike submit' should be wrong because submit should also be honored"* — **verify**;
+  a claim about which callbacks are honoured.
+- **`:650`** — *"what do you mean 'reserved, unbuilt'… If we declare that a callback should be
+  veto-ing, then it should be"* — part refid (`R9`), part a **behaviour question**.
+
+The remaining eight are structural: `:442` unreadable paragraph · `:619` a dead reference that can
+be dropped (**FIX-03 territory** — a closed arc) · `:698` possibly-stale hook names plus an unclear
+paragraph · `:708` and `:753` restate API surface that belongs in the guide, *"describe one level of
+abstraction up"* · `:118`/`:331`/`:470` covered above.
+
+### Disposition
+
+**Nothing here is stale**, on the same test as the first fourteen. **Recommended order:** the tixy
+behaviour question first (it may need a revert), then the A-doc's three factual claims (a
+stakeholder-facing doc that misstates the API is worse than an unreadable one), then the three-way
+collapse, then the rest as editorial.
