@@ -372,10 +372,10 @@ its own result, and a target that fails must be re-runnable without re-running t
 
 | id | step | state |
 |---|---|---|
-| **ACC-01-01** | **`balloons` smoke** — write the list, then run it | list **owed** |
-| **ACC-01-02** | **`keyboard` smoke** — refresh anchors, then run | list exists |
-| **ACC-01-03** | **`maze` + `draw` smoke** — close the plan-buffer gap below, then run | list exists, **has a gap** |
-| **ACC-01-04** | **`sapper` smoke** — write the list, then run | list **owed** |
+| **ACC-01-01** | **`balloons` smoke** | list **written** 2026-08-26 |
+| **ACC-01-02** | **`keyboard` smoke** | list exists, anchors refreshed |
+| **ACC-01-03** | **`maze` + `draw` smoke** | list exists, **gap closed** (B11, D8, D9) |
+| **ACC-01-04** | **`sapper` smoke** | list **written** 2026-08-26 |
 | **ACC-01-05** | **Slice regeneration**, the review cut | after 01…04 |
 | **ACC-01-06** | **Owner's readability review** of the slices | last in ACC |
 
@@ -399,8 +399,17 @@ files**: the `draw` game (5 new modules), a structural split of `main.lua` into
 **`9911a27 align ux with the convention: Shift-Esc only exits mini-games`**, which is upstream
 doing its own `Shift+Esc` work in the same area as Decision 33.
 
-The checklist covers `draw` (§A runs in both). **It does not cover the plan-a-path key-tile
-buffer, Track 2** — no row mentions it, and it is input-driven in exactly our territory:
+**Correction, same day: the gap is real but narrower than first written.** The claim *"no row
+mentions Track 2"* was wrong — it came from a grep for *"plan-a-path / key-tile / plan field"* that
+missed how the checklist actually names it, *"Track 2 (plan)"*. Rows **D5** and **D7** already
+exercise the plan buffer's held-key edge and its lost-release recovery, which is precisely the
+`isrepeat` mechanism our migration touched.
+
+What was genuinely uncovered is Track 2's **other** surfaces: submitting and running a plan
+end-to-end, and `Shift+Esc` from a plan level (B4 covers direct-control only). Rows **B11**, **D8**
+and **D9** were added for those.
+
+The checklist covers `draw` (§A runs in both). The buffer is input-driven in exactly our territory:
 
 - `maze_plan.lua:141` is `plan_key(k, _, isrepeat)`, a keyboard handler whose comment reads *"A
   held key repeats keypresses; act on the edge only… whether it is fresh — where tracking which
@@ -454,7 +463,7 @@ A smoke failure is almost always the second. An editorial or citation defect is 
 |---|---|---|
 | **FIX-01-01** | 10 ephemeral step-id and `wip/` path citations in the persistent corpus | enumerated below |
 | **FIX-01-02** | session numbers in the persistent corpus | enumerated below |
-| **FIX-01-03** | P11's deferred editorial marker list (8 dev-doc prose-size items) | **candidate, pending owner nod** |
+| **FIX-01-03** | P11's deferred editorial marker list (8 dev-doc prose-size items) | **live** (owner, 2026-08-26) |
 
 #### FIX-01-01 — ephemeral citations in the persistent corpus
 
@@ -534,10 +543,18 @@ is that nothing greps for a *claim*, so also check `src/` and `tests/` comments,
 design — they are the workflow documents that govern this feature's sessions. `agents/sweep.md`
 is additionally a completed-phase historical record.
 
-#### FIX-01-03 — the deferred editorial marker list (candidate)
+#### FIX-01-03 — the deferred editorial marker list
 
-The 8 dev-doc prose-size complaints P11 set aside as a named list (session45). Currently homeless
-and FIX-shaped. **Pending the owner's nod** before it becomes a live row.
+**Live on the owner's ruling, 2026-08-26** — it earns its own step rather than riding another.
+
+The 8 dev-doc prose-size complaints P11 set aside as a named list. They were deferred, not
+discharged: P11's own scope was the marker *gate*, and these are editorial judgements about prose
+length in the development docs, which is a different kind of work and was correctly not mixed in.
+
+**The list must be re-derived before the step runs.** It was named as a count, not enumerated on
+disk, and a count is not a work item — the same failure mode as W10 batch 3, where *"~50 ids"*
+nobody had enumerated turned out to hold 13 already-covered rows and 8 real ones. Enumerate first,
+then size the step.
 
 ### Phase U — Upstream reconciliation and downstream compatibility (INSERTED 2026-08-09,
 session32, by owner ruling; sits between F and G)

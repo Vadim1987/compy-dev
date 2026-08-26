@@ -208,3 +208,34 @@ after wip deletion is the same defect regardless of whether it reads as a
 pointer or a date. 4 sites (technical_debt/input.md 249, 632;
 decisions/input.md 798, 1255). Correction: **keep the date, drop the
 session**. Flagged: re-sweep wider before closing (S-form + src/ + tests/).
+
+## 2026-08-26 — all four smoke checklists written/updated; FIX-01-03 live
+
+**Self-correction, important:** my "no row covers Track 2" claim was WRONG.
+The grep was for `plan-a-path|key-tile|plan field`; the checklist names it
+**"Track 2 (plan)"**. Rows **D5 and D7 already cover** the plan buffer's
+held-key edge + lost-release recovery — i.e. exactly the `isrepeat`
+mechanism `569204e` touched. Corrected in plan.md rather than quietly
+narrowed. Real remaining gap was smaller: plan submit/run end-to-end, and
+Shift+Esc from a plan level. Added **B11, D8, D9**.
+
+**Written (new): `balloons`** — 4 sections. Structure driven by what the
+migration actually is: continuous session stays open (A), lines-vs-string
+join in `terminal.lua` (B — note the failure is SILENT: every answer reads
+wrong, no crash), ESC clears-but-keeps-open (C), exit + echo (D).
+
+**Written (new): `sapper`** — the interesting one. Feature diff is TINY (two
+registration lines, `compy.singleclick` → `compy.input.hooks.singleclick`),
+so A-rows are really a PLATFORM routing check, stated as such. B covers the
+press-time touch fallback incl. the "this modifier and neither other" guard.
+**C documents the P19 defect as an EXPECTED result** with instructions to
+report only deviation FROM the description — otherwise the owner files a
+known accepted defect as new.
+
+**Updated:** header (all four lists exist; ACC run order by upstream
+sensitivity; tag-a-green-pass pointer to TAGS.md). Anchors refreshed —
+platform row was `5128a4bf` in 2 tables, now `c7e065c3` (4 tables total).
+
+**FIX-01-03 live (owner).** Flagged in-plan: the 8 items were named as a
+COUNT, never enumerated on disk. Must be re-derived before sizing — same
+failure mode as W10 batch 3 ("~50 ids" → 13 already-covered + 8 real).

@@ -9,10 +9,24 @@ top-to-bottom in one sitting, with the expected result stated so a failure is un
 example repo's PR gate is a human smoke pass), and the step that last changed the code.
 
 **Which examples owe a list** (measured 2026-08-13; Phase G carries the full reasoning): this
-feature changed code in twelve examples — nine tracked and three detached. **Written so far:
-`keyboard`, `maze`+`draw`.** **Owed: `balloons`** (detached, so its PR's only gate is this pass) and
-**`sapper`** (tracked, but its input mechanism changed materially and it carries a live defect —
-P19's). The remaining tracked examples ride the platform PR's review pass.
+feature changed code in twelve examples — nine tracked and three detached. **All four owed lists
+now exist**: `keyboard`, `maze`+`draw`, `balloons` (detached, so its PR's only gate is this pass)
+and `sapper` (tracked, but its input mechanism changed materially and it carries a live defect).
+The remaining tracked examples ride the platform PR's review pass.
+
+**Run them in this order**, which is by *upstream sensitivity* — least exposed first, so that a
+result nobody can invalidate is banked before the exposed ones:
+
+| step | list | why it sits here |
+|---|---|---|
+| **ACC-01-01** | `balloons` | 5 ahead / 0 behind its upstream — no divergence to reconcile, so no later merge can invalidate the result |
+| **ACC-01-02** | `keyboard` | reconciled 2026-08-11; upstream may have moved since |
+| **ACC-01-03** | `maze` + `draw` | reconciled against a base dated 2026-07-24 |
+| **ACC-01-04** | `sapper` | in-repo, so it moves with the platform |
+
+**A clean pass is worth pinning.** Tag the exact state a green run was made against — the scheme
+and the standing tag registry are in `wip/77-new-input-api/TAGS.md` — so that "it passed" names a
+commit rather than an afternoon.
 
 **Keep this document current with the code.** A checklist that tests a mechanism the code no longer
 has is worse than none, because it passes.
@@ -36,7 +50,7 @@ run** — a row that fails against a state nobody recorded costs a bisect.
 |---|---|---|
 | `keyboard`, the branch under test | `newinput` (local, unpushed) | **`e568961`** |
 | `keyboard` upstream it is diffed against | `origin/dsent/dev` | **`025e858`** |
-| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`5128a4bf`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`c7e065c3`** |
 | platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
 
 *(Re-pinned 2026-08-12 after P-18-19/20 — the last three behavioural differences against upstream
@@ -169,7 +183,7 @@ moved before you run.
 |---|---|---|
 | `maze`, the branch under test | `newinput-edge` (local, unpushed) | **`ca59903`** |
 | `maze` upstream it is diffed against | `dsent/dsent/dev` | **`b8cc436`** |
-| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`5128a4bf`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`c7e065c3`** |
 | platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
 
 ### How to launch — this changed, and the old command no longer works
@@ -215,6 +229,7 @@ cd <repo root> && love src play /abs/path/out/maze     # and .../draw
 | B8 | on an editor level, `Alt+Shift+Esc` | **[new]** also leaves for the menu |
 | B9 | on an editor level, `Ctrl+Shift+Esc` | **[new]** also leaves — and the run is **not** stopped back to the console behind it |
 | B10 | on an editor level, `Ctrl+Alt+Shift+Esc` | **[new]** same as B9 |
+| B11 | on a **Track 2 (plan)** level, press `Shift+Esc` | **[new]** returns to the menu, and **no plan strip is left over it**. *(B4 covers direct-control only; the plan track has its own field-like surface.)* |
 
 **B8–B10 have never been pressed by anyone.** The game registers all four
 members of the family, but two of them — the Ctrl-bearing ones — used to reach
@@ -243,6 +258,8 @@ defect against `P-17-03` §5, not a mystery.)*
 | D5 | on a **Track 2 (plan)** level, hold a direction key | **one** tile is appended, not a run of them |
 | D6 | on a **direct-control** level, hold a direction key | the robot queues a **run** of moves — unchanged, this one is supposed to repeat |
 | D7 | on a plan level, hold a direction, click away and back, press it again | it still works. *(A lost release used to kill that direction for the session.)* |
+| D8 | on a plan level, build a plan of several tiles and submit it | **[new]** the robot runs the **whole** plan, in order — the buffer delivered every tile, not just the last |
+| D9 | on a plan level, submit a plan that misses the goal | **[new]** the run ends back at home, as a crash does. *(Upstream behaviour, checked here as a regression: the plan track is the one place our press/repeat change reaches that the other rows do not exercise end-to-end.)* |
 
 ### E — Tab, and on the way out
 
@@ -264,3 +281,182 @@ defect against `P-17-03` §5, not a mystery.)*
 - **E5** and **B7** are deliberate preservations. A failure there means the migration changed
   something it promised not to.
 - Everything else is a regression check against behaviour the example already had.
+
+---
+
+## balloons
+
+**Repository:** `src/examples/balloons` (separate remote, own PR). **Detached, so this pass is its
+PR's only gate** — there is no automated suite in that repo and no reviewer downstream of it.
+**Last mechanism change:** the migration off the retired poll idiom onto the continuous-session
+`compy.input.*` API, five commits ending `99ad70f`.
+
+**Everything in this section is [new].** No part of the migration has been exercised by a human.
+
+### The four commits a result should be reported against
+
+Quote these with any finding, and refresh them (`git -C <repo> rev-parse --short HEAD`) if the tree
+moved before you run.
+
+| what | ref | commit |
+|---|---|---|
+| `balloons`, the branch under test | `main` (local, unpushed) | **`99ad70f`** |
+| `balloons` upstream it is diffed against | `origin/main` | **`9e7a1e1`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`c7e065c3`** |
+| platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
+
+*(`main` is **5 ahead, 0 behind** `origin/main` — a clean fast-forward, and the five commits are
+exactly this feature's work.)*
+
+### How to launch
+
+- **Desktop / nodejs:** from the repo root, `love src play src/examples/balloons`.
+- **The exit row (D1) needs the IDE, not play mode** — under `play` the console is disabled, so
+  `Ctrl+Esc` has nothing to return to. Start with `love src` and open the project from the console.
+
+**The game:** balloons rise carrying questions (*"Print missing letter in 'giraf..e':"*, *"What is
+3 + 4?:"*). You type the answer and press Enter. Three states matter: **loaded** (the splash, which
+takes the command `start`), **active** (answering), and **finished** (which takes `restart`).
+
+### A — the session stays open, which is the whole migration
+
+The retired idiom re-armed the input widget after every submit. The new one activates **once** and
+stays open; `after_submit` clears the line. If that is wrong, the symptom is a field that vanishes
+or stops accepting text — not a crash.
+
+| | do | expect |
+|---|---|---|
+| A1 | launch, and look at the splash | the command field is **open and empty**, hinting `To start: Type <start>` |
+| A2 | type `start`, press Enter | the game starts; balloons begin rising |
+| A3 | look at the field immediately after A2 | it is **still open**, and **empty** — not gone, not still holding `start` |
+| A4 | answer a balloon correctly (e.g. `f` for `giraf..e`) and press Enter | it scores; the hint shows `Your answer: <f>` |
+| A5 | keep answering five in a row without touching anything else | every one is accepted — the session does **not** need re-arming between submits |
+| A6 | let the game finish, then type `restart` and Enter | it restarts, and the field is open and empty again |
+
+### B — submit delivers lines, not a command string
+
+The API hands `on_text_entered` an **array of lines**; the game's handlers index by a single
+string. The join happens in `terminal.lua`. A mistake here does not crash — it silently compares
+the wrong thing, so **every answer reads as wrong**.
+
+| | do | expect |
+|---|---|---|
+| B1 | answer one balloon **correctly** | it is accepted. *(If a correct answer scores as wrong, the join is the suspect, not the game logic.)* |
+| B2 | answer one **incorrectly** on purpose | it is rejected — the rejection path still works |
+| B3 | press Enter on an **empty** field | nothing breaks; the game does not raise |
+| B4 | type an answer with a trailing space, then Enter | behaves as it did before the migration |
+
+### C — ESC clears, and cannot strand you
+
+`ESC` clears the line and **leaves the widget open** by default. That is deliberate: the command
+line is the only way to talk to this game, so a dismissable field would be a dead end with no
+re-arm.
+
+| | do | expect |
+|---|---|---|
+| C1 | type a few characters, press `ESC` | the line clears; **the field stays open** |
+| C2 | immediately type again | the characters appear — you are not stranded |
+| C3 | press `ESC` on an already-empty field | nothing happens; still open |
+
+### D — on the way out
+
+| | do | expect |
+|---|---|---|
+| D1 | leave with `Ctrl+Esc` (**IDE launch**) | you are back in the console |
+| D2 | type a long answer, watching each character | each appears **once** — no echo |
+
+### What a failure here means
+
+- **A3, A5, C1–C2** are the continuous-session mechanism. A failure is a defect in this migration.
+- **B1** failing while B2 passes points at the lines-to-string join in `terminal.lua`, not at the
+  game.
+- **D2** is the echo check every list carries; a doubled character is a platform-side defect, not a
+  balloons one.
+- Everything else is a regression check against behaviour the example already had.
+
+---
+
+## sapper
+
+**In-repo** (`src/examples/sapper`), so it ships with the platform PR and has no separate remote.
+**Last mechanism change:** `b1885568` — single and double clicks are now **emitted as events**
+through the gateway, retiring the direct `compy.singleclick` / `compy.doubleclick` entry points.
+The example's own logic was left alone: against its original import the file differs only in those
+two registration lines.
+
+**Read this before running: one row is expected to fail, by ruling.** See section C.
+
+### The two commits a result should be reported against
+
+| what | ref | commit |
+|---|---|---|
+| platform repo, the branch under test | `feature/77-newapi-analysis-s20260615` | **`c7e065c3`** |
+| platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
+
+### How to launch
+
+- **Desktop / nodejs:** from the repo root, `love src play src/examples/sapper`.
+- **The exit row (D1) needs the IDE**, as elsewhere: `love src`, then open the project.
+
+**The controls, which are unusual and deliberate:** a **single click flags** a cell; a **double
+click unlocks** it. Because a single tap is often accidental on a touch device and a double tap
+unreliable, the example also offers a **press-time** route with a modifier held — **`Shift`+press
+flags**, **`Ctrl`+press unlocks** — and that route acts immediately, without waiting out the
+double-click window. It is a touch fallback, not a shortcut, and it was kept deliberately
+(`technical_debt/input.md`, *"sapper's modifier click path is a touch fallback…"*).
+
+### A — the derived clicks, which now arrive as events
+
+| | do | expect |
+|---|---|---|
+| A1 | with no modifier held, single-click a covered cell | it is **flagged** |
+| A2 | single-click the same cell again | the flag is **removed** — flagging toggles |
+| A3 | double-click a covered cell | it is **unlocked** |
+| A4 | double-click with the game in `ready` state | the mode advances, as before |
+| A5 | after a win or a loss, double-click anywhere | a new game starts |
+| A6 | click and **drag** before releasing | **nothing happens** — a drifting pointer discards the derived click, unchanged |
+
+### B — the press-time modifier route (the touch fallback)
+
+**Hold the modifier down for the whole gesture** in these rows. Releasing it early is section C.
+
+| | do | expect |
+|---|---|---|
+| B1 | hold `Shift`, click a covered cell, **keep holding** ~1 s, release | the cell is flagged, and **stays** flagged |
+| B2 | hold `Ctrl`, click a covered cell, keep holding ~1 s, release | the cell is unlocked |
+| B3 | hold `Shift`+`Alt` together and click | **nothing happens** — each route demands *its* modifier and neither of the other two |
+| B4 | hold `Ctrl`+`Shift` and click | **nothing happens**, same rule |
+| B5 | hold `Alt` alone and click | **nothing happens** |
+| B6 | compare B1's timing against A1's | B1 acts **immediately**; A1 waits out the double-click window (~0.4 s). That gap is the point of the fallback |
+
+### C — the known defect: let go of Shift too soon and the flag undoes itself
+
+**This row is expected to fail, and the failure is not yours to report as new.** It predates this
+feature entirely, was ruled on 2026-08-11, and was **accepted without a guard**.
+
+| | do | expect |
+|---|---|---|
+| C1 | hold `Shift`, click a covered cell, and **release `Shift` immediately** | the cell flags, then **un-flags about 0.4 s later**. Net effect: *shift-click appears to do nothing* |
+
+**Why.** `Shift`+press flags at once. The gateway synthesises the derived single click ~0.4 s later
+(`controller.lua`, `click_delay`) and a derived click samples its modifiers **at synthesis time**,
+not at press. Shift is gone by then, so the echo arrives unmodified, passes the plain hook's
+*"nothing held"* guard, and runs the action a second time — and flagging toggles.
+
+**What to report.** Only a *deviation from this description*. If C1 behaves differently — no undo
+at all, or an undo that also fires while Shift is still held (which would contradict B1) — that is
+a real finding. The described behaviour itself is recorded in `technical_debt/input.md`.
+
+### D — on the way out
+
+| | do | expect |
+|---|---|---|
+| D1 | leave with `Ctrl+Esc` (**IDE launch**) | you are back in the console |
+
+### What a failure here means
+
+- **A1–A6** are the event-emission change. The example's logic did not move, so a difference here
+  is a **platform** defect in how derived clicks are routed, not a sapper one.
+- **B1–B6** are the press path. It was reverted to its original shape deliberately after a
+  conversion broke it; a failure means the revert was incomplete.
+- **C1** is the known defect. Confirm it matches the description; do not file it as new.
