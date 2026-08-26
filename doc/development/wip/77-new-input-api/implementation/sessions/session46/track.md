@@ -876,3 +876,37 @@ defined only in wip/design → resolve nowhere a stakeholder can reach) ·
 event_dispatch_layers.md:106 → FIX-02-06.
 
 Counts: FIX-02 15→20, total 21→26.
+
+## 2026-08-26 — BUG/FIX renumbered by BLAST RADIUS (owner)
+
+Owner's ordering principle: rows that **may reveal more defects, escalate into
+design decisions, or cause regressions via deep code changes — anything with
+big or UNKNOWN blast radius — go first.** Narrow mechanical rows follow,
+because sizing them against an unsettled surface is sizing twice.
+
+**New heads of each list:**
+- **BUG-01-01** `state.pending` — UNKNOWN reachability, may extend to
+  shortcuts/hooks/callbacks, false-premise ledger entry
+- **BUG-01-02** highlighter — design escalation (sentinel vs new member)
+- **BUG-01-03** turtle — may implicate EVERY migrated example
+- **BUG-01-04** textinput uppercase — fix is in combo serialisation, which
+  every shortcut match runs through (deeper than it looks)
+- **FIX-02-01** `on_text_entered`/`after_submit` duplication — public-surface
+  design escalation; cold review MISSED it, owner raised it twice
+- **FIX-02-02** tixy legend — verify → ratify or revert, in code
+- **FIX-02-03** A-doc factual claims — may reveal the CODE is wrong
+- **FIX-01-01** editorial list — UNKNOWN SIZE (never enumerated) → leads FIX-01
+
+**FIX-02: 20 → 19 rows** — old 05 and 14 merged into new 06, being one defect
+in three places.
+
+**Shipped a CROSSWALK** (old→new for all three lists) because today's commit
+messages and the triage docs use old numbers. Flagged the contrast: cheap here
+(**no code citations**), which is exactly why the DECISION ids are getting
+names instead of numbers.
+
+**Self-caught error:** my trim block deleted CHG-01 along with the superseded
+FIX-01 list (both sat between the same anchors). Verified via `git diff`
+(6 removed CHG-01 lines) and restored in full. **Fourth mechanical slip this
+session — all four from acting on a text range without checking what else it
+contained.**

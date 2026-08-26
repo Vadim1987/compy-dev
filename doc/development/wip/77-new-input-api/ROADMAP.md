@@ -34,82 +34,107 @@ report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/
 
 ## ⬜ The six defect sprints — **the current work**
 
-**FIX-02-01 leads (owner, 2026-08-26)** — the remark triage runs *first*, before the other rows are
-sized, because **37 unresolved remarks across 12 shipping files are the largest untriaged surface
-left, and triaging them may reveal defects nobody has counted.** Two of this session's findings
-arrived that way. Sizing the rest before it is sizing against an unknown.
+**The remark triage already ran** (owner directed it to lead; it did, and produced five new rows —
+`FIX-02-01/02/03/04/15`). What remains of it is execution, now `FIX-02-07`.
 
-Then, mostly unordered, with three constraints: **DEC-01 and CHG-01 must both finish before any
+**Rows are ordered by blast radius, not severity** — see the principle below. Three hard
+constraints on top of that: **DEC-01 and CHG-01 must both finish before any
 slice is cut**, **CHG-01 also gates ACC-02**, and **FIX-03 runs last** — it is the sweep that catches what FIX-02 and DEC-01 miss, and running it
 first means three brooms over one floor. Within BUG-01, `01`
 and `02` are the majors.
 
-### BUG-01 — runtime defects (6)
+### Ordering principle (owner, 2026-08-26)
 
-| id | defect | note |
+**Rows that can change the shape of the work go first.** Anything that may reveal more defects,
+escalate into a design decision, or reach deep enough to cause regressions — anything whose blast
+radius is **big or unknown** — leads. Narrow mechanical rows follow, because sizing them against an
+unsettled surface is sizing twice.
+
+**Renumbered once, here, and stable from now on.** Crosswalk at the end of this section.
+
+### BUG-01 — runtime defects (6), in priority order
+
+| id | defect | blast radius |
 |---|---|---|
-| BUG-01-01 | `state.pending` survives a project stop | **major** · trace reachability first · carries a test gap · a debt entry rests on a false premise |
-| BUG-01-02 | a highlighter cannot be turned off | **major** · needs a design call — *parked, see below* |
-| BUG-01-03 | `show{force=true, prompt=…}` silently drops the prompt | |
-| BUG-01-04 | `set_cursor` clamps bytes, boundary event measures characters | non-ASCII prompts |
-| BUG-01-05 | `turtle` double-handles its own keys | **check the other migrated examples for siblings** · symptom of FIX-02-09 |
-| BUG-01-06 | a `textinput` shortcut cannot bind an upper-case character | |
+| **BUG-01-01** | `state.pending` survives a project stop | **UNKNOWN** — reachability untraced; `shortcuts`/`hooks`/`callbacks` may share the hole; the debt entry covering it rests on a false premise; ships with a test |
+| **BUG-01-02** | a highlighter cannot be turned off | **design escalation** — sentinel vs a new `clear_highlighter` member; either changes the public surface |
+| **BUG-01-03** | `turtle` double-handles its own keys | **may implicate every migrated example** — it is a finding about the migration. Fix with FIX-02-11 |
+| **BUG-01-04** | a `textinput` shortcut cannot bind an upper-case character | **deep** — the fix is in combo serialisation, which every shortcut match runs through |
+| **BUG-01-05** | `set_cursor` clamps bytes, boundary event measures characters | medium — two functions disagree; which is right is a small design call |
+| **BUG-01-06** | `show{force = true, prompt = …}` silently drops the prompt | narrow — one call path |
 
-### FIX-02 — docs, vocabulary, process (20)
+### FIX-02 — docs, vocabulary, process (19), in priority order
 
-| id | defect | note |
+*(was 20 — the old `05` and `14` merge into `06`, being one defect in three places.)*
+
+| id | defect | blast radius |
 |---|---|---|
-| FIX-02-01 | **37** `> REMARK:` blocks across **12 shipping files**, incl. **11 in the A-doc** — gate covers only `src/`+`tests/` | **major** · **[triage COMPLETE](validation/reviews/FIX-02-01-remark-triage.md)** — all 37, none stale |
-| FIX-02-16 | **`tixy` may drop the legend on submit — an unratified change to pre-feature behaviour** | **verify against base, then ratify or revert** — highest-value of the triage |
-| FIX-02-17 | **`on_text_entered` and `after_submit` are two ways to set one callback** | API-shape question the cold review missed; bears on the strategic frame |
-| FIX-02-18 | `technical_debt/general.md` carries an entry that is **not debt** (a convention) | same shape as Decision 12; feeds FIX-02-15 |
-| FIX-02-19 | the A-doc's **three factual claims** (`:79`, `:650`, `:675`) may misstate the API | a stakeholder-facing doc that is wrong is worse than one that is unreadable |
-| FIX-02-20 | pointer annotations in `project_sandbox_env.md` — **completeness never checked** | a verification task, not an edit |
-| FIX-02-02 | provenance front matter | **3 files only**, by ruling |
-| FIX-02-03 | `pong/README.md` — 316-line diff, 2-line change | |
-| FIX-02-04 | CHANGELOG omits the breaking change | |
-| FIX-02-05 | two docs disagree on route release | |
-| FIX-02-06 | **tier / chain / "the walk"** — three names, one thing | strategic-frame clause |
-| FIX-02-07 | **overlay / widget / area / field** — four names | known unclosed; `src` half swept in S45 |
-| FIX-02-08 | "combinator" — concept earned, word not | |
-| FIX-02-09 | the guide never says a shown widget **always consumes** (keyboard) | **fix with BUG-01-05** |
-| FIX-02-10 | the guide never says callbacks cannot be un-set | |
-| FIX-02-11 | `hide()` vs teardown — the singleton is never stated | |
-| FIX-02-12 | the channel list exists twice | |
-| FIX-02-13 | a `pending()` routing case deferred in the hardest-read area | |
-| FIX-02-14 | **`release_keyboard_route` — name, comment and cited decision all describe retired behaviour** | **one defect in three places** with FIX-02-05 and `event_dispatch_layers.md:112` — **fix as one**, or the surviving copy re-seeds the others |
-| FIX-02-15 | **debt ledger is 34% resolved entries** (547/1610 lines), many about scaffolding this feature invented | test each against the PR base; rot goes, pre-existing fixes need a ruling |
+| **FIX-02-01** | **`on_text_entered` and `after_submit` are two ways to set one callback** | **design escalation, public surface.** The cold review missed it; the owner raised it twice. Bears on the strategic frame's "no moving parts beyond the ask" |
+| **FIX-02-02** | **`tixy` may drop the legend on submit** | **verify → ratify or revert.** A possibly unratified change to pre-feature behaviour, in code |
+| **FIX-02-03** | the A-doc's three factual claims (`:79`, `:650`, `:675`) | **may reveal the code is wrong, not the doc** |
+| **FIX-02-04** | pointer annotations in `project_sandbox_env.md` — completeness never checked | **unknown yield** — a verification task |
+| **FIX-02-05** | the debt ledger's 20 resolved entries | **unknown yield** — each tested against base; may find more rot |
+| **FIX-02-06** | the stale keyboard/pointer divergence claim | **one defect in three places** — `release_keyboard_route`'s comment, `event_dispatch_layers.md:112`, and the second doc. **Fix as one**; any survivor re-seeds the others |
+| **FIX-02-07** | execute the 37 remark dispositions | triage **complete**; breadth known, 12 files |
+| **FIX-02-08** | "tier" / "chain" / "the walk" — three names, one thing | known breadth, 3 slices |
+| **FIX-02-09** | "overlay" / "widget" / "area" / "field" — four names | known breadth; `src` half done in S45, docs half open |
+| **FIX-02-10** | "combinator" — concept earned, word not | narrow |
+| **FIX-02-11** | the guide never says a shown widget **always consumes** (keyboard) | narrow — **but fix with BUG-01-03**, which is its symptom |
+| **FIX-02-12** | the guide never says callbacks cannot be un-set | narrow — depends on BUG-01-02's ruling |
+| **FIX-02-13** | `hide()` vs teardown — the singleton is never stated | narrow |
+| **FIX-02-14** | the channel list exists twice | narrow |
+| **FIX-02-15** | `technical_debt/general.md` carries an entry that is not debt | narrow |
+| **FIX-02-16** | a `pending()` routing case deferred in the hardest-read area | narrow |
+| **FIX-02-17** | CHANGELOG omits the breaking change | narrow — **feeds CHG-01** |
+| **FIX-02-18** | `pong/README.md` — 316-line diff, 2-line change | narrow |
+| **FIX-02-19** | provenance front matter, 3 files | narrow |
 
-### FIX-01 — pre-existing citation hygiene (3)
+### Crosswalk — old id → new id
 
-| id | defect |
-|---|---|
-| FIX-01-01 | 10 ephemeral step-id and `wip/` path citations in the persistent corpus |
-| FIX-01-02 | session numbers in the persistent corpus (4 sites) |
-| FIX-01-03 | P11's deferred editorial list — **named as a count, never enumerated; re-derive before sizing** |
+**BUG-01:** `01→02` · `02→01`... in full: old `01`(pending)→**01** · old `02`(highlighter)→**02** ·
+old `03`(show/force)→**06** · old `04`(clamping)→**05** · old `05`(turtle)→**03** ·
+old `06`(uppercase)→**04**.
+
+**FIX-02:** old `01`(remarks)→**07** · `02`(provenance)→**19** · `03`(pong)→**18** ·
+`04`(CHANGELOG)→**17** · `05`+`14`(stale claim)→**06** · `06`(tier/chain)→**08** ·
+`07`(overlay)→**09** · `08`(combinator)→**10** · `09`(always-consumes)→**11** ·
+`10`(callbacks-unset)→**12** · `11`(hide/singleton)→**13** · `12`(channel list)→**14** ·
+`13`(pending routing)→**16** · `15`(debt ledger)→**05** · `16`(tixy)→**02** ·
+`17`(API duplication)→**01** · `18`(general.md)→**15** · `19`(A-doc claims)→**03** ·
+`20`(pointer annotations)→**04**.
+
+*Commit messages and the triage documents dated 2026-08-26 use the old numbers; this table is the
+bridge. Unlike the decision ids, these have **no citations in code**, which is why renumbering them
+is cheap and renumbering those was not.*
+
+### FIX-01 — pre-existing citation hygiene (3), in priority order
+
+| id | defect | blast radius |
+|---|---|---|
+| **FIX-01-01** | P11's deferred editorial list — **named as a count, never enumerated** | **UNKNOWN SIZE** — re-derive before sizing; this is why it leads |
+| **FIX-01-02** | ephemeral citations in the persistent corpus — 10 step-id/`wip/` paths, **plus the `FR-1`/`FR-6` namespace** found by the remark triage | known, ~12 sites |
+| **FIX-01-03** | session numbers in the persistent corpus | known, 4 sites |
+
+*(Old `01`→**02**, `02`→**03**, `03`→**01**.)*
 
 ### CHG-01 — CHANGELOG validation and update (4 steps) — **gates ACC-02 and every slice cut**
 
-**Owner, 2026-08-26: this runs before ACC-02 and before any PR reassembly.** The CHANGELOG ships in
-slice `3a` and is the first thing a stakeholder scans for what breaks; sending a cold reviewer or a
-smoke sitting at a tree whose CHANGELOG is wrong wastes the pass.
+**Owner, 2026-08-26: runs before ACC-02 and before any PR reassembly.** The CHANGELOG ships in slice
+`3a` and is the first thing a stakeholder scans for what breaks; sending a cold reviewer or a smoke
+sitting at a tree whose CHANGELOG is wrong wastes the pass.
 
-**Its state today, measured:** 22 lines, **the entire file added by this feature**, one `### Changed`
-section with three entries — and three separate defects in it.
+**Its state today:** 22 lines, **the entire file added by this feature**, one `### Changed` section —
+with retired vocabulary in its own prose (*"an active **overlay**"*), no `Removed` section, and a
+`> REMARK:` **above its own H1**.
 
 | id | step |
 |---|---|
-| CHG-01-01 | **validate what is there against the actual diff** — the same claims-vs-reality check that caught the PR description. Note the existing text says *"an active **overlay**"*, retired vocabulary (FIX-02-07) |
-| CHG-01-02 | add the **`Removed`** section — the four retired globals are the most breaking thing here and appear under no heading a reader would look under *(feeder: FIX-02-04)* |
-| CHG-01-03 | absorb the **pre-existing-resolved debt and the behavioural changes**, per the owner's ruling *(feeder: FIX-02-15)* |
-| CHG-01-04 | completeness against the breaking changes; and settle the **version question** the in-file remark raises *(`1.0.0-rc` vs the scale of the change)* |
+| CHG-01-01 | **validate what is there against the actual diff** — the claims-vs-reality check that caught the PR description |
+| CHG-01-02 | add the **`Removed`** section for the four retired globals *(feeder: FIX-02-17)* |
+| CHG-01-03 | absorb pre-existing-resolved debt and behavioural changes, per the owner's ruling *(feeder: FIX-02-05)* |
+| CHG-01-04 | completeness against the breaking changes; settle the **version question** — `1.0.0-rc` against the scale of the change. **Three independent askers**: the CHANGELOG's own remark, `user_input.md:470`, `project_sandbox_env.md:71` |
 
-**Write it once.** Three rows feed this file — FIX-02-04, FIX-02-15 and the remark at its head.
-Assembled separately they will duplicate and disagree.
-
-**It carries a `> REMARK:` above its own H1**, in the owner's voice: *"too shy for major changes
-done — rewired dispatching, unblocked event-handling, new topology with shortcuts/hooks… and version
-is 1.0.0-rc…"* That remark is **the brief for this step**, not merely a marker to clear.
+**Write it once.** Three rows feed this file; assembled separately they duplicate and disagree.
 
 ### FIX-03 — the closed-arc sweep (4 steps) — **runs after FIX-02 and DEC-01**
 
@@ -154,7 +179,7 @@ out of scope** — frozen history, and it carries its own dead `D-1…D-10` name
 
 ---
 
-## ⬜ ACC-02 — human acceptance — **blocked on the four sprints**
+## ⬜ ACC-02 — human acceptance — **blocked on the six sprints**
 
 Runs only once the tree is fixed. Every row costs owner time; re-running them against a tree about
 to change is what this ordering exists to prevent.
