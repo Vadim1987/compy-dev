@@ -82,8 +82,8 @@ There is no show-and-hide-many-times-per-second pattern in this codebase.
 
 | id | step | note |
 |---|---|---|
-| ARC-01-01 | choose the seam — project **open** vs project **run** — and audit nil-handling at all four dynamic consumers | **decides the shape; do first, no code** |
-| ARC-01-02 | `state.callbacks` / `state.pending` resolve dynamically instead of being captured | behaviour-identical; a pass-through proxy over these was tried before and *"reproduced plain table behaviour exactly"* |
+| ARC-01-01 | ~~choose the seam~~ — **ANSWERED by the cold review: the seam is `run`, not `open`** | `ConsoleController:restart()` (`consoleController.lua:1179`) and Ctrl+T quickswitch (`controller.lua:793-808`) both call `stop_project_run()` + `run_project()` **directly, bypassing open/close** — construct-at-open would leave every restart on a stale widget, reproducing the exact class this row exists to kill. Verified. Nil-audit still outstanding |
+| ARC-01-02 | `state.callbacks` / `state.pending` resolve dynamically instead of being captured | **bigger than "one coupling"** — captured in two places (`:790-805`, `:512-527`) and read as plain tables by four functions (`merge_callback_keys`, `consume_pending`, `stash_hidden_configure`, `api_show`). A shape change, not a one-liner. **Must land BEFORE ARC-01-03**: `get_compy_input` runs at boot, before any project exists, so under a per-run widget the capture would index nil (`main.lua:379` publishes the widget, `:383` builds the console — today's ordering exists for exactly this) |
 | ARC-01-03 | construction + destruction move to the seam | |
 | ARC-01-04 | delete the teardown machinery the lifetime replaces | the payoff commit |
 | ARC-01-05 | fixture seam + the spec fallout | the churn lives here |
@@ -107,6 +107,24 @@ There is no show-and-hide-many-times-per-second pattern in this codebase.
 
 **Nothing a project can observe changes, except that the leaks stop** — which is the PR story: the
 NFR implemented at the boundary it specifies, deleting the machinery that existed to fake it.
+
+### Cold second opinion (2026-08-26): **sound, but not now**
+
+[`validation/outcomes/ARC-01-cold-second-opinion.md`](validation/outcomes/ARC-01-cold-second-opinion.md).
+Its three substantive findings were **verified in code** and are folded into the steps above. Two
+corrections to this row as originally filed:
+
+- **Decision 3 needs an explicit amendment, not a reinterpretation.** Its literal text says *"created
+  once at load"* and enumerates four instances by name. The per-session reading is defensible on the
+  stated *mechanism* but reaches past the words — so the honest move is to amend the decision and say
+  why, not to argue the words already allow it. **Conceded.**
+- **"Net deletion" was optimistic** — likely a wash once the `get_compy_input` reshape, the boot
+  ordering fix and the Decision 3 amendment are counted. The 101 test touchpoints are exact, but only
+  4 sites call `run_project`, so most of that churn would not exercise the new lifetime **without
+  new tests written for it** — a coverage gap, not just churn.
+
+**The argument for deferring:** a table-driven `reset_config` symmetric to `apply_config` closes the
+same defect class, so ARC-01's *urgency* collapses even though its *correctness* stands.
 
 ---
 
