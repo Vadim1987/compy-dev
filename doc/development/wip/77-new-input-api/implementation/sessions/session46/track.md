@@ -381,3 +381,40 @@ Applied rule 3 mechanically (docs touched since convention commit `8d665fe4`,
 Kept the 44/53 survey figure in the doc explicitly labelled as describing the
 CORPUS not a defect — so a future session does not re-derive it and re-open
 a question the owner has closed.
+
+## 2026-08-26 — REMARK triage (owner: "I was told nothing remains")
+
+**Owner is right to push back, and the explanation is specific — not an
+excuse.** The remarks were NOT missed by TF2: all are in the 187
+(`S27-remark-inventory.md` doc/ section = **R080–R109 + R166**), and several
+carry triage verdicts already (R080: "S1, recommend declining for this
+release"). TF2 handled the CONTENT.
+
+**What failed: the removal pass, then the check.** Most doc/ blocks were
+removed; 14 were not; nothing caught it because **the gate greps src/ +
+tests/ only**. P11 reported the gate clean and was CORRECT — doc/ was never
+in scope. So "nothing remains" was true of the GATE and false of the CORPUS.
+The scope was the defect, not the report.
+
+**Count correction: 14, not 10** (12 in decisions/input.md + 2 in tests.md).
+My earlier figure came from a truncated `head`.
+
+**Verdict: NONE is stale.** Grep-verified that every target still exists in
+the shipping text — "widget outputs" ×2, "student" ×2, "de-facto SDL" ×2,
+"checked at the end" ×1, "bypassed if not shown" ×1.
+
+Split: 1 already-ruled design question (R080) · 11 live editorial · 2
+rule-shaped (one owner principle stated twice: strip historical
+self-argument — overlaps the parent plan's collapsed-decisions row, so treat
+together or the file gets swept twice by two rules disagreeing at the edges).
+
+**Highest value = `:153`** — a shipping decisions ledger states the widget
+hidden-check TWO INCOMPATIBLE WAYS. Not a wording preference; the doc
+contradicts itself on load-bearing behaviour.
+
+**False alarm I nearly raised, checked instead:** decisions/input.md has 16
+`keys_pressed` mentions — same retired name that was the PR description's
+blocker. But Decisions 13/20/29 correctly carry `SUPERSEDED by Decision 30`
+in their headings. **The ledger is working**; those are legitimate historical
+record. Wrote an explicit caution into the triage so the "strip history"
+remarks (:429/:749) do not delete the supersession trail.

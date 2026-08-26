@@ -68,14 +68,18 @@ why this is not a FIX row.
 
 ### FIX-02-01 — the owner's own review remarks would ship to stakeholders
 
-**Severity: major, and the most consequential finding here. Verified: 10 sites.**
+**Severity: major, and the most consequential finding here. Verified: 14 sites** — the 10 first
+reported came from a truncated grep. **Triaged in full: [`FIX-02-01-remark-triage.md`](FIX-02-01-remark-triage.md).**
 
 `> REMARK:` blocks are committed in two persistent docs that **ship in slice `3a`**:
 
 | file | count |
 |---|---|
-| `doc/development/decisions/input.md` | 8 |
+| `doc/development/decisions/input.md` | 12 |
 | `doc/development/tests.md` | 2 |
+
+**They were inventoried by TF2** (R080–R109, R166) and several were triaged. What failed was the
+removal pass, and then the absence of any check over `doc/`. None of the 14 is stale.
 
 These are not editorial nits. Several are substantive challenges in the owner's own voice — one
 argues Decision 5 should be discarded outright (*"I see no reason to treat widget separately — and
