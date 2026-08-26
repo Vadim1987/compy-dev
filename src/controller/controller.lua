@@ -338,12 +338,14 @@ end
 
 --- Teardown of the widget's own output/callback state on
 --- project stop (Decision 11): re-seed the callbacks to their
---- stay-open defaults (AC10 — not a wipe-to-nil) and clear the
---- evaluator's highlighter.
+--- stay-open defaults (AC10 — not a wipe-to-nil), drop any
+--- unspent hidden-configure draft, and clear the evaluator's
+--- highlighter.
 local function reset_widget_outputs()
   local ui = love.state.user_input_controller
   if not ui then return end
   ui:reset_callbacks()
+  ui:clear_pending()
   if ui.model and ui.model.evaluator then
     ui.model.evaluator.highlighter = nil
   end

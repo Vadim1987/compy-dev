@@ -196,6 +196,27 @@ describe('input surface: inbound events — route lifetime #input',
         assert.is_true(F.is_widget_visible())
         assert.same({ 'two' }, F.widget:get_text())
       end)
+
+      -- doc/development/decisions/input.md, Decision 11: a
+      -- configure() while HIDDEN has no session to apply to, so
+      -- it stashes prompt/text/cursor for the next show()
+      -- (doc/development/internals/user_input.md,
+      -- "configure(config)"). The compy.input closure that held
+      -- that store is built ONCE for the application, not per
+      -- run, so teardown has to drop it -- otherwise the next
+      -- project's bare show() opens on the previous draft.
+      it('discards a draft stashed by a hidden configure',
+        function()
+          local first = F.activate_project()
+          first.configure({ text = 'secret', prompt = 'A> ' })
+          F.cc:stop_project_run()
+
+          local second = F.activate_project()
+          second.show()
+
+          assert.is_true(F.widget:is_empty())
+          assert.not_equal('A> ', F.widget.model:get_label())
+        end)
     end)
 
     -- doc/development/decisions/input.md, Decision 11 (the

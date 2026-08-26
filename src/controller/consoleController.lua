@@ -797,7 +797,11 @@ local get_compy_input = function()
     shortcuts = shortcut_tables,
     hooks = { },
     callbacks = widget.callbacks,
-    pending = { },
+    -- Like callbacks, the widget's OWN table: this closure runs
+    -- ONCE for the application, so a store it owned outright
+    -- would outlive every project. Teardown wipes it there
+    -- (controller.lua, reset_widget_outputs).
+    pending = widget.pending,
   }
   -- get_active resolves the widget's OWN shown flag (is_shown),
   -- never love.state directly.

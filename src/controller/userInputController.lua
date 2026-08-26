@@ -39,6 +39,14 @@ local new = function(model, disable_selection,
     -- compy.input.callbacks, the same table (owner ruling
     -- 2026-07-20); console and editor set their own directly.
     callbacks = default_callbacks(),
+    -- The hidden-configure draft (doc/development/internals/
+    -- user_input.md, "configure(config)"), held HERE and not in
+    -- the compy.input closure: that closure is built once for
+    -- the application, and a draft has to die with the run that
+    -- wrote it. Same arrangement as `callbacks` above — the
+    -- surface holds this exact table, so teardown wipes it in
+    -- place and never reassigns.
+    pending = { },
   }
 end
 
@@ -471,6 +479,16 @@ function UserInputController:reset_callbacks()
   local c = self.callbacks
   for k in pairs(c) do c[k] = nil end
   for k, v in pairs(default_callbacks()) do c[k] = v end
+end
+
+--- Teardown of the hidden-configure draft on project stop
+--- (doc/development/decisions/input.md, Decision 11): an
+--- unspent draft belongs to the run that wrote it, so it is
+--- dropped rather than carried into the next project's show().
+--- Wiped in place — compy.input's surface holds this table.
+function UserInputController:clear_pending()
+  local p = self.pending
+  for k in pairs(p) do p[k] = nil end
 end
 
 ----------------

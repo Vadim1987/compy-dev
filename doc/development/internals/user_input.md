@@ -784,7 +784,11 @@ always safe and never warns (it is not
 a refusal): every provided field — including `prompt`, `text`, and
 `cursor` — is retained and applied on the very next `show()`. That
 application is one-shot: a *later* bare `show()` (no config) does
-not keep re-injecting a stale hidden-configured draft. The
+not keep re-injecting a stale hidden-configured draft. It is also
+**run-scoped**: a draft never spent before the project stops is
+dropped at teardown with everything else the project installed
+(`decisions/input.md`, Decision 11), so it cannot open in the next
+project's widget. The
 widget-output callbacks are the one exception — like a value passed
 directly to `show()`, they stay sticky across every future
 show/hide cycle until overwritten, matching `show()`'s own existing

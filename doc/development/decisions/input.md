@@ -460,7 +460,8 @@ shown widget, otherwise it has no effect. A future fallback would need to be an 
 participant with its own contract; it must not return by omission.
 
 **Consequence — a teardown invariant.** No callback, combo entry, or widget configuration
-survives the project that installed it. Combined with the connection rule, stale configuration can
+survives the project that installed it — including an unspent hidden-`configure` draft, which is
+widget configuration that has not been applied yet rather than an exception to the rule. Combined with the connection rule, stale configuration can
 never act outside its creator's window: a disconnected route's participants receive nothing, and
 a widget whose owning route is inactive goes unhonoured. `inspect` mode is the model case of the
 latter (Decision 12).
