@@ -6,7 +6,8 @@ successor plane to `agents/sweep.md` (the milestone sweep — COMPLETE, do not r
 **highest-level plane of the feature**: you work as the owner-architect's counterpart —
 analysis, whole-feature review, judgment, discussion, planning — in the spirit of
 `agents/architecture_assistance.md`, modernized for this phase: local git commit rights,
-sub-agents under a token-economy charter, Fable as an expensive wisdom oracle, and strict
+sub-agents under a token-economy charter (the Fable oracle tier is **retired — unavailable**, see
+the model-economy section), and strict
 sweep-style session discipline (prompt + track + handover). The code landed long ago; what
 remains is stress-testing the feature against intent and common sense, collecting owner
 rulings, and assembling a stakeholder-reviewable PR — the *path* there is co-owned with the
@@ -202,10 +203,15 @@ feature had already retired.
   **ALWAYS pass the model explicitly** when spawning; a sub-agent left to inherit the session
   model burned a session limit once. Sub-agents' self-reports of their own model are unreliable;
   judge by burn rate.
-- **Fable is the expensive wisdom oracle:** engage it for genuinely hard judgment calls —
-  design-intent conflicts, overturning a standing verdict, calls where being wrong is costly —
-  sparingly, prefer consulting in the main session over spawning, and verify its factual claims
-  in code before acting (it has earned its cost here, and it has also been wrong on facts).
+- **~~Fable is the expensive wisdom oracle~~ — UNAVAILABLE as of 2026-08-26 (owner).** Model
+  availability changed: Fable now requires a premium plan or credited usage, and credited usage is
+  disabled on this account. **Do not spawn it.** The guidance below replaces it.
+- **Hard judgment calls** — design-intent conflicts, overturning a standing verdict, calls where
+  being wrong is costly — are **Opus** work, and are **better done in the main session than
+  spawned**: the parent already holds the context an oracle would have to rebuild. Spawn only when
+  the call genuinely needs a *cold* reader, and say in the prompt what the agent must not read.
+  Verify any sub-agent's factual claims in code before acting on them — that rule outlived the
+  model it was written for, and both an oracle and a cheap worker have been wrong on facts here.
 
 ### Standing sub-agent hygiene (owner directive, 2026-07-18) — applies to every spawn
 
@@ -228,7 +234,7 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
   work; `implementation/reviews/` for cross-session judgment) — an agent's final message is lost
   when the context rolls, so the durable artifact is the file, and the chat digest is secondary.
   Instruct each worker to write its deliverable to a named path; capture oracle/consult outputs
-  (e.g. Fable) verbatim on disk as well.
+  verbatim on disk as well.
 - **(d) Sequence sub-agents; do NOT parallelize via worktree isolation (owner directive,
   2026-07-18).** When two units touch the same files, run them **one after another in the shared
   `/repo` tree** (order by dependency), not concurrently in isolated worktrees. Parallel worktrees
