@@ -105,6 +105,32 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 >   **F → U → G**. Do not fold the P-table into this document.
 > - **Baseline is now 955/0/0/3**, not the 854/0/0/4 recorded below.
 
+> **STATUS BLOCK II — added 2026-08-26 (session46), owner-ruled. Supersedes the bullets above
+> wherever they disagree; the 2026-08-09 block is kept unedited as the record of where the work
+> stood then.**
+>
+> - **The spinoff sprint is CLOSED, and TF2 closes with it.** All 187 remarks are discharged;
+>   P11 shut the marker gate in session45; P25 and P26 opened and are both empty. The ⛔ block at
+>   the head of [`reviews/S27-triage-and-plan.md`](reviews/S27-triage-and-plan.md) is the close,
+>   and that document is now terminal — no new rows, no reopening.
+> - **So "we are still clearing TF2" above is no longer true.** What remained was **acceptance**,
+>   not triage: the human smoke pass and the owner's readability review of the PR candidate. Both
+>   gate PRs, which is this plan's altitude, so §0's promotion rule sent them up.
+> - **They are now Phase ACC**, inserted below and running **first**. Findings from it open a
+>   **new focused sprint**, never a reopened TF2.
+> - **Step ids were deliberately NOT renamed.** 2,563 P-id citations across 221 files, 786 of
+>   them in frozen session dirs; a crosswalk in the sprint's close covers a reader who lands on
+>   one. The reasoning is recorded there.
+> - **Agreed ordering (owner, 2026-08-26):** **ACC → recon → U → L → G**, with the **B→C→D
+>   collapse ruling as step zero of G** — ruled where the evidence is complete and where its
+>   output, the justification table, is needed anyway. Phase F's place in that line is open.
+> - **Upstream divergence is now measured** — 86 commits behind the edge, 22 behind aldum
+>   upstream, one shared merge-base at 2026-06-05. The 86 is a **floor**: it is what a 23-day-old
+>   local view can see, and the reported edge-side editor overhaul is not in it. See
+>   [`../TAGS.md`](../TAGS.md) and
+>   [`notes/S46-repo-head-inventory.md`](notes/S46-repo-head-inventory.md).
+> - **Baseline is 968/0/0/10**, not the 955/0/0/3 recorded above.
+
 ## Phases
 
 Ordering is load-bearing: A3 (test fidelity) precedes any ruling that cites green tests
@@ -324,6 +350,47 @@ Delta check of the post-execution tree against stakeholder intent AND the
 meta-requirements (clarity, stability, robustness, minimalism). Anything failed →
 back to Phase D as a named question, not silently patched.
 Output: `validation/reviews/final-revalidation.md`.
+
+### Phase ACC — Acceptance (INSERTED 2026-08-26, session46, by owner ruling; runs FIRST)
+
+**The spinoff sprint is closed and this is where its last two items landed.** TF2 closed with it
+(`reviews/S27-triage-and-plan.md`, the ⛔ block at its head). Neither item was ever remark-shaped:
+both gate PRs, which is release altitude, and §0's promotion rule sends release-shaped work up.
+
+Named `ACC` rather than given a sequence letter for the reason Phase U was named `U`: **B–G are
+load-bearing across frozen prompts and tracks.** DI, TF, R, U and L carry names for the same
+reason.
+
+**Two items, and they are the whole phase:**
+
+1. **The human smoke pass.** Checklists in `doc/development/smoke_checklists.md`. Order by
+   upstream sensitivity — **`balloons` first**, being 5 ahead / 0 behind `origin/main`, the only
+   repo with no divergence to reconcile and therefore the one result recon cannot invalidate.
+   Then `keyboard` and `maze`, then any platform-side rows an edge-side editor overhaul could
+   disturb. `balloons` and `sapper` still **owe a list**; the document's header says so.
+   **`maze` runs against `newinput-edge`** — `da9d1c2`, the maze half of the `Shift+Esc` fix
+   rows B8–B10 exercise, is on that branch only.
+2. **The owner's readability review of the PR candidate**, taken **as slices**, for the
+   separation of review surface. The assembly guide is re-runnable and git-only, so an
+   intermediate cut costs machine time, not owner time; only the **final** cut must stay last.
+
+**Why ACC runs before U, not after (owner, 2026-08-26).** A smoke pass on the pre-merge tree is
+not merely reassurance — it is the **control** for the post-merge one. Merging an advanced
+upstream, including a reported edge-side editor overhaul, into a branch whose behaviour no human
+has verified leaves every later device failure with two candidate causes and no way to separate
+them. Re-running a pass costs bounded owner time; bisecting a confounded failure does not.
+
+**Recon does not subsume the pass.** They are orthogonal: recon measures upstream movement, the
+pass tests device behaviour no suite can reach. Recon can make the pass premature, never
+unnecessary.
+
+**Exit, and what a failure does.** ACC exits when every owed checklist has been run by a human
+and the owner has read the slices. **A finding does not reopen TF2** — it opens a **new focused
+sprint** against that defect, with its own id space. Tag the states a clean pass ran against
+(`TAGS.md`, round 2), so "green" names a commit rather than a moment.
+
+**Phase F's placement relative to ACC is open** — the owner did not rule on it, and the B→C→D
+collapse may absorb F. Left for the gate rather than settled here.
 
 ### Phase U — Upstream reconciliation and downstream compatibility (INSERTED 2026-08-09,
 session32, by owner ruling; sits between F and G)

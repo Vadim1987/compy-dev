@@ -12,6 +12,68 @@ Every id is assigned to exactly one workstream (coverage table, Appendix A).
 
 ---
 
+## ⛔ SPRINT CLOSED — 2026-08-26, owner ruling (session46)
+
+**This document is now a historical record. Do not add rows to it; do not reopen it.**
+
+All 187 remarks are discharged. P11 — the last and largest row — closed in session45, and its
+release condition holds: `grep -rnE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/` returns
+nothing. P25 and P26 were opened during that session and are **both empty**: every item escalated
+to them came back answerable once someone checked it.
+
+**What remained was never remark-shaped.** Two items were still open — the human smoke pass and
+the owner's readability review of the PR candidate. Both are **acceptance** work: they gate PRs
+(§16.3) and they are Phase G's own concern. Carrying them here is what made this sprint feel
+endless — not unfinished triage, but residue at the wrong altitude.
+
+**This close is §0's own rule firing, not an override of it.** §0 states that *"anything that
+turns out to be release-shaped rather than remark-shaped is **promoted up**, not carried here."*
+Acceptance is release-shaped. It is therefore promoted to the release plan as **Phase ACC**
+([`../plan.md`](../plan.md)), and TF2 closes with this sprint.
+
+**If acceptance reveals something, it does not come back here.** A finding opens a **new focused
+sprint** against the defect it found, with its own id space. This document stays terminal.
+
+### Crosswalk — where a P-id's live descendant went
+
+A reader landing on a `P`-id from an old prompt, track or commit message needs a forward
+pointer. The ids themselves are **not renamed** — see the note below — so this table is the
+bridge.
+
+| sprint concept | live descendant |
+|---|---|
+| P11 marker gate | closed; the gate command lives in `agents/validation.md`, "Comment gate" |
+| the human smoke pass | **Phase ACC**, `../plan.md` — checklists in `doc/development/smoke_checklists.md` |
+| PR readability / slice review | **Phase ACC**, then Phase G |
+| P12 → upstream reconciliation | already promoted, **Phase U** |
+| P19 sapper disposition | closed [S41]; the standing record is `technical_debt/input.md` |
+| P25 / P26 | opened and closed empty; nothing carried |
+| everything else | discharged in place — this document's own rows are the record |
+
+### Why the ids were NOT renamed (session46, evidence-based)
+
+The owner raised renaming the step ids and correctly anticipated arguments against. They are
+decisive, and mostly the plan's own:
+
+- **2,563 P-id citations across 221 files**, of which **786 sit in `implementation/sessions/`** —
+  which `agents/validation.md` declares **frozen records**. Renaming means either editing frozen
+  history or leaving 786 citations dangling.
+- **The principle is already ratified here.** Phase U was named `U` rather than resequenced
+  precisely because *"B–G labels are load-bearing across frozen prompts and tracks — the same
+  reason DI, TF and R carry names."* The same logic governs P-ids.
+- **The precedent is recent and it hurt.** Session45 renamed a set of headings and left 31
+  dangling citations, two of them naming a design model the feature had already retired. This
+  would be the same failure at roughly eighty times the scale.
+- **A sweep would collide.** `src/examples/maze/levels.lua` uses `P10`–`P19` as **puzzle ids**,
+  unrelated to this sprint and in another author's file. Any regex rename hits them.
+
+**The confusion the rename was meant to fix is fixed by this close instead.** The cost was never
+the id space — it was having *two live timelines* to switch between. Closing TF2 leaves exactly
+one, and P-ids become historical rather than ambiguous. Nothing has to be renamed to stop
+switching.
+
+---
+
 ## 0. What this document is, and what it is NOT (added 2026-08-09, session32, owner ruling)
 
 **This is a spinoff sprint, not the release plan.** The release plan is

@@ -61,3 +61,39 @@ Findings:
   behind `origin/dsent/dev`).
 - Smoke checklist anchor table: 3 of 4 rows current; platform row stale by
   3 commits (its own refresh instruction, working as designed).
+
+## 2026-08-26 — tags laid, TF2 sprint closed
+
+**Tags (owner-directed):** 16 annotated local tags, 4 repos, scheme
+`wip77/<date>/<kind>`. head + base + mergebase everywhere, plus keyboard
+`premerge` and maze `alt-newinput`. Registry = `wip/77-new-input-api/TAGS.md`
+(single doc, as asked). Never pushed.
+
+- Laying them produced the missing number: platform is **86 behind the
+  edge / 838 ahead**, **22 behind aldum upstream**, one shared merge-base
+  `01ac1429` (2026-06-05, ~3 months). 838 is inflated by our own wip
+  commits. **86 is a FLOOR** — what a 23-day-old view can see.
+- base == mergebase in all three example repos = zero divergence. Kept the
+  redundant tag for uniform lookup; the equality is itself the finding.
+
+**Sprint close (owner directive, "right now"):** S27 gets a ⛔ terminal
+block; TF2 closes with it. Argued as §0's OWN promotion rule firing
+("release-shaped work is promoted up, not carried here"), not an override.
+Acceptance → new **Phase ACC** in plan.md, running FIRST, before U.
+Added STATUS BLOCK II rather than editing the deliberately-stale 2026-08-09
+block — that one kept unedited as record.
+
+**Rename: advised AGAINST, evidence-based; owner had anticipated it.**
+- 2,563 P-id citations / 221 files; **786 in frozen session dirs**.
+- Plan already ratified the principle when naming Phase U (B–G
+  load-bearing across frozen prompts).
+- S45 precedent: heading rename → 31 dangling citations. This is ~80x.
+- **Collision:** `src/examples/maze/levels.lua` uses P10–P19 as PUZZLE ids,
+  another author's file. Any regex sweep hits them.
+- Real fix for the owner's actual pain (switching timelines): the close
+  itself leaves ONE live timeline. Added a crosswalk table instead.
+
+**Leak found, not acted on:** 3 bare P-id citations escaped into the
+persistent corpus (`technical_debt/input.md` x2, `agents/rules/commenting.md`
+x1). They go dangling if wip/77 is deleted. Zero wip/ *paths* leaked, so
+the comment-reference rule is holding. Flag for Phase L / wip-deletion.
