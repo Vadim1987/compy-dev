@@ -1,4 +1,5 @@
 require('model.robot.transport')
+require('model.serial.init')
 require('model.serial.backend_android')
 
 --- Device check for the robot transport. Not part of the
@@ -20,14 +21,20 @@ function robot_probe(arg)
   end
   if not RobotPort then
     local serial = Serial.new(AndroidBackend.new())
-    local t = RobotTransport.new(serial, love.timer.getTime)
-    t:start('console')
-    serial:onConnect(function()
+    local cs = serial:table_for('console')
+    local t = RobotTransport.new(cs.send, love.timer.getTime)
+    cs.onConnect = function()
       print('robot: connected, associating')
-    end, 'console')
-    serial:onDisconnect(function()
+      t:connected()
+    end
+    cs.onDisconnect = function()
       print('robot: disconnected')
-    end, 'console')
+      t:disconnected()
+    end
+    cs.onLine = function(l)
+      t:take(l)
+    end
+    t.serial = serial
     RobotPort = t
     print('robot: started, plug the bridge in')
   end

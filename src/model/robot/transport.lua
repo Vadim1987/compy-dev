@@ -1,28 +1,29 @@
-require('model.serial.init')
-
---- Robot transport over the serial API: the first consumer.
---- Builds the envelope, matches ACK identifiers, retries on
---- a timeout, associates the bridge to the pair's radio
---- group, and reports outcomes. One command at a time: the
---- link is stop-and-wait by design.
+--- Robot transport: the protocol machine over a line link.
+--- Builds the COMMAND id envelope, matches ACK identifiers,
+--- retries the identical line on a timeout, associates the
+--- bridge to the pair's radio group, and reports outcomes.
+--- One command at a time: the link is stop-and-wait.
 ---
---- The clock is injected: seconds, monotonic. Identifiers
---- grow across reconnects and are never reused, which is
---- safe under any suppression policy on the robot.
+--- The machine touches no environment tables: the consumer
+--- wires compy.serial fields to connected(), disconnected()
+--- and take(), and hands in the send function. The clock is
+--- injected: seconds, monotonic. Identifiers grow across
+--- reconnects and are never reused, which is safe under any
+--- suppression policy on the robot.
 
 --- @class RobotTransport
 RobotTransport = {}
 RobotTransport.__index = RobotTransport
 
---- @param serial Serial
+--- @param send function send(line) -> ok, err
 --- @param clock function seconds
 --- @param group integer? radio group, default 0
 --- @param retry_s number? retry timeout, default 0.030
 --- @param tries integer? attempts, default 8
 --- @return RobotTransport
-function RobotTransport.new(serial, clock, group, retry_s, tries)
+function RobotTransport.new(send, clock, group, retry_s, tries)
   local self = setmetatable({}, RobotTransport)
-  self.serial = serial
+  self.send = send
   self.clock = clock
   self.group = group or 0
   self.retry_s = retry_s or 0.030
@@ -39,37 +40,30 @@ function RobotTransport.new(serial, clock, group, retry_s, tries)
   return self
 end
 
---- @param env string
-function RobotTransport:start(env)
-  self.serial:onConnect(function()
-    self:associate()
-  end, env)
-  self.serial:onDisconnect(function()
-    local done = self.done
-    self.done = nil
-    self.mode = 'idle'
-    self.line = nil
-    if done then
-      done(nil, 'disconnected')
-    end
-  end, env)
-  self.serial:onLine(function(l)
-    self:take(l)
-  end, env)
-end
-
 --- Send the current line and arm the retry clock
 function RobotTransport:fire()
-  self.serial:send(self.line .. '\r')
+  self.send(self.line .. '\r')
   self.tries = self.tries + 1
   self.deadline = self.clock() + self.retry_s
 end
 
-function RobotTransport:associate()
+--- The link is up; begin the association
+function RobotTransport:connected()
   self.mode = 'associating'
   self.line = '!g ' .. self.group
   self.tries = 0
   self:fire()
+end
+
+--- The link is gone; the outstanding command fails
+function RobotTransport:disconnected()
+  local done = self.done
+  self.done = nil
+  self.mode = 'idle'
+  self.line = nil
+  if done then
+    done(nil, 'disconnected')
+  end
 end
 
 --- @param payload string
@@ -91,6 +85,7 @@ function RobotTransport:command(payload, done)
   return true
 end
 
+--- A line from the link
 --- @param l string
 function RobotTransport:take(l)
   if self.mode == 'associating' then
