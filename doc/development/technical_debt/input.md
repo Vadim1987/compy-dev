@@ -540,8 +540,8 @@ question, not resolved here.
 ### A widget opened from a key can receive that key's own echo
 
 - **Status:** answered by a **documented project idiom**, not by a framework
-  mechanism (owner, 2026-08-03) — `../../input_api.md`, *"Opening the input widget
-  from a key"*, pinned by `tests/input/input_widget_control_spec.lua`, group
+  mechanism (owner, 2026-08-03) — `../../input_api.md`, *"Worked example: a plain key
+  that opens the input widget"*, pinned by `tests/input/input_widget_control_spec.lua`, group
   *"the documented echo guard"*, and used by `src/examples/turtle`. A
   framework fix was implemented and then reverted (2026-08-01) because its
   design had never been ruled. What remains open is whether the framework
@@ -1076,7 +1076,8 @@ Not commissioned for closure; each may never need action.
 
 - **Where:** the shortcuts mechanism generally (`src/controller/projectInputController.lua`,
   `find_shortcut`; `src/controller/controller.lua`, `combo_string`), and
-  `doc/input_api.md`, "Choosing the mechanism".
+  `doc/input_api.md`, "Choosing the mechanism: transitions,
+  state, and what not to build".
 - **The rule this rests on, stated because the API does not state it (owner, 2026-08-10):**
   **a combo can only reliably serve an atomic transition — a one-off shot, stateless in
   itself. It must not be used to toggle a long-lived state that depends on the combo still

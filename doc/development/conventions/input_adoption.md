@@ -19,7 +19,8 @@ are evaluated**, so each rule is marked:
 - **[project surface]** — depends on `compy.input`, so framework-side code must translate the
   intent rather than copy the instruction.
 
-The project-facing version of the same material is `doc/input_api.md`, "Choosing the mechanism".
+The project-facing version of the same material is `doc/input_api.md`,
+"Choosing the mechanism: transitions, state, and what not to build".
 
 ---
 

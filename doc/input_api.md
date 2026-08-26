@@ -8,13 +8,23 @@ reviewed: none
 
 # Compy Input API
 
-> REMARK: rewrite intro completely, be dev-friendly. Vague statements do not help. Just tell its an API for configuring and interacting with text solicitation subsystem, and for reacting to user input events (all of them). Tell that even when widget is not shown or used, still it can be used to manage hotkeys, combos etc.
+`compy.input` is what a project running inside Compy uses to **ask the user
+for text** and to **react to input events** — every event the device produces,
+not only the ones the text field cares about.
 
-This guide is for projects running inside Compy. `compy.input` is the
-project-facing input surface: it opens one shared text input widget and delivers
-submissions through callbacks. There is no polling API or compatibility shim.
+It is three surfaces, and the rest of this guide is those three in order:
 
-> REMARK: would it help readability if we conceptually split API into three surfaces (and say so): a) dispatching/intercepting inbound events via shortcuts and hooks b) altering the soliciting widget state (hide/show/cursor/reconfigure) c) handling events generated inside widget via callbacks (submit, cancel, limit...)
+1. **The input widget** — put a text field on screen and change it while it is
+   there: `show`, `hide`, `configure`, `set_text`, `set_cursor`, `clear`.
+2. **Callbacks** — what the widget tells you back: a submission, a cancel, a
+   cursor hitting a boundary, a validator's verdict.
+3. **Inbound events** — shortcuts and hooks over the keyboard, the mouse and
+   the touchscreen.
+
+The third stands on its own: **a project that never opens the widget can still
+use `compy.input` for hotkeys, combos and click handling.** Nothing here is
+polled, and there is no compatibility shim — a project reads events by
+registering for them.
 
 ## Quick start
 
@@ -34,7 +44,11 @@ compy.input.show{
 The input widget stays open after a successful submit. `after_submit` clears the
 next draft; it is assigned on `callbacks`, not passed to `show`.
 
-## `show(config)`
+## The input widget — opening it and changing it
+
+Everything that puts the widget on screen and alters it while it is there.
+
+### `show(config)`
 
 `compy.input.show(config)` activates the input widget. All keys are optional.
 
@@ -67,7 +81,48 @@ compy.input.callbacks.after_submit = function()
 end
 ```
 
-## Submit lifecycle
+### Live changes
+
+`compy.input.configure(config)` updates an active input widget. It accepts the
+same documented configuration keys except `force`, and raises on anything
+else by the same rule as `show`; active `text` and `cursor`
+are not changed by `configure`, so use `set_text`, `set_cursor`, or `clear`.
+When hidden, `configure` retains `prompt`, `text`, and `cursor` for one later
+`show`.
+
+`compy.input.is_shown()` tells you whether the input widget is up. Use it when a
+project must not act twice — opening the prompt from a key that is also
+typed *into* the prompt, for example:
+
+```lua
+compy.input.hooks.keyreleased = function(key)
+  if key == 'i' and not compy.input.is_shown() then
+    compy.input.show{ prompt = 'command' }
+    return true -- consumed; while it is open, 'i' is the widget's
+  end
+end
+```
+
+That guard stops *later* presses of `i` from re-opening the prompt. It does
+not stop the `i` that opened it from being typed into it — see "Opening the
+input widget from a key" below.
+
+`compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
+empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
+it. Mutating calls warn and do nothing while the input widget is hidden.
+
+`col` is a **caret position between characters**, not a character index: it
+ranges over `1 .. #line + 1`, where `1` is before the first character and
+`#line + 1` is at the end of the line. So on `"lemon"`, `set_cursor(1, 3)`
+puts the caret between `e` and `m` — typing inserts there (`"leXmon"`) and
+Backspace deletes the character before it (`"lmon"`). Out-of-range values
+clamp to that range rather than failing.
+
+## What the widget tells you — callbacks
+
+Everything the widget calls back about: a submission, a cancel, a boundary, a validation.
+
+### Submit lifecycle
 
 Enter submits; Shift+Enter inserts a newline. On a non-empty submission the
 order is:
@@ -96,7 +151,7 @@ Escape first runs `before_cancel()`. A truthy return vetoes the
 cancel. Otherwise it clears the field and calls `after_cancel()`; it also
 stays shown unless that callback hides it.
 
-## Validation and highlighting
+### Validation and highlighting
 
 Projects can use the supplied helpers or provide functions with the same
 shapes. The helpers are globals in the project environment:
@@ -140,44 +195,20 @@ compy.input.show{
 }
 ```
 
-## Live changes
+### Callback assignments
 
-`compy.input.configure(config)` updates an active input widget. It accepts the
-same documented configuration keys except `force`, and raises on anything
-else by the same rule as `show`; active `text` and `cursor`
-are not changed by `configure`, so use `set_text`, `set_cursor`, or `clear`.
-When hidden, `configure` retains `prompt`, `text`, and `cursor` for one later
-`show`.
+`compy.input.callbacks` is writable. These entries may also be supplied in
+`show` or `configure` and persist until replaced: `on_text_entered`,
+`on_limit_reached`, `validator`, and `highlighter`.
 
-`compy.input.is_shown()` tells you whether the input widget is up. Use it when a
-project must not act twice — opening the prompt from a key that is also
-typed *into* the prompt, for example:
+The lifecycle entries are direct assignments only: `before_submit`,
+`after_submit`, `before_cancel`, and `after_cancel`.
 
-```lua
-compy.input.hooks.keyreleased = function(key)
-  if key == 'i' and not compy.input.is_shown() then
-    compy.input.show{ prompt = 'command' }
-    return true -- consumed; while it is open, 'i' is the widget's
-  end
-end
-```
+## Inbound events — shortcuts and hooks
 
-That guard stops *later* presses of `i` from re-opening the prompt. It does
-not stop the `i` that opened it from being typed into it — see "Opening the
-input widget from a key" below.
+Everything that reaches your project from the keyboard, the mouse and the touchscreen — with or without a widget on screen.
 
-`compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
-empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
-it. Mutating calls warn and do nothing while the input widget is hidden.
-
-`col` is a **caret position between characters**, not a character index: it
-ranges over `1 .. #line + 1`, where `1` is before the first character and
-`#line + 1` is at the end of the line. So on `"lemon"`, `set_cursor(1, 3)`
-puts the caret between `e` and `m` — typing inserts there (`"leXmon"`) and
-Backspace deletes the character before it (`"lmon"`). Out-of-range values
-clamp to that range rather than failing.
-
-## Event hooks and shortcuts
+### Event hooks and shortcuts
 
 `compy.input.shortcuts.keypressed[combo]` registers a combo-specific
 function. `shortcuts.keyreleased` and `shortcuts.textinput` work the same
@@ -265,7 +296,7 @@ do when a binding and a held key have to work together.
 fallback function per event. At activation, an existing project `love.*`
 handler seeds the matching hook when no explicit hook was supplied.
 
-## Combos the framework keeps
+### Combos the framework keeps
 
 A few combinations belong to the platform. They are answered before your
 project's route exists, so **a project cannot take one by naming it** — but the
@@ -315,7 +346,7 @@ Ctrl+S and Ctrl+Shift+S also do something in the **editor** — close the buffer
 and finish the edit — but that is the editor's own handling, not a reservation:
 it applies when you are editing, not while your project runs.
 
-## Pointer and click hooks
+### Pointer and click hooks
 
 Pointer events run the same chain as keyboard ones, so they are hooks like
 any other: `hooks.mousepressed`, `.mousereleased`, `.mousemoved`,
@@ -362,50 +393,7 @@ discrete trigger — `mousemoved`, `wheelmoved`, the touch events, and the
 derived clicks — take modifier classes only, so `shortcuts.mousemoved['ctrl+*']`
 is a ctrl-drag and an unmodified move goes straight to the hook.
 
-## Worked example: a plain key that opens the input widget
-
-Not a recommended shape — a **worked example of an awkward case**, and of how
-the pieces above combine to solve one. Most projects open the widget from a
-modified combo, where nothing below arises.
-
-Bind a bare character key to open a prompt and the prompt comes up with that
-character already in the field. LÖVE delivers a `keypressed` **and** a
-`textinput` for one physical key and does not promise their order, so the
-trigger's own echo arrives on the other channel, either side of the open. The
-`is_shown()` guard does not help: it is about the *next* press, not this one.
-
-Guard the trigger with a one-shot shortcut on the `textinput` channel.
-Shortcuts run before the input widget, so it swallows the echo whichever side of
-the open it lands on, and it unregisters itself so the character is typable
-as content afterwards:
-
-```lua
-local function arm_echo_guard()
-  compy.input.shortcuts.textinput['i'] = function()
-    compy.input.shortcuts.textinput['i'] = nil
-    return true -- the echo is consumed, not typed
-  end
-end
-arm_echo_guard()
-
-compy.input.callbacks.after_submit = function()
-  compy.input.hide()
-  arm_echo_guard() -- the next open needs a fresh one-shot
-end
-```
-
-**Re-arming** is registering that one-shot again, and it is needed wherever you
-close the input widget: one closed without a fresh guard takes the echo on its
-next open. Only your own `hide()` calls need this —
-Escape *clears* the field without closing, so the spent one-shot is still
-correct.
-
-Use a **bare** key as the trigger. A modified combo cannot be guarded this
-way: the two channels do not share a combo string for it — `shift+i` on
-`keypressed` against `shift+I` on `textinput` — and the upper-case form
-cannot be registered.
-
-## Held keys
+### Held keys
 
 There are three ways to find out that a key is held, and they are **not
 equal alternatives** — the further down this list you go, the more likely it
@@ -463,7 +451,7 @@ point — a project that *draws* held state has no event argument to consult.
 Handlers need nothing added to their arguments for it, and get nothing added:
 every shortcut, hook and widget call receives LÖVE's own argument list.
 
-## Choosing the mechanism: transitions, state, and what not to build
+### Choosing the mechanism: transitions, state, and what not to build
 
 The API offers three ways to reach input, and they answer different questions.
 Choosing by question rather than by taste is what keeps a project predictable.
@@ -536,14 +524,48 @@ move(fast, precise)                  -- everything below is deterministic
 It keeps the non-deterministic part visible in one place instead of scattered
 through code that is otherwise a pure function of your own state.
 
-## Callback assignments
+### Worked example: a plain key that opens the input widget
 
-`compy.input.callbacks` is writable. These entries may also be supplied in
-`show` or `configure` and persist until replaced: `on_text_entered`,
-`on_limit_reached`, `validator`, and `highlighter`.
+Not a recommended shape — a **worked example of an awkward case**, and of how
+the pieces above combine to solve one. Most projects open the widget from a
+modified combo, where nothing below arises.
 
-The lifecycle entries are direct assignments only: `before_submit`,
-`after_submit`, `before_cancel`, and `after_cancel`.
+Bind a bare character key to open a prompt and the prompt comes up with that
+character already in the field. LÖVE delivers a `keypressed` **and** a
+`textinput` for one physical key and does not promise their order, so the
+trigger's own echo arrives on the other channel, either side of the open. The
+`is_shown()` guard does not help: it is about the *next* press, not this one.
+
+Guard the trigger with a one-shot shortcut on the `textinput` channel.
+Shortcuts run before the input widget, so it swallows the echo whichever side of
+the open it lands on, and it unregisters itself so the character is typable
+as content afterwards:
+
+```lua
+local function arm_echo_guard()
+  compy.input.shortcuts.textinput['i'] = function()
+    compy.input.shortcuts.textinput['i'] = nil
+    return true -- the echo is consumed, not typed
+  end
+end
+arm_echo_guard()
+
+compy.input.callbacks.after_submit = function()
+  compy.input.hide()
+  arm_echo_guard() -- the next open needs a fresh one-shot
+end
+```
+
+**Re-arming** is registering that one-shot again, and it is needed wherever you
+close the input widget: one closed without a fresh guard takes the echo on its
+next open. Only your own `hide()` calls need this —
+Escape *clears* the field without closing, so the spent one-shot is still
+correct.
+
+Use a **bare** key as the trigger. A modified combo cannot be guarded this
+way: the two channels do not share a combo string for it — `shift+i` on
+`keypressed` against `shift+I` on `textinput` — and the upper-case form
+cannot be registered.
 
 ## Stop hook — `compy.before_exit`
 
@@ -580,7 +602,7 @@ end
   other project participant, it does not survive the run that installed it.
 - **Default:** a no-op that logs in debug mode.
 
-## Migration
+## Migration from the legacy globals
 
 The retired polling globals have no replacement compatibility layer. Move
 their work into a callback:

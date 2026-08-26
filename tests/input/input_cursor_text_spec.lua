@@ -1,9 +1,8 @@
--- > REMARK: what if we organize tests by three groups named
--- explicitly: a) interception of inbound key/mouse events b)
--- management of input widget c) reacting to input widget events
--- (limits, submission, cancellation) -- but we'll need good
--- names for describe, aligned with documentation
-
+-- The suite's own three groups, named to match the guide's
+-- three surfaces: "inbound events" for interception,
+-- "widget control" for driving the widget, "widget callbacks"
+-- for what it reports back. This file is the second.
+--
 -- Availability: introduced with the Compy input API
 -- (1.0.0-rc20260712) — covers the compy.input surface.
 

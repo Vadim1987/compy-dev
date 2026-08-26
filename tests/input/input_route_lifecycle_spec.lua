@@ -277,7 +277,7 @@ describe('input surface: inbound events — route lifetime #input',
           assert.is_nil(captured.callbacks.validator)
         end)
 
-      -- doc/input_api.md, "Stop hook — compy.before_exit":
+      -- doc/input_api.md, "Stop hook — `compy.before_exit`":
       -- the hook fires on stop paths and a raise is not one,
       -- and it is reset by whichever path ended the run so one
       -- project's hook never fires for the next. Two claims,
