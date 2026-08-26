@@ -1,13 +1,95 @@
-# DEC-01 — de-noising the decisions ledger: remove tombstones, renumber the rest
+# DEC-01 — de-noising the decisions ledger
 
-**Owner request, 2026-08-26.** Specification only; nothing executed. **Runs before the next slice
-cut**, so the ledger a reviewer reads is the clean one.
+**Owner request, 2026-08-26**, revised the same day. Specification only; nothing executed. **Runs
+before the next slice cut**, so the ledger a reviewer reads is the clean one.
 
-**Verdict: doable, and the owner's algorithm is the right one.** Its sentinel-wrapping step solves
-the problem that makes naive renumbering unsafe — renaming `26 → 13` while a real `13` still exists.
-Wrapping puts old and new ids in disjoint namespaces so no rename can collide with a not-yet-renamed
-id. What follows adds the survey, the gate that makes it safe, and three hazards the algorithm does
-not by itself address.
+> ## SUPERSEDED APPROACH — renumbering (kept below, do not execute)
+>
+> The first specification removed the tombstones and renumbered the survivors to a gapless 1–29,
+> using the owner's sentinel-wrapping algorithm. **The owner then proposed abandoning numbers
+> altogether and calling decisions by name.** That is the better answer and it is now the plan;
+> the renumbering spec is retained below because its survey, its hazards and its gate all still
+> apply to a name migration, which is the same sweep with a different target.
+
+## Recommended: names, not numbers (owner proposal, 2026-08-26)
+
+**Endorsed, and the safety argument is the decisive one — not the tidiness one.**
+
+**A missed citation fails safely under naming and dangerously under renumbering.** This is the
+whole case:
+
+| | a citation the sweep misses |
+|---|---|
+| **renumbering** | still reads `Decision 8`, which **still exists and now means something else** — silently wrong, and reads as authoritative |
+| **naming** | still reads `Decision 8` when no numbers exist — **visibly dangling**, and greppable |
+
+Renumbering makes the failure mode invisible; naming makes it loud. With **165 citations in `src/`
+and `tests/`** to sweep, that difference decides it.
+
+**It also dissolves two problems rather than solving them.** A removed decision's name is simply
+not reused — there is no gap to explain and nothing to renumber. And inserting a decision disturbs
+nothing, so the ids stop drifting **permanently**, rather than being re-flattened after every
+removal. Renumbering is a cost paid *every time*; naming is paid **once**.
+
+### Two facts that make it cheap, and one that constrains it
+
+**Every heading already carries a name.** `## Decision 8 — per-event combo tables and canonical
+combo serialisation`. The names are not invented, they are **promoted** — a lookup-and-substitute
+job, not an authoring one.
+
+**Citation sites are mostly bare, though.** In `src/` and `tests/` they read `Decision 30`,
+`(Decision 21`, `Decision 11's teardown` — the owner's *"corpus and comments already kinda
+annotate them"* holds for **headings**, not for citations. So the sweep must supply the name at
+each site; it cannot just delete the number.
+
+**The constraint — full names will not fit inline.** Measured:
+
+| | |
+|---|---|
+| heading names | min 25, **median 52**, max 98 chars |
+| `src`/`tests` lines already carrying a citation | **median 59**, max 66 — against a **64-char hard limit** |
+
+Substituting a 52-character name into a 59-character line is not close. **So citation uses a short
+kebab slug, not the full name**, and the full name stays as the heading's prose.
+
+### The one decision the owner owes
+
+**How the slug is declared.** Recommended:
+
+```markdown
+## combo-tables — per-event combo tables and canonical combo serialisation
+```
+
+— slug first, prose after. Citations then read `(see combo-tables)`, about 20 characters, which
+fits comfortably and **says what it is about at the point of use**, which `Decision 8` never did.
+That is the real win beyond safety: a reader no longer has to leave the code to learn what the
+citation means.
+
+The alternative — keep the prose heading and declare the slug on its own line — is also workable
+and keeps headings reading as sentences, at the cost of one more line per entry and a slug that is
+not visible in a table of contents.
+
+### What carries over unchanged from the renumbering spec
+
+Everything below still applies, because a name migration is the same sweep aimed differently:
+
+- **The gate at step 2.** Wrap first, prove no bare `Decisions?` survives anywhere in scope, and
+  only then substitute. Completeness is established *before* anything is rewritten.
+- **The 3 line-broken mentions**, joined as their own commit first.
+- **Case and plural variants** — `Decisions 25 and 27`, lower-case `decision 5`.
+- **`wip/` is out of scope** — frozen history, plus its own dead `D-1…D-10` namespace.
+- **The crosswalk is a deliverable**, appended to the ledger: old number → name. It is needed
+  *more* under naming, since commit messages and `wip/` cite numbers that will exist nowhere.
+- **The four tombstones still go**, and Decision 20's body is still the last full description of
+  `compy.input.keys_pressed` — decide per entry whether that history moves into a successor.
+
+**One thing gets simpler:** step 5 no longer renames one id at a time to avoid collisions. Names do
+not collide with numbers, so the substitution can be done in one pass per file once the wrap is
+proven complete.
+
+---
+
+# Retained: the superseded renumbering specification
 
 ## The survey
 

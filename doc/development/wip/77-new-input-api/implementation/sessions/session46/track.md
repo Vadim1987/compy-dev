@@ -505,3 +505,45 @@ of WHY it went. Decide per entry in the inventory, not during the sweep.
 mandatory, renumbering is optional. Gaps are self-evidently gaps; renumbering
 buys a clean sequence at the cost of 165 code citations where a miss is
 silent. **If the job is cut short, cut the renumbering and keep the removal.**
+
+## 2026-08-26 — owner: drop decision NUMBERS, use names. Endorsed.
+
+**Endorsed, and on a stronger ground than the owner's own (tidiness):
+SAFETY. Missed-citation failure mode inverts.**
+- renumbering: a miss still reads `Decision 8`, which **still exists and now
+  means something ELSE** → silently wrong, reads authoritative
+- naming: a miss still reads `Decision 8` when no numbers exist → **visibly
+  dangling**, greppable
+With **165 citations in src/+tests**, that difference decides it. Renumbering
+hides the failure; naming makes it loud.
+
+Also: naming **dissolves** the tombstone gap + id drift rather than solving
+them. Renumbering is a cost paid EVERY removal; naming is paid ONCE.
+
+**Owner's "corpus already annotates them" is HALF true — checked:**
+- **headings DO**: `## Decision 8 — per-event combo tables and canonical
+  combo serialisation`. So names are **promoted, not invented**.
+- **citation sites do NOT**: src/tests read bare `Decision 30`, `(Decision
+  21`, `Decision 11's teardown`. The sweep must SUPPLY the name; it cannot
+  just delete the number.
+
+**Hard constraint found by measuring — full names cannot go inline:**
+- heading names: min 25 / **median 52** / max 98 chars
+- src+tests lines already carrying a citation: **median 59**, max 66, against
+  the **64-char hard limit**
+→ citations must use a **short kebab slug**, full name stays as heading prose.
+Recommended `## combo-tables — per-event combo tables and …`, cited as
+`(see combo-tables)` ≈20 chars. Bonus: says WHAT IT IS at the point of use,
+which `Decision 8` never did.
+
+**Open for owner: how the slug is declared** (slug-first heading vs separate
+slug line).
+
+Carried over unchanged: the step-2 gate, the 3 line-broken mentions, plural/
+lowercase variants, wip/ out of scope, crosswalk appended to the ledger (needed
+MORE under naming — commit messages cite numbers that will exist nowhere), and
+the Decision 20 / keys_pressed history question.
+**Simpler now:** no one-at-a-time renaming — names cannot collide with
+numbers, so substitution is one pass per file once the wrap is proven.
+Renumbering spec retained in-file as superseded; its survey/hazards/gate all
+still apply.

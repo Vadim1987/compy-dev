@@ -436,11 +436,19 @@ combinator) · `09`–`11` three gaps in `doc/input_api.md`, of which `09` is th
 over · `12` the duplicated channel list · `13` a deferred `pending()` routing case.
 
 **DEC-01 — de-noising the decisions ledger (owner request, 2026-08-26).** Remove the 4 tombstoned
-entries and renumber the surviving 29 to a gapless 1–29. **Runs before the next slice cut**, so the
+entries and **replace decision numbers with names** — the owner's revised proposal, which supersedes
+the renumbering approach and is endorsed on safety grounds: a citation the sweep misses still reads
+`Decision 8`, which under renumbering **still exists and means something else**, and under naming is
+**visibly dangling**. With 165 citations in `src`/`tests`, that difference decides it. Naming also
+dissolves the tombstone gap and the id drift permanently, rather than re-flattening after every
+removal. Every heading already carries its name, so names are promoted rather than invented; but
+citation sites are bare, and full names (median 52 chars) will not fit lines already at a median of
+59 against a 64-char limit — **so citations use a short slug**. One open call for the owner: how the
+slug is declared. **Runs before the next slice cut**, so the
 ledger a reviewer reads is the clean one. Six steps, with the governing gate at step 2 rather than
 at the end: once every id is sentinel-wrapped, no rename can collide. Full specification, survey and
 hazards — line-broken mentions, case and plural variants, and the `wip/` namespace that must **not**
-be swept — in [`../reviews/DEC-01-ledger-renumbering-spec.md`](../reviews/DEC-01-ledger-renumbering-spec.md).
+be swept — in [`../reviews/DEC-01-ledger-denoising-spec.md`](../reviews/DEC-01-ledger-denoising-spec.md).
 
 **The hazard that governs it:** a missed citation does not dangle, it silently names a *different*
 existing decision. That is worse than a dangling one, and 165 of the citations are in `src/` and
