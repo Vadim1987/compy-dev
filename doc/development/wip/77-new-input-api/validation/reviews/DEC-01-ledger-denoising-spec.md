@@ -69,6 +69,71 @@ The alternative — keep the prose heading and declare the slug on its own line 
 and keeps headings reading as sentences, at the cost of one more line per entry and a slug that is
 not visible in a table of contents.
 
+### The slug convention (owner, 2026-08-26): `D-MNEMONIC`
+
+Short uppercase mnemonics on a `D-` prefix — the owner's `D-BE-GOOD` / `D-NO-HARM` shape.
+
+**Why the prefix earns its two characters:** it makes the whole class greppable (`grep -rn
+'\bD-[A-Z]'`), and it **cannot be confused with the dead `D-1…D-10` design namespace** in `wip/`,
+which is digits where these are letters. One regex separates them for the rest of time.
+
+**Budget the length.** `Decision 8` is 10 characters and `Decision 21` is 11; the slugs below
+average ~14. That is **+3 to +4 characters at every citation site**, against lines with a median of
+59 and a max of 66 in a 64-char limit — so **some citation lines will need reflowing**, and a few
+already exceed the limit today. Slugs are therefore capped at **16 characters**. Reflow the affected
+lines in the same commit as the substitution for that file, never later.
+
+### DEC-01-03 — the inventory, drafted
+
+**29 survivors, 4 removals.** Proposed slugs; the owner edits freely — this exists to be argued
+with, not approved silently.
+
+| old | slug | what it says |
+|---|---|---|
+| 1 | `D-ROUTE-OWNS` | routing is route-centric, not widget-centric |
+| 2 | `D-CHAIN-OF-3` | a three-component chain with truthy-consume |
+| 3 | `D-WIDGET-AT-BOOT` | a boot-provisioned widget per surface |
+| 4 | `D-NO-POLLING` | callbacks replace polling |
+| 5 | `D-TWO-SURFACES` | two directions, two surfaces; the limit signal travels the output side |
+| 6 | `D-NO-FW-TIER` | submit and cancel are widget-owned, not a framework tier |
+| 7 | `D-FROZEN-SHELL` | freeze the container and sub-table identities; leaves writable |
+| 8 | `D-COMBO-TABLES` | per-event combo tables and canonical serialisation |
+| 9 | `D-ISREPEAT` | uniform signatures and `isrepeat` threading |
+| 10 | `D-HOOKS-SEEDED` | one `hooks[event]` table, seeded once at activation |
+| 11 | `D-ROUTE-LIFETIME` | held by an open project, released at its stop |
+| 12 | `D-INSPECT-ROUTE` | `inspect` is a mode-to-route line — **see the note below** |
+| ~~13~~ | — | **REMOVE** — superseded by 30 |
+| 14 | `D-DEFACTO-KEPT` | reverse-engineered behaviour is preserved and formalised |
+| 15 | `D-UNKNOWN-RAISES` | unrecognised show/configure configuration raises |
+| ~~16~~ | — | **REMOVE** — superseded by 25 and 27 |
+| 17 | `D-BEHAVIOUR-TEST` | behavioural evidence is the default test evidence |
+| 18 | `D-ONE-STATE-ASK` | the widget answers one state question, `is_shown()` |
+| ~~20~~ | — | **REMOVE** — superseded by 30 |
+| 21 | `D-COMBO-SHAPE` | modifiers plus one trigger, or a class |
+| 22 | `D-IGNORE-REPEAT` | `compy.input.fn.ignore_repeat` |
+| 23 | `D-NO-LOG-NOISE` | an unhandled event is not logged |
+| 24 | `D-STOP-AND-SIDE` | `fn.stop_here` and `.side_run` |
+| 25 | `D-ONE-LIFETIME` | one route, one chain, one lifetime for every channel |
+| 26 | `D-LOVE-ARGS` | every consumer receives LÖVE's own argument list |
+| 27 | `D-BUTTON-TRIGGER` | one combo vocabulary, with the button as a trigger |
+| 28 | `D-STOP-IS-FW` | stopping is the framework's; the project's hook runs inside it |
+| ~~29~~ | — | **REMOVE** — superseded by 30 |
+| 30 | `D-ASK-THE-DEVICE` | modifier state is read from the device; `keys_pressed` dissolved |
+| 31 | `D-THREE-MODS` | the modifier set is closed: `ctrl`, `alt`, `shift` |
+| 32 | `D-USAGE-SHAPE` | how the API is meant to be used |
+| 33 | `D-EXACT-RESERVE` | a reservation matches its modifier set exactly |
+| 34 | `D-RESERVE-TABLE` | reservations are combo strings in a privileged table |
+
+**19 does not exist** — the ledger already had a gap, which is precisely the condition naming makes
+permanent and harmless.
+
+**A fifth removal candidate, for the owner.** Decision 12's own heading says *"`inspect` is a
+mode-to-route line — **NOT A DECISION, de-facto behaviour**"*. By the convention document's own rule
+(*behaviour that predates the feature and is merely written down does not deserve a ledger entry*)
+it should not be in the ledger at all — it belongs in an internals guide. **Ruling wanted:** remove
+it as a fifth, or keep it with the disclaimer. It is listed above with a slug so the count works
+either way.
+
 ### What carries over unchanged from the renumbering spec
 
 Everything below still applies, because a name migration is the same sweep aimed differently:

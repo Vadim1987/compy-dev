@@ -547,3 +547,35 @@ the Decision 20 / keys_pressed history question.
 numbers, so substitution is one pass per file once the wrap is proven.
 Renumbering spec retained in-file as superseded; its survey/hazards/gate all
 still apply.
+
+## 2026-08-26 — slug convention set; inventory drafted
+
+Owner: **short mnemonic slugs, `D-BE-GOOD` / `D-NO-HARM` shape**. Also noted
+surprise that citation sites don't use names (asked NOT to spend tokens on
+blame forensics — complied, just recorded the fact).
+
+**`D-` prefix earns its 2 chars twice over:** greppable as a class
+(`\bD-[A-Z]`), AND cannot be confused with the dead `D-1..D-10` design
+namespace in wip/ — digits vs letters, one regex separates them forever.
+
+**Length budget — a consequence worth stating before execution.**
+`Decision 8` = 10 chars, `Decision 21` = 11; drafted slugs average ~14.
+That is **+3/+4 at EVERY citation site**, against src/tests lines at median
+59 / max 66 in a 64-char limit. So **some citation lines will need
+reflowing**, and a few already exceed today. → **capped slugs at 16 chars**
+and re-tightened the long ones (D-BUTTON-IS-TRIGGER→D-BUTTON-TRIGGER,
+D-TEST-BY-BEHAVIOUR→D-BEHAVIOUR-TEST, D-HOOKS-SEEDED-ONCE→D-HOOKS-SEEDED,
+D-ISREPEAT-THREADED→D-ISREPEAT). Reflow must land in the SAME commit as the
+substitution for that file, never later.
+
+**Drafted the full DEC-01-03 inventory: 29 slugs + 4 removals.** Explicitly
+framed as "exists to be argued with, not approved silently."
+
+**Confirmed the pre-existing gap: 19 does not exist.** 33 headings, highest
+34. This is exactly the condition naming makes permanent and HARMLESS.
+
+**Surfaced a 5th removal candidate for owner ruling: Decision 12.** Its own
+heading says "NOT A DECISION, de-facto behaviour". By conventions/docs.md's
+own rule (behaviour predating the feature, merely written down, deserves no
+ledger entry) it belongs in an internals guide, not the ledger. Listed with a
+slug anyway so the count works either way.
