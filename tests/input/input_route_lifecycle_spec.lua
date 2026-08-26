@@ -205,6 +205,26 @@ describe('input surface: inbound events — route lifetime #input',
       -- that store is built ONCE for the application, not per
       -- run, so teardown has to drop it -- otherwise the next
       -- project's bare show() opens on the previous draft.
+      -- doc/development/decisions/input.md, Decision 11: the
+      -- prompt LABEL is widget configuration like any other, so
+      -- it cannot outlive the project that set it. apply_config
+      -- writes model.custom_label only when cfg.prompt is
+      -- given, so the next project's bare show() never
+      -- overwrites it -- teardown is the only clearer, and the
+      -- widget is one application-lifetime instance.
+      it('clears a prompt label set by the stopped project',
+        function()
+          local first = F.activate_project()
+          first.show({ prompt = 'A> ', text = 'a' })
+          F.cc:stop_project_run()
+
+          local second = F.activate_project()
+          second.show()
+
+          assert.not_equal('A> ',
+            F.widget.model:get_label())
+        end)
+
       it('discards a draft stashed by a hidden configure',
         function()
           local first = F.activate_project()

@@ -339,15 +339,21 @@ end
 --- Teardown of the widget's own output/callback state on
 --- project stop (Decision 11): re-seed the callbacks to their
 --- stay-open defaults (AC10 — not a wipe-to-nil), drop any
---- unspent hidden-configure draft, and clear the evaluator's
---- highlighter.
+--- unspent hidden-configure draft, and clear the two mirrored
+--- fields apply_config writes: the prompt LABEL and the
+--- evaluator's highlighter. The label needs clearing here and
+--- nowhere else — apply_config writes it only when cfg.prompt
+--- is given, so the next project's bare show() cannot overwrite
+--- it, and the widget is one application-lifetime instance.
 local function reset_widget_outputs()
   local ui = love.state.user_input_controller
   if not ui then return end
   ui:reset_callbacks()
   ui:clear_pending()
-  if ui.model and ui.model.evaluator then
-    ui.model.evaluator.highlighter = nil
+  if ui.model then
+    ui.model.custom_label = nil
+    local ev = ui.model.evaluator
+    if ev then ev.highlighter = nil end
   end
 end
 
