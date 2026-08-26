@@ -5,8 +5,8 @@
 
 **Corrected 2026-08-26 after owner challenge.** The first pass of this document triaged **7**
 findings, taken from the reviewer's summary rather than its body. The report carries **13 numbered
-findings plus three analysis sections** that raise more. Every one is now a defect row. **Total:
-19**, plus this session's own document findings, registered here rather than living only in a track.
+findings plus three analysis sections** that raise more, and the owner added one. Every one is a defect row. **Total:
+20**, plus this session's own document findings, registered here rather than living only in a track.
 
 **Nothing is dropped as "not a defect" without the owner saying so.** Two rows are closed already
 (one fixed, one scoped down by ruling) and stay visible so the count reconciles.
@@ -16,7 +16,7 @@ findings plus three analysis sections** that raise more. Every one is now a defe
 | sprint | contents | rows |
 |---|---|---|
 | **BUG-01** | runtime defects — the code misbehaves | 6 |
-| **FIX-02** | documentation, vocabulary and process defects from this review | 13 |
+| **FIX-02** | documentation, vocabulary and process defects from this review | 14 |
 | **FIX-01** | *(pre-existing, unchanged)* citations, session numbers, editorial list | 3 |
 
 ---
@@ -103,6 +103,39 @@ in a surface the guide presents as general.
 | **FIX-02-11** | the guide never says the widget is a persistent singleton that `hide()` merely deactivates — so FR-2's teardown question has no answer | minor | reviewer only |
 | **FIX-02-12** | the channel list exists twice — the exact duplication the commenting rules forbid | nit | reviewer only |
 | **FIX-02-13** | a `pending()` routing case is deferred in the area the review was asked to read hardest | minor | verified (one of the ruled 10) |
+| **FIX-02-14** | **`release_keyboard_route` — name, doc comment and cited decision all describe retired behaviour** | minor | **parent-verified in code** |
+
+### FIX-02-14 — a live function that documents a mechanism this feature removed
+
+**Raised by the owner, 2026-08-26**, asking whether the keyboard/pointer asymmetry had dissolved
+back. It has — and checking it found this.
+
+**The behaviour is correct.** The project route occupies all twelve channels and holds them until
+the project stops; the `running → project_open` release is gone. Against the PR base there is no
+asymmetry, so the round trip this feature made — introduce a keyboard-only release, exempt pointer
+from it, then dissolve both — **shipped as a no-op**.
+
+**The description did not follow.** `controller.lua:703` still reads:
+
+> *"Hand keyboard/text back to the console at the moment a project's code finishes running but the
+> project stays open (the `'running' -> 'project_open'` state change — Decision 11). **Pointer
+> handlers stay hooked until the project stops (same decision).**"*
+
+Both sentences describe retired behaviour and both cite Decision 11 as authority. Three things are
+wrong at once:
+
+- **the name** — its only surviving call site is the **crash path** (`consoleController.lua:301`,
+  after `run_user_code` raised), not the transition it is named for;
+- **the body** — it calls `project_input:deactivate()`, dropping the *whole* route, and empties the
+  derived click slots, so it is not keyboard-specific either;
+- **the citation** — Decision 11 is marked `SUPERSEDED IN PART` and says the opposite now.
+
+**Probable parent of FIX-02-05.** The reviewer's *"two docs in `3a` disagree about whether the route
+is released at `running → project_open`"* is likely this claim propagated into prose. **Check them
+together**; fixing the doc without the comment leaves the source in place.
+
+**Fix shape, not decided here:** rename to what it does (it deactivates a route on a crash),
+rewrite the comment against the shipped behaviour, and repoint or drop the citation.
 
 ### FIX-02-06 / 07 / 08 — the vocabulary rows, and why they are not nits
 

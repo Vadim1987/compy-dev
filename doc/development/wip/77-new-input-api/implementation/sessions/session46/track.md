@@ -684,3 +684,38 @@ keyboard/pointer asymmetry was INTRODUCED by this feature, not inherited
 error `conventions/docs.md`'s "de-facto behaviour has a boundary" rule exists
 to prevent — lesson already captured, only the instance is being deleted.
 Wrote the two-paragraph caution into the FIX-02-01 triage.
+
+## 2026-08-26 — owner's question found FIX-02-14
+
+Owner asked: aren't keyboard and pointer on the same chain now, so the
+introduced asymmetry dissolved back? **Yes — verified in code.** EVENTS lists
+all 12 channels; the route holds them until stop; the `running →
+project_open` release is gone. So the feature's round trip (introduce a
+keyboard-only release → exempt pointer → dissolve both) **shipped as a
+no-op** against the base.
+
+**But checking it found a live defect.** `release_keyboard_route` still
+exists (`controller.lua:710`) and its doc comment at :703 still claims BOTH
+retired things — the `running → project_open` handback AND "Pointer handlers
+stay hooked until the project stops" — citing Decision 11 for each. Three
+things wrong at once:
+- **name**: only surviving call site is the **CRASH path**
+  (`consoleController.lua:301`, after `run_user_code` raised), not the
+  transition it is named for
+- **body**: calls `project_input:deactivate()` (the WHOLE route) and empties
+  the derived click slots — not keyboard-specific either
+- **citation**: Decision 11 is `SUPERSEDED IN PART` and now says the opposite
+
+**Probable PARENT of FIX-02-05** (reviewer's "two docs disagree about route
+release at running → project_open") — the comment is likely the source that
+propagated into prose. Linked them: fix together, or fixing the doc leaves
+the source.
+
+Registered as **FIX-02-14**, parent-verified. Counts updated: FIX-02 13→14,
+total 19→20. Roadmap ACC-01-02 result line now reads "20 defects (19 from the
+review, 1 the owner found reading it)".
+
+**Worth noting for the pattern file:** this is the second time this session
+that a *stale claim about retired behaviour* surfaced — the PR description's
+`keys_pressed`, now this. S45's lesson generalises further than doc prose:
+**code comments that narrate a mechanism's lifecycle rot the same way.**
