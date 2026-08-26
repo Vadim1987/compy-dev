@@ -355,10 +355,10 @@ index 00000000..5749ba93
 +> `doc/development/wip/77-new-input-api/implementation/README.md`.
 diff --git a/agents/rules.md b/agents/rules.md
 new file mode 100644
-index 00000000..8363f11e
+index 00000000..01dbdcae
 --- /dev/null
 +++ b/agents/rules.md
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,157 @@
 +# Compy — Coding Rules
 +
 +Audience: LLM assistant. Apply when writing, reviewing, or analysing code in this repo.
@@ -380,6 +380,7 @@ index 00000000..8363f11e
 +./doc/development/conventions/code.md -- code style
 +./doc/development/conventions/git.md -- conventional commits usage
 +./doc/development/conventions/docs.md -- doc front matter, provenance, citation hygiene
++./doc/development/conventions/input_adoption.md -- question-and-action checklist for adopting the input API (examples done; console/editor pending)
 +`./doc/development/internals/*` -- current implementation essentials, derived from codebase isnpection -- currently cover editor, console, examples
 +./doc/development/internals/user_input.md -- cross-component usage of user input in different modes
 +./doc/development/drawing_system.md -- unobvious wiring of drawing system, enabling paper-and-pen vs realtime drawing modes
@@ -391,11 +392,20 @@ index 00000000..8363f11e
 +| Constraint | Limit |
 +|---|---|
 +| Line length | 64 chars |
-+| Function body | 14 lines |
++| Function body | 14 lines (16 tolerated — see below) |
 +| Parameters | 4 |
 +| Nesting depth | 4 |
 +
 +When a limit is approached, redesign — don't raise the limit.
++
++**The one tolerance** (owner ratification, 2026-08-07): a function body may run
++to **16 lines** when the alternative is extracting a helper whose only job is
++to satisfy the limit. A helper that exists for the counter, not for the reader,
++buys nothing — it adds a name, a call site and a doc-comment to save two lines.
++Before using the tolerance, check the cheaper fix: comment boilerplate inside
++the body counts toward nothing and is usually where the overflow came from.
++(The case that produced this rule needed neither — trimming the comments took
++the body to eight lines.)
 +
 +---
 +
@@ -405,7 +415,8 @@ index 00000000..8363f11e
 +- `end` closes on the same line as the last statement in its block.
 +- Empty table: `{ }` (spaces inside braces).
 +- Table/array literals: one element per line.
-+- Comments: own line only, never inline.
++- Comments: own line only, never inline. Content rules — what a comment may
++  carry at all — in [`rules/commenting.md`](rules/commenting.md).
 +- At most one blank line between non-blank lines.
 +
 +---
@@ -443,6 +454,18 @@ index 00000000..8363f11e
 +Same applies to dispatch tables: `actions[key]()` beats `if key == 'x' then ... end`. The framework has accumulated some of this; new code and all examples must not.
 +
 +**Pedagogical test.** Before adding an abstraction: *could a motivated student understand and modify this?* If not, look for a simpler path.
++
++**No invented special cases (KISS, DRY).** Solve the requirement, not a generalisation of it. A rule that applies to one case is a special case, and a special case the system did not ask for is a defect however small and however principled it reads — it is a second rule to learn, to document, and to keep true. Signs you are inventing one: a sentinel return value that only one caller produces; a branch whose other arm nothing exercises; an exception clause appended to a decision that was uniform before. The minimum that satisfies the requirement is the answer. When a fix needs a mechanism, say so and get it ruled on rather than shipping it inside a fix that was approved without it.
++```lua
++-- wrong: an unbound channel needs a callable method, so the method
++-- was given a decline protocol the chain had no other use for
++function Widget:singleclick() return false end
++if widget:is_shown() then return widget[event](widget, ...) ~= false end
++
++-- right
++function Widget:singleclick() end
++if widget:is_shown() then widget[event](widget, ...); return true end
++```
 +
 +---
 +
@@ -493,6 +516,211 @@ index 00000000..8363f11e
 +- Avoid allocation in hot paths (`update`, `draw`). Reuse tables and values where the pattern is clear.
 +- **Mandatory in student-facing examples.** Encouraged in new framework code. Existing framework code may have known debt here and there — just don't add more.
 +- Prefer iterators over intermediate tables. Prefer preallocated buffers over per-frame construction.
+diff --git a/agents/rules/commenting.md b/agents/rules/commenting.md
+new file mode 100644
+index 00000000..428c8b78
+--- /dev/null
++++ b/agents/rules/commenting.md
+@@ -0,0 +1,199 @@
++# Commenting rules
++
++_Owner-authored (2026-08-07); restated for agent use in session27 — content
++unchanged, structure and worked examples added._
++
++> The authority on **what a comment may contain**. Load it before writing or
++> reviewing comments, and whenever you are about to explain in prose something
++> the code could say itself. Formatting mechanics (own line, never inline;
++> 64-char limit) live in [`../rules.md`](../rules.md) and still apply.
++
++**META-RULE: a comment should not exist if it does not bear any valuable
++information.** Everything below is that rule, made checkable.
++
++## The gate — apply to every comment you write, keep, or review
++
++Ask in order. The first "yes" decides.
++
++1. **Is it derivable from the code as it stands?** → delete it.
++2. **Would a better name carry it?** → rename the function, variable or test,
++   then delete it. A comment is not a repair for a name.
++3. **Does it carry one of the four payloads below?** → keep it, at minimal
++   viable size.
++4. Otherwise → delete it.
++
++A comment that survives the gate is not thereby the right *length*. Run it past
++the size rule as well.
++
++## The four payloads — the only things worth a comment
++
++1. **Intent or constraint** that is not obvious from the code and not
++   expressible through naming: why this order, why this bound, what breaks if
++   it changes.
++2. **Non-local context** — a concept, contract or decision that lives
++   elsewhere (another module, a design decision, a doc section). The comment
++   carries the pointer **plus the one thing the reader needs here**; it does not
++   reproduce what it points at. See "A reference is not an annotation" below.
++3. **Availability** — `supported since <version>`, `deprecated since
++   <version>`.
++4. **An interim development marker** — temporary by construction, see below.
++
++## Size
++
++- **Minimal viable, never below readability.** Prefer a clause to a sentence, a
++  sentence to a paragraph.
++- **A comment as long as or longer than the code it describes is a symptom,
++  not a style.** Either the code cannot express itself (fix the code) or it is
++  doing too much (split it). Where the code is genuinely irreducible — a
++  platform quirk, a numeric tolerance — one line saying so is the fix.
++- **No literary prose.** No restating a point in a second phrasing, no
++  scene-setting, no rhetorical question followed by its own answer. Bloat that
++  adds no information fails the meta-rule regardless of how well it reads.
++
++## What a comment must not do
++
++- **Say what the code does *not* do.** Every piece of code fails to do
++  infinitely many things. Admissible only when a competent reader could
++  plausibly conclude otherwise *and* no change of naming or structure prevents
++  the confusion — and then it states the confusion, not a list of absences.
++
++  **An absence is waste; a prohibition is a payload** (owner ruling,
++  2026-08-25). *"This does not check X"* describes what happens to be missing —
++  the code already says that, and it says it more reliably. *"X must never be
++  checked here"* is a **constraint on every future edit**, which is payload 1
++  and cannot be read off the code at all: the next author's reasonable-looking
++  addition is exactly what it forbids. Write the rule, not the gap:
++
++  ```lua
++  -- WASTE: an absence. The code below already shows it.
++  -- Straight to the console, with no widget test in front of it.
++
++  -- PAYLOAD: a prohibition the next edit could violate.
++  -- Widget visibility is state on the widget, never a routing
++  -- condition (decisions/input.md, Decision 1).
++  ```
++- **Narrate history** — "this used to…", "we removed…", "previously the
++  handler…" — outside an interim marker. Git holds history.
++- **Restate the identifier in prose.** `-- the handler that handles the event`
++  next to `handle_event` is noise.
++- **Comment on itself** — "the following section explains…", "note that…".
++
++## Citations
++
++A comment that points at a doc must stay resolvable after the feature's scratch
++is deleted:
++
++- cite a **canonical doc** under `doc/` — never a path under
++  `doc/development/wip/…`, which rots on deletion;
++- **never write an unreachable LINK from inside an example repository** (owner
++  ruling 2026-08-12, **refined 2026-08-12**). `src/examples/*` are separate
++  repositories with their own remotes and their own PRs. **What is prohibited
++  is a pointer to a file that repo does not contain** — a `doc/…` path, which
++  cannot be followed from a tree that does not have it, and which ships a
++  dangling reference into a third party's file. The same goes for
++  platform-internal identifiers: a decision number means nothing there.
++  **What is tolerable is naming the platform guide and its section** —
++  *"Compy Input API, 'Submit lifecycle'"* rather than
++  `doc/input_api.md, "Submit lifecycle"` — **and only where it is really
++  needed**, i.e. where the comment would otherwise have to restate a contract
++  the platform owns. A name a reader can search for is not a broken link; a
++  path they cannot open is. Prefer saying the thing in place, briefly; the
++  durable argument still belongs in the platform's own docs. This outranks
++  the clause above, which was written for platform sources;
++- cite a **named section**, never "paragraph 3" or a line number;
++- when you rename or remove a heading, **grep `src/` and `tests/` for the old
++  name**. A citation that no longer resolves is worse than none, because it
++  still reads as authoritative. One heading rename in this feature left 31
++  dangling citations, two of them naming a retired design model.
++
++## A reference is not an annotation (owner ruling, 2026-08-25)
++
++**Compaction must not turn comments into an index of reference ids.** A comment
++reduced to `-- Decision 21` or `-- see input_api.md, "Held keys"` has been
++deleted, not compacted: it tells the reader that something governs this code
++without telling them **what**, so the only way to find out is to leave the file.
++A reader skimming for orientation gets nothing, and an assistant reading the
++module in isolation gets nothing.
++
++**The rule.** Every citation carries **at least a clause of its own** — the
++claim, constraint or reason that applies *here*. The reference is where the
++argument lives for whoever digs deeper; the clause is what makes digging
++optional.
++
++```lua
++-- BAD: an index entry. What is true here?
++-- (doc/development/decisions/input.md, Decision 33)
++local reservation = RESERVED.keypressed[combo_string(k)]
++
++-- GOOD: the claim, then where it is argued.
++-- A reservation matches its modifier set exactly, so an
++-- unnamed modifier misses (decisions/input.md, Decision 33).
++local reservation = RESERVED.keypressed[combo_string(k)]
++```
++
++This does not license restating the source. One clause, not a précis: if the
++comment is long enough to argue the point, the argument belongs in the doc and
++the comment belongs shorter. The size rule still governs — this rule sets the
++**floor**, the size rule sets the ceiling, and a comment lives between them.
++
++## Interim comments — allowed while the tree is in motion, gone at release
++
++While code is being moved, prototyped or deleted, comments that carry
++requirement and decision ids, "this moved to X", "kept until Y lands", or a
++reviewer's open question hold the logical integrity of a tree that is changing
++under its own feet. They are legitimate and useful. Two conditions, both
++mandatory:
++
++1. **Marked.** Prefix `INTERIM:` — a single greppable token, deliberately
++   distinct from `TODO`. Review remarks (`REMARK:`) count as interim comments
++   and are subject to the same gate.
++2. **Removed completely before release.** Not thinned, not "mostly" — the
++   release check is
++
++   ```
++   grep -rnE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/
++   ```
++
++   returning nothing. Each marker is either resolved into a payload-carrying
++   comment, or acted on and deleted, or promoted to a durable record (see next).
++
++   **Three alternatives, and no exclusions — each part is there for a reason
++   found the hard way:**
++
++   - **No colons.** Two markers once hid from the colon-only pattern by being
++     spelled `REMARK` without one. A gate that cannot see a marker is worse
++     than no gate.
++   - **The arrow form** (`-->`, `--->` opening a comment) — a reviewer writing
++     in the margin does not always type `REMARK:`, and this is what they type
++     instead. One such comment was live in `controller.lua` for the whole
++     feature, invisible to every sweep.
++   - **Case-sensitive.** Markers are uppercase by convention; that is what
++     makes them tokens rather than words. Matching case-insensitively drags in
++     ordinary English — "she remarked" in a prose corpus, "the interim help
++     chord" in an example's comment — and one such phrase belongs to another
++     author, so the gate could never reach zero while it stood. Case
++     sensitivity removes the false positives without hiding a single real
++     marker, and with them the need for any exclusion list.
++
++**`INTERIM:` is not `TODO`.** A `TODO` is a durable backlog item: it survives
++release, and once it is substantial it belongs in
++`doc/development/technical_debt/` rather than in the source. An `INTERIM:` is
++scaffolding, and scaffolding that ships is a defect.
++
++## Where this is enforced
++
++Comment cleanup is a **pre-PR gate**, not an ongoing chore: run it once the
++code has stabilised and before the delivery slices are assembled — see
++[`../validation.md`](../validation.md), "Comment References". Doing it earlier
++wastes the interim markers that are still load-bearing; doing it later ships
++them.
++
++**And the same holds for verbosity, not only for markers** (owner, 2026-08-12).
++Mid-development, a verbose comment is doing real work: it orients the next
++reader — human or assistant — in a codebase that is fragile and still moving,
++where the reasoning is not yet settled enough to be obvious from the code.
++**Do not compact as you go.** Compaction is its own substep near the end of a
++step, taken once, over stabilised code: it dries up history and obituaries,
++intermediate rulings, and second phrasings, keeping only the reasons. `P-18-10`
++is the worked example — one dedicated pass that took `keyboard`'s `input.lua`
++from 177 comment lines to 101 without losing an argument.
 diff --git a/agents/rules/materialization.md b/agents/rules/materialization.md
 new file mode 100644
 index 00000000..4c6d567b
@@ -757,10 +985,10 @@ index 00000000..d3417b28
 +here only as a record of the prior cycle. Not applicable now: the terminal milestone landed.)
 diff --git a/agents/validation.md b/agents/validation.md
 new file mode 100644
-index 00000000..22b750f6
+index 00000000..96ee94b9
 --- /dev/null
 +++ b/agents/validation.md
-@@ -0,0 +1,219 @@
+@@ -0,0 +1,294 @@
 +# PR-prep session — feature-review boot pointer (the pre-PR architect-assistant plane)
 +
 +
@@ -792,12 +1020,23 @@ index 00000000..22b750f6
 +   prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 +5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
 +   directs.
-+6. Confirm the baseline: `busted tests` → expect **854 / 0 / 0 / 4** (the 4 pending are
-+   intentional; do not "fix" them, and do not add a fifth without saying so). A different count is
++6. Confirm the baseline: `busted tests` → expect **968 / 0 / 0 / 10**. A different count is
 +   a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
-+   (The count moves as batches land — it was 815 through session ~15, 841 after Phase R, 854 after
-+   the session21 mop-up; **the current session's `prompt.md` carries the authoritative number**,
-+   this line is the fallback.)
++   (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
++   session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
++   session27 remark pass, 955 after session29's two production fixes, 942 after session35's
++   dissolution of the held-key set, which deleted more test cases than it added, 946 after
++   session36 added `Key.any_pressed` with its own spec, and **968 after session43** — 949 once
++   P13's harmony spec was reverted and rewritten as three cases, 964 after the Decision 33 sweep
++   added the first cases asserting what a reservation does *not* claim, 966 with the
++   `ctrl+shift+s` pair, 967 with harmony's boolean `isDown`, 968 with the Ctrl+S relocation;
++   **the current session's `prompt.md` carries the authoritative number**, this line is the
++   fallback.)
++   **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
++   routing-grid cells that are not black-box observable, and 7 are the framework's reserved
++   combos, whose own effects are the framework's contract rather than the input API's and are
++   named as gaps in `tests/input/input_global_shortcuts_spec.lua`. `doc/development/tests.md`
++   records the distinction. Do not "fix" any of them; an **eleventh** is a finding.
 +
 +## Fixed pointers
 +
@@ -814,8 +1053,12 @@ index 00000000..22b750f6
 +  — note these live in the FEATURE-level `reviews/`, **not** `implementation/reviews/`; older
 +  handover prompts point one level too shallow.
 +- **PR ASSEMBLY:** `doc/development/wip/77-new-input-api/implementation/pr-assembly-guide.md`
-+  (re-runnable, git-only; slices in `implementation/pr-slices/`, `3*.patch` currently STALE vs
-+  the tree — regeneration is always the LAST step, after the tree settles).
++  (re-runnable, git-only; slices in `implementation/pr-slices/`, commit messages in
++  `implementation/pr-commit-messages.md`, description in `implementation/pr-description.md`).
++  Last regenerated 2026-08-03 at HEAD `264e0c6c` and verified there — **STALE since session27**,
++  which moved the tree substantially. The guide itself was revised 2026-08-07: Set-3 letters now
++  encode apply order, and Set 4 is cut as `4a-balloons` / `4b-maze` / `4c-keyboard`. Regeneration
++  stays the LAST step before the PR.
 +- **PERSISTENT DOCS CORPUS** (the only docs that survive `wip/77` deletion; all spec refs must
 +  resolve here): `doc/input_api.md`, `doc/development/internals/user_input.md`,
 +  `doc/development/decisions/input.md`, `doc/development/technical_debt/{input,general}.md`,
@@ -855,6 +1098,11 @@ index 00000000..22b750f6
 +- **A production fix is always its own commit**, never folded into the docs/tests/marker work that
 +  surfaced it. Its message carries the evidence: what was broken, how it is reachable, and why the
 +  breaking test proves it (`agents/development.md`: start with a breaking test, then implement).
++- **A deviation is never documented in the commit message alone (owner directive, 2026-08-10).**
++  Stating it there is necessary and not sufficient: a commit message is not part of the
++  workspace a reader has open. Every accepted behaviour change, widening or trade-off lands in
++  a document that fits — the persistent internals doc, the debt register, the guide — and in a
++  code comment where no document fits. The commit then says the same thing for the reviewer.
 +- **A batch is not a commit unit.** A mop-up batch of N markers may land as several commits if it
 +  contains separable concerns; one commit per batch is a coincidence, not the rule.
 +- **Suite green at every commit** — the count is stated in the message, and any change to it is
@@ -862,7 +1110,55 @@ index 00000000..22b750f6
 +- Same standing limits as before: unit-sized, conventional-commits style (`agents/rules.md`), each
 +  unit noted in track, **NEVER push**, never sweep the owner's unrelated working-tree changes in.
 +
++## Operational modes — recommended boundaries, not a hard workflow (owner, 2026-08-09)
++
++A session drifts when it silently changes what kind of work it is doing. Session30
++began as a design discussion, became a research session, and produced a plan
++amendment and a diagnostic tool before anyone named the transition. That is how
++rabbit-holes and self-inflicted designs get made, and the owner's remedy is to
++**name the mode and watch its boundary**:
++
++- **Research + analysis** — gather evidence, verify claims in code, characterise a
++  problem. Produces findings, not commitments.
++- **Evaluation + replanning** — weigh the findings critically, then change the plan.
++- **Execution** — implement what the plan says.
++
++*(The owner named these as "four modes" while enumerating three; the boundary that
++matters is the transition, so the count is left for them to settle.)*
++
++These are **boundaries to watch, not gates to enforce**. Mixing them at small scale
++is normal; mixing them at large scale is what this rule exists to catch. When a
++session notices it has crossed one, say so and let the owner decide whether to
++continue or hand over cold — a fresh session is cheap next to a design built inside
++a long, heterogeneous context.
++
++### Replanning always starts with evaluation of the findings
++
++Never move findings straight into a plan. Assess them critically first, and flag
++each of these explicitly — **none is automatically a defect, several may be
++legitimate, and all deserve a stated judgement**:
++
++- **self-inflicted constraints** — a requirement the assistant introduced while
++  answering its own corner-case, later mistaken for a given;
++- **phantom problems** — a problem that exists in the analysis but not in the code
++  or in use;
++- **unratified terminology** — vocabulary the work minted for itself and began
++  reasoning on (check against the PR base: absent there means it is ours);
++- **solutions that significantly expand commitment scope** — the fix is larger than
++  the thing it fixes, or drags in subsystems nobody asked about;
++- **deviation from intent and the stakeholder mandate** — the strategic frame above;
++- **deviation from pre-feature functionality** — something that worked before and
++  would not after, whether or not anyone noticed it working.
++
++This list is the successor's opening checklist whenever the previous session was
++analysis-heavy.
++
 +## Comment References
++
++**Authority on comment content: [`agents/rules/commenting.md`](rules/commenting.md)** — the
++gate (does this comment carry information the code cannot?), the four admissible payloads, the
++size rule, and the `INTERIM:`/`REMARK:` markers that must be **zero before the PR**. Read it
++before any comment sweep; this section covers only the citation half.
 +
 +During active development phase comments could've referenced intermittent doc sources (in-place decisions, reviews, resolutions etc.)
 +
@@ -964,6 +1260,13 @@ index 00000000..22b750f6
 +  `sed -i -E 's#(CURRENT PROMPT:.*/)session[0-9]+(/prompt.md`)#\1sessionNN+1\2#' agents/validation.md`
 +  (this file — formerly `agents/pr-prep.md`; older prompts reference it by the old name);
 +  (c) commit the wrap (track + successor prompt + repointed pointer) as one `docs` commit.
++- **Comment gate before slice regeneration.** Comments in slice scope are swept against
++  `agents/rules/commenting.md` once the code has stabilised and before the slices are
++  regenerated — `grep -rnE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/` must return
++  nothing. Every part of that pattern is argued in `agents/rules/commenting.md`, "Interim
++  comments" — colon-less because two markers once hid from the colon form, the arrow because
++  a live review comment carried no marker word at all, and case-sensitive because markers are
++  uppercase tokens while "remarked" and "interim" are ordinary English. Do not narrow it.
 +- The phase is DONE when: rulings collected, approved corrections executed, slices regenerated,
 +  PR assembled (description = intent → design → ratified deviations → justification table → open
 +  questions), and the owner has ruled on deleting `wip/77`. Then record the close-out in the
@@ -971,7 +1274,7 @@ index 00000000..22b750f6
 +
 +## Volatile pointer — the only line that changes between sessions
 +
-+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session26/prompt.md`
++- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session46/prompt.md`
 +
 +## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 +

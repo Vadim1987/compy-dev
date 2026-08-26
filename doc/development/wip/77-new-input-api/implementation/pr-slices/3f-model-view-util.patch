@@ -1,5 +1,5 @@
 diff --git a/src/model/input/userInputModel.lua b/src/model/input/userInputModel.lua
-index 4613feec..60daa516 100644
+index 4613feec..0e470942 100644
 --- a/src/model/input/userInputModel.lua
 +++ b/src/model/input/userInputModel.lua
 @@ -12,7 +12,6 @@ require("util.debug")
@@ -37,7 +37,7 @@ index 4613feec..60daa516 100644
    self:jump_end()
  end
  
-@@ -408,8 +411,15 @@ end
+@@ -408,8 +413,15 @@ end
  ----------------
  
  --- @return boolean
@@ -54,7 +54,7 @@ index 4613feec..60daa516 100644
  end
  
  --- @private
-@@ -491,7 +501,6 @@ function UserInputModel:_advance_cursor(x, y)
+@@ -491,7 +503,6 @@ function UserInputModel:_advance_cursor(x, y)
      self.cursor.c = next
    else
      self.cursor.l = cur_l + move_y
@@ -62,7 +62,7 @@ index 4613feec..60daa516 100644
    end
  end
  
-@@ -500,6 +509,20 @@ function UserInputModel:set_cursor(c)
+@@ -500,6 +511,20 @@ function UserInputModel:set_cursor(c)
    self.cursor = c
  end
  
@@ -83,7 +83,7 @@ index 4613feec..60daa516 100644
  --- @param y integer?
  --- @param x integer?
  --- @param selection 'keep'|'move'?
-@@ -553,20 +576,35 @@ function UserInputModel:get_cursor_y()
+@@ -553,20 +578,35 @@ function UserInputModel:get_cursor_y()
    return self.cursor.l
  end
  
@@ -129,48 +129,35 @@ index 4613feec..60daa516 100644
  end
  
  --- @return InputDTO
-@@ -797,42 +835,52 @@ function UserInputModel:cancel()
+@@ -797,42 +837,39 @@ function UserInputModel:cancel()
    self:reset()
  end
  
-+--- @private
-+--- Cursor-to-error-position on an evaluator reject. Split out
-+--- of handle() to keep it under the function-body line limit
-+--- once the push('userinput') block (below it) is gone
-+--- (doc/development/internals/user_input.md, "Submit and cancel —
-+--- widget-owned callback sequences").
-+--- @param result Error[]
-+function UserInputModel:_report_parse_error(result)
-+  --- @TODO fix
-+  local perr = result[1]
-+  -- Log.debug(Debug.terse_t(perr, nil, nil, true))
-+  if not perr or not perr.c then return end
-+  --- @TODO check line len and move to next if at end
-+  local c = perr.c
-+  if c > 1 then c = c + 1 end
-+  self:move_cursor(perr.l, c)
-+end
 +
 +--- @private
++--- On a reject, seat the cursor on the error position.
 +--- @param ent InputText
 +--- @return boolean ok
 +--- @return string[]|Error[]|InputText result
 +function UserInputModel:_apply_eval(ent)
 +  local ok, result = self.evaluator:apply(ent)
-+  if not ok then
-+    self:_report_parse_error(result)
-+  end
++  if ok then return ok, result end
++  --- @TODO check line len and move to next if at end
++  local perr = result[1]
++  if not perr or not perr.c then return ok, result end
++  local c = perr.c
++  if c > 1 then c = c + 1 end
++  self:move_cursor(perr.l, c)
 +  return ok, result
 +end
 +
  --- @param eval boolean
  --- @return boolean
  --- @return string[]|Error[]
-+-- doc/development/internals/user_input.md, "Submit and cancel —
-+-- widget-owned callback sequences": the old push('userinput')
-+-- notification (fired here under `if self.oneshot`) is gone
-+-- — on_text_entered (userInputController.lua submit chain)
-+-- replaces it as the "value ready" signal.
++-- on_text_entered (userInputController.lua submit chain) is
++-- the "value ready" signal. See
++-- doc/development/internals/user_input.md,
++-- "Submit and cancel — widget-owned callback sequences".
  function UserInputModel:handle(eval)
    local ent = self:get_text()
    local ok, result
@@ -270,47 +257,46 @@ index 5715a7c4..0db59575 100644
  --- @param filters Filters?
  --- @param custom_apply function?
 diff --git a/src/util/key.lua b/src/util/key.lua
-index a6447165..6de55ab8 100644
+index a6447165..9b29c3c1 100644
 --- a/src/util/key.lua
 +++ b/src/util/key.lua
-@@ -5,6 +5,117 @@ local unpack  = unpack or table.unpack
- local shift_k = { "lshift", "rshift" }
+@@ -6,12 +6,152 @@ local shift_k = { "lshift", "rshift" }
  local ctrl_k  = { "lctrl", "rctrl" }
  local alt_k   = { "lalt", "ralt" }
-+-- gui = super/cmd/win. Kept in the modifier set for parity with ctrl/alt/shift so
-+-- combo_string can serialise gui-combos; no shortcut registers one yet.
-+local gui_k   = { "lgui", "rgui" }
-+
-+-- Single source of truth for left/right modifier folding. Each row is
-+-- { left-key, right-key, generic-name }; combo_string folds e.g. lctrl|rctrl -> "ctrl"
-+-- (precedence order: ctrl, alt, shift, gui). This is the single
-+-- source shared by combo registration and dispatch.
+ 
++-- Single source of truth for left/right modifier folding. Each
++-- row is { left-key, right-key, generic-name }; combo_string
++-- folds e.g. lctrl|rctrl -> "ctrl" (precedence order: ctrl,
++-- alt, shift). The set is closed
++-- (doc/development/decisions/input.md, Decision 31): a key
++-- outside it is an ordinary trigger. This is the single source
++-- shared by combo registration and dispatch.
 +local mod_triples = {
 +  { ctrl_k[1],  ctrl_k[2],  "ctrl" },
 +  { alt_k[1],   alt_k[2],   "alt" },
 +  { shift_k[1], shift_k[2], "shift" },
-+  { gui_k[1],   gui_k[2],   "gui" },
 +}
 +
 +-- Generic modifier names in combo-string precedence order
-+-- (doc/development/decisions/input.md, Decision 8: ctrl < alt < shift <
-+-- gui), and the l/r fold that maps held key-names onto
++-- (doc/development/decisions/input.md, Decision 8: ctrl < alt <
++-- shift), and the l/r fold that maps held key-names onto
 +-- them ('lctrl' -> 'ctrl').
 +local mod_rank = {
-+  ctrl = 1, alt = 2, shift = 3, gui = 4,
++  ctrl = 1, alt = 2, shift = 3,
 +}
-+local mod_order = { 'ctrl', 'alt', 'shift', 'gui' }
++local mod_order = { 'ctrl', 'alt', 'shift' }
 +local fold_mod = { }
 +for _, row in ipairs(mod_triples) do
 +  fold_mod[row[1]] = row[3]
 +  fold_mod[row[2]] = row[3]
 +end
 +
-+--- Split a combo string into a generic-modifier set, the trigger
-+--- token, and how many triggers were seen. Tokens fold l/r to
-+--- generic names; anything that is not a modifier is a trigger.
-+--- The count is what lets registration refuse a combo naming two
-+--- of them — dispatch itself only ever splits its own output.
++--- Split a combo string into a generic-modifier set, the
++--- trigger token, and how many triggers were seen. Tokens fold
++--- l/r to generic names; anything that is not a modifier is a
++--- trigger. The count is what lets registration refuse a combo
++--- naming two of them — dispatch itself only ever splits its
++--- own output.
 +--- @param combo string
 +--- @return table mods
 +--- @return string? trigger
@@ -328,11 +314,12 @@ index a6447165..6de55ab8 100644
 +  return mods, trigger, n
 +end
 +
-+--- Canonicalise a combo string (doc/development/decisions/input.md,
-+--- Decision 8): lower-cased, l/r folded, modifiers in
-+--- fixed precedence, trigger last, '+'-joined. 'Ctrl+S' ->
-+--- 'ctrl+s'; bare 'S' -> 's'. Matches what combo_string()
-+--- (controller.lua) emits at dispatch.
++--- Canonicalise a combo string
++--- (doc/development/decisions/input.md, Decision 8):
++--- lower-cased, l/r folded, modifiers in fixed precedence,
++--- trigger last, '+'-joined. 'Ctrl+S' -> 'ctrl+s'; bare 'S' ->
++--- 's'. Matches what combo_string() (controller.lua) emits at
++--- dispatch.
 +--- @param combo string
 +--- @return string
 +local function normalize_combo(combo)
@@ -346,12 +333,12 @@ index a6447165..6de55ab8 100644
 +end
 +
 +--- A combo names modifiers plus exactly ONE trigger
-+--- (doc/development/decisions/input.md, Decision 21). Refused at
-+--- registration rather than silently canonicalised, because the
-+--- canonical form used to keep the LAST trigger and drop the
-+--- rest: 'ctrl+a+b' became 'ctrl+b', and 'a+b+*' became a bare
-+--- '*' — the widest binding there is, from a string written to
-+--- mean the narrowest.
++--- (doc/development/decisions/input.md, Decision 21). Refused
++--- at registration rather than silently canonicalised, because
++--- the canonical form used to keep the LAST trigger and drop
++--- the rest: 'ctrl+a+b' became 'ctrl+b', and 'a+b+*' became a
++--- bare '*' — the widest binding there is, from a string
++--- written to mean the narrowest.
 +---
 +--- A bare '*' is refused for a different reason: it satisfies
 +--- the one-trigger rule but is the class of "no modifiers
@@ -373,12 +360,13 @@ index a6447165..6de55ab8 100644
 +    .. ' or ctrl+alt+*)', 4)
 +end
 +
-+--- A project handlers sub-table (doc/development/decisions/input.md,
-+--- Decision 8): assigned combo keys normalise on
-+--- registration, so handlers.keypressed['Ctrl+S'] is
-+--- stored (and dispatch-matched) as 'ctrl+s'.
-+--- The matcher uses exact canonical lookup (O(1)), plus one
-+--- class lookup on a miss (Decision 21).
++--- A project handlers sub-table
++--- (doc/development/decisions/input.md, Decision 8): assigned
++--- combo keys normalise on registration, so
++--- handlers.keypressed['Ctrl+S'] is stored (and
++--- dispatch-matched) as 'ctrl+s'. The matcher uses exact
++--- canonical lookup (O(1)), plus one class lookup on a miss
++--- (Decision 21).
 +--- @return table
 +local function new_handler_table()
 +  return setmetatable({ }, {
@@ -388,17 +376,34 @@ index a6447165..6de55ab8 100644
 +    end,
 +  })
 +end
- 
++
  --- @param k string
  --- @return boolean
-@@ -12,6 +123,16 @@ local function is_enter(k)
+ local function is_enter(k)
    return k == "return" or k == 'kpenter'
  end
  
++--- Is any of the named keys held? The project-facing way to ask
++--- the keyboard about a key `Key` has no accessor for — a key
++--- that is not a modifier — so project code has one surface for
++--- held state instead of reaching for love.keyboard beside it.
++--- Multi-argument is OR, exactly like the device call it wraps.
++--- Named `any_pressed` because of that OR: a future richer
++--- predicate over a whole chord is a different question and
++--- takes a different name.
++--- @param ... string
++--- @return boolean
++local function any_pressed(...)
++  if select('#', ...) == 0 then
++    error('Key.any_pressed needs at least one key name', 2)
++  end
++  return love.keyboard.isDown(...)
++end
++
 +--- Whether a key name is any modifier, l/r alike. A combo class
 +--- (Decision 21) must not match its own modifier: holding Alt
-+--- alone dispatches 'alt+lalt', the modifier prepended to itself
-+--- as the trigger, which 'alt+*' would otherwise catch.
++--- alone dispatches 'alt+lalt', the modifier prepended to
++--- itself as the trigger, which 'alt+*' would otherwise catch.
 +--- @param k string
 +--- @return boolean
 +local function is_mod(k)
@@ -408,7 +413,7 @@ index a6447165..6de55ab8 100644
  --- @return boolean
  local function is_shift(k)
    return table.is_member(shift_k, k)
-@@ -43,11 +164,15 @@ local function alt()
+@@ -43,11 +183,16 @@ local function alt()
  end
  
  Key = {
@@ -423,6 +428,7 @@ index a6447165..6de55ab8 100644
 +  normalize_combo = normalize_combo,
 +  new_handler_table = new_handler_table,
 +  is_enter    = is_enter,
++  any_pressed = any_pressed,
 +  is_mod      = is_mod,
 +  shift       = shift,
 +  is_shift    = is_shift,
@@ -432,7 +438,7 @@ index a6447165..6de55ab8 100644
 +  is_alt      = is_alt,
  }
 diff --git a/src/view/input/userInputView.lua b/src/view/input/userInputView.lua
-index 73cbbd83..43b8e3f6 100644
+index 73cbbd83..c16b15e3 100644
 --- a/src/view/input/userInputView.lua
 +++ b/src/view/input/userInputView.lua
 @@ -16,7 +16,6 @@ local new = function(cfg, ctrl)
@@ -465,12 +471,12 @@ index 73cbbd83..43b8e3f6 100644
  
  --- Draw the pre-rendered canvas to screen
 +-- doc/development/internals/user_input.md, "Submit and cancel —
-+-- widget-owned callback sequences": oneshot is gone; the published
-+-- input widget
-+-- instance is the one view that skips this continuous
-+-- per-frame update_view(). The boot-provisioned input widget owns
-+-- its rendering updates; other controllers update before drawing.
-+-- See the identity-redraw debt entry for the migration constraint.
++-- widget-owned callback sequences": oneshot is gone; the
++-- published input widget instance is the one view that skips
++-- this continuous per-frame update_view(). The boot-provisioned
++-- input widget owns its rendering updates; other controllers
++-- update before drawing. See the identity-redraw debt entry for
++-- the migration constraint.
  function UserInputView:draw()
 -  if not self.controller:is_oneshot() then
 +  if self.controller ~= love.state.user_input_controller then

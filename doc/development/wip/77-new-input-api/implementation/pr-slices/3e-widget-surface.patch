@@ -1,7 +1,23 @@
 diff --git a/src/controller/consoleController.lua b/src/controller/consoleController.lua
-index 37acd4ac..6c446cc5 100644
+index 37acd4ac..1af15d84 100644
 --- a/src/controller/consoleController.lua
 +++ b/src/controller/consoleController.lua
+@@ -1,6 +1,7 @@
+ require("view.input.userInputView")
+ require("controller.editorController")
+ require("controller.userInputController")
++require("controller.projectInputController")
+ 
+ 
+ local class = require('util.class')
+@@ -16,7 +17,6 @@ local messages = {
+     return 'cannot open ' .. n .. ': No such file or directory'
+   end,
+ }
+-
+ --- @class ConsoleController
+ --- @field time number
+ --- @field model Model
 @@ -41,7 +41,16 @@ function ConsoleController.new(M, main_ctrl)
    local pre_env = table.clone(env)
    local config = M.cfg
@@ -20,31 +36,58 @@ index 37acd4ac..6c446cc5 100644
    local self = setmetatable({
      time        = 0,
      model       = M,
-@@ -123,6 +132,32 @@ local function run_user_code(f, cc, project_path)
+@@ -123,6 +132,59 @@ local function run_user_code(f, cc, project_path)
    return true
  end
  
-+-- Project lifecycle callback. It is intentionally separate from
-+-- compy.input's keyboard/text dispatch surface. Declared up
-+-- here with hide_overlay because both ends of a run reset it:
-+-- the stop path, and the failed-run path in run_project.
 +local function default_before_exit()
 +  Log.debug('compy.before_exit noop')
 +end
 +
-+--- Take the overlay down THROUGH the widget when a run ends,
-+--- so its own `shown` flag comes down together with the
-+--- published handle. Clearing love.state.user_input alone left
-+--- the widget believing it was still active, and the next
-+--- project's show() was then refused as a repeat by the
-+--- already-active guard (doc/development/decisions/input.md,
-+--- Decision 3) — a stopped project's overlay silently
-+--- swallowing the next project's.
-+--- hide() fires no cancel chain (Decision 6), which is what
-+--- teardown wants: this is not a user-facing dismiss.
-+--- Declared here rather than beside stop_project_run because
-+--- the failed-run path in run_project below needs it too.
-+local function hide_overlay()
++--- The framework's own teardown, and the ONLY place a project's
++--- `compy.before_exit` is ever invoked.
++---
++--- Stopping is the framework's business, not the project's.
++--- A hook at all is a convenience — somewhere to save a score
++--- or stop a timer — so it is called here, directly, inside a
++--- pcall, and never through the dispatch chain. That is the
++--- point of the indirection rather than a call at the stop
++--- site: a chain consumer signals by returning truthy, and no
++--- later edit should be able to give a project's teardown hook
++--- that meaning by accident. Nothing reads what it returns, and
++--- there is no return value here for a caller to read either.
++---
++--- Single invocation point by construction, so a second stop
++--- path cannot grow its own arrangement. It is also where
++--- forced restore of global device state belongs once that is
++--- built: the framework has teardown of its own to do, and
++--- this is the seam for it. See
++--- doc/development/technical_debt/input.md, "A project that
++--- raises leaves global device state dirty".
++---
++--- Uninstalling AFTER the call, never before, is what makes a
++--- parting reinstallation from inside the hook unreachable.
++--- @param compy table
++local function framework_before_exit(compy)
++  local project_hook = compy.before_exit
++  if project_hook then
++    local ok, err = pcall(project_hook)
++    if not ok then
++      Log.error('compy.before_exit raised: '
++        .. tostring(err))
++    end
++  end
++  compy.before_exit = default_before_exit
++end
++
++--- Called at both ends of a run — the stop path and the
++--- failed-run path. Down THROUGH the widget, never by clearing
++--- `love.state.user_input`: the widget's own `shown` flag has
++--- to fall with the handle, or the next project's show() is
++--- refused as a repeat (doc/development/decisions/input.md,
++--- Decision 3). `hide()` fires no cancel flow (Decision 6) —
++--- teardown is not a user-facing dismiss.
++local function hide_input_widget()
 +  local widget = love.state.user_input_controller
 +  if widget then return widget:hide() end
 +  love.state.user_input = nil
@@ -53,7 +96,7 @@ index 37acd4ac..6c446cc5 100644
  --- @param cc ConsoleController
  local function close_project(cc)
    local ok = cc:close_project()
-@@ -195,36 +230,13 @@ function ConsoleController:loadfile(name)
+@@ -195,36 +257,13 @@ function ConsoleController:loadfile(name)
    return chunk
  end
  
@@ -97,24 +140,24 @@ index 37acd4ac..6c446cc5 100644
  
  --- @param name string?
  function ConsoleController:run_project(name)
-@@ -253,10 +265,36 @@ function ConsoleController:run_project(name)
+@@ -253,10 +292,36 @@ function ConsoleController:run_project(name)
        love.state.app_state = 'running'
        local rok, run_err = run_user_code(f, self, path)
        if not rok then
 +        -- Top-level code raised, so the route was never
-+        -- connected. Release, then take down any overlay the
++        -- connected. Release, then take down any widget the
 +        -- project managed to show first: Decision 11's teardown
 +        -- invariant says a widget whose owning route is
 +        -- inactive goes unhonoured, and a shown one is not
 +        -- (doc/development/decisions/input.md, Decision 11).
 +        self.main_ctrl.release_keyboard_route(self)
-+        hide_overlay()
++        hide_input_widget()
 +        -- ...and the participants it installed before raising.
 +        -- Same invariant, same reason: nothing survives the
-+        -- project that installed it. before_exit is RESET but
-+        -- not FIRED: the frozen spec scopes the hook to stop
-+        -- paths and excludes crash, yet a slot left holding the
-+        -- dead project's function would fire for the next one.
++        -- project that installed it. before_exit is uninstalled
++        -- but NOT fired: the hook is scoped to stop paths and
++        -- excludes crash, yet a slot left holding the dead
++        -- project's function would fire for the next one.
 +        self.main_ctrl.clear_user_handlers(self)
 +        self:get_project_env().compy.before_exit =
 +            default_before_exit
@@ -134,7 +177,7 @@ index 37acd4ac..6c446cc5 100644
            love.state.app_state = 'project_open'
          end
        end
-@@ -309,6 +347,13 @@ local compy_audio = require("util.audio")
+@@ -309,6 +374,13 @@ local compy_audio = require("util.audio")
  local compy_graphics = {
    shape2d = require("util.graphics.shape2d")
  }
@@ -148,92 +191,98 @@ index 37acd4ac..6c446cc5 100644
  local get_compy_terminal = function(terminal)
    return {
      --- @param x number
-@@ -328,14 +373,430 @@ local get_compy_terminal = function(terminal)
+@@ -328,14 +400,461 @@ local get_compy_terminal = function(terminal)
      end
    }
  end
 +
 +-- Builds the `compy.input` sub-namespace — the input
 +-- solicitation surface, complementary to compy.terminal
-+-- (above): compy.terminal is the always-present console
-+-- OUTPUT grid the project writes to; compy.input is the
-+-- transient input widget the project pops up to ask the
-+-- user for text and get a value back. The two "cursor"
-+-- notions differ: terminal.gotoxy moves the console grid
-+-- cursor, input.get_cursor/set_cursor address the caret
-+-- WITHIN the input field.
-+-- By architectural contract these wrappers are the ONLY
-+-- project-facing surface for the input widget: they wrap
++-- (above): compy.terminal is the always-present console OUTPUT
++-- grid the project writes to; compy.input is the transient
++-- input widget the project pops up to ask the user for text and
++-- get a value back. The two "cursor" notions differ:
++-- terminal.gotoxy moves the console grid cursor,
++-- input.get_cursor/set_cursor address the caret WITHIN the
++-- input field. By architectural contract these wrappers are the
++-- ONLY project-facing surface for the input widget: they wrap
 +-- UserInputController (love.state.user_input_controller);
 +-- projects never touch the controller directly. Namespace +
 +-- lifecycle docs: doc/development/internals/user_input.md.
-+-- compy.input's write boundary (doc/development/decisions/input.md,
-+-- Decision 7): the container and the IDENTITY of its
-+-- three sub-tables (shortcuts / hooks / callbacks) are frozen — a
-+-- project cannot replace them (compy.input.shortcuts = {} raises).
-+-- Every LEAF inside is freely writable: shortcuts[event][combo] = fn
-+-- (through the combo table's own normalising __newindex, Decision 8),
++-- compy.input's write boundary
++-- (doc/development/decisions/input.md, Decision 7): the
++-- container and the IDENTITY of its three sub-tables (shortcuts
++-- / hooks / callbacks) are frozen — a project cannot replace
++-- them (compy.input.shortcuts = {} raises). Every LEAF inside
++-- is freely writable: shortcuts[event][combo] = fn (through the
++-- combo table's own normalising __newindex, Decision 8),
 +-- hooks[event] = fn, callbacks[name] = fn. One structural rule
-+-- replaces the old enumerated 11-name allowlist — nothing to keep in
-+-- sync with the API surface.
-+
++-- replaces the old enumerated 11-name allowlist — nothing to
++-- keep in sync with the API surface.
 +--- @param k any
-+local function frozen_error(k)
++local function unassignable_error(k)
 +  error("compy.input: '" .. tostring(k)
 +    .. "' is not assignable", 2)
 +end
 +
-+--- shortcuts sub-table: per-event combo tables whose identities are
-+--- frozen (shortcuts.keypressed = {} raises); leaf combo writes reach
-+--- the combo table's own normalising __newindex (Decision 8).
++--- A read-only view over private state: reads resolve through
++--- `resolve`, every write is refused. The empty table is the
++--- point: a metatable defends only the keys its table does
++--- not hold, so nothing may be a real field here.
++--- Three surfaces share this shape: the shortcuts sub-table
++--- (frozen per-event combo tables), the combinator table, and
++--- the compy.input container itself.
++--- @param resolve fun(k: any): any
++--- @param name fun(k: any): string   what the error reports
++--- @return table
++local function build_frozen_view(resolve, name)
++  return setmetatable({ }, {
++    __index = function(_, k) return resolve(k) end,
++    __newindex = function(_, k) unassignable_error(name(k)) end,
++  })
++end
++
++--- shortcuts sub-table: per-event combo tables whose identities
++--- are frozen (shortcuts.keypressed = {} raises); leaf combo
++--- writes reach the combo table's own normalising __newindex
++--- (doc/development/decisions/input.md, Decision 8).
 +--- @param shortcuts table
 +local function build_shortcuts_surface(shortcuts)
-+  return setmetatable({ }, {
-+    __index = function(_, event) return shortcuts[event] end,
-+    __newindex = function(_, event)
-+      frozen_error('shortcuts.' .. tostring(event))
-+    end,
-+  })
++  return build_frozen_view(
++    function(event) return shortcuts[event] end,
++    function(event) return 'shortcuts.' .. tostring(event) end)
 +end
 +
-+--- hooks / callbacks sub-table: flat leaf writes are allowed (nothing
-+--- nested to protect); only the sub-table's own identity is frozen, at
-+--- the compy.input container level above.
-+--- @param store table
-+local function build_leaf_surface(store)
-+  return setmetatable({ }, {
-+    __index = function(_, k) return store[k] end,
-+    __newindex = function(_, k, v) store[k] = v end,
-+  })
-+end
-+
-+--- The dispatch combinators (doc/development/decisions/input.md,
-+--- Decisions 22 and 24), reached as compy.input.fn.*. Stateless
-+--- and orthogonal: `ignore_repeat` decides whether the handler
-+--- RUNS, `stop_here`/`side_run` decide where the event GOES, and
-+--- neither knows about the other. Named for their effect on the
-+--- event, which is what a reader of a registration table needs.
-+--- A reserved binding is `stop_here(ignore_repeat(fn))`.
++--- The dispatch combinators
++--- (doc/development/decisions/input.md, Decisions 22 and 24),
++--- reached as compy.input.fn.*. Stateless and orthogonal:
++--- `ignore_repeat` decides whether the handler RUNS,
++--- `stop_here`/`side_run` decide whether the event PROPAGATES —
++--- each returns a fixed truthy/falsy in place of whatever the
++--- handler returned — and neither knows about the other. The
++--- combination most bindings want is
++--- `stop_here(ignore_repeat(fn))`: act once per press, and let
++--- nothing downstream see the key.
 +local INPUT_FN = {
 +  --- Skip the handler on an OS key repeat. Says nothing about
 +  --- propagation: a fresh press returns what the handler
 +  --- returned, a skipped repeat returns nothing.
 +  ignore_repeat = function(fn)
-+    return function(k, keys, isr)
++    return function(k, sc, isr)
 +      if isr then return end
-+      return fn(k, keys, isr)
++      return fn(k, sc, isr)
 +    end
 +  end,
-+  --- Run `fn` if given, then consume. With no `fn` the binding's
-+  --- only job is to swallow the event.
++  --- Run `fn` if given, then consume. With no `fn` the
++  --- binding's only job is to swallow the event.
 +  stop_here = function(fn)
 +    return function(...)
 +      if fn then fn(...) end
 +      return true
 +    end
 +  end,
-+  --- Run `fn` if given, and let the event carry on regardless of
-+  --- what it returned — the binding is a side effect, not a
++  --- Run `fn` if given, and let the event carry on regardless
++  --- of what it returned — the binding is a side effect, not a
 +  --- claim on the key.
 +  side_run = function(fn)
 +    return function(...)
@@ -243,81 +292,76 @@ index 37acd4ac..6c446cc5 100644
 +  end,
 +}
 +
-+local input_fn_surface = setmetatable({ }, {
-+  __index = function(_, k) return INPUT_FN[k] end,
-+  __newindex = function(_, k)
-+    frozen_error('fn.' .. tostring(k))
-+  end,
-+})
++local input_fn_surface = build_frozen_view(
++  function(k) return INPUT_FN[k] end,
++  function(k) return 'fn.' .. tostring(k) end)
 +
-+--- Assemble the compy.input surface: reads resolve the three frozen
-+--- sub-tables (shortcuts / hooks / callbacks), the combinator
-+--- table, the live held-key view, or a callable method; every
-+--- write to the container itself is refused loudly (Decision 7
-+--- revised — frozen container, writable leaves).
-+--- `get_keys` is resolved on every read, never captured: the
-+--- view is rebuilt when its backing table identity changes
-+--- (Decision 13), so a reference taken at build time goes stale.
++--- Assemble the compy.input surface: reads resolve the three
++--- frozen sub-tables (shortcuts / hooks / callbacks), the
++--- combinator table, or a callable method; every write to the
++--- container itself is refused loudly (Decision 7 — frozen
++--- container, writable leaves).
 +--- @param state table
 +--- @param methods table
-+--- @param get_keys fun(): table
 +--- @return table
-+local function build_input_surface(state, methods, get_keys)
-+  local shortcuts = build_shortcuts_surface(state.shortcuts)
-+  local hooks = build_leaf_surface(state.hooks)
-+  local callbacks = build_leaf_surface(state.callbacks)
-+  return setmetatable({ }, {
-+    __index = function(_, k)
-+      if k == 'shortcuts' then return shortcuts end
-+      if k == 'hooks' then return hooks end
-+      if k == 'callbacks' then return callbacks end
-+      if k == 'fn' then return input_fn_surface end
-+      if k == 'keys_pressed' then return get_keys() end
-+      return methods[k]
-+    end,
-+    __newindex = function(_, k) frozen_error(k) end,
-+  })
++local function build_input_surface(state, methods)
++  -- hooks and callbacks are handed over as themselves: only
++  -- their IDENTITY is frozen, which the container's own refusal
++  -- above already does, and every leaf inside them is writable.
++  -- A pass-through proxy over them reproduced plain table
++  -- behaviour exactly.
++  local resolve = {
++    shortcuts = build_shortcuts_surface(state.shortcuts),
++    hooks = state.hooks,
++    callbacks = state.callbacks,
++    fn = input_fn_surface,
++  }
++  return build_frozen_view(function(k)
++    return resolve[k] or methods[k]
++  end, tostring)
 +end
 +
-+-- The four widget-output entries (doc/development/decisions/input.md,
-+-- Decision 5):
-+-- show()/configure() config key and direct field-write
-+-- share one underlying `state` entry, sticky across shows
-+-- until overwritten (doc/input_api.md, "Callback
-+-- assignments"; the doc/development/internals/user_input.md,
-+-- "configure(config)" live reconfigure surface below
-+-- leaves this unchanged).
-+local OUTPUT_KEYS = {
++-- A config table carries keys of exactly two kinds, and the
++-- two behave differently enough to be named apart.
++
++-- STICKY: one `state` entry each, shared by the config key and
++-- the direct compy.input.callbacks write, and kept across shows
++-- until overwritten (doc/input_api.md, "Callback assignments").
++local CALLBACK_KEYS = {
 +  'on_text_entered',
 +  'on_limit_reached',
 +  'validator',
 +  'highlighter',
 +}
 +
-+-- prompt/text/cursor are per-show fields (never sticky at
-+-- this layer) — EXCEPT when configure() stashes them while
-+-- hidden: then they apply once, on the very next show().
-+local PENDING_KEYS = { 'prompt', 'text', 'cursor' }
++-- PER-SHOW: spent by the show() that reads them. `cursor` is a
++-- {line, col} pair applied after text, the seat compy.input.
++-- set_cursor moves later. configure() while HIDDEN has no
++-- session to apply them to, so it stashes them in state.pending
++-- for the next show() to consume, the one case where they
++-- outlive their call.
++local PER_SHOW_KEYS = { 'prompt', 'text', 'cursor' }
 +
-+-- show() has a deliberately small config table.  Callback
-+-- lifecycle hooks remain explicit compy.input.callbacks writes.
-+local SHOW_KEYS = {
-+  prompt = true,
-+  text = true,
-+  cursor = true,
-+  force = true,
-+  highlighter = true,
-+  validator = true,
-+  on_text_entered = true,
-+  on_limit_reached = true,
-+}
++--- @param names string[]
++--- @param extra string?
++--- @return table set
++local function key_set(names, extra)
++  local set = { }
++  for _, k in ipairs(names) do set[k] = true end
++  if extra then set[extra] = true end
++  return set
++end
 +
-+-- configure() takes the same table minus force: force answers
-+-- "replace the text of an ALREADY-active overlay", which is
-+-- the only state configure() ever runs in.
-+local CONFIGURE_KEYS = { }
-+for k in pairs(SHOW_KEYS) do CONFIGURE_KEYS[k] = true end
-+CONFIGURE_KEYS.force = nil
++-- What each entry point accepts, assembled from the two lists
++-- above rather than re-typed: `force` answers "replace the text
++-- of an ALREADY-active widget", so it is show()'s alone —
++-- configure() only ever runs in that state.
++local CONFIGURE_KEYS = key_set(CALLBACK_KEYS)
++local SHOW_KEYS = key_set(CALLBACK_KEYS, 'force')
++for _, k in ipairs(PER_SHOW_KEYS) do
++  CONFIGURE_KEYS[k] = true
++  SHOW_KEYS[k] = true
++end
 +
 +-- Lifecycle callbacks are compy.input.callbacks assignments,
 +-- never config-table keys. Naming one here is the likeliest
@@ -346,8 +390,8 @@ index 37acd4ac..6c446cc5 100644
 +--- the project stop at the typo instead of running on in a
 +--- shape nobody asked for. Level 3 puts the trace on the
 +--- project's own show()/configure() line.
-+--- Runtime STATE no-ops (an active overlay, a hidden widget)
-+--- are NOT this: they keep warning, per Decision 3.
++--- Runtime STATE no-ops (the widget already active, or
++--- hidden) are NOT this: they keep warning, per Decision 3.
 +--- @param cfg table
 +--- @param fname string
 +--- @param allowed table
@@ -365,23 +409,23 @@ index 37acd4ac..6c446cc5 100644
 +--- last-known value.
 +--- @param state table
 +--- @param cfg table
-+local function merge_output_keys(state, cfg)
-+  for _, k in ipairs(OUTPUT_KEYS) do
++local function merge_callback_keys(state, cfg)
++  for _, k in ipairs(CALLBACK_KEYS) do
 +    if cfg[k] ~= nil then state.callbacks[k] = cfg[k] end
 +    cfg[k] = state.callbacks[k]
 +  end
 +end
 +
 +--- Consume the hidden-configure pending prompt/text/cursor
-+--- (doc/development/internals/user_input.md, "configure(config)"): spent
-+--- on this show() regardless of whether it
-+--- ends up used (an explicit cfg value at this same show() call
-+--- wins) — a later bare show() must not keep re-injecting a
-+--- stale draft.
++--- (doc/development/internals/user_input.md,
++--- "configure(config)"): spent on this show() regardless of
++--- whether it ends up used (an explicit cfg value at this same
++--- show() call wins) — a later bare show() must not keep
++--- re-injecting a stale draft.
 +--- @param pending table
 +--- @param cfg table
 +local function consume_pending(pending, cfg)
-+  for _, k in ipairs(PENDING_KEYS) do
++  for _, k in ipairs(PER_SHOW_KEYS) do
 +    if cfg[k] == nil then cfg[k] = pending[k] end
 +    pending[k] = nil
 +  end
@@ -389,56 +433,68 @@ index 37acd4ac..6c446cc5 100644
 +
 +--- Stash configure()'s provided prompt/text/cursor into the
 +--- pending store for consumption by the next show()
-+--- (doc/development/internals/user_input.md, "configure(config)");
-+--- output-callback fields go through the same sticky `state`
-+--- fields show() already reads — persisted, never applied
-+--- live (there is no active session to apply them to).
++--- (doc/development/internals/user_input.md,
++--- "configure(config)"); output-callback fields go through the
++--- same sticky `state` fields show() already reads — persisted,
++--- never applied live (there is no active session to apply them
++--- to).
 +--- @param state table
 +--- @param cfg table
 +local function stash_hidden_configure(state, cfg)
-+  merge_output_keys(state, cfg)
-+  for _, k in ipairs(PENDING_KEYS) do
++  merge_callback_keys(state, cfg)
++  for _, k in ipairs(PER_SHOW_KEYS) do
 +    if cfg[k] ~= nil then state.pending[k] = cfg[k] end
 +  end
++end
++
++--- The two that DO something, lifted out of the api table below
++--- so they read as functions rather than as entries. Everything
++--- still in the table is a one-line delegation to the widget.
++--- @param get_widget fun(): UserInputController?
++--- @param state table
++--- @param cfg table?
++local function api_show(get_widget, state, cfg)
++  local next_cfg = cfg or { }
++  check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
++  merge_callback_keys(state, next_cfg)
++  consume_pending(state.pending, next_cfg)
++  local ui = get_widget()
++  if ui then ui:show(next_cfg) end
++end
++
++--- @param get_widget fun(): UserInputController?
++local function api_hide(get_widget)
++  local ui = get_widget()
++  if ui then ui:hide() end
 +end
 +
 +-- Builds the compy.input surface: the three-consumer dispatch
 +-- surface (doc/development/decisions/input.md, Decision 2) a
 +-- project registers against. `shortcuts[event]` are the
-+-- doc/development/decisions/input.md, Decision 8 per-event combo
-+-- sub-tables (normalising); `hooks[event]` is the one seeded hook
-+-- per event (Decision 10). show/hide drive the widget
-+-- (resolved from love.state, never held by the project).
++-- doc/development/decisions/input.md, Decision 8 per-event
++-- combo sub-tables (normalising); `hooks[event]` is the one
++-- seeded hook per event (Decision 10). show/hide drive the
++-- widget (resolved from love.state, never held by the project).
 +-- The widget-method surface a project drives (show/hide/
-+-- configure/set_text/set_cursor/get_cursor/clear), parameterized
-+-- by instance: any
-+-- adopter — not only the project overlay — gets the same
-+-- ergonomics over ITS OWN widget by supplying its own resolvers.
-+-- `get_widget` resolves the UserInputController; `get_active_flag`
-+-- reports shown-ness (truthy = shown); `state` is the sticky
-+-- output/pending store show()/configure() read. The project
-+-- overlay closes the two resolvers over the love.state globals —
-+-- behaviour-identical to the pre-factory inline shape.
++-- configure/set_text/set_cursor/get_cursor/clear),
++-- parameterized by instance: any adopter — not only the project
++-- widget — gets the same ergonomics over ITS OWN widget by
++-- supplying its own resolvers. `get_widget` resolves the
++-- UserInputController; `get_active_flag` reports shown-ness
++-- (truthy = shown); `state` is the sticky output/pending store
++-- show()/configure() read. The project widget closes the two
++-- resolvers over the love.state globals — behaviour-identical
++-- to the pre-factory inline shape.
 +--- @param get_widget fun(): UserInputController?
 +--- @param get_active_flag fun(): table?
 +--- @param state table
 +--- @return table
 +local function build_widget_api(get_widget, get_active_flag, state)
 +  return {
-+    show = function(cfg)
-+      local next_cfg = cfg or {}
-+      check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
-+      merge_output_keys(state, next_cfg)
-+      consume_pending(state.pending, next_cfg)
-+      local ui = get_widget()
-+      if ui then ui:show(next_cfg) end
-+    end,
-+    hide = function()
-+      local ui = get_widget()
-+      if ui then ui:hide() end
-+    end,
++    show = function(cfg) api_show(get_widget, state, cfg) end,
++    hide = function() api_hide(get_widget) end,
 +    -- doc/development/decisions/input.md, Decision 18: the one
-+    -- state question a project may ask the overlay. It cannot
++    -- state question a project may ask the widget. It cannot
 +    -- read this itself — a project's `love` is a sandboxed
 +    -- clone, so `love.state.user_input` is always nil inside a
 +    -- project (internals/project_sandbox_env.md).
@@ -475,13 +531,14 @@ index 37acd4ac..6c446cc5 100644
 +      end
 +      get_widget():set_text(text, keep_cursor)
 +    end,
-+    -- doc/development/internals/user_input.md, "configure(config)": live
-+    -- update on an active session (only
-+    -- the Contract's live-updatable set — prompt/highlighter/
-+    -- validator/widget outputs; text/cursor inert there); safe
-+    -- + un-warned while hidden — provided fields persist (via
-+    -- state/pending, same fields show() reads) for the very next
-+    -- show(). Never a partial/silent apply either way.
++    -- doc/development/internals/user_input.md,
++    -- "configure(config)": live update on an active session
++    -- (only the Contract's live-updatable set —
++    -- prompt/highlighter/ validator/widget outputs; text/cursor
++    -- inert there); safe + un-warned while hidden — provided
++    -- fields persist (via state/pending, same fields show()
++    -- reads) for the very next show(). Never a partial/silent
++    -- apply either way.
 +    configure = function(cfg)
 +      local next_cfg = cfg or { }
 +      check_keys(next_cfg, 'compy.input.configure',
@@ -490,14 +547,14 @@ index 37acd4ac..6c446cc5 100644
 +        stash_hidden_configure(state, next_cfg)
 +        return
 +      end
-+      merge_output_keys(state, next_cfg)
++      merge_callback_keys(state, next_cfg)
 +      get_widget():configure(next_cfg)
 +    end,
-+    -- doc/development/internals/user_input.md, "clear()": empty content +
-+    -- cursor to start, no callback;
-+    -- no-op + warn while hidden. Refreshes the view directly
-+    -- (no re-show) — reuses the controller's existing clear()
-+    -- (content + error state).
++    -- doc/development/internals/user_input.md, "clear()": empty
++    -- content + cursor to start, no callback; no-op + warn
++    -- while hidden. Refreshes the view directly (no re-show) —
++    -- reuses the controller's existing clear() (content + error
++    -- state).
 +    clear = function()
 +      if not get_active_flag() then
 +        Log.warn('compy.input.clear ignored — hidden')
@@ -511,29 +568,33 @@ index 37acd4ac..6c446cc5 100644
 +end
 +
 +local get_compy_input = function()
-+  -- callbacks IS the overlay widget's OWN table (owner ruling
++  -- callbacks IS the widget's OWN table (owner ruling
 +  -- 2026-07-20: compy.input.callbacks === the widget's
-+  -- self.callbacks). The widget is provisioned before the console
-+  -- (main.lua reorder), so it exists here. NEVER reassign this
-+  -- table — only mutate it — since the surface holds this exact
-+  -- reference (teardown re-seeds in place).
++  -- self.callbacks). The widget is provisioned before the
++  -- console (main.lua reorder), so it exists here. NEVER
++  -- reassign this table — only mutate it — since the surface
++  -- holds this exact reference (teardown re-seeds in place).
 +  local widget = love.state.user_input_controller
++  -- One combo table per channel, from the list the route
++  -- dispatches on — not a copy of it, so a channel cannot exist
++  -- for dispatch and be missing here.
++  local shortcut_tables = { }
++  for _, ev in ipairs(ProjectInputController.EVENTS) do
++    shortcut_tables[ev] = Key.new_handler_table()
++  end
 +  local state = {
-+    -- shortcuts: per-event combo tables (Decision 8, normalising).
-+    -- hooks: one fn per event, seeded once at activation (Decision
-+    -- 10 revised). callbacks: the widget's own table (Decision 7
-+    -- revised). shortcuts/hooks start empty (leaves fill on project
-+    -- write); callbacks carries the widget's stay-open defaults.
-+    shortcuts = {
-+      keypressed  = Key.new_handler_table(),
-+      keyreleased = Key.new_handler_table(),
-+      textinput   = Key.new_handler_table(),
-+    },
++    -- shortcuts: per-event combo tables (Decision 8,
++    -- normalising). hooks: one fn per event, seeded once at
++    -- activation (Decision 10). callbacks: the widget's own
++    -- table (Decision 7). shortcuts/hooks start empty (leaves
++    -- fill on project write); callbacks carries the widget's
++    -- stay-open defaults.
++    shortcuts = shortcut_tables,
 +    hooks = { },
 +    callbacks = widget.callbacks,
 +    pending = { },
 +  }
-+  -- get_active resolves the overlay's OWN shown flag (is_shown),
++  -- get_active resolves the widget's OWN shown flag (is_shown),
 +  -- never love.state directly.
 +  local function get_active()
 +    local w = love.state.user_input_controller
@@ -543,36 +604,49 @@ index 37acd4ac..6c446cc5 100644
 +    function() return love.state.user_input_controller end,
 +    get_active,
 +    state)
-+  -- doc/development/decisions/input.md, Decision 20: the
-+  -- held-key view a project can read OUTSIDE an event. The same
-+  -- read-only proxy the chain hands participants (Decision 13)
-+  -- — a project cannot build one, its `love` being a clone.
-+  local held = Controller.held_keys
-+  return build_input_surface(state, methods, held)
++  return build_input_surface(state, methods)
 +end
 +
-+-- Builds the `compy.*` table injected into a project's sandbox env (terminal, audio, graphics,
-+-- fonts, input); called while preparing the project environment.
++-- Builds the `compy.*` table injected into a project's sandbox
++-- env (terminal, audio, graphics, fonts, input); called while
++-- preparing the project environment.
  local get_compy_namespace = function(terminal)
    require("util.namespace.fonts")
 -  return {
++  -- Two members are held as upvalues rather than fields, and
++  -- for the same reason: a metatable's __newindex only fires
++  -- for a key the table does NOT hold, so a raw field cannot
++  -- be defended. `input` must refuse assignment (Decision 7)
++  -- and `before_exit` must intercept it.
++  -- UNSETTLED: an upvalue also survives table.clone by
++  -- reference, so every env clone shares ONE before_exit slot.
++  -- Nothing relies on that; nothing rules it out either.
++  -- See doc/development/technical_debt/input.md,
++  -- "`compy.before_exit` is a closure slot".
 +  local before_exit_slot = default_before_exit
++  local input_surface = get_compy_input()
 +  local ns = {
      terminal = get_compy_terminal(terminal),
      audio = compy_audio,
      graphics = compy_graphics,
 -    fonts = CompyFonts()
 +    fonts = CompyFonts(),
-+    input = get_compy_input(),
    }
 +  return setmetatable(ns, {
 +    __index = function(t, k)
 +      if k == 'before_exit' then return before_exit_slot end
++      if k == 'input' then return input_surface end
 +      return rawget(t, k)
 +    end,
 +    __newindex = function(t, k, v)
 +      if k == 'before_exit' then
 +        before_exit_slot = v
++      elseif k == 'input' then
++        -- Decision 7's first clause. compy.input's own
++        -- metatable cannot defend this: replacing the
++        -- container is a write to `compy`, one table up.
++        error("compy.input is not assignable — write to its"
++          .. ' sub-tables (shortcuts / hooks / callbacks)', 2)
 +      else
 +        rawset(t, k, v)
 +      end
@@ -581,7 +655,7 @@ index 37acd4ac..6c446cc5 100644
  end
  
  function ConsoleController.prepare_env(cc)
-@@ -552,70 +1013,6 @@ function ConsoleController.prepare_project_env(cc)
+@@ -552,70 +1071,6 @@ function ConsoleController.prepare_project_env(cc)
      close_project(cc)
    end
  
@@ -652,7 +726,7 @@ index 37acd4ac..6c446cc5 100644
    --- @param name string
    project_env.edit           = function(name)
      return cc:edit(name)
-@@ -625,9 +1022,16 @@ function ConsoleController.prepare_project_env(cc)
+@@ -625,9 +1080,26 @@ function ConsoleController.prepare_project_env(cc)
  
    local terminal             = cc.model.output.terminal
    local compy_namespace      = get_compy_namespace(terminal)
@@ -662,33 +736,51 @@ index 37acd4ac..6c446cc5 100644
 +  project_env.LuaHighlighter = LuaHighlighter
 +  project_env.LuaSyntaxValidator = LuaSyntaxValidator
 +  project_env.LineValidators = LineValidators
-+  project_env.InputEvalText  = nil
-+  project_env.InputEvalLua   = nil
-+  project_env.ValidatedTextEval = nil
-+  project_env.LuaEditorEval  = nil
++  -- WITHHELD, not exported. project_env starts as a clone of
++  -- the application env, which carries these four globals, so
++  -- the assignment REMOVES each from a project's reach.
++  -- Projects configure validation through compy.input's
++  -- validator callback; they do not install evaluator objects
++  -- (doc/development/internals/user_input.md, "Evaluators").
++  for _, name in ipairs({
++    'InputEvalText',
++    'InputEvalLua',
++    'ValidatedTextEval',
++    'LuaEditorEval',
++  }) do
++    project_env[name] = nil
++  end
 +
    project_env.eval           = LANG.eval
    project_env.print_eval     = LANG.print_eval
  
-@@ -859,12 +1263,15 @@ end
+@@ -859,12 +1331,14 @@ end
  
  function ConsoleController:stop_project_run()
    self:evacuate_required()
 +  local compy = self:get_project_env().compy
-+  compy.before_exit()
++  framework_before_exit(compy)
    self.main_ctrl.set_default_handlers(self, self.view)
    self.main_ctrl.set_love_update(self)
 -  love.state.user_input = nil
-+  hide_overlay()
++  hide_input_widget()
    View.clear_snapshot()
    self.main_ctrl.set_love_draw(self, self.view)
 -  self.main_ctrl.clear_user_handlers()
 +  self.main_ctrl.clear_user_handlers(self)
-+  compy.before_exit = default_before_exit
    self.main_ctrl.report()
    love.state.app_state = 'project_open'
  end
-@@ -997,15 +1404,13 @@ function ConsoleController:keypressed(k)
+@@ -964,7 +1438,7 @@ function ConsoleController:keypressed(k)
+     end
+     if not love.state.testing then
+       love.state.testing = 'running'
+-      input:cancel()
++      input:discard_draft()
+       TerminalTest.test(out.terminal)
+     elseif love.state.testing == 'waiting' then
+       TerminalTest.reset(out.terminal)
+@@ -997,15 +1471,13 @@ function ConsoleController:keypressed(k)
      if k == "pagedown" then
        input:history_fwd()
      end
@@ -702,8 +794,8 @@ index 37acd4ac..6c446cc5 100644
 -      end
 -    end
 +    -- History navigation at the vertical boundary is driven by
-+    -- the widget's on_limit_reached callback (set at construction),
-+    -- not by keypressed's return value (retired,
++    -- the widget's on_limit_reached callback (set at
++    -- construction), not by keypressed's return value (retired,
 +    -- doc/development/decisions/input.md, Decision 5).
 +    -- keypressed still runs for its editing side effects; its
 +    -- return is unused.
@@ -711,21 +803,37 @@ index 37acd4ac..6c446cc5 100644
      if not Key.shift() and Key.is_enter(k) then
        if not input:has_error() then
          self:evaluate_input()
+@@ -1041,6 +1513,9 @@ end
+ --- @param presses number
+ function ConsoleController:mousepressed(
+     x, y, btn, touch, presses)
++  if love.DEBUG then
++    Log.info(string.format('click! {%d, %d}', x, y))
++  end
+   if love.state.app_state == 'editor' then
+     if self.cfg.editor.mouse_enabled then
+       self.editor.input:mousepressed(x, y, btn, touch, presses)
 diff --git a/src/controller/userInputController.lua b/src/controller/userInputController.lua
-index ed087f7f..84e91c32 100644
+index ed087f7f..f72d9e89 100644
 --- a/src/controller/userInputController.lua
 +++ b/src/controller/userInputController.lua
-@@ -2,30 +2,53 @@ local class = require('util.class')
+@@ -2,30 +2,52 @@ local class = require('util.class')
  require("util.key")
  require("util.view")
  require("util.string.string")
 +require("util.lua")
 +
 +-- Stay-open defaults for the submit/cancel lifecycle
-+-- after_submit/after_cancel default to
-+-- no-ops, so a widget stays open unless a callback hides it. on_limit_
-+-- reached defaults to a no-op so the navigation-boundary emit is an
++-- after_submit/after_cancel default to no-ops, so a widget
++-- stays open unless a callback hides it. on_limit_ reached
++-- defaults to a no-op so the navigation-boundary emit is an
 +-- unconditional call. Re-seeded (not wiped) on teardown (AC10).
++-- before_submit/before_cancel are deliberately absent: their
++-- return is READ as a veto, and an unset one must be
++-- distinguishable from one that declines to veto
++-- (doc/development/decisions/input.md, Decision 23).
++-- run_callback already answers nil for an absent name, which is
++-- no veto.
 +local function default_callbacks()
 +  return {
 +    on_limit_reached = noop,
@@ -738,27 +846,20 @@ index ed087f7f..84e91c32 100644
 ---- @param result table?
  --- @param disable_selection boolean?
 -local new = function(model, result, disable_selection)
-+--- @param allow_modify boolean?  enable the Ctrl+D duplicate-line
-+--- combo (editor-only today). Known at construction; the overlay
-+--- and console never opt in.
-+local new = function(model, disable_selection, allow_modify)
++--- @param allow_duplicate_line boolean?  editor-only today
++local new = function(model, disable_selection,
++                     allow_duplicate_line)
    return {
      model = model,
 -    result = result,
      disable_selection = disable_selection,
-+    -- Ctrl+D duplicate-line gate (editor-only today; a future
-+    -- combo-table would supersede this per-action flag).
-+    allow_modify = allow_modify,
-+    -- Strictly internal shown/hidden flag (owner ruling
-+    -- 2026-07-20): is_shown() reads this, never love.state. The
-+    -- overlay starts hidden and is toggled by show()/hide();
-+    -- always-active widgets (console/editor) set it true at
-+    -- construction.
++    allow_duplicate_line = allow_duplicate_line,
++    -- is_shown() reads this, never love.state (owner ruling
++    -- 2026-07-20).
 +    shown = false,
-+    -- The widget-invoked callbacks (outputs + submit/cancel
-+    -- lifecycle). For the project overlay this table IS
-+    -- compy.input.callbacks (same table, owner ruling 2026-07-20);
-+    -- console/editor set their own directly.
++    -- For the project widget this table IS
++    -- compy.input.callbacks, the same table (owner ruling
++    -- 2026-07-20); console and editor set their own directly.
 +    callbacks = default_callbacks(),
    }
  end
@@ -778,7 +879,7 @@ index ed087f7f..84e91c32 100644
  --- @param v UserInputView
  function UserInputController:init_view(v)
    self.view = v
-@@ -52,8 +75,9 @@ function UserInputController:get_text()
+@@ -52,8 +74,9 @@ function UserInputController:get_text()
  end
  
  --- @param t str
@@ -790,7 +891,7 @@ index ed087f7f..84e91c32 100644
    self:update_view()
  end
  
-@@ -65,9 +89,10 @@ function UserInputController:is_empty()
+@@ -65,9 +88,10 @@ function UserInputController:is_empty()
  end
  
  --- @param dir VerticalDir?
@@ -803,7 +904,7 @@ index ed087f7f..84e91c32 100644
  end
  
  ----------------
-@@ -120,6 +145,25 @@ function UserInputController:set_cursor(cursor)
+@@ -120,6 +144,25 @@ function UserInputController:set_cursor(cursor)
    return self.model:set_cursor(cursor)
  end
  
@@ -829,22 +930,21 @@ index ed087f7f..84e91c32 100644
  -----------
  -- error --
  -----------
-@@ -150,8 +194,14 @@ function UserInputController:evaluate()
+@@ -150,7 +193,12 @@ function UserInputController:evaluate()
    return ok, res
  end
  
-+--- Unconditional clear + hide. NOT the project widget's Escape path
-+--- any more (that is `cancel_flow`, below, callback-driven and
-+--- stay-open by default) — this method survives only as
-+--- console's own debug/test-mode cancel
-+--- (`consoleController.lua`'s `terminal_test`).
- function UserInputController:cancel()
+-function UserInputController:cancel()
++--- Throw away the current draft, firing nothing. Deliberately
++--- NOT `cancel_flow` (below): that is a project's Escape and
++--- runs `before_cancel`/`after_cancel`, which a console debug
++--- path must not trigger on a project's behalf. Its only
++--- caller is `consoleController.lua`'s `terminal_test`.
++function UserInputController:discard_draft()
    self.model:cancel()
-+  self:hide()
  end
  
- function UserInputController:jump_home()
-@@ -174,27 +224,310 @@ function UserInputController:history_fwd()
+@@ -174,27 +222,317 @@ function UserInputController:history_fwd()
    self.model:history_fwd()
  end
  
@@ -852,9 +952,17 @@ index ed087f7f..84e91c32 100644
 +---   widget API    ---
 +----------------------
 +
-+-- Internal widget API. Not called by projects directly — only via the compy.input.*
-+-- wrappers (consoleController). Free functions rather than class methods because they are
-+-- private helpers to show()/hide() below.
++-- Internal widget API, reached only through the compy.input.*
++-- wrappers (consoleController). Free functions, not methods:
++-- they are private helpers to show()/hide() below.
++
++-- The callbacks a config table may carry. The lifecycle ones
++-- (before_/after_submit, before_/after_cancel) are deliberately
++-- absent: they are set through compy.input.callbacks, never
++-- through show() or configure().
++local CONFIG_CALLBACKS = {
++  'validator', 'on_text_entered', 'on_limit_reached',
++}
 +
 +--- @param self UserInputController
 +--- @param cfg table
@@ -869,32 +977,45 @@ index ed087f7f..84e91c32 100644
 +  if cfg.highlighter ~= nil and ev then
 +    ev.highlighter = cfg.highlighter
 +  end
-+  if cfg.validator ~= nil then
-+    self.callbacks.validator = cfg.validator
-+  end
-+  if cfg.on_text_entered ~= nil then
-+    self.callbacks.on_text_entered = cfg.on_text_entered
-+  end
-+  if cfg.on_limit_reached ~= nil then
-+    self.callbacks.on_limit_reached = cfg.on_limit_reached
++  for _, name in ipairs(CONFIG_CALLBACKS) do
++    if cfg[name] ~= nil then
++      self.callbacks[name] = cfg[name]
++    end
 +  end
 +end
 +
-+
-+--- Fresh activation of the overlay widget: clear content when no text is given, apply
-+--- config, publish the overlay handle, render once. Called only by show() on the
-+--- inactive->active transition (show() guards against re-entry while active). The
-+--- clear-on-no-text lives here, not in apply_config, because it is activation policy
-+--- (a re-show with no text starts empty) rather than per-field config.
-+--- `cursor` (a `{line, col}` pair) lands here too, applied
-+--- after text (doc/development/internals/user_input.md,
-+--- "Cursor manipulation and \"reset\"") — kept out of
-+--- apply_config so
-+--- the live-reconfigure path (configure() below) can never
-+--- reach it.
++--- Re-show over an already-shown widget: the secondary path,
++--- and deliberately the narrow one. Only the text subset of cfg
++--- applies; a full live reconfigure is configure()
++--- (doc/development/internals/user_input.md,
++--- "configure(config)").
 +--- @param self UserInputController
 +--- @param cfg table
-+local open_fresh = function(self, cfg)
++local re_show = function(self, cfg)
++  -- doc/development/decisions/input.md, Decision 3
++  -- (warn-don't-swallow): a plain show() over an active widget
++  -- is suppressed; say so.
++  if not cfg.force then
++    Log.warn('UserInputController:show ignored — widget already'
++      .. ' active (pass force=true to override)')
++    return
++  end
++  if cfg.text ~= nil then
++    self.model:set_text(cfg.text)
++    self:update_view()
++  end
++end
++
++--- The activation path: clear when no text is given, apply
++--- config, publish the handle, render once. Clear-on-no-text is
++--- activation policy (a fresh show with no text starts empty),
++--- which is why it is here and not in apply_config; `cursor` is
++--- here for the same reason: configure() never reaches it.
++--- See doc/development/internals/user_input.md,
++--- "Cursor manipulation and reset".
++--- @param self UserInputController
++--- @param cfg table
++local open_widget = function(self, cfg)
 +  if cfg.text == nil then
 +    self.model:clear_input()
 +  end
@@ -902,12 +1023,12 @@ index ed087f7f..84e91c32 100644
 +  if cfg.cursor ~= nil then
 +    self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
 +  end
-+  -- love.state.user_input is the overlay CONTRACT: its
-+  -- presence is the flag the draw loop (controller.lua)
-+  -- checks to paint V:draw() each frame, and it carries the
-+  -- { M, C, V } handle the legacy poll idiom reads. Drivers
-+  -- change but the flag persists (doc/development/internals/user_input.md,
-+  -- "Widget lifecycle").
++  -- love.state.user_input is the widget CONTRACT: its presence
++  -- is the flag the draw loop (controller.lua) checks to paint
++  -- V:draw() each frame, and it carries the { M, C, V } handle
++  -- the legacy poll idiom reads. Drivers change but the flag
++  -- persists (doc/development/internals/user_input.md, "Widget
++  -- lifecycle").
 +  love.state.user_input = {
 +    M = self.model,
 +    C = self,
@@ -917,61 +1038,43 @@ index ed087f7f..84e91c32 100644
 +  self:update_view()
 +end
 +
-+--- Activate the widget.
-+--- No-op if already active, unless force=true.
++--- Activate the widget. Shown already, it re-shows instead —
++--- a no-op unless force=true.
 +--- @param config table?
 +function UserInputController:show(config)
 +  local cfg = config or {}
-+  if self.shown then
-+    -- doc/development/decisions/input.md, Decision 3 (warn-don't-swallow):
-+    -- a plain show() over an active overlay is suppressed;
-+    -- say so.
-+    if not cfg.force then
-+      Log.warn('UserInputController:show ignored — overlay already active (pass force=true to override)')
-+      return
-+    end
-+    -- force=true intentionally applies only the text subset
-+    -- of cfg on an active overlay; a full live reconfigure
-+    -- is the compy.input API's configure() (internals/
-+    -- user_input.md, "configure(config)"). Other fields
-+    -- are ignored here by design.
-+    if cfg.text ~= nil then
-+      self.model:set_text(cfg.text)
-+      self:update_view()
-+    end
-+    return
-+  end
-+  open_fresh(self, cfg)
++  if self.shown then return re_show(self, cfg) end
++  open_widget(self, cfg)
 +end
 +
 +--- Deactivate without firing the cancel chain. Clearing
-+--- love.state.user_input is what "hides" the overlay: the
-+--- draw loop (controller.lua) paints V:draw() only while
-+--- the flag is set, so nil-ing it stops the paint on the
-+--- next frame.
++--- love.state.user_input is what "hides" the widget: the draw
++--- loop (controller.lua) paints V:draw() only while the flag is
++--- set, so nil-ing it stops the paint on the next frame.
++--- A permanent surface (always_shown) declines.
 +function UserInputController:hide()
++  if self.always then return end
 +  self.shown = false
 +  love.state.user_input = nil
 +end
 +
-+--- Live-reconfigure an active session (compy.input.
-+--- configure; doc/development/internals/user_input.md, "configure(config)"
-+--- — the boundary decision closed here): only
-+--- the Contract's live-updatable set reaches apply_config —
-+--- prompt/highlighter/validator/widget-output callbacks. text/
-+--- cursor never reaches it from here — accepted but
-+--- inert on an active session (use set_text/set_cursor, or
-+--- clear()+show()); no partial/silent path exists because this
-+--- filtered table is the only thing configure() ever applies.
++--- Live-reconfigure an active session (compy.input. configure;
++--- doc/development/internals/user_input.md, "configure(config)"
++--- — the boundary decision closed here): only the Contract's
++--- live-updatable set reaches apply_config — the prompt, the
++--- highlighter, and the validator / on_text_entered /
++--- on_limit_reached callbacks. text/ cursor never reaches it
++--- from here — accepted but inert on an active session (use
++--- set_text/set_cursor, or clear()+show()); no partial/silent
++--- path exists because this filtered table is the only thing
++--- configure() ever applies.
 +--- @param cfg table
 +function UserInputController:configure(cfg)
-+  apply_config(self, {
-+    prompt           = cfg.prompt,
-+    highlighter      = cfg.highlighter,
-+    validator        = cfg.validator,
-+    on_text_entered  = cfg.on_text_entered,
-+    on_limit_reached = cfg.on_limit_reached,
-+  })
++  local live = { prompt = cfg.prompt, highlighter = cfg.highlighter }
++  for _, name in ipairs(CONFIG_CALLBACKS) do
++    live[name] = cfg[name]
++  end
++  apply_config(self, live)
 +  self:update_view()
 +end
 +
@@ -980,24 +1083,22 @@ index ed087f7f..84e91c32 100644
 +----------------------
 +
 +-- Submit/cancel are the widget's OWN default behaviour
-+-- (doc/development/decisions/input.md, Decision 6): the
-+-- widget runs them on Enter/Escape as an ordinary consumer
-+-- (never a routing concern)
-+-- and signals out through its callbacks. before_/after_submit and
-+-- before_/after_cancel are read off self.callbacks — the same
-+-- table a project populates via compy.input.callbacks.
++-- (doc/development/decisions/input.md, Decision 6): the widget
++-- runs them on Enter/Escape as an ordinary consumer (never a
++-- routing concern) and signals out through its callbacks.
++-- before_/after_submit and before_/after_cancel are read off
++-- self.callbacks — the same table a project populates via
++-- compy.input.callbacks.
 +
-+--- Validator gate (doc/development/internals/user_input.md, "Submit and
-+--- cancel — widget-owned callback sequences").
-+--- No custom validator
-+--- accepts unconditionally; a set validator's ok/err_msg
-+--- verdict decides, locking the session on reject via the
-+--- existing has_error()/clear_error() gate in keypressed().
++--- Run the project's validator, if it set one, and record its
++--- errors on the model — which is what locks the session until
++--- keypressed()'s has_error()/clear_error() releases it. No
++--- validator accepts unconditionally.
 +--- @param model UserInputModel
 +--- @param validator function?
 +--- @param lines string[]
-+--- @return boolean ok
-+local function gate(model, validator, lines)
++--- @return boolean accepted
++local function validate(model, validator, lines)
 +  if not validator then return true end
 +  local ok, errors = validator(lines)
 +  if not ok then model:set_error(errors) end
@@ -1023,32 +1124,30 @@ index ed087f7f..84e91c32 100644
 +  debug_noop(name)
 +end
 +
-+--- Submit flow (doc/development/decisions/input.md, Decision 6
-+--- revised): the
-+--- widget's own Enter behaviour. before_submit (veto reserved,
-+--- unbuilt) → empty guard → validate → deliver (fires
++--- Submit flow (doc/development/decisions/input.md, Decision
++--- 6): the widget's own Enter behaviour. A truthy before_submit
++--- VETOES; otherwise empty guard → validate → deliver (fires
 +--- on_text_entered) → after_submit. after_submit defaults to a
 +--- no-op, so the widget stays open unless a callback hides it.
-+--- @param keys_pressed table?
-+function UserInputController:submit_flow(keys_pressed)
-+  run_callback(self, 'before_submit', keys_pressed)
++function UserInputController:submit_flow()
++  if run_callback(self, 'before_submit') then return end
 +  if self.model:get_text():is_empty() then return end
 +  local lines = self.model:get_text()
-+  if not gate(self.model, self.callbacks.validator, lines) then
++  local validator = self.callbacks.validator
++  if not validate(self.model, validator, lines) then
 +    return
 +  end
 +  run_callback(self, 'on_text_entered', lines)
 +  run_callback(self, 'after_submit', lines)
 +end
 +
-+--- Cancel flow (Decision 6): the
-+--- widget's own Escape behaviour. A truthy before_cancel VETOES
-+--- (skips the clear); otherwise clear (hardwired) → after_cancel.
-+--- after_cancel defaults to a no-op — Escape clears but the widget
-+--- stays open unless a callback hides it.
-+--- @param keys_pressed table?
-+function UserInputController:cancel_flow(keys_pressed)
-+  if run_callback(self, 'before_cancel', keys_pressed) then
++--- Cancel flow (Decision 6): the widget's own Escape behaviour.
++--- A truthy before_cancel VETOES (skips the clear); otherwise
++--- clear (hardwired) → after_cancel. after_cancel defaults to a
++--- no-op — Escape clears but the widget stays open unless a
++--- callback hides it.
++function UserInputController:cancel_flow()
++  if run_callback(self, 'before_cancel') then
 +    return
 +  end
 +  self.model:cancel()
@@ -1070,13 +1169,20 @@ index ed087f7f..84e91c32 100644
 +  return self.shown
 +end
 +
-+--- Mark this widget as an always-active surface (console/editor
-+--- input, never toggled like the transient overlay) and return
-+--- self, for inline construction. The overlay leaves shown=false
-+--- and toggles it via show()/hide().
++--- Mark this widget as its host's permanent input surface —
++--- the console line, the editor's input and search strips —
++--- and return self, for inline construction. A project's widget
++--- leaves shown=false and toggles it with show()/hide().
++---
++--- The name is enforced, not aspirational: hide() refuses on
++--- such a widget. Shownness became a flag with this API
++--- (pre-feature there was none: a widget was live iff
++--- love.state.user_input was set), and a flag anything may
++--- clear is a convention, not the guarantee the name claims.
 +--- @return UserInputController self
 +function UserInputController:always_shown()
 +  self.shown = true
++  self.always = true
 +  return self
 +end
 +
@@ -1084,9 +1190,9 @@ index ed087f7f..84e91c32 100644
 +--- PLACE — never reassign the table, the compy.input surface
 +--- holds this exact reference. Teardown between project runs
 +--- (doc/development/decisions/input.md, Decision 11 — "re-seed,
-+--- don't wipe"): clears a stopped project's
-+--- callbacks and restores defaults, so a nil'd after_cancel never
-+--- silently means "stays open forever" for the next project.
++--- don't wipe"): clears a stopped project's callbacks and
++--- restores defaults, so a nil'd after_cancel never silently
++--- means "stays open forever" for the next project.
 +function UserInputController:reset_callbacks()
 +  local c = self.callbacks
 +  for k in pairs(c) do c[k] = nil end
@@ -1097,30 +1203,30 @@ index ed087f7f..84e91c32 100644
  --  keyboard  --
  ----------------
  
++--- LÖVE's own argument list, like every other consumer on the
++--- chain (doc/development/decisions/input.md, Decision 26). The
++--- tail is unread here and named anyway: this widget is where a
++--- repeat-aware edit would land, and the position has to be the
++--- right one when it does.
  --- @param k string
 ---- @return boolean? limit
 -function UserInputController:keypressed(k)
-+--- @param keys_pressed table?  read-only pressed-keys view
-+--- (doc/development/decisions/input.md, Decision 13)
-+--- @param isr boolean?
++--- @param sc string?    scancode
++--- @param isr boolean?  key repeat
 +-- No return value: the old limit-flag return channel is retired
 +-- (Decision 5) — on_limit_reached is the sole notification
 +-- path now (see "emit_limit" below).
-+-- This handler now receives the uniform
-+-- (k, keys_pressed, isr) triple (doc/development/decisions/input.md,
-+-- Decision 9).
-+-- Its own editing logic still reads modifiers via Key.*
-+-- (love.keyboard) — widening that to the keys_pressed
-+-- read-only view is not required here, but recommended in
-+-- the future.
-+function UserInputController:keypressed(k, keys_pressed, isr)
++-- Its editing logic reads modifiers via Key.* (love.keyboard).
++function UserInputController:keypressed(k, sc, isr)
 +  if not self.shown then
 +    if love.DEBUG then Log.debug('input: hidden no-op') end
 +    return
 +  end
-+  -- Defensive render-on-entry: guarantees the view catches up to the model even if a prior
-+  -- branch returned without re-rendering. Mutating branches below re-render at their end,
-+  -- so this is belt-and-suspenders, not the primary update.
++  -- Defensive render-on-entry: guarantees the view catches up
++  -- to the model even if a prior branch returned without
++  -- re-rendering. Mutating branches below re-render at their
++  -- end, so this is belt-and-suspenders, not the primary
++  -- update.
    self:update_view()
 +  -- _G.web: web/love.js build flag. On web, space may not emit
 +  -- textinput, so synthesise it here.
@@ -1130,11 +1236,12 @@ index ed087f7f..84e91c32 100644
    local input = self.model
 -  local ret
  
-+  -- Navigation-boundary output (doc/development/decisions/input.md,
-+  -- Decision 5): the widget signals a hit limit ONLY
-+  -- through on_limit_reached — the keypressed return value no
-+  -- longer carries a limit flag (retired; console reads history
-+  -- via its own on_limit_reached callback).
++  -- Navigation-boundary output
++  -- (doc/development/decisions/input.md, Decision 5): the
++  -- widget signals a hit limit ONLY through on_limit_reached —
++  -- the keypressed return value no longer carries a limit flag
++  -- (retired; console reads history via its own
++  -- on_limit_reached callback).
 +  local function emit_limit(dir, scope)
 +    local cb = self.callbacks.on_limit_reached
 +    if cb then cb(dir, scope) end
@@ -1146,10 +1253,10 @@ index ed087f7f..84e91c32 100644
 +    return 'line'
 +  end
 +
-+  -- (combo serialisation lives in controller.lua; this
-+  -- handler only sees the raw key.)
-+  -- doc/development/internals/user_input.md, "Error state": locked-on-reject
-+  -- unlocks on Enter/Space/arrows.
++  -- (combo serialisation lives in controller.lua; this handler
++  -- only sees the raw key.)
++  -- doc/development/internals/user_input.md, "Error state":
++  -- locked-on-reject unlocks on Enter/Space/arrows.
    if input:has_error() then
      if Key.is_enter(k)
          or k == "up" or k == "down"
@@ -1158,7 +1265,7 @@ index ed087f7f..84e91c32 100644
      then
        input:clear_error()
      end
-@@ -249,12 +582,14 @@ function UserInputController:keypressed(k)
+@@ -249,12 +587,14 @@ function UserInputController:keypressed(k)
    end
    local function vertical()
      if k == "up" then
@@ -1177,7 +1284,7 @@ index ed087f7f..84e91c32 100644
      end
      if Key.alt() then
        if k == "up" then
-@@ -266,6 +601,12 @@ function UserInputController:keypressed(k)
+@@ -266,6 +606,12 @@ function UserInputController:keypressed(k)
      end
    end
    local function horizontal()
@@ -1190,7 +1297,7 @@ index ed087f7f..84e91c32 100644
      if k == "left" then
        input:cursor_left()
      end
-@@ -336,65 +677,42 @@ function UserInputController:keypressed(k)
+@@ -336,65 +682,40 @@ function UserInputController:keypressed(k)
      end
    end
  
@@ -1241,21 +1348,22 @@ index ed087f7f..84e91c32 100644
 +  vertical()
 +  horizontal()
 +  newline()
-+  if self.allow_modify then modify() end
++  if self.allow_duplicate_line then modify() end
 +  copypaste()
 +  selection()
  
 -    cancel()
 -    submit()
-+  -- The widget's own submit/cancel flow (Decision 6): plain Enter
-+  -- submits, plain Escape cancels — ordinary widget behaviour, out through
-+  -- callbacks. Shift+Enter is a newline (newline() above); Ctrl+Escape is not a
-+  -- cancel. Editor/console callers that must not run these consume the key
-+  -- upstream (editor) or set no callbacks (console no-op).
++  -- The widget's own submit/cancel flow (Decision 6): plain
++  -- Enter submits, plain Escape cancels — ordinary widget
++  -- behaviour, out through callbacks. Shift+Enter is a newline
++  -- (newline() above); Ctrl+Escape is not a cancel.
++  -- Editor/console callers that must not run these consume the
++  -- key upstream (editor) or set no callbacks (console no-op).
 +  if Key.is_enter(k) and not Key.shift() then
-+    self:submit_flow(keys_pressed)
++    self:submit_flow()
 +  elseif k == 'escape' and not Key.ctrl() then
-+    self:cancel_flow(keys_pressed)
++    self:cancel_flow()
    end
  
    self:update_view()
@@ -1263,16 +1371,12 @@ index ed087f7f..84e91c32 100644
  end
  
  --- @param t string
--function UserInputController:textinput(t)
++-- Visibility is decided by the internal hidden-check (shown ->
++-- edit; hidden -> no-op). A shown widget always edits its live
++-- model state.
+ function UserInputController:textinput(t)
 -  self:update_view()
 -  if self.model:has_error() then
-+--- @param keys_pressed table?  read-only pressed-keys view
-+--- (doc/development/decisions/input.md, Decision 13)
-+-- Uniform textinput signature
-+-- (doc/development/decisions/input.md, Decision 9). Visibility is
-+-- decided by the internal hidden-check (shown -> edit; hidden ->
-+-- no-op). A shown widget always edits its live model state.
-+function UserInputController:textinput(t, keys_pressed)
 +  if not self.shown then
 +    if love.DEBUG then Log.debug('input: hidden no-op') end
      return
@@ -1283,14 +1387,14 @@ index ed087f7f..84e91c32 100644
      return
    end
    self.model:add_text(t)
-@@ -402,7 +720,13 @@ function UserInputController:textinput(t)
+@@ -402,7 +723,13 @@ function UserInputController:textinput(t)
  end
  
  --- @param k string
 -function UserInputController:keyreleased(k)
-+--- @param keys_pressed table?  read-only pressed-keys view
-+--- (doc/development/decisions/input.md, Decision 13)
-+function UserInputController:keyreleased(k, keys_pressed)
++--- @param sc string?    scancode; LÖVE's second argument,
++---                    unread
++function UserInputController:keyreleased(k, sc)
 +  if not self.shown then
 +    if love.DEBUG then Log.debug('input: hidden no-op') end
 +    return
@@ -1298,36 +1402,53 @@ index ed087f7f..84e91c32 100644
    local input = self.model
    self:update_view()
  
+@@ -509,6 +836,15 @@ function UserInputController:wheelmoved(x, y)
+   --- TODO
+ end
+ 
++-- The derived clicks are the framework's synthesis, for
++-- projects to bind; text editing has no use for them. Present
++-- because the chain calls every channel on its terminal tier.
++function UserInputController:singleclick()
++end
++
++function UserInputController:doubleclick()
++end
++
+ --- @param id userdata
+ --- @param x number
+ --- @param y number
 diff --git a/src/main.lua b/src/main.lua
-index a0bb4d31..bc61e28c 100644
+index a0bb4d31..1056fdf3 100644
 --- a/src/main.lua
 +++ b/src/main.lua
-@@ -352,6 +352,31 @@ function love.load()
+@@ -352,6 +352,32 @@ function love.load()
    end
    local ctrl = Controller
    --- MVC wiring
 +  -- The reusable seam now exists (free-function `dispatch` +
-+  -- the `build_widget_api` factory in consoleController.lua), so
-+  -- console/editor COULD rewire onto it. They stay on their own
-+  -- separate `UserInputController` instances anyway, because
-+  -- console's `inspect`-mode REPL state must persist independently
-+  -- of the project's (Decision 12) — a single shared instance
-+  -- would be clobbered across that boundary. Migration is
-+  -- therefore deliberately deferred (Decision 1), not blocked.
-+  -- UserInput M/V/C are provisioned FIRST — before the console —
-+  -- so the project env's compy.input (built during
-+  -- ConsoleController construction) can bind to the widget's OWN
-+  -- callbacks table at that moment (owner ruling 2026-07-20:
-+  -- compy.input.callbacks IS the widget's self.callbacks). The
-+  -- widget is a boot-provisioned instance; provisioning it early
-+  -- has no dependency on the console.
++  -- the `build_widget_api` factory in consoleController.lua),
++  -- so console/editor COULD rewire onto it. They stay on their
++  -- own separate `UserInputController` instances anyway,
++  -- because console's `inspect`-mode REPL state must persist
++  -- independently of the project's (Decision 12) — a single
++  -- shared instance would be clobbered across that boundary.
++  -- Migration is therefore deliberately deferred (Decision 1),
++  -- not blocked. UserInput M/V/C are provisioned FIRST — before
++  -- the console — so the project env's compy.input (built
++  -- during ConsoleController construction) can bind to the
++  -- widget's OWN callbacks table at that moment (owner ruling
++  -- 2026-07-20: compy.input.callbacks IS the widget's
++  -- self.callbacks). The widget is a boot-provisioned instance;
++  -- provisioning it early has no dependency on the console.
 +  local ui_m = UserInputModel(baseconf, InputEvalText)
 +  local ui_c = UserInputController(ui_m, true)
 +  local ui_v = UserInputView(baseconf.view, ui_c)
-+  -- init_view binds the view to the controller (self.view = v); it is NOT an activation/show.
++  -- init_view binds the view to the controller (self.view = v);
++  -- it is NOT an activation/show.
 +  ui_c:init_view(ui_v)
 +  -- App-wide handle for the widget: the compy.input
-+  -- wrappers and the overlay draw path resolve the
++  -- wrappers and the widget draw path resolve the
 +  -- controller through love.state (service-locator pattern).
 +  love.state.user_input_controller = ui_c
 +
@@ -1335,10 +1456,10 @@ index a0bb4d31..bc61e28c 100644
    redirect_to(CM)
    local CC = ConsoleController(CM, ctrl)
 diff --git a/src/types.lua b/src/types.lua
-index 0cfe8fd8..d27d3e7e 100644
+index 0cfe8fd8..8557fb51 100644
 --- a/src/types.lua
 +++ b/src/types.lua
-@@ -189,9 +189,70 @@
+@@ -189,9 +189,69 @@
  --- @field n_rows integer
  --- @field fpsc FPSC
  
@@ -1402,7 +1523,6 @@ index 0cfe8fd8..d27d3e7e 100644
 +--- @field hooks InputHooks
 +--- @field callbacks InputCallbacks
 +--- @field fn InputFn
-+--- @field keys_pressed table
 +
 +--- @class Compy
 +--- @field input CompyInput
