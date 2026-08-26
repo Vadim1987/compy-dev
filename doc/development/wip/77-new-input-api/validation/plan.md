@@ -301,6 +301,38 @@ code. Then TF2 resumes.
 > on TF2/TF3. **Owner ruling: run TF2 next as planned** (DI + TF + R must all be owner-accepted before
 > Phase B — TF still pending).
 
+> ## ⛔ PHASES B, C AND D ARE DISSOLVED — owner ruling, 2026-08-26
+>
+> **Not "collapsed into something else" — dissolved.** The three phases below stand as a record of
+> what was predicted; none of them will run.
+>
+> **The owner's reasoning, recorded in their terms.** B, C and D were *"an attempt to predict the
+> shape of work before release so it won't be forgotten. This shape effectively emerged — similar
+> to the guess but different. We do not need these placeholders any more."*
+>
+> - **B — the intent check — is done by the cold reviews.** `ACC-01-02` was exactly a delta check
+>   of the delivered solution against the original stakeholder ask, producing the satisfied /
+>   deviated split and hunting scaffolding-suspects under the heading *Vocabulary*. It was performed
+>   by a reviewer with **no stake in the work**, which B — a self-check — could not have been.
+>   `ACC-02-01` repeats it over the fixed tree.
+> - **C2 — the disposition table — emerged as the defect register.** Every finding mapped to a
+>   disposition and a sprint row, in `../reviews/ACC-01-02-findings-triage.md`. Ids instead of
+>   principle-mappings; the same function.
+> - **C1 and D are dissolved rather than discharged, and deliberately.** *"Principles enforced
+>   without abstract encoding. D was absolutely an abstract guess about how addressing B and C
+>   outcomes can look."* Rulings have instead been made **where the evidence is**, one at a time,
+>   against concrete rows — which is D's method without D's sitting.
+>
+> **One consequence, stated so it is not lost.** C1's named "jargon policy" now exists as three
+> concrete defect rows (`FIX-02-06/07/08`) rather than as one principle. The owner has ruled that
+> acceptable: principles are enforced at the row, not encoded abstractly first.
+>
+> **This ruling discharges the gate.** The B→C→D collapse was scheduled as *step zero of Phase G*
+> and is hereby settled ahead of it; Phase G no longer opens with it. The 2026-08-09 status block's
+> *"OPEN, GATED DECISION"* and its note that the three missing artifacts are *"a pending question,
+> not a settled substitution"* are **superseded** — the question is answered, and the answer is that
+> the artifacts were never needed.
+
 ### Phase B — Convergence check (Opus; judgment-lite; NO code edits)
 
 [PROPOSED 2026-07-19 addendum: B consumes DI1's verdict table as its evidence base for the

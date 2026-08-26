@@ -120,9 +120,22 @@ Lists: [`doc/development/smoke_checklists.md`](../../smoke_checklists.md). **Tag
 | **recon** | fetch-only reconnaissance | read-only; measures the 86+ we are behind |
 | **Phase U** | upstream reconciliation | `maze` is a **re-merge**, not a first one · pull each upstream into **its own branch** |
 | **Phase L** | ledger compaction | after the tree settles, so after U |
-| **Phase G** | final slice cut + PR assembly | **opens with the B→C→D collapse ruling** |
+| **Phase G** | final slice cut + PR assembly | |
 
-**Phase F's position is open** — the collapse ruling may absorb it.
+### Phases B, C, D — **dissolved** (owner ruling, 2026-08-26)
+
+They are absent from this roadmap by **ruling**, not by omission. They were a prediction of the
+shape of pre-release work; that shape emerged differently, so the placeholders go.
+
+- **B, the intent check** → done by the **cold reviews** (`ACC-01-02`, repeated at `ACC-02-01`) —
+  and by a reviewer with no stake, which a self-check could never be.
+- **C2, the disposition table** → emerged as the **defect register**.
+- **C1 and D** → dissolved outright: *principles are enforced at the row, without abstract
+  encoding first.* The parked calls below are that method.
+
+**This settled the gate early.** The collapse ruling was scheduled as step zero of Phase G; it is
+done, and G no longer opens with it. **Phase F** goes with them — its "final revalidation" is what
+`ACC-02-01` is.
 
 ---
 

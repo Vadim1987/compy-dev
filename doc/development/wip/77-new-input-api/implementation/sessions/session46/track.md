@@ -609,3 +609,45 @@ detail docs: BUG-01-05 sibling check · FIX-02-09 fix-with-BUG-01-05 ·
 ACC-02-04 must run on `newinput-edge` · **ACC-02-05 sapper section C is
 EXPECTED to fail (P19)** · DEC-01 blocks slice cutting · wip/ out of DEC-01
 scope.
+
+## 2026-08-26 — OWNER RULING: phases B, C, D DISSOLVE
+
+Owner caught that the roadmap already omitted B/C/D — i.e. I had silently
+presupposed the collapse. Owned it: that is exactly the drift the plan
+forbids ("never silently drifted from"). Now a RULING, not an omission.
+
+**Owner's framing (recorded verbatim in-plan):** B/C/D were "an attempt to
+predict the shape of work before release so it won't be forgotten. This shape
+effectively emerged — similar to the guess but different. We do not need
+these placeholders any more."
+
+**Not "collapsed into" — DISSOLVED.** The distinction matters and the plan
+says so:
+- **B (intent check)** → the COLD REVIEWS do it. ACC-01-02 was literally a
+  delta check vs the original ask, with satisfied/deviated buckets and
+  scaffolding-suspect hunting under "Vocabulary". And done by a reviewer with
+  **no stake** — which B, a self-check, could never have been.
+- **C2 (disposition table)** → emerged as the defect register. Ids instead of
+  principle-mappings; same function.
+- **C1 + D** → dissolved outright. "Principles enforced without abstract
+  encoding. D was absolutely an abstract guess about how addressing B and C
+  outcomes can look."
+
+**Consequence stated so it is not lost:** C1's named "jargon policy" now
+exists as 3 concrete rows (FIX-02-06/07/08) rather than one principle. Owner
+ruled that acceptable — enforce at the row, do not encode abstractly first.
+
+**This DISCHARGED A GATE AHEAD OF SCHEDULE.** The B→C→D collapse ruling was
+scheduled as *step zero of Phase G*. It is settled now. G no longer opens
+with it, and the 2026-08-09 status block's "OPEN, GATED DECISION" +
+"pending question, not a settled substitution" are superseded — the answer is
+that the artifacts were never needed.
+
+**Phase F goes with them** — its "final revalidation, one page" is what
+ACC-02-01 (second cold review) is.
+
+**Still pending owner nod:** my U/L/G rename proposal (REC-01 / MERGE-01 /
+retire L / PR-01). Note the same dissolution logic applies hardest to **L**:
+2 of its 3 items are absorbed (DEC-01-04 supersets its excision list) or
+parked (Decision 12), leaving one prose edit. U is NOT analogous — that work
+genuinely has not happened.
