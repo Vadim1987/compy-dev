@@ -1237,16 +1237,29 @@ Not commissioned for closure; each may never need action.
   applying. A site may be declined again with
   fuller reasoning; what it may not do is disappear silently.
 
-### `compy.input` is rebuilt per project environment, not once at namespace setup
+### `compy.input` is built once for the application, not per project run
 
-- **Where:** `src/controller/consoleController.lua` — the function that
-  builds `compy.input` is called every time a project environment is
-  prepared, so the table is reconstructed each time rather than built once.
-- **Disposition:** Accepted, no action expected. The `show`/`hide` closures
-  resolve the live widget instance dynamically at call time, so they
-  reach the current widget regardless of when the table was built —
-  arguably more resilient than a build-once table would be, since it holds
-  up if the widget instance is ever reassigned.
+- **Where:** `src/controller/consoleController.lua` — `get_compy_input()` runs
+  inside `prepare_project_env`, which `ConsoleController.new` calls **once**, at
+  construction. Every project run therefore shares one surface and one private
+  `state`. Env cloning does not separate them either: `table.clone` copies the
+  surface's metatable, and that metatable closes over the same `state`.
+- **Corrected 2026-08-26.** This entry previously claimed the opposite — *"the
+  function that builds `compy.input` is called every time a project environment
+  is prepared"* — and accepted the debt on that premise. The call graph
+  contradicts it, and the wrong premise closed the question: it is what made an
+  application-lifetime store look run-scoped, which is how the hidden-`configure`
+  draft came to survive a project stop (fixed; see `internals/user_input.md`,
+  *`configure(config)` — the live-reconfigure surface*).
+- **Disposition:** Accepted, no action expected — but for a different reason than
+  the one recorded before. The `show`/`hide` closures resolve the live widget at
+  call time, so a build-once surface still reaches the current widget. What the
+  arrangement costs is that **every store the closure owns outlives every
+  project**, so anything run-scoped must live on the widget (where teardown
+  reaches it) rather than in `state`. `callbacks` and `pending` both do;
+  `shortcuts` and `hooks` are wiped by name at teardown instead.
+- **Revisit:** if a third run-scoped store is ever added here, prefer moving the
+  whole `state` to a per-run lifetime over adding a third teardown arrangement.
 
 ### Console debug hotkeys are ad-hoc `if`-navigation
 
