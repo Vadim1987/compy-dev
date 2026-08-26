@@ -65,8 +65,11 @@ git diff $BASE $TIP -- \
 # Renumber them if the order ever changes; the letter is the position.
 
 # 3a · input permanent docs
+# [S46] doc/tall_blocks.md and doc/development/smoke_checklists.md added --
+# both are feature-era docs that fell outside every pathspec. See §4.1.
 git diff $BASE $TIP -- \
-  CHANGELOG.md doc/input_api.md doc/development/internals/user_input.md \
+  CHANGELOG.md doc/input_api.md doc/tall_blocks.md \
+  doc/development/internals/user_input.md doc/development/smoke_checklists.md \
   doc/development/decisions/ doc/development/technical_debt/ doc/development/tests.md \
   > "$OUT/3a-input-docs.patch"
 
@@ -74,10 +77,13 @@ git diff $BASE $TIP -- \
 # .gitignore rides here: its only feature-era change is the editor-artifact
 # entry added when a stray tests/input/*.swp was untracked.
 # The highlight regression spec is EXCLUDED — it rides 3c with its fix (§1.1).
+# [S46] harmony_input_spec.lua and util/key_spec.lua added -- both were
+# outside every pathspec. See §4.1.
 git diff $BASE $TIP -- \
   tests/editor/editor_spec.lua \
   tests/input/ ':(exclude)tests/input/highlight_regression_spec.lua' \
   tests/helpers/input_fixture.lua tests/helpers/input_session.lua tests/mock.lua \
+  tests/harmony_input_spec.lua tests/util/key_spec.lua \
   .gitignore \
   > "$OUT/3b-tests.patch"
 
@@ -108,10 +114,12 @@ HLRE='function UserInputModel:highlight\(\)$'
 git diff $BASE $TIP -- $UIM | awk -v re="$HLRE" '
   /^diff --git|^index |^--- |^\+\+\+ /{print;next}
   /^@@/{keep=!($0 ~ re)} keep' > "$OUT/3f-model-view-util.patch"
+# [S46] src/harmony/ added -- production code that fell outside every
+# pathspec and would have shipped a PR missing it. See §4.1.
 git diff $BASE $TIP -- \
   src/model/consoleModel.lua src/model/editor/searchModel.lua \
   src/model/interpreter/eval/evaluator.lua \
-  src/view/input/userInputView.lua src/util/key.lua \
+  src/view/input/userInputView.lua src/util/key.lua src/harmony/ \
   >> "$OUT/3f-model-view-util.patch"
 
 # 3g · tracked example migrations
@@ -399,6 +407,30 @@ outside every slice because `SET1` named three `conventions/` files individually
 been dropped from the PR silently. `SET1` now names the directory. Run this check after **any**
 commit that adds a file, not only before Phase G — a pathspec written against a tree cannot
 anticipate one.
+
+### 4.1 [S46] The check fired a third time — five files, one of them production code
+
+Run 2026-08-26 against tip `dd43697c`: **100 files in the change, 95 in the union of the
+slices.** Five fell outside every pathspec and would have been dropped from the PR silently:
+
+| file | + | belongs in | why it was missed |
+|---|---|---|---|
+| `src/harmony/init.lua` | 8 | `3f` | **production code**; no code slice named `src/harmony/` |
+| `doc/development/smoke_checklists.md` | 462 | `3a` | added later; `3a` listed `tests.md` but not its sibling |
+| `tests/harmony_input_spec.lua` | 119 | `3b` | added later; `3b` lists `tests/input/` and named helpers only |
+| `tests/util/key_spec.lua` | 43 | `3b` | added later; `tests/util/` was in no pathspec |
+| `doc/tall_blocks.md` | 72 | `3a` | added later; `3a` named `doc/input_api.md` individually |
+
+**This is the same failure a third time**, and the pattern is now unmistakable: *a pathspec that
+names files cannot see a file that did not exist when the pathspec was written.* It first cost
+`conventions/docs.md`, which is why `SET1` names a directory. It has now cost four more docs and
+tests, and — new, and worse — **eight lines of production code**.
+
+**The mitigation is not just these five additions.** Prefer a **directory** over a file list
+wherever the directory's contents are all in-scope (`3g` already does this deliberately, and says
+so). Where a file list is genuinely required, this check is the only thing standing between the
+list and a silent omission, so **run §4 after any commit that adds a file** — which is what the
+section above already says, and what was not done between session27 and now.
 
 `sort -u` above hides the two intentional file-level overlaps introduced in §1.1 — Set-1 docs appear
 in both `1a` and `1b`, and `userInputModel.lua` in both `3f` and `3c`. The completeness half of the
