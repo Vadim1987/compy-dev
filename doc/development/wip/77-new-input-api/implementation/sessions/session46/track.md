@@ -579,3 +579,33 @@ heading says "NOT A DECISION, de-facto behaviour". By conventions/docs.md's
 own rule (behaviour predating the feature, merely written down, deserves no
 ledger entry) it belongs in an internals guide, not the ledger. Listed with a
 slug anyway so the count works either way.
+
+## 2026-08-26 — four open calls closed by owner; ROADMAP.md created
+
+Owner closed all four, each with a TRIGGER rather than an answer:
+- **slug table** — no review needed, "I can always grep-and-rename"
+- **Decision 12** — STAYS in place; requires context; owner disposes during
+  their own review
+- **highlighter sentinel** — discuss when we fix the defect (BUG-01-02)
+- **ruled-or-swept (14 remarks)** — discuss when we enter that step
+
+Recorded all four in the roadmap's "Parked, with the moment each gets
+answered" table — deliberately NOT as open questions, since each has a
+trigger. An open question with no trigger is what rots.
+
+**Created `wip/77-new-input-api/ROADMAP.md`** — owner asked to "stabilize a
+roadmap I can use to move". Deliberately a SEPARATE doc from plan.md:
+plan.md is reasoning + record, carries 3 dated status blocks, never
+retro-edited → unusable as a "what next" view. Roadmap = one page, ordered,
+current. Added a NAVIGATION block at the top of plan.md's Phases section
+pointing to it ("come here for why, go there for what next").
+
+Roadmap contents: state table (HEAD/suite/gate/slices/tags/upstream-86) ·
+ACC-01 done · the 4 sprints with **all 28 rows** · ACC-02 (7 steps, blocked) ·
+release path · parked-with-triggers · one-line sequence.
+
+Carried the per-row gotchas INTO the roadmap so they are not lost in the
+detail docs: BUG-01-05 sibling check · FIX-02-09 fix-with-BUG-01-05 ·
+ACC-02-04 must run on `newinput-edge` · **ACC-02-05 sapper section C is
+EXPECTED to fail (P19)** · DEC-01 blocks slice cutting · wip/ out of DEC-01
+scope.

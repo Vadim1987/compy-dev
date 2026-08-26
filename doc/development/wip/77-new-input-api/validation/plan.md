@@ -136,6 +136,11 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 >   [`notes/S46-repo-head-inventory.md`](notes/S46-repo-head-inventory.md).
 > - **Baseline is 968/0/0/10**, not the 955/0/0/3 recorded above.
 
+> **NAVIGATION — added 2026-08-26.** This document is the reasoning and the record, and it carries
+> three dated status blocks because nothing in it is retro-edited. **For the ordered, current view
+> of what happens next, read [`../ROADMAP.md`](../ROADMAP.md)** — one page, maintained as the
+> sequence moves. Come here for *why*, go there for *what next*.
+
 ## Phases
 
 Ordering is load-bearing: A3 (test fidelity) precedes any ruling that cites green tests
