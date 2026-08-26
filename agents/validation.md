@@ -162,6 +162,18 @@ legitimate, and all deserve a stated judgement**:
 This list is the successor's opening checklist whenever the previous session was
 analysis-heavy.
 
+## Roadmap representation
+
+**Authority: [`agents/rules/roadmap.md`](rules/roadmap.md)** — materialised 2026-08-26 from this
+phase's own mistakes. One nested roadmap and never a second ledger (the TF2 spinoff became a second
+live timeline and cost weeks); numbering that matches execution order, with a crosswalk on every
+renumber; **ordering by blast radius rather than severity**; the `KIND-sprint-task` id convention;
+and the renumber-vs-rename test — *if an id appears in code, use names, because a missed citation
+under renumbering resolves to the wrong thing instead of dangling.*
+
+**The live roadmap is `doc/development/wip/77-new-input-api/ROADMAP.md`.** Read it for *what next*;
+read `validation/plan.md` for *why*.
+
 ## Comment References
 
 **Authority on comment content: [`agents/rules/commenting.md`](rules/commenting.md)** — the
@@ -283,7 +295,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session46/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session47/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 

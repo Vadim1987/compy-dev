@@ -910,3 +910,44 @@ FIX-01 list (both sat between the same anchors). Verified via `git diff`
 (6 removed CHG-01 lines) and restored in full. **Fourth mechanical slip this
 session — all four from acting on a text range without checking what else it
 contained.**
+
+## 2026-08-26 — WRAP
+
+Owner directed: materialize the roadmap rules + reference from orientation,
+then wrap and commission the successor toward execution.
+
+**Materialized `agents/rules/roadmap.md`** — 5 rules, all earned this session:
+1. one nested roadmap, never a second ledger (the TF2 lesson, stated with its
+   history so nobody repeats it)
+2. numbering follows execution order; crosswalk on every renumber
+   — **incl. the renumber-vs-rename test**: id in code → use NAMES, because a
+   missed citation under renumbering resolves to the WRONG THING instead of
+   dangling
+3. order by BLAST RADIUS not severity ("severity is a property of the defect;
+   blast radius is a property of FIXING it, and only the second orders work")
+4. `KIND-sprint-task` id conventions; inserted phases take NAMES not letters
+5. two honesty habits: parked questions carry their trigger; **omission is not
+   a ruling** (the B/C/D drift I committed)
+
+Referenced from **AGENTS.md** (the orientation entry every agent reads) AND
+from agents/validation.md, with a pointer that ROADMAP.md = what next,
+plan.md = why.
+
+**Wrapped per agents/sessions.md §5:** report.md written (distilled, not a
+retelling), session47/prompt.md written, pointer repointed 46→47.
+
+**Successor framing — deviation noted in the prompt itself.** sessions.md's
+table says cognitive-heavy → successor gets REVALIDATION. Owner directed
+EXECUTION. Honoured the owner, but **folded the revalidation instinct into the
+first move** ("verify before acting"), which is also this phase's most-repeated
+lesson — several rows are marked "reviewer only" and unconfirmed.
+
+Told the successor explicitly: if a row turns out NOT to be a defect, **close
+it and say so** rather than fixing something unbroken.
+
+Flagged 3 rows as owner-not-agent decisions (highlighter design call, the
+on_text_entered/after_submit surface question, tixy ratify-or-revert).
+
+Carried the 4 standing cautions incl. both grep failure modes, `git add -A`
+(the guide still says it in one place — told them not to follow it there), and
+the gate's scope.
