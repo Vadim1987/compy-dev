@@ -1,8 +1,13 @@
 # PR description — the new input API
 
-Draft for the Main feature PR. Written to the strategic frame: a reviewer with
-**only this text and `doc/input_api.md`** should be able to judge it. Nothing
-below cites `wip/77`, and no term is used that the guide does not define.
+For the Main feature PR. Written to the strategic frame: a reviewer with **only
+this text and `doc/input_api.md`** should be able to judge it. Nothing below
+cites a working tree, and no term is used that the guide does not define.
+
+**Reconciled against the diff on 2026-08-26.** An earlier draft described a
+member that does not exist and denied a capability the code ships; both were
+found by a cold reviewer reading this text against the patches, which is the
+audience it is written for.
 
 ---
 
@@ -68,14 +73,17 @@ so a raise in a shortcut surfaces the same way as a raise anywhere else.
 | `compy.input.hooks[event]` | One function per event. A project's own `love.<event>` is seeded here automatically, so existing code keeps working — and now runs *while a prompt is up*, which is the lockout fix. |
 | `compy.input.shortcuts[event][combo]` | Bind `ctrl+s` without hand-testing modifiers. Removes the commonest hand-rolled block in the examples. |
 | combo classes — `alt+*` | "Every Alt chord is ours." Without it a project writes one entry per key, or hand-tests modifiers and gets the exclusions subtly wrong. One example did exactly that. |
-| `compy.input.keys_pressed` | Held keys, readable **outside** an event. The callback argument cannot serve a per-frame renderer; a real project needed this and had been maintaining its own mirror. |
+| `Key.any_pressed` / `Key.shift` / `Key.ctrl` / `Key.alt` | Held keys, readable **outside** an event — the callback argument cannot serve a per-frame renderer, and a real project had been maintaining its own mirror. Note these live on the existing `Key` global, **not** on `compy.input`: asking the device is not an input-routing concern, and putting it on the new surface would have implied a second source of truth for key state. |
 | `compy.input.fn.ignore_repeat / stop_here / side_run` | Three declarations a binding can make about repeats and propagation, so the handler does not have to know its own context. Without them every handler ends in `return true` and carries that knowledge wherever it is reused. |
 | `compy.before_exit` | A project that changed global device state (key-repeat, text input) gets one chance to put it back. Nothing else restores it. |
 
 **Deliberately absent**, and worth stating because a reviewer may look for them:
 
-- **No pointer shortcuts.** A combo names a key; a pointer event has none.
-  Pointer starts at the hook tier.
+- **No modifier-only pointer combos.** Pointer *does* take shortcuts — a button
+  serialises as its own trigger, so `shortcuts.mousepressed['ctrl+mouse2']` is
+  one vocabulary with `ctrl+s` rather than a second one. What has no binding is
+  a modifier with **no** button named, and the channels with no discrete trigger
+  at all (`mousemoved`, `wheelmoved`, `touchmoved`) match on held modifiers only.
 - **No framework tier above shortcuts.** An earlier draft had one, claiming
   Enter/Escape while a widget was shown. It is gone: a project shortcut can bind
   Enter and win, like any other combo.
@@ -106,9 +114,11 @@ Recorded, not blocking. Each is in the debt ledger with options.
 1. **Should a shown widget consume clicks within its bounds?** Nothing does
    bounds checks today. The chain now gives a project the means to decide, which
    is a different answer from the framework deciding for it.
-2. **Should pointer gain a combo vocabulary** — a modifier-only binding such as
-   `ctrl` plus a button? Cheap now that pointer is on the chain, but it is new
-   vocabulary and nobody has asked for it.
+2. **Should a modifier alone bind a pointer event** — `ctrl` with no button
+   named? Buttons already bind (`ctrl+mouse2`); what is absent is the
+   button-less form. Cheap to add, but it is vocabulary nobody has asked for,
+   and it would make every existing pointer binding conditional on nothing else
+   being held.
 3. **Three usability defects predating this work**, deliberately left alone to
    keep this PR to the ask, and because each may have a reason not visible from
    here: a top-level raise and a handler raise surface differently; the error
@@ -125,12 +135,18 @@ Recorded, not blocking. Each is in the debt ledger with options.
 
 ## Verification
 
-- `busted tests` → **923 passing, 0 failures, 3 pending** (the three are
-  documented gaps awaiting a consumer, not skipped work).
+- `busted tests` → **968 passing, 0 failures, 0 errors, 10 pending.** The ten
+  pending are documented gaps, not skipped work: three are routing-grid cells
+  that are not black-box observable, and seven cover combos the framework
+  reserves, whose behaviour is the framework's contract rather than this API's.
+  `doc/development/tests.md` records the distinction.
 - The contract suite drives the **real** production path throughout: the real
   `love.handlers` gateway, a real `ConsoleController`, and the real route
   installer — not a simulation of them.
 - Every claim in `doc/input_api.md` is pinned by at least one row.
 - **Not covered by tests, and needing a human at a screen:** anything that
-  reaches the screen or a game — the overlay paint, the migrated examples, and
-  the click paths. A smoke-test plan accompanies this PR.
+  reaches the screen or a game — the compositing paint, the migrated examples,
+  and the click paths. Nothing in CI can press a key, and the detached example
+  repositories have no suites at all. **`doc/development/smoke_checklists.md`
+  ships in this PR** and carries a runnable list per affected example, each row
+  stating its expected result so a failure is unambiguous.

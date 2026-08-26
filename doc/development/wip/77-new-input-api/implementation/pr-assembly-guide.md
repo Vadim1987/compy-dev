@@ -29,7 +29,83 @@ TIP=$(git rev-parse HEAD)        # or the specific landed tip you are slicing
 
 ---
 
+## 1.0 [S46] Derive the classification, do not maintain it — the pathspecs are an OUTPUT
+
+**Owner correction, 2026-08-26.** What is static in this procedure is the **anchor baseline sha**,
+not the pathspecs. The pathspecs were never meant to be a list somebody keeps up to date; they are
+meant to be **worked out as a discovery step each time, from the change itself**, immediately
+before the slices are built.
+
+**Why this is not a style preference.** Three times now a file has fallen outside every pathspec
+(§4.1). Each time the cause was identical: a list of filenames cannot see a file that did not exist
+when the list was written. A maintained list makes silent omission the *default* and correctness
+contingent on remembering to run a check afterwards. Deriving the classification makes omission
+**impossible to express** — an unclassified file stops the build.
+
+**So the order is: enumerate → classify → assert nothing is unclassified → cut.** Run this first;
+everything in §1 below is its output.
+
+```sh
+# 1 · enumerate the WHOLE change, wip excluded. This is the authority.
+git diff $BASE $TIP --name-only -- . ':(exclude)doc/development/wip/77-new-input-api/**' \
+  | sort > /tmp/_all.txt
+
+# 2 · classify by RULE, not by filename list. Directory patterns, so a new
+#     file in a known area classifies itself.
+classify() {
+  case "$1" in
+    AGENTS.md|CLAUDE.md|agents/*)                                      echo 2 ;;
+    doc/development/conventions/*|doc/development/docs.md)             echo 1 ;;
+    doc/development/drawing_system.md|doc/development/overview.md)     echo 1 ;;
+    doc/development/internals/event_dispatch_layers.md)                echo 1 ;;
+    doc/development/internals/console.md)                              echo 1 ;;
+    doc/development/internals/editor.md)                               echo 1 ;;
+    doc/development/internals/project_sandbox_env.md)                  echo 1 ;;
+    doc/development/internals/examples/*)                              echo 1 ;;
+    CHANGELOG.md|doc/*.md)                                             echo 3a ;;
+    doc/development/internals/user_input.md)                           echo 3a ;;
+    doc/development/smoke_checklists.md|doc/development/tests.md)      echo 3a ;;
+    doc/development/decisions/*|doc/development/technical_debt/*)      echo 3a ;;
+    tests/input/highlight_regression_spec.lua)                         echo 3c ;;
+    tests/*|.gitignore)                                                echo 3b ;;
+    src/controller/controller.lua|src/controller/editorController.lua) echo 3d ;;
+    src/controller/projectInputController.lua)                         echo 3d ;;
+    src/controller/userInputController.lua)                            echo 3e ;;
+    src/controller/consoleController.lua|src/main.lua|src/types.lua)   echo 3e ;;
+    src/examples/*)                                                    echo 3g ;;
+    src/model/*|src/view/*|src/util/*|src/harmony/*)                   echo 3f ;;
+    *)                                                                 echo UNCLASSIFIED ;;
+  esac
+}
+
+# 3 · HARD GATE. An unclassified file is a stop, not a warning.
+while read -r f; do
+  [ "$(classify "$f")" = UNCLASSIFIED ] && echo "UNCLASSIFIED: $f"
+done < /tmp/_all.txt | tee /tmp/_unclassified.txt
+[ -s /tmp/_unclassified.txt ] && { echo "STOP: classify these before cutting slices"; exit 1; }
+```
+
+**When a file lands in `UNCLASSIFIED`, that is the procedure working.** Decide which set it
+belongs to, add a *rule* covering its area (not its name), and re-run. If it belongs to no set,
+that is a finding about the change, not about this guide.
+
+**Verified 2026-08-26 at tip `388e161d`:** the classifier assigns all **100** files with zero
+unclassified, and its partition matches the existing slices exactly — 3a 11, 3b 21, 3d 3, 3e 4,
+3f 7, 3g 12, Set 1 26, Set 2 15.
+
+**One limit, by construction.** This classifier is a *file* → set map, so it governs file-level
+completeness only. The two carve-outs in §1.1 split *within* a file — `userInputModel.lua`
+legitimately appears in both `3c` and `3f` — and remain hunk-level operations layered on top. That
+is the one place where `3c`'s content is not derivable from the classification.
+
+---
+
 ## 1. Regenerate the slices (pathspec = source of truth)
+
+> **[S46] Heading kept for its inbound references; the claim in it is superseded by §1.0.** The
+> pathspecs below are the *output* of the classification, not its source of truth. When they
+> disagree with §1.0's rules, §1.0 wins and these lines get regenerated.
+
 
 Each command writes one patch. The pathspecs are exhaustive and disjoint — together they equal the
 full wip-excluded diff (verification in §4). Regenerate all of them:

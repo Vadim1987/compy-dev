@@ -281,3 +281,35 @@ changes**.
   ← `ConsoleController.new` line 80, called ONCE → app-lifetime. Found no
   code clearing it. Structurally CONFIRMED; **reachability not traced** —
   flagged as such, not asserted.
+
+## 2026-08-26 — owner correction: pathspec is DERIVED, not maintained
+
+Owner: they never assumed the pathspec was static — expected it **figured out
+as a first discovery step** preceding the slice build. **Static = the anchor
+baseline shas only.** Better design, and it makes the §4.1 defect class
+*impossible to express* rather than merely detectable.
+
+Implemented as guide **§1.0**: enumerate → classify by RULE (directory
+patterns) → **hard gate on UNCLASSIFIED** → cut. An unclassified file exits 1.
+Verified: classifies all 100, zero unclassified, partition matches existing
+slices exactly (3a 11, 3b 21, 3d 3, 3e 4, 3f 7, 3g 12, S1 26, S2 15).
+Stated limit: file→set map only; §1.1's two carve-outs are hunk-level
+(`userInputModel.lua` legitimately in both 3c and 3f) and layer on top.
+
+**Answered the owner's question — review NOT undermined, do not repeat.**
+Checked rather than recalled: the 5-file fix landed in `16aa25e2` BEFORE the
+kit was built. All five present in the kit's patches. **85 kit files + 15
+withheld agentic = 100.** Reviewer saw the complete change set minus exactly
+what we intended to withhold.
+
+**PR description rewritten** (the blocker). Both claims verified in code first:
+- `keys_pressed`: line 71, zero hits in src/ → replaced with the real surface,
+  `Key.any_pressed`/`shift`/`ctrl`/`alt`, + why it lives on `Key` not
+  `compy.input` (asking the device is not a routing concern).
+- "No pointer shortcuts": **FALSE**. `projectInputController.lua:53-54`
+  serialises `mouseN`; its own comment line 45 says "'ctrl+s' and
+  'ctrl+mouse2' are one vocabulary, not two." Rewritten as the true narrower
+  claim (no modifier-only/button-less form). Open question 2 rewritten — it
+  asked for a capability half-shipped.
+- Counts 923/0/3 → **968/0/0/10** + the 3-and-7 pending explanation.
+- Smoke plan claim now concrete (smoke_checklists.md ships in 3a).
