@@ -651,3 +651,36 @@ retire L / PR-01). Note the same dissolution logic applies hardest to **L**:
 2 of its 3 items are absorbed (DEC-01-04 supersets its excision list) or
 parked (Decision 12), leaving one prose edit. U is NOT analogous — that work
 genuinely has not happened.
+
+## 2026-08-26 — rename approved and applied; Decision 11 trail assessed
+
+**Rename applied (owner approved):** `recon` → **REC-01** and LIFTED OUT of
+the release path (it is discovery that can spawn defects, not release work) ·
+Phase U → **MERGE-01** (4 sub-steps, one per repo) · Phase G → **PR-01**
+(5 sub-steps, shrunk — its opener was the collapse ruling, now settled) ·
+**Phase L RETIRED**. Applied in ROADMAP.md + plan.md ordering line.
+
+**Phase L retires losing nothing** — its 3 items:
+1. excise collapsed decisions → DEC-01-04 (a SUPERSET: also removes 16)
+2. Decision 11's withdrawn-rationale trail → **already a row: REMARK `:429`**
+   inside FIX-02-01. Same item, second source.
+3. demote Decision 12 → parked, owner disposes during review
+
+**Owner asked: is the Decision 11 item important? Answer: no — but there is a
+TRAP in how it gets removed.** The passage is TWO paragraphs and only one goes:
+- *"Why the original rationale was withdrawn"* → **REMOVE**. Quotes and argues
+  against a draft justification that never shipped = exactly what the owner's
+  rule retires.
+- *"Changed baseline behaviour"* immediately after → **KEEP**. Records a real
+  **pre-feature** deviation: a running project without its own keyboard
+  handler used to leave the console callback installed → unhandled input
+  accumulated in the hidden console and **Enter could evaluate it**. That is
+  the plan's own "deviation from pre-feature functionality" category. A
+  wholesale block sweep would take it.
+
+**One fact inside the removed paragraph, noted as already-generalised:** the
+keyboard/pointer asymmetry was INTRODUCED by this feature, not inherited
+(`release_keyboard_route` did not exist at the PR base). That is precisely the
+error `conventions/docs.md`'s "de-facto behaviour has a boundary" rule exists
+to prevent — lesson already captured, only the instance is being deleted.
+Wrote the two-paragraph caution into the FIX-02-01 triage.

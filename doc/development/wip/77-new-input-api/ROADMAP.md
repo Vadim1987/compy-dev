@@ -113,14 +113,57 @@ Lists: [`doc/development/smoke_checklists.md`](../../smoke_checklists.md). **Tag
 
 ---
 
-## ⬜ The release path
+## ⬜ REC-01 — upstream reconnaissance — *discovery, not release*
 
-| step | what | note |
+**Renamed from "recon" and lifted out of the release path (owner, 2026-08-26)**, because it is not
+release work: it measures **86+ commits** of drift we currently cannot see, and if upstream moved in
+our surfaces its output is **new defect work**. It may spawn a sprint. Fetch-only, read-only;
+nothing merges here.
+
+| id | step |
+|---|---|
+| REC-01-01 | fetch every remote; measure the real drift against the pinned tags |
+| REC-01-02 | assess whether it touched our surfaces — the reported edge-side editor overhaul above all |
+| REC-01-03 | triage anything it surfaces into a sprint, or record that it surfaced nothing |
+
+## ⬜ MERGE-01 — upstream reconciliation
+
+*(was Phase U — renamed, unchanged in substance.)* Four repos, each with its own remote and its own
+PR.
+
+| id | step | note |
 |---|---|---|
-| **recon** | fetch-only reconnaissance | read-only; measures the 86+ we are behind |
-| **Phase U** | upstream reconciliation | `maze` is a **re-merge**, not a first one · pull each upstream into **its own branch** |
-| **Phase L** | ledger compaction | after the tree settles, so after U |
-| **Phase G** | final slice cut + PR assembly | |
+| MERGE-01-01 | `maze` | a **re-merge**, not a first one — reconciled already at a base dated 2026-07-24 |
+| MERGE-01-02 | `keyboard` | merged at S37; ancestry preserved so re-merges stay cheap |
+| MERGE-01-03 | `balloons` | zero divergence today |
+| MERGE-01-04 | the platform repo | the big one — 86+ behind |
+
+**Mechanic, standing:** pull each upstream into **its own branch**; never merge into the working
+branch as the first move.
+
+## ⬜ PR-01 — assembly
+
+*(was Phase G — renamed and shrunk. Its opening item, the B→C→D collapse ruling, is already
+settled; its checklists are written; its description was rewritten.)*
+
+| id | step |
+|---|---|
+| PR-01-01 | the final slice cut — **the shipping one**, after MERGE-01 |
+| PR-01-02 | the justification table in the PR description |
+| PR-01-03 | reviewability gate: `doc/input_api.md` + the description, alone |
+| PR-01-04 | open the coordinated PRs — platform + three example repos |
+| PR-01-05 | the `wip/77` deletion ruling — **owner-gated, after the PRs are up** |
+
+### Phase L — **retired** (owner-approved, 2026-08-26)
+
+Ledger compaction had three items and **none needs a phase**:
+
+1. excise the collapsed decisions → **DEC-01-04**, which is a *superset* (it also removes 16);
+2. remove Decision 11's withdrawn-rationale trail → **already a row**: it is REMARK `:429`, inside
+   FIX-02-01;
+3. demote Decision 12 → **parked**, the owner disposes it during review.
+
+Retiring L therefore drops nothing.
 
 ### Phases B, C, D — **dissolved** (owner ruling, 2026-08-26)
 
@@ -156,4 +199,4 @@ Not open questions to chase — each has a trigger:
 
 ## The one-line sequence
 
-**ACC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 } → ACC-02 → recon → U → L → G**
+**ACC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 } → ACC-02 → REC-01 → MERGE-01 → PR-01**

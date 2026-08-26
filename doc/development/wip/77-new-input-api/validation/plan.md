@@ -122,8 +122,12 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 >   them in frozen session dirs; a crosswalk in the sprint's close covers a reader who lands on
 >   one. The reasoning is recorded there.
 > - **Agreed ordering (owner, 2026-08-26, revised same day):** **ACC-01 → BUG-01 + FIX-01 + FIX-02
->   + DEC-01 → ACC-02 (opening with a second cold review) → recon → U → L → G**, with the **B→C→D collapse ruling as step zero of G** — ruled where the evidence is complete and where its
->   output, the justification table, is needed anyway. Phase F's place in that line is open.
+>   + DEC-01 → ACC-02 (opening with a second cold review) → **REC-01 → MERGE-01 → PR-01**.
+>   **Renamed 2026-08-26 (owner):** `recon` → **`REC-01`** and lifted *out* of the release path,
+>   being discovery that can spawn defects rather than release work; Phase U → **`MERGE-01`**;
+>   Phase G → **`PR-01`**, shrunk; **Phase L retired** — its three items are absorbed by DEC-01-04,
+>   already a row inside FIX-02-01, or parked. **Phases B, C, D and F are dissolved** (ruling
+>   above), so the collapse ruling is no longer step zero of anything — it is settled.
 > - **Phase FIX** is new, and holds small already-diagnosed defects as a batch. Its first row is
 >   **10 ephemeral citations in documents that survive `wip/77` deletion** — seven of them in
 >   `doc/development/smoke_checklists.md`, four of those being `wip/` **paths** rather than bare

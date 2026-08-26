@@ -122,6 +122,26 @@ before being kept or dropped.
 >
 > *"historical references (when exactly was something decided) bear no value, strip them"*
 
+**`:429` is also Phase L's item 2** — *"remove Decision 11's withdrawn-rationale audit trail"* —
+arriving from a second source. Retiring Phase L therefore loses nothing: the item is this row.
+
+**A trap in how `:429` gets executed.** The passage it sits on contains **two paragraphs, and only
+one should go.**
+
+- *"Why the original rationale was withdrawn"* — **remove.** It quotes and argues against a draft
+  justification that never shipped, which is exactly what the owner's rule retires.
+- *"Changed baseline behaviour"*, immediately after — **KEEP.** It records a real deviation from
+  **pre-feature** behaviour: a running project without its own keyboard handler used to leave the
+  console callback installed, so unhandled input accumulated in the hidden console and Enter could
+  evaluate it. That is the plan's own "deviation from pre-feature functionality" category, and
+  sweeping the block wholesale would take it.
+
+**One fact inside the removed paragraph is worth not losing**, though it need not stay here: the
+keyboard/pointer asymmetry was **introduced by this feature, not inherited** — `release_keyboard_route`
+did not exist at the PR base. That is precisely the error `conventions/docs.md`'s *"de-facto
+behaviour has a boundary"* rule was written to prevent, so the lesson is already generalised; only
+the instance is being deleted.
+
 **These are not two local edits — they are one owner principle applying to the whole file**, and
 they overlap the parent plan's existing row to excise decisions that were established and then
 collapsed within this feature. Treat them together with that row, or the file gets swept twice by
