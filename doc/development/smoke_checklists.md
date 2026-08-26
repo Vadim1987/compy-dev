@@ -36,7 +36,7 @@ run** — a row that fails against a state nobody recorded costs a bisect.
 |---|---|---|
 | `keyboard`, the branch under test | `newinput` (local, unpushed) | **`e568961`** |
 | `keyboard` upstream it is diffed against | `origin/dsent/dev` | **`025e858`** |
-| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`534bd174`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`5128a4bf`** |
 | platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
 
 *(Re-pinned 2026-08-12 after P-18-19/20 — the last three behavioural differences against upstream
@@ -167,9 +167,9 @@ moved before you run.
 
 | what | ref | commit |
 |---|---|---|
-| `maze`, the branch under test | `newinput-edge` (local, unpushed) | **`37b996a`** |
+| `maze`, the branch under test | `newinput-edge` (local, unpushed) | **`ca59903`** |
 | `maze` upstream it is diffed against | `dsent/dsent/dev` | **`b8cc436`** |
-| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`f76ddb14`** |
+| platform repo running it | `feature/77-newapi-analysis-s20260615` | **`5128a4bf`** |
 | platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
 
 ### How to launch — this changed, and the old command no longer works
@@ -212,6 +212,16 @@ cd <repo root> && love src play /abs/path/out/maze     # and .../draw
 | B5 | at the menu, press `Shift+Esc` | **nothing happens** — the menu is the top level; `Ctrl+Esc` is how you leave to the console |
 | B6 | type a draft, then `Shift+Esc` | you leave — the draft is not silently wiped *and then* the game left, which is what one keystroke doing both would look like |
 | B7 | in **draw**, `<` typed as a command | still exits to the draw menu. **It was deliberately kept** |
+| B8 | on an editor level, `Alt+Shift+Esc` | **[new]** also leaves for the menu |
+| B9 | on an editor level, `Ctrl+Shift+Esc` | **[new]** also leaves — and the run is **not** stopped back to the console behind it |
+| B10 | on an editor level, `Ctrl+Alt+Shift+Esc` | **[new]** same as B9 |
+
+**B8–B10 have never been pressed by anyone.** The game registers all four
+members of the family, but two of them — the Ctrl-bearing ones — used to reach
+the platform's gate first, which read them as `Ctrl+Esc` and tore the project
+down on the release. That is what Decision 33 changed (a reservation now matches
+its modifiers exactly), and `da9d1c2` restored the family on the maze side. The
+two halves have never been exercised together on a device.
 
 ### C — the menu digit and its echo (run in **maze**, entering track 3)
 
