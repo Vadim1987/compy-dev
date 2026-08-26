@@ -313,3 +313,47 @@ what we intended to withhold.
   asked for a capability half-shipped.
 - Counts 923/0/3 → **968/0/0/10** + the 3-and-7 pending explanation.
 - Smoke plan claim now concrete (smoke_checklists.md ships in 3a).
+
+## 2026-08-26 — ACC-01-02 findings triaged (triage only, no fixes)
+
+Owner: triage not fix. Also flagged highlighter as a bug (agreed), and was
+**suspicious of the convention-collision finding** — rightly.
+
+**Owner's challenge was half-right, and checking it changed the finding.**
+`conventions/docs.md` DOES literally say "The block is the only place
+provenance is recorded. Do not re-add the HTML comment." So the reviewer's
+claim is textually true. BUT it forbids the **FORM**, not the owner's
+purpose — `authored: llm` + `reviewed: none` carries exactly what "authored
+By LLM; human-approved NOT YET" carried, and the `reviewed` field's own
+description says so. Owner's intent is preserved, just relocated.
+
+**The real shape is bigger and different.** Surveyed all 53 docs under doc/
+(wip excluded): front-matter **9** · HTML-only **22** · both **1** ·
+neither **21**. All 21 of slice 1a's files are HTML-only with NO
+front-matter → **incomplete migration, not a duplicate/contradiction**.
+44 of 53 non-compliant. Our own `smoke_checklists.md` is in "neither".
+
+**Biggest finding is one the reviewer under-rated: FIX-02-01.** 10 committed
+`> REMARK:` blocks ship in slice 3a — 8 in `decisions/input.md`, 2 in
+`tests.md`. **The owner's OWN voice**, several substantive (one argues
+Decision 5 should be discarded: "codebase change would be minimal and won't
+change any behaviour"). Two problems: unaddressed remarks, AND **the marker
+gate never covered doc/** — it greps src/ + tests/ only. P11 reported clean
+CORRECTLY; doc/ was out of scope. Gate needs widening or this recurs.
+
+**Proposed split (owner's own boundary):** BUG-01 (2 runtime defects needing
+investigation) vs FIX-02 (5 doc/process, mechanical once ruled). FIX-01 left
+alone — different batch, different source.
+
+**Honesty markers in the triage doc:** BUG-01-02 (highlighter) and FIX-02-05
+(byte/char clamping) are NOT parent-verified — carried at the reviewer's word
+and labelled so. BUG-01-01 verified structurally, reachability NOT traced.
+
+**Compounding find on BUG-01-01:** the debt-ledger entry covering it rests on
+the premise "compy.input is rebuilt per project environment" — which the call
+graph contradicts (built once, ConsoleController.new:80). A ledger entry on a
+false premise is worse than none: it closes the question.
+
+Verified this round: pong/README 316/316 lines but **2/2 with
+--ignore-all-space** (CRLF rewrite hiding a 2-line change); CHANGELOG
+Unreleased has only `### Changed`, no `Removed`.
