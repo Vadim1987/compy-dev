@@ -82,7 +82,7 @@ There is no show-and-hide-many-times-per-second pattern in this codebase.
 
 | id | step | note |
 |---|---|---|
-| ARC-01-01 | ~~choose the seam~~ — **ANSWERED by the cold review: the seam is `run`, not `open`** | `ConsoleController:restart()` (`consoleController.lua:1179`) and Ctrl+T quickswitch (`controller.lua:793-808`) both call `stop_project_run()` + `run_project()` **directly, bypassing open/close** — construct-at-open would leave every restart on a stale widget, reproducing the exact class this row exists to kill. Verified. **Nil-audit still outstanding**, and with it the pen-and-paper question below |
+| ~~ARC-01-01~~ ✅ | ~~choose the seam~~ — **the seam is `run`, not `open`**; nil audit and pen-and-paper **both confirmed by experiment** (session48) | `ConsoleController:restart()` (`consoleController.lua:1179`) and Ctrl+T quickswitch (`controller.lua:793-808`) both call `stop_project_run()` + `run_project()` **directly, bypassing open/close** — construct-at-open would leave every restart on a stale widget. **Nil audit: all six consumers survive a nil widget, and every guard was mutation-tested to prove the probe would have caught it.** **Pen-and-paper: sapper run in the real app** — passes through `run_project`, is fully alive at `project_open`, and `stop_project_run` fires once, *from* `project_open`. No can of worms; proceed. [`validation/notes/ARC-01-01-verification.md`](validation/notes/ARC-01-01-verification.md) |
 | ARC-01-02 | `state.callbacks` / `state.pending` resolve dynamically instead of being captured | **bigger than "one coupling"** — captured in two places (`:790-805`, `:512-527`) and read as plain tables by four functions (`merge_callback_keys`, `consume_pending`, `stash_hidden_configure`, `api_show`). A shape change, not a one-liner. **Must land BEFORE ARC-01-03**: `get_compy_input` runs at boot, before any project exists, so under a per-run widget the capture would index nil (`main.lua:379` publishes the widget, `:383` builds the console — today's ordering exists for exactly this) |
 | ARC-01-03 | construction + destruction move to the seam | |
 | ARC-01-04 | delete the teardown machinery the lifetime replaces | the payoff commit |
@@ -108,13 +108,20 @@ fired, and pointer had to be exempted from it *because* pen-and-paper projects b
 Decision 11 was amended to delete. Rebuilding the same mistake with a widget instead of a route is
 the live hazard here.
 
-**Confirm at ARC-01-01 with a real project** (`sapper`), not by reading — and if it opens a can of
-worms, pivot before writing code, which is what ARC-01-01 is for.
+**CONFIRMED 2026-08-26 with the real `sapper`, in the real app** (harmony under `xvfb`), not by
+reading. It passes through `run_project`, settles at `project_open` and *plays* there — a started
+board, twelve cells opened — and `stop_project_run` fires exactly once, at Ctrl+Shift+Q, entered
+*from* `project_open`. Both seams are reachable for pen-and-paper projects; the transition between
+them is not one of them. Evidence and screenshot:
+[`validation/notes/ARC-01-01-verification.md`](validation/notes/ARC-01-01-verification.md).
 
 ### Risks, stated before starting
 
-1. **Nil between runs** — `love.state.user_input_controller` is nil when no project runs. Three of
-   four consumers appear to guard already; **confirm, do not assume** (ARC-01-01).
+1. ~~**Nil between runs**~~ — **RETIRED 2026-08-26, confirmed not a risk.** Every consumer guards,
+   and each guard was mutation-tested. One caveat survives into the later steps: on the **dispatch**
+   path a raise is swallowed by `with_canvas_and_errors`, so nil-safety there must be asserted
+   against the **error channel** (`suspend_msg` / `app_state`), never against "no crash"
+   ([`validation/notes/ARC-01-01-verification.md`](validation/notes/ARC-01-01-verification.md)).
 2. **Owner ruling 2026-07-20 softens** — *"`compy.input.callbacks` IS the widget's table"* becomes
    *"resolves to the current widget's table"*. Observably identical to a project; still the owner's
    ruling to re-make.
