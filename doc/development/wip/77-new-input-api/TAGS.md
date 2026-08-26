@@ -18,6 +18,12 @@ taken, so a post-fetch disagreement is resolved by lookup instead of by bisect.
 Full shas are recorded because the corpus elsewhere records short ones, and a fetch can
 introduce prefix ambiguity.
 
+**Every `base` tag here is a snapshot from the owner's last fetch of that remote — not a live
+view** (owner attestation, 2026-08-26: nothing has been fetched in any repo since the work was
+reconciled against it). The dates differ per repo because the fetches did. So a `base` tag says
+*"this is what we developed against"*, never *"this is what upstream is"*, and the gap between
+those two is what recon exists to measure.
+
 ## Naming scheme
 
 ```

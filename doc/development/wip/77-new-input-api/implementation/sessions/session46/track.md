@@ -97,3 +97,31 @@ block — that one kept unedited as record.
 persistent corpus (`technical_debt/input.md` x2, `agents/rules/commenting.md`
 x1). They go dangling if wip/77 is deleted. Zero wip/ *paths* leaked, so
 the comment-reference rule is holding. Flag for Phase L / wip-deletion.
+
+## 2026-08-26 — owner attestation: no fetch since the reconciliations
+
+Owner: maze was reconciled against whatever the **last fetch** brought (that
+fetch advanced the head); **nothing fetched in any repo since**. What upstream
+did in the weeks after is unknown.
+
+Corrects my finding #1. Maze's Phase U row is NOT simply outdated — maze is
+**reconciled as of `b8cc436` (2026-07-24)** and owes a **re-check, not a
+redo**. S37's ancestry-preserving merge shape is paying off exactly as
+argued: upstream is still a strict ancestor, so the re-merge stays cheap.
+
+**Generalised:** every baseline in this feature is a last-fetch snapshot, not
+a live view; dates differ per repo because the fetches did. Staleness floors
+(a ref's date bounds how old our view is, and says NOTHING about what landed
+upstream after):
+
+- platform `dsent/dsent/dev` 2026-08-03 (23d) · `upstream/dev` 2026-07-22 (35d)
+- keyboard `origin/dsent/dev` 2026-08-02 (24d)
+- maze `dsent/dsent/dev` 2026-07-24 (33d)
+- balloons `origin/main` 2026-05-11 (107d)
+
+Recorded in the inventory note, plan.md Phase U, and TAGS.md ("a base tag says
+what we developed against, never what upstream is").
+
+**Still unverified:** maze `newinput` divergence — redone-vs-merged is
+inferred from commit subjects only. The attestation makes fetch-then-rebuild
+plausible but does not prove content was carried. Flagged in plan.md.

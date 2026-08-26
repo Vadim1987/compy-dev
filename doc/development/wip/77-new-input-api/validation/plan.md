@@ -465,6 +465,27 @@ PR's shape.)
   as its content.
 - **`maze` needs the same two steps** — the input reading first, then the merge — before P17.
 
+**[S46, 2026-08-26] `maze` is RECONCILED, as of `b8cc436` (2026-07-24) — what it owes now is a
+re-check, not the merge.** `newinput-edge` is **0 behind / 11 ahead** of maze's
+`dsent/dsent/dev`, so upstream is a strict ancestor. **Owner attestation:** the reconciliation was
+made against what the last fetch brought, and **nothing has been fetched in any repo since**, so
+what upstream did in the weeks after is unknown.
+
+This is the merge shape paying off exactly as S37 intended — ancestry was preserved *"because
+upstream is expected to move again and every later re-merge is cheap only while `dsent/dev` stays
+an ancestor,"* and it still is. At recon, maze is a re-merge onto a moved base, not a first
+reconciliation.
+
+**The same holds for every baseline in this feature**: each is a snapshot from the owner's last
+fetch of that remote, dated per repo, never a live view. `../TAGS.md` pins all of them, and
+`notes/S46-repo-head-inventory.md` carries the staleness floors.
+
+**Still open on the maze side:** the older `newinput` branch diverged (4 ahead / 37 behind
+`newinput-edge`, and `a045fdb` is **not** an ancestor). The work looks **redone on the newer base
+rather than merged**, which is consistent with the attested fetch-then-rebuild sequence — but the
+correspondence is **inferred from commit subjects and has not been proven by diff**. Verify before
+Phase U treats `newinput` as fully superseded.
+
 ### Phase L — Ledger compaction (INSERTED 2026-08-11, owner) — runs before release, after the tree settles
 
 **The rule this reverses.** The sprint has run under *"tombstone decisions, never renumber"*

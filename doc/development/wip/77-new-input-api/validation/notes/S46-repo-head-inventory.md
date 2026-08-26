@@ -106,11 +106,35 @@ early migration commits. Take upstream from `origin/dsent/dev`, never from the l
 
 **Two findings here, both needing owner confirmation.**
 
-**1. The maze upstream reconciliation appears already done, on `newinput-edge`.** Phase U records
-maze as *"still owed"* — the input reading, then the merge, before P17. But `newinput-edge` sits
-**0 behind / 11 ahead** of `dsent/dsent/dev`: upstream is a strict ancestor, with eleven of our
-input-migration commits on top. If that ref is current, maze's merge is done and the plan's row
-is outdated.
+**1. The maze upstream reconciliation is done — against a base that is itself 33 days old.**
+Phase U records maze as *"still owed"* — the input reading, then the merge, before P17. But
+`newinput-edge` sits **0 behind / 11 ahead** of `dsent/dsent/dev`: upstream is a strict ancestor,
+with eleven of our input-migration commits on top.
+
+**Owner attestation, 2026-08-26:** the reconciliation was made against whatever the **last fetch**
+brought in — that fetch advanced the head — and **nothing has been fetched in any repo since**.
+What upstream did in the weeks after is unknown.
+
+So the plan's row is not simply *outdated*: maze is **reconciled as of `b8cc436`, 2026-07-24**,
+and what remains is a **re-check at recon time, not a redo**. That distinction is the whole value
+of the merge's shape — S37 kept ancestry deliberately *"because upstream is expected to move again
+and every later re-merge is cheap only while `dsent/dev` stays an ancestor."* It is still an
+ancestor. The mechanism is working as designed.
+
+**This generalises to all four repos.** Every baseline below is a snapshot from the owner's last
+fetch of that remote, not a live view. The dates differ per repo because the fetches did:
+
+| repo | baseline | commit-dated | our view is at least this stale |
+|---|---|---|---|
+| platform | `dsent/dsent/dev` | 2026-08-03 | 23 days |
+| platform | `upstream/dev` (aldum) | 2026-07-22 | 35 days |
+| `keyboard` | `origin/dsent/dev` | 2026-08-02 | 24 days |
+| `maze` | `dsent/dsent/dev` | 2026-07-24 | 33 days |
+| `balloons` | `origin/main` | 2026-05-11 | 107 days |
+
+These are **floors, not measurements**: a ref's date is when its newest commit was *authored*, so
+it bounds how old our view is, and says nothing about what landed upstream afterwards. Only the
+fetch answers that — which is exactly why the tags were laid before it.
 
 **2. `newinput` was redone, not merged — and the branches have diverged.** `newinput` is **4
 ahead / 37 behind** `newinput-edge`, and `a045fdb` is **not** an ancestor of it. The four old
