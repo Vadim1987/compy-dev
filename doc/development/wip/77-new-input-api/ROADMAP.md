@@ -109,6 +109,15 @@ A-doc**, not only prose:
 - `tests/input/input_widget_control_spec.lua` — also used as fixture *text*, which is noise when
   grepping the term and should not be counted as a citation.
 
+**The word is already overloaded, which the cold review caught (2026-08-26).** It carries **two
+different meanings** in the shipping tree, both involving text:
+
+- `discard_draft()` — the **user's** in-progress typed content, thrown away (`model:cancel()`);
+- the hidden-`configure` sense — the **programmer's** staged config for the next `show()`.
+
+One is what a person typed, the other is what a project pre-loaded, and a reader meeting `text` in
+either place has no way to tell which. This is no longer only a ratification question.
+
 **The ruling the row needs, and it is the owner's:** does "draft" stay or go? It is ordinary English
 for unsubmitted text, so unlike *combinator* it may have earned itself — but it is currently used
 without ever being defined. **If it stays**, define it once in `doc/input_api.md` so it reads as a
