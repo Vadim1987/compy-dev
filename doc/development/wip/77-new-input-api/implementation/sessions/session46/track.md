@@ -799,3 +799,39 @@ doc sweep reaches. wip/ excluded as always.
 **Ordering: FIX-03 runs LAST** among the sprints — it catches what FIX-02 and
 DEC-01 miss; running it first = three brooms over one floor, disagreeing at
 the edges. Sequence now has 5 sprints.
+
+## 2026-08-26 — CHG-01 commissioned; marker count corrected 14 → 37
+
+Owner: CHANGELOG validation/update step **before ACC-02 and before any PR
+reassemble**. Commissioned as **CHG-01**, 4 steps, gating both.
+
+**Reading the CHANGELOG to size it exposed my SECOND truncation error.**
+CHANGELOG.md carries a `> REMARK:` **above its own H1** — and my earlier
+"14 blocks in 2 files" missed it, because I piped that grep to `head` too.
+
+**Full-tree sweep, accurate: 37 REMARK blocks across 12 SHIPPING files**
+(was reported 10, then 14, now 37):
+- decisions/input.md 12 · **internals/user_input.md 11** · tests.md 2 ·
+  project_sandbox_env.md 2 · event_dispatch_layers.md 2 · examples/repl.md 2 ·
+  CHANGELOG.md 1 · technical_debt/general.md 1 ·
+  examples/{tixy,balloons,turtle,guess}.md 1 each
+- **user_input.md is the A-DOC** — validation.md: "stakeholders are pointed at
+  it from the PR". 11 unresolved remarks in it.
+- **23 of the 37 are still UNTRIAGED** (my detail covers only 2 files).
+
+**Recorded the error IN the triage doc rather than quietly fixing it** — same
+mistake twice in one session, and it is the mechanism that hid the defect
+both times. `| head` on a counting grep is now a known personal failure mode.
+
+**Gate blind spot is WIDER than doc/**: it greps src/+tests/, so it misses
+everything else — including CHANGELOG.md at the REPO ROOT, which even a
+`doc/`-widened gate would miss.
+
+**CHANGELOG state today:** 22 lines, **entire file added by this feature**,
+one `### Changed` (3 entries). Defects: retired vocab ("an active **overlay**"
+= FIX-02-07), no `Removed` section for the 4 retired globals (FIX-02-04),
+missing pre-existing-resolved + behavioural changes (FIX-02-15), and the
+version question the remark raises (1.0.0-rc vs the scale of the change).
+
+**Wrote "write it once" into both plan and roadmap** — 3 rows feed this one
+file; assembled separately they will duplicate and disagree.

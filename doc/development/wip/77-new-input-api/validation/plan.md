@@ -122,7 +122,8 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 >   them in frozen session dirs; a crosswalk in the sprint's close covers a reader who lands on
 >   one. The reasoning is recorded there.
 > - **Agreed ordering (owner, 2026-08-26, revised same day):** **ACC-01 → BUG-01 + FIX-01 + FIX-02
->   + DEC-01 → ACC-02 (opening with a second cold review) → **REC-01 → MERGE-01 → PR-01**.
+>   + DEC-01 + CHG-01 → FIX-03 → ACC-02 (opening with a second cold review) → **REC-01 → MERGE-01 →
+>   PR-01**.
 >   **Renamed 2026-08-26 (owner):** `recon` → **`REC-01`** and lifted *out* of the release path,
 >   being discovery that can spawn defects rather than release work; Phase U → **`MERGE-01`**;
 >   Phase G → **`PR-01`**, shrunk; **Phase L retired** — its three items are absorbed by DEC-01-04,
@@ -494,6 +495,14 @@ be swept — in [`../reviews/DEC-01-ledger-denoising-spec.md`](../reviews/DEC-01
 **The hazard that governs it:** a missed citation does not dangle, it silently names a *different*
 existing decision. That is worse than a dangling one, and 165 of the citations are in `src/` and
 `tests/`.
+
+**CHG-01 — CHANGELOG validation and update (owner, 2026-08-26).** **Gates ACC-02 and every slice
+cut.** The file ships in `3a` and is what a stakeholder scans first for what breaks, so a cold
+review or a smoke sitting over a wrong CHANGELOG wastes the pass. Today it is 22 lines, entirely
+added by this feature, carrying one `Changed` section, retired vocabulary (*"an active overlay"*),
+no `Removed` section for the four retired globals, and a `> REMARK:` **above its own H1** which is
+this step's brief rather than a marker to clear. Three rows feed it — FIX-02-04, FIX-02-15 and that
+remark — so **write it once**; assembled separately they duplicate and disagree.
 
 **FIX-03 — the closed-arc sweep (owner proposal, 2026-08-26).** Retire prose narrating history that
 opened *and closed* inside this branch. Commissioned because three instances were found this session

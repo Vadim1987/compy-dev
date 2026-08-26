@@ -32,10 +32,10 @@ report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/
 
 ---
 
-## ⬜ The five defect sprints — **the current work**
+## ⬜ The six defect sprints — **the current work**
 
-Mostly unordered, with two constraints: **DEC-01 must finish before any slice is cut**, and
-**FIX-03 runs last** — it is the sweep that catches what FIX-02 and DEC-01 miss, and running it
+Mostly unordered, with three constraints: **DEC-01 and CHG-01 must both finish before any slice is
+cut**, **CHG-01 also gates ACC-02**, and **FIX-03 runs last** — it is the sweep that catches what FIX-02 and DEC-01 miss, and running it
 first means three brooms over one floor. Within BUG-01, `01`
 and `02` are the majors.
 
@@ -54,7 +54,7 @@ and `02` are the majors.
 
 | id | defect | note |
 |---|---|---|
-| FIX-02-01 | 14 `> REMARK:` blocks ship in `3a` — **and the gate never covered `doc/`** | **major** · [full triage](validation/reviews/FIX-02-01-remark-triage.md) · none is stale |
+| FIX-02-01 | **37** `> REMARK:` blocks across **12 shipping files**, incl. **11 in the A-doc** — gate covers only `src/`+`tests/` | **major** · [triage](validation/reviews/FIX-02-01-remark-triage.md) · **23 untriaged** · none stale |
 | FIX-02-02 | provenance front matter | **3 files only**, by ruling |
 | FIX-02-03 | `pong/README.md` — 316-line diff, 2-line change | |
 | FIX-02-04 | CHANGELOG omits the breaking change | |
@@ -77,6 +77,29 @@ and `02` are the majors.
 | FIX-01-01 | 10 ephemeral step-id and `wip/` path citations in the persistent corpus |
 | FIX-01-02 | session numbers in the persistent corpus (4 sites) |
 | FIX-01-03 | P11's deferred editorial list — **named as a count, never enumerated; re-derive before sizing** |
+
+### CHG-01 — CHANGELOG validation and update (4 steps) — **gates ACC-02 and every slice cut**
+
+**Owner, 2026-08-26: this runs before ACC-02 and before any PR reassembly.** The CHANGELOG ships in
+slice `3a` and is the first thing a stakeholder scans for what breaks; sending a cold reviewer or a
+smoke sitting at a tree whose CHANGELOG is wrong wastes the pass.
+
+**Its state today, measured:** 22 lines, **the entire file added by this feature**, one `### Changed`
+section with three entries — and three separate defects in it.
+
+| id | step |
+|---|---|
+| CHG-01-01 | **validate what is there against the actual diff** — the same claims-vs-reality check that caught the PR description. Note the existing text says *"an active **overlay**"*, retired vocabulary (FIX-02-07) |
+| CHG-01-02 | add the **`Removed`** section — the four retired globals are the most breaking thing here and appear under no heading a reader would look under *(feeder: FIX-02-04)* |
+| CHG-01-03 | absorb the **pre-existing-resolved debt and the behavioural changes**, per the owner's ruling *(feeder: FIX-02-15)* |
+| CHG-01-04 | completeness against the breaking changes; and settle the **version question** the in-file remark raises *(`1.0.0-rc` vs the scale of the change)* |
+
+**Write it once.** Three rows feed this file — FIX-02-04, FIX-02-15 and the remark at its head.
+Assembled separately they will duplicate and disagree.
+
+**It carries a `> REMARK:` above its own H1**, in the owner's voice: *"too shy for major changes
+done — rewired dispatching, unblocked event-handling, new topology with shortcuts/hooks… and version
+is 1.0.0-rc…"* That remark is **the brief for this step**, not merely a marker to clear.
 
 ### FIX-03 — the closed-arc sweep (4 steps) — **runs after FIX-02 and DEC-01**
 
@@ -227,4 +250,4 @@ Not open questions to chase — each has a trigger:
 
 ## The one-line sequence
 
-**ACC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**

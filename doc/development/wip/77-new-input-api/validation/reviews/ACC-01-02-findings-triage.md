@@ -90,7 +90,7 @@ in a surface the guide presents as general.
 
 | id | defect | severity | state |
 |---|---|---|---|
-| **FIX-02-01** | 14 unresolved `> REMARK:` blocks ship in `3a`; **and the marker gate never covered `doc/`** | major | triaged in full → [`FIX-02-01-remark-triage.md`](FIX-02-01-remark-triage.md) |
+| **FIX-02-01** | **37** unresolved `> REMARK:` blocks across **12 shipping files**; **the gate covers only `src/`+`tests/`** | major | [triage](FIX-02-01-remark-triage.md) — **23 still untriaged** |
 | **FIX-02-02** | provenance front matter missing | nit | **scoped to 3 files by owner ruling** |
 | **FIX-02-03** | `pong/README.md` — 316-line diff hiding a 2-line change | nit | verified |
 | **FIX-02-04** | CHANGELOG omits the breaking change it exists to record | minor | verified |

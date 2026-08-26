@@ -1,14 +1,30 @@
 # FIX-02-01 — triage of the surviving `> REMARK:` blocks in the persistent docs
 
-**Triage only, nothing fixed** (owner, 2026-08-26). **14 blocks**, not the 10 first reported —
-that count came from a truncated grep and is corrected here.
+**Triage only, nothing fixed** (owner, 2026-08-26).
 
-| file | blocks |
-|---|---|
-| `doc/development/decisions/input.md` | 12 |
-| `doc/development/tests.md` | 2 |
+> **COUNT CORRECTED TWICE — the real figure is 37 blocks across 12 files.** First reported as 10,
+> then 14, now 37. **Both earlier counts came from piping `grep` to `head`** — the same mistake
+> made twice in one session, recorded here rather than quietly fixed, because it is the mechanism
+> that hid the defect in the first place and it will hide the next one.
 
-Both files **ship in slice `3a`**.
+| file | blocks | |
+|---|---|---|
+| `doc/development/decisions/input.md` | 12 | triaged in detail below |
+| **`doc/development/internals/user_input.md`** | **11** | **the A-doc — `validation.md`: *"stakeholders are pointed at it from the PR"*** |
+| `doc/development/tests.md` | 2 | triaged below |
+| `doc/development/internals/project_sandbox_env.md` | 2 | **untriaged** |
+| `doc/development/internals/event_dispatch_layers.md` | 2 | **untriaged** |
+| `doc/development/internals/examples/repl.md` | 2 | **untriaged** |
+| `CHANGELOG.md` | 1 | **above the H1** — see CHG-01 |
+| `doc/development/technical_debt/general.md` | 1 | **untriaged** |
+| `doc/development/internals/examples/{tixy,balloons,turtle,guess}.md` | 1 each | **untriaged** |
+
+**All twelve ship** — in slice `3a` or Set 1. **23 of the 37 are not yet triaged**; the detail below
+covers `decisions/input.md` and `tests.md` only.
+
+**The gate's blind spot is wider than `doc/`.** It greps `src/` and `tests/`, so it misses
+*everything else in the tree* — including `CHANGELOG.md` at the repo root, which no `doc/` sweep
+reaches either. Widening it to `doc/` alone would still have missed the CHANGELOG.
 
 ## Why these survived, precisely
 
