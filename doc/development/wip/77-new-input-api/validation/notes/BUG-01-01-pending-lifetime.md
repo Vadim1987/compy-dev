@@ -67,6 +67,31 @@ beside it leaves the closure owning **no** application-lifetime state of its own
 `state` is now either wiped by name at teardown or owned by the widget. No public surface was added,
 which the strategic frame's "no moving parts beyond the ask" would have charged for.
 
+## Owner attestation, 2026-08-26 — the defect class, named
+
+> *"Hidden persistent mutable store which pretends to be ephemeral is a real design defect which you
+> likely fixed."*
+
+The owner endorsed the solution on that description, before the cold review returned. Their framing
+is sharper than this note's original one and is the version to carry: the bug was never *"a table
+was not cleared"* — it was **a store whose real lifetime and whose apparent lifetime disagreed**, in
+a place where nothing forced them to be reconciled. The clearing was the remedy; the mismatch was
+the defect.
+
+Three properties have to hold at once for it to bite, which is why it survived review:
+
+1. **hidden** — private to a closure, so no reader can see how long it lives;
+2. **persistent** — built once for the application;
+3. **pretending to be ephemeral** — every neighbouring store in the same table *was* run-scoped, and
+   the guide describes the behaviour in per-run language ("retained and applied on the very next
+   `show()`"), so the surrounding evidence actively argued for the wrong lifetime.
+
+**Open, for the owner:** whether this warrants a *sweep* for siblings rather than stopping at one
+instance. The argument for: session46's rule of thumb is that instances found by unrelated routes
+signal a class defect, and property 3 is a reading trap, not a typo — nothing stops it recurring.
+The argument against: one instance is not three, and `FIX-03` is already a sweep over this branch.
+Not proposed as a row; recorded so the question is not lost.
+
 ## Tooling note
 
 The `lua-lsp` MCP bridge was **down for this row** (`broken pipe` on every call, including a bare

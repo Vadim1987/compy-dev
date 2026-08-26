@@ -63,3 +63,26 @@
   Proposed as a new FIX-02 row; **owner rules on the word**, not me. Held pending that.
 - Lesson repeated: the replanning checklist's "unratified terminology — check against the PR base"
   is the test that settles this, and it took one grep.
+- Registered as **FIX-02-20** (`92fbb4bf`), numbered out of execution order on purpose — renumbering
+  19 rows a second time after the crosswalk shipped costs more than the note explaining it.
+
+## 2026-08-26 — cold review of the BUG-01-01 fix: APPROVE, 2 findings
+
+- Sonnet, cold: banned from reading `wip/77` (the author's own reasoning), told the LSP was down and
+  to grep instead, told to treat every commit-message claim as an assertion to verify. Prompt of
+  record `validation/prompts/`, deliverable `validation/outcomes/BUG-01-01-cold-fix-review.md`.
+- **Verdict: approve.** It re-derived the call graph independently, walked EVERY run-ending path
+  (`stop_project_run`, `quit_project`, `restart`, the top-level-raise path, the controller quick-
+  switch/quit handlers) and confirmed all funnel through `clear_user_handlers` → the new teardown —
+  a check I had not done exhaustively. It also **built a scratch worktree at the pre-fix commit,
+  cherry-picked the test alone, and watched it fail**: the test is load-bearing, proven not asserted.
+- **Finding 1 (minor), verified and fixed** (`d5526687`): `user_input.md:710` still carried the
+  false premise abadf244 retracted — in the same file `bd2a5d49` edited. Swept for siblings; the
+  other two "created once" claims are true and stay. Its stale `:601-635` citation went too.
+- **Finding 2 (nit), verified, declined**: `pending` is built on all four widgets, fillable only on
+  the project one. Uniform shape beats conditional construction; documented in a comment instead.
+- **Best catch was in the judgment half, not the findings:** "draft" is not merely unratified, it is
+  **overloaded** — `discard_draft()` means the USER's typed content, the hidden-configure sense means
+  the PROGRAMMER's staged config, both with a `text` field. FIX-02-20 sharpened (`d8861811`).
+- Worth noting for the economy charter: Sonnet, scoped prompt, ~2 min of my attention to verify.
+  Found a real doc defect and a terminology collision. Cheap review tier was the right call here.
