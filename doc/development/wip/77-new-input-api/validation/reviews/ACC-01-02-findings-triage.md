@@ -1,180 +1,177 @@
-# ACC-01-02 — triage of the cold review's findings
+# ACC-01-02 — full defect register from the cold PR review
 
-**Input:** `../outcomes/ACC-01-02-cold-pr-review.md` (the cold reviewer's report) and
-`../prompts/ACC-01-02-cold-review-commission.md` (its commission).
+**Input:** `../outcomes/ACC-01-02-cold-pr-review.md` · **commission:** `../prompts/ACC-01-02-cold-review-commission.md`
 **Author:** session46 (parent). **Triage only — nothing here is fixed** (owner, 2026-08-26).
 
-Every finding below was **re-verified in code by the parent** before being triaged. Two came back
-materially different from how the reviewer framed them, which is why the rule exists: a sub-agent's
-finding is a strong hint, not a fact.
+**Corrected 2026-08-26 after owner challenge.** The first pass of this document triaged **7**
+findings, taken from the reviewer's summary rather than its body. The report carries **13 numbered
+findings plus three analysis sections** that raise more. Every one is now a defect row. **Total:
+19**, plus this session's own document findings, registered here rather than living only in a track.
 
-**Proposed disposition: two sprints**, following the owner's own boundary — a defect that is
-understood and mechanical is a `FIX` row; one that needs investigation or a design call earns a
-focused sprint.
+**Nothing is dropped as "not a defect" without the owner saying so.** Two rows are closed already
+(one fixed, one scoped down by ruling) and stay visible so the count reconciles.
 
-| | sprint | contents |
+## Sprints
+
+| sprint | contents | rows |
 |---|---|---|
-| **BUG-01** | runtime defects | two, both needing investigation before a fix can be sized |
-| **FIX-02** | doc / process defects | five, mechanical once ruled on (`02-02` reduced to three files by owner ruling) |
-
-*(`FIX-01` stays as it is — citations, session numbers, the editorial list. These are a separate
-batch from a separate source and mixing them would lose that.)*
+| **BUG-01** | runtime defects — the code misbehaves | 6 |
+| **FIX-02** | documentation, vocabulary and process defects from this review | 13 |
+| **FIX-01** | *(pre-existing, unchanged)* citations, session numbers, editorial list | 3 |
 
 ---
 
 ## BUG-01 — runtime defects
 
-### BUG-01-01 — `state.pending` outlives the project that set it
+| id | defect | severity | verified |
+|---|---|---|---|
+| **BUG-01-01** | `state.pending` survives a project stop | major | parent, structurally |
+| **BUG-01-02** | a highlighter cannot be turned off for the rest of a run | major | reviewer only |
+| **BUG-01-03** | `show{force = true, prompt = …}` silently drops the prompt | minor | reviewer only |
+| **BUG-01-04** | `set_cursor` clamps in bytes, the boundary event measures characters | minor | reviewer only |
+| **BUG-01-05** | the migrated `turtle` example double-handles its own keys | minor | reviewer only |
+| **BUG-01-06** | a `textinput` shortcut cannot bind an upper-case character | nit | reviewer only |
 
-**Severity: major. Verified structurally; reachability NOT traced.**
+### BUG-01-01 — `state.pending` survives a project stop
 
-`compy.input`'s private `state` — including `pending` — is built inside the `get_compy_input()`
-closure (`src/controller/consoleController.lua:775`), which runs from `prepare_project_env`, which
-is called **once**, from `ConsoleController.new` (line 80). So `pending` has **application
-lifetime**, not project lifetime. A hidden `configure{ text = … }` stashes into it
-(line 651) and is consumed by the next `show()` (line 665). I found no code clearing it.
+`compy.input`'s private `state` — including `pending` — is built in the `get_compy_input()` closure
+(`consoleController.lua:775`), reached from `prepare_project_env`, called **once** from
+`ConsoleController.new:80`. So `pending` has **application** lifetime. A hidden `configure{text=…}`
+stashes into it (`:651`), the next `show()` consumes it (`:665`), and nothing clears it between
+projects. Project A's draft opens in project B's widget — contradicting this PR's own contract,
+*"Nothing a project installed survives it."*
 
-**The consequence if reachable:** project A's stashed prompt or text opens inside project B's
-widget — which contradicts this PR's own stated contract, *"Nothing a project installed survives
-it."*
+**Two things to establish before sizing:** whether the path is reachable from a shipped example
+(the reviewer confirmed the code path by reading, not a caller), and whether `shortcuts`/`hooks`/
+`callbacks` share the hole.
 
-**Why it deserves investigation rather than a patch.** The obvious fix (clear `pending` at
-teardown) is one line, but two things must be established first: whether the path is actually
-reachable given how teardown re-seeds the surfaces, and whether `shortcuts` / `hooks` / `callbacks`
-have the same hole — the reviewer asserted they are wiped and I did not confirm it.
+**Compounding:** the debt-ledger entry covering this area accepts the debt on the premise that
+*"`compy.input` is rebuilt per project environment"* — which the call graph contradicts. **A ledger
+entry resting on a false premise is worse than none**, because it closes the question.
 
-**Compounding, and worth its own attention:** the debt-ledger entry covering this area justifies
-accepting the debt on the premise that *"`compy.input` is rebuilt per project environment"* —
-which the call graph above contradicts. **A ledger entry resting on a false premise is worse than
-no entry**, because it closes the question. Re-check the premise, then the entry.
+**Carries a test gap:** the `stop teardown` block checks handlers, hooks, visibility and callbacks —
+**not `pending`**. The fix ships with that case.
 
-### BUG-01-02 — a highlighter cannot be un-set for the rest of a run
-
-**Severity: major. Owner's read, 2026-08-26: "looks like a bug too." Not yet re-verified by the
-parent — the one row here still resting on the reviewer's word.**
+### BUG-01-02 — a highlighter cannot be turned off
 
 `merge_callback_keys` re-injects the sticky value because **nil is indistinguishable from absent**,
-and the live highlighter is additionally mirrored onto the evaluator, which only `apply_config`
-writes and only project stop clears. Net: having set a highlighter, a project cannot remove it.
+and the live highlighter is mirrored onto the evaluator, which only `apply_config` writes and only
+project stop clears. **Needs a design call, not a patch:** "absent means keep, nil means clear"
+wants a sentinel, and a sentinel is new vocabulary in an API whose mandate is *fewer* moving parts;
+the alternative is a new `clear_highlighter` member. Neither is obviously right. Owner called it a
+bug, 2026-08-26.
 
-**The design call this needs.** "Absent means keep, nil means clear" requires a sentinel, and a
-sentinel is new vocabulary in an API whose whole mandate is *fewer* moving parts. The alternative —
-an explicit `clear_highlighter` — is a new member. Neither is obviously right, which is precisely
-why this is not a FIX row.
+### BUG-01-03 — `show{force = true, prompt = …}` silently drops the prompt
+
+A caller passing both gets the force and loses the prompt, with no warning. **Silent is the
+problem:** the same call behaves differently for no visible reason.
+
+### BUG-01-04 — byte-vs-character clamping disagreement
+
+`set_cursor` clamps in bytes while the boundary event measures characters — a defect for any
+non-ASCII prompt, which is a case this project documents elsewhere.
+
+### BUG-01-05 — the migrated `turtle` example double-handles its own keys
+
+**The example-level symptom of a documentation gap** (FIX-02-09). Because the lockout fix means a
+project's own handler now runs *while the widget is shown*, a hook that does not `return true` runs
+**in addition to** the widget's editing. `turtle` was migrated without accounting for it. Being a
+finding *about the migration*, it may have siblings among the other migrated examples — **check them
+all; do not fix only this one.**
+
+### BUG-01-06 — a `textinput` shortcut cannot bind an upper-case character
+
+The combo serialisation lower-cases, so `shortcuts.textinput['A']` is unreachable. Small, but a hole
+in a surface the guide presents as general.
 
 ---
 
-## FIX-02 — documentation and process defects
+## FIX-02 — documentation, vocabulary and process defects
 
-### FIX-02-01 — the owner's own review remarks would ship to stakeholders
+| id | defect | severity | state |
+|---|---|---|---|
+| **FIX-02-01** | 14 unresolved `> REMARK:` blocks ship in `3a`; **and the marker gate never covered `doc/`** | major | triaged in full → [`FIX-02-01-remark-triage.md`](FIX-02-01-remark-triage.md) |
+| **FIX-02-02** | provenance front matter missing | nit | **scoped to 3 files by owner ruling** |
+| **FIX-02-03** | `pong/README.md` — 316-line diff hiding a 2-line change | nit | verified |
+| **FIX-02-04** | CHANGELOG omits the breaking change it exists to record | minor | verified |
+| **FIX-02-05** | two docs in `3a` disagree about whether the route is released at `running → project_open` | minor | reviewer only |
+| **FIX-02-06** | **"tier" / "chain" / "the walk"** — three names for one thing, interchangeable across `3a`, `3d`, `3e` | minor | reviewer only |
+| **FIX-02-07** | **"overlay" / "input widget" / "input area" / "field"** — four names for the widget, all in active use | minor | reviewer only |
+| **FIX-02-08** | **"combinator"** — concept earned, word not; the guide's own table header says "wrapper" | nit | reviewer only |
+| **FIX-02-09** | the guide never states that a shown widget **always consumes** on the keyboard side | minor | reviewer only |
+| **FIX-02-10** | the guide never states that callbacks cannot be un-set | minor | reviewer only |
+| **FIX-02-11** | the guide never says the widget is a persistent singleton that `hide()` merely deactivates — so FR-2's teardown question has no answer | minor | reviewer only |
+| **FIX-02-12** | the channel list exists twice — the exact duplication the commenting rules forbid | nit | reviewer only |
+| **FIX-02-13** | a `pending()` routing case is deferred in the area the review was asked to read hardest | minor | verified (one of the ruled 10) |
 
-**Severity: major, and the most consequential finding here. Verified: 14 sites** — the 10 first
-reported came from a truncated grep. **Triaged in full: [`FIX-02-01-remark-triage.md`](FIX-02-01-remark-triage.md).**
+### FIX-02-06 / 07 / 08 — the vocabulary rows, and why they are not nits
 
-`> REMARK:` blocks are committed in two persistent docs that **ship in slice `3a`**:
+The strategic frame says the PR must not carry *"moving parts or vocabulary beyond that ask without
+a one-line justification."* These three are that clause failing:
 
-| file | count |
+- **`06` — tier / chain / the walk.** Three words for one concept, interchangeable across three
+  slices. Pick one and sweep.
+- **`07` — overlay / input widget / input area / field.** Four for the widget. `doc/input_api.md`
+  is consistent on "input widget"; the internals docs and inline comments are not. **`1b`'s own
+  remark flags this and it was not acted on** — a known, recorded, unclosed item rather than a new
+  discovery. Session45 retired "overlay" from `src`/`tests`; the **docs** half stayed open.
+- **`08` — combinator.** Concept earned, word unearned; "wrapper" is what the audience — students
+  and their teachers — will understand.
+
+The reviewer explicitly judged **"reservation"**, **"derived event"** and **"route"/"occupy"** as
+*earned*. Recorded so nobody sweeps them by association.
+
+### FIX-02-09 — the gap BUG-01-05 is a symptom of
+
+*"Nothing states that a shown widget **always** consumes … That is the single most surprising
+consequence of the lockout fix."* The guide states it for **pointer** hooks and never for
+**keyboard**. **Fix the guide and the example together**, or the next migration repeats `turtle`'s
+mistake.
+
+---
+
+## Closed, kept visible so the count reconciles
+
+| defect | disposition |
 |---|---|
-| `doc/development/decisions/input.md` | 12 |
-| `doc/development/tests.md` | 2 |
-
-**They were inventoried by TF2** (R080–R109, R166) and several were triaged. What failed was the
-removal pass, and then the absence of any check over `doc/`. None of the 14 is stale.
-
-These are not editorial nits. Several are substantive challenges in the owner's own voice — one
-argues Decision 5 should be discarded outright (*"I see no reason to treat widget separately — and
-if we discard decision 5, codebase change would be minimal and won't change any behaviour"*),
-others correct terminology that conflates inbound events with widget callbacks.
-
-**Two separate problems, and the second is the reason this recurs:**
-
-1. The remarks are unaddressed. Each needs a ruling, not deletion — one of them may change code.
-2. **The marker gate never covered `doc/`.** It greps `src/` and `tests/` only
-   (`agents/validation.md`, "Comment gate"). P11 closed that gate and reported it clean, correctly,
-   because `doc/` was outside its scope. **Widen the gate**, or this recurs on the next feature.
-
-### FIX-02-02 — provenance: three files, not forty-four (owner ruling, 2026-08-26)
-
-**Severity: nit. Scope settled by the owner; most of what the reviewer reported is not a defect.**
-
-The reviewer reported a contradiction *inside* the PR: slice `1a` adds an HTML comment that slice
-`1b`'s new `conventions/docs.md` forbids. The convention **does** say it — *"The block is the only
-place provenance is recorded. Do not re-add the HTML comment."*
-
-**But it forbids the form, not the purpose**, and the purpose survives: `authored: llm` plus
-`reviewed: none` carries exactly what *"authored By LLM; human-approved NOT YET"* carried. The
-`reviewed` field's own description says so.
-
-**Owner ruling — the history is not a violation:**
-
-1. the rubber-stamping was done in HTML;
-2. the convention came **after** it;
-3. **files added or changed later should respect it; older stamps may remain intact unless they are
-   changed;**
-4. and a formal violation is not worth displacing more important work.
-
-So slice `1a` is not a defect at all — it faithfully reproduces a commit that predates the rule,
-and re-cutting it to satisfy a later convention would misrepresent the history it exists to record.
-
-**Applying rule 3 mechanically** — docs touched since the convention commit `8d665fe4` (2026-07-31)
-that still lack front matter — gives **13**, which split by how much they are ours:
-
-| group | count | disposition |
-|---|---|---|
-| **added after the convention** — unambiguously ours | **3** | the only ones worth doing |
-| pre-existing, merely *changed* since | 10 | in scope by the letter of rule 3; **deferred under rule 4** |
-| untouched since the convention | 31 | **not in scope** — rule 3 does not reach them |
-
-The three:
-
-- `doc/development/internals/examples/keyboard.md` (added 2026-08-07)
-- `doc/development/smoke_checklists.md` (added 2026-08-12)
-- `doc/tall_blocks.md` (added 2026-08-16)
-
-All three ship in this PR, all three are ours, and the fix is a six-line block each. **That is the
-whole row.** The 44-of-53 figure the survey produced describes the corpus, not a defect in this
-work, and is recorded here only so nobody re-derives it and re-opens the question.
-
-### FIX-02-03 — `pong/README.md` is a 316-line diff hiding a 2-line change
-
-**Severity: minor. Verified.** `git diff --numstat` reports **316/316**; with `--ignore-all-space`
-it reports **2/2**. A line-ending rewrite (CRLF→LF) swallowed the real change. A reviewer sees a
-whole-file rewrite in an example nobody touched and must either read 316 lines or trust it.
-
-**Fix:** re-commit as the 2-line change, or keep the normalisation and split it into its own commit
-so the letter of the rule that governs `1a` — *a mechanical pass ships separately from meaning* —
-applies here too.
-
-### FIX-02-04 — the CHANGELOG has no `Removed` section
-
-**Severity: minor. Verified:** `## Unreleased` carries only `### Changed`.
-
-Removal of the four polling globals is the single most breaking thing in this release and the
-argument the PR leads with. A stakeholder scanning the CHANGELOG for what breaks finds nothing
-under the heading they would look under.
-
-### FIX-02-05 — byte-vs-character clamping split across two functions
-
-**Severity: minor. NOT re-verified by the parent** — carried from the reviewer's report at its
-word, and flagged so nobody treats it as established.
-
-`set_cursor` and `is_at_limit` reportedly disagree about whether they clamp in bytes or characters.
-If true it is a defect for any non-ASCII prompt. **Verify first, then size.**
+| ~~PR description drift~~ — described a member that does not exist, denied a shipped capability | **FIXED** `e123ca9e`; both claims verified in code first |
+| ~~five files outside every pathspec~~ — incl. `src/harmony/init.lua` | **FIXED** `16aa25e2`; root cause fixed in `e123ca9e` (guide §1.0, derived classification) |
 
 ---
 
-## Already closed, recorded so the count reconciles
+## This session's own document findings, registered
 
-**The PR description drift** — the reviewer's blocker — was fixed in `e123ca9e` before this triage,
-because it was the one finding that blocked nothing else and cost only prose. Both of its claims
-were verified in code first: `compy.input.keys_pressed` does not exist in `src/`, and *"No pointer
-shortcuts"* is contradicted by `projectInputController.lua:53` and by the comment at line 45 of the
-same file (*"'ctrl+s' and 'ctrl+mouse2' are one vocabulary, not two"*).
+Raised by the parent rather than the reviewer, and previously living only in a track:
 
-## What the reviewer got right that is worth keeping
+| id | finding | state |
+|---|---|---|
+| **FIX-01-01** | 10 ephemeral step-id and `wip/` path citations in the persistent corpus | planned |
+| **FIX-01-02** | session numbers in the persistent corpus (4 sites) | planned, owner-ruled |
+| **FIX-01-03** | P11's deferred editorial marker list — **named as a count, never enumerated**; re-derive before sizing | planned, live |
+| **FIX-02-01** *(second half)* | **the marker gate greps `src/` and `tests/` only** — `doc/` was never in scope, which is why 14 remarks survived a gate reported clean | planned |
 
-Not everything here is a defect, and the report's positive findings are evidence about the work:
-the `xpcall` arity fix in `3d` means project raises previously vanished **with no error window at
-all**; `on_limit_reached(direction, scope)` delivers more than the ask; the test slice drives the
-real gateway rather than a simulation; and **`doc/input_api.md` is accurate exactly where the PR
-description was not** — which is the artefact the strategic frame cares most about.
+---
+
+## What the review could not check — not defects, but not clean either
+
+Recorded so these are not mistaken for passes:
+
+- **Nothing was run.** No `busted`, no `love`, no device. The suite count and *"every claim in the
+  guide is pinned by a row"* are unverified by the reviewer.
+- **Nothing that reaches a screen** — paint, examples in motion, click/drag, the double-click
+  window. **That is exactly what ACC-02 exists for.**
+- **The Web (love.js) build** — no coverage at all, by the ledger's own admission.
+- **Whether any untracked project relies on the old loose reserved-combo matching.** The narrowing
+  is intentional and tested; its blast radius outside this repo is unknown.
+- **`4c` (`keyboard`)** — a large behavioural rewrite replacing a hand-maintained `INPUT.held` mirror
+  with device queries, *"whose correctness depends on timing I cannot observe."* **The strongest
+  argument for running the `keyboard` smoke pass carefully.**
+
+## Wins, recorded because they are evidence too
+
+The `xpcall` arity fix (`3d:107`) — the message handler received the error as `CC` and raised inside
+itself, so **project raises vanished with no error window at all**. A serious latent bug found and
+fixed en route. Also ~150 lines of hand-written installers collapsed into one generator; eleven
+copies of the gateway's `get_user_input()` dance deleted; the `oneshot` flag, `result` reftable and
+`love.event.push('userinput')` round-trip gone with no survivor; and **`doc/input_api.md` judged
+"the strongest artefact in the delivery"** — accurate exactly where the PR description was not.

@@ -121,8 +121,8 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 > - **Step ids were deliberately NOT renamed.** 2,563 P-id citations across 221 files, 786 of
 >   them in frozen session dirs; a crosswalk in the sprint's close covers a reader who lands on
 >   one. The reasoning is recorded there.
-> - **Agreed ordering (owner, 2026-08-26):** **ACC → FIX → recon → U → L → G**, with the **B→C→D
->   collapse ruling as step zero of G** — ruled where the evidence is complete and where its
+> - **Agreed ordering (owner, 2026-08-26, revised same day):** **ACC-01 → BUG-01 + FIX-01 + FIX-02
+>   → ACC-02 → recon → U → L → G**, with the **B→C→D collapse ruling as step zero of G** — ruled where the evidence is complete and where its
 >   output, the justification table, is needed anyway. Phase F's place in that line is open.
 > - **Phase FIX** is new, and holds small already-diagnosed defects as a batch. Its first row is
 >   **10 ephemeral citations in documents that survive `wip/77` deletion** — seven of them in
@@ -370,48 +370,74 @@ reason.
 acceptance sprint. Each smoke target earns its own step, because each is a separate sitting with
 its own result, and a target that fails must be re-runnable without re-running the others.
 
-**Renumbered 2026-08-26** (owner: none had run yet). Slice generation moved to the front because
-the cold review consumes it, and both are runnable without a device — which is what let ACC start
-while the smoke environment was unavailable.
+**Restructured 2026-08-26 (owner).** ACC splits into two sprints, because the device-free half
+finished and produced enough defects that the owner declined to spend a smoke sitting until they
+are fixed: *"we have enough defects to fix before I put my hands on keyboard."*
+
+#### ACC-01 — the device-free acceptance pass — **COMPLETE**
 
 | id | step | state |
 |---|---|---|
-| **ACC-01-01** | **Slice regeneration**, the review cut | **DONE** — and it found five unsliced files, §4.1 of the guide |
-| **ACC-01-02** | **Cold-agent PR review** — the slices against the original stakeholder ask | **DONE** — `../outcomes/ACC-01-02-cold-pr-review.md` |
-| **ACC-01-03** | **`balloons` smoke** | list **written** 2026-08-26 |
-| **ACC-01-04** | **`keyboard` smoke** | list exists, anchors refreshed |
-| **ACC-01-05** | **`maze` + `draw` smoke** | list exists, **gap closed** (B11, D8, D9) |
-| **ACC-01-06** | **`sapper` smoke** | list **written** 2026-08-26 |
-| **ACC-01-07** | **Owner's readability review** of the slices | last in ACC |
+| **ACC-01-01** | Slice regeneration, the review cut | **DONE** — found five unsliced files, one of them production code (guide §4.1) |
+| **ACC-01-02** | Cold-agent PR review of the slices against the original stakeholder ask | **DONE** — `../outcomes/ACC-01-02-cold-pr-review.md` |
 
-#### ACC-01-02 — the cold review, and how it was isolated
+**Method, and the isolation that makes the result mean something.** A kit was assembled outside the
+repo holding only the stakeholder inputs as the specification (the verbatim ticket first), the
+slices **minus the agentic set**, and clean `git archive` exports of the platform baseline
+(`3256aac`, the guide's own `BASE`) and each detached repo's PR base — no `.git` anywhere, so no
+history and no commit messages. The reviewer was **forbidden `/repo` and the `lua-lsp` server**,
+both of which expose the landed state: a review against the answer key reports what the author did,
+not whether it was right.
 
-**Method.** A kit was assembled outside the repo holding only: the stakeholder inputs as the
-specification (the verbatim ticket first), the slices **minus the agentic set**, and **clean
-`git archive` exports** of the platform baseline (`3256aac`, the assembly guide's own `BASE`) and
-of each detached repo's PR base. No `.git` anywhere, so no history and no commit messages.
+**Verdict: merge with changes. 19 defects**, registered in
+[`../reviews/ACC-01-02-findings-triage.md`](../reviews/ACC-01-02-findings-triage.md) as BUG-01 (6)
+and FIX-02 (13). Two are already closed and stay visible so the count reconciles.
 
-**The isolation that makes the result mean something:** the reviewer was forbidden `/repo` and the
-`lua-lsp` server. Both expose the *landed* state, which is the answer key — a review against it
-would report what the author did, not whether it was right. It was also told not to read the
-codebase exhaustively, to consult the baseline selectively from the patch hunks, and where the
-project's own pre-change docs live.
+#### ACC-02 — the human acceptance pass — **BLOCKED on BUG-01 and FIX-02**
 
-**Verdict returned: merge with changes.** Findings are in the outcome document; two were
-independently re-verified in code before being acted on, per the standing rule that a sub-agent's
-claim is a strong hint and not a fact.
+**Runs only once the defect sprints are done** (owner, 2026-08-26). Every row needs the owner at a
+device or reading slices, and re-running them against a tree that is about to change is the
+sitting-time this ordering exists to protect.
 
-**Order by upstream sensitivity.** `balloons` goes first: 5 ahead / 0 behind `origin/main`, the
-only repo with no divergence to reconcile, so its result is the one recon cannot invalidate.
+| id | step | state |
+|---|---|---|
+| **ACC-02-01** | `balloons` smoke | list written 2026-08-26 |
+| **ACC-02-02** | `keyboard` smoke | list exists, anchors refreshed. **Read the review's "could not check": `4c` is a behavioural rewrite whose correctness depends on timing it could not observe** |
+| **ACC-02-03** | `maze` + `draw` smoke | list exists, gap closed (B11, D8, D9) |
+| **ACC-02-04** | `sapper` smoke | list written 2026-08-26 |
+| **ACC-02-05** | Slice regeneration — the **second** review cut, over the fixed tree | after the sprints |
+| **ACC-02-06** | Owner's readability review of the slices | last in ACC |
 
-**`maze` runs against `newinput-edge`** — `da9d1c2`, the maze half of the `Shift+Esc` fix that
-rows B8–B10 exercise, is on that branch only.
+**Order by upstream sensitivity.** `balloons` first: 5 ahead / 0 behind `origin/main`, the only repo
+with no divergence to reconcile, so its result is the one recon cannot invalidate. **`maze` runs
+against `newinput-edge`** — `da9d1c2`, the maze half of the `Shift+Esc` fix that rows B8–B10
+exercise, is on that branch only.
 
-**ACC-01-05/06 are a review cut, not the shipping cut.** The assembly guide is re-runnable and
-git-only, so an intermediate regeneration costs machine time rather than owner time. The **final**
-cut still happens last, in Phase G, after recon and U have moved the tree.
+**A clean pass is worth pinning:** tag the state each green run was made against (`../TAGS.md`,
+round 2), so "it passed" names a commit rather than an afternoon.
 
-#### ACC-01-03 carries a coverage gap, found 2026-08-26
+#### The defect sprints ACC-02 waits on
+
+Full reasoning per row in the triage document; this is the index.
+
+**BUG-01 — runtime defects (6).** `01` `state.pending` survives a project stop (major; carries a
+test gap and a debt-ledger entry resting on a false premise) · `02` a highlighter cannot be turned
+off (major; needs a design call, not a patch) · `03` `show{force=true, prompt=…}` silently drops the
+prompt · `04` `set_cursor` clamps bytes while the boundary event measures characters · `05` the
+migrated `turtle` double-handles its keys — **check the other migrated examples for siblings** ·
+`06` a `textinput` shortcut cannot bind an upper-case character.
+
+**FIX-02 — documentation, vocabulary and process (13).** `01` the 14 surviving `> REMARK:` blocks
+**and the marker gate's `doc/` blind spot** · `02` provenance, scoped to 3 files by ruling · `03`
+`pong/README.md` · `04` the CHANGELOG's missing breaking change · `05` two docs disagreeing about
+route release · `06`–`08` the vocabulary rows (tier/chain/walk; overlay/widget/area/field;
+combinator) · `09`–`11` three gaps in `doc/input_api.md`, of which `09` is the one `turtle` trips
+over · `12` the duplicated channel list · `13` a deferred `pending()` routing case.
+
+**FIX-01 stays as it is** — citations, session numbers, the editorial marker list. Different batch,
+different source; merging them would lose that.
+
+#### ACC-02-03 carries a coverage gap, found 2026-08-26
 
 **`maze`'s reconciliation brought in a whole upstream game and a new input mechanic, and one of
 them is unexercised.** Between the old upstream point (`12f675f6`, 2026-05-25) and the base maze
@@ -444,7 +470,7 @@ The checklist covers `draw` (§A runs in both). The buffer is input-driven in ex
 `inputStale`, the held-key filter this branch deleted, and the game raised on the first glyph —
 textually clean, semantically broken, and no hunk touched both files. The plan buffer likewise
 reasons about *"tracking which keys are down"*, which is what session35 dissolved. **Add rows for
-Track 2 before running ACC-01-03.**
+Track 2 before running ACC-02-03.**
 
 **Why ACC runs before U, not after (owner, 2026-08-26).** A smoke pass on the pre-merge tree is
 not merely reassurance — it is the **control** for the post-merge one. Merging an advanced

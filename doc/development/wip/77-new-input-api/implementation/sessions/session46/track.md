@@ -418,3 +418,45 @@ blocker. But Decisions 13/20/29 correctly carry `SUPERSEDED by Decision 30`
 in their headings. **The ledger is working**; those are legitimate historical
 record. Wrote an explicit caution into the triage so the "strip history"
 remarks (:429/:749) do not delete the supersession trail.
+
+## 2026-08-26 — owner: triage ALL review findings; ACC splits
+
+**Owner caught me short-changing the triage.** I had registered **7** defects,
+taken from the reviewer's SUMMARY rather than its body. The report carries
+**13 numbered findings + 3 analysis sections** (Vocabulary, guide gaps, Tests)
+raising more. Owner expected "not less than a dozen" — correct, it is **19**.
+
+**What I had missed entirely:**
+- #5 `show{force=true, prompt=…}` silently drops the prompt
+- #6 two docs in 3a disagree about route release at `running → project_open`
+- #9 **turtle double-handles its keys** (owner named this)
+- #11 channel list exists twice — the duplication the comment rules forbid
+- #13 `textinput` shortcut cannot bind an upper-case char
+- **Vocabulary: tier/chain/"the walk"** (owner's "tripled terminology") +
+  overlay/widget/area/field quartet + "combinator"
+- 3 guide gaps: shown-widget-always-consumes (keyboard side), callbacks
+  cannot be un-set, hide() vs teardown / singleton
+- Test gaps: no test covers the pending leak; a routing `pending()` deferred
+
+**Lesson, recorded:** triaging from an agent's summary instead of its document
+loses more than half. The summary is a chat convenience; the file is the
+deliverable — which is exactly why hygiene (c) demands the file.
+
+**Registered my OWN document findings in the plan too** (owner asked): the 5
+unsliced files (closed), the doc/ gate blind spot, FIX-01-01/02/03. They were
+living only in this track.
+
+**Vocabulary rows are NOT nits** — they are the strategic frame's own clause
+failing ("no vocabulary beyond the ask without a one-line justification").
+Noted that 07 (overlay quartet) is a KNOWN unclosed item: 1b's own remark
+flags it, S45 retired "overlay" from src/tests, docs half stayed open.
+Recorded which terms the reviewer judged EARNED (reservation, derived event,
+route/occupy) so nobody sweeps them by association.
+
+**ACC split (owner):** ACC-01 = device-free (slices + cold review) **COMPLETE**.
+ACC-02 = smoke ×4 + slice regen + owner review, **BLOCKED on BUG-01/FIX-02**.
+Owner: "we have enough defects to fix before I put my hands on keyboard."
+Repointed the smoke ids in plan.md AND smoke_checklists.md.
+
+**BUG-01-05 (turtle) flagged for sibling check** — it is a finding about the
+MIGRATION, so other migrated examples may share it. Do not fix only turtle.
