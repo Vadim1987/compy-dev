@@ -125,3 +125,42 @@ what we developed against, never what upstream is").
 **Still unverified:** maze `newinput` divergence — redone-vs-merged is
 inferred from commit subjects only. The attestation makes fetch-then-rebuild
 plausible but does not prove content was carried. Flagged in plan.md.
+
+## 2026-08-26 — Phase FIX created (owner ruling)
+
+Owner: bare P-id citations in the persistent corpus are a **defect**; add a
+**FIX step after ACC** and put it there. Rationale given: "i would anyway
+spot it on review."
+
+**Swept the whole class before writing the row** (the S45 "one claim, three
+homes" lesson). My earlier "3 citations" was UNDER-COUNTED — the real set is
+**10**, and the worst are not bare ids but **wip/ PATHS**:
+
+- `doc/development/smoke_checklists.md` — **7 of the 10**, incl. **4 paths**
+  (lines 8, 142, 154, 261) + bare ids (15, 42, 233)
+- `technical_debt/input.md` — 141 (`P-18-05`), 1609 (`P10`)
+- `agents/rules/commenting.md` — 197 (`P-18-10`)
+
+**Excluded deliberately, with reason stated in-plan:** `agents/validation.md`
+and `agents/sweep.md` cite sessions + wip/ paths BY DESIGN — they are the
+workflow docs that *govern* wip/77. A boot pointer naming the tree it manages
+is not dangling. But `agents/rules/commenting.md` IS in scope: generic project
+rule, not feature-scoped, no business citing a step id.
+
+**Ordering confirmed sound:** FIX after ACC is right, not a compromise — the
+wip/ paths still RESOLVE while wip/ exists, so the smoke pass is unaffected,
+and fixing earlier = rewriting a doc while the owner is running it.
+
+**Correction shape stated:** not deletion. Each citation carries provenance;
+restate the fact + cite a persistent doc's NAMED section. Where nothing
+persistent holds it → that fact needs a home → Phase L.
+
+**Left OPEN for owner, not assumed:** ~4 session-provenance mentions
+("the session25 claim", "amended in place (session34)") in
+technical_debt/input.md + decisions/input.md. These read as *when*, not as
+pointers to follow. Fold into FIX-1 or accept as provenance?
+
+**Proposed as a FIX candidate:** P11's deferred 8-item editorial marker list
+— currently homeless and FIX-shaped. Pending owner nod.
+
+Ordering now: **ACC → FIX → recon → U → L → G**.

@@ -121,9 +121,14 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 > - **Step ids were deliberately NOT renamed.** 2,563 P-id citations across 221 files, 786 of
 >   them in frozen session dirs; a crosswalk in the sprint's close covers a reader who lands on
 >   one. The reasoning is recorded there.
-> - **Agreed ordering (owner, 2026-08-26):** **ACC → recon → U → L → G**, with the **B→C→D
+> - **Agreed ordering (owner, 2026-08-26):** **ACC → FIX → recon → U → L → G**, with the **B→C→D
 >   collapse ruling as step zero of G** — ruled where the evidence is complete and where its
 >   output, the justification table, is needed anyway. Phase F's place in that line is open.
+> - **Phase FIX** is new, and holds small already-diagnosed defects as a batch. Its first row is
+>   **10 ephemeral citations in documents that survive `wip/77` deletion** — seven of them in
+>   `doc/development/smoke_checklists.md`, four of those being `wip/` **paths** rather than bare
+>   ids. It runs *after* ACC because those paths still resolve while `wip/` exists, so the smoke
+>   pass is unaffected.
 > - **Upstream divergence is now measured** — 86 commits behind the edge, 22 behind aldum
 >   upstream, one shared merge-base at 2026-06-05. The 86 is a **floor**: it is what a 23-day-old
 >   local view can see, and the reported edge-side editor overhaul is not in it. See
@@ -391,6 +396,76 @@ sprint** against that defect, with its own id space. Tag the states a clean pass
 
 **Phase F's placement relative to ACC is open** — the owner did not rule on it, and the B→C→D
 collapse may absorb F. Left for the gate rather than settled here.
+
+### Phase FIX — Known-defect batch (INSERTED 2026-08-26, session46, by owner ruling; runs after ACC)
+
+**A collection point for small, already-diagnosed defects, executed once as a batch** — the
+things that need correcting, not investigating. Created because the first such defect had no
+home and the owner would have hit it during the ACC review anyway; a named step is cheaper than
+a surprise.
+
+**The boundary against "a finding opens a focused sprint" (ACC's exit rule).** They do not
+compete:
+
+- **FIX** — the defect is understood, the correction is mechanical, no judgment is owed.
+- **A focused sprint** — the finding needs investigation or a design call.
+
+A smoke failure is almost always the second. An editorial or citation defect is the first.
+
+#### FIX-1 — ephemeral citations in the persistent corpus
+
+**The defect.** Documents that **survive `wip/77` deletion** cite the feature's ephemeral working
+tree — by bare step id (`P19`, `P-18-05`) and, worse, by **path** into `wip/`. Every one of these
+resolves today and **none will resolve once the feature tree is deleted**, which is an owner-gated
+but expected event. `agents/validation.md` already states the rule for code comments — *"comments
+cite canonical docs (`doc/…`), never a feature's ephemeral working tree; a wip path rots when the
+feature's scratch is deleted"* — and the same rot argument governs persistent prose.
+
+A dangling citation is **worse than none, because it reads as authoritative.** That is the
+session45 lesson (31 citations left pointing at renamed headings, two naming a retired design
+model), and this is the same failure with a deletion as its trigger instead of a rename.
+
+**Enumerated, 2026-08-26 — the complete set in the persistent corpus:**
+
+| file | line | citation | kind |
+|---|---|---|---|
+| `doc/development/smoke_checklists.md` | 8 | `wip/77-…/validation/plan.md` Phase G, §16.3 | **path** |
+| `doc/development/smoke_checklists.md` | 142 | `wip/77-…/validation/reviews/P-18-00-triage-and-plan.md` | **path** |
+| `doc/development/smoke_checklists.md` | 154 | `wip/77-…/validation/reviews/P-17-04-triage-and-substeps.md` | **path** |
+| `doc/development/smoke_checklists.md` | 261 | `wip/77-…/validation/reviews/P-17-04-triage-and-substeps.md` | **path** |
+| `doc/development/smoke_checklists.md` | 15 | `P19's` | bare id |
+| `doc/development/smoke_checklists.md` | 42 | `P-18-19/20` | bare id |
+| `doc/development/smoke_checklists.md` | 233 | `P-17-03` §5 | bare id |
+| `doc/development/technical_debt/input.md` | 141 | `P-18-05` | bare id |
+| `doc/development/technical_debt/input.md` | 1609 | `P10` | bare id |
+| `agents/rules/commenting.md` | 197 | `P-18-10` | bare id |
+
+**`smoke_checklists.md` carries seven of the ten** and is the only one citing paths. It is also
+the document a human reads *during ACC* — which is why FIX runs after ACC and not before: the
+paths still resolve while `wip/` exists, so the pass is unaffected, and fixing them earlier would
+be rewriting a document while someone is running it.
+
+**The correction is not deletion.** Each citation is carrying provenance a reader may want. The
+fix is to say the same thing in a form that survives: state the fact, and cite the persistent
+document that holds it — a **named section**, per the rule. Where nothing persistent holds it,
+that is a signal the fact needs a persistent home, which is Phase L's business.
+
+**NOT defects, deliberately excluded:** `agents/validation.md` and `agents/sweep.md` cite
+sessions and `wip/` paths throughout, correctly — they are the workflow documents that *govern*
+`wip/77`, and a boot pointer naming the tree it manages is not a dangling reference.
+`agents/rules/commenting.md` is different and **is** in scope: it is a generic project rule, not
+feature-scoped, and has no business citing a step id.
+
+**Open, for the owner — session-provenance mentions.** A softer sibling: `technical_debt/input.md`
+and `decisions/input.md` carry ~4 mentions of the form *"the session25 claim"*, *"amended in place
+(session34)"*, *"the audit run in session27"*. These read as *when* something was decided rather
+than as pointers to follow, so a reader loses little when they stop resolving. **Ruling wanted:**
+fold into FIX-1, or accept as provenance. Not assumed either way.
+
+#### Candidate rows, pending the owner's nod
+
+- **The deferred editorial marker list** — the 8 dev-doc prose-size complaints P11 set aside as a
+  named list (session45). Currently homeless and FIX-shaped.
 
 ### Phase U — Upstream reconciliation and downstream compatibility (INSERTED 2026-08-09,
 session32, by owner ruling; sits between F and G)
