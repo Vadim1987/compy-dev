@@ -82,11 +82,29 @@ There is no show-and-hide-many-times-per-second pattern in this codebase.
 
 | id | step | note |
 |---|---|---|
-| ARC-01-01 | ~~choose the seam~~ — **ANSWERED by the cold review: the seam is `run`, not `open`** | `ConsoleController:restart()` (`consoleController.lua:1179`) and Ctrl+T quickswitch (`controller.lua:793-808`) both call `stop_project_run()` + `run_project()` **directly, bypassing open/close** — construct-at-open would leave every restart on a stale widget, reproducing the exact class this row exists to kill. Verified. Nil-audit still outstanding |
+| ARC-01-01 | ~~choose the seam~~ — **ANSWERED by the cold review: the seam is `run`, not `open`** | `ConsoleController:restart()` (`consoleController.lua:1179`) and Ctrl+T quickswitch (`controller.lua:793-808`) both call `stop_project_run()` + `run_project()` **directly, bypassing open/close** — construct-at-open would leave every restart on a stale widget, reproducing the exact class this row exists to kill. Verified. **Nil-audit still outstanding**, and with it the pen-and-paper question below |
 | ARC-01-02 | `state.callbacks` / `state.pending` resolve dynamically instead of being captured | **bigger than "one coupling"** — captured in two places (`:790-805`, `:512-527`) and read as plain tables by four functions (`merge_callback_keys`, `consume_pending`, `stash_hidden_configure`, `api_show`). A shape change, not a one-liner. **Must land BEFORE ARC-01-03**: `get_compy_input` runs at boot, before any project exists, so under a per-run widget the capture would index nil (`main.lua:379` publishes the widget, `:383` builds the console — today's ordering exists for exactly this) |
 | ARC-01-03 | construction + destruction move to the seam | |
 | ARC-01-04 | delete the teardown machinery the lifetime replaces | the payoff commit |
 | ARC-01-05 | fixture seam + the spec fallout | the churn lives here |
+
+### Pen-and-paper projects — asked by the owner, answered by reading, still to be confirmed
+
+**Do projects that live in `project_open` and never stay in `'running'` (sapper-like) lose their
+widget?** Read says **no, and the seam answer stands**: they still go *through* `run_project`, which
+sets `'running'`, executes the top level, and — when the run is non-blocking — settles at
+`'project_open'` **without releasing anything** (`consoleController.lua:286-320`). So construction at
+`run_project` reaches them, and destruction at `stop_project_run` is the same boundary Decision 11
+already uses for every channel.
+
+**The trap to avoid is precise:** bind destruction to `stop_project_run`, **never** to the
+`running → project_open` transition. That transition is exactly where `release_keyboard_route` once
+fired, and pointer had to be exempted from it *because* pen-and-paper projects broke — the asymmetry
+Decision 11 was amended to delete. Rebuilding the same mistake with a widget instead of a route is
+the live hazard here.
+
+**Confirm at ARC-01-01 with a real project** (`sapper`), not by reading — and if it opens a can of
+worms, pivot before writing code, which is what ARC-01-01 is for.
 
 ### Risks, stated before starting
 

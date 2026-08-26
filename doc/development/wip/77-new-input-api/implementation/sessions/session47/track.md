@@ -104,6 +104,56 @@
 - **Class-defect verdict, unchanged:** two instances, the second found BY LOOKING, so session46's
   density heuristic still does not fire. No open-ended sweep proposed. Debt entry's revisit trigger
   stays.
+- **MODE TRANSITION, named:** owner opened a design discussion off the back of the sweep
+  (`reset_config` symmetry; is the widget singleton premature optimisation?). Execution →
+  evaluation/replanning. Declared rather than drifted, per the modes rule. No code moved on it.
+- **Owner's architectural read, verified and largely upheld** — see the answer recorded below the
+  fold in this entry and the rows proposed to them:
+  - `apply_config`'s `if cfg.x ~= nil` guard is the **shared root** of BUG-01-02 (cannot clear a
+    highlighter mid-run) and of the `custom_label` leak (never cleared at stop). Owner spotted the
+    link unprompted.
+  - **Decision 3's NFR forbids per-input-SESSION construction, not per-project-RUN.** Read it: *"A
+    non-functional requirement forbids allocating a fresh object graph per input session — the
+    device is memory-constrained and the common pattern is repeated prompting."* Repeated prompting
+    is a within-run pattern. **The run boundary was never examined.** The owner's suspicion that the
+    singleton is over-applied is correct on the evidence.
+  - Decision 3 also records **four widget instances**, not one — project (`main.lua:371`), console
+    REPL (`consoleController.lua:44`), editor input + search. Verified in code. So a per-run project
+    widget would not disturb the other three.
+  - **What couples the singleton in:** `get_compy_input` captures `widget.callbacks` and
+    `widget.pending` **by reference**, so a replaced widget leaves the surface pointing at a corpse.
+    That capture exists because of owner ruling 2026-07-20 (`compy.input.callbacks` IS the widget's
+    table). The code notes a pass-through proxy was tried and "reproduced plain table behaviour
+    exactly" — so the dynamic-resolution route is known to work.
 - **New row FIX-02-21:** `prompt` sits on `PER_SHOW_KEYS` ("spent by the show() that reads them")
   but is sticky within a run too. Owner picks: mis-filed key (comment fix) or wrong behaviour (BUG
   row, and migrated examples may lean on today's stickiness — maze's re-prompt comment suggests it).
+
+## 2026-08-26 — ARC-01 filed, second-opinioned, and its deferral overturned
+
+- Filed `ARC-01` under a **new KIND** (`ARC` = structural work that dissolves a defect class) —
+  filing it as BUG would hide that it removes machinery rather than patching it.
+- Cold second opinion: **"sound, but not now."** Four technical findings, all verified in code:
+  seam = `run` not `open` (restart + Ctrl+T bypass open/close — its best catch, and it ANSWERED
+  ARC-01-01), ARC-01-02 is a shape change across 4 functions and must precede construction moving,
+  Decision 3 needs a written amendment not a reinterpretation, "net deletion" → "a wash".
+- **Owner overturned the timing half with a base check the reviewer never made.** At `3256aac` the
+  widget was built PER ACTIVATION (model + controller + view, fresh each `input_text`/`input_code`).
+  So: singleton is ours, per-run is strictly less allocation than base, and the merge argument was
+  backwards — the merge-sensitive sites are code this feature ADDED and ARC-01 REMOVES, so deferring
+  means reconciling them against 86 commits and then deleting them.
+- **I had recommended deferring; reversed it.** My merge-cost reasoning priced conflict size without
+  checking which direction the change moved the diff. It moves toward upstream.
+- **Twice this phase a base check overturned a verdict, and both times the owner made it.** Written
+  into session48's prompt as a standing instruction rather than left as a habit.
+- Owner's last question — pen-and-paper projects that live in `project_open`. Read says safe: they
+  still pass THROUGH `run_project`, which sets 'running', runs the top level, and settles at
+  'project_open' without releasing anything. Seam unchanged. **The trap named on the row**: bind
+  destruction to `stop_project_run`, never to the running→project_open transition — that is exactly
+  where `release_keyboard_route` fired and broke pen-and-paper before. To be confirmed with sapper
+  at ARC-01-01, owner agreeing to pivot there if it opens a can of worms.
+- **Fable retired from `agents/validation.md`** (`7ffac945`) — unavailable on this account; owner had
+  forgotten to strike it, and this session followed the stale recommendation and spawned one. Tier
+  replaced rather than deleted: judgment calls are Opus, and better in-session than spawned.
+- WRAPPED. Report written, session48 prompt commissions ARC-01, pointer repointed, baseline line
+  updated 968 → 970.
