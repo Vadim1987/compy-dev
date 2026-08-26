@@ -6,7 +6,7 @@
 **Corrected 2026-08-26 after owner challenge.** The first pass of this document triaged **7**
 findings, taken from the reviewer's summary rather than its body. The report carries **13 numbered
 findings plus three analysis sections** that raise more, and the owner added one. Every one is a defect row. **Total:
-20**, plus this session's own document findings, registered here rather than living only in a track.
+21**, plus this session's own document findings, registered here rather than living only in a track.
 
 **Nothing is dropped as "not a defect" without the owner saying so.** Two rows are closed already
 (one fixed, one scoped down by ruling) and stay visible so the count reconciles.
@@ -16,7 +16,7 @@ findings plus three analysis sections** that raise more, and the owner added one
 | sprint | contents | rows |
 |---|---|---|
 | **BUG-01** | runtime defects — the code misbehaves | 6 |
-| **FIX-02** | documentation, vocabulary and process defects from this review | 14 |
+| **FIX-02** | documentation, vocabulary and process defects from this review | 15 |
 | **FIX-01** | *(pre-existing, unchanged)* citations, session numbers, editorial list | 3 |
 
 ---
@@ -104,6 +104,43 @@ in a surface the guide presents as general.
 | **FIX-02-12** | the channel list exists twice — the exact duplication the commenting rules forbid | nit | reviewer only |
 | **FIX-02-13** | a `pending()` routing case is deferred in the area the review was asked to read hardest | minor | verified (one of the ruled 10) |
 | **FIX-02-14** | **`release_keyboard_route` — name, doc comment and cited decision all describe retired behaviour** | minor | **parent-verified in code** |
+| **FIX-02-15** | **the input debt ledger is 34% resolved entries, many about scaffolding this feature invented** | minor | **parent-verified** |
+
+### FIX-02-15 — the debt ledger carries its own scaffolding
+
+**Raised by the owner, 2026-08-26**, by analogy with the decision tombstones: *is the ledger
+carrying items introduced and fixed within this branch, which from upstream's perspective never
+existed?* **It is.**
+
+**Measured:** `doc/development/technical_debt/input.md` is 1610 lines and 62 entries. **20 are
+already marked `RESOLVED` / `CLOSED`, occupying 547 lines — 34% of the file.**
+`technical_debt/general.md` is clean; this is an input-ledger problem only.
+
+**Two kinds inside those 20, and they need different rulings.** The mechanical test is the one Phase
+L used — *does the subject exist at the PR base `3256aac`?*
+
+- **Rot — invented here, resolved here.** Subjects with **zero** occurrences at base:
+  `compy.input`, `compy.keys_pressed`, `compy.before_exit`, `is_active`, `normalize_combo` /
+  `new_handler_table`, `_generic_callback`. Entries about these record a problem this feature
+  created and then fixed. **From upstream's perspective they never happened**, which is the owner's
+  own rule for the decisions ledger, and there is no reason it stops there. One is doubly dead —
+  the `compy.keys_pressed` entry is debt about a member Decision 30 later dissolved entirely.
+- **Real, pre-existing, fixed by this work.** Subjects present at base: the `userinput` round-trip
+  (3 sites), the `wrap` xpcall arity, `compy.singleclick` (6), `userlove` (8). These are honest
+  records of genuine fixes. **Ruling wanted:** a resolved entry is arguably CHANGELOG material
+  rather than debt-register material, but that is the owner's call and it is not rot.
+
+**A caution for whoever runs this, from a near-miss.** I first classified `love.handlers.userinput`
+as rot because that exact string returns **0** at base — it is written `handlers.userinput` there.
+It is real pre-existing debt. **Test the subject with the spelling the base actually uses**, not the
+one today's ledger uses; the exact-string grep will lie in exactly the cases that matter.
+
+**Scope for the row:** enumerate all 20 (this is a sample, not an enumeration), test each against
+base, then dispose per kind.
+
+**Third instance of one pattern.** Decision tombstones, `release_keyboard_route`'s comment, and now
+this: **every ledger this feature keeps has accumulated entries about its own scaffolding.** Worth
+checking the remaining persistent docs for the same shape rather than waiting for someone to ask.
 
 ### FIX-02-14 — a live function that documents a mechanism this feature removed
 

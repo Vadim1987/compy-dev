@@ -719,3 +719,39 @@ review, 1 the owner found reading it)".
 that a *stale claim about retired behaviour* surfaced — the PR description's
 `keys_pressed`, now this. S45's lesson generalises further than doc prose:
 **code comments that narrate a mechanism's lifecycle rot the same way.**
+
+## 2026-08-26 — owner's second catch: FIX-02-15, the debt ledger's own scaffolding
+
+Owner asked, by analogy with the decision tombstones: does the debt ledger
+carry items introduced AND fixed within this branch (= never existed from
+upstream's view)? **Yes.**
+
+**Measured:** `technical_debt/input.md` = 1610 lines, 62 entries, **20 marked
+RESOLVED/CLOSED occupying 547 lines = 34% of the file**.
+`technical_debt/general.md` is clean — input-ledger problem only.
+
+**Two kinds inside the 20**, split by Phase L's own test (subject exists at
+base `3256aac`?):
+- **ROT** — zero at base, so invented here and resolved here: `compy.input`,
+  `compy.keys_pressed`, `compy.before_exit`, `is_active`, `normalize_combo`/
+  `new_handler_table`, `_generic_callback`. The `compy.keys_pressed` one is
+  **doubly dead** — debt about a member Decision 30 later dissolved.
+- **REAL pre-existing, fixed by this work** — present at base: `userinput`
+  round-trip (3), `wrap` xpcall arity, `compy.singleclick` (6), `userlove`
+  (8). Owner ruling wanted: resolved entries are arguably CHANGELOG material,
+  not debt-register material — but that is a call, not rot.
+
+**NEAR-MISS, written into the row as a caution.** I first classified
+`love.handlers.userinput` as ROT because that exact string is **0 at base** —
+it is spelled `handlers.userinput` there. It is REAL pre-existing debt.
+**Test with the spelling the BASE uses, not the ledger's.** Same failure as
+the Track 2 miss earlier today: exact-string grep lies precisely where it
+matters.
+
+**Flagged as the THIRD instance of one pattern** — decision tombstones,
+`release_keyboard_route`'s comment, now the debt ledger. **Every ledger this
+feature keeps has accumulated entries about its own scaffolding.**
+Recommended checking the remaining persistent docs for the same shape rather
+than waiting to be asked.
+
+Counts: FIX-02 14→15, total 20→21 (19 review + 2 owner).

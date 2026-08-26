@@ -25,7 +25,7 @@ reconciliation, and assembly.
 | id | step | result |
 |---|---|---|
 | ACC-01-01 | slice regeneration, the review cut | found **5 files outside every pathspec**, one production code |
-| ACC-01-02 | cold PR review vs the original stakeholder ask | **merge with changes — 20 defects** (19 from the review, 1 the owner found reading it) |
+| ACC-01-02 | cold PR review vs the original stakeholder ask | **merge with changes — 21 defects** (19 from the review, 2 the owner found reading it) |
 
 Detail: [`validation/reviews/ACC-01-02-findings-triage.md`](validation/reviews/ACC-01-02-findings-triage.md) ·
 report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/ACC-01-02-cold-pr-review.md)
@@ -48,7 +48,7 @@ and `02` are the majors.
 | BUG-01-05 | `turtle` double-handles its own keys | **check the other migrated examples for siblings** · symptom of FIX-02-09 |
 | BUG-01-06 | a `textinput` shortcut cannot bind an upper-case character | |
 
-### FIX-02 — docs, vocabulary, process (14)
+### FIX-02 — docs, vocabulary, process (15)
 
 | id | defect | note |
 |---|---|---|
@@ -66,6 +66,7 @@ and `02` are the majors.
 | FIX-02-12 | the channel list exists twice | |
 | FIX-02-13 | a `pending()` routing case deferred in the hardest-read area | |
 | FIX-02-14 | **`release_keyboard_route` — name, comment and cited decision all describe retired behaviour** | **check with FIX-02-05**, likely its source |
+| FIX-02-15 | **debt ledger is 34% resolved entries** (547/1610 lines), many about scaffolding this feature invented | test each against the PR base; rot goes, pre-existing fixes need a ruling |
 
 ### FIX-01 — pre-existing citation hygiene (3)
 
