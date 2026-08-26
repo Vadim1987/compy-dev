@@ -45,8 +45,8 @@ function love.keypressed(key)
 end
 
 -- The `i` that opens the prompt must not also be typed into
--- it (doc/input_api.md, "Worked example: a plain key that
--- opens the input widget"):
+-- it (doc/input_api.md, "Worked example: the trigger key
+-- echoes into the widget it opened"):
 -- LÖVE delivers a keypressed and a textinput for one physical
 -- key in no guaranteed order. This one-shot eats that echo
 -- whichever side of the open it lands on, then unregisters so

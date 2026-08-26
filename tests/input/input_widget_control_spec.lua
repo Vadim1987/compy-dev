@@ -536,8 +536,8 @@ describe('input surface: widget control #input', function()
     end)
   end)
 
-  -- doc/input_api.md, "Worked example: a plain key that
-  -- opens the input widget".
+  -- doc/input_api.md, "Worked example: the trigger key
+  -- echoes into the widget it opened".
   -- LÖVE delivers a keypressed AND a textinput for one physical
   -- key and guarantees nothing about their order, so the
   -- trigger's own echo can land in the field it just opened.

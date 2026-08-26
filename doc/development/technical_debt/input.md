@@ -540,8 +540,8 @@ question, not resolved here.
 ### A widget opened from a key can receive that key's own echo
 
 - **Status:** answered by a **documented project idiom**, not by a framework
-  mechanism (owner, 2026-08-03) — `../../input_api.md`, *"Worked example: a plain key
-  that opens the input widget"*, pinned by `tests/input/input_widget_control_spec.lua`, group
+  mechanism (owner, 2026-08-03) — `../../input_api.md`, *"Worked example: the trigger key
+  echoes into the widget it opened"*, pinned by `tests/input/input_widget_control_spec.lua`, group
   *"the documented echo guard"*, and used by `src/examples/turtle`. A
   framework fix was implemented and then reverted (2026-08-01) because its
   design had never been ruled. What remains open is whether the framework

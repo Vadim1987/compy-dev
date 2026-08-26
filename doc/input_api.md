@@ -104,8 +104,8 @@ end
 ```
 
 That guard stops *later* presses of `i` from re-opening the prompt. It does
-not stop the `i` that opened it from being typed into it — see "Opening the
-input widget from a key" below.
+not stop the `i` that opened it from being typed into it — see "Worked
+example: the trigger key echoes into the widget it opened" below.
 
 `compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
 empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
@@ -289,7 +289,7 @@ Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else
 being held, so holding a movement key would silently break unrelated
 shortcuts. Anything beyond exact-or-class matching belongs in a hook, which
-sees every event on its channel; "Choosing the mechanism" below covers what to
+sees every event on its channel; "Choosing the mechanism: transitions, state, and what not to build" below covers what to
 do when a binding and a held key have to work together.
 
 `compy.input.hooks.keypressed`, `.keyreleased`, and `.textinput` are one
@@ -406,8 +406,8 @@ register a shortcut and let the framework match it:
 `shortcuts.keypressed['ctrl+s']`. That says it once, as data, in a vocabulary
 that is already folded and already the same on every channel. Asking about
 modifiers imperatively inside a handler turns into a cascade repeated at every
-call site. When a binding and a held key have to work together, see "Choosing
-the mechanism" below.
+call site. When a binding and a held key have to work together, see "Choosing the mechanism: transitions,
+state, and what not to build" below.
 
 **2. Ask `Key` — allowed, and worth a second look.** `Key` is available to
 every project, like `compy`. `Key.shift()`, `Key.ctrl()` and `Key.alt()`
@@ -524,7 +524,7 @@ move(fast, precise)                  -- everything below is deterministic
 It keeps the non-deterministic part visible in one place instead of scattered
 through code that is otherwise a pure function of your own state.
 
-### Worked example: a plain key that opens the input widget
+### Worked example: the trigger key echoes into the widget it opened
 
 Not a recommended shape — a **worked example of an awkward case**, and of how
 the pieces above combine to solve one. Most projects open the widget from a
