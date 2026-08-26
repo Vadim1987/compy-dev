@@ -19,10 +19,10 @@ result nobody can invalidate is banked before the exposed ones:
 
 | step | list | why it sits here |
 |---|---|---|
-| **ACC-02-01** | `balloons` | 5 ahead / 0 behind its upstream — no divergence to reconcile, so no later merge can invalidate the result |
-| **ACC-02-02** | `keyboard` | reconciled 2026-08-11; upstream may have moved since |
-| **ACC-02-03** | `maze` + `draw` | reconciled against a base dated 2026-07-24 |
-| **ACC-02-04** | `sapper` | in-repo, so it moves with the platform |
+| **ACC-02-02** | `balloons` | 5 ahead / 0 behind its upstream — no divergence to reconcile, so no later merge can invalidate the result |
+| **ACC-02-03** | `keyboard` | reconciled 2026-08-11; upstream may have moved since |
+| **ACC-02-04** | `maze` + `draw` | reconciled against a base dated 2026-07-24 |
+| **ACC-02-05** | `sapper` | in-repo, so it moves with the platform |
 
 **A clean pass is worth pinning.** Tag the exact state a green run was made against — the scheme
 and the standing tag registry are in `wip/77-new-input-api/TAGS.md` — so that "it passed" names a

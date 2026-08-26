@@ -122,7 +122,7 @@ rulings** that dissolve most row-level concerns, with mechanical work delegated 
 >   them in frozen session dirs; a crosswalk in the sprint's close covers a reader who lands on
 >   one. The reasoning is recorded there.
 > - **Agreed ordering (owner, 2026-08-26, revised same day):** **ACC-01 → BUG-01 + FIX-01 + FIX-02
->   → ACC-02 → recon → U → L → G**, with the **B→C→D collapse ruling as step zero of G** — ruled where the evidence is complete and where its
+>   + DEC-01 → ACC-02 (opening with a second cold review) → recon → U → L → G**, with the **B→C→D collapse ruling as step zero of G** — ruled where the evidence is complete and where its
 >   output, the justification table, is needed anyway. Phase F's place in that line is open.
 > - **Phase FIX** is new, and holds small already-diagnosed defects as a batch. Its first row is
 >   **10 ephemeral citations in documents that survive `wip/77` deletion** — seven of them in
@@ -401,12 +401,13 @@ sitting-time this ordering exists to protect.
 
 | id | step | state |
 |---|---|---|
-| **ACC-02-01** | `balloons` smoke | list written 2026-08-26 |
-| **ACC-02-02** | `keyboard` smoke | list exists, anchors refreshed. **Read the review's "could not check": `4c` is a behavioural rewrite whose correctness depends on timing it could not observe** |
-| **ACC-02-03** | `maze` + `draw` smoke | list exists, gap closed (B11, D8, D9) |
-| **ACC-02-04** | `sapper` smoke | list written 2026-08-26 |
-| **ACC-02-05** | Slice regeneration — the **second** review cut, over the fixed tree | after the sprints |
-| **ACC-02-06** | Owner's readability review of the slices | last in ACC |
+| **ACC-02-01** | **A second cold PR review**, over the fixed tree — before the owner touches a keyboard (owner, 2026-08-26) | re-runs the ACC-01-02 method |
+| **ACC-02-02** | `balloons` smoke | list written 2026-08-26 |
+| **ACC-02-03** | `keyboard` smoke | list exists, anchors refreshed. **Read the review's "could not check": `4c` is a behavioural rewrite whose correctness depends on timing it could not observe** |
+| **ACC-02-04** | `maze` + `draw` smoke | list exists, gap closed (B11, D8, D9) |
+| **ACC-02-05** | `sapper` smoke | list written 2026-08-26 |
+| **ACC-02-06** | Slice regeneration — the **third** cut, if the smoke passes moved anything | after the passes |
+| **ACC-02-07** | Owner's readability review of the slices | last in ACC |
 
 **Order by upstream sensitivity.** `balloons` first: 5 ahead / 0 behind `origin/main`, the only repo
 with no divergence to reconcile, so its result is the one recon cannot invalidate. **`maze` runs
@@ -434,10 +435,21 @@ route release · `06`–`08` the vocabulary rows (tier/chain/walk; overlay/widge
 combinator) · `09`–`11` three gaps in `doc/input_api.md`, of which `09` is the one `turtle` trips
 over · `12` the duplicated channel list · `13` a deferred `pending()` routing case.
 
+**DEC-01 — de-noising the decisions ledger (owner request, 2026-08-26).** Remove the 4 tombstoned
+entries and renumber the surviving 29 to a gapless 1–29. **Runs before the next slice cut**, so the
+ledger a reviewer reads is the clean one. Six steps, with the governing gate at step 2 rather than
+at the end: once every id is sentinel-wrapped, no rename can collide. Full specification, survey and
+hazards — line-broken mentions, case and plural variants, and the `wip/` namespace that must **not**
+be swept — in [`../reviews/DEC-01-ledger-renumbering-spec.md`](../reviews/DEC-01-ledger-renumbering-spec.md).
+
+**The hazard that governs it:** a missed citation does not dangle, it silently names a *different*
+existing decision. That is worse than a dangling one, and 165 of the citations are in `src/` and
+`tests/`.
+
 **FIX-01 stays as it is** — citations, session numbers, the editorial marker list. Different batch,
 different source; merging them would lose that.
 
-#### ACC-02-03 carries a coverage gap, found 2026-08-26
+#### ACC-02-04 carries a coverage gap, found 2026-08-26
 
 **`maze`'s reconciliation brought in a whole upstream game and a new input mechanic, and one of
 them is unexercised.** Between the old upstream point (`12f675f6`, 2026-05-25) and the base maze
@@ -470,7 +482,7 @@ The checklist covers `draw` (§A runs in both). The buffer is input-driven in ex
 `inputStale`, the held-key filter this branch deleted, and the game raised on the first glyph —
 textually clean, semantically broken, and no hunk touched both files. The plan buffer likewise
 reasons about *"tracking which keys are down"*, which is what session35 dissolved. **Add rows for
-Track 2 before running ACC-02-03.**
+Track 2 before running ACC-02-04.**
 
 **Why ACC runs before U, not after (owner, 2026-08-26).** A smoke pass on the pre-merge tree is
 not merely reassurance — it is the **control** for the post-merge one. Merging an advanced

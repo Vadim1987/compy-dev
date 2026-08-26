@@ -460,3 +460,48 @@ Repointed the smoke ids in plan.md AND smoke_checklists.md.
 
 **BUG-01-05 (turtle) flagged for sibling check** — it is a finding about the
 MIGRATION, so other migrated examples may share it. Do not fix only turtle.
+
+## 2026-08-26 — DEC-01 specified (ledger renumbering); ACC-02 opens with a cold review
+
+Owner: remove decision tombstones + renumber BEFORE next slicing. Sentinel
+algorithm supplied. Also: **ACC-02 starts with a NEW cold review** before they
+touch a keyboard.
+
+**Verdict: doable, owner's algorithm is right.** The sentinel wrap solves the
+real problem (renaming 26→13 while a real 13 still exists) by making old/new
+namespaces disjoint.
+
+**Survey:** 33 headings, highest number **34** (sequence ALREADY has a gap).
+**4 tombstones: 13, 16, 20, 29** (all SUPERSEDED). 117 mentions in ledger,
+**165 in src/+tests across 18 files**, ~10 persistent doc files, 1328 in wip/.
+Result: 29 entries, gapless 1–29.
+
+**My contribution — the gate belongs at step 2, not the end.** The hazard is
+inverted from the usual rename: a missed citation does NOT dangle, it
+**silently names a different EXISTING decision**. Worse than dangling because
+it reads authoritative. So: once wrapping is provably complete, everything
+after is safe. Gate = no unwrapped `Decisions?` anywhere in scope.
+
+**Three hazards the algorithm doesn't cover by itself:**
+1. **Line-broken mentions — owner anticipated, CONFIRMED 3** (ledger lines
+   117, 230, 1444: "(Decision\n30)"). Must be joined as its OWN commit first —
+   a reflow inside a rename diff is unreadable.
+2. **Case/plural variants**: "Decisions 25 and 27" (one mention, two ids);
+   lowercase `decision 5` ×4, `decision 2` ×3.
+3. **wip/ must NOT be renumbered** — frozen history, and it carries a SEPARATE
+   dead namespace `D-1..D-10` (1328 hits, design/spec.md only, zero in
+   persistent corpus or code). Do not conflate.
+
+**Inventory = deliverable, not worksheet.** Must outlive the op (commit
+messages + wip cite old numbers) → **append to the ledger itself**, the only
+place surviving wip deletion.
+
+**Flagged for DEC-01-04:** 3 of 4 tombstones are superseded BY Decision 30,
+which is itself renumbering. And **Decision 20's body is the last full
+description of `compy.input.keys_pressed`** — deleting it removes the record
+of WHY it went. Decide per entry in the inventory, not during the sweep.
+
+**Contested, non-blocking, recorded so the trade is visible:** removal is
+mandatory, renumbering is optional. Gaps are self-evidently gaps; renumbering
+buys a clean sequence at the cost of 165 code citations where a miss is
+silent. **If the job is cut short, cut the renumbering and keep the removal.**
