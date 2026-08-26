@@ -45,7 +45,9 @@ local new = function(model, disable_selection,
     -- the application, and a draft has to die with the run that
     -- wrote it. Same arrangement as `callbacks` above — the
     -- surface holds this exact table, so teardown wipes it in
-    -- place and never reassigns.
+    -- place and never reassigns. Only the PROJECT widget's is
+    -- ever filled — the console and editor widgets have no
+    -- compy.input surface to stash through.
     pending = { },
   }
 end

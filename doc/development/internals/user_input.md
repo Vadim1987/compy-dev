@@ -707,9 +707,14 @@ For a project-author usage guide with examples, see
 
 > REMARK: why restate the shape of API there? Just tell what the table is and where its constructed and where its described
 
-`compy.input` is a table created once per project environment (`get_compy_input()`,
-`consoleController.lua:601-635`, wrapped into the project's `compy` table by
-`get_compy_namespace()`). Its container and the identity of its three sub-tables
+`compy.input` is a table created **once for the application**, not once per project
+(`get_compy_input()` in `consoleController.lua`, wrapped into the project's `compy` table by
+`get_compy_namespace()`): it is built inside `prepare_project_env`, which `ConsoleController.new`
+calls a single time at construction. Cloning the environment does not separate instances either —
+the container is metatable-only and `table.clone` copies the metatable, so every clone resolves to
+the same private state. Anything held there that must not outlive a run is therefore cleared by the
+stop teardown, or kept on the widget where that teardown already reaches (Decision 11).
+Its container and the identity of its three sub-tables
 (`shortcuts`/`hooks`/`callbacks`) are frozen — Decision 7, see the
 "compy.input's write boundary" comment in `consoleController.lua` — but every leaf inside them is
 freely writable. It exposes:
