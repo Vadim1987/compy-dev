@@ -126,6 +126,29 @@ corrections to this row as originally filed:
 **The argument for deferring:** a table-driven `reset_config` symmetric to `apply_config` closes the
 same defect class, so ARC-01's *urgency* collapses even though its *correctness* stands.
 
+### The base check that overturns the deferral (owner, 2026-08-26)
+
+**The reviewer did not check the PR base, and the owner did.** At `3256aac` the project's input
+widget was constructed **per activation** — model, controller AND view, fresh inside the `input()`
+closure on every `input_text`/`input_code` call (`consoleController.lua:563-580` at base), with
+`love.state.user_input = nil` on the way out. Three consequences:
+
+1. **The singleton is this feature's own invention**, not inherited. Decision 3's *"created once at
+   load"* describes something that did not exist before this branch — which makes the amendment far
+   easier to write, and largely dissolves the reviewer's "looks like a loophole" concern.
+2. **Per-run allocation is still strictly less than the base did**, and the base shipped on the same
+   memory-constrained device without complaint. The NFR's premise was never tested against the
+   system that had been doing the opposite all along.
+3. **The merge argument for deferring is backwards.** ARC-01's merge-sensitive sites are the
+   `main.lua` boot block (code *this feature added*, which ARC-01 removes) and
+   `reset_widget_outputs` (likewise). **Deferring means reconciling both against 86 commits of
+   upstream drift and then deleting them** — reconciliation spent on code already scheduled for
+   removal. Doing ARC-01 first shrinks our side of the diff before the merge is computed.
+
+**Ruling: ARC-01 runs before MERGE-01, as originally filed.** The cold review's *"not now"* was
+priced on a merge-cost argument this fact does not support; its other four findings stand and are
+folded in above.
+
 ---
 
 ## ⬜ The six defect sprints — **the current work**
