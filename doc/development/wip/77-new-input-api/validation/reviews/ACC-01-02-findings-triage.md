@@ -15,7 +15,7 @@ focused sprint.
 | | sprint | contents |
 |---|---|---|
 | **BUG-01** | runtime defects | two, both needing investigation before a fix can be sized |
-| **FIX-02** | doc / process defects | five, mechanical once ruled on |
+| **FIX-02** | doc / process defects | five, mechanical once ruled on (`02-02` reduced to three files by owner ruling) |
 
 *(`FIX-01` stays as it is — citations, session numbers, the editorial list. These are a separate
 batch from a separate source and mixing them would lose that.)*
@@ -89,35 +89,47 @@ others correct terminology that conflates inbound events with widget callbacks.
    (`agents/validation.md`, "Comment gate"). P11 closed that gate and reported it clean, correctly,
    because `doc/` was outside its scope. **Widen the gate**, or this recurs on the next feature.
 
-### FIX-02-02 — the provenance convention is 83% unapplied
+### FIX-02-02 — provenance: three files, not forty-four (owner ruling, 2026-08-26)
 
-**Severity: minor as a defect, but the reviewer's framing was wrong and the real shape is bigger.**
+**Severity: nit. Scope settled by the owner; most of what the reviewer reported is not a defect.**
 
-The reviewer reported this as a contradiction *inside* the PR: slice `1a` adds an HTML comment that
-slice `1b`'s new `conventions/docs.md` forbids. The convention **does** say it —
-*"The block is the only place provenance is recorded. Do not re-add the HTML comment."*
+The reviewer reported a contradiction *inside* the PR: slice `1a` adds an HTML comment that slice
+`1b`'s new `conventions/docs.md` forbids. The convention **does** say it — *"The block is the only
+place provenance is recorded. Do not re-add the HTML comment."*
 
-**But that forbids the form, not the purpose**, and the purpose is preserved: `authored: llm` plus
+**But it forbids the form, not the purpose**, and the purpose survives: `authored: llm` plus
 `reviewed: none` carries exactly what *"authored By LLM; human-approved NOT YET"* carried. The
 `reviewed` field's own description says so.
 
-**What is actually wrong is that the migration was never finished.** Across `doc/` (wip excluded),
-**53 documents**:
+**Owner ruling — the history is not a violation:**
 
-| form | count |
-|---|---|
-| front matter — the convention | **9** |
-| HTML comment only — the retired form | **22** |
-| both | 1 |
-| neither | **21** |
+1. the rubber-stamping was done in HTML;
+2. the convention came **after** it;
+3. **files added or changed later should respect it; older stamps may remain intact unless they are
+   changed;**
+4. and a formal violation is not worth displacing more important work.
 
-All 21 files in slice `1a` are in the "HTML only" group; none has front matter, so this is an
-**incomplete migration, not a duplicate**. The convention says *"Every document under `doc/` opens
-with YAML front matter"* — 44 of 53 do not. Note `doc/development/smoke_checklists.md`, which this
-feature added, is itself in the "neither" group.
+So slice `1a` is not a defect at all — it faithfully reproduces a commit that predates the rule,
+and re-cutting it to satisfy a later convention would misrepresent the history it exists to record.
 
-**Scope ruling wanted:** migrate only what this PR ships, or the corpus. The second is larger than
-this feature and arguably not ours.
+**Applying rule 3 mechanically** — docs touched since the convention commit `8d665fe4` (2026-07-31)
+that still lack front matter — gives **13**, which split by how much they are ours:
+
+| group | count | disposition |
+|---|---|---|
+| **added after the convention** — unambiguously ours | **3** | the only ones worth doing |
+| pre-existing, merely *changed* since | 10 | in scope by the letter of rule 3; **deferred under rule 4** |
+| untouched since the convention | 31 | **not in scope** — rule 3 does not reach them |
+
+The three:
+
+- `doc/development/internals/examples/keyboard.md` (added 2026-08-07)
+- `doc/development/smoke_checklists.md` (added 2026-08-12)
+- `doc/tall_blocks.md` (added 2026-08-16)
+
+All three ship in this PR, all three are ours, and the fix is a six-line block each. **That is the
+whole row.** The 44-of-53 figure the survey produced describes the corpus, not a defect in this
+work, and is recorded here only so nobody re-derives it and re-opens the question.
 
 ### FIX-02-03 — `pong/README.md` is a 316-line diff hiding a 2-line change
 

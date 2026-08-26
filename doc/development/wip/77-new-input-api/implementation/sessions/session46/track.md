@@ -357,3 +357,27 @@ false premise is worse than none: it closes the question.
 Verified this round: pong/README 316/316 lines but **2/2 with
 --ignore-all-space** (CRLF rewrite hiding a 2-line change); CHANGELOG
 Unreleased has only `### Changed`, no `Removed`.
+
+## 2026-08-26 — owner ruling on provenance: scope collapses 44 → 3
+
+Owner's four points: (1) stamping was HTML; (2) convention came after;
+(3) files added/changed LATER respect it, older stamps stay unless changed;
+(4) a formal violation does not displace more important work.
+
+**Consequence: slice 1a is NOT a defect.** It faithfully reproduces a commit
+predating the rule; re-cutting it to satisfy a later convention would
+misrepresent the history it exists to record. The reviewer's framing is
+retired.
+
+Applied rule 3 mechanically (docs touched since convention commit `8d665fe4`,
+2026-07-31, lacking front-matter) → **13**, split by ownership:
+- **3 ADDED after the convention = unambiguously ours** → the whole row:
+  `internals/examples/keyboard.md` (08-07), `smoke_checklists.md` (08-12),
+  `tall_blocks.md` (08-16). All three ship in this PR. ~6 lines each.
+- 10 pre-existing but changed → in scope by the LETTER of rule 3, deferred
+  under rule 4.
+- 31 untouched → rule 3 does not reach them. Not in scope.
+
+Kept the 44/53 survey figure in the doc explicitly labelled as describing the
+CORPUS not a defect — so a future session does not re-derive it and re-open
+a question the owner has closed.
