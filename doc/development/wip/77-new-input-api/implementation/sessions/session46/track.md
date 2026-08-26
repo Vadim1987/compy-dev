@@ -755,3 +755,47 @@ Recommended checking the remaining persistent docs for the same shape rather
 than waiting to be asked.
 
 Counts: FIX-02 14→15, total 20→21 (19 review + 2 owner).
+
+## 2026-08-26 — FIX-02-15 ruling recorded; FIX-03 commissioned
+
+**Owner ruling on debt disposal, recorded in the row:** rot debt **vacuumed**
+(deleted, no tombstone) · pre-existing-but-resolved → **CHANGELOG** ·
+behavioural changes → **CHANGELOG**.
+
+**Structural note added:** this gives the CHANGELOG **two feeders** —
+FIX-02-04 (Removed section for the retired globals) and FIX-02-15 (resolved
+pre-existing fixes + behavioural changes). **Do them together**; assembled
+twice from two rows it will duplicate and disagree.
+
+**Owner asked: commission a broader doc cleanup for closed history arcs?
+Answered YES, with evidence.** Three instances found this session by THREE
+UNRELATED ROUTES, none by looking:
+- decision tombstones ← a planned step
+- `release_keyboard_route` ← owner's design question
+- debt ledger 547 lines ← owner's analogy question
+Three independent discoveries of one shape = class defect, not coincidence.
+
+**Specified as FIX-03** (`validation/reviews/FIX-03-closed-arc-sweep-spec.md`),
+4 steps, inventory-before-edit per standing discipline.
+
+**Made the test MECHANICAL rather than stylistic** — this is the key design
+choice: subject absent at base `3256aac` AND absent today → arc closed inside
+the branch. Two greps per subject, no judgement.
+
+**Two exclusions, and the 2nd is mine from today's near-miss:**
+1. owner's — lessons already materialized in a decision/convention. But
+   **VERIFY materialization before deleting the instance**; an unmaterialized
+   lesson deleted with its narration is gone. (Today's worked example: the
+   asymmetry lesson IS materialized in conventions/docs.md "de-facto
+   behaviour has a boundary" → instance can go.)
+2. **prose that is the ONLY record of a PRE-FEATURE deviation.** Decision
+   11's rot paragraph sits DIRECTLY ABOVE "Changed baseline behaviour" (the
+   hidden-console/Enter-evaluates record). A sweep matching on TONE takes
+   both. → **match on subjects, never on tone.**
+
+**Scope includes src/ and tests/ comments** — where FIX-02-14 hid and where no
+doc sweep reaches. wip/ excluded as always.
+
+**Ordering: FIX-03 runs LAST** among the sprints — it catches what FIX-02 and
+DEC-01 miss; running it first = three brooms over one floor, disagreeing at
+the edges. Sequence now has 5 sprints.

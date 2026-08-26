@@ -135,8 +135,19 @@ as rot because that exact string returns **0** at base — it is written `handle
 It is real pre-existing debt. **Test the subject with the spelling the base actually uses**, not the
 one today's ledger uses; the exact-string grep will lie in exactly the cases that matter.
 
-**Scope for the row:** enumerate all 20 (this is a sample, not an enumeration), test each against
-base, then dispose per kind.
+**OWNER RULING, 2026-08-26 — the disposal is settled:**
+
+- **rot debt is vacuumed** — deleted outright, no tombstone;
+- **pre-existing-but-resolved → the CHANGELOG**;
+- **behavioural changes → the CHANGELOG**.
+
+**This gives the CHANGELOG two feeders, and it should be written once.** FIX-02-04 owes it a
+`Removed` section for the retired globals; this row owes it the resolved pre-existing fixes and the
+behavioural changes. **Do them together** — a CHANGELOG assembled twice from two rows will
+duplicate and disagree.
+
+**Scope for the row:** enumerate all 20 (the split above is a sample, not an enumeration), test each
+against base with the base's own spelling, then dispose per the ruling.
 
 **Third instance of one pattern.** Decision tombstones, `release_keyboard_route`'s comment, and now
 this: **every ledger this feature keeps has accumulated entries about its own scaffolding.** Worth

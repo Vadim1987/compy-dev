@@ -32,9 +32,11 @@ report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/
 
 ---
 
-## ⬜ The four defect sprints — **the current work**
+## ⬜ The five defect sprints — **the current work**
 
-No ordering between sprints; **DEC-01 must finish before any slice is cut.** Within BUG-01, `01`
+Mostly unordered, with two constraints: **DEC-01 must finish before any slice is cut**, and
+**FIX-03 runs last** — it is the sweep that catches what FIX-02 and DEC-01 miss, and running it
+first means three brooms over one floor. Within BUG-01, `01`
 and `02` are the majors.
 
 ### BUG-01 — runtime defects (6)
@@ -75,6 +77,30 @@ and `02` are the majors.
 | FIX-01-01 | 10 ephemeral step-id and `wip/` path citations in the persistent corpus |
 | FIX-01-02 | session numbers in the persistent corpus (4 sites) |
 | FIX-01-03 | P11's deferred editorial list — **named as a count, never enumerated; re-derive before sizing** |
+
+### FIX-03 — the closed-arc sweep (4 steps) — **runs after FIX-02 and DEC-01**
+
+Retire prose that narrates history which opened *and closed* inside this branch. Spec:
+[`validation/reviews/FIX-03-closed-arc-sweep-spec.md`](validation/reviews/FIX-03-closed-arc-sweep-spec.md)
+
+**Why a sweep and not more rows:** three instances were found this session by three unrelated
+routes, none by looking — the signature of a class defect. **The test is mechanical:** subject
+absent at base `3256aac` **and** absent today → the arc closed inside the branch.
+
+| id | step |
+|---|---|
+| FIX-03-01 | enumerate subjects failing both greps |
+| FIX-03-02 | classify: closed arc / lesson-bearing / pre-feature-deviation record |
+| FIX-03-03 | for lesson-bearing, locate the materialized lesson — or promote it before deleting |
+| FIX-03-04 | dispose: closed arcs vacuumed |
+
+**Two exclusions.** Lessons already materialized in a decision or convention — *verify, then
+delete*. And **prose that is the only record of a deviation from pre-feature behaviour**: Decision
+11's rot paragraph sits directly above one such record, so a sweep matching on *tone* takes both.
+**Match on subjects, never on tone.**
+
+**Scope includes `src/` and `tests/` comments** — where FIX-02-14 hid, and where no doc sweep
+reaches.
 
 ### DEC-01 — decisions ledger: names, not numbers (6 steps)
 
@@ -201,4 +227,4 @@ Not open questions to chase — each has a trigger:
 
 ## The one-line sequence
 
-**ACC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 } → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**

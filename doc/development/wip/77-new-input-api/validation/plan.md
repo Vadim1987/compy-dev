@@ -495,6 +495,15 @@ be swept — in [`../reviews/DEC-01-ledger-denoising-spec.md`](../reviews/DEC-01
 existing decision. That is worse than a dangling one, and 165 of the citations are in `src/` and
 `tests/`.
 
+**FIX-03 — the closed-arc sweep (owner proposal, 2026-08-26).** Retire prose narrating history that
+opened *and closed* inside this branch. Commissioned because three instances were found this session
+by three unrelated routes and none by looking, which is a class defect rather than three
+coincidences. The test is two greps — subject absent at base *and* absent today — so judgement is
+needed only for the two exclusions: a lesson not yet materialized elsewhere, and prose that is the
+only record of a **pre-feature** deviation. **Runs after FIX-02 and DEC-01**, whose outputs it must
+treat as already done. Spec:
+[`../reviews/FIX-03-closed-arc-sweep-spec.md`](../reviews/FIX-03-closed-arc-sweep-spec.md).
+
 **FIX-01 stays as it is** — citations, session numbers, the editorial marker list. Different batch,
 different source; merging them would lose that.
 
