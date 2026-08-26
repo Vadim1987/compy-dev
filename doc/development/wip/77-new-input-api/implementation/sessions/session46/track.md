@@ -164,3 +164,47 @@ pointers to follow. Fold into FIX-1 or accept as provenance?
 — currently homeless and FIX-shaped. Pending owner nod.
 
 Ordering now: **ACC → FIX → recon → U → L → G**.
+
+## 2026-08-26 — maze coverage gap found; id scheme adopted; FIX-01-02
+
+**My wording caused a false alarm, corrected:** "newer base" compared
+`newinput-edge` to the OLD `newinput` branch, not to upstream. Maze IS
+reconciled against the latest head we hold — **0 behind** `dsent/dsent/dev`.
+(The v1/v1.1 "behind" hits are ancient release branches, not advance.)
+
+**But the owner's instinct found a REAL gap.** Between the old upstream point
+`12f675f6` (2026-05-25) and the reconciled base `b8cc436` (2026-07-24)
+upstream landed **4,920 insertions / 37 files**:
+- the whole `draw` game (5 modules)
+- `main.lua` split → `maze_{main,logic,render,constants,plan}.lua`
+- a spec suite, more levels
+- **`9911a27 align ux: Shift-Esc only exits mini-games`** — upstream doing
+  its OWN Shift+Esc work, same area as Decision 33
+
+**The gap:** checklist covers `draw` (§A) but **nothing covers the
+plan-a-path key-tile buffer (Track 2)**, which is input-driven in exactly our
+territory:
+- `maze_plan.lua:141` `plan_key(k, _, isrepeat)` — comment: "A held key
+  repeats keypresses; act on the edge only... tracking which keys are down"
+- `maze_main.lua:208` "plan buffer needs to know whether it is a fresh press"
+- **our migration already edited it**: `569204e refactor(input): let the press
+  say whether it is a repeat, in the plan buffer`
+
+**This is the keyboard breakage's exact shape** — upstream `words.lua` broke
+on `inputStale` (the held-key filter we deleted); the plan buffer likewise
+reasons about "which keys are down", which session35 dissolved. Rows needed
+BEFORE running ACC-01-03.
+
+**ID scheme adopted (owner):** `KIND-sprint-task`.
+- ACC-01-01 balloons · -02 keyboard · -03 maze+draw · -04 sapper ·
+  -05 slice regeneration (review cut) · -06 owner slice review
+- FIX-01-01 ephemeral citations (10) · FIX-01-02 session numbers ·
+  FIX-01-03 deferred editorial list (candidate)
+
+**FIX-01-02 = owner ruling, and it OVERTURNS my proposal.** I had offered to
+accept session mentions as provenance; owner: session numbers NEVER belong in
+the persistent corpus. Owner is right and more consistent — unresolvable
+after wip deletion is the same defect regardless of whether it reads as a
+pointer or a date. 4 sites (technical_debt/input.md 249, 632;
+decisions/input.md 798, 1255). Correction: **keep the date, drop the
+session**. Flagged: re-sweep wider before closing (S-form + src/ + tests/).

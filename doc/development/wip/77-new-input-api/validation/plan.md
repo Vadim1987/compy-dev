@@ -366,18 +366,54 @@ Named `ACC` rather than given a sequence letter for the reason Phase U was named
 load-bearing across frozen prompts and tracks.** DI, TF, R, U and L carry names for the same
 reason.
 
-**Two items, and they are the whole phase:**
+**Step ids follow the owner's scheme (2026-08-26): `KIND-sprint-task`.** `ACC-01-…` is the first
+acceptance sprint. Each smoke target earns its own step, because each is a separate sitting with
+its own result, and a target that fails must be re-runnable without re-running the others.
 
-1. **The human smoke pass.** Checklists in `doc/development/smoke_checklists.md`. Order by
-   upstream sensitivity — **`balloons` first**, being 5 ahead / 0 behind `origin/main`, the only
-   repo with no divergence to reconcile and therefore the one result recon cannot invalidate.
-   Then `keyboard` and `maze`, then any platform-side rows an edge-side editor overhaul could
-   disturb. `balloons` and `sapper` still **owe a list**; the document's header says so.
-   **`maze` runs against `newinput-edge`** — `da9d1c2`, the maze half of the `Shift+Esc` fix
-   rows B8–B10 exercise, is on that branch only.
-2. **The owner's readability review of the PR candidate**, taken **as slices**, for the
-   separation of review surface. The assembly guide is re-runnable and git-only, so an
-   intermediate cut costs machine time, not owner time; only the **final** cut must stay last.
+| id | step | state |
+|---|---|---|
+| **ACC-01-01** | **`balloons` smoke** — write the list, then run it | list **owed** |
+| **ACC-01-02** | **`keyboard` smoke** — refresh anchors, then run | list exists |
+| **ACC-01-03** | **`maze` + `draw` smoke** — close the plan-buffer gap below, then run | list exists, **has a gap** |
+| **ACC-01-04** | **`sapper` smoke** — write the list, then run | list **owed** |
+| **ACC-01-05** | **Slice regeneration**, the review cut | after 01…04 |
+| **ACC-01-06** | **Owner's readability review** of the slices | last in ACC |
+
+**Order by upstream sensitivity.** `balloons` goes first: 5 ahead / 0 behind `origin/main`, the
+only repo with no divergence to reconcile, so its result is the one recon cannot invalidate.
+
+**`maze` runs against `newinput-edge`** — `da9d1c2`, the maze half of the `Shift+Esc` fix that
+rows B8–B10 exercise, is on that branch only.
+
+**ACC-01-05/06 are a review cut, not the shipping cut.** The assembly guide is re-runnable and
+git-only, so an intermediate regeneration costs machine time rather than owner time. The **final**
+cut still happens last, in Phase G, after recon and U have moved the tree.
+
+#### ACC-01-03 carries a coverage gap, found 2026-08-26
+
+**`maze`'s reconciliation brought in a whole upstream game and a new input mechanic, and one of
+them is unexercised.** Between the old upstream point (`12f675f6`, 2026-05-25) and the base maze
+is reconciled against (`b8cc436`, 2026-07-24), upstream landed **4,920 insertions across 37
+files**: the `draw` game (5 new modules), a structural split of `main.lua` into
+`maze_{main,logic,render,constants,plan}.lua`, a spec suite, more levels — and
+**`9911a27 align ux with the convention: Shift-Esc only exits mini-games`**, which is upstream
+doing its own `Shift+Esc` work in the same area as Decision 33.
+
+The checklist covers `draw` (§A runs in both). **It does not cover the plan-a-path key-tile
+buffer, Track 2** — no row mentions it, and it is input-driven in exactly our territory:
+
+- `maze_plan.lua:141` is `plan_key(k, _, isrepeat)`, a keyboard handler whose comment reads *"A
+  held key repeats keypresses; act on the edge only… whether it is fresh — where tracking which
+  keys are down…"*;
+- `maze_main.lua:208` — *"plan buffer needs to know whether it is a fresh press or…"*;
+- **our own migration already edited it** — `569204e refactor(input): let the press say whether it
+  is a repeat, in the plan buffer`.
+
+**This is the keyboard breakage's shape.** There, upstream's new `words.lua` judged typing through
+`inputStale`, the held-key filter this branch deleted, and the game raised on the first glyph —
+textually clean, semantically broken, and no hunk touched both files. The plan buffer likewise
+reasons about *"tracking which keys are down"*, which is what session35 dissolved. **Add rows for
+Track 2 before running ACC-01-03.**
 
 **Why ACC runs before U, not after (owner, 2026-08-26).** A smoke pass on the pre-merge tree is
 not merely reassurance — it is the **control** for the post-merge one. Merging an advanced
@@ -412,7 +448,15 @@ compete:
 
 A smoke failure is almost always the second. An editorial or citation defect is the first.
 
-#### FIX-1 — ephemeral citations in the persistent corpus
+**Step ids follow the owner's scheme (2026-08-26): `KIND-sprint-task`.**
+
+| id | defect | state |
+|---|---|---|
+| **FIX-01-01** | 10 ephemeral step-id and `wip/` path citations in the persistent corpus | enumerated below |
+| **FIX-01-02** | session numbers in the persistent corpus | enumerated below |
+| **FIX-01-03** | P11's deferred editorial marker list (8 dev-doc prose-size items) | **candidate, pending owner nod** |
+
+#### FIX-01-01 — ephemeral citations in the persistent corpus
 
 **The defect.** Documents that **survive `wip/77` deletion** cite the feature's ephemeral working
 tree — by bare step id (`P19`, `P-18-05`) and, worse, by **path** into `wip/`. Every one of these
@@ -456,16 +500,44 @@ sessions and `wip/` paths throughout, correctly — they are the workflow docume
 `agents/rules/commenting.md` is different and **is** in scope: it is a generic project rule, not
 feature-scoped, and has no business citing a step id.
 
-**Open, for the owner — session-provenance mentions.** A softer sibling: `technical_debt/input.md`
-and `decisions/input.md` carry ~4 mentions of the form *"the session25 claim"*, *"amended in place
-(session34)"*, *"the audit run in session27"*. These read as *when* something was decided rather
-than as pointers to follow, so a reader loses little when they stop resolving. **Ruling wanted:**
-fold into FIX-1, or accept as provenance. Not assumed either way.
+#### FIX-01-02 — session numbers in the persistent corpus
 
-#### Candidate rows, pending the owner's nod
+**Owner ruling, 2026-08-26: session numbers never belong in the persistent corpus.** Session
+numbering is this feature's internal bookkeeping. It means nothing to a stakeholder reading
+`doc/`, and after `wip/77` is deleted there is nothing left that could explain what "session25"
+was — so the mention is not merely useless, it is unresolvable.
 
-- **The deferred editorial marker list** — the 8 dev-doc prose-size complaints P11 set aside as a
-  named list (session45). Currently homeless and FIX-shaped.
+I had proposed accepting these as provenance. **The ruling is the opposite, and it is the more
+consistent position**: a mention that cannot be resolved after deletion is the same defect as
+FIX-01-01, whether it reads as a pointer or as a date. It is separated only because its
+correction differs — FIX-01-01 re-homes a citation, this one **deletes the bookkeeping and keeps
+the fact**.
+
+| file | line | mention |
+|---|---|---|
+| `doc/development/technical_debt/input.md` | 249 | *"the frozen-surface audit run in session27"* |
+| `doc/development/technical_debt/input.md` | 632 | *"the session25 claim that the multi-trigger raise…"* |
+| `doc/development/decisions/input.md` | 798 | *"Amended in place, 2026-08-10 (session34)"* |
+| `doc/development/decisions/input.md` | 1255 | *"Amended in place, 2026-08-09 (session33)"* |
+
+**The correction: keep the date, drop the session.** *"Amended in place, 2026-08-10 (session34)"*
+becomes *"Amended in place, 2026-08-10"* — the date is real provenance a reader can use, the
+session id is an internal handle. Where a mention carries a *claim* rather than a date (line 632's
+*"the session25 claim"*), restate the claim and drop the attribution.
+
+**Re-sweep before closing, and widen the net.** This list comes from one grep pattern
+(`\bS[0-9]{2}\b|\bsession[0-9]{2}\b`) over `doc/` minus `wip/` plus `agents/`. Session45's lesson
+is that nothing greps for a *claim*, so also check `src/` and `tests/` comments, and the `S`-form
+(`S27`) as well as the spelled form.
+
+**Excluded, as in FIX-01-01:** `agents/validation.md` and `agents/sweep.md` cite sessions by
+design — they are the workflow documents that govern this feature's sessions. `agents/sweep.md`
+is additionally a completed-phase historical record.
+
+#### FIX-01-03 — the deferred editorial marker list (candidate)
+
+The 8 dev-doc prose-size complaints P11 set aside as a named list (session45). Currently homeless
+and FIX-shaped. **Pending the owner's nod** before it becomes a live row.
 
 ### Phase U — Upstream reconciliation and downstream compatibility (INSERTED 2026-08-09,
 session32, by owner ruling; sits between F and G)
