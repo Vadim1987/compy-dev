@@ -158,3 +158,14 @@ A second round belongs at **smoke-green** — the owner's own argument for smoki
 yields a stable state worth pinning. Suggested shape: `wip77/smoke-green/<repo>-<date>`, applied
 only to repos whose pass came back clean, so the tag means *"a human ran the checklist against
 exactly this"*.
+
+---
+
+## Tags laid from this inventory
+
+Sixteen local tags, four repos, namespace `wip77/20260826/*`. The registry —
+**the** lookup for which tag to reach for — is
+[`../../TAGS.md`](../../TAGS.md). It also carries the platform divergence
+measurement this note lacked at first writing: **86 commits behind the edge,
+22 behind aldum upstream, merge-base 2026-06-05**, and the 86 is a floor,
+since it is what a 23-day-old view can see.
