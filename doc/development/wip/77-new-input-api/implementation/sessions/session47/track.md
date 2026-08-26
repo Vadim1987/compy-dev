@@ -43,3 +43,23 @@
 - **TOOLING:** `lua-lsp` MCP is DOWN — `broken pipe` on every call including a bare `references`.
   Fell back to grep read at each site. Retry before assuming it is gone; it is the correctness tool
   for the rows still ahead (BUG-01-04 touches combo serialisation, DEC-01 has 165 code citations).
+  Restarted at owner's request: killed the stale bridge (pid 75642); Claude Code did NOT respawn it
+  and the tools are now absent from the session. Needs `/mcp` reconnect from the owner's side.
+  Root cause in `/tmp/lua-ls-log/file_repo.log`: the language server died 2026-08-25 14:47 on
+  `Proto parse error: unexpected character 'C'` — it has been dead a full day, not just this session.
+
+## 2026-08-26 — owner challenge: "draft" (FINDING, not mine)
+
+- Owner challenged "draft" as a coined term leaking into docs. **Checked instead of assuming, both
+  directions.**
+- **Not minted by me**: it was already in the tree — `consoleController.lua:629` (a comment I did not
+  touch), `userInputController:discard_draft()`, `doc/input_api.md:45`, `internals/user_input.md:787`,
+  `smoke_checklists.md:227`, and tests using `'draft'` as fixture text.
+- **But the owner's instinct is right, one level up**: `git grep -i draft 3256aac -- src/ doc/ tests/`
+  → **zero** text hits at the PR base. At base the method was `cancel()`; this feature introduced
+  `discard_draft()`. So "draft" IS feature-minted vocabulary — ours, unratified — now in production
+  code, the A-doc, the internals doc, the smoke checklists and tests.
+- Same class as FIX-02-08/09/10 (tier/chain/the walk · overlay/widget/area/field · combinator).
+  Proposed as a new FIX-02 row; **owner rules on the word**, not me. Held pending that.
+- Lesson repeated: the replanning checklist's "unratified terminology — check against the PR base"
+  is the test that settles this, and it took one grep.

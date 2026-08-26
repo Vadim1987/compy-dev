@@ -63,9 +63,10 @@ unsettled surface is sizing twice.
 | **BUG-01-05** | `set_cursor` clamps bytes, boundary event measures characters | medium — two functions disagree; which is right is a small design call |
 | **BUG-01-06** | `show{force = true, prompt = …}` silently drops the prompt | narrow — one call path |
 
-### FIX-02 — docs, vocabulary, process (19), in priority order
+### FIX-02 — docs, vocabulary, process (20), in priority order
 
-*(was 20 — the old `05` and `14` merge into `06`, being one defect in three places.)*
+*(was 20, then 19 — the old `05` and `14` merged into `06`, being one defect in three places — and
+back to 20 with `FIX-02-20`, registered 2026-08-26.)*
 
 | id | defect | blast radius |
 |---|---|---|
@@ -88,6 +89,31 @@ unsettled surface is sizing twice.
 | **FIX-02-17** | CHANGELOG omits the breaking change | narrow — **feeds CHG-01** |
 | **FIX-02-18** | `pong/README.md` — 316-line diff, 2-line change | narrow |
 | **FIX-02-19** | provenance front matter, 3 files | narrow |
+| **FIX-02-20** | **"draft" — unratified vocabulary, and the widest-spread of them** | **runs with the 08–10 cluster, not last** — see the note below |
+
+**FIX-02-20 is numbered out of execution order, deliberately.** `agents/rules/roadmap.md` §2 wants
+numeric order to *be* execution order, but it also says renumber **once, before execution starts**;
+execution started, a crosswalk already shipped, and commit `bd2a5d49` cites these ids. Renumbering
+19 rows a second time to insert one costs more than this line does. It belongs with the vocabulary
+cluster (`FIX-02-08/09/10`) and should be worked there.
+
+**Found 2026-08-26 (session47), by owner challenge during BUG-01-01.** `git grep -i draft 3256aac --
+src/ doc/ tests/` returns **zero** text hits at the PR base: the word is this feature's own. Its
+spread is wider than any other vocabulary row, and unlike them it reaches **production code and the
+A-doc**, not only prose:
+
+- `src/controller/userInputController.lua` — `discard_draft()`, a method name. **At base this was
+  `cancel()`**, so the rename is ours.
+- `src/controller/consoleController.lua:629`, `controller.lua`, `userInputController.lua` — comments.
+- `doc/input_api.md:45` · `doc/development/internals/user_input.md` · `doc/development/smoke_checklists.md:227`
+- `tests/input/input_widget_control_spec.lua` — also used as fixture *text*, which is noise when
+  grepping the term and should not be counted as a citation.
+
+**The ruling the row needs, and it is the owner's:** does "draft" stay or go? It is ordinary English
+for unsubmitted text, so unlike *combinator* it may have earned itself — but it is currently used
+without ever being defined. **If it stays**, define it once in `doc/input_api.md` so it reads as a
+term rather than as loose description. **If it goes**, the row is bigger than the other three,
+because `discard_draft()` is a production rename with call sites.
 
 ### Crosswalk — old id → new id
 
@@ -276,6 +302,7 @@ Not open questions to chase — each has a trigger:
 |---|---|
 | highlighter: sentinel, or a `clear_highlighter` member? | **when BUG-01-02 is fixed** |
 | the 14 remarks: ruled individually, or swept? | **when FIX-02-01 starts** |
+| does "draft" stay (and get defined) or go? | **at FIX-02-20**, with the 08–10 vocabulary cluster |
 | Decision 12 — a ledger entry that says it is not a decision | **owner disposes during review** — needs context, stays in place |
 | the slug table | **no review needed** — grep-and-rename if a slug displeases |
 | provenance beyond the 3 files | **deferred** — a formal violation does not displace real work |
