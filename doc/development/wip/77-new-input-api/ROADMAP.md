@@ -86,7 +86,12 @@ There is no show-and-hide-many-times-per-second pattern in this codebase.
 | ARC-01-02 | `state.callbacks` / `state.pending` resolve dynamically instead of being captured | **bigger than "one coupling"** — captured in two places (`:790-805`, `:512-527`) and read as plain tables by four functions (`merge_callback_keys`, `consume_pending`, `stash_hidden_configure`, `api_show`). A shape change, not a one-liner. **Must land BEFORE ARC-01-03**: `get_compy_input` runs at boot, before any project exists, so under a per-run widget the capture would index nil (`main.lua:379` publishes the widget, `:383` builds the console — today's ordering exists for exactly this) |
 | ARC-01-03 | construction + destruction move to the seam | |
 | ARC-01-04 | delete the teardown machinery the lifetime replaces | the payoff commit |
-| ARC-01-05 | fixture seam + the spec fallout | the churn lives here |
+| ARC-01-05 | **why do two reconfiguration policies coexist in the widget instead of uniform logic — and is `prompt` on the wrong one?** | **owner, 2026-08-26 — filed here so it is not forgotten, deliberately not investigated yet.** `apply_config` treats some fields as *set-if-given* and others as *always-set*; `cfg.prompt` is on the first policy, which is how `8a9022ec`'s cross-project label leak was possible. Answer whether the split is intentional and whether `prompt` sits on the right side of it. A little orthogonal to the lifetime work, but it lands in the same function ARC-01 is already reshaping, and it may escalate into a design call — so it runs **before** the churn step, not after |
+| ARC-01-06 | fixture seam + the spec fallout | the churn lives here |
+
+**Crosswalk (renumber 2026-08-26):** `ARC-01-05` (fixture seam + spec fallout) → **`ARC-01-06`**.
+The new `ARC-01-05` is the reconfiguration-policy question above. No ARC ids appear in `src/` or
+`tests/`, so rule 2's renumber branch applies.
 
 ### Pen-and-paper projects — asked by the owner, answered by reading, still to be confirmed
 
