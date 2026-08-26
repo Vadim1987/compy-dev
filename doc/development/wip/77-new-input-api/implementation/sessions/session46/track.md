@@ -239,3 +239,45 @@ platform row was `5128a4bf` in 2 tables, now `c7e065c3` (4 tables total).
 **FIX-01-03 live (owner).** Flagged in-plan: the 8 items were named as a
 COUNT, never enumerated on disk. Must be re-derived before sizing — same
 failure mode as W10 batch 3 ("~50 ids" → 13 already-covered + 8 real).
+
+## 2026-08-26 — ACC-01-01/02 executed: slices + cold PR review
+
+Owner unavailable for smoke for hours → asked for a device-free acceptance
+step. Renumbered ACC (none had run): slices=01, cold review=02, smokes
+03–06, owner review 07.
+
+**ACC-01-01 slice regeneration — the guide's §4 check EARNED ITS KEEP.**
+100 files in the change, **95 in the slices**. Five outside every pathspec,
+would have been SILENTLY DROPPED from the PR:
+- `src/harmony/init.lua` (+8) — **PRODUCTION CODE** → 3f
+- `doc/development/smoke_checklists.md` (+462) → 3a
+- `tests/harmony_input_spec.lua` (+119) → 3b
+- `tests/util/key_spec.lua` (+43) → 3b
+- `doc/tall_blocks.md` (+72) → 3a
+Same failure as `conventions/docs.md` — **third occurrence**, first to cost
+code. Root cause each time: a pathspec naming FILES cannot see a file that
+did not exist when it was written. Guide §4.1 records it + the mitigation
+(prefer directories; run §4 after any commit adding a file — the guide
+already said this; not run since session27). Now 100/100.
+
+**Process note:** first branch-dance attempt ABORTED (dirty tree) and the
+`cp` still ran → clobbered 1b with an empty diff. Caught it, restored from
+git, committed slices first to clean the tree, redid it. No damage. Lesson:
+`set -e` does not catch a failure inside `cmd 2>&1 | tail`.
+
+**Avoided the session45 trap:** guide says `git add -A` for the reassembly
+commit. Did NOT — used explicit adds from `git apply --numstat`. `git add -A`
+there would have swept the 3 embedded repos + owner scratch again.
+
+**ACC-01-02 cold review.** Kit outside repo: spec (verbatim ticket first) +
+slices minus set 2 + `git archive` baselines (no .git → no history). Agent
+FORBIDDEN `/repo` and lua-lsp (= the answer key). Verdict **merge with
+changes**.
+
+**Verified 2 claims in code myself before relaying:**
+- `keys_pressed` in pr-description line 71 w/ justification; **zero hits in
+  src/** → CONFIRMED, description describes a member that does not exist.
+- `state.pending`: built in `get_compy_input()` closure ← `prepare_project_env`
+  ← `ConsoleController.new` line 80, called ONCE → app-lifetime. Found no
+  code clearing it. Structurally CONFIRMED; **reachability not traced** —
+  flagged as such, not asserted.

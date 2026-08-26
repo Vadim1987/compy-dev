@@ -370,14 +370,36 @@ reason.
 acceptance sprint. Each smoke target earns its own step, because each is a separate sitting with
 its own result, and a target that fails must be re-runnable without re-running the others.
 
+**Renumbered 2026-08-26** (owner: none had run yet). Slice generation moved to the front because
+the cold review consumes it, and both are runnable without a device — which is what let ACC start
+while the smoke environment was unavailable.
+
 | id | step | state |
 |---|---|---|
-| **ACC-01-01** | **`balloons` smoke** | list **written** 2026-08-26 |
-| **ACC-01-02** | **`keyboard` smoke** | list exists, anchors refreshed |
-| **ACC-01-03** | **`maze` + `draw` smoke** | list exists, **gap closed** (B11, D8, D9) |
-| **ACC-01-04** | **`sapper` smoke** | list **written** 2026-08-26 |
-| **ACC-01-05** | **Slice regeneration**, the review cut | after 01…04 |
-| **ACC-01-06** | **Owner's readability review** of the slices | last in ACC |
+| **ACC-01-01** | **Slice regeneration**, the review cut | **DONE** — and it found five unsliced files, §4.1 of the guide |
+| **ACC-01-02** | **Cold-agent PR review** — the slices against the original stakeholder ask | **DONE** — `../outcomes/ACC-01-02-cold-pr-review.md` |
+| **ACC-01-03** | **`balloons` smoke** | list **written** 2026-08-26 |
+| **ACC-01-04** | **`keyboard` smoke** | list exists, anchors refreshed |
+| **ACC-01-05** | **`maze` + `draw` smoke** | list exists, **gap closed** (B11, D8, D9) |
+| **ACC-01-06** | **`sapper` smoke** | list **written** 2026-08-26 |
+| **ACC-01-07** | **Owner's readability review** of the slices | last in ACC |
+
+#### ACC-01-02 — the cold review, and how it was isolated
+
+**Method.** A kit was assembled outside the repo holding only: the stakeholder inputs as the
+specification (the verbatim ticket first), the slices **minus the agentic set**, and **clean
+`git archive` exports** of the platform baseline (`3256aac`, the assembly guide's own `BASE`) and
+of each detached repo's PR base. No `.git` anywhere, so no history and no commit messages.
+
+**The isolation that makes the result mean something:** the reviewer was forbidden `/repo` and the
+`lua-lsp` server. Both expose the *landed* state, which is the answer key — a review against it
+would report what the author did, not whether it was right. It was also told not to read the
+codebase exhaustively, to consult the baseline selectively from the patch hunks, and where the
+project's own pre-change docs live.
+
+**Verdict returned: merge with changes.** Findings are in the outcome document; two were
+independently re-verified in code before being acted on, per the standing rule that a sub-agent's
+claim is a strong hint and not a fact.
 
 **Order by upstream sensitivity.** `balloons` goes first: 5 ahead / 0 behind `origin/main`, the
 only repo with no divergence to reconcile, so its result is the one recon cannot invalidate.

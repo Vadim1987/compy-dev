@@ -1,0 +1,554 @@
+diff --git a/core_editor.lua b/core_editor.lua
+index 3d6f6cb..bf800de 100644
+--- a/core_editor.lua
++++ b/core_editor.lua
+@@ -40,12 +40,37 @@ function input_prompt()
+   return "Commands:"
+ end
+ 
+-function process_user_input()
+-  if GS.input:is_empty() then
+-    rearm_input()
+-    return
++-- Submitting is an event: the runtime calls
++-- on_text_entered with the entered lines.
++
++function submit_program(lines)
++  start_program(string.unlines(lines))
++end
++
++-- The prompt is written only where it genuinely changes:
++-- arming a level, rejecting a program, and ending a run.
++-- Watching for a change instead would mean remembering the
++-- previous value to compare against.
++--
++-- show() only opens: over an already-open field it is
++-- ignored and cannot change the prompt. Reconfigure is what
++-- changes a live field, and the text is set separately.
++
++function open_editor(text)
++  compy.input.show{
++    prompt = input_prompt(),
++    text = string.lines(text),
++    on_text_entered = submit_program,
++  }
++end
++
++function set_prompt(text)
++  if compy.input.is_shown() then
++    compy.input.configure{ prompt = input_prompt() }
++    compy.input.set_text(string.lines(text))
++  else
++    open_editor(text)
+   end
+-  start_program(string.unlines(GS.input()))
+ end
+ 
+ -- The reject path: a failed validation keeps the typed
+@@ -56,7 +81,7 @@ function reject_program(text, bad, lines)
+   GS.invalid = bad
+   GS.program = text
+   echo_lines = lines
+-  input_text(input_prompt(), lines)
++  set_prompt(text)
+ end
+ 
+ -- Any submit clears the previous run's crash marker; it
+@@ -81,25 +106,47 @@ function start_program(text)
+   GS.running = true
+ end
+ 
++function editor_idle()
++  return not player.anim and 0 == #(player.queue)
++end
++
++-- Still a poll, and the game's own question rather than the
++-- editor's: has the queue drained? Nothing raises an event
++-- for an animation ending.
++--
++-- The prompt comes back here because this is the moment the
++-- run ends -- once, not once per frame. Which runs get it
++-- back is finish_run's decision, read from what it leaves
++-- behind: a win starts an animation, a miss drops
++-- ctrl_update, and a crash does neither -- that is the case
++-- the child edits and retries from.
++
+ function rearm_input()
+-  if player.anim or 0 < #(player.queue) then
++  if not editor_idle() then
+     return
+   end
+-  if GS.running then
+-    finish_run()
+-  else
+-    input_text(input_prompt(), string.lines(GS.program or ""))
++  if not GS.running then
++    return
++  end
++  finish_run()
++  if ctrl_update and editor_idle() then
++    set_prompt(GS.program or "")
+   end
+ end
+ 
+ -- Arm the command editor with initial text. editor()
+ -- starts empty; rearm_editor() keeps the last program.
++--
++-- It goes through set_prompt rather than opening directly:
++-- a level can arm while a field from the previous one is
++-- still up, and opening over an open field is ignored --
++-- which would silently drop both the text and the prompt
++-- this was called to set.
+ 
+ function arm_editor(text)
+   ctrl_pressed = nil
+-  ctrl_update = process_user_input
+-  GS.input = user_input()
+-  input_text("Commands:", string.lines(text))
++  ctrl_update = rearm_input
++  set_prompt(text)
+ end
+ 
+ function editor()
+diff --git a/draw_main.lua b/draw_main.lua
+index f55f468..31529a0 100644
+--- a/draw_main.lua
++++ b/draw_main.lua
+@@ -216,6 +216,11 @@ function startDrawMode(mode)
+   end
+ end
+ 
++-- The command field goes with the screen: nothing else can
++-- close one, so a field left open here would sit over the
++-- menu for the rest of the session, taking a share of every
++-- key the menu is trying to read.
++
+ function toDrawMenu()
+   setPictureNavigationEnabled(false)
+   GS.screen = "menu"
+@@ -225,6 +230,7 @@ function toDrawMenu()
+   player.queue_refs = { }
+   ctrl_update = nil
+   ctrl_pressed = nil
++  compy.input.hide()
+ end
+ 
+ function nextPictureLevel()
+@@ -258,15 +264,41 @@ function stepDrawProgram(dt)
+   end
+ end
+ 
+-tab_was_down = false
++-- Tab moves on to the next picture once this one is done.
++-- A shortcut reaches it even while the command editor is
++-- open, which Free draw never closes.
++--
++-- ignore_repeat, or a held Tab walks through the pictures;
++-- side_run, so the press still travels on to the field.
++-- Every modifier combination is listed because a shortcut
++-- matches its modifiers exactly, and this gesture answers
++-- to all of them. alt+tab is listed for completeness; the
++-- desktop usually takes it first.
++
++TAB_COMBOS = {
++  "tab",
++  "shift+tab",
++  "ctrl+tab",
++  "alt+tab",
++  "ctrl+shift+tab",
++  "ctrl+alt+tab",
++  "alt+shift+tab",
++  "ctrl+alt+shift+tab"
++}
+ 
+-function pollPictureProgression()
+-  local down = love.keyboard.isDown("tab")
+-  local edge = down and not tab_was_down
+-  if edge and GS.won then
++function tabProgression()
++  if GS.screen ~= "game" then
++    return
++  end
++  if GS.won then
+     nextPictureLevel()
+   end
+-  tab_was_down = down
++end
++
++for _, combo in ipairs(TAB_COMBOS) do
++  compy.input.shortcuts.keypressed[combo] =
++      compy.input.fn.side_run(
++        compy.input.fn.ignore_repeat(tabProgression))
+ end
+ 
+ function love.update(dt)
+@@ -274,7 +306,6 @@ function love.update(dt)
+   if GS.screen ~= "game" then
+     return
+   end
+-  pollPictureProgression()
+   stepDrawProgram(dt)
+   if ctrl_update then
+     ctrl_update(dt)
+@@ -302,10 +333,16 @@ end
+ 
+ love.mousepressed = SYSTEM_KEYS.menu
+ 
+-function is_shift_down()
+-  local down = love.keyboard.isDown
+-  return down("lshift") or down("rshift")
+-end
++-- Shift+Esc steps back to this program's menu. A combo
++-- rather than a test inside the key handler, which is what
++-- makes it reach Free draw at all: that mode keeps its
++-- command field active the whole time, and a combo is
++-- offered the key before the field is. The typed "<" exit
++-- stays.
++--
++-- stop_here, or the same press also reaches the field and
++-- clears it: one keystroke leaving the game and wiping the
++-- drawing's program behind it.
+ 
+ function on_escape()
+   if GS.screen == "game" then
+@@ -313,6 +350,15 @@ function on_escape()
+   end
+ end
+ 
++compy.input.shortcuts.keypressed["shift+escape"] =
++    compy.input.fn.stop_here(on_escape)
++compy.input.shortcuts.keypressed["alt+shift+escape"] =
++    compy.input.fn.stop_here(on_escape)
++compy.input.shortcuts.keypressed["ctrl+shift+escape"] =
++    compy.input.fn.stop_here(on_escape)
++compy.input.shortcuts.keypressed["ctrl+alt+shift+escape"] =
++    compy.input.fn.stop_here(on_escape)
++
+ function drawGameKey(key)
+   local fn = SYSTEM_KEYS[key]
+   if fn then
+@@ -322,11 +368,13 @@ function drawGameKey(key)
+   end
+ end
+ 
+-function love.keypressed(key)
++-- A hook rather than love.keypressed, because combos are
++-- registered on this same channel above: Shift+Esc and the
++-- Tab family are offered every press first and may take it,
++-- so this does not see them all.
++
++compy.input.hooks.keypressed = function(key)
+   if key == "escape" then
+-    if is_shift_down() then
+-      on_escape()
+-    end
+     return
+   end
+   if GS.screen == "menu" then
+diff --git a/macro.lua b/macro.lua
+index 50b11b8..0d6287b 100644
+--- a/macro.lua
++++ b/macro.lua
+@@ -2,14 +2,8 @@
+ 
+ -- Keyboard macro recording and playback
+ 
+-SHIFT_KEYS = {
+-  lshift = true,
+-  rshift = true
+-}
+-
+ macro_state = {
+   recording = false,
+-  shift_held = false,
+   name = nil,
+   body = { }
+ }
+@@ -69,13 +63,23 @@ end
+ 
+ -- Handle non-escape key presses
+ 
++-- Whether Shift is down is asked of the keyboard, not
++-- remembered from its press. A remembered flag survives a
++-- release that never arrives -- a window losing focus with
++-- the key down -- and then every later key starts a
++-- recording instead of running, dimmed for the rest of the
++-- session with no way back but a restart.
++--
++-- With both Shift keys: holding two and releasing one keeps
++-- the keyboard's answer true, so the next key still names a
++-- macro, which is what the dimmed screen is showing.
++
+ function handle_key(k)
+-  if SHIFT_KEYS[k] then
+-    macro_state.shift_held = true
++  if Key.is_shift(k) then
+     return
+   elseif macro_state.recording then
+     record_key(k)
+-  elseif macro_state.shift_held then
++  elseif Key.shift() then
+     start_recording(k)
+   else
+     execute_key(k)
+@@ -84,9 +88,12 @@ end
+ 
+ -- Handle shift release
+ 
++-- The release still ends a recording: that is a genuine
++-- edge, not a piece of remembered state, and letting go is
++-- how a child says the macro is done.
++
+ function release_shift(k)
+-  if SHIFT_KEYS[k] then
+-    macro_state.shift_held = false
++  if Key.is_shift(k) then
+     finish_recording()
+   end
+ end
+diff --git a/maze_main.lua b/maze_main.lua
+index 572cb4d..4fc15e8 100644
+--- a/maze_main.lua
++++ b/maze_main.lua
+@@ -70,29 +70,60 @@ end
+ 
+ -- Main Loop
+ 
+-tab_was_down = false
+-
+-function poll_tab_progression()
+-  local down = love.keyboard.isDown("tab")
+-  local edge = down and not tab_was_down
+-  if edge then
+-    if GS.celebrating or GS.won then
+-      next_level()
+-    elseif GS.failed then
+-      reset_after_fail()
+-    else
+-      reset_level()
+-    end
++-- Tab moves the level on: forward after a win, back to the
++-- start after a failed run, and a plain restart otherwise.
++--
++-- ignore_repeat, or a held Tab walks through the levels.
++-- side_run, so the press travels on afterwards and still
++-- reaches the command field on editor levels.
++--
++-- Every modifier combination is listed because a shortcut
++-- matches its modifiers exactly, and this gesture answers
++-- to all of them. Drop the ones nobody meant, if any.
++-- alt+tab is listed for completeness -- the desktop
++-- usually takes it before any program sees it.
++
++TAB_COMBOS = {
++  "tab",
++  "shift+tab",
++  "ctrl+tab",
++  "alt+tab",
++  "ctrl+shift+tab",
++  "ctrl+alt+tab",
++  "alt+shift+tab",
++  "ctrl+alt+shift+tab"
++}
++
++function tab_progression()
++  if GS.mode ~= "game" then
++    return
++  end
++  if GS.celebrating or GS.won then
++    next_level()
++  elseif GS.failed then
++    reset_after_fail()
++  else
++    reset_level()
+   end
+-  tab_was_down = down
+ end
+ 
+--- Return to the start menu, dropping game input.
++for _, combo in ipairs(TAB_COMBOS) do
++  compy.input.shortcuts.keypressed[combo] =
++      compy.input.fn.side_run(
++        compy.input.fn.ignore_repeat(tab_progression))
++end
++
++-- Return to the start menu, dropping game input. The
++-- command field goes with it: nothing else can close one,
++-- so a field left open here would sit over the menu for the
++-- rest of the session, taking a share of every key the menu
++-- is trying to read.
+ 
+ function to_menu()
+   GS.mode = "menu"
+   ctrl_update = nil
+   ctrl_pressed = nil
++  compy.input.hide()
+ end
+ 
+ -- Advance the running program one frame: progress any
+@@ -115,7 +146,6 @@ function love.update(dt)
+   if GS.mode ~= "game" then
+     return
+   end
+-  poll_tab_progression()
+   step_program(dt)
+   if ctrl_update then
+     ctrl_update(dt)
+@@ -142,17 +172,22 @@ end
+ 
+ love.mousepressed = SYSTEM_KEYS.menu
+ 
+-function is_shift_down()
+-  local d = love.keyboard.isDown
+-  return d("lshift") or d("rshift")
+-end
+-
+ -- Shift+Esc steps back one level within the game: a game
+ -- level returns to the track menu; the menu is the top
+ -- level, so it is a no-op there (UX standard -- leaving the
+--- game to the console is Ctrl+Esc / the host). On editor
+--- levels the text modal consumes keys, so this reaches us
+--- only on direct-control levels and the menu.
++-- game to the console is Ctrl+Esc / the host).
++--
++-- A combo rather than a test inside the key handler, which
++-- is what makes it reach editor levels: a combo is offered
++-- the key before the command field is, so an open field
++-- cannot hide the gesture. The typed "<" command stays too.
++--
++-- stop_here, or the same press also reaches the field and
++-- clears it -- one keystroke leaving the game AND wiping
++-- the draft behind it.
++--
++-- No repeat filter, deliberately: a second firing finds
++-- GS.mode already off "game" and does nothing.
+ 
+ function on_escape()
+   if GS.mode == "game" then
+@@ -160,32 +195,54 @@ function on_escape()
+   end
+ end
+ 
+-function game_key(k)
++compy.input.shortcuts.keypressed["shift+escape"] =
++    compy.input.fn.stop_here(on_escape)
++compy.input.shortcuts.keypressed["alt+shift+escape"] =
++    compy.input.fn.stop_here(on_escape)
++compy.input.shortcuts.keypressed["ctrl+shift+escape"] =
++    compy.input.fn.stop_here(on_escape)
++compy.input.shortcuts.keypressed["ctrl+alt+shift+escape"] =
++    compy.input.fn.stop_here(on_escape)
++
++-- The whole press is passed on, not just the key name: the
++-- plan buffer needs to know whether it is a fresh press or
++-- the keyboard repeating, and only the press itself can say
++-- so. Direct-control levels ignore the extra arguments and
++-- keep repeating, which is how holding a direction has
++-- always queued a run of moves there.
++
++function game_key(k, sk, isrepeat)
+   local fn = SYSTEM_KEYS[k]
+   if fn then
+     fn()
+   elseif ctrl_pressed then
+-    ctrl_pressed(k)
++    ctrl_pressed(k, sk, isrepeat)
+   end
+ end
+ 
+-function love.keypressed(k)
++-- A hook rather than love.keypressed, because combos are
++-- registered on this same channel above: Shift+Esc and the
++-- Tab family are offered every press first and may take it,
++-- so this does not see them all -- and a plain callback
++-- would read as though it did. The other channels stay
++-- callbacks; nothing is registered ahead of them.
++--
++-- Bare Escape stops here and goes no further; the shifted
++-- form was taken by a combo before this ran.
++
++compy.input.hooks.keypressed = function(k, sk, isrepeat)
+   if k == "escape" then
+-    if is_shift_down() then
+-      on_escape()
+-    end
+     return
+   end
+   if GS.mode == "menu" then
+     menu_key(k)
+   else
+-    game_key(k)
++    game_key(k, sk, isrepeat)
+   end
+ end
+ 
+ function love.keyreleased(k)
+   release_shift(k)
+-  plan_key_up(k)
+ end
+ 
+ function love.resize()
+diff --git a/maze_plan.lua b/maze_plan.lua
+index 5f1f9c7..05a837c 100644
+--- a/maze_plan.lua
++++ b/maze_plan.lua
+@@ -13,14 +13,11 @@
+ -- the next edit or submit; hold delays the miss reset so
+ -- the end position can be seen.
+ 
+-plan_held = { }
+-
+ function plan_reset()
+   GS.plan = {
+     buf = { },
+     done = 0
+   }
+-  plan_held = { }
+ end
+ 
+ -- Any level reset sends the robot home, so the whole
+@@ -134,23 +131,23 @@ function plan_dispatch(k)
+   end
+ end
+ 
+--- A held key repeats keypresses; act on the edge only.
++-- A held key repeats keypresses; act on the edge only. The
++-- runtime marks a repeat as one, so the press itself says
++-- whether it is fresh -- where tracking which keys are down
++-- refuses a direction for the rest of the session if its
++-- release goes missing, as it does when a window loses
++-- focus with the key held.
+ 
+-function plan_key(k)
+-  if plan_held[k] then
++function plan_key(k, _, isrepeat)
++  if isrepeat then
+     return
+   end
+-  plan_held[k] = true
+   if plan_locked() then
+     return
+   end
+   plan_dispatch(k)
+ end
+ 
+-function plan_key_up(k)
+-  plan_held[k] = nil
+-end
+-
+ -- Advance the green highlight as the queue drains.
+ 
+ function plan_track_exec()
+diff --git a/maze_render.lua b/maze_render.lua
+index 9868a39..6871fcf 100644
+--- a/maze_render.lua
++++ b/maze_render.lua
+@@ -218,7 +218,7 @@ function draw_macro_body(x, y)
+ end
+ 
+ function draw_macro_ui()
+-  if macro_state.shift_held then
++  if Key.shift() then
+     draw_dim()
+   end
+   if not macro_state.recording then

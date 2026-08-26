@@ -1,0 +1,759 @@
+diff --git a/alt.lua b/alt.lua
+index 4554152..e7d3637 100644
+--- a/alt.lua
++++ b/alt.lua
+@@ -9,8 +9,7 @@
+ -- constant. A wrong input knocks (once per target). Same
+ -- press-count gauge, level-up screen, pastel, and exit hint as
+ -- Press/Find (findkey.lua); folds the Caps/Shift games. The
+--- first
+--- few Shift-requiring targets show an inline Shift hint
++-- first few Shift-requiring targets show an inline Shift hint
+ -- (hints.lua); Ctrl+Alt+H re-arms it.
+ 
+ -- Append a glyph group's targets to a round's master set.
+@@ -43,12 +42,6 @@ ALT_KEYTARGET = {
+   backspace = true, tab = true, ["return"] = true
+ }
+ 
+--- Reverse SHIFT_MAP: a symbol target's base key (the burst).
+-ALT_BASE = { }
+-for base, sym in pairs(SHIFT_MAP) do
+-  ALT_BASE[sym] = base
+-end
+-
+ function altIsKeyTarget(item)
+   return ALT_KEYTARGET[item] == true
+ end
+@@ -58,7 +51,7 @@ end
+ -- digits, unshifted punctuation, space, and the non-printing
+ -- keys do not.
+ function altNeedsShift(item)
+-  return isUpperChar(item) or ALT_BASE[item] ~= nil
++  return isUpperChar(item) or GLYPH_BASE[item] ~= nil
+ end
+ 
+ -- The physical key a target is produced on, for the success
+@@ -67,10 +60,7 @@ end
+ -- a letter or digit itself.
+ function altBaseKey(item)
+   if altIsKeyTarget(item) then return item end
+-  if item == " " then return "space" end
+-  if ALT_BASE[item] then return ALT_BASE[item] end
+-  if isAlphaChar(item) then return string.lower(item) end
+-  return item
++  return glyphBaseKey(item)
+ end
+ 
+ -- The top-band keycap label for a target: a friendly name for
+@@ -117,8 +107,9 @@ end
+ 
+ -- Teacher chord (Ctrl+Alt+H): re-arm the hint budget for the
+ -- next few shifted characters, restart the finger sweep, and
+--- play a soft blip. Any chord glyph is dropped by the Alt/Ctrl
+--- guard in appTextinput, so nothing trails into play.
++-- play a soft blip. Reached through this scene's onHint entry:
++-- the chord is a shortcut, so it never becomes scene input, and
++-- its 'h' cannot trail in either -- the shortcut claims it.
+ function altHintReenable()
+   ALT.hint = ALT_HINT_MORE
+   ALT.htime = 0
+@@ -175,16 +166,12 @@ end
+ -- glyph, however made. Non-printing targets ignore textinput
+ -- (keypressed judges them).
+ --
+--- inputStale drops a glyph whose producing key is held or was
+--- just released. A held key keeps emitting textinput (the IDE
+--- sends textinput before the keypress, so a repeat's key is
+--- already held); and a final key-repeat glyph can trail just
+--- after the key's release. That stops a held wrong key knocking
+--- each frame, a held right key bleeding a miss onto the next
+--- target, and a chord key's trailing glyph (e.g. after Alt+H)
+--- fumbling the live target.
++-- spendGlyph takes one glyph per press and drops the repeats
++-- until the keyboard reports the key up: a held wrong key
++-- knocks once, a held right key does not bleed a miss onto the
++-- next target, and a chord's trailing glyph cannot fumble one.
+ function altTextinput(ch)
+-  if inputStale(altBaseKey(ch)) then return end
++  if spendGlyph(altBaseKey(ch)) then return end
+   if fkDone(ALT) then return end
+   if not gaugeGlowing(ALT) then return end
+   if altIsKeyTarget(gaugeCurrent(ALT)) then return end
+@@ -204,20 +191,18 @@ function altPlayKey(k)
+   if not altIsKeyTarget(gaugeCurrent(ALT)) then return end
+   if k == gaugeCurrent(ALT) then
+     altHit()
+-  elseif not isMod(k) and k ~= "capslock" then
++  elseif not Key.is_mod(k) and k ~= "capslock" then
+     altWrong()
+   end
+ end
+ 
+--- Ctrl+Alt+H re-arms the hint. On the level-up screen only Tab
+--- is handled (no printable replay key, so nothing trails into
+--- the next level); any stray glyph there is dropped by
+--- altTextinput's fkDone guard anyway.
++-- On the level-up screen only Tab is handled (no printable
++-- replay key, so nothing trails into the next level); any stray
++-- glyph there is dropped by altTextinput's fkDone guard anyway.
++-- Ctrl+Alt+H is not matched here any more: it is a shortcut
++-- (input.lua) that calls onHint below, so this scene sees no
++-- chord at all.
+ function altKeypressed(k)
+-  if k == "h" and INPUT.ctrl and INPUT.alt then
+-    altHintReenable()
+-    return
+-  end
+   if fkDone(ALT) then
+     fkDoneKey(ALT, ALT_CFG, k)
+     return
+@@ -241,7 +226,7 @@ end
+ -- not then point at Shift.
+ function altHintReady(item)
+   if isAlphaChar(item) then return capsEffectiveUpper() end
+-  return INPUT.shift
++  return Key.shift()
+ end
+ 
+ -- The hint's keyboard glows: while the base key is not yet
+@@ -251,7 +236,7 @@ end
+ -- ready with no Shift, so Shift is not lit then).
+ function altHintDeco(deco)
+   if altHintReady(gaugeCurrent(ALT)) then
+-    if INPUT.shift then
++    if Key.shift() then
+       deco.lshift = { bg = COL_WARM_DIM }
+       deco.rshift = { bg = COL_WARM_DIM }
+     end
+@@ -312,5 +297,6 @@ registerScene("alt", {
+   keypressed = altKeypressed,
+   textinput = altTextinput,
+   onNotch = altOnNotch,
++  onHint = altHintReenable,
+   noHint = altDone
+ })
+diff --git a/astrocore.lua b/astrocore.lua
+index 7e084d4..2ede4b3 100644
+--- a/astrocore.lua
++++ b/astrocore.lua
+@@ -142,7 +142,7 @@ function astroKeypressed(k)
+     astroShootPast(cap)
+   elseif cap then
+     astroShoot(cap)
+-  elseif not isMod(k) and k ~= "capslock" then
++  elseif not Key.is_mod(k) and k ~= "capslock" then
+     astroBlank()
+     streamWrongPress(k)
+   end
+diff --git a/bubble.lua b/bubble.lua
+index 001086e..22255ce 100644
+--- a/bubble.lua
++++ b/bubble.lua
+@@ -144,11 +144,16 @@ function bubbleKeypressed(k)
+   if k == gaugeCurrent(BUBBLE) then
+     BUB.key = k
+     BUB.t = 0
+-  elseif not isMod(k) and k ~= "capslock" then
++  elseif not Key.is_mod(k) and k ~= "capslock" then
+     fkWrong(BUBBLE, BUBBLE_CFG, k)
+   end
+ end
+ 
++-- The one judge in the game that keys on the release EVENT --
++-- a chosen channel, not a platform limit.
++-- The caution: a release lost to a focus change leaves BUB.key
++-- set with no release coming. bubbleGrow's timeout pops the
++-- bubble a moment later: the cost is a pop the child retries.
+ function bubbleKeyreleased(k)
+   if k ~= BUB.key then return end
+   bubbleRelease()
+diff --git a/findkey.lua b/findkey.lua
+index 74cb561..5636492 100644
+--- a/findkey.lua
++++ b/findkey.lua
+@@ -129,7 +129,7 @@ function fkKeypressed(st, cfg, k)
+   if not gaugeGlowing(st) then return end
+   if k == gaugeCurrent(st) then
+     fkHit(st, cfg, k)
+-  elseif not isMod(k) and k ~= "capslock" then
++  elseif not Key.is_mod(k) and k ~= "capslock" then
+     fkWrong(st, cfg, k)
+   end
+ end
+diff --git a/help.lua b/help.lua
+index b4549f6..e888a7a 100644
+--- a/help.lua
++++ b/help.lua
+@@ -7,8 +7,12 @@
+ -- current hardware). A scene may suppress the hint/overlay
+ -- (its own completion screen) via noHint() -> true.
+ 
++-- Alt+H is a chord that is HELD, not one that fires, so it is
++-- asked rather than bound: the overlay is up for exactly as
++-- long as the keys are, and it cannot wedge on a lost release.
+ function helpHeld()
+-  return INPUT.held.h and INPUT.alt and not INPUT.ctrl
++  local h = Key.any_pressed("h")
++  return h and Key.alt() and not Key.ctrl()
+ end
+ 
+ -- True while the help overlay is on screen. main pauses the
+diff --git a/hide.lua b/hide.lua
+index 330039a..4e20e77 100644
+--- a/hide.lua
++++ b/hide.lua
+@@ -272,7 +272,7 @@ function hideKeypressed(k)
+   local i = hideInRotation(k)
+   if i then
+     hideHit(k, i)
+-  elseif not isMod(k) and k ~= "capslock" then
++  elseif not Key.is_mod(k) and k ~= "capslock" then
+     hideWrong(k)
+   end
+ end
+diff --git a/indicators.lua b/indicators.lua
+index b0ff193..06ef0cd 100644
+--- a/indicators.lua
++++ b/indicators.lua
+@@ -18,8 +18,11 @@ function isUpperChar(t)
+   return t == string.upper(t) and t ~= string.lower(t)
+ end
+ 
+--- Reconcile from one produced letter and the Shift state read
+--- at the moment textinput fired (edge-tracked, not isDown).
++-- Reconcile from one produced letter and the Shift state its
++-- caller read when textinput fired. That state is asked of the
++-- keyboard, so a Shift released inside the same event batch can
++-- read as already up -- accepted, since the next letter fixes
++-- the estimate.
+ function capsReconcile(letter, shift_held)
+   local up = isUpperChar(letter)
+   CAPS_STATE.on = (up ~= shift_held)
+diff --git a/input.lua b/input.lua
+index b99c47c..2d09df0 100644
+--- a/input.lua
++++ b/input.lua
+@@ -1,68 +1,101 @@
+ -- Input lifecycle and event model.
+ --
+--- The IDE keeps key-repeat enabled and strips the isrepeat flag
+--- before calling the game, so repeats are filtered here by
+--- edge tracking: a key already in INPUT.held is a repeat and is
+--- ignored completely. The game does NOT disable global
+--- key-repeat (the runner exposes no project-exit cleanup hook
+--- to restore it on Ctrl+Esc force-exit; see Beads
+--- compy-keyboard-exit-hook). Text input is enabled to match
+--- the IDE default (restoring it on exit is a no-op).
++-- The game registers compy.input.hooks.* instead of love.*
++-- handlers -- the framework captures love.* into the same
++-- hooks, so this only says it out loud -- and its reserved
++-- chords and the Alt class are compy.input.shortcuts entries,
++-- which run ahead of the hooks.
+ --
+--- Ordering: the IDE delivers textinput BEFORE the matching
+--- keypress (the reverse of desktop LOVE). So a "fresh keypress
+--- arms a gate, its textinput consumes it" scheme cannot work --
+--- the glyph arrives before anything arms it, and after a chord
+--- (which clears such a gate) the next target is dropped. So
+--- textinput is judged directly, with no gate. An Alt+key chord
+--- is swallowed in appChord (the keypress) AND its glyph dropped
+--- in appTextinput (a chord glyph CAN surface and is never a
+--- target), so a chord cannot fumble a target. A held key emits
+--- textinput; since textinput precedes the fresh keypress, the
+--- producing key is in INPUT.held when a repeat arrives, so the
+--- scene drops it. The release boundary still leaks, though: a
+--- final key-repeat glyph can arrive just after its keyup, so a
+--- key is "stale" for a frame after release (INPUT.upRecent);
+--- inputStale() drops input for a held OR just-released key.
++-- OS key repeat is filtered by the isrepeat flag the hooks get
++-- as their third argument. setTextInput(true) below is for the
++-- device build: the IDE makes the same call at its own boot, so
++-- this line matters there and is harmless here (undoing it on
++-- exit would be a no-op). Global key repeat is left ON -- the
++-- repeats are filtered rather than suppressed, and stopping
++-- them would change what scenes see.
+ --
+--- Held modifier edges are the source of truth for
+--- modifier-dependent acceptance and for Caps reconciliation.
+-
+-INPUT = {
+-  held = { }, upRecent = { },
+-  shift = false, ctrl = false, alt = false
+-}
+-
+--- A key stays "stale" this many frames after its release, to
+--- swallow a final key-repeat glyph arriving just after keyup.
+-INPUT_UP_GRACE = 1
+-
+-function inputInit()
+-  love.keyboard.setTextInput(true)
+-  INPUT.held = { }
+-  INPUT.upRecent = { }
+-  INPUT.shift = false
+-  INPUT.ctrl = false
+-  INPUT.alt = false
+-end
++-- keypressed and textinput have NO guaranteed order between
++-- them, and nothing here may depend on which arrives first.
++-- So acceptance never asks whether the producing key is held:
++-- at the first character of a press that answer differs by
++-- build. A character is CLAIMED instead, one per press -- has a
++-- character for this key been taken since the key was last down
++-- -- and the claim is released by asking the KEYBOARD once a
++-- frame (inputTick), never by an event. No grace window, no
++-- frame clock.
++--
++-- Modifier state is asked of the keyboard through Key, which
++-- folds each l/r pair the way a combo string does; the key-cap
++-- renderer needs it from draw, where there is no event to
++-- consult.
+ 
+-function modHeld(a, b)
+-  if INPUT.held[a] or INPUT.held[b] then
+-    return true
+-  end
+-  return false
++-- A chord's trigger is claimed when the chord is taken: Alt+H,
++-- then letting go of Alt, leaves H repeating, and those
++-- characters are not a typed answer. Claiming twice is free.
++local function claimChord(k)
++  spendGlyph(k)
+ end
+ 
+-function isMod(k)
+-  return k == "lshift" or k == "rshift"
+-    or k == "lctrl" or k == "rctrl"
+-    or k == "lalt" or k == "ralt"
++-- The app's reserved keys, none of which reaches a scene.
++--
++-- stop_here says the combo is taken. ignore_repeat goes inside
++-- it wherever there is an action, since stop_here alone re-runs
++-- that action on every OS repeat: a held ctrl+alt+up would ramp
++-- the notch every frame. A claim goes OUTSIDE it -- an action
++-- fires once per press, a claim stands while the key is down.
++--
++-- A combo is its modifier set EXACTLY, so a gesture that also
++-- tolerates Shift is bound twice, to the same handler value.
++-- "alt+*" and "alt+shift+*" are the swallowing classes: every
++-- Alt chord without Ctrl is taken, never reaching a scene as a
++-- typed target, and their only job is the claim. An exact
++-- binding wins over a class, so alt+p / alt+shift+p pause and
++-- claim for themselves.
++-- Ctrl+Alt+H is a different modifier set, so a different class,
++-- and it too is bound twice. It re-arms the active scene's hint
++-- through the onHint descriptor entry, the way ctrl+alt+up
++-- reaches onNotch. Being a shortcut it is taken in EVERY scene,
++-- including the ones that judge key targets.
++local function register_reserved()
++  local fn = compy.input.fn
++  local sc = compy.input.shortcuts.keypressed
++  local back = fn.stop_here(fn.ignore_repeat(goBack))
++  local notch_up = fn.stop_here(fn.ignore_repeat(function()
++    notchAdjust(1)
++  end))
++  local notch_down = fn.stop_here(fn.ignore_repeat(function()
++    notchAdjust(-1)
++  end))
++  sc["shift+escape"] = back
++  sc["alt+shift+escape"] = back
++  sc["ctrl+alt+up"] = notch_up
++  sc["ctrl+alt+shift+up"] = notch_up
++  sc["ctrl+alt+down"] = notch_down
++  sc["ctrl+alt+shift+down"] = notch_down
++  sc["alt+*"] = fn.stop_here(claimChord)
++  sc["alt+shift+*"] = fn.stop_here(claimChord)
++  local pause = fn.stop_here(function(k, _, isr)
++    claimChord(k)
++    if not isr then pauseToggle() end
++  end)
++  sc["alt+p"] = pause
++  sc["alt+shift+p"] = pause
++  local rearm = fn.ignore_repeat(hintReenable)
++  local hint = fn.stop_here(function(k, sk, isr)
++    claimChord(k)
++    rearm(k, sk, isr)
++  end)
++  sc["ctrl+alt+h"] = hint
++  sc["ctrl+alt+shift+h"] = hint
+ end
+ 
+-function inputUpdateMods()
+-  INPUT.shift = modHeld("lshift", "rshift")
+-  INPUT.ctrl = modHeld("lctrl", "rctrl")
+-  INPUT.alt = modHeld("lalt", "ralt")
++function inputInit()
++  love.keyboard.setTextInput(true)
++  GLYPH_CLAIMED = { }
++  compy.input.hooks.keypressed = appKeypressed
++  compy.input.hooks.keyreleased = appKeyreleased
++  compy.input.hooks.textinput = appTextinput
++  register_reserved()
+ end
+ 
+ function goBack()
+@@ -76,85 +109,132 @@ function notchAdjust(delta)
+   if s and s.onNotch then s.onNotch(delta) end
+ end
+ 
+--- Reserved chords are handled before scene input, keyed on the
+--- non-modifier key so a held Shift during a letter falls
+--- through to the scene.
+-function reservedChord(k)
+-  if k == "escape" and INPUT.shift and not INPUT.ctrl then
+-    goBack()
+-    return true
+-  end
+-  if INPUT.ctrl and INPUT.alt and k == "up" then
+-    notchAdjust(1)
+-    return true
+-  end
+-  if INPUT.ctrl and INPUT.alt and k == "down" then
+-    notchAdjust(-1)
+-    return true
++-- The teacher's hint chord, dispatched like the notch: a scene
++-- that teaches answers onHint, and only alt.lua does. It stays
++-- inert behind the pause screen, where the notch does not.
++function hintReenable()
++  if PAUSED then return end
++  local s = SCENES[ACTIVE]
++  if s and s.onHint then s.onHint() end
++end
++
++-- One character per key press reaches a scene. textinput
++-- carries no isrepeat of its own, and this is what recognises a
++-- repeat without asking whether the key is held.
++GLYPH_CLAIMED = { }
++
++-- The key a produced character came from: space, a shifted
++-- symbol through SHIFT_MAP inverted, a letter its lowercase
++-- key, else itself. It lives here because scene files are
++-- lazy-loaded and config.lua's SHIFT_MAP is not.
++GLYPH_BASE = { }
++for base, sym in pairs(SHIFT_MAP) do
++  GLYPH_BASE[sym] = base
++end
++
++function glyphBaseKey(ch)
++  if ch == " " then return "space" end
++  if GLYPH_BASE[ch] then return GLYPH_BASE[ch] end
++  if isAlphaChar(ch) then return string.lower(ch) end
++  return ch
++end
++
++-- The device call RAISES on a string that is not one of LOVE's
++-- key constants ("Invalid key constant: ~"), and a produced
++-- character is not always a key name -- an IME or dead-key
++-- composition can map to nothing this keyboard has.
++-- A claim that cannot be polled can never be released, so it is
++-- never taken: such a character is accepted, and holding one
++-- would repeat it. No scene targets one. Asked once per name,
++-- since the answer cannot change.
++local POLLABLE = { }
++local function pollable(k)
++  local known = POLLABLE[k]
++  if known == nil then
++    known = pcall(Key.any_pressed, k)
++    POLLABLE[k] = known
+   end
+-  return false
++  return known
+ end
+ 
+--- Alt+key (without Ctrl) is a chord, never a typed target, so
+--- swallow it here. Alt+P toggles the modal pause on a timed
+--- scene (a no-op elsewhere); Alt+H peeks help (via helpHeld).
+--- Ctrl+Alt+H stays unconsumed, for the scene's hint re-arm.
+-function appChord(k)
+-  if INPUT.ctrl then return false end
+-  if not INPUT.alt then return false end
+-  if k == "p" then pauseToggle() end
+-  return true
++-- Claim this key's glyph for the current press. True means the
++-- caller must DROP it: a glyph for this key has already been
++-- taken and the key has not been up since.
++-- Keypresses do not use this: they have the real isrepeat flag.
++function spendGlyph(k)
++  if GLYPH_CLAIMED[k] then return true end
++  if not pollable(k) then return false end
++  GLYPH_CLAIMED[k] = true
++  return false
+ end
+ 
+--- A key is "stale" (a repeat, not a fresh press) while held
+--- or for INPUT_UP_GRACE frames after its release -- the latter
+--- catches a final key-repeat glyph delivered just after keyup.
+-function inputStale(k)
+-  if INPUT.held[k] then return true end
+-  local up = INPUT.upRecent[k]
+-  if not up then return false end
+-  return DBG_FRAME - up <= INPUT_UP_GRACE
++-- Claims are released by the DEVICE, once a frame, and by
++-- nothing else. keyreleased is not consulted: a release and a
++-- trailing repeat character are the same shape on that channel,
++-- so clearing at the release would let that character through
++-- as a fresh one nobody typed. Asking the keyboard needs no
++-- window, no clock and no ordering.
++function inputTick()
++  for k in pairs(GLYPH_CLAIMED) do
++    if not Key.any_pressed(k) then
++      GLYPH_CLAIMED[k] = nil
++    end
++  end
+ end
+ 
+--- capslock is exempt from the stale filter (its release may not
+--- arrive, wedging the set and freezing Caps). Scene input is
+--- also dropped while the help overlay is up (the game is frozen
+--- behind it).
+-function appKeypressed(k)
+-  if inputStale(k) and k ~= "capslock" then return end
++-- isr is the hook's isrepeat: a held key is filtered at the
++-- source. capslock keeps the exemption it has upstream; under
++-- isrepeat nothing can eat a toggle, so its only effect now is
++-- that capslock repeats reach capsToggle.
++-- Scene input is dropped while the help overlay is up (the game
++-- is frozen behind it).
++function appKeypressed(k, _, isr)
++  if isr and k ~= "capslock" then return end
+   dbgLog("KP " .. k)
+-  INPUT.held[k] = true
+-  inputUpdateMods()
+-  if reservedChord(k) then return end
+-  if appChord(k) then return end
++  -- A chord that is NOT swallowed still owns its trigger: it
++  -- reaches the scene by design, and if its modifier goes up
++  -- while the trigger stays down the repeats produce plain
++  -- characters.
++  if Key.ctrl() or Key.alt() then claimChord(k) end
+   if k == "capslock" then capsToggle() end
+   if PAUSED then return end
+   if helpOverlayShown() then return end
++  -- A modifier's own press names no combo, so no class can take
++  -- one. Alt+key is a chord whatever the key is, so a modifier
++  -- pressed while Alt is held is dropped here, Alt's own press
++  -- included -- named rather than polled, since whether
++  -- the device already reports a key down inside its own
++  -- keypressed is not something to depend on. Ctrl+Alt is a
++  -- different modifier set and passes: scenes ignore modifiers,
++  -- but the intro finishes its typewriter on any key.
++  local alt = Key.alt() or Key.is_alt(k)
++  if alt and not Key.ctrl() and Key.is_mod(k) then
++    return
++  end
+   local s = SCENES[ACTIVE]
+   if s and s.keypressed then s.keypressed(k) end
+ end
+ 
++-- No judgement state here: claims are released by inputTick's
++-- poll. The dispatch stays -- bubble.lua judges its hold on
++-- this channel.
+ function appKeyreleased(k)
+   dbgLog("KR " .. k)
+-  INPUT.held[k] = nil
+-  INPUT.upRecent[k] = DBG_FRAME
+-  inputUpdateMods()
+   local s = SCENES[ACTIVE]
+   if s and s.keyreleased then s.keyreleased(k) end
+ end
+ 
+--- textinput is judged by the scene (the per-glyph stale filter
+--- lives there); dropped here while paused or behind help. A
+--- glyph made with Alt or Ctrl held is a chord, never a target
+--- (only Shift modifies a target), so drop it too.
++-- Judged by the scene, and dropped here while paused or behind
++-- help. A character made with Alt or Ctrl held belongs to a
++-- chord and is never a target -- only Shift modifies one.
+ function appTextinput(t)
+   if PAUSED then return end
+-  if INPUT.alt then return end
+-  if INPUT.ctrl then return end
++  if Key.alt() then return end
++  if Key.ctrl() then return end
+   if helpOverlayShown() then return end
+-  dbgLog("TI " .. t .. " sh=" .. tostring(INPUT.shift))
++  dbgLog("TI " .. t .. " sh=" .. tostring(Key.shift()))
+   if isAlphaChar(t) then
+-    capsReconcile(t, INPUT.shift)
++    capsReconcile(t, Key.shift())
+   end
+   local s = SCENES[ACTIVE]
+   if s and s.textinput then s.textinput(t) end
+diff --git a/intro.lua b/intro.lua
+index bfd834b..b51bf8c 100644
+--- a/intro.lua
++++ b/intro.lua
+@@ -55,6 +55,11 @@ function introUpdate(dt)
+   end
+ end
+ 
++-- Any key finishes the typewriter early -- a lone Shift too. A
++-- lone Alt does not reach here: appKeypressed filters it, since
++-- "alt+*" cannot take a bare Alt press and the chord test it
++-- replaced did. The Shift/Alt asymmetry is the game's own and
++-- is left as it is, not "fixed" into a second difference.
+ function introKeypressed(k)
+   if INTRO.phase ~= "ready" then
+     introFinish()
+diff --git a/keyboard_view.lua b/keyboard_view.lua
+index 06e6d3c..4b5a3d8 100644
+--- a/keyboard_view.lua
++++ b/keyboard_view.lua
+@@ -283,7 +283,7 @@ kbBuildCells()
+ 
+ -- Effective case of letter keycaps: upper iff Caps XOR Shift.
+ function capsEffectiveUpper()
+-  if INPUT.shift then return not CAPS_STATE.on end
++  if Key.shift() then return not CAPS_STATE.on end
+   return CAPS_STATE.on
+ end
+ 
+diff --git a/main.lua b/main.lua
+index 4359e61..906ff5a 100644
+--- a/main.lua
++++ b/main.lua
+@@ -1,8 +1,8 @@
+ -- keyboard: the program a 4-6 year-old launches to meet the
+ -- keyboard. One program: a typewriter intro, a mini-game menu,
+--- and the mini-games. main.lua defines the LOVE callbacks once
+--- and dispatches to the active scene after reserved-chord
+--- handling; scenes are loaded once here at boot.
++-- and the mini-games. main.lua defines update/draw and loads
++-- the scenes once here at boot; the keyboard/text callbacks are
++-- compy.input hooks and shortcuts, registered in input.lua.
+ 
+ gfx = love.graphics
+ 
+@@ -86,10 +86,20 @@ inputInit()
+ 
+ -- Suppress the system pointer: relative mode keeps it off the
+ -- screen edges so the Android nav/status bars never reveal.
+--- The keyboard uses no mouse; the runner restores it on exit.
++-- The keyboard uses no mouse.
++-- Relative mode is REAL device state: it outlives the run and
++-- lands in whatever the project exits to, and the runner does
++-- not put it back, so this restores what it found.
++-- compy.before_exit fires on every stop path including Ctrl+Esc
++-- but NOT on a raise -- so a run that ends by raising leaves
++-- the mode on, and the next run restores that faithfully.
+ -- TODO(root-access): replace with trackpad disable on entry.
+ 
++POINTER_RELATIVE_WAS = love.mouse.getRelativeMode()
+ love.mouse.setRelativeMode(true)
++compy.before_exit = function()
++  love.mouse.setRelativeMode(POINTER_RELATIVE_WAS)
++end
+ if DEBUG then pcall(dbgBoot) end
+ gotoScene("intro")
+ 
+@@ -117,14 +127,20 @@ function updateStep(dt)
+   sceneUpdate(dt)
+ end
+ 
++-- inputTick releases claims whose key the keyboard reports up.
++-- It runs HERE, not in updateStep, which returns early before
++-- the first draw, while paused, and while the help overlay is
++-- held -- and that overlay is a HELD Alt+H, so a claim would
++-- outlive its key in ordinary use.
+ function love.update(dt)
+   DBG_FRAME = DBG_FRAME + 1
+-  if not DEBUG then 
+-    return updateStep(dt) 
++  inputTick()
++  if not DEBUG then
++    return updateStep(dt)
+   end
+   local ok, err = pcall(updateStep, dt)
+-  if not ok 
+-  then dbgLogErr("UPDATE", err) 
++  if not ok
++  then dbgLogErr("UPDATE", err)
+   end
+ end
+ 
+@@ -156,15 +172,3 @@ function love.draw()
+   gfx.pop()
+   DREW_ONCE = true
+ end
+-
+-function love.keypressed(k)
+-  appKeypressed(k)
+-end
+-
+-function love.keyreleased(k)
+-  appKeyreleased(k)
+-end
+-
+-function love.textinput(t)
+-  appTextinput(t)
+-end
+diff --git a/menu.lua b/menu.lua
+index 4bd302e..4cc927e 100644
+--- a/menu.lua
++++ b/menu.lua
+@@ -79,12 +79,18 @@ function menuDraw()
+   menuDrawList()
+ end
+ 
++-- The digit that opens a game claims its key: gotoScene runs
++-- inside this handler, so the digit's own textinput can land on
++-- the game just opened, whose first target is already live, and
++-- be judged as a typed answer. Whoever consumes a key owns it,
++-- as a chord owns its trigger.
+ function menuKeypressed(k)
+   local n = tonumber(k)
+   if not n then return end
+   if n == 0 then n = 10 end
+   local id = MENU_ORDER[n]
+   if id and sceneAvailable(id) then
++    spendGlyph(k)
+     gotoScene(id)
+   end
+ end
+diff --git a/train.lua b/train.lua
+index 87da65d..6809d0f 100644
+--- a/train.lua
++++ b/train.lua
+@@ -237,7 +237,7 @@ function trainKeypressed(k)
+   if LOAD.phase ~= "wait" then return end
+   if k == gaugeCurrent(TRAIN) then
+     trainHit(k)
+-  elseif not isMod(k) and k ~= "capslock" then
++  elseif not Key.is_mod(k) and k ~= "capslock" then
+     trainWrong(k)
+   end
+ end
+diff --git a/words.lua b/words.lua
+index b84f510..7dd2f00 100644
+--- a/words.lua
++++ b/words.lua
+@@ -142,12 +142,10 @@ function wordsExpected()
+ end
+ 
+ -- The physical key a target glyph is produced on: space for a
+--- space, the lowercase key for a letter (incl. a capital), else
+--- the glyph itself (an unshifted punctuation key).
++-- space, a letter's lowercase key, a shifted symbol's unshifted
++-- key, else the glyph itself.
+ function wordsBaseKey(ch)
+-  if ch == " " then return "space" end
+-  if isAlphaChar(ch) then return string.lower(ch) end
+-  return ch
++  return glyphBaseKey(ch)
+ end
+ 
+ -- The gauge filled: celebrate and show the level-up screen.
+@@ -215,10 +213,10 @@ function wordsBad()
+ end
+ 
+ -- Printable glyphs are judged here (every Words target is
+--- printable). The inputStale guard drops a held/released or
+--- chord glyph, exactly as Alt does.
++-- printable). spendGlyph takes one glyph per press and drops
++-- the rest, exactly as Alt does: a held key types once.
+ function wordsTextinput(ch)
+-  if inputStale(wordsBaseKey(ch)) then return end
++  if spendGlyph(wordsBaseKey(ch)) then return end
+   if wordsDone() then return end
+   local want = wordsExpected()
+   if want == "" then return end
