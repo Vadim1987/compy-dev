@@ -9,7 +9,7 @@ the sequence**. Updated 2026-08-26.
 | | |
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
-| suite | **969 / 0 / 0 / 10** — 968 + BUG-01-01's case; the 10 pending are an owner ruling, an 11th is a finding |
+| suite | **970 / 0 / 0 / 10** — 968 + BUG-01-01's two cases; the 10 pending are an owner ruling, an 11th is a finding |
 | marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
@@ -56,17 +56,17 @@ unsettled surface is sizing twice.
 
 | id | defect | blast radius |
 |---|---|---|
-| ~~**BUG-01-01**~~ ✅ | `state.pending` survives a project stop | **CLOSED, fixed** — `bd2a5d49` (fix + breaking test + behaviour docs), `abadf244` (the false-premise debt entry). Siblings do **not** share the hole; no shipped example reaches it, but the path is public API. Evidence: [`validation/notes/BUG-01-01-pending-lifetime.md`](validation/notes/BUG-01-01-pending-lifetime.md) |
+| ~~**BUG-01-01**~~ ✅ | `state.pending` survives a project stop | **CLOSED, fixed** — `bd2a5d49` (fix + breaking test + behaviour docs), `abadf244` (the false-premise debt entry). No shipped example reaches it, but the path is public API. **Its siblings were then swept** (owner-scoped: `compy.input` + the widget singleton) and one more was found and fixed — the prompt label, `8a9022ec`. Evidence: [`validation/notes/BUG-01-01-pending-lifetime.md`](validation/notes/BUG-01-01-pending-lifetime.md) |
 | **BUG-01-02** | a highlighter cannot be turned off | **design escalation** — sentinel vs a new `clear_highlighter` member; either changes the public surface |
 | **BUG-01-03** | `turtle` double-handles its own keys | **may implicate every migrated example** — it is a finding about the migration. Fix with FIX-02-11 |
 | **BUG-01-04** | a `textinput` shortcut cannot bind an upper-case character | **deep** — the fix is in combo serialisation, which every shortcut match runs through |
 | **BUG-01-05** | `set_cursor` clamps bytes, boundary event measures characters | medium — two functions disagree; which is right is a small design call |
 | **BUG-01-06** | `show{force = true, prompt = …}` silently drops the prompt | narrow — one call path |
 
-### FIX-02 — docs, vocabulary, process (20), in priority order
+### FIX-02 — docs, vocabulary, process (21), in priority order
 
 *(was 20, then 19 — the old `05` and `14` merged into `06`, being one defect in three places — and
-back to 20 with `FIX-02-20`, registered 2026-08-26.)*
+back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26.)*
 
 | id | defect | blast radius |
 |---|---|---|
@@ -90,6 +90,23 @@ back to 20 with `FIX-02-20`, registered 2026-08-26.)*
 | **FIX-02-18** | `pong/README.md` — 316-line diff, 2-line change | narrow |
 | **FIX-02-19** | provenance front matter, 3 files | narrow |
 | **FIX-02-20** | **"draft" — unratified vocabulary, and the widest-spread of them** | **runs with the 08–10 cluster, not last** — see the note below |
+| **FIX-02-21** | **`prompt` is classified per-show but behaves sticky** — which is right is undecided | **may escalate to a BUG row**; found 2026-08-26 |
+
+**FIX-02-21, found while fixing BUG-01-01's sibling.** `consoleController.lua` splits config keys into
+two lists with a comment saying so: `CALLBACK_KEYS` are *"kept across shows until overwritten"*,
+`PER_SHOW_KEYS` are *"spent by the show() that reads them"*. **`prompt` is on the per-show list and
+does not behave that way**: `apply_config` writes `model.custom_label` only when `cfg.prompt` is
+given, so within one run `show{prompt = 'x'}` → `hide()` → bare `show()` comes back up labelled
+`'x'`. `doc/input_api.md` does not say which is intended — its table says only *"Label shown next to
+the field."*
+
+**Two readings, and the owner picks.** Either the behaviour is right and `prompt` is a sticky key
+mis-filed under per-show (a comment and a list-membership fix), or the classification is right and a
+bare `show()` should come up unlabelled (a behaviour change, and then this is a **BUG** row, because
+migrated examples may lean on the current stickiness — `maze` re-prompts through `configure`
+precisely because *"show() only opens: over an already-open field it is ignored and cannot change the
+prompt"*). **Cross-run leakage is settled and already fixed** (`8a9022ec`); this row is only about
+within-run behaviour.
 
 **FIX-02-20 is numbered out of execution order, deliberately.** `agents/rules/roadmap.md` §2 wants
 numeric order to *be* execution order, but it also says renumber **once, before execution starts**;
@@ -312,6 +329,7 @@ Not open questions to chase — each has a trigger:
 | highlighter: sentinel, or a `clear_highlighter` member? | **when BUG-01-02 is fixed** |
 | the 14 remarks: ruled individually, or swept? | **when FIX-02-01 starts** |
 | does "draft" stay (and get defined) or go? | **at FIX-02-20**, with the 08–10 vocabulary cluster |
+| is `prompt` sticky or per-show *within* a run? | **at FIX-02-21** — escalates to a BUG row if the answer is per-show |
 | Decision 12 — a ledger entry that says it is not a decision | **owner disposes during review** — needs context, stays in place |
 | the slug table | **no review needed** — grep-and-rename if a slug displeases |
 | provenance beyond the 3 files | **deferred** — a formal violation does not displace real work |

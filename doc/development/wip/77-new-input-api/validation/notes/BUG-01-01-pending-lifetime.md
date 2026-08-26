@@ -86,11 +86,47 @@ Three properties have to hold at once for it to bite, which is why it survived r
    the guide describes the behaviour in per-run language ("retained and applied on the very next
    `show()`"), so the surrounding evidence actively argued for the wrong lifetime.
 
-**Open, for the owner:** whether this warrants a *sweep* for siblings rather than stopping at one
-instance. The argument for: session46's rule of thumb is that instances found by unrelated routes
-signal a class defect, and property 3 is a reading trap, not a typo — nothing stops it recurring.
-The argument against: one instance is not three, and `FIX-03` is already a sweep over this branch.
-Not proposed as a row; recorded so the question is not lost.
+**Answered the same day.** The owner scoped the sweep to what could be inspected cheaply — the
+`compy.input` hierarchy and the widget singleton, explicitly **not** every similarly-shaped closure
+in the codebase — and it found **one more live instance**. Results below.
+
+## The scoped sibling sweep, 2026-08-26
+
+Scope as ruled: everything reachable under `compy.input`, plus the mutable state of the widget
+singleton. Each candidate was checked against the question *"can this hold something a project put
+there, after that project has stopped?"*
+
+| store | verdict |
+|---|---|
+| `shortcuts` — 12 combo tables | **clean.** Teardown wipes each by name off `_bindable`; that list and the `EVENTS` list the tables are built from are the same 12 channels, in different order |
+| `hooks` — 12 slots | **clean**, same walk |
+| `callbacks` | **clean.** `reset_callbacks` wipes and re-seeds in place |
+| `pending` | the original defect, fixed `bd2a5d49` |
+| `fn` (the combinators) | **clean** — a fixed table of pure functions, nothing mutable |
+| widget `shown` flag | **clean** — `hide()` at teardown |
+| widget text content | **clean** — activation with no `text` calls `clear_input()` |
+| `model.custom_status` | **clean** — cleared by `clear_input()` |
+| `model.custom_label` (the prompt) | **DEFECT.** Fixed `8a9022ec` |
+| input history | **clean at the seam** — probed: Up in project B after project A submitted returns empty |
+
+**The one that bit: `model.custom_label`.** `apply_config` mirrors `cfg.prompt` onto it and writes it
+**only when `cfg.prompt` is given**. Nothing cleared it — not `hide()`, not teardown, and notably not
+`clear_input()`, which sits in the same function and *does* clear its neighbour `custom_status`. So
+project A's `show{prompt = 'A> '}` labelled project B's field, and B could not overwrite it by
+accident, because a bare `show()` leaves it untouched.
+
+Proof it is the same class, not a coincidence: the breaking test failed **twice** — once on its own
+assertion, and once in the *next spec in the file*, which had asserted the absence of that exact
+string for unrelated reasons. Leaking across projects and leaking across test cases are one leak.
+
+**Is it a class defect after all?** Two instances now, and the second was found by *looking* — so the
+density argument from session46 (instances found by unrelated routes) still does not apply, and no
+open-ended sweep is proposed. What the second instance does show is that the shape recurs inside one
+subsystem, which is why the debt entry's revisit trigger stays.
+
+**Byproduct — a new row.** `prompt` is on `PER_SHOW_KEYS`, documented *"spent by the show() that
+reads them"*, and does not behave that way **within** a run either. Registered as `FIX-02-21`; the
+cross-run half is what `8a9022ec` fixed and is not in question.
 
 ## Tooling note
 

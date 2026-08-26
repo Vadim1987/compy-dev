@@ -86,3 +86,24 @@
   the PROGRAMMER's staged config, both with a `text` field. FIX-02-20 sharpened (`d8861811`).
 - Worth noting for the economy charter: Sonnet, scoped prompt, ~2 min of my attention to verify.
   Found a real doc defect and a terminology collision. Cheap review tier was the right call here.
+
+## 2026-08-26 — owner-scoped sibling sweep: ONE more defect
+
+- Owner scoped it deliberately: `compy.input` hierarchy + widget singleton **only**, explicitly not
+  "every similarly-shaped closure in the codebase" — named as token burn and overkill. Right call:
+  the whole sweep cost ~6 targeted greps and two throwaway probes.
+- **10 stores checked, 9 clean, 1 defect.** Table in the note. Two checks earned their keep:
+  `_bindable` vs `EVENTS` are the same 12 channels (a mismatch would have been an unwipeable
+  shortcut channel), and history was **probed, not read** — Up in project B returns empty.
+- **`model.custom_label` — the prompt label — leaked.** `apply_config` writes it only when
+  `cfg.prompt` is given, and nothing ever cleared it. `clear_input()` clears its NEIGHBOUR
+  `custom_status` and not it. Fixed `8a9022ec`, suite 970.
+- The breaking test failed **twice** — the second failure was my own BUG-01-01 spec, which had
+  asserted the absence of `'A> '`. Cross-project leak and cross-spec leak are one leak; that was
+  the confirmation, not a nuisance.
+- **Class-defect verdict, unchanged:** two instances, the second found BY LOOKING, so session46's
+  density heuristic still does not fire. No open-ended sweep proposed. Debt entry's revisit trigger
+  stays.
+- **New row FIX-02-21:** `prompt` sits on `PER_SHOW_KEYS` ("spent by the show() that reads them")
+  but is sticky within a run too. Owner picks: mis-filed key (comment fix) or wrong behaviour (BUG
+  row, and migrated examples may lean on today's stickiness — maze's re-prompt comment suggests it).
