@@ -139,3 +139,17 @@
   fresh project is undiagnosed, and the entry says so rather than guessing.
 - **The amendments themselves are still unratified.** The owner answered the open question, not the
   ruling — ARC-01-03 stays gated, ARC-01-04 does not start.
+
+## 2026-08-27 — ARC-01-03 applied (ratified verbatim)
+
+- Owner ratified the drafted text ("ok let it be go ahead"); both amendments applied to
+  `doc/development/decisions/input.md` **exactly as shown**, nothing added.
+- Decision 3: `AMENDED IN PART` note + `Decision (as amended)` + rewritten `Why` (now carrying the
+  base-allocation fact and what per-run buys) + Consequence's first sentence. Decision 7: the
+  single `Amended in place` blockquote, decision text untouched.
+- Citations safe: all 13 `Decision 3` references in `src/`+`tests/` cite the NUMBER, not the
+  heading, so nothing dangles. Suite still 973.
+- **Raised, not acted on:** Decision 3's HEADING still reads "a boot-provisioned widget per surface,
+  not per-session construction", which is now wrong for one of the four instances. The `AMENDED IN
+  PART` note directly beneath corrects it, and Decision 11 shows the ledger does update headings —
+  but the owner ratified body text, not a heading change, so it waits for a word.

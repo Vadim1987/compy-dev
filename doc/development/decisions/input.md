@@ -165,20 +165,40 @@ widget's own test is `is_shown()`.
 
 ## Decision 3 — a boot-provisioned widget per surface, not per-session construction
 
-**Decision.** A surface's input widget is **created once at load** and reused across every
-session on it — boot-provisioned, never constructed per session. Projects reach the
-project-facing one through the `compy.input.*` surface and never hold the widget object;
-`show()` / `hide()` are state flips on that instance, not construction and teardown.
+**AMENDED IN PART, 2026-08-27.** The **project** widget is created per project **run**, not at
+load. Everything else stands: the console's, the editor's and the search strip's widgets are still
+boot-provisioned, and within a run `show()`/`hide()` are still state flips on one instance, never
+construction and teardown. The NFR below is not withdrawn — it is applied at the boundary it
+actually names.
 
-**Why.** A non-functional requirement forbids allocating a fresh object graph per input
-session — the device is memory-constrained and the common pattern is repeated prompting. A
-shared instance also makes the "hide and bring back with state intact" requirement fall out for
-free: the state was never destroyed. And it is what makes Decision 1 cheap — a shared surface
-whose show/hide are pure state changes has nothing to reconnect.
+**Decision (as amended).** A surface's input widget is created **once per lifetime of the surface
+it serves** and reused across every session on it. For the console, the editor and the search strip
+that lifetime is the application, so those three are boot-provisioned. For a project it is the
+**project run**: the widget is constructed when the run starts and destroyed when it stops.
+Projects reach it through the `compy.input.*` surface and never hold the widget object; `show()` /
+`hide()` are state flips on that instance, not construction and teardown.
+
+**Why.** A non-functional requirement forbids allocating a fresh object graph **per input
+session** — the device is memory-constrained and the common pattern is repeated prompting.
+Repeated prompting happens *within* a run, so a per-run widget satisfies that requirement in full:
+a project that prompts a hundred times allocates once. The requirement was previously applied one
+boundary wider than it states, and that wider boundary was never examined. A shared-within-the-run
+instance also keeps "hide and bring back with state intact" free — the state is not destroyed while
+the project that owns it is alive — and it is what makes Decision 1 cheap.
+
+**Per-run is strictly less allocation than the system this feature replaced.** At the PR base the
+project's widget was built **per activation** — model, controller and view, fresh on every
+`input_text` / `input_code` call. The application-lifetime singleton is this feature's own
+invention, not inherited behaviour, and it shipped on the same memory-constrained device without
+complaint while doing considerably more allocation than a per-run widget does.
+
+**What it buys.** A store that belongs to a project now *dies with that project*, structurally,
+rather than by a hand-maintained wipe list at teardown. Two cross-project leaks were fixed by
+extending that list, and a third had been missing from it for months.
 
 **Consequence.** Four instances exist, not one, and what they share is the widget **code**, not
-the object: the project's (`main.lua`), the console's REPL line (`consoleController.lua`), and
-the editor's input and search strips (`editorController.lua`). What differs between them is the
+the object: the project's (created at the run seam), the console's REPL line
+(`consoleController.lua`), and the editor's input and search strips (`editorController.lua`). What differs between them is the
 evaluator attached, the capability flags set at construction, and which route handles the
 result — never the widget's own behaviour. `show()` on an already-active session is a no-op (it *warns*
 rather than swallowing — see Decision 7's discipline) unless `{force = true}` is passed.
@@ -317,6 +337,14 @@ once. A shape rule does both with nothing to keep in sync: refuse every direct-c
 sub-table-identity write, permit every leaf. The guard lives in the surface's metatable, one level
 down per sub-table, so a mistyped assignment fails at the point of the mistake rather than
 corrupting the API — loudly, never a silent swallow.
+
+> **Amended in place, 2026-08-27 (ARC-01).** "Frozen identity" binds the **project**, not the
+> framework. `compy.input.callbacks` **resolves to** the current widget's `callbacks` table
+> (owner ruling 2026-07-20, re-made 2026-08-27), and the widget lives for one project run
+> (Decision 3, as amended) — so the identity is constant for the whole of the only lifetime a
+> project has, and a project cannot observe the resolution. `shortcuts` and `hooks` are the
+> surface's own tables and are unchanged. **The decision is unchanged:** the container and all
+> three sub-table identities remain unassignable, and every leaf remains writable.
 
 **Consequence.** `shortcuts.keypressed`'s normalising behaviour (Decision 8) stays reachable only
 through its combo-keyed leaves; protecting that invariant is what the frozen-identities clause is
