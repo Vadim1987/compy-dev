@@ -23,9 +23,15 @@ not the controller — so each line is what a project author can observe.
 | 9 | `show{highlighter=hl}` → `configure{highlighter=nil}` | highlighter **kept** (cannot be unset) |
 | 10 | `show{validator=v}` → `configure{validator=nil}` → `hide()` → `show{}` | validator **kept** through both |
 
-Probe 6 is the non-obvious one: the force path does not apply the highlighter *now*, but
-`merge_callback_keys` (`src/controller/consoleController.lua`) writes it into the sticky store, so it
-lands on the **next** activation. The call is neither honoured nor refused — it is deferred, silently.
+Probe 6 is the non-obvious one: the force path does not apply the highlighter *now*, but it lands on
+the **next** activation. The call is neither honoured nor refused — it is deferred, silently.
+
+**Scope of that, corrected 2026-08-27 (cold review, re-probed):** it is the **highlighter alone**.
+`merge_callback_keys` writes into the widget's own `callbacks` table — the same table `apply_config`
+writes — so `validator`, `on_text_entered` and `on_limit_reached` passed to a forced `show` are
+**applied immediately**. The `highlighter` differs because it is stored on `model.evaluator`, which
+that merge never touches. An earlier reading of these probes generalised from the one field tested
+to all four.
 
 Probe 3 vs. probe 1: `text` absent means **clear** on a fresh `show` and **keep** on a forced
 re-`show`. Two policies for one field, both reachable from the same function.

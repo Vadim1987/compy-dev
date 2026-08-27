@@ -73,8 +73,9 @@ worth knowing before the name is chosen.
 ## 3. What deletes
 
 - **`re_show`** — the forced path becomes the activation path. With it go **`BUG-01-06`** (a forced
-  `show` silently drops `prompt`) and its unfiled sibling (a forced `show` *defers* the callbacks to
-  the next activation).
+  `show` silently drops `prompt`) and its unfiled sibling (a forced `show` *defers* the
+  **highlighter** to the next activation — the highlighter alone; the other callbacks land at once,
+  corrected by the cold review).
 - **`UserInputController:configure`'s hand-built `live` table** — it exists only to keep `text` out
   of `apply_config`. Once `apply_config` cannot see `text`, passing the whole config is safe.
 - **`text` from `apply_config`** — which is what leaves one policy where the row started with two.

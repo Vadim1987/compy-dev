@@ -282,3 +282,39 @@
   whether the lifecycle callbacks fall to it). Persistent-corpus placement is deliberate: a
   recommendation left in the wip plan dies with the plan.
 - Cold review of the plan still running; its findings bear on the STEPS, not on the settled shape.
+
+## 2026-08-27 — cold review returns: approve with changes; TWO of my claims corrected
+
+- Report: `validation/outcomes/ARC-02-plan-cold-review.md`. Verdict **approve with changes**.
+  Confirmed §2(a) (clear_input ≠ set_text) and killed the one way it could have been wrong
+  (`string.lines('')` → `{''}`, so no fourth effect). Confirmed containment of every deletion via
+  LSP + grep: re_show 1 caller, apply_config 2, pending not project-visible.
+- **My error #1 (F4), verified and corrected in 5 places.** I told the owner a forced show defers
+  `highlighter`/`validator`/the widget outputs. **Only the highlighter defers.** merge_callback_keys
+  writes into the widget's OWN callbacks table — the same table apply_config writes — so
+  validator/on_text_entered/on_limit_reached land IMMEDIATELY. The highlighter differs because it
+  lives on model.evaluator, which the merge never touches. Re-probed: `validator is v2 DURING force?
+  true`. **I generalised from a highlighter-only probe to all four and never tested the others.**
+  That is the same shape of mistake as the provenance-from-absence one earlier this session:
+  a conclusion wider than the evidence taken.
+- **My error #2 (F1), verified.** I told the owner pick B was "the one change in the plan against
+  stakeholder-seen text". It is not. `spec.versions/version01.md:178-180` — *"content replaced if
+  text is provided, preserved otherwise"* — and `input_widget_control_spec.lua:154` pins it green
+  with a deliberate comment ("it is not a hidden reset"). ARC-02-04 reverses it.
+  **Decision 35 does not change** — the owner's provenance ranking covers it (a parenthetical inside
+  a package they approved is outranked by their own words "override the existing one") — but the
+  deviation was UNDISCLOSED. Added to Decision 35's "What this changes for a project" as the first
+  of two, so the entry states both rather than one.
+- **New defect BUG-01-09, re-probed and worse than reported:** `set_text` assigns `self.entered`
+  only when `#string.lines(text) == 1`, so a multi-line STRING falls through every branch and
+  nothing is written — `show{text='a\nb'}` leaves the PREVIOUS content standing. Documented input
+  shape (`doc/input_api.md`: "a string or list of line strings"), primary call, silent. Also affects
+  `set_text('x\ny')` directly. Worst failure mode on the BUG-01 list.
+- Plan changes folded in: -02 cannot be its own commit (suite-green-at-every-commit → breaking tests
+  land WITH the step that makes them pass) and -08 cannot trail; hidden configure{prompt} needs a
+  nil-widget guard + must keep merge_callback_keys.
+- Reviewer's refinements I did NOT act on but recorded: the three clear_input effects are near-inert
+  on the PROJECT widget (custom_status written only by editorController; history unreachable from a
+  project; selection disabled at construction) — so §2(a) stays but is not the top risk; and
+  Decision 15 ALREADY raises for `force` as a show-only key, so ARC-02-01 may be an addition rather
+  than an amendment. Both worth checking at execution.

@@ -1561,8 +1561,18 @@ no-ops to a warning — `show` on an already-active widget without `force`, and
 side**: they are not a legitimate call at an inconvenient moment but a call to the wrong function,
 true whether the widget is up or hidden.
 
-**What this changes for a project.** A hidden `configure` no longer retains `text`/`cursor` for the
-next `show`. Nothing is lost: content for a widget that is about to come up is set **by the `show`
+**What this changes for a project — two things, both stated rather than discovered.**
+
+**First, a forced `show` with no `text` now clears.** Before this decision it preserved the content,
+which is what the spec approved in round 2 said (*"content replaced if `text` is provided, preserved
+otherwise"*) and what a test pinned deliberately. Statement 4 reverses it, because a `force` that
+sometimes re-sets-up and sometimes half-does is the third policy this decision exists to remove, and
+because the stakeholder's own words for the flag were *"override the existing one"* — a request that
+outranks a parenthetical inside a package they approved. A project that wants the draft kept passes
+it, or does not pass `force`.
+
+**Second, a hidden `configure` no longer retains `text`/`cursor` for the
+next `show`.** Nothing is lost: content for a widget that is about to come up is set **by the `show`
 that brings it up**, before it is visible, and any richer deferral is a local variable in the
 project. The retained `prompt` is unaffected — it is project-owned, applies immediately, and is
 still there at the next `show`.

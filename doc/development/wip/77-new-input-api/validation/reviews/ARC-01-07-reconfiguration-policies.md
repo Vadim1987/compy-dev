@@ -102,7 +102,11 @@ Each is reproducible from the probes and reachable by an ordinary project.
    `on_text_entered`, `on_limit_reached`, `validator`, `highlighter` — and `prompt` is deliberately
    not in that list. It persists anyway. A reader following the doc will expect a bare `show{}` to
    present an unlabelled field.
-3. **`force` silently defers three keys instead of applying or refusing them** (probes 2, 6).
+3. **`force` silently defers the highlighter instead of applying or refusing it** (probes 2, 6).
+   *(Corrected 2026-08-27: this said "three keys". The cold review checked and only the
+   `highlighter` defers — `validator` / `on_text_entered` / `on_limit_reached` land immediately,
+   because `merge_callback_keys` writes into the widget's own `callbacks` table. Re-probed and
+   confirmed. The defect is one key, not four; the shape of the complaint is unchanged.)*
    `show{force=true, highlighter=hl2}` on an active widget does not change the highlighter — and
    then changes it at the *next* activation, because the sticky store was written on the way past.
    The documented promise is "replace `text` instead of warning"; that a *closed* config table
@@ -189,7 +193,8 @@ the label is decoration surface the project owns, where content is user-owned an
   contains `prompt` under the comment *"spent by the show() that reads them"*, which is false for
   `prompt` and true for `text`/`cursor`. A reader is told the opposite of the ruling.
 - **The `force` deferral (§4.3)** — `show{force=true, highlighter=X}` on an active widget neither
-  applies nor refuses `X`, then applies it at the next activation. Independent of `prompt`; the
+  applies nor refuses `X`, then applies it at the next activation. (Highlighter only — see §4.3's
+  correction.) Independent of `prompt`; the
   attestation does not touch it. Still the least predictable behaviour in this surface.
 - **The pending-consumed-by-an-ignoring-`show` edge (§4.6)** — minor, unchanged.
 

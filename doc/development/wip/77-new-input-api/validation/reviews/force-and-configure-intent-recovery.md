@@ -44,8 +44,14 @@ the existing one" is the widest reading available, not the narrowest.
 ## 2. What was built instead
 
 `re_show` (`src/controller/userInputController.lua:279-292`) applies **`text` and nothing else**.
-`prompt` and `cursor` are dropped; `highlighter`, `validator` and the widget outputs are written to
-the sticky store by `merge_callback_keys` and then ignored, landing at the **next** activation.
+`prompt` and `cursor` are dropped. The **`highlighter`** is written by `merge_callback_keys` and then
+ignored by `re_show`, landing at the **next** activation.
+
+*(Corrected 2026-08-27 by the cold review, re-probed: `validator`, `on_text_entered` and
+`on_limit_reached` do **not** defer — `merge_callback_keys` writes them into the widget's own
+`callbacks` table, which is where `apply_config` would put them, so they take effect at once. Only
+the `highlighter`, stored on `model.evaluator`, is left behind. Three behaviours across the call's
+keys, not four keys deferred.)*
 
 Set the three layers side by side:
 
@@ -61,7 +67,7 @@ narrows content; the code narrows everything **but** content.
 
 That inversion is the source of every oddity on this path: `force` ends up **weaker than
 `configure`** (one field versus five), which inverts what "I know what I'm doing" leads a reader to
-expect, and it is why `BUG-01-06` and its deferral sibling exist at all.
+expect, and it is why `BUG-01-06` and its highlighter-deferral sibling exist at all.
 
 ## 3. Did the stakeholder assume `show` would be enough, with no separate configuration channel?
 
@@ -113,7 +119,7 @@ D-2 stands in full: a second `show()` is blocked by default, `force` opts in.
    activation, including `text` absent ⇒ clear. Deletes `re_show`'s bespoke branch; the forced path
    becomes `open_widget`, the same code the first call runs.
    - **Dissolves rather than patches:** `BUG-01-06` (dropped `prompt`), its deferral sibling
-     (callbacks applied at the *next* activation), the pending-consumed-by-an-ignoring-`show` edge,
+     (the **highlighter** applied at the *next* activation), the pending-consumed-by-an-ignoring-`show` edge,
      and `force`'s third content policy (absent ⇒ keep).
    - **Cost:** `show{force = true}` with no `text` would clear where today it keeps. **`force` has
      zero consumers in-tree** — it appears in no example — so the blast radius is tests and docs.
@@ -175,7 +181,7 @@ end
 **Three pieces of machinery then delete themselves** rather than needing rules written about them:
 
 - **`re_show`'s bespoke branch** — the forced path becomes `open_widget`, the same code the first
-  call runs. With it go BUG-01-06 and the deferral sibling.
+  call runs. With it go BUG-01-06 and the highlighter-deferral sibling.
 - **`UserInputController:configure`'s hand-built `live` table** (`{ prompt = …, highlighter = … }`
   plus the `CONFIG_CALLBACKS` loop) — it exists *only* to keep `text` out of `apply_config`. Once
   `apply_config` cannot see `text`, passing the whole config is safe and the filter is redundant.
