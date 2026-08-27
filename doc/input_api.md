@@ -26,6 +26,59 @@ use `compy.input` for hotkeys, combos and click handling.** Nothing here is
 polled, and there is no compatibility shim — a project reads events by
 registering for them.
 
+## Vocabulary
+
+A few terms that show up everywhere in this guide. Reading this once saves
+re-reading the sections that use them.
+
+**Channel.** One kind of device event — `keypressed`, `textinput`,
+`mousepressed`, `singleclick`, etc. Every channel carries exactly the arguments
+LÖVE delivers for it (e.g. `keypressed` carries `key, scancode, isrepeat`).
+Keyboard, pointer and touch channels all work the same way; a project registers
+for them in the same tables.
+
+**Combo.** A string that names *what the user pressed*: the held modifiers plus
+one trigger key or button. `'ctrl+s'` is a combo. `'mouse2'` is a combo. The
+modifiers are optional (`'s'` is also a valid combo — bare, unmodified S), they
+come in a fixed order (ctrl, alt, shift — there are three), and left/right fold
+together, so `'Ctrl+Alt+S'` and `'ctrl+alt+s'` are the same binding.
+
+**Shortcut.** A function registered under a specific combo, on a specific
+channel. When that combo occurs, the shortcut runs before anything else on that
+channel. Shortcuts live in `compy.input.shortcuts.<channel>[combo]`.
+
+**Modifier class.** A combo with `*` as its trigger: `'alt+*'` matches every
+Alt chord. An exact shortcut wins over the class, so you can have a catch-all
+`'alt+*'` and still bind `'alt+p'` specifically.
+
+**Hook.** A single fallback function for an entire channel. If no shortcut
+matched (or the matching shortcut did not consume the event), the hook runs.
+Hooks live in `compy.input.hooks.<channel>`. There is at most one hook per
+channel. When your project defines `love.keypressed`, `love.mousepressed`, etc.,
+those functions are automatically installed as hooks — so existing LÖVE code
+keeps working.
+
+**Dispatch chain.** The fixed order in which every input event is offered to your
+project's handlers. For each event, the framework tries three consumers in order:
+
+```
+  1. shortcut  — compy.input.shortcuts.<channel>[combo]
+  2. hook      — compy.input.hooks.<channel>
+  3. widget    — the input widget (only when it is shown)
+```
+
+The walk stops at the first consumer that **consumes** the event.
+
+**Consume.** A shortcut or hook consumes an event by returning a truthy value
+(`return true`). That tells the framework "I handled this; nothing below should
+see it." A shortcut that returns nothing (or a falsey value) lets the event fall
+through to the hook, and a hook that returns nothing lets it reach the widget.
+The input widget, when shown, always consumes — it is the terminal consumer.
+
+This is the entire event model: three consumers, tried in order, stop on the
+first truthy return. There is no bubbling, no capturing, no priority numbers.
+The rest of this guide is the detail of each surface.
+
 ## Quick start
 
 ```lua
@@ -250,30 +303,61 @@ The lifecycle entries are direct assignments only: `before_submit`,
 
 ## Inbound events — shortcuts and hooks
 
-Everything that reaches your project from the keyboard, the mouse and the touchscreen — with or without a widget on screen.
+Everything that reaches your project from the keyboard, the mouse and the
+touchscreen — with or without a widget on screen. The terms *shortcut*, *hook*,
+*combo*, *channel*, *consume* and *dispatch chain* are defined in the
+Vocabulary section above.
+
+### How events reach your project
+
+When LÖVE fires an input event (a keypress, a mouse click, a touch), the
+framework first checks whether the platform has a reserved combo for it (see
+"Combos the framework keeps" below — these are things like Ctrl+Escape to
+stop the project). Platform reservations act **and pass the event on** — they
+never consume.
+
+Then, while your project is running, every event walks the dispatch chain:
+
+```
+  LÖVE event arrives
+    │
+    ▼
+  ① shortcut — is there a shortcut for this combo?
+    │            yes, and it returned truthy → stop (consumed)
+    │            no match, or returned falsey → fall through
+    ▼
+  ② hook — is there a hook for this channel?
+    │        yes, and it returned truthy → stop (consumed)
+    │        no hook, or returned falsey → fall through
+    ▼
+  ③ widget — is the input widget shown?
+               yes → the widget handles it (always consumes)
+               no  → nobody handled it
+```
+
+The arguments every consumer receives are LÖVE's own, unchanged —
+`keypressed` gets `(key, scancode, isrepeat)`, `mousepressed` gets
+`(x, y, button, istouch, presses)`, and so on. A handler you wrote as
+`love.keypressed` works unchanged when it becomes a hook, because the
+signature is the same.
 
 ### Event hooks and shortcuts
 
+Shortcuts are per-combo bindings; hooks are per-channel fallbacks. Both run
+*before* the input widget and can consume the event. The dispatch chain tries
+them in that order: shortcut first, then hook, then the widget.
+
 `compy.input.shortcuts.keypressed[combo]` registers a combo-specific
 function. `shortcuts.keyreleased` and `shortcuts.textinput` work the same
-way. A shortcut runs before the input widget and can consume the event.
+way.
 
-**Every shortcut, hook and callback receives exactly the arguments LÖVE
-delivers for that event** — `keypressed(key, scancode, isrepeat)`,
-`mousepressed(x, y, button, istouch, presses)`, and so on. A handler you
-already wrote as `love.keypressed` works unchanged when it becomes a hook,
-because it is the same signature. Held modifiers are not among the arguments:
-ask `Key` for them — `Key.shift()` for a modifier, `Key.any_pressed(k)` for
-any other key — which works inside a handler and outside one alike; see
-"Held keys" below.
+Held modifiers are not among the event arguments: ask `Key` for them —
+`Key.shift()` for a modifier, `Key.any_pressed(k)` for any other key —
+which works inside a handler and outside one alike; see "Held keys" below.
 
-A combo is its modifiers plus **one** trigger — `'ctrl+alt+s'`. The modifiers
-are optional: `'s'` is a valid combo and binds a bare unmodified S, the same
-way `'mouse2'` binds an unmodified right-click. Modifiers come first in a fixed
-order (ctrl, alt, shift — there are three, and Super/Cmd is not one of
-them), left and right fold together, and the whole
-string is normalised when you assign it, so `'Ctrl+Alt+S'` and `'ctrl+alt+s'`
-are the same binding. A combo naming two triggers or none raises.
+The combo vocabulary is covered in the Vocabulary section above. Two
+additional rules: Super/Cmd is **not** a modifier (there are exactly three:
+ctrl, alt, shift), and a combo naming two triggers or none **raises**.
 
 The trigger may be `*`, which binds the whole modifier class: `'alt+*'` is
 every Alt chord, and the handler receives the actual key as its first
@@ -294,8 +378,9 @@ end
 ```
 
 A held key repeats, and shortcuts and hooks see every repeat. Three
-combinators under `compy.input.fn` let a registration say what should happen,
-so the handler does not have to:
+**wrappers** under `compy.input.fn` let you declare repeat and propagation
+behaviour at the registration site, so the handler function itself does not
+have to know:
 
 | wrapper | effect |
 |---|---|
@@ -333,12 +418,14 @@ Combos of ordinary keys — "A and B held together" — are deliberately not
 expressible. Every binding would otherwise become conditional on nothing else
 being held, so holding a movement key would silently break unrelated
 shortcuts. Anything beyond exact-or-class matching belongs in a hook, which
-sees every event on its channel; "Choosing the mechanism: transitions, state, and what not to build" below covers what to
+sees every event on its channel; "Choosing the mechanism" below covers what to
 do when a binding and a held key have to work together.
 
-`compy.input.hooks.keypressed`, `.keyreleased`, and `.textinput` are one
-fallback function per event. At activation, an existing project `love.*`
-handler seeds the matching hook when no explicit hook was supplied.
+**Hooks** are the fallback after shortcuts. `compy.input.hooks.keypressed`,
+`.keyreleased`, and `.textinput` each hold one function per channel. At
+activation, an existing project `love.*` handler seeds the matching hook when
+no explicit hook was supplied, so a project that already defines
+`love.keypressed` keeps working without changes.
 
 ### Combos the framework keeps
 
@@ -450,8 +537,8 @@ register a shortcut and let the framework match it:
 `shortcuts.keypressed['ctrl+s']`. That says it once, as data, in a vocabulary
 that is already folded and already the same on every channel. Asking about
 modifiers imperatively inside a handler turns into a cascade repeated at every
-call site. When a binding and a held key have to work together, see "Choosing the mechanism: transitions,
-state, and what not to build" below.
+call site. When a binding and a held key have to work together, see
+"Choosing the mechanism" below.
 
 **2. Ask `Key` — allowed, and worth a second look.** `Key` is available to
 every project, like `compy`. `Key.shift()`, `Key.ctrl()` and `Key.alt()`
