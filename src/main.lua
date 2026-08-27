@@ -360,13 +360,13 @@ function love.load()
   -- independently of the project's (Decision 12) — a single
   -- shared instance would be clobbered across that boundary.
   -- Migration is therefore deliberately deferred (Decision 1),
-  -- not blocked. UserInput M/V/C are provisioned FIRST — before
-  -- the console — so the project env's compy.input (built
-  -- during ConsoleController construction) can bind to the
-  -- widget's OWN callbacks table at that moment (owner ruling
-  -- 2026-07-20: compy.input.callbacks IS the widget's
-  -- self.callbacks). The widget is a boot-provisioned instance;
-  -- provisioning it early has no dependency on the console.
+  -- not blocked. UserInput M/V/C are provisioned before the
+  -- console, which no longer has to be the order: compy.input
+  -- now RESOLVES the widget's callbacks and pending stores per
+  -- access instead of binding them at construction (owner
+  -- ruling 2026-07-20, re-made 2026-08-27), so building the
+  -- console first would work. Provisioning the widget early has
+  -- no dependency on the console either way.
   local ui_m = UserInputModel(baseconf, InputEvalText)
   local ui_c = UserInputController(ui_m, true)
   local ui_v = UserInputView(baseconf.view, ui_c)

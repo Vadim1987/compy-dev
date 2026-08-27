@@ -158,10 +158,10 @@ function F.setup()
   cfg = build_cfg()
   require_modules()
 
-  -- Provision the widget BEFORE the console (mirrors
-  -- main.lua's reorder): ConsoleController construction builds
-  -- the project env's compy.input, which binds to the widget's
-  -- own callbacks table — so the widget must exist first.
+  -- Provision the widget before the console, as main.lua does.
+  -- The order is no longer load-bearing: compy.input resolves
+  -- the widget's stores per access rather than binding them at
+  -- construction. The fixture mirrors production anyway.
   widget = build_widget(cfg)
   CC = build_console(cfg)
   Controller.set_default_handlers(CC, CC.view)
@@ -261,6 +261,15 @@ function F.show_selectable_widget(lines)
   w:always_shown()
   love.state.user_input_controller = w
   return w
+end
+
+-- A SECOND project widget, published as the current one. The
+-- shape a per-run widget lifetime produces: the surface a
+-- project holds must follow the live widget, not the one that
+-- happened to exist when the surface was built. F.reset puts
+-- the shared widget back.
+function F.other_widget()
+  return build_widget(cfg)
 end
 
 -- Production stop owns route/output teardown, the widget's

@@ -81,6 +81,46 @@ describe('input contracts: NFR and mechanism guards #input',
         F.show_widget()
         assert.equal(m1, F.widget.model)
       end)
+
+      -- The two stores compy.input keeps for a project —
+      -- callbacks and the hidden-configure pending draft, live
+      -- ON the widget, and the surface RESOLVES them rather
+      -- than holding them (owner ruling 2026-07-20, re-made
+      -- 2026-08-27: compy.input.callbacks resolves to the
+      -- current widget's table). Identity is frozen against the
+      -- project (Decision 7) and stable for as long as a
+      -- project can observe it; it is not frozen against the
+      -- framework replacing the widget underneath.
+      it('callbacks resolve to the current widget', function()
+        local input = F.compy_input()
+        local other = F.other_widget()
+        local f = function() end
+        input.callbacks.on_text_entered = f
+        assert.equal(f, other.callbacks.on_text_entered)
+        assert.not_equal(f, F.widget.callbacks.on_text_entered)
+      end)
+
+      it('the pending draft resolves to the current widget',
+        function()
+          local input = F.compy_input()
+          local other = F.other_widget()
+          input.configure({ prompt = 'who?' })
+          assert.equal('who?', other.pending.prompt)
+          assert.is_nil(F.widget.pending.prompt)
+        end)
+
+      -- Between runs there is no widget and therefore no store.
+      -- Every call stays inert rather than raising: the same
+      -- rule the rest of the surface already follows.
+      it('with no widget there is no store, and no raise',
+        function()
+          local input = F.compy_input()
+          love.state.user_input_controller = nil
+          input.configure({ prompt = 'who?' })
+          input.show({ text = 'hi' })
+          assert.is_nil(input.callbacks)
+          assert.is_false(input.is_shown())
+        end)
     end)
 
   -- ====================================================

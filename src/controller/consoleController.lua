@@ -514,14 +514,20 @@ local function build_input_surface(state, methods)
   -- their IDENTITY is frozen, which the container's own refusal
   -- above already does, and every leaf inside them is writable.
   -- A pass-through proxy over them reproduced plain table
-  -- behaviour exactly.
+  -- behaviour exactly. "Frozen" binds the PROJECT, not the
+  -- framework: callbacks is the live widget's table, so its
+  -- identity is stable for exactly as long as a project can
+  -- observe it — its own run.
   local resolve = {
     shortcuts = build_shortcuts_surface(state.shortcuts),
     hooks = state.hooks,
-    callbacks = state.callbacks,
     fn = input_fn_surface,
   }
+  -- callbacks is NOT in the table above: it lives on the
+  -- widget, so it is resolved per access rather than captured
+  -- (see widget_store).
   return build_frozen_view(function(k)
+    if k == 'callbacks' then return state.callbacks end
     return resolve[k] or methods[k]
   end, tostring)
 end
@@ -608,16 +614,36 @@ local function check_keys(cfg, fname, allowed)
   end
 end
 
+-- The two stores compy.input keeps for a project live ON the
+-- widget, and the surface RESOLVES them instead of holding
+-- them: a widget lives for a project RUN, so a captured
+-- reference would be the previous run's table
+-- (doc/development/decisions/input.md, Decision 3). Between
+-- runs there is no widget and no store — every reader below
+-- reads "no store" as "nothing to remember" and does nothing,
+-- which is the rule the rest of this surface already follows.
+local WIDGET_STORES = { callbacks = true, pending = true }
+
+--- @param k any
+--- @return table?
+local function widget_store(k)
+  if not WIDGET_STORES[k] then return nil end
+  local w = love.state.user_input_controller
+  return w and w[k]
+end
+
 --- Merge the sticky output-callback state into a show()/
 --- configure() config in place: an explicit value wins and is
---- written back into `state`; an absent one defaults to the
+--- written back onto the widget; an absent one defaults to the
 --- last-known value.
 --- @param state table
 --- @param cfg table
 local function merge_callback_keys(state, cfg)
+  local callbacks = state.callbacks
+  if not callbacks then return end
   for _, k in ipairs(CALLBACK_KEYS) do
-    if cfg[k] ~= nil then state.callbacks[k] = cfg[k] end
-    cfg[k] = state.callbacks[k]
+    if cfg[k] ~= nil then callbacks[k] = cfg[k] end
+    cfg[k] = callbacks[k]
   end
 end
 
@@ -627,9 +653,10 @@ end
 --- whether it ends up used (an explicit cfg value at this same
 --- show() call wins) — a later bare show() must not keep
 --- re-injecting a stale draft.
---- @param pending table
+--- @param pending table?
 --- @param cfg table
 local function consume_pending(pending, cfg)
+  if not pending then return end
   for _, k in ipairs(PER_SHOW_KEYS) do
     if cfg[k] == nil then cfg[k] = pending[k] end
     pending[k] = nil
@@ -647,8 +674,10 @@ end
 --- @param cfg table
 local function stash_hidden_configure(state, cfg)
   merge_callback_keys(state, cfg)
+  local pending = state.pending
+  if not pending then return end
   for _, k in ipairs(PER_SHOW_KEYS) do
-    if cfg[k] ~= nil then state.pending[k] = cfg[k] end
+    if cfg[k] ~= nil then pending[k] = cfg[k] end
   end
 end
 
@@ -773,13 +802,12 @@ local function build_widget_api(get_widget, get_active_flag, state)
 end
 
 local get_compy_input = function()
-  -- callbacks IS the widget's OWN table (owner ruling
-  -- 2026-07-20: compy.input.callbacks === the widget's
-  -- self.callbacks). The widget is provisioned before the
-  -- console (main.lua reorder), so it exists here. NEVER
-  -- reassign this table — only mutate it — since the surface
-  -- holds this exact reference (teardown re-seeds in place).
-  local widget = love.state.user_input_controller
+  -- This closure runs ONCE for the application, so it reads no
+  -- widget: callbacks and pending are RESOLVED per access
+  -- through the state metatable below (owner ruling 2026-07-20,
+  -- re-made 2026-08-27: compy.input.callbacks resolves to the
+  -- current widget's table). NEVER reassign a resolved
+  -- table — only mutate it.
   -- One combo table per channel, from the list the route
   -- dispatches on — not a copy of it, so a channel cannot exist
   -- for dispatch and be missing here.
@@ -787,22 +815,19 @@ local get_compy_input = function()
   for _, ev in ipairs(ProjectInputController.EVENTS) do
     shortcut_tables[ev] = Key.new_handler_table()
   end
-  local state = {
-    -- shortcuts: per-event combo tables (Decision 8,
-    -- normalising). hooks: one fn per event, seeded once at
-    -- activation (Decision 10). callbacks: the widget's own
-    -- table (Decision 7). shortcuts/hooks start empty (leaves
-    -- fill on project write); callbacks carries the widget's
-    -- stay-open defaults.
+  -- shortcuts: per-event combo tables (Decision 8,
+  -- normalising). hooks: one fn per event, seeded once at
+  -- activation (Decision 10). Both are the surface's own and
+  -- start empty (leaves fill on project write). callbacks and
+  -- pending are NOT fields — they are the widget's, reached
+  -- through __index (widget_store), and callbacks carries the
+  -- widget's stay-open defaults.
+  local state = setmetatable({
     shortcuts = shortcut_tables,
     hooks = { },
-    callbacks = widget.callbacks,
-    -- Like callbacks, the widget's OWN table: this closure runs
-    -- ONCE for the application, so a store it owned outright
-    -- would outlive every project. Teardown wipes it there
-    -- (controller.lua, reset_widget_outputs).
-    pending = widget.pending,
-  }
+  }, {
+    __index = function(_, k) return widget_store(k) end,
+  })
   -- get_active resolves the widget's OWN shown flag (is_shown),
   -- never love.state directly.
   local function get_active()

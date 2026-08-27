@@ -682,10 +682,12 @@ absent → no-op + debug-log. `self.callbacks` is the widget's own table, seeded
 `DEFAULT_CALLBACKS` (`after_submit`/`after_cancel`/`on_limit_reached` = stay-open no-ops) and
 re-seeded — never wiped to `nil` — on project teardown (Decision 11; a nil'd `after_cancel` must
 not silently mean "stays open forever" for the next project). For the **project widget**,
-`compy.input.callbacks` **is this exact same table** (owner ruling 2026-07-20; captured once in
-`get_compy_input`, `consoleController.lua:601-635`) — a project's `compy.input.callbacks.after_submit
-= fn` write lands directly on `self.callbacks.after_submit`, no copy, no bridging. Console/editor set
-their own instance's `self.callbacks.X` directly (they are trusted host code, not routed through
+`compy.input.callbacks` **resolves to this exact same table** (owner ruling 2026-07-20, re-made
+2026-08-27; resolved per access in `get_compy_input`, not captured) — a project's
+`compy.input.callbacks.after_submit = fn` write lands directly on `self.callbacks.after_submit`, no
+copy, no bridging. It resolves to the **current** widget, so a project sees one stable table for its
+whole run and cannot observe the resolution; the same holds for the hidden-configure `pending`
+draft. Console/editor set their own instance's `self.callbacks.X` directly (they are trusted host code, not routed through
 `compy.input` at all — see `consoleController.lua:49-52` for console's own `on_limit_reached` wiring).
 
 A project wanting the pre-redesign "prompt once, then close" behaviour opts in with one line:
