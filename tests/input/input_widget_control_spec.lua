@@ -153,6 +153,41 @@ describe('input surface: widget control #input', function()
           string.find(tostring(err), 'show()', 1, true))
       end)
 
+    -- A malformed cursor VALUE is refused the same way a bad
+    -- KEY is: a framework message, not a raw arithmetic error
+    -- from inside the framework
+    -- (doc/development/technical_debt/input.md,
+    -- "T-CURSOR-SHAPE"). Every one of these shapes used to
+    -- crash the project.
+    it('show raises on a malformed cursor', function()
+      local input = F.compy_input()
+      for _, bad in ipairs({
+        { }, { 1 }, { nil, 2 }, 1, 'x',
+      }) do
+        assert.has_error(function()
+          input.show({ force = true, cursor = bad })
+        end)
+      end
+    end)
+
+    -- `false` is the uniform unset across the config table
+    -- (doc/development/decisions/input.md, Decision 35,
+    -- statement 3), so a computed `cursor` that came to
+    -- nothing is not an authoring error — it seats no cursor
+    -- and the activation baseline stands.
+    -- Discriminating: an explicit cursor would seat col 2, so
+    -- landing on the activation baseline (end of 'hello',
+    -- col 6) proves `false` seated nothing rather than seating
+    -- something that happens to match.
+    it('show treats cursor = false as unset', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello', cursor = false })
+      assert.same({ 1, 6 }, { input.get_cursor() })
+      input.show({ force = true, text = 'hello',
+        cursor = { 1, 2 } })
+      assert.same({ 1, 2 }, { input.get_cursor() })
+    end)
+
     -- Guard against strictness creeping past its remit: a
     -- runtime STATE that makes a call a no-op is not an
     -- authoring error, and must keep warning rather than raise.

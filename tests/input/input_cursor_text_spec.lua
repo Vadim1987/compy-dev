@@ -123,6 +123,34 @@ describe('input surface: widget control — cursor and text #input',
       assert.same(1, l) -- single line: clamps to 1
     end)
 
+    -- A cursor is {line, col}, two numbers. A malformed one is
+    -- an authoring error and is refused the way a bad config
+    -- KEY is (doc/development/decisions/input.md, Decision 15)
+    -- — with a framework message naming the expected shape,
+    -- not a raw arithmetic error from inside math.min. This is
+    -- distinct from an out-of-RANGE number, which is
+    -- well-formed and still clamps (cases above).
+    it('raises a framework error on a nil position',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        local _, err = pcall(function()
+          input.set_cursor(nil, nil)
+        end)
+        assert.is_truthy(
+          string.find(tostring(err), 'cursor', 1, true))
+        assert.is_falsy(
+          string.find(tostring(err), 'math', 1, true))
+      end)
+
+    it('raises on a partial position', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello' })
+      assert.has_error(function()
+        input.set_cursor(1, nil)
+      end)
+    end)
+
     -- doc/input_api.md, "Live changes": hidden set_cursor
     -- no-ops and warns.
     it('while hidden warns and no-ops', function()

@@ -668,6 +668,34 @@ local function check_keys(cfg, fname, allowed)
   end
 end
 
+--- A cursor is a {line, col} pair of numbers. A malformed one
+--- is an authoring error and is refused the way a bad KEY is —
+--- with a framework message naming the shape, rather than the
+--- raw "bad argument to 'min'" that used to come back out of
+--- the clamp (doc/development/technical_debt/input.md,
+--- "T-CURSOR-SHAPE"). An out-of-RANGE number is a different
+--- thing: it is well-formed and still clamps, which is what
+--- doc/input_api.md promises.
+---
+--- Falsey is the uniform unset (Decision 35, statement 3), so a
+--- computed cursor that came to nothing seats none instead of
+--- raising, and normalising it to nil here is what lets the
+--- activation path keep one absence to test for.
+--- Same level-4 depth rule as check_keys above.
+--- @param fname string
+--- @param cursor any
+--- @return table? pair
+local function checked_cursor(fname, cursor)
+  if not cursor then return nil end
+  local pair = type(cursor) == 'table' and cursor or { }
+  if type(pair[1]) == 'number'
+    and type(pair[2]) == 'number' then
+    return pair
+  end
+  error(fname ..
+    ': cursor must be a {line, col} pair of numbers', 4)
+end
+
 -- The two stores compy.input keeps for a project live ON the
 -- widget, and the surface RESOLVES them instead of holding
 -- them: a widget lives for a project RUN, so a captured
@@ -710,9 +738,26 @@ end
 local function api_show(get_widget, state, cfg)
   local next_cfg = cfg or { }
   check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
+  next_cfg.cursor =
+    checked_cursor('compy.input.show', next_cfg.cursor)
   merge_callback_keys(state, next_cfg)
   local ui = get_widget()
   if ui then ui:show(next_cfg) end
+end
+
+--- Lifted out for check_keys' depth rule, like api_configure.
+--- @param get_widget fun(): UserInputController?
+--- @param get_active fun(): table?
+--- @param line any
+--- @param col any
+local function api_set_cursor(get_widget, get_active, line, col)
+  if not get_active() then
+    Log.warn('compy.input.set_cursor ignored — hidden')
+    return
+  end
+  local pair =
+    checked_cursor('compy.input.set_cursor', { line, col })
+  get_widget():set_cursor_pos(pair[1], pair[2])
 end
 
 --- Sibling of api_show, and lifted out for the same reason it
@@ -783,11 +828,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
     -- manipulation and \"reset\"": clamped move; no-op +
     -- warn while hidden.
     set_cursor = function(line, col)
-      if not get_active_flag() then
-        Log.warn('compy.input.set_cursor ignored — hidden')
-        return
-      end
-      get_widget():set_cursor_pos(line, col)
+      api_set_cursor(get_widget, get_active_flag, line, col)
     end,
     -- doc/input_api.md, "Live changes": replace content
     -- (cursor to end, or kept + clamped); no-op + warn
