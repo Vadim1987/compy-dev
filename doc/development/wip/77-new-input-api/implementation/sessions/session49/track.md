@@ -318,3 +318,27 @@
   project; selection disabled at construction) — so §2(a) stays but is not the top risk; and
   Decision 15 ALREADY raises for `force` as a show-only key, so ARC-02-01 may be an addition rather
   than an amendment. Both worth checking at execution.
+
+## 2026-08-27 — owner: why defer the highlighter at all? → root cause found
+
+- Owner's instinct correct on both counts. **No, there is no point**, and **no, the stakeholder never
+  asked for deferral** — nothing in the ticket, round 2, the spec or the decisions mentions it. It is
+  not a policy; it is an artifact.
+- **And the self-correction needs no separate work: ARC-02 already does it.** Once `force` routes
+  through `open_widget` → `apply_config`, the highlighter applies on that path like everything else.
+  The deferral dissolves with `re_show`; there is nothing extra to implement.
+- **But ARC-02 does NOT fix the cause, and the cause has a second, worse symptom.** Probed:
+  `highlighter` has **two homes** — the widget's `callbacks` table (the sticky store, shared with the
+  `compy.input.callbacks` surface) and `model.evaluator.highlighter`, which is what the model
+  actually reads. Only `apply_config` copies store → evaluator.
+  - `compy.input.callbacks.highlighter = hl` on a shown widget: `callbacks.highlighter == hl` **true**,
+    `ev.highlighter == hl` **false**. It does nothing.
+  - A later unrelated `input.configure({})` flushes it: `ev == hl` **true**. So the highlighter
+    appears at a call that never mentioned it.
+  - `validator` has ONE home and direct assignment works (probed). Same for the outputs.
+  - `doc/input_api.md` "Callback assignments" documents highlighter as assignable this way.
+- Filed **BUG-01-10** as the root cause, with BUG-01-06's sibling cross-linked to it as a symptom.
+  Third defect out of the evaluator split — session48 fixed the shared-singleton one.
+- Fix is a small design call, not obvious: one home (model reads the controller's slot), a
+  write-through on the `callbacks` proxy, or two homes with every write funnelled through one
+  function. Not mine to pick.
