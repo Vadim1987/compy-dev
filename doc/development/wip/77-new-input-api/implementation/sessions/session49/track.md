@@ -446,3 +446,21 @@
     the design-phase D-1..D-7 rulings are not the same numbering as the implementation ledger's.
   - Also corrected: `ledgers.md`'s closing line said vacuuming was "deliberately unruled". It is
     now ruled. What remains unruled is only **where** swept entries go.
+
+## 2026-08-27 — wrap
+
+- Owner: fold BUG-01-10 INSIDE ARC-02 (same seam — right call; touching it twice is how the copy
+  step behind the defect got missed). Landed as ARC-02-06, three steps shifted, crosswalk on the
+  sprint. **The plan doc and the cold review keep the pre-insert numbers** — flagged in the
+  successor prompt because that is exactly the kind of thing that silently mis-resolves.
+- `status.md` written at the feature root: bookmark page, four links, no state, dies with the
+  release. Explicitly says the ledgers are the position and the roadmap is a different question.
+- Wrapped per `agents/sessions.md` §5: report distilled, successor prompt written, pointer repointed
+  to session50, baseline line in validation.md corrected (it still said 968/session47; 979 has held
+  since session48 and session49 added no tests).
+- **Deviation from the workflow's default, on owner instruction.** §5's table says a cognitive-heavy
+  session hands over a **revalidation** task, and this session was cognitive-heavy. The owner
+  directed *"successor should move towards roadmap"* → session50 is **execution of ARC-02**. Noted
+  here rather than silently followed; the judgment this session produced was already reviewed twice
+  in-flight (cold review of the plan, and the owner ruling every design call), which is what a
+  revalidation pass would have been for.
