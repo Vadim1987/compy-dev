@@ -584,34 +584,35 @@ local CALLBACK_KEYS = {
   'highlighter',
 }
 
--- PER-SHOW: spent by the show() that reads them. `cursor` is a
--- {line, col} pair applied after text, the seat compy.input.
--- set_cursor moves later. configure() while HIDDEN has no
--- session to apply them to, so it stashes them in state.pending
--- for the next show() to consume, the one case where they
--- outlive their call.
-local PER_SHOW_KEYS = { 'prompt', 'text', 'cursor' }
+-- SHOW-ONLY keys, mapped to where they DO belong so a refusal
+-- can name the call instead of only refusing this one.
+-- `text`/`cursor` are the USER's content and only activation
+-- seats them; `force` answers "replace the widget that is
+-- already up", which configure() never faces. See
+-- doc/development/decisions/input.md, Decision 15's show-only
+-- category, added there by Decision 35.
+local SHOW_ONLY_KEYS = {
+  text   = 'show(), or set_text on a live widget',
+  cursor = 'show(), or set_cursor on a live widget',
+  force  = 'show()',
+}
 
 --- @param names string[]
---- @param extra string?
 --- @return table set
-local function key_set(names, extra)
+local function key_set(names)
   local set = { }
   for _, k in ipairs(names) do set[k] = true end
-  if extra then set[extra] = true end
   return set
 end
 
--- What each entry point accepts, assembled from the two lists
--- above rather than re-typed: `force` answers "replace the text
--- of an ALREADY-active widget", so it is show()'s alone —
--- configure() only ever runs in that state.
+-- What each entry point accepts. The difference between them is
+-- exactly SHOW_ONLY_KEYS: everything else is project-owned and
+-- both calls take it, set-if-given (Decision 35, statement 3).
 local CONFIGURE_KEYS = key_set(CALLBACK_KEYS)
-local SHOW_KEYS = key_set(CALLBACK_KEYS, 'force')
-for _, k in ipairs(PER_SHOW_KEYS) do
-  CONFIGURE_KEYS[k] = true
-  SHOW_KEYS[k] = true
-end
+local SHOW_KEYS = key_set(CALLBACK_KEYS)
+CONFIGURE_KEYS.prompt = true
+SHOW_KEYS.prompt = true
+for k in pairs(SHOW_ONLY_KEYS) do SHOW_KEYS[k] = true end
 
 -- Lifecycle callbacks are compy.input.callbacks assignments,
 -- never config-table keys. Naming one here is the likeliest
@@ -629,6 +630,11 @@ local function bad_key_message(fname, key)
   if LIFECYCLE_KEYS[name] then
     return fname .. ": assign '" .. name ..
       "' on compy.input.callbacks, do not pass it here"
+  end
+  local belongs_to = SHOW_ONLY_KEYS[name]
+  if belongs_to then
+    return fname .. ": '" .. name .. "' belongs to " ..
+      belongs_to .. ', do not pass it here'
   end
   return fname .. ": unknown config key '" .. name .. "'"
 end
@@ -661,7 +667,7 @@ end
 -- runs there is no widget and no store — every reader below
 -- reads "no store" as "nothing to remember" and does nothing,
 -- which is the rule the rest of this surface already follows.
-local WIDGET_STORES = { callbacks = true, pending = true }
+local WIDGET_STORES = { callbacks = true }
 
 --- @param k any
 --- @return table?
@@ -686,40 +692,6 @@ local function merge_callback_keys(state, cfg)
   end
 end
 
---- Consume the hidden-configure pending prompt/text/cursor
---- (doc/development/internals/user_input.md,
---- "configure(config)"): spent on this show() regardless of
---- whether it ends up used (an explicit cfg value at this same
---- show() call wins) — a later bare show() must not keep
---- re-injecting a stale draft.
---- @param pending table?
---- @param cfg table
-local function consume_pending(pending, cfg)
-  if not pending then return end
-  for _, k in ipairs(PER_SHOW_KEYS) do
-    if cfg[k] == nil then cfg[k] = pending[k] end
-    pending[k] = nil
-  end
-end
-
---- Stash configure()'s provided prompt/text/cursor into the
---- pending store for consumption by the next show()
---- (doc/development/internals/user_input.md,
---- "configure(config)"); output-callback fields go through the
---- same sticky `state` fields show() already reads — persisted,
---- never applied live (there is no active session to apply them
---- to).
---- @param state table
---- @param cfg table
-local function stash_hidden_configure(state, cfg)
-  merge_callback_keys(state, cfg)
-  local pending = state.pending
-  if not pending then return end
-  for _, k in ipairs(PER_SHOW_KEYS) do
-    if cfg[k] ~= nil then pending[k] = cfg[k] end
-  end
-end
-
 --- The two that DO something, lifted out of the api table below
 --- so they read as functions rather than as entries. Everything
 --- still in the table is a one-line delegation to the widget.
@@ -730,7 +702,6 @@ local function api_show(get_widget, state, cfg)
   local next_cfg = cfg or { }
   check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
   merge_callback_keys(state, next_cfg)
-  consume_pending(state.pending, next_cfg)
   local ui = get_widget()
   if ui then ui:show(next_cfg) end
 end
@@ -754,7 +725,7 @@ end
 -- widget — gets the same ergonomics over ITS OWN widget by
 -- supplying its own resolvers. `get_widget` resolves the
 -- UserInputController; `get_active_flag` reports shown-ness
--- (truthy = shown); `state` is the sticky output/pending store
+-- (truthy = shown); `state` is the sticky output-callback store
 -- show()/configure() read. The project widget closes the two
 -- resolvers over the love.state globals — behaviour-identical
 -- to the pre-factory inline shape.
@@ -805,23 +776,22 @@ local function build_widget_api(get_widget, get_active_flag, state)
       get_widget():set_text(text, keep_cursor)
     end,
     -- doc/development/internals/user_input.md,
-    -- "configure(config)": live update on an active session
-    -- (only the Contract's live-updatable set —
-    -- prompt/highlighter/ validator/widget outputs; text/cursor
-    -- inert there); safe + un-warned while hidden — provided
-    -- fields persist (via state/pending, same fields show()
-    -- reads) for the very next show(). Never a partial/silent
-    -- apply either way.
+    -- "configure(config)": the project-owned fields, applied
+    -- the same way whether the widget is up or hidden — there
+    -- is nothing to defer, because the fields are written onto
+    -- the widget and the widget outlives its own visibility.
+    -- Hidden is not a refusal and does not warn. text/cursor
+    -- never arrive: check_keys refuses them above
+    -- (doc/development/decisions/input.md, Decision 35).
+    -- Between runs there is no widget, so this is inert rather
+    -- than a raise — the rule the rest of this surface follows.
     configure = function(cfg)
       local next_cfg = cfg or { }
       check_keys(next_cfg, 'compy.input.configure',
         CONFIGURE_KEYS)
-      if not get_active_flag() then
-        stash_hidden_configure(state, next_cfg)
-        return
-      end
       merge_callback_keys(state, next_cfg)
-      get_widget():configure(next_cfg)
+      local ui = get_widget()
+      if ui then ui:configure(next_cfg) end
     end,
     -- doc/development/internals/user_input.md, "clear()": empty
     -- content + cursor to start, no callback; no-op + warn
@@ -842,7 +812,7 @@ end
 
 local get_compy_input = function()
   -- This closure runs ONCE for the application, so it reads no
-  -- widget: callbacks and pending are RESOLVED per access
+  -- widget: callbacks is RESOLVED per access
   -- through the state metatable below (owner ruling 2026-07-20,
   -- re-made 2026-08-27: compy.input.callbacks resolves to the
   -- current widget's table). NEVER reassign a resolved
@@ -857,10 +827,10 @@ local get_compy_input = function()
   -- shortcuts: per-event combo tables (Decision 8,
   -- normalising). hooks: one fn per event, seeded once at
   -- activation (Decision 10). Both are the surface's own and
-  -- start empty (leaves fill on project write). callbacks and
-  -- pending are NOT fields — they are the widget's, reached
-  -- through __index (widget_store), and callbacks carries the
-  -- widget's stay-open defaults.
+  -- start empty (leaves fill on project write). callbacks is
+  -- NOT a field — it is the widget's, reached through __index
+  -- (widget_store), and it carries the widget's stay-open
+  -- defaults.
   local state = setmetatable({
     shortcuts = shortcut_tables,
     hooks = { },

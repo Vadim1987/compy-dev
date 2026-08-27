@@ -82,10 +82,10 @@ describe('input contracts: NFR and mechanism guards #input',
         assert.equal(m1, F.widget.model)
       end)
 
-      -- The two stores compy.input keeps for a project —
-      -- callbacks and the hidden-configure pending draft, live
-      -- ON the widget, and the surface RESOLVES them rather
-      -- than holding them (owner ruling 2026-07-20, re-made
+      -- What compy.input keeps for a project — the callbacks
+      -- store, and the project-owned config fields — lives ON
+      -- the widget, and the surface RESOLVES it rather
+      -- than holding it (owner ruling 2026-07-20, re-made
       -- 2026-08-27: compy.input.callbacks resolves to the
       -- current widget's table). Identity is frozen against the
       -- project (Decision 7) and stable for as long as a
@@ -101,14 +101,23 @@ describe('input contracts: NFR and mechanism guards #input',
         assert.not_equal(f, previous.callbacks.on_text_entered)
       end)
 
-      it('the pending draft resolves to the current widget',
+      -- The second witness for the same resolve-per-access
+      -- rule, on the OTHER path: configure() writes the
+      -- project-owned fields through to the widget rather than
+      -- into a store the surface holds, so a hidden configure
+      -- lands on whichever widget is current at that moment,
+      -- not on the one that existed when the surface was
+      -- built. (It used to witness this through the pending
+      -- draft, which no longer exists — configure stopped
+      -- stashing when text/cursor left its key set.)
+      it('a hidden configure resolves to the current widget',
         function()
           local input = F.compy_input()
           local previous = F.widget
           local other = F.other_widget()
           input.configure({ prompt = 'who?' })
-          assert.equal('who?', other.pending.prompt)
-          assert.is_nil(previous.pending.prompt)
+          assert.equal('who?', other.model.custom_label)
+          assert.is_nil(previous.model.custom_label)
         end)
 
       -- Between runs there is no widget and therefore no store.

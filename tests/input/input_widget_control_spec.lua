@@ -118,6 +118,22 @@ describe('input surface: widget control #input', function()
         end)
       end)
 
+    -- A show()-only key is refused with a message NAMING where
+    -- it belongs, the way a lifecycle callback already is
+    -- (doc/development/decisions/input.md, Decision 35,
+    -- statement 2). Refusing `force` as an "unknown config
+    -- key" was misleading for a key the guide documents.
+    it('configure names where a show-only key belongs',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'ok' })
+        local _, err = pcall(function()
+          input.configure({ force = true })
+        end)
+        assert.is_truthy(
+          string.find(tostring(err), 'show()', 1, true))
+      end)
+
     -- Guard against strictness creeping past its remit: a
     -- runtime STATE that makes a call a no-op is not an
     -- authoring error, and must keep warning rather than raise.
@@ -311,50 +327,65 @@ describe('input surface: widget control #input', function()
       assert.equal('left', new_dir)
     end)
 
-    -- doc/development/internals/user_input.md,
-    -- "configure(config)": text/cursor are inert on an active
-    -- session — even mixed with a live field, the live one
-    -- applies and the inert ones are untouched (no
-    -- partial/silent application: each field's own rule holds
-    -- exactly).
-    it('leaves text/cursor untouched on an ' ..
-      'active session, even mixed with a live field',
+    -- doc/development/decisions/input.md, Decision 35,
+    -- statement 2: text/cursor are the USER's content and
+    -- belong to show()/set_text/set_cursor, so configure()
+    -- refuses them as keys belonging to another call
+    -- (Decision 15's show-only category, the treatment `force`
+    -- already gets). The refusal is at the key check, before
+    -- anything is applied — so a live field passed alongside
+    -- does not land either. Nothing partial, nothing silent.
+    it('raises on text on an active session, and ' ..
+      'applies nothing it was mixed with',
       function()
         local input = F.compy_input()
         input.show({ text = 'hi' })
         input.set_cursor(1, 2)
-        input.configure({
-          prompt = 'live',
-          text   = 'ignored',
-          cursor = { 1, 99 },
-        })
+        assert.has_error(function()
+          input.configure({
+            prompt = 'live',
+            text   = 'ignored',
+          })
+        end)
         assert.same({ 'hi' }, F.widget:get_text())
+        assert.not_equal('live',
+          F.widget.model:get_label())
+      end)
+
+    it('raises on cursor on an active session',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hi' })
+        input.set_cursor(1, 2)
+        assert.has_error(function()
+          input.configure({ cursor = { 1, 99 } })
+        end)
         local l, c = input.get_cursor()
         assert.same(1, l)
         assert.same(2, c)
-        assert.equal('live', F.widget.model:get_label())
       end)
   end)
 
   describe('configure(): while hidden', function()
-    -- doc/development/internals/user_input.md,
-    -- "configure(config)": configure while hidden is safe (no
-    -- warn — it is not a refusal) and text/cursor apply on the
-    -- very next show().
-    it('applies text and cursor on the ' ..
-      'next show', function()
+    -- doc/development/decisions/input.md, Decision 15's
+    -- show-only category as added by Decision 35: text/cursor
+    -- raise from configure() in BOTH states. The call is wrong
+    -- whatever the widget is doing, so being hidden does not
+    -- make it a legitimate call at an inconvenient moment.
+    -- A project seeding content passes it to the show() that
+    -- brings the widget up, before it is visible.
+    it('raises on text while hidden too', function()
       local input = F.compy_input()
-      local warned = 0
-      local ow = Log.warn
-      Log.warn = function() warned = warned + 1 end
-      input.configure({ text = 'draft', cursor = { 1, 2 } })
-      Log.warn = ow
-      assert.equal(0, warned)
-      input.show({})
-      assert.same({ 'draft' }, F.widget:get_text())
-      local l, c = input.get_cursor()
-      assert.same(1, l)
-      assert.same(2, c)
+      assert.has_error(function()
+        input.configure({ text = 'draft' })
+      end)
+    end)
+
+    it('raises on cursor while hidden too', function()
+      local input = F.compy_input()
+      assert.has_error(function()
+        input.configure({ cursor = { 1, 2 } })
+      end)
     end)
 
     -- doc/development/internals/user_input.md,
@@ -374,20 +405,26 @@ describe('input surface: widget control #input', function()
       assert.is_function(input.callbacks.validator)
     end)
 
-    -- Pending fields are one-shot: a LATER bare show() must
-    -- not keep re-injecting a stale hidden-configured draft
-    -- (distinguishes this from the output-callback
-    -- fields,
-    -- which stay sticky forever by design).
-    it('hidden-configured text does not leak into a later ' ..
-      'show', function()
-      local input = F.compy_input()
-      input.configure({ text = 'draft' })
-      input.show({})
-      input.hide()
-      input.show({})
-      assert.is_true(F.widget:is_empty())
-    end)
+    -- The project-owned fields are STICKY, not one-shot: a
+    -- hidden configure() writes them straight onto the widget,
+    -- so they survive every later bare show() rather than
+    -- being spent by the first (Decision 35, statement 3 —
+    -- set-if-given, persisting until replaced). This is a
+    -- change: the retained prompt used to be consumed by the
+    -- next show() and was one-shot in the store, even though
+    -- nothing then reset the label it had written.
+    it('a hidden-configured prompt survives later shows',
+      function()
+        local input = F.compy_input()
+        input.configure({ prompt = 'draft-label' })
+        assert.equal('draft-label',
+          F.widget.model:get_label())
+        input.show({})
+        input.hide()
+        input.show({})
+        assert.equal('draft-label',
+          F.widget.model:get_label())
+      end)
   end)
 
   describe('clear()', function()

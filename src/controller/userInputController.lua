@@ -40,16 +40,6 @@ local new = function(model, disable_selection,
     -- (owner ruling 2026-07-20, re-made 2026-08-27); console
     -- and editor set their own directly.
     callbacks = default_callbacks(),
-    -- The hidden-configure draft (doc/development/internals/
-    -- user_input.md, "configure(config)"), held HERE and not in
-    -- the compy.input closure: that closure is built once for
-    -- the application, and a draft has to die with the run that
-    -- wrote it. Same arrangement as `callbacks` above — the
-    -- surface resolves to this table rather than holding it, so
-    -- teardown wipes it in place. Only the PROJECT widget's is
-    -- ever filled — the console and editor widgets have no
-    -- compy.input surface to stash through.
-    pending = { },
   }
 end
 

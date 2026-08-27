@@ -233,10 +233,18 @@ describe('input surface: inbound events — route lifetime #input',
             F.widget.model:get_label())
         end)
 
-      it('discards a draft stashed by a hidden configure',
+      -- The same rule reached by the HIDDEN path: configure()
+      -- while hidden writes the project-owned fields straight
+      -- onto the widget, and the widget dies with the run, so
+      -- the write is run-scoped structurally rather than by
+      -- anyone remembering to clear a store. (This case used
+      -- to pass `text` as well; text/cursor at configure now
+      -- raise — doc/development/decisions/input.md,
+      -- Decision 35, statement 2.)
+      it('discards a prompt set by a hidden configure',
         function()
           local first = F.activate_project()
-          first.configure({ text = 'secret', prompt = 'A> ' })
+          first.configure({ prompt = 'A> ' })
           F.cc:stop_project_run()
 
           local second = F.activate_project()
