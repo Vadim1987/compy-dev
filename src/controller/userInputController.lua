@@ -471,29 +471,6 @@ function UserInputController:always_shown()
   return self
 end
 
---- Re-seed the callbacks to the stay-open DEFAULT_CALLBACKS, IN
---- PLACE — never reassign the table, the compy.input surface
---- holds this exact reference. Teardown between project runs
---- (doc/development/decisions/input.md, Decision 11 — "re-seed,
---- don't wipe"): clears a stopped project's callbacks and
---- restores defaults, so a nil'd after_cancel never silently
---- means "stays open forever" for the next project.
-function UserInputController:reset_callbacks()
-  local c = self.callbacks
-  for k in pairs(c) do c[k] = nil end
-  for k, v in pairs(default_callbacks()) do c[k] = v end
-end
-
---- Teardown of the hidden-configure draft on project stop
---- (doc/development/decisions/input.md, Decision 11): an
---- unspent draft belongs to the run that wrote it, so it is
---- dropped rather than carried into the next project's show().
---- Wiped in place — compy.input's surface holds this table.
-function UserInputController:clear_pending()
-  local p = self.pending
-  for k in pairs(p) do p[k] = nil end
-end
-
 ----------------
 --  keyboard  --
 ----------------

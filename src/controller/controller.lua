@@ -318,8 +318,8 @@ end
 --- Teardown of the project's compy.input registrations
 --- (doc/development/decisions/input.md, Decision 11): clears
 --- the project's shortcuts and hooks. The callbacks table lives
---- on the widget and is re-seeded by reset_widget_outputs
---- (below), so it is not touched here. Reaches through the
+--- on the widget, which the stop destroys outright, so there is
+--- nothing to clear there. Reaches through the
 --- frozen container's sub-tables — the container itself refuses
 --- direct writes (Decision 7).
 --- @param CC ConsoleController
@@ -334,27 +334,6 @@ local function reset_compy_input(CC)
     wipe_table(input.shortcuts[ev])
   end
   for _, ev in ipairs(HOOK_EVENTS) do input.hooks[ev] = nil end
-end
-
---- Teardown of the widget's own output/callback state on
---- project stop (Decision 11): re-seed the callbacks to their
---- stay-open defaults (AC10 — not a wipe-to-nil), drop any
---- unspent hidden-configure draft, and clear the two mirrored
---- fields apply_config writes: the prompt LABEL and the
---- evaluator's highlighter. The label needs clearing here and
---- nowhere else — apply_config writes it only when cfg.prompt
---- is given, so the next project's bare show() cannot overwrite
---- it, and the widget is one application-lifetime instance.
-local function reset_widget_outputs()
-  local ui = love.state.user_input_controller
-  if not ui then return end
-  ui:reset_callbacks()
-  ui:clear_pending()
-  if ui.model then
-    ui.model.custom_label = nil
-    local ev = ui.model.evaluator
-    if ev then ev.highlighter = nil end
-  end
 end
 
 local click_delay = 0.4
@@ -1067,8 +1046,12 @@ Controller = {
     Controller._userhandlers = {}
     View.clear_snapshot()
     if not CC then return end
+    -- Only the surface's own stores. The widget's outputs are
+    -- not re-seeded here and no longer can be: the widget
+    -- belongs to the run and is destroyed with it
+    -- (doc/development/decisions/input.md, Decision 3 as
+    -- amended), so the next run meets a fresh one.
     reset_compy_input(CC)
-    reset_widget_outputs()
   end,
 
   oneshot = function()
