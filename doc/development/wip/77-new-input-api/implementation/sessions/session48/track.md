@@ -102,3 +102,23 @@
   same line, once, in a 45-line log identical in length to the post-change one.** Pre-existing,
   unrelated to ARC-01-02 — an editor-scenario failure nobody has filed. NOT filed by me either:
   it is outside this feature and outside the input subsystem; raising it with the owner instead.
+
+## 2026-08-27 — ARC-01-03 drafted, NOT applied
+
+- Wrote `validation/reviews/ARC-01-03-ledger-amendments-draft.md`: exact replacement text for both
+  decisions, so the ruling is a yes/no on words rather than on a summary of them. The ratified
+  ledger is untouched.
+- **The two amendments are not the same kind of thing, and the ledger already has a convention for
+  each.** Decision 3 substantively changes (creation boundary for one of four instances) → Decision
+  11's style: an `AMENDED IN PART` header note plus a `Decision (as amended)` paragraph. Decision 7
+  does NOT change — only the scope of "frozen" needs saying — → the `Amended in place` blockquote
+  style. Saying Decision 7 changes would overstate it.
+- **Verified the base claim myself before writing it into a ledger amendment** rather than
+  inheriting it from the roadmap: at `3256aac`, `input()` builds `UserInputModel`,
+  `UserInputController` AND `UserInputView` on every `input_text`/`input_code` call
+  (`consoleController.lua:563-580` at base). Per-activation confirmed; "per-run allocates less than
+  the base did" is safe to state to a stakeholder.
+- Dropped a premature claim from the draft: it named where construction would live (a file), which
+  is ARC-01-04's decision, not this step's. Now says "at the run seam".
+- One question left open for the owner deliberately: does the PR description carry the amendments or
+  only the behaviour? Recommended one line in the justification table.
