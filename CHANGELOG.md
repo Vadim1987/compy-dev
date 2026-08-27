@@ -102,6 +102,10 @@ newest first.
   `{line, col}` shape, instead of failing with a raw Lua error from inside
   the framework. Out-of-range positions are unaffected and still clamp.
 
+- A bad config key passed to `compy.input.show` now reports your own `show`
+  line. It previously pointed inside the framework, which named the mistake
+  but not the call that made it. `configure` was already correct.
+
 - While a project runs, keyboard and text input with no shortcut, hook,
   or shown input widget no longer accumulates in the hidden console.
   It stays in the project route and has no effect. An explicit future

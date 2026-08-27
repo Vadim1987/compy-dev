@@ -101,6 +101,21 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### The config-key list is duplicated across two modules
+
+- **Where:** `userInputController.lua` (`CONFIG_CALLBACKS`) and
+  `consoleController.lua` (`CALLBACK_KEYS`).
+- **State:** since `ARC-02-06` gave the highlighter one home, the two lists
+  hold identical contents — `validator`, `on_text_entered`,
+  `on_limit_reached`, `highlighter` — and are maintained separately. Adding a
+  project callback to one and not the other fails quietly in one direction:
+  the surface would accept the key and the widget would ignore it.
+- **Why it stands:** no defect today, and unifying it crosses a module
+  boundary that nothing else in this sprint touched. Reported rather than
+  fixed, per the discovered-debt rule.
+- **Revisit:** when either list next changes — that is the moment the
+  duplication costs something.
+
 ### Decision 1 — console/editor convergence onto the shared chain is unimplemented
 
 - **Where:** `src/controller/consoleController.lua` (`ConsoleController:keypressed`,
