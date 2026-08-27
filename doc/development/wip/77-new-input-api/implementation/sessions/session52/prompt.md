@@ -5,4 +5,4 @@ Session51 revalidated ARC-02 cleanly; see
 completion consistently in both the sprint and the one-line sequence.
 
 ## Your task
-
+Await the owner's explicit commission for the next roadmap work.

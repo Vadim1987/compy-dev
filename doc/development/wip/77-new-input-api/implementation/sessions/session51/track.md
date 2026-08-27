@@ -37,4 +37,4 @@
   before wrapping; the next unfinished row is BUG-01-03.
 
 ## 2026-08-27 — wrap
-
+- Owner approval received; report and session52 wait-for-commission prompt written.

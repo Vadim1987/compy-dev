@@ -8,4 +8,4 @@ only project-owned fields, and hidden configuration preserves callback settings.
 The highlighter has one resolved source of truth; malformed cursor pairs raise,
 valid out-of-range pairs clamp, and `false` is the deliberate unset. The focused
 tests exercise production paths and the suite is **990 / 0 / 0 / 10**.
-
+`BUG-01-09` remains a recorded, pre-existing defect, not an ARC-02 regression.
