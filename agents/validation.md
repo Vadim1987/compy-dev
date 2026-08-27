@@ -30,7 +30,7 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **979 / 0 / 0 / 10**. A different count is
+6. Confirm the baseline: `busted tests` → expect **990 / 0 / 0 / 10**. A different count is
    a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
    (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
    session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
@@ -42,7 +42,10 @@ owner and revisable, not a frozen mandate.
    `ctrl+shift+s` pair, 967 with harmony's boolean `isDown`, 968 with the Ctrl+S relocation, and
    **970 after session47** — two breaking tests for the two lifetime leaks it fixed, and **979
    after session48**'s widget-lifetime work. **Session49 added none**: it was analysis, rulings and
-   the ledger restructuring, and 979 held across all of its commits.
+   the ledger restructuring, and 979 held across all of its commits. **990 after session50**'s
+   `ARC-02` — 981 with the forced-show trio, 984 with the configure-boundary six, 985 with the
+   highlighter's one home, 986 with the `show` trace level, 990 with the cursor shapes; its four
+   documentation commits added none.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -304,7 +307,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session50/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session51/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
