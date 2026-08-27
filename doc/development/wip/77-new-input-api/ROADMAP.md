@@ -15,8 +15,8 @@ the sequence**. Updated 2026-08-27.
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
 | upstream | **86 commits behind the edge** (a floor: our view is 23 days old) |
 
-**The spinoff sprint is closed and TF2 with it.** What remains is one structural row, acceptance,
-four defect sprints, reconciliation, and assembly.
+**The spinoff sprint is closed and TF2 with it.** With `ARC-01` complete, what remains is
+acceptance, four defect sprints, reconciliation, and assembly.
 
 ---
 
@@ -32,9 +32,11 @@ report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/
 
 ---
 
-## 🟨 ARC-01 — the project widget gets a run lifetime — **6 of 7 done**
+## ✅ ARC-01 — the project widget gets a run lifetime — **COMPLETE**
 
-**Landed in session48** (`e684458b`, `e28a20f6`, `314fca05`, `55f9edd4`, `e13ef346`, `739d17ea`): the widget is built at the run seam and destroyed at the stop, the ledger is amended, the teardown machinery is deleted, and `close_project` no longer leaves a closed project's widget behind. **Cold review: approve** — [`validation/outcomes/ARC-01-cold-review-s48.md`](validation/outcomes/ARC-01-cold-review-s48.md). Only `ARC-01-07` remains, and it is handed to a cold session.
+**Landed in session48** (`e684458b`, `e28a20f6`, `314fca05`, `55f9edd4`, `e13ef346`, `739d17ea`): the widget is built at the run seam and destroyed at the stop, the ledger is amended, the teardown machinery is deleted, and `close_project` no longer leaves a closed project's widget behind. **Cold review: approve** — [`validation/outcomes/ARC-01-cold-review-s48.md`](validation/outcomes/ARC-01-cold-review-s48.md). `ARC-01-07` was answered by the cold session49 — a research row, so it closes with a written reason
+and no code: the two policies are one rule plus one exception, `prompt` is on the right side of it by
+owner ruling, and the residue was redistributed to `FIX-02-21`, `BUG-01-06` and the new `BUG-01-07`.
 
 *(New KIND: `ARC` — structural work that dissolves a defect class. Filing it as a `BUG` row would
 hide from a reader that it removes machinery rather than patching it. Owner-ruled 2026-08-26.)*
@@ -92,7 +94,7 @@ filed): **proven** at `ARC-01-01` — constructing a `ConsoleController` with th
 | ARC-01-04 | construction + destruction move to the seam | |
 | ARC-01-05 | delete the teardown machinery the lifetime replaces | the payoff commit |
 | ~~ARC-01-06~~ ✅ | fixture seam + the spec fallout | **mostly landed inside `ARC-01-04`** — suite-green-at-every-commit forced the fixture seam to move with the lifetime rather than after it. `F.widget` stopped being a captured field and now resolves to the current widget, so all touchpoints follow the lifetime; `F.run_project` and `F.other_widget` were added; the stop-teardown cases were restated as "the stop destroys the widget and the next run gets a clean one". What remained is a sweep for stale assumptions, done in session48 |
-| ARC-01-07 | **why do two reconfiguration policies coexist in the widget instead of uniform logic — and is `prompt` on the wrong one?** | **owner, 2026-08-26 — filed here so it is not forgotten, deliberately not investigated yet.** `apply_config` treats some fields as *set-if-given* and others as *always-set*; `cfg.prompt` is on the first policy, which is how `8a9022ec`'s cross-project label leak was possible. Answer whether the split is intentional and whether `prompt` sits on the right side of it. A little orthogonal to the lifetime work, but it lands in the same function ARC-01 is already reshaping, and it may escalate into a design call — handed to a COLD session (owner, 2026-08-27) — it is a fresh question and deserves a reader who has not spent a session inside the lifetime work |
+| ~~ARC-01-07~~ ✅ | ~~**why do two reconfiguration policies coexist in the widget instead of uniform logic — and is `prompt` on the wrong one?**~~ **ANSWERED (session49):** the split is *one* policy plus one deliberate exception — **content resets, everything the project sets persists until replaced** — and `prompt` is on the **right** side, by owner ruling. What was never written down is the rule itself. Three things survive as work: **FIX-02-21** (the classification + doc unit, no behaviour change), **BUG-01-06** (the `force` path's three behaviours for one call's keys), **BUG-01-07** (balloons' shadow label). Analysis: [`validation/reviews/ARC-01-07-reconfiguration-policies.md`](validation/reviews/ARC-01-07-reconfiguration-policies.md); ruling: [`validation/notes/owner-attestation-prompt-field.md`](validation/notes/owner-attestation-prompt-field.md); probes: [`validation/notes/ARC-01-07-behaviour-probes.md`](validation/notes/ARC-01-07-behaviour-probes.md). *Original filing:* | **owner, 2026-08-26 — filed here so it is not forgotten, deliberately not investigated yet.** `apply_config` treats some fields as *set-if-given* and others as *always-set*; `cfg.prompt` is on the first policy, which is how `8a9022ec`'s cross-project label leak was possible. Answer whether the split is intentional and whether `prompt` sits on the right side of it. A little orthogonal to the lifetime work, but it lands in the same function ARC-01 is already reshaping, and it may escalate into a design call — handed to a COLD session (owner, 2026-08-27) — it is a fresh question and deserves a reader who has not spent a session inside the lifetime work |
 
 **Crosswalk — two inserts, both 2026-08-26/27.** No ARC id appears in `src/` or `tests/`, so rule
 2's renumber branch applies; earlier notes, prompts and commit messages carry the old numbers.
@@ -234,16 +236,17 @@ unsettled surface is sizing twice.
 
 **Renumbered once, here, and stable from now on.** Crosswalk at the end of this section.
 
-### BUG-01 — runtime defects (6), in priority order
+### BUG-01 — runtime defects (7), in priority order
 
 | id | defect | blast radius |
 |---|---|---|
 | ~~**BUG-01-01**~~ ✅ | `state.pending` survives a project stop | **CLOSED, fixed** — `bd2a5d49` (fix + breaking test + behaviour docs), `abadf244` (the false-premise debt entry). No shipped example reaches it, but the path is public API. **Its siblings were then swept** (owner-scoped: `compy.input` + the widget singleton) and one more was found and fixed — the prompt label, `8a9022ec`. Evidence: [`validation/notes/BUG-01-01-pending-lifetime.md`](validation/notes/BUG-01-01-pending-lifetime.md) |
-| **BUG-01-02** | a highlighter cannot be turned off | **design escalation** — sentinel vs a new `clear_highlighter` member; either changes the public surface. **Wait for ARC-01**, which removes this row's teardown half and leaves only the within-run call |
+| **BUG-01-02** | a highlighter cannot be turned off | **design escalation** — sentinel vs a new `clear_highlighter` member; either changes the public surface. **Wait for ARC-01**, which removes this row's teardown half and leaves only the within-run call. **ARC-01-07 narrowed it and killed the cheapest option** (2026-08-27): the owner's "just document a conventional no-op value" answer works for `prompt` (`''`, verified), `validator` (`function() return true end`) and the two output callbacks — but **not for the highlighter**, and this row is the highlighter. Absent ≠ no-op: with no parser and no highlighter the model takes `ev:validation_hl(text)` (`userInputModel.lua:392-400`), which carries `parse_err` — the channel that displays the **validator's** error in the field. Any user-supplied highlighter takes the other branch, which has no `parse_err` key, so a "no-op highlighter" silently disables validation error display for exactly the documented `LineValidators` case. No user-space value reproduces absent; this one needs machinery or nothing. **Rule with `prompt` de-scoped** — it has `''` |
 | **BUG-01-03** | `turtle` double-handles its own keys | **may implicate every migrated example** — it is a finding about the migration. Fix with FIX-02-11 |
 | **BUG-01-04** | a `textinput` shortcut cannot bind an upper-case character | **deep** — the fix is in combo serialisation, which every shortcut match runs through |
 | **BUG-01-05** | `set_cursor` clamps bytes, boundary event measures characters | medium — two functions disagree; which is right is a small design call |
-| **BUG-01-06** | `show{force = true, prompt = …}` silently drops the prompt | narrow — one call path |
+| **BUG-01-06** | `show{force = true, prompt = …}` silently drops the prompt | narrow — one call path. **A sibling was found at ARC-01-07 and is NOT covered by this row:** the same call *defers* `highlighter`/`validator`/the widget outputs — `merge_callback_keys` writes them to the sticky store, `re_show` ignores them, and they land at the **next** activation. Three behaviours for one call's keys (applied / dropped / deferred). Rule on them together |
+| **BUG-01-07** | **balloons keeps a shadow copy of the widget's label and re-pushes it every game cycle** | narrow — one example repo, no platform code. Pre-feature fossil: `ui_messages.hint` + `ui_draw_hint()` re-assert the label on each state transition because in the legacy era the label died with each `input_text()` call. With stickiness ratified (owner, 2026-08-27) the widget owns the label and the shadow state is redundant. Two vestigial arguments ride along — `terminal_write(msg, flushed)` never reads `flushed`, and `ui_set_hint(fmt(GAME_PROMPT, txt), true)` passes a second argument `ui_set_hint` does not take — plus a stale `-- NOTE: won't work if there was no real input`. `ui_messages.hint`'s initial `SPLASH_HINT_START` never reaches the widget (`game_init` calls `ui_show_command_prompt` immediately); the same text does reach the screen via `graphics.lua:575`, so nothing is visibly missing. **Filed by the owner, 2026-08-27**, on reading the ARC-01-07 evidence. Modest severity: redundancy and misleading fossils, no user-visible misbehaviour found |
 
 ### FIX-02 — docs, vocabulary, process (21), in priority order
 
@@ -272,7 +275,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | **FIX-02-18** | `pong/README.md` — 316-line diff, 2-line change | narrow |
 | **FIX-02-19** | provenance front matter, 3 files | narrow |
 | **FIX-02-20** | **"draft" — unratified vocabulary, and the widest-spread of them** | **runs with the 08–10 cluster, not last** — see the note below |
-| **FIX-02-21** | **`prompt` is classified per-show but behaves sticky** — which is right is undecided | **may escalate to a BUG row**; found 2026-08-26 |
+| **FIX-02-21** | **`prompt` is classified per-show but behaves sticky** — ~~which is right is undecided~~ **RULED: the behaviour is right, the classification is wrong** | **no longer escalates** — stays a FIX. Owner ruled 2026-08-27 (below); the work is a comment, a list membership and two doc sentences |
 
 **FIX-02-21, found while fixing BUG-01-01's sibling.** `consoleController.lua` splits config keys into
 two lists with a comment saying so: `CALLBACK_KEYS` are *"kept across shows until overwritten"*,
@@ -289,6 +292,23 @@ migrated examples may lean on the current stickiness — `maze` re-prompts throu
 precisely because *"show() only opens: over an already-open field it is ignored and cannot change the
 prompt"*). **Cross-run leakage is settled and already fixed** (`8a9022ec`); this row is only about
 within-run behaviour.
+
+**ANSWERED — the first reading, by owner ruling at ARC-01-07 (2026-08-27).** The behaviour is right;
+`prompt` is a sticky key mis-filed under per-show. The owner's grounds, attested in
+[`validation/notes/owner-attestation-prompt-field.md`](validation/notes/owner-attestation-prompt-field.md):
+`prompt` entered FR-1 by **their** ruling against a real balloons defect (no way to change the label
+mid-run), and a label surviving a bare `show()` is *wanted* — **the label is decoration surface the
+project owns, where content is user-owned and must reset.** That yields the rule the design never
+wrote down and this row was really asking for:
+
+> **Content resets; everything the project sets persists until it is replaced.**
+
+So the remaining work is classification and prose, with **no behaviour change**: correct
+`PER_SHOW_KEYS`'s comment (or split `prompt` out of the constant, which says it structurally), add
+`prompt` to `doc/input_api.md`'s persistence list under "Callback assignments", state the rule where
+`show`/`configure` are described, and record the balloons rationale in
+`doc/development/internals/user_input.md` so it outlives `wip/77`. Full analysis:
+[`validation/reviews/ARC-01-07-reconfiguration-policies.md`](validation/reviews/ARC-01-07-reconfiguration-policies.md) §7.
 
 **FIX-02-20 is numbered out of execution order, deliberately.** `agents/rules/roadmap.md` §2 wants
 numeric order to *be* execution order, but it also says renumber **once, before execution starts**;
@@ -521,7 +541,7 @@ Not open questions to chase — each has a trigger:
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 *`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
 other rows would otherwise be sized against — the ordering principle firing exactly as written.*
