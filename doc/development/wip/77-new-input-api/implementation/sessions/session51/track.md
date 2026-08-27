@@ -35,3 +35,6 @@
 - The roadmap's sprint section already marked ARC-02 COMPLETE, but its one-line
   sequence omitted the matching check. Corrected the navigational inconsistency
   before wrapping; the next unfinished row is BUG-01-03.
+
+## 2026-08-27 — wrap
+
