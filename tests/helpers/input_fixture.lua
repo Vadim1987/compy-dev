@@ -131,11 +131,16 @@ end
 -- the compy.input wrappers resolve it from there.
 local function build_widget(cfg)
   -- Its OWN evaluator, as production's build_input_widget does:
-  -- the highlighter is written onto the evaluator, so sharing
-  -- one would carry it between widgets.
+  -- the evaluator resolves this widget's highlighter slot, so
+  -- sharing one would resolve every widget's highlighter to
+  -- whichever bound it last.
   local m = UserInputModel(cfg, Evaluator.plain('text input'))
   local c = UserInputController(m, true)
   c:init_view({ render = function() end, draw = function() end })
+  -- The same call production makes, not a fixture-local
+  -- equivalent: a widget built here must be wired the way
+  -- build_input_widget wires one.
+  c:bind_highlighter()
   love.state.user_input_controller = c
   return c
 end

@@ -115,6 +115,26 @@ describe('input surface: widget callbacks #input', function()
         assert.equal(marker, got.hl)
       end)
 
+    -- doc/input_api.md, "Callback assignments": the highlighter
+    -- is assignable directly, like every other callback, and a
+    -- direct assignment is live — it does not wait for an
+    -- unrelated later show()/configure() to flush it. It has
+    -- ONE home (the widget's callbacks slot) and the evaluator
+    -- resolves that slot rather than holding a copy
+    -- (doc/development/technical_debt/input.md,
+    -- "T-HL-TWO-HOMES").
+    it('a direct highlighter assignment is live',
+      function()
+        local input = F.activate_project()
+        local marker = { { 'x' } }
+        input.show({ text = 'hi' })
+        input.callbacks.highlighter =
+          function() return marker end
+        F.session.type('a')
+        assert.equal(marker,
+          F.widget.model:get_highlight().hl)
+      end)
+
     it('LuaHighlighter colors Lua input widget text', function()
       local input = F.activate_project()
       input.show({ highlighter = LuaHighlighter })

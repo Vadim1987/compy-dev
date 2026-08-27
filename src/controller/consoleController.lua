@@ -192,9 +192,9 @@ end
 --- The console's, editor's and search strip's widgets are
 --- unaffected: those surfaces live as long as the app does.
 --- Its own evaluator, NOT the shared `InputEvalText` instance:
---- `configure_core` writes the project's highlighter onto the
---- evaluator, so a shared one carries that highlighter into the
---- next run no matter how short the widget's life is. The
+--- the evaluator resolves this widget's highlighter slot
+--- (`bind_highlighter`), so a shared one would resolve every
+--- widget's highlighter to whichever bound it last. The
 --- evaluator is part of what the run owns.
 --- @param cfg table
 local function build_input_widget(cfg)
@@ -202,6 +202,7 @@ local function build_input_widget(cfg)
   local model = UserInputModel(cfg, eval)
   local widget = UserInputController(model, true)
   widget:init_view(UserInputView(cfg.view, widget))
+  widget:bind_highlighter()
   love.state.user_input_controller = widget
 end
 

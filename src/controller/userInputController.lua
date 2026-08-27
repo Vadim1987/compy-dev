@@ -60,6 +60,40 @@ function UserInputController:update_view()
   self.view:render(input, status)
 end
 
+--- Give the highlighter ONE home: this widget's `callbacks`
+--- slot, which is also what compy.input.callbacks resolves to.
+--- The evaluator stops holding a copy and RESOLVES the slot
+--- instead, so a direct `compy.input.callbacks.highlighter`
+--- assignment and a show()/configure() key are the same write
+--- by construction — rather than by a copy step every writing
+--- path has to remember, which is the step that was missed
+--- (doc/development/technical_debt/input.md,
+--- "T-HL-TWO-HOMES").
+---
+--- Resolution, not a forwarding function, because the model
+--- branches on the TRUTH of `ev.highlighter`: with no
+--- highlighter set it must stay nil so the validation-colouring
+--- fallback still runs (userInputModel.lua, `highlight`).
+---
+--- Call it only on a widget whose evaluator is its OWN. The
+--- console's and editor's evaluators are shared and carry a
+--- LANGUAGE highlighter of their own, which is not a project
+--- callback and must not be resolved away.
+function UserInputController:bind_highlighter()
+  local ev = self.model.evaluator
+  if not ev then return end
+  local base = getmetatable(ev)
+  local callbacks = self.callbacks
+  setmetatable(ev, {
+    __index = function(_, k)
+      if k == 'highlighter' then
+        return callbacks.highlighter
+      end
+      return base[k]
+    end,
+  })
+end
+
 ---------------
 --  entered  --
 ---------------
@@ -237,6 +271,7 @@ end
 -- through show() or configure().
 local CONFIG_CALLBACKS = {
   'validator', 'on_text_entered', 'on_limit_reached',
+  'highlighter',
 }
 
 --- Everything the PROJECT owns: set-if-given, left alone when
@@ -250,10 +285,6 @@ local CONFIG_CALLBACKS = {
 local configure_core = function(self, cfg)
   if cfg.prompt ~= nil then
     self.model.custom_label = cfg.prompt
-  end
-  local ev = self.model.evaluator
-  if cfg.highlighter ~= nil and ev then
-    ev.highlighter = cfg.highlighter
   end
   for _, name in ipairs(CONFIG_CALLBACKS) do
     if cfg[name] ~= nil then
