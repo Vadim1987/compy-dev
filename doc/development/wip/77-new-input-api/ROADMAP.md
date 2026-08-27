@@ -4,6 +4,17 @@
 [`validation/plan.md`](validation/plan.md) and the review documents this points at; **this file is
 the sequence**. Updated 2026-08-27.
 
+---
+
+## The one-line sequence
+
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+
+*`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
+other rows would otherwise be sized against — the ordering principle firing exactly as written.*
+
+---
+
 ## Where things stand
 
 | | |
@@ -696,11 +707,3 @@ Not open questions to chase — each has a trigger:
 | provenance beyond the 3 files | **deferred** — a formal violation does not displace real work |
 | where Decision 20's `keys_pressed` history lives after removal | **at DEC-01-04**, per entry |
 
----
-
-## The one-line sequence
-
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
-
-*`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
-other rows would otherwise be sized against — the ordering principle firing exactly as written.*
