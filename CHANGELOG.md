@@ -69,10 +69,38 @@ newest first.
 
 - `compy.input.show` and `compy.input.configure` raise on a key outside
   their config table, rather than ignoring it. This includes the retired
-  `eval` and `result` keys, and lifecycle callbacks such as `after_submit`
-  that belong on `compy.input.callbacks`. Calls that are no-ops because of
-  the current state — `show` on an active overlay, mutations while hidden —
-  still warn as before.
+  `eval` and `result` keys, lifecycle callbacks such as `after_submit`
+  that belong on `compy.input.callbacks`, and — at `configure` — `text`,
+  `cursor` and `force`, which are `show`'s. Each raise names where the key
+  belongs. Calls that are no-ops because of the current state — `show` on
+  an active overlay, mutations while hidden — still warn as before.
+
+- `show` and `configure` are one configuration path, split by who owns the
+  field. Your content (`text`, `cursor`) is `show`'s alone; everything the
+  project sets (`prompt`, `highlighter`, `validator`, `on_text_entered`,
+  `on_limit_reached`) is applied by both, only when named, and stays until
+  replaced. `false` unsets any of them. There is no longer a key that one
+  call applies and the other silently drops or defers.
+
+- `show{force = true}` is now a full re-setup rather than a text-only
+  patch: it applies every key you pass, and with no `text` it starts
+  empty. It previously applied `text` alone, kept the content when `text`
+  was absent, dropped `prompt`, and deferred `highlighter` to a later
+  call. Pass the content if you want it kept.
+
+- `configure` while the input prompt is hidden applies immediately and
+  stays in force, instead of stashing `prompt`/`text`/`cursor` for the
+  next `show` to spend once. `text` and `cursor` are no longer accepted
+  there at all — pass them to the `show` that brings the widget up, which
+  runs before anything is on screen.
+
+- Assigning `compy.input.callbacks.highlighter` on a widget that is up now
+  takes effect at once. It previously did nothing until an unrelated later
+  `show`/`configure` happened to flush it.
+
+- A malformed `cursor` is refused with a message naming the expected
+  `{line, col}` shape, instead of failing with a raw Lua error from inside
+  the framework. Out-of-range positions are unaffected and still clamp.
 
 - While a project runs, keyboard and text input with no shortcut, hook,
   or shown input widget no longer accumulates in the hidden console.

@@ -118,11 +118,10 @@ raw model setter with an arbitrary project-supplied pair.
 > REMARK: FR-1 is deelopment-time requirement id,(refid needs to be translated/deleted and essence needs to be explained to cold reader?)
 **FR-1's "initial cursor position" is implemented at the controller layer, not the model's.**
 `UserInputModel.new(cfg, eval, custom_label)` (`userInputModel.lua:45-63`) still hardcodes
-`cursor = Cursor()` — always `(1, 1)`, no cursor constructor parameter — but a fresh `show()`
-activation (`open_fresh`, `userInputController.lua:252-272`) applies a `cfg.cursor = {line, col}`
-via `set_cursor_pos` immediately after construction, after `text` is applied. `show(cfg)`'s `force`
-path over an **already-active** session still only patches the `text` subset and ignores `cursor` —
-repositioning an active session's cursor is `compy.input.set_cursor`'s job, not `force`'s.
+`cursor = Cursor()` — always `(1, 1)`, no cursor constructor parameter — but an activation
+(`open_widget`) applies a `cfg.cursor = {line, col}` via `set_cursor_pos` after `text` is applied.
+A forced `show` takes that same path, so it seats `cursor` like any other activation; repositioning
+a session you are *not* re-activating is `compy.input.set_cursor`'s job.
 
 "Reset the prompt" is four bespoke, mutually inconsistent mechanisms, not one shared primitive:
 
@@ -695,8 +694,10 @@ not silently mean "stays open forever" for the next project). For the **project 
 2026-08-27; resolved per access in `get_compy_input`, not captured) — a project's
 `compy.input.callbacks.after_submit = fn` write lands directly on `self.callbacks.after_submit`, no
 copy, no bridging. It resolves to the **current** widget, so a project sees one stable table for its
-whole run and cannot observe the resolution; the same holds for the hidden-configure `pending`
-draft. Console/editor set their own instance's `self.callbacks.X` directly (they are trusted host code, not routed through
+whole run and cannot observe the resolution. `highlighter` lives in this table too, and the
+widget's evaluator **resolves** the slot rather than holding a copy of it
+(`UserInputController:bind_highlighter`) — see "One home for the highlighter" below.
+Console/editor set their own instance's `self.callbacks.X` directly (they are trusted host code, not routed through
 `compy.input` at all — see `consoleController.lua:49-52` for console's own `on_limit_reached` wiring).
 
 A project wanting the pre-redesign "prompt once, then close" behaviour opts in with one line:
@@ -773,7 +774,7 @@ All fields are optional and match the project-facing guide's table:
 `prompt`, `text`, `cursor` (`{line, col}`, applied after `text`),
 `validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, and
 `force`. The project wrapper checks this table before it reaches
-`apply_config`: an unrecognised key **raises** at the project's call line
+`configure_core`: an unrecognised key **raises** at the project's call line
 (`decisions/input.md`, Decision 15), rather than being dropped. This
 includes lifecycle names such as `after_submit`, which are direct
 `compy.input.callbacks` assignments rather than `show` keys, and which raise
@@ -782,40 +783,82 @@ evaluator or legacy result paths.
 
 #### `configure(config)` — the live-reconfigure surface
 
-On an active session, `configure` takes the same config keys as
-`show()` — minus `force`, which raises here — and applies only the
-ones given, immediately: `prompt`,
-`highlighter`, `validator`, and the widget-output callbacks
-(`on_text_entered`, `on_limit_reached`) take effect from the very
-next prompt render / keystroke / submit onward. `text` and `cursor`
-are accepted but have **no effect** on an active session —
-`configure` never mutates content or the caret; use
-`set_text`/`set_cursor` for that, or `clear()` followed by a fresh
-`show()`. There is no partial application: each field either
-applies in full or is dropped in full, per the rule above — never a
-half-applied config.
+`configure` carries the **project-owned** fields and only those:
+`prompt`, `highlighter`, `validator`, and the widget-output
+callbacks (`on_text_entered`, `on_limit_reached`). Each is applied
+only when given, immediately, and stays until replaced. There is no
+partial application: each field either applies in full or is not
+named at all — never a half-applied config.
 
-While hidden, `configure` still validates its keys, but is otherwise
-always safe and never warns (it is not
-a refusal): every provided field — including `prompt`, `text`, and
-`cursor` — is retained and applied on the very next `show()`. That
-application is one-shot: a *later* bare `show()` (no config) does
-not keep re-injecting a stale hidden-configured draft. It is also
-**run-scoped**: a draft never spent before the project stops is
-dropped at teardown with everything else the project installed
-(`decisions/input.md`, Decision 11), so it cannot open in the next
-project's widget. The
-widget-output callbacks are the one exception — like a value passed
-directly to `show()`, they stay sticky across every future
-show/hide cycle until overwritten, matching `show()`'s own existing
-config persistence.
+`text`, `cursor` and `force` **raise** here. They are `show`-only
+keys — keys that belong to another call, the treatment lifecycle
+callbacks already get — and the raise carries a message naming
+where each belongs (`decisions/input.md`, Decision 15's show-only
+category, added there by Decision 35). The live writes for content
+are `set_text` / `set_cursor` / `clear`.
 
-`force` (a `show(config)` flag, not part of `configure`) is a
-narrower, older mechanism: re-invoking `show` with
-`{force = true}` over an active session replaces only the `text`
-subset in place and ignores every other field. `configure` is the
-documented, general live-reconfigure path; `force` remains solely
-for the content-replacement case it already covered.
+Hidden or shown makes no difference. `configure` writes the fields
+onto the widget, and the widget outlives its own visibility, so
+there is nothing to defer and nothing to stash: a hidden
+`configure` applies at once, is still in force at the next `show`,
+and never warns (it is not a refusal). It is **run-scoped** by
+construction rather than by a teardown step — the widget it wrote
+on does not survive the run (`decisions/input.md`, Decision 11), so
+it cannot reach the next project's widget. Between runs there is no
+widget at all and the call is inert.
+
+`show{force = true}` over a live widget is the **same activation
+path** a first `show` takes: a full re-setup with the config
+passed, content baseline included. It is not a narrower mechanism
+alongside `configure`, and there is no field it applies that
+`configure` drops or vice versa.
+
+#### Why `prompt` is sticky rather than per-show
+
+`prompt` is set-if-given and persists until replaced, like every
+other project-owned field. It reads like an oversight — the label
+is the most per-prompt-looking thing on the widget — and it was
+questioned twice on exactly that ground before being ruled correct
+(owner, 2026-08-27).
+
+The evidence is **balloons**. In the pre-feature era the label died
+with each `input_text()` call, so the example kept a shadow copy
+(`ui_messages.hint`) and re-asserted it on every state transition.
+A per-show `prompt` would make that shadow copy *necessary* rather
+than vestigial: every project that wants a stable label would have
+to re-send it on every activation, and forgetting once shows a
+widget with no label. Sticky puts the label where the rest of the
+project's configuration already is, and the shadow copy becomes
+deletable.
+
+This is recorded here rather than only in the feature's working
+notes because the reasoning is not recoverable from the code: what
+the code shows is a field that could as easily have been either.
+
+#### One home for the highlighter
+
+`highlighter` is a project callback like the other three, and it
+lives in the widget's `callbacks` table with them. What makes it
+different is where it is *read*: `UserInputModel:highlight` reads
+`self.evaluator.highlighter`, not the callbacks table.
+
+It is not copied there. `UserInputController:bind_highlighter`
+gives the widget's own evaluator a metatable that **resolves** the
+callbacks slot, so a `compy.input.callbacks.highlighter = fn`
+assignment and a `show`/`configure` key are the same write by
+construction. That matters because a copy step is something every
+writing path has to remember, and one did not: a direct assignment
+used to do nothing at all until an unrelated later call flushed it.
+
+Resolution rather than a forwarding function, deliberately: the
+model branches on the *truth* of `ev.highlighter`, and with none
+set it must stay `nil` so the validation-colouring fallback still
+runs. A forwarder would be permanently truthy and would replace
+that fallback silently.
+
+Bound only where the evaluator is the widget's **own**. The console
+and editor share theirs and it carries a *language* highlighter —
+not a project callback, and not something to resolve away.
 
 #### `clear()`
 

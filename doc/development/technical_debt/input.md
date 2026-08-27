@@ -47,38 +47,6 @@ paid, or turned out not to be debt.
   trigger; if a framework mechanism is adopted instead, a wildcard one-shot
   needs no combo lookup and this stays a corner.
 
-### T-CFG-BOUNDARY — the `show`/`configure` content-ownership boundary is not built (Decision 35)
-
-- **Where:** `consoleController.lua` (`PER_SHOW_KEYS`, `check_keys`,
-  `stash_hidden_configure`) and `userInputController.lua` (`re_show`).
-- **State:** Decision 35 (`../decisions/input.md`) rules that `configure` must
-  refuse `text`/`cursor`, that a hidden `configure`'s stash of them must go, and
-  that a forced `show{}` with no `text` must clear the field. None of the three
-  holds yet: `PER_SHOW_KEYS` still folds `text`/`cursor` into `CONFIGURE_KEYS`
-  without raising, `stash_hidden_configure` still writes `state.pending` for the
-  next `show()`, and `re_show` only touches `set_text` when `cfg.text ~= nil` —
-  an unforced-content `force=true` `show()` still preserves rather than clears.
-- **Why it stands:** the decision was ruled the day this was written, and its
-  own text names the implementing pass as not yet landed.
-- **Revisit:** the `configure` closure and `PER_SHOW_KEYS` comments still cite
-  the pre-Decision-35 internals doc, not any post-35 contract — the docs need
-  the same pass as the code, once the implementing work lands.
-
-### T-HL-UNSET — A highlighter cannot be turned off — `false` already does it, unratified
-
-- **Where:** `src/controller/userInputController.lua`, `apply_config`;
-  `userInputModel.lua:384/393`.
-- **State:** `apply_config` writes any non-nil `highlighter` (including
-  `false`); every consumer then tests it for truthiness, so a stored `false`
-  takes the same branch as absent. Verified by probe: `validator = false`,
-  `on_text_entered = false` and `highlighter = false` all already behave as
-  "no such thing."
-- **Why it stands:** not a design gap any more, but nothing says so — `false`
-  meaning "unset" is a de-facto contract nobody ratified or wrote down, and
-  `prompt`'s different unset spelling (`''`/`false`) sits beside it unexplained.
-- **Revisit:** ratify `false` as the uniform "no such thing" and document it,
-  or reject it and build dedicated unset machinery instead.
-
 ### T-TURTLE-DUP — `turtle` double-handles its own keys
 
 - **Where:** `src/examples/turtle/main.lua`.
@@ -100,23 +68,6 @@ paid, or turned out not to be debt.
 - **Why it stands:** small, unresolved design call, not yet ruled.
 - **Revisit:** decide which unit is authoritative and make the other agree.
 
-### T-FORCE-PARTIAL — `show{force = true}` applies some keys, drops one, defers another
-
-- **Where:** `consoleController.lua` — `PER_SHOW_KEYS` / `CALLBACK_KEYS`, the
-  `force` path.
-- **State:** one call has three behaviours for its own keys — `text` and the
-  three callback keys apply immediately, `prompt`/`cursor` are silently
-  dropped, and `highlighter` defers until an unrelated later `show`/`configure`
-  flushes it (root cause filed separately: "the highlighter has two homes,
-  and one of them lags," below). Traced to `merge_callback_keys` writing into
-  the widget's `callbacks` table, which `apply_config` also writes, while
-  `highlighter` lives only on `model.evaluator`.
-- **Why it stands:** narrow — one call path, and `force` has no consumer
-  in-tree today, which is why it went unnoticed this long.
-- **Revisit:** may dissolve rather than be fixed — making `force` the full
-  re-setup it was reviewed as removes this row's defect along with its
-  siblings; track alongside the configuration-boundary work.
-
 ### T-BALLOON-LABEL — balloons keeps a shadow copy of the widget's label, re-pushed every cycle
 
 - **Where:** `src/examples/balloons` — `ui_messages.hint` and
@@ -131,22 +82,6 @@ paid, or turned out not to be debt.
   user-visible misbehaviour found.
 - **Revisit:** when balloons is next touched for the label-stickiness work.
 
-### T-CURSOR-SHAPE — `show{cursor = {}}` raises a raw Lua error from inside the framework
-
-- **Where:** `userInputController.lua`, `set_cursor_pos` — `math.min(line,
-  n)` with no nil guard.
-- **State:** a partial or empty cursor table (`{}`, `{1}`, `{nil, 2}`), a bare
-  scalar (`cursor = 1`), or `false` all crash the project with a raw Lua
-  arithmetic error rather than a framework-shaped one — unlike the rest of the
-  config table, which validates strictly and raises a message naming the bad
-  key. `doc/input_api.md` promises out-of-range cursor values clamp rather
-  than fail.
-- **Why it stands:** a public path that crashes the project on a value shape
-  nothing guards.
-- **Revisit:** also gates a design rule for what a scalar/defaulted cursor
-  should mean as "unset," which cannot be documented while the path still
-  raises.
-
 ### T-MULTILINE-STR — `set_text` silently ignores a multi-line *string*
 
 - **Where:** `userInputController.lua`, `UserInputModel:set_text`.
@@ -158,27 +93,11 @@ paid, or turned out not to be debt.
   call shape.
 - **Why it stands:** narrow fix, but the worst failure mode on this list —
   silent, on a documented shape, on the primary call.
-- **Revisit:** belongs with the configuration-boundary work already touching
-  `apply_config`/`set_text`.
-
-### T-HL-TWO-HOMES — The highlighter has two homes, and one of them lags
-
-- **Where:** the widget's `callbacks` table (the sticky store, shared with
-  the `compy.input.callbacks` surface) and `model.evaluator`, which is what
-  the model actually reads (`userInputModel.lua:384/393`).
-- **State:** only `apply_config` copies store to evaluator, so any path that
-  writes the store without going through it leaves the live copy stale — a
-  direct `compy.input.callbacks.highlighter = fn` assignment on a shown
-  widget does nothing until an unrelated later `show`/`configure` flushes it.
-  `validator` and the widget outputs have one home each and do not have this
-  problem. `doc/input_api.md` ("Callback assignments") documents `highlighter`
-  as assignable this way regardless.
-- **Why it stands:** ruled — one home, proxied via `callbacks`; the evaluator
-  stops holding a copy and `compy.input.callbacks` proxies to the widget's
-  table instead. Settled in shape; the work is implementation.
-- **Revisit:** implement the proxy, and record the drift it replaces in
-  `internals/user_input.md` for a reader meeting the old two-homes shape in an
-  older tree.
+- **Revisit:** the configuration-boundary work it was to ride along with
+  (`ARC-02`) has landed without it — that sprint reshaped which call may set
+  the content, not what `set_text` does with a string it is given, and
+  `reset_content` preserves the behaviour exactly. Still outstanding, and now
+  the last unfixed defect on the primary call path.
 
 ## BACKLOG
 
@@ -1261,6 +1180,65 @@ changes.
   anyway.
 
 ## RETIRED
+
+### The `show`/`configure` content-ownership boundary was not built (RESOLVED, 2026-08-27)
+
+- **Resolution:** built as sprint `ARC-02`, the implementing pass Decision 35's
+  own text named as not yet landed. `configure` refuses `text`/`cursor` as
+  `show`-only keys, the hidden-`configure` stash is gone with `state.pending`
+  entirely, and a forced `show` with no `text` clears. Was `T-CFG-BOUNDARY`.
+- **Where it was:** `consoleController.lua` (`PER_SHOW_KEYS`, `check_keys`,
+  `stash_hidden_configure`) and `userInputController.lua` (`re_show`).
+- **Note:** the two behaviour changes against stakeholder-seen text — the
+  clearing forced `show`, and the dropped stash — are recorded in Decision 35,
+  which is the deviation record for them.
+
+### A highlighter could not be turned off — `false` already did it, unratified (RESOLVED, 2026-08-27)
+
+- **Resolution:** ratified rather than built. Decision 35, statement 3 makes
+  `false` the uniform unset for every project-owned field, and
+  `doc/input_api.md` documents it with the `computed or false` idiom. No code
+  changed: every consumer already tested truthiness, so a stored `false`
+  always took the absent branch. `prompt`'s two spellings are documented
+  beside it — `''` is an empty label, `false` restores the default.
+  Was `T-HL-UNSET`.
+- **Where it was:** `userInputController.lua`, the shared config path.
+
+### `show{force = true}` applied some keys, dropped one, deferred another (RESOLVED, 2026-08-27)
+
+- **Resolution:** dissolved rather than patched, as the row predicted. A
+  forced `show` now takes the ordinary activation path, so there is no
+  separate `force` path left to have its own behaviour for a key.
+  Was `T-FORCE-PARTIAL`.
+- **Where it was:** `userInputController.lua`, `re_show` — deleted.
+
+### `show{cursor = {}}` raised a raw Lua error from inside the framework (RESOLVED, 2026-08-27)
+
+- **Resolution:** `checked_cursor` at the project boundary refuses a malformed
+  pair with a framework message naming the shape, on both public paths
+  (`show`'s config key and `compy.input.set_cursor`). Out-of-range numbers are
+  untouched and still clamp, which is the distinction the guide promises.
+  `cursor = false` is the uniform unset rather than an error.
+  Was `T-CURSOR-SHAPE`.
+- **Where it was:** `userInputController.lua`, `set_cursor_pos` — reached with
+  nil or a non-table and dying inside `math.min`.
+
+### The highlighter had two homes, and one of them lagged (RESOLVED, 2026-08-27)
+
+- **Resolution:** one home, per the owner's ruling. The widget's `callbacks`
+  slot is the source of truth and the evaluator RESOLVES it
+  (`UserInputController:bind_highlighter`) rather than holding a copy, so a
+  direct assignment and a `show`/`configure` key are the same write by
+  construction. Resolution rather than a forwarding closure, because the model
+  branches on the truth of `ev.highlighter` and it must stay nil when unset or
+  the validation-colouring fallback stops running. Bound only where the
+  evaluator is the widget's own — console and editor share theirs and it
+  carries a language highlighter. The drift it replaces is written up in
+  `internals/user_input.md`, "One home for the highlighter".
+  Was `T-HL-TWO-HOMES`.
+- **Where it was:** the widget's `callbacks` table and `model.evaluator`, with
+  only the shared config path copying between them.
+
 
 ### `wrap`'s error handler is called with the wrong arity, so project raises vanish (RESOLVED, 2026-08-03)
 

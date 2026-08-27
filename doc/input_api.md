@@ -61,9 +61,39 @@ Everything that puts the widget on screen and alters it while it is there.
 | `validator` | `function(lines) -> true` or `false, Error[]`; gates submit. |
 | `on_text_entered` | `function(lines)` called after successful validation. |
 | `on_limit_reached` | Called when cursor movement reaches a boundary. |
-| `force` | `show` only: while active, replace `text` instead of warning. |
+| `force` | `show` only: re-open a widget that is already up. |
 
 `show` on an active input widget warns and does nothing unless `force = true`.
+With `force`, it is a **full re-setup** — the same thing a first `show` does,
+with the config you passed. In particular a forced `show` with no `text`
+starts empty, exactly as a first one does; pass the content if you want it
+kept.
+
+Two kinds of key live in this table, and the difference is who owns the thing
+they set:
+
+- **Your content** — `text` and `cursor` — belongs to the person typing, so
+  only `show` seats it. While the widget is up, `set_text`, `set_cursor` and
+  `clear` are the ways to change it.
+- **Everything else** belongs to your project. Those keys are set only when
+  you name them, and stay until you replace them: leaving one out changes
+  nothing, and there is no key that `show` applies and `configure` quietly
+  drops.
+
+`false` is how you unset any of the project's keys, which makes
+`computed or false` safe to pass:
+
+```lua
+-- No highlighter this round, whatever validate() returned.
+compy.input.configure{ highlighter = validate() or false }
+```
+
+For `prompt`, `''` is an empty label and `false` restores the default one. A
+`cursor` of `false` seats none, leaving the baseline `show` just applied.
+
+A `cursor` that is not a `{line, col}` pair of numbers raises, naming the
+shape. Out-of-range numbers are fine and clamp — `{1, 999}` lands at the end
+of line 1.
 
 A key outside this table **raises**. The config table is closed, so an
 unrecognised key can only be a mistake, and a mistake you can see beats one
@@ -83,12 +113,20 @@ end
 
 ### Live changes
 
-`compy.input.configure(config)` updates an active input widget. It accepts the
-same documented configuration keys except `force`, and raises on anything
-else by the same rule as `show`; active `text` and `cursor`
-are not changed by `configure`, so use `set_text`, `set_cursor`, or `clear`.
-When hidden, `configure` retains `prompt`, `text`, and `cursor` for one later
+`compy.input.configure(config)` changes the project's own settings on the
+input widget — `prompt`, `highlighter`, `validator`, `on_text_entered`,
+`on_limit_reached`. It raises on an unrecognised key by the same rule as
 `show`.
+
+`configure` never touches your content, so `text`, `cursor` and `force` raise
+from it as keys belonging to another call, the way a lifecycle callback
+already does. Use `show` to seat content, and `set_text` / `set_cursor` /
+`clear` to change it while the widget is up.
+
+Calling `configure` while the widget is hidden is fine and does not warn: the
+settings apply straight away and are still in force at the next `show`. To
+open a widget with content already in it, pass the content to that `show` —
+it is applied before anything is on screen.
 
 `compy.input.is_shown()` tells you whether the input widget is up. Use it when a
 project must not act twice — opening the prompt from a key that is also
@@ -199,7 +237,13 @@ compy.input.show{
 
 `compy.input.callbacks` is writable. These entries may also be supplied in
 `show` or `configure` and persist until replaced: `on_text_entered`,
-`on_limit_reached`, `validator`, and `highlighter`.
+`on_limit_reached`, `validator`, and `highlighter`. `prompt` is not a
+callback, but it persists the same way — set it once and it stays until you
+set it again.
+
+Assigning here and passing the key to `show` / `configure` are the same
+write, and either takes effect immediately. Set any of them to `false` to
+unset it.
 
 The lifecycle entries are direct assignments only: `before_submit`,
 `after_submit`, `before_cancel`, and `after_cancel`.
