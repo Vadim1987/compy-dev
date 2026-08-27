@@ -83,15 +83,27 @@ There is no show-and-hide-many-times-per-second pattern in this codebase.
 | id | step | note |
 |---|---|---|
 | ~~ARC-01-01~~ ✅ | ~~choose the seam~~ — **the seam is `run`, not `open`**; nil audit and pen-and-paper **both confirmed by experiment** (session48) | `ConsoleController:restart()` (`consoleController.lua:1179`) and Ctrl+T quickswitch (`controller.lua:793-808`) both call `stop_project_run()` + `run_project()` **directly, bypassing open/close** — construct-at-open would leave every restart on a stale widget. **Nil audit: all six consumers survive a nil widget, and every guard was mutation-tested to prove the probe would have caught it.** **Pen-and-paper: sapper run in the real app** — passes through `run_project`, is fully alive at `project_open`, and `stop_project_run` fires once, *from* `project_open`. No can of worms; proceed. [`validation/notes/ARC-01-01-verification.md`](validation/notes/ARC-01-01-verification.md) |
-| ARC-01-02 | `state.callbacks` / `state.pending` resolve dynamically instead of being captured | **bigger than "one coupling"** — captured in two places (`:790-805`, `:512-527`) and read as plain tables by four functions (`merge_callback_keys`, `consume_pending`, `stash_hidden_configure`, `api_show`). A shape change, not a one-liner. **Must land BEFORE ARC-01-03**: `get_compy_input` runs at boot, before any project exists, so under a per-run widget the capture would index nil (`main.lua:379` publishes the widget, `:383` builds the console — today's ordering exists for exactly this) |
-| ARC-01-03 | construction + destruction move to the seam | |
-| ARC-01-04 | delete the teardown machinery the lifetime replaces | the payoff commit |
-| ARC-01-05 | **why do two reconfiguration policies coexist in the widget instead of uniform logic — and is `prompt` on the wrong one?** | **owner, 2026-08-26 — filed here so it is not forgotten, deliberately not investigated yet.** `apply_config` treats some fields as *set-if-given* and others as *always-set*; `cfg.prompt` is on the first policy, which is how `8a9022ec`'s cross-project label leak was possible. Answer whether the split is intentional and whether `prompt` sits on the right side of it. A little orthogonal to the lifetime work, but it lands in the same function ARC-01 is already reshaping, and it may escalate into a design call — so it runs **before** the churn step, not after |
-| ARC-01-06 | fixture seam + the spec fallout | the churn lives here |
+| ARC-01-02 | `state.callbacks` / `state.pending` resolve dynamically instead of being captured | **bigger than "one coupling"** — captured in two places (`:790-805`, `:512-527`) and read as plain tables by four functions (`merge_callback_keys`, `consume_pending`, `stash_hidden_configure`, `api_show`). A shape change, not a one-liner. **Must land BEFORE ARC-01-04** (the construction move; `-03` as
+filed): **proven** at `ARC-01-01` — constructing a `ConsoleController` with the widget nil raises.
+`get_compy_input` runs at boot, before any project exists, so under a per-run widget the capture would index nil (`main.lua:379` publishes the widget, `:383` builds the console — today's ordering exists for exactly this) |
+| ARC-01-03 | **amend the ledger: Decision 3 AND Decision 7** — the gate before any lifetime code | **owner-gated.** Decision 3 says *"created once at load"* and names four instances; per-run is not a reading of that, it is a change to it. **Decision 7 needs the same treatment and was missed when this row was filed** (found session48): it freezes the *identity* of `callbacks`, and a per-run widget changes that identity between runs. Nothing a project can observe — within a run both hold — but "amend, don't reinterpret" applies to both. Base check makes both easy to write: the singleton is this branch's own invention |
+| ARC-01-04 | construction + destruction move to the seam | |
+| ARC-01-05 | delete the teardown machinery the lifetime replaces | the payoff commit |
+| ARC-01-06 | **why do two reconfiguration policies coexist in the widget instead of uniform logic — and is `prompt` on the wrong one?** | **owner, 2026-08-26 — filed here so it is not forgotten, deliberately not investigated yet.** `apply_config` treats some fields as *set-if-given* and others as *always-set*; `cfg.prompt` is on the first policy, which is how `8a9022ec`'s cross-project label leak was possible. Answer whether the split is intentional and whether `prompt` sits on the right side of it. A little orthogonal to the lifetime work, but it lands in the same function ARC-01 is already reshaping, and it may escalate into a design call — so it runs **before** the churn step, not after |
+| ARC-01-07 | fixture seam + the spec fallout | the churn lives here |
 
-**Crosswalk (renumber 2026-08-26):** `ARC-01-05` (fixture seam + spec fallout) → **`ARC-01-06`**.
-The new `ARC-01-05` is the reconfiguration-policy question above. No ARC ids appear in `src/` or
-`tests/`, so rule 2's renumber branch applies.
+**Crosswalk — two inserts, both 2026-08-26/27.** No ARC id appears in `src/` or `tests/`, so rule
+2's renumber branch applies; earlier notes, prompts and commit messages carry the old numbers.
+
+| as filed | after the policy question | after the ledger step | step |
+|---|---|---|---|
+| `ARC-01-03` | `ARC-01-03` | **`ARC-01-04`** | construction + destruction move |
+| `ARC-01-04` | `ARC-01-04` | **`ARC-01-05`** | delete the teardown machinery |
+| — | `ARC-01-05` | **`ARC-01-06`** | the reconfiguration-policy question (owner) |
+| `ARC-01-05` | `ARC-01-06` | **`ARC-01-07`** | fixture seam + spec fallout |
+
+`ARC-01-03` is new and is the ledger-amendment gate. **Session48's `prompt.md` uses the original
+numbers** — its `ARC-01-03` is now `-04`, its `-04` is `-05`, its `-05` is `-07`.
 
 ### Pen-and-paper projects — asked by the owner, answered by reading, still to be confirmed
 
@@ -122,9 +134,11 @@ them is not one of them. Evidence and screenshot:
    path a raise is swallowed by `with_canvas_and_errors`, so nil-safety there must be asserted
    against the **error channel** (`suspend_msg` / `app_state`), never against "no crash"
    ([`validation/notes/ARC-01-01-verification.md`](validation/notes/ARC-01-01-verification.md)).
-2. **Owner ruling 2026-07-20 softens** — *"`compy.input.callbacks` IS the widget's table"* becomes
-   *"resolves to the current widget's table"*. Observably identical to a project; still the owner's
-   ruling to re-make.
+2. ~~**Owner ruling 2026-07-20 softens**~~ — **RE-MADE BY THE OWNER 2026-08-27: granted, "trivial".**
+   *"`compy.input.callbacks` IS the widget's table"* becomes *"resolves to the current widget's
+   table"*. What follows from it is work, not risk: the ruling is quoted in three code comments
+   (`main.lua`, `consoleController.lua` ×2) that say **IS**, and they are corrected as part of
+   `ARC-01-02`. The ledger half — Decision 7's frozen `callbacks` identity — is `ARC-01-03`.
 3. **Test churn is moderate, not trivial** — sized at the fixture seam, not before it.
 
 ### What it dissolves
@@ -147,7 +161,8 @@ corrections to this row as originally filed:
 - **Decision 3 needs an explicit amendment, not a reinterpretation.** Its literal text says *"created
   once at load"* and enumerates four instances by name. The per-session reading is defensible on the
   stated *mechanism* but reaches past the words — so the honest move is to amend the decision and say
-  why, not to argue the words already allow it. **Conceded.**
+  why, not to argue the words already allow it. **Conceded — and it now has a step of its own,
+  `ARC-01-03`, which session48 widened to cover Decision 7 as well.**
 - **"Net deletion" was optimistic** — likely a wash once the `get_compy_input` reshape, the boot
   ordering fix and the Decision 3 amendment are counted. The 101 test touchpoints are exact, but only
   4 sites call `run_project`, so most of that churn would not exercise the new lifetime **without

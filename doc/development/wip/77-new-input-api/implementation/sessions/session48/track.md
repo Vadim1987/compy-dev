@@ -54,3 +54,22 @@
 - Probes archived under `validation/notes/ARC-01-01-probes/`; nothing left in `src/` or `tests/`;
   suite back at **970 / 0 / 0 / 10**.
 - **Verdict: no can of worms. ARC-01-02 is next.** Holding at the gate for the owner.
+
+## 2026-08-27 — owner rulings at the gate
+
+- **Incidental finding → debt ledger now** (owner). Filed in `technical_debt/input.md` beside "A
+  raise from project top-level and from a handler surface differently" — same class, different
+  cause. Revisit after the PR, with its sibling. `2474df20`.
+- **Ruling re-made: granted, "trivial"** — `compy.input.callbacks` *resolves to* the current
+  widget's table. Consequence is work, not risk: three code comments quote the old wording as **IS**
+  (`main.lua:367`, `consoleController.lua:776-777`) and are corrected in ARC-01-02.
+- **Owner asked whether Decision 3 was amended. It was not, and it was not a step** — it lived as
+  prose in the row's "two obligations", which is how things get lost (roadmap rule 5). Now
+  **`ARC-01-03`**, an owner-gated ledger step before any lifetime code.
+- **Found while filing it: Decision 7 needs the same amendment, and nobody had noticed.** It freezes
+  the *identity* of `callbacks`; a per-run widget changes that identity between runs. Unobservable
+  to a project (within a run both hold), but "amend, don't reinterpret" applies to it too. Folded
+  into the same step.
+- Second renumber today: 03→04, 04→05, 05→06, and the old churn step is now 07. Two-insert crosswalk
+  table shipped in the row, including a line mapping session48's own prompt (immutable) onto the new
+  numbers.
