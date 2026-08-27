@@ -2,14 +2,14 @@
 
 **The navigable view.** One page, current, ordered. The reasoning lives in
 [`validation/plan.md`](validation/plan.md) and the review documents this points at; **this file is
-the sequence**. Updated 2026-08-26.
+the sequence**. Updated 2026-08-27.
 
 ## Where things stand
 
 | | |
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
-| suite | **970 / 0 / 0 / 10** — 968 + BUG-01-01's two cases; the 10 pending are an owner ruling, an 11th is a finding |
+| suite | **979 / 0 / 0 / 10** — 970 + ARC-01's nine (3 store resolution, 6 widget lifetime); the 10 pending are an owner ruling, an 11th is a finding |
 | marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
@@ -32,7 +32,9 @@ report: [`validation/outcomes/ACC-01-02-cold-pr-review.md`](validation/outcomes/
 
 ---
 
-## ⬜ ARC-01 — the project widget gets a run lifetime — **runs FIRST**
+## 🟨 ARC-01 — the project widget gets a run lifetime — **6 of 7 done**
+
+**Landed in session48** (`e684458b`, `e28a20f6`, `314fca05`, `55f9edd4`, `e13ef346`, `739d17ea`): the widget is built at the run seam and destroyed at the stop, the ledger is amended, the teardown machinery is deleted, and `close_project` no longer leaves a closed project's widget behind. **Cold review: approve** — [`validation/outcomes/ARC-01-cold-review-s48.md`](validation/outcomes/ARC-01-cold-review-s48.md). Only `ARC-01-07` remains, and it is handed to a cold session.
 
 *(New KIND: `ARC` — structural work that dissolves a defect class. Filing it as a `BUG` row would
 hide from a reader that it removes machinery rather than patching it. Owner-ruled 2026-08-26.)*

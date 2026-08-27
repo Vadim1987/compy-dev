@@ -153,3 +153,23 @@
   not per-session construction", which is now wrong for one of the four instances. The `AMENDED IN
   PART` note directly beneath corrects it, and Decision 11 shows the ledger does update headings —
   but the owner ratified body text, not a heading change, so it waits for a word.
+
+## 2026-08-27 — ARC-01-05, -06, and the wrap
+
+- ARC-01-05 landed in two commits, one concern each: the dead machinery deleted (`55f9edd4`), then
+  `close_project` destroying its widget (`e13ef346`). Debt entry filed FIRST at the owner's
+  direction (`b658b959`) — it is true regardless of the fix.
+- **My first close_project fix was wrong and the new test caught it**: destroy sat inside
+  `if open then`, and `F.run_project` restores `P.current`, so the branch never ran. Moved ahead of
+  the check. Also discarded my own uncommitted fix with a `git checkout -- src/` while setting up
+  the mutation check — second careless git command today, after `git add -A src/`.
+- Cold review came back **approve** with one real finding (the dead teardown function — which was
+  ARC-01-05's target, reached independently from the code) and a correction to my citation count
+  (12, not 13: my grep matched `Decision 30`/`32`/`33`). It **missed close_project**.
+- Owner swapped ARC-01-06/-07 so ids match execution order — their words: the original order was
+  their mistake. Crosswalk now shows both hops.
+- ARC-01-06 (fixture seam) was mostly already done inside -04; the sweep found one real bug
+  (`F.show_widget` drove the fixture's stale local) and three comments still asserting the old
+  lifetime, one of which named teardown as "the only clearer".
+- Wrapped: report, session49 prompt commissioning ARC-01-07 for a COLD session, pointer repointed,
+  roadmap status updated to 979.
