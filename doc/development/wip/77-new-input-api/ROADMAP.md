@@ -89,21 +89,24 @@ filed): **proven** at `ARC-01-01` — constructing a `ConsoleController` with th
 | ARC-01-03 | **amend the ledger: Decision 3 AND Decision 7** — the gate before any lifetime code | **owner-gated.** Decision 3 says *"created once at load"* and names four instances; per-run is not a reading of that, it is a change to it. **Decision 7 needs the same treatment and was missed when this row was filed** (found session48): it freezes the *identity* of `callbacks`, and a per-run widget changes that identity between runs. Nothing a project can observe — within a run both hold — but "amend, don't reinterpret" applies to both. Base check makes both easy to write: the singleton is this branch's own invention |
 | ARC-01-04 | construction + destruction move to the seam | |
 | ARC-01-05 | delete the teardown machinery the lifetime replaces | the payoff commit |
-| ARC-01-06 | **why do two reconfiguration policies coexist in the widget instead of uniform logic — and is `prompt` on the wrong one?** | **owner, 2026-08-26 — filed here so it is not forgotten, deliberately not investigated yet.** `apply_config` treats some fields as *set-if-given* and others as *always-set*; `cfg.prompt` is on the first policy, which is how `8a9022ec`'s cross-project label leak was possible. Answer whether the split is intentional and whether `prompt` sits on the right side of it. A little orthogonal to the lifetime work, but it lands in the same function ARC-01 is already reshaping, and it may escalate into a design call — so it runs **before** the churn step, not after |
-| ARC-01-07 | fixture seam + the spec fallout | the churn lives here |
+| ~~ARC-01-06~~ ✅ | fixture seam + the spec fallout | **mostly landed inside `ARC-01-04`** — suite-green-at-every-commit forced the fixture seam to move with the lifetime rather than after it. `F.widget` stopped being a captured field and now resolves to the current widget, so all touchpoints follow the lifetime; `F.run_project` and `F.other_widget` were added; the stop-teardown cases were restated as "the stop destroys the widget and the next run gets a clean one". What remained is a sweep for stale assumptions, done in session48 |
+| ARC-01-07 | **why do two reconfiguration policies coexist in the widget instead of uniform logic — and is `prompt` on the wrong one?** | **owner, 2026-08-26 — filed here so it is not forgotten, deliberately not investigated yet.** `apply_config` treats some fields as *set-if-given* and others as *always-set*; `cfg.prompt` is on the first policy, which is how `8a9022ec`'s cross-project label leak was possible. Answer whether the split is intentional and whether `prompt` sits on the right side of it. A little orthogonal to the lifetime work, but it lands in the same function ARC-01 is already reshaping, and it may escalate into a design call — handed to a COLD session (owner, 2026-08-27) — it is a fresh question and deserves a reader who has not spent a session inside the lifetime work |
 
 **Crosswalk — two inserts, both 2026-08-26/27.** No ARC id appears in `src/` or `tests/`, so rule
 2's renumber branch applies; earlier notes, prompts and commit messages carry the old numbers.
 
-| as filed | after the policy question | after the ledger step | step |
+| as filed | after the two inserts | **final** | step |
 |---|---|---|---|
-| `ARC-01-03` | `ARC-01-03` | **`ARC-01-04`** | construction + destruction move |
-| `ARC-01-04` | `ARC-01-04` | **`ARC-01-05`** | delete the teardown machinery |
-| — | `ARC-01-05` | **`ARC-01-06`** | the reconfiguration-policy question (owner) |
-| `ARC-01-05` | `ARC-01-06` | **`ARC-01-07`** | fixture seam + spec fallout |
+| `ARC-01-03` | `ARC-01-04` | **`ARC-01-04`** | construction + destruction move |
+| `ARC-01-04` | `ARC-01-05` | **`ARC-01-05`** | delete the teardown machinery |
+| — | `ARC-01-05` → `-06` | **`ARC-01-07`** | the reconfiguration-policy question (owner) |
+| `ARC-01-05` | `ARC-01-06` → `-07` | **`ARC-01-06`** | fixture seam + spec fallout |
 
-`ARC-01-03` is new and is the ledger-amendment gate. **Session48's `prompt.md` uses the original
-numbers** — its `ARC-01-03` is now `-04`, its `-04` is `-05`, its `-05` is `-07`.
+`ARC-01-03` is new and is the ledger-amendment gate. The last swap is the owner's (2026-08-27):
+the policy question was filed ahead of the churn step and then executed after it, so the ids were
+put back in execution order rather than left disagreeing with it — rule 2's whole point.
+**Session48's `prompt.md` uses the ORIGINAL numbers** — its `ARC-01-03` is now `-04`, its `-04` is
+`-05`, and its `-05` is `-06`.
 
 ### Pen-and-paper projects — asked by the owner, answered by reading, still to be confirmed
 

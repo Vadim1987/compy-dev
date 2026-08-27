@@ -1,6 +1,6 @@
 -- Shared fixture for the input contract suite. Builds the
 -- real love.handlers wiring over a real ConsoleController,
--- the input widget (mirroring main.lua), the
+-- a project input widget (production builds one per run), the
 -- click/update path and a keypress-level driver — so a
 -- contract test reads as a one-line statement (see
 -- tests/helpers/input_session). All MVC/gfx/font
@@ -126,9 +126,9 @@ local function build_console(cfg)
   return CC
 end
 
--- The persistent widget (main.lua: one instance, published to
--- love.state.user_input_controller; the compy.input wrappers
--- resolve it from there).
+-- A project widget, published to love.state.user_input_controller
+-- the way production's build_input_widget does at the run seam;
+-- the compy.input wrappers resolve it from there.
 local function build_widget(cfg)
   -- Its OWN evaluator, as production's build_input_widget does:
   -- the highlighter is written onto the evaluator, so sharing
@@ -242,8 +242,12 @@ end
 
 -- Activate the test fixture widget directly.
 function F.show_widget(opts)
-  widget:show(opts)
-  return widget
+  -- The CURRENT widget, not the fixture's local: after
+  -- F.run_project the run built its own, and showing the stale
+  -- one would assert against an object nothing else reads.
+  local w = love.state.user_input_controller
+  w:show(opts)
+  return w
 end
 
 -- This is the narrow activation seam: the full runner also
@@ -277,7 +281,7 @@ function F.show_selectable_widget(lines)
   -- love.state.user_input_controller, not from the published
   -- handle, so a case that wants this widget to receive chain
   -- traffic has to stand it up there too. F.reset puts the
-  -- shared widget back.
+  -- fixture's own widget back.
   w:always_shown()
   love.state.user_input_controller = w
   return w
@@ -315,8 +319,8 @@ end
 -- on purpose between runs.
 function F.reset()
   -- Undo a show_selectable_widget swap before teardown runs, so
-  -- stop_project_run tears down the shared widget rather than a
-  -- case-local one.
+  -- stop_project_run tears down the fixture's widget rather
+  -- than a case-local one.
   love.state.user_input_controller = widget
   CC:stop_project_run()
   -- The stop DESTROYS the widget, as a real stop does. A case

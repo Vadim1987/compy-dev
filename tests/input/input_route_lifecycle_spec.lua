@@ -160,13 +160,14 @@ describe('input surface: inbound events — route lifetime #input',
           assert.is_nil(F.widget.model.evaluator.highlighter)
         end)
 
-      -- doc/development/decisions/input.md, Decision 11:
-      -- teardown also re-seeds the DEFAULT lifecycle callbacks
-      -- on the project-facing surface, not merely nils them.
-      -- The next project therefore meets the documented
-      -- stay-open default -- neither the previous project's
-      -- after_cancel nor a nil-call error.
-      it('re-seeds the default callbacks for the next project',
+      -- doc/development/decisions/input.md, Decision 11: the
+      -- next project meets the documented stay-open DEFAULTS --
+      -- neither the previous project's after_cancel nor a
+      -- nil-call error. It used to get them from a re-seed at
+      -- teardown; it now gets them from a widget built with
+      -- them (Decision 3 as amended). The guarantee is what is
+      -- asserted here, not the mechanism behind it.
+      it('gives the next project the default callbacks',
         function()
           local first = F.activate_project()
           local leaked = false
@@ -217,8 +218,8 @@ describe('input surface: inbound events — route lifetime #input',
       -- it cannot outlive the project that set it. apply_config
       -- writes model.custom_label only when cfg.prompt is
       -- given, so the next project's bare show() never
-      -- overwrites it -- teardown is the only clearer, and the
-      -- widget is one application-lifetime instance.
+      -- overwrites it. Nothing clears it either: the widget it
+      -- was written on does not survive the run.
       it('clears a prompt label set by the stopped project',
         function()
           local first = F.activate_project()
