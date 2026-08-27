@@ -281,10 +281,27 @@ deletion of `wip/77`. The contract binding them is
 |---|---|
 | `LEDGER-01-01` | **changelog** — `Unreleased` → `CURRENT_SCOPE` with its release protocol stated in-file; `Removed` leads with the breaking change; `Added`/`Changed` brought up to the work. Commits `f4c85ec5`, `b76ed826` |
 | `LEDGER-01-02` | **decisions** — `ACTIVE` (28) / `RETIRED` (6); numbers and text untouched, 34 in and 34 out. Produced the verified ruled-but-unimplemented list. Commit `b54e5e81` |
-| `LEDGER-01-03` | **debt** — `ACTIVE` (11 + 1 in `general.md`) / `BACKLOG` (40 + 4) / `RETIRED` (23) on the owner's release-scope rule; 64 → 74 entries, the ten additions being two unimplemented decisions and eight uncovered defects. Commit `1e635f6f` |
+| `LEDGER-01-03` | **debt** — `ACTIVE` (10 + 4 in `general.md`) / `BACKLOG` (41 + 1) / `RETIRED` (23) on the owner's release-scope rule; 64 → 74 entries, the ten additions being two unimplemented decisions and eight uncovered defects. Commit `1e635f6f` |
 
 Sub-agent prompts of record in `validation/prompts/LEDGER-0*`; their reports in
 `validation/outcomes/LEDGER-0*`. Each was reviewed and corrected before landing — see the commits.
+
+### The cross-check, run once — and it found one thing
+
+`agents/rules/ledgers.md` §5: *an `ACTIVE` debt entry with no roadmap row pointing at it is a visible
+gap.* Run 2026-08-27 over all 15 ACTIVE entries. **Fourteen map to a row** — the ten `BUG-01` rows,
+`ARC-02` (Decision 35), `FIX-02-15`, `CHG-01-04`, `FIX-02-05` and `DEC-01`.
+
+**One did not: Decision 1's console/editor convergence** — and the absence was the symptom rather
+than the cause. The decision itself calls that convergence *"deliberately left as a follow-on"*, so
+under the release-scope rule it is **BACKLOG**, and it was filed ACTIVE only because the sub-agent
+prompt said to file unimplemented decisions there. That instruction was mine and it was too broad: a
+decision deliberately deferred past this release is deferred debt, not release-blocking debt. Re-sorted.
+
+**What is still missing is the other direction.** Roadmap rows do not yet cite the debt entries they
+fulfil, so the cross-check is a manual read rather than a grep. Wiring the pointers in is worth doing
+**with the slug scheme**, not before it — an entry referenced by its full heading is referenced by
+something mutable.
 
 ### The absorption was partial, and saying so is the point
 

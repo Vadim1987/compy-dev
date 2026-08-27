@@ -47,23 +47,6 @@ paid, or turned out not to be debt.
   trigger; if a framework mechanism is adopted instead, a wildcard one-shot
   needs no combo lookup and this stays a corner.
 
-### Decision 1 — console/editor convergence onto the shared chain is unimplemented
-
-- **Where:** `src/controller/consoleController.lua` (`ConsoleController:keypressed`,
-  `:1516`) and `src/controller/editorController.lua`
-  (`EditorController:keypressed`, `:825`) — each still runs its own narrow,
-  single-argument dispatch, not the project route's `dispatch(shortcuts, hooks,
-  widget, event, trigger, ...)` chain.
-- **State:** Decision 1 (`../decisions/input.md`) names this convergence as
-  "deliberately left as a follow-on, not attempted," and Decisions 26 and 33
-  repeat the same scope note in different words. The decision text is honest
-  about the gap; the gap itself is still open.
-- **Why it stands:** out of this feature's mandate — scoped out on filing, not
-  an oversight found later.
-- **Revisit:** when the console/editor routes are migrated onto the combo
-  mechanism. See also "Console and editor route handlers bind by hand-written
-  modifier tests," which is this gap's symptom one layer down.
-
 ### Decision 35 — the `show`/`configure` content-ownership boundary is not built
 
 - **Where:** `consoleController.lua` (`PER_SHOW_KEYS`, `check_keys`,
@@ -198,6 +181,27 @@ paid, or turned out not to be debt.
   older tree.
 
 ## BACKLOG
+
+### Decision 1 — console/editor convergence onto the shared chain is unimplemented
+
+- **Where:** `src/controller/consoleController.lua` (`ConsoleController:keypressed`,
+  `:1516`) and `src/controller/editorController.lua`
+  (`EditorController:keypressed`, `:825`) — each still runs its own narrow,
+  single-argument dispatch, not the project route's `dispatch(shortcuts, hooks,
+  widget, event, trigger, ...)` chain.
+- **State:** Decision 1 (`../decisions/input.md`) names this convergence as
+  "deliberately left as a follow-on, not attempted," and Decisions 26 and 33
+  repeat the same scope note in different words. The decision text is honest
+  about the gap; the gap itself is still open.
+- **Why it stands:** out of this feature's mandate — scoped out on filing, not
+  an oversight found later.
+- **Revisit:** when the console/editor routes are migrated onto the combo
+  mechanism. See also "Console and editor route handlers bind by hand-written
+  modifier tests," which is this gap's symptom one layer down.
+- **Release scope:** **BACKLOG, not ACTIVE** — the decision itself calls the convergence a
+  deliberate follow-on, so it is deferred past this release by the ruling that created it.
+  Re-sorted 2026-08-27 by the cross-check in `agents/rules/ledgers.md` §5: it was the one
+  ACTIVE entry with no roadmap row, and the absence was the symptom, not the cause.
 
 ### Widget sink reaches the singleton via `love.state` global + nil-guard (RESOLVED-IN-PART by the input-API redesign)
 
