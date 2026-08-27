@@ -73,3 +73,32 @@
 - Second renumber today: 03→04, 04→05, 05→06, and the old churn step is now 07. Two-insert crosswalk
   table shipped in the row, including a line mapping session48's own prompt (immutable) onto the new
   numbers.
+
+## 2026-08-27 — ARC-01-02 landed (`e684458b`)
+
+- Three breaking tests first (all red before the change): callbacks assignment must land on the
+  CURRENT widget; a hidden `configure()` must stash on that widget; with no widget there is no store
+  and no raise. Then the shape change: `state.callbacks` / `state.pending` resolve through a
+  metatable (`widget_store`) instead of being captured at closure build.
+- Readers updated: `merge_callback_keys`, `consume_pending`, `stash_hidden_configure` all treat "no
+  store" as "nothing to remember". `build_input_surface` resolves `callbacks` per access; `hooks`
+  and `shortcuts` stay the surface's own.
+- **The ordering constraint is gone, and the ARC-01-01 probe proved it by failing:** re-running the
+  archived nil-audit probe, only C7 fails now — constructing a ConsoleController with no widget no
+  longer raises. That was the blocker on ARC-01-04.
+- Comment/doc sweep for the re-made ruling: `main.lua` (claimed the boot order was load-bearing —
+  it is not), `userInputController.lua` ×2, the fixture's copy of the same claim, and the internals
+  guide's "**is this exact same table**" → "**resolves to**".
+- Suite **970 → 973**, three added, none changed or removed. LSP diagnostics clean on all three
+  touched src files.
+- Scope boundary checked and recorded in the roadmap rather than acted on: `compy.input`'s own
+  `shortcuts`/`hooks` stay application-lifetime, but their teardown walks `_bindable` — *the
+  dispatcher's own channel list* — so it cannot drift the way the widget's field-by-field wipe did.
+  Suspected sibling defect, checked, **phantom**. Worth the five minutes; a reviewer will ask.
+- Runtime smoke: sapper under harmony behaves exactly as before the change, no errors.
+- **A harmony smoke error, attributed rather than assumed.** The full scenario suite surfaced
+  `editorView.lua:70: attempt to index local 'bm' (a nil value)` (`get_current_buffer` ←
+  `editorController.submit`). Re-ran the whole suite against the PRE-change `src/`: **same error,
+  same line, once, in a 45-line log identical in length to the post-change one.** Pre-existing,
+  unrelated to ARC-01-02 — an editor-scenario failure nobody has filed. NOT filed by me either:
+  it is outside this feature and outside the input subsystem; raising it with the owner instead.

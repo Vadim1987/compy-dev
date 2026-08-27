@@ -141,6 +141,19 @@ them is not one of them. Evidence and screenshot:
    `ARC-01-02`. The ledger half — Decision 7's frozen `callbacks` identity — is `ARC-01-03`.
 3. **Test churn is moderate, not trivial** — sized at the fixture seam, not before it.
 
+### The scope boundary a reviewer will ask about (checked at ARC-01-02, 2026-08-27)
+
+**Why does the widget get a run lifetime while `compy.input` itself stays application-lifetime?**
+The surface keeps two stores of its own — `shortcuts` and `hooks` — and they are still wiped by hand
+at teardown (`reset_compy_input`), which looks like the very class this row exists to kill.
+
+**Checked, and it is not the same class.** That wipe walks `_bindable` — *the same channel list the
+dispatcher itself dispatches on*, not a hand-copied roster of it. A channel cannot exist for
+dispatch and be absent from teardown, so the list cannot drift. What made the widget's stores
+dangerous was the opposite: `reset_widget_outputs` named individual *fields* (`custom_label`, the
+evaluator's `highlighter`) one by one, and a third field went missing from that list for months.
+**Deliberately out of scope, with a reason — not an oversight.**
+
 ### What it dissolves
 
 - **`BUG-01-02`** loses its teardown half; only the within-run design call (sentinel vs
