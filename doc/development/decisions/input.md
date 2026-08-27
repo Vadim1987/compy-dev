@@ -511,6 +511,8 @@ individually revisable — but only by a named ruling, not by drift. See
 
 **Status: implemented** (owner ruling, 2026-07-30). Enforced by `check_keys` /
 `bad_key_message` in `consoleController.lua`, which cite this decision back.
+**Added to by Decision 35** (owner, 2026-08-27): `text` and `cursor` join
+`force` as `show`-only keys. Nothing here is withdrawn.
 
 **Decision.** A key outside the documented config table, supplied to
 `show(config)` or `configure(config)`, **raises**. A recognised field that is
@@ -518,6 +520,14 @@ only writable by direct assignment — the lifecycle callbacks — is equally
 unrecognised in this table and raises with a message naming
 `compy.input.callbacks`. `force` is a `show`-only key and raises from
 `configure`.
+
+**The `show`-only category, added 2026-08-27 (Decision 35).** `text` and
+`cursor` are `show`-only on the same terms as `force` and raise from
+`configure` with a message naming where they belong. They are the user's
+content, and `configure` never touches it. This is an addition to the list
+above, not a reinterpretation of it: a key that belongs to another call is
+already the shape this decision raises on, and `force` was already its
+precedent.
 
 **Why — DevX: strict contract enforcement, explicit failure mode.**
 Warn-and-ignore would be right if these functions took a general-purpose
@@ -535,6 +545,10 @@ runtime **state** is not that, and keeps warning per Decision 3: `show` on an
 already-active widget without `force`, and `set_text` / `set_cursor` / `clear`
 while hidden. Those are legitimate calls at an inconvenient moment, not
 mistakes in the project's source.
+
+That list is exhaustive and `text` / `cursor` at `configure` were never on it.
+They raise in **both** states, shown and hidden: the call is wrong whatever the
+widget is doing, so there is no inconvenient moment for it to be legitimate at.
 
 **Consequence.** `show` and `configure` raise on the first offending key, with
 the trace on the project's own call line. A project's error surfaces the normal
@@ -1344,7 +1358,7 @@ deliberately reachable without the gate.
 
 ## Decision 35 — the configuration boundary: the user's content is `show`'s alone
 
-**Owner-ruled 2026-08-27.** **Amends Decision 15's scope paragraph** (below). Decisions 3, 6 and 18
+**Owner-ruled 2026-08-27.** **Adds a `show`-only key category to Decision 15** (below). Decisions 3, 6 and 18
 stand unchanged: this decision is about *which call may set what*, not about lifecycle or routing.
 
 **The shape.** A config table carries two kinds of field, separated by **who owns the thing it
@@ -1388,11 +1402,17 @@ sets**:
   one function. The exception is the user's content, and it is stated rather than encoded in the
   order in which two helpers happen to run.
 
-**What this amends.** Decision 15 raises on unrecognised configuration and keeps *runtime-state*
-no-ops to a warning — `show` on an already-active widget without `force`, and
-`set_text`/`set_cursor`/`clear` while hidden. `text`/`cursor` at `configure` **move to the raise
-side**: they are not a legitimate call at an inconvenient moment but a call to the wrong function,
-true whether the widget is up or hidden.
+**What this adds to Decision 15.** That decision raises on unrecognised configuration and keeps
+*runtime-state* no-ops to a warning — `show` on an already-active widget without `force`, and
+`set_text`/`set_cursor`/`clear` while hidden. `text`/`cursor` at `configure` **raise**: they are not
+a legitimate call at an inconvenient moment but a call to the wrong function, true whether the
+widget is up or hidden.
+
+This is an **addition, not an amendment** (owner, 2026-08-27). Decision 15's warn list names three
+runtime states and `configure{text}` was never one of them, so nothing there is being reversed; and
+the decision already raises for *a key that belongs to another call* — `force` is a `show`-only key
+and raises from `configure`. `text`/`cursor` join that existing category rather than crossing a line
+the decision had drawn elsewhere.
 
 **What this changes for a project — two things, both stated rather than discovered.**
 

@@ -234,7 +234,7 @@ inside `apply_config`, and — under pick A(ii) — `state.pending` entirely.
 **Both picks settled** (owner, 2026-08-27) and the shape is ratified as **Decision 35** in
 `doc/development/decisions/input.md` — the persistent ledger, so it outlives `wip/77`, and that entry
 is also the deviation record. `text`/`cursor` at `configure` **raise** as keys belonging to another
-call, so `ARC-02-01`'s Decision 15 amendment is in scope and is the gate; the hidden-`configure`
+call, so `ARC-02-01`'s Decision 15 gate is in scope and comes first; the hidden-`configure`
 stash **goes**, on the owner's ground that the promise was redundant when it was made — content for a
 widget about to come up is set by the `show` that brings it up, before it is visible.
 
@@ -243,7 +243,7 @@ constraints on whoever builds it live in Decision 35's closing section, not in t
 
 | id | step | note |
 |---|---|---|
-| ARC-02-01 | the ledger gate — amend Decision 15's scope paragraph | **in scope** (pick A settled). Decision 35 is written; this step amends **Decision 15**'s scope paragraph to move `text`/`cursor` at `configure` from the warn side to the raise side. The `ARC-01-03` pattern: amend, do not reinterpret |
+| ARC-02-01 ✅ | the ledger gate — `text`/`cursor` join `force` as `show`-only keys in Decision 15 | **DONE.** Landed as an **addition, not an amendment** (owner ruling, 2026-08-27, on the cold review's argument): Decision 15's warn list names three runtime states and `configure{text}` was never one of them, and the decision already raises for a key belonging to another call — `force`. So the keys join an existing category instead of crossing a line. Decision 35's own framing was aligned to match |
 | ARC-02-02 | breaking tests first, one per claim | `force` applies the prompt / applies the highlighter **now** / clears with no `text`; `configure{text}` refuses; hidden `configure{prompt}` shows next time. Each seen to fail first |
 | ARC-02-03 | `text` leaves `apply_config`; `reset_content` on the activation path | the single-policy move. **Trap:** `clear_input` ≠ `set_text('')` — it also clears the selection, the custom status and the history index (plan §2a) |
 | ARC-02-04 | `re_show` deletes; `show` composes | the payoff commit — `BUG-01-06` and its sibling dissolve here |
