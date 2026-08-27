@@ -229,3 +229,34 @@
   show/configure, so "configure with defaults" leaves them standing — defensible but must be stated
   or the name over-promises.
 - Materialized as §8 of `validation/reviews/force-and-configure-intent-recovery.md`.
+
+## 2026-08-27 — ARC-02 planned; cold review spawned
+
+- Owner settled the design: configure runs everything except user input and REFUSES text/cursor;
+  text/cursor are show's alone; text normalised to empty in show; all other flags non-nil-only in
+  both calls. Asked for: plan (code+docs+tests), materialize, roadmap, then a cold reviewer.
+- **Two corrections found while planning, both before writing a line of code:**
+  - **`clear_input()` ≠ `set_text('')`.** clear_input (`userInputModel.lua:344-351`) also runs
+    `clear_selection()`, `custom_status = nil`, `history:reset_index()`; set_text (`:125-140`) does
+    none of them. So "normalise text to ''" is a CONTRACT statement, not a literal default — routing
+    an absent text through set_text('') would leave a stale selection, stale custom status and an
+    unreset history index on a fresh show. reset_content keeps two branches.
+  - **`UserInputModel:reset(history)` already exists** (`:354`) — name collision to know about
+    before (d)'s `compy.input.reset()` gets built. Not blocking, different layer.
+- **Pick A surfaced (mine to raise, owner's to settle):** "refusing" text/cursor at configure is
+  warn (Decision 15's runtime-state branch, no ledger touch) OR raise as a key-belonging-elsewhere
+  (the LIFECYCLE_KEYS treatment that already exists — recommended, uniform, deletes `pending`
+  outright, but AMENDS Decision 15's scope paragraph → owner-gated gate step first).
+- **Pick B:** under A(ii) the hidden-configure stash goes. That IS against stakeholder-seen text
+  (reviewed spec: "safe to call when hidden (takes effect on next show())"; and doc/input_api.md
+  says so too). Argument that it is not a broken promise: the sentence stays true for every field
+  configure still ACCEPTS, and no capability is lost (pass text to show, or hold a local). Flagged
+  as the one item needing a deviation record per the 2026-08-10 directive.
+- Plan: `validation/reviews/ARC-02-configure-boundary-plan.md`, 8 steps, tests-first, risks stated.
+  Roadmap: new **ARC-02** sprint section + one-line sequence updated. Closes/dissolves BUG-01-06 (+
+  sibling), BUG-01-08, FIX-02-21, FIX-02-12; drops BUG-01-02 out of design-escalation.
+  `reset()` deliberately OUT of scope — a public addition inside a deletion sprint is how surfaces grow.
+- Cold review spawned: **Opus, explicit model**, prompt of record at
+  `validation/prompts/ARC-02-plan-cold-review.md`, deliverable
+  `validation/outcomes/ARC-02-plan-cold-review.md`. Told it what NOT to read (this track, the two
+  predecessor reviews) until it has its own view — the point of a cold spawn.

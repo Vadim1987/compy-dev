@@ -15,8 +15,8 @@ the sequence**. Updated 2026-08-27.
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
 | upstream | **86 commits behind the edge** (a floor: our view is 23 days old) |
 
-**The spinoff sprint is closed and TF2 with it.** With `ARC-01` complete, what remains is
-acceptance, four defect sprints, reconciliation, and assembly.
+**The spinoff sprint is closed and TF2 with it.** With `ARC-01` complete, what remains is `ARC-02`
+(planned 2026-08-27, not started), acceptance, four defect sprints, reconciliation, and assembly.
 
 ---
 
@@ -213,6 +213,42 @@ closure on every `input_text`/`input_code` call (`consoleController.lua:563-580`
 **Ruling: ARC-01 runs before MERGE-01, as originally filed.** The cold review's *"not now"* was
 priced on a merge-cost argument this fact does not support; its other four findings stand and are
 folded in above.
+
+---
+
+## ⬜ ARC-02 — `show` composes `configure`; the user's content is `show`'s alone — **PLANNED, not started**
+
+**Plan: [`validation/reviews/ARC-02-configure-boundary-plan.md`](validation/reviews/ARC-02-configure-boundary-plan.md).**
+Owner-settled design (2026-08-27), grown out of `ARC-01-07`. `configure` runs everything except the
+user's input and refuses `text`/`cursor`; `text`/`cursor` are `show`'s alone; every other flag is
+processed only when non-nil, in both calls. `show{force = true}` becomes the **full re-setup** the
+stakeholder was shown and gated — intent recovery in
+[`validation/reviews/force-and-configure-intent-recovery.md`](validation/reviews/force-and-configure-intent-recovery.md) §1.
+
+**An `ARC` row because it deletes rather than patches:** `re_show`, the `live` filter table, `text`
+inside `apply_config`, and — under pick A(ii) — `state.pending` entirely.
+
+**Two picks are the owner's** (plan §4): how `configure` refuses `text`/`cursor` (warn per Decision
+15's existing scope, or raise as a key belonging to another call — recommended, and it amends
+Decision 15), and whether the hidden-`configure` stash goes with it. The second is the one change in
+the plan that is against **stakeholder-seen** text rather than against machinery invented in this
+cycle, so it carries a deviation record.
+
+| id | step | note |
+|---|---|---|
+| ARC-02-01 | the ledger gate — amend Decision 15's scope paragraph | **owner-gated**, only under pick A(ii). The `ARC-01-03` pattern: amend, do not reinterpret |
+| ARC-02-02 | breaking tests first, one per claim | `force` applies the prompt / applies the highlighter **now** / clears with no `text`; `configure{text}` refuses; hidden `configure{prompt}` shows next time. Each seen to fail first |
+| ARC-02-03 | `text` leaves `apply_config`; `reset_content` on the activation path | the single-policy move. **Trap:** `clear_input` ≠ `set_text('')` — it also clears the selection, the custom status and the history index (plan §2a) |
+| ARC-02-04 | `re_show` deletes; `show` composes | the payoff commit — `BUG-01-06` and its sibling dissolve here |
+| ARC-02-05 | `configure` refuses `text`/`cursor`; `pending` deletes or shrinks | `consoleController` key sets, `consume_pending`, `stash_hidden_configure`, `WIDGET_STORES` |
+| ARC-02-06 | **`BUG-01-08`** — the cursor shapes | must precede any documented "unset by a reasonable default" rule, which is what would make a scalar cursor something a project writes |
+| ARC-02-07 | docs + the deviation record | executes **`FIX-02-21`** and answers **`FIX-02-12`**; `false` as the uniform unset; the balloons rationale into the persistent internals doc |
+| ARC-02-08 | sweep the fixture and specs | the `ARC-01-06` lesson — expect it partly absorbed by `-03`…`-05` |
+
+**Closes or dissolves:** `BUG-01-06` (+ its unfiled sibling), `BUG-01-08`, `FIX-02-21`, `FIX-02-12`,
+and it drops `BUG-01-02` out of the design-escalation column — `highlighter = false` already works,
+so that row becomes ratification. **Not in scope:** `reset()` (predecessor §8d) — a public addition
+needing its own justification line, deliberately kept out of a sprint whose value is deletion.
 
 ---
 
@@ -543,7 +579,7 @@ Not open questions to chase — each has a trigger:
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → ARC-02 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 *`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
 other rows would otherwise be sized against — the ordering principle firing exactly as written.*
