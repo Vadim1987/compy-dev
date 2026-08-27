@@ -1506,3 +1506,72 @@ sharing one answer between the two layers was considered and **rejected** —
 a cached combo is a model of device state with no path back to the truth, the
 shape Decision 30 dissolved `keys_pressed` for, and the dispatch walk is
 deliberately reachable without the gate.
+
+---
+
+## Decision 35 — the configuration boundary: the user's content is `show`'s alone
+
+**Owner-ruled 2026-08-27.** **Amends Decision 15's scope paragraph** (below). Decisions 3, 6 and 18
+stand unchanged: this decision is about *which call may set what*, not about lifecycle or routing.
+
+**The shape.** A config table carries two kinds of field, separated by **who owns the thing it
+sets**:
+
+| | owner | set by |
+|---|---|---|
+| `text`, `cursor` | **the user** — they are typing in it | `show` (the baseline), and `set_text` / `set_cursor` / `clear` while it is up |
+| `prompt`, `highlighter`, `validator`, `on_text_entered`, `on_limit_reached` | **the project** | `show` **and** `configure`, set-if-given, persisting until replaced |
+
+**Decision — four statements, in force together.**
+
+1. **`show` owns the content baseline.** Activation sets the user's content: `text` given is the
+   content, `text` absent is an empty field. `cursor` is applied after it. A project that wants the
+   previous draft back passes it.
+2. **`configure` never touches the user's content.** `text` and `cursor` at `configure` are **keys
+   that belong to another call** and are refused as such — the treatment the lifecycle callbacks
+   already get, with a message naming where they belong. `set_text` and `set_cursor` are the live
+   writes; `clear` is the live reset.
+3. **Everything the project owns is set-if-given, in both calls.** A field the caller did not name
+   is left alone — never cleared, never defaulted. `false` is the unset: every consumer tests
+   truthiness, so a stored `false` takes the same path as a field that was never set. For `prompt`,
+   `''` is an empty label and `false` restores the default one.
+4. **`show` is `configure` plus the content baseline plus activation.** `show{force = true}` over a
+   live widget is a full re-setup — the same path a first `show` takes — and without `force` it is
+   refused with a warning (Decision 3). There is no third policy, and no field that one call applies
+   and the other silently drops.
+
+**Why this shape.**
+
+- **Separation of concerns.** The split is not a list to memorise but a question to ask: *does the
+  user own this?* Content is theirs, and a call that changes settings must not reach into what
+  somebody is typing. Everything else is the project's, and persists because the project is the one
+  who set it.
+- **Least astonishment.** The alternative in force before this decision let one call apply a field,
+  drop a second and defer a third to the *next* activation. A closed config table that raises on a
+  key it does not know, while silently discarding one it does, teaches the wrong lesson twice.
+- **DRY.** `show` composes `configure` rather than reimplementing it. One function applies the
+  project-owned fields, and it is the same function in both paths, so the two cannot drift.
+- **KISS.** One rule and one deliberate exception, in place of three content policies reachable from
+  one function. The exception is the user's content, and it is stated rather than encoded in the
+  order in which two helpers happen to run.
+
+**What this amends.** Decision 15 raises on unrecognised configuration and keeps *runtime-state*
+no-ops to a warning — `show` on an already-active widget without `force`, and
+`set_text`/`set_cursor`/`clear` while hidden. `text`/`cursor` at `configure` **move to the raise
+side**: they are not a legitimate call at an inconvenient moment but a call to the wrong function,
+true whether the widget is up or hidden.
+
+**What this changes for a project.** A hidden `configure` no longer retains `text`/`cursor` for the
+next `show`. Nothing is lost: content for a widget that is about to come up is set **by the `show`
+that brings it up**, before it is visible, and any richer deferral is a local variable in the
+project. The retained `prompt` is unaffected — it is project-owned, applies immediately, and is
+still there at the next `show`.
+
+**Recommended and deliberately not built: `reset()`.** `clear()` resets what the **user** owns.
+Nothing resets what the **project** owns, so returning a widget to its defaults means naming every
+field with its own falsey value. A `compy.input.reset()` — `configure` with the platform defaults —
+completes that symmetry with one verb on each side of the ownership line. It is a public addition
+rather than a deletion, so it is **recommended for a later release, not made part of this one**. If
+it is built: it must not clear content (that is `clear()`'s job, and doing both would make `clear()`
+redundant), and it must state whether the lifecycle callbacks — assignable only on
+`compy.input.callbacks` — fall to it, since "configure with defaults" leaves them standing.

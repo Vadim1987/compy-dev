@@ -260,3 +260,25 @@
   `validation/prompts/ARC-02-plan-cold-review.md`, deliverable
   `validation/outcomes/ARC-02-plan-cold-review.md`. Told it what NOT to read (this track, the two
   predecessor reviews) until it has its own view — the point of a cold spawn.
+
+## 2026-08-27 — owner settles both picks; design recorded as Decision 35
+
+- **Pick A → raise. Pick B → the stash goes.** Owner's grounds on B are better than mine and replace
+  it: (1) **provenance ranking** — deviating from what was *package-approved* is safer than from what
+  was *explicitly requested*, and the stash sentence is the former; (2) **the promise was redundant
+  when made** — text/cursor for a widget about to come up are set by the show() that brings it up,
+  before it is visible, so the stash never bought a capability. Any richer deferral is a project-side
+  local. My "the sentence stays true for the fields configure still accepts" was the narrower,
+  weaker version of that and is superseded.
+- Read as: A(ii) is chosen, since B only follows from it. Stated in the plan so it can be corrected.
+- **Decision 35 written** into `doc/development/decisions/input.md` — the PERSISTENT ledger, so shape
+  + rationale outlive wip/77, and it doubles as the deviation record (2026-08-10 directive
+  satisfied: not a commit message). Framed as the owner asked — a specific shape ruled with
+  rationale (separation of user-owned vs project-owned concerns, least astonishment, DRY, KISS), NOT
+  as an argument with the ephemeral past. Amends Decision 15's scope paragraph; ARC-02-01 executes
+  that amendment.
+- **reset() recommended, not built.** Recorded in Decision 35's closing section with the two
+  constraints on whoever builds it (must not clear content — that is clear()'s job; must state
+  whether the lifecycle callbacks fall to it). Persistent-corpus placement is deliberate: a
+  recommendation left in the wip plan dies with the plan.
+- Cold review of the plan still running; its findings bear on the STEPS, not on the settled shape.

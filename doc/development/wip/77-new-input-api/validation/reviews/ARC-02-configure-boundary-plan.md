@@ -6,7 +6,8 @@ recovery, §6 decomposition, §7 empty values, §8 the four-part proposal) and
 [`ARC-01-07-reconfiguration-policies.md`](ARC-01-07-reconfiguration-policies.md).
 Owner ruling on `prompt`: [`../notes/owner-attestation-prompt-field.md`](../notes/owner-attestation-prompt-field.md).
 
-**Not yet executed.** Two picks are the owner's (§4), and this plan goes to a cold review first.
+**Not yet executed.** Both picks are **settled** (§4, owner 2026-08-27) and the shape is ratified as
+**Decision 35**. A cold review of the steps is running.
 
 ---
 
@@ -32,7 +33,7 @@ show(cfg):
   activate()                                         -- publish handle, shown, render
 
 configure(cfg):
-  refuse text/cursor                                 -- §4 pick A: warn or raise
+  refuse text/cursor                                 -- raises: belongs to another call
   configure_core(cfg)
   render
 ```
@@ -82,7 +83,34 @@ worth knowing before the name is chosen.
   and `consume_pending` / `stash_hidden_configure` go with it. Under A(i) `pending` shrinks to
   `text`/`cursor` instead.
 
-## 4. Two picks for the owner
+## 4. Both picks — SETTLED by the owner, 2026-08-27
+
+**Both went the way the plan recommended, and the second on a better argument than the plan's.**
+Recorded as **Decision 35** in `doc/development/decisions/input.md` — the persistent ledger, so the
+shape and its rationale outlive `wip/77`. That entry *is* the deviation record required by the
+2026-08-10 directive; nothing here rests on a commit message.
+
+**Pick A → (ii), raise.** `text`/`cursor` at `configure` are keys that belong to another call, and
+get the treatment the lifecycle callbacks already get. `ARC-02-01`, the Decision 15 amendment, is
+therefore **in scope and is the gate**.
+
+**Pick B → the hidden stash goes,** and the owner's reasoning replaces the plan's:
+
+> *"Deviating from what he package-approved is safer than from what he requested explicitly, and if
+> the approval did not promise hidden text setup there is no violation at all. If it promised,
+> that's obviously a mistaken promise — text and cursor on a hidden widget can be set during
+> `show()` before it actually shows — and any more complicated deferral can be built from the
+> project side to match a specific need."*
+
+Two things in that outrank the plan's argument. First, the **provenance ranking**: a sentence inside
+a spec that was approved as a package is weaker evidence of intent than a request the stakeholder
+wrote themselves, and the stash is the former. Second, and decisive, the promise was **redundant
+when it was made**: content for a widget that is about to come up is set by the `show` that brings
+it up, *before* it is visible — so the stash never bought a capability, only a second way to spend
+one. The plan's "the sentence stays true for the fields configure still accepts" was a narrower and
+weaker version of this, and is superseded by it.
+
+## 4b. The picks as originally posed (kept for the record)
 
 **Pick A — how `configure` refuses `text`/`cursor`.**
 
@@ -146,4 +174,6 @@ becomes ratification.
   notice.
 - **Scope creep towards `reset()`.** §8(d) of the predecessor is *not* in this plan. It is a public
   addition needing a justification-table line, and it should be decided separately from a sprint
-  whose whole value is deletion.
+  whose whole value is deletion. **Owner-ruled 2026-08-27: not built in this release, but
+  recommended** — the recommendation, with the two constraints on anyone who later builds it, is
+  recorded in **Decision 35**'s closing section rather than left in this ephemeral plan.

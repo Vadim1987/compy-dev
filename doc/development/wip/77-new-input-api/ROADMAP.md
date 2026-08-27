@@ -228,27 +228,32 @@ stakeholder was shown and gated — intent recovery in
 **An `ARC` row because it deletes rather than patches:** `re_show`, the `live` filter table, `text`
 inside `apply_config`, and — under pick A(ii) — `state.pending` entirely.
 
-**Two picks are the owner's** (plan §4): how `configure` refuses `text`/`cursor` (warn per Decision
-15's existing scope, or raise as a key belonging to another call — recommended, and it amends
-Decision 15), and whether the hidden-`configure` stash goes with it. The second is the one change in
-the plan that is against **stakeholder-seen** text rather than against machinery invented in this
-cycle, so it carries a deviation record.
+**Both picks settled** (owner, 2026-08-27) and the shape is ratified as **Decision 35** in
+`doc/development/decisions/input.md` — the persistent ledger, so it outlives `wip/77`, and that entry
+is also the deviation record. `text`/`cursor` at `configure` **raise** as keys belonging to another
+call, so `ARC-02-01`'s Decision 15 amendment is in scope and is the gate; the hidden-`configure`
+stash **goes**, on the owner's ground that the promise was redundant when it was made — content for a
+widget about to come up is set by the `show` that brings it up, before it is visible.
+
+**`reset()` is recommended but not built in this release** (owner). The recommendation and the two
+constraints on whoever builds it live in Decision 35's closing section, not in the ephemeral plan.
 
 | id | step | note |
 |---|---|---|
-| ARC-02-01 | the ledger gate — amend Decision 15's scope paragraph | **owner-gated**, only under pick A(ii). The `ARC-01-03` pattern: amend, do not reinterpret |
+| ARC-02-01 | the ledger gate — amend Decision 15's scope paragraph | **in scope** (pick A settled). Decision 35 is written; this step amends **Decision 15**'s scope paragraph to move `text`/`cursor` at `configure` from the warn side to the raise side. The `ARC-01-03` pattern: amend, do not reinterpret |
 | ARC-02-02 | breaking tests first, one per claim | `force` applies the prompt / applies the highlighter **now** / clears with no `text`; `configure{text}` refuses; hidden `configure{prompt}` shows next time. Each seen to fail first |
 | ARC-02-03 | `text` leaves `apply_config`; `reset_content` on the activation path | the single-policy move. **Trap:** `clear_input` ≠ `set_text('')` — it also clears the selection, the custom status and the history index (plan §2a) |
 | ARC-02-04 | `re_show` deletes; `show` composes | the payoff commit — `BUG-01-06` and its sibling dissolve here |
-| ARC-02-05 | `configure` refuses `text`/`cursor`; `pending` deletes or shrinks | `consoleController` key sets, `consume_pending`, `stash_hidden_configure`, `WIDGET_STORES` |
+| ARC-02-05 | `configure` refuses `text`/`cursor`; `pending` **deletes** | `consoleController` key sets, `consume_pending`, `stash_hidden_configure`, `WIDGET_STORES` |
 | ARC-02-06 | **`BUG-01-08`** — the cursor shapes | must precede any documented "unset by a reasonable default" rule, which is what would make a scalar cursor something a project writes |
 | ARC-02-07 | docs + the deviation record | executes **`FIX-02-21`** and answers **`FIX-02-12`**; `false` as the uniform unset; the balloons rationale into the persistent internals doc |
 | ARC-02-08 | sweep the fixture and specs | the `ARC-01-06` lesson — expect it partly absorbed by `-03`…`-05` |
 
 **Closes or dissolves:** `BUG-01-06` (+ its unfiled sibling), `BUG-01-08`, `FIX-02-21`, `FIX-02-12`,
 and it drops `BUG-01-02` out of the design-escalation column — `highlighter = false` already works,
-so that row becomes ratification. **Not in scope:** `reset()` (predecessor §8d) — a public addition
-needing its own justification line, deliberately kept out of a sprint whose value is deletion.
+so that row becomes ratification. **Not in scope, but recommended:** `reset()` (predecessor §8d) — a public addition
+needing its own justification line, deliberately kept out of a sprint whose value is deletion, and
+carried forward as a recommendation in Decision 35 rather than lost with `wip/77`.
 
 ---
 
