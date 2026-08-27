@@ -1,8 +1,17 @@
-# Where the project stands — the four files to open
+# Status over view
 
 A bookmark page, nothing more. **It is not updated dynamically**, it holds no state of its own, and
-it does not survive the release: it exists so that "where are we?" starts with four links instead of
+it does not survive the release: it exists so that "where are we?" starts with a few links instead of
 a directory listing.
+
+## Dev-facing documentation (describes NEW input, still being actively updated)
+
+* [doc/input_api.md](../../../input_api.md) -- what projects can use (new API)
+* [doc/internals/user_input.md](../../internals/user_input.md) -- what is under the cover
+
+For design decisions and technical debt check list  below
+
+## Where development stands — the four files to open
 
 Three of the four are **ledgers** — persistent, and they outlive this working tree. The fourth is
 the plan, which is ephemeral and moves fast. The contract binding them is
