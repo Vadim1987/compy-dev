@@ -1,13 +1,10 @@
-require('model.serial.init')
-require('model.serial.backend_android')
-
 --- Device check for the serial API. Not part of the API and
---- not meant to survive review: it opens a port, prints what
---- the callbacks report, and sends one line once connected.
+--- not meant to survive review: it prints what arrives on
+--- the platform port and sends one line once connected.
 ---
---- serial_probe()            start, print events, send PING
+--- serial_probe()            print events, send PING
 --- serial_probe('print(1)')  same, but send that line
---- serial_probe(false)       stop and release
+--- serial_probe(false)       stop printing, release fields
 
 --- Byte values, so an unprintable reply is still readable
 --- @param chunk string
@@ -22,21 +19,19 @@ end
 
 --- @param arg string|boolean|nil
 function serial_probe(arg)
+  local cs = SerialPort:table_for('console')
   if arg == false then
-    if SerialPort then SerialPort:stop() end
-    SerialPort = nil
+    cs.onConnect = nil
+    cs.onDisconnect = nil
+    cs.onLine = nil
+    cs.onBytes = nil
     print('probe: stopped')
     return
   end
-  if SerialPort then
-    print('probe: already running, stop it with false')
-    return
-  end
   local line = type(arg) == 'string' and arg or 'PING'
-  SerialPort = Serial.new(AndroidBackend.new())
-  local cs = SerialPort:table_for('console')
-  cs.onConnect = function(info)
-    print('probe: connected ' .. tostring(info and info.name))
+  local hello = function(info)
+    print('probe: connected ' ..
+      tostring(info and info.name or 'already'))
     if info and info.acm then
       print('probe: acm refused, ' .. info.acm)
     end
@@ -44,6 +39,7 @@ function serial_probe(arg)
     print('probe: sent ' .. line .. ' -> ' ..
       tostring(ok) .. ' ' .. tostring(err))
   end
+  cs.onConnect = hello
   cs.onDisconnect = function()
     print('probe: disconnected')
   end
@@ -53,5 +49,9 @@ function serial_probe(arg)
   cs.onBytes = function(chunk)
     print('probe: bytes ' .. #chunk .. ' ' .. hex_of(chunk))
   end
-  print('probe: started, plug the micro:bit in')
+  if cs.isConnected() then
+    hello()
+  else
+    print('probe: started, plug the micro:bit in')
+  end
 end

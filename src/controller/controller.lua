@@ -349,10 +349,6 @@ Controller = {
         end
       end
       if RobotPort then
-        for _, f in ipairs(RobotPort.serial:update()) do
-          print('robot fault [' .. f.env .. ']: ' ..
-            tostring(f.err))
-        end
         local fault = RobotPort:update()
         if fault then
           print('robot fault: ' .. fault)

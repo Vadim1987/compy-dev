@@ -522,6 +522,16 @@ function ConsoleController.prepare_env(cc)
     love.event.quit()
   end
 
+  require('model.serial.init')
+  if love.system.getOS() == 'Android' then
+    require('model.serial.backend_android')
+    SerialPort = Serial.new(AndroidBackend.new())
+  else
+    require('model.serial.backend_null')
+    SerialPort = Serial.new(NullBackend.new())
+  end
+  compy_namespace.serial    = SerialPort:table_for('console')
+
   require('model.serial.probe')
   require('model.robot.probe')
 
@@ -692,6 +702,7 @@ function ConsoleController.prepare_project_env(cc)
   local terminal             = cc.model.output.terminal
   local compy_namespace      = get_compy_namespace(terminal)
   compy_namespace.text_input = input_text
+  compy_namespace.serial     = SerialPort:table_for('program')
   project_env.compy          = compy_namespace
 
   project_env.eval           = LANG.eval
