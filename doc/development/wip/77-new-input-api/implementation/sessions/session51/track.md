@@ -26,3 +26,12 @@
   malformed shapes (raise), valid out-of-range pairs (clamp), and false (unset).
 - BUG-01-09 / T-MULTILINE-STR remains an explicit, pre-existing out-of-scope
   defect; ARC-02 neither hides nor worsens it. The suite remains **990 / 0 / 0 /
+  10**; all ARC commits pass `git show --check`.
+- Owner approved proceeding. ARC-02's COMPLETE roadmap marker stands; next is
+  the ordered defect-sprint block, beginning with BUG-01.
+
+## 2026-08-27 — roadmap correction
+
+- The roadmap's sprint section already marked ARC-02 COMPLETE, but its one-line
+  sequence omitted the matching check. Corrected the navigational inconsistency
+  before wrapping; the next unfinished row is BUG-01-03.
