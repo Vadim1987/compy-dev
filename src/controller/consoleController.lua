@@ -649,13 +649,21 @@ end
 --- project's own show()/configure() line.
 --- Runtime STATE no-ops (the widget already active, or
 --- hidden) are NOT this: they keep warning, per Decision 3.
+---
+--- Level 4 puts the trace on the project's own line, and holds
+--- only while every caller sits at the same depth: project →
+--- the api table's one-line closure → api_show/api_configure →
+--- here. That is why `configure` is lifted out into
+--- `api_configure` rather than doing the work inline — inline
+--- it was one frame shallower, and the same constant pointed
+--- `show`'s raise at this file instead of at the project.
 --- @param cfg table
 --- @param fname string
 --- @param allowed table
 local function check_keys(cfg, fname, allowed)
   for key in pairs(cfg) do
     if not allowed[key] then
-      error(bad_key_message(fname, key), 3)
+      error(bad_key_message(fname, key), 4)
     end
   end
 end
@@ -705,6 +713,22 @@ local function api_show(get_widget, state, cfg)
   merge_callback_keys(state, next_cfg)
   local ui = get_widget()
   if ui then ui:show(next_cfg) end
+end
+
+--- Sibling of api_show, and lifted out for the same reason it
+--- is: both entry points must reach check_keys at the same
+--- call depth, or one shared error level cannot put the trace
+--- on the project's line for both.
+--- @param get_widget fun(): UserInputController?
+--- @param state table
+--- @param cfg table?
+local function api_configure(get_widget, state, cfg)
+  local next_cfg = cfg or { }
+  check_keys(next_cfg, 'compy.input.configure',
+    CONFIGURE_KEYS)
+  merge_callback_keys(state, next_cfg)
+  local ui = get_widget()
+  if ui then ui:configure(next_cfg) end
 end
 
 --- @param get_widget fun(): UserInputController?
@@ -787,12 +811,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
     -- Between runs there is no widget, so this is inert rather
     -- than a raise — the rule the rest of this surface follows.
     configure = function(cfg)
-      local next_cfg = cfg or { }
-      check_keys(next_cfg, 'compy.input.configure',
-        CONFIGURE_KEYS)
-      merge_callback_keys(state, next_cfg)
-      local ui = get_widget()
-      if ui then ui:configure(next_cfg) end
+      api_configure(get_widget, state, cfg)
     end,
     -- doc/development/internals/user_input.md, "clear()": empty
     -- content + cursor to start, no callback; no-op + warn

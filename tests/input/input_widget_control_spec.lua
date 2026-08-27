@@ -85,6 +85,25 @@ describe('input surface: widget control #input', function()
         assert.matches('result', err)
       end)
 
+    -- doc/development/decisions/input.md, Decision 15,
+    -- Consequence: the trace lands on the PROJECT's own
+    -- show()/configure() line. A trace pointing inside
+    -- consoleController tells the author nothing about which
+    -- of their calls was wrong, which is most of the value of
+    -- raising instead of warning.
+    it('the raise points at the project, not the framework',
+      function()
+        local input = F.compy_input()
+        for _, call in ipairs({
+          function() input.show({ nope = 1 }) end,
+          function() input.configure({ nope = 1 }) end,
+        }) do
+          local _, err = pcall(call)
+          assert.is_falsy(string.find(
+            tostring(err), 'consoleController', 1, true))
+        end
+      end)
+
     -- The likeliest mistake is a lifecycle callback in the
     -- table instead of on compy.input.callbacks, so it earns
     -- a message that says where the assignment belongs.
