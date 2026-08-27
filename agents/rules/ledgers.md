@@ -69,6 +69,16 @@ The line between the first two is **release scope** — not severity, and not in
 - **BACKLOG** — real, acknowledged, and deliberately deferred past it.
 - **RETIRED** — paid, or turned out not to be debt.
 
+**`ACTIVE` entries carry a `T-` slug; the other two sections do not need one.** Same shape as the
+decisions ledger's `D-SLUG` — uppercase mnemonic, `T-` prefix, 16 characters at most, declared first
+in the heading with the prose after. **An entry earns its slug when it becomes `ACTIVE`** and keeps
+it thereafter.
+
+The asymmetry is deliberate rather than lazy: a decision is cited from `src/` and `tests/`, which is
+what makes its numbering dangerous, while a debt entry is cited from **plans**. So the entries that
+need a stable handle are exactly the ones a roadmap row points at, and slugging a hundred `BACKLOG`
+entries that nobody references is ceremony.
+
 Two consequences worth stating, because both have been got wrong:
 
 - **Partly-paid debt is not retired.** An entry marked resolved-in-part whose own "Revisit" line
@@ -122,9 +132,14 @@ free to split, merge and renumber its rows (`roadmap.md` rules 2 and 3) without 
 at all, which is the entire point: **the register is stable at exactly the rate the project's
 position changes, and the roadmap is stable at the rate the plan changes.**
 
+**A row cites the entry's slug**, which is why `ACTIVE` entries have one — a pointer to a
+heading is a pointer to something mutable.
+
 An `ACTIVE` debt entry with no roadmap row pointing at it is a **visible gap** — something is
 release-blocking and nothing is scheduled to do it. That cross-check is worth running before any
-release.
+release, and it earned its place the first time it was run: it found an entry that was not
+release-blocking at all, filed `ACTIVE` by a too-broad instruction, and the missing row was the
+symptom rather than the cause.
 
 ## 6. One timeline, still
 

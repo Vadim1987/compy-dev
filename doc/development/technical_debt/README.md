@@ -4,6 +4,16 @@ A running list of known debt — discovered during work but deliberately not add
 the time it surfaced. Entries are matter-of-fact context, not defects to fix on sight; each
 notes where it lives, why it stands, and when it is worth revisiting.
 
+**Every `ACTIVE` entry carries a `T-` slug** — a short uppercase mnemonic on a `T-` prefix, capped at
+16 characters, declared **first in the heading** with the prose after it. That is what a roadmap row
+cites when it points at the goal it is working towards, and it makes the whole class greppable
+(`grep -rn '\bT-[A-Z]'`). The shape deliberately matches the decisions ledger's `D-` slug, and the
+prefix keeps the two apart for good.
+
+An entry **earns its slug when it becomes `ACTIVE`, and keeps it afterwards.** `BACKLOG` and
+`RETIRED` entries are read rather than cited, so slugging all of them would be ceremony: unlike a
+decision, a debt entry is not cited from `src/` or `tests/`.
+
 Each file sorts its entries into three sections, in release-scope order — not severity, not
 intent: **ACTIVE** must be resolved before the current release ships. **BACKLOG** is real
 and acknowledged debt, but deliberately deferred past the current release. **RETIRED** is

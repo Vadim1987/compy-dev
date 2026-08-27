@@ -22,7 +22,7 @@ paid, or turned out not to be debt.
 
 > REMARK: its not a defect, but convention -- gfx is alias for love.graphics, sfx is alias for compy.audio
 
-### `gfx` implicit global in `controller.lua`
+### T-GFX-GLOBAL — `gfx` implicit global in `controller.lua`
 
 - **Where:** `src/controller/controller.lua` — `set_love_update` / `set_love_draw` (and
   other drawing call sites in the same file) use `gfx`, a free variable not set in the file
@@ -33,7 +33,7 @@ paid, or turned out not to be debt.
 - **Revisit:** When the controller's load/aliasing is next reworked — prefer a module-top
   `local gfx = love.graphics` per the standard-aliases convention.
 
-### The changelog's version number has never been settled against the scale of the change
+### T-VERSION-NUM — The changelog's version number has never been settled against the scale of the change
 
 - **Where:** `CHANGELOG.md`, and three independent askers — the file's own `REMARK:`,
   `doc/development/internals/user_input.md:470`, and
@@ -46,7 +46,7 @@ paid, or turned out not to be debt.
 - **Roadmap:** `CHG-01-04` is the task. The rest of `CHG-01` was done by the ledger
   restructuring (2026-08-27); this part was not.
 
-### The register's resolved entries claim resolution that was never verified
+### T-RETIRED-UNVER — The register's resolved entries claim resolution that was never verified
 
 - **Where:** `input.md`'s `RETIRED` section — 21 entries carrying a `RESOLVED` marker.
 - **What is owed:** the 2026-08-27 restructuring sorted them on their **headings**. Not one was
@@ -57,7 +57,7 @@ paid, or turned out not to be debt.
   to run it rather than to skip it.
 - **Roadmap:** `FIX-02-05`.
 
-### The decisions ledger is cited by number, and numbers resolve to the wrong entry when they move
+### T-DEC-NUMBERED — The decisions ledger is cited by number, and numbers resolve to the wrong entry when they move
 
 - **Where:** `doc/development/decisions/input.md`; roughly 165 citations across `src/` and
   `tests/`.

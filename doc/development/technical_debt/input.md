@@ -27,7 +27,7 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-### `combo_string` does not normalise the case of a textinput token
+### T-COMBO-CASE — `combo_string` does not normalise the case of a textinput token
 
 - **Where:** `src/controller/controller.lua`, `combo_string`; the
   registration side is `Key.new_handler_table`'s normalising `__newindex`
@@ -47,7 +47,7 @@ paid, or turned out not to be debt.
   trigger; if a framework mechanism is adopted instead, a wildcard one-shot
   needs no combo lookup and this stays a corner.
 
-### Decision 35 — the `show`/`configure` content-ownership boundary is not built
+### T-CFG-BOUNDARY — the `show`/`configure` content-ownership boundary is not built (Decision 35)
 
 - **Where:** `consoleController.lua` (`PER_SHOW_KEYS`, `check_keys`,
   `stash_hidden_configure`) and `userInputController.lua` (`re_show`).
@@ -64,7 +64,7 @@ paid, or turned out not to be debt.
   the pre-Decision-35 internals doc, not any post-35 contract — the docs need
   the same pass as the code, once the implementing work lands.
 
-### A highlighter cannot be turned off — `false` already does it, unratified
+### T-HL-UNSET — A highlighter cannot be turned off — `false` already does it, unratified
 
 - **Where:** `src/controller/userInputController.lua`, `apply_config`;
   `userInputModel.lua:384/393`.
@@ -79,7 +79,7 @@ paid, or turned out not to be debt.
 - **Revisit:** ratify `false` as the uniform "no such thing" and document it,
   or reject it and build dedicated unset machinery instead.
 
-### `turtle` double-handles its own keys
+### T-TURTLE-DUP — `turtle` double-handles its own keys
 
 - **Where:** `src/examples/turtle/main.lua`.
 - **State:** a finding from the input-API migration — turtle's own key
@@ -90,7 +90,7 @@ paid, or turned out not to be debt.
 - **Revisit:** with the input guide's missing statement that a shown widget
   always consumes keyboard input — this defect is that gap's symptom.
 
-### `set_cursor` clamps by byte offset; the boundary event measures characters
+### T-CURSOR-BYTES — `set_cursor` clamps by byte offset; the boundary event measures characters
 
 - **Where:** the cursor-setting path in `userInputController.lua` /
   `userInputModel.lua`.
@@ -100,7 +100,7 @@ paid, or turned out not to be debt.
 - **Why it stands:** small, unresolved design call, not yet ruled.
 - **Revisit:** decide which unit is authoritative and make the other agree.
 
-### `show{force = true}` applies some keys, drops one, defers another
+### T-FORCE-PARTIAL — `show{force = true}` applies some keys, drops one, defers another
 
 - **Where:** `consoleController.lua` — `PER_SHOW_KEYS` / `CALLBACK_KEYS`, the
   `force` path.
@@ -117,7 +117,7 @@ paid, or turned out not to be debt.
   re-setup it was reviewed as removes this row's defect along with its
   siblings; track alongside the configuration-boundary work.
 
-### balloons keeps a shadow copy of the widget's label, re-pushed every cycle
+### T-BALLOON-LABEL — balloons keeps a shadow copy of the widget's label, re-pushed every cycle
 
 - **Where:** `src/examples/balloons` — `ui_messages.hint` and
   `ui_draw_hint()`.
@@ -131,7 +131,7 @@ paid, or turned out not to be debt.
   user-visible misbehaviour found.
 - **Revisit:** when balloons is next touched for the label-stickiness work.
 
-### `show{cursor = {}}` raises a raw Lua error from inside the framework
+### T-CURSOR-SHAPE — `show{cursor = {}}` raises a raw Lua error from inside the framework
 
 - **Where:** `userInputController.lua`, `set_cursor_pos` — `math.min(line,
   n)` with no nil guard.
@@ -147,7 +147,7 @@ paid, or turned out not to be debt.
   should mean as "unset," which cannot be documented while the path still
   raises.
 
-### `set_text` silently ignores a multi-line *string*
+### T-MULTILINE-STR — `set_text` silently ignores a multi-line *string*
 
 - **Where:** `userInputController.lua`, `UserInputModel:set_text`.
 - **State:** `self.entered` is assigned only when `#string.lines(text) == 1`;
@@ -161,7 +161,7 @@ paid, or turned out not to be debt.
 - **Revisit:** belongs with the configuration-boundary work already touching
   `apply_config`/`set_text`.
 
-### The highlighter has two homes, and one of them lags
+### T-HL-TWO-HOMES — The highlighter has two homes, and one of them lags
 
 - **Where:** the widget's `callbacks` table (the sticky store, shared with
   the `compy.input.callbacks` surface) and `model.evaluator`, which is what
