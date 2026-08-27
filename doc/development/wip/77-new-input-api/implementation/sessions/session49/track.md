@@ -110,3 +110,38 @@
   USER's in-progress text; `configure` changes the PROJECT's surface and never touches content.
   Same axis as the attestation's rule. The spec (`design/spec.md:148-151`) says force "reconfigures
   in-place", which is a THIRD thing and matches neither — frozen-design drift, noted not edited.
+
+## 2026-08-27 — force: intent recovered from the reviewed spec
+
+- Owner: force needs thinking through; can we recover stakeholder intent on forced vs non-forced
+  show, and first vs subsequent calls? Did they assume show alone would be the config surface? Would
+  visible/invisible be a better split? Core intent stated: **do not override the stakeholder ruling,
+  but recommend a better shape and delete accidental complexity within it.**
+- **Recovered, and it is exact.** The round-2 stakeholder was responding to a spec paragraph
+  (`spec.versions/version01.md:174-186`) that read *"`force = true`: the singleton is then
+  reconfigured in-place with the new config (content replaced if `text` is provided, preserved
+  otherwise)"*. Their instruction — *"offer a flag for 'I know what I'm doing — override the existing
+  one'"* — gates THAT. So force = full re-setup over a live session.
+- **The implementation kept the parenthetical and dropped the main clause.** Spec narrows *content*;
+  code narrows *everything but content*. Not a weaker flag — the complement of it. That single
+  inversion explains why force is weaker than configure and why BUG-01-06 + the deferral exist.
+- **`configure` was in the spec they reviewed** (`version01.md:200`), and that spec told them in as
+  many words to use it for live prompt/validator/highlighter changes. They quoted a sentence from
+  two paragraphs away and objected to `keys_pressed` — so they read it. **Seen and unobjected**, in
+  the same round they tightened `show`. Answers "is configure earned": need ratified (owner's
+  balloons ruling), two-entry-point shape is ours.
+- **Visible/invisible split: rejected, decisively.** The label is visible, so prompt would be
+  show-only, so mid-run relabelling would need show{force} = full re-setup = wipes the player's
+  half-typed command. It breaks balloons, the use case that created configure. Also the line is not
+  crisp (highlighter is visibly colouring; the validator is invisible but its errors are displayed).
+  The working cut is the owner's own: **ownership, not visibility.**
+- `force` has **zero consumers in-tree** (no example uses it) → changing its semantics is cheap.
+- **Found on the way, filed as FIX-02-22:** three documents say a hidden widget keeps its content
+  (`spec.md:155` — contradicting its own §3 five lines up; the round-2 reviewed text; and
+  **Decision 3 in the PERSISTENT ledger**, amended last session). Code clears, suite pins it,
+  **turtle depends on it in a comment**. Disposition: fix the documents. FR-3/FR-4 are not violated —
+  they are about not tearing the widget down, which still holds.
+- Roadmap: FIX-02-12 and FIX-02-21 are NOT duplicates but are **one edit** (same paragraph) —
+  cross-linked rather than merged. FIX-02-22 co-located with FIX-02-13 by cross-reference, kept at
+  the numeric end so rule 2's ordering is not broken for one insert. BUG-01-06 annotated as
+  *may dissolve*.
