@@ -288,28 +288,6 @@ local reset_content = function(self, cfg)
   end
 end
 
---- Re-show over an already-shown widget: the secondary path,
---- and deliberately the narrow one. Only the text subset of cfg
---- applies; a full live reconfigure is configure()
---- (doc/development/internals/user_input.md,
---- "configure(config)").
---- @param self UserInputController
---- @param cfg table
-local re_show = function(self, cfg)
-  -- doc/development/decisions/input.md, Decision 3
-  -- (warn-don't-swallow): a plain show() over an active widget
-  -- is suppressed; say so.
-  if not cfg.force then
-    Log.warn('UserInputController:show ignored — widget already'
-      .. ' active (pass force=true to override)')
-    return
-  end
-  if cfg.text ~= nil then
-    self.model:set_text(cfg.text)
-    self:update_view()
-  end
-end
-
 --- The activation path: content baseline, then the
 --- project-owned fields, then the cursor, then publish the
 --- handle and render once. `text` and `cursor` are here and not
@@ -341,12 +319,22 @@ local open_widget = function(self, cfg)
   self:update_view()
 end
 
---- Activate the widget. Shown already, it re-shows instead —
---- a no-op unless force=true.
+--- Activate the widget. Over a widget that is already up this
+--- is refused unless force=true, and a forced show is the SAME
+--- path a first one takes — a full re-setup, not a narrower
+--- second policy (doc/development/decisions/input.md,
+--- Decision 35, statement 4).
 --- @param config table?
 function UserInputController:show(config)
   local cfg = config or {}
-  if self.shown then return re_show(self, cfg) end
+  -- doc/development/decisions/input.md, Decision 3
+  -- (warn-don't-swallow): a plain show() over an active widget
+  -- is suppressed; say so.
+  if self.shown and not cfg.force then
+    Log.warn('UserInputController:show ignored — widget already'
+      .. ' active (pass force=true to override)')
+    return
+  end
   open_widget(self, cfg)
 end
 

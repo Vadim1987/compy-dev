@@ -148,16 +148,50 @@ describe('input surface: widget control #input', function()
           F.widget:get_text())
       end)
 
-    -- force with NO text: a reconfiguration that changes
-    -- nothing — content survives (it is not a hidden
-    -- reset; doc/input_api.md, "`show(config)`").
-    it('force without text leaves content intact',
+    -- force with NO text CLEARS, because a forced show is a
+    -- full re-setup and absent text means an empty field
+    -- (doc/development/decisions/input.md, Decision 35,
+    -- statements 1 and 4). This reverses the earlier rule that
+    -- content survived a bare forced show; a project that wants
+    -- the draft kept passes it, or does not pass force.
+    it('force without text clears the content',
       function()
         local input = F.compy_input()
         input.show({ text = 'keep' })
         input.show({ force = true })
-        assert.same({ 'keep' }, F.widget:get_text())
+        assert.is_true(F.widget:is_empty())
       end)
+
+    -- A forced show applies every project-owned field, not the
+    -- text subset alone (Decision 35, statement 4: there is no
+    -- field one call applies and the other silently drops).
+    it('force applies the prompt', function()
+      local input = F.compy_input()
+      input.show({ text = 'hi', prompt = 'first?' })
+      input.show({ force = true, prompt = 'second?' })
+      assert.equal('second?', F.widget.model:get_label())
+    end)
+
+    -- The highlighter is the field that used to be DEFERRED to
+    -- the next activation rather than dropped, because it is
+    -- read off the evaluator and only the shared config path
+    -- writes there. It must land on this show, now.
+    it('force applies the highlighter now, not at the ' ..
+      'next activation', function()
+      local input = F.activate_project()
+      local marker = { { 'x' } }
+      input.show({
+        text        = 'hi',
+        highlighter = function() return { { 'old' } } end,
+      })
+      input.show({
+        force       = true,
+        highlighter = function() return marker end,
+      })
+      F.session.type('a')
+      assert.equal(marker,
+        F.widget.model:get_highlight().hl)
+    end)
 
     -- After hide the widget stops being the surface the
     -- route forwards to: typed text lands in the console,
