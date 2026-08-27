@@ -145,3 +145,27 @@
   cross-linked rather than merged. FIX-02-22 co-located with FIX-02-13 by cross-reference, kept at
   the numeric end so rule 2's ordering is not broken for one insert. BUG-01-06 annotated as
   *may dissolve*.
+
+## 2026-08-27 — owner proposes show() = configure() + guard + activate
+
+- Owner's question: are configure and show{force} identical bar visibility, so should show simply
+  invoke configure (force gate before, activation after)?
+- **Decomposition right, differentiator wrong.** On an ALREADY-ACTIVE widget activation is a no-op,
+  so the two differ by exactly one thing: show resets the USER's content baseline, configure never
+  touches it. Visibility is the incidental difference; content is the essential one. That is the
+  ownership rule expressed as code.
+- **The enabling move is the one this whole row started from: take `text` OUT of `apply_config`.**
+  That function holds two policies precisely because `text` (user-owned exception) lives inside the
+  project-owned set-if-given rule, with its other half (`clear_input`) one level up in open_widget.
+  Move content onto the activation path → apply_config becomes single-policy and IS the configure
+  core; show composes it. The original ARC-01-07 question dissolves structurally instead of being
+  documented around.
+- Three things then delete themselves: `re_show`'s branch (→ open_widget); `configure`'s hand-built
+  `live` filter table (exists only to keep text out of apply_config); `prompt`'s slot in
+  `state.pending` (project-owned + sticky ⇒ just write it; only text/cursor need pending).
+- Verified containment: apply_config / re_show / open_widget are file-local with no callers outside
+  `userInputController.lua` (apply_config: exactly two, both in-file).
+- Does NOT decompose, and is a real call: hidden `configure{text=…}` — stash for the next show
+  (today, documented) vs warn+refuse like `set_text` does when hidden. Refusing deletes the last of
+  `pending` but is a documented behaviour change; belongs with FIX-02-22's disposition.
+- Materialized as §6 of `validation/reviews/force-and-configure-intent-recovery.md`.

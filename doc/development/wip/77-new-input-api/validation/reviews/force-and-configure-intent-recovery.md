@@ -130,7 +130,72 @@ D-2 stands in full: a second `show()` is blocked by default, `force` opts in.
 Net effect: three content policies collapse to **one rule and one deliberate exception**, and three
 filed rows dissolve instead of being patched — the `ARC` pattern, at a much smaller scale.
 
-## 6. Found while doing this — the `hide()` contract says something the code does not do
+## 6. The shape that falls out — `show` built from `configure` (owner's question, 2026-08-27)
+
+> *"Then `configure` and `show{force}` become identical in behaviour, the only difference being that
+> `show` also activates visibility? Does it mean `show()` should simply invoke `.configure()`
+> (guarding by the force flag before, and activating visibility after)?"*
+
+**The decomposition is right; the differentiator is not visibility, it is content.** On an
+already-active widget, activation is a no-op — so under §5.1 `show{force}` and `configure` differ by
+exactly one thing: `show` resets the **user's** content baseline (`text` given ⇒ set, absent ⇒
+clear) and `configure` never touches it. That *is* the ownership rule, expressed as code rather than
+as prose:
+
+```
+show(cfg):
+  if shown and not cfg.force then warn; return end   -- D-2, the stakeholder's gate
+  reset_content(cfg)                                 -- USER-owned:   given ⇒ set, absent ⇒ clear
+  apply_project_config(cfg)                          -- PROJECT-owned: set-if-given (== configure)
+  place_cursor(cfg)                                  -- after text, as today
+  activate()                                         -- publish handle, shown = true, render
+
+configure(cfg):
+  apply_project_config(cfg)
+  render
+```
+
+**The enabling move is smaller than it looks, and it is the one this row started from.** Take `text`
+out of `apply_config`. Today that function carries `prompt`, `text`, `highlighter` and the callbacks,
+which is *why* it holds two policies — `text` is the user-owned exception living inside the
+project-owned rule, and `open_widget`'s `clear_input` is its other half, sitting one level up. Move
+content handling wholly onto the activation path and `apply_config` becomes single-policy: pure
+set-if-given over project-owned fields. **It then *is* the configure core**, and `show` composes it
+rather than duplicating it.
+
+`reset_content` is the whole exception, in four lines that read as the rule:
+
+```lua
+local reset_content = function(self, cfg)
+  if cfg.text == nil then self.model:clear_input()
+  else self.model:set_text(cfg.text) end
+end
+```
+
+**Three pieces of machinery then delete themselves** rather than needing rules written about them:
+
+- **`re_show`'s bespoke branch** — the forced path becomes `open_widget`, the same code the first
+  call runs. With it go BUG-01-06 and the deferral sibling.
+- **`UserInputController:configure`'s hand-built `live` table** (`{ prompt = …, highlighter = … }`
+  plus the `CONFIG_CALLBACKS` loop) — it exists *only* to keep `text` out of `apply_config`. Once
+  `apply_config` cannot see `text`, passing the whole config is safe and the filter is redundant.
+- **`prompt`'s slot in `state.pending`** — a hidden `configure{prompt = …}` currently stashes the
+  label for the next `show`, but `prompt` is project-owned and sticky, so it can simply be written.
+  Only `text`/`cursor` need a pending store at all. That also removes the edge where a `show` that
+  ignores a `prompt` still consumes the pending one.
+
+Containment is good: `apply_config`, `re_show` and `open_widget` are file-local to
+`src/controller/userInputController.lua` and have no callers outside it (`apply_config`: two, both
+in that file). The `compy.input` layer changes only where `pending` shrinks.
+
+**What does not decompose, and is a real call rather than a mechanical one:** hidden
+`configure{text = …}`. There is no session to apply content to, so it either stashes for the next
+`show` (today's behaviour, documented in `doc/input_api.md`) or it warns and refuses, as `set_text`
+already does while hidden. Both are defensible; refusing is the simpler story and deletes the last
+of `pending`, but it is a documented behaviour change and belongs with the `FIX-02-22` disposition
+rather than being folded in silently.
+
+## 7. Found while doing this — the `hide()` contract says something the code does not do
 
 Not part of the force question; surfaced by the same intent recovery and filed as **`FIX-02-22`**.
 
