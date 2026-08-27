@@ -464,6 +464,42 @@ question, not resolved here.
   stakeholders' ask, and to leave them room to contest the suggested fix —
   a glitch may have had a reason nobody here can see.
 
+### A raise at `project_open` is swallowed whole, so pen-and-paper projects report errors worse than any other kind
+
+- **Status:** open — found while probing the dispatch path's nil-safety during
+  the widget-lifetime work; **not a feature regression**, the gate below is
+  verbatim at the PR base. Sibling of the entry above: same class (what the
+  author sees depends on something they did not choose), different cause —
+  there it is *which `pcall` caught it*, here it is *what `app_state` happened
+  to be*.
+- **Where:** `controller.lua` `user_error_handler` → `consoleController.lua`
+  `suspend_run`, whose first act is `if love.state.app_state ~= 'running' then
+  return end`.
+- **State:** a raise inside a hook or a `love.*` handler reaches
+  `user_error_handler`, which calls `suspend_run` — and `suspend_run` does
+  nothing unless the app is in `'running'`. A **non-blocking** project settles
+  in `'project_open'` and lives there (see "Input-only / pointer-only projects
+  stay live in `project_open`"), so for that whole lifetime a raise produces
+  **no error window and no state change**. The only trace is the console line
+  `user_error_handler` prints afterwards, and in pen-and-paper mode the
+  project's canvas is what the user is looking at.
+- **Confirmed by probe, not by reading:** the same raise in the same hook sets
+  `suspend_msg` while `'running'` and sets nothing at `'project_open'`.
+- **Why it matters:** this is the class of project — `sapper` is the shipped
+  example — whose *entire* logic runs in hooks. Every authoring error in the
+  part of the program that does the work is invisible, while the same error in
+  the same project's top-level code is not. The gate reads as a guard against
+  suspending something that is not running; the projects it silences are
+  running in every sense the author cares about.
+- **Options:** (a) drop the `'running'` gate and let `suspend_run` fire from
+  `'project_open'` too — needs a check that the snapshot/resume path is sane
+  from that state; (b) leave the gate and give the `project_open` case its own
+  surfacing; (c) leave as is. No recommendation yet: (a) is small but touches
+  the suspend path, which is not this feature's territory.
+- **Revisit:** with the entry above — same decision-maker, same session,
+  **after the PR merges**. Both are pre-feature behaviour and neither belongs
+  in the stakeholders' ask.
+
 ### The error lock is correct, documented, and hostile
 
 - **Status:** owner ruled (2026-07-31): behaviour is pre-feature, so leave it;
