@@ -39,9 +39,23 @@ ledger, not here.
 - **RETIRED** — decisions that no longer rule anything: superseded in full by a later one, or kept
   as a correction (an entry that turned out never to have been a decision).
 
-**Retired never means deleted.** Entries keep their number and their full text, because comments in
-`src/` and `tests/` cite them by number and a citation that resolves to nothing is worse than one
-that resolves to a tombstone. A retired heading names what stands in its place.
+**Retired does not mean deleted — while the ledger is numbered.** Entries keep their number and their
+full text, because comments in `src/` and `tests/` cite them by number, and a citation that resolves
+to nothing is worse than one that resolves to a tombstone. A retired heading names what stands in
+its place.
+
+**Vacuuming retired entries is nevertheless allowed, and is an obvious operational need** (owner,
+2026-08-27). Two conditions, and no formal process is required beyond them:
+
+- **Only entries that were not the stakeholder's.** A ruling we made for ourselves may be swept once
+  it rules nothing. A ruling that came from outside is a record of what was asked, and it stays.
+- **Citations must still resolve.** Under numbering that means keeping the tombstone; under names a
+  removed entry **dangles visibly and greps out**, which is safe. This is the same argument
+  [`roadmap.md`](roadmap.md) §2 makes for renaming over renumbering.
+
+**The absence of a written vacuum process does not block the sweep** — rule it in place and record
+the ruling. A rule that exists to keep citations resolving must not be read as a rule that the ledger
+may only ever grow.
 
 **Disclose supersession in the heading**, not only in the body. An entry whose body says it was
 superseded while its heading does not will be read as live by anyone scanning, and it will be
@@ -72,9 +86,29 @@ Two consequences worth stating, because both have been got wrong:
   X is an obligation. The **decision stays in the decisions ledger** — it holds the rationale — and
   the debt entry is the pointer to what is unfulfilled. Never move a decision into the debt register.
 - **A defect.** A known misbehaviour is owed work, and the register is where what-is-owed lives.
+- **A planned task that outlives its sprint.** Work that was scheduled, then not done and not
+  cancelled, is owed. **This holds for work on the ledgers themselves** (owner, 2026-08-27):
+  documentation and readability debt is still debt, and a register that exempts its own upkeep is
+  keeping two sets of books.
 
 This is what keeps the three ledgers honest against each other: a decision with no matching debt
 entry is claiming to be implemented, and a defect with no entry is claiming not to exist.
+
+### An entry normally names a decision
+
+**A debt entry should reference the decision it derives from** (owner, 2026-08-27) — that is what
+makes the register readable as obligations rather than as a list of complaints, and it is what lets a
+reader follow *what is owed* back to *why it was ruled that way*.
+
+**Two kinds of entry are exempt**, and they are exempt because a citation would add nothing:
+
+- **A self-describing discovered defect.** Something is broken; the entry says what and where. No
+  decision produced it and none needs naming.
+- **An obvious operational need** — reconciling with upstream before a PR, verifying a claim before
+  shipping it, keeping a ledger legible. The need argues for itself.
+
+An entry that is neither, and cites nothing, is usually a sign that the decision behind it was never
+written down.
 
 ## 5. How the roadmap relates to the debt register
 
@@ -99,4 +133,5 @@ accident. **The three ledgers hold state, not plans.** The moment a register sec
 ordering, its own status column, or its own sense of being unfinished, it has become a second
 roadmap, and the failure that rule describes has arrived by another door.
 
-Vacuuming the retired sections — when, and to where — is deliberately unruled as of 2026-08-27.
+**Where** vacuumed entries go — dropped outright, or moved to an archive — remains unruled; §2 rules
+only that the sweep may happen and on what condition.

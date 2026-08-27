@@ -33,6 +33,45 @@ paid, or turned out not to be debt.
 - **Revisit:** When the controller's load/aliasing is next reworked — prefer a module-top
   `local gfx = love.graphics` per the standard-aliases convention.
 
+### The changelog's version number has never been settled against the scale of the change
+
+- **Where:** `CHANGELOG.md`, and three independent askers — the file's own `REMARK:`,
+  `doc/development/internals/user_input.md:470`, and
+  `doc/development/conventions/../internals/project_sandbox_env.md:71`.
+- **What is owed:** the tree calls itself `1.0.0-rc`, and the input work removed four public
+  globals with no shim. Whether an rc number is honest against a break of that size was never
+  ruled. Three places ask; none answers.
+- **Why it is an entry:** an **obvious operational need** — a version number is the first thing
+  an upgrader reads, and it is not settleable after the release it labels.
+- **Roadmap:** `CHG-01-04` is the task. The rest of `CHG-01` was done by the ledger
+  restructuring (2026-08-27); this part was not.
+
+### The register's resolved entries claim resolution that was never verified
+
+- **Where:** `input.md`'s `RETIRED` section — 21 entries carrying a `RESOLVED` marker.
+- **What is owed:** the 2026-08-27 restructuring sorted them on their **headings**. Not one was
+  tested against the PR base to confirm the claim. A register whose retired section is unaudited
+  is a register that quietly forgets things it never finished.
+- **Why it is an entry:** an **obvious operational need**, and the register's own upkeep is debt
+  like any other (`agents/rules/ledgers.md` §4). Expected yield is unknown, which is the reason
+  to run it rather than to skip it.
+- **Roadmap:** `FIX-02-05`.
+
+### The decisions ledger is cited by number, and numbers resolve to the wrong entry when they move
+
+- **Where:** `doc/development/decisions/input.md`; roughly 165 citations across `src/` and
+  `tests/`.
+- **What is owed:** the conversion from numbers to mnemonic names. Under numbering, a missed
+  citation after any renumber still resolves — **to the wrong decision** — and reads as
+  authoritative; under names it dangles visibly and greps out. The same argument
+  `agents/rules/roadmap.md` §2 makes for ids in code.
+- **Why it is an entry:** an **obvious operational need** — readability debt in a ledger is debt
+  (`agents/rules/ledgers.md` §4), and this one degrades silently.
+- **Also unblocks the vacuum:** the retired entries that were never the stakeholder's may be
+  swept once names make a dangling citation safe (`ledgers.md` §2).
+- **Roadmap:** `DEC-01`, six steps. Not absorbed by the 2026-08-27 restructuring, which did the
+  sectioning only.
+
 ## BACKLOG
 
 ### The test suite passes only in declaration order

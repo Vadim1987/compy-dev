@@ -419,3 +419,30 @@
   roadmap row = task). Includes the cross-check that makes it useful: **an ACTIVE debt entry with no
   roadmap row pointing at it is a visible gap**. Vacuuming retired sections left unruled, as owner
   said.
+
+## 2026-08-27 — three owner rulings on the ledger contract
+
+- **(1) Every non-absorbed task earns a debt entry, including work on the ledgers themselves.**
+  Rationale, owner: *"docs/readability debt is still a debt."* Written into `ledgers.md` §4 as a
+  third kind of obligation, with the sharp version: a register that exempts its own upkeep is
+  keeping two sets of books. Three entries added to `technical_debt/general.md` ACTIVE — the
+  unsettled version number (CHG-01-04), the unverified RETIRED entries (FIX-02-05), the decisions
+  ledger's numbering (DEC-01). Filed in `general.md` rather than `input.md` because they are
+  ledger-hygiene debt, not subsystem behaviour.
+- **(2) A debt entry normally references a decision** — unless it is a self-describing discovered
+  defect or an obvious operational need (owner's example: reconciliation with upstream before the
+  PR). New `ledgers.md` §4 subsection. The closing line is mine and worth keeping: an entry that is
+  neither, and cites nothing, usually means the decision behind it was never written down. All
+  three new entries take the operational-need exemption and say so.
+- **(3) DEC-01-04 is NOT in conflict with "retired never means deleted".** Owner: vacuuming retired
+  decisions **which were not the stakeholder's** is an obvious operational need, and *"absence of
+  formal process should not prevent it from being ruled in place."* My sequencing constraint (wait
+  for DEC-01-05 so names make a dangling citation safe) is downgraded from a **gate** to a
+  **precaution**. `ledgers.md` §2 rewritten: the permission, plus its one real condition — only
+  entries that were not the stakeholder's; a ruling that came from outside is a record of what was
+  asked and it stays.
+  - Note for whoever runs DEC-01-04: **that condition has to be checked, not assumed.** The six
+    RETIRED entries look internal, but "was this the stakeholder's?" is a per-entry question and
+    the design-phase D-1..D-7 rulings are not the same numbering as the implementation ledger's.
+  - Also corrected: `ledgers.md`'s closing line said vacuuming was "deliberately unruled". It is
+    now ruled. What remains unruled is only **where** swept entries go.

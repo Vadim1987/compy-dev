@@ -294,6 +294,13 @@ work standing. Closing them would have been the "omission is not a ruling" failu
 (`agents/rules/roadmap.md` §5) with a ruling as its cover. **What each still owes is annotated on the
 row itself.** The recommendation to absorb them wholesale was mine and it was wrong in detail.
 
+**Each non-absorbed remainder now earns a debt entry** (owner, 2026-08-27: *"docs/readability debt
+is still a debt"* — including work on the ledgers themselves). All three are in
+`technical_debt/general.md` under `ACTIVE`, since they are ledger-hygiene debt rather than
+subsystem behaviour, and each is exempt from the cite-a-decision rule as an **obvious operational
+need** (`agents/rules/ledgers.md` §4): the unsettled **version number**, the **unverified resolved
+entries**, and the **decisions ledger's numbering**.
+
 ---
 
 ## ⬜ The six defect sprints — **the current work**
@@ -511,15 +518,16 @@ reaches.
 full, and it is a different job: this sprint is the numbers→names conversion, not a sectioning. The
 split took the structural half and nothing else; all six steps stand.
 
-**One step now needs reconciling with the new structure. `DEC-01-04` removes the four tombstones
-(13, 16, 20, 29), and `agents/rules/ledgers.md` says retired never means deleted** — because a
-citation resolving to nothing is worse than one resolving to a tombstone. The two are not actually in
-conflict: that rule is argued **from numbering**, and `DEC-01`'s whole point is that under *names* a
-dangling citation greps out visibly instead of silently resolving to the wrong entry
-(`agents/rules/roadmap.md` §2). So removal becomes safe **at exactly the moment `DEC-01-05`
-lands**, and not before. **Sequence it after the substitution, and say so in the ledger** —
-`RETIRED` now holds six entries, not four, so `DEC-01-03`'s inventory needs Decision 9 and Decision
-12 added to whatever it decides for the others.
+**`DEC-01-04` (remove the four tombstones) needs no reconciling — owner-ruled 2026-08-27:**
+*"the need to vacuum retired decisions which were not stakeholder's is an obvious operational need;
+absence of a formal process should not prevent it from being ruled in place."* I had proposed
+sequencing the removal after `DEC-01-05` so that names would make a dangling citation safe; the
+ruling makes that a **precaution, not a gate**. `agents/rules/ledgers.md` §2 now carries both the
+permission and its one real condition — **only entries that were not the stakeholder's**.
+
+**`RETIRED` holds six entries, not four**, so `DEC-01-03`'s inventory needs Decision 9 and Decision
+12 added to whatever it decides for the others, and `DEC-01-04` should say which of the six it
+sweeps and which it keeps as stakeholder record.
 
 **Blocks slice cutting.** Spec + drafted inventory:
 [`validation/reviews/DEC-01-ledger-denoising-spec.md`](validation/reviews/DEC-01-ledger-denoising-spec.md)
