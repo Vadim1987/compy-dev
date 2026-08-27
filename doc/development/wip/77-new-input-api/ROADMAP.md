@@ -268,6 +268,34 @@ carried forward as a recommendation in Decision 35 rather than lost with `wip/77
 
 ---
 
+## ✅ LEDGER-01 — the three ledgers get a shape — **COMPLETE**
+
+**Owner directive, 2026-08-27.** `CHANGELOG.md`, `decisions/*` and `technical_debt/*` become three
+ledgers that answer *where are we* at **project altitude**, so that question stops requiring a read of
+a plan that is reorganised every few sessions. All three are in the persistent corpus and survive the
+deletion of `wip/77`. The contract binding them is
+**[`agents/rules/ledgers.md`](../../../../agents/rules/ledgers.md)** — a sibling to
+`agents/rules/roadmap.md`, which governs planned work where this governs state.
+
+| unit | result |
+|---|---|
+| `LEDGER-01-01` | **changelog** — `Unreleased` → `CURRENT_SCOPE` with its release protocol stated in-file; `Removed` leads with the breaking change; `Added`/`Changed` brought up to the work. Commits `f4c85ec5`, `b76ed826` |
+| `LEDGER-01-02` | **decisions** — `ACTIVE` (28) / `RETIRED` (6); numbers and text untouched, 34 in and 34 out. Produced the verified ruled-but-unimplemented list. Commit `b54e5e81` |
+| `LEDGER-01-03` | **debt** — `ACTIVE` (11 + 1 in `general.md`) / `BACKLOG` (40 + 4) / `RETIRED` (23) on the owner's release-scope rule; 64 → 74 entries, the ten additions being two unimplemented decisions and eight uncovered defects. Commit `1e635f6f` |
+
+Sub-agent prompts of record in `validation/prompts/LEDGER-0*`; their reports in
+`validation/outcomes/LEDGER-0*`. Each was reviewed and corrected before landing — see the commits.
+
+### The absorption was partial, and saying so is the point
+
+The three rows below were expected to be **absorbed** by this work (owner, 2026-08-27). Reading them
+in full afterwards, they are not: the restructuring did the *structural* half of each and left real
+work standing. Closing them would have been the "omission is not a ruling" failure
+(`agents/rules/roadmap.md` §5) with a ruling as its cover. **What each still owes is annotated on the
+row itself.** The recommendation to absorb them wholesale was mine and it was wrong in detail.
+
+---
+
 ## ⬜ The six defect sprints — **the current work**
 
 **The remark triage already ran** (owner directed it to lead; it did, and produced five new rows —
@@ -314,7 +342,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | **FIX-02-02** | **`tixy` may drop the legend on submit** | **verify → ratify or revert.** A possibly unratified change to pre-feature behaviour, in code |
 | **FIX-02-03** | the A-doc's three factual claims (`:79`, `:650`, `:675`) | **may reveal the code is wrong, not the doc** |
 | **FIX-02-04** | pointer annotations in `project_sandbox_env.md` — completeness never checked | **unknown yield** — a verification task |
-| **FIX-02-05** | the debt ledger's 20 resolved entries | **unknown yield** — each tested against base; may find more rot |
+| **FIX-02-05** | the debt ledger's 20 resolved entries | **unknown yield** — each tested against base; may find more rot. **NOT absorbed by `LEDGER-01-03`**, which sorted them into `RETIRED` on their headings without testing one of them against the base. The sort is done; **the verification this row exists for is untouched**, and it now has a section to walk rather than a scattered set |
 | **FIX-02-06** | the stale keyboard/pointer divergence claim | **one defect in three places** — `release_keyboard_route`'s comment, `event_dispatch_layers.md:112`, and the second doc. **Fix as one**; any survivor re-seeds the others |
 | **FIX-02-07** | execute the 37 remark dispositions | triage **complete**; breadth known, 12 files |
 | **FIX-02-08** | "tier" / "chain" / "the walk" — three names, one thing | known breadth, 3 slices |
@@ -446,6 +474,13 @@ with retired vocabulary in its own prose (*"an active **overlay**"*), no `Remove
 
 **Write it once.** Three rows feed this file; assembled separately they duplicate and disagree.
 
+**PARTLY DONE by `LEDGER-01-01`** (2026-08-27): `-02` is complete — the `Removed` section exists and
+leads with the breaking change, closing `FIX-02-17`. `-01` and `-03` are **partly** done: the file
+was written from the PR artifacts and spot-checked, not validated claim-by-claim against the diff.
+**`-04` is untouched, and it carries the one thing here nobody else will do — the version question**
+(`1.0.0-rc` against the scale of the change, asked independently in three places). `ARC-02-07` also
+revisits this file, because `ARC-02` changes behaviour its bullets describe.
+
 ### FIX-03 — the closed-arc sweep (4 steps) — **runs after FIX-02 and DEC-01**
 
 Retire prose that narrates history which opened *and closed* inside this branch. Spec:
@@ -471,6 +506,20 @@ delete*. And **prose that is the only record of a deviation from pre-feature beh
 reaches.
 
 ### DEC-01 — decisions ledger: names, not numbers (6 steps)
+
+**NOT absorbed by `LEDGER-01-02`** (2026-08-27) — I recommended absorbing it before reading it in
+full, and it is a different job: this sprint is the numbers→names conversion, not a sectioning. The
+split took the structural half and nothing else; all six steps stand.
+
+**One step now needs reconciling with the new structure. `DEC-01-04` removes the four tombstones
+(13, 16, 20, 29), and `agents/rules/ledgers.md` says retired never means deleted** — because a
+citation resolving to nothing is worse than one resolving to a tombstone. The two are not actually in
+conflict: that rule is argued **from numbering**, and `DEC-01`'s whole point is that under *names* a
+dangling citation greps out visibly instead of silently resolving to the wrong entry
+(`agents/rules/roadmap.md` §2). So removal becomes safe **at exactly the moment `DEC-01-05`
+lands**, and not before. **Sequence it after the substitution, and say so in the ledger** —
+`RETIRED` now holds six entries, not four, so `DEC-01-03`'s inventory needs Decision 9 and Decision
+12 added to whatever it decides for the others.
 
 **Blocks slice cutting.** Spec + drafted inventory:
 [`validation/reviews/DEC-01-ledger-denoising-spec.md`](validation/reviews/DEC-01-ledger-denoising-spec.md)
@@ -597,7 +646,7 @@ Not open questions to chase — each has a trigger:
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → ARC-02 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 *`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
 other rows would otherwise be sized against — the ordering principle firing exactly as written.*

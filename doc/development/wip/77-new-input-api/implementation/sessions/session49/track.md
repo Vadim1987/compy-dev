@@ -379,3 +379,43 @@
 - Mine to do after they land: the roadmap rewiring (absorb the three rows + crosswalk, point rows at
   debt entries) and the **ledger-protocol document** stating the three-ledger contract — the "from
   now on" part, and the most valuable artifact of the lot.
+
+## 2026-08-27 — three ledgers landed; my absorption recommendation was wrong in detail
+
+- LEDGER-02 (changelog) and LEDGER-01 (decisions) and LEDGER-03 (debt) all landed, each reviewed and
+  corrected before commit. Commits f4c85ec5/b76ed826, b54e5e81, 1e635f6f.
+- **Corrections I made to worker output** (all three needed one — none was wrong in a way that would
+  have been caught by tests):
+  - changelog: worker "self-corrected" a TRUE claim (label persists) using a fact about a DIFFERENT
+    field (text clears), and replaced it with the hidden-configure staging — which Decision 35
+    removes. Rewrote to what is true both today and after ARC-02.
+  - decisions: Decision 9's BODY says SUPERSEDED, its heading did not; worker followed my literal
+    heading rule and escalated. Moved it, heading gains the marker the other five carry.
+  - debt: worker flagged four "settled but unmarked" entries as one group. Three are settled
+    (RETIRED); the fourth (sapper modifier-click) says "needs the platform's help" = deferred work,
+    so BACKLOG. Also moved a RESOLVED-IN-PART entry OUT of RETIRED — its Revisit line names open
+    work. And fixed general.md's sections from H1 (three of them, beside the file title) to H2.
+- **The worker overturned a claim in MY prompt, correctly:** I cited `close_project bypasses the
+  run's exit path` as an example of an existing BUG-01 debt entry. It maps to no BUG-01 row. It went
+  to BACKLOG on evidence rather than on my say-so. Fourth overturned claim of this session; the
+  pattern is that my *examples* are less reliable than my *rules*.
+- **My "absorb all three" recommendation was wrong in detail, and I recorded that rather than
+  closing the rows.** Reading them in full AFTER the owner agreed:
+  - **CHG-01**: -02 done (closes FIX-02-17). -01/-03 partly. **-04 untouched — and it carries the
+    version question (`1.0.0-rc` vs the scale of the change), asked independently in three places.**
+  - **FIX-02-05**: NOT absorbed. LEDGER-03 sorted the resolved entries on their headings; it tested
+    none against base. The sort is done, the VERIFICATION the row exists for is untouched.
+  - **DEC-01**: NOT absorbed. It is numbers→names, not sectioning. All six steps stand.
+    **DEC-01-04 (remove the 4 tombstones) vs ledgers.md "retired never means deleted"** — not a real
+    conflict: that rule is argued from NUMBERING, and DEC-01's point is that under NAMES a dangling
+    citation greps out instead of resolving to the wrong entry. So removal is safe at DEC-01-05 and
+    not before; sequence it after the substitution. Also DEC-01-03's inventory now needs Decision 9
+    and 12 — RETIRED holds six, not four.
+  - Closing those rows on my say-so would have been "omission is not a ruling" with a ruling as
+    cover.
+- **`agents/rules/ledgers.md` written** — the "from now on" contract: what each ledger answers, the
+  section rules, what becomes a debt entry (unimplemented decision + defect, with the DECISION
+  staying put and the debt entry as the pointer), and roadmap→debt many-to-one (debt entry = goal,
+  roadmap row = task). Includes the cross-check that makes it useful: **an ACTIVE debt entry with no
+  roadmap row pointing at it is a visible gap**. Vacuuming retired sections left unruled, as owner
+  said.
