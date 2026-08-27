@@ -1189,7 +1189,8 @@ function ConsoleController.prepare_project_env(cc)
   -- the assignment REMOVES each from a project's reach.
   -- Projects configure validation through compy.input's
   -- validator callback; they do not install evaluator objects
-  -- (doc/development/internals/user_input.md, "Evaluators").
+  -- (doc/development/internals/user_input.md,
+  -- "Evaluator and validation").
   for _, name in ipairs({
     'InputEvalText',
     'InputEvalLua',

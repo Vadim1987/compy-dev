@@ -205,14 +205,6 @@ describe('input surface: inbound events — route lifetime #input',
         assert.same({ 'two' }, F.widget:get_text())
       end)
 
-      -- doc/development/decisions/input.md, Decision 11: a
-      -- configure() while HIDDEN has no session to apply to, so
-      -- it stashes prompt/text/cursor for the next show()
-      -- (doc/development/internals/user_input.md,
-      -- "configure(config)"). The compy.input closure that held
-      -- that store is built ONCE for the application, not per
-      -- run, so teardown has to drop it -- otherwise the next
-      -- project's bare show() opens on the previous draft.
       -- doc/development/decisions/input.md, Decision 11: the
       -- prompt LABEL is widget configuration like any other, so
       -- it cannot outlive the project that set it. configure_core
