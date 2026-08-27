@@ -139,7 +139,7 @@ describe('input surface: inbound events — route lifetime #input',
 
       -- doc/development/decisions/input.md, Decision 11: the
       -- widget's OWN mirrored output fields
-      -- (userInputController.apply_config) persist across a
+      -- (userInputController.configure_core) persist across a
       -- hide/re-show within one run (doc/input_api.md,
       -- "Callback assignments") but must not leak into the next
       -- project.
@@ -215,7 +215,7 @@ describe('input surface: inbound events — route lifetime #input',
       -- project's bare show() opens on the previous draft.
       -- doc/development/decisions/input.md, Decision 11: the
       -- prompt LABEL is widget configuration like any other, so
-      -- it cannot outlive the project that set it. apply_config
+      -- it cannot outlive the project that set it. configure_core
       -- writes model.custom_label only when cfg.prompt is
       -- given, so the next project's bare show() never
       -- overwrites it. Nothing clears it either: the widget it

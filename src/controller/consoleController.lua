@@ -192,7 +192,7 @@ end
 --- The console's, editor's and search strip's widgets are
 --- unaffected: those surfaces live as long as the app does.
 --- Its own evaluator, NOT the shared `InputEvalText` instance:
---- `apply_config` writes the project's highlighter onto the
+--- `configure_core` writes the project's highlighter onto the
 --- evaluator, so a shared one carries that highlighter into the
 --- next run no matter how short the widget's life is. The
 --- evaluator is part of what the run owns.

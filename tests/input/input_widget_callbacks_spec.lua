@@ -687,7 +687,7 @@ describe('input surface: widget callbacks #input', function()
     -- doc/development/internals/user_input.md, "Submit
     -- and cancel — widget-owned callback sequences")
     -- must survive the after_submit bare re-show, not the
-    -- show()-time prompt: apply_config's custom_label is
+    -- show()-time prompt: configure_core's custom_label is
     -- only overwritten
     -- when cfg.prompt is given, so a bare show({}) never
     -- resets what configure() just set.

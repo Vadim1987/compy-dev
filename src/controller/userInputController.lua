@@ -249,14 +249,17 @@ local CONFIG_CALLBACKS = {
   'validator', 'on_text_entered', 'on_limit_reached',
 }
 
+--- Everything the PROJECT owns: set-if-given, left alone when
+--- absent, and identical in both entry points — which is what
+--- stops show() and configure() drifting apart
+--- (doc/development/decisions/input.md, Decision 35).
+--- The user's content is deliberately not here; see
+--- reset_content.
 --- @param self UserInputController
 --- @param cfg table
-local apply_config = function(self, cfg)
+local configure_core = function(self, cfg)
   if cfg.prompt ~= nil then
     self.model.custom_label = cfg.prompt
-  end
-  if cfg.text ~= nil then
-    self.model:set_text(cfg.text)
   end
   local ev = self.model.evaluator
   if cfg.highlighter ~= nil and ev then
@@ -266,6 +269,22 @@ local apply_config = function(self, cfg)
     if cfg[name] ~= nil then
       self.callbacks[name] = cfg[name]
     end
+  end
+end
+
+--- The content baseline, which only ACTIVATION sets: text given
+--- is the content, text absent is an empty field (Decision 35,
+--- statement 1). "Absent means empty" is the contract, not a
+--- default value passed through: clear_input() also drops the
+--- selection, the custom status and the history index, none of
+--- which set_text('') would do.
+--- @param self UserInputController
+--- @param cfg table
+local reset_content = function(self, cfg)
+  if cfg.text == nil then
+    self.model:clear_input()
+  else
+    self.model:set_text(cfg.text)
   end
 end
 
@@ -291,20 +310,19 @@ local re_show = function(self, cfg)
   end
 end
 
---- The activation path: clear when no text is given, apply
---- config, publish the handle, render once. Clear-on-no-text is
---- activation policy (a fresh show with no text starts empty),
---- which is why it is here and not in apply_config; `cursor` is
---- here for the same reason: configure() never reaches it.
+--- The activation path: content baseline, then the
+--- project-owned fields, then the cursor, then publish the
+--- handle and render once. `text` and `cursor` are here and not
+--- in configure_core because they are the USER's — activation
+--- is the only call that may seat them
+--- (doc/development/decisions/input.md, Decision 35).
 --- See doc/development/internals/user_input.md,
 --- "Cursor manipulation and reset".
 --- @param self UserInputController
 --- @param cfg table
 local open_widget = function(self, cfg)
-  if cfg.text == nil then
-    self.model:clear_input()
-  end
-  apply_config(self, cfg)
+  reset_content(self, cfg)
+  configure_core(self, cfg)
   if cfg.cursor ~= nil then
     self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
   end
@@ -343,23 +361,17 @@ function UserInputController:hide()
   love.state.user_input = nil
 end
 
---- Live-reconfigure an active session (compy.input. configure;
---- doc/development/internals/user_input.md, "configure(config)"
---- — the boundary decision closed here): only the Contract's
---- live-updatable set reaches apply_config — the prompt, the
---- highlighter, and the validator / on_text_entered /
---- on_limit_reached callbacks. text/ cursor never reaches it
---- from here — accepted but inert on an active session (use
---- set_text/set_cursor, or clear()+show()); no partial/silent
---- path exists because this filtered table is the only thing
---- configure() ever applies.
+--- Live-reconfigure an active session (compy.input.configure;
+--- doc/development/internals/user_input.md,
+--- "configure(config)"). It runs configure_core and nothing
+--- else, so the project-owned fields are applied by the same
+--- code show() uses. No filter table stands in front of it:
+--- configure_core cannot see the user's content, which is the
+--- boundary itself rather than something this call enforces
+--- (doc/development/decisions/input.md, Decision 35).
 --- @param cfg table
 function UserInputController:configure(cfg)
-  local live = { prompt = cfg.prompt, highlighter = cfg.highlighter }
-  for _, name in ipairs(CONFIG_CALLBACKS) do
-    live[name] = cfg[name]
-  end
-  apply_config(self, live)
+  configure_core(self, cfg)
   self:update_view()
 end
 
