@@ -198,3 +198,34 @@
 - Stakeholder record is **silent on empty values** — unruled area, so rule it rather than discover
   it. Decision 14 (formalise de-facto contracts) and NFR-3 (Lua idiom) both point at ratifying
   `false` = "no such thing" rather than changing anything.
+
+## 2026-08-27 — owner's four-part proposal (a/b/c/d), assessed
+
+- Verdict: consistent with intent and better than what is there; four qualifications.
+- **(a)** show cannot be ONLY configure+activate — configure leaves unnamed flags alone, but show
+  must reset the USER's content (owner's own ruling; turtle depends on it in a comment). So:
+  force gate → reset_content → configure → cursor → activate. Alternative: show normalises
+  `cfg.text` to `''` and (a) stays literally true — cosmetic; explicit line reads as the rule.
+  **Do NOT default `cursor`** in that normalisation: probed, `show{text='hello'}` lands the caret at
+  (1,6), the end — defaulting to {1,1} would be a behaviour change vs today AND base.
+- **(b)** yes. Two adjustments: hidden `configure{prompt}` should APPLY not stash (project-owned,
+  lives on the widget, needs no session → pending shrinks to text/cursor); active `configure{text}`
+  should WARN not silently drop (reviewed spec says "no effect", a warning is still no effect plus a
+  diagnostic). Hidden `configure{text}` stash STAYS — stakeholder-promised.
+- **(c)** true for functions + prompt (verified). **`cursor` raises today**: `cursor = 1` AND
+  `cursor = false` both die at `:309` indexing `cfg.cursor[1]`. So the proposal's own example does
+  not work — BUG-01-08 widened, and it now GATES the rule (cannot document a scalar unset that
+  raises). **`text` has no unset distinct from empty** — absent already clears. `text = false`
+  doesn't raise but is off-contract; don't document it.
+  Wart to document: `false` = off, `nil` = leave alone → a computed nil silently means leave-alone.
+  Idiom: `highlighter = computed or false`.
+- **(d)** yes, but the owner's justification is not the strongest one available. Probed `clear()`:
+  it empties content and KEEPS label + highlighter. So **clear() resets what the USER owns; reset()
+  would reset what the PROJECT owns** — the ownership rule with a verb on each side. That is
+  principled, and it settles that reset() must NOT clear content (else clear() is redundant).
+  Cautions: (1) strategic frame — new public method needs a justification-table line, and the honest
+  justification is the symmetry, NOT defensive cleanup, which ARC-01 already dissolved; (2) do the
+  lifecycle callbacks (before_/after_submit/cancel) fall to reset()? They are not settable via
+  show/configure, so "configure with defaults" leaves them standing — defensible but must be stated
+  or the name over-promises.
+- Materialized as §8 of `validation/reviews/force-and-configure-intent-recovery.md`.

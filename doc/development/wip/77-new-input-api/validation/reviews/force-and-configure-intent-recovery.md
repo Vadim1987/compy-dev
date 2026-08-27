@@ -260,7 +260,102 @@ Two standing rules point the same way, though, and neither is a stakeholder ask 
 one; and fix `cursor`, which is the only empty value that misbehaves rather than merely being
 undocumented.
 
-## 8. Found while doing this — the `hide()` contract says something the code does not do
+## 8. The owner's four-part proposal, assessed (2026-08-27)
+
+> **(a)** `show()` calls `configure` with the same arguments (after checking visibility and the force
+> flag), then activates visibility. **(b)** `configure` acts on the flags it was passed, never on
+> flags it was not; invocable directly, which makes both hidden and lifetime configuration possible.
+> **(c)** To unset a flag, the caller passes either a falsey value or a reasonable default (e.g.
+> cursor as 1). **(d)** To unset *all* flags, expose a new `reset()` which calls `configure` with
+> platform-defined defaults.
+
+**Consistent with stakeholder intent overall, and better than what is there.** Four qualifications,
+one of which is a correction and one of which is a scope warning.
+
+### (a) — yes, with one step that must not be dropped
+
+`show` cannot be *only* `configure` + activate, because `configure` leaves unnamed flags alone and
+`show` must **reset the user's content**: a fresh `show()` with no `text` starts empty. That is the
+owner's own ruling (2026-08-27), it is what turtle depends on in a comment
+(`src/examples/turtle/main.lua:63-66`), and it is the one deliberate exception to the ownership rule.
+So the layering is:
+
+```
+show(cfg):  force gate  ->  reset_content(cfg)  ->  configure(cfg)  ->  cursor  ->  activate
+```
+
+Equivalently, `show` may normalise `cfg.text` to `''` before delegating, which keeps (a) literally
+true — *"calls configure with the same arguments"* — at the cost of hiding the exception inside a
+default. Cosmetic choice; the explicit `reset_content` line reads as the rule and is preferred.
+
+**`cursor` must not be defaulted in that normalisation.** `show{text = 'hello'}` with no cursor lands
+the caret at `(1, 6)` — the end of the text, set by `set_text` itself. Defaulting `cursor` to `{1,1}`
+would move it to the start, a behaviour change against both today and the base.
+
+### (b) — yes; one field pair is the stated exception, and it should say so out loud
+
+Already true for the project-owned fields. Two adjustments make it uniform:
+
+- **Hidden `configure{prompt = …}` should apply directly, not stash.** `prompt` is project-owned and
+  lives on the widget; it needs no session. Only `text`/`cursor` need `pending` at all. (Between
+  runs there is no widget and therefore no store — the surface already reads that as "nothing to
+  remember", so ARC-01 is unaffected.)
+- **`configure{text = …}` on an *active* session should warn, not silently drop.** It cannot apply:
+  `configure` never touches the user's content — that is what `set_text`/`set_cursor` are for. The
+  reviewed spec already says it has "no effect"; a warning is still no effect, plus a diagnostic,
+  and silent no-ops are exactly the accidental complexity being removed here.
+
+The **hidden** `configure{text = …}` stash stays: the reviewed spec promised *"safe to call when
+hidden (takes effect on next `show()`)"* (§7).
+
+### (c) — yes for the fields that have an "off"; **no** for `cursor` today, and `text` has no unset
+
+Verified by probe:
+
+| field | unset value | status |
+|---|---|---|
+| `highlighter`, `validator`, `on_text_entered`, `on_limit_reached` | `false` | **works exactly** — consumers guard on truthiness, so a stored `false` takes the same branch as absent |
+| `prompt` | `''` = empty label; `false` = back to the platform default (`text input`) | works, two distinct meanings, both useful |
+| `text` | — | **has no unset distinct from empty**: absent already means clear, and `''` converges with it. `text = false` does not raise but is off-contract; do not document it |
+| `cursor` | `1`, `{1,1}` | **raises today.** `cursor = 1` and `cursor = false` both die at `userInputController.lua:309` (`attempt to index field 'cursor' (a number value)`), and `{}` / `{1}` die at `:171`. This is **`BUG-01-08`**, which must be fixed before (c) can be stated as a rule |
+
+**One usability wart worth a documented sentence:** with `false` meaning *off* and `nil` meaning
+*leave alone*, a project that computes a value which may be `nil` gets "leave alone" when it meant
+"off". The idiom to document is `configure{ highlighter = computed or false }`.
+
+### (d) — yes, but the justification the proposal gives is not its strongest, and the frame requires one
+
+**The strongest argument is a symmetry the proposal does not claim.** `clear()` already exists and is
+stakeholder-seen; probed, it empties the content and **keeps** the label and highlighter. So:
+
+> `clear()` resets what the **user** owns. `reset()` resets what the **project** owns.
+
+That is the ownership rule with a verb on each side, and it makes `reset()` principled rather than
+merely convenient. It also settles what `reset()` must *not* do: it must not clear content — that is
+`clear()`'s job, and a `reset()` that did both would make `clear()` redundant and the pair
+asymmetric.
+
+**Two cautions.**
+
+1. **The strategic frame applies.** `reset()` is a public moving part nobody asked for, so it needs a
+   line in the PR description's justification table. The honest justification is the symmetry above
+   plus the multi-field case — **not** defensive cleanup between projects, which `ARC-01` dissolved
+   structurally when the widget got a run lifetime. Justifying it by a problem that no longer exists
+   is how a surface grows without anyone noticing.
+2. **One ambiguity to settle before it is built:** do the *lifecycle* callbacks (`before_submit`,
+   `after_submit`, `before_cancel`, `after_cancel`) fall to `reset()`? They are assignable only on
+   `compy.input.callbacks`, never through `show`/`configure`, so *"calls `configure` with
+   platform-defined defaults"* leaves them standing. That is defensible — `reset()` resets the config
+   surface, not every slot — but it must be said, or the name will over-promise.
+
+### Net
+
+(a)+(b) delete machinery and contradict nothing. (c) is already true where it matters and needs
+`BUG-01-08` fixed to be true where it is not. (d) is a genuine addition and the only part that
+enlarges the public surface — worth doing on the symmetry argument, worth stating in the
+justification table, and worth defining precisely enough that "all flags" is not read as "everything".
+
+## 9. Found while doing this — the `hide()` contract says something the code does not do
 
 Not part of the force question; surfaced by the same intent recovery and filed as **`FIX-02-22`**.
 
