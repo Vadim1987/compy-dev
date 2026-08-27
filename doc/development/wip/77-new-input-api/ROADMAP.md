@@ -246,7 +246,7 @@ constraints on whoever builds it live in Decision 35's closing section, not in t
 | ARC-02-04 | `re_show` deletes; `show` composes | the payoff commit — `BUG-01-06` and its sibling dissolve here |
 | ARC-02-05 | `configure` refuses `text`/`cursor`; `pending` **deletes** | `consoleController` key sets, `consume_pending`, `stash_hidden_configure`, `WIDGET_STORES` |
 | ARC-02-06 | **`BUG-01-08`** — the cursor shapes | must precede any documented "unset by a reasonable default" rule, which is what would make a scalar cursor something a project writes |
-| ARC-02-07 | docs + the deviation record | executes **`FIX-02-21`** and answers **`FIX-02-12`**; `false` as the uniform unset; the balloons rationale into the persistent internals doc |
+| ARC-02-07 | docs + the deviation record + **`CHANGELOG.md`** | executes **`FIX-02-21`** and answers **`FIX-02-12`**; `false` as the uniform unset; the balloons rationale into the persistent internals doc. **`CHANGELOG.md` is in scope here**: `LEDGER-02` wrote its input bullets against today's behaviour, and `ARC-02` changes some of what they describe (a forced `show` clears; `configure` refuses `text`/`cursor`) |
 | ARC-02-08 | sweep the fixture and specs | the `ARC-01-06` lesson — expect it partly absorbed by `-03`…`-05` |
 
 **Cold review of the plan: approve with changes** —
