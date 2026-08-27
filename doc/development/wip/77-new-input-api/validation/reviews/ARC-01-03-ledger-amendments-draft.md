@@ -103,11 +103,19 @@ case is the *"Amended in place"* blockquote.
 | no project can observe the resolution | `input_nfr_mechanism_spec.lua`, the three cases added by `ARC-01-02` |
 | nothing else in Decision 7 moves | the amendment says so, and `shortcuts`/`hooks` are untouched by `ARC-01` |
 
-## The open question this draft does not decide
+## What the PR carries — RULED (owner, 2026-08-27)
 
-**Does the PR description carry these amendments, or only the behaviour?** The strategic frame says
-the PR must be reviewable from `doc/input_api.md` + the description alone. A stakeholder reading
-that pair never sees `decisions/input.md`. Recommendation: **one line in the justification table** —
-*"the input widget now lives for a project run, not for the application; the NFR is applied at the
-boundary it names, and this allocates less than the pre-feature code did"* — with the ledger holding
-the full argument for anyone who follows it. Owner's call.
+**The PR carries only the behaviour.** The amendments stay in the ledger; the description does not
+recount them. A stakeholder is told what the software does — a project's input widget lives as long
+as the project run does — and is not walked through which internal decision had to be re-worded to
+permit it.
+
+This settles the recommendation above (a justification-table line arguing the NFR boundary) in the
+narrower direction: **that argument is ledger business, not PR business.** It also fits the
+strategic frame, which asks the PR to carry nothing beyond the stakeholders' ask without a one-line
+justification — and "the widget stops outliving the project that used it" needs no justification
+beyond itself, because the leaks it prevents are the ask.
+
+**Practical consequence for `ARC-01-04` onward:** the behaviour change still has to be visible in the
+places a reader *does* have open — the persistent internals guide and the code — per the deviation
+rule. Only the PR description is exempt.

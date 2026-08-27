@@ -45,6 +45,32 @@ semantics.
   each of those turns this from dormant into a source of false failures. Also worth a pass
   whenever a subsystem's fixtures are next reworked, since the leaks are fixture-shaped.
 
+## Editor submit raises when no buffer is open
+
+- **Where:** `src/view/editor/editorView.lua` `get_current_buffer` — `local bm =
+  ctrl:get_active_buffer()` is indexed unguarded on the next line.
+  `EditorController:get_active_buffer` is `self.model.buffers:first()`, which answers
+  **nil** when the buffer list is empty. Two more call sites index the same nil the same
+  way: `get_active_buffer_id` and `_generate_status`.
+- **State:** reproduced deterministically, not observed once. The harmony scenario
+  `editor.open-close` — `project("create")`, `edit()`, then **Ctrl+Shift+S** — raises
+  `editorView.lua:70: attempt to index local 'bm' (a nil value)` through
+  `editorController.submit` ← `_normal_mode_keys` ← `keypressed`. The buffer list is empty
+  at the moment the key is handled; **why** it is empty right after `edit()` on a freshly
+  created project is *not* diagnosed here.
+- **Not a feature regression:** the full scenario suite was run against two trees — with and
+  without the input feature's in-flight widget-lifetime change — and produced the same error,
+  at the same line, once each, in logs of identical length. It predates that work.
+- **Why it is filed and not fixed:** it is outside the input subsystem and outside the
+  feature that found it; fixing it means deciding what submit *should* do with no buffer
+  (no-op, or refuse earlier), which is an editor design call.
+- **No test covers it.** `busted tests` is green, so the suite never submits without a
+  buffer — the gap is what let a deterministic raise sit unnoticed in a scenario that runs
+  every time the harmony suite does.
+- **Revisit:** when the editor's buffer lifecycle is next touched. A guard in
+  `get_current_buffer` alone would only move the nil one frame later; the three call sites
+  and the "what does submit mean here" question go together.
+
 ## The console's terminal self-test is unreachable
 
 - **Where:** `src/controller/consoleController.lua` — `terminal_test`'s opening guard,

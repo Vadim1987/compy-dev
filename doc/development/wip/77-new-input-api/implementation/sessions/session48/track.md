@@ -122,3 +122,20 @@
   is ARC-01-04's decision, not this step's. Now says "at the run seam".
 - One question left open for the owner deliberately: does the PR description carry the amendments or
   only the behaviour? Recommended one line in the justification table.
+
+## 2026-08-27 — two owner rulings
+
+- **PR carries only the behaviour** (owner). The amendments stay in the ledger; the description does
+  not recount them. My justification-table recommendation is settled in the narrower direction and
+  the draft records it. Note carried forward: the deviation rule still applies to the internals
+  guide and the code — only the PR description is exempt.
+- **The `bm` raise goes into a persistent ledger** (owner) — `technical_debt/general.md`, not
+  `input.md`: it is an editor defect, and general.md is the persistent home for debt outside the
+  input subsystem.
+- Characterised before filing: `get_active_buffer` is `buffers:first()`, nil when the list is empty,
+  and **three** call sites index it unguarded (`get_current_buffer`, `get_active_buffer_id`,
+  `_generate_status`). Deterministic repro named (`editor.open-close`, Ctrl+Shift+S after `edit()`).
+  **Root cause deliberately NOT claimed** — why the buffer list is empty right after `edit()` on a
+  fresh project is undiagnosed, and the entry says so rather than guessing.
+- **The amendments themselves are still unratified.** The owner answered the open question, not the
+  ruling — ARC-01-03 stays gated, ARC-01-04 does not start.
