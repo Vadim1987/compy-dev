@@ -1356,7 +1356,23 @@ function ConsoleController:open_project(name, play)
 end
 
 --- @return boolean success
+--- Closing ends the project, so it ends the project's widget:
+--- reachable from a running project's own env and from the
+--- console during `inspect`, and without this a closed
+--- project's widget outlives it (Decision 3 as amended).
+--- Unconditional, ahead of the has-a-project check: with no
+--- project there is no widget either, so it is a no-op there,
+--- and the invariant does not depend on the bookkeeping order.
+---
+--- Only the widget, deliberately. The whole exit path belongs
+--- here — `stop_project_run` fires `compy.before_exit` and
+--- tears the handlers down, and `quit_project` calls it before
+--- closing. Whether its absence here was purposeful is not
+--- established, so this does the narrow correct thing rather
+--- than guess. See doc/development/technical_debt/input.md,
+--- "`close_project` bypasses the run's exit path".
 function ConsoleController:close_project()
+  destroy_input_widget()
   local P = self.model.projects
   local open = P.current
   if open then

@@ -290,6 +290,17 @@ describe('input surface: inbound events — route lifetime #input',
           assert.not_equal(mark, cbs.on_text_entered)
         end)
 
+      -- Closing ends the project, so it ends the widget too.
+      -- close_project does NOT run the rest of the exit path
+      -- (technical_debt/input.md, "`close_project` bypasses the
+      -- run's exit path") — this pins the widget half only.
+      it('a close takes the widget with it', function()
+        F.run_project()
+        assert.is_not_nil(love.state.user_input_controller)
+        F.cc:close_project()
+        assert.is_nil(love.state.user_input_controller)
+      end)
+
       -- A pen-and-paper project settles in 'project_open' and
       -- keeps running there (sapper). The widget belongs to the
       -- RUN, so that transition must not take it — the trap
