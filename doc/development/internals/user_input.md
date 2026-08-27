@@ -66,7 +66,7 @@ The input view height is `input_max = 14` lines. This is a display limit only �
 
 ### Selection
 
-Text selection works across lines. `Shift+arrow` extends selection; releasing shift releases it. `UserInputController.disable_selection` suppresses selection, and it is a **constructor argument, set per instance**: the console's widget is the only one that leaves it unset (`consoleController.lua:44`). The editor's input and search instances (`editorController.lua:12,16`) and **the project's widget** (`main.lua:371`, the instance published as `love.state.user_input_controller`) are all constructed with it — the editor because it uses its own block-level selection model rather than character-level selection in the input.
+Text selection works across lines. `Shift+arrow` extends selection; releasing shift releases it. `UserInputController.disable_selection` suppresses selection, and it is a **constructor argument, set per instance**: the console's widget is the only one that leaves it unset (`consoleController.lua:44`). The editor's input and search instances (`editorController.lua:12,16`) and **the project's widget** (`consoleController.lua`, `build_input_widget` — the instance published as `love.state.user_input_controller` for the length of a run) are all constructed with it — the editor because it uses its own block-level selection model rather than character-level selection in the input.
 
 Mouse click on the input widget (translated from screen coordinates to input grid via `_translate_to_input_grid`) sets the cursor position, and drag extends selection. There is one `UserInputController` class and the project route passes the `love.state.user_input_controller` instance as its widget, so there is no project-specific translation path — but **the translation is reached only by the console's widget**, because every mouse entry point returns immediately on `disable_selection` (`userInputController.lua:772,789,803,818`) and every other instance sets it. A project's input widget therefore does not take a click to the cursor at all, and did not at this branch's base either. The coordinate translation is bottom-relative: line 0 is the bottom line of the input, which is non-obvious.
 
@@ -589,10 +589,19 @@ regardless of what the stub body does).
 
 ### Widget lifecycle (introduced in an earlier build)
 
-`UserInputController` for the project widget is a single instance created once in `love.load()`
-(in `src/main.lua`) and stored in `love.state.user_input_controller`.
-The same model, controller, and view are reused across every widget
-session; per-session allocation is eliminated.
+`UserInputController` for the project widget is created **when a project run starts** and
+destroyed when it stops (`consoleController.lua`, `build_input_widget` / `destroy_input_widget`,
+called from `run_project` and `stop_project_run`); while it exists it is stored in
+`love.state.user_input_controller`. **Between runs that field is nil**, and every consumer of it
+resolves it dynamically and guards. The same model, controller, view — and the widget's own
+evaluator — are reused across every widget session *within* the run, so per-session allocation is
+eliminated, which is what the NFR asks for (`decisions/input.md`, Decision 3 as amended).
+
+The run boundary, not the open boundary: `restart()` and the `Ctrl+T` quickswitch call
+`stop_project_run` + `run_project` directly and never re-open, so a widget built at open would
+survive into a restart. Destruction is bound to the **stop**, never to the
+`running → project_open` transition — a non-blocking project (sapper) lives in `project_open` and
+still owns its widget there.
 
 Activation: `compy.input.show(config)` calls
 `UserInputController:show(config)`, which sets
@@ -832,12 +841,12 @@ refusal (there is no active session to clear).
 | `src/controller/projectInputController.lua` | The project route: the three-consumer dispatch walk (`shortcuts` → `hooks` → widget), hook seeding |
 | `src/controller/consoleController.lua` | Console/editor route dispatch, `compy` namespace + `compy.input` surface construction |
 
-`controller.lua` is consumed from `main.lua` (constructs the widget instance, wires
+`controller.lua` is consumed from `main.lua` (wires
 `set_default_handlers`) and `consoleController.lua` (calls into it on every mode
 transition — run, stop, suspend, inspect). `projectInputController.lua` is used
 only by `controller.lua` (the single `Controller.project_input` instance) and is
 never referenced by console/editor code directly. `userInputController.lua`
-instances are constructed by `main.lua` (the project's widget),
+instances are constructed by `consoleController.lua` (the project's widget, at the run seam),
 `editorController.lua` (its own main input and its `search` sub-widget), and
 implicitly by console (`consoleModel`/`consoleController`) — see "Search" above
 for the third, less obvious instance.

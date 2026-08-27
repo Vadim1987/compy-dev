@@ -185,6 +185,38 @@ local function hide_input_widget()
   love.state.user_input = nil
 end
 
+--- The project's widget is built when a run starts and dropped
+--- when it stops (doc/development/decisions/input.md, Decision
+--- 3 as amended): a store a project leaves on it cannot reach
+--- the next project, because the object it lived on is gone.
+--- The console's, editor's and search strip's widgets are
+--- unaffected: those surfaces live as long as the app does.
+--- Its own evaluator, NOT the shared `InputEvalText` instance:
+--- `apply_config` writes the project's highlighter onto the
+--- evaluator, so a shared one carries that highlighter into the
+--- next run no matter how short the widget's life is. The
+--- evaluator is part of what the run owns.
+--- @param cfg table
+local function build_input_widget(cfg)
+  local eval = Evaluator.plain('text input')
+  local model = UserInputModel(cfg, eval)
+  local widget = UserInputController(model, true)
+  widget:init_view(UserInputView(cfg.view, widget))
+  love.state.user_input_controller = widget
+end
+
+--- Down THROUGH the widget first: `hide()` lowers its own shown
+--- flag and clears the published handle, and only then is the
+--- widget itself dropped. Bound to the STOP, never to the
+--- 'running' → 'project_open' transition — a non-blocking
+--- project lives in `project_open` and still owns its widget
+--- there (Decision 11, and the asymmetry its amendment
+--- deleted).
+local function destroy_input_widget()
+  hide_input_widget()
+  love.state.user_input_controller = nil
+end
+
 --- @param cc ConsoleController
 local function close_project(cc)
   local ok = cc:close_project()
@@ -290,6 +322,13 @@ function ConsoleController:run_project(name)
       local n = name or P.current.name or 'project'
       Log.info('Running \'' .. n .. '\'')
       love.state.app_state = 'running'
+      -- Before the project's top-level code, which may show the
+      -- widget on its first line. This is the run seam, chosen
+      -- over the OPEN seam because restart() and the Ctrl+T
+      -- quickswitch call stop+run directly, never re-open:
+      -- construct-at-open would leave every restart on the
+      -- previous run's widget.
+      build_input_widget(self.cfg)
       local rok, run_err = run_user_code(f, self, path)
       if not rok then
         -- Top-level code raised, so the route was never
@@ -299,7 +338,7 @@ function ConsoleController:run_project(name)
         -- inactive goes unhonoured, and a shown one is not
         -- (doc/development/decisions/input.md, Decision 11).
         self.main_ctrl.release_keyboard_route(self)
-        hide_input_widget()
+        destroy_input_widget()
         -- ...and the participants it installed before raising.
         -- Same invariant, same reason: nothing survives the
         -- project that installed it. before_exit is uninstalled
@@ -1364,7 +1403,10 @@ function ConsoleController:stop_project_run()
   framework_before_exit(compy)
   self.main_ctrl.set_default_handlers(self, self.view)
   self.main_ctrl.set_love_update(self)
-  hide_input_widget()
+  -- After framework_before_exit above: the project's own
+  -- before_exit hook may still drive compy.input, and it must
+  -- find a widget there when it does.
+  destroy_input_widget()
   View.clear_snapshot()
   self.main_ctrl.set_love_draw(self, self.view)
   self.main_ctrl.clear_user_handlers(self)

@@ -108,8 +108,13 @@ describe('input surface: inbound events — route lifetime #input',
         F.cc:stop_project_run()
         assert.same({ }, input.shortcuts.keypressed)
         assert.is_nil(input.hooks.keypressed)
-        assert.is_nil(input.callbacks.before_submit)
-        assert.is_nil(input.callbacks.validator)
+        -- shortcuts and hooks belong to the surface and are
+        -- cleared in place; the callbacks belonged to the run's
+        -- widget, which the stop destroyed outright.
+        assert.is_nil(input.callbacks)
+        local next_run = F.activate_project()
+        assert.is_nil(next_run.callbacks.before_submit)
+        assert.is_nil(next_run.callbacks.validator)
       end)
 
       -- doc/development/decisions/input.md, Decision 11: a
@@ -138,7 +143,7 @@ describe('input surface: inbound events — route lifetime #input',
       -- hide/re-show within one run (doc/input_api.md,
       -- "Callback assignments") but must not leak into the next
       -- project.
-      it('resets the widget\'s own output fields',
+      it('gives the next project clean output fields',
         function()
           F.activate_project()
           F.show_widget({
@@ -147,6 +152,8 @@ describe('input surface: inbound events — route lifetime #input',
             highlighter = function() end,
           })
           F.cc:stop_project_run()
+          assert.is_nil(love.state.user_input_controller)
+          F.activate_project()
           assert.is_nil(F.widget.callbacks.validator)
           assert.is_nil(F.widget.callbacks.on_text_entered)
           assert.equal(noop, F.widget.callbacks.on_limit_reached)
@@ -239,6 +246,62 @@ describe('input surface: inbound events — route lifetime #input',
         end)
     end)
 
+    -- The widget's own lifetime (doc/development/decisions/
+    -- input.md, Decision 3 as amended): it is constructed when
+    -- a run starts and destroyed when the run stops, so a store
+    -- a project left on it cannot reach the next project —
+    -- structurally, rather than by a teardown wipe list.
+    describe('the widget lives for one project run', function()
+
+      it('a run publishes a widget', function()
+        F.cc:stop_project_run()
+        assert.is_nil(love.state.user_input_controller)
+        F.run_project()
+        assert.is_not_nil(love.state.user_input_controller)
+      end)
+
+      it('a stop leaves none', function()
+        F.run_project()
+        F.cc:stop_project_run()
+        assert.is_nil(love.state.user_input_controller)
+      end)
+
+      it('two runs get two widgets', function()
+        F.run_project()
+        local first = love.state.user_input_controller
+        F.cc:stop_project_run()
+        F.run_project()
+        local second = love.state.user_input_controller
+        assert.not_equal(first, second)
+      end)
+
+      -- The payoff, stated as a project can observe it: what
+      -- one project puts on the widget is gone for the next
+      -- one because the object it lived on is gone.
+      it('a callback does not survive into the next run',
+        function()
+          local mark = function() end
+          F.run_project(function()
+            F.compy_input().callbacks.on_text_entered = mark
+          end)
+          F.cc:stop_project_run()
+          F.run_project()
+          local cbs = F.compy_input().callbacks
+          assert.not_equal(mark, cbs.on_text_entered)
+        end)
+
+      -- A pen-and-paper project settles in 'project_open' and
+      -- keeps running there (sapper). The widget belongs to the
+      -- RUN, so that transition must not take it — the trap
+      -- Decision 11's amendment exists to keep deleted.
+      it('a non-blocking run keeps its widget at project_open',
+        function()
+          F.run_project()
+          assert.equal('project_open', love.state.app_state)
+          assert.is_not_nil(love.state.user_input_controller)
+        end)
+    end)
+
     -- doc/development/decisions/input.md, Decision 11 (the
     -- teardown invariant): a project whose TOP-LEVEL code
     -- raises never reaches the route installer, so run_project
@@ -271,13 +334,15 @@ describe('input surface: inbound events — route lifetime #input',
         P.current, P.run = prev_current, prev_run
       end
 
-      -- Both halves, deliberately: clearing the published
-      -- handle alone leaves the widget believing it is still
-      -- active (consoleController.lua, hide_input_widget).
+      -- Both halves, deliberately: the published handle is
+      -- cleared AND the widget itself is gone. Under Decision 3
+      -- as amended a failed run ends the run, so it takes the
+      -- widget with it, so the case need not ask whether
+      -- a surviving widget still believes it is active.
       it('leaves no input widget behind', function()
         run_raising_project()
         assert.is_false(F.is_widget_visible())
-        assert.is_false(F.widget:is_shown())
+        assert.is_nil(love.state.user_input_controller)
       end)
 
       -- The user-visible consequence of the case above, and the
@@ -314,8 +379,14 @@ describe('input surface: inbound events — route lifetime #input',
           end)
           assert.same({ }, captured.shortcuts.keypressed)
           assert.is_nil(captured.hooks.keypressed)
-          assert.is_nil(captured.callbacks.before_submit)
-          assert.is_nil(captured.callbacks.validator)
+          -- The callbacks the project wrote lived on the run's
+          -- widget, and the failed run destroyed it: there is
+          -- no table left to inspect, and the next run builds
+          -- its own with the documented defaults.
+          assert.is_nil(captured.callbacks)
+          local next_run = F.activate_project()
+          assert.is_nil(next_run.callbacks.before_submit)
+          assert.is_nil(next_run.callbacks.validator)
         end)
 
       -- doc/input_api.md, "Stop hook — `compy.before_exit`":

@@ -93,20 +93,22 @@ describe('input contracts: NFR and mechanism guards #input',
       -- framework replacing the widget underneath.
       it('callbacks resolve to the current widget', function()
         local input = F.compy_input()
+        local previous = F.widget
         local other = F.other_widget()
         local f = function() end
         input.callbacks.on_text_entered = f
         assert.equal(f, other.callbacks.on_text_entered)
-        assert.not_equal(f, F.widget.callbacks.on_text_entered)
+        assert.not_equal(f, previous.callbacks.on_text_entered)
       end)
 
       it('the pending draft resolves to the current widget',
         function()
           local input = F.compy_input()
+          local previous = F.widget
           local other = F.other_widget()
           input.configure({ prompt = 'who?' })
           assert.equal('who?', other.pending.prompt)
-          assert.is_nil(F.widget.pending.prompt)
+          assert.is_nil(previous.pending.prompt)
         end)
 
       -- Between runs there is no widget and therefore no store.

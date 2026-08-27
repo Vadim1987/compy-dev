@@ -360,24 +360,12 @@ function love.load()
   -- independently of the project's (Decision 12) — a single
   -- shared instance would be clobbered across that boundary.
   -- Migration is therefore deliberately deferred (Decision 1),
-  -- not blocked. UserInput M/V/C are provisioned before the
-  -- console, which no longer has to be the order: compy.input
-  -- now RESOLVES the widget's callbacks and pending stores per
-  -- access instead of binding them at construction (owner
-  -- ruling 2026-07-20, re-made 2026-08-27), so building the
-  -- console first would work. Provisioning the widget early has
-  -- no dependency on the console either way.
-  local ui_m = UserInputModel(baseconf, InputEvalText)
-  local ui_c = UserInputController(ui_m, true)
-  local ui_v = UserInputView(baseconf.view, ui_c)
-  -- init_view binds the view to the controller (self.view = v);
-  -- it is NOT an activation/show.
-  ui_c:init_view(ui_v)
-  -- App-wide handle for the widget: the compy.input
-  -- wrappers and the widget draw path resolve the
-  -- controller through love.state (service-locator pattern).
-  love.state.user_input_controller = ui_c
-
+  -- not blocked. The PROJECT's widget is not built here at all:
+  -- it lives for one project run and is constructed at the run
+  -- seam (consoleController.lua, run_project; Decision 3 as
+  -- amended). Between runs `love.state.user_input_controller`
+  -- is nil, and every consumer of it resolves it dynamically
+  -- and guards.
   local CM = ConsoleModel(baseconf)
   redirect_to(CM)
   local CC = ConsoleController(CM, ctrl)

@@ -130,7 +130,10 @@ end
 -- love.state.user_input_controller; the compy.input wrappers
 -- resolve it from there).
 local function build_widget(cfg)
-  local m = UserInputModel(cfg, InputEvalText)
+  -- Its OWN evaluator, as production's build_input_widget does:
+  -- the highlighter is written onto the evaluator, so sharing
+  -- one would carry it between widgets.
+  local m = UserInputModel(cfg, Evaluator.plain('text input'))
   local c = UserInputController(m, true)
   c:init_view({ render = function() end, draw = function() end })
   love.state.user_input_controller = c
@@ -149,7 +152,19 @@ local cfg, CC, widget, session
 -- F for Fixture. Fields
 -- (F.cc/console/editor/widget/session/cfg) are nil until
 -- F.setup runs; reading them at describe-body scope is a bug.
-local F = {}
+--
+-- `F.widget` is NOT a field: the project widget lives for one
+-- project run (doc/development/decisions/input.md, Decision 3
+-- as amended), so a captured reference goes stale the moment a
+-- case runs or stops a project. It resolves to whichever widget
+-- is current, which is what a project sees through compy.input.
+local F = setmetatable({}, {
+  __index = function(_, k)
+    if k == 'widget' then
+      return love.state.user_input_controller
+    end
+  end,
+})
 
 function F.setup()
   if CC then return end -- already built for this spec file
@@ -158,10 +173,11 @@ function F.setup()
   cfg = build_cfg()
   require_modules()
 
-  -- Provision the widget before the console, as main.lua does.
-  -- The order is no longer load-bearing: compy.input resolves
-  -- the widget's stores per access rather than binding them at
-  -- construction. The fixture mirrors production anyway.
+  -- Production builds the project widget at the run seam, and
+  -- most cases here drive the surface without running a
+  -- project — so the fixture stands one up itself and F.reset
+  -- replaces it per case. A case that wants the real lifetime
+  -- uses F.run_project.
   widget = build_widget(cfg)
   CC = build_console(cfg)
   Controller.set_default_handlers(CC, CC.view)
@@ -174,7 +190,6 @@ function F.setup()
   F.cc        = CC
   F.console   = CC.input
   F.editor    = CC.editor
-  F.widget    = widget
   F.session   = session
   F.cfg       = cfg
 end
@@ -190,8 +205,8 @@ function F.teardown()
   end
   _G.love, _G.TESTING = nil, nil
   cfg, CC, widget, session = nil, nil, nil, nil
-  F.cc, F.console, F.editor   = nil, nil, nil
-  F.widget, F.session, F.cfg = nil, nil, nil
+  F.cc, F.console, F.editor = nil, nil, nil
+  F.session, F.cfg = nil, nil
 end
 
 -- The project-facing public surface (compy.input.show/hide); it
@@ -237,6 +252,11 @@ end
 -- events still use love.handlers.
 function F.activate_project(handlers)
   love.state.app_state = 'running'
+  -- A real run builds the widget at this same boundary
+  -- (Decision 3 as amended), so the narrow seam does too —
+  -- otherwise a case that stops and re-activates would find no
+  -- widget where production gives it a fresh one.
+  widget = build_widget(cfg)
   Controller.set_user_handlers(handlers or { }, CC)
   return F.compy_input()
 end
@@ -263,6 +283,23 @@ function F.show_selectable_widget(lines)
   return w
 end
 
+-- Drive the REAL ConsoleController:run_project with a chunk
+-- supplied here, because a unit test has no project on disk.
+-- Only the loader is stubbed; everything the run does around
+-- the chunk (state transitions, widget lifetime, teardown) is
+-- production. `fn` is the project's top-level code.
+--- @param fn function?
+function F.run_project(fn)
+  local P = CC.model.projects
+  local prev_current, prev_run = P.current, P.run
+  P.current = { name = 'p' }
+  P.run = function()
+    return function() if fn then fn() end end, nil, '/tmp/p'
+  end
+  CC:run_project('p')
+  P.current, P.run = prev_current, prev_run
+end
+
 -- A SECOND project widget, published as the current one. The
 -- shape a per-run widget lifetime produces: the surface a
 -- project holds must follow the live widget, not the one that
@@ -282,6 +319,11 @@ function F.reset()
   -- case-local one.
   love.state.user_input_controller = widget
   CC:stop_project_run()
+  -- The stop DESTROYS the widget, as a real stop does. A case
+  -- that never runs a project still needs one to drive, so the
+  -- fixture stands the next one up here — which is also what
+  -- makes each case's widget its own (Decision 3 as amended).
+  widget = build_widget(cfg)
   -- The device outlives a test the way a keyboard outlives a
   -- keystroke: a chord that never released leaves its modifier
   -- down for the next test unless the reset lifts it.
