@@ -11,11 +11,18 @@ reviewed: none
 Debt not tied to one subsystem — load-order/aliasing assumptions and shared-utility
 semantics.
 
+Three sections below, in release-scope order — not severity, not intent:
+**ACTIVE** must be resolved before this release ships. **BACKLOG** is real and
+acknowledged, but deliberately deferred past this release. **RETIRED** is
+paid, or turned out not to be debt.
+
 ---
 
-> REMARK: its not a defect, but convention -- gfx is alias for love.graphics, sfx is alias for compy.audio 
+## ACTIVE
 
-## `gfx` implicit global in `controller.lua`
+> REMARK: its not a defect, but convention -- gfx is alias for love.graphics, sfx is alias for compy.audio
+
+### `gfx` implicit global in `controller.lua`
 
 - **Where:** `src/controller/controller.lua` — `set_love_update` / `set_love_draw` (and
   other drawing call sites in the same file) use `gfx`, a free variable not set in the file
@@ -26,7 +33,9 @@ semantics.
 - **Revisit:** When the controller's load/aliasing is next reworked — prefer a module-top
   `local gfx = love.graphics` per the standard-aliases convention.
 
-## The test suite passes only in declaration order
+## BACKLOG
+
+### The test suite passes only in declaration order
 
 - **Where:** the whole suite, not one file. `busted tests` is green; `busted tests --shuffle`
   fails 29–55 rows per run, varying with the shuffle. Concentrated in `input model spec`
@@ -45,7 +54,7 @@ semantics.
   each of those turns this from dormant into a source of false failures. Also worth a pass
   whenever a subsystem's fixtures are next reworked, since the leaks are fixture-shaped.
 
-## Editor submit raises when no buffer is open
+### Editor submit raises when no buffer is open
 
 - **Where:** `src/view/editor/editorView.lua` `get_current_buffer` — `local bm =
   ctrl:get_active_buffer()` is indexed unguarded on the next line.
@@ -71,7 +80,7 @@ semantics.
   `get_current_buffer` alone would only move the nil one frame later; the three call sites
   and the "what does submit mean here" question go together.
 
-## The console's terminal self-test is unreachable
+### The console's terminal self-test is unreachable
 
 - **Where:** `src/controller/consoleController.lua` — `terminal_test`'s opening guard,
   `love.state.app_state ~= 'ready' or love.state.app_state ~= 'project_open'`. A state
@@ -89,7 +98,7 @@ semantics.
 - **Revisit:** when the console's debug affordances or the terminal widget are next worked
   on. Fix is one operator; the work is confirming the revived path still renders sensibly.
 
-## `table.protect(love.handlers)` is a no-op on the passed table
+### `table.protect(love.handlers)` is a no-op on the passed table
 
 - **Where:** `src/controller/controller.lua` — end of `setup_callback_handlers`.
 - **State:** `table.protect` returns a read-only proxy but does not mutate the original
@@ -98,3 +107,7 @@ semantics.
   `util/table` question.
 - **Revisit:** If/when read-only enforcement on `love.handlers` is actually wanted — either
   consume the returned proxy or change `table.protect`'s semantics.
+
+## RETIRED
+
+*(none in this file yet.)*

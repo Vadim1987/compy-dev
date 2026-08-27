@@ -1,5 +1,5 @@
 ---
-description: Input subsystem debt — standing properties, open decisions, and anticipated items with their revisit conditions
+description: Input subsystem debt — sorted ACTIVE / BACKLOG / RETIRED by release scope
 status: active
 audience: developer
 authored: llm
@@ -18,13 +18,208 @@ Keyboard/text/pointer routing, the console and project input controllers
 `../input_api.md`. "The input API" below means the `compy.input` surface
 introduced in **1.0.0-rc20260712**.
 
-Three groups below: standing properties (settled, just noted), open decisions
-(the framework owner has not yet ruled), and anticipated items (may never need
-action; revisit at the named point).
+Three sections below, in release-scope order — not severity, not intent:
+**ACTIVE** must be resolved before this release ships. **BACKLOG** is real and
+acknowledged, but deliberately deferred past this release. **RETIRED** is
+paid, or turned out not to be debt.
 
 ---
 
-## Standing
+## ACTIVE
+
+### `combo_string` does not normalise the case of a textinput token
+
+- **Where:** `src/controller/controller.lua`, `combo_string`; the
+  registration side is `Key.new_handler_table`'s normalising `__newindex`
+  (`src/util/key.lua`), which lower-cases through `normalize_combo`.
+- **State:** An upper-case *textinput* combo token cannot match a
+  registration, because registration lower-cases and dispatch does not.
+  Measured (2026-08-03) with `shift` held and `I` typed: dispatch looks up
+  `shift+I`, while `shortcuts.textinput['shift+I']` is stored as `shift+i`.
+  The slot is therefore **unreachable**, not merely awkward — the handler can
+  be written but can never fire. Bare lower-case tokens are unaffected.
+- **Why it stands:** No *adopted* consumer yet — but the revisit condition
+  below has now fired. The paired-shortcut idiom recorded under *"A widget
+  opened from a key can receive that key's own echo"* is a real textinput-combo
+  consumer, and this defect is exactly what confines it to bare triggers.
+- **Revisit:** now — together with the ruling on that entry. If the idiom is
+  adopted as the documented answer, this becomes blocking for any modified
+  trigger; if a framework mechanism is adopted instead, a wildcard one-shot
+  needs no combo lookup and this stays a corner.
+
+### Decision 1 — console/editor convergence onto the shared chain is unimplemented
+
+- **Where:** `src/controller/consoleController.lua` (`ConsoleController:keypressed`,
+  `:1516`) and `src/controller/editorController.lua`
+  (`EditorController:keypressed`, `:825`) — each still runs its own narrow,
+  single-argument dispatch, not the project route's `dispatch(shortcuts, hooks,
+  widget, event, trigger, ...)` chain.
+- **State:** Decision 1 (`../decisions/input.md`) names this convergence as
+  "deliberately left as a follow-on, not attempted," and Decisions 26 and 33
+  repeat the same scope note in different words. The decision text is honest
+  about the gap; the gap itself is still open.
+- **Why it stands:** out of this feature's mandate — scoped out on filing, not
+  an oversight found later.
+- **Revisit:** when the console/editor routes are migrated onto the combo
+  mechanism. See also "Console and editor route handlers bind by hand-written
+  modifier tests," which is this gap's symptom one layer down.
+
+### Decision 35 — the `show`/`configure` content-ownership boundary is not built
+
+- **Where:** `consoleController.lua` (`PER_SHOW_KEYS`, `check_keys`,
+  `stash_hidden_configure`) and `userInputController.lua` (`re_show`).
+- **State:** Decision 35 (`../decisions/input.md`) rules that `configure` must
+  refuse `text`/`cursor`, that a hidden `configure`'s stash of them must go, and
+  that a forced `show{}` with no `text` must clear the field. None of the three
+  holds yet: `PER_SHOW_KEYS` still folds `text`/`cursor` into `CONFIGURE_KEYS`
+  without raising, `stash_hidden_configure` still writes `state.pending` for the
+  next `show()`, and `re_show` only touches `set_text` when `cfg.text ~= nil` —
+  an unforced-content `force=true` `show()` still preserves rather than clears.
+- **Why it stands:** the decision was ruled the day this was written, and its
+  own text names the implementing pass as not yet landed.
+- **Revisit:** the `configure` closure and `PER_SHOW_KEYS` comments still cite
+  the pre-Decision-35 internals doc, not any post-35 contract — the docs need
+  the same pass as the code, once the implementing work lands.
+
+### A highlighter cannot be turned off — `false` already does it, unratified
+
+- **Where:** `src/controller/userInputController.lua`, `apply_config`;
+  `userInputModel.lua:384/393`.
+- **State:** `apply_config` writes any non-nil `highlighter` (including
+  `false`); every consumer then tests it for truthiness, so a stored `false`
+  takes the same branch as absent. Verified by probe: `validator = false`,
+  `on_text_entered = false` and `highlighter = false` all already behave as
+  "no such thing."
+- **Why it stands:** not a design gap any more, but nothing says so — `false`
+  meaning "unset" is a de-facto contract nobody ratified or wrote down, and
+  `prompt`'s different unset spelling (`''`/`false`) sits beside it unexplained.
+- **Revisit:** ratify `false` as the uniform "no such thing" and document it,
+  or reject it and build dedicated unset machinery instead.
+
+### `turtle` double-handles its own keys
+
+- **Where:** `src/examples/turtle/main.lua`.
+- **State:** a finding from the input-API migration — turtle's own key
+  handling and the widget's always-consumes behaviour both act on the same
+  keystroke. Not yet characterised beyond "it is a finding about the
+  migration," and it may implicate every migrated example, not only turtle.
+- **Why it stands:** unactioned pending characterisation.
+- **Revisit:** with the input guide's missing statement that a shown widget
+  always consumes keyboard input — this defect is that gap's symptom.
+
+### `set_cursor` clamps by byte offset; the boundary event measures characters
+
+- **Where:** the cursor-setting path in `userInputController.lua` /
+  `userInputModel.lua`.
+- **State:** two functions disagree on the unit a cursor position is counted
+  in — one clamps bytes, the other measures characters at the boundary. Which
+  is right has not been decided.
+- **Why it stands:** small, unresolved design call, not yet ruled.
+- **Revisit:** decide which unit is authoritative and make the other agree.
+
+### `show{force = true}` applies some keys, drops one, defers another
+
+- **Where:** `consoleController.lua` — `PER_SHOW_KEYS` / `CALLBACK_KEYS`, the
+  `force` path.
+- **State:** one call has three behaviours for its own keys — `text` and the
+  three callback keys apply immediately, `prompt`/`cursor` are silently
+  dropped, and `highlighter` defers until an unrelated later `show`/`configure`
+  flushes it (root cause filed separately: "the highlighter has two homes,
+  and one of them lags," below). Traced to `merge_callback_keys` writing into
+  the widget's `callbacks` table, which `apply_config` also writes, while
+  `highlighter` lives only on `model.evaluator`.
+- **Why it stands:** narrow — one call path, and `force` has no consumer
+  in-tree today, which is why it went unnoticed this long.
+- **Revisit:** may dissolve rather than be fixed — making `force` the full
+  re-setup it was reviewed as removes this row's defect along with its
+  siblings; track alongside the configuration-boundary work.
+
+### balloons keeps a shadow copy of the widget's label, re-pushed every cycle
+
+- **Where:** `src/examples/balloons` — `ui_messages.hint` and
+  `ui_draw_hint()`.
+- **State:** a pre-feature fossil. The shadow state re-asserts the label on
+  every state transition because in the legacy era the label died with each
+  `input_text()` call. With label stickiness now ratified, the widget owns the
+  label and the shadow is redundant. Two vestigial arguments ride along it
+  (`terminal_write`'s unread `flushed`, `ui_set_hint`'s extra argument it does
+  not take) plus a stale comment.
+- **Why it stands:** modest severity — redundancy and misleading fossils, no
+  user-visible misbehaviour found.
+- **Revisit:** when balloons is next touched for the label-stickiness work.
+
+### `show{cursor = {}}` raises a raw Lua error from inside the framework
+
+- **Where:** `userInputController.lua`, `set_cursor_pos` — `math.min(line,
+  n)` with no nil guard.
+- **State:** a partial or empty cursor table (`{}`, `{1}`, `{nil, 2}`), a bare
+  scalar (`cursor = 1`), or `false` all crash the project with a raw Lua
+  arithmetic error rather than a framework-shaped one — unlike the rest of the
+  config table, which validates strictly and raises a message naming the bad
+  key. `doc/input_api.md` promises out-of-range cursor values clamp rather
+  than fail.
+- **Why it stands:** a public path that crashes the project on a value shape
+  nothing guards.
+- **Revisit:** also gates a design rule for what a scalar/defaulted cursor
+  should mean as "unset," which cannot be documented while the path still
+  raises.
+
+### `set_text` silently ignores a multi-line *string*
+
+- **Where:** `userInputController.lua`, `UserInputModel:set_text`.
+- **State:** `self.entered` is assigned only when `#string.lines(text) == 1`;
+  a multi-line string falls through every branch and nothing is written, so
+  `show{text = "a\nb"}` leaves the previous session's content standing. A list
+  of line strings works; `doc/input_api.md` documents `text` as "a string or
+  list of line strings," so this is a silent failure on a documented, primary
+  call shape.
+- **Why it stands:** narrow fix, but the worst failure mode on this list —
+  silent, on a documented shape, on the primary call.
+- **Revisit:** belongs with the configuration-boundary work already touching
+  `apply_config`/`set_text`.
+
+### The highlighter has two homes, and one of them lags
+
+- **Where:** the widget's `callbacks` table (the sticky store, shared with
+  the `compy.input.callbacks` surface) and `model.evaluator`, which is what
+  the model actually reads (`userInputModel.lua:384/393`).
+- **State:** only `apply_config` copies store to evaluator, so any path that
+  writes the store without going through it leaves the live copy stale — a
+  direct `compy.input.callbacks.highlighter = fn` assignment on a shown
+  widget does nothing until an unrelated later `show`/`configure` flushes it.
+  `validator` and the widget outputs have one home each and do not have this
+  problem. `doc/input_api.md` ("Callback assignments") documents `highlighter`
+  as assignable this way regardless.
+- **Why it stands:** ruled — one home, proxied via `callbacks`; the evaluator
+  stops holding a copy and `compy.input.callbacks` proxies to the widget's
+  table instead. Settled in shape; the work is implementation.
+- **Revisit:** implement the proxy, and record the drift it replaces in
+  `internals/user_input.md` for a reader meeting the old two-homes shape in an
+  older tree.
+
+## BACKLOG
+
+### Widget sink reaches the singleton via `love.state` global + nil-guard (RESOLVED-IN-PART by the input-API redesign)
+
+- **Where:** was `src/controller/projectInputController.lua`, `_sink` — read
+  `love.state.user_input_controller` on each call and guarded it with
+  `if ui then …`.
+- **Old state:** The old tier-4 `_sink` reached the widget through a global
+  rather than an injected instance field (`self.input`), and defended with
+  a nil-check against a value the singleton convention said was always
+  present.
+- **Resolution:** The sink is gone. `dispatch` (the free-function extraction
+  recorded as an implementation note in `decisions/input.md`,
+  `projectInputController.lua:74-86`) is now a free function that takes the
+  widget **as a parameter** rather than reaching for a global itself — the
+  concern moves one level up, to `ProjectInputController:_dispatch`
+  (`:93-97`), which is the one remaining place that resolves
+  `love.state.user_input_controller`. The nil-guard (`if widget and
+  widget:is_shown()`) is carried at that boundary, not inside the reusable
+  mechanism.
+- **Revisit:** Whether `_dispatch` itself should inject `self.input` at
+  construction instead of reading the global, and turn its nil-guard into
+  an assertion, remains open — the same question, one layer up.
 
 ### The Web build has no coverage, and carried a feature-era regression unseen
 
@@ -51,59 +246,6 @@ action; revisit at the named point).
   through `wrap`. A grep is enough to enforce it and would have caught this.
 - **Revisit:** if a Web build is released, or when CI grows a second
   interpreter.
-
-### `wrap`'s error handler is called with the wrong arity, so project raises vanish (RESOLVED, 2026-08-03)
-
-- **Resolution:** `wrap` binds CC in a closure used by both branches
-  (`2554d2e3`), so a raise anywhere in project code now reaches
-  `user_error_handler` and suspends the run. Three rows pin it — pointer,
-  `love.update`, and a keyboard hook as the control that the other two are not
-  asserting something impossible. Owner ruling: a certainly-wrong behaviour is
-  not preserved on the grounds that changing it was never approved, even
-  though it is pre-feature.
-- **Where it was:** `src/controller/controller.lua`, `wrap` — the non-web
-  branch was
-  `return xpcall(f, user_error_handler, ...)`. `xpcall` invokes a message
-  handler with exactly **one** argument (the error), but the signature is
-  `user_error_handler(CC, msg)`. So `CC` binds to the error string, `msg` is
-  nil, and `'user error: ' .. msg` raises *inside* the message handler, where
-  `xpcall` swallows it. Nothing reaches `suspend_run`.
-- **Measured effect** (probe run 2026-08-03, asserting the handler executed
-  before the raise): a raise in a project's **pointer handler** or in its
-  **`love.update`** runs the handler, then vanishes — no error window, no
-  console line, `app_state` still `'running'`. A raise in a **keyboard hook**
-  suspends correctly, because that path goes through `chain_native`, which
-  binds CC in a closure (`xpcall(fn, function(m) user_error_handler(CC, m)
-  end, ...)`) and gets the arity right.
-- **`_G.web` is falsy on the desktop build, so the broken branch was the live
-  one.** The web branch passed both arguments and never had the arity
-  problem. Its own flaw — returning bare `r` where the other branch returned
-  `xpcall`'s `ok, res...` tuple, so the `@return` annotation described only
-  one of them — was fixed alongside the wrapper collapse (`f1dc6aee`).
-- **Why the web branch exists at all, established 2026-08-03:** it is not a
-  stylistic duplicate. `xpcall(f, h, ...)` forwarding arguments to `f` is a
-  LuaJIT / Lua 5.2 extension; PUC Lua 5.1 takes exactly two arguments and
-  drops the rest, so on that runtime every handler would be invoked with nil
-  for all of its parameters. `pcall(f, ...)` forwards on both. Measured here:
-  LuaJIT gives `1, 2`; 5.1 semantics give `nil, nil`. The branch is therefore
-  **load-bearing and must not be collapsed away** — a warning to that effect
-  now sits on it in code.
-- **Reach at the time:** `wrap` had three call sites — `wrapped_native`
-  (pointer handlers), the loader, and the project `update` wrapper — plus
-  `CC:wrap_handler`, which took `wrap` as its error handler, for the compy
-  click handlers. All of those except the loader and the update wrapper have
-  since been replaced by `guarded`.
-- **Pre-feature, verified:** `wrap` and `user_error_handler` are
-  byte-identical at the PR base `3256aac`. The input API neither introduced
-  nor worsened this; it only made the contrast visible, because the keyboard
-  chain's own wrapper does it correctly.
-- **Consequence for the docs:** "A raise from project top-level and from a
-  handler surface differently" (below) describes the handler path as
-  reaching the error window. That holds for keyboard hooks only.
-- **Kept as a closed entry** because two things in it are still live
-  knowledge: why the web branch exists (above), and the fact that this
-  subsystem's error path had a defect no test could see for the length of the
-  feature — the argument for the Web-coverage entry that opens this section.
 
 ### A project that raises leaves global device state dirty; no force-reset exists
 
@@ -154,81 +296,6 @@ action; revisit at the named point).
   runs no teardown. Wiring the force-reset means calling the framework half on
   the crash path too, which is a decision this entry does not pre-empt.
 
-### `compy.before_exit` is absent from the persistent API docs (RESOLVED, 2026-08-03)
-
-- **Resolution:** documented as `doc/input_api.md`, "Stop hook —
-  `compy.before_exit`" (owner ruled 2026-08-03), covering signature, ignored
-  return, timing before framework teardown, which stop paths fire it, that a
-  raise is **not** one of them, and the reset. Every clause is pinned in
-  `tests/input/input_route_lifecycle_spec.lua`; the not-fired-on-raise claim
-  was mutation-checked rather than read.
-- **What it was:** a public, project-settable lifecycle slot whose only
-  specification lived in the feature's ephemeral working tree, which is
-  scheduled for deletion — while the PR is meant to be reviewable from
-  `doc/input_api.md` plus the description alone. The entry above also depends
-  on that contract being findable.
-
-### Future input unification (RESOLVED, 2026-08-03)
-
-- **Resolution:** done, and in the direction this entry doubted. Every
-  channel — keyboard, text, pointer, and the derived singleclick/doubleclick
-  events — routes through one chain with one error boundary and one lifetime
-  (`../decisions/input.md`, Decision 25). The derived clicks did fold into
-  hooks: `compy.singleclick` is gone and `compy.input.hooks.singleclick`
-  replaces it.
-- **Where this entry was wrong, worth keeping:** it recorded the asymmetry as
-  predating the input API. It did not. At the PR base every event installed
-  through one path and none was released before stop; the split was
-  introduced by this feature (Decision 11, amended). The entry then reasoned
-  from the false premise to "folding clicks into hooks would falsely imply" a
-  shared contract — when a shared contract was in fact the pre-existing state.
-- **What genuinely remains unproven** and is recorded separately: pointer
-  combos, and whether a shown widget should consume clicks within its bounds.
-  See "Pointer delivery is an unstructured broadcast" below.
-
-### Project-handler wrapping: dedup the guard, drop the misleading `keyboard_` name (RESOLVED, 2026-08-03)
-
-- **Resolution:** the two builders are one. `chain_project_handler(CC, fn)`
-  wraps, `project_handler(userlove, CC, key)` guards, and both the keyboard
-  participants (`project_handlers`) and the pointer installs (`hook_pointer`)
-  use it. The guard exists once. `wrapped_native` / `keyboard_native` /
-  `chain_native` are gone, and with them the `native` label and the
-  keyboard-specific name on a function that was never keyboard-specific.
-- **What made the collapse possible:** the split was justified by return
-  policy — `CC:wrap_handler` discards the return by construction, and a chain
-  participant's return is its consume signal. That was never a real
-  constraint: a returning wrapper is usable where the return is ignored,
-  which is exactly what a pointer handler installed on `love.*` does. The
-  genuine obstacle was that the two paths had *different error handling*, one
-  of which was broken — see the arity entry above, fixed first so the
-  collapse could be behaviour-preserving rather than a fix in disguise.
-- `CC:wrap_handler` survived this step for the compy single/double click
-  handlers, then went with them when the clicks became ordinary events
-  (Decision 25). Nothing wraps project code any other way now: `guarded`
-  (`controller.lua`), applied where a route is entered, is the only one.
-- **Verified behaviour-preserving:** suite 911/0/0/3 across the change, and
-  the pointer path now propagates a return value that both `love.handlers`
-  and the poll loop discard.
-- **What it was:** two builders adapting a project's own `love.*` handlers —
-  `wrapped_native` (via `CC:wrap_handler`, return discarded, installed
-  straight onto `love.*` by `hook_pointer`) and `keyboard_native` (via
-  `chain_native`, return propagated, seeded as `hooks[event]` by
-  `occupy_keyboard`) — carrying the **identical** guard
-  (`orig and new and orig ~= new`) and differing only in the wrapper they
-  called. `keyboard_native` was misnamed: nothing about it was
-  keyboard-specific. Deferred out of the D5 vocabulary rename (2026-07-21)
-  on the reasoning that renaming under a mechanical sweep would either bless
-  the smell with fresh names or smuggle a behaviour-touching refactor into a
-  rename commit — which is why it waited for a pass of its own.
-
-### `love.handlers.userinput` is dead code (RESOLVED, 2026-08-07)
-
-Deleted, with the local `clear_user_input` that existed only to feed it. Both
-`love.event.push('userinput')` sites were present at the PR base
-(`3256aac:userInputModel.lua`) and were removed by this feature, leaving the
-consumer installed — the same shape as `wrap_handler`. Kept as a resolved entry
-because the pattern recurs: when a producer goes, grep for its consumer.
-
 ### `compy.before_exit` is a closure slot
 
 - **Where:** `src/controller/consoleController.lua`, `get_compy_namespace` —
@@ -268,172 +335,6 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   this specific hooks/widget interaction. No dedicated guard exists.
 - **Revisit:** Note the coupling wherever `on_limit_reached` is
   documented for project authors, or decide it needs a guard.
-
-### Input-only / pointer-only projects stay live in `project_open` (RESOLVED, ruling a)
-
-- **Where:** `consoleController.lua` `run_project`
-  (`consoleController.lua:260-269`), `controller.lua`
-  `user_is_interactive` (`controller.lua:1112-1113`),
-  `user_pointer` / `hook_pointer` (`controller.lua:68`,
-  `:238-249`), `set_default_handlers`
-  (`controller.lua:778-824`, resets `user_pointer`), and
-  `love.quit` (`controller.lua:733-758`).
-- **State (old, broken behaviour):** A non-blocking project (no
-  `update`/`draw` hooked) always dropped to `'project_open'` with
-  the project route unconditionally released
-  (`release_keyboard_route`). For a project whose entire UI was
-  the input widget (`examples/guess`) or a pointer handler
-  (`examples/sapper`), this meant (1) submit was dead — typing
-  still reached the widget but Enter never fired, because
-  submit/cancel (then a non-overridable framework tier, since
-  retired — Decision 2) lives in the *project*
-  route, which `project_open` disconnected — and (2) Ctrl+Esc quit the whole
-  app instead of returning to the console, because `love.quit`
-  only stopped-to-console while `app_state == 'running'`.
-- **Confirmed pre-existing:** this was verified byte-identical on
-  `master` (pre-`0022004`) — not an input-API regression. The
-  `release_keyboard_route` call site is new in 1.0.0-rc20260712
-  (route-lifecycle rework, AC-27/28), but the lifecycle split it
-  slots into predates the feature.
-- **Resolution:** owner ruled (a) — an input-only / pointer-only
-  project is "live" without hooking `update`/`draw`. New
-  predicate `Controller.user_is_interactive()` returns
-  `love.state.user_input ~= nil or user_pointer`, where the
-  module-local `user_pointer` flag is set in `hook_pointer` when
-  a project installs any pointer/click handler and reset in
-  `set_default_handlers`. `run_project` now releases the keyboard
-  route only when `not user_is_interactive()` — an interactive
-  non-blocking project keeps the project route, so submit/cancel
-  keep working (`app_state` still becomes `'project_open'`
-  either way, since quickswitch relies on that). `love.quit` now
-  stops-to-console for `app_state == 'running'` OR
-  (`'project_open'` AND `user_is_interactive()`); an idle console
-  (`'project_open'`, nothing interactive) still lets the app
-  quit.
-- **Carried-forward limitation:** a non-blocking project with
-  *no* interaction surface at all (no widget shown, no pointer
-  handler, no update/draw) still gets `release_keyboard_route` —
-  the keyboard goes back to the console. This is intended, not a
-  gap: such a project has nothing left to be interactive with.
-
----
-
-## Open decisions
-
-The framework owner has not yet ruled on these; each is recorded as an open
-question, not resolved here.
-
-### `compy.keys_pressed` is not exposed to projects (RESOLVED, 2026-08-03)
-
-- **Where:** the project-facing `compy` namespace (`consoleController.lua`,
-  the function that assembles it) exposes `terminal`, `audio`, `graphics`,
-  `fonts`, `input`, and a `before_exit` slot — no `keys_pressed`. Held-key
-  access exists framework-side (`Controller.keys_pressed`, the `held_keys()`
-  read-only pressed-keys view) and via the per-event callback argument, but a project cannot poll
-  currently-held keys from inside its own `update()`.
-- **Why it stands:** Open design question — expose a read-only held-key view
-  to projects, or treat callback-arg access as the sanctioned shape and amend
-  the documented contract to say so explicitly.
-- **A real consumer now exists, and it rules out the second option**
-  (2026-08-03): the `keyboard` example maintains its own `INPUT.held` /
-  `INPUT.shift` mirror and reads it **during draw**, to decide whether to
-  render shifted key labels. A per-event argument cannot serve a per-frame
-  renderer, so callback-arg access alone is insufficient for any project that
-  *renders* held state rather than reacting to it.
-- **Resolution:** owner ruled to expose it — `compy.input.keys_pressed`
-  (`../decisions/input.md`, Decision 20), the same read-only view the chain
-  hands participants, resolved per access so it cannot go stale. Placed on
-  `compy.input` rather than at the top of `compy`: it is input state, and the
-  input guide is where a reader looks for it.
-- **Resolution superseded** (`../decisions/input.md`, Decision 30): the view is
-  dissolved and no held-key surface is exposed. **The need this entry recorded
-  is still met, by a different answer** — the renderer that ruled out
-  callback-arg access asks the device instead (`love.keyboard.isDown`), which a
-  per-frame draw can do as freely as a handler can. The entry stays RESOLVED;
-  only what resolves it has changed.
-
-### Shortcuts key-repeat semantics are shipped unsettled (RESOLVED, 2026-08-03)
-
-- **Where:** `src/controller/projectInputController.lua`, `:keypressed` —
-  `isrepeat` is threaded through to `hooks[event]` dispatch only; `shortcuts`
-  fire on every OS key-repeat with no `isrepeat` gate.
-- **Why it stands:** Whether shortcuts dispatch should also gate on
-  `isrepeat` (fire once per physical press) or intentionally fire on every
-  repeat is an open behavioural call, shipped open by design.
-- **The first real consumer wants once-per-press** (2026-08-03): `keyboard`'s
-  reserved chords (`shift+escape`, `ctrl+alt+up`/`down`) are now shortcuts,
-  and each wraps itself in a `if not isr then … end` gate — otherwise holding
-  `ctrl+alt+up` ramps the notch every frame. The flag *is* delivered to
-  shortcuts, so the workaround is three lines; the question is whether every
-  consumer should have to write them.
-- **Resolution:** owner ruled that dispatch keeps firing on every repeat and a
-  binding opts out for itself — `compy.input.fn.ignore_repeat(fn)`
-  (`../decisions/input.md`, Decision 22), with `fn.stop_here` alongside it
-  when the binding also claims the key (Decision 24). Filtering inside the shortcut tier
-  was rejected for two reasons: it suppresses with no way to recover a
-  hold-to-act binding, and it would leave the same hand-written check in
-  `hooks.keypressed`, where commands are equally idiomatically bound. The
-  wrapper has one signature and composes across all three tiers.
-
-### No public `is_active()`-shaped visibility query (RESOLVED, 2026-07-31)
-
-- **Where:** the `compy.input` project surface (`consoleController.lua`) had
-  no `is_shown`/`is_active`/`is_visible`, though an internal
-  `UserInputController:is_shown()` existed.
-- **State (old), and worse than this entry recorded:** the entry said example
-  projects read `love.state.user_input` directly, as if that were a working
-  workaround. **It is not.** A project's `love` is a sandboxed deep clone
-  (`../internals/project_sandbox_env.md`), so `love.state.user_input` read
-  from inside a project is always `nil` — the framework writes the real
-  global, the project sees its copy. `examples/maze/main.lua:497` guards a
-  re-show with exactly that read: dead code that never fires, which is why
-  maze re-shows the widget on every tick.
-- **Resolution:** owner ruled to expose it —
-  `compy.input.is_shown()` (`../decisions/input.md`, Decision 18), returning
-  the widget's own flag so it cannot drift from the one the dispatch walk
-  reads. Used by `examples/turtle` for its open-only-if-closed guard.
-
-### On the console route, a hidden widget's input falls to the console line (RESOLVED, 2026-08-03)
-
-- **Resolution:** settled by construction — the console route no longer has a
-  widget step at all. The three `forward_*` functions that implemented it were
-  deleted, so every keyboard/text event on that route goes to `CC:keypressed` /
-  `CC:textinput` (the console line, or the editor fork), hidden widget or
-  shown. Decision 1's "widget visibility is never a routing condition" now
-  holds on both routes. The two routes still read differently — the project
-  route ends an unclaimed event in the chain, the console route ends it in its
-  own input surface — but that is each route's own terminal, not two answers
-  to one question.
-- **The rows that pinned it are re-sited, not deleted** (2026-08-03). They had
-  gone vacuous: with no widget step on the console route, a *shown* widget
-  would have satisfied them there too. On the project route a hidden widget is
-  a real decision — the walk skips it and reports not-consumed — so they now
-  discriminate on the widget's own text, with a third row as the control that
-  the same keystroke edits a shown widget. The `#disputable` tag is gone: the
-  question it marked is answered, not merely pinned.
-- **Where it was:** `src/controller/controller.lua` — `forward_keypressed` /
-  `forward_textinput` / `forward_keyreleased` handed the event to the widget
-  only while `love.state.user_input` was set, which `hide()` clears; the
-  console-route defaults then fell back to `CC:keypressed` / `CC:textinput`.
-- **Why it stands:** The general principle — *input the widget declined
-  should have no effect* — was ruled for the **project** route only:
-  Decision 11 ("Changed baseline behaviour", `../decisions/input.md`) gives
-  a running project's route every keyboard/text event, so an event no
-  shortcut, hook, or shown widget takes simply ends there, instead of
-  accumulating in the console behind the project's screen. The **console**
-  route kept the old shape, and it is not obviously wrong there: the console
-  line is that route's own input surface, so "the widget is down, type into
-  the terminal" is arguably the correct reading, not a leak. What is unruled
-  is whether the two routes should read the same way.
-- **Reachability:** No leak path through a *running* project is known today
-  — the running case is Decision 11's, and the `project_open` case is
-  narrowed by ruling (a) above (`user_is_interactive`), which keeps the
-  project route for any project with a widget or a pointer handler. The
-  open question is therefore a contract question first: two routes, two
-  answers to the same question, only one of them written down.
-- **Revisit:** At the next ruling pass over route symmetry — either sanction
-  the console fallback explicitly in the contract doc, or give the console
-  route the project route's "declined means no effect" shape.
 
 ### A raise from project top-level and from a handler surface differently
 
@@ -631,8 +532,6 @@ question, not resolved here.
   choice between (a)–(d) turns on what the framework is willing to promise
   about batch boundaries, which is a design question, not a bug fix.
 
----
-
 ### Combo triggers are key-name-only; positional bindings have no vocabulary
 
 - **Where:** `src/controller/controller.lua`, `combo_string` — a combo's
@@ -663,90 +562,6 @@ question, not resolved here.
   position).
 - **Revisit:** when a project needs layout-independent positional keys.
 
-
-### A bare `*` shortcut is legal, and ruled that it should not be (RESOLVED, 2026-08-03)
-
-- **Resolution:** `check_combo` (`src/util/key.lua`) now raises on a `*`
-  trigger with no modifiers, naming the alternative in the message ("for every
-  key, use `compy.input.hooks`"). Decision 21 and `doc/input_api.md` carry the
-  rule, and two rows pin it — the raise, and the control that `shift+*` is
-  still accepted, so the check cannot pass by rejecting classes generally.
-- **What it was (measured 2026-08-03):** `shortcuts.keypressed['*']`
-  registered without raising and caught every **unmodified** key — `q` fired
-  it, `ctrl+s` did not, that belonging to the `ctrl+*` class. Coherent with
-  Decision 21 (a class is its modifier set exactly, and the empty set is a
-  class), but undocumented, untested, and a second spelling for what a hook
-  already expresses.
-- The entry was kept here rather than in `../decisions/input.md` while it was
-  unimplemented, deliberately: a ratified entry describing behaviour the code
-  lacks is the exact error this phase spent a session undoing.
-- Corrected while closing: the session25 claim that the multi-trigger raise
-  "settles whether a bare `*` is legal" was wrong. It permitted it.
-
-
-## Anticipated — revisit at the named point, close only if warranted
-
-Not commissioned for closure; each may never need action.
-
-### A multi-trigger combo is silently truncated at registration (RESOLVED, 2026-08-03)
-
-- **Where:** `src/util/key.lua`, `normalize_combo` / `split_combo` — the
-  trigger is "the last non-modifier token wins", with no complaint about the
-  earlier ones.
-- **State (measured 2026-08-03):** `ctrl+a+b` is stored as `ctrl+b`, and
-  `a+b+*` is stored as **`*`** — a string an author wrote to mean the
-  narrowest possible binding registers the widest possible one. Nothing warns.
-  The grammar is *modifiers plus exactly one trigger*: `combo_string` prepends
-  only the four modifier classes, so a held non-modifier key never enters the
-  combo string at all (measured: `a` and `b` held, `b` pressed → `ctrl+alt+b`,
-  no trace of `a`). Multi-key chords are outside the grammar; a project that
-  wants "a and b held together" asks the device for the second key inside the
-  hook or shortcut that handles the first (`doc/input_api.md`, "Choosing the
-  mechanism"). Reconstructing it from a pair of flag-setting shortcuts is
-  **not** the answer — that shape is now named as an antipattern there.
-- **Resolution:** registration now **raises** on a combo naming more than one
-  trigger, or none (`../decisions/input.md`, Decision 21) — the same treatment
-  `show`/`configure` give an unrecognised key. `a+b+*` no longer registers the
-  widest possible binding; it is refused with the legal shape in the message.
-
-### A combo table cannot express a modifier-class rule (RESOLVED, 2026-08-03)
-
-- **Where:** `compy.input.shortcuts[event]` (`../decisions/input.md`,
-  Decision 8) — `Key.new_handler_table`, an exact canonical lookup keyed by
-  one full combo string.
-- **State:** every binding names one combo, and dispatch is one exact lookup
-  of `combo_string`'s output. A project that wants "**every** `alt+x` is a
-  chord, swallow it whatever `x` is" has no sanctioned way to say so; it needs
-  an entry per key, or it keeps that rule in a hook and tests the modifiers by
-  hand. Found by the `keyboard` migration (2026-08-03), which moved its three
-  named chords to shortcuts and kept `appChord` — its Alt-class rule — as a
-  hook for exactly this reason.
-- **The table is not sealed, though** (measured 2026-08-03):
-  `Key.new_handler_table` sets no `__metatable`, so a project can reach the
-  metatable and add an `__index`, and dispatch's plain lookup then consults it
-  on a miss — a working wildcard, in three lines. It is undocumented, it would
-  break the moment the table is sealed, and a reader would take it for a bug.
-  Recorded because it shows the mechanism exists, **not** as an idiom.
-- **A wildcard would have to answer more than it looks:** precedence against
-  an exact binding, whether the matched trigger is passed to the handler, and
-  the modifier's own press — holding Alt and pressing nothing else dispatches
-  the combo **`alt+lalt`**, since `combo_string` prepends the held modifier to
-  a trigger that *is* that modifier. A naive `^alt%+` pattern matches it.
-- **Resolution:** owner ruled a sanctioned form — a trailing `*` binds the
-  modifier class (`../decisions/input.md`, Decision 21). `alt+*` is every Alt
-  chord; exact bindings win, the class is consulted only on a miss, and it
-  never matches the modifier's own press. The three questions above are
-  answered by it: precedence is exact-first; the trigger is already the
-  handler's first argument; and a class does not match when the trigger is
-  itself a modifier. The unsealed-metatable route above is superseded — do
-  not use it.
-- **Still true, and now documented rather than implicit:** the class form is
-  about a *modifier* class. Combos of ordinary keys (`a+b`) remain outside the
-  grammar by design, since including held non-modifiers would make every
-  binding conditional on nothing else being held. That case is a hook that
-  asks the device for the rest of the chord (`doc/input_api.md`, "Choosing the
-  mechanism").
-
 ### A keyboard-hooks-only project does not count as interactive
 
 - **Where:** `src/controller/controller.lua`, `user_is_blocking()` /
@@ -766,44 +581,6 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** if a keyboard-only project appears, or when ruling (a)'s
   "interaction surface" definition is next revisited; the fix would be to
   count seeded hooks alongside the widget and pointer tests.
-
-### Combo-string dispatch allocates a table per call — RESOLVED 2026-08-16
-
-- **Where:** `src/controller/controller.lua` — `combo_string` built a `parts`
-  table and `table.concat`ed it on every call, on the per-keystroke dispatch
-  path.
-- **Resolved** (`737d8316`): it now accumulates the string directly, so no table
-  is allocated. A reused module-level buffer was the other candidate and was
-  **declined** — it trades the allocation for shared mutable state in a function
-  that would then have to never be called re-entrantly.
-- **What remains, and it is smaller:** `find_shortcut`
-  (`src/controller/projectInputController.lua`) calls `combo_string` **twice** on
-  a miss — once for the exact combo, once for the `'*'` class — so one event can
-  ask the device six times instead of three. Reusing the first walk needs either
-  a parameter on `combo_string`, cached state, or a second copy of Decision 8's
-  precedence logic; all three were judged worse than the cost.
-- **Revisit:** with the `'*'`-class lookup, if combo dispatch ever lands
-  somewhere genuinely hot.
-
-### `combo_string` does not normalise the case of a textinput token
-
-- **Where:** `src/controller/controller.lua`, `combo_string`; the
-  registration side is `Key.new_handler_table`'s normalising `__newindex`
-  (`src/util/key.lua`), which lower-cases through `normalize_combo`.
-- **State:** An upper-case *textinput* combo token cannot match a
-  registration, because registration lower-cases and dispatch does not.
-  Measured (2026-08-03) with `shift` held and `I` typed: dispatch looks up
-  `shift+I`, while `shortcuts.textinput['shift+I']` is stored as `shift+i`.
-  The slot is therefore **unreachable**, not merely awkward — the handler can
-  be written but can never fire. Bare lower-case tokens are unaffected.
-- **Why it stands:** No *adopted* consumer yet — but the revisit condition
-  below has now fired. The paired-shortcut idiom recorded under *"A widget
-  opened from a key can receive that key's own echo"* is a real textinput-combo
-  consumer, and this defect is exactly what confines it to bare triggers.
-- **Revisit:** now — together with the ruling on that entry. If the idiom is
-  adopted as the documented answer, this becomes blocking for any modified
-  trigger; if a framework mechanism is adopted instead, a wildcard one-shot
-  needs no combo lookup and this stays a corner.
 
 ### `gui` is supportable as a modifier, and deliberately not supported
 
@@ -932,18 +709,6 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When example-project behaviour is next characterised as a
   body of work.
 
-### `F.reset()` test helper exceeds the 14-line function-body limit (RESOLVED, 2026-07-31)
-
-- **Where:** `tests/helpers/input_fixture.lua`, `F.reset()`.
-- **State (old):** Around 18 code lines — native-slot restores plus several
-  state-clearing assignments — against the project's 14-line function-body
-  hard limit.
-- **Resolution:** The native-slot restores the entry names are gone: the
-  helper delegates to production teardown (`CC:stop_project_run()`) and clears
-  only what production does not own. Nine code lines as of the widget-shown
-  fix, which removed the last compensating assignment (`widget.shown = false`).
-  Nothing to extract.
-
 ### Test-fixture standup boilerplate / naming
 
 - **Where:** `tests/helpers/input_fixture.lua` — the module-standup
@@ -982,23 +747,6 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When the cursor API surface is next touched — decide
   consolidate-vs-separate and record it.
 
-### `submit()`'s deliver-then-hide ordering forced example-side deferral of any reshow (RESOLVED by the input-API redesign)
-
-- **Where:** `src/controller/userInputController.lua` — was `submit()` (calls
-  `deliver(self, text)` then unconditionally `hide()`s); now `submit_flow`.
-- **Old state:** `on_text_entered` fired while the widget was still active, and
-  a trailing `hide()` ran right after (auto-close). A project wanting to "reshow with
-  the same text on invalid input" could not call `compy.input.show{...}`
-  synchronously from inside its own callback — a re-entry guard
-  suppressed it, then `hide()` wiped it. One example project worked around
-  this by deferring the reshow a frame.
-- **Resolution:** Auto-close on submit is gone (Decision 6):
-  `after_submit` DEFAULTS to a
-  no-op and the widget stays open. A rejected validator locks the field with the
-  rejected text still showing — there is nothing to reshow, so the one-frame
-  deferral workaround this entry described no longer has a reason to exist.
-- **Revisit:** None needed; carried here as resolved history, not deleted.
-
 ### Per-example internals docs still describe a retired polling idiom
 
 - **Where:** `doc/development/internals/examples/{tixy,balloons,turtle,
@@ -1022,22 +770,6 @@ Not commissioned for closure; each may never need action.
 - **Why it stands:** Not part of the shipped example set; nobody currently
   runs them.
 - **Revisit:** Migrate or delete at will; not blocking anything.
-
-### An `update_prompt` endpoint was asked for and declined; `configure` already is one
-
-- **Where:** `src/examples/balloons/terminal.lua` — an in-file remark asks the API to expose an
-  *"update-prompt"* endpoint so a game can write its own welcome message when its mode switches.
-- **Declined, 2026-08-11 (owner).** It is sugar over `compy.input.configure{ prompt = … }`, and a
-  second path to a decorative change costs the surface's orthogonality, which is not ideal
-  already. *At best it is a pattern to recommend, not a function to add.*
-- **And the project already has it**, which is the part worth recording: `terminal_write(msg)` in
-  that same file is one line over one `configure` call, exposed to the game as `write`. So the
-  recommended shape is not hypothetical — it exists, in the example that asked for the endpoint.
-- **The remark's other half — "three functions juggling each other" — is not the win it looks.**
-  Two of the three are load-bearing: the handler slot is late-bound because `ui.lua` requires this
-  file, and so activates the session, before `main.lua`'s router exists. Inlining the third
-  (`deliver`, which joins submitted lines into the one string the game's handlers take) saves a
-  function and costs the comment explaining why the join happens. Left alone deliberately.
 
 ### PROPOSAL: if event-sourced held state is ever needed, it belongs to the framework
 
@@ -1325,30 +1057,6 @@ Not commissioned for closure; each may never need action.
 - **Revisit:** When this handler is next touched — lift the debug toggles
   onto the combo-table mechanism (Decision 8), or a `toggle_debug(k)` helper.
 
-### `userlove` does not convey its semantics (CLOSED — ruled to keep, 2026-08-03)
-
-- **Ruling:** the name stays. Owner, 2026-08-03: *"I'd not rename userlove,
-  its nice and makes no harm itself."* The rename was the last item of the
-  deferred naming cluster; the rest of that cluster resolved by deletion
-  rather than renaming (see the entries above).
-- **What the reader needs instead, and now has in the code comment:**
-  `userlove` is *a table indexed by love-event name holding the project's
-  handlers*. Both callers pass one — `set_user_handlers` the sandboxed `love`
-  table, `restore_user_handlers` the saved `Controller._userhandlers`. That
-  second caller is why the once-proposed `project_love` was dropped: it would
-  have been true at only one of the two entry points.
-- **Kept as a closed entry rather than deleted** because the wrong candidate
-  is the useful part of the record: anyone re-proposing `project_love` should
-  find the reason it was refused.
-- **Note (2026-08-03):** this entry used to also cover `forward_keypressed` /
-  `forward_keyreleased` / `forward_textinput`. Those were **deleted, not
-  renamed** — they implemented the console route's widget gate, which
-  Decision 1 rules out ("widget visibility is state on the widget, never a
-  routing condition"), and which was unreachable once the failed-run teardown
-  was fixed. Its description here was also wrong on fact: it routed to the
-  console route's active *widget*, not to "the currently-active keyboard
-  route".
-
 ### Per-event `set_love_*` installers are lexically isomorphic
 
 - **Where:** `src/controller/controller.lua`, `set_default_handlers` — ten
@@ -1361,92 +1069,6 @@ Not commissioned for closure; each may never need action.
   collapsing it is a refactor with no behavioural payoff.
 - **Revisit:** If the installer set grows or is next restructured — drive it
   from a `{ event → installer }` table.
-
-### `_generic_callback` re-resolves the callback precedence on every event (RESOLVED by the input-API redesign)
-
-- **Where:** was `src/controller/projectInputController.lua`, `_generic_callback` — computed
-  `compy_input[chan] or natives[event]` per dispatched event, then branched
-  on whether a callback existed.
-- **Old state:** The precedence (explicit `on_*` wins, else captured native, else
-  noop) was fixed at `activate` but re-resolved on every dispatched event
-  instead of once.
-- **Resolution:** `_generic_callback` is gone. Decision 10
-  replaced the two-store precedence rule with one table (`hooks[event]`), seeded once at
-  `activate` (`seed_hooks`, `projectInputController.lua:43-49`) — there is
-  no per-event resolution left to memoise; `dispatch` (`:74-86`) just reads
-  `hooks[event]` directly.
-- **Revisit:** None needed; carried here as resolved history, not deleted.
-
-### Pointer delivery is an unstructured broadcast, not a chain (RESOLVED, 2026-08-03)
-
-- **Resolution:** pointer joined the existing chain rather than getting a
-  mirror of it (`../decisions/input.md`, Decision 25). The gateway's pointer
-  entries no longer deliver to the widget themselves; they hand the event to
-  the active route like every other channel, and the widget is the chain's
-  terminal. A pointer hook consumes on a truthy return, so a shown widget
-  *can* now be starved of a click aimed past it — the capability this entry
-  asked about.
-- **What made it cheap in the end:** the owner's ruling that the
-  keyboard/pointer split was self-inflicted rather than inherited (Decision 11,
-  amended). The consume contract itself cost nothing: measured across
-  `life`, `sapper`, `tixy`, `paint` and `pong`, no project pointer handler
-  returns a value, and the return was discarded in any case. So this was never
-  the "two symmetrically mirrored chains" it was estimated as — one chain
-  already existed and pointer simply entered it.
-- **Still open, deliberately:** whether a shown widget should consume clicks
-  **within its bounds** automatically. Nothing does bounds checks today; the
-  chain gives a project the means to decide, which is a different answer from
-  the framework deciding for it.
-- **Also still open:** a pointer *combo* vocabulary (a modifier-only shortcut
-  such as `ctrl` plus a button). Pointer has no shortcuts tier and enters the
-  walk at the hook tier; Decision 25 records the question as not-decided.
-
-### Widget sink reaches the singleton via `love.state` global + nil-guard (RESOLVED-IN-PART by the input-API redesign)
-
-- **Where:** was `src/controller/projectInputController.lua`, `_sink` — read
-  `love.state.user_input_controller` on each call and guarded it with
-  `if ui then …`.
-- **Old state:** The old tier-4 `_sink` reached the widget through a global
-  rather than an injected instance field (`self.input`), and defended with
-  a nil-check against a value the singleton convention said was always
-  present.
-- **Resolution:** The sink is gone. `dispatch` (the free-function extraction
-  recorded as an implementation note in `decisions/input.md`,
-  `projectInputController.lua:74-86`) is now a free function that takes the
-  widget **as a parameter** rather than reaching for a global itself — the
-  concern moves one level up, to `ProjectInputController:_dispatch`
-  (`:93-97`), which is the one remaining place that resolves
-  `love.state.user_input_controller`. The nil-guard (`if widget and
-  widget:is_shown()`) is carried at that boundary, not inside the reusable
-  mechanism.
-- **Revisit:** Whether `_dispatch` itself should inject `self.input` at
-  construction instead of reading the global, and turn its nil-guard into
-  an assertion, remains open — the same question, one layer up.
-
-### `UserInputController:keypressed` forked on `love.state.app_state == 'editor'` (RESOLVED — the `app_state` fork was removed, 2026-07-21)
-
-- **Where:** was `src/controller/userInputController.lua:keypressed`, an
-  `if love.state.app_state == 'editor' then … else … end` branch.
-- **Old state:** A reusable input widget read global app-mode to change its own
-  behaviour — both the editing keymap (order + Ctrl+D `modify`) and whether its
-  Enter/Escape submit/cancel ran. Flagged by the owner (2026-07-20) as an
-  abstraction leak: the widget could not be reasoned about — or migrated onto the
-  new API by the editor later — without knowing it was "the editor." See
-  `doc/development/decisions/input.md` Decision 6.
-- **Resolution:** The branch is deleted; `keypressed` runs one uniform path. The
-  two real differences moved to honest homes: (1) `modify` (Ctrl+D) is a
-  per-instance `allow_duplicate_line` constructor flag, set only by the editor's input,
-  mirroring `disable_selection`; (2) the editor consumes Enter/Escape **upstream**
-  (`block_input()` in `EditorController:_normal_mode_keys`' `submit()`/`load()`),
-  so the widget's uniform `submit_flow`/`cancel_flow` never runs for the keys the
-  editor owns. No instance reads global mode. Suite green
-  (`tests/input/input_widget_callbacks_spec.lua`, the `the same lifecycle on every route` group).
-- **Revisit:** `allow_duplicate_line` is a one-off flag; the widget owning its own
-  **combo table** (Ctrl+D and the lifecycle keys as registered combos an editor or
-  project extends) is the better end-state the owner named — deferred with the
-  console/editor migration (Decision 1), not this pass. The former inline question
-  at `:724` is retired (its concern is resolved
-  in shape; the combo-table refinement is what remains).
 
 ### Discovered, de-facto behaviours pinned during the un-fork (rationale note)
 
@@ -1467,45 +1089,6 @@ be silently narrowed later (any change is a separate, owner-gated decision):
   love.state.user_input_controller`) — an identity check standing in for the old
   `oneshot` flag. Its survival under a console/editor re-plug remains a
   tracked future concern, out of the input API's scope.
-
-### Comment wip-citation cleanup (RESOLVED, 2026-07-30)
-
-Comments citing the feature's ephemeral wip tree instead of a canonical doc, in violation of
-the `doc/development/conventions/code.md` "Comment References" rule. This entry recorded the
-residue as two `src/controller/` comments; a pre-PR revalidation found **thirteen** comment
-blocks across seven tracked files, four of them shipped examples under `src/examples/`.
-
-All are rehomed: the controller comments to the `decisions/input.md` decisions they already
-cited alongside the wip path, the examples to `doc/input_api.md`, "Submit lifecycle". Kept as
-a resolved entry rather than deleted, because the undercount is the lesson — a debt row's
-stated scope is a claim like any other, and this one was never re-measured after the tree
-moved under it.
-
-### The console's prompt is drawn under a project that never takes over `love.draw` (DISPUTABLE, ruled to keep 2026-08-07)
-
-`ConsoleView:draw` paints the console's own input strip whenever the screen mode is not
-`editor` (`src/view/consoleView.lua`, `drawConsole`). A project that replaces `love.draw`
-never reaches that path — the gateway's draw wrapper calls the project's own draw instead
-(`src/controller/controller.lua`, `set_love_update`). A project that draws **through the
-console terminal** and defines no `love.draw` of its own does reach it, so the console's
-prompt stays on screen for the whole run, inert: the input route belongs to the project, so
-anything typed at that strip goes to the project, not to the prompt it appears to offer.
-
-`src/examples/sapper` is the case in hand — it renders the minefield as terminal output and
-binds only the derived clicks, so the strip sits under the game field for the entire session.
-Surfaced by the owner's smoke test as *"any chance to not show inactive console input at the
-bottom?"*.
-
-**Ruled to keep as-is (owner, 2026-08-07):** the console's drawing logic is not to be
-conditioned on what a project happens to draw, for the cosmetic benefit of one pen-and-paper
-example. The gate would have to distinguish "a project owns the input route" from "the console
-is interactive again" — `inspect` being the second — which puts project-lifecycle knowledge
-into a view whose job is to paint the console.
-
-**Cost of leaving it:** the strip reads as an available prompt while it is not one. **Cost of
-fixing it:** a state test in the view, invisible to the suite — the input fixture stubs the
-`view.view` module wholesale, so `ConsoleView:draw` is not exercised by any row, and the fix
-would be verifiable only by a human smoke test. Revisit if a project owner asks.
 
 ### paint's `useCanvas(btn)` means a mouse button on one path and a click count on the other (pre-existing)
 
@@ -1672,3 +1255,560 @@ changes.
 - **Revisit:** when a second project hits it, or when the input guide gains
   its reserved-combo section (P10) and has to explain the double binding
   anyway.
+
+## RETIRED
+
+### `wrap`'s error handler is called with the wrong arity, so project raises vanish (RESOLVED, 2026-08-03)
+
+- **Resolution:** `wrap` binds CC in a closure used by both branches
+  (`2554d2e3`), so a raise anywhere in project code now reaches
+  `user_error_handler` and suspends the run. Three rows pin it — pointer,
+  `love.update`, and a keyboard hook as the control that the other two are not
+  asserting something impossible. Owner ruling: a certainly-wrong behaviour is
+  not preserved on the grounds that changing it was never approved, even
+  though it is pre-feature.
+- **Where it was:** `src/controller/controller.lua`, `wrap` — the non-web
+  branch was
+  `return xpcall(f, user_error_handler, ...)`. `xpcall` invokes a message
+  handler with exactly **one** argument (the error), but the signature is
+  `user_error_handler(CC, msg)`. So `CC` binds to the error string, `msg` is
+  nil, and `'user error: ' .. msg` raises *inside* the message handler, where
+  `xpcall` swallows it. Nothing reaches `suspend_run`.
+- **Measured effect** (probe run 2026-08-03, asserting the handler executed
+  before the raise): a raise in a project's **pointer handler** or in its
+  **`love.update`** runs the handler, then vanishes — no error window, no
+  console line, `app_state` still `'running'`. A raise in a **keyboard hook**
+  suspends correctly, because that path goes through `chain_native`, which
+  binds CC in a closure (`xpcall(fn, function(m) user_error_handler(CC, m)
+  end, ...)`) and gets the arity right.
+- **`_G.web` is falsy on the desktop build, so the broken branch was the live
+  one.** The web branch passed both arguments and never had the arity
+  problem. Its own flaw — returning bare `r` where the other branch returned
+  `xpcall`'s `ok, res...` tuple, so the `@return` annotation described only
+  one of them — was fixed alongside the wrapper collapse (`f1dc6aee`).
+- **Why the web branch exists at all, established 2026-08-03:** it is not a
+  stylistic duplicate. `xpcall(f, h, ...)` forwarding arguments to `f` is a
+  LuaJIT / Lua 5.2 extension; PUC Lua 5.1 takes exactly two arguments and
+  drops the rest, so on that runtime every handler would be invoked with nil
+  for all of its parameters. `pcall(f, ...)` forwards on both. Measured here:
+  LuaJIT gives `1, 2`; 5.1 semantics give `nil, nil`. The branch is therefore
+  **load-bearing and must not be collapsed away** — a warning to that effect
+  now sits on it in code.
+- **Reach at the time:** `wrap` had three call sites — `wrapped_native`
+  (pointer handlers), the loader, and the project `update` wrapper — plus
+  `CC:wrap_handler`, which took `wrap` as its error handler, for the compy
+  click handlers. All of those except the loader and the update wrapper have
+  since been replaced by `guarded`.
+- **Pre-feature, verified:** `wrap` and `user_error_handler` are
+  byte-identical at the PR base `3256aac`. The input API neither introduced
+  nor worsened this; it only made the contrast visible, because the keyboard
+  chain's own wrapper does it correctly.
+- **Consequence for the docs:** "A raise from project top-level and from a
+  handler surface differently" (below) describes the handler path as
+  reaching the error window. That holds for keyboard hooks only.
+- **Kept as a closed entry** because two things in it are still live
+  knowledge: why the web branch exists (above), and the fact that this
+  subsystem's error path had a defect no test could see for the length of the
+  feature — the argument for the Web-coverage entry that opens this section.
+
+### `compy.before_exit` is absent from the persistent API docs (RESOLVED, 2026-08-03)
+
+- **Resolution:** documented as `doc/input_api.md`, "Stop hook —
+  `compy.before_exit`" (owner ruled 2026-08-03), covering signature, ignored
+  return, timing before framework teardown, which stop paths fire it, that a
+  raise is **not** one of them, and the reset. Every clause is pinned in
+  `tests/input/input_route_lifecycle_spec.lua`; the not-fired-on-raise claim
+  was mutation-checked rather than read.
+- **What it was:** a public, project-settable lifecycle slot whose only
+  specification lived in the feature's ephemeral working tree, which is
+  scheduled for deletion — while the PR is meant to be reviewable from
+  `doc/input_api.md` plus the description alone. The entry above also depends
+  on that contract being findable.
+
+### Future input unification (RESOLVED, 2026-08-03)
+
+- **Resolution:** done, and in the direction this entry doubted. Every
+  channel — keyboard, text, pointer, and the derived singleclick/doubleclick
+  events — routes through one chain with one error boundary and one lifetime
+  (`../decisions/input.md`, Decision 25). The derived clicks did fold into
+  hooks: `compy.singleclick` is gone and `compy.input.hooks.singleclick`
+  replaces it.
+- **Where this entry was wrong, worth keeping:** it recorded the asymmetry as
+  predating the input API. It did not. At the PR base every event installed
+  through one path and none was released before stop; the split was
+  introduced by this feature (Decision 11, amended). The entry then reasoned
+  from the false premise to "folding clicks into hooks would falsely imply" a
+  shared contract — when a shared contract was in fact the pre-existing state.
+- **What genuinely remains unproven** and is recorded separately: pointer
+  combos, and whether a shown widget should consume clicks within its bounds.
+  See "Pointer delivery is an unstructured broadcast" below.
+
+### Project-handler wrapping: dedup the guard, drop the misleading `keyboard_` name (RESOLVED, 2026-08-03)
+
+- **Resolution:** the two builders are one. `chain_project_handler(CC, fn)`
+  wraps, `project_handler(userlove, CC, key)` guards, and both the keyboard
+  participants (`project_handlers`) and the pointer installs (`hook_pointer`)
+  use it. The guard exists once. `wrapped_native` / `keyboard_native` /
+  `chain_native` are gone, and with them the `native` label and the
+  keyboard-specific name on a function that was never keyboard-specific.
+- **What made the collapse possible:** the split was justified by return
+  policy — `CC:wrap_handler` discards the return by construction, and a chain
+  participant's return is its consume signal. That was never a real
+  constraint: a returning wrapper is usable where the return is ignored,
+  which is exactly what a pointer handler installed on `love.*` does. The
+  genuine obstacle was that the two paths had *different error handling*, one
+  of which was broken — see the arity entry above, fixed first so the
+  collapse could be behaviour-preserving rather than a fix in disguise.
+- `CC:wrap_handler` survived this step for the compy single/double click
+  handlers, then went with them when the clicks became ordinary events
+  (Decision 25). Nothing wraps project code any other way now: `guarded`
+  (`controller.lua`), applied where a route is entered, is the only one.
+- **Verified behaviour-preserving:** suite 911/0/0/3 across the change, and
+  the pointer path now propagates a return value that both `love.handlers`
+  and the poll loop discard.
+- **What it was:** two builders adapting a project's own `love.*` handlers —
+  `wrapped_native` (via `CC:wrap_handler`, return discarded, installed
+  straight onto `love.*` by `hook_pointer`) and `keyboard_native` (via
+  `chain_native`, return propagated, seeded as `hooks[event]` by
+  `occupy_keyboard`) — carrying the **identical** guard
+  (`orig and new and orig ~= new`) and differing only in the wrapper they
+  called. `keyboard_native` was misnamed: nothing about it was
+  keyboard-specific. Deferred out of the D5 vocabulary rename (2026-07-21)
+  on the reasoning that renaming under a mechanical sweep would either bless
+  the smell with fresh names or smuggle a behaviour-touching refactor into a
+  rename commit — which is why it waited for a pass of its own.
+
+### `love.handlers.userinput` is dead code (RESOLVED, 2026-08-07)
+
+Deleted, with the local `clear_user_input` that existed only to feed it. Both
+`love.event.push('userinput')` sites were present at the PR base
+(`3256aac:userInputModel.lua`) and were removed by this feature, leaving the
+consumer installed — the same shape as `wrap_handler`. Kept as a resolved entry
+because the pattern recurs: when a producer goes, grep for its consumer.
+
+### Input-only / pointer-only projects stay live in `project_open` (RESOLVED, ruling a)
+
+- **Where:** `consoleController.lua` `run_project`
+  (`consoleController.lua:260-269`), `controller.lua`
+  `user_is_interactive` (`controller.lua:1112-1113`),
+  `user_pointer` / `hook_pointer` (`controller.lua:68`,
+  `:238-249`), `set_default_handlers`
+  (`controller.lua:778-824`, resets `user_pointer`), and
+  `love.quit` (`controller.lua:733-758`).
+- **State (old, broken behaviour):** A non-blocking project (no
+  `update`/`draw` hooked) always dropped to `'project_open'` with
+  the project route unconditionally released
+  (`release_keyboard_route`). For a project whose entire UI was
+  the input widget (`examples/guess`) or a pointer handler
+  (`examples/sapper`), this meant (1) submit was dead — typing
+  still reached the widget but Enter never fired, because
+  submit/cancel (then a non-overridable framework tier, since
+  retired — Decision 2) lives in the *project*
+  route, which `project_open` disconnected — and (2) Ctrl+Esc quit the whole
+  app instead of returning to the console, because `love.quit`
+  only stopped-to-console while `app_state == 'running'`.
+- **Confirmed pre-existing:** this was verified byte-identical on
+  `master` (pre-`0022004`) — not an input-API regression. The
+  `release_keyboard_route` call site is new in 1.0.0-rc20260712
+  (route-lifecycle rework, AC-27/28), but the lifecycle split it
+  slots into predates the feature.
+- **Resolution:** owner ruled (a) — an input-only / pointer-only
+  project is "live" without hooking `update`/`draw`. New
+  predicate `Controller.user_is_interactive()` returns
+  `love.state.user_input ~= nil or user_pointer`, where the
+  module-local `user_pointer` flag is set in `hook_pointer` when
+  a project installs any pointer/click handler and reset in
+  `set_default_handlers`. `run_project` now releases the keyboard
+  route only when `not user_is_interactive()` — an interactive
+  non-blocking project keeps the project route, so submit/cancel
+  keep working (`app_state` still becomes `'project_open'`
+  either way, since quickswitch relies on that). `love.quit` now
+  stops-to-console for `app_state == 'running'` OR
+  (`'project_open'` AND `user_is_interactive()`); an idle console
+  (`'project_open'`, nothing interactive) still lets the app
+  quit.
+- **Carried-forward limitation:** a non-blocking project with
+  *no* interaction surface at all (no widget shown, no pointer
+  handler, no update/draw) still gets `release_keyboard_route` —
+  the keyboard goes back to the console. This is intended, not a
+  gap: such a project has nothing left to be interactive with.
+
+### `compy.keys_pressed` is not exposed to projects (RESOLVED, 2026-08-03)
+
+- **Where:** the project-facing `compy` namespace (`consoleController.lua`,
+  the function that assembles it) exposes `terminal`, `audio`, `graphics`,
+  `fonts`, `input`, and a `before_exit` slot — no `keys_pressed`. Held-key
+  access exists framework-side (`Controller.keys_pressed`, the `held_keys()`
+  read-only pressed-keys view) and via the per-event callback argument, but a project cannot poll
+  currently-held keys from inside its own `update()`.
+- **Why it stands:** Open design question — expose a read-only held-key view
+  to projects, or treat callback-arg access as the sanctioned shape and amend
+  the documented contract to say so explicitly.
+- **A real consumer now exists, and it rules out the second option**
+  (2026-08-03): the `keyboard` example maintains its own `INPUT.held` /
+  `INPUT.shift` mirror and reads it **during draw**, to decide whether to
+  render shifted key labels. A per-event argument cannot serve a per-frame
+  renderer, so callback-arg access alone is insufficient for any project that
+  *renders* held state rather than reacting to it.
+- **Resolution:** owner ruled to expose it — `compy.input.keys_pressed`
+  (`../decisions/input.md`, Decision 20), the same read-only view the chain
+  hands participants, resolved per access so it cannot go stale. Placed on
+  `compy.input` rather than at the top of `compy`: it is input state, and the
+  input guide is where a reader looks for it.
+- **Resolution superseded** (`../decisions/input.md`, Decision 30): the view is
+  dissolved and no held-key surface is exposed. **The need this entry recorded
+  is still met, by a different answer** — the renderer that ruled out
+  callback-arg access asks the device instead (`love.keyboard.isDown`), which a
+  per-frame draw can do as freely as a handler can. The entry stays RESOLVED;
+  only what resolves it has changed.
+
+### Shortcuts key-repeat semantics are shipped unsettled (RESOLVED, 2026-08-03)
+
+- **Where:** `src/controller/projectInputController.lua`, `:keypressed` —
+  `isrepeat` is threaded through to `hooks[event]` dispatch only; `shortcuts`
+  fire on every OS key-repeat with no `isrepeat` gate.
+- **Why it stands:** Whether shortcuts dispatch should also gate on
+  `isrepeat` (fire once per physical press) or intentionally fire on every
+  repeat is an open behavioural call, shipped open by design.
+- **The first real consumer wants once-per-press** (2026-08-03): `keyboard`'s
+  reserved chords (`shift+escape`, `ctrl+alt+up`/`down`) are now shortcuts,
+  and each wraps itself in a `if not isr then … end` gate — otherwise holding
+  `ctrl+alt+up` ramps the notch every frame. The flag *is* delivered to
+  shortcuts, so the workaround is three lines; the question is whether every
+  consumer should have to write them.
+- **Resolution:** owner ruled that dispatch keeps firing on every repeat and a
+  binding opts out for itself — `compy.input.fn.ignore_repeat(fn)`
+  (`../decisions/input.md`, Decision 22), with `fn.stop_here` alongside it
+  when the binding also claims the key (Decision 24). Filtering inside the shortcut tier
+  was rejected for two reasons: it suppresses with no way to recover a
+  hold-to-act binding, and it would leave the same hand-written check in
+  `hooks.keypressed`, where commands are equally idiomatically bound. The
+  wrapper has one signature and composes across all three tiers.
+
+### No public `is_active()`-shaped visibility query (RESOLVED, 2026-07-31)
+
+- **Where:** the `compy.input` project surface (`consoleController.lua`) had
+  no `is_shown`/`is_active`/`is_visible`, though an internal
+  `UserInputController:is_shown()` existed.
+- **State (old), and worse than this entry recorded:** the entry said example
+  projects read `love.state.user_input` directly, as if that were a working
+  workaround. **It is not.** A project's `love` is a sandboxed deep clone
+  (`../internals/project_sandbox_env.md`), so `love.state.user_input` read
+  from inside a project is always `nil` — the framework writes the real
+  global, the project sees its copy. `examples/maze/main.lua:497` guards a
+  re-show with exactly that read: dead code that never fires, which is why
+  maze re-shows the widget on every tick.
+- **Resolution:** owner ruled to expose it —
+  `compy.input.is_shown()` (`../decisions/input.md`, Decision 18), returning
+  the widget's own flag so it cannot drift from the one the dispatch walk
+  reads. Used by `examples/turtle` for its open-only-if-closed guard.
+
+### On the console route, a hidden widget's input falls to the console line (RESOLVED, 2026-08-03)
+
+- **Resolution:** settled by construction — the console route no longer has a
+  widget step at all. The three `forward_*` functions that implemented it were
+  deleted, so every keyboard/text event on that route goes to `CC:keypressed` /
+  `CC:textinput` (the console line, or the editor fork), hidden widget or
+  shown. Decision 1's "widget visibility is never a routing condition" now
+  holds on both routes. The two routes still read differently — the project
+  route ends an unclaimed event in the chain, the console route ends it in its
+  own input surface — but that is each route's own terminal, not two answers
+  to one question.
+- **The rows that pinned it are re-sited, not deleted** (2026-08-03). They had
+  gone vacuous: with no widget step on the console route, a *shown* widget
+  would have satisfied them there too. On the project route a hidden widget is
+  a real decision — the walk skips it and reports not-consumed — so they now
+  discriminate on the widget's own text, with a third row as the control that
+  the same keystroke edits a shown widget. The `#disputable` tag is gone: the
+  question it marked is answered, not merely pinned.
+- **Where it was:** `src/controller/controller.lua` — `forward_keypressed` /
+  `forward_textinput` / `forward_keyreleased` handed the event to the widget
+  only while `love.state.user_input` was set, which `hide()` clears; the
+  console-route defaults then fell back to `CC:keypressed` / `CC:textinput`.
+- **Why it stands:** The general principle — *input the widget declined
+  should have no effect* — was ruled for the **project** route only:
+  Decision 11 ("Changed baseline behaviour", `../decisions/input.md`) gives
+  a running project's route every keyboard/text event, so an event no
+  shortcut, hook, or shown widget takes simply ends there, instead of
+  accumulating in the console behind the project's screen. The **console**
+  route kept the old shape, and it is not obviously wrong there: the console
+  line is that route's own input surface, so "the widget is down, type into
+  the terminal" is arguably the correct reading, not a leak. What is unruled
+  is whether the two routes should read the same way.
+- **Reachability:** No leak path through a *running* project is known today
+  — the running case is Decision 11's, and the `project_open` case is
+  narrowed by ruling (a) above (`user_is_interactive`), which keeps the
+  project route for any project with a widget or a pointer handler. The
+  open question is therefore a contract question first: two routes, two
+  answers to the same question, only one of them written down.
+- **Revisit:** At the next ruling pass over route symmetry — either sanction
+  the console fallback explicitly in the contract doc, or give the console
+  route the project route's "declined means no effect" shape.
+
+### A bare `*` shortcut is legal, and ruled that it should not be (RESOLVED, 2026-08-03)
+
+- **Resolution:** `check_combo` (`src/util/key.lua`) now raises on a `*`
+  trigger with no modifiers, naming the alternative in the message ("for every
+  key, use `compy.input.hooks`"). Decision 21 and `doc/input_api.md` carry the
+  rule, and two rows pin it — the raise, and the control that `shift+*` is
+  still accepted, so the check cannot pass by rejecting classes generally.
+- **What it was (measured 2026-08-03):** `shortcuts.keypressed['*']`
+  registered without raising and caught every **unmodified** key — `q` fired
+  it, `ctrl+s` did not, that belonging to the `ctrl+*` class. Coherent with
+  Decision 21 (a class is its modifier set exactly, and the empty set is a
+  class), but undocumented, untested, and a second spelling for what a hook
+  already expresses.
+- The entry was kept here rather than in `../decisions/input.md` while it was
+  unimplemented, deliberately: a ratified entry describing behaviour the code
+  lacks is the exact error this phase spent a session undoing.
+- Corrected while closing: the session25 claim that the multi-trigger raise
+  "settles whether a bare `*` is legal" was wrong. It permitted it.
+
+### A multi-trigger combo is silently truncated at registration (RESOLVED, 2026-08-03)
+
+- **Where:** `src/util/key.lua`, `normalize_combo` / `split_combo` — the
+  trigger is "the last non-modifier token wins", with no complaint about the
+  earlier ones.
+- **State (measured 2026-08-03):** `ctrl+a+b` is stored as `ctrl+b`, and
+  `a+b+*` is stored as **`*`** — a string an author wrote to mean the
+  narrowest possible binding registers the widest possible one. Nothing warns.
+  The grammar is *modifiers plus exactly one trigger*: `combo_string` prepends
+  only the four modifier classes, so a held non-modifier key never enters the
+  combo string at all (measured: `a` and `b` held, `b` pressed → `ctrl+alt+b`,
+  no trace of `a`). Multi-key chords are outside the grammar; a project that
+  wants "a and b held together" asks the device for the second key inside the
+  hook or shortcut that handles the first (`doc/input_api.md`, "Choosing the
+  mechanism"). Reconstructing it from a pair of flag-setting shortcuts is
+  **not** the answer — that shape is now named as an antipattern there.
+- **Resolution:** registration now **raises** on a combo naming more than one
+  trigger, or none (`../decisions/input.md`, Decision 21) — the same treatment
+  `show`/`configure` give an unrecognised key. `a+b+*` no longer registers the
+  widest possible binding; it is refused with the legal shape in the message.
+
+### A combo table cannot express a modifier-class rule (RESOLVED, 2026-08-03)
+
+- **Where:** `compy.input.shortcuts[event]` (`../decisions/input.md`,
+  Decision 8) — `Key.new_handler_table`, an exact canonical lookup keyed by
+  one full combo string.
+- **State:** every binding names one combo, and dispatch is one exact lookup
+  of `combo_string`'s output. A project that wants "**every** `alt+x` is a
+  chord, swallow it whatever `x` is" has no sanctioned way to say so; it needs
+  an entry per key, or it keeps that rule in a hook and tests the modifiers by
+  hand. Found by the `keyboard` migration (2026-08-03), which moved its three
+  named chords to shortcuts and kept `appChord` — its Alt-class rule — as a
+  hook for exactly this reason.
+- **The table is not sealed, though** (measured 2026-08-03):
+  `Key.new_handler_table` sets no `__metatable`, so a project can reach the
+  metatable and add an `__index`, and dispatch's plain lookup then consults it
+  on a miss — a working wildcard, in three lines. It is undocumented, it would
+  break the moment the table is sealed, and a reader would take it for a bug.
+  Recorded because it shows the mechanism exists, **not** as an idiom.
+- **A wildcard would have to answer more than it looks:** precedence against
+  an exact binding, whether the matched trigger is passed to the handler, and
+  the modifier's own press — holding Alt and pressing nothing else dispatches
+  the combo **`alt+lalt`**, since `combo_string` prepends the held modifier to
+  a trigger that *is* that modifier. A naive `^alt%+` pattern matches it.
+- **Resolution:** owner ruled a sanctioned form — a trailing `*` binds the
+  modifier class (`../decisions/input.md`, Decision 21). `alt+*` is every Alt
+  chord; exact bindings win, the class is consulted only on a miss, and it
+  never matches the modifier's own press. The three questions above are
+  answered by it: precedence is exact-first; the trigger is already the
+  handler's first argument; and a class does not match when the trigger is
+  itself a modifier. The unsealed-metatable route above is superseded — do
+  not use it.
+- **Still true, and now documented rather than implicit:** the class form is
+  about a *modifier* class. Combos of ordinary keys (`a+b`) remain outside the
+  grammar by design, since including held non-modifiers would make every
+  binding conditional on nothing else being held. That case is a hook that
+  asks the device for the rest of the chord (`doc/input_api.md`, "Choosing the
+  mechanism").
+
+### Combo-string dispatch allocates a table per call — RESOLVED 2026-08-16
+
+- **Where:** `src/controller/controller.lua` — `combo_string` built a `parts`
+  table and `table.concat`ed it on every call, on the per-keystroke dispatch
+  path.
+- **Resolved** (`737d8316`): it now accumulates the string directly, so no table
+  is allocated. A reused module-level buffer was the other candidate and was
+  **declined** — it trades the allocation for shared mutable state in a function
+  that would then have to never be called re-entrantly.
+- **What remains, and it is smaller:** `find_shortcut`
+  (`src/controller/projectInputController.lua`) calls `combo_string` **twice** on
+  a miss — once for the exact combo, once for the `'*'` class — so one event can
+  ask the device six times instead of three. Reusing the first walk needs either
+  a parameter on `combo_string`, cached state, or a second copy of Decision 8's
+  precedence logic; all three were judged worse than the cost.
+- **Revisit:** with the `'*'`-class lookup, if combo dispatch ever lands
+  somewhere genuinely hot.
+
+### `F.reset()` test helper exceeds the 14-line function-body limit (RESOLVED, 2026-07-31)
+
+- **Where:** `tests/helpers/input_fixture.lua`, `F.reset()`.
+- **State (old):** Around 18 code lines — native-slot restores plus several
+  state-clearing assignments — against the project's 14-line function-body
+  hard limit.
+- **Resolution:** The native-slot restores the entry names are gone: the
+  helper delegates to production teardown (`CC:stop_project_run()`) and clears
+  only what production does not own. Nine code lines as of the widget-shown
+  fix, which removed the last compensating assignment (`widget.shown = false`).
+  Nothing to extract.
+
+### `submit()`'s deliver-then-hide ordering forced example-side deferral of any reshow (RESOLVED by the input-API redesign)
+
+- **Where:** `src/controller/userInputController.lua` — was `submit()` (calls
+  `deliver(self, text)` then unconditionally `hide()`s); now `submit_flow`.
+- **Old state:** `on_text_entered` fired while the widget was still active, and
+  a trailing `hide()` ran right after (auto-close). A project wanting to "reshow with
+  the same text on invalid input" could not call `compy.input.show{...}`
+  synchronously from inside its own callback — a re-entry guard
+  suppressed it, then `hide()` wiped it. One example project worked around
+  this by deferring the reshow a frame.
+- **Resolution:** Auto-close on submit is gone (Decision 6):
+  `after_submit` DEFAULTS to a
+  no-op and the widget stays open. A rejected validator locks the field with the
+  rejected text still showing — there is nothing to reshow, so the one-frame
+  deferral workaround this entry described no longer has a reason to exist.
+- **Revisit:** None needed; carried here as resolved history, not deleted.
+
+### `_generic_callback` re-resolves the callback precedence on every event (RESOLVED by the input-API redesign)
+
+- **Where:** was `src/controller/projectInputController.lua`, `_generic_callback` — computed
+  `compy_input[chan] or natives[event]` per dispatched event, then branched
+  on whether a callback existed.
+- **Old state:** The precedence (explicit `on_*` wins, else captured native, else
+  noop) was fixed at `activate` but re-resolved on every dispatched event
+  instead of once.
+- **Resolution:** `_generic_callback` is gone. Decision 10
+  replaced the two-store precedence rule with one table (`hooks[event]`), seeded once at
+  `activate` (`seed_hooks`, `projectInputController.lua:43-49`) — there is
+  no per-event resolution left to memoise; `dispatch` (`:74-86`) just reads
+  `hooks[event]` directly.
+- **Revisit:** None needed; carried here as resolved history, not deleted.
+
+### Pointer delivery is an unstructured broadcast, not a chain (RESOLVED, 2026-08-03)
+
+- **Resolution:** pointer joined the existing chain rather than getting a
+  mirror of it (`../decisions/input.md`, Decision 25). The gateway's pointer
+  entries no longer deliver to the widget themselves; they hand the event to
+  the active route like every other channel, and the widget is the chain's
+  terminal. A pointer hook consumes on a truthy return, so a shown widget
+  *can* now be starved of a click aimed past it — the capability this entry
+  asked about.
+- **What made it cheap in the end:** the owner's ruling that the
+  keyboard/pointer split was self-inflicted rather than inherited (Decision 11,
+  amended). The consume contract itself cost nothing: measured across
+  `life`, `sapper`, `tixy`, `paint` and `pong`, no project pointer handler
+  returns a value, and the return was discarded in any case. So this was never
+  the "two symmetrically mirrored chains" it was estimated as — one chain
+  already existed and pointer simply entered it.
+- **Still open, deliberately:** whether a shown widget should consume clicks
+  **within its bounds** automatically. Nothing does bounds checks today; the
+  chain gives a project the means to decide, which is a different answer from
+  the framework deciding for it.
+- **Also still open:** a pointer *combo* vocabulary (a modifier-only shortcut
+  such as `ctrl` plus a button). Pointer has no shortcuts tier and enters the
+  walk at the hook tier; Decision 25 records the question as not-decided.
+
+### `UserInputController:keypressed` forked on `love.state.app_state == 'editor'` (RESOLVED — the `app_state` fork was removed, 2026-07-21)
+
+- **Where:** was `src/controller/userInputController.lua:keypressed`, an
+  `if love.state.app_state == 'editor' then … else … end` branch.
+- **Old state:** A reusable input widget read global app-mode to change its own
+  behaviour — both the editing keymap (order + Ctrl+D `modify`) and whether its
+  Enter/Escape submit/cancel ran. Flagged by the owner (2026-07-20) as an
+  abstraction leak: the widget could not be reasoned about — or migrated onto the
+  new API by the editor later — without knowing it was "the editor." See
+  `doc/development/decisions/input.md` Decision 6.
+- **Resolution:** The branch is deleted; `keypressed` runs one uniform path. The
+  two real differences moved to honest homes: (1) `modify` (Ctrl+D) is a
+  per-instance `allow_duplicate_line` constructor flag, set only by the editor's input,
+  mirroring `disable_selection`; (2) the editor consumes Enter/Escape **upstream**
+  (`block_input()` in `EditorController:_normal_mode_keys`' `submit()`/`load()`),
+  so the widget's uniform `submit_flow`/`cancel_flow` never runs for the keys the
+  editor owns. No instance reads global mode. Suite green
+  (`tests/input/input_widget_callbacks_spec.lua`, the `the same lifecycle on every route` group).
+- **Revisit:** `allow_duplicate_line` is a one-off flag; the widget owning its own
+  **combo table** (Ctrl+D and the lifecycle keys as registered combos an editor or
+  project extends) is the better end-state the owner named — deferred with the
+  console/editor migration (Decision 1), not this pass. The former inline question
+  at `:724` is retired (its concern is resolved
+  in shape; the combo-table refinement is what remains).
+
+### Comment wip-citation cleanup (RESOLVED, 2026-07-30)
+
+Comments citing the feature's ephemeral wip tree instead of a canonical doc, in violation of
+the `doc/development/conventions/code.md` "Comment References" rule. This entry recorded the
+residue as two `src/controller/` comments; a pre-PR revalidation found **thirteen** comment
+blocks across seven tracked files, four of them shipped examples under `src/examples/`.
+
+All are rehomed: the controller comments to the `decisions/input.md` decisions they already
+cited alongside the wip path, the examples to `doc/input_api.md`, "Submit lifecycle". Kept as
+a resolved entry rather than deleted, because the undercount is the lesson — a debt row's
+stated scope is a claim like any other, and this one was never re-measured after the tree
+moved under it.
+
+### An `update_prompt` endpoint was asked for and declined; `configure` already is one
+
+- **Where:** `src/examples/balloons/terminal.lua` — an in-file remark asks the API to expose an
+  *"update-prompt"* endpoint so a game can write its own welcome message when its mode switches.
+- **Declined, 2026-08-11 (owner).** It is sugar over `compy.input.configure{ prompt = … }`, and a
+  second path to a decorative change costs the surface's orthogonality, which is not ideal
+  already. *At best it is a pattern to recommend, not a function to add.*
+- **And the project already has it**, which is the part worth recording: `terminal_write(msg)` in
+  that same file is one line over one `configure` call, exposed to the game as `write`. So the
+  recommended shape is not hypothetical — it exists, in the example that asked for the endpoint.
+- **The remark's other half — "three functions juggling each other" — is not the win it looks.**
+  Two of the three are load-bearing: the handler slot is late-bound because `ui.lua` requires this
+  file, and so activates the session, before `main.lua`'s router exists. Inlining the third
+  (`deliver`, which joins submitted lines into the one string the game's handlers take) saves a
+  function and costs the comment explaining why the join happens. Left alone deliberately.
+
+### `userlove` does not convey its semantics (CLOSED — ruled to keep, 2026-08-03)
+
+- **Ruling:** the name stays. Owner, 2026-08-03: *"I'd not rename userlove,
+  its nice and makes no harm itself."* The rename was the last item of the
+  deferred naming cluster; the rest of that cluster resolved by deletion
+  rather than renaming (see the entries above).
+- **What the reader needs instead, and now has in the code comment:**
+  `userlove` is *a table indexed by love-event name holding the project's
+  handlers*. Both callers pass one — `set_user_handlers` the sandboxed `love`
+  table, `restore_user_handlers` the saved `Controller._userhandlers`. That
+  second caller is why the once-proposed `project_love` was dropped: it would
+  have been true at only one of the two entry points.
+- **Kept as a closed entry rather than deleted** because the wrong candidate
+  is the useful part of the record: anyone re-proposing `project_love` should
+  find the reason it was refused.
+- **Note (2026-08-03):** this entry used to also cover `forward_keypressed` /
+  `forward_keyreleased` / `forward_textinput`. Those were **deleted, not
+  renamed** — they implemented the console route's widget gate, which
+  Decision 1 rules out ("widget visibility is state on the widget, never a
+  routing condition"), and which was unreachable once the failed-run teardown
+  was fixed. Its description here was also wrong on fact: it routed to the
+  console route's active *widget*, not to "the currently-active keyboard
+  route".
+
+### The console's prompt is drawn under a project that never takes over `love.draw` (DISPUTABLE, ruled to keep 2026-08-07)
+
+`ConsoleView:draw` paints the console's own input strip whenever the screen mode is not
+`editor` (`src/view/consoleView.lua`, `drawConsole`). A project that replaces `love.draw`
+never reaches that path — the gateway's draw wrapper calls the project's own draw instead
+(`src/controller/controller.lua`, `set_love_update`). A project that draws **through the
+console terminal** and defines no `love.draw` of its own does reach it, so the console's
+prompt stays on screen for the whole run, inert: the input route belongs to the project, so
+anything typed at that strip goes to the project, not to the prompt it appears to offer.
+
+`src/examples/sapper` is the case in hand — it renders the minefield as terminal output and
+binds only the derived clicks, so the strip sits under the game field for the entire session.
+Surfaced by the owner's smoke test as *"any chance to not show inactive console input at the
+bottom?"*.
+
+**Ruled to keep as-is (owner, 2026-08-07):** the console's drawing logic is not to be
+conditioned on what a project happens to draw, for the cosmetic benefit of one pen-and-paper
+example. The gate would have to distinguish "a project owns the input route" from "the console
+is interactive again" — `inspect` being the second — which puts project-lifecycle knowledge
+into a view whose job is to paint the console.
+
+**Cost of leaving it:** the strip reads as an available prompt while it is not one. **Cost of
+fixing it:** a state test in the view, invisible to the suite — the input fixture stubs the
+`view.view` module wholesale, so `ConsoleView:draw` is not exercised by any row, and the fix
+would be verifiable only by a human smoke test. Revisit if a project owner asks.

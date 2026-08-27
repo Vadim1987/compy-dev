@@ -2,8 +2,13 @@
 
 A running list of known debt — discovered during work but deliberately not addressed at
 the time it surfaced. Entries are matter-of-fact context, not defects to fix on sight; each
-notes where it lives, why it stands, and when it is worth revisiting. Remove an entry when
-the debt is paid.
+notes where it lives, why it stands, and when it is worth revisiting.
+
+Each file sorts its entries into three sections, in release-scope order — not severity, not
+intent: **ACTIVE** must be resolved before the current release ships. **BACKLOG** is real
+and acknowledged debt, but deliberately deferred past the current release. **RETIRED** is
+paid, or turned out not to be debt — moved there, not deleted, with its heading's resolution
+marker kept intact.
 
 Tone and intent follow
 [`../conventions/architecture_principles.md`](../conventions/architecture_principles.md)
