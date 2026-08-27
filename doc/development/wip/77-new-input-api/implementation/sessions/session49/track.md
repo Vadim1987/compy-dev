@@ -342,3 +342,40 @@
 - Fix is a small design call, not obvious: one home (model reads the controller's slot), a
   write-through on the `callbacks` proxy, or two homes with every write funnelled through one
   function. Not mine to pick.
+
+## 2026-08-27 — BUG-01-10 ruled; three-ledger restructuring commissioned
+
+- **BUG-01-10 ruled (owner): one home, proxied via `callbacks`.** The widget's callbacks slot is the
+  single source of truth, the evaluator stops holding a copy, and `compy.input.callbacks` proxies to
+  it — so a direct assignment and a show/configure key reach the same place by construction, not by a
+  copy step some paths skip. **The drift is documented in `internals/user_input.md`** so a reader
+  meeting the two-homes shape in an older tree knows why it went. Row leaves design-escalation.
+- **Owner's restructuring:** changelog / decisions / tech-debt become three ledgers giving
+  project-altitude visibility, "so that from now on it is easy to look into three ledgers to
+  understand where we are — not at steps altitude, which keeps moving fast and unpredictably."
+  Changelog gains CURRENT_SCOPE (emptied into a version section on release); debt splits
+  ACTIVE/RETIRED/BACKLOG; decisions split ACTIVE/RETIRED. Unimplemented decisions and defects become
+  debt entries; roadmap rows point at debt **many-to-one** — a debt entry is a GOAL, roadmap rows are
+  the tasks fulfilling it. Vacuuming the retired sections is deliberately left for later.
+- Owner cannot reset a session from mobile → **cold subagents under my orchestration** instead of a
+  cold session. Token economy is the stated driver.
+- **I contested one thing before spawning and was upheld:** `CHG-01` (changelog), `FIX-02-05`
+  (resolved-debt pass) and `DEC-01` (decisions ledger) already cover three of the four pieces. Doing
+  this beside them would have created the second-timeline failure `agents/rules/roadmap.md` §1 names.
+  **Owner ruled: absorb all three.** They close with a pointer; a crosswalk is owed.
+- **Asked the one thing a subagent cannot guess: ACTIVE vs BACKLOG.** Owner chose **release scope** —
+  ACTIVE = must be resolved before this release ships; BACKLOG = deliberately deferred past it. (I
+  had recommended "has roadmap coverage"; theirs couples the register to the release, which is what
+  makes the changelog's CURRENT_SCOPE and the debt register read as one picture.)
+- Stated as assumption, not asked: an unimplemented decision **stays** in the decisions ledger and
+  *gains* a debt entry pointing back — moving it would strand the rationale.
+- **Spawned two, both Sonnet, explicit model, prompts of record on disk:**
+  - `LEDGER-01` decisions ACTIVE/RETIRED split (+ produces the unimplemented-decisions list the debt
+    pass needs) → `validation/outcomes/LEDGER-01-decisions-split.md`
+  - `LEDGER-02` changelog actualisation + CURRENT_SCOPE, absorbing CHG-01/FIX-02-17 →
+    `validation/outcomes/LEDGER-02-changelog-actualisation.md`
+  Disjoint files; neither may commit, stage, or touch ROADMAP.md. **The debt pass waits on
+  LEDGER-01's list** — that dependency is why it is not spawned yet.
+- Mine to do after they land: the roadmap rewiring (absorb the three rows + crosswalk, point rows at
+  debt entries) and the **ledger-protocol document** stating the three-ledger contract — the "from
+  now on" part, and the most valuable artifact of the lot.
