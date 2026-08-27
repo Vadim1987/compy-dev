@@ -169,3 +169,32 @@
   (today, documented) vs warn+refuse like `set_text` does when hidden. Refusing deletes the last of
   `pending` but is a documented behaviour change; belongs with FIX-02-22's disposition.
 - Materialized as §6 of `validation/reviews/force-and-configure-intent-recovery.md`.
+
+## 2026-08-27 — owner challenges "behaviour change against what?"; empty values probed
+
+- Owner's criterion: a change against **our own within-cycle machinery** is not a concern unless it
+  blasts half the system; what counts is base and stakeholder intent. Correct, and it retires my
+  `force` caveat — force does not exist at base, restoring it MATCHES intent, and re_show has zero
+  consumers. I overstated it as a behaviour change. Owner also notes the stakeholder already ruled
+  show-force = re-setup; agreed, §1's recovery is exactly that.
+- **The same criterion settles the OTHER open call against my tidier option:** the reviewed spec says
+  of configure *"Safe to call when hidden (takes effect on next show())"*
+  (`spec.versions/version01.md:205-208`). The stash is stakeholder-seen. So refusing hidden
+  `configure{text}` would contradict intent, not just our machinery. **Keep the stash.** `pending`
+  shrinks to text/cursor but does not disappear.
+- **Empty values probed — and one result overturns something I told the owner an hour ago.**
+  `highlighter = false` turns the highlighter off EXACTLY: `apply_config` guards `~= nil` so `false`
+  is stored, and every consumer guards on **truthiness** (`if ev.highlighter then`), so a stored
+  `false` takes the same branch as absent. Same for `validator = false` (rejecting validator lifted,
+  verified) and the output callbacks. **BUG-01-02's machinery debate is over — the unset already
+  exists.** My earlier "no user-space value reproduces absent" reasoned about nil and missed
+  truthiness. Roadmap row corrected in place, with the correction stated rather than quietly edited.
+- `prompt = false` → falls back to the evaluator default label; `prompt = ''` → empty label. Two
+  distinct, both useful. `text = ''` converges with absent — the ideal.
+- **New defect, BUG-01-08:** `show{cursor = {}}`, `{1}`, `{nil,2}` and `set_cursor(nil,nil)` all raise
+  a raw Lua error — `set_cursor_pos` (`:169-175`) does `math.min(line, n)` unguarded. Public path,
+  crashes the project, and the config table is otherwise strictly validated while the doc promises
+  clamping. **Base-checked: ours** — `set_cursor_pos` does not exist at 3256aac.
+- Stakeholder record is **silent on empty values** — unruled area, so rule it rather than discover
+  it. Decision 14 (formalise de-facto contracts) and NFR-3 (Lua idiom) both point at ratifying
+  `false` = "no such thing" rather than changing anything.

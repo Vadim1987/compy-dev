@@ -193,9 +193,74 @@ in that file). The `compy.input` layer changes only where `pending` shrinks.
 `show` (today's behaviour, documented in `doc/input_api.md`) or it warns and refuses, as `set_text`
 already does while hidden. Both are defensible; refusing is the simpler story and deletes the last
 of `pending`, but it is a documented behaviour change and belongs with the `FIX-02-22` disposition
-rather than being folded in silently.
+rather than being folded in silently. **Settled in §7: keep the stash** — the reviewed spec promised
+it, so refusing would contradict stakeholder intent, not just our own machinery.
 
-## 7. Found while doing this — the `hide()` contract says something the code does not do
+## 7. Empty values — what they do today, and what the record says they should (owner, 2026-08-27)
+
+> *"Behaviour change against what? Baseline, stakeholder intent, our own machinery emerged within
+> this development cycle? The latter is not a concern unless it blasts half of the system."*
+
+**The owner is right, and it retires one of §5's two caveats.** Measured against the three baselines
+that matter:
+
+| proposed change | vs PR base `3256aac` | vs stakeholder intent | vs our own machinery |
+|---|---|---|---|
+| `force` = full re-setup | **no change** — `force` does not exist at base | **restores it** (§1) | changes `re_show`, invented this cycle, **zero consumers in-tree** |
+| hidden `configure{text}` refuses instead of stashing | no change — `configure` does not exist at base | **contradicts it** — see below | would delete `pending` |
+
+So `force` is not a behaviour change in any sense that ranks; calling it one was overstating.
+**And the same criterion settles the other caveat against the tidier option:** the spec the
+stakeholder reviewed says of `configure`, *"Safe to call when hidden (takes effect on next
+`show()`)"* (`spec.versions/version01.md:205-208`). The stash is stakeholder-seen, so refusing would
+be a change against intent, not merely against our machinery. **Keep the stash;** `pending` shrinks
+to `text`/`cursor` (§6) but does not go away.
+
+### What empty values do today — all verified by probe
+
+| value | effect | verdict |
+|---|---|---|
+| `force = false` | identical to absent | fine — it is the documented default |
+| `text = ''` | empty content | **converges with absent**, which is the ideal |
+| `prompt = ''` | empty label | fine, and it is `prompt`'s "off" |
+| `prompt = false` | **falls back to the evaluator's default label** (`text input`) | a *second*, distinct meaning: "give me the default back" |
+| `highlighter = false` | **exactly absent** | see below |
+| `validator = false` | **exactly absent** — a rejecting validator is lifted, submit proceeds | as above |
+| `on_text_entered = false` | not called, no crash | as above |
+| `cursor = {}` / `{1}` / `{nil, 2}` | **raises a raw Lua error** | defect — **`BUG-01-08`** |
+
+**The `false` result is a genuine finding, and it dissolves `BUG-01-02`.** `apply_config` guards on
+`~= nil`, so `false` is *stored*; every consumer then guards on **truthiness** —
+`if ev.highlighter then` (`userInputModel.lua:384/393`), and the same shape for the validator and the
+outputs — so a stored `false` takes **the same branch as absent**. Not an approximation: the same
+line of code. So the unset this feature was about to design machinery for **already exists**, is
+uniform across every function-valued field, and is idiomatic Lua.
+
+*(This corrects a claim made earlier in this same session — that no user-space value reproduces
+absent, so the row needed machinery or nothing. It reasoned about `nil` and missed that the code
+tests truthiness. `BUG-01-02`'s roadmap row carries the correction.)*
+
+### What the stakeholder expects of empty values
+
+**Nothing — the record is silent.** Empty and false values appear in no part of the ticket, the
+clarification, round 2, or the spec. There is no intent to recover here, so this is an **unruled
+area**, and it should be ruled rather than discovered.
+
+Two standing rules point the same way, though, and neither is a stakeholder ask being stretched:
+
+- **Decision 14** — *de-facto contracts: reverse-engineered behaviour is preserved and formalised,
+  not silently changed.* `false` meaning "no such thing" is exactly that situation: behaviour that
+  already exists, uniformly, and has never been written down.
+- **NFR-3** — fit existing Compy and LÖVE conventions. In Lua, `false` for "off" and `nil` for
+  "don't touch" is the idiom, and `nil` already means "don't touch" everywhere in this config table.
+
+**The recommendation is therefore to ratify what the code does, not to change it:** document
+`false` as the uniform "unset" across `highlighter`, `validator`, `on_text_entered` and
+`on_limit_reached`; document `prompt = ''` for an empty label and `prompt = false` for the default
+one; and fix `cursor`, which is the only empty value that misbehaves rather than merely being
+undocumented.
+
+## 8. Found while doing this — the `hide()` contract says something the code does not do
 
 Not part of the force question; surfaced by the same intent recovery and filed as **`FIX-02-22`**.
 
