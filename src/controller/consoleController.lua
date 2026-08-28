@@ -914,7 +914,7 @@ end
 -- Builds the `compy.*` table injected into a project's sandbox
 -- env (terminal, audio, graphics, fonts, input); called while
 -- preparing the project environment.
-local get_compy_namespace = function(terminal)
+local get_compy_namespace = function(terminal, serial)
   require("util.namespace.fonts")
   -- Two members are held as upvalues rather than fields, and
   -- for the same reason: a metatable's __newindex only fires
@@ -928,6 +928,12 @@ local get_compy_namespace = function(terminal)
   -- "`compy.before_exit` is a closure slot".
   local before_exit_slot = default_before_exit
   local input_surface = get_compy_input()
+  -- `serial` is held as an upvalue for the same reason as
+  -- `input`: table.clone is deep, and a copied serial table
+  -- would collect an env's handlers where the dispatcher
+  -- never reads them. An upvalue survives the clone by
+  -- reference, so every env talks to the platform port.
+  local serial_surface = serial
   local ns = {
     terminal = get_compy_terminal(terminal),
     audio = compy_audio,
@@ -938,6 +944,7 @@ local get_compy_namespace = function(terminal)
     __index = function(t, k)
       if k == 'before_exit' then return before_exit_slot end
       if k == 'input' then return input_surface end
+      if k == 'serial' then return serial_surface end
       return rawget(t, k)
     end,
     __newindex = function(t, k, v)
@@ -949,6 +956,9 @@ local get_compy_namespace = function(terminal)
         -- container is a write to `compy`, one table up.
         error("compy.input is not assignable — write to its"
           .. ' sub-tables (shortcuts / hooks / callbacks)', 2)
+      elseif k == 'serial' then
+        error('compy.serial is not assignable — write to its'
+          .. ' fields (onLine / onBytes / onConnect ...)', 2)
       else
         rawset(t, k, v)
       end
@@ -1076,9 +1086,24 @@ function ConsoleController.prepare_env(cc)
   end
 
   local terminal            = cc.model.output.terminal
-  local compy_namespace     = get_compy_namespace(terminal)
+  require('model.serial.init')
+  if love.system.getOS() == 'Android' then
+    require('model.serial.backend_android')
+    SerialPort = Serial.new(AndroidBackend.new())
+  else
+    require('model.serial.backend_null')
+    SerialPort = Serial.new(NullBackend.new())
+  end
+
+  local compy_namespace     = get_compy_namespace(terminal,
+    SerialPort:table_for('console'))
   prepared.compy            = compy_namespace
   prepared.tty              = compy_namespace.terminal
+
+  require('model.serial.probe')
+  require('model.robot.probe')
+  prepared.serial_probe     = serial_probe
+  prepared.robot_probe      = robot_probe
 
   prepared.run              = prepared.run_project
 
@@ -1178,7 +1203,8 @@ function ConsoleController.prepare_project_env(cc)
   project_env.gfx            = love.graphics
 
   local terminal             = cc.model.output.terminal
-  local compy_namespace      = get_compy_namespace(terminal)
+  local compy_namespace      = get_compy_namespace(terminal,
+    SerialPort:table_for('program'))
   project_env.compy          = compy_namespace
 
   project_env.LuaHighlighter = LuaHighlighter
