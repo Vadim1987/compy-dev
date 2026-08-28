@@ -13,10 +13,11 @@ Session53 conducted a full, cold-agent revalidation of both target packages spec
 - **`BUG-01-09` Status:** Verified that leaving `BUG-01-09` out of `ARC-02` was the correct scope boundary, with the defect properly tracked in the `ACTIVE` debt register.
 - **Deliverable Materialized:** [`validation/reviews/ARC-02-revalidation.md`](../../validation/reviews/ARC-02-revalidation.md).
 
-## 2. `doc/input_api.md` Revalidation Summary
+## 2. `doc/input_api.md` Revalidation & Enhancements Summary
 
 - Verified cognitive friendliness, formatting, and technical precision of the new `Vocabulary` section and `Dispatch chain` ASCII diagram.
 - Confirmed zero terminology/concept drift relative to `src/controller/projectInputController.lua` and `doc/development/internals/user_input.md`.
+- **Addendum:** Enhanced `doc/input_api.md` by positioning hooks as generic event handlers, shortcuts as optional early guards, adding usage guidelines for both, explaining tier-3 widget positioning, and replacing the awkward `highlighter = validate() or false` code example with clear prose.
 - **Deliverable Materialized:** [`validation/reviews/input-api-doc-revalidation.md`](../../validation/reviews/input-api-doc-revalidation.md).
 
 ## 3. Verification & Baseline

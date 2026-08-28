@@ -43,28 +43,21 @@ modifiers are optional (`'s'` is also a valid combo — bare, unmodified S), the
 come in a fixed order (ctrl, alt, shift — there are three), and left/right fold
 together, so `'Ctrl+Alt+S'` and `'ctrl+alt+s'` are the same binding.
 
-**Shortcut.** A function registered under a specific combo, on a specific
-channel. When that combo occurs, the shortcut runs before anything else on that
-channel. Shortcuts live in `compy.input.shortcuts.<channel>[combo]`.
+**Hook.** The primary, generic handler for an entire channel (`compy.input.hooks.<channel>`). A hook carries your project's main, generalized event processing logic (such as overall game controls, canvas drawing, or state transitions). There is at most one hook per channel. When your project defines `love.keypressed`, `love.mousepressed`, etc., those functions are automatically installed as hooks — so existing LÖVE code keeps working.
+
+**Shortcut.** An optional guard function registered in front of the hook for a specific key or button combo (`compy.input.shortcuts.<channel>[combo]`). Shortcuts allow intercepting events early for specific combos — most often to process and stop event propagation (or just stop), and optionally to ride along without consuming (`fn.side_run`).
 
 **Modifier class.** A combo with `*` as its trigger: `'alt+*'` matches every
 Alt chord. An exact shortcut wins over the class, so you can have a catch-all
 `'alt+*'` and still bind `'alt+p'` specifically.
 
-**Hook.** A single fallback function for an entire channel. If no shortcut
-matched (or the matching shortcut did not consume the event), the hook runs.
-Hooks live in `compy.input.hooks.<channel>`. There is at most one hook per
-channel. When your project defines `love.keypressed`, `love.mousepressed`, etc.,
-those functions are automatically installed as hooks — so existing LÖVE code
-keeps working.
-
 **Dispatch chain.** The fixed order in which every input event is offered to your
 project's handlers. For each event, the framework tries three consumers in order:
 
 ```
-  1. shortcut  — compy.input.shortcuts.<channel>[combo]
-  2. hook      — compy.input.hooks.<channel>
-  3. widget    — the input widget (only when it is shown)
+  1. shortcut  — compy.input.shortcuts.<channel>[combo] (optional early guard)
+  2. hook      — compy.input.hooks.<channel> (generic channel handler)
+  3. widget    — the input widget (only when shown; stateful terminal consumer)
 ```
 
 The walk stops at the first consumer that **consumes** the event.
@@ -133,13 +126,7 @@ they set:
   nothing, and there is no key that `show` applies and `configure` quietly
   drops.
 
-`false` is how you unset any of the project's keys, which makes
-`computed or false` safe to pass:
-
-```lua
--- No highlighter this round, whatever validate() returned.
-compy.input.configure{ highlighter = validate() or false }
-```
+`false` is how you unset any project-owned key (`prompt`, `highlighter`, `validator`, `on_text_entered`, `on_limit_reached`). Passing `false` restores the key to its absent/default state, making expressions like `custom_validator or false` safe to pass when dynamically toggling settings.
 
 For `prompt`, `''` is an empty label and `false` restores the default one. A
 `cursor` of `false` seats none, leaving the baseline `show` just applied.
@@ -341,11 +328,14 @@ The arguments every consumer receives are LÖVE's own, unchanged —
 `love.keypressed` works unchanged when it becomes a hook, because the
 signature is the same.
 
-### Event hooks and shortcuts
+### Why the widget sits at tier 3
 
-Shortcuts are per-combo bindings; hooks are per-channel fallbacks. Both run
-*before* the input widget and can consume the event. The dispatch chain tries
-them in that order: shortcut first, then hook, then the widget.
+Placing shortcuts and hooks *above* the widget gives your project full control to intercept events flexibly (blocking or bypassing them using filter-like functions) before they reach the text surface. The input widget itself is a stateful component that consumes events without the ability to pass them further down in pipeline style. Placing it after shortcuts and hooks ensures that a shown text field does not lock out your project's custom hotkeys or event guards unless your handlers explicitly allow them to fall through.
+
+### Event hooks and shortcuts — when to use which
+
+- **Hooks (`compy.input.hooks.<channel>`)** are your project's **generic event handlers**. Use a hook for complex, generalized event processing across an entire channel (such as character movement, drawing on canvas, or general game state handling). There is at most one hook per channel.
+- **Shortcuts (`compy.input.shortcuts.<channel>[combo]`)** are **optional early guards** configured in front of the hook. Use a shortcut for clearly detectable, combo-specific alternative interceptions earlier in the dispatch walk — most often to process and stop propagation (or just stop), and optionally to ride along without consuming (`fn.side_run`).
 
 `compy.input.shortcuts.keypressed[combo]` registers a combo-specific
 function. `shortcuts.keyreleased` and `shortcuts.textinput` work the same
