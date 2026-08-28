@@ -80,3 +80,17 @@ Mode: **research + analysis** (named per validation.md). No feature work.
 Behavioural note: the owner's instinct — "run it on my machine and hand you
 the file" — was the whole diagnosis. The env fingerprint line settled in one
 read what source analysis had been circling.
+
+### Wrap (owner-approved)
+
+- Owner confirmed **992 successes on their machine**; noted the scary-looking
+  stack traces. Verified those are pre-existing: 17 error lines at HEAD and 17
+  at the pre-fix commit, all from the deliberate `boom`/`kaboom` raises whose
+  own tests assert the error window is reached.
+- `77111e11` adds the CHANGELOG entry (owner asked; CURRENT_SCOPE had no
+  `Fixed` section, so this opened one).
+- Diagnostic files deleted. `broken-busted/` left alone — the owner's.
+- Baseline line + CURRENT PROMPT pointer moved to 992 / session55.
+- Successor is a **revalidation** task: session54 exercised judgment (the fix
+  shape, and an unprompted amendment to a neighbouring debt entry), so
+  `sessions.md` §5 puts a cold check next.
