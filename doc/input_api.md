@@ -577,19 +577,19 @@ every shortcut, hook and widget call receives LÖVE's own argument list.
 The API offers three ways to reach input, and they answer different questions.
 Choosing by question rather than by taste is what keeps a project predictable.
 
-**A shortcut is for a one-off transition of your own state** — start the game,
+**A shortcut or hook is for a one-off transition of your own state** — start the game,
 end it, switch mode, open the prompt. It is an *independent* change that stands
 on its own once made. Its purpose is decomposition: one binding per thing,
 listable as data, instead of one hook demultiplexing a dozen combos by hand.
 
-**Polling is for continuous state** — is the paddle key down, is Ctrl held
+**Polling of pressed keys is for continuous state** — is the paddle key down, is Ctrl held
 while this drag happens, which caps to light while drawing. Ask `Key` at the
 moment you need the answer. This is not a lesser rung: the device is
 self-correcting, and asking it costs nothing but the call.
 
-**Do not use a pair of shortcuts to hold a state.** Setting a flag on
-`keypressed` and clearing it on `keyreleased` for the same combo looks tidy and
-is not reliable, because the closing event is not guaranteed to arrive in the
+**Do NOT 'pair' shortcuts on different channels to toggle state.** Setting a flag on
+`keypressed` and clearing it on `keyreleased` for the same combo looks tidy... *and
+is not reliable*, because the closing event is not guaranteed to arrive in the
 shape the opening one expects:
 
 ```lua
@@ -631,7 +631,7 @@ lying, and nothing corrects it afterwards. If your project has a reason to do
 it anyway, make that an explicit decision taken in awareness of the drift, not
 a default. The framework does not maintain such a table, and deliberately so.
 
-**Lift the hardware to the top.** When logic gets complex, read the keyboard
+**Perform hardware polling before complex processing.** When logic gets complicated, read the keyboard
 early — at the top of the handler or `update` — into names that mean something
 in your game, then let the rest of the logic run on those:
 
