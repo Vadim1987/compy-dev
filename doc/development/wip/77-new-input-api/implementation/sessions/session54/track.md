@@ -36,3 +36,30 @@ Mode: **research + analysis** (named per validation.md). No feature work.
   checkout that skips `git submodule update` diverges here and not upstream.
 - Written up: `validation/notes/S54-suite-env-divergence.md`. OPEN, waiting
   on the owner's `busted-report.txt` + `busted-env.txt`.
+
+### Owner delivered the reports (`broken-busted/`) — root cause found
+
+- Their env: **PUC Lua 5.1, no LuaJIT installed**. That one line was it.
+- All 107 failures under `tests/input/`, none elsewhere. 1000 tests
+  collected either side, so nothing mis-collected — both submodule
+  hypotheses dead on arrival.
+- Cause: `controller.lua` `wrap` branches on **`_G.web`** to avoid PUC 5.1
+  dropping `xpcall`'s trailing arguments. `_G.web` is a *platform* test
+  standing in for a *runtime capability*; under busted-on-PUC-5.1 they come
+  apart, so every project route is entered with nil arguments.
+- The code comment at that branch already states the hazard verbatim. The
+  guard, not the knowledge, is what was wrong.
+- Reproduced **exactly**: forced the arg-drop in the container →
+  883/107/0/10, and the 107 failing rows `diff` identical to the owner's.
+  Reverted; suite re-confirmed 990/0/0/10.
+- Fix drafted (capability predicate, one `select`/`xpcall` probe), **not
+  applied** — src change in PR-prep, owner's ruling. Presented with the
+  diff ready.
+- Falsifies a premise in `technical_debt/input.md` ("the suite runs on
+  LuaJIT"), and its proposed grep mitigation would not have caught this —
+  the call is not bare, it is on the wrongly-guarded branch. Noted in the
+  defect note; the debt entry itself is untouched pending the ruling.
+
+Behavioural note: the owner's instinct — "run it on my machine and hand you
+the file" — was the whole diagnosis. The env fingerprint line settled in one
+read what source analysis had been circling.
