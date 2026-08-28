@@ -420,7 +420,7 @@ no explicit hook was supplied, so a project that already defines
 ### Combos the framework keeps
 
 A few combinations belong to the platform. They are answered before your
-project's route exists, so **a project cannot take one by naming it** — but the
+project's route exists, so **a project cannot override one by naming it** — but the
 platform does not swallow the key either: **your binding still runs**, and the
 platform's action happens as well.
 
