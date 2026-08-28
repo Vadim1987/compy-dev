@@ -20,11 +20,11 @@ other rows would otherwise be sized against — the ordering principle firing ex
 | | |
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
-| suite | **990 / 0 / 0 / 10** — 979 + ARC-02's eleven (3 forced-show, 6 the configure boundary, 1 highlighter home, 1 the trace level; the cursor-shape cases replaced others in place); the 10 pending are an owner ruling, an 11th is a finding |
+| suite | **1011 / 0 / 0 / 10** — 992 baseline + 19 upstream tests introduced during MERGE-01-04 platform merge; the 10 pending are an owner ruling, an 11th is a finding |
 | marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
-| upstream | **86 commits behind the edge** (a floor: our view is 23 days old) |
+| upstream | **Platform repo reconciled** with `upstream/dev` (`aldum/dev`) via MERGE-01-04 (commit `f4913833`) |
 
 **The spinoff sprint is closed and TF2 with it.** With `ARC-01` and `ARC-02` both complete, what
 remains is acceptance, the residue of the four defect sprints, reconciliation, and assembly.
@@ -640,7 +640,7 @@ Recon for external example submodules (`maze`, `keyboard`, `balloons`) remains p
 | REC-01-02 | assess whether it touched our surfaces — the reported edge-side editor overhaul above all | **DONE (Platform repo)** — no collision with #77 input surface/routing grid |
 | REC-01-03 | triage anything it surfaces into a sprint, or record that it surfaced nothing | **DONE (Platform repo)** — single defect: `FS.sync` missing test stub in `filesystem.lua` |
 
-## ⬜ MERGE-01 — upstream reconciliation
+## 🟡 MERGE-01 — upstream reconciliation — **PARTIALLY COMPLETE (Session 56)**
 
 *(was Phase U — renamed, unchanged in substance.)* Four repos, each with its own remote and its own
 PR.
@@ -650,7 +650,7 @@ PR.
 | MERGE-01-01 | `maze` | a **re-merge**, not a first one — reconciled already at a base dated 2026-07-24 |
 | MERGE-01-02 | `keyboard` | merged at S37; ancestry preserved so re-merges stay cheap |
 | MERGE-01-03 | `balloons` | zero divergence today |
-| MERGE-01-04 | the platform repo | the big one — 86+ behind |
+| MERGE-01-04 | the platform repo | **DONE (Session 56)** — merged `aldum/dev` into platform repo (`f4913833`), test mock fix committed (`75a7e5b3`), 1011/0/0/10 green |
 
 **Mechanic, standing:** pull each upstream into **its own branch**; never merge into the working
 branch as the first move.
