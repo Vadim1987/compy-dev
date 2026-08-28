@@ -1,9 +1,27 @@
 # S54 — suite passes in the container, 107 failures in the owner's setup
 
-**Status:** DIAGNOSED, exactly — root cause below, reproduced bit-for-bit.
-Fix is drafted and **pending an owner ruling**; nothing in `src/` changed.
-**Opened / diagnosed:** 2026-08-28 (session54, detour before the
+**Status:** FIXED — root cause below, reproduced bit-for-bit, closed the
+same day. Debt entry recorded and retired (`technical_debt/input.md`).
+**Awaiting confirmation on the owner's machine.**
+**Opened / diagnosed / fixed:** 2026-08-28 (session54, detour before the
 commissioned task).
+
+## The fix, as landed
+
+Not the capability probe drafted below — the branch is **gone** instead.
+`wrap` closes the arguments over a nullary function and calls
+`xpcall(fn, on_error)`, which asks nothing of the runtime, so no platform
+test remains to disagree with the capability. `select('#')` rather than
+`#args`, so an explicit nil argument survives.
+
+Guarded by two breaking cases in `input_route_lifecycle_spec.lua`, "the
+boundary carries arguments on any runtime": they swap the global `xpcall`
+for PUC 5.1's arity and drive a real keystroke, so they fail on LuaJIT too
+without the fix. Suite **992 / 0 / 0 / 10**.
+
+Verified end to end by running the whole suite with the global `xpcall`
+replaced by PUC 5.1's arity: **883 / 109** before, **992 / 0** after. (109,
+not 107, because the two new cases fail there too before the fix.)
 
 ## Root cause — `wrap` guards the `xpcall` extension on the wrong predicate
 
@@ -207,7 +225,11 @@ radius today is small:
   fails on the reviewer's is a defect on its own terms, independent of the
   production reading.
 
-Pending owner ruling: apply the capability-predicate fix (with a breaking
-test first, per `agents/development.md`), and amend the debt entry named
-above. Both diagnostic files (`tests/diag_output.lua`, `tests/diag_env.sh`)
-are deleted once that lands — they stay untracked meanwhile.
+Done: fix landed with its breaking tests, `T-XPCALL-GUARD` recorded and
+retired, and the falsified premise in "The Web build has no coverage"
+corrected in place.
+
+Open: **the suite baseline moves 990 → 992**; `agents/validation.md`'s
+fallback line and the successor prompt take the new number at wrap. The two
+diagnostic files (`tests/diag_output.lua`, `tests/diag_env.sh`) stay
+untracked until the owner's own machine reports green, then are deleted.

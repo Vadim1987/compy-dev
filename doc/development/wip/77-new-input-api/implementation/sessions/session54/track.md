@@ -60,6 +60,23 @@ Mode: **research + analysis** (named per validation.md). No feature work.
   the call is not bare, it is on the wrongly-guarded branch. Noted in the
   defect note; the debt entry itself is untouched pending the ruling.
 
+### Owner ruled: record the debt entry first, then fix
+
+- `4e828e6e` records `T-XPCALL-GUARD` as ACTIVE (minimal, owner's word),
+  deliberately before the fix so there is an entry for the fix to close.
+- `77845502` fix + two breaking tests. Chose to **delete the branch** rather
+  than apply the drafted capability probe: closing the arguments over a
+  nullary function asks nothing of the runtime, so the predicate that could
+  be wrong stops existing. Simpler than the probe and strictly safer.
+- `a69e81d2` retires the entry and corrects the falsified premise in "The
+  Web build has no coverage" ("the suite runs on LuaJIT" — it does not).
+- Whole suite re-run with the global `xpcall` at PUC 5.1's arity: 883/109
+  before, 992/0 after. Plain run 992/0/0/10.
+- **Baseline moves 990 → 992.** validation.md's fallback line + successor
+  prompt take it at wrap.
+- lua-lsp MCP was down (broken pipe, twice) — no AST check on the edit; the
+  suite and the PUC-arity run are the evidence instead.
+
 Behavioural note: the owner's instinct — "run it on my machine and hand you
 the file" — was the whole diagnosis. The env fingerprint line settled in one
 read what source analysis had been circling.
