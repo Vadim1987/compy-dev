@@ -119,37 +119,28 @@ end
 -- swallowed it, so a project raise vanished with no error
 -- window at all (doc/development/technical_debt/input.md,
 -- "`wrap`'s error handler is called with the wrong arity").
+--
+-- The arguments are CLOSED OVER, not passed through xpcall.
+-- `xpcall(f, h, ...)` forwarding arguments to `f` is a
+-- LuaJIT/5.2 extension; PUC Lua 5.1 takes exactly two and
+-- drops the rest, calling every handler with nil for all of
+-- its parameters. This form asks nothing of the runtime, so
+-- there is no platform branch to get wrong — the previous one
+-- keyed off `_G.web` (the Web build, which is PUC 5.1) and so
+-- missed `busted` running on PUC 5.1, where it cost 107 red
+-- cases (`doc/development/technical_debt/input.md`, RETIRED,
+-- "`wrap` guards the `xpcall` arity hazard on the platform").
+--
+-- `select('#')`, not `#args`: an explicit nil argument is an
+-- argument, and the two disagree about that.
 local function wrap(f, CC, ...)
   local function on_error(msg)
     user_error_handler(CC, msg)
   end
-  if _G.web then
-    -- DO NOT collapse this branch into the xpcall below. It is
-    -- not a stylistic duplicate: `xpcall(f, h, ...)` passing
-    -- arguments to `f` is a LuaJIT/5.2 extension, and PUC Lua
-    -- 5.1 — what the Web build runs — takes exactly two
-    -- arguments and drops the rest, so every handler would be
-    -- called with nil for all of its parameters. pcall passes
-    -- them on both runtimes. `_G.web` is set from
-    -- OS.get_name() == 'Web' (main.lua).
-    local ok, r = pcall(f, ...)
-    if not ok then
-      on_error(r)
-    end
-    -- `ok, r`, not bare `r`: this branch used to answer with a
-    -- lone value while the other answered xpcall's tuple, and
-    -- every caller discarded the result so nothing caught it.
-    -- What the branches now share is the FIRST TWO values,
-    -- which is all any caller reads (project_handler takes
-    -- `ok, res`, dropping `res` when `ok` is false). The tails
-    -- differ and deliberately are not reconciled: xpcall
-    -- forwards every return of `f` where pcall is captured to
-    -- one here, and on failure xpcall yields `false, nil`
-    -- against this branch's `false, <error>`.
-    return ok, r
-  else
-    return xpcall(f, on_error, ...)
-  end
+  local args, n = { ... }, select('#', ...)
+  return xpcall(function()
+    return f(unpack(args, 1, n))
+  end, on_error)
 end
 
 --- Run `fn` the way project code must always be run: drawing

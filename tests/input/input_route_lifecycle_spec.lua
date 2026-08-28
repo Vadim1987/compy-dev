@@ -550,6 +550,45 @@ describe('input surface: inbound events — route lifetime #input',
         end)
     end)
 
+    -- Passing arguments through xpcall to the called function
+    -- is a LuaJIT/5.2 extension: PUC Lua 5.1 takes exactly two
+    -- arguments and drops the rest. The boundary must not
+    -- depend on which runtime it is under — and this suite is
+    -- run on both, so a boundary that does is 107 red cases on
+    -- one developer's machine and green on another's.
+    --
+    -- Stated here rather than as a unit case on the boundary
+    -- helper: what breaks is not the helper, it is every
+    -- argument the chain is entered with.
+    describe('the boundary carries arguments on any runtime',
+      function()
+        -- Runs `fn` with the global xpcall replaced by one
+        -- with PUC 5.1's arity. Restored before the assertion
+        -- so a failure cannot leave it installed.
+        local function under_puc_xpcall(fn)
+          local real = xpcall
+          _G.xpcall = function(f, h) return real(f, h) end
+          local ok, err = real(fn, function(m) return m end)
+          _G.xpcall = real
+          if not ok then error(err, 0) end
+        end
+
+        it('a hook still receives its key', function()
+          local input = F.activate_project()
+          local seen
+          input.hooks.keypressed = function(k) seen = k end
+          under_puc_xpcall(function() F.session.press('a') end)
+          assert.equal('a', seen)
+        end)
+
+        it('the widget still receives typed text', function()
+          local input = F.activate_project()
+          input.show({ text = '' })
+          under_puc_xpcall(function() F.session.type('z') end)
+          assert.same({ 'z' }, F.widget:get_text())
+        end)
+      end)
+
     describe('compy.before_exit', function()
       -- compy.before_exit fires once on
       -- stop, before
