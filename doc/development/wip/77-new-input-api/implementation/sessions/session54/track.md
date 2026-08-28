@@ -94,3 +94,21 @@ read what source analysis had been circling.
 - Successor is a **revalidation** task: session54 exercised judgment (the fix
   shape, and an unprompted amendment to a neighbouring debt entry), so
   `sessions.md` §5 puts a cold check next.
+
+### Post-wrap correction (owner)
+
+- Owner: the changelog described the change against this branch's recent
+  state, but a changelog is read against the **last release**. Checked
+  `master`: it carries the same `_G.web`-guarded `xpcall` verbatim, reached
+  via `error_wrapper`/`set_handlers`. So on PUC 5.1 an adopted
+  `love.keypressed`/`textinput`/`keyreleased` and `love.update`'s `dt`
+  already arrived nil pre-feature. Feature **inherited and widened**, did
+  not introduce.
+- `19581cb4` restates the changelog cumulatively; same correction applied to
+  the working note and the retired debt entry, both of which implied the
+  boundary was this feature's.
+- session55 prompt + session54 report updated: scope now nine commits, and
+  the changelog entry is flagged as the one verdict already wrong once.
+- **This is [[check-the-pr-base-first]] again**, third time this phase. The
+  fix was verified against the branch tip, which makes an inherited defect
+  read as a branch regression. The owner made the check, again.

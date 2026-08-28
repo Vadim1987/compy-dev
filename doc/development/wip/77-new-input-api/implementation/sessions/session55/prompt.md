@@ -39,7 +39,7 @@ reconstruct intent from the report and the owner's in-session framing it
 records: *document a defect, troubleshoot it, then fix it, recording the
 debt entry first so the fix closes it.*
 
-Scope — seven commits, `dbb4ea8b` .. `77111e11`:
+Scope — nine commits, `dbb4ea8b` .. `19581cb4`:
 
 - **The production fix (`77845502`) is the piece that most deserves a cold
   reader.** It changed the error boundary every project handler is invoked
@@ -52,10 +52,17 @@ Scope — seven commits, `dbb4ea8b` .. `77111e11`:
   coherently rather than as churn. It also amended a *neighbouring* entry
   ("The Web build has no coverage") whose premise the defect falsified;
   that amendment is a judgment call made without the owner in the room.
-- **`CHANGELOG.md` (`77111e11`)** — opened a `Fixed` section in
-  CURRENT_SCOPE. Check the entry is true for a project author and does not
-  overstate the blast radius: desktop LÖVE and the Web build were both
-  unaffected, which the entry must not blur.
+- **`CHANGELOG.md` (`77111e11`, corrected by `19581cb4`)** — opened a
+  `Fixed` section in CURRENT_SCOPE. The first version described the fix
+  against this branch's own recent state; **the owner caught that** and it
+  was rewritten as cumulative against the last release, because `master`
+  carries the same guarded `xpcall` and the feature inherited the defect
+  rather than introducing it. Check the corrected entry is true for a
+  project author, that it does not overstate the blast radius (desktop LÖVE
+  and the Web build were both unaffected), and that the same framing now
+  holds in the working note and the retired debt entry, which `19581cb4`
+  also touched. **This is the one place a stated verdict was already wrong
+  once — read it coldest.**
 - **The validation note** (`dbb4ea8b`, `38a7a7ad`, `08e70d6c`) — written
   across three commits as the picture changed. Check it reads as one
   document now, not as a diary with stale forward-references.

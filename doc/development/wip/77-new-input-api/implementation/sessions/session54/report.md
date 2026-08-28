@@ -54,6 +54,16 @@ interpreter-independent, which it had never been.
   `busted` uses, and that entry's proposed lint (no bare `xpcall` with
   arguments) would not have caught this call, which sat on the guarded
   branch. Amended in place.
+- **The first changelog entry framed the fix against the wrong baseline,
+  and the owner caught it.** It described the change against this branch's
+  recent state; a changelog is read against the last release. `master`
+  carries the same `_G.web`-guarded `xpcall` verbatim — on PUC 5.1 an
+  adopted `love.keypressed`/`textinput`/`keyreleased` and `love.update`'s
+  `dt` already arrived nil there. So the feature **inherited** this defect,
+  widened it to every shortcut/hook/widget, and supplied the first tests
+  that could see it. Corrected in the changelog, the note and the retired
+  debt entry. The general trap: a fix verified against the branch tip
+  reads as a branch-introduced regression unless you check the base.
 - **Two hypotheses died before the report arrived** — a stale `metalua`
   submodule (this branch does bump it; reproducing gives 3 failures, not
   107) and a stale `stringutils` one (no effect). Recorded because the
@@ -70,7 +80,8 @@ interpreter-independent, which it had never been.
 - `CHANGELOG.md` — CURRENT_SCOPE had no `Fixed` section; this opened one.
 - Commits: `dbb4ea8b`, `38a7a7ad` (diagnosis), `4e828e6e` (debt ACTIVE),
   `77845502` (fix + tests), `a69e81d2` (debt RETIRED), `08e70d6c` (note
-  closed), `77111e11` (changelog).
+  closed), `77111e11` (changelog), `28288d8c` (wrap), `19581cb4` (changelog
+  correction, post-wrap).
 - The two throwaway diagnostic files were deleted once the owner's machine
   reported green.
 
