@@ -47,20 +47,6 @@ paid, or turned out not to be debt.
   trigger; if a framework mechanism is adopted instead, a wildcard one-shot
   needs no combo lookup and this stays a corner.
 
-### T-XPCALL-GUARD — `wrap` guards the `xpcall` arity hazard on the platform, not the capability
-
-- **Where:** `src/controller/controller.lua`, `wrap`.
-- **State:** passing arguments through `xpcall` to `f` is a LuaJIT/5.2
-  extension; PUC Lua 5.1 drops them. `wrap` avoids that with a `pcall`
-  branch, but selects it on `_G.web` — a platform test standing in for a
-  runtime capability. On PUC Lua 5.1 outside the Web build the two disagree,
-  and every project route is entered with nil arguments. Measured
-  2026-08-28: `busted tests` on PUC Lua 5.1 gives **107 failures**, all under
-  `tests/input/`; the same suite on LuaJIT is green.
-- **Why it stands:** just found. Also makes the suite's green
-  interpreter-dependent, which the PR's baseline claim does not survive.
-- **Revisit:** now — branch on a capability probe instead of `_G.web`.
-
 ### T-TURTLE-DUP — `turtle` double-handles its own keys
 
 - **Where:** `src/examples/turtle/main.lua`.
@@ -175,10 +161,15 @@ paid, or turned out not to be debt.
 
 ### The Web build has no coverage, and carried a feature-era regression unseen
 
-- **State:** nothing in `busted tests` exercises the `_G.web` branch, and the
-  suite runs on LuaJIT, where the desktop branch works. A defect reachable
-  only on the Web build is therefore invisible to every check this project
-  runs.
+- **State:** nothing in `busted tests` exercises the `_G.web` branch. A
+  defect reachable only on the Web build is therefore invisible to every
+  check this project runs.
+- **Amended 2026-08-28:** this entry used to add "and the suite runs on
+  LuaJIT". It does not — it runs on whatever interpreter the developer's
+  `busted` uses, and on the owner's machine that is PUC Lua 5.1. That is how
+  the retired `wrap` arity defect surfaced. The lint proposed below would
+  not have caught it either: the call was not bare, it was on the guarded
+  branch. A second interpreter in CI remains the only check that would.
 - **The worked example, found 2026-08-03:** the dispatch chain introduced by
   `56c4284f` wrapped project keyboard handlers in a **bare**
   `xpcall(fn, handler, unpack(args))`, with no web branch. On PUC Lua 5.1 —
@@ -1209,6 +1200,21 @@ changes.
   anyway.
 
 ## RETIRED
+
+### `wrap` guards the `xpcall` arity hazard on the platform, not the capability (RESOLVED, 2026-08-28)
+
+- **Resolution:** the branch is gone rather than re-guarded. `wrap` now
+  closes the arguments over a nullary function and calls
+  `xpcall(fn, on_error)`, which asks nothing of the runtime — so there is no
+  platform test left to disagree with the capability. Was `T-XPCALL-GUARD`.
+- **Where it was:** `src/controller/controller.lua`, `wrap` — the `_G.web`
+  branch, whose `pcall` side was correct for the Web build and unreachable
+  for `busted` on PUC Lua 5.1, which is not the Web build. There the route
+  was entered with nil arguments: **107 failures**, all under
+  `tests/input/`, on a suite green on LuaJIT.
+- **Guarded by:** `input_route_lifecycle_spec.lua`, "the boundary carries
+  arguments on any runtime" — two cases driving a real keystroke with the
+  global `xpcall` swapped for PUC 5.1's arity.
 
 ### The `show`/`configure` content-ownership boundary was not built (RESOLVED, 2026-08-27)
 
