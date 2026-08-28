@@ -110,3 +110,17 @@ newest first.
   or shown input widget no longer accumulates in the hidden console.
   It stays in the project route and has no effect. An explicit future
   route participant could provide a different fallback if needed.
+
+### Fixed
+
+- **Project input handlers no longer lose their arguments on PUC Lua
+  5.1.** Passing arguments through `xpcall` is a LuaJIT extension; a
+  runtime without it dropped every one of them at the framework's error
+  boundary, so shortcuts, hooks and the input widget were all entered
+  with `nil` for the key, character and repeat flag. The Web build was
+  already guarded against this and unaffected; a desktop LÖVE build runs
+  LuaJIT and was unaffected too — what this reached was any other host on
+  PUC Lua 5.1, including the interpreter many `busted` setups use, where
+  the input test suite reported 107 failures against a suite that passed
+  on LuaJIT. The boundary now closes over the arguments instead of
+  forwarding them, and behaves identically on every runtime.
