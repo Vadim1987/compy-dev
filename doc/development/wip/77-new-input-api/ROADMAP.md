@@ -623,18 +623,22 @@ Lists: [`doc/development/smoke_checklists.md`](../../smoke_checklists.md). **Tag
 
 ---
 
-## ⬜ REC-01 — upstream reconnaissance — *discovery, not release*
+## 🟡 REC-01 — upstream reconnaissance — *discovery, not release* — **PARTIALLY COMPLETE (Session 55)**
 
 **Renamed from "recon" and lifted out of the release path (owner, 2026-08-26)**, because it is not
 release work: it measures **86+ commits** of drift we currently cannot see, and if upstream moved in
 our surfaces its output is **new defect work**. It may spawn a sprint. Fetch-only, read-only;
 nothing merges here.
 
-| id | step |
-|---|---|
-| REC-01-01 | fetch every remote; measure the real drift against the pinned tags |
-| REC-01-02 | assess whether it touched our surfaces — the reported edge-side editor overhaul above all |
-| REC-01-03 | triage anything it surfaces into a sprint, or record that it surfaced nothing |
+**Session 55 status:** Platform repo RECON analyzed against `feature/77-newinput-premerge` (`aldum/dev` merge).
+Upstream 24 commits analyzed: no architectural overlap with #77 input API, single unit-test regression identified in `src/util/filesystem.lua` (`FS.sync` stub missing for `TESTING=true`).
+Recon for external example submodules (`maze`, `keyboard`, `balloons`) remains pending.
+
+| id | step | status |
+|---|---|---|
+| REC-01-01 | fetch every remote; measure the real drift against the pinned tags | **DONE (Platform repo)** — 24 commits in `aldum/dev` evaluated via `feature/77-newinput-premerge` |
+| REC-01-02 | assess whether it touched our surfaces — the reported edge-side editor overhaul above all | **DONE (Platform repo)** — no collision with #77 input surface/routing grid |
+| REC-01-03 | triage anything it surfaces into a sprint, or record that it surfaced nothing | **DONE (Platform repo)** — single defect: `FS.sync` missing test stub in `filesystem.lua` |
 
 ## ⬜ MERGE-01 — upstream reconciliation
 
