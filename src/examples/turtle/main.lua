@@ -31,6 +31,7 @@ function love.draw()
 end
 
 function love.keypressed(key)
+  if compy.input.is_shown() then return end
   if Key.shift() then
     if key == "r" then
       tx, ty = midx, midy

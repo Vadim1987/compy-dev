@@ -47,17 +47,6 @@ paid, or turned out not to be debt.
   trigger; if a framework mechanism is adopted instead, a wildcard one-shot
   needs no combo lookup and this stays a corner.
 
-### T-TURTLE-DUP — `turtle` double-handles its own keys
-
-- **Where:** `src/examples/turtle/main.lua`.
-- **State:** a finding from the input-API migration — turtle's own key
-  handling and the widget's always-consumes behaviour both act on the same
-  keystroke. Not yet characterised beyond "it is a finding about the
-  migration," and it may implicate every migrated example, not only turtle.
-- **Why it stands:** unactioned pending characterisation.
-- **Revisit:** with the input guide's missing statement that a shown widget
-  always consumes keyboard input — this defect is that gap's symptom.
-
 ### T-CURSOR-BYTES — `set_cursor` clamps by byte offset; the boundary event measures characters
 
 - **Where:** the cursor-setting path in `userInputController.lua` /
@@ -1200,6 +1189,11 @@ changes.
   anyway.
 
 ## RETIRED
+
+### T-TURTLE-DUP — `turtle` double-handles its own keys (RESOLVED, 2026-08-28)
+
+- **Resolution:** `if compy.input.is_shown() then return end` guard added to `love.keypressed` in `src/examples/turtle/main.lua` to match `love.keyreleased` and prevent double-handling when prompt is open.
+- **Where:** `src/examples/turtle/main.lua`.
 
 ### `wrap` guards the `xpcall` arity hazard on the platform, not the capability (RESOLVED, 2026-08-28)
 
