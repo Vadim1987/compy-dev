@@ -27,6 +27,18 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
+### T-ONESHOT - need to restore 'oneshot' as a useful synt-sugar option
+
+(attestation: it was removed in-flight to avoid oversugaring, but the need is confirmed by microbit development). Rationale: it will reduce boilerplate (no need to install separate after_submit hook which sloses the widget, and also aligns with historical tradition (old API had 'oneshot'). To be written down as decision.
+
+### T-PLAINTEXT-ENTERED
+
+Right now we have two almost similar hooks: `after_submit` and `on_text_entered`. The latter provides list of lines -- technically fair but useless, as in most cases consumer will concat them into plaintext. Word 'text' also semantically assumes we are working with text object.
+
+Suggestion: let `on_text_entered` return the plain text (concatenated), and `after_submit` to get same content as list of lines.
+Pros: two easy ways to reach both representations without boilerplate, `after_submit` gets its own reason for existance beyond oneshot -> less confusion in the documentation, better devX. Recommendation would be clean: use `on_text_entered` to process plaintext, use `after_submit` for any other processing logic (recommended convention, not enforced)
+Status: inlined here by human, to be written down as decision and analyzed first (same as T-PLAINTEXT-ENTERED)
+
 ### T-COMBO-CASE — `combo_string` does not normalise the case of a textinput token
 
 - **Where:** `src/controller/controller.lua`, `combo_string`; the
