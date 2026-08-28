@@ -401,7 +401,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | id | defect | blast radius |
 |---|---|---|
 | **FIX-02-01** | **`on_text_entered` and `after_submit` are two ways to set one callback** | **design escalation, public surface.** The cold review missed it; the owner raised it twice. Bears on the strategic frame's "no moving parts beyond the ask" |
-| **FIX-02-02** | **`tixy` may drop the legend on submit** | **verify → ratify or revert.** A possibly unratified change to pre-feature behaviour, in code |
+| ~~**FIX-02-02**~~ ✅ | **RATIFIED (Session 56) — `legend = ""` on submit is the example's own code in `src/examples/tixy/main.lua:submit_body` (submitting custom formula retires canned caption; see `validation/notes/S24-W7-A4-A5-invisible-overlay.md`). No framework defect.** `tixy` may drop the legend on submit | **RATIFIED** — verified by `S24-W7-A5` investigation note |
 | **FIX-02-03** | the A-doc's three factual claims (`:79`, `:650`, `:675`) | **may reveal the code is wrong, not the doc** |
 | **FIX-02-04** | pointer annotations in `project_sandbox_env.md` — completeness never checked | **unknown yield** — a verification task |
 | **FIX-02-05** | the debt ledger's 20 resolved entries · **`T-RETIRED-UNVER`** | **unknown yield** — each tested against base; may find more rot. **NOT absorbed by `LEDGER-01-03`**, which sorted them into `RETIRED` on their headings without testing one of them against the base. The sort is done; **the verification this row exists for is untouched**, and it now has a section to walk rather than a scattered set |
