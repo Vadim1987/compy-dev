@@ -22,6 +22,10 @@ paid, or turned out not to be debt.
 
 > REMARK: its not a defect, but convention -- gfx is alias for love.graphics, sfx is alias for compy.audio
 
+### T-NAMESPACE-CLONE
+
+Проектное окружение клонируется глубоко (table.clone перед запуском), поэтому любая живая платформенная таблица, положенная в неймспейс полем, едет в проект копией: программа присваивает обработчики в копию, диспетчер читает оригинал, обе стороны молчат без всякой ошибки. Потратил на это час отладки на устройстве. Ты это обошёл для input — держишь поверхность апвэлью за __index; я сделал serial тем же способом, включая запрет на присваивание самой таблицы. Паттерн неочевиден — следующий, кто добавит живую таблицу полем, наступит точно так же. Может, стоит строки в доке рядом с Decision 7.
+
 ### T-GFX-GLOBAL — `gfx` implicit global in `controller.lua`
 
 - **Where:** `src/controller/controller.lua` — `set_love_update` / `set_love_draw` (and
