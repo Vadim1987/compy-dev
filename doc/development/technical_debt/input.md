@@ -47,6 +47,20 @@ paid, or turned out not to be debt.
   trigger; if a framework mechanism is adopted instead, a wildcard one-shot
   needs no combo lookup and this stays a corner.
 
+### T-XPCALL-GUARD — `wrap` guards the `xpcall` arity hazard on the platform, not the capability
+
+- **Where:** `src/controller/controller.lua`, `wrap`.
+- **State:** passing arguments through `xpcall` to `f` is a LuaJIT/5.2
+  extension; PUC Lua 5.1 drops them. `wrap` avoids that with a `pcall`
+  branch, but selects it on `_G.web` — a platform test standing in for a
+  runtime capability. On PUC Lua 5.1 outside the Web build the two disagree,
+  and every project route is entered with nil arguments. Measured
+  2026-08-28: `busted tests` on PUC Lua 5.1 gives **107 failures**, all under
+  `tests/input/`; the same suite on LuaJIT is green.
+- **Why it stands:** just found. Also makes the suite's green
+  interpreter-dependent, which the PR's baseline claim does not survive.
+- **Revisit:** now — branch on a capability probe instead of `_G.web`.
+
 ### T-TURTLE-DUP — `turtle` double-handles its own keys
 
 - **Where:** `src/examples/turtle/main.lua`.
