@@ -109,7 +109,7 @@ end
 function Project:load_file(filename)
   local rok, content = self:readfile(filename)
   if rok then
-    return codeload(content)
+    return codeload(content, nil, filename)
   end
 end
 
@@ -290,8 +290,8 @@ end
 --- @return string? err
 function ProjectService:opreate(name, play)
   if play then
-    local ok = self:open('play', true)
-    return ok, false
+    local ok, err = self:open('play', true)
+    return ok, false, err
   else
     local ook, _ = self:open(name, false)
     if ook then
@@ -382,8 +382,12 @@ function ProjectService:run(name, env)
     p_path, err = self.is_project(ProjectService.path, name)
   end
   if p_path then
-    local _, code = self.current:readfile(ProjectService.MAIN)
-    local content, c_err = codeload(code, env)
+    local ok, code = self.current:readfile(ProjectService.MAIN)
+    if not ok then return nil, code, p_path end
+    if type(code) ~= 'string' then
+      return nil, FS.messages.unreadable(ProjectService.MAIN), p_path
+    end
+    local content, c_err = codeload(code, env, ProjectService.MAIN)
     return content, c_err, p_path
   end
   return nil, err

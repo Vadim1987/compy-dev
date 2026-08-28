@@ -23,7 +23,7 @@ local class = require('util.class')
 --- @field move function
 Dequeue = class.create()
 
-local tags = {}
+local tags = setmetatable({}, { __mode = 'k' })
 
 --- Create a new double-ended queue
 --- @param values table?
@@ -53,8 +53,7 @@ function Dequeue.new(values, tag)
       self:push_back(v)
     end
   end
-  local addr = tostring(self)
-  tags[addr] = ttag
+  tags[self] = ttag
   return self
 end
 
@@ -79,7 +78,7 @@ end
 --- Return item type
 --- @return string?
 function Dequeue:type()
-  return tags[tostring(self)]
+  return tags[self]
 end
 
 function Dequeue:get_type()

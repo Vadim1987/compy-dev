@@ -13,6 +13,10 @@ describe('table utils #table', function()
       assert.is_false(table.is_array(t3))
       assert.is_false(table.is_array(t4))
     end)
+    it('rejects non-tables', function()
+      assert.is_false(table.is_array('str'))
+      assert.is_false(table.is_array(42))
+    end)
   end)
 
   describe('odds', function()
@@ -26,6 +30,10 @@ describe('table utils #table', function()
   end)
 
   describe('flatten', function()
+    it('rejects non-tables', function()
+      assert.is_nil(table.flatten(42))
+    end)
+
     it('one deep', function()
       assert.same({}, table.flatten({}))
 

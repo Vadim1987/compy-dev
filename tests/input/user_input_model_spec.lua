@@ -34,6 +34,44 @@ describe("input model spec #input", function()
   -----------------
   --   ASCII     --
   -----------------
+  describe('errors', function()
+    it('converts non-string errors', function()
+      local model = UserInputModel(mockConf, luaEval)
+      --- @diagnostic disable-next-line: invisible
+      model:set_error({ 42 })
+      --- @diagnostic disable-next-line: invisible
+      assert.same({ '42' }, model.error)
+    end)
+  end)
+
+  describe('invalid UTF-8', function()
+    local invalid = 'abc\195('
+
+    it('add_text drops invalid bytes', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:add_text(invalid)
+      assert.same({ 'abc(' }, model:get_text())
+    end)
+
+    it('paste drops invalid bytes across lines', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:paste('abc\ndef' .. invalid)
+      assert.same({ 'abc', 'defabc(' }, model:get_text())
+    end)
+
+    it('set_text drops invalid bytes', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:set_text(invalid)
+      assert.same({ 'abc(' }, model:get_text())
+    end)
+
+    it('set_text drops invalid bytes in tables', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:set_text({ 'ok', invalid })
+      assert.same({ 'ok', 'abc(' }, model:get_text())
+    end)
+  end)
+
   describe('basics', function()
     local model = UserInputModel(mockConf, luaEval)
 

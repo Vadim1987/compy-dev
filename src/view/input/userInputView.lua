@@ -158,7 +158,10 @@ function UserInputView:render_input(input, status, time)
     for l, s in ipairs(visible) do
       local ln = l + vc.offset
       local tl = string.ulen(s)
-      if not tl then return end
+      if not tl then
+        gfx.pop()
+        return
+      end
 
       for c = 1, tl do
         local char = string.usub(s, c, c)

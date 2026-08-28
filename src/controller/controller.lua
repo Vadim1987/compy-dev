@@ -6,6 +6,7 @@ require("util.string.string")
 require("util.key")
 require("util.lua")
 local LANG = require("util.eval")
+local FS = require("util.filesystem")
 
 local messages = {
   user_break = "BREAK into program",
@@ -97,8 +98,9 @@ for _, k in ipairs(_derived) do
 end
 
 --- @param CC ConsoleController
---- @param msg string
+--- @param msg any
 local function user_error_handler(CC, msg)
+  msg = tostring(msg)
   Log.debug('user error: ' .. msg)
   local err = LANG.get_call_error(msg) or ''
   local user_msg = messages.exec_error(err)
@@ -585,6 +587,7 @@ Controller = {
       if love.state.app_state == 'snapshot' then
         gfx.captureScreenshot(function(img)
           local snap = gfx.newImage(img)
+          if View.snapshot then View.snapshot:release() end
           View.snapshot = snap
           CC:suspend()
         end)
@@ -645,6 +648,10 @@ Controller = {
     local cfg = CC.cfg
 
     local function quit()
+      --- flush pending writes before the process can exit
+      --- (spec 2.6): a graceful quit loses nothing. One
+      --- syscall; force-stop is covered by per-accept fsync
+      FS.sync()
       if love.state.app_state == 'shutdown' then
         return false
       end
@@ -673,6 +680,30 @@ Controller = {
       end
     end
     love.quit = quit
+  end,
+
+  --- Background durability net (spec 2.6): a child
+  --- leaving the app flushes pending writes. One syscall
+  --- on focus loss; does not cover a force-stop mid-edit
+  --- (per-accept fsync does).
+  --- @private
+  --- @param CC ConsoleController
+  set_love_focus = function(CC)
+    local function focus(f)
+      if not f then FS.sync() end
+    end
+    love.focus = focus
+  end,
+
+  --- Companion to focus: Android reports a backgrounded
+  --- window as not visible; flush there too.
+  --- @private
+  --- @param CC ConsoleController
+  set_love_visible = function(CC)
+    local function visible(v)
+      if not v then FS.sync() end
+    end
+    love.visible = visible
   end,
 
   ----------------
@@ -720,10 +751,11 @@ Controller = {
 
     --- SKIPPED joystick and gamepad support
 
-    --- intented to run as kiosk app
-    --- SKIPPED focus
+    --- intented to run as kiosk app; focus/visible are
+    --- wired only to flush pending writes on background
+    Controller.set_love_focus(CC)
+    Controller.set_love_visible(CC)
     --- SKIPPED mousefocus
-    --- SKIPPED visible
     --- SKIPPED resize
     --- SKIPPED filedropped
     --- SKIPPED directorydropped

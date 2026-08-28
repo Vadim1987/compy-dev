@@ -339,6 +339,8 @@ function love.load()
   local baseconf = {
     view = viewconf,
     editor = editorconf,
+    --- console history entries kept; 0 for unlimited
+    input_history = 1000,
     autotest = autotest,
     mode = mode,
   }

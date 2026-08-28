@@ -198,7 +198,7 @@ end
 --- @param self table
 --- @return boolean is_array
 function table.is_array(self)
-  if not self or not type(self) == "table" then
+  if not self or type(self) ~= "table" then
     return false
   end
   local is_array = true
@@ -215,7 +215,7 @@ end
 --- @param depth integer?
 --- @return table?
 function table.flatten(self, depth)
-  if not self or not type(self) == "table" then
+  if not self or type(self) ~= "table" then
     return
   end
   local d = depth or 1
@@ -236,7 +236,7 @@ end
 --- @param self table
 --- @return table?
 function table.odds(self)
-  if not self or not type(self) == "table" then
+  if not self or type(self) ~= "table" then
     return
   end
   local ret = {}

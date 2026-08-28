@@ -1550,9 +1550,7 @@ function ConsoleController:keypressed(k)
 
   local function terminal_test()
     local out = self.model.output
-    if love.state.app_state ~= 'ready'
-        or love.state.app_state ~= 'project_open'
-    then
+    if love.state.app_state ~= 'ready' then
       return
     end
     if not love.state.testing then
@@ -1750,15 +1748,17 @@ function ConsoleController:get_canvas()
 end
 
 --- @param f function
+--- @return any ... result of f
 function ConsoleController:use_canvas(f)
   local canvas = self.model.output.canvas
   gfx.setCanvas({
     canvas, -- this is actually [1] = canvas
     stencil = true
   })
-  local r = f()
+  local r = { pcall(f) }
   gfx.setCanvas()
-  return r
+  if not r[1] then error(r[2], 0) end
+  return unpack(r, 2)
 end
 
 --- @return ViewData

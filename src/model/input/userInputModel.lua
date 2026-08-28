@@ -45,7 +45,7 @@ UserInputModel = class.create()
 function UserInputModel.new(cfg, eval, custom_label)
   local self = setmetatable({
     entered = InputText(),
-    history = History(),
+    history = History(cfg.input_history),
     evaluator = eval,
     cursor = Cursor(),
     selection = InputSelection(),
@@ -79,6 +79,19 @@ function UserInputModel:init_visible(text)
   self.visible:set_default_range()
 end
 
+--- Drop bytes that do not form valid UTF-8
+--- @param s string
+--- @return string
+local function sanitize_utf8(s)
+  local r = s
+  local n, pos = utf8.len(r)
+  while not n do
+    r = string.sub(r, 1, pos - 1) .. string.sub(r, pos + 1)
+    n, pos = utf8.len(r)
+  end
+  return r
+end
+
 ----------------
 --  entered   --
 ----------------
@@ -86,6 +99,7 @@ end
 --- @param text string
 function UserInputModel:add_text(text)
   if type(text) == 'string' then
+    text = sanitize_utf8(text)
     self:pop_selected_text()
     local sl, cc    = self:get_cursor_pos()
     local cur_line  = self:get_text_line(sl)
@@ -124,6 +138,7 @@ end
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)
   if type(text) == 'string' then
+    text = sanitize_utf8(text)
     local lines = string.lines(text)
     local n_added = #lines
     if n_added == 1 then
@@ -133,7 +148,11 @@ function UserInputModel:set_text(text, keep_cursor)
       self:_update_cursor(true)
     end
   elseif type(text) == 'table' then
-    self.entered = InputText(text)
+    local clean = {}
+    for i, l in ipairs(text) do
+      clean[i] = sanitize_utf8(l)
+    end
+    self.entered = InputText(clean)
   end
   self:text_change()
   if keep_cursor then
@@ -353,7 +372,7 @@ end
 --- @param history boolean?
 function UserInputModel:reset(history)
   if history and self:keep_history() then
-    self.history = History()
+    self.history = History(self.cfg.input_history)
   end
   self:clear_input()
 end
@@ -904,7 +923,7 @@ end
 function UserInputModel:set_error(errors)
   self.error = nil
   if type(errors) == "table" then
-    if type(errors[1] == "string") then
+    if type(errors[1]) == "string" then
       self.error = errors
     else
       self.error = {}

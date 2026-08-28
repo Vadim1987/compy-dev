@@ -11,10 +11,15 @@ end
 
 --- @param code string
 --- @param env table?
+--- @param name string?
 --- @return function? chunk
 --- @return string? err
-local codeload = function(code, env)
-  local f, err = loadstring(code)
+local codeload = function(code, env, name)
+  if type(code) ~= 'string' then
+    return nil, ('code must be a string (got %s)'):format(type(code))
+  end
+  local chunk = name and ('@' .. name) or nil
+  local f, err = loadstring(code, chunk)
 
   if not f then return nil, err end
   if env then
