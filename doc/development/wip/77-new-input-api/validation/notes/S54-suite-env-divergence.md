@@ -55,9 +55,18 @@ arrives. Hence 107 failures, **all of them under `tests/input/`** and none
 anywhere else — the rest of the suite does not cross that boundary.
 
 The container never sees it because it has only LuaJIT (`jit=none` vs
-`LuaJIT 2.1.1703358377` is the one env line that mattered). The upstream
-branch never sees it because `with_canvas_and_errors` is this feature's — it
-is the route-entry error boundary the dispatch chain introduced.
+`LuaJIT 2.1.1703358377` is the one env line that mattered).
+
+**The upstream branch does not see it, but is not free of it** — a
+distinction worth stating, because the first reading of this was "the
+feature introduced it" and that is wrong. `master` carries the same
+`_G.web`-guarded `xpcall` verbatim, reached through `error_wrapper` /
+`set_handlers`, so on PUC 5.1 a project's adopted `love.keypressed` /
+`textinput` / `keyreleased` and `love.update`'s `dt` were **already**
+arriving nil there. What upstream lacks is not the defect but the
+*coverage*: no test crosses that boundary. This feature inherited the bug
+and widened it — `with_canvas_and_errors` routes every shortcut, hook and
+the widget through it — and then had the tests to make it visible.
 
 ### Reproduced exactly
 

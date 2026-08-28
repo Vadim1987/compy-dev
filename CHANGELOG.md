@@ -113,14 +113,15 @@ newest first.
 
 ### Fixed
 
-- **Project input handlers no longer lose their arguments on PUC Lua
-  5.1.** Passing arguments through `xpcall` is a LuaJIT extension; a
-  runtime without it dropped every one of them at the framework's error
-  boundary, so shortcuts, hooks and the input widget were all entered
-  with `nil` for the key, character and repeat flag. The Web build was
-  already guarded against this and unaffected; a desktop LÖVE build runs
-  LuaJIT and was unaffected too — what this reached was any other host on
-  PUC Lua 5.1, including the interpreter many `busted` setups use, where
-  the input test suite reported 107 failures against a suite that passed
-  on LuaJIT. The boundary now closes over the arguments instead of
-  forwarding them, and behaves identically on every runtime.
+- **Project callbacks no longer lose their arguments on Lua runtimes
+  without LuaJIT's `xpcall` extension.** The framework runs your code
+  behind an error boundary that forwarded arguments through `xpcall`;
+  where that is unsupported — PUC Lua 5.1 — every argument was dropped
+  before your function saw it. This is longstanding, not new: `love.update`
+  already received a `nil` `dt` there, and so did an adopted
+  `love.keypressed` / `love.textinput` / `love.keyreleased`. This release
+  routes far more through that boundary — every shortcut, every hook and
+  the input widget — so the same loss reached all of them until now. The
+  boundary closes over the arguments instead of forwarding them, and
+  behaves identically on every runtime. Desktop LÖVE runs LuaJIT and was
+  never affected; the Web build was guarded separately and was not either.

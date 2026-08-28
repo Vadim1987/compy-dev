@@ -1212,6 +1212,14 @@ changes.
   for `busted` on PUC Lua 5.1, which is not the Web build. There the route
   was entered with nil arguments: **107 failures**, all under
   `tests/input/`, on a suite green on LuaJIT.
+- **Not introduced by this feature.** `master` carries the same guarded
+  `xpcall`, reached through `error_wrapper`/`set_handlers`, so on PUC 5.1 an
+  adopted `love.keypressed`/`textinput`/`keyreleased` and `love.update`'s
+  `dt` already arrived nil. The feature inherited the defect, widened it to
+  every shortcut, hook and the widget, and supplied the first tests that
+  could see it. The fix is therefore cumulative against the last release,
+  not a repair of this branch's own regression — which is how `CHANGELOG.md`
+  states it.
 - **Guarded by:** `input_route_lifecycle_spec.lua`, "the boundary carries
   arguments on any runtime" — two cases driving a real keystroke with the
   global `xpcall` swapped for PUC 5.1's arity.
