@@ -358,10 +358,10 @@ corrupting the API — loudly, never a silent swallow.
 through its combo-keyed leaves; protecting that invariant is what the frozen-identities clause is
 for.
 
-**Sibling rule: Decision 38.** This decision freezes the identities *on this surface*; Decision 38
-says why any live platform table must reach a project through `__index` in the first place — the
-project environment is a deep clone, so a table handed over as a plain field is handed over as a
-copy, silently. Read them together when adding a namespace member.
+**Adding a namespace member elsewhere?** The general practice behind this shape — a live platform
+table reaches a project through `__index`, never as a value, because the project environment is a
+deep clone — is in `../conventions/architecture_principles.md`, *"A Namespace Hands Out Live Tables
+by Reference, Never by Value"*.
 
 ## Decision 8 — per-event combo tables and canonical combo serialisation
 
@@ -1452,22 +1452,31 @@ is `FEAT-01-02`. **Its edges are recommendations below, not rulings** — they a
 
 **Decision.** `show{ oneshot = true }` takes the widget down after a successful submit, without the
 project installing a lifecycle callback to do it. It is sugar over what a project can already
-write, and it is restored deliberately: it was removed in-flight to avoid over-sugaring the surface,
-and the need was re-confirmed by microbit development (owner attestation).
+write, and it is restored deliberately: it was dropped in-flight to avoid over-sugaring the
+surface, and that call is reversed here.
 
-**Why.** Two reasons, and they are different in kind. The first is boilerplate: a prompt-per-command
-project must otherwise assign `after_submit = function() compy.input.hide() end`, which is a hook
-installed for its side effect rather than for anything it computes. The second is continuity — the
-API this one replaces had `oneshot`, so a project author migrating meets a familiar name rather
-than a pattern they must reconstruct.
+**Why — two facts that settle it together.** `oneshot` **preceded this feature**: the API being
+replaced had it, so this is a restoration, not an invention, and a migrating project author meets a
+familiar name instead of a pattern they must reconstruct. And it was **asked for by a second
+developer** — the author of the `serial` API — which makes it a request from outside the input
+work rather than an ergonomic preference of the input work's own. A returning name that an
+independent consumer asks for does not need a third argument.
 
-**The in-tree evidence is thin, and is recorded rather than dressed up.** Of the shipped examples,
-**exactly one** — `turtle` — closes the widget on submit; `valid`, `repl`, `guess` and `balloons`
-all install `after_submit` to `clear()` and *stay open*, which is the repeated-prompting pattern
-`hide` is not part of. And `turtle` would keep its `after_submit` under this decision anyway, since
-it re-arms an echo guard there. So in this tree `oneshot` removes one call from one example. **The
-case for it rests on the owner's device-side attestation, not on the examples**, and the PR's
-justification table should say exactly that rather than implying in-tree demand.
+**The third one is real anyway: the one-line question.** A project whose subject is *not* user
+input — a game, a tool, a demo — wants to ask the user something and get on with it. With
+`oneshot` that is a single call carrying a prompt and a callback, and **no boilerplate at all**:
+nothing to install beforehand, nothing to tear down after. Without it, the same project must also
+assign `after_submit = function() compy.input.hide() end`, a hook that exists purely for its side
+effect and that the author has to know to write. The cost of *not* having the flag falls hardest on
+exactly the projects least equipped to pay it.
+
+**On counting examples — don't.** In this tree only `turtle` closes on submit, and it keeps an
+`after_submit` regardless to re-arm an echo guard, so a census of `src/examples/` scores `oneshot`
+at one call saved. That census measures the wrong thing: the shipped examples were written *for*
+the API as it stands, and four of them (`valid`, `repl`, `guess`, `balloons`) demonstrate the
+repeated-prompting pattern deliberately, which is the pattern `oneshot` is not for. The evidence
+for a convenience is who asks for it and what it costs the project that lacks it — both recorded
+above.
 
 **Recommended edges, pending `FEAT-01-01`:**
 
@@ -1484,8 +1493,10 @@ justification table should say exactly that rather than implying in-tree demand.
   widget left standing after an error would be a second, silent failure mode on top of the first.
 
 **Consequence.** `show` grows one key, so `doc/input_api.md`, the config-key lists and the
-CHANGELOG's `Added` section all move together (`FEAT-01-04`, feeding `CHG-01`). Nothing existing
-changes behaviour: absent the key, submit behaves exactly as it does today.
+CHANGELOG's `Added` section all move together (`FEAT-01-05` documents it; `CHG-01` carries it).
+Nothing existing changes behaviour: absent the key, submit behaves exactly as it does today. The
+guide's worked example for it should be the one-line question, since that is the case the flag is
+for.
 
 ## Decision 37 — the submit callbacks are told apart by their payload
 
@@ -1520,42 +1531,6 @@ entry and a justification-table line. Every in-tree consumer moves with it: `tur
 `guess` simplify (`lines[1]` → the string), `repl` loses its `string.unlines`, and **`maze` is the
 one that pays** — `submit_program` genuinely wants lines, so it moves to `after_submit` or splits
 the string itself. Sizing that migration is `FEAT-01-04`'s first act, not an afterthought.
-
-## Decision 38 — a live platform table reaches a project through `__index`, never as a value
-
-**Status: ruled in; the pattern is already implemented** (owner, 2026-08-30). The obligation
-`T-NAMESPACE-CLONE` is paid by writing it down — `OP-01-03`.
-
-**Decision.** Any platform table a project must reach **live** is exposed through a namespace's
-metatable — resolved on access behind an up-value — and is never placed in the namespace as a plain
-field. Assignment to such a table is refused, exactly as Decision 7 refuses assignment to
-`compy.input`'s sub-tables.
-
-**Why.** The project environment is a **deep clone**, taken before the run
-(`../internals/project_sandbox_env.md`). A live table stored as a field is therefore *copied* into
-that clone, and the two sides then diverge in the quietest possible way: the project assigns its
-handlers into the copy, the framework's dispatcher reads the original, and **neither side raises**.
-Nothing is nil, nothing is out of range, nothing is logged — the handlers simply never run. It cost
-an hour of on-device debugging to find once, and the shape gives a debugger nothing to grab.
-
-**This is a generalisation, not a new idea.** Decision 18 met the same hazard from the other
-direction: `love.state.user_input` read from inside a project is *always* `nil`, because the project
-sees its clone while the framework writes the real global — which is why `is_shown()` exists at all.
-`compy.input` was built to dodge it, and `serial` was later built the same way, assignment to the
-table itself included. What was missing was the rule stated once, where the next person to add a
-namespace field will meet it.
-
-**Where this lives, and the one thing wrong with it.** The rule is **platform-wide, not input's** —
-its debt entry is in `technical_debt/general.md`, and the next table it saves may belong to any
-subsystem. It sits here because the owner asked for it *next to Decision 7*, which is where a reader
-meets the pattern, and because `decisions/` currently has no sandbox or namespace ledger to hold it.
-If one is ever opened, this is its first entry and should move whole.
-
-**Consequence.** The pattern is a requirement for new namespace members, not a stylistic preference:
-a live table added as a value field is a defect at the moment it is written, and it is a defect that
-tests pass through, since a unit test that holds one table sees no divergence. Decision 7 is the
-sibling rule — it freezes the identities on the *input* surface; this one says why any live surface
-must be reached that way in the first place.
 
 ---
 

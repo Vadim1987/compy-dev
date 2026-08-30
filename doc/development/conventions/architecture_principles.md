@@ -77,6 +77,39 @@ Concrete habits: avoid allocating in `update`/`draw` hot paths; prefer iterators
 
 ---
 
+## A Namespace Hands Out Live Tables by Reference, Never by Value
+
+**If a project must reach a platform table that is still alive, expose it through the namespace's
+metatable — resolved on access behind an up-value — rather than storing it as a plain field.**
+
+The reason is the sandbox. A project's environment is a **deep clone**, taken before the run
+(`../internals/project_sandbox_env.md`). A live table stored as a field is therefore copied along
+with everything else, and the two sides then drift apart in the quietest way available: the program
+assigns its handlers into *its* copy, the framework's dispatcher reads *the original*, and **neither
+side raises**. Nothing is `nil`, nothing is out of range, nothing is logged — the handlers simply
+never run. This has cost an hour of on-device debugging at least once, and it gives a debugger
+nothing to grab.
+
+The practice, then, is two habits together: resolve the table through `__index` on access, and
+refuse assignment to the table itself, so a project cannot swap the surface out from under the
+resolution. `compy.input` is built that way (its identities are frozen — `decisions/input.md`,
+Decision 7), and the `serial` surface was later built the same way, assignment guard included.
+
+Two notes on why this is worth stating rather than leaving to be rediscovered:
+
+- **It is not enforced by anything.** No test catches it, because a unit test holds *one* table and
+  sees no divergence; the failure needs the clone to exist, which means it needs a real project run.
+- **The framework has already met it from the other direction.** A project reading
+  `love.state.user_input` always sees `nil` — the framework writes the real global and the project
+  reads its copy — which is why `compy.input.is_shown()` exists at all (`decisions/input.md`,
+  Decision 18). Same hazard, opposite direction.
+
+It is a **suggested practice, not a ruling**: a table that is genuinely a snapshot may be handed
+over by value quite correctly. The question to ask of any new namespace member is simply *"does
+anyone write to this after the run starts?"* — and if the answer is yes, it goes behind `__index`.
+
+---
+
 ## The Pedagogical Test
 
 Before introducing a new abstraction, pattern, or dependency, ask: *would a motivated student be able to understand and modify this?* If the honest answer is no, look for a simpler approach.
