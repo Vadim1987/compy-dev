@@ -1376,7 +1376,15 @@ sets**:
 | | owner | set by |
 |---|---|---|
 | `text`, `cursor` | **the user** — they are typing in it | `show` (the baseline), and `set_text` / `set_cursor` / `clear` while it is up |
-| `prompt`, `highlighter`, `validator`, `on_text_entered`, `on_limit_reached` | **the project** | `show` **and** `configure`, set-if-given, persisting until replaced |
+| `prompt`, `highlighter`, `validator`, `on_text_entered`, `on_limit_reached`, `auto_hide` | **the project** | `show` **and** `configure`, set-if-given, persisting until replaced |
+
+**The `show`-only side is `text`, `cursor` and `force`, and the three belong there for two different
+reasons** (amended 2026-08-30, `FEAT-02`, when `auto_hide` — ruled as `oneshot` — left the category
+for the row above; Decision 36). `text` and `cursor` are the **user's**, and a call that changes
+settings must not reach into what somebody is typing. `force` is there because it is *meaningless*
+at `configure` — it answers *"replace the widget already up"*, a question `configure` never faces.
+**Neither reason is "it describes this session"**: a key that configures the widget's own behaviour
+is the project's, whatever its lifetime, and lifecycle is not something the user owns.
 
 **Decision — four statements, in force together.**
 
@@ -1448,53 +1456,65 @@ it is built: it must not clear content (that is `clear()`'s job, and doing both 
 redundant), and it must state whether the lifecycle callbacks — assignable only on
 `compy.input.callbacks` — fall to it, since "configure with defaults" leaves them standing.
 
-## Decision 36 — `oneshot`: a `show` that closes itself on submit
+## Decision 36 — `auto_hide`: a widget that closes itself on submit
 
 **Status: implemented** (owner ruling 2026-08-30; built at `FEAT-01-02`). `T-ONESHOT` is retired.
 The edges below were recommendations when this entry was written and are **rulings** as of
 `FEAT-01-01` — three ratified as recommended, one **reversed**.
 
-**Decision.** `show{ oneshot = true }` takes the widget down after a successful submit, without the
-project installing a lifecycle callback to do it. It is sugar over what a project can already
+**Amended the same day, by the owner** (`FEAT-02`; `T-ONESHOT-SCOPE`): the key was **ruled as
+`oneshot` and is named `auto_hide`**, and it is a **widget property**, not a `show`-only one. Two
+things below are superseded — edge 1 in full, and the *familiar name* half of the first ground. The
+superseded text is kept as ruled and marked; the *Amendment* section states what replaces it.
+Attestation: `wip/77-new-input-api/validation/notes/owner-attestation-oneshot-widget-property.md`.
+
+**Decision.** `show{ auto_hide = true }` takes the widget down after a successful submit, without
+the project installing a lifecycle callback to do it. It is sugar over what a project can already
 write, and it is restored deliberately: it was dropped in-flight to avoid over-sugaring the
 surface, and that call is reversed here.
 
-**Why — two facts that settle it together.** `oneshot` **preceded this feature**: the API being
-replaced had it, so this is a restoration, not an invention, and a migrating project author meets a
-familiar name instead of a pattern they must reconstruct. And it was **asked for by a second
-developer** — the author of the `serial` API (owner attestation; that surface is not in this repo,
-so the request is not checkable here) — which makes it a request from outside the input work rather
-than an ergonomic preference of the input work's own. A returning name that an independent consumer
-asks for does not need a third argument.
+**Why — two facts that settle it together.** The **capability** `oneshot` named **preceded this
+feature**: the API being replaced had it, so this is a restoration, not an invention. *(**Ground
+amended 2026-08-30** — as first written this sentence continued "and a migrating project author
+meets a familiar name instead of a pattern they must reconstruct". That half does not hold; see the
+*Amendment*. The restoration argument stands, the familiarity claim is withdrawn.)* And it was
+**asked for by a second developer** — the author of the `serial` API (owner attestation; that
+surface is not in this repo, so the request is not checkable here) — which makes it a request from
+outside the input work rather
+than an ergonomic preference of the input work's own. A returning capability that an independent
+consumer asks for does not need a third argument. *(They asked for it as `oneshot` and will not find
+that name — the one real cost of the rename, stated in the Amendment below.)*
 
 **The third one is real anyway: the one-line question.** A project whose subject is *not* user
 input — a game, a tool, a demo — wants to ask the user something and get on with it. With
-`oneshot` that is a single call carrying a prompt and a callback, and **no boilerplate at all**:
+`auto_hide` that is a single call carrying a prompt and a callback, and **no boilerplate at all**:
 nothing to install beforehand, nothing to tear down after. Without it, the same project must also
 assign `after_submit = function() compy.input.hide() end`, a hook that exists purely for its side
 effect and that the author has to know to write. The cost of *not* having the flag falls hardest on
 exactly the projects least equipped to pay it.
 
 **On counting examples — don't.** In this tree only `turtle` closes on submit, and it keeps an
-`after_submit` regardless to re-arm an echo guard, so a census of `src/examples/` scores `oneshot`
+`after_submit` regardless to re-arm an echo guard, so a census of `src/examples/` scores the flag
 at one call saved. That census measures the wrong thing: the shipped examples were written *for*
 the API as it stands, and four of them (`valid`, `repl`, `guess`, `balloons`) demonstrate the
-repeated-prompting pattern deliberately, which is the pattern `oneshot` is not for. The evidence
+repeated-prompting pattern deliberately, which is the pattern `auto_hide` is not for. The evidence
 for a convenience is who asks for it and what it costs the project that lacks it — both recorded
 above.
 
 **The edges, ruled (owner, 2026-08-30 — `FEAT-01-01`).** Evidence and the questions as they were
 put: `wip/77-new-input-api/validation/reviews/FEAT-01-01-oneshot-ruling-sheet.md`.
 
-- **A `show`-only key, spent by the `show` that reads it.** `oneshot` describes *this* prompting
-  session, not a standing project preference, which puts it on the same side of Decision 35's
-  boundary as `text`, `cursor` and `force`. A sticky `oneshot` would also be the more surprising of
-  the two, since a later bare `show()` would close on submit for reasons written elsewhere.
-  Consequently `configure{oneshot}` **raises**, like the other three, and a bare `show()` clears it.
+- **SUPERSEDED 2026-08-30 — see the *Amendment*. As ruled:** *"**A `show`-only key, spent by the
+  `show` that reads it.** `oneshot` describes* this *prompting session, not a standing project
+  preference, which puts it on the same side of Decision 35's boundary as `text`, `cursor` and
+  `force`. A sticky `oneshot` would also be the more surprising of the two, since a later bare
+  `show()` would close on submit for reasons written elsewhere. Consequently `configure{oneshot}`
+  **raises**, like the other three, and a bare `show()` clears it."* The flag is now project-owned
+  and persistent, and `configure` takes it.
 - **Submit only — cancel is already not a close.** `cancel_flow` clears and leaves the widget
-  standing (Decision 6), and no `oneshot` reading should quietly change what Escape does. **The
+  standing (Decision 6), and no `auto_hide` reading should quietly change what Escape does. **The
   asymmetry is documented, not hidden** (`FEAT-01-05`): a project that installs nothing and relies
-  on `oneshot` alone has no dismissal path — its user's Escape clears the content and the widget
+  on `auto_hide` alone has no dismissal path — its user's Escape clears the content and the widget
   stays up. A project that wants Escape to close writes `after_cancel = function() hide() end`, the
   same one-liner on the other channel.
 - **It composes with `after_submit`; it does not refuse one.** The project's callback runs first and
@@ -1512,11 +1532,58 @@ put: `wip/77-new-input-api/validation/reviews/FEAT-01-01-oneshot-ruling-sheet.md
   behaviour this whole decision is sugar for. *A widget standing behind a reported error is the
   smaller of the two failures, not a second one.*
 
-**Consequence.** `show` grows one key, so `doc/input_api.md`, the config-key lists and the
-CHANGELOG's `Added` section all move together (`FEAT-01-05` documents it; `CHG-01` carries it).
-Nothing existing changes behaviour: absent the key, submit behaves exactly as it does today. The
-guide's worked example for it should be the one-line question, since that is the case the flag is
-for.
+**Amendment (owner, 2026-08-30 — `FEAT-02`).** Ruled the same day as the edges above, on the peer
+review of the implementation. **Two things change: the key's name, and which call may set it.**
+
+1. **It is `auto_hide`, not `oneshot`.** The flag is a persistent behaviour **mode**, and `oneshot`
+   names a single occurrence — the ambiguity would otherwise have to be warned about in the guide,
+   and renaming deletes the warning instead of writing it. `auto_hide` reads as a mode and matches
+   the surface's own verbs: `compy.input` has `show` and `hide`, and `close` appears nowhere on it.
+2. **The first ground above is corrected, not deleted.** *"A migrating project author meets a
+   familiar name"* is false. At the PR base (`3256aac`) `oneshot` was an **internal model
+   constructor argument** — it suppressed history, pushed the `userinput` event for the retired poll
+   idiom, and switched the view's draw path — so it meant *"this is the transient prompt widget, not
+   the console's permanent one"*. **No project ever wrote it or read it**; `is_oneshot()` was a view
+   helper, not a project surface. What is restored is the **capability**, and that argument stands
+   untouched. The name has no claim on anyone's memory, and the token is not free in-tree either —
+   the profiler owns it (`Prof.start_oneshot`, `love.PROFILE.oneshot`). Evidence:
+   `wip/77-new-input-api/validation/notes/oneshot-at-the-pr-base.md`.
+3. **It is a widget property, settable at `show` and `configure`** — set-if-given, `false` to unset
+   (Decision 35, statement 3, so the disarm idiom needs no new vocabulary), and **persistent until
+   replaced**, exactly like `validator`. The show-only category exists to protect what the **user**
+   owns; `force` sits in it because it is *meaningless* at `configure`, not because it is protected
+   from it. **`auto_hide` is machinery, and the user does not own lifecycle** — it was admitted on a
+   resemblance to two keys it does not resemble.
+4. **The persistence is ruled, not incidental.** `auto_hide` configures a **type of behaviour**, not
+   one show/hide cycle, so it is an ordinary project-owned setting and gets **no category of its
+   own**: no clearing rule, no consumption semantics, nothing that behaves unlike `validator`. A
+   later bare `show()` **inherits** it. A project that wants a continuous session after an
+   auto-hiding one writes `auto_hide = false` at either call. *This reverses the superseded edge's
+   last clause, which had a bare `show()` clear it.*
+5. **No reader is added.** `is_auto_hiding()` and a `config` namespace were both proposed and
+   refused: disarming is unconditional, so there is nothing to ask before acting. The line, general
+   beyond this key: **a read-only query earns its place when the framework can change the value, not
+   when only the project can.** That is why `is_shown()` exists — shownness moves for reasons a
+   project cannot derive — and why this flag has no getter.
+
+**What it fixes.** Today `configure` refuses the key, so disarming a live one requires `show{force}`
+— a full re-setup that **clears the user's draft** (statement 4 of Decision 35). Worse than it
+sounds: the project cannot put the draft back, because the widget surface has **no text getter** and
+a project's `love` is a sandboxed clone (Decision 18). Changing your mind about the flag destroyed
+content nobody could read. That is the defect, and statement 3 above is the fix.
+
+**What it does NOT fix, said so nobody expects it to.** A callback doing `show{force = true,
+auto_hide = true}` from inside the submit chain re-arms the flag, and the close belonging to the
+submit already in progress still fires — the close reads the flag at the **end** of the submit it is
+running (see the placement note in `submit_flow`). Owning the close by the submit that armed it
+needs a generation token, and that state was judged not worth it. The escape is to re-show **after**
+the widget is down, or to leave the follow-up plain; `doc/input_api.md` says so.
+
+**Consequence.** `show` **and `configure`** grow one key, so `doc/input_api.md`, the config-key
+lists and the CHANGELOG all move together (`FEAT-01-05` documented the key; `FEAT-02` renames it and
+documents the persistence; `CHG-01` carries it). Nothing existing changes behaviour: absent the key,
+submit behaves exactly as it does today. The guide's worked example for it should be the one-line
+question, since that is the case the flag is for.
 
 ## Decision 37 — the submit callbacks are told apart by their payload
 

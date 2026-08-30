@@ -36,8 +36,12 @@ paid, or turned out not to be debt.
   `userInputController.lua`, the `show`/`configure` key lists in `../input_api.md`.
 - **State:** `oneshot` is refused at `configure`, so the only way to disarm one mid-session is
   `show{force}` — a **full re-setup that clears the user's draft** (Decision 35, statement 4,
-  pinned by `force without text clears the content`). Changing your mind about the flag costs
-  the user's typing, or an exact hand re-supply of `text` and `cursor`.
+  pinned by `force without text clears the content`). **The draft cannot be put back:** the
+  widget surface has no text getter (`build_widget_api`, `consoleController.lua`) and a
+  project's `love` is a sandboxed clone, so nothing can read the content it is about to destroy
+  (Decision 18). Changing your mind about the flag costs the user's typing outright — session58
+  verified this in code and corrected the earlier claim that an exact hand re-supply of `text`
+  and `cursor` was available.
 - **Why it stands:** the show-only category exists to protect **user-owned** content; `force`
   is in it because it is *meaningless* at `configure`, not because it is protected from it.
   **`oneshot` is machinery and the user does not own lifecycle** — it was admitted on a
