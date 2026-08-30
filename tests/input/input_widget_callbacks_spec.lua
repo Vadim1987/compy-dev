@@ -577,35 +577,53 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.widget:has_error())
     end)
 
-    -- Decision 36, ruled edge 1: the key is spent by the show
-    -- that reads it. A later bare show() gets a widget that
-    -- stays open, with no way for the earlier call to reach it.
-    it('it is spent by its own show', function()
+    -- Decision 36's Amendment, reversing ruled edge 1: the flag
+    -- configures a TYPE of behaviour, not one show/hide cycle,
+    -- so it persists until replaced exactly like validator. A
+    -- later bare show() inherits it.
+    it('it persists into a later bare show', function()
       local input = F.activate_project()
       input.show({ text = 'a', auto_hide = true })
       F.session.press('return')
       input.show({ text = 'b' })
       F.session.press('return')
+      assert.is_false(F.is_widget_visible())
+    end)
+
+    -- ...and false is the unset (Decision 35, statement 3), so
+    -- the disarm needs no vocabulary of its own. This is the
+    -- pair of the case above: without it, "persists" would be
+    -- indistinguishable from "cannot be turned off".
+    it('a later show disarms it with false', function()
+      local input = F.activate_project()
+      input.show({ text = 'a', auto_hide = true })
+      F.session.press('return')
+      input.show({ text = 'b', auto_hide = false })
+      F.session.press('return')
       assert.is_true(F.is_widget_visible())
     end)
 
     -- A follow-up prompt opened from inside the submit chain
-    -- survives the close, because the flag is read AFTER the
-    -- callbacks and the second show cleared it. This is the
-    -- property that makes that placement right, and it had no
-    -- coverage; the case where the follow-up passes auto_hide
-    -- ITSELF is documented rather than pinned, since it is the
-    -- one a fix would change (doc/input_api.md, "Asking one
-    -- question"). force is not incidental: the widget is still
-    -- up while the callbacks run, so a plain show is refused.
-    it('a forced follow-up show survives the close',
+    -- survives the close only by DISARMING: the mode persists,
+    -- so silence is not a disarm (Decision 36's Amendment).
+    -- What the case pins is the flag's read PLACEMENT — after
+    -- the callbacks, so the follow-up's own `false` is what the
+    -- close reads. Capturing the value before them closes this
+    -- follow-up too, which is why that shape stays rejected.
+    -- force is not incidental: the widget is still up while the
+    -- callbacks run, so a plain show is refused.
+    it('a disarming forced follow-up survives the close',
       function()
         local input = F.activate_project()
         input.show({
           text            = 'a',
           auto_hide       = true,
           on_text_entered = function()
-            input.show({ prompt = 'again?', force = true })
+            input.show({
+              prompt    = 'again?',
+              force     = true,
+              auto_hide = false,
+            })
           end,
         })
         F.session.press('return')

@@ -586,21 +586,20 @@ local CALLBACK_KEYS = {
 }
 
 -- SHOW-ONLY keys, mapped to where they DO belong so a refusal
--- can name the call instead of only refusing this one.
--- `text`/`cursor` are the USER's content and only activation
--- seats them; `force` answers "replace the widget that is
--- already up", which configure() never faces. See
--- doc/development/decisions/input.md, Decision 15's show-only
--- category, added there by Decision 35.
--- `auto_hide` joins them as a property of THIS prompting
--- session rather than a standing preference (Decision 36) — the
--- first of the four that outlives its own call, since the
--- widget remembers it until the submit that spends it.
+-- can name the call instead of only refusing this one. The
+-- three are here for two different reasons, and neither is "it
+-- describes this session": `text`/`cursor` are the USER's
+-- content and only activation seats them, while `force` answers
+-- "replace the widget that is already up", which configure()
+-- never faces. See doc/development/decisions/input.md,
+-- Decision 15's show-only category, added there by Decision 35.
+-- `auto_hide` was admitted on that resemblance and left again
+-- (Decision 36's Amendment): it is machinery, and the user does
+-- not own lifecycle.
 local SHOW_ONLY_KEYS = {
-  text      = 'show(), or set_text on a live widget',
-  cursor    = 'show(), or set_cursor on a live widget',
-  force     = 'show()',
-  auto_hide = 'show()',
+  text    = 'show(), or set_text on a live widget',
+  cursor  = 'show(), or set_cursor on a live widget',
+  force   = 'show()',
 }
 
 --- @param names string[]
@@ -611,13 +610,19 @@ local function key_set(names)
   return set
 end
 
+-- Project-owned and NOT sticky: these land on the widget itself
+-- rather than in the store above, and persist with it.
+local WIDGET_KEYS = { 'prompt', 'auto_hide' }
+
 -- What each entry point accepts. The difference between them is
 -- exactly SHOW_ONLY_KEYS: everything else is project-owned and
 -- both calls take it, set-if-given (Decision 35, statement 3).
 local CONFIGURE_KEYS = key_set(CALLBACK_KEYS)
 local SHOW_KEYS = key_set(CALLBACK_KEYS)
-CONFIGURE_KEYS.prompt = true
-SHOW_KEYS.prompt = true
+for _, k in ipairs(WIDGET_KEYS) do
+  CONFIGURE_KEYS[k] = true
+  SHOW_KEYS[k] = true
+end
 for k in pairs(SHOW_ONLY_KEYS) do SHOW_KEYS[k] = true end
 
 -- Lifecycle callbacks are compy.input.callbacks assignments,

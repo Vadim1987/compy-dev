@@ -286,6 +286,12 @@ local configure_core = function(self, cfg)
   if cfg.prompt ~= nil then
     self.model.custom_label = cfg.prompt
   end
+  -- Persistent until replaced, like every other key here: it
+  -- configures a TYPE of behaviour, not one show/hide cycle
+  -- (Decision 36's Amendment). `false` is the unset.
+  if cfg.auto_hide ~= nil then
+    self.auto_hide = cfg.auto_hide
+  end
   for _, name in ipairs(CONFIG_CALLBACKS) do
     if cfg[name] ~= nil then
       self.callbacks[name] = cfg[name]
@@ -325,11 +331,6 @@ local open_widget = function(self, cfg)
   if cfg.cursor ~= nil then
     self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
   end
-  -- Seated unconditionally, unlike the project-owned fields
-  -- above: auto_hide describes THIS session, so a later bare
-  -- show() must clear it rather than inherit it
-  -- (doc/development/decisions/input.md, Decision 36).
-  self.auto_hide = cfg.auto_hide
   -- love.state.user_input is the widget CONTRACT: its presence
   -- is the flag the draw loop (controller.lua) checks to paint
   -- V:draw() each frame, and it carries the { M, C, V } handle
@@ -467,10 +468,11 @@ function UserInputController:submit_flow()
   run_callback(self, 'on_text_entered', string.unlines(lines))
   run_callback(self, 'after_submit', lines)
   -- Read AFTER the callbacks, not captured before them: a
-  -- callback that opens a follow-up prompt with
-  -- show{force = true} re-seats this flag, and clearing it is
-  -- how that prompt survives the close belonging to the submit
-  -- still in progress. A follow-up that passes auto_hide ITSELF
+  -- callback that opens a follow-up prompt writes
+  -- auto_hide = false on it, and this line is what reads that.
+  -- Captured earlier, the close belonging to the submit still
+  -- in progress would take the follow-up down as well. The
+  -- mode PERSISTS, so a follow-up that stays silent about it
   -- does not survive — documented at doc/input_api.md,
   -- "Asking one question".
   if self.auto_hide then self:hide() end

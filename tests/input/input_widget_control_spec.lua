@@ -153,21 +153,33 @@ describe('input surface: widget control #input', function()
           string.find(tostring(err), 'show()', 1, true))
       end)
 
-    -- auto_hide is show()-only for the same reason force is: it
-    -- describes THIS prompting session, not a standing project
-    -- preference (doc/development/decisions/input.md, Decision
-    -- 36, ruled edge 1). It is the first show-only key that
-    -- outlives its call, so the refusal is worth its own case
-    -- rather than riding on force's.
-    it('configure raises on auto_hide, naming show()',
+    -- auto_hide is NOT show-only: the category protects what
+    -- the USER owns, and the user does not own lifecycle
+    -- (doc/development/decisions/input.md, Decision 36's
+    -- Amendment). configure takes it like any other
+    -- project-owned key.
+    it('configure arms auto_hide', function()
+      local input = F.activate_project()
+      input.show({ text = 'a' })
+      input.configure({ auto_hide = true })
+      F.session.press('return')
+      assert.is_false(F.is_widget_visible())
+    end)
+
+    -- The live defect the move closes. Before it, disarming
+    -- meant show{force} — a full re-setup that clears the
+    -- draft (Decision 35, statement 4) — and nothing could read
+    -- the draft back to re-supply it, so changing your mind
+    -- cost the user's typing outright.
+    it('configure disarms it and leaves the draft alone',
       function()
-        local input = F.compy_input()
-        input.show({ text = 'ok' })
-        local _, err = pcall(function()
-          input.configure({ auto_hide = true })
-        end)
-        assert.is_truthy(
-          string.find(tostring(err), 'show()', 1, true))
+        local input = F.activate_project()
+        input.show({ text = 'keep', auto_hide = true })
+        input.configure({ auto_hide = false })
+        assert.same({ 'keep' },
+          F.widget.model:get_text():items())
+        F.session.press('return')
+        assert.is_true(F.is_widget_visible())
       end)
 
     -- A malformed cursor VALUE is refused the same way a bad
