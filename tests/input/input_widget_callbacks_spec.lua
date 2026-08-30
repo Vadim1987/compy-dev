@@ -581,7 +581,7 @@ describe('input surface: widget callbacks #input', function()
     -- configures a TYPE of behaviour, not one show/hide cycle,
     -- so it persists until replaced exactly like validator. A
     -- later bare show() inherits it.
-    it('it persists into a later bare show', function()
+    it('a later bare show still closes on submit', function()
       local input = F.activate_project()
       input.show({ text = 'a', auto_hide = true })
       F.session.press('return')
@@ -594,7 +594,8 @@ describe('input surface: widget callbacks #input', function()
     -- the disarm needs no vocabulary of its own. This is the
     -- pair of the case above: without it, "persists" would be
     -- indistinguishable from "cannot be turned off".
-    it('a later show disarms it with false', function()
+    it('a later show passing false stops the closing',
+      function()
       local input = F.activate_project()
       input.show({ text = 'a', auto_hide = true })
       F.session.press('return')

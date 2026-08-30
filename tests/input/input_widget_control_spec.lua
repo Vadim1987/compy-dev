@@ -158,26 +158,26 @@ describe('input surface: widget control #input', function()
     -- (doc/development/decisions/input.md, Decision 36's
     -- Amendment). configure takes it like any other
     -- project-owned key.
-    it('configure arms auto_hide', function()
-      local input = F.activate_project()
-      input.show({ text = 'a' })
-      input.configure({ auto_hide = true })
-      F.session.press('return')
-      assert.is_false(F.is_widget_visible())
-    end)
+    it('a widget armed at configure closes on submit',
+      function()
+        local input = F.activate_project()
+        input.show({ text = 'a' })
+        input.configure({ auto_hide = true })
+        F.session.press('return')
+        assert.is_false(F.is_widget_visible())
+      end)
 
     -- The live defect the move closes. Before it, disarming
     -- meant show{force} — a full re-setup that clears the
     -- draft (Decision 35, statement 4) — and nothing could read
     -- the draft back to re-supply it, so changing your mind
     -- cost the user's typing outright.
-    it('configure disarms it and leaves the draft alone',
+    it('disarming at configure keeps the draft',
       function()
         local input = F.activate_project()
         input.show({ text = 'keep', auto_hide = true })
         input.configure({ auto_hide = false })
-        assert.same({ 'keep' },
-          F.widget.model:get_text():items())
+        assert.same({ 'keep' }, F.widget:get_text())
         F.session.press('return')
         assert.is_true(F.is_widget_visible())
       end)
