@@ -441,6 +441,12 @@ end
 --- on_text_entered) → after_submit. after_submit defaults to a
 --- no-op, so the widget stays open unless a callback hides it.
 ---
+--- The two deliveries differ by PAYLOAD, which is what tells
+--- the callbacks apart (Decision 37): the concatenated text to
+--- on_text_entered, whose name promises text, and the line
+--- list to after_submit. The validator keeps the lines — it
+--- runs per line, and LineValidators reports which one failed.
+---
 --- A oneshot session hides LAST, so the project's own
 --- after_submit still runs against a live widget (Decision 36).
 --- The close sits here and nowhere else, which is what makes
@@ -458,7 +464,7 @@ function UserInputController:submit_flow()
   if not validate(self.model, validator, lines) then
     return
   end
-  run_callback(self, 'on_text_entered', lines)
+  run_callback(self, 'on_text_entered', string.unlines(lines))
   run_callback(self, 'after_submit', lines)
   if self.oneshot then self:hide() end
 end

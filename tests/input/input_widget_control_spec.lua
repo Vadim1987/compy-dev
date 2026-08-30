@@ -376,7 +376,7 @@ describe('input surface: widget control #input', function()
       })
       F.session.press('return')
       assert.is_false(old_called)
-      assert.same({ 'ab' }, new_text)
+      assert.equal('ab', new_text)
     end)
 
     -- doc/development/internals/user_input.md,

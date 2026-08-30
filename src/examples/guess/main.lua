@@ -51,5 +51,5 @@ init()
 compy.input.show{
   prompt = "Guess a number:",
   validator = LineValidators({ is_natural }),
-  on_text_entered = function(lines) check(tonumber(lines[1])) end,
+  on_text_entered = function(text) check(tonumber(text)) end,
 }

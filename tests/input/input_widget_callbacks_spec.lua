@@ -301,7 +301,7 @@ describe('input surface: widget callbacks #input', function()
           on_text_entered = function(t) entered = t end,
         })
         F.session.press('return')
-        assert.same({ 'abc' }, entered)
+        assert.equal('abc', entered)
       end)
 
     -- doc/development/decisions/input.md, Decision 6: the full
@@ -332,9 +332,31 @@ describe('input surface: widget callbacks #input', function()
           {
             'before',
             { 'validator', { 'a', 'b' } },
-            { 'entered', { 'a', 'b' } },
+            { 'entered', 'a\nb' },
             { 'after', { 'a', 'b' } },
           }, order)
+      end)
+
+    -- doc/development/decisions/input.md, Decision 37: the two
+    -- submit callbacks are told apart by their PAYLOAD --
+    -- on_text_entered takes the concatenated text,
+    -- after_submit the list of lines. Multi-line content, so
+    -- the two shapes cannot coincide: with one line they are
+    -- 'a' and { 'a' }, which a broken split would still pass.
+    it('the two submit callbacks differ by payload',
+      function()
+        local seen = { }
+        local input = F.activate_project()
+        input.callbacks.after_submit = function(t)
+          seen.after = t
+        end
+        input.show({
+          text = { 'a', 'b' },
+          on_text_entered = function(t) seen.entered = t end,
+        })
+        F.session.press('return')
+        assert.equal('a\nb', seen.entered)
+        assert.same({ 'a', 'b' }, seen.after)
       end)
 
     -- Decision 6: submit does not auto-close. The default
@@ -437,10 +459,10 @@ describe('input surface: widget callbacks #input', function()
         input.show({
           text = { 'local x = 1', 'return x' },
           validator = LuaSyntaxValidator,
-          on_text_entered = function(lines) seen = lines end,
+          on_text_entered = function(text) seen = text end,
         })
         F.session.press('return')
-        assert.same({ 'local x = 1', 'return x' }, seen)
+        assert.equal('local x = 1\nreturn x', seen)
       end)
   end)
 
@@ -763,7 +785,7 @@ describe('input surface: widget callbacks #input', function()
       })
       F.session.type('a')
       F.session.press('return')
-      assert.same({ { 'a' } }, seen)
+      assert.same({ 'a' }, seen)
       assert.is_false(F.widget:is_shown())
       assert.is_false(F.is_widget_visible())
     end)
@@ -803,7 +825,7 @@ describe('input surface: widget callbacks #input', function()
         F.session.press('return')
         assert.is_true(F.is_widget_visible())
         assert.is_true(F.widget:is_empty())
-        assert.same({ { 'a' }, { 'b' } }, seen)
+        assert.same({ 'a', 'b' }, seen)
       end)
 
     -- Balloons shape (doc/input_api.md, "Live changes",
@@ -1064,7 +1086,7 @@ describe('input surface: widget callbacks #input', function()
           on_text_entered = function(t) got = t end,
         })
         F.session.press('return')
-        assert.same({ 'hi' }, got)
+        assert.equal('hi', got)
 
         input.show({ text = 'bye', force = true })
         F.session.press('escape')
@@ -1125,7 +1147,7 @@ describe('input surface: widget callbacks #input', function()
             on_text_entered = function(t) got = t end,
           })
           mock.keystroke('C-return', F.session.press)
-          assert.same({ 'hi' }, got)
+          assert.equal('hi', got)
         end)
 
         it('input widget: Alt+Enter submits', function()
@@ -1136,7 +1158,7 @@ describe('input surface: widget callbacks #input', function()
             on_text_entered = function(t) got = t end,
           })
           mock.keystroke('M-return', F.session.press)
-          assert.same({ 'hi' }, got)
+          assert.equal('hi', got)
         end)
 
         it('console: Ctrl+Enter evaluates', function()

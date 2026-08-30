@@ -71,7 +71,7 @@ function is_natural(s)
 end
 
 -- Continuous-session idiom (doc/input_api.md, "Submit
--- lifecycle"): consume the line in on_text_entered;
+-- lifecycle"): consume the text in on_text_entered;
 -- the widget stays open by default now, so after_submit just clears
 -- the field for the next line instead of re-showing. The line validator
 -- prevents invalid lines from reaching the submit callback.
@@ -84,5 +84,5 @@ compy.input.show{
     min_length(2),
     is_lower
   }),
-  on_text_entered = function(lines) print(lines[1]) end,
+  on_text_entered = function(text) print(text) end,
 }

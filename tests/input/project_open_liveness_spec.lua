@@ -118,6 +118,6 @@ describe('input surface: inbound events — a project stays live'
     })
     love.state.app_state = 'project_open' -- route NOT released
     F.session.press('return')
-    assert.same({ 'x' }, seen)
+    assert.equal('x', seen)
   end)
 end)
