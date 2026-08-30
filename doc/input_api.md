@@ -81,8 +81,8 @@ end
 
 compy.input.show{
   prompt = "say something:",
-  on_text_entered = function(lines)
-    print(string.unlines(lines))
+  on_text_entered = function(text)
+    print(text)
   end,
 }
 ```
@@ -105,7 +105,7 @@ Everything that puts the widget on screen and alters it while it is there.
 | `cursor` | Initial `{line, col}` after `text` is applied. |
 | `highlighter` | `function(lines) -> coloring`; changes display only. |
 | `validator` | `function(lines) -> true` or `false, Error[]`; gates submit. |
-| `on_text_entered` | `function(lines)` called after successful validation. |
+| `on_text_entered` | `function(text)` called after successful validation, with the submitted content as one string. |
 | `on_limit_reached` | Called when cursor movement reaches a boundary. |
 | `force` | `show` only: re-open a widget that is already up. |
 
@@ -208,10 +208,14 @@ order is:
 1. `before_submit()`, if assigned. A truthy return vetoes the
    submit: steps 2-4 do not run and the text stays in the field.
 2. `validator(lines)`, if assigned.
-3. `on_text_entered(lines)`, if assigned.
-4. `after_submit(lines)`, if assigned.
+3. `on_text_entered(text)`, if assigned — the submitted content as **one
+   string**, lines joined with `\n`.
+4. `after_submit(lines)`, if assigned — the same content as a **list of line
+   strings**.
 
-`lines` is always a list of line strings. A rejecting validator returns
+The two are told apart by what they hand you, and that is the whole
+difference: `on_text_entered` gives you the text, `after_submit` gives you the
+lines. `validator` and `highlighter` also receive `lines`. A rejecting validator returns
 `false, errors`, where `errors` is a list of positioned `Error` values; the
 input widget displays the error and steps 3–4 do not run. A highlighter has no
 submit or validation authority: it only controls how the current text looks.
@@ -253,8 +257,8 @@ end
 compy.input.show{
   prompt = "Guess a number:",
   validator = LineValidators(natural),
-  on_text_entered = function(lines)
-    check(tonumber(lines[1]))
+  on_text_entered = function(text)
+    check(tonumber(text))
   end,
 }
 ```
@@ -267,8 +271,8 @@ compy.input.show{
   text = string.lines(body),
   highlighter = LuaHighlighter,
   validator = LuaSyntaxValidator,
-  on_text_entered = function(lines)
-    body = string.unlines(lines)
+  on_text_entered = function(text)
+    body = text
   end,
 }
 ```
@@ -730,7 +734,7 @@ their work into a callback:
 
 | Old shape | Replacement |
 |---|---|
-| `user_input()` plus a per-frame poll | `on_text_entered = function(lines) ... end` |
+| `user_input()` plus a per-frame poll | `on_text_entered = function(text) ... end` |
 | `input_text(prompt, text)` | `show{ prompt = prompt, text = text, on_text_entered = fn }` |
 | `input_code(prompt, text)` | `show{ prompt = prompt, text = text, highlighter = LuaHighlighter, validator = LuaSyntaxValidator, on_text_entered = fn }` |
 | `validated_input(filters, prompt)` | `show{ prompt = prompt, validator = LineValidators(filters), on_text_entered = fn }` |
@@ -739,7 +743,7 @@ their work into a callback:
 | `function compy.doubleclick(x, y)` | `compy.input.hooks.doubleclick = function(x, y) ... end` |
 | `eval = InputEvalLua` | `highlighter = LuaHighlighter, validator = LuaSyntaxValidator` |
 | `eval = ValidatedTextEval(filters)` | `validator = LineValidators(filters)` |
-| `result = ...` | Consume `lines` in `on_text_entered`; no result object exists. |
+| `result = ...` | Consume the `text` in `on_text_entered`; no result object exists. |
 
 The old evaluator globals (`InputEvalText`, `InputEvalLua`,
 `ValidatedTextEval`, and `LuaEditorEval`) are not project API. Do not place

@@ -50,6 +50,19 @@ newest first.
 
 ### Changed
 
+- **Breaking: `on_text_entered` now receives the submitted content as
+  one string**, lines joined with `\n`, instead of a list of line
+  strings. `after_submit` is unchanged and still receives the list, and
+  that difference is now what tells the two callbacks apart — before,
+  both were handed the same argument and nothing distinguished them.
+  **Migrating:** a callback that joined the payload itself
+  (`string.unlines(lines)` as its first statement) needs no change at
+  all — joining a string returns it unchanged. A callback that indexed
+  it (`lines[1]`) **must** drop the index, and will otherwise **fail
+  silently**: indexing a string yields `nil` rather than raising. A
+  consumer that genuinely wants the lines has `after_submit`. See
+  "Submit lifecycle" in `doc/input_api.md`.
+
 - **Keyboard and text input are no longer blocked while an input
   prompt is open.** Previously, showing an input widget stopped a
   project's own `love.keypressed`/`love.textinput`/`love.keyreleased`

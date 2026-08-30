@@ -662,15 +662,30 @@ if run_callback(self, 'before_submit') then return end   -- truthy = veto
 if self.model:get_text():is_empty() then return end
 local lines = self.model:get_text()
 if not gate(self.model, self.callbacks.validator, lines) then return end
-run_callback(self, 'on_text_entered', lines)
+run_callback(self, 'on_text_entered', string.unlines(lines))
 run_callback(self, 'after_submit', lines)               -- DEFAULT: no-op — widget stays open
+if self.oneshot then self:hide() end                    -- show{oneshot} only
 ```
+
+**The two deliveries differ by payload** (Decision 37): `on_text_entered` receives the submitted
+content as one joined string, `after_submit` the line list. That difference is what tells the two
+callbacks apart — before it, both received the same argument and the guide could not say what
+distinguished them. The `validator` keeps the lines: it runs per line, and `LineValidators` reports
+which one failed.
 
 `on_text_entered` fires **while the widget is still active**: there is no implicit hide.
 `after_submit` DEFAULTS to a no-op, so **a successful submit leaves the widget open**
 (Decision 6) unless a project's own `after_submit` calls `compy.input.hide()`. A truthy `before_submit` **vetoes** the submit outright:
 nothing downstream runs and the text stays in the field. It is a guard on *whether to submit at
 all*; rejecting bad input with a message is still the `validator`'s job.
+
+**`show{oneshot = true}` is the exception to "no implicit hide"** (Decision 36), and it is sugar for
+the `after_submit = hide` above rather than a second policy. The close sits at the END of this
+flow, which is what gives it its edges for free: every early return above suppresses it, a project's
+own `after_submit` still runs against a live widget, and a callback that **raises** leaves the
+widget standing — the raise unwinds to the route boundary past that line, exactly as it unwinds
+past a hand-written `after_submit` that hides. The flag is seated at activation and spent by the
+`show` that carried it; `configure{oneshot}` raises.
 
 **Cancel** (`UserInputController:cancel_flow`):
 
