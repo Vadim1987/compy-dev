@@ -108,7 +108,7 @@ Everything that puts the widget on screen and alters it while it is there.
 | `on_text_entered` | `function(text)` called after successful validation, with the submitted content as one string. |
 | `on_limit_reached` | Called when cursor movement reaches a boundary. |
 | `force` | `show` only: re-open a widget that is already up. |
-| `oneshot` | `show` only: close the widget after a successful submit. |
+| `auto_hide` | `show` only: close the widget after a successful submit. |
 
 `show` on an active input widget warns and does nothing unless `force = true`.
 With `force`, it is a **full re-setup** — the same thing a first `show` does,
@@ -122,9 +122,9 @@ they set:
 - **Your content** — `text` and `cursor` — belongs to the person typing, so
   only `show` seats it. While the widget is up, `set_text`, `set_cursor` and
   `clear` are the ways to change it.
-- **`force` and `oneshot` describe the opening itself**, not a standing
+- **`force` and `auto_hide` describe the opening itself**, not a standing
   preference, so they too are `show`-only — passing either to `configure`
-  raises, naming `show`. `oneshot` is spent by the `show` that carried it: a
+  raises, naming `show`. `auto_hide` is spent by the `show` that carried it: a
   later plain `show` opens an ordinary widget again.
 - **Everything else** belongs to your project. Those keys are set only when
   you name them, and stay until you replace them: leaving one out changes
@@ -164,7 +164,7 @@ input widget — `prompt`, `highlighter`, `validator`, `on_text_entered`,
 `show`.
 
 `configure` never touches your content, so `text`, `cursor`, `force` and
-`oneshot` raise from it as keys belonging to another call, the way a lifecycle
+`auto_hide` raise from it as keys belonging to another call, the way a lifecycle
 callback already does. Use `show` to seat content, and `set_text` / `set_cursor` /
 `clear` to change it while the widget is up.
 
@@ -241,13 +241,13 @@ compy.input.callbacks.after_submit = function()
 end
 ```
 
-Or pass `oneshot` and let `show` do it — see below.
+Or pass `auto_hide` and let `show` do it — see below.
 
 Escape first runs `before_cancel()`. A truthy return vetoes the
 cancel. Otherwise it clears the field and calls `after_cancel()`; it also
 stays shown unless that callback hides it.
 
-### Asking one question — `oneshot`
+### Asking one question — `auto_hide`
 
 When your project is not *about* input and just needs an answer, `show` can
 take the widget down itself:
@@ -256,12 +256,12 @@ take the widget down itself:
 compy.input.show{
   prompt = "Your name?",
   on_text_entered = function(text) greet(text) end,
-  oneshot = true,
+  auto_hide = true,
 }
 ```
 
 That is the whole thing: nothing to install beforehand, nothing to tear down
-after. `oneshot` is exactly the `after_submit = hide` above, written as a key
+after. `auto_hide` is exactly the `after_submit = hide` above, written as a key
 — which is also the way to predict what it does at the edges:
 
 - It closes after a **successful** submit, so a `before_submit` veto, an empty
@@ -271,17 +271,17 @@ after. `oneshot` is exactly the `after_submit = hide` above, written as a key
 - If one of your callbacks **raises**, the widget stays up. Your project
   suspends with the error, which is the failure worth seeing.
 - **Escape does not close it.** Cancel clears the field and leaves the widget
-  standing, the same as always — so a project that shows a `oneshot` prompt and
+  standing, the same as always — so a project that shows an `auto_hide` prompt and
   installs nothing else gives its user no way to dismiss it without answering.
   If you want Escape to close, say so, the same way:
   `compy.input.callbacks.after_cancel = function() compy.input.hide() end`.
-- **Asking a follow-up question from inside your callback: leave `oneshot`
+- **Asking a follow-up question from inside your callback: leave `auto_hide`
   off.** The widget is still up while your callbacks run, so a second `show`
-  needs `force = true` — and if that second `show` also passes `oneshot`, it is
+  needs `force = true` — and if that second `show` also passes `auto_hide`, it is
   closed straight away, before the user can type into it. The close belongs to
   the submit still in progress, and the flag it reads is whichever one is set
-  by then. `show{force = true}` **without** `oneshot` is the follow-up that
-  survives; ask that one, and pass `oneshot` again on the last question of the
+  by then. `show{force = true}` **without** `auto_hide` is the follow-up that
+  survives; ask that one, and pass `auto_hide` again on the last question of the
   chain.
 
 ### Validation and highlighting

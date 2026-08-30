@@ -22,7 +22,7 @@ newest first.
 
 ### Added
 
-- **`show{oneshot = true}`** takes the input widget down after a
+- **`show{auto_hide = true}`** takes the input widget down after a
   successful submit, so a project that just needs one answer writes a
   single call with a prompt and a callback and installs nothing else.
   It is the `after_submit = function() compy.input.hide() end` you

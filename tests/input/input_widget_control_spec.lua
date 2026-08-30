@@ -153,18 +153,18 @@ describe('input surface: widget control #input', function()
           string.find(tostring(err), 'show()', 1, true))
       end)
 
-    -- oneshot is show()-only for the same reason force is: it
+    -- auto_hide is show()-only for the same reason force is: it
     -- describes THIS prompting session, not a standing project
     -- preference (doc/development/decisions/input.md, Decision
     -- 36, ruled edge 1). It is the first show-only key that
     -- outlives its call, so the refusal is worth its own case
     -- rather than riding on force's.
-    it('configure raises on oneshot, naming show()',
+    it('configure raises on auto_hide, naming show()',
       function()
         local input = F.compy_input()
         input.show({ text = 'ok' })
         local _, err = pcall(function()
-          input.configure({ oneshot = true })
+          input.configure({ auto_hide = true })
         end)
         assert.is_truthy(
           string.find(tostring(err), 'show()', 1, true))

@@ -326,10 +326,10 @@ local open_widget = function(self, cfg)
     self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
   end
   -- Seated unconditionally, unlike the project-owned fields
-  -- above: oneshot describes THIS session, so a later bare
+  -- above: auto_hide describes THIS session, so a later bare
   -- show() must clear it rather than inherit it
   -- (doc/development/decisions/input.md, Decision 36).
-  self.oneshot = cfg.oneshot
+  self.auto_hide = cfg.auto_hide
   -- love.state.user_input is the widget CONTRACT: its presence
   -- is the flag the draw loop (controller.lua) checks to paint
   -- V:draw() each frame, and it carries the { M, C, V } handle
@@ -447,7 +447,7 @@ end
 --- list to after_submit. The validator keeps the lines — it
 --- runs per line, and LineValidators reports which one failed.
 ---
---- A oneshot session hides LAST, so the project's own
+--- An auto_hide session hides LAST, so the project's own
 --- after_submit still runs against a live widget (Decision 36).
 --- The close sits here and nowhere else, which is what makes
 --- every early return above suppress it without a rule of its
@@ -470,10 +470,10 @@ function UserInputController:submit_flow()
   -- callback that opens a follow-up prompt with
   -- show{force = true} re-seats this flag, and clearing it is
   -- how that prompt survives the close belonging to the submit
-  -- still in progress. A follow-up that passes oneshot ITSELF
+  -- still in progress. A follow-up that passes auto_hide ITSELF
   -- does not survive — documented at doc/input_api.md,
   -- "Asking one question".
-  if self.oneshot then self:hide() end
+  if self.auto_hide then self:hide() end
 end
 
 --- Cancel flow (Decision 6): the widget's own Escape behaviour.

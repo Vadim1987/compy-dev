@@ -508,14 +508,15 @@ describe('input surface: widget callbacks #input', function()
       end)
   end)
 
-  -- doc/development/decisions/input.md, Decision 36: oneshot is
-  -- sugar over `after_submit = function() hide() end`, and that
-  -- equivalence is what every case here pins. The four edges
-  -- were ruled at FEAT-01-01 before any of this was written.
-  describe('oneshot', function()
-    it('a oneshot show closes on submit', function()
+  -- doc/development/decisions/input.md, Decision 36: auto_hide
+  -- is sugar over `after_submit = function() hide() end`, and
+  -- that equivalence is what every case here pins. The four
+  -- edges were ruled at FEAT-01-01 before any of this was
+  -- written.
+  describe('auto_hide', function()
+    it('an auto_hide show closes on submit', function()
       local input = F.activate_project()
-      input.show({ text = 'a', oneshot = true })
+      input.show({ text = 'a', auto_hide = true })
       F.session.press('return')
       assert.is_false(F.is_widget_visible())
     end)
@@ -531,11 +532,11 @@ describe('input surface: widget callbacks #input', function()
     end)
 
     -- Decision 36, ruled edge 2: Escape clears and leaves the
-    -- widget standing (Decision 6), and oneshot does not
+    -- widget standing (Decision 6), and auto_hide does not
     -- change what Escape does.
     it('it does not close on cancel', function()
       local input = F.activate_project()
-      input.show({ text = 'a', oneshot = true })
+      input.show({ text = 'a', auto_hide = true })
       F.session.press('escape')
       assert.is_true(F.is_widget_visible())
       assert.is_true(F.widget:is_empty())
@@ -552,7 +553,7 @@ describe('input surface: widget callbacks #input', function()
         input.callbacks.after_submit = function()
           seen = F.is_widget_visible()
         end
-        input.show({ text = 'a', oneshot = true })
+        input.show({ text = 'a', auto_hide = true })
         F.session.press('return')
         assert.is_true(seen)
         assert.is_false(F.is_widget_visible())
@@ -566,7 +567,7 @@ describe('input surface: widget callbacks #input', function()
       local input = F.activate_project()
       input.show({
         text      = 'bad',
-        oneshot   = true,
+        auto_hide = true,
         validator = function()
           return false, { Error('no') }
         end,
@@ -581,7 +582,7 @@ describe('input surface: widget callbacks #input', function()
     -- stays open, with no way for the earlier call to reach it.
     it('it is spent by its own show', function()
       local input = F.activate_project()
-      input.show({ text = 'a', oneshot = true })
+      input.show({ text = 'a', auto_hide = true })
       F.session.press('return')
       input.show({ text = 'b' })
       F.session.press('return')
@@ -592,7 +593,7 @@ describe('input surface: widget callbacks #input', function()
     -- survives the close, because the flag is read AFTER the
     -- callbacks and the second show cleared it. This is the
     -- property that makes that placement right, and it had no
-    -- coverage; the case where the follow-up passes oneshot
+    -- coverage; the case where the follow-up passes auto_hide
     -- ITSELF is documented rather than pinned, since it is the
     -- one a fix would change (doc/input_api.md, "Asking one
     -- question"). force is not incidental: the widget is still
@@ -602,7 +603,7 @@ describe('input surface: widget callbacks #input', function()
         local input = F.activate_project()
         input.show({
           text            = 'a',
-          oneshot         = true,
+          auto_hide       = true,
           on_text_entered = function()
             input.show({ prompt = 'again?', force = true })
           end,
@@ -625,7 +626,7 @@ describe('input surface: widget callbacks #input', function()
       local input = F.activate_project()
       input.show({
         text            = 'a',
-        oneshot         = true,
+        auto_hide       = true,
         on_text_entered = function()
           ran = ran + 1
           error('boom')
