@@ -38,6 +38,39 @@ Note: the same stale "renaming is off the table" sentence is in **this session's
 
 Full note: `validation/reviews/FEAT-02-case-and-executability.md`.
 
+## Execution
+
+- `-01` landed as two commits: `8bca3c04` (the three stale citations) then `19f47df0` (Decisions 36
+  and 35 amended, `T-ONESHOT-SCOPE`'s State corrected on the no-getter evidence).
+- `-02` landed as `fe076244` — token-only rename, suite green at 1021, profiler / metalua / the two
+  "oneshot is gone" historical comments deliberately untouched.
+- `-03` was **blocked on an owner ruling** and is now `2c6fe978`. The ruled persistence
+  retires the *implicit* disarm a bare `show{force}` used to perform, so
+  `a forced follow-up show survives the close` fails — the case pins the category as well as the
+  placement, and the roadmap + prompt both say it must keep passing. Evidence in
+  `validation/notes/auto-hide-persistence-vs-the-forced-follow-up.md`, including a re-run of the
+  forbidden capture-before mutation, which fails the same case under the new shape too — the
+  placement is untouched and still load-bearing.
+- **Owner ruling on the collision (2026-08-30), and it corrected my framing.** I called the delta
+  *"a working idiom stops working"*; the owner: *"there is no working idiom"* — `FEAT-01`'s shape
+  was a quick implementation of a disposable flag, ruled and overruled within a day and never
+  released, so a contradiction with it is the thing being removed, not a cost to weigh. The
+  instruction: **implement the pivot** across code, tests, examples and docs. Recorded verbatim in
+  the note.
+- `-04` `5ad6e518` — guide + internals + the retired `T-ONESHOT` entry marked as history.
+- `-05` `6d0aa9af` (CHANGELOG rewritten as a mode; `T-ONESHOT-SCOPE` retired) and `07c8e183`
+  (roadmap complete, suite arithmetic, the collision on the record). `ce86010d` fixes a `types.lua`
+  annotation the sprint made misleading.
+- **Examples: nothing to change.** No example uses the flag (`turtle` closes with its own
+  `after_submit`, which Decision 36 already records); checked before claiming it.
+- Suite **1023 / 0 / 0 / 10** at every commit from `-03` on. Marker gate clean.
+
+## Findings parked (not ours)
+
+- `doc/mermaid/{input,editor,classes}.md` show `oneshot: boolean` on `InputModel`/`UserInputModel`.
+  That field is **gone** from the model (the base's constructor argument), so the diagrams are stale
+  — pre-existing drift, unrelated to the rename. Not fixed; reported.
+
 - Rename blast radius verified: `src/lib/metalua/*` and the **profiler** (`controller/profiler.lua`,
   `controller.lua:842,1080-1082`, `input_global_shortcuts_spec.lua:338`) keep `oneshot`; so do the
   two **historical** comments at `userInputView.lua:290` and `userInputModel.lua:436-439`, which say
