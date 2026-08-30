@@ -39,6 +39,16 @@ services:
       - lua-lsp-cache:/opt/lua-language-server/log/cache
       - ../../../../../../:/repo:rw
       - ../:/impl:rw
+      # `docker-data` is the host side of the agent home above, and it
+      # sits INSIDE the worktree — so /repo carries a copy of the home
+      # dir, and every tree-wide grep walks it. These two anonymous
+      # volumes are empty stubs mounted over the two paths that expose
+      # it, so from inside the container the directory is there and
+      # empty (matching .gitignore's view) while the host keeps the
+      # data. Two, not one: the same directory is reachable through
+      # /repo and again through /impl.
+      - /repo/doc/development/wip/77-new-input-api/implementation/docker/docker-data
+      - /impl/docker/docker-data
       #- ../../../../../../../brainlab/sessions/git/doc/development/wip/77-new-input-api/SWEEP:/impl/sessions:rw
       #- ../../../../../../../brainlab/sessions/git/doc/development/wip/77-new-input-api/SWEEP:/repo/doc/development/wip/77-new-input-api/implementation/sessions:rw
 
