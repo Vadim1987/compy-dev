@@ -39,6 +39,51 @@ Suggestion: let `on_text_entered` return the plain text (concatenated), and `aft
 Pros: two easy ways to reach both representations without boilerplate, `after_submit` gets its own reason for existance beyond oneshot -> less confusion in the documentation, better devX. Recommendation would be clean: use `on_text_entered` to process plaintext, use `after_submit` for any other processing logic (recommended convention, not enforced)
 Status: inlined here by human, to be written down as decision and analyzed first (same as T-PLAINTEXT-ENTERED)
 
+### T-GUARD-LIVE — the guide never says a project's own keys stay live while the field is up
+
+- **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
+  widget sits at tier 3"*.
+- **State:** the guide documents the **mechanism** (three consumers, tried in
+  order, the shown widget always consumes at tier 3) and it documents one
+  **case** — guarding the trigger key so a later press does not re-open the
+  prompt. It never states the consequence that falls out of the two: while the
+  field is up, a project's *unrelated* keys are still live, because tier 2 runs
+  above it. An unguarded native handler therefore acts on the keys the user is
+  typing — a space toggles a mode, a capital `R` moves the world — and the
+  event still reaches the field, so nothing looks wrong from either side.
+  Neither is the exemption written: **reservations sit above tier 1 and no
+  project guard can reach them**, so a project that returns early from its own
+  handler keeps `ctrl+pause`, `ctrl+s` and the rest working. That is what makes
+  a blanket `if compy.input.is_shown() then return end` cheap rather than
+  costly, and it is the missing half of the advice.
+- **Why it stands:** the shape was found the hard way. `turtle` shipped
+  unguarded (`T-TURTLE-DUP`), and its fix is the guard the guide never asks
+  for; a reader of the guide alone would not know to write it. The guard is
+  also **test-pinned** (`tests/input/input_widget_control_spec.lua`, *"the
+  guard the ruling asks an example to write"*), so the codebase already treats
+  it as the idiom while the documentation does not.
+- **Revisit:** `FIX-02-23` — a few lines in the guide, at the `is_shown`
+  paragraph. Cheap, and it is the paragraph a project author reads before
+  mixing native handlers with a prompt.
+
+### T-MAZE-NEUTRALIZE — `maze` neutralises its hooks by clearing a flag, not by the framework guard
+
+- **Where:** the `maze` example repo — the hook sites in `draw_main.lua` and
+  `maze_main.lua`. (`core_editor.lua` already carries an equivalent,
+  pre-existing `is_shown` guard.)
+- **State:** those two sites suppress themselves by setting
+  `ctrl_pressed = nil` rather than by asking whether the widget is shown. A
+  cold review could not trace the pattern across every path and stopped short
+  of a verdict, so **whether it is equivalent to the guard is unverified** —
+  not known-broken.
+- **Why it stands:** `maze` is a reference implementation, and a superseded
+  pattern in one teaches the pattern to the next reader. Against that: it is
+  a separate repo, the approach may be perfectly legitimate, and rewriting
+  working example code to match a house idiom is overreach. **Both sides are
+  real, which is why the row that pays this entry opens with the weighing and
+  may close it `wontfix`.**
+- **Revisit:** `BUG-01-11`, and not before its evaluation step has run.
+
 ### T-COMBO-CASE — `combo_string` does not normalise the case of a textinput token
 
 - **Where:** `src/controller/controller.lua`, `combo_string`; the

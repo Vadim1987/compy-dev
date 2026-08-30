@@ -78,6 +78,32 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### The conventions the examples demonstrate carry no test coverage
+
+- **Where:** `src/examples/` and the nested example repos. No example anywhere
+  in this codebase has spec coverage; the suite exercises the framework and
+  never an example.
+- **State:** the gap has teeth because the examples are not only samples — the
+  guide points at them and projects copy them, so a convention that rots in an
+  example rots in every project derived from it. `T-TURTLE-DUP` is the worked
+  case: `turtle` double-handled its own keys for months while the suite stayed
+  green, and its fix is likewise pinned by nothing. **End-to-end testing of
+  examples is overkill and is not what is owed here** (owner, 2026-08-30).
+  What may be worth pinning is the narrow set of conventions the examples
+  *share* and the documentation *relies on* — the `is_shown` guard on a native
+  handler, the one-shot echo guard on a trigger key, `after_submit` closing a
+  prompt-per-command — each of which is a documented promise today with no
+  test behind it at the point a project author would copy it.
+- **Why it stands:** deliberately deferred past this release (owner,
+  2026-08-30). Building it means a test genre this codebase does not have —
+  driving an example's own `love.*` handlers through the framework's dispatch
+  — and inventing that genre inside a defect row is how a defect row becomes a
+  project. The framework side of each convention *is* already covered; what is
+  missing is the example side.
+- **Revisit:** when an example convention next breaks silently, or when the
+  examples are next reworked as a set. **No roadmap row points here on
+  purpose** — it is out of release scope, and a row would claim otherwise.
+
 ### The test suite passes only in declaration order
 
 - **Where:** the whole suite, not one file. `busted tests` is green; `busted tests --shuffle`
