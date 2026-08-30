@@ -1458,9 +1458,10 @@ surface, and that call is reversed here.
 **Why — two facts that settle it together.** `oneshot` **preceded this feature**: the API being
 replaced had it, so this is a restoration, not an invention, and a migrating project author meets a
 familiar name instead of a pattern they must reconstruct. And it was **asked for by a second
-developer** — the author of the `serial` API — which makes it a request from outside the input
-work rather than an ergonomic preference of the input work's own. A returning name that an
-independent consumer asks for does not need a third argument.
+developer** — the author of the `serial` API (owner attestation; that surface is not in this repo,
+so the request is not checkable here) — which makes it a request from outside the input work rather
+than an ergonomic preference of the input work's own. A returning name that an independent consumer
+asks for does not need a third argument.
 
 **The third one is real anyway: the one-line question.** A project whose subject is *not* user
 input — a game, a tool, a demo — wants to ask the user something and get on with it. With
@@ -1526,11 +1527,14 @@ more examples take `lines[1]`, which is the same operation for the single-line c
 today (`userInputController.lua`, submit flow) and what the guide documents. **The change is
 one-sided**: only `on_text_entered`'s payload moves, from the line list to the joined string.
 
-**Consequence.** It is a **breaking change on a documented callback**, so it carries a CHANGELOG
-entry and a justification-table line. Every in-tree consumer moves with it: `turtle`, `valid` and
-`guess` simplify (`lines[1]` → the string), `repl` loses its `string.unlines`, and **`maze` is the
-one that pays** — `submit_program` genuinely wants lines, so it moves to `after_submit` or splits
-the string itself. Sizing that migration is `FEAT-01-04`'s first act, not an afterthought.
+**Consequence, and it is smaller than it looks.** The change is breaking on a documented callback,
+so it carries a CHANGELOG entry and a justification-table line. But **every in-tree consumer
+simplifies and none pays**: four of the seven — `maze`'s `submit_program`, `tixy`'s `submit_body`,
+`balloons`'s `deliver` and `repl` — call `string.unlines` on the payload as their *first statement*,
+which is this decision performed by hand at each call site; the other three (`turtle`, `valid`,
+`guess`) take `lines[1]`. **Not one consumer in this tree wants the list**, which is the strongest
+evidence the split is right, and a consumer that does want it still has `after_submit`. `FEAT-01-04`
+should confirm the count before relying on it — the point is the shape, and the shape is unanimous.
 
 ---
 

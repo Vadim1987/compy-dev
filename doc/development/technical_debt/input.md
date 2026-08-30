@@ -59,9 +59,10 @@ paid, or turned out not to be debt.
   `on_text_entered`'s payload moves.
 - **Why it stands:** it is a **breaking change on a documented callback**, so it needs its
   CHANGELOG entry, its justification-table line and a migration of every in-tree consumer.
-  Three examples simplify (`lines[1]` → the string) and `repl` loses a `string.unlines`, but
-  **`maze` pays** — `submit_program` genuinely wants lines and moves to `after_submit` or
-  splits the string itself.
+  That migration is all downhill: **four consumers call `string.unlines` on the payload as
+  their first statement** (`maze`'s `submit_program`, `tixy`'s `submit_body`, `balloons`'s
+  `deliver`, `repl`) and three take `lines[1]` (`turtle`, `valid`, `guess`). **None wants
+  the list**; a consumer that did would still have `after_submit`.
 - **Revisit:** `FEAT-01-03` (with `FIX-02-01`, never separately), `FEAT-01-04` to build and
   feed `CHG-01`.
 
@@ -70,27 +71,31 @@ paid, or turned out not to be debt.
 - **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
   widget sits at tier 3"*.
 - **State:** the guide documents the **mechanism** (three consumers, tried in
-  order, the shown widget always consumes at tier 3) and it documents one
-  **case** — guarding the trigger key so a later press does not re-open the
-  prompt. It never states the consequence that falls out of the two: while the
-  field is up, a project's *unrelated* keys are still live, because tier 2 runs
-  above it. An unguarded native handler therefore acts on the keys the user is
-  typing — a space toggles a mode, a capital `R` moves the world — and the
-  event still reaches the field, so nothing looks wrong from either side.
-  Neither is the exemption written: **reservations sit above tier 1 and no
-  project guard can reach them**, so a project that returns early from its own
-  handler keeps `ctrl+pause`, `ctrl+s` and the rest working. That is what makes
-  a blanket `if compy.input.is_shown() then return end` cheap rather than
-  costly, and it is the missing half of the advice.
-- **Why it stands:** the shape was found the hard way. `turtle` shipped
-  unguarded (`T-TURTLE-DUP`), and its fix is the guard the guide never asks
-  for; a reader of the guide alone would not know to write it. The guard is
-  also **test-pinned** (`tests/input/input_widget_control_spec.lua`, *"the
-  guard the ruling asks an example to write"*), so the codebase already treats
-  it as the idiom while the documentation does not.
-- **Revisit:** `FIX-02-23` — a few lines in the guide, at the `is_shown`
-  paragraph. Cheap, and it is the paragraph a project author reads before
-  mixing native handlers with a prompt.
+  order, the shown widget always consumes at tier 3) and one **case** —
+  guarding the trigger key so a later press does not re-open the prompt. It
+  never states the consequence that falls out of the two: while the field is
+  up, a project's *unrelated* keys are still live, because tier 2 runs above
+  it. An unguarded native handler acts on the keys the user is typing — a
+  space toggles a mode, a capital `R` moves the world — and the event still
+  reaches the field, so nothing looks wrong from either side. **The remedy —
+  an early return on `is_shown()` covering the whole handler — is never named
+  either**, though the suite pins it as the idiom
+  (`tests/input/input_widget_control_spec.lua`, *"the guard the ruling asks an
+  example to write"*).
+- **What is NOT missing, corrected 2026-08-30:** an earlier draft of this entry
+  claimed the guide never says a framework reservation is beyond a project's
+  reach. It does — *"Combos the framework keeps"* says a reservation is
+  answered before the project's route exists and cannot be overridden, and
+  tables `ctrl+pause` with the rest. The entry is narrower than first written:
+  what is missing is the *consequence for an open field*, not the reservation
+  rule.
+- **Why it stands:** `turtle` shipped unguarded for months (`T-TURTLE-DUP`),
+  and a reader of the guide alone would not have known to write the guard that
+  fixed it.
+- **Revisit:** `FIX-02-23` — a few lines at the `is_shown` paragraph, the one a
+  project author reads before mixing native handlers with a prompt. It can
+  point at *"Combos the framework keeps"* for the reassurance rather than
+  restating it.
 
 ### T-MAZE-NEUTRALIZE — `maze` neutralises its hooks by clearing a flag, not by the framework guard
 

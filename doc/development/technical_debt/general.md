@@ -185,8 +185,8 @@ paid, or turned out not to be debt.
   into the copy while the dispatcher reads the original, and **neither side raises** —
   nothing is nil, nothing is logged, the handlers simply never run. It cost an hour of
   on-device debugging to find. `compy.input` already dodged it by holding the surface
-  up-value behind `__index`, and `serial` was later built the same way, assignment to the
-  table itself included; what was missing was the rule stated once, where the next person
+  up-value behind `__index`, and `serial` was later built the same way per its author,
+  assignment to the table itself included (that surface is not in this repository); what was missing was the rule stated once, where the next person
   to add a namespace field would meet it.
 - **Paid by:** `../conventions/architecture_principles.md`, *"A Namespace Hands Out Live
   Tables by Reference, Never by Value"*. It is filed as a **suggested practice rather than

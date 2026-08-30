@@ -93,7 +93,8 @@ nothing to grab.
 The practice, then, is two habits together: resolve the table through `__index` on access, and
 refuse assignment to the table itself, so a project cannot swap the surface out from under the
 resolution. `compy.input` is built that way (its identities are frozen — `decisions/input.md`,
-Decision 7), and the `serial` surface was later built the same way, assignment guard included.
+Decision 7); the `serial` surface was later built the same way, assignment guard included (reported
+by its author — that surface is not in this repository).
 
 Two notes on why this is worth stating rather than leaving to be rediscovered:
 
