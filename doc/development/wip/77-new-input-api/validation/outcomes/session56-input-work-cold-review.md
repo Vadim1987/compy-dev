@@ -248,7 +248,7 @@ charter; the report above is left as delivered.*
 - **The reservation exemption is documented, and I missed the section.** `doc/input_api.md`,
   *"Combos the framework keeps"* — a reservation is *"answered before your project's route exists"*,
   cannot be overridden, and the table names `ctrl+pause`. `T-GUARD-LIVE` and `FIX-02-23` are narrowed
-  to the gap that survives: the consequence for an **open field**, and the whole-handler guard as the
+  to the gap that survives: the consequence for a **shown widget**, and the whole-handler guard as the
   named remedy. The corrected entry carries the correction visibly rather than quietly.
 - **The stale `36, 37, 38`** in the sequence note is fixed — the one reference the withdrawal missed.
 - **`serial`** is attested, not checkable: `grep -rnw serial src/` finds only *serialisation*. Both

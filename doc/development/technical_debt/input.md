@@ -66,18 +66,18 @@ paid, or turned out not to be debt.
 - **Revisit:** `FEAT-01-03` (with `FIX-02-01`, never separately), `FEAT-01-04` to build and
   feed `CHG-01`.
 
-### T-GUARD-LIVE — the guide never says a project's own keys stay live while the field is up
+### T-GUARD-LIVE — the guide never says a project's own keys stay live while the widget is shown
 
 - **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
   widget sits at tier 3"*.
 - **State:** the guide documents the **mechanism** (three consumers, tried in
   order, the shown widget always consumes at tier 3) and one **case** —
   guarding the trigger key so a later press does not re-open the prompt. It
-  never states the consequence that falls out of the two: while the field is
-  up, a project's *unrelated* keys are still live, because tier 2 runs above
-  it. An unguarded native handler acts on the keys the user is typing — a
-  space toggles a mode, a capital `R` moves the world — and the event still
-  reaches the field, so nothing looks wrong from either side. **The remedy —
+  never states the consequence that falls out of the two: while the widget is
+  shown, a project's *unrelated* keys are still live, because tier 2 runs
+  above it. An unguarded native handler acts on the keys the user is typing —
+  a space toggles a mode, a capital `R` moves the world — and the event still
+  reaches the widget, so nothing looks wrong from either side. **The remedy —
   an early return on `is_shown()` covering the whole handler — is never named
   either**, though the suite pins it as the idiom
   (`tests/input/input_widget_control_spec.lua`, *"the guard the ruling asks an
@@ -87,8 +87,8 @@ paid, or turned out not to be debt.
   reach. It does — *"Combos the framework keeps"* says a reservation is
   answered before the project's route exists and cannot be overridden, and
   tables `ctrl+pause` with the rest. The entry is narrower than first written:
-  what is missing is the *consequence for an open field*, not the reservation
-  rule.
+  what is missing is the *consequence for a shown widget*, not the
+  reservation rule.
 - **Why it stands:** `turtle` shipped unguarded for months (`T-TURTLE-DUP`),
   and a reader of the guide alone would not have known to write the guard that
   fixed it.
