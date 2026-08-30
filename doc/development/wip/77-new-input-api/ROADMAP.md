@@ -357,6 +357,30 @@ entries**, and the **decisions ledger's numbering**.
 
 ---
 
+## 🆕 Intake — three owner debt entries, filed by hand, **not yet placed in a sprint**
+
+**Recorded 2026-08-30, on the owner's instruction to record and plan them, not to work them.** The
+owner wrote three entries straight into the debt ledgers from the device, in two commits —
+`880c45ef` (`technical_debt/input.md`) and `b6456d61` (`technical_debt/general.md`). They are on the
+board here so that the ledger and the sequence do not disagree; **the ledger entries are the
+authority on content**, this block carries only the placement question.
+
+**Trigger: filed into sprints when the `BUG-01-03` turtle revalidation closes.** KIND and sprint are
+the **owner's call** — see the placement note under each. Nothing here is worked before then.
+
+| entry | ledger | what it asks for | placement question |
+|---|---|---|---|
+| **`T-ONESHOT`** | `input.md` ACTIVE | restore `oneshot` as syntactic sugar — a `show` that closes itself on submit, with no `after_submit` hook installed to do it. Owner attestation: removed in-flight to avoid over-sugaring, **need re-confirmed by microbit development**; the old API had it | **not a `FIX`** — it adds a public option, so it is code plus a decision entry, not docs. Also the one row on this board that **grows** the surface: the strategic frame's *"no moving parts beyond the ask"* applies, and the justification table would have to carry it |
+| **`T-PLAINTEXT-ENTERED`** | `input.md` ACTIVE | `on_text_entered` yields **concatenated plain text**; `after_submit` yields the **list of lines**. Gives `after_submit` a reason to exist beyond one-shot closing, and makes both representations reachable without boilerplate | **collides with `FIX-02-01`, which is the same seam** — that row asks whether the two hooks are *one callback set two ways*; this proposes the answer that keeps both by **differentiating their payloads**. They must be ruled together, and `FIX-02-01` should not be worked as if this did not exist. A payload change is breaking → feeds `CHG-01` |
+| **`T-NAMESPACE-CLONE`** | `general.md` ACTIVE | the project environment is deep-cloned before a run, so a live platform table placed in a namespace **by value** travels as a copy: the program assigns handlers into the copy, the dispatcher reads the original, and **both sides stay silent**. Cost the owner an hour of on-device debugging. Input dodges it by holding the surface up-value behind `__index`; `serial` was since built the same way, assignment to the table itself included. The pattern is non-obvious and the next live table added as a field repeats it | a **documentation** row, and the entry names its own home: *lines in the doc next to Decision 7*. Written in Russian, on-device — **needs translating into the ledger's language when filed**, not paraphrasing away |
+
+**Two observations worth having before the filing ruling, neither of them a ruling:** the first two
+entries are the owner's own device-side findings from real use, which is the evidence class this
+phase has been short of; and both touch the **public input surface**, so whichever way they go they
+land in `doc/input_api.md` and the PR's justification table, not only in the ledger.
+
+---
+
 ## ⬜ The six defect sprints — **the current work**
 
 **The remark triage already ran** (owner directed it to lead; it did, and produced five new rows —
@@ -400,7 +424,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 
 | id | defect | blast radius |
 |---|---|---|
-| **FIX-02-01** | **`on_text_entered` and `after_submit` are two ways to set one callback** | **design escalation, public surface.** The cold review missed it; the owner raised it twice. Bears on the strategic frame's "no moving parts beyond the ask" |
+| **FIX-02-01** | **`on_text_entered` and `after_submit` are two ways to set one callback** | **design escalation, public surface.** The cold review missed it; the owner raised it twice. Bears on the strategic frame's "no moving parts beyond the ask". **Do not work this row without `T-PLAINTEXT-ENTERED`** (intake block above): the owner has since proposed keeping both hooks and differentiating their payloads, which is a candidate answer to exactly this question |
 | ~~**FIX-02-02**~~ ✅ | **RATIFIED (Session 56) — `legend = ""` on submit is the example's own code in `src/examples/tixy/main.lua:submit_body` (submitting custom formula retires canned caption; see `validation/notes/S24-W7-A4-A5-invisible-overlay.md`). No framework defect.** `tixy` may drop the legend on submit | **RATIFIED** — verified by `S24-W7-A5` investigation note |
 | **FIX-02-03** | the A-doc's three factual claims (`:79`, `:650`, `:675`) | **may reveal the code is wrong, not the doc** |
 | **FIX-02-04** | pointer annotations in `project_sandbox_env.md` — completeness never checked | **unknown yield** — a verification task |
@@ -710,4 +734,5 @@ Not open questions to chase — each has a trigger:
 | the slug table | **no review needed** — grep-and-rename if a slug displeases |
 | provenance beyond the 3 files | **deferred** — a formal violation does not displace real work |
 | where Decision 20's `keys_pressed` history lives after removal | **at DEC-01-04**, per entry |
+| which sprint (and KIND) the three owner debt entries are filed into | **when `BUG-01-03`'s revalidation closes** — see the intake block above |
 
