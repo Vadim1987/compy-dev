@@ -30,7 +30,7 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **1021 / 0 / 0 / 10**. A different count is
+6. Confirm the baseline: `busted tests` → expect **1023 / 0 / 0 / 10**. A different count is
    a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
    (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
    session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
@@ -49,7 +49,9 @@ owner and revisable, not a frozen mandate.
    `xpcall` argument-loss fix, and **1011 after `MERGE-01-04`** — the platform upstream merge
    brought 19 tests of its own. Session56 added none: revalidation and ledger work, and
    **1021 after session57**'s `FEAT-01` — eight cases for `oneshot`, one for the payload split,
-   and one from its cold peer review.
+   and one from its cold peer review, and **1023 after session58**'s `FEAT-02`: two cases were
+   replaced in place (they pinned the show-only category the sprint retired) and two added — the
+   `configure` disarm that keeps the user's draft, and `false` as the unset.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -311,7 +313,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session58/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session59/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
