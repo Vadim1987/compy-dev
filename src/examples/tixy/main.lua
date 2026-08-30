@@ -175,7 +175,7 @@ end
 -- sitting in the field with nothing to re-inject — after_submit is
 -- removed entirely (editing continues in place for free).
 local function submit_body(text)
-  body = string.unlines(text)
+  body = text
   setupTixy()
   legend = ""
 end
