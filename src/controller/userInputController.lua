@@ -466,6 +466,13 @@ function UserInputController:submit_flow()
   end
   run_callback(self, 'on_text_entered', string.unlines(lines))
   run_callback(self, 'after_submit', lines)
+  -- Read AFTER the callbacks, not captured before them: a
+  -- callback that opens a follow-up prompt with
+  -- show{force = true} re-seats this flag, and clearing it is
+  -- how that prompt survives the close belonging to the submit
+  -- still in progress. A follow-up that passes oneshot ITSELF
+  -- does not survive — documented at doc/input_api.md,
+  -- "Asking one question".
   if self.oneshot then self:hide() end
 end
 

@@ -275,6 +275,14 @@ after. `oneshot` is exactly the `after_submit = hide` above, written as a key
   installs nothing else gives its user no way to dismiss it without answering.
   If you want Escape to close, say so, the same way:
   `compy.input.callbacks.after_cancel = function() compy.input.hide() end`.
+- **Asking a follow-up question from inside your callback: leave `oneshot`
+  off.** The widget is still up while your callbacks run, so a second `show`
+  needs `force = true` — and if that second `show` also passes `oneshot`, it is
+  closed straight away, before the user can type into it. The close belongs to
+  the submit still in progress, and the flag it reads is whichever one is set
+  by then. `show{force = true}` **without** `oneshot` is the follow-up that
+  survives; ask that one, and pass `oneshot` again on the last question of the
+  chain.
 
 ### Validation and highlighting
 

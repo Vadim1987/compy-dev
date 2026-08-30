@@ -588,6 +588,30 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.is_widget_visible())
     end)
 
+    -- A follow-up prompt opened from inside the submit chain
+    -- survives the close, because the flag is read AFTER the
+    -- callbacks and the second show cleared it. This is the
+    -- property that makes that placement right, and it had no
+    -- coverage; the case where the follow-up passes oneshot
+    -- ITSELF is documented rather than pinned, since it is the
+    -- one a fix would change (doc/input_api.md, "Asking one
+    -- question"). force is not incidental: the widget is still
+    -- up while the callbacks run, so a plain show is refused.
+    it('a forced follow-up show survives the close',
+      function()
+        local input = F.activate_project()
+        input.show({
+          text            = 'a',
+          oneshot         = true,
+          on_text_entered = function()
+            input.show({ prompt = 'again?', force = true })
+          end,
+        })
+        F.session.press('return')
+        assert.is_true(F.is_widget_visible())
+        assert.equal('again?', F.widget.model:get_label())
+      end)
+
     -- Decision 36, ruled edge 4 -- the one REVERSED from the
     -- entry's own recommendation. A raised callback leaves the
     -- widget standing, which is what the hand-written
