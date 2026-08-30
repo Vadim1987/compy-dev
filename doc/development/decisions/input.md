@@ -1439,6 +1439,119 @@ it is built: it must not clear content (that is `clear()`'s job, and doing both 
 redundant), and it must state whether the lifecycle callbacks — assignable only on
 `compy.input.callbacks` — fall to it, since "configure with defaults" leaves them standing.
 
+## Decision 36 — `oneshot`: a `show` that closes itself on submit
+
+**Status: ruled in, not implemented** (owner, 2026-08-30). The obligation is `T-ONESHOT`; the work
+is `FEAT-01-02`. **Its edges are recommendations below, not rulings** — they are ratified at
+`FEAT-01-01`, before any code.
+
+**Decision.** `show{ oneshot = true }` takes the widget down after a successful submit, without the
+project installing a lifecycle callback to do it. It is sugar over what a project can already
+write, and it is restored deliberately: it was removed in-flight to avoid over-sugaring the surface,
+and the need was re-confirmed by microbit development (owner attestation).
+
+**Why.** Two reasons, and they are different in kind. The first is boilerplate: a prompt-per-command
+project must otherwise assign `after_submit = function() compy.input.hide() end`, which is a hook
+installed for its side effect rather than for anything it computes. The second is continuity — the
+API this one replaces had `oneshot`, so a project author migrating meets a familiar name rather
+than a pattern they must reconstruct.
+
+**The in-tree evidence is thin, and is recorded rather than dressed up.** Of the shipped examples,
+**exactly one** — `turtle` — closes the widget on submit; `valid`, `repl`, `guess` and `balloons`
+all install `after_submit` to `clear()` and *stay open*, which is the repeated-prompting pattern
+`hide` is not part of. And `turtle` would keep its `after_submit` under this decision anyway, since
+it re-arms an echo guard there. So in this tree `oneshot` removes one call from one example. **The
+case for it rests on the owner's device-side attestation, not on the examples**, and the PR's
+justification table should say exactly that rather than implying in-tree demand.
+
+**Recommended edges, pending `FEAT-01-01`:**
+
+- **A `show`-only key, spent by the `show` that reads it.** `oneshot` describes *this* prompting
+  session, not a standing project preference, which puts it on the same side of Decision 35's
+  boundary as `text`, `cursor` and `force`. A sticky `oneshot` would also be the more surprising of
+  the two, since a later bare `show()` would close on submit for reasons written elsewhere.
+- **Submit only — cancel is already not a close.** `cancel_flow` clears and leaves the widget
+  standing (Decision 6), and no `oneshot` reading should quietly change what Escape does.
+- **It composes with `after_submit`; it does not refuse one.** The project's callback runs first and
+  the close follows it, so a project can both react to the submission and have the widget go down.
+  Refusing the combination would force exactly the boilerplate this decision exists to remove.
+- **It closes even if a callback raised.** The submit chain runs under an error boundary, and a
+  widget left standing after an error would be a second, silent failure mode on top of the first.
+
+**Consequence.** `show` grows one key, so `doc/input_api.md`, the config-key lists and the
+CHANGELOG's `Added` section all move together (`FEAT-01-04`, feeding `CHG-01`). Nothing existing
+changes behaviour: absent the key, submit behaves exactly as it does today.
+
+## Decision 37 — the submit callbacks are told apart by their payload
+
+**Status: ruled in, not implemented** (owner, 2026-08-30). The obligation is `T-PLAINTEXT-ENTERED`;
+the work is `FEAT-01-03`/`-04`. This decision is also the **answer to `FIX-02-01`**, which asks
+whether the two callbacks are one thing configured two ways.
+
+**Decision.** `on_text_entered` receives the submitted content as a **single concatenated string**.
+`after_submit` receives it as the **list of lines**. Both still fire, in that order, after
+validation. The recommended division of labour — *use `on_text_entered` to process the text, use
+`after_submit` for everything else* — is a **convention, not an enforcement**: neither callback is
+restricted to its recommended use.
+
+**Why.** Today both callbacks receive the identical argument, so the surface offers two names for
+one moment and the guide cannot say what distinguishes them. That is the defect `FIX-02-01` names,
+and the cheap-looking fix — delete one — costs a real capability, because the two run at different
+points of the flow and a project may legitimately want both. Giving them **different payloads**
+resolves the redundancy without removing anything: each callback acquires a reason to exist that a
+reader can state in one sentence.
+
+The choice of *which* gets the string is not arbitrary. `text` names a text object, so a callback
+called `on_text_entered` handing back an array of lines contradicts its own name; and the
+concatenation is what consumers do anyway — `repl` writes `print(string.unlines(lines))` and three
+more examples take `lines[1]`, which is the same operation for the single-line case they all use.
+
+**Half of this decision is already true.** `after_submit(lines)` is what the submit chain passes
+today (`userInputController.lua`, submit flow) and what the guide documents. **The change is
+one-sided**: only `on_text_entered`'s payload moves, from the line list to the joined string.
+
+**Consequence.** It is a **breaking change on a documented callback**, so it carries a CHANGELOG
+entry and a justification-table line. Every in-tree consumer moves with it: `turtle`, `valid` and
+`guess` simplify (`lines[1]` → the string), `repl` loses its `string.unlines`, and **`maze` is the
+one that pays** — `submit_program` genuinely wants lines, so it moves to `after_submit` or splits
+the string itself. Sizing that migration is `FEAT-01-04`'s first act, not an afterthought.
+
+## Decision 38 — a live platform table reaches a project through `__index`, never as a value
+
+**Status: ruled in; the pattern is already implemented** (owner, 2026-08-30). The obligation
+`T-NAMESPACE-CLONE` is paid by writing it down — `OP-01-03`.
+
+**Decision.** Any platform table a project must reach **live** is exposed through a namespace's
+metatable — resolved on access behind an up-value — and is never placed in the namespace as a plain
+field. Assignment to such a table is refused, exactly as Decision 7 refuses assignment to
+`compy.input`'s sub-tables.
+
+**Why.** The project environment is a **deep clone**, taken before the run
+(`../internals/project_sandbox_env.md`). A live table stored as a field is therefore *copied* into
+that clone, and the two sides then diverge in the quietest possible way: the project assigns its
+handlers into the copy, the framework's dispatcher reads the original, and **neither side raises**.
+Nothing is nil, nothing is out of range, nothing is logged — the handlers simply never run. It cost
+an hour of on-device debugging to find once, and the shape gives a debugger nothing to grab.
+
+**This is a generalisation, not a new idea.** Decision 18 met the same hazard from the other
+direction: `love.state.user_input` read from inside a project is *always* `nil`, because the project
+sees its clone while the framework writes the real global — which is why `is_shown()` exists at all.
+`compy.input` was built to dodge it, and `serial` was later built the same way, assignment to the
+table itself included. What was missing was the rule stated once, where the next person to add a
+namespace field will meet it.
+
+**Where this lives, and the one thing wrong with it.** The rule is **platform-wide, not input's** —
+its debt entry is in `technical_debt/general.md`, and the next table it saves may belong to any
+subsystem. It sits here because the owner asked for it *next to Decision 7*, which is where a reader
+meets the pattern, and because `decisions/` currently has no sandbox or namespace ledger to hold it.
+If one is ever opened, this is its first entry and should move whole.
+
+**Consequence.** The pattern is a requirement for new namespace members, not a stylistic preference:
+a live table added as a value field is a defect at the moment it is written, and it is a defect that
+tests pass through, since a unit test that holds one table sees no divergence. Decision 7 is the
+sibling rule — it freezes the identities on the *input* surface; this one says why any live surface
+must be reached that way in the first place.
+
 ---
 
 ## RETIRED
