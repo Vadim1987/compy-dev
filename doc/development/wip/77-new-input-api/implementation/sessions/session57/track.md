@@ -167,3 +167,21 @@ hours earlier.
 - **Counter-proposal carried, not decided:** `auto_hide` over `auto_close`, because the surface's
   verbs are `show`/`hide` and `close` appears nowhere on it — `FIX-02-08`/`-09` exist for exactly
   this. Margin is small; it is the owner's, and session58 puts it to them before executing `-02`.
+
+## Third addendum — the name lands, and the getter is withdrawn
+
+- **`auto_hide` agreed**, on my counter-proposal: matches `show`/`hide`, and `close` is on no part
+  of the surface.
+- **The owner withdrew their own `-04` (first-class readable flag)** and the argument is better than
+  the row: the mode shape **dissolved the use case**. The teardown advice was *check the flag, then
+  disarm*; disarming is now unconditional, so there is nothing to check. The query was load-bearing
+  only under `FEAT-01`'s re-seat-every-`show` semantics.
+- **The line worth keeping past this feature:** a read-only query earns its place when the
+  **framework** can change the value, not when only the project can. `is_shown()` passes that test;
+  `is_auto_hiding()` does not. Folded into `-01` rather than given a row, and flagged as a candidate
+  for `conventions/architecture_principles.md` on the `T-NAMESPACE-CLONE` precedent (generic rule →
+  suggested practice, not a decision).
+- **Two of six rows withdrawn within a day, both the owner's own.** Worth noticing the pattern
+  rather than the count: both were filed against the `FEAT-01` shape and stopped making sense once
+  the flag became a mode. **A design change invalidates rows that were sized against the old shape,
+  and the sprint should be re-read after one, not just re-numbered.**

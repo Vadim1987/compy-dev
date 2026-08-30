@@ -99,6 +99,16 @@ Decision 36's *"a migrating project author meets a familiar name"* is false: the
 restored, the name never reached anyone. The token is also already taken in-tree by the profiler.
 `FEAT-02-01` now amends a **ground** as well as an edge.
 
+**The name is `auto_hide`, and no reader is added.** The owner took the counter-proposal — it reads
+as a mode and matches the surface's own `show`/`hide`, where `close` appears nowhere. They then
+withdrew their own *first-class and readable* row on a good argument: the mode shape **dissolved its
+use case**, because disarming is unconditional (`auto_hide = false`, armed or not) and there is
+nothing to check before acting. The general line, which `FEAT-02-01` will carry: **a read-only query
+earns its place when the framework can change the value, not when only the project can** — why
+`is_shown()` stays and `is_auto_hiding()` was never built. **Two of `FEAT-02`'s six filed rows are
+now withdrawn, both by the owner, both within a day**, and neither was drift: each was filed against
+the `FEAT-01` shape and stopped making sense once the flag became a mode.
+
 **A retirement takes its citations with it** — new standing rule, `agents/rules/roadmap.md` §5, on
 the owner's directive: *no reconfiguration of a roadmap should leave references orphaned and
 unactionable*. It has a sharp edge worth keeping: the dangerous case is not the dangling citation

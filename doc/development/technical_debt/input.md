@@ -27,7 +27,7 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-### T-ONESHOT-SCOPE — `oneshot` is a `show`-only key and should be a widget property
+### T-ONESHOT-SCOPE — `oneshot` is a `show`-only key and should be `auto_hide`, a widget property
 
 - **Decision:** **36**, edge 1 — amended by the owner 2026-08-30, the same day it was ruled;
   the amendment itself is `FEAT-02-01`. Attestation:
@@ -41,8 +41,8 @@ paid, or turned out not to be debt.
 - **Why it stands:** the show-only category exists to protect **user-owned** content; `force`
   is in it because it is *meaningless* at `configure`, not because it is protected from it.
   **`oneshot` is machinery and the user does not own lifecycle** — it was admitted on a
-  resemblance to two keys it does not resemble. It also needs to be **readable** by a project
-  reasoning about its own teardown path, which it is not today.
+  resemblance to two keys it does not resemble. **No reader is added:** a query earns its place
+  when the framework can change the value, and nothing but the project ever writes this one.
 - **Also:** once project-owned the flag **persists until replaced**, like `validator` — it
   configures a *type of behaviour*, not one show/hide cycle (owner, 2026-08-30). `oneshot`
   names a single occurrence and so contradicts that, which is why the key is **renamed** at

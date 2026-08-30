@@ -1,4 +1,4 @@
-# Owner attestation — `oneshot` is a widget property, not a `show`-only key
+# Owner attestation — `oneshot` becomes `auto_hide`, a widget property
 
 **2026-08-30, session57, in discussion.** This **overrules `FEAT-01-01`'s Q1**, ruled the same day.
 Recorded here because a ruling that lives only in a chat is lost; `FEAT-02` executes it.
@@ -81,8 +81,18 @@ resemblance to two keys it does not resemble.
    already taken in-tree by the profiler. `FEAT-02-01` amends that ground; `FEAT-02-02` does the
    rename.
 
-3. **It becomes a first-class, readable flag** — checkable from project code the way `is_shown()`
-   is. A project reasoning about its own teardown path must be able to *ask*.
+3. ~~**It becomes a first-class, readable flag** — checkable from project code the way `is_shown()`
+   is. A project reasoning about its own teardown path must be able to *ask*.~~ **WITHDRAWN the same
+   day, by the owner.** The mode shape dissolved the use case: disarming is unconditional
+   (`auto_hide = false`, armed or not), so there is nothing to ask before acting — the query was
+   load-bearing only under `FEAT-01`'s semantics, where every `show` re-seated the flag. The owner's
+   ground: *"the flag is no more a state mutable from elsewhere — avoiding this indeterministic
+   mutability is another reason to make it a mode, keeping the stateful surface minimal."*
+   **The general line, which `FEAT-02-01` carries: a read-only query earns its place when the
+   framework can change the value, not when only the project can.** That is why `is_shown()` stays
+   — shownness moves for reasons a project cannot derive — and why `is_auto_hiding()` was never
+   built. `compy.input.config.auto_hide` was rejected hardest: a whole namespace to expose one
+   boolean is the same *new entity for convenience* the owner refused when rejecting a one-off flag.
 4. **The edge case is documented, not fixed.** A project calling `show{force}` from a teardown path
    should either **check the flag and disarm it first**, or do the re-show **after** the widget is
    hidden, with its state stashed project-side.

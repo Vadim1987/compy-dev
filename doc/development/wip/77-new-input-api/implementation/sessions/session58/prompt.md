@@ -1,4 +1,4 @@
-# session58 — `FEAT-02`: the close-on-submit flag is renamed and becomes a widget property
+# session58 — `FEAT-02`: `oneshot` becomes `auto_hide`, a widget property
 
 Read `agents/sessions.md` and `agents/validation.md` first, then the predecessor report
 [`../session57/report.md`](../session57/report.md).
@@ -26,7 +26,7 @@ The owner wants a reader who did not argue for the thing being overturned. Two c
 - If the case for the change does not survive your own reading, **say so before building it**. An
   overruling that only one session believes in is worth catching now, not after the ledger moves.
 
-## Your task — `FEAT-02`, six rows
+## Your task — `FEAT-02`, five rows
 
 `ROADMAP.md` holds them; read them there. The ruling and its reasoning, including what was
 **rejected** and what this **does not fix**, are in
@@ -38,10 +38,10 @@ reinterpret); **rename the key**; move it to the project-owned keys, `show` **an
 teardown-path advice and the persistence; invert the two tests that pin the old category and update
 the CHANGELOG.
 
-**The name is not settled — it is `FEAT-02-02`'s first act.** The owner proposed `auto_close` as an
-example; the roadmap carries a counter-proposal (`auto_hide`, matching the surface's own `show`/`hide`
-verbs) with the argument on both sides. **Put it to the owner and wait**, exactly as `FEAT-01-01`
-did. Do not pick one yourself.
+**The name is settled: `auto_hide`** (owner, 2026-08-30, on the parent's counter-proposal). It reads
+as a mode and matches the surface's own verbs — `compy.input` has `show` and `hide`, and `close`
+appears nowhere on it. **No reader is added**: `is_auto_hiding()` and a `config` namespace were both
+considered and refused, and the roadmap records why. Do not re-derive either.
 
 ### Three things not to rediscover the hard way
 
@@ -52,6 +52,12 @@ did. Do not pick one yourself.
   was not. That note also exists as a standing reminder — the parent asserted the base was
   "not checkable" rather than running one command, in a phase whose own boot document carries
   *check the PR base first* as a twice-learned lesson.
+- **Do not add a getter.** *First-class and readable* was filed by the owner and **withdrawn by
+  them the same day**, once the mode shape dissolved its use case: disarming is unconditional, so
+  there is nothing to check first. The line to hold, and `-01` writes it down: **a read-only query
+  earns its place when the framework can change the value, not when only the project can** — which
+  is why `is_shown()` stays. Consequence for `-04`: with no reader, the guide's rule is *state the
+  mode you want at every `show` that cares*, the discipline `validator` already asks for.
 - **Do not re-file the clearing rule, and do not soften the persistence.** *Disarmed when the
   widget goes down* was filed by session57 and **withdrawn by the owner the same day**. The settled
   reading is that **`oneshot` configures a type of behaviour, not one show/hide cycle** — so it is
@@ -98,9 +104,9 @@ Report both before starting `-01`, then proceed.
 - `hide()` refuses on an `always_shown` widget (console, editor) — worth knowing before hanging
   anything off it, which is part of why the clearing rule was withdrawn.
 - A project's `love` is a sandboxed deep clone, so a project **cannot** read widget state without a
-  surface built for it — that is Decision 18's shape, and `is_shown()` is the precedent `-04` should
-  follow — and the base had an `is_oneshot()` of its own, as a VIEW helper, which is not the same
-  thing and is not a template.
+  surface built for it (Decision 18). Relevant here only as the reason a getter would have had to be
+  *built* rather than derived — and no getter is being built. The base's `is_oneshot()` was a **view
+  helper**, not a project surface, and is not a precedent for one.
 - `false` is the uniform unset across the config table (Decision 35, statement 3), so the disarm
   idiom needs no new vocabulary.
 - The widget lives for one project **run** (Decision 3 as amended by `ARC-01`), so the flag dies
