@@ -108,7 +108,7 @@ Everything that puts the widget on screen and alters it while it is there.
 | `on_text_entered` | `function(text)` called after successful validation, with the submitted content as one string. |
 | `on_limit_reached` | Called when cursor movement reaches a boundary. |
 | `force` | `show` only: re-open a widget that is already up. |
-| `auto_hide` | `show` only: close the widget after a successful submit. |
+| `auto_hide` | Close the widget after every successful submit, until you set it back to `false`. |
 
 `show` on an active input widget warns and does nothing unless `force = true`.
 With `force`, it is a **full re-setup** — the same thing a first `show` does,
@@ -122,16 +122,15 @@ they set:
 - **Your content** — `text` and `cursor` — belongs to the person typing, so
   only `show` seats it. While the widget is up, `set_text`, `set_cursor` and
   `clear` are the ways to change it.
-- **`force` and `auto_hide` describe the opening itself**, not a standing
-  preference, so they too are `show`-only — passing either to `configure`
-  raises, naming `show`. `auto_hide` is spent by the `show` that carried it: a
-  later plain `show` opens an ordinary widget again.
-- **Everything else** belongs to your project. Those keys are set only when
-  you name them, and stay until you replace them: leaving one out changes
-  nothing, and there is no key that `show` applies and `configure` quietly
-  drops.
+- **`force` describes the opening itself** — it answers "replace the widget
+  that is already up", which is not a question `configure` can be asked — so it
+  is `show`-only and raises from `configure`, naming `show`.
+- **Everything else** belongs to your project, `auto_hide` included. Those keys
+  are set only when you name them, and stay until you replace them: leaving one
+  out changes nothing, and there is no key that `show` applies and `configure`
+  quietly drops.
 
-`false` is how you unset any project-owned key (`prompt`, `highlighter`, `validator`, `on_text_entered`, `on_limit_reached`). Passing `false` restores the key to its absent/default state, making expressions like `custom_validator or false` safe to pass when dynamically toggling settings.
+`false` is how you unset any project-owned key (`prompt`, `highlighter`, `validator`, `on_text_entered`, `on_limit_reached`, `auto_hide`). Passing `false` restores the key to its absent/default state, making expressions like `custom_validator or false` safe to pass when dynamically toggling settings.
 
 For `prompt`, `''` is an empty label and `false` restores the default one. A
 `cursor` of `false` seats none, leaving the baseline `show` just applied.
@@ -160,13 +159,13 @@ end
 
 `compy.input.configure(config)` changes the project's own settings on the
 input widget — `prompt`, `highlighter`, `validator`, `on_text_entered`,
-`on_limit_reached`. It raises on an unrecognised key by the same rule as
-`show`.
+`on_limit_reached`, `auto_hide`. It raises on an unrecognised key by the same
+rule as `show`.
 
-`configure` never touches your content, so `text`, `cursor`, `force` and
-`auto_hide` raise from it as keys belonging to another call, the way a lifecycle
-callback already does. Use `show` to seat content, and `set_text` / `set_cursor` /
-`clear` to change it while the widget is up.
+`configure` never touches your content, so `text`, `cursor` and `force` raise
+from it as keys belonging to another call, the way a lifecycle callback already
+does. Use `show` to seat content, and `set_text` / `set_cursor` / `clear` to
+change it while the widget is up.
 
 Calling `configure` while the widget is hidden is fine and does not warn: the
 settings apply straight away and are still in force at the next `show`. To
@@ -262,7 +261,21 @@ compy.input.show{
 
 That is the whole thing: nothing to install beforehand, nothing to tear down
 after. `auto_hide` is exactly the `after_submit = hide` above, written as a key
-— which is also the way to predict what it does at the edges:
+— which is also the way to predict what it does at the edges.
+
+**It stays on until you turn it off.** `auto_hide` is a mode, not a one-shot:
+it belongs to your project like `validator` does, so it applies to *every*
+later submit — including one from a plain `compy.input.show()` that says
+nothing about it — until you pass `auto_hide = false`. Both calls take it:
+
+```lua
+compy.input.configure{ auto_hide = false }   -- now; the draft is untouched
+compy.input.show{ auto_hide = false }        -- at the next opening
+```
+
+Prefer `configure` while the widget is up. A forced `show` would also disarm
+it, but a forced `show` is a full re-setup and starts the field empty, so it
+throws away whatever the user has typed.
 
 - It closes after a **successful** submit, so a `before_submit` veto, an empty
   field or a rejecting validator all leave the widget up, with the draft intact.
@@ -275,14 +288,17 @@ after. `auto_hide` is exactly the `after_submit = hide` above, written as a key
   installs nothing else gives its user no way to dismiss it without answering.
   If you want Escape to close, say so, the same way:
   `compy.input.callbacks.after_cancel = function() compy.input.hide() end`.
-- **Asking a follow-up question from inside your callback: leave `auto_hide`
-  off.** The widget is still up while your callbacks run, so a second `show`
-  needs `force = true` — and if that second `show` also passes `auto_hide`, it is
-  closed straight away, before the user can type into it. The close belongs to
-  the submit still in progress, and the flag it reads is whichever one is set
-  by then. `show{force = true}` **without** `auto_hide` is the follow-up that
-  survives; ask that one, and pass `auto_hide` again on the last question of the
-  chain.
+- **Asking a follow-up question from inside your callback: disarm it on the
+  follow-up.** The widget is still up while your callbacks run, so a second
+  `show` needs `force = true` — and because the mode persists, a follow-up that
+  says nothing about `auto_hide` is closed straight away, before the user can
+  type into it. The close belongs to the submit still in progress and reads
+  whichever value is set by the time your callbacks return, so
+  `show{force = true, auto_hide = false}` is the follow-up that survives. Ask
+  that one, and set `auto_hide = true` again on the last question of the chain.
+  If a teardown path of yours re-shows the widget, the same applies: disarm on
+  that `show`, or run it **after** the widget is down, holding the state you
+  need on your own side.
 
 ### Validation and highlighting
 

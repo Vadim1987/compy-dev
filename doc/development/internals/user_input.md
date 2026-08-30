@@ -664,7 +664,7 @@ local lines = self.model:get_text()
 if not gate(self.model, self.callbacks.validator, lines) then return end
 run_callback(self, 'on_text_entered', string.unlines(lines))
 run_callback(self, 'after_submit', lines)               -- DEFAULT: no-op — widget stays open
-if self.auto_hide then self:hide() end                    -- show{auto_hide} only
+if self.auto_hide then self:hide() end                    -- while auto_hide is set
 ```
 
 **The two deliveries differ by payload** (Decision 37): `on_text_entered` receives the submitted
@@ -679,13 +679,17 @@ which one failed.
 nothing downstream runs and the text stays in the field. It is a guard on *whether to submit at
 all*; rejecting bad input with a message is still the `validator`'s job.
 
-**`show{auto_hide = true}` is the exception to "no implicit hide"** (Decision 36), and it is sugar for
+**`auto_hide` is the exception to "no implicit hide"** (Decision 36), and it is sugar for
 the `after_submit = hide` above rather than a second policy. The close sits at the END of this
 flow, which is what gives it its edges for free: every early return above suppresses it, a project's
 own `after_submit` still runs against a live widget, and a callback that **raises** leaves the
 widget standing — the raise unwinds to the route boundary past that line, exactly as it unwinds
-past a hand-written `after_submit` that hides. The flag is seated at activation and spent by the
-`show` that carried it; `configure{auto_hide}` raises.
+past a hand-written `after_submit` that hides. The flag is **project-owned and persistent**: it is
+seated in `configure_core` like every other project-owned field, so `show` and `configure` both set
+it, set-if-given, and it applies to every later submit until a call passes `auto_hide = false`
+(Decision 36's Amendment). It is read at the END of the submit and not captured before the
+callbacks, which is what lets a follow-up prompt opened from inside the chain disarm itself and
+survive the close belonging to the submit still in progress.
 
 **Cancel** (`UserInputController:cancel_flow`):
 
@@ -787,8 +791,8 @@ predicate was added.
 
 All fields are optional and match the project-facing guide's table:
 `prompt`, `text`, `cursor` (`{line, col}`, applied after `text`),
-`validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, `force`
-and `auto_hide`. The project wrapper checks this table before it reaches
+`validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, `auto_hide`
+and `force`. The project wrapper checks this table before it reaches
 `configure_core`: an unrecognised key **raises** at the project's call line
 (`decisions/input.md`, Decision 15), rather than being dropped. This
 includes lifecycle names such as `after_submit`, which are direct
@@ -799,13 +803,14 @@ evaluator or legacy result paths.
 #### `configure(config)` — the live-reconfigure surface
 
 `configure` carries the **project-owned** fields and only those:
-`prompt`, `highlighter`, `validator`, and the widget-output
-callbacks (`on_text_entered`, `on_limit_reached`). Each is applied
-only when given, immediately, and stays until replaced. There is no
-partial application: each field either applies in full or is not
-named at all — never a half-applied config.
+`prompt`, `highlighter`, `validator`, `auto_hide`, and the
+widget-output callbacks (`on_text_entered`, `on_limit_reached`).
+Each is applied only when given, immediately, and stays until
+replaced. There is no partial application: each field either
+applies in full or is not named at all — never a half-applied
+config.
 
-`text`, `cursor`, `force` and `auto_hide` **raise** here. They are
+`text`, `cursor` and `force` **raise** here. They are
 `show`-only keys — keys that belong to another call, the treatment lifecycle
 callbacks already get — and the raise carries a message naming
 where each belongs (`decisions/input.md`, Decision 15's show-only

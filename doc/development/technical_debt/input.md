@@ -1281,6 +1281,10 @@ changes.
 - **Where:** `userInputController.lua` (`open_widget`, `submit_flow`),
   `consoleController.lua` (`SHOW_ONLY_KEYS`), `../input_api.md`
   (*"Asking one question"*), Decision 36.
+- **Read the paragraph above as history, not as behaviour** (2026-08-30, the same
+  day): `T-ONESHOT-SCOPE` and `FEAT-02` replaced that shape. The key is
+  **`auto_hide`**, it is project-owned and settable at `configure`, and it
+  **persists until set to `false`** rather than being spent by its own `show`.
 
 ### T-PLAINTEXT-ENTERED — the two submit callbacks receive identical payloads (RESOLVED, 2026-08-30)
 
