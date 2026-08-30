@@ -34,7 +34,7 @@ narrow mechanical rows follow. Sizing a small row against an unsettled surface i
 | | |
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
-| suite | **1020 / 0 / 0 / 10** — 1011 + `FEAT-01`'s nine (eight for `oneshot`, one for the payload split); the 10 pending are an owner ruling, an 11th is a finding |
+| suite | **1021 / 0 / 0 / 10** — 1011 + `FEAT-01`'s ten (eight for `oneshot`, one for the payload split, one from the cold peer review); the 10 pending are an owner ruling, an 11th is a finding |
 | marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |

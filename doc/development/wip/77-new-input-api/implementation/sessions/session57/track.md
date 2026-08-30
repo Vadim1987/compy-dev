@@ -71,3 +71,31 @@
   and `input_widget_callbacks_spec.lua:125` name `T-HL-TWO-HOMES`, whose heading dropped the slug
   when it retired (register convention: the body says *"Was `T-HL-TWO-HOMES`"*). Grep still finds
   it, so it is soft rot rather than a dangler — `FIX-03`'s business, flagged not swept.
+
+## Cold peer review of the sprint — commissioned at the owner's direction
+
+Prompt of record `validation/prompts/FEAT-01-peer-review.md`; report
+`validation/outcomes/FEAT-01-peer-review.md` with a parent verification addendum. Opus, cold —
+told explicitly not to open the track or either of my two review documents. **It did not need
+them**, which is evidence for the ledger's self-sufficiency (the `FEAT-01-03` question).
+
+**Verdict: approve with comments. Five findings, all five verified, all five acted on** — four
+fixed (`a113de70`), one documented and raised (`9eebbe3a`). Suite **1021 / 0 / 0 / 10**.
+
+- **The one that mattered:** seven live documents outside the sprint's blast list still described
+  the old payload — six per-example internals notes and `smoke_checklists.md` §B, whose three
+  sentences a **human** executes by hand. I had swept the guide and the internals doc and stopped
+  at the boundary of what I had touched. The lesson is the shape of the miss, not the count:
+  **a payload change's blast radius is every document that quotes a call site, not the documents
+  that describe the call.**
+- **One needed narrowing, and the narrowing matters.** The reviewer reported that a `oneshot`
+  prompt re-opened from inside the submit chain is closed immediately. True — but its repro
+  omitted `force = true`, and without that the follow-up `show` is refused outright (Decision 3)
+  and never happens. Re-probed both ways myself before acting.
+- **Not fixed in code, deliberately.** Reading the flag after the callbacks is what lets a forced
+  follow-up survive; capturing it before would close that one too. The remaining case needs a
+  per-session token — state on a surface whose value is having none. Raised to the owner rather
+  than taken. The new test pins the property any fix keeps and NOT the case a fix would change;
+  mutation-checked.
+- Decision 5 got an amendment pointer rather than a rewrite — its ruled text says results leave
+  through the widget's own callbacks, not what one of them is handed.
