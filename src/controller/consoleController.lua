@@ -1103,6 +1103,8 @@ function ConsoleController.prepare_env(cc)
   require('model.serial.probe')
   require('model.robot.probe')
   prepared.serial_probe     = serial_probe
+  prepared.serial_stats     = serial_stats
+  prepared.serial_tune      = serial_tune
   prepared.robot_probe      = robot_probe
 
   prepared.run              = prepared.run_project

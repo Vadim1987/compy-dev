@@ -9,9 +9,12 @@ require('util.jni')
 --- the backend must be created and polled on one thread.
 ---
 --- Verified on the device: scan, permission, open, write,
---- detach on unplug and a clean reconnect all run. Nothing
---- has come back from the board yet, so the read path is
---- exercised but not confirmed.
+--- read, detach on unplug and a clean reconnect all run.
+--- Open problem: reads stop early. After a write the board's
+--- reply arrives in two or three slices and then no read
+--- brings anything until the next write, while the same
+--- board answers a Mac at once. The knobs and counters below
+--- (serial_tune, serial_stats) exist to pin this down.
 
 --- @class AndroidBackend
 --- @field new function
@@ -27,8 +30,10 @@ local CDC_COMM = 2
 local CDC_DATA = 10
 local EP_BULK = 2
 local DIR_IN = 0x80
+local RX_CAP = 512
 local RX_SIZE = 64
 local READ_MS = 5
+local DRAIN_MAX = 16
 local WRITE_MS = 1000
 local CTRL_MS = 1000
 --- PendingIntent.FLAG_IMMUTABLE, required on Android 12+
@@ -46,6 +51,36 @@ local function now()
   return os.time()
 end
 
+--- Read-path knobs, changeable on the live port from the
+--- console (serial_tune) while the receive stall is being
+--- chased. The defaults are the original behaviour exactly:
+--- one read per poll, a 5 ms window, 64 bytes asked for.
+--- @return table
+local function default_tune()
+  return {
+    read_ms = READ_MS,
+    read_size = RX_SIZE,
+    gap_s = 0,
+    drain = false,
+  }
+end
+
+--- What the read path did so far, for serial_stats
+--- @return table
+local function fresh_stats()
+  return {
+    polls = 0,
+    reads = 0,
+    got = 0,
+    empty = 0,
+    neg = 0,
+    bytes = 0,
+    sends = 0,
+    last_got_at = nil,
+    last_send_at = nil,
+  }
+end
+
 --- @return AndroidBackend
 function AndroidBackend.new()
   local self = setmetatable({}, AndroidBackend)
@@ -55,7 +90,14 @@ function AndroidBackend.new()
   self.dev = nil
   self.due = 0
   self.extras_told = false
+  self.tune = default_tune()
+  self.stats = fresh_stats()
+  self.next_read = 0
   return self
+end
+
+function AndroidBackend:resetStats()
+  self.stats = fresh_stats()
 end
 
 function AndroidBackend:start(sink)
@@ -297,7 +339,7 @@ function AndroidBackend:openDevice(entry)
   }
   jniDropLocal(env, conn)
   jniDropLocal(env, connCls)
-  local rx = env[0].NewByteArray(env, RX_SIZE)
+  local rx = env[0].NewByteArray(env, RX_CAP)
   port.rx = jniGlobal(env, rx)
   jniDropLocal(env, rx)
   if not jniCallBool(env, port.conn, port.claimM,
@@ -332,15 +374,48 @@ function AndroidBackend:release(port)
   jniDropGlobal(env, port.conn)
 end
 
---- One bulk-in slice; '' when the slice brought nothing
+--- One bulk-in slice; '' when the slice brought nothing.
+--- Every outcome is counted apart: bulkTransfer returns a
+--- negative for both timeout and error, zero for an empty
+--- packet, and the stall shows as reads that keep coming
+--- back empty while the board still has bytes to give.
 --- @return string
 function AndroidBackend:read()
   local env = self.env
   local port = self.port
+  local tune = self.tune
+  local st = self.stats
+  local size = math.min(tune.read_size, RX_CAP)
   local n = jniCallInt(env, port.conn, port.bulkM,
-    port.epIn, port.rx, RX_SIZE, READ_MS)
-  if n <= 0 then return '' end
-  return jniReadBytes(env, port.rx, n)
+    port.epIn, port.rx, size, tune.read_ms)
+  st.reads = st.reads + 1
+  if n > 0 then
+    st.got = st.got + 1
+    st.bytes = st.bytes + n
+    st.last_got_at = now()
+    return jniReadBytes(env, port.rx, n)
+  end
+  if n == 0 then
+    st.empty = st.empty + 1
+  else
+    st.neg = st.neg + 1
+  end
+  return ''
+end
+
+--- Everything the port gives right now: one read, or, with
+--- drain on, reads until one comes back empty
+--- @return string
+function AndroidBackend:readAll()
+  local chunk = self:read()
+  if not self.tune.drain or chunk == '' then return chunk end
+  local parts = { chunk }
+  for _ = 2, DRAIN_MAX do
+    local more = self:read()
+    if more == '' then break end
+    parts[#parts + 1] = more
+  end
+  return table.concat(parts)
 end
 
 --- @param data string
@@ -359,6 +434,8 @@ function AndroidBackend:send(data)
   if n ~= #data then
     return nil, 'bulk write sent ' .. n .. ' of ' .. #data
   end
+  self.stats.sends = self.stats.sends + 1
+  self.stats.last_send_at = now()
   return true
 end
 
@@ -457,8 +534,12 @@ end
 
 --- @return string? fault
 function AndroidBackend:pollOpen()
-  local chunk = self:read()
-  if chunk ~= '' then self.sink.bytes(chunk) end
+  self.stats.polls = self.stats.polls + 1
+  if now() >= self.next_read then
+    self.next_read = now() + self.tune.gap_s
+    local chunk = self:readAll()
+    if chunk ~= '' then self.sink.bytes(chunk) end
+  end
   if now() < self.due then return end
   self.due = now() + PRESENCE_S
   local listed = self:present()
