@@ -194,6 +194,7 @@
 --- @field text str?
 --- @field cursor integer[]?
 --- @field force boolean?
+--- @field oneshot boolean?
 --- @field validator function?
 --- @field highlighter function?
 --- @field on_text_entered function?
