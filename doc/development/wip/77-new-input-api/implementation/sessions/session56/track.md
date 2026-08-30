@@ -49,3 +49,8 @@
   * `serial` claims now attributed as attestation (`grep -rnw serial src/` finds only *serialisation*).
   * **One finding disputed and left standing:** withdrawing Decision 38 is exactly what `ledgers.md` §2's vacuum clause permits — never the stakeholder's, no citation anywhere, and §2 says the absent process does not block the sweep.
   * **Bloat charge accepted where it lands on my choice.** Three of the four artifacts from the guard line were commissioned (predecessor's prompt, the charter's verification rule, the owner's own question); `T-GUARD-LIVE` was mine to size and was mis-sized. Trimmed.
+
+## Wrap — 2026-08-30
+
+* **Owner asked warm-vs-cold for `FEAT-01`. Answer: cold**, and the reason is the useful one — session56 *wrote* Decisions 36 and 37, so implementing them warm would never test whether the ledger is a specification or just a memory of one. A cold session either executes from it or discovers it is insufficient, and both outcomes are worth having. The mode boundary agrees: this session was revalidation and ledger work; `FEAT-01` is implementation.
+* **Wrapped:** report distilled, `session57/prompt.md` written (FEAT-01, opening with a *scoped* revalidation — the cold review already covered fidelity, so the open question is executability), pointer repointed, `agents/validation.md`'s stale 992 baseline refreshed to 1011 with its history line.
