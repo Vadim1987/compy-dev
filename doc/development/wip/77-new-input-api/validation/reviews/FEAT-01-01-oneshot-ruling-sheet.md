@@ -1,6 +1,6 @@
 # `FEAT-01-01` — `oneshot`: the edges, put to the owner
 
-**Session57, 2026-08-30. OWNER-GATED — nothing is implemented until this is ruled.**
+**Session57, 2026-08-30. RULED — the dispositions are at the foot of this document.**
 
 Decision 36 rules `oneshot` **in** and leaves its edges as *recommendations, not rulings*. This sheet
 puts each one to the owner: **evidence first, then the question**. Five questions — the four edges
@@ -134,6 +134,20 @@ work. The PR's justification table needs one line saying that.
 **Question.** Is that line the owner's to write, or drafted here for approval?
 
 ---
+
+## Rulings — owner, 2026-08-30
+
+| | ruled | note |
+|---|---|---|
+| **Q1** | show-only and non-sticky, **as recommended** | the "two kinds of show-only key" note was offered and **declined** — the category stays as Decision 35 words it, and this sheet is where the distinction is recorded if anyone needs it later |
+| **Q2** | **(a)** submit only, and **document the asymmetry** | the dismissal hole is accepted, not deferred: `FEAT-01-05` writes it into the guide rather than leaving a reader to find it. No debt entry — a documented behaviour is not an obligation |
+| **Q3** | composes with `after_submit`, **as recommended** | put as a formality with a stated recommendation; ratified without objection. Recorded plainly because *silence is not a ruling* and this one came close to being taken as one |
+| **Q4** | **(3)** — closes on a clean submit only | **reverses Decision 36's own recommendation.** The reversal is the point of running this gate: the recommendation's ground (*"the submit chain runs under an error boundary"*) did not survive contact with where the boundary actually is. No new machinery in `submit_flow` |
+| **Q5** | drafted here, for approval | the justification-table line lands with `CHG-01`/`PR-01`, not in this sprint |
+
+**Decision 36's edge section is rewritten as ruled text**, and `T-ONESHOT`'s `State` and `Revisit`
+lines follow it — both in the same commit as this disposition, so no reader meets a recommendation
+sitting next to its own ruling.
 
 ## What happens once this is ruled
 

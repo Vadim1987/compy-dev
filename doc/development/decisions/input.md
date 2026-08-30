@@ -1446,9 +1446,9 @@ redundant), and it must state whether the lifecycle callbacks — assignable onl
 
 ## Decision 36 — `oneshot`: a `show` that closes itself on submit
 
-**Status: ruled in, not implemented** (owner, 2026-08-30). The obligation is `T-ONESHOT`; the work
-is `FEAT-01-02`. **Its edges are recommendations below, not rulings** — they are ratified at
-`FEAT-01-01`, before any code.
+**Status: ruled in, edges ratified, not yet implemented** (owner, 2026-08-30). The obligation is
+`T-ONESHOT`; the work is `FEAT-01-02`. The edges below were recommendations when this entry was
+written and are **rulings** as of `FEAT-01-01` — three ratified as recommended, one **reversed**.
 
 **Decision.** `show{ oneshot = true }` takes the widget down after a successful submit, without the
 project installing a lifecycle callback to do it. It is sugar over what a project can already
@@ -1479,19 +1479,34 @@ repeated-prompting pattern deliberately, which is the pattern `oneshot` is not f
 for a convenience is who asks for it and what it costs the project that lacks it — both recorded
 above.
 
-**Recommended edges, pending `FEAT-01-01`:**
+**The edges, ruled (owner, 2026-08-30 — `FEAT-01-01`).** Evidence and the questions as they were
+put: `wip/77-new-input-api/validation/reviews/FEAT-01-01-oneshot-ruling-sheet.md`.
 
 - **A `show`-only key, spent by the `show` that reads it.** `oneshot` describes *this* prompting
   session, not a standing project preference, which puts it on the same side of Decision 35's
   boundary as `text`, `cursor` and `force`. A sticky `oneshot` would also be the more surprising of
   the two, since a later bare `show()` would close on submit for reasons written elsewhere.
+  Consequently `configure{oneshot}` **raises**, like the other three, and a bare `show()` clears it.
 - **Submit only — cancel is already not a close.** `cancel_flow` clears and leaves the widget
-  standing (Decision 6), and no `oneshot` reading should quietly change what Escape does.
+  standing (Decision 6), and no `oneshot` reading should quietly change what Escape does. **The
+  asymmetry is documented, not hidden** (`FEAT-01-05`): a project that installs nothing and relies
+  on `oneshot` alone has no dismissal path — its user's Escape clears the content and the widget
+  stays up. A project that wants Escape to close writes `after_cancel = function() hide() end`, the
+  same one-liner on the other channel.
 - **It composes with `after_submit`; it does not refuse one.** The project's callback runs first and
   the close follows it, so a project can both react to the submission and have the widget go down.
   Refusing the combination would force exactly the boilerplate this decision exists to remove.
-- **It closes even if a callback raised.** The submit chain runs under an error boundary, and a
-  widget left standing after an error would be a second, silent failure mode on top of the first.
+- **It closes on a CLEAN submit only — a raised callback leaves the widget standing.** This
+  **reverses** the recommendation this entry carried, on evidence gathered when the recommendation
+  was checked for buildability. The recommendation's ground was *"the submit chain runs under an
+  error boundary"*; the boundary is real but it wraps the **route entry**
+  (`controller.lua`, `with_canvas_and_errors`), not the chain, and deliberately so. A raise in
+  `on_text_entered` therefore already unwinds past `after_submit` today, so honouring the edge
+  meant new machinery inside `submit_flow` — a protected call and a re-raise — for a case where the
+  first failure is **not** silent: the project suspends and its error is reported. The widget's
+  fate now matches what the hand-written `after_submit = hide` would have done, which is the
+  behaviour this whole decision is sugar for. *A widget standing behind a reported error is the
+  smaller of the two failures, not a second one.*
 
 **Consequence.** `show` grows one key, so `doc/input_api.md`, the config-key lists and the
 CHANGELOG's `Added` section all move together (`FEAT-01-05` documents it; `CHG-01` carries it).

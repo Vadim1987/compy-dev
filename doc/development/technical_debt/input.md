@@ -33,18 +33,19 @@ paid, or turned out not to be debt.
   submit, without the project installing a callback to do it.
 - **Where:** the submit flow in `userInputController.lua`, the config-key lists in
   `consoleController.lua`, and `../input_api.md`'s `show` table.
-- **State:** ruled in, unbuilt. A project that wants a prompt-per-command writes
-  `after_submit = function() compy.input.hide() end` today — a hook installed for its side
-  effect. The **edges are not ruled**: whether the key is spent by its `show` or sticky,
-  whether it composes with a project's own `after_submit`, and what it does when a callback
-  raised. Decision 36 carries a recommendation on each; none is ratified.
+- **State:** ruled in, **edges ratified 2026-08-30**, unbuilt. A project that wants a
+  prompt-per-command writes `after_submit = function() compy.input.hide() end` today — a hook
+  installed for its side effect. The edges are now rulings in Decision 36: show-only and
+  spent by its `show`; submit only, never cancel; it composes with a project's own
+  `after_submit`; and it closes on a **clean** submit only — the one edge that was reversed,
+  because the error boundary the recommendation stood on wraps the route, not the chain.
 - **Why it stands:** only the edges are unsettled; the flag itself is settled. It
   **preceded this feature** — the replaced API had it, so this is a restoration — and it was
   **asked for by the `serial` API's author**, a consumer outside the input work. Its
   ergonomic case is the one-line question: a project whose subject is not user input asks
   the user something with a prompt and a callback and nothing else to install or tear down.
-- **Revisit:** `FEAT-01-01` ratifies the edges, `FEAT-01-02` builds it, `FEAT-01-05`
-  documents it. It **grows** the public surface, so the PR's justification table carries a
+- **Revisit:** `FEAT-01-01` ratified the edges ✅, `FEAT-01-02` builds it, `FEAT-01-05`
+  documents it — including the dismissal asymmetry the cancel ruling leaves standing. It **grows** the public surface, so the PR's justification table carries a
   line — naming the precedent and the outside request, which is what grounds it.
 
 ### T-PLAINTEXT-ENTERED — the two submit callbacks receive identical payloads
