@@ -27,17 +27,43 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-### T-ONESHOT - need to restore 'oneshot' as a useful synt-sugar option
+### T-ONESHOT — `oneshot` is ruled in and nothing implements it
 
-(attestation: it was removed in-flight to avoid oversugaring, but the need is confirmed by microbit development). Rationale: it will reduce boilerplate (no need to install separate after_submit hook which sloses the widget, and also aligns with historical tradition (old API had 'oneshot'). To be written down as decision.
+- **Decision:** **36** — `show{ oneshot = true }` takes the widget down after a successful
+  submit, without the project installing a callback to do it.
+- **Where:** the submit flow in `userInputController.lua`, the config-key lists in
+  `consoleController.lua`, and `../input_api.md`'s `show` table.
+- **State:** ruled in, unbuilt. A project that wants a prompt-per-command writes
+  `after_submit = function() compy.input.hide() end` today — a hook installed for its side
+  effect. The **edges are not ruled**: whether the key is spent by its `show` or sticky,
+  whether it composes with a project's own `after_submit`, and what it does when a callback
+  raised. Decision 36 carries a recommendation on each; none is ratified.
+- **Why it stands:** the owner's attestation is the case for it — removed in-flight to avoid
+  over-sugaring, need re-confirmed by microbit development. **The in-tree evidence is thin
+  and the entry says so:** exactly one shipped example (`turtle`) closes on submit, and it
+  would keep its `after_submit` anyway to re-arm an echo guard, so here the sugar removes one
+  call from one example. That is a reason to ratify deliberately, not a reason to drop it.
+- **Revisit:** `FEAT-01-01` ratifies the edges, `FEAT-01-02` builds it. It **grows** the
+  public surface, so the PR's justification table carries a line naming the attestation as
+  the ground.
 
-### T-PLAINTEXT-ENTERED
+### T-PLAINTEXT-ENTERED — the two submit callbacks receive identical payloads
 
-Right now we have two almost similar hooks: `after_submit` and `on_text_entered`. The latter provides list of lines -- technically fair but useless, as in most cases consumer will concat them into plaintext. Word 'text' also semantically assumes we are working with text object.
-
-Suggestion: let `on_text_entered` return the plain text (concatenated), and `after_submit` to get same content as list of lines.
-Pros: two easy ways to reach both representations without boilerplate, `after_submit` gets its own reason for existance beyond oneshot -> less confusion in the documentation, better devX. Recommendation would be clean: use `on_text_entered` to process plaintext, use `after_submit` for any other processing logic (recommended convention, not enforced)
-Status: inlined here by human, to be written down as decision and analyzed first (same as T-PLAINTEXT-ENTERED)
+- **Decision:** **37** — `on_text_entered` receives the concatenated string, `after_submit`
+  the list of lines. This is also the ruled answer to `FIX-02-01`.
+- **Where:** the submit chain in `userInputController.lua` (`on_text_entered` then
+  `after_submit`, both passed `lines`); consumers across `src/examples/`; `../input_api.md`.
+- **State:** both callbacks are handed the same argument, so the surface offers two names for
+  one moment and the guide cannot say what tells them apart. **Half the fix is already true:**
+  `after_submit(lines)` is what the chain passes today and what the guide documents, so only
+  `on_text_entered`'s payload moves.
+- **Why it stands:** it is a **breaking change on a documented callback**, so it needs its
+  CHANGELOG entry, its justification-table line and a migration of every in-tree consumer.
+  Three examples simplify (`lines[1]` → the string) and `repl` loses a `string.unlines`, but
+  **`maze` pays** — `submit_program` genuinely wants lines and moves to `after_submit` or
+  splits the string itself.
+- **Revisit:** `FEAT-01-03` (with `FIX-02-01`, never separately), `FEAT-01-04` to build and
+  feed `CHG-01`.
 
 ### T-GUARD-LIVE — the guide never says a project's own keys stay live while the field is up
 
