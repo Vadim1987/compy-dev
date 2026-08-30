@@ -4,8 +4,27 @@
 -- field below takes a syntactically complete Lua chunk and
 -- Enter sends the whole chunk down the line. With the Lua
 -- REPL firmware on the micro:bit this is remote execution.
+--
+-- Diagnostic build: every chunk is printed as byte values
+-- before it is turned into text, and the chunk handed to
+-- send is printed the same way. A byte lost in the input
+-- field and a byte lost on the wire look alike as text and
+-- differ here: a short tx means the field mangled it, a
+-- whole tx with a short rx means the line did.
 
 local serial = compy.serial
+
+--- Byte values, so a damaged chunk stays readable and
+--- terminators remain visible
+--- @param chunk string
+--- @return string
+local function hex_of(chunk)
+  local out = {}
+  for i = 1, #chunk do
+    out[i] = string.format('%02X', string.byte(chunk, i))
+  end
+  return table.concat(out, ' ')
+end
 
 -- Everything means everything: bytes are assembled into
 -- lines here, and a tail that stays unterminated (the
@@ -15,6 +34,7 @@ local tail = ''
 local settle = 0
 
 serial.onBytes = function(chunk)
+  print('rx ' .. #chunk .. ' ' .. hex_of(chunk))
   local text = chunk:gsub('\r\n', '\n'):gsub('\r', '\n')
   tail = tail .. text
   while true do
@@ -58,7 +78,9 @@ compy.input.show{
   validator = LuaSyntaxValidator,
   highlighter = LuaHighlighter,
   on_text_entered = function(lines)
-    local ok, err = serial.send(table.concat(lines, '\r') .. '\r')
+    local chunk = table.concat(lines, '\r') .. '\r'
+    print('tx ' .. #chunk .. ' ' .. hex_of(chunk))
+    local ok, err = serial.send(chunk)
     if not ok then
       print('[send failed: ' .. tostring(err) .. ']')
     end
