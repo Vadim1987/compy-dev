@@ -36,11 +36,16 @@ resemblance to two keys it does not resemble.
 1. **`oneshot` is a widget property.** It leaves `SHOW_ONLY_KEYS` and becomes project-owned:
    settable at `show` **and** `configure`, set-if-given, `false` to unset (Decision 35, statement 3
    — the disarm idiom arrives free).
-2. **Disarmed when the widget goes down.** The parent's condition, accepted: *"cleared on
-   consumption"* alone leaves the flag alive when a session ends **without** a submit — Escape, then
-   a later bare `show()` gets a `oneshot` nobody asked for, which is exactly the stickiness Q1 was
-   right to fear. The close calls `hide`, so consumption is subsumed. One rule: **armed by `show` /
-   `configure`, disarmed when the widget goes down.**
+2. **It persists until replaced, like every other project-owned key — no clearing rule.** The
+   parent proposed *disarmed when the widget goes down*, arguing that a session ending without a
+   submit would leave the flag armed for a later bare `show()`. **The owner withdrew it the same
+   day:** the flag lives on the widget as `callbacks` do, and the widget lives one **run**
+   (Decision 3 as amended by `ARC-01`), so project exit tears it down and no machinery is needed.
+   Two further reasons it was wrong, which the parent conceded: clearing at `hide` would be a
+   **second reconfiguration policy** where `ARC-01-07` established one — *content resets,
+   everything the project sets persists until replaced* — and the argument **proves too much**,
+   since `validator` persists across a bare `show()` in exactly the same way and surprises nobody.
+   A project wanting a continuous session after a `oneshot` one writes `oneshot = false`.
 3. **It becomes a first-class, readable flag** — checkable from project code the way `is_shown()`
    is. A project reasoning about its own teardown path must be able to *ask*.
 4. **The edge case is documented, not fixed.** A project calling `show{force}` from a teardown path

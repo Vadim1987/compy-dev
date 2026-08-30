@@ -115,7 +115,17 @@ hours earlier.
 - The argument that actually carried it was **neither of ours to start with**: disarming a `oneshot`
   today requires `show{force}`, a full re-setup that **clears the user's draft**. Nobody had noticed.
   A live defect beats a tidiness argument, and it should have been the first thing looked for.
-- Filed: `FEAT-02` (six rows, leads the remaining sequence), `T-ONESHOT-SCOPE`, and the attestation
+- Filed: `FEAT-02` (leads the remaining sequence), `T-ONESHOT-SCOPE`, and the attestation
   at `validation/notes/owner-attestation-oneshot-widget-property.md`. **Cold session by owner
   preference** — a reader who did not argue for the thing being overturned.
 - Wrapped: report, `session58/prompt.md`, pointer repointed, baseline refreshed to 1021.
+- **Post-wrap: the owner withdrew `FEAT-02-03`** (*disarmed when the widget goes down*) — my row,
+  filed hours earlier. Their ground: the flag sits on the widget like `callbacks`, the widget lives
+  one run, so project exit tears it down. **Verified** (`gives the next project clean output
+  fields`), and their ground answers **cross-run** leakage while my row was aimed at **within-run**
+  stickiness — so I conceded on two stronger grounds instead: clearing at `hide` would be a
+  **second reconfiguration policy** where `ARC-01-07` established one, and my argument **proves too
+  much** (a bare `show()` inherits `validator` the same way and surprises nobody). Row withdrawn
+  and *recorded, not deleted*, with a crosswalk; the successor prompt is corrected and told not to
+  re-file it. **Pattern worth keeping: when the owner's conclusion is right and their stated reason
+  addresses a different hazard, say both.**

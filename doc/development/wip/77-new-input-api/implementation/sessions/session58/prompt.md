@@ -26,27 +26,27 @@ The owner wants a reader who did not argue for the thing being overturned. Two c
 - If the case for the change does not survive your own reading, **say so before building it**. An
   overruling that only one session believes in is worth catching now, not after the ledger moves.
 
-## Your task — `FEAT-02`, six rows
+## Your task — `FEAT-02`, five rows
 
 `ROADMAP.md` holds them; read them there. The ruling and its reasoning, including what was
 **rejected** and what this **does not fix**, are in
 [`../../../validation/notes/owner-attestation-oneshot-widget-property.md`](../../../validation/notes/owner-attestation-oneshot-widget-property.md).
 Debt goal: **`T-ONESHOT-SCOPE`**. In outline: amend Decisions 36 and 35 **first** (the ledger gate —
 amend, never reinterpret); move `oneshot` to the project-owned keys, `show` **and** `configure`,
-`false` to unset; **disarm it when the widget goes down**; make it **readable by a project**, the
-way `is_shown()` is; document the teardown-path advice; invert the two tests that pin the old
-category and update the CHANGELOG.
+`false` to unset; make it **readable by a project**, the way `is_shown()` is; document the
+teardown-path advice; invert the two tests that pin the old category and update the CHANGELOG.
 
 ### Three things not to rediscover the hard way
 
-- **`FEAT-02-03` is not optional polish.** Without *disarmed when the widget goes down*, a session
-  that ends with **no** submit (Escape) leaves the flag armed, and a later bare `show()` gets a
-  `oneshot` nobody asked for. That is the stickiness Q1 was right to fear, and it is the one way
-  this change can be a regression.
+- **Do not re-file the clearing rule.** *Disarmed when the widget goes down* was filed by session57
+  and **withdrawn by the owner the same day**; the roadmap keeps it, with its reasoning, under "the
+  row that was filed and withdrawn". If it looks necessary to you, read that section first — it
+  fails three ways, and the strongest is that it would be a **second reconfiguration policy** where
+  `ARC-01-07` established one. `oneshot` persists until replaced, exactly like `validator`.
 - **It does not fix the peer review's case, and is not meant to.** A hook doing
   `show{force, oneshot = true}` still re-arms and the trailing close still fires. Do not quietly
   widen the sprint into fixing it — that needs a generation token, and the state was judged not
-  worth it. `FEAT-02-05` is where the user learns to avoid it.
+  worth it. `FEAT-02-04` is where the user learns to avoid it.
 - **Do not "simplify" the close by capturing the flag before the hooks.** It looks like the obvious
   shape and it is wrong: mutation-tested in session57, it leaves the broken case broken **and**
   closes the plain forced follow-up that currently survives. The test
@@ -71,10 +71,10 @@ Report both before starting `-01`, then proceed.
 
 - `oneshot` lives on the widget (`self.oneshot`), seated in `open_widget` **unconditionally**, and
   spent by the last line of `submit_flow`. It is in `SHOW_ONLY_KEYS` in `consoleController.lua`.
-- `hide()` refuses on an `always_shown` widget (console, editor). Whatever `FEAT-02-03` hangs off
-  `hide` must not assume it always runs.
+- `hide()` refuses on an `always_shown` widget (console, editor) — worth knowing before hanging
+  anything off it, which is part of why the clearing rule was withdrawn.
 - A project's `love` is a sandboxed deep clone, so a project **cannot** read widget state without a
-  surface built for it — that is Decision 18's shape, and `is_shown()` is the precedent `-04` should
+  surface built for it — that is Decision 18's shape, and `is_shown()` is the precedent `-03` should
   follow.
 - `false` is the uniform unset across the config table (Decision 35, statement 3), so the disarm
   idiom needs no new vocabulary.

@@ -43,7 +43,7 @@ paid, or turned out not to be debt.
   **`oneshot` is machinery and the user does not own lifecycle** — it was admitted on a
   resemblance to two keys it does not resemble. It also needs to be **readable** by a project
   reasoning about its own teardown path, which it is not today.
-- **Revisit:** `FEAT-02`, all six rows, cold by owner preference. The change is **not** a fix
+- **Revisit:** `FEAT-02`, five rows, cold by owner preference. The change is **not** a fix
   for the re-show edge the peer review found — that survives, and the row says so.
 
 ### T-GUARD-LIVE — the guide never says a project's own keys stay live while the widget is shown
