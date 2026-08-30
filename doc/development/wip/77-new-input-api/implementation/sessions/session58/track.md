@@ -75,3 +75,29 @@ Full note: `validation/reviews/FEAT-02-case-and-executability.md`.
   `controller.lua:842,1080-1082`, `input_global_shortcuts_spec.lua:338`) keep `oneshot`; so do the
   two **historical** comments at `userInputView.lua:290` and `userInputModel.lua:436-439`, which say
   "oneshot is gone" about the *base's* model argument.
+
+## Owner remarks after the sprint (2026-08-30)
+
+Five, all answered: BDD naming pass on the four new cases (`aadfb2b0`); the mermaid drift filed as
+`T-MERMAID-MODEL` + `FIX-02-24` (`44253cd2`); the `show{force, auto_hide = false}` question — it
+does **not** fail, it is pinned, and only the silent and re-arming follow-ups close; turtle upgraded
+to `auto_hide` with its terminology fixed on the spot (`8b52d5b5`), since its `after_submit` had a
+second job the owner's condition allowed for; turtle's own smoke checklist + `ACC-02-08`
+(`42d1138a`).
+
+## Cold peer review (Opus, commissioned by the owner) — `a77968e0`, acted on in `23e4a05a`
+
+**Approve with comments, six findings, all verified before acting.** The two that mattered were
+documents left describing the replaced shape: `doc/input_api.md`'s echo-guard worked example still
+showed the `after_submit = hide + re-arm` turtle had just stopped using — and turtle **cites that
+section by name** — with a rule (*"Only your own `hide()` calls need this"*) that `auto_hide`
+falsifies; and Decision 36's Amendment, written this session, called *"leave the follow-up plain"*
+an escape, which the same paragraph's persistence retires.
+
+Also caught: the turtle checklist's A6 chained badly off A5 (would have made the tester type a
+stray `i` and report B2's symptom), `WIDGET_KEYS` commented "NOT sticky" against this file's own
+definition of sticky, and one over-long line. The sixth — the changed follow-up behaviour is
+unpinned — was answered in a comment rather than a case: it and the re-arming follow-up are the two
+shapes a generation-token fix would change, and pinning cements what a fix should move.
+
+The review re-established all three facts the sprint leans on, by mutation where it could.
