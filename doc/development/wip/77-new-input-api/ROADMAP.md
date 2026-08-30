@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -18,6 +18,7 @@ the sequence**. Updated 2026-08-30.
 | **ARC-02** ✅ | `show` composes `configure`; the user's content is `show`'s alone | the second structural row — it dissolved four defects, including two nobody had filed yet |
 | **OP-01** ✅ | ledger upkeep for the owner's three hand-filed entries → **Decisions 36 and 37** | needed no ruling, and it produced the design inputs the next stage implements |
 | **FEAT-01** | the two surface proposals: **`oneshot`**, and the **payload split** that tells the submit callbacks apart | **leads by blast radius** — it changes the public surface, so `FIX-02-01` is one of its rows' seams, `CHG-01` carries what it breaks, and a slice cut before it lands is cut twice |
+| **FEAT-02** | **`oneshot` becomes a widget property**, readable like `is_shown()` — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
 | **{ BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02** |
 | **FIX-03** | the ephemeral-citation sweep | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
 | **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
@@ -424,6 +425,49 @@ callback hands you. **Both are defensible and neither is a new moving part**: `o
 this work, and the payload split makes two confusingly-similar hooks distinct instead of redundant
 — it answers a simplicity complaint rather than adding to one. Both still need that line written,
 not assumed.
+
+---
+
+## ⬜ FEAT-02 — `oneshot` becomes a widget property
+
+**Owner ruling, 2026-08-30, in discussion — it overrules `FEAT-01-01`'s Q1, made the same day.**
+Attestation with the reasoning, what was rejected and what this does *not* fix:
+[`validation/notes/owner-attestation-oneshot-widget-property.md`](validation/notes/owner-attestation-oneshot-widget-property.md).
+Debt goal: **`T-ONESHOT-SCOPE`**.
+
+**The principle replaces an analogy.** Decision 36 put `oneshot` beside `text`, `cursor` and `force`
+because it *describes this session*. The category's real reason is narrower — `text` and `cursor`
+are **the user's**, and `force` sits there because it is *meaningless* at `configure`, not because it
+is protected from it. **`oneshot` is machinery, and the user does not own lifecycle**, so it was
+admitted on a resemblance to two keys it does not resemble.
+
+**It also closes a live defect.** Today, disarming a `oneshot` mid-session requires `show{force}`,
+which is a **full re-setup that clears the user's draft** (Decision 35, statement 4, pinned by
+`force without text clears the content`). Changing your mind about the flag costs the user's typing.
+That is the strongest argument for the change, and it is a defect rather than a preference.
+
+**Cold by preference (owner):** `FEAT-01` was executed and ruled inside one long context, and this
+row overturns part of it. A reader who did not argue for the thing being overturned is the right one.
+
+| id | step | notes |
+|---|---|---|
+| **FEAT-02-01** | **amend Decision 36 (edge 1) and Decision 35's boundary note** — the ledger gate, first | **amend, never reinterpret** — the same standard `ARC-01-03` was held to. Edge 1 is *ruled text ruled today*; it does not get quietly rewritten. Say what it said, what replaces it, and that the ground was a resemblance rather than a reason. Decision 35's show-only category loses a member and should say why the remaining three belong |
+| **FEAT-02-02** | **`oneshot` moves to the project-owned keys** — `show` **and** `configure`, set-if-given, `false` to unset | the disarm idiom arrives **free** from Decision 35 statement 3 (`false` is the uniform unset); no new vocabulary. In code: out of `SHOW_ONLY_KEYS`, into `CALLBACK_KEYS`' company and `configure_core` |
+| **FEAT-02-03** | **disarmed when the widget goes down** | the companion rule, **without which this is a regression**: *cleared on consumption* alone leaves the flag alive when a session ends with **no** submit — Escape, then a later bare `show()` gets a `oneshot` nobody asked for, which is the stickiness `FEAT-01-01`'s Q1 was right to fear. The close calls `hide`, so consumption is subsumed. One rule: **armed by `show`/`configure`, disarmed when the widget goes down** |
+| **FEAT-02-04** | **make it first-class and readable** — a project can ask, the way it asks `is_shown()` | the owner's requirement, and the reason for it: a project reasoning about its own teardown path must be able to *check* rather than remember. Mind Decision 18's framing — a project's `love` is a sandboxed clone, so it cannot read widget state without a surface for it |
+| **FEAT-02-05** | **document the teardown-path edge**, in the guide | the owner's wording is the shape of the advice: a `show{force}` from a teardown path should either **check the flag and disarm it first**, or run **after** the widget is hidden with the project holding its own state. This **replaces** the bullet `9eebbe3a` added, which describes the old shape |
+| **FEAT-02-06** | tests and the CHANGELOG | **two existing cases invert**: `configure raises on oneshot, naming show()` becomes `configure arms it`, and `it is spent by its own show` becomes the going-down rule. `a forced follow-up show survives the close` must keep passing — it pins the placement, not the category |
+
+**What this does NOT fix, stated so nobody expects it to.** The peer review's case survives: a hook
+doing `show{force, oneshot = true}` still re-arms, and the trailing close still fires. Owning the
+close by the submit that armed it needs a generation token, judged not worth the state. What changes
+is that the behaviour gains a one-line explanation — *the close reads the flag at the end of the
+submit it is running* — and the hook gains the clean escape it lacks today.
+
+**Rejected, on evidence:** capturing the flag *before* the hooks. Mutation-tested during `FEAT-01` —
+it leaves the `oneshot` follow-up closed **and** closes the plain follow-up that currently survives,
+failing exactly `a forced follow-up show survives the close`. Reading the flag after the hooks is
+what makes any forced follow-up survivable.
 
 ---
 

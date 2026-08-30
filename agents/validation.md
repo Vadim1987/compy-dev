@@ -30,7 +30,7 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **1011 / 0 / 0 / 10**. A different count is
+6. Confirm the baseline: `busted tests` → expect **1021 / 0 / 0 / 10**. A different count is
    a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
    (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
    session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
@@ -47,7 +47,9 @@ owner and revisable, not a frozen mandate.
    highlighter's one home, 986 with the `show` trace level, 990 with the cursor shapes; its four
    documentation commits added none. **992 after session54**'s two breaking tests for the
    `xpcall` argument-loss fix, and **1011 after `MERGE-01-04`** — the platform upstream merge
-   brought 19 tests of its own. Session56 added none: revalidation and ledger work.
+   brought 19 tests of its own. Session56 added none: revalidation and ledger work, and
+   **1021 after session57**'s `FEAT-01` — eight cases for `oneshot`, one for the payload split,
+   and one from its cold peer review.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -309,7 +311,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session57/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session58/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 

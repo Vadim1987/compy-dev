@@ -99,3 +99,23 @@ fixed (`a113de70`), one documented and raised (`9eebbe3a`). Suite **1021 / 0 / 0
   mutation-checked.
 - Decision 5 got an amendment pointer rather than a rewrite — its ruled text says results leave
   through the widget's own callbacks, not what one of them is handed.
+
+## Owner reopens the design — FEAT-02 filed, session wrapped
+
+The peer review's finding 1 did not end as a documented wart. The owner's answer changed what
+`oneshot` **is**: *"show-specific keys are an exclusion carved out to protect user-owned input, and
+the user does not own lifecycle"* — so `oneshot` becomes a **widget property**, readable like
+`is_shown()`, disarmed when the widget goes down. **This overrules this session's own Q1**, ruled
+hours earlier.
+
+- The owner's first candidate — capture the flag before the hooks — was **rejected on the mutation
+  evidence I already had**: it leaves the broken case broken and closes the plain forced follow-up
+  that currently survives. Answering a design question with a test result rather than an argument
+  is the cheapest move available and it settled that half in one exchange.
+- The argument that actually carried it was **neither of ours to start with**: disarming a `oneshot`
+  today requires `show{force}`, a full re-setup that **clears the user's draft**. Nobody had noticed.
+  A live defect beats a tidiness argument, and it should have been the first thing looked for.
+- Filed: `FEAT-02` (six rows, leads the remaining sequence), `T-ONESHOT-SCOPE`, and the attestation
+  at `validation/notes/owner-attestation-oneshot-widget-property.md`. **Cold session by owner
+  preference** — a reader who did not argue for the thing being overturned.
+- Wrapped: report, `session58/prompt.md`, pointer repointed, baseline refreshed to 1021.

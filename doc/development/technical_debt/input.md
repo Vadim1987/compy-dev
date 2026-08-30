@@ -27,6 +27,25 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
+### T-ONESHOT-SCOPE — `oneshot` is a `show`-only key and should be a widget property
+
+- **Decision:** **36**, edge 1 — amended by the owner 2026-08-30, the same day it was ruled;
+  the amendment itself is `FEAT-02-01`. Attestation:
+  `../wip/77-new-input-api/validation/notes/owner-attestation-oneshot-widget-property.md`.
+- **Where:** `SHOW_ONLY_KEYS` in `consoleController.lua`, `configure_core` and `hide` in
+  `userInputController.lua`, the `show`/`configure` key lists in `../input_api.md`.
+- **State:** `oneshot` is refused at `configure`, so the only way to disarm one mid-session is
+  `show{force}` — a **full re-setup that clears the user's draft** (Decision 35, statement 4,
+  pinned by `force without text clears the content`). Changing your mind about the flag costs
+  the user's typing, or an exact hand re-supply of `text` and `cursor`.
+- **Why it stands:** the show-only category exists to protect **user-owned** content; `force`
+  is in it because it is *meaningless* at `configure`, not because it is protected from it.
+  **`oneshot` is machinery and the user does not own lifecycle** — it was admitted on a
+  resemblance to two keys it does not resemble. It also needs to be **readable** by a project
+  reasoning about its own teardown path, which it is not today.
+- **Revisit:** `FEAT-02`, all six rows, cold by owner preference. The change is **not** a fix
+  for the re-show edge the peer review found — that survives, and the row says so.
+
 ### T-GUARD-LIVE — the guide never says a project's own keys stay live while the widget is shown
 
 - **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
