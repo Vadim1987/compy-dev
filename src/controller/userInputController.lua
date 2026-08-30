@@ -325,6 +325,11 @@ local open_widget = function(self, cfg)
   if cfg.cursor ~= nil then
     self:set_cursor_pos(cfg.cursor[1], cfg.cursor[2])
   end
+  -- Seated unconditionally, unlike the project-owned fields
+  -- above: oneshot describes THIS session, so a later bare
+  -- show() must clear it rather than inherit it
+  -- (doc/development/decisions/input.md, Decision 36).
+  self.oneshot = cfg.oneshot
   -- love.state.user_input is the widget CONTRACT: its presence
   -- is the flag the draw loop (controller.lua) checks to paint
   -- V:draw() each frame, and it carries the { M, C, V } handle
@@ -435,6 +440,16 @@ end
 --- VETOES; otherwise empty guard → validate → deliver (fires
 --- on_text_entered) → after_submit. after_submit defaults to a
 --- no-op, so the widget stays open unless a callback hides it.
+---
+--- A oneshot session hides LAST, so the project's own
+--- after_submit still runs against a live widget (Decision 36).
+--- The close sits here and nowhere else, which is what makes
+--- every early return above suppress it without a rule of its
+--- own — and why a callback that RAISES leaves the widget
+--- standing: the raise unwinds to the route boundary
+--- (controller.lua, with_canvas_and_errors) past this line,
+--- exactly as it unwinds past a hand-written after_submit that
+--- hides. That edge is ruled, not incidental (Decision 36).
 function UserInputController:submit_flow()
   if run_callback(self, 'before_submit') then return end
   if self.model:get_text():is_empty() then return end
@@ -445,6 +460,7 @@ function UserInputController:submit_flow()
   end
   run_callback(self, 'on_text_entered', lines)
   run_callback(self, 'after_submit', lines)
+  if self.oneshot then self:hide() end
 end
 
 --- Cancel flow (Decision 6): the widget's own Escape behaviour.

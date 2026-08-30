@@ -486,6 +486,112 @@ describe('input surface: widget callbacks #input', function()
       end)
   end)
 
+  -- doc/development/decisions/input.md, Decision 36: oneshot is
+  -- sugar over `after_submit = function() hide() end`, and that
+  -- equivalence is what every case here pins. The four edges
+  -- were ruled at FEAT-01-01 before any of this was written.
+  describe('oneshot', function()
+    it('a oneshot show closes on submit', function()
+      local input = F.activate_project()
+      input.show({ text = 'a', oneshot = true })
+      F.session.press('return')
+      assert.is_false(F.is_widget_visible())
+    end)
+
+    -- The control for the case above: without the key the same
+    -- sequence leaves the widget up, so a submit broken
+    -- outright cannot pass the case by never showing anything.
+    it('a plain show does not close on submit', function()
+      local input = F.activate_project()
+      input.show({ text = 'a' })
+      F.session.press('return')
+      assert.is_true(F.is_widget_visible())
+    end)
+
+    -- Decision 36, ruled edge 2: Escape clears and leaves the
+    -- widget standing (Decision 6), and oneshot does not
+    -- change what Escape does.
+    it('it does not close on cancel', function()
+      local input = F.activate_project()
+      input.show({ text = 'a', oneshot = true })
+      F.session.press('escape')
+      assert.is_true(F.is_widget_visible())
+      assert.is_true(F.widget:is_empty())
+    end)
+
+    -- Decision 36, ruled edge 3: it composes with a project's
+    -- own after_submit rather than refusing one, and the close
+    -- comes LAST -- so the callback still runs against a live
+    -- widget, which is what lets it clear or read the field.
+    it('it composes with after_submit, closing last',
+      function()
+        local seen
+        local input = F.activate_project()
+        input.callbacks.after_submit = function()
+          seen = F.is_widget_visible()
+        end
+        input.show({ text = 'a', oneshot = true })
+        F.session.press('return')
+        assert.is_true(seen)
+        assert.is_false(F.is_widget_visible())
+      end)
+
+    -- "After a SUCCESSFUL submit" needs no rule of its own:
+    -- the close hangs where after_submit fires, so every early
+    -- return of the submit chain suppresses it for free. A
+    -- rejecting validator is the case a project actually meets.
+    it('a rejecting validator leaves it open', function()
+      local input = F.activate_project()
+      input.show({
+        text      = 'bad',
+        oneshot   = true,
+        validator = function()
+          return false, { Error('no') }
+        end,
+      })
+      F.session.press('return')
+      assert.is_true(F.is_widget_visible())
+      assert.is_true(F.widget:has_error())
+    end)
+
+    -- Decision 36, ruled edge 1: the key is spent by the show
+    -- that reads it. A later bare show() gets a widget that
+    -- stays open, with no way for the earlier call to reach it.
+    it('it is spent by its own show', function()
+      local input = F.activate_project()
+      input.show({ text = 'a', oneshot = true })
+      F.session.press('return')
+      input.show({ text = 'b' })
+      F.session.press('return')
+      assert.is_true(F.is_widget_visible())
+    end)
+
+    -- Decision 36, ruled edge 4 -- the one REVERSED from the
+    -- entry's own recommendation. A raised callback leaves the
+    -- widget standing, which is what the hand-written
+    -- after_submit = hide would also have done: the raise
+    -- unwinds past it. Asserted against the error channel, not
+    -- against "no crash" -- the route boundary swallows the
+    -- raise and suspends, so a silently-skipped callback would
+    -- pass a has_no.errors check just as well.
+    it('a raised callback leaves it open', function()
+      local ran = 0
+      local input = F.activate_project()
+      input.show({
+        text            = 'a',
+        oneshot         = true,
+        on_text_entered = function()
+          ran = ran + 1
+          error('boom')
+        end,
+      })
+      F.session.press('return')
+      assert.equal(1, ran)
+      assert.equal('snapshot', love.state.app_state)
+      assert.is_true(F.is_widget_visible())
+    end)
+  end)
+
   describe('Enter and Escape as ordinary keys', function()
     -- doc/development/internals/user_input.md, "Submit and
     -- cancel — widget-owned callback sequences":

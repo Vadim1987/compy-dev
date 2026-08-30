@@ -592,10 +592,15 @@ local CALLBACK_KEYS = {
 -- already up", which configure() never faces. See
 -- doc/development/decisions/input.md, Decision 15's show-only
 -- category, added there by Decision 35.
+-- `oneshot` joins them as a property of THIS prompting session
+-- rather than a standing preference (Decision 36) — the first
+-- of the four that outlives its own call, since the widget
+-- remembers it until the submit that spends it.
 local SHOW_ONLY_KEYS = {
-  text   = 'show(), or set_text on a live widget',
-  cursor = 'show(), or set_cursor on a live widget',
-  force  = 'show()',
+  text    = 'show(), or set_text on a live widget',
+  cursor  = 'show(), or set_cursor on a live widget',
+  force   = 'show()',
+  oneshot = 'show()',
 }
 
 --- @param names string[]
