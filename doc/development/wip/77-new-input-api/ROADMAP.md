@@ -2,7 +2,7 @@
 
 **The navigable view.** One page, current, ordered. The reasoning lives in
 [`validation/plan.md`](validation/plan.md) and the review documents this points at; **this file is
-the sequence**. Updated 2026-08-27.
+the sequence**. Updated 2026-08-30.
 
 ---
 
@@ -10,17 +10,24 @@ the sequence**. Updated 2026-08-27.
 
 **ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
-*`FEAT-01` and `OP-01` were filed 2026-08-30 from the owner's hand-written debt entries. **`OP-01`
-ran first and is complete** — it needed no ruling, and it produced the decisions (36 and 37) that
-`FEAT-01` now implements, which is the opposite of this line's first reading and the owner's own
-correction to it. **`FEAT-01` leads what remains, by blast radius**: it changes the public surface,
-so `FIX-02-01` is the same seam as one of its rows, `CHG-01` carries what it breaks, and a slice cut
-before it lands is cut twice.*
+| stage | what it is | why it sits here |
+|---|---|---|
+| **ACC-01** ✅ | device-free acceptance — a cold PR review against the original stakeholder ask | it found the 26 defects everything after it works through; nothing could be sized before it ran |
+| **ARC-01** ✅ | the project widget gets a **run lifetime** instead of an application one | structural: it *dissolved* a defect class rather than patching it, and deleted the teardown machinery the later rows would have been sized against |
+| **LEDGER-01** ✅ | the three ledgers get a shape — changelog, decisions, debt | the rows after it record their state somewhere; the somewhere had to exist first |
+| **ARC-02** ✅ | `show` composes `configure`; the user's content is `show`'s alone | the second structural row — it dissolved four defects, including two nobody had filed yet |
+| **OP-01** ✅ | ledger upkeep for the owner's three hand-filed entries → **Decisions 36 and 37** | needed no ruling, and it produced the design inputs the next stage implements |
+| **FEAT-01** | the two surface proposals: **`oneshot`**, and the **payload split** that tells the submit callbacks apart | **leads by blast radius** — it changes the public surface, so `FIX-02-01` is one of its rows' seams, `CHG-01` carries what it breaks, and a slice cut before it lands is cut twice |
+| **{ BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02** |
+| **FIX-03** | the ephemeral-citation sweep | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
+| **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
+| **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain |
+| **MERGE-01** | upstream reconciliation — actually merge | 🟡 platform repo **done** (`f4913833`); `maze`, `keyboard`, `balloons` remain |
+| **PR-01** | assembly — the shipping slice cut, the description, the coordinated PRs | last by construction: a slice regenerated before the tree stops moving is regenerated twice |
 
-*`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
-other rows would otherwise be sized against — the ordering principle firing exactly as written.*
-
----
+*The ordering principle throughout is **blast radius, not severity** — anything that can reveal more
+defects, escalate into a design decision, or reach deep enough to cause regressions goes first, and
+narrow mechanical rows follow. Sizing a small row against an unsettled surface is sizing it twice.*
 
 ## Where things stand
 
@@ -32,6 +39,20 @@ other rows would otherwise be sized against — the ordering principle firing ex
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
 | upstream | **Platform repo reconciled** with `upstream/dev` (`aldum/dev`) via MERGE-01-04 (commit `f4913833`) |
+| downstream | **this build is the experimental foundation of the platform's `serial` API work** (owner, 2026-08-30) — the snapshot taken after the upstream merge and before the hand-filed debt entries. It **does not delay the release; it sets the mark** — see the note below |
+
+**A downstream consumer now stands on this branch** (owner, 2026-08-30). Platform work on the
+**`serial` API** took this build as its experimental foundation — the snapshot after the upstream
+merge (`f4913833`, `75a7e5b3`) and before the hand-filed debt entries (`880c45ef`). Two consequences,
+and the owner has ruled on the first: **it does not delay the release**, it *sets the mark*. The
+second is `FEAT-01`'s business — the payload split (`FEAT-01-03`/`-04`) is a **breaking change with
+a real consumer now**, not a theoretical one, so `CHG-01`'s migration note has an audience and
+should be written for it. The `serial` surface is also the origin of two of the three hand-filed
+entries: its author asked for `oneshot` and met the namespace-clone hazard.
+
+*(The exact snapshot is unpinned. If it matters later, tag it — `TAGS.md` is where this branch's
+baselines live, and the range is `75a7e5b3..880c45ef` with nothing in between but this session's
+predecessor's work.)*
 
 **The spinoff sprint is closed and TF2 with it.** With `ARC-01` and `ARC-02` both complete, what
 remains is acceptance, the residue of the four defect sprints, reconciliation, and assembly.
@@ -393,6 +414,7 @@ appended at the end — they are what makes `-02` and `-04` worth having.
 | **FEAT-01-04** | implement the split; **feed `CHG-01`** | a payload change on a documented callback is **breaking** — the `Removed`/`Changed` sections and the justification table both carry it |
 | **FEAT-01-05** | **document `oneshot`** in `doc/input_api.md` — the `show` config table, and a worked example | the worked example is **the one-line question** (prompt + `on_text_entered` + `oneshot`, nothing installed and nothing torn down), because that is the case the flag exists for. Decision 36 names it. Also the config-key lists and the CHANGELOG's `Added` section |
 | **FEAT-01-06** | **document how to choose between `on_text_entered` and `after_submit`** | the guide currently describes both and distinguishes neither, which is `FIX-02-01`'s complaint. The text to write, per the owner: **either or both may be used; the recommendation is `on_text_entered` for text-centric work and `after_submit` for generic machinery — useful for clarity and for cutting boilerplate, and explicitly not enforced.** Write it *with* `-05`: a reader meeting `oneshot` is a reader deciding which callback to hang their work on |
+| **FEAT-01-07** | **consider rewiring the examples that join the lines themselves** — *only where it makes the example clearer* | **conditional by design** (owner, 2026-08-30), and it runs **after `-04`**, not inside it. Four examples call `string.unlines` on the payload as their first statement (`maze`, `tixy`, `balloons`, `repl`) and three take `lines[1]` (`turtle`, `valid`, `guess`); every one of them *could* drop that line under the new payload. The row asks whether doing so **reads better**, example by example — an example exists to be read, and a mechanical sweep that leaves a call site less obvious has spent clarity to buy consistency. `wontfix` per example is a legitimate outcome. Two of the seven are in **separate repos** (`maze`, `balloons`), so their changes ride their own PRs |
 
 **The frame question, stated once so the ruling is taken with it in view.** The stakeholder ask was a
 *simpler and more robust* input API, and the PR must not carry moving parts beyond it without a
