@@ -27,49 +27,6 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-### T-ONESHOT — `oneshot` is ruled in and nothing implements it
-
-- **Decision:** **36** — `show{ oneshot = true }` takes the widget down after a successful
-  submit, without the project installing a callback to do it.
-- **Where:** the submit flow in `userInputController.lua`, the config-key lists in
-  `consoleController.lua`, and `../input_api.md`'s `show` table.
-- **State:** ruled in, **edges ratified 2026-08-30**, unbuilt. A project that wants a
-  prompt-per-command writes `after_submit = function() compy.input.hide() end` today — a hook
-  installed for its side effect. The edges are now rulings in Decision 36: show-only and
-  spent by its `show`; submit only, never cancel; it composes with a project's own
-  `after_submit`; and it closes on a **clean** submit only — the one edge that was reversed,
-  because the error boundary the recommendation stood on wraps the route, not the chain.
-- **Why it stands:** only the edges are unsettled; the flag itself is settled. It
-  **preceded this feature** — the replaced API had it, so this is a restoration — and it was
-  **asked for by the `serial` API's author**, a consumer outside the input work. Its
-  ergonomic case is the one-line question: a project whose subject is not user input asks
-  the user something with a prompt and a callback and nothing else to install or tear down.
-- **Revisit:** `FEAT-01-01` ratified the edges ✅, `FEAT-01-02` builds it, `FEAT-01-05`
-  documents it — including the dismissal asymmetry the cancel ruling leaves standing. It **grows** the public surface, so the PR's justification table carries a
-  line — naming the precedent and the outside request, which is what grounds it.
-
-### T-PLAINTEXT-ENTERED — the two submit callbacks receive identical payloads
-
-- **Decision:** **37** — `on_text_entered` receives the concatenated string, `after_submit`
-  the list of lines. This is also the ruled answer to `FIX-02-01`.
-- **Where:** the submit chain in `userInputController.lua` (`on_text_entered` then
-  `after_submit`, both passed `lines`); consumers across `src/examples/`; `../input_api.md`.
-- **State:** both callbacks are handed the same argument, so the surface offers two names for
-  one moment and the guide cannot say what tells them apart. **Half the fix is already true:**
-  `after_submit(lines)` is what the chain passes today and what the guide documents, so only
-  `on_text_entered`'s payload moves.
-- **Why it stands:** it is a **breaking change on a documented callback**, so it needs its
-  CHANGELOG entry, its justification-table line and a migration of the consumers that
-  index. **None wants the list**; a consumer that did would still have `after_submit`.
-  **Four call `string.unlines` on the payload as their first statement** (`maze`'s
-  `submit_program`, `tixy`'s `submit_body`, `balloons`'s `deliver`, `repl`) and **keep
-  working untouched** — `unlines` is idempotent over a string, so rewriting them is
-  `FEAT-01-07`'s clarity call. **Three take `lines[1]`** (`turtle`, `valid`, `guess`) and
-  break **silently** (`("s")[1]` is nil, not a raise): those three are the migration, and
-  all three are in-tree — the breaking half needs no cross-repo coordination.
-- **Revisit:** `FEAT-01-03` (with `FIX-02-01`, never separately), `FEAT-01-04` to build and
-  feed `CHG-01`.
-
 ### T-GUARD-LIVE — the guide never says a project's own keys stay live while the widget is shown
 
 - **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
@@ -1281,6 +1238,34 @@ changes.
   anyway.
 
 ## RETIRED
+
+### T-ONESHOT — `oneshot` is ruled in and nothing implements it (RESOLVED, 2026-08-30)
+
+- **Resolution:** built at `FEAT-01-02` after `FEAT-01-01` ratified the edges —
+  three as Decision 36 recommended them, one **reversed**: it closes on a *clean*
+  submit only, because the error boundary the recommendation stood on wraps the
+  route rather than the submit chain. `show{ oneshot = true }` seats the flag at
+  activation and `submit_flow` spends it after `after_submit`; `configure{oneshot}`
+  raises as a `show`-only key. Documented at `FEAT-01-05`, including the dismissal
+  asymmetry Escape leaves standing.
+- **Where:** `userInputController.lua` (`open_widget`, `submit_flow`),
+  `consoleController.lua` (`SHOW_ONLY_KEYS`), `../input_api.md`
+  (*"Asking one question"*), Decision 36.
+
+### T-PLAINTEXT-ENTERED — the two submit callbacks receive identical payloads (RESOLVED, 2026-08-30)
+
+- **Resolution:** built at `FEAT-01-04` per Decision 37 — `on_text_entered`
+  receives the joined string, `after_submit` the line list, and that difference is
+  what tells them apart. This also closed **`FIX-02-01`**, which asked whether the
+  two were one callback set two ways; the answer needed the write-up as much as
+  the ruling, so `FEAT-01-06` carries the *recommended, not enforced* convention.
+- **The migration was not uniform, which the entry originally missed.** `unlines`
+  is idempotent over a string, so the four consumers that joined kept working
+  untouched and were rewired at `FEAT-01-07` for clarity alone; the three that
+  indexed (`turtle`, `valid`, `guess`) broke **silently** and migrated with the
+  framework.
+- **Where:** `userInputController.lua` (submit flow), `../input_api.md`,
+  `CHANGELOG.md` (`Changed`, leading with the migration), Decision 37.
 
 ### T-TURTLE-DUP — `turtle` double-handles its own keys (RESOLVED, 2026-08-28)
 

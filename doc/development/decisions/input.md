@@ -1446,9 +1446,9 @@ redundant), and it must state whether the lifecycle callbacks — assignable onl
 
 ## Decision 36 — `oneshot`: a `show` that closes itself on submit
 
-**Status: ruled in, edges ratified, not yet implemented** (owner, 2026-08-30). The obligation is
-`T-ONESHOT`; the work is `FEAT-01-02`. The edges below were recommendations when this entry was
-written and are **rulings** as of `FEAT-01-01` — three ratified as recommended, one **reversed**.
+**Status: implemented** (owner ruling 2026-08-30; built at `FEAT-01-02`). `T-ONESHOT` is retired.
+The edges below were recommendations when this entry was written and are **rulings** as of
+`FEAT-01-01` — three ratified as recommended, one **reversed**.
 
 **Decision.** `show{ oneshot = true }` takes the widget down after a successful submit, without the
 project installing a lifecycle callback to do it. It is sugar over what a project can already
@@ -1516,9 +1516,9 @@ for.
 
 ## Decision 37 — the submit callbacks are told apart by their payload
 
-**Status: ruled in, not implemented** (owner, 2026-08-30). The obligation is `T-PLAINTEXT-ENTERED`;
-the work is `FEAT-01-03`/`-04`. This decision is also the **answer to `FIX-02-01`**, which asks
-whether the two callbacks are one thing configured two ways.
+**Status: implemented** (owner, 2026-08-30; built at `FEAT-01-04`). `T-PLAINTEXT-ENTERED` is
+retired. This decision is also the **answer to `FIX-02-01`**, which asked whether the two callbacks
+are one thing configured two ways — closed with it, as `FEAT-01-03` required.
 
 **Decision.** `on_text_entered` receives the submitted content as a **single concatenated string**.
 `after_submit` receives it as the **list of lines**. Both still fire, in that order, after

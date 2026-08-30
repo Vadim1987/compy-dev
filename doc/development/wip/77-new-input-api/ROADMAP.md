@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -34,7 +34,7 @@ narrow mechanical rows follow. Sizing a small row against an unsettled surface i
 | | |
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
-| suite | **1011 / 0 / 0 / 10** — 992 baseline + 19 upstream tests introduced during MERGE-01-04 platform merge; the 10 pending are an owner ruling, an 11th is a finding |
+| suite | **1020 / 0 / 0 / 10** — 1011 + `FEAT-01`'s nine (eight for `oneshot`, one for the payload split); the 10 pending are an owner ruling, an 11th is a finding |
 | marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
@@ -385,7 +385,7 @@ entries**, and the **decisions ledger's numbering**.
 
 ---
 
-## ⬜ FEAT-01 — the two surface proposals the owner filed from the device
+## ✅ FEAT-01 — the two surface proposals the owner filed from the device — **COMPLETE**
 
 **New KIND, owner-ruled 2026-08-30: `FEAT` is design-and-implementation of a proposed surface
 change** — distinct from `BUG` (something misbehaves), `FIX` (docs and process) and `OP` below
@@ -409,12 +409,12 @@ appended at the end — they are what makes `-02` and `-04` worth having.
 | id | step | notes |
 |---|---|---|
 | **FEAT-01-01** ✅ | **the `oneshot` design ruling** — what the option means at the edges, before any code · **`T-ONESHOT`** | **RULED 2026-08-30.** Three edges ratified as recommended, one **reversed**: `oneshot` closes on a **clean submit only**, because the error boundary the recommendation stood on wraps the route, not the submit chain. Sheet: [`validation/reviews/FEAT-01-01-oneshot-ruling-sheet.md`](validation/reviews/FEAT-01-01-oneshot-ruling-sheet.md). *Original filing:* | **owner-gated, and the design questions are real**: does `oneshot` close on *submit only*, or also on cancel/escape? Does it survive a `configure`? Does it compose with an `after_submit` the project also set, or refuse one? The entry's own attestation is the constraint — it was **removed in-flight to avoid over-sugaring** and comes back because **microbit development re-confirmed the need**, so the ruling must say what earns it back |
-| **FEAT-01-02** | implement `oneshot` | breaking-test first per `agents/development.md`; the framework side *is* testable, unlike the example side (`general.md` BACKLOG) |
+| **FEAT-01-02** ✅ | implement `oneshot` | breaking-test first per `agents/development.md`; the framework side *is* testable, unlike the example side (`general.md` BACKLOG) |
 | **FEAT-01-03** ✅ | **the payload split** — `on_text_entered` yields concatenated plain text, `after_submit` yields the list of lines · **`T-PLAINTEXT-ENTERED`** | **ruled together with `FIX-02-01`, never separately.** That row asks whether the two hooks are one callback set two ways; this is a candidate *answer* — keep both, differentiate their payloads, and `after_submit` gains a reason to exist beyond closing. The owner's framing is a **recommended convention, not an enforced one**. **RULED 2026-08-30, jointly with `FIX-02-01`** — Decision 37 is the ruling and says so in its own text; this row confirmed it is executable and corrected its consequence paragraph, which read as though all seven consumers merely simplify. They do not: four keep working untouched (`string.unlines` is idempotent over a string) and three break **silently**. |
-| **FEAT-01-04** | implement the split; **feed `CHG-01`** | a payload change on a documented callback is **breaking** — the `Removed`/`Changed` sections and the justification table both carry it |
-| **FEAT-01-05** | **document `oneshot`** in `doc/input_api.md` — the `show` config table, and a worked example | the worked example is **the one-line question** (prompt + `on_text_entered` + `oneshot`, nothing installed and nothing torn down), because that is the case the flag exists for. Decision 36 names it. Also the config-key lists and the CHANGELOG's `Added` section |
-| **FEAT-01-06** | **document how to choose between `on_text_entered` and `after_submit`** | the guide currently describes both and distinguishes neither, which is `FIX-02-01`'s complaint. The text to write, per the owner: **either or both may be used; the recommendation is `on_text_entered` for text-centric work and `after_submit` for generic machinery — useful for clarity and for cutting boilerplate, and explicitly not enforced.** Write it *with* `-05`: a reader meeting `oneshot` is a reader deciding which callback to hang their work on |
-| **FEAT-01-07** | **consider rewiring the examples that join the lines themselves** — *only where it makes the example clearer* | **conditional by design** (owner, 2026-08-30), and it runs **after `-04`**, not inside it. Four examples call `string.unlines` on the payload as their first statement (`maze`, `tixy`, `balloons`, `repl`) and three take `lines[1]` (`turtle`, `valid`, `guess`); every one of them *could* drop that line under the new payload. The row asks whether doing so **reads better**, example by example — an example exists to be read, and a mechanical sweep that leaves a call site less obvious has spent clarity to buy consistency. `wontfix` per example is a legitimate outcome. Two of the seven are in **separate repos** (`maze`, `balloons`), so their changes ride their own PRs |
+| **FEAT-01-04** ✅ | implement the split; **feed `CHG-01`** | a payload change on a documented callback is **breaking** — the `Removed`/`Changed` sections and the justification table both carry it |
+| **FEAT-01-05** ✅ | **document `oneshot`** in `doc/input_api.md` — the `show` config table, and a worked example | the worked example is **the one-line question** (prompt + `on_text_entered` + `oneshot`, nothing installed and nothing torn down), because that is the case the flag exists for. Decision 36 names it. Also the config-key lists and the CHANGELOG's `Added` section |
+| **FEAT-01-06** ✅ | **document how to choose between `on_text_entered` and `after_submit`** | the guide currently describes both and distinguishes neither, which is `FIX-02-01`'s complaint. The text to write, per the owner: **either or both may be used; the recommendation is `on_text_entered` for text-centric work and `after_submit` for generic machinery — useful for clarity and for cutting boilerplate, and explicitly not enforced.** Write it *with* `-05`: a reader meeting `oneshot` is a reader deciding which callback to hang their work on |
+| **FEAT-01-07** ✅ | **consider rewiring the examples that join the lines themselves** — *only where it makes the example clearer* | **DONE 2026-08-30 — all four joiners rewired, none `wontfix`, and the reason is the same in each: the join was never what the example is about.** `repl` becomes `print(text)`, `tixy` `body = text` (its parameter was already *named* `text` while holding a line list), `maze` `start_program(text)`, `balloons` `current_handler(text)`. Two of the four — `maze` and `balloons` — carried comments stating that the API hands you LINES, which the split made **false**, so those two would have needed a commit whether or not the code moved. The three `lines[1]` consumers are not this row's: they broke silently and migrated with `FEAT-01-04`. `maze` (`d2be028`) and `balloons` (`6d6c6e3`) are commits in their own repos. *Original filing:* | **conditional by design** (owner, 2026-08-30), and it runs **after `-04`**, not inside it. Four examples call `string.unlines` on the payload as their first statement (`maze`, `tixy`, `balloons`, `repl`) and three take `lines[1]` (`turtle`, `valid`, `guess`); every one of them *could* drop that line under the new payload. The row asks whether doing so **reads better**, example by example — an example exists to be read, and a mechanical sweep that leaves a call site less obvious has spent clarity to buy consistency. `wontfix` per example is a legitimate outcome. Two of the seven are in **separate repos** (`maze`, `balloons`), so their changes ride their own PRs |
 
 **The frame question, stated once so the ruling is taken with it in view.** The stakeholder ask was a
 *simpler and more robust* input API, and the PR must not carry moving parts beyond it without a
