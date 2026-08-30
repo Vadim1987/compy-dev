@@ -241,8 +241,10 @@
 --- @field get_cursor fun(): integer?, integer?
 --- @field set_cursor fun(line: integer, col: integer)
 --- @field set_text fun(text: str, keep_cursor: boolean?)
---- configure takes InputShowConfig minus `force`, which answers
---- a show-only question; passing it raises.
+--- configure takes InputShowConfig minus the show-only keys —
+--- `text`, `cursor` and `force`; passing one raises. Everything
+--- else, `auto_hide` included, is project-owned and reaches
+--- both calls.
 --- @field configure fun(cfg: InputShowConfig?)
 --- @field clear fun()
 --- @field shortcuts InputShortcuts
