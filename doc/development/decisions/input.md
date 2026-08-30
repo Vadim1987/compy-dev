@@ -1543,13 +1543,30 @@ today (`userInputController.lua`, submit flow) and what the guide documents. **T
 one-sided**: only `on_text_entered`'s payload moves, from the line list to the joined string.
 
 **Consequence, and it is smaller than it looks.** The change is breaking on a documented callback,
-so it carries a CHANGELOG entry and a justification-table line. But **every in-tree consumer
-simplifies and none pays**: four of the seven — `maze`'s `submit_program`, `tixy`'s `submit_body`,
+so it carries a CHANGELOG entry and a justification-table line. But **not one consumer in this tree
+wants the list** — which is the strongest evidence the split is right, and a consumer that does want
+it still has `after_submit`. Four of the seven — `maze`'s `submit_program`, `tixy`'s `submit_body`,
 `balloons`'s `deliver` and `repl` — call `string.unlines` on the payload as their *first statement*,
 which is this decision performed by hand at each call site; the other three (`turtle`, `valid`,
-`guess`) take `lines[1]`. **Not one consumer in this tree wants the list**, which is the strongest
-evidence the split is right, and a consumer that does want it still has `after_submit`. `FEAT-01-04`
-should confirm the count before relying on it — the point is the shape, and the shape is unanimous.
+`guess`) take `lines[1]`.
+
+**The migration is not uniform, and the asymmetry runs opposite to the sentence above** (verified in
+code at `FEAT-01-03`, 2026-08-30):
+
+- **The four that join keep working untouched.** `string.unlines` is idempotent over a string —
+  `string.join` returns its argument unchanged when handed one (`util/string/string.lua`) — so
+  `string.unlines(already_joined)` is a no-op. Rewriting them is *clarity* work, which is exactly
+  what `FEAT-01-07` weighs example by example, and `wontfix` on any of them costs nothing.
+- **The three that index break, and break silently.** `("abc")[1]` is `nil` in Lua, not an error, so
+  `turtle` would `eval(nil)`, `valid` `print(nil)` and `guess` `tonumber(nil)`. These are the
+  migration, and they land **with** `FEAT-01-04`, not after it.
+- **Both separate-repo consumers are in the safe group** (`maze`, `balloons`); all three mandatory
+  sites are in-tree. The breaking half of this change therefore needs **no cross-repo coordination**
+  — worth knowing before `CHG-01`'s migration note is written for an audience.
+- **For those three the payloads are only identical while the input is one line.** Shift+Enter is a
+  line feed in any widget, so after the split they receive the whole text where they used to receive
+  its first line. Arguably a latent bug fixed rather than a regression, but it is a behaviour change
+  on three shipped examples and belongs in the migration note.
 
 ---
 

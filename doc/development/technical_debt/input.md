@@ -59,11 +59,14 @@ paid, or turned out not to be debt.
   `after_submit(lines)` is what the chain passes today and what the guide documents, so only
   `on_text_entered`'s payload moves.
 - **Why it stands:** it is a **breaking change on a documented callback**, so it needs its
-  CHANGELOG entry, its justification-table line and a migration of every in-tree consumer.
-  That migration is all downhill: **four consumers call `string.unlines` on the payload as
-  their first statement** (`maze`'s `submit_program`, `tixy`'s `submit_body`, `balloons`'s
-  `deliver`, `repl`) and three take `lines[1]` (`turtle`, `valid`, `guess`). **None wants
-  the list**; a consumer that did would still have `after_submit`.
+  CHANGELOG entry, its justification-table line and a migration of the consumers that
+  index. **None wants the list**; a consumer that did would still have `after_submit`.
+  **Four call `string.unlines` on the payload as their first statement** (`maze`'s
+  `submit_program`, `tixy`'s `submit_body`, `balloons`'s `deliver`, `repl`) and **keep
+  working untouched** — `unlines` is idempotent over a string, so rewriting them is
+  `FEAT-01-07`'s clarity call. **Three take `lines[1]`** (`turtle`, `valid`, `guess`) and
+  break **silently** (`("s")[1]` is nil, not a raise): those three are the migration, and
+  all three are in-tree — the breaking half needs no cross-repo coordination.
 - **Revisit:** `FEAT-01-03` (with `FIX-02-01`, never separately), `FEAT-01-04` to build and
   feed `CHG-01`.
 
