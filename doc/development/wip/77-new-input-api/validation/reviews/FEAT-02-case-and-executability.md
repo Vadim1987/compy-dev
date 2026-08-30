@@ -121,15 +121,16 @@ re-files it in a test, which is the most durable place to put it.
 The correct inversion under the settled reading: **the flag persists across a later bare `show()`,
 and `auto_hide = false` disarms it** — the same shape as `validator`'s persistence.
 
-### Defect C (minor) — the attestation's ruling list contradicts itself once
+### Defect C (minor) — one unmarked superseded line in the attestation
 
-`owner-attestation-oneshot-widget-property.md`, *What was ruled*, item 1 closes on the owner's quote
-*"`oneshot` should be a widget property, **cleared on consumption**"*. Items 2, 2a and 2c supersede
-it — persistence, no clearing rule, and the rename — but item 1 carries no marker, and a reader who
-takes the numbered list as the spec gets consumption semantics.
+The numbered ruling list is internally consistent: item 2 opens *"It persists until replaced … no
+clearing rule"*. The unmarked line is one level up, in the **owner's quote** the list is derived
+from — *"Therefore `oneshot` should be a widget property, **cleared on consumption**"* — which
+rulings 2 and 2a supersede the same day. A reader who takes the quoted paragraph as the spec builds
+a consumption semantics the owner then declined.
 
-The quote is a record of what was said and should not be rewritten. **Proposed:** a parenthetical
-marker on item 1 pointing at 2a, in the note's own editorial voice.
+The quote is a record of what was said and is not rewritten. **Done:** an editorial marker directly
+beneath it, in the note's own voice, pointing at rulings 2 and 2a.
 
 ### What is executable, and is not in doubt
 

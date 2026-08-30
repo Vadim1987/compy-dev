@@ -25,6 +25,11 @@ rather than taking it. The owner's response reopened the design instead of the d
 > *Therefore `oneshot` should be a widget property, cleared on consumption. It will make the API
 > more predictable, even if it overrules a previous decision.*
 
+*(Editorial marker, session58 — the words stand as spoken; **"cleared on consumption" is superseded
+the same day** by rulings 2 and 2a below, which settle the flag as persistent until replaced. A
+reader taking this paragraph alone as the spec would build a consumption semantics the owner then
+declined.)*
+
 **This replaces an analogy with a principle.** Decision 36's edge 1 argued `oneshot` belongs beside
 `text`, `cursor` and `force` because it *describes this session*. The category's actual reason is
 narrower: `text` and `cursor` are **the user's**, and `force` is in the list because it is
