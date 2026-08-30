@@ -35,7 +35,7 @@ services:
     tmpfs:
       - /tmp
     volumes:
-      - compy-agent-home:/home/agent
+      - ./docker-data/agent:/home/agent
       - lua-lsp-cache:/opt/lua-language-server/log/cache
       - ../../../../../../:/repo:rw
       - ../:/impl:rw
@@ -43,5 +43,4 @@ services:
       #- ../../../../../../../brainlab/sessions/git/doc/development/wip/77-new-input-api/SWEEP:/repo/doc/development/wip/77-new-input-api/implementation/sessions:rw
 
 volumes:
-  compy-agent-home:
   lua-lsp-cache:
