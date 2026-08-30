@@ -30,6 +30,12 @@ function love.draw()
   end
 end
 
+-- Hooks run above the widget on purpose (doc/input_api.md,
+-- "Why the widget sits at tier 3"), so a project that must not
+-- act on keys being typed into the prompt says so itself. The
+-- guard is blanket, so `pause` goes quiet with `space` and
+-- `shift+r`: the framework reserves `ctrl+pause` for the same
+-- suspend, and a reservation no guard can reach.
 function love.keypressed(key)
   if compy.input.is_shown() then return end
   if Key.shift() then
