@@ -8,13 +8,14 @@ the sequence**. Updated 2026-08-27.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → FEAT-01 → OP-01 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
-*`FEAT-01` and `OP-01` were filed 2026-08-30 from the owner's hand-written debt entries, and
-`FEAT-01` takes the lead **by blast radius**: it changes the public surface, so `FIX-02-01` is the
-same seam as one of its rows, `CHG-01` carries what it breaks, and a slice cut before it lands is
-cut twice. `OP-01` follows it because two of its three rows write the decisions `FEAT-01`'s rulings
-produce.*
+*`FEAT-01` and `OP-01` were filed 2026-08-30 from the owner's hand-written debt entries. **`OP-01`
+ran first and is complete** — it needed no ruling, and it produced the decisions (36, 37, 38) that
+`FEAT-01` now implements, which is the opposite of this line's first reading and the owner's own
+correction to it. **`FEAT-01` leads what remains, by blast radius**: it changes the public surface,
+so `FIX-02-01` is the same seam as one of its rows, `CHG-01` carries what it breaks, and a slice cut
+before it lands is cut twice.*
 
 *`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
 other rows would otherwise be sized against — the ordering principle firing exactly as written.*
@@ -371,8 +372,9 @@ change** — distinct from `BUG` (something misbehaves), `FIX` (docs and process
 device (`880c45ef`); **the ledger entries are the authority on content**, these rows are the
 sequence.
 
-**This sprint leads the remaining work, by the ordering principle rather than by preference.** Both
-rows change the **public surface**, so everything downstream is sized against them: `FIX-02-01` is
+**This sprint leads the remaining work, by the ordering principle rather than by preference.** Its
+design inputs are in hand — `OP-01` wrote Decisions 36 and 37 first, so what is left here is
+ratifying the edges and building. Both rows change the **public surface**, so everything downstream is sized against them: `FIX-02-01` is
 the same seam as `-03`, the CHANGELOG's breaking-change section is `CHG-01`'s subject, and a slice
 cut before either lands is cut twice. It is also the sprint that **grows** the API, which is the one
 direction the strategic frame watches — see the note under `FEAT-01-01`.
@@ -393,7 +395,21 @@ written**, not assumed.
 
 ---
 
-## ⬜ OP-01 — ledger upkeep for the three hand-filed entries
+## ✅ OP-01 — ledger upkeep for the three hand-filed entries — **COMPLETE**
+
+**Ran 2026-08-30, on the owner's direction to start it immediately** — *"it derives decisions from
+my input and documents them with rationale, then restyling debt entries and rederiving them from
+written decisions is mechanical."* That is the order it ran in, and it inverted this sprint's own
+first plan: `-02` led, `-01` followed from it. **Decisions 36, 37 and 38** are the output
+(`71d1f260`), and `T-NAMESPACE-CLONE` is **retired** — its obligation was documentation, and
+Decision 38 with Decision 7's pointer to it is the payment (`84882f01`).
+
+**Two things the writing surfaced, both recorded where they belong rather than here.** The
+`oneshot` case is thinner in-tree than the entry implied — one example closes on submit, and it
+keeps its `after_submit` regardless — so Decision 36 names the owner's attestation as the ground
+and asks the justification table to say so. And **half of `FEAT-01-03` is already true**:
+`after_submit(lines)` is what the submit chain passes today, so only `on_text_entered`'s payload
+moves.
 
 **`OP` is the second KIND ruled 2026-08-30: operational need, no parent decision required**
 (`agents/rules/ledgers.md` §4 — *"the need argues for itself"*). Keeping a register legible is named
@@ -401,9 +417,9 @@ there as exactly such a need.
 
 | id | step | notes |
 |---|---|---|
-| **OP-01-01** | **rewrite the three entries in-place to the register's own style** — slug in the heading, then `Where` / `State` / `Why it stands` / `Revisit` | mechanical, and **ordered after `-02` where it matters**: house style has an entry cite the decision it derives from, and for `T-ONESHOT` / `T-PLAINTEXT-ENTERED` that decision does not exist yet. Rewriting first means rewriting twice. `T-NAMESPACE-CLONE` is independent of that and can go first — it also needs **translating from Russian**, faithfully, not paraphrased away |
-| **OP-01-02** | **create or amend the ratified decisions the entries call for** | three: `oneshot`'s existence and edges (feeds `FEAT-01-01`), the callback payload split (feeds `FEAT-01-03`), and the live-table/namespace rule. A proposal sitting in the debt register is an obligation with no ruling behind it — this row is what makes the register honest |
-| **OP-01-03** | **the namespace-clone documentation** — the lines the entry asks for, next to Decision 7 · **`T-NAMESPACE-CLONE`** | **its own step, and it closes the entry outright** — this one is paid by documentation, with no code and no surface change. The content is already the owner's: the project environment is deep-cloned before a run, so a live platform table placed in a namespace *by value* travels as a copy — the program assigns into the copy, the dispatcher reads the original, and **both sides stay silent**. Input dodges it by holding the surface up-value behind `__index`, and `serial` was since built the same way. It cost an hour of on-device debugging, and the next live table added as a field repeats it |
+| **OP-01-01** ✅ | **rewrite the three entries in-place to the register's own style** — slug in the heading, then `Where` / `State` / `Why it stands` / `Revisit` | **DONE** (`f819d19b`), and it ran **after `-02`**, as the owner directed: house style has an entry cite the decision it derives from, so the decisions were written first and the entries re-derived from them — the alternative was writing them twice. `T-NAMESPACE-CLONE` did not need restyling in the end; it was retired instead. The translation from Russian survives in its retired entry, faithful rather than paraphrased |
+| **OP-01-02** ✅ | **create or amend the ratified decisions the entries call for** | three: `oneshot`'s existence and edges (feeds `FEAT-01-01`), the callback payload split (feeds `FEAT-01-03`), and the live-table/namespace rule. A proposal sitting in the debt register is an obligation with no ruling behind it — this row is what makes the register honest |
+| **OP-01-03** ✅ | **the namespace-clone documentation** — the lines the entry asks for, next to Decision 7 · **`T-NAMESPACE-CLONE`** | **its own step, and it closes the entry outright** — this one is paid by documentation, with no code and no surface change. The content is already the owner's: the project environment is deep-cloned before a run, so a live platform table placed in a namespace *by value* travels as a copy — the program assigns into the copy, the dispatcher reads the original, and **both sides stay silent**. Input dodges it by holding the surface up-value behind `__index`, and `serial` was since built the same way. It cost an hour of on-device debugging, and the next live table added as a field repeats it |
 
 **Why these are not one sprint with `FEAT-01`.** They are different work with different gates: `OP`
 rows need no ruling and can run any time; `FEAT` rows are owner-gated design. Folding them together
