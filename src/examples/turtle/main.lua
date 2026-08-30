@@ -55,9 +55,9 @@ end
 -- it (doc/input_api.md, "Worked example: the trigger key
 -- echoes into the widget it opened"):
 -- LÖVE delivers a keypressed and a textinput for one physical
--- key in no guaranteed order. This one-time guard eats that echo
--- whichever side of the open it lands on, then unregisters so
--- `i` is ordinary content afterwards.
+-- key in no guaranteed order. This one-time guard eats that
+-- echo whichever side of the open it lands on, then unregisters
+-- so `i` is ordinary content afterwards.
 local function arm_echo_guard()
   compy.input.shortcuts.textinput["i"] = function()
     compy.input.shortcuts.textinput["i"] = nil

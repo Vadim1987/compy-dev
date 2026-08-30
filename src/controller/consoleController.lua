@@ -610,8 +610,9 @@ local function key_set(names)
   return set
 end
 
--- Project-owned and NOT sticky: these land on the widget itself
--- rather than in the store above, and persist with it.
+-- Project-owned, and kept across shows exactly as the sticky
+-- ones are. They differ only in WHERE they live: on the widget
+-- itself rather than in the store above.
 local WIDGET_KEYS = { 'prompt', 'auto_hide' }
 
 -- What each entry point accepts. The difference between them is

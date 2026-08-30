@@ -607,6 +607,14 @@ describe('input surface: widget callbacks #input', function()
     -- A follow-up prompt opened from inside the submit chain
     -- survives the close only by DISARMING: the mode persists,
     -- so silence is not a disarm (Decision 36's Amendment).
+    -- The other two follow-up shapes -- one that stays silent,
+    -- one that passes auto_hide ITSELF -- are documented at
+    -- doc/input_api.md, "Asking one question", and deliberately
+    -- NOT pinned: both are closed by the submit in progress
+    -- today, and both would survive if the close ever owned a
+    -- generation token, which Decision 36's Amendment records
+    -- as considered and declined. A test would cement the case
+    -- a fix is meant to change.
     -- What the case pins is the flag's read PLACEMENT — after
     -- the callbacks, so the follow-up's own `false` is what the
     -- close reads. Capturing the value before them closes this

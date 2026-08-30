@@ -515,7 +515,8 @@ itself — the prompt would stay open from the second command on.
 | A3 | press `i`, type `back`, Enter; repeat three or four times | **every** cycle closes on submit — not just the first. *(A prompt that stays open from the second command on is the flag failing to persist.)* |
 | A4 | press `i`, type `xyzzy` (not a command), Enter | the prompt closes and the turtle does not move — the close follows a **successful submit**, and an unknown word is still a valid submission here (this game installs no validator) |
 | A5 | press `i`, press Enter on the **empty** field | **nothing happens and the prompt stays open** — an empty submit is not a submit, so nothing closes |
-| A6 | press `i`, type `left`, then press **Escape** | the line clears and **the prompt stays open** — Escape is not a close, deliberately. Type `left` again and Enter to get out |
+| A6 | **with the prompt still open from A5** (do not press `i` again — the guard is spent, so it would type an `i`), type `left`, then press **Escape** | the line clears and **the prompt stays open** — Escape is not a close, deliberately |
+| A7 | type `left` again and press Enter | it moves and the prompt closes, leaving you where A3 left off |
 
 ### B — the echo guard, re-armed from `after_submit`
 
@@ -550,7 +551,7 @@ idiom for a project whose hooks run above the widget.
 
 ### What a failure here means
 
-- **A2–A5 and B2** are the 2026-08-30 change. A failure is a defect in `FEAT-02` or in the echo
+- **A2–A5, A7 and B2** are the 2026-08-30 change. A failure is a defect in `FEAT-02` or in the echo
   guard's new home — report it against `wip/77-new-input-api/ROADMAP.md`, `FEAT-02`.
 - **A3 specifically** distinguishes the mode from a one-off: if only the first submit closes, the
   flag is being cleared somewhere it should not be, and that is a **platform** defect, not turtle's.

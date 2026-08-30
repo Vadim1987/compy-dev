@@ -1576,8 +1576,11 @@ content nobody could read. That is the defect, and statement 3 above is the fix.
 auto_hide = true}` from inside the submit chain re-arms the flag, and the close belonging to the
 submit already in progress still fires — the close reads the flag at the **end** of the submit it is
 running (see the placement note in `submit_flow`). Owning the close by the submit that armed it
-needs a generation token, and that state was judged not worth it. The escape is to re-show **after**
-the widget is down, or to leave the follow-up plain; `doc/input_api.md` says so.
+needs a generation token, and that state was judged not worth it. **The escape is to pass
+`auto_hide = false` on the follow-up**, or to re-show after the widget is down; `doc/input_api.md`
+says so. *(Leaving the follow-up plain is NOT an escape — silence stopped being a disarm the moment
+the flag became persistent, which is the same amendment. Corrected 2026-08-30, the day it was
+written, on a cold peer review.)*
 
 **Consequence.** `show` **and `configure`** grow one key, so `doc/input_api.md`, the config-key
 lists and the CHANGELOG all move together (`FEAT-01-05` documented the key; `FEAT-02` renames it and

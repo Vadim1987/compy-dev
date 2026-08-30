@@ -263,7 +263,7 @@ That is the whole thing: nothing to install beforehand, nothing to tear down
 after. `auto_hide` is exactly the `after_submit = hide` above, written as a key
 — which is also the way to predict what it does at the edges.
 
-**It stays on until you turn it off.** `auto_hide` is a mode, not a one-shot:
+**It stays on until you turn it off.** `auto_hide` is a mode, not a one-off:
 it belongs to your project like `validator` does, so it applies to *every*
 later submit — including one from a plain `compy.input.show()` that says
 nothing about it — until you pass `auto_hide = false`. Both calls take it:
@@ -728,7 +728,7 @@ character already in the field. LÖVE delivers a `keypressed` **and** a
 trigger's own echo arrives on the other channel, either side of the open. The
 `is_shown()` guard does not help: it is about the *next* press, not this one.
 
-Guard the trigger with a one-shot shortcut on the `textinput` channel.
+Guard the trigger with a one-time shortcut on the `textinput` channel.
 Shortcuts run before the input widget, so it swallows the echo whichever side of
 the open it lands on, and it unregisters itself so the character is typable
 as content afterwards:
@@ -742,17 +742,15 @@ local function arm_echo_guard()
 end
 arm_echo_guard()
 
-compy.input.callbacks.after_submit = function()
-  compy.input.hide()
-  arm_echo_guard() -- the next open needs a fresh one-shot
-end
+-- the next open needs a fresh guard, however the widget closed
+compy.input.callbacks.after_submit = arm_echo_guard
 ```
 
-**Re-arming** is registering that one-shot again, and it is needed wherever you
-close the input widget: one closed without a fresh guard takes the echo on its
-next open. Only your own `hide()` calls need this —
-Escape *clears* the field without closing, so the spent one-shot is still
-correct.
+**Re-arming** is registering that guard again, and it is needed wherever the
+input widget closes: one closed without a fresh guard takes the echo on its next
+open. That is your own `hide()` call **or `auto_hide` closing it for you** —
+`after_submit` runs before the close, so the same line covers both. Escape
+*clears* the field without closing, so the spent guard is still correct.
 
 Use a **bare** key as the trigger. A modified combo cannot be guarded this
 way: the two channels do not share a combo string for it — `shift+i` on
