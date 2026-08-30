@@ -22,10 +22,6 @@ paid, or turned out not to be debt.
 
 > REMARK: its not a defect, but convention -- gfx is alias for love.graphics, sfx is alias for compy.audio
 
-### T-NAMESPACE-CLONE
-
-Проектное окружение клонируется глубоко (table.clone перед запуском), поэтому любая живая платформенная таблица, положенная в неймспейс полем, едет в проект копией: программа присваивает обработчики в копию, диспетчер читает оригинал, обе стороны молчат без всякой ошибки. Потратил на это час отладки на устройстве. Ты это обошёл для input — держишь поверхность апвэлью за __index; я сделал serial тем же способом, включая запрет на присваивание самой таблицы. Паттерн неочевиден — следующий, кто добавит живую таблицу полем, наступит точно так же. Может, стоит строки в доке рядом с Decision 7.
-
 ### T-GFX-GLOBAL — `gfx` implicit global in `controller.lua`
 
 - **Where:** `src/controller/controller.lua` — `set_love_update` / `set_love_draw` (and
@@ -179,4 +175,23 @@ paid, or turned out not to be debt.
 
 ## RETIRED
 
-*(none in this file yet.)*
+### T-NAMESPACE-CLONE — a live platform table in a namespace travels to the project as a copy — PAID by Decision 38
+
+- **Where:** the project environment's construction — a deep clone taken before the run
+  (`../internals/project_sandbox_env.md`) — and every namespace that hands a project a
+  platform table.
+- **What was owed:** the pattern written down. A live table placed in a namespace as a
+  plain field is *copied* into the project's clone, so the program assigns its handlers
+  into the copy while the dispatcher reads the original, and **neither side raises** —
+  nothing is nil, nothing is logged, the handlers simply never run. It cost an hour of
+  on-device debugging to find. `compy.input` already dodged it by holding the surface
+  up-value behind `__index`, and `serial` was later built the same way, assignment to the
+  table itself included; what was missing was the rule stated once, where the next person
+  to add a namespace field would meet it.
+- **Paid by:** `../decisions/input.md`, **Decision 38** — a live platform table reaches a
+  project through `__index`, never as a value. Decision 7 carries a pointer to it, so a
+  reader working on the surface meets the rule where the owner asked for it. Decision 18
+  is the same hazard met from the other direction (`love.state.user_input` read inside a
+  project is always `nil`).
+- **Retired 2026-08-30.** Nothing outstanding: the obligation was documentation, and the
+  code already implements the pattern in both places it applies.

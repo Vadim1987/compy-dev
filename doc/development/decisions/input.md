@@ -358,6 +358,11 @@ corrupting the API — loudly, never a silent swallow.
 through its combo-keyed leaves; protecting that invariant is what the frozen-identities clause is
 for.
 
+**Sibling rule: Decision 38.** This decision freezes the identities *on this surface*; Decision 38
+says why any live platform table must reach a project through `__index` in the first place — the
+project environment is a deep clone, so a table handed over as a plain field is handed over as a
+copy, silently. Read them together when adding a namespace member.
+
 ## Decision 8 — per-event combo tables and canonical combo serialisation
 
 > REMARK: rewrite -- now 'combo-tables' are reproduced without explanation. Instead the solution was to support combo-tables at all (to avoid stuffing all event-handling logic in a single hook and enable modularity). The way combo tables are assembled and checked is downstream tactical decision -- we took the simplest form. So the full block has to be rewritten 
