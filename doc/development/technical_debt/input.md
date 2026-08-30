@@ -27,6 +27,24 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
+### T-MERMAID-MODEL — the class diagrams show a model field that no longer exists
+
+- **Where:** `../mermaid/input.md`, `../mermaid/editor.md`, `../mermaid/classes.md` — the
+  `InputModel` / `UserInputModel` class blocks.
+- **State:** all three list `oneshot: boolean` as a model field. It is **gone**: at the PR base
+  it was a constructor argument (`UserInputModel.new(cfg, eval, oneshot, custom_label)`)
+  distinguishing the transient prompt widget from the console's permanent one, and this feature
+  removed it — `new(cfg, eval, custom_label)` today. The `auto_hide` key that replaced the
+  *capability* lives on the **controller**, not the model, so the diagrams do not merely use an
+  old name; they show a field on the wrong class. `custom_label`, a live field, is missing from
+  the same blocks.
+- **Why it stands:** the diagrams were never re-checked against the model after the input work.
+  The drift is presumed wider than the one field — nobody has walked them — so the row is
+  *verify all three against the current classes*, not *delete one line*.
+- **Reader risk:** a diagram is what someone opens **before** reading code, and it carries no
+  hedge. A field shown there reads as current in a way a stale sentence does not.
+- **Revisit:** `FIX-02-24`, with the rest of the documentation sweep.
+
 ### T-GUARD-LIVE — the guide never says a project's own keys stay live while the widget is shown
 
 - **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
