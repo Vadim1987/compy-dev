@@ -379,19 +379,29 @@ the same seam as `-03`, the CHANGELOG's breaking-change section is `CHG-01`'s su
 cut before either lands is cut twice. It is also the sprint that **grows** the API, which is the one
 direction the strategic frame watches — see the note under `FEAT-01-01`.
 
+**Four rows of work and two of documentation, deliberately.** Both changes are meaningless to a
+project author who cannot find them: `oneshot` is a convenience nobody uses if the guide does not
+show the one-line form, and a payload split that is not explained just moves the confusion
+`FIX-02-01` names from the callbacks to their arguments. `-05` and `-06` are not a write-up phase
+appended at the end — they are what makes `-02` and `-04` worth having.
+
 | id | step | notes |
 |---|---|---|
 | **FEAT-01-01** | **the `oneshot` design ruling** — what the option means at the edges, before any code · **`T-ONESHOT`** | **owner-gated, and the design questions are real**: does `oneshot` close on *submit only*, or also on cancel/escape? Does it survive a `configure`? Does it compose with an `after_submit` the project also set, or refuse one? The entry's own attestation is the constraint — it was **removed in-flight to avoid over-sugaring** and comes back because **microbit development re-confirmed the need**, so the ruling must say what earns it back |
 | **FEAT-01-02** | implement `oneshot` | breaking-test first per `agents/development.md`; the framework side *is* testable, unlike the example side (`general.md` BACKLOG) |
 | **FEAT-01-03** | **the payload split** — `on_text_entered` yields concatenated plain text, `after_submit` yields the list of lines · **`T-PLAINTEXT-ENTERED`** | **ruled together with `FIX-02-01`, never separately.** That row asks whether the two hooks are one callback set two ways; this is a candidate *answer* — keep both, differentiate their payloads, and `after_submit` gains a reason to exist beyond closing. The owner's framing is a **recommended convention, not an enforced one** |
 | **FEAT-01-04** | implement the split; **feed `CHG-01`** | a payload change on a documented callback is **breaking** — the `Removed`/`Changed` sections and the justification table both carry it |
+| **FEAT-01-05** | **document `oneshot`** in `doc/input_api.md` — the `show` config table, and a worked example | the worked example is **the one-line question** (prompt + `on_text_entered` + `oneshot`, nothing installed and nothing torn down), because that is the case the flag exists for. Decision 36 names it. Also the config-key lists and the CHANGELOG's `Added` section |
+| **FEAT-01-06** | **document how to choose between `on_text_entered` and `after_submit`** | the guide currently describes both and distinguishes neither, which is `FIX-02-01`'s complaint. The text to write, per the owner: **either or both may be used; the recommendation is `on_text_entered` for text-centric work and `after_submit` for generic machinery — useful for clarity and for cutting boilerplate, and explicitly not enforced.** Write it *with* `-05`: a reader meeting `oneshot` is a reader deciding which callback to hang their work on |
 
 **The frame question, stated once so the ruling is taken with it in view.** The stakeholder ask was a
 *simpler and more robust* input API, and the PR must not carry moving parts beyond it without a
 line in the justification table. `FEAT-01-01` adds an option; `FEAT-01-03` changes what a documented
-callback hands you. Both are defensible — one removes boilerplate the old API did not have, the
-other makes two confusingly-similar hooks distinct instead of redundant — and **both need that line
-written**, not assumed.
+callback hands you. **Both are defensible and neither is a new moving part**: `oneshot` is a
+*restoration* of a name the replaced API had, requested by the `serial` API's author from outside
+this work, and the payload split makes two confusingly-similar hooks distinct instead of redundant
+— it answers a simplicity complaint rather than adding to one. Both still need that line written,
+not assumed.
 
 ---
 
@@ -400,16 +410,25 @@ written**, not assumed.
 **Ran 2026-08-30, on the owner's direction to start it immediately** — *"it derives decisions from
 my input and documents them with rationale, then restyling debt entries and rederiving them from
 written decisions is mechanical."* That is the order it ran in, and it inverted this sprint's own
-first plan: `-02` led, `-01` followed from it. **Decisions 36, 37 and 38** are the output
-(`71d1f260`), and `T-NAMESPACE-CLONE` is **retired** — its obligation was documentation, and
-Decision 38 with Decision 7's pointer to it is the payment (`84882f01`).
+first plan: `-02` led, `-01` followed from it. **Decisions 36 and 37** are the output
+(`71d1f260`, corrected `96683802`), and `T-NAMESPACE-CLONE` is **retired** — its obligation was
+documentation, and it is paid by a **suggested practice, not a decision** (owner, 2026-08-30):
+*"A Namespace Hands Out Live Tables by Reference, Never by Value"* in
+`conventions/architecture_principles.md`, with the one-line pointer from Decision 7 that `serial`'s
+author asked for. The rule binds any subsystem, not the input surface, and a genuine snapshot may
+still be passed by value — a practice with a question attached is the right instrument, and a
+ruling was not.
 
-**Two things the writing surfaced, both recorded where they belong rather than here.** The
-`oneshot` case is thinner in-tree than the entry implied — one example closes on submit, and it
-keeps its `after_submit` regardless — so Decision 36 names the owner's attestation as the ground
-and asks the justification table to say so. And **half of `FEAT-01-03` is already true**:
-`after_submit(lines)` is what the submit chain passes today, so only `on_text_entered`'s payload
-moves.
+**One thing the writing surfaced: half of `FEAT-01-03` is already true.** `after_submit(lines)` is
+what the submit chain passes today and what the guide documents, so only `on_text_entered`'s
+payload moves.
+
+**And one thing it got wrong, corrected by the owner the same day.** The first draft of Decision 36
+weighed `oneshot` by counting shipped examples and called its case thin. That census measures the
+wrong thing — the examples were written for the API as it stands, and four of them demonstrate
+repeated prompting on purpose. `oneshot` **preceded this feature** and was **asked for by the
+`serial` API's author**; those two facts settle it, and the ergonomics (a one-line user-facing
+question from a project whose subject is not input) is the third.
 
 **`OP` is the second KIND ruled 2026-08-30: operational need, no parent decision required**
 (`agents/rules/ledgers.md` §4 — *"the need argues for itself"*). Keeping a register legible is named
@@ -418,8 +437,8 @@ there as exactly such a need.
 | id | step | notes |
 |---|---|---|
 | **OP-01-01** ✅ | **rewrite the three entries in-place to the register's own style** — slug in the heading, then `Where` / `State` / `Why it stands` / `Revisit` | **DONE** (`f819d19b`), and it ran **after `-02`**, as the owner directed: house style has an entry cite the decision it derives from, so the decisions were written first and the entries re-derived from them — the alternative was writing them twice. `T-NAMESPACE-CLONE` did not need restyling in the end; it was retired instead. The translation from Russian survives in its retired entry, faithful rather than paraphrased |
-| **OP-01-02** ✅ | **create or amend the ratified decisions the entries call for** | three: `oneshot`'s existence and edges (feeds `FEAT-01-01`), the callback payload split (feeds `FEAT-01-03`), and the live-table/namespace rule. A proposal sitting in the debt register is an obligation with no ruling behind it — this row is what makes the register honest |
-| **OP-01-03** ✅ | **the namespace-clone documentation** — the lines the entry asks for, next to Decision 7 · **`T-NAMESPACE-CLONE`** | **its own step, and it closes the entry outright** — this one is paid by documentation, with no code and no surface change. The content is already the owner's: the project environment is deep-cloned before a run, so a live platform table placed in a namespace *by value* travels as a copy — the program assigns into the copy, the dispatcher reads the original, and **both sides stay silent**. Input dodges it by holding the surface up-value behind `__index`, and `serial` was since built the same way. It cost an hour of on-device debugging, and the next live table added as a field repeats it |
+| **OP-01-02** ✅ | **create or amend the ratified decisions the entries call for** | **DONE** (`71d1f260`): Decision 36 (`oneshot`'s existence, edges left to `FEAT-01-01`) and Decision 37 (the payload split, which is also `FIX-02-01`'s answer). The third — the live-table/namespace rule — turned out **not** to be a decision at all and left the ledger for the conventions doc; see the sprint note above. A proposal sitting in the debt register is an obligation with no ruling behind it, and this row is what made the register honest |
+| **OP-01-03** ✅ | **the namespace-clone documentation** — the lines the entry asks for, next to Decision 7 · **`T-NAMESPACE-CLONE`** | **DONE** (`84882f01`, relocated `96683802`) — paid by documentation, with no code and no surface change, and it closed the entry outright. The content is the owner's: the project environment is deep-cloned before a run, so a live platform table placed in a namespace *by value* travels as a copy — the program assigns into the copy, the dispatcher reads the original, and **both sides stay silent**. Input dodges it by holding the surface up-value behind `__index`, and `serial` was since built the same way. **Filed as a generic practice, not an input decision**, at the owner's direction |
 
 **Why these are not one sprint with `FEAT-01`.** They are different work with different gates: `OP`
 rows need no ruling and can run any time; `FEAT` rows are owner-gated design. Folding them together
