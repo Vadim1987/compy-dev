@@ -67,7 +67,29 @@ session's own Q1 ruling**.
   being objected to.** That is recorded on the sheet as what it was rather than dressed as a
   considered ruling — silence is not a ruling, and this one came close to being taken as one.
 
-## 5. Artifacts
+## 5. Addendum — the two things settled after the wrap was written
+
+**The `oneshot` clearing question is closed, on a reading rather than a lifetime argument.**
+`oneshot` **configures a type of behaviour, not one show/hide cycle** (owner): it is an ordinary
+project-owned setting, persistent until replaced like `validator`, and a clearing rule would be *"a
+new entity — a one-off flag — just for syntactic sugaring"*. My filed row and both of my grounds for
+withdrawing it are subsumed by that. **Two obligations ride on it, both rows in `FEAT-02`**: the
+persistence must be **ruled** in Decision 36 and **said plainly** in the guide — because the name
+says one-off while the semantics say mode, and a reader who takes `oneshot = true` as *"this one
+time"* gets a closing widget on every later prompt, silently. Renaming is not available; Decision 36
+grounds the flag on being a restoration of that exact name.
+
+**A retirement takes its citations with it** — new standing rule, `agents/rules/roadmap.md` §5, on
+the owner's directive: *no reconfiguration of a roadmap should leave references orphaned and
+unactionable*. It has a sharp edge worth keeping: the dangerous case is not the dangling citation
+but the one that **still resolves**, to a heading that no longer means what it did — a debt entry
+retired out of its slug leaves `T-FOO` findable only in a *"Was `T-FOO`"* line, so a reader lands on
+a retirement note and reads it as a live obligation. **The pass that causes an orphan owes the fix**;
+the sweep is a backstop. `FIX-03-05` is filed as that backstop and adopts the six citations this
+session found — the `T-HL-TWO-HOMES` pair in `src/` and `tests/`, and four `ARC-02`-era slugs cited
+from `ROADMAP.md` with no heading left.
+
+## 6. Artifacts
 
 - Track: `session57/track.md` · Ruling sheet: `validation/reviews/FEAT-01-01-oneshot-ruling-sheet.md`
   (five questions, dispositions at its foot)

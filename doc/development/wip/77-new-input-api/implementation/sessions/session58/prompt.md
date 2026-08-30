@@ -38,11 +38,17 @@ teardown-path advice; invert the two tests that pin the old category and update 
 
 ### Three things not to rediscover the hard way
 
-- **Do not re-file the clearing rule.** *Disarmed when the widget goes down* was filed by session57
-  and **withdrawn by the owner the same day**; the roadmap keeps it, with its reasoning, under "the
-  row that was filed and withdrawn". If it looks necessary to you, read that section first — it
-  fails three ways, and the strongest is that it would be a **second reconfiguration policy** where
-  `ARC-01-07` established one. `oneshot` persists until replaced, exactly like `validator`.
+- **Do not re-file the clearing rule, and do not soften the persistence.** *Disarmed when the
+  widget goes down* was filed by session57 and **withdrawn by the owner the same day**. The settled
+  reading is that **`oneshot` configures a type of behaviour, not one show/hide cycle** — so it is
+  an ordinary project-owned setting, persistent until replaced exactly like `validator`, and it
+  needs no category of its own. The roadmap keeps the withdrawn row with its full reasoning; read
+  that section before re-deriving the argument.
+  **The persistence carries two obligations, both owner conditions, both rows:** Decision 36's
+  amended text must **rule** it (`-01`), and the guide must **say** it plainly (`-04`). They are not
+  bookkeeping — `oneshot = true` reads as *"this one time"*, so a reader who assumes it self-clears
+  gets a closing widget on every later prompt, silently. Renaming is off the table: Decision 36
+  grounds the flag on being a restoration of that exact name.
 - **It does not fix the peer review's case, and is not meant to.** A hook doing
   `show{force, oneshot = true}` still re-arms and the trailing close still fires. Do not quietly
   widen the sprint into fixing it — that needs a generation token, and the state was judged not
@@ -89,6 +95,10 @@ Report both before starting `-01`, then proceed.
   or in a code comment where no document fits.
 - Say **widget**, not "field" or "overlay".
 - The owner also works in this tree. Never sweep their unrelated working-tree changes into a commit.
-- Two loose findings are recorded in session57's track and are **not** yours unless the owner says
-  so: `ROADMAP.md`'s status table cites `FIX-02-01` for a `doc/`-markers concern that has no row
-  anywhere, and two in-repo comments cite `T-HL-TWO-HOMES`, a slug retired out of its own heading.
+- One loose finding stays parked and is **not** yours unless the owner says so: `ROADMAP.md`'s
+  status table cites `FIX-02-01` for a `doc/`-markers concern that has no row anywhere. The
+  retired-id citations that were parked with it now have a home — **`FIX-03-05`**, filed on the
+  owner's directive that a retirement takes its citations with it
+  ([`agents/rules/roadmap.md`](../../../../../../agents/rules/roadmap.md) §5). That rule binds
+  **you**: if `FEAT-02` retires or renumbers anything, sweep its citations in the same pass rather
+  than leaving them for the broom.

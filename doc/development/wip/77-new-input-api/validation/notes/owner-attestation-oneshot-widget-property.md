@@ -46,6 +46,29 @@ resemblance to two keys it does not resemble.
    everything the project sets persists until replaced* — and the argument **proves too much**,
    since `validator` persists across a bare `show()` in exactly the same way and surprises nobody.
    A project wanting a continuous session after a `oneshot` one writes `oneshot = false`.
+2a. **The settled reading: `oneshot` configures a *type of behaviour*, not one show/hide cycle**
+   (owner, 2026-08-30, closing the clearing question). This is the ground the withdrawal stands on,
+   and it is stronger than the lifetime argument that first retired the clearing rule: *"I like the
+   concept that `oneshot` configures the **type** of behaviour, not merely one show/hide cycle — it
+   avoids introducing a new entity, a 'one-off flag' just for syntactic sugaring."* So the flag is
+   an ordinary project-owned setting that happens to govern the lifecycle, and it needs **no
+   category of its own**: no clearing rule, no consumption semantics, nothing that behaves unlike
+   `validator`. **Persistent until disabled.**
+
+2b. **Because it is persistent, the docs must say so, and the ledger must rule it** (owner). Not a
+   remark in passing — see the trap below, which is the parent's addition and the reason the owner's
+   condition is not optional.
+
+   **The name says one-off; the semantics say mode.** `oneshot = true` reads to a project author as
+   *"this one time"*, and a reader who assumes that will expect the flag to clear itself. It does
+   not: every subsequent submit closes the widget until the project passes `oneshot = false`. That
+   is a silent trap of the same class this feature keeps meeting — right-looking code, wrong
+   behaviour, no error. **Renaming is not the answer**: Decision 36 grounds the flag on being a
+   *restoration* of a name the replaced API had and on an outside developer asking for it *by that
+   name*, and a rename forfeits both. Whether the replaced API's `oneshot` self-cleared is **not
+   checkable in this repo**, so a migrating author's expectation is genuinely unknown — which is a
+   third reason to be blunt in the guide rather than merely accurate.
+
 3. **It becomes a first-class, readable flag** — checkable from project code the way `is_shown()`
    is. A project reasoning about its own teardown path must be able to *ask*.
 4. **The edge case is documented, not fixed.** A project calling `show{force}` from a teardown path

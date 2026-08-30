@@ -75,7 +75,7 @@ KIND-<sprint>-<task>          e.g. BUG-01-03, FIX-02-11, ACC-01-02
 - **Phases inserted into an existing lettered sequence take a name, not a letter** (`DI`, `TF`,
   `R`, `U`) — sequence letters are load-bearing across documents already written.
 
-## 5. Two habits that keep a roadmap honest
+## 5. Three habits that keep a roadmap honest
 
 **A parked question carries the moment it gets answered.** Not "open question" — *"answered when
 BUG-01-02 is fixed"*. An open question with no trigger is the kind that rots, and a roadmap full of
@@ -85,3 +85,20 @@ them stops being a sequence.
 away — in which case *say so, with the reasoning* — or it drifted away, which is the thing plans
 exist to prevent. Session46 dropped three phases from a roadmap before anyone had ruled on them; the
 owner noticed, and the fix was to record the ruling, not to quietly restore them.
+
+**A retirement takes its citations with it** (owner directive, 2026-08-30). When an id is retired,
+renumbered or withdrawn, the references to it are wiped **in the same pass** — *"no reconfiguration
+of a roadmap should leave them orphaned and unactionable."* This is the other half of §2's
+crosswalk: a crosswalk tells a reader what an old id **became**, and is the right instrument for
+prose already written; it is **not** a licence to leave live citations pointing at nothing.
+
+Two failure modes, and the second is the one that bites:
+
+- **A dangling citation** — the id resolves to no heading. Visible, greps out, annoying.
+- **A citation that still resolves, to a heading that no longer means what it did.** This is why §2's
+  renumber-vs-rename test exists, and the same hazard reappears at retirement: a debt entry retired
+  out of its slug leaves `T-FOO` findable only in a *"Was `T-FOO`"* line, so a reader who greps lands
+  on the retirement note and reads it as the live obligation.
+
+**Where it is executed:** the closed-arc / ephemeral-citation sweep is the standing broom, but the
+sweep is a backstop, not the plan. The pass that *causes* the orphan is the pass that owes the fix.

@@ -20,7 +20,7 @@ the sequence**. Updated 2026-08-30.
 | **FEAT-01** | the two surface proposals: **`oneshot`**, and the **payload split** that tells the submit callbacks apart | **leads by blast radius** — it changes the public surface, so `FIX-02-01` is one of its rows' seams, `CHG-01` carries what it breaks, and a slice cut before it lands is cut twice |
 | **FEAT-02** | **`oneshot` becomes a widget property**, readable like `is_shown()` — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
 | **{ BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02** |
-| **FIX-03** | the ephemeral-citation sweep | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
+| **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
 | **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
 | **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain |
 | **MERGE-01** | upstream reconciliation — actually merge | 🟡 platform repo **done** (`f4913833`); `maze`, `keyboard`, `balloons` remain |
@@ -451,10 +451,10 @@ row overturns part of it. A reader who did not argue for the thing being overtur
 
 | id | step | notes |
 |---|---|---|
-| **FEAT-02-01** | **amend Decision 36 (edge 1) and Decision 35's boundary note** — the ledger gate, first | **amend, never reinterpret** — the same standard `ARC-01-03` was held to. Edge 1 is *ruled text ruled today*; it does not get quietly rewritten. Say what it said, what replaces it, and that the ground was a resemblance rather than a reason. Decision 35's show-only category loses a member and should say why the remaining three belong |
-| **FEAT-02-02** | **`oneshot` moves to the project-owned keys** — `show` **and** `configure`, set-if-given, `false` to unset | the disarm idiom arrives **free** from Decision 35 statement 3 (`false` is the uniform unset); no new vocabulary. In code: out of `SHOW_ONLY_KEYS`, into `CALLBACK_KEYS`' company and `configure_core` |
+| **FEAT-02-01** | **amend Decision 36 (edge 1) and Decision 35's boundary note** — the ledger gate, first | **amend, never reinterpret** — the same standard `ARC-01-03` was held to. Edge 1 is *ruled text ruled today*; it does not get quietly rewritten. Say what it said, what replaces it, and that the ground was a resemblance rather than a reason. Decision 35's show-only category loses a member and should say why the remaining three belong. **The amended text must state the persistence** (owner: *if the flag is persistent until disabled it should be clearly said in docs, and probably mentioned in decisions*) — a mode that outlives its `show` is exactly what a reader will assume it is not |
+| **FEAT-02-02** | **`oneshot` moves to the project-owned keys** — `show` **and** `configure`, set-if-given, `false` to unset, **persistent until replaced** | the disarm idiom arrives **free** from Decision 35 statement 3 (`false` is the uniform unset); no new vocabulary. In code: out of `SHOW_ONLY_KEYS`, into `CALLBACK_KEYS`' company and `configure_core`. **The persistence is the point, not a side effect** — `oneshot` configures a *type of behaviour*, so it is an ordinary project-owned setting and needs no category of its own. `FEAT-02-01` rules it in Decision 36; this row must not smuggle in a clearing step |
 | **FEAT-02-03** | **make it first-class and readable** — a project can ask, the way it asks `is_shown()` | the owner's requirement, and the reason for it: a project reasoning about its own teardown path must be able to *check* rather than remember. Mind Decision 18's framing — a project's `love` is a sandboxed clone, so it cannot read widget state without a surface for it |
-| **FEAT-02-04** | **document the teardown-path edge**, in the guide | the owner's wording is the shape of the advice: a `show{force}` from a teardown path should either **check the flag and disarm it first**, or run **after** the widget is hidden with the project holding its own state. This **replaces** the bullet `9eebbe3a` added, which describes the old shape |
+| **FEAT-02-04** | **document the teardown-path edge and the persistence**, in the guide | the owner's wording is the shape of the advice: a `show{force}` from a teardown path should either **check the flag and disarm it first**, or run **after** the widget is hidden with the project holding its own state. This **replaces** the bullet `9eebbe3a` added, which describes the old shape. **Second and larger obligation: say plainly that the flag persists until replaced.** The name says one-off and the semantics say *mode*, so a reader who takes `oneshot = true` as *"this one time"* expects it to clear itself and gets a closing widget on every later prompt — silent, right-looking, wrong. Renaming is off the table (Decision 36 grounds the flag on being a restoration of that exact name, asked for by an outside developer), and whether the replaced API's `oneshot` self-cleared is **not checkable in this repo**, so a migrating author's expectation is unknown. Be blunt, not merely accurate |
 | **FEAT-02-05** | tests and the CHANGELOG | **two existing cases invert**: `configure raises on oneshot, naming show()` becomes `configure arms it`, and `it is spent by its own show` becomes the going-down rule. `a forced follow-up show survives the close` must keep passing — it pins the placement, not the category |
 
 ### The row that was filed and withdrawn — `disarmed when the widget goes down`
@@ -464,8 +464,15 @@ row overturns part of it. A reader who did not argue for the thing being overtur
 consumption* alone leaves the flag armed when a session ends with **no** submit, so an Escape
 followed by a later bare `show()` would get a `oneshot` nobody asked for.
 
-**It is wrong, and on a better ground than the one that retired it.** The owner's objection was
-lifetime: the flag lives on the widget as `callbacks` do, the widget lives one **run** (Decision 3
+**Settled by a reading of the flag, not by a lifetime argument (owner, 2026-08-30).** `oneshot`
+**configures a type of behaviour**, not one show/hide cycle — *"it avoids introducing a new entity,
+a 'one-off flag' just for syntactic sugaring"*. Under that reading a clearing rule is not merely
+unnecessary, it is a category of its own for a setting that should be ordinary. **The condition
+attached: persistence must be said clearly in the docs and ruled in the decisions** — `FEAT-02-01`
+and `FEAT-02-04` carry it.
+
+The lifetime argument that first retired the row still holds and is kept because it answers a
+different question. The owner's objection was: the flag lives on the widget as `callbacks` do, the widget lives one **run** (Decision 3
 as amended by `ARC-01`), so project exit tears it down and no machinery is needed — verified, and
 pinned by `gives the next project clean output fields`
 (`input_route_lifecycle_spec.lua`). That answers **cross-run** leakage, which is a different hazard
@@ -751,6 +758,30 @@ absent at base `3256aac` **and** absent today → the arc closed inside the bran
 | FIX-03-02 | classify: closed arc / lesson-bearing / pre-feature-deviation record |
 | FIX-03-03 | for lesson-bearing, locate the materialized lesson — or promote it before deleting |
 | FIX-03-04 | dispose: closed arcs vacuumed |
+| **FIX-03-05** | **retired-id citations** — every reference to a retired, renumbered or withdrawn id, wiped |
+
+**`FIX-03-05` is new (owner directive, 2026-08-30):** *"references to a retired ID should be wiped
+during doc sweep; no reconfiguration of a roadmap should leave them orphaned and unactionable."* The
+rule itself is now standing, in [`agents/rules/roadmap.md`](../../../../agents/rules/roadmap.md) §5
+— **the pass that causes an orphan owes the fix**, and this row is the backstop for what slipped
+through, not the plan for handling it.
+
+**Two known subjects, both surfaced by session57 and parked until now:**
+
+1. **`T-HL-TWO-HOMES` is cited from `src/` and `tests/`** — `userInputController.lua` (the
+   `bind_highlighter` doc comment) and `input_widget_callbacks_spec.lua`. The entry retired, and the
+   register's convention drops the slug from the heading and says *"Was `T-HL-TWO-HOMES`"* in the
+   body. So the citations still **grep**, and land a reader on a retirement note that reads like a
+   live obligation — §5's second and worse failure mode, exactly.
+2. **Four more slugs are cited from `ROADMAP.md` with no heading left:** `T-CFG-BOUNDARY`,
+   `T-CURSOR-SHAPE`, `T-FORCE-PARTIAL`, `T-HL-UNSET`. Found by the ledger cross-check
+   (`LEDGER-01`'s two greps `comm`'d), all four from the `ARC-02` era. These are on **completed**
+   rows, so the citation is historical rather than actionable — decide per row whether to re-point
+   at the retirement or to say plainly that the goal is retired.
+
+**Check it is clean with the cross-check already written for it** (`LEDGER-01`, above): `comm` the
+`^### T-` headings against the roadmap's `T-` citations. A citation missing from the heading side is
+a pointer to nothing.
 
 **Two exclusions.** Lessons already materialized in a decision or convention — *verify, then
 delete*. And **prose that is the only record of a deviation from pre-feature behaviour**: Decision

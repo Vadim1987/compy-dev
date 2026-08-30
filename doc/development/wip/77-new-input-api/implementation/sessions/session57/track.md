@@ -129,3 +129,21 @@ hours earlier.
   and *recorded, not deleted*, with a crosswalk; the successor prompt is corrected and told not to
   re-file it. **Pattern worth keeping: when the owner's conclusion is right and their stated reason
   addresses a different hazard, say both.**
+
+## Addendum before handover — two owner rulings after the wrap
+
+- **The clearing question settled on a *reading*, not on lifetime.** `oneshot` configures a **type
+  of behaviour**, not one show/hide cycle — so no clearing rule, no consumption semantics, no
+  category of its own: *"it avoids introducing a new entity, a 'one-off flag' just for syntactic
+  sugaring."* My withdrawn row and both grounds I conceded on are subsumed by that. **My addition:**
+  the name says one-off and the semantics say mode, so the persistence is a silent trap unless the
+  guide is blunt — and renaming is unavailable, because Decision 36 is grounded on the name being a
+  restoration. Also unverifiable here: whether the replaced API's `oneshot` self-cleared, so a
+  migrating author's expectation is genuinely unknown. Both obligations are rows (`-01` rules it,
+  `-04` says it).
+- **New standing rule: a retirement takes its citations with it** (`agents/rules/roadmap.md` §5).
+  The owner's framing is the right one and sharper than mine: I had filed the `T-HL-TWO-HOMES`
+  citations as "soft rot, flagged not swept" — the rule says a reconfiguration that leaves them is
+  the defect, and the pass that causes the orphan owes the fix. `FIX-03-05` filed as the backstop,
+  adopting all six known citations. **Lesson to carry: "flagged not swept" was me treating the
+  broom as the plan.**
