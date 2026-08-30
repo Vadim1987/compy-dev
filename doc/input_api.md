@@ -108,6 +108,7 @@ Everything that puts the widget on screen and alters it while it is there.
 | `on_text_entered` | `function(text)` called after successful validation, with the submitted content as one string. |
 | `on_limit_reached` | Called when cursor movement reaches a boundary. |
 | `force` | `show` only: re-open a widget that is already up. |
+| `oneshot` | `show` only: close the widget after a successful submit. |
 
 `show` on an active input widget warns and does nothing unless `force = true`.
 With `force`, it is a **full re-setup** — the same thing a first `show` does,
@@ -121,6 +122,10 @@ they set:
 - **Your content** — `text` and `cursor` — belongs to the person typing, so
   only `show` seats it. While the widget is up, `set_text`, `set_cursor` and
   `clear` are the ways to change it.
+- **`force` and `oneshot` describe the opening itself**, not a standing
+  preference, so they too are `show`-only — passing either to `configure`
+  raises, naming `show`. `oneshot` is spent by the `show` that carried it: a
+  later plain `show` opens an ordinary widget again.
 - **Everything else** belongs to your project. Those keys are set only when
   you name them, and stay until you replace them: leaving one out changes
   nothing, and there is no key that `show` applies and `configure` quietly
@@ -158,9 +163,9 @@ input widget — `prompt`, `highlighter`, `validator`, `on_text_entered`,
 `on_limit_reached`. It raises on an unrecognised key by the same rule as
 `show`.
 
-`configure` never touches your content, so `text`, `cursor` and `force` raise
-from it as keys belonging to another call, the way a lifecycle callback
-already does. Use `show` to seat content, and `set_text` / `set_cursor` /
+`configure` never touches your content, so `text`, `cursor`, `force` and
+`oneshot` raise from it as keys belonging to another call, the way a lifecycle
+callback already does. Use `show` to seat content, and `set_text` / `set_cursor` /
 `clear` to change it while the widget is up.
 
 Calling `configure` while the widget is hidden is fine and does not warn: the
@@ -220,6 +225,13 @@ lines. `validator` and `highlighter` also receive `lines`. A rejecting validator
 input widget displays the error and steps 3–4 do not run. A highlighter has no
 submit or validation authority: it only controls how the current text looks.
 
+**Which one should your work go in?** Either, or both — this is a
+recommendation and nothing enforces it. Reach for `on_text_entered` when the
+work is about the text the user typed, and for `after_submit` when it is
+machinery that happens to run at submit time: re-arming a prompt, clearing the
+field, closing something. Following it costs nothing and buys a reader of your
+project one less question; ignoring it breaks nothing.
+
 The input widget remains shown by default. To close it after a submit, make that
 choice explicit:
 
@@ -229,9 +241,40 @@ compy.input.callbacks.after_submit = function()
 end
 ```
 
+Or pass `oneshot` and let `show` do it — see below.
+
 Escape first runs `before_cancel()`. A truthy return vetoes the
 cancel. Otherwise it clears the field and calls `after_cancel()`; it also
 stays shown unless that callback hides it.
+
+### Asking one question — `oneshot`
+
+When your project is not *about* input and just needs an answer, `show` can
+take the widget down itself:
+
+```lua
+compy.input.show{
+  prompt = "Your name?",
+  on_text_entered = function(text) greet(text) end,
+  oneshot = true,
+}
+```
+
+That is the whole thing: nothing to install beforehand, nothing to tear down
+after. `oneshot` is exactly the `after_submit = hide` above, written as a key
+— which is also the way to predict what it does at the edges:
+
+- It closes after a **successful** submit, so a `before_submit` veto, an empty
+  field or a rejecting validator all leave the widget up, with the draft intact.
+- Your own `after_submit` still runs, and runs **first** — the widget is still
+  live while it does, so it can read or clear the field.
+- If one of your callbacks **raises**, the widget stays up. Your project
+  suspends with the error, which is the failure worth seeing.
+- **Escape does not close it.** Cancel clears the field and leaves the widget
+  standing, the same as always — so a project that shows a `oneshot` prompt and
+  installs nothing else gives its user no way to dismiss it without answering.
+  If you want Escape to close, say so, the same way:
+  `compy.input.callbacks.after_cancel = function() compy.input.hide() end`.
 
 ### Validation and highlighting
 

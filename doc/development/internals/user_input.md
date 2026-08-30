@@ -787,8 +787,8 @@ predicate was added.
 
 All fields are optional and match the project-facing guide's table:
 `prompt`, `text`, `cursor` (`{line, col}`, applied after `text`),
-`validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, and
-`force`. The project wrapper checks this table before it reaches
+`validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, `force`
+and `oneshot`. The project wrapper checks this table before it reaches
 `configure_core`: an unrecognised key **raises** at the project's call line
 (`decisions/input.md`, Decision 15), rather than being dropped. This
 includes lifecycle names such as `after_submit`, which are direct
@@ -805,8 +805,8 @@ only when given, immediately, and stays until replaced. There is no
 partial application: each field either applies in full or is not
 named at all — never a half-applied config.
 
-`text`, `cursor` and `force` **raise** here. They are `show`-only
-keys — keys that belong to another call, the treatment lifecycle
+`text`, `cursor`, `force` and `oneshot` **raise** here. They are
+`show`-only keys — keys that belong to another call, the treatment lifecycle
 callbacks already get — and the raise carries a message naming
 where each belongs (`decisions/input.md`, Decision 15's show-only
 category, added there by Decision 35). The live writes for content

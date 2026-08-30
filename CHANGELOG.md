@@ -22,6 +22,13 @@ newest first.
 
 ### Added
 
+- **`show{oneshot = true}`** takes the input widget down after a
+  successful submit, so a project that just needs one answer writes a
+  single call with a prompt and a callback and installs nothing else.
+  It is the `after_submit = function() compy.input.hide() end` you
+  would otherwise write, as a key. Escape still clears without
+  closing; see "Asking one question" in `doc/input_api.md`.
+
 - A new `compy.input` API for showing an input prompt and reacting to
   input events. `show`/`hide`/`configure`/`clear` replace the old
   polling globals with one call plus a callback
