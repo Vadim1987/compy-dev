@@ -55,7 +55,7 @@ end
 -- it (doc/input_api.md, "Worked example: the trigger key
 -- echoes into the widget it opened"):
 -- LÖVE delivers a keypressed and a textinput for one physical
--- key in no guaranteed order. This one-shot eats that echo
+-- key in no guaranteed order. This one-time guard eats that echo
 -- whichever side of the open it lands on, then unregisters so
 -- `i` is ordinary content afterwards.
 local function arm_echo_guard()
@@ -66,17 +66,19 @@ local function arm_echo_guard()
 end
 arm_echo_guard()
 
--- One-shot prompt (doc/input_api.md, "Submit lifecycle"): the overlay
--- stays open after submit by default, so a project that wants a
--- prompt-per-command closes it itself. The field comes up empty
--- next time because show() with no `text` clears it — hide()
--- only takes the overlay down — so no separate clear is
--- needed. Closing is also where the echo guard is re-armed: the
--- next open needs a fresh one-shot.
-compy.input.callbacks.after_submit = function()
-  compy.input.hide()
-  arm_echo_guard()
-end
+-- A prompt per command: the widget stays open after submit by
+-- default, so this project asks for the other behaviour with
+-- `auto_hide` on the show below (doc/input_api.md, "Asking one
+-- question"). It is a mode rather than a one-off — every submit
+-- closes the widget until something passes `auto_hide = false`,
+-- which is exactly what turtle wants and why it is set once at
+-- the show instead of re-armed here. The field comes up empty
+-- next time because show() with no `text` clears it, so no
+-- separate clear is needed either.
+--
+-- What is left for after_submit is the echo guard, which runs
+-- before the close: the next open needs a fresh one.
+compy.input.callbacks.after_submit = arm_echo_guard
 
 -- This project keeps its keyboard on love.keypressed/keyreleased on
 -- purpose: the framework captures a project's own love.* handlers and
@@ -85,11 +87,12 @@ end
 -- here would work the same written as compy.input.hooks.*.
 function love.keyreleased(key)
   -- Open only when it is closed, and consume `i` only then: the hook
-  -- runs BEFORE the overlay, so without the guard every `i` typed into
+  -- runs BEFORE the widget, so without the guard every `i` typed into
   -- the prompt would re-trigger show (which warns and no-ops).
   if key == "i" and not compy.input.is_shown() then
     compy.input.show{
       prompt = "TURTLE",
+      auto_hide = true,
       on_text_entered = function(text)
         eval(text)
       end,
