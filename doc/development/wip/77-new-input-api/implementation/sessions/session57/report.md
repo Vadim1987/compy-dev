@@ -59,8 +59,14 @@ session's own Q1 ruling**.
   route is `show{force}`, which is a full re-setup that clears content. Nobody had noticed; it is
   now the strongest argument for `FEAT-02` and it is a defect, not a preference.
 
-## 4. Two things this session got wrong
+## 4. Three things this session got wrong
 
+- **I asserted an unknown instead of running one command.** *"Whether the replaced API's `oneshot`
+  self-cleared is not checkable in this repo"* went into the ledger; the base is in this repo's
+  history, `agents/validation.md` carries *check the PR base first* as a twice-learned lesson of
+  this very phase, and one `git grep` at `3256aac` overturned a claim I had used to argue a rename
+  was unavailable. **The failure was not the wrong answer — it was recording an unknown as a fact
+  about the world rather than about my own effort.**
 - **The documentation sweep stopped at the boundary of what I had edited.** I fixed the guide and
   the internals doc and never asked which *other* documents quote the call sites. Seven did.
 - **Q3 of the ruling sheet was put as a formality with a stated recommendation, and ratified by not
@@ -78,6 +84,20 @@ persistence must be **ruled** in Decision 36 and **said plainly** in the guide �
 says one-off while the semantics say mode, and a reader who takes `oneshot = true` as *"this one
 time"* gets a closing widget on every later prompt, silently. Renaming is not available; Decision 36
 grounds the flag on being a restoration of that exact name.
+
+**The flag is renamed, and my reason for saying it could not be was false.** The owner overruled
+their own position: `oneshot` names a single occurrence while the flag is a mode, so the key gets a
+name that reads as one (`auto_close` proposed as an example; the name itself is `FEAT-02-02`'s to
+settle, with `auto_hide` carried as a counter-proposal because the surface's verbs are `show`/`hide`
+and there is no `close` on it). **I had argued renaming was unavailable on two grounds and both
+fail.** The base check I said was impossible took one command
+([`validation/notes/oneshot-at-the-pr-base.md`](../../../validation/notes/oneshot-at-the-pr-base.md)):
+at `3256aac`, `oneshot` was an **internal model constructor argument** separating the transient
+prompt widget from the console's permanent one — suppressing history, pushing the `userinput` event
+for the poll idiom, switching the view's draw path. **No project could write it or read it**, so
+Decision 36's *"a migrating project author meets a familiar name"* is false: the capability was
+restored, the name never reached anyone. The token is also already taken in-tree by the profiler.
+`FEAT-02-01` now amends a **ground** as well as an edge.
 
 **A retirement takes its citations with it** — new standing rule, `agents/rules/roadmap.md` §5, on
 the owner's directive: *no reconfiguration of a roadmap should leave references orphaned and

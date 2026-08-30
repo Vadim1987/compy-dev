@@ -428,7 +428,7 @@ not assumed.
 
 ---
 
-## ⬜ FEAT-02 — `oneshot` becomes a widget property
+## ⬜ FEAT-02 — the close-on-submit flag is renamed and becomes a widget property
 
 **Owner ruling, 2026-08-30, in discussion — it overrules `FEAT-01-01`'s Q1, made the same day.**
 Attestation with the reasoning, what was rejected and what this does *not* fix:
@@ -451,11 +451,12 @@ row overturns part of it. A reader who did not argue for the thing being overtur
 
 | id | step | notes |
 |---|---|---|
-| **FEAT-02-01** | **amend Decision 36 (edge 1) and Decision 35's boundary note** — the ledger gate, first | **amend, never reinterpret** — the same standard `ARC-01-03` was held to. Edge 1 is *ruled text ruled today*; it does not get quietly rewritten. Say what it said, what replaces it, and that the ground was a resemblance rather than a reason. Decision 35's show-only category loses a member and should say why the remaining three belong. **The amended text must state the persistence** (owner: *if the flag is persistent until disabled it should be clearly said in docs, and probably mentioned in decisions*) — a mode that outlives its `show` is exactly what a reader will assume it is not |
-| **FEAT-02-02** | **`oneshot` moves to the project-owned keys** — `show` **and** `configure`, set-if-given, `false` to unset, **persistent until replaced** | the disarm idiom arrives **free** from Decision 35 statement 3 (`false` is the uniform unset); no new vocabulary. In code: out of `SHOW_ONLY_KEYS`, into `CALLBACK_KEYS`' company and `configure_core`. **The persistence is the point, not a side effect** — `oneshot` configures a *type of behaviour*, so it is an ordinary project-owned setting and needs no category of its own. `FEAT-02-01` rules it in Decision 36; this row must not smuggle in a clearing step |
-| **FEAT-02-03** | **make it first-class and readable** — a project can ask, the way it asks `is_shown()` | the owner's requirement, and the reason for it: a project reasoning about its own teardown path must be able to *check* rather than remember. Mind Decision 18's framing — a project's `love` is a sandboxed clone, so it cannot read widget state without a surface for it |
-| **FEAT-02-04** | **document the teardown-path edge and the persistence**, in the guide | the owner's wording is the shape of the advice: a `show{force}` from a teardown path should either **check the flag and disarm it first**, or run **after** the widget is hidden with the project holding its own state. This **replaces** the bullet `9eebbe3a` added, which describes the old shape. **Second and larger obligation: say plainly that the flag persists until replaced.** The name says one-off and the semantics say *mode*, so a reader who takes `oneshot = true` as *"this one time"* expects it to clear itself and gets a closing widget on every later prompt — silent, right-looking, wrong. Renaming is off the table (Decision 36 grounds the flag on being a restoration of that exact name, asked for by an outside developer), and whether the replaced API's `oneshot` self-cleared is **not checkable in this repo**, so a migrating author's expectation is unknown. Be blunt, not merely accurate |
-| **FEAT-02-05** | tests and the CHANGELOG | **two existing cases invert**: `configure raises on oneshot, naming show()` becomes `configure arms it`, and `it is spent by its own show` becomes the going-down rule. `a forced follow-up show survives the close` must keep passing — it pins the placement, not the category |
+| **FEAT-02-01** | **amend Decision 36 — TWO things — and Decision 35's boundary note** — the ledger gate, first | **amend, never reinterpret** — the same standard `ARC-01-03` was held to. Edge 1 is *ruled text ruled today*; it does not get quietly rewritten. Say what it said, what replaces it, and that the ground was a resemblance rather than a reason. Decision 35's show-only category loses a member and should say why the remaining three belong. **The second amendment is to Decision 36's own first GROUND**, and it is a correction of fact: *"a migrating project author meets a familiar name"* does not hold — the base check shows `oneshot` was an internal model constructor argument, never a project-facing key ([`validation/notes/oneshot-at-the-pr-base.md`](validation/notes/oneshot-at-the-pr-base.md)). The **capability** was restored; the name never reached a project author. Amend the ground, do not delete it — the restoration argument survives, the familiarity claim does not. **The amended text must state the persistence** (owner: *if the flag is persistent until disabled it should be clearly said in docs, and probably mentioned in decisions*) — a mode that outlives its `show` is exactly what a reader will assume it is not |
+| **FEAT-02-02** | **rename the key** — `oneshot` → a name that reads as a mode | **owner ruling, 2026-08-30, overruling their own earlier position.** *"Use a new name without semantic ambiguity — it does not bear the one-off vibe and reads like a mode."* `oneshot` names a *single occurrence* while the flag is a persistent **behaviour mode**, which is the ambiguity `FEAT-02-04` would otherwise have to warn a reader about; renaming deletes the warning instead of writing it. **Three findings support it and none was known when the flag was named:** the familiarity ground is false (row `-01`), the token is already taken in-tree by the **profiler** (`Prof.start_oneshot`, `love.PROFILE.oneshot`, and a reserved-combo test that names it), and `FIX-02-08`/`-09` exist because one word meaning two things is this feature's recurring defect. **Name not final — see the open question below.** Costs: the `serial` author asked for the flag under the old name, and eight tests, three production sites, four documents and two ledgers carry it |
+| **FEAT-02-03** | **the flag moves to the project-owned keys** — `show` **and** `configure`, set-if-given, `false` to unset, **persistent until replaced** | the disarm idiom arrives **free** from Decision 35 statement 3 (`false` is the uniform unset); no new vocabulary. In code: out of `SHOW_ONLY_KEYS`, into `CALLBACK_KEYS`' company and `configure_core`. **The persistence is the point, not a side effect** — `oneshot` configures a *type of behaviour*, so it is an ordinary project-owned setting and needs no category of its own. `FEAT-02-01` rules it in Decision 36; this row must not smuggle in a clearing step |
+| **FEAT-02-04** | **make it first-class and readable** — a project can ask, the way it asks `is_shown()` | the owner's requirement, and the reason for it: a project reasoning about its own teardown path must be able to *check* rather than remember. Mind Decision 18's framing — a project's `love` is a sandboxed clone, so it cannot read widget state without a surface for it |
+| **FEAT-02-05** | **document the teardown-path edge and the persistence**, in the guide | the owner's wording is the shape of the advice: a `show{force}` from a teardown path should either **check the flag and disarm it first**, or run **after** the widget is hidden with the project holding its own state. This **replaces** the bullet `9eebbe3a` added, which describes the old shape. **Second and larger obligation: say plainly that the flag persists until replaced.** The name says one-off and the semantics say *mode*, so a reader who takes `oneshot = true` as *"this one time"* expects it to clear itself and gets a closing widget on every later prompt — silent, right-looking, wrong. Renaming is off the table (Decision 36 grounds the flag on being a restoration of that exact name, asked for by an outside developer), and whether the replaced API's `oneshot` self-cleared is **not checkable in this repo**, so a migrating author's expectation is unknown. Be blunt, not merely accurate |
+| **FEAT-02-06** | tests and the CHANGELOG | **two existing cases invert**: `configure raises on oneshot, naming show()` becomes `configure arms it`, and `it is spent by its own show` becomes the going-down rule. `a forced follow-up show survives the close` must keep passing — it pins the placement, not the category |
 
 ### The row that was filed and withdrawn — `disarmed when the widget goes down`
 
@@ -469,7 +470,7 @@ followed by a later bare `show()` would get a `oneshot` nobody asked for.
 a 'one-off flag' just for syntactic sugaring"*. Under that reading a clearing rule is not merely
 unnecessary, it is a category of its own for a setting that should be ordinary. **The condition
 attached: persistence must be said clearly in the docs and ruled in the decisions** — `FEAT-02-01`
-and `FEAT-02-04` carry it.
+and `FEAT-02-05` carry it.
 
 The lifetime argument that first retired the row still holds and is kept because it answers a
 different question. The owner's objection was: the flag lives on the widget as `callbacks` do, the widget lives one **run** (Decision 3
@@ -480,7 +481,7 @@ from the within-run stickiness the row was aimed at. The row fails for two furth
 
 - **It is an exception to the single reconfiguration policy.** *Content resets, everything the
   project sets persists until replaced* — `ARC-01-07`'s answer, carried in Decision 35. Once
-  `FEAT-02-02` makes `oneshot` project-owned, persisting until replaced is what the policy
+  `FEAT-02-03` makes the flag project-owned, persisting until replaced is what the policy
   **requires**; clearing it at `hide` is a second policy, which is the thing `ARC-02` existed to
   delete.
 - **The argument proves too much.** A later bare `show()` validates "for reasons written elsewhere"
@@ -488,18 +489,37 @@ from the within-run stickiness the row was aimed at. The row fails for two furth
   objection would condemn every project-owned key.
 
 **What replaces it:** nothing, deliberately. A project that wants a continuous session after a
-`oneshot` one writes `show{oneshot = false}` or `configure{oneshot = false}`, which `FEAT-02-02`
-gives it for free. `FEAT-02-04` should say so, since it is the one place a reader will look.
+one writes the flag as `false` at `show` or `configure`, which `FEAT-02-03`
+gives it for free. `FEAT-02-05` should say so, since it is the one place a reader will look.
 
-**Crosswalk (one withdrawal, 2026-08-30).** No `FEAT-02` id appears in `src/` or `tests/` — the
-sprint has not started — so `agents/rules/roadmap.md` rule 2's renumber branch applies.
+**Crosswalk (a withdrawal and an insert, both 2026-08-30).** No `FEAT-02` id appears in `src/` or
+`tests/` — the sprint has not started — so `agents/rules/roadmap.md` rule 2's renumber branch
+applies. Rule §5 also applies to this table's own subject: nothing outside this file cites these
+ids yet, and the successor prompt was corrected in the same pass rather than left to the sweep.
 
-| as filed | now |
-|---|---|
-| `FEAT-02-03` | **withdrawn** (above) |
-| `FEAT-02-04` | **`FEAT-02-03`** — first-class and readable |
-| `FEAT-02-05` | **`FEAT-02-04`** — the teardown-path documentation |
-| `FEAT-02-06` | **`FEAT-02-05`** — tests and the CHANGELOG |
+| as filed | after the withdrawal | **final** | step |
+|---|---|---|---|
+| `FEAT-02-01` | `FEAT-02-01` | **`FEAT-02-01`** | the ledger gate — now amending **two** things |
+| — | — | **`FEAT-02-02`** | **the rename** (new, owner 2026-08-30) |
+| `FEAT-02-02` | `FEAT-02-02` | **`FEAT-02-03`** | the flag moves to the project-owned keys |
+| `FEAT-02-03` | **withdrawn** | — | ~~disarmed when the widget goes down~~ (above) |
+| `FEAT-02-04` | `FEAT-02-03` | **`FEAT-02-04`** | first-class and readable |
+| `FEAT-02-05` | `FEAT-02-04` | **`FEAT-02-05`** | the teardown-path + persistence documentation |
+| `FEAT-02-06` | `FEAT-02-05` | **`FEAT-02-06`** | tests and the CHANGELOG |
+
+### Open question, carried with its trigger — what the key is called
+
+**Answered at `FEAT-02-02`, by the owner, before the row is executed.** The owner proposed
+`auto_close` *as an example* rather than as a ruling. The parent's counter-proposal, for them to
+take or leave:
+
+**`auto_hide` matches the surface's own verb.** `compy.input` has `show` and `hide`; there is no
+`close` on it. `auto_close` would introduce a third word for what `hide()` does, in a feature that
+is already paying `FIX-02-08` (*tier / chain / the walk*) and `FIX-02-09` (*overlay / widget / area
+/ field*) for exactly that. Against it: the guide's prose already says "close" for this concept in
+eleven places, and *close* reads more naturally than *hide* for a prompt that has finished its job —
+so the cost of `auto_hide` is prose that has to say "hide", and the cost of `auto_close` is one more
+name for one thing. **The parent recommends `auto_hide` and does not think the margin is large.**
 
 **What this does NOT fix, stated so nobody expects it to.** The peer review's case survives: a hook
 doing `show{force, oneshot = true}` still re-arms, and the trailing close still fires. Owning the

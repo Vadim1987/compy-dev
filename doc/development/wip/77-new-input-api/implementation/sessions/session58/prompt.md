@@ -1,4 +1,4 @@
-# session58 — `FEAT-02`: `oneshot` becomes a widget property
+# session58 — `FEAT-02`: the close-on-submit flag is renamed and becomes a widget property
 
 Read `agents/sessions.md` and `agents/validation.md` first, then the predecessor report
 [`../session57/report.md`](../session57/report.md).
@@ -26,18 +26,32 @@ The owner wants a reader who did not argue for the thing being overturned. Two c
 - If the case for the change does not survive your own reading, **say so before building it**. An
   overruling that only one session believes in is worth catching now, not after the ledger moves.
 
-## Your task — `FEAT-02`, five rows
+## Your task — `FEAT-02`, six rows
 
 `ROADMAP.md` holds them; read them there. The ruling and its reasoning, including what was
 **rejected** and what this **does not fix**, are in
 [`../../../validation/notes/owner-attestation-oneshot-widget-property.md`](../../../validation/notes/owner-attestation-oneshot-widget-property.md).
-Debt goal: **`T-ONESHOT-SCOPE`**. In outline: amend Decisions 36 and 35 **first** (the ledger gate —
-amend, never reinterpret); move `oneshot` to the project-owned keys, `show` **and** `configure`,
+Debt goal: **`T-ONESHOT-SCOPE`**. In outline: amend Decision 36 — **two things, one of them a
+correction of fact** — and Decision 35's boundary note (the ledger gate, first; amend, never
+reinterpret); **rename the key**; move it to the project-owned keys, `show` **and** `configure`,
 `false` to unset; make it **readable by a project**, the way `is_shown()` is; document the
-teardown-path advice; invert the two tests that pin the old category and update the CHANGELOG.
+teardown-path advice and the persistence; invert the two tests that pin the old category and update
+the CHANGELOG.
+
+**The name is not settled — it is `FEAT-02-02`'s first act.** The owner proposed `auto_close` as an
+example; the roadmap carries a counter-proposal (`auto_hide`, matching the surface's own `show`/`hide`
+verbs) with the argument on both sides. **Put it to the owner and wait**, exactly as `FEAT-01-01`
+did. Do not pick one yourself.
 
 ### Three things not to rediscover the hard way
 
+- **Read [`../../../validation/notes/oneshot-at-the-pr-base.md`](../../../validation/notes/oneshot-at-the-pr-base.md)
+  before `-01`.** It is why `-01` amends a *ground* and not only an edge: Decision 36 says a
+  migrating project author meets a familiar name, and the base check shows `oneshot` was an internal
+  model constructor argument no project could write or read. The capability was restored; the name
+  was not. That note also exists as a standing reminder — the parent asserted the base was
+  "not checkable" rather than running one command, in a phase whose own boot document carries
+  *check the PR base first* as a twice-learned lesson.
 - **Do not re-file the clearing rule, and do not soften the persistence.** *Disarmed when the
   widget goes down* was filed by session57 and **withdrawn by the owner the same day**. The settled
   reading is that **`oneshot` configures a type of behaviour, not one show/hide cycle** — so it is
@@ -52,7 +66,7 @@ teardown-path advice; invert the two tests that pin the old category and update 
 - **It does not fix the peer review's case, and is not meant to.** A hook doing
   `show{force, oneshot = true}` still re-arms and the trailing close still fires. Do not quietly
   widen the sprint into fixing it — that needs a generation token, and the state was judged not
-  worth it. `FEAT-02-04` is where the user learns to avoid it.
+  worth it. `FEAT-02-05` is where the user learns to avoid it.
 - **Do not "simplify" the close by capturing the flag before the hooks.** It looks like the obvious
   shape and it is wrong: mutation-tested in session57, it leaves the broken case broken **and**
   closes the plain forced follow-up that currently survives. The test
@@ -75,13 +89,18 @@ Report both before starting `-01`, then proceed.
 
 ## Facts worth having up front (verified 2026-08-30 — re-verify before relying on them)
 
-- `oneshot` lives on the widget (`self.oneshot`), seated in `open_widget` **unconditionally**, and
+- The flag lives on the widget (`self.oneshot`), seated in `open_widget` **unconditionally**, and
   spent by the last line of `submit_flow`. It is in `SHOW_ONLY_KEYS` in `consoleController.lua`.
+  The rename's blast radius is eight tests, three production sites, `types.lua`, four documents and
+  two ledgers — plus `oneshot` is **live in-tree for the profiler** (`Prof.start_oneshot`,
+  `love.PROFILE.oneshot`, and a pending reserved-combo test that names it), so a blind
+  search-and-replace is wrong.
 - `hide()` refuses on an `always_shown` widget (console, editor) — worth knowing before hanging
   anything off it, which is part of why the clearing rule was withdrawn.
 - A project's `love` is a sandboxed deep clone, so a project **cannot** read widget state without a
-  surface built for it — that is Decision 18's shape, and `is_shown()` is the precedent `-03` should
-  follow.
+  surface built for it — that is Decision 18's shape, and `is_shown()` is the precedent `-04` should
+  follow — and the base had an `is_oneshot()` of its own, as a VIEW helper, which is not the same
+  thing and is not a template.
 - `false` is the uniform unset across the config table (Decision 35, statement 3), so the disarm
   idiom needs no new vocabulary.
 - The widget lives for one project **run** (Decision 3 as amended by `ARC-01`), so the flag dies

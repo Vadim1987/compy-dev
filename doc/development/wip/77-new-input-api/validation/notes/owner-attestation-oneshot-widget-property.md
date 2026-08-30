@@ -61,13 +61,25 @@ resemblance to two keys it does not resemble.
 
    **The name says one-off; the semantics say mode.** `oneshot = true` reads to a project author as
    *"this one time"*, and a reader who assumes that will expect the flag to clear itself. It does
-   not: every subsequent submit closes the widget until the project passes `oneshot = false`. That
-   is a silent trap of the same class this feature keeps meeting — right-looking code, wrong
-   behaviour, no error. **Renaming is not the answer**: Decision 36 grounds the flag on being a
-   *restoration* of a name the replaced API had and on an outside developer asking for it *by that
-   name*, and a rename forfeits both. Whether the replaced API's `oneshot` self-cleared is **not
-   checkable in this repo**, so a migrating author's expectation is genuinely unknown — which is a
-   third reason to be blunt in the guide rather than merely accurate.
+   not: every subsequent submit closes the widget until the project disables it. That is a silent
+   trap of the same class this feature keeps meeting — right-looking code, wrong behaviour, no
+   error.
+
+2c. **Superseded the same day: the flag is RENAMED instead** (owner, overruling their own earlier
+   position). *"Use a new name without semantic ambiguity — it does not bear the one-off vibe and
+   reads like a mode."* This deletes the warning rather than writing it, and is the better trade.
+
+   **The parent had argued renaming was unavailable, and was wrong twice over.** It claimed
+   Decision 36's grounding forfeits, and it claimed the replaced API's behaviour was *"not checkable
+   in this repo"* — the owner corrected that, and the check was then run
+   ([`oneshot-at-the-pr-base.md`](oneshot-at-the-pr-base.md)). It shows the opposite of what the
+   ledger says: at base `3256aac`, `oneshot` was an **internal model constructor argument**
+   distinguishing the transient prompt widget from the console's permanent one — suppressing
+   history, pushing the `userinput` event for the poll idiom, and switching the view's draw path. **A
+   project never wrote it or read it.** So Decision 36's *"a migrating project author meets a
+   familiar name"* is false; the **capability** was restored, the name was not. The token is also
+   already taken in-tree by the profiler. `FEAT-02-01` amends that ground; `FEAT-02-02` does the
+   rename.
 
 3. **It becomes a first-class, readable flag** — checkable from project code the way `is_shown()`
    is. A project reasoning about its own teardown path must be able to *ask*.

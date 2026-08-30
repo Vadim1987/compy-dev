@@ -43,11 +43,13 @@ paid, or turned out not to be debt.
   **`oneshot` is machinery and the user does not own lifecycle** — it was admitted on a
   resemblance to two keys it does not resemble. It also needs to be **readable** by a project
   reasoning about its own teardown path, which it is not today.
-- **Also unstated where a reader needs it:** once `oneshot` is project-owned it **persists
-  until replaced**, like `validator` — it configures a *type of behaviour*, not one show/hide
-  cycle (owner, 2026-08-30). The name says one-off and the semantics say mode, so the guide
-  must say the persistence plainly and Decision 36 must rule it; a reader who assumes the flag
-  self-clears gets a closing widget on every later prompt, silently.
+- **Also:** once project-owned the flag **persists until replaced**, like `validator` — it
+  configures a *type of behaviour*, not one show/hide cycle (owner, 2026-08-30). `oneshot`
+  names a single occurrence and so contradicts that, which is why the key is **renamed** at
+  `FEAT-02-02` rather than warned about. Decision 36's first ground goes with it: the base
+  check shows `oneshot` was an internal model argument a project never wrote, so *"a migrating
+  author meets a familiar name"* is false — the capability was restored, the name was not
+  (`../wip/77-new-input-api/validation/notes/oneshot-at-the-pr-base.md`).
 - **Revisit:** `FEAT-02`, five rows, cold by owner preference. The change is **not** a fix
   for the re-show edge the peer review found — that survives, and the row says so.
 

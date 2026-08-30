@@ -147,3 +147,23 @@ hours earlier.
   the defect, and the pass that causes the orphan owes the fix. `FIX-03-05` filed as the backstop,
   adopting all six known citations. **Lesson to carry: "flagged not swept" was me treating the
   broom as the plan.**
+
+## Second addendum — the rename, and the base check I should have run
+
+- **Owner overruled themselves: the key is renamed.** `oneshot` names a single occurrence, the flag
+  is a mode. Renaming **deletes** the doc warning I had just made mandatory rather than writing it —
+  the better trade, and I should have proposed it myself instead of arguing the trap had to be
+  documented.
+- **They also corrected a factual claim of mine, and the correction was the more valuable half.** I
+  had written that the replaced API's behaviour was *"not checkable in this repo"*. It took one
+  `git grep` at `3256aac`. **Recording an unknown as a fact about the world rather than about my own
+  effort** — in a phase whose boot document carries *check the PR base first* as a twice-learned
+  lesson, and with a memory of mine saying the same thing.
+- **What the check found changes the ledger, not just my claim.** Base `oneshot` was an internal
+  model constructor argument (history suppression, the `userinput` poll handshake, the view's draw
+  path) that **no project could write or read**. So Decision 36's *"a migrating project author meets
+  a familiar name"* is **false** — capability restored, name never reached anyone. `FEAT-02-01`
+  amends a ground as well as an edge. Note: `validation/notes/oneshot-at-the-pr-base.md`.
+- **Counter-proposal carried, not decided:** `auto_hide` over `auto_close`, because the surface's
+  verbs are `show`/`hide` and `close` appears nowhere on it — `FIX-02-08`/`-09` exist for exactly
+  this. Margin is small; it is the owner's, and session58 puts it to them before executing `-02`.
