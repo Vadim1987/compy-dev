@@ -27,36 +27,6 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-### T-ONESHOT-SCOPE — `oneshot` is a `show`-only key and should be `auto_hide`, a widget property
-
-- **Decision:** **36**, edge 1 — amended by the owner 2026-08-30, the same day it was ruled;
-  the amendment itself is `FEAT-02-01`. Attestation:
-  `../wip/77-new-input-api/validation/notes/owner-attestation-oneshot-widget-property.md`.
-- **Where:** `SHOW_ONLY_KEYS` in `consoleController.lua`, `configure_core` and `hide` in
-  `userInputController.lua`, the `show`/`configure` key lists in `../input_api.md`.
-- **State:** `oneshot` is refused at `configure`, so the only way to disarm one mid-session is
-  `show{force}` — a **full re-setup that clears the user's draft** (Decision 35, statement 4,
-  pinned by `force without text clears the content`). **The draft cannot be put back:** the
-  widget surface has no text getter (`build_widget_api`, `consoleController.lua`) and a
-  project's `love` is a sandboxed clone, so nothing can read the content it is about to destroy
-  (Decision 18). Changing your mind about the flag costs the user's typing outright — session58
-  verified this in code and corrected the earlier claim that an exact hand re-supply of `text`
-  and `cursor` was available.
-- **Why it stands:** the show-only category exists to protect **user-owned** content; `force`
-  is in it because it is *meaningless* at `configure`, not because it is protected from it.
-  **`oneshot` is machinery and the user does not own lifecycle** — it was admitted on a
-  resemblance to two keys it does not resemble. **No reader is added:** a query earns its place
-  when the framework can change the value, and nothing but the project ever writes this one.
-- **Also:** once project-owned the flag **persists until replaced**, like `validator` — it
-  configures a *type of behaviour*, not one show/hide cycle (owner, 2026-08-30). `oneshot`
-  names a single occurrence and so contradicts that, which is why the key is **renamed** at
-  `FEAT-02-02` rather than warned about. Decision 36's first ground goes with it: the base
-  check shows `oneshot` was an internal model argument a project never wrote, so *"a migrating
-  author meets a familiar name"* is false — the capability was restored, the name was not
-  (`../wip/77-new-input-api/validation/notes/oneshot-at-the-pr-base.md`).
-- **Revisit:** `FEAT-02`, five rows, cold by owner preference. The change is **not** a fix
-  for the re-show edge the peer review found — that survives, and the row says so.
-
 ### T-GUARD-LIVE — the guide never says a project's own keys stay live while the widget is shown
 
 - **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
@@ -1268,6 +1238,29 @@ changes.
   anyway.
 
 ## RETIRED
+
+### T-ONESHOT-SCOPE — the `show`-only `oneshot` becomes `auto_hide`, a widget property (RESOLVED, 2026-08-30)
+
+- **Resolution:** built at `FEAT-02` on the owner's ruling, the same day the edge it
+  amends was made. The key is **`auto_hide`**, it left `SHOW_ONLY_KEYS` for
+  `configure_core`, and `show` and `configure` both set it, set-if-given, with
+  `false` as the unset. It **persists until replaced**, like `validator`: it
+  configures a *type of behaviour*, not one show/hide cycle, so it needs no
+  clearing rule and no category of its own. No reader was added — a query earns
+  its place when the framework can change the value, and nothing but the project
+  writes this one.
+- **The defect it closed:** disarming used to require `show{force}`, a full
+  re-setup that clears the user's draft — and nothing could read that draft back
+  first (no text getter on the surface; a project's `love` is a sandboxed clone,
+  Decision 18). `configure{auto_hide = false}` now disarms without touching it.
+- **What it did NOT fix, deliberately:** a follow-up `show{force}` from inside the
+  submit chain is still closed by the submit in progress unless it passes
+  `auto_hide = false`. Owning the close by the submit that armed it needs a
+  generation token, judged not worth the state; the guide carries the idiom.
+- **Where:** `consoleController.lua` (`SHOW_ONLY_KEYS`, `WIDGET_KEYS`),
+  `userInputController.lua` (`configure_core`, `submit_flow`), `../input_api.md`
+  (*"Asking one question"*), `../internals/user_input.md`, Decision 36's
+  Amendment, `../../CHANGELOG.md`.
 
 ### T-ONESHOT — `oneshot` is ruled in and nothing implements it (RESOLVED, 2026-08-30)
 

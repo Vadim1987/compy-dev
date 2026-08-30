@@ -22,12 +22,15 @@ newest first.
 
 ### Added
 
-- **`show{auto_hide = true}`** takes the input widget down after a
-  successful submit, so a project that just needs one answer writes a
-  single call with a prompt and a callback and installs nothing else.
-  It is the `after_submit = function() compy.input.hide() end` you
-  would otherwise write, as a key. Escape still clears without
-  closing; see "Asking one question" in `doc/input_api.md`.
+- **`auto_hide`** takes the input widget down after a successful
+  submit, so a project that just needs one answer writes a single call
+  with a prompt and a callback and installs nothing else. It is the
+  `after_submit = function() compy.input.hide() end` you would
+  otherwise write, as a key — and it is a **mode, not a one-off**:
+  `show` and `configure` both set it, and it stays in force for every
+  later submit until a call passes `auto_hide = false`. Escape still
+  clears without closing; see "Asking one question" in
+  `doc/input_api.md`.
 
 - A new `compy.input` API for showing an input prompt and reacting to
   input events. `show`/`hide`/`configure`/`clear` replace the old
