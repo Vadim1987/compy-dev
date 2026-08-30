@@ -8,7 +8,13 @@ the sequence**. Updated 2026-08-27.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → FEAT-01 → OP-01 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+
+*`FEAT-01` and `OP-01` were filed 2026-08-30 from the owner's hand-written debt entries, and
+`FEAT-01` takes the lead **by blast radius**: it changes the public surface, so `FIX-02-01` is the
+same seam as one of its rows, `CHG-01` carries what it breaks, and a slice cut before it lands is
+cut twice. `OP-01` follows it because two of its three rows write the decisions `FEAT-01`'s rulings
+produce.*
 
 *`ARC-01` leads because it dissolves part of `BUG-01-02` and removes the teardown machinery the
 other rows would otherwise be sized against — the ordering principle firing exactly as written.*
@@ -357,34 +363,55 @@ entries**, and the **decisions ledger's numbering**.
 
 ---
 
-## 🆕 Intake — three owner debt entries, filed by hand, **not yet placed in a sprint**
+## ⬜ FEAT-01 — the two surface proposals the owner filed from the device
 
-**Recorded 2026-08-30, on the owner's instruction to record and plan them, not to work them.** The
-owner wrote three entries straight into the debt ledgers from the device, in two commits —
-`880c45ef` (`technical_debt/input.md`) and `b6456d61` (`technical_debt/general.md`). They are on the
-board here so that the ledger and the sequence do not disagree; **the ledger entries are the
-authority on content**, this block carries only the placement question.
+**New KIND, owner-ruled 2026-08-30: `FEAT` is design-and-implementation of a proposed surface
+change** — distinct from `BUG` (something misbehaves), `FIX` (docs and process) and `OP` below
+(ledger upkeep). The owner wrote the two proposals straight into `technical_debt/input.md` from the
+device (`880c45ef`); **the ledger entries are the authority on content**, these rows are the
+sequence.
 
-**Trigger: filed into sprints when the `BUG-01-03` turtle revalidation closes.** KIND and sprint are
-the **owner's call** — see the placement note under each. Nothing here is worked before then.
+**This sprint leads the remaining work, by the ordering principle rather than by preference.** Both
+rows change the **public surface**, so everything downstream is sized against them: `FIX-02-01` is
+the same seam as `-03`, the CHANGELOG's breaking-change section is `CHG-01`'s subject, and a slice
+cut before either lands is cut twice. It is also the sprint that **grows** the API, which is the one
+direction the strategic frame watches — see the note under `FEAT-01-01`.
 
-**The trigger has fired (2026-08-30):** the revalidation closed *approve with comments*, both
-comments dispositioned. This block is now waiting on the owner's filing ruling and nothing else.
+| id | step | notes |
+|---|---|---|
+| **FEAT-01-01** | **the `oneshot` design ruling** — what the option means at the edges, before any code · **`T-ONESHOT`** | **owner-gated, and the design questions are real**: does `oneshot` close on *submit only*, or also on cancel/escape? Does it survive a `configure`? Does it compose with an `after_submit` the project also set, or refuse one? The entry's own attestation is the constraint — it was **removed in-flight to avoid over-sugaring** and comes back because **microbit development re-confirmed the need**, so the ruling must say what earns it back |
+| **FEAT-01-02** | implement `oneshot` | breaking-test first per `agents/development.md`; the framework side *is* testable, unlike the example side (`general.md` BACKLOG) |
+| **FEAT-01-03** | **the payload split** — `on_text_entered` yields concatenated plain text, `after_submit` yields the list of lines · **`T-PLAINTEXT-ENTERED`** | **ruled together with `FIX-02-01`, never separately.** That row asks whether the two hooks are one callback set two ways; this is a candidate *answer* — keep both, differentiate their payloads, and `after_submit` gains a reason to exist beyond closing. The owner's framing is a **recommended convention, not an enforced one** |
+| **FEAT-01-04** | implement the split; **feed `CHG-01`** | a payload change on a documented callback is **breaking** — the `Removed`/`Changed` sections and the justification table both carry it |
 
-| entry | ledger | what it asks for | placement question |
-|---|---|---|---|
-| **`T-ONESHOT`** | `input.md` ACTIVE | restore `oneshot` as syntactic sugar — a `show` that closes itself on submit, with no `after_submit` hook installed to do it. Owner attestation: removed in-flight to avoid over-sugaring, **need re-confirmed by microbit development**; the old API had it | **not a `FIX`** — it adds a public option, so it is code plus a decision entry, not docs. Also the one row on this board that **grows** the surface: the strategic frame's *"no moving parts beyond the ask"* applies, and the justification table would have to carry it |
-| **`T-PLAINTEXT-ENTERED`** | `input.md` ACTIVE | `on_text_entered` yields **concatenated plain text**; `after_submit` yields the **list of lines**. Gives `after_submit` a reason to exist beyond one-shot closing, and makes both representations reachable without boilerplate | **collides with `FIX-02-01`, which is the same seam** — that row asks whether the two hooks are *one callback set two ways*; this proposes the answer that keeps both by **differentiating their payloads**. They must be ruled together, and `FIX-02-01` should not be worked as if this did not exist. A payload change is breaking → feeds `CHG-01` |
-| **`T-NAMESPACE-CLONE`** | `general.md` ACTIVE | the project environment is deep-cloned before a run, so a live platform table placed in a namespace **by value** travels as a copy: the program assigns handlers into the copy, the dispatcher reads the original, and **both sides stay silent**. Cost the owner an hour of on-device debugging. Input dodges it by holding the surface up-value behind `__index`; `serial` was since built the same way, assignment to the table itself included. The pattern is non-obvious and the next live table added as a field repeats it | a **documentation** row, and the entry names its own home: *lines in the doc next to Decision 7*. Written in Russian, on-device — **needs translating into the ledger's language when filed**, not paraphrasing away |
-
-**Two observations worth having before the filing ruling, neither of them a ruling:** the first two
-entries are the owner's own device-side findings from real use, which is the evidence class this
-phase has been short of; and both touch the **public input surface**, so whichever way they go they
-land in `doc/input_api.md` and the PR's justification table, not only in the ledger.
+**The frame question, stated once so the ruling is taken with it in view.** The stakeholder ask was a
+*simpler and more robust* input API, and the PR must not carry moving parts beyond it without a
+line in the justification table. `FEAT-01-01` adds an option; `FEAT-01-03` changes what a documented
+callback hands you. Both are defensible — one removes boilerplate the old API did not have, the
+other makes two confusingly-similar hooks distinct instead of redundant — and **both need that line
+written**, not assumed.
 
 ---
 
-## ⬜ The six defect sprints — **the current work**
+## ⬜ OP-01 — ledger upkeep for the three hand-filed entries
+
+**`OP` is the second KIND ruled 2026-08-30: operational need, no parent decision required**
+(`agents/rules/ledgers.md` §4 — *"the need argues for itself"*). Keeping a register legible is named
+there as exactly such a need.
+
+| id | step | notes |
+|---|---|---|
+| **OP-01-01** | **rewrite the three entries in-place to the register's own style** — slug in the heading, then `Where` / `State` / `Why it stands` / `Revisit` | mechanical, and **ordered after `-02` where it matters**: house style has an entry cite the decision it derives from, and for `T-ONESHOT` / `T-PLAINTEXT-ENTERED` that decision does not exist yet. Rewriting first means rewriting twice. `T-NAMESPACE-CLONE` is independent of that and can go first — it also needs **translating from Russian**, faithfully, not paraphrased away |
+| **OP-01-02** | **create or amend the ratified decisions the entries call for** | three: `oneshot`'s existence and edges (feeds `FEAT-01-01`), the callback payload split (feeds `FEAT-01-03`), and the live-table/namespace rule. A proposal sitting in the debt register is an obligation with no ruling behind it — this row is what makes the register honest |
+| **OP-01-03** | **the namespace-clone documentation** — the lines the entry asks for, next to Decision 7 · **`T-NAMESPACE-CLONE`** | **its own step, and it closes the entry outright** — this one is paid by documentation, with no code and no surface change. The content is already the owner's: the project environment is deep-cloned before a run, so a live platform table placed in a namespace *by value* travels as a copy — the program assigns into the copy, the dispatcher reads the original, and **both sides stay silent**. Input dodges it by holding the surface up-value behind `__index`, and `serial` was since built the same way. It cost an hour of on-device debugging, and the next live table added as a field repeats it |
+
+**Why these are not one sprint with `FEAT-01`.** They are different work with different gates: `OP`
+rows need no ruling and can run any time; `FEAT` rows are owner-gated design. Folding them together
+would hide which half is waiting on a decision.
+
+---
+
+## ⬜ The six defect sprints — **the work `FEAT-01` and `OP-01` now run ahead of**
 
 **The remark triage already ran** (owner directed it to lead; it did, and produced five new rows —
 `FIX-02-01/02/03/04/15`). What remains of it is execution, now `FIX-02-07`.
@@ -404,13 +431,14 @@ unsettled surface is sizing twice.
 
 **Renumbered once, here, and stable from now on.** Crosswalk at the end of this section.
 
-### BUG-01 — runtime defects (10), in priority order
+### BUG-01 — runtime defects (11), in priority order
 
 | id | defect | blast radius |
 |---|---|---|
 | ~~**BUG-01-01**~~ ✅ | `state.pending` survives a project stop | **CLOSED, fixed** — `bd2a5d49` (fix + breaking test + behaviour docs), `abadf244` (the false-premise debt entry). No shipped example reaches it, but the path is public API. **Its siblings were then swept** (owner-scoped: `compy.input` + the widget singleton) and one more was found and fixed — the prompt label, `8a9022ec`. Evidence: [`validation/notes/BUG-01-01-pending-lifetime.md`](validation/notes/BUG-01-01-pending-lifetime.md) |
 | ~~**BUG-01-02**~~ ✅ | **RATIFIED by `ARC-02-08` (`e4748e60`), no code — `false` is the uniform unset (Decision 35, statement 3) and is documented as such. The design escalation dissolved: every consumer already tested truthiness, so a stored `false` always took the absent branch.**  a highlighter cannot be turned off · **`T-HL-UNSET`** | **design escalation** — sentinel vs a new `clear_highlighter` member; either changes the public surface. **Wait for ARC-01**, which removes this row's teardown half and leaves only the within-run call. **ARC-01-07 may have dissolved it outright** (2026-08-27, superseding this row's earlier note in the same session): **`highlighter = false` already turns the highlighter off, exactly**, and needs no machinery at all. `apply_config` guards on `~= nil`, so `false` is *stored*; every consumer then guards on **truthiness** — `if ev.highlighter then` (`userInputModel.lua:384/393`) — so a stored `false` takes the **same branch as absent**, `ev:validation_hl(text)`, which is the channel that displays the validator's error in the field. Identical by construction, not by approximation. **Verified by probe**: `validator = false` lifts a rejecting validator, `on_text_entered = false` submits without a crash, `highlighter = false` leaves `get_highlight()` working. *(An earlier note on this row said no user-space value reproduces absent and that the row needed machinery or nothing. That was wrong — it reasoned about `nil` and missed that the code tests truthiness.)* **What remains here is a documentation and ratification call, not a design one:** `false` means *"no such thing"* is already the de-facto contract (Decision 14's situation exactly), it is idiomatic Lua, and it is uniform across `highlighter`, `validator` and the widget outputs. Ratify it and write it down, or reject it and then build machinery. **`prompt` is de-scoped either way** — it has `''` for an empty label and `false` for "back to the default label", both verified |
 | ~~**BUG-01-03**~~ ✅ | **FIXED (Session 56) — `compy.input.is_shown()` guard added to `src/examples/turtle/main.lua:love.keypressed` to match `love.keyreleased` and prevent double-handling when prompt is open.** `turtle` double-handles its own keys · **`T-TURTLE-DUP`** | **FIXED and REVALIDATED** — cold peer review 2026-08-30, **approve with comments**: [`validation/outcomes/BUG-01-03-turtle-fix-peer-review.md`](validation/outcomes/BUG-01-03-turtle-fix-peer-review.md). The guard is the framework's own documented idiom, not a patch over a framework defect (`doc/input_api.md`, *"Why the widget sits at tier 3"*), and is test-pinned in `input_widget_control_spec.lua:621-637`. Both comments dispositioned in the report's addendum: the blanket return's cost is the example's *shortcut*, not the capability (`ctrl+pause` is a reservation above tier 1) and is now written at the guard (`c80b9638`); **no test pins the fix and none can** without inventing an example-under-test genre this codebase has nowhere — recorded, not chased |
+| **BUG-01-11** | **`maze` neutralises two hook sites by clearing a flag, not by the widget guard** · **`T-MAZE-NEUTRALIZE`** | **unknown, and the row opens by weighing rather than by fixing** (owner, 2026-08-30). `draw_main.lua` and `maze_main.lua` set `ctrl_pressed = nil` where `core_editor.lua` uses a pre-existing `is_shown` guard; the cold review could not trace every path, so this is **unverified, not known-broken**. **Step one is the pros-and-contras**, and `wontfix` is a legitimate outcome: for it, `maze` is a reference implementation and a superseded pattern there teaches the next reader wrongly; against it, `maze` is a **separate repo** whose working code must not be overfixed to match a house idiom when the approach is legitimate and contradicts no convention. Only if the weighing goes the first way does any code follow |
 | **BUG-01-04** | a `textinput` shortcut cannot bind an upper-case character · **`T-COMBO-CASE`** | **deep** — the fix is in combo serialisation, which every shortcut match runs through |
 | **BUG-01-05** | `set_cursor` clamps bytes, boundary event measures characters · **`T-CURSOR-BYTES`** | medium — two functions disagree; which is right is a small design call |
 | ~~**BUG-01-06**~~ ✅ | **DISSOLVED by `ARC-02-04` (`af1e8ec6`) — `re_show` deleted, so the path that dropped `prompt` no longer exists. Its highlighter-deferral sibling went with `ARC-02-06`.**  `show{force = true, prompt = …}` silently drops the prompt · **`T-FORCE-PARTIAL`** | narrow — one call path, and **it may dissolve rather than be fixed**: intent recovery ([`validation/reviews/force-and-configure-intent-recovery.md`](validation/reviews/force-and-configure-intent-recovery.md)) found the stakeholder gated *"reconfigured in-place with the new config"* behind `force`, and the code kept only that sentence's parenthetical — so `force` applies content and **nothing else**, the complement of what was specified. Making `force` the full re-setup it was reviewed as removes this row's defect along with three others. `force` has **no consumers in-tree**. **A sibling is NOT covered by this row, and it has since been traced to a root cause — `BUG-01-10`:** the same call *defers* the **`highlighter`** — and only it. **Corrected 2026-08-27 by the cold review:** `validator` / `on_text_entered` / `on_limit_reached` are **applied immediately**, because `merge_callback_keys` writes into the widget's own `callbacks` table, the very table `apply_config` would write. The `highlighter` alone defers, because it lives on `model.evaluator`, which that merge never touches. Verified by probe. So the call has three behaviours for its keys — applied (`text`, three callbacks), dropped (`prompt`, `cursor`), deferred (`highlighter`). Rule on them together |
@@ -420,14 +448,14 @@ unsettled surface is sizing twice.
 | **BUG-01-09** | **`set_text` silently ignores a multi-line *string***, so `show{text = "a\nb"}` leaves the previous content standing · **`T-MULTILINE-STR`** | narrow fix, **but the failure mode is the worst on this list**: silent, on a **documented** input shape, on the primary call. `UserInputModel:set_text` (`:125-134`) assigns `self.entered` only when `#string.lines(text) == 1`; a multi-line string falls through every branch and nothing is written, so the **previous session's content survives into the new one**. A list of line strings works. `doc/input_api.md` documents `text` as *"a string or list of line strings"*. Found by the `ARC-02` cold review, re-probed here: `show{text='previous'}` → `hide()` → `show{text='a\nb'}` leaves `previous` on screen. Belongs with `ARC-02-03`, which is the step that touches the content path |
 | ~~**BUG-01-08**~~ ✅ | **FIXED by `ARC-02-07` (`3bade47a`) — `checked_cursor` at the project boundary; `false` is the unset, out-of-range still clamps.**  **`show{cursor = {}}` raises a raw Lua error from inside the framework** · **`T-CURSOR-SHAPE`** | narrow — one unguarded function, but it is a **public path that crashes the project**. `set_cursor_pos` (`userInputController.lua:169-175`) does `math.min(line, n)` with no nil guard, so a partial or empty cursor table — `{}`, `{1}`, `{nil, 2}` — and a direct `compy.input.set_cursor(nil, nil)` all die with *"bad argument #1 to 'min' (number expected, got nil)"*. Two reasons it matters beyond the crash: the config table is otherwise **strictly** validated (an unknown key raises with a message naming the key and where it belongs), and `doc/input_api.md` promises out-of-range cursor values **clamp** rather than fail. **Base-checked: ours** — `set_cursor_pos` does not exist at `3256aac`; it is FR-9's implementation. Distinct from `BUG-01-05`, which is about byte-vs-character clamping of *valid* input. Found 2026-08-27 probing empty values; **widened the same day** — `cursor = 1` and `cursor = false` raise too, at `:309` (*"attempt to index field 'cursor' (a number value)"*), because the config path indexes `cfg.cursor[1]` without checking the shape. **This row now gates a design rule:** a scalar or defaulted cursor is the proposed "unset" for the field, and it cannot be documented while it raises. **Numbered last, but its radius argues for running it with `BUG-01-05`/`-06`** — all three are cursor/config call-path fixes in the same two files |
 
-### FIX-02 — docs, vocabulary, process (22), in priority order
+### FIX-02 — docs, vocabulary, process (23), in priority order
 
 *(was 20, then 19 — the old `05` and `14` merged into `06`, being one defect in three places — and
 back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26.)*
 
 | id | defect | blast radius |
 |---|---|---|
-| **FIX-02-01** | **`on_text_entered` and `after_submit` are two ways to set one callback** | **design escalation, public surface.** The cold review missed it; the owner raised it twice. Bears on the strategic frame's "no moving parts beyond the ask". **Do not work this row without `T-PLAINTEXT-ENTERED`** (intake block above): the owner has since proposed keeping both hooks and differentiating their payloads, which is a candidate answer to exactly this question |
+| **FIX-02-01** | **`on_text_entered` and `after_submit` are two ways to set one callback** | **design escalation, public surface.** The cold review missed it; the owner raised it twice. Bears on the strategic frame's "no moving parts beyond the ask". **Do not work this row without `FEAT-01-03`**: the owner has since proposed keeping both hooks and differentiating their payloads (`T-PLAINTEXT-ENTERED`), which is a candidate answer to exactly this question — and `FEAT-01` runs ahead of this sprint, so the answer should be in hand by the time this row opens |
 | ~~**FIX-02-02**~~ ✅ | **RATIFIED (Session 56) — `legend = ""` on submit is the example's own code in `src/examples/tixy/main.lua:submit_body` (submitting custom formula retires canned caption; see `validation/notes/S24-W7-A4-A5-invisible-overlay.md`). No framework defect.** `tixy` may drop the legend on submit | **RATIFIED** — verified by `S24-W7-A5` investigation note |
 | **FIX-02-03** | the A-doc's three factual claims (`:79`, `:650`, `:675`) | **may reveal the code is wrong, not the doc** |
 | **FIX-02-04** | pointer annotations in `project_sandbox_env.md` — completeness never checked | **unknown yield** — a verification task |
@@ -448,6 +476,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | **FIX-02-19** | provenance front matter, 3 files | narrow |
 | **FIX-02-20** | **"draft" — unratified vocabulary, and the widest-spread of them** | **runs with the 08–10 cluster, not last** — see the note below |
 | ~~**FIX-02-21**~~ ✅ | **EXECUTED by `ARC-02-05` + `ARC-02-08` — the misleading `PER_SHOW_KEYS` membership is gone with the list itself, and `prompt` is documented as persisting until replaced. The balloons rationale is in `internals/user_input.md` so it outlives `wip/77`.**  **`prompt` is classified per-show but behaves sticky** — ~~which is right is undecided~~ **RULED: the behaviour is right, the classification is wrong** | **no longer escalates** — stays a FIX. Owner ruled 2026-08-27 (below); the work is a comment, a list membership and two doc sentences |
+| **FIX-02-23** | **the guide never says a project's own keys stay live while the field is up** — nor that reservations are exempt from any project guard · **`T-GUARD-LIVE`** | narrow — *a few lines at the `is_shown` paragraph of `doc/input_api.md`*, and it is the paragraph a project author reads before mixing native handlers with a prompt. Earned by `BUG-01-03`: the guide documents the tier mechanism and the trigger-key case, and a reader of it alone still would not know to write the guard that fixes `turtle` — which the suite already pins as the idiom (`input_widget_control_spec.lua`). The **reservation exemption is the half that makes the advice cheap**: a blanket early return costs a project nothing of the framework's own controls |
 | **FIX-02-22** | **three documents say a hidden widget keeps its content; the code clears it** | narrow, but **one site is in the persistent corpus** and outlives `wip/77`. `design/spec.md:155` (*"Content preserved for the next `show()` without `text`"*, contradicting its own §3 five lines up), the round-2 reviewed text `spec.versions/version01.md:191-194`, and **`decisions/input.md` Decision 3** (*"hide and bring back with state intact"*, amended last session). Code clears (`open_widget`), the suite pins it, and **turtle depends on it in a comment** (`main.lua:63-66`). **Disposition: fix the documents** — the owner ruled the behaviour 2026-08-27, and the stakeholder requirement (FR-3/FR-4, the sapper complaint) is about not tearing the widget down, which still holds. Decision 3 needs one qualifier: state survives *except the draft text*. Found 2026-08-27, ARC-01-07 follow-up |
 
 **FIX-02-21, found while fixing BUG-01-01's sibling.** `consoleController.lua` splits config keys into
@@ -737,5 +766,7 @@ Not open questions to chase — each has a trigger:
 | the slug table | **no review needed** — grep-and-rename if a slug displeases |
 | provenance beyond the 3 files | **deferred** — a formal violation does not displace real work |
 | where Decision 20's `keys_pressed` history lives after removal | **at DEC-01-04**, per entry |
-| which sprint (and KIND) the three owner debt entries are filed into | **when `BUG-01-03`'s revalidation closes** — see the intake block above |
+| ~~which sprint (and KIND) the three owner debt entries are filed into~~ | **ANSWERED 2026-08-30** — two new KINDs, owner-ruled: `OP-01` for the ledger upkeep (operational, no parent decision), `FEAT-01` for the design and implementation |
+| does `oneshot` close on cancel as well as submit, and what happens when the project also set `after_submit`? | **at `FEAT-01-01`** — the design ruling, before any code |
+| is `maze`'s flag-clearing neutralisation worth rewriting, or `wontfix`? | **at `BUG-01-11`**, whose first step is that weighing |
 
