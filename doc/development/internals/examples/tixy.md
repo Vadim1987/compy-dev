@@ -35,8 +35,8 @@ Uses `compy.input.show{}` with `LuaHighlighter` and `LuaSyntaxValidator` **(supp
 > REMARK: did we decided to change preexisting behaviour by dropping legend on submit? maybe do not do it?
 
 ```lua
-local function submit_body(lines)
-  body = string.unlines(lines)
+local function submit_body(text)
+  body = text
   setupTixy()
   legend = ""
 end
@@ -58,7 +58,7 @@ compy.input.show{
 }
 ```
 
-`submit_body` (wired as `on_text_entered`) consumes submitted line strings while the session is active. Cancel clears the field, so `after_cancel` is a direct callback assignment that restores the current body.
+`submit_body` (wired as `on_text_entered`) consumes the submitted text as one string while the session is active. Cancel clears the field, so `after_cancel` is a direct callback assignment that restores the current body.
 
 `compy.input.set_text(body)` in `load_example()` pre-fills the live input with the current formula when loading a preset — the user sees the formula they're about to run before submitting. This replaces the old `write_to_input(body)` call.
 

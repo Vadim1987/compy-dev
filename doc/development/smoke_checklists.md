@@ -333,11 +333,12 @@ or stops accepting text — not a crash.
 | A5 | keep answering five in a row without touching anything else | every one is accepted — the session does **not** need re-arming between submits |
 | A6 | let the game finish, then type `restart` and Enter | it restarts, and the field is open and empty again |
 
-### B — submit delivers lines, not a command string
+### B — submit delivers the command string the handlers expect
 
-The API hands `on_text_entered` an **array of lines**; the game's handlers index by a single
-string. The join happens in `terminal.lua`. A mistake here does not crash — it silently compares
-the wrong thing, so **every answer reads as wrong**.
+The API hands `on_text_entered` the submitted content as **one string** (Decision 37), which is the
+shape the game's handlers index by, so `terminal.lua` passes it straight through. It used to hand
+an array and `deliver` joined it; either way a mistake here does not crash — it silently compares
+the wrong thing, so **every answer reads as wrong**, which is what makes B1 worth walking.
 
 | | do | expect |
 |---|---|---|

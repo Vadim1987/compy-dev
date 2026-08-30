@@ -66,9 +66,15 @@ newest first.
   (`string.unlines(lines)` as its first statement) needs no change at
   all — joining a string returns it unchanged. A callback that indexed
   it (`lines[1]`) **must** drop the index, and will otherwise **fail
-  silently**: indexing a string yields `nil` rather than raising. A
-  consumer that genuinely wants the lines has `after_submit`. See
-  "Submit lifecycle" in `doc/input_api.md`.
+  silently**: indexing a string yields `nil` rather than raising.
+  Dropping the index is not behaviour-preserving either, and the
+  difference is also silent: `lines[1]` took the **first** line, while
+  the new argument is **all** of them. A callback that parses what it
+  receives — `tonumber(text)`, or a lookup keyed by it — now gets `nil`
+  where a multi-line submission used to give it the first line. Prompts
+  that only ever hold one line are unaffected; Shift+Enter is what makes
+  any widget multi-line. A consumer that genuinely wants the lines has
+  `after_submit`. See "Submit lifecycle" in `doc/input_api.md`.
 
 - **Keyboard and text input are no longer blocked while an input
   prompt is open.** Previously, showing an input widget stopped a

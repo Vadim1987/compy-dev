@@ -238,7 +238,10 @@ migrate to `compy.input.*`; the replacement mapping is documented in the usage g
 **Decision.** The chain routes events *into* the active route. The widget reports results *out*
 through its own configured **widget outputs**, which are **not** chain components:
 
-- `on_text_entered(lines)` — fires at submit, with assembled line strings.
+- `on_text_entered(lines)` — fires at submit, with assembled line strings. **Amended by Decision
+  37 (2026-08-30): the payload is now the joined string; `after_submit` carries the line list.** The
+  text is left as ruled — what this decision settles is that widget results leave through callbacks
+  of the widget's own, not what one of them is handed.
 - `on_limit_reached(direction, scope)` — fires when the cursor tries to move past a boundary
   (`direction` up/down/left/right; `scope` whole-input or current-line).
 - `validator(lines)` and `highlighter(lines)` — widget behaviour; the
@@ -627,7 +630,7 @@ the callbacks inline:
 ```lua
 compy.input.show{
   prompt = 'name?',
-  on_text_entered = function(lines) greet(string.unlines(lines)) end,
+  on_text_entered = function(text) greet(text) end,
 }
 ```
 
@@ -644,8 +647,9 @@ internals.
 ## Implementation alignment
 
 The public `show` table now matches the intended project surface: validation
-and highlighting are separate callbacks, submitted values are line arrays,
-and a project consumes them through `on_text_entered`. `eval` and `result`
+and highlighting are separate callbacks, the submitted value reaches the
+project through `on_text_entered` — as the joined text since Decision 37,
+as line arrays when this was written. `eval` and `result`
 are retired rather than carried as compatibility keys. The internal evaluator
 objects used by console and editor remain implementation details.
 

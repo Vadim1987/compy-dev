@@ -33,7 +33,7 @@ compy.input.show{
     min_length(2),
     is_lower
   }),
-  on_text_entered = function(lines) print(string.unlines(lines)) end,
+  on_text_entered = function(text) print(text) end,
 }
 ```
 
