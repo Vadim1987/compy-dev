@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -18,7 +18,7 @@ the sequence**. Updated 2026-08-30.
 | **ARC-02** ✅ | `show` composes `configure`; the user's content is `show`'s alone | the second structural row — it dissolved four defects, including two nobody had filed yet |
 | **OP-01** ✅ | ledger upkeep for the owner's three hand-filed entries → **Decisions 36 and 37** | needed no ruling, and it produced the design inputs the next stage implements |
 | **FEAT-01** | the two surface proposals: **`oneshot`**, and the **payload split** that tells the submit callbacks apart | **leads by blast radius** — it changes the public surface, so `FIX-02-01` is one of its rows' seams, `CHG-01` carries what it breaks, and a slice cut before it lands is cut twice |
-| **FEAT-02** | **`oneshot` becomes `auto_hide`**, a widget property — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
+| **FEAT-02** ✅ | **`oneshot` becomes `auto_hide`**, a widget property — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
 | **{ BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02** |
 | **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
 | **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
@@ -35,7 +35,7 @@ narrow mechanical rows follow. Sizing a small row against an unsettled surface i
 | | |
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
-| suite | **1021 / 0 / 0 / 10** — 1011 + `FEAT-01`'s ten (eight for `oneshot`, one for the payload split, one from the cold peer review); the 10 pending are an owner ruling, an 11th is a finding |
+| suite | **1023 / 0 / 0 / 10** — 1021 + `FEAT-02`'s two (the `configure` disarm that keeps the draft, and `false` as the unset; two further cases replaced the ones pinning the retired category); the 10 pending are an owner ruling, an 11th is a finding |
 | marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
@@ -428,7 +428,7 @@ not assumed.
 
 ---
 
-## ⬜ FEAT-02 — `oneshot` becomes `auto_hide`, a widget property
+## ✅ FEAT-02 — `oneshot` becomes `auto_hide`, a widget property
 
 **Owner ruling, 2026-08-30, in discussion — it overrules `FEAT-01-01`'s Q1, made the same day.**
 Attestation with the reasoning, what was rejected and what this does *not* fix:
@@ -448,6 +448,23 @@ That is the strongest argument for the change, and it is a defect rather than a 
 
 **Cold by preference (owner):** `FEAT-01` was executed and ruled inside one long context, and this
 row overturns part of it. A reader who did not argue for the thing being overturned is the right one.
+
+**DONE 2026-08-30 (session58), suite 1021 → 1023.** `-01` `19f47df0` (Decisions 36 and 35 amended,
+preceded by `8bca3c04` repairing three citations of what had been withdrawn), `-02` `fe076244`
+(token-only rename), `-03` `2c6fe978` (the category move, with its four breaking tests — **the test
+inversions `-05` was filed for landed here**, because tests-first is what proves the move), `-04`
+`5ad6e518` (guide + internals + the retired `T-ONESHOT` entry marked as history). `-05` keeps the
+CHANGELOG and the ledger upkeep.
+
+**One collision, ruled by the owner mid-sprint.** The persistence retires the *implicit* disarm a
+bare `show{force}` used to perform, so `a forced follow-up show survives the close` could not pass
+unchanged — it pinned the category as well as the placement, which neither this cell nor the session
+prompt had noticed. Ruled: *"there is no working idiom"* — `FEAT-01`'s shape was a quick
+implementation of a disposable flag, ruled and overruled within a day and never released, so a
+contradiction with it is the thing being removed rather than a cost to weigh. The case now pins the
+placement on a **disarming** follow-up, and the forbidden capture-before-hooks mutation was re-run
+and still fails it. Evidence:
+[`validation/notes/auto-hide-persistence-vs-the-forced-follow-up.md`](validation/notes/auto-hide-persistence-vs-the-forced-follow-up.md).
 
 | id | step | notes |
 |---|---|---|
