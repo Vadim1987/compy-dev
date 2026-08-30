@@ -14,6 +14,10 @@ now exist**: `keyboard`, `maze`+`draw`, `balloons` (detached, so its PR's only g
 and `sapper` (tracked, but its input mechanism changed materially and it carries a live defect).
 The remaining tracked examples ride the platform PR's review pass.
 
+**A fifth was added 2026-08-30: `turtle`.** It moved onto `auto_hide` at `FEAT-02`, so its prompt
+lifecycle is now the framework's rather than its own — the same class of change that earned `sapper`
+a list, and the only in-tree consumer of the key.
+
 **Run them in this order**, which is by *upstream sensitivity* — least exposed first, so that a
 result nobody can invalidate is banked before the exposed ones:
 
@@ -23,6 +27,7 @@ result nobody can invalidate is banked before the exposed ones:
 | **ACC-02-03** | `keyboard` | reconciled 2026-08-11; upstream may have moved since |
 | **ACC-02-04** | `maze` + `draw` | reconciled against a base dated 2026-07-24 |
 | **ACC-02-05** | `sapper` | in-repo, so it moves with the platform |
+| **ACC-02-08** | `turtle` | in-repo, and the last mechanism to land — **numbered out of execution order**, for the reason `ROADMAP.md`'s `FIX-02-20` note records; run it beside `sapper` |
 
 **A clean pass is worth pinning.** Tag the exact state a green run was made against — the scheme
 and the standing tag registry are in `wip/77-new-input-api/TAGS.md` — so that "it passed" names a
@@ -461,3 +466,94 @@ a real finding. The described behaviour itself is recorded in `technical_debt/in
 - **B1–B6** are the press path. It was reverted to its original shape deliberately after a
   conversion broke it; a failure means the revert was incomplete.
 - **C1** is the known defect. Confirm it matches the description; do not file it as new.
+
+---
+
+## turtle
+
+**In-repo** (`src/examples/turtle`), so it ships with the platform PR and has no separate remote.
+**Last mechanism change:** 2026-08-30, `FEAT-02` — the prompt now closes itself through
+**`auto_hide = true`** on its single `show`, instead of a hand-written
+`after_submit = function() compy.input.hide() end`. What is left in `after_submit` is the `i` echo
+guard, which is re-armed for the next open.
+
+**Nothing a user does should look different.** This list is a regression pass with one new
+mechanism inside it, so a row that fails is either the framework's `auto_hide` or the re-armed
+guard — the game's own logic did not move.
+
+### The two commits a result should be reported against
+
+Quote these with any finding, and refresh them (`git rev-parse --short HEAD`) if the tree moved
+before you run.
+
+| what | ref | commit |
+|---|---|---|
+| platform repo, the branch under test | `feature/77-newapi-analysis-s20260615` | **`8b52d5b5`** |
+| platform edge upstream, for comparison | `dsent/dsent/dev` | **`617bbe65`** |
+
+### How to launch
+
+- **Desktop / nodejs:** from the repo root, `love src play src/examples/turtle`.
+- **The exit row (D1) needs the IDE**, as elsewhere: `love src`, then open the project from the
+  console.
+
+**The game:** a turtle sits in the middle of the screen. **`i`** opens a prompt labelled `TURTLE`;
+type a command and press Enter to move it. The commands are `forward`/`fd`, `back`/`b`,
+`left`/`l`, `right`/`r` and `pause`. `space` toggles the debug readout, `Shift+R` sends the turtle
+home — **both only while the prompt is closed**.
+
+### A — the prompt closes itself, and stays that way
+
+The mechanism this list exists for. `auto_hide` is a **mode**, not a one-off: it is set once at the
+`show` and applies to every later submit. A3 is the row that catches a flag that wrongly clears
+itself — the prompt would stay open from the second command on.
+
+| | do | expect |
+|---|---|---|
+| A1 | launch, press `i` | the prompt opens, labelled `TURTLE`, **empty** |
+| A2 | type `forward`, press Enter | the turtle moves up **and the prompt closes by itself** |
+| A3 | press `i`, type `back`, Enter; repeat three or four times | **every** cycle closes on submit — not just the first. *(A prompt that stays open from the second command on is the flag failing to persist.)* |
+| A4 | press `i`, type `xyzzy` (not a command), Enter | the prompt closes and the turtle does not move — the close follows a **successful submit**, and an unknown word is still a valid submission here (this game installs no validator) |
+| A5 | press `i`, press Enter on the **empty** field | **nothing happens and the prompt stays open** — an empty submit is not a submit, so nothing closes |
+| A6 | press `i`, type `left`, then press **Escape** | the line clears and **the prompt stays open** — Escape is not a close, deliberately. Type `left` again and Enter to get out |
+
+### B — the echo guard, re-armed from `after_submit`
+
+`i` is both the trigger and an ordinary character. The guard eats exactly one `i` per open and is
+re-armed on submit — which is now `after_submit`'s only job, so B2 is what proves the refactor.
+
+| | do | expect |
+|---|---|---|
+| B1 | press `i` and look at the field | it is **empty** — no `i` was typed into the prompt it opened |
+| B2 | submit a command (the prompt closes), then press `i` again | still **empty**. *(A stray `i` here means the guard was not re-armed — the one thing `after_submit` still does.)* |
+| B3 | with the prompt open, type `iii` | all three appear — the guard is spent after the first, and `i` is ordinary content afterwards |
+| B4 | type a long command, watching each character | each appears **once** — the echo check every list carries |
+
+### C — the game's own keys while the prompt is up
+
+`turtle` guards its whole `love.keypressed` with `compy.input.is_shown()`, which is the documented
+idiom for a project whose hooks run above the widget.
+
+| | do | expect |
+|---|---|---|
+| C1 | with the prompt **open**, press `space` | the debug readout does **not** toggle |
+| C2 | with the prompt **closed**, press `space` | it toggles |
+| C3 | with the prompt **open**, press `Shift+R` | the turtle does **not** jump home, and an `R` lands in the field |
+| C4 | with the prompt **closed**, press `Shift+R` | the turtle returns to the centre |
+
+### D — on the way out
+
+| | do | expect |
+|---|---|---|
+| D1 | leave with `Ctrl+Esc` (**IDE launch**) | you are back in the console |
+| D2 | reopen the project and press `i` | the prompt opens empty — nothing from the previous run survived |
+
+### What a failure here means
+
+- **A2–A5 and B2** are the 2026-08-30 change. A failure is a defect in `FEAT-02` or in the echo
+  guard's new home — report it against `wip/77-new-input-api/ROADMAP.md`, `FEAT-02`.
+- **A3 specifically** distinguishes the mode from a one-off: if only the first submit closes, the
+  flag is being cleared somewhere it should not be, and that is a **platform** defect, not turtle's.
+- **A6** is the documented asymmetry: `auto_hide` closes on submit and never on cancel. Confirm it
+  reads acceptably rather than whether it differs.
+- **C1–C4** are pre-existing behaviour the change was not supposed to touch.

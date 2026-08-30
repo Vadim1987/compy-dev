@@ -868,6 +868,7 @@ to change is what this ordering exists to prevent.
 | ACC-02-03 | `keyboard` smoke | the review could not check `4c`'s timing — run this one carefully |
 | ACC-02-04 | `maze` + `draw` smoke | **against `newinput-edge`** — `da9d1c2` is on that branch only |
 | ACC-02-05 | `sapper` smoke | **section C is expected to fail** — P19's accepted defect, described in the list |
+| ACC-02-08 | `turtle` smoke | **added 2026-08-30** — `FEAT-02` put its prompt lifecycle on `auto_hide`, so the game no longer closes the widget itself. In-repo, so **run it beside `ACC-02-05`**; numbered out of execution order for the reason `FIX-02-20` records. List: `doc/development/smoke_checklists.md`, *"turtle"* |
 | ACC-02-06 | slice regeneration, if the passes moved anything | |
 | ACC-02-07 | owner's readability review of the slices | |
 
