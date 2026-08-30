@@ -175,7 +175,7 @@ paid, or turned out not to be debt.
 
 ## RETIRED
 
-### T-NAMESPACE-CLONE — a live platform table in a namespace travels to the project as a copy — PAID by Decision 38
+### T-NAMESPACE-CLONE — a live platform table in a namespace travels to the project as a copy — PAID by a written practice
 
 - **Where:** the project environment's construction — a deep clone taken before the run
   (`../internals/project_sandbox_env.md`) — and every namespace that hands a project a
@@ -188,10 +188,15 @@ paid, or turned out not to be debt.
   up-value behind `__index`, and `serial` was later built the same way, assignment to the
   table itself included; what was missing was the rule stated once, where the next person
   to add a namespace field would meet it.
-- **Paid by:** `../decisions/input.md`, **Decision 38** — a live platform table reaches a
-  project through `__index`, never as a value. Decision 7 carries a pointer to it, so a
-  reader working on the surface meets the rule where the owner asked for it. Decision 18
-  is the same hazard met from the other direction (`love.state.user_input` read inside a
-  project is always `nil`).
+- **Paid by:** `../conventions/architecture_principles.md`, *"A Namespace Hands Out Live
+  Tables by Reference, Never by Value"*. It is filed as a **suggested practice rather than
+  a decision** (owner, 2026-08-30) on two grounds: the rule is generic — it binds any
+  subsystem handing a project a live table, not the input surface — and a table that is
+  genuinely a snapshot may be passed by value quite correctly, so the right instrument is
+  a practice with a question attached (*does anyone write to this after the run starts?*),
+  not a ruling. `decisions/input.md` Decision 7 carries the one-line pointer to it, which
+  is where `serial`'s author suggested the note belonged; Decision 18 records the same
+  hazard met from the other direction (`love.state.user_input` read inside a project is
+  always `nil`).
 - **Retired 2026-08-30.** Nothing outstanding: the obligation was documentation, and the
   code already implements the pattern in both places it applies.

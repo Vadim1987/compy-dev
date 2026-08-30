@@ -38,14 +38,14 @@ paid, or turned out not to be debt.
   effect. The **edges are not ruled**: whether the key is spent by its `show` or sticky,
   whether it composes with a project's own `after_submit`, and what it does when a callback
   raised. Decision 36 carries a recommendation on each; none is ratified.
-- **Why it stands:** the owner's attestation is the case for it — removed in-flight to avoid
-  over-sugaring, need re-confirmed by microbit development. **The in-tree evidence is thin
-  and the entry says so:** exactly one shipped example (`turtle`) closes on submit, and it
-  would keep its `after_submit` anyway to re-arm an echo guard, so here the sugar removes one
-  call from one example. That is a reason to ratify deliberately, not a reason to drop it.
-- **Revisit:** `FEAT-01-01` ratifies the edges, `FEAT-01-02` builds it. It **grows** the
-  public surface, so the PR's justification table carries a line naming the attestation as
-  the ground.
+- **Why it stands:** only the edges are unsettled; the flag itself is settled. It
+  **preceded this feature** — the replaced API had it, so this is a restoration — and it was
+  **asked for by the `serial` API's author**, a consumer outside the input work. Its
+  ergonomic case is the one-line question: a project whose subject is not user input asks
+  the user something with a prompt and a callback and nothing else to install or tear down.
+- **Revisit:** `FEAT-01-01` ratifies the edges, `FEAT-01-02` builds it, `FEAT-01-05`
+  documents it. It **grows** the public surface, so the PR's justification table carries a
+  line — naming the precedent and the outside request, which is what grounds it.
 
 ### T-PLAINTEXT-ENTERED — the two submit callbacks receive identical payloads
 
