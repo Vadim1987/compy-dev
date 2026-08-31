@@ -117,6 +117,36 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### `set_text`'s list branch does not split embedded newlines
+
+- **Where:** `src/model/input/userInputModel.lua` — `UserInputModel:set_text`,
+  the `type(text) == 'table'` branch, which sanitises each element and stores it
+  verbatim.
+- **State:** the two branches of one function disagree about what a newline
+  means. `set_text("a\nb")` yields two lines; `set_text({"a\nb"})` yields **one**
+  line holding a raw newline, which the model then counts as an ordinary
+  character — three characters long, caret positions `1..4`. The content
+  round-trips through `string.unlines` unchanged, so a submit delivers what was
+  set; what is uncharacterised is the rendering, which needs a display.
+- **Why it matters:** `../input_api.md` documents `text` as *"a string or list
+  of line strings"*, one shape with two spellings, and the spellings now behave
+  differently. This is the same **one fact stated twice** family as the
+  accept-side/apply-side key lists — nothing reconciles the two branches, and
+  the disagreement is silent.
+- **Why it is narrow, stated so the weighing is honest:** no in-tree caller can
+  reach it. All three (`maze/core_editor.lua`, `tixy/main.lua` twice) pass
+  either a raw string or `string.lines(…)`, and `string.lines` never emits an
+  element containing a newline. A project has to hand-build such a list. The
+  sibling path differs too: `UserInputController:add_text` normalises with
+  `string.unlines` before handing over, so the *add* path has no such branch.
+- **Provenance: pre-existing.** At the PR base the table branch is
+  `InputText(text)` — no split, no sanitise. This feature fixed the *string*
+  half and thereby made the two halves visibly disagree; it did not introduce
+  the branch. Found by the cold peer review of the fix that exposed it.
+- **No slug, deliberately** — a slug is the commitment to fix, and whether this
+  is fixed before the release is not yet decided.
+- **Revisit:** `BUG-02-01`, whose first step is that decision.
+
 ### The error highlight compares a byte column against a character index
 
 - **Where:** `src/view/input/userInputView.lua` — `ec = perr.c` is read off the

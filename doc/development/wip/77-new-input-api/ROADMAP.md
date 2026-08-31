@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -19,7 +19,7 @@ the sequence**. Updated 2026-08-30.
 | **OP-01** ✅ | ledger upkeep for the owner's three hand-filed entries → **Decisions 36 and 37** | needed no ruling, and it produced the design inputs the next stage implements |
 | **FEAT-01** | the two surface proposals: **`oneshot`**, and the **payload split** that tells the submit callbacks apart | **leads by blast radius** — it changes the public surface, so `FIX-02-01` is one of its rows' seams, `CHG-01` carries what it breaks, and a slice cut before it lands is cut twice |
 | **FEAT-02** ✅ | **`oneshot` becomes `auto_hide`**, a widget property — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
-| **{ BUG-01 · FIX-01 · FIX-02 · DEC-01 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02** |
+| **{ BUG-01 ✅ · BUG-02 · FIX-01 · FIX-02 · DEC-01 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. A third is conditional: **if `BUG-02`'s weighing goes to *fix*, it finishes before `CHG-01`** |
 | **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
 | **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
 | **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain |
@@ -626,6 +626,28 @@ copying its convention on purpose.
 `apply_config`/`callbacks` seam. **RULED (owner, 2026-08-27): one home, proxied via `callbacks`** — the widget's `callbacks` slot is the single source of truth and the evaluator stops holding a copy; the `compy.input.callbacks` surface proxies to it, so a direct assignment and a `show`/`configure` key reach the same place by construction. **The drift this replaces is documented in `doc/development/internals/user_input.md`** — a reader meeting the old two-homes shape in an older tree needs to know why the evaluator no longer carries it. No longer an escalation; the shape is settled and the work is implementation. Third defect from the evaluator split — session48 fixed the shared-singleton one. Found 2026-08-27 |
 | ~~**BUG-01-09**~~ ✅ | **FIXED (session60) — the string branch of `UserInputModel:set_text` splits with `string.lines` and hands every line to `InputText`, as the table branch already did with a list. Two breaking tests written first; `CHANGELOG.md` *"Fixed"* carries it for a reader, and `T-MULTILINE-STR` is RETIRED. Base-checked: the `== 1` guard is at `3256aac` in the same shape, so the defect is PRE-EXISTING — what this feature added is the documented shape and the surface that reaches it.**  `set_text` silently ignores a multi-line *string*, so `show{text = "a\nb"}` leaves the previous content standing · **`T-MULTILINE-STR`** | narrow fix, **but the failure mode is the worst on this list**: silent, on a **documented** input shape, on the primary call. `UserInputModel:set_text` (`:125-134`) assigns `self.entered` only when `#string.lines(text) == 1`; a multi-line string falls through every branch and nothing is written, so the **previous session's content survives into the new one**. A list of line strings works. `doc/input_api.md` documents `text` as *"a string or list of line strings"*. Found by the `ARC-02` cold review, re-probed here: `show{text='previous'}` → `hide()` → `show{text='a\nb'}` leaves `previous` on screen. Belongs with `ARC-02-03`, which is the step that touches the content path |
 | ~~**BUG-01-08**~~ ✅ | **FIXED by `ARC-02-07` (`3bade47a`) — `checked_cursor` at the project boundary; `false` is the unset, out-of-range still clamps.**  **`show{cursor = {}}` raises a raw Lua error from inside the framework** · **`T-CURSOR-SHAPE`** | narrow — one unguarded function, but it is a **public path that crashes the project**. `set_cursor_pos` (`userInputController.lua:169-175`) does `math.min(line, n)` with no nil guard, so a partial or empty cursor table — `{}`, `{1}`, `{nil, 2}` — and a direct `compy.input.set_cursor(nil, nil)` all die with *"bad argument #1 to 'min' (number expected, got nil)"*. Two reasons it matters beyond the crash: the config table is otherwise **strictly** validated (an unknown key raises with a message naming the key and where it belongs), and `doc/input_api.md` promises out-of-range cursor values **clamp** rather than fail. **Base-checked: ours** — `set_cursor_pos` does not exist at `3256aac`; it is FR-9's implementation. Distinct from `BUG-01-05`, which is about byte-vs-character clamping of *valid* input. Found 2026-08-27 probing empty values; **widened the same day** — `cursor = 1` and `cursor = false` raise too, at `:309` (*"attempt to index field 'cursor' (a number value)"*), because the config path indexes `cfg.cursor[1]` without checking the shape. **This row now gates a design rule:** a scalar or defaulted cursor is the proposed "unset" for the field, and it cannot be documented while it raises. **Numbered last, but its radius argues for running it with `BUG-01-05`/`-06`** — all three are cursor/config call-path fixes in the same two files |
+
+### BUG-02 — the `set_text` list branch does not split (1), opened 2026-08-31
+
+**Opened by the owner at session61's revalidation**, from a finding of the `BUG-01` sprint's cold
+peer review that the sprint left undispositioned. **The row opens by weighing, not by fixing**, and
+the minimal outcome — already delivered — is that the defect is written down where a developer
+meets it. Whether it is *fixed* before the release is an owner call taken at this row.
+
+| id | defect | blast radius |
+|---|---|---|
+| **BUG-02-01** | **weigh fixing vs postponing** the list branch's non-splitting · unslugged entry, *"`set_text`'s list branch does not split embedded newlines"* | **the weighing is narrow; the fix is not.** `UserInputModel:set_text` is the content path every activation and every live text change runs through, and `BUG-01-09` has just rewritten it — which is exactly the argument for deciding rather than reaching. Against fixing: no in-tree caller can reach it (all three pass a raw string or `string.lines(…)`, which never emits an element containing a newline), so a project must hand-build such a list. For fixing: `doc/input_api.md` documents `text` as *"a string or list of line strings"* and the two branches now disagree about what that means, which is the same **one fact stated twice** family as `FIX-02-08`/`-09` |
+
+**Ordering.** It sits in the defect brace beside `FIX-01`/`FIX-02`, and it carries one hard
+constraint of its own: **if the weighing goes to *fix*, `BUG-02` finishes before `CHG-01`**, because
+a behaviour change on a documented surface earns a CHANGELOG line and `CHG-01` is the pass that
+validates them. If it goes to *postpone*, the entry stays unslugged in BACKLOG and nothing else
+moves.
+
+**Provenance, kept straight for the PR description.** **Pre-existing** — at `3256aac` the table
+branch is `InputText(text)` with no split and no sanitise. What this feature did was fix the
+*string* half (`BUG-01-09`) and thereby make the two halves visibly disagree; it did not introduce
+the branch.
 
 ### FIX-02 — docs, vocabulary, process (25), in priority order
 
