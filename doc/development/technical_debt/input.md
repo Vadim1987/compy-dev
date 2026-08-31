@@ -133,20 +133,6 @@ paid, or turned out not to be debt.
   may close it `wontfix`.**
 - **Revisit:** `BUG-01-11`, and not before its evaluation step has run.
 
-### T-BALLOON-LABEL — balloons keeps a shadow copy of the widget's label, re-pushed every cycle
-
-- **Where:** `src/examples/balloons` — `ui_messages.hint` and
-  `ui_draw_hint()`.
-- **State:** a pre-feature fossil. The shadow state re-asserts the label on
-  every state transition because in the legacy era the label died with each
-  `input_text()` call. With label stickiness now ratified, the widget owns the
-  label and the shadow is redundant. Two vestigial arguments ride along it
-  (`terminal_write`'s unread `flushed`, `ui_set_hint`'s extra argument it does
-  not take) plus a stale comment.
-- **Why it stands:** modest severity — redundancy and misleading fossils, no
-  user-visible misbehaviour found.
-- **Revisit:** when balloons is next touched for the label-stickiness work.
-
 ## BACKLOG
 
 ### Decision 1 — console/editor convergence onto the shared chain is unimplemented
@@ -1235,6 +1221,33 @@ changes.
   anyway.
 
 ## RETIRED
+
+### T-BALLOON-LABEL — balloons keeps a shadow copy of the widget's label, re-pushed every cycle (RESOLVED, 2026-08-31)
+
+- **Resolution:** fixed at `BUG-01-07`, in the **balloons repo** (a separate
+  repo with its own remote, which opens its own PR alongside the platform one).
+  `ui_messages.hint` and `ui_draw_hint` are gone; `ui_set_hint` writes straight
+  through to the widget, with a comment carrying the reason the indirection
+  existed.
+- **Why it could go:** the copy had **no second reader** — it was written and
+  read only inside the `ui_set_hint` → `ui_draw_hint` pair, so collapsing them
+  loses no state. It existed because in the legacy era the label died with each
+  `input_text()` call; with label stickiness ratified the widget owns the label
+  and a prompt persists until replaced.
+- **Three fossils went with it:** the `-- NOTE: won't work if there was no real
+  input` comment (it described the flush-dependent redraw), `terminal_write`'s
+  never-read `flushed` parameter, and the second argument passed to
+  `ui_set_hint`, which takes one. The unused `SPLASH_HINT_START` seed went too;
+  the constant stays, because the splash screen reads it directly.
+- **Not runtime-verified:** balloons has no suite and needs a display. Desk-
+  checked and parses; the manual smoke pass is where it is exercised.
+- **Discovered and deliberately NOT fixed** (`agents/development.md`: report
+  non-blocking debt rather than fixing it): `ui_draw_status` reads
+  `ui_messages.results`, which nothing ever sets — `ui_status_finalize` writes
+  `ui_messages.result`, singular. The `results or` branch is dead and the
+  function always falls through to `status`, which is what the active state
+  wants, so nothing misbehaves. Unrelated to the input API and not ours; raised
+  for the owner rather than filed.
 
 ### T-CURSOR-BYTES — `set_cursor` clamps by byte offset; the boundary event measures characters (RESOLVED, 2026-08-31)
 
