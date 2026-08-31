@@ -35,7 +35,7 @@ narrow mechanical rows follow. Sizing a small row against an unsettled surface i
 | | |
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
-| suite | **1030 / 0 / 0 / 10** — 1028 + `BUG-01-05`'s two (the character clamp, at `set_cursor` and at the `set_text` keep_cursor landing); 1028 was 1025 + `BUG-01-04`'s three (upper-case serialisation bare and modified, and the end-to-end textinput dispatch); 1025 was 1023 + `BUG-01-09`'s two breaking tests (the multi-line string, at `show` and at the live `set_text`); 1023 was 1021 + `FEAT-02`'s two (the `configure` disarm that keeps the draft, and `false` as the unset; two further cases replaced the ones pinning the retired category); the 10 pending are an owner ruling, an 11th is a finding |
+| suite | **1032 / 0 / 0 / 10** — 1030 + the two the sprint's cold peer review earned (a shortcut receiving the typed case, and the parser's byte column reaching the caret); 1030 was 1028 + `BUG-01-05`'s two (the character clamp, at `set_cursor` and at the `set_text` keep_cursor landing); 1028 was 1025 + `BUG-01-04`'s three (upper-case serialisation bare and modified, and the end-to-end textinput dispatch); 1025 was 1023 + `BUG-01-09`'s two breaking tests (the multi-line string, at `show` and at the live `set_text`); 1023 was 1021 + `FEAT-02`'s two (the `configure` disarm that keeps the draft, and `false` as the unset; two further cases replaced the ones pinning the retired category); the 10 pending are an owner ruling, an 11th is a finding |
 | marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
@@ -606,7 +606,8 @@ unsettled surface is sizing twice.
 
 **All eleven rows are closed.** Session60 took the five that were still open: `-09`, `-04` and
 `-05` fixed in the platform, `-07` fixed in the balloons repo, `-11` ruled `wontfix` with its
-premise corrected. Suite 1023 → 1030, seven breaking tests. **Three provenance patterns worth
+premise corrected. Suite 1023 → 1032 — seven breaking tests across the three platform fixes, plus
+two the cold peer review earned. **Three provenance patterns worth
 carrying into the PR description:** `-09` was inherited from the base, `-04` was introduced whole
 by this feature, and `-05` was mixed — a pre-existing bound our own wrappers made reachable by
 copying its convention on purpose.
