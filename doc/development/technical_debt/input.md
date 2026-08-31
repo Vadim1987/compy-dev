@@ -133,26 +133,6 @@ paid, or turned out not to be debt.
   may close it `wontfix`.**
 - **Revisit:** `BUG-01-11`, and not before its evaluation step has run.
 
-### T-COMBO-CASE — `combo_string` does not normalise the case of a textinput token
-
-- **Where:** `src/controller/controller.lua`, `combo_string`; the
-  registration side is `Key.new_handler_table`'s normalising `__newindex`
-  (`src/util/key.lua`), which lower-cases through `normalize_combo`.
-- **State:** An upper-case *textinput* combo token cannot match a
-  registration, because registration lower-cases and dispatch does not.
-  Measured (2026-08-03) with `shift` held and `I` typed: dispatch looks up
-  `shift+I`, while `shortcuts.textinput['shift+I']` is stored as `shift+i`.
-  The slot is therefore **unreachable**, not merely awkward — the handler can
-  be written but can never fire. Bare lower-case tokens are unaffected.
-- **Why it stands:** No *adopted* consumer yet — but the revisit condition
-  below has now fired. The paired-shortcut idiom recorded under *"A widget
-  opened from a key can receive that key's own echo"* is a real textinput-combo
-  consumer, and this defect is exactly what confines it to bare triggers.
-- **Revisit:** now — together with the ruling on that entry. If the idiom is
-  adopted as the documented answer, this becomes blocking for any modified
-  trigger; if a framework mechanism is adopted instead, a wildcard one-shot
-  needs no combo lookup and this stays a corner.
-
 ### T-CURSOR-BYTES — `set_cursor` clamps by byte offset; the boundary event measures characters
 
 - **Where:** the cursor-setting path in `userInputController.lua` /
@@ -530,10 +510,12 @@ paid, or turned out not to be debt.
   **paired shortcut**: register the trigger on both channels, where
   `shortcuts.keypressed[combo]` opens and `shortcuts.textinput[combo]`
   swallows the echo and unregisters itself, re-armed by whatever closes the
-  widget. Verified in both delivery orders. Its two limits: the re-arm has no
-  single home (Escape clears without hiding, and there is no close callback),
-  and it is confined to **bare** combos by the case defect recorded under
-  *"`combo_string` does not normalise the case of a textinput token"*.
+  widget. Verified in both delivery orders. Its limit: the re-arm has no
+  single home (Escape clears without hiding, and there is no close callback).
+  *(It was also confined to **bare** combos, by `T-COMBO-CASE`; that half is
+  gone — dispatch lower-cases the trigger, so a `shift+i` registration now
+  matches the `"I"` echo. A modified trigger additionally needs the modifier
+  still held when the echo lands, which `BUG-01-04` did not test.)*
 - **Revisit:** a design pass on the run loop's event-batch guarantees — the
   choice between (a)–(d) turns on what the framework is willing to promise
   about batch boundaries, which is a design question, not a bug fix.
@@ -1263,6 +1245,34 @@ changes.
   anyway.
 
 ## RETIRED
+
+### T-COMBO-CASE — `combo_string` does not normalise the case of a textinput token (RESOLVED, 2026-08-31)
+
+- **Resolution:** fixed at `BUG-01-04`. `combo_string` (`controller.lua`) now
+  lower-cases the trigger, so dispatch emits what registration stores. Decision
+  8 already ratified the rule — "a project can register `['Ctrl+S']` and still
+  match" — this only makes the dispatch half implement it.
+- **The defect it closed:** registration canonicalises the whole combo
+  (`key.lua`, `combo:lower()` inside `split_combo`), dispatch did not, so
+  `shortcuts.textinput['Shift+I']` was stored as `shift+i` while typing `I`
+  looked up `shift+I`. The slot was **unreachable**, not awkward: writable,
+  never fireable, silent. `normalize_combo`'s own docstring asserted the
+  agreement that did not hold.
+- **Narrow by construction:** only textinput delivers a cased trigger.
+  `keypressed`/`keyreleased` carry LÖVE key constants, already lower, and the
+  reservation tables have no textinput channel; `'*'` lower-cases to itself.
+- **It was OURS.** At the PR base `3256aac` `src/util/key.lua` is 53 lines with
+  no combo machinery and `controller.lua` has neither `combo_string` nor
+  `RESERVED`. This feature introduced **both halves** of the asymmetry — it is
+  not inherited drift, which is the opposite of `T-MULTILINE-STR` above.
+- **The limitation it makes explicit:** a shortcut cannot tell `I` from `i`.
+  That was already true of every registration and is now true of dispatch;
+  a project needing the distinction reads the character in `hooks.textinput`.
+  Written down in `../../input_api.md`, *"Event hooks and shortcuts — when to
+  use which"*.
+- **Where:** `controller/controller.lua` (`combo_string`),
+  `tests/input/input_combo_serialisation_spec.lua`,
+  `tests/input/input_events_spec.lua`, `../../input_api.md`.
 
 ### T-MULTILINE-STR — `set_text` silently ignores a multi-line *string* (RESOLVED, 2026-08-31)
 
