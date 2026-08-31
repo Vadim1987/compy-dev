@@ -388,6 +388,21 @@ Held keys and combo strings use two deliberately different representations:
 through an overloadable matcher (default exact match), left as a marked seam for future
 glob/prefix needs.
 
+> **Canonical form is lower-case. Clarified 2026-08-31 (owner) — assumed from the start, and
+> written down only because leaving it unwritten cost a defect.** Case folding is part of the
+> canonical form on the same footing as folding left/right and ordering the modifiers, so
+> `'Ctrl+S'`, `'ctrl+S'` and `'ctrl+s'` are one binding. It went unstated because it is the
+> practically universal convention for key bindings, not because it was undecided.
+>
+> Unstated is not free. Registration folded case; serialisation did not, so a `textinput` shortcut
+> bound to an upper-case character could never fire — the two sides of "normalise, then match
+> exactly" disagreed about what canonical meant, and neither side was written down to be checked
+> against. Both halves fold now.
+>
+> **Only the matching ignores case.** Dispatch passes the raw payload, so a `textinput` handler
+> still receives the character the user actually typed and can tell `I` from `i` from its own
+> first argument. The fold decides *which* handler runs, never *what it is told*.
+
 **Substance unchanged; container renamed.** This decision's mechanics — per-event keying,
 normalisation-on-assignment, the matcher seam — are exactly as originally ratified. Only the
 container's name changed: the table was called `handlers`, now **`shortcuts`** — `handlers`
