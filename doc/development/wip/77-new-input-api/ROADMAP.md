@@ -642,7 +642,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | **FIX-02-06** | the stale keyboard/pointer divergence claim | **one defect in three places** — `release_keyboard_route`'s comment, `event_dispatch_layers.md:112`, and the second doc. **Fix as one**; any survivor re-seeds the others |
 | **FIX-02-07** | execute the 37 remark dispositions | triage **complete**; breadth known, 12 files |
 | **FIX-02-08** | "tier" / "chain" / "the walk" — three names, one thing | known breadth, 3 slices |
-| **FIX-02-09** | "overlay" / "widget" / "area" / "field" — four names | known breadth; `src` half done in S45, docs half open. **The examples were not in that sweep** — found 2026-08-30. `turtle` was fixed on the spot while it was being edited anyway; what remains is the **nested repos**, `keyboard` (six files) and `maze` (`maze_render.lua`), which open their own PRs and are swept there |
+| **FIX-02-09** | "overlay" / "widget" / "area" / "field" — four names | known breadth; `src` half done in S45, docs half open. **The examples were not in that sweep** — found 2026-08-30. `turtle` was fixed on the spot while it was being edited anyway; what remains is the **nested repos**, `keyboard` (six files) and `maze` (`maze_render.lua`), which open their own PRs and are swept there. **Scope clarified by the owner, 2026-08-31 — see the note below** |
 | **FIX-02-10** | "combinator" — concept earned, word not | narrow |
 | ~~**FIX-02-11**~~ ✅ | **RESOLVED — `doc/input_api.md:69,321,333` already states the widget always consumes when shown and explains tier 3 placement. Symptom (`BUG-01-03`) fixed in `turtle/main.lua`.** the guide never says a shown widget **always consumes** (keyboard) | **RESOLVED** — documented in `doc/input_api.md` |
 | ~~**FIX-02-12**~~ ✅ | **ANSWERED by `ARC-02-08` (`e4748e60`) — `false` documented as the uniform unset in `doc/input_api.md`, with the `computed or false` idiom. Ratified rather than built: every consumer already tested truthiness.**  the guide never says callbacks cannot be un-set | narrow — depends on BUG-01-02's ruling. **Write with `FIX-02-21`**: both are answered by the same paragraph — the ownership rule (*content resets; everything the project sets persists until replaced*) plus the sentence saying what "replaced" cannot mean. Not a duplicate of it; the same edit |
@@ -692,6 +692,21 @@ So the remaining work is classification and prose, with **no behaviour change**:
 `show`/`configure` are described, and record the balloons rationale in
 `doc/development/internals/user_input.md` so it outlives `wip/77`. Full analysis:
 [`validation/reviews/ARC-01-07-reconfiguration-policies.md`](validation/reviews/ARC-01-07-reconfiguration-policies.md) §7.
+
+**FIX-02-09's scope, clarified by the owner (2026-08-31).** Two things, and the second is why this
+row cannot be finished early.
+
+**"Docs" means comments too.** Prose documents and the comments in `src/`, `tests/` and the
+examples are one corpus for this sweep, on equal footing — a term that survives in a comment is as
+misleading as one that survives in the guide, and comments are where `FIX-02-14` already hid once.
+`doc/input_api.md` alone still carries eight "field"s.
+
+**The vocabulary is still being minted, which makes this a LATE row.** "Field is open" kept
+resurfacing in session60's own conversation and went into a validation note five times before it
+was caught — long after this row was scoped, by a session that knew the rule. A sweep run before
+the writing stops sweeps a floor that is still being walked on; this one belongs beside `FIX-03`,
+which exists for the same reason. The phrase to watch is not the noun alone but the whole idiom:
+say **the widget is shown**, not *the field is open*.
 
 **FIX-02-20 is numbered out of execution order, deliberately.** `agents/rules/roadmap.md` §2 wants
 numeric order to *be* execution order, but it also says renumber **once, before execution starts**;
