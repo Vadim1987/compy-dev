@@ -160,12 +160,21 @@ paid, or turned out not to be debt.
 ### The config-key list is duplicated across two modules
 
 - **Where:** `userInputController.lua` (`CONFIG_CALLBACKS`) and
-  `consoleController.lua` (`CALLBACK_KEYS`).
-- **State:** since `ARC-02-06` gave the highlighter one home, the two lists
-  hold identical contents — `validator`, `on_text_entered`,
+  `consoleController.lua` (`CALLBACK_KEYS`) — and, for the non-callback keys,
+  `consoleController.lua`'s `WIDGET_KEYS` against the explicit branches at the
+  top of `userInputController.lua`'s `configure_core`.
+- **State:** since `ARC-02-06` gave the highlighter one home, the two callback
+  lists hold identical contents — `validator`, `on_text_entered`,
   `on_limit_reached`, `highlighter` — and are maintained separately. Adding a
   project callback to one and not the other fails quietly in one direction:
   the surface would accept the key and the widget would ignore it.
+- **The same split covers the non-callback keys, in a second pair of places**
+  (noted 2026-08-31): one module decides what `show` / `configure` *accept*
+  (`WIDGET_KEYS`), the other decides what they *apply* (`configure_core`), and
+  nothing ties the two together. `FEAT-02` went through here — `auto_hide`
+  needed an entry on each side — so the failure above is reachable for a key
+  that is not a callback at all. The pair grew from one key to two; it is the
+  shape that is the debt, not the length.
 - **Why it stands:** no defect today, and unifying it crosses a module
   boundary that nothing else in this sprint touched. Reported rather than
   fixed, per the discovered-debt rule.
