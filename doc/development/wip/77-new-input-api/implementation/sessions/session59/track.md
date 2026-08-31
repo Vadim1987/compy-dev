@@ -56,3 +56,29 @@
 - Nothing in `FEAT-02`'s delivery was reopened — all six were rot in the surroundings.
 - **Not wrapped.** Report + successor prompt not written; awaiting the owner's word on whether the
   session continues (`agents/sessions.md` §4: iterate until explicitly approved).
+
+## F4 reopened at design level — 2026-08-31
+
+- **Owner corrected my model of the slug rule**, and it is worth keeping: *a slug is added when
+  debt is PLANNED for fixing.* Not an identifier you hand out to make something citable — the slug
+  IS the commitment. So the question is binary: fix before release or not. Their test: is it a
+  code-quality defect — drift source, readability, smelly code that raises questions on PR review?
+  Yes → BACKLOG becomes ACTIVE, slug, roadmap row.
+- I had suggested "slug it, don't row it" — incoherent under that rule, and the owner said so.
+  This is the pattern from [[owner-answers-defects-at-design-level]] again: the answer was not to
+  the finding but to the category the finding was filed in.
+- Reading the code closely to answer *is it really a defect* paid off twice. It **is** one (silent
+  one-directional failure: accept-side-only key is taken by the surface, ignored by the widget).
+  But the entry described **one** defect where there are **two of different strength** — and my own
+  F4 wording had implied a symmetry that is not there: `WIDGET_KEYS` ↔ `configure_core` is
+  *membership* duplication, not *list* duplication, because `prompt` and `auto_hide` reach different
+  destinations and cannot be looped. Harmless in a findings report; not harmless once the entry
+  reads as a work order. **Rewrote rather than moved.**
+- Scoped the row as **pin the agreement with a test**, not *unify the lists* — the refactor crosses
+  the surface/widget boundary and would read worse on review than the duplication does. Named the
+  refactor in the entry as the thing deliberately not done. Verified first that no agreement test
+  exists.
+- Landed: `265b714d` — `T-KEYSET-SPLIT` ACTIVE, `FIX-02-25` filed, FIX-02 count 24 → 25.
+- Incidental: `implementation/docker/docker-data/` is the container's home mirror inside the repo
+  and is **gitignored** — it makes `grep -rn … doc/` noisy with this session's own transcripts.
+  Exclude it (`--exclude-dir=docker-data`) when sweeping `doc/`. Nothing tracked, nothing at risk.

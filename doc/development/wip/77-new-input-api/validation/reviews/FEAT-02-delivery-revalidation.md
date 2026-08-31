@@ -136,7 +136,8 @@ tracked file under the comment gate**, so it should land before slice regenerati
 
 ### F4 — the debt entry on duplicated key lists did not notice its own Revisit trigger
 
-**Where:** `technical_debt/input.md:160-173`, *"The config-key list is duplicated across two
+**Where (as at review time — the entry has since moved; see §7):** `technical_debt/input.md:160-173`,
+*"The config-key list is duplicated across two
 modules"*, whose **Revisit** reads *"when either list next changes — that is the moment the
 duplication costs something."*
 
@@ -228,7 +229,7 @@ The owner ruled *"apply them all"*. One concern per commit, suite **1023 / 0 / 0
 | **F2** | `712b9ec5` | `FIX-02-20`'s inventory: the *"fixture noise, not a citation"* clause is replaced by the real citation it was hiding (`input_widget_control_spec.lua:175`, a test **description**), the three unnamed corpus files are added, the spread is re-counted, and it is re-dated with an instruction to re-count rather than trust the numbers |
 | **F1** | `0b260e1b` | `tests.md`'s manual-smoke paragraph no longer enumerates the detached repos. It scopes by *examples whose input mechanism changed*, points at `smoke_checklists.md` as the list of lists, and says not to re-enumerate — the duplicate copy is what rotted twice |
 | **F5** | `160cf9f8` | the guide's *Callback assignments* names `prompt` **and `auto_hide`** as the non-callbacks that persist |
-| **F4** | `e3636668` | the duplicated-key-list debt entry's **Where** and **State** now cover the `WIDGET_KEYS` ↔ `configure_core` pair. Reported, not fixed — its *Why it stands* is untouched and still holds |
+| **F4** | `e3636668`, then `265b714d` | the debt entry first gained the `WIDGET_KEYS` ↔ `configure_core` pair; then, on the owner's ruling, was **promoted BACKLOG → ACTIVE as `T-KEYSET-SPLIT` with a roadmap row (`FIX-02-25`)** — see §8 |
 | **F6** | `53d56f6a` | `FEAT-02`'s DONE line gives `-05` its commit (`6d0aa9af`) |
 
 **Two of the six were fixed by deleting a duplicate rather than updating it** (F1's example list,
@@ -239,3 +240,48 @@ sprints, which touch several documents that restate each other.
 **Nothing in `FEAT-02`'s delivery was reopened.** All six were rot in the *surroundings* — index
 paragraphs, sizing notes, a citation — which is what a delivery-level pass is for and what a code
 review would not have caught.
+
+---
+
+## 8. F4, reopened at design level and promoted — `T-KEYSET-SPLIT` / `FIX-02-25`
+
+**Owner ruling, 2026-08-31.** F4 was filed as *reported, not fixed*, and the owner rejected the
+framing rather than the finding: **a slug is added when debt is planned for fixing**, so the
+question is binary — fix before release or not — and the test is whether it is a code-quality
+defect: a source of drift, a readability problem, or something that would raise questions on PR
+review. If yes, it moves BACKLOG → ACTIVE, takes a slug, and gets a row.
+
+**Judged yes, and the entry was rewritten rather than moved**, because reading the code closely
+showed it described one defect where there are two of different strength:
+
+- **`CALLBACK_KEYS` ↔ `CONFIG_CALLBACKS` — a real list duplication.** Same four strings, both
+  loopable, no shared source, each backing a different job: the first the sticky `state.callbacks`
+  store the surface merges from (`merge_callback_keys`), the second assignment onto the widget's own
+  `self.callbacks`.
+- **`WIDGET_KEYS` ↔ `configure_core` — membership duplication, not list duplication.** `prompt` and
+  `auto_hide` reach **different destinations** (`model.custom_label`, `self.auto_hide`), so they
+  cannot be looped and there is no list to share — only the fact that both calls take them. **F4's
+  own wording implied a symmetry that is not there**, which was harmless in a findings report and
+  would not have been once the entry read as a work order.
+
+**The defect that justifies the promotion is the silent one-directional failure:** a key added to
+the accept side alone is taken by the surface and ignored by the widget, with no raise — the config
+table is strictly validated (Decision 15) against a set that does not know what the widget
+implements. Same family as `FIX-02-08`/`-09`: one fact stated twice with nothing reconciling the
+statements. And it has already drifted in the way that counts — not the values, which have never
+diverged, but the shape: `FEAT-02` added an entry on each side and the old entry's *"revisit when
+either list changes"* trigger did not fire. **A trigger that depends on someone remembering to look
+is what failed here**, which is the argument for a row over a Revisit line.
+
+**Scoped deliberately as *pin the agreement with a test*, not *unify the lists*.** Unifying means
+one module importing the other's list across the surface/widget boundary the architecture keeps
+separate — larger than the defect, and it would read worse on review than the duplication does. The
+refactor is named in the entry as the thing not being done. **No agreement test exists today**
+(verified: every key is covered behaviourally and individually; nothing asserts the set is closed),
+so the row's work is a few lines, no behaviour change, and it converts an invisible coupling into an
+executable one.
+
+**Release scope:** ACTIVE means *resolved before this release ships*, and the row is explicit that
+it is **not functional and does not block the release** — it is fixed before the PR because the
+question it answers is a reviewer's, not a user's. The test itself is left to the sprint that runs
+`FIX-02-25`.
