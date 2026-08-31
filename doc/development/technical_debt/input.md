@@ -115,6 +115,36 @@ paid, or turned out not to be debt.
   point at *"Combos the framework keeps"* for the reassurance rather than
   restating it.
 
+## BACKLOG
+
+### The error highlight compares a byte column against a character index
+
+- **Where:** `src/view/input/userInputView.lua` — `ec = perr.c` is read off the
+  parse error, and the draw loop that counts `tl = string.ulen(s)` compares its
+  character index against it.
+- **State:** the parser reports an error column as a **byte** offset
+  (`model/lang/lua/parser.lua`, `get_error`, read out of metalua's message),
+  while the loop that colours the line counts **characters**. On a line holding
+  multi-byte content the byte column exceeds the character index it is compared
+  with, so the error colouring starts further right than the error is. On ASCII
+  the two coincide and it looks correct, which is why nobody has seen it.
+- **Sibling, already fixed:** the same byte column reached the **caret** through
+  `_apply_eval`, where the new character bound refused it outright and the caret
+  stopped moving. That was a live regression and was fixed with a `char_col`
+  conversion. This site is the other consumer of the same value, found by the
+  same review.
+- **Why it stands (owner ruling, 2026-08-31):** deferred past this release. It
+  is cosmetic — a wrong colour extent, never wrong content and never a crash —
+  it reaches only the console and editor error display, and it is not the input
+  API's surface. **No slug**, by the convention that a slug is the commitment to
+  fix.
+- **Shape when taken:** reuse `char_col` (`model/input/userInputModel.lua`), or
+  lift it where the model and the view can both call it. Do not fix the view
+  alone — the unit should be settled once, at the boundary where the parser's
+  answer enters the input subsystem, rather than at each consumer.
+- **Revisit:** when the error display is next touched, or if mis-coloured errors
+  are reported on non-ASCII source.
+
 ### Decision 1 — console/editor convergence onto the shared chain is unimplemented
 
 - **Where:** `src/controller/consoleController.lua` (`ConsoleController:keypressed`,
@@ -1224,8 +1254,9 @@ changes.
   reaches the widget alone. **But `jump_level` → `start_level` → `cur_controls()`
   re-arms `ctrl_pressed` and hides nothing** (`compy.input.hide()` appears only
   in the two menu exits), so a jump from an editor level to a `controls = keys`
-  level would leave both live. **Reported to the owner, not fixed** — it is
-  maze's own latent defect, in another repo, and this row was ruled `wontfix`.
+  level would leave both live. **Reported in maze's own `ISSUES.md`, not fixed** —
+  it is that repo's defect and that repo's readers need to find it, where this
+  ledger is ephemeral to them.
 - **The shape is the one the guide advises** (owner, 2026-08-31): read the
   hardware early and turn the result into a deterministic variable the rest of
   the logic runs on — `../../input_api.md`, *"Perform hardware polling before
