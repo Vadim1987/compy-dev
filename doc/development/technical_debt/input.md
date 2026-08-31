@@ -138,6 +138,16 @@ paid, or turned out not to be debt.
   it reaches only the console and editor error display, and it is not the input
   API's surface. **No slug**, by the convention that a slug is the commitment to
   fix.
+- **What the guide promises, and why that promise still holds.** `../input_api.md`
+  (*"Characters, not bytes"*) says *"every cursor position the widget reports or
+  accepts is counted this way"*. The sprint's peer review read that as
+  over-reaching, on the argument that an error column is a position the widget
+  accepts. It is not one: `ec`/`el` reach `userInputView` only to choose a
+  colour, and no project-facing call reports or accepts them — `get_cursor`,
+  `set_cursor` and `show{cursor}` are the whole surface the sentence governs,
+  and all three now count characters. The sentence stands as written; it is
+  recorded here because the reasoning is not obvious from either document and
+  the next reader will otherwise re-open the question.
 - **Shape when taken:** reuse `char_col` (`model/input/userInputModel.lua`), or
   lift it where the model and the view can both call it. Do not fix the view
   alone — the unit should be settled once, at the boundary where the parser's
