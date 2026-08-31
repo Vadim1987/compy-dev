@@ -13,7 +13,11 @@ anything forgotten, is anything drifting.**
 
 **Verdict: the sprint delivered all five rows with their conditions intact.** Six findings, none of
 which overturns the work. One is load-bearing for the sprints that come next; two are ordinary
-corpus rot; three are nits. Corrections are **proposed, not applied** — the owner rules.
+corpus rot; three are nits.
+
+> **All six corrections applied on the owner's instruction, 2026-08-31** — one commit each,
+> suite green at every one. See §7 for the resolution table. The findings below are left in the
+> present tense as they were written, so the report still reads as the evidence for the fixes.
 
 ---
 
@@ -211,3 +215,27 @@ The parked finding stands as the prompt left it: `ROADMAP.md`'s status table cit
 sizing when they do rule on it: the concern is real and currently **25 `REMARK:` blocks** across
 three persistent-corpus documents — `decisions/input.md` (12), `internals/user_input.md` (11),
 `tests.md` (2).
+
+---
+
+## 7. Resolution — all six applied, 2026-08-31
+
+The owner ruled *"apply them all"*. One concern per commit, suite **1023 / 0 / 0 / 10** at each.
+
+| # | commit | what changed |
+|---|---|---|
+| **F3** | `61dc75fe` | `input_widget_callbacks_spec.lua:511` now cites **Decision 36 as amended** instead of `FEAT-01-01`. Done first: it was the only finding in tracked code and the only one under the comment gate. **`src/` and `tests/` now carry zero `wip/77` roadmap ids** |
+| **F2** | `712b9ec5` | `FIX-02-20`'s inventory: the *"fixture noise, not a citation"* clause is replaced by the real citation it was hiding (`input_widget_control_spec.lua:175`, a test **description**), the three unnamed corpus files are added, the spread is re-counted, and it is re-dated with an instruction to re-count rather than trust the numbers |
+| **F1** | `0b260e1b` | `tests.md`'s manual-smoke paragraph no longer enumerates the detached repos. It scopes by *examples whose input mechanism changed*, points at `smoke_checklists.md` as the list of lists, and says not to re-enumerate — the duplicate copy is what rotted twice |
+| **F5** | `160cf9f8` | the guide's *Callback assignments* names `prompt` **and `auto_hide`** as the non-callbacks that persist |
+| **F4** | `e3636668` | the duplicated-key-list debt entry's **Where** and **State** now cover the `WIDGET_KEYS` ↔ `configure_core` pair. Reported, not fixed — its *Why it stands* is untouched and still holds |
+| **F6** | `53d56f6a` | `FEAT-02`'s DONE line gives `-05` its commit (`6d0aa9af`) |
+
+**Two of the six were fixed by deleting a duplicate rather than updating it** (F1's example list,
+and F2's inventory clause). Both had rotted because a set was written down in two places and only
+one was maintained — the same shape, found twice in one pass. Worth watching for in the defect
+sprints, which touch several documents that restate each other.
+
+**Nothing in `FEAT-02`'s delivery was reopened.** All six were rot in the *surroundings* — index
+paragraphs, sizing notes, a citation — which is what a delivery-level pass is for and what a code
+review would not have caught.

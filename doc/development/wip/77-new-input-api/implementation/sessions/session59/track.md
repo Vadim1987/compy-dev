@@ -39,3 +39,20 @@
   sizing and left it.
 - **Findings reported, corrections proposed, not applied.** Awaiting owner ruling per
   `agents/rules/revalidation.md` §After the checks.
+
+## corrections — 2026-08-31
+
+- Owner: **"yes apply them all"**. Six commits, one concern each, suite green at every one:
+  F3 `61dc75fe` → F2 `712b9ec5` → F1 `0b260e1b` → F5 `160cf9f8` → F4 `e3636668` → F6 `53d56f6a`.
+  F3 first by its own argument: only tracked code, only one under the comment gate.
+- **`src/` and `tests/` now carry zero `wip/77` roadmap ids** — worth keeping true; it is a
+  precondition for deleting `wip/77` without orphaning citations.
+- Pattern worth carrying: **two of the six were fixed by deleting a duplicate, not updating it**
+  (tests.md's copy of the example list, FIX-02-20's inventory clause). Both rotted because a set
+  lived in two places and one was maintained. The defect sprints touch several documents that
+  restate each other — same shape, likely again.
+- I wrote a commit hash into the resolution table before the commit existed and had to correct it.
+  Cheap here; the lesson is to write hashes only after `git log` confirms them.
+- Nothing in `FEAT-02`'s delivery was reopened — all six were rot in the surroundings.
+- **Not wrapped.** Report + successor prompt not written; awaiting the owner's word on whether the
+  session continues (`agents/sessions.md` §4: iterate until explicitly approved).
