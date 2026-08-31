@@ -179,6 +179,21 @@ describe('input surface: widget control — cursor and text #input',
         assert.same(8, c) -- 'worldly' end (len 7 + 1)
       end)
 
+    -- doc/input_api.md, "The input widget — opening it and
+    -- changing it": the same "string or list of line strings"
+    -- shape reaches the live surface, so a newline splits here
+    -- too rather than leaving the old content standing.
+    it('splits a multi-line string into lines',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        input.set_text('a\nb')
+        assert.same({ 'a', 'b' }, F.widget:get_text())
+        local l, c = input.get_cursor()
+        assert.same(2, l)
+        assert.same(2, c)
+      end)
+
     describe("with keep_cursor", function()
     -- doc/input_api.md, "Live changes": keep_cursor
     -- preserves position (clamped).

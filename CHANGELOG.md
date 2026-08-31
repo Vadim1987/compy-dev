@@ -142,6 +142,16 @@ newest first.
 
 ### Fixed
 
+- **Setting the widget's content to a string with newlines in it now
+  works.** `text` is documented as "a string or list of line strings",
+  and the list form always worked; the string form was written only
+  when it held a single line, so `show{text = "a\nb"}` or
+  `set_text("a\nb")` silently wrote nothing and left the previous
+  content standing. This is longstanding, not new — the same guard is
+  in the release this one branches from — but this release is the one
+  that documents the shape and puts it on the project-facing surface,
+  so the silent case is fixed rather than described.
+
 - **Project callbacks no longer lose their arguments on Lua runtimes
   without LuaJIT's `xpcall` extension.** The framework runs your code
   behind an error boundary that forwarded arguments through `xpcall`;

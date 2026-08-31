@@ -49,6 +49,19 @@ describe('input surface: widget control #input', function()
         assert.same({ 'hello' }, F.widget:get_text())
       end)
 
+    -- doc/input_api.md, "The input widget — opening it and
+    -- changing it": text is "a string or list of line strings",
+    -- so the string form carries its own newlines. The previous
+    -- session's content must not survive one.
+    it('a fresh activation with a multi-line string sets every line',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'previous' })
+        input.hide()
+        input.show({ text = 'a\nb' })
+        assert.same({ 'a', 'b' }, F.widget:get_text())
+      end)
+
     it('re-activation without force warns + no-ops',
       function()
         local input = F.compy_input()

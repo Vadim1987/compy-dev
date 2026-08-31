@@ -138,12 +138,7 @@ end
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)
   if type(text) == 'string' then
-    text = sanitize_utf8(text)
-    local lines = string.lines(text)
-    local n_added = #lines
-    if n_added == 1 then
-      self.entered = InputText({ text })
-    end
+    self.entered = InputText(string.lines(sanitize_utf8(text)))
     if not keep_cursor then
       self:_update_cursor(true)
     end
