@@ -722,7 +722,7 @@ row cannot be finished early.
 **"Docs" means comments too.** Prose documents and the comments in `src/`, `tests/` and the
 examples are one corpus for this sweep, on equal footing — a term that survives in a comment is as
 misleading as one that survives in the guide, and comments are where `FIX-02-14` already hid once.
-`doc/input_api.md` alone still carries eight "field"s.
+`doc/input_api.md` alone still carries **13** "field"s, every one of them the widget sense (re-counted 2026-08-31; the note first said eight).
 
 **The vocabulary is still being minted, which makes this a LATE row.** "Field is open" kept
 resurfacing in session60's own conversation and went into a validation note five times before it
@@ -802,7 +802,7 @@ is cheap and renumbering those was not.*
 | id | defect | blast radius |
 |---|---|---|
 | **FIX-01-01** | P11's deferred editorial list — **named as a count, never enumerated** | **UNKNOWN SIZE** — re-derive before sizing; this is why it leads |
-| **FIX-01-02** | ephemeral citations in the persistent corpus — 10 step-id/`wip/` paths, **plus the `FR-1`/`FR-6` namespace** found by the remark triage | known, ~12 sites |
+| **FIX-01-02** | ephemeral citations in the persistent corpus — 10 step-id/`wip/` paths, **plus the `FR-1`/`FR-6` namespace** found by the remark triage | known, ~12 sites — **re-derive rather than trust the count**: the `BUG-01-11` retirement added one more `wip/` path to the debt register in 2026-08-31, so the sizing drifts whenever a row cites its own evidence note |
 | **FIX-01-03** | session numbers in the persistent corpus | known, 4 sites |
 
 *(Old `01`→**02**, `02`→**03**, `03`→**01**.)*
