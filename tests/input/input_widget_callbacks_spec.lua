@@ -510,9 +510,9 @@ describe('input surface: widget callbacks #input', function()
 
   -- doc/development/decisions/input.md, Decision 36: auto_hide
   -- is sugar over `after_submit = function() hide() end`, and
-  -- that equivalence is what every case here pins. The four
-  -- edges were ruled at FEAT-01-01 before any of this was
-  -- written.
+  -- that equivalence is what every case here pins. The edges
+  -- are ruled there too, and read them AS AMENDED -- the
+  -- Amendment superseded the show-only one.
   describe('auto_hide', function()
     it('an auto_hide show closes on submit', function()
       local input = F.activate_project()
