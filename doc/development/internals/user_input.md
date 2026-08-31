@@ -97,20 +97,30 @@ Cursor access exists at three layers. **Model** (`UserInputModel`) has the full 
 `set_cursor(c)`) — used internally by the model's own `keypressed` handling in response to
 arrow/Home/End. **Controller** (`UserInputController`) exposes a narrower passthrough plus a
 clamped 2D mover: `get_cursor_info`/`get_cursor_pos`/`set_cursor(Cursor)`/`jump_home`/
-`set_cursor_pos(line, col)` — the last one (`userInputController.lua:124-139`) computes its own
-clamp against line/text length rather than relying on `move_cursor`'s fallback-to-previous-position
-behaviour. **`compy` (project-facing)** now has its own surface on the input widget:
+`set_cursor_pos(line, col)` — the last one (`userInputController.lua`, `set_cursor_pos`) computes
+its own clamp against line/text length rather than relying on `move_cursor`'s
+fallback-to-previous-position behaviour. **`compy` (project-facing)** now has its own surface on the input widget:
 `compy.input.get_cursor()` / `set_cursor(line, col)` / `set_text(text[, keep_cursor])`
 (`consoleController.lua:487-510`) — `get_cursor` returns `nil` while hidden (a plain "nothing to
 report" read, not a refusal); `set_cursor`/`set_text` no-op **and warn** while hidden.
 
-There are three call sites that manipulate the cursor programmatically (i.e., not as a direct
+There are four call sites that manipulate the cursor programmatically (i.e., not as a direct
 response to an arrow/Home/End keypress): two in `editorController.lua` — `load_selection`
 (`:590-604`, reads/restores the cursor via the **controller** API to preserve the caret across an
 insert) and `reject_oversized` (`:628-633`, called from two live submit paths, jumps the cursor to
 a rejected block's start via **`input.model:move_cursor` directly, bypassing the controller**) —
-plus the project-facing `compy.input.set_cursor`/`set_text` above. Console and search never touch
-it programmatically. `UserInputModel:set_cursor(c)` is a raw, **unvalidated** assignment
+one in the model itself, `_apply_eval`, which seats the caret on the error position when an
+evaluation is rejected, and the project-facing `compy.input.set_cursor`/`set_text` above. Console
+and search never touch it programmatically.
+
+**`_apply_eval` is the site that converts units, and it is the reason the census is worth keeping
+accurate.** It is fed by the Lua parser, which reports an error column as a **byte** offset, while
+every cursor position in the input subsystem is a character position — so it converts at the door
+(`char_col`) rather than handing the raw value on. It was missed by a sweep that enumerated
+everything *reading* the cursor bound and not everything *feeding* it; see
+`text_encoding.md`, *"Byte offsets arrive from outside; convert them at the door"*, and the debt
+register's error-highlight entry
+for the other consumer of the same value. `UserInputModel:set_cursor(c)` is a raw, **unvalidated** assignment
 (`self.cursor = c`) — safe because every caller supplies a pre-validated `Cursor`; the project path
 instead routes through `UserInputController:set_cursor_pos`, which clamps rather than trusting the
 raw model setter with an arbitrary project-supplied pair.
