@@ -416,9 +416,13 @@ Held modifiers are not among the event arguments: ask `Key` for them —
 `Key.shift()` for a modifier, `Key.any_pressed(k)` for any other key —
 which works inside a handler and outside one alike; see "Held keys" below.
 
-The combo vocabulary is covered in the Vocabulary section above. Two
+The combo vocabulary is covered in the Vocabulary section above. Three
 additional rules: Super/Cmd is **not** a modifier (there are exactly three:
-ctrl, alt, shift), and a combo naming two triggers or none **raises**.
+ctrl, alt, shift), a combo naming two triggers or none **raises**, and a
+combo is **case-insensitive** — `'Ctrl+S'`, `'ctrl+S'` and `'ctrl+s'` are
+one binding, and typing `I` fires the same `shortcuts.textinput['i']` that
+typing `i` does. A shortcut therefore cannot tell the two cases apart; if
+your project needs to, read the character in `hooks.textinput`.
 
 The trigger may be `*`, which binds the whole modifier class: `'alt+*'` is
 every Alt chord, and the handler receives the actual key as its first

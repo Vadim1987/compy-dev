@@ -378,6 +378,12 @@ local MOD_HELD = {
 --- (doc/development/decisions/input.md, Decision 30). No buffer
 --- table: three concatenations, not an allocation per call, and
 --- nothing here to make reentrancy-unsafe.
+---
+--- The trigger is lower-cased because registration is: Decision
+--- 8 canonicalises an assigned combo whole, so 'Shift+I' is
+--- stored as 'shift+i' and a dispatch that kept the typed case
+--- could never reach it. Only textinput delivers a cased
+--- trigger — keypressed tokens are LÖVE key constants.
 --- @param k string            triggering key (raw LÖVE name)
 --- @return string             canonical combo string
 local function combo_string(k)
@@ -387,7 +393,7 @@ local function combo_string(k)
       combo = combo .. m[3] .. '+'
     end
   end
-  return combo .. k
+  return combo .. k:lower()
 end
 
 --- Is any modifier held? The cheap pre-check the triggerless

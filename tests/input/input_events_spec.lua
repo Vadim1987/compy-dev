@@ -278,6 +278,21 @@ describe('input surface: inbound events — dispatch #input',
         assert.is_true(fired)
       end)
 
+    -- The registration side lower-cases the whole combo, so a
+    -- textinput channel — the only one that can deliver an
+    -- upper-case trigger — must match on the character the user
+    -- actually typed, not only on its lower-case twin.
+    it('a textinput combo fires on an upper-case character',
+      function()
+        local fired = false
+        local input = F.activate_project()
+        input.shortcuts.textinput['Shift+I'] =
+            function() fired = true; return true end
+        F.session.press('lshift')
+        F.session.type('I')
+        assert.is_true(fired)
+      end)
+
     it('a keyreleased combo fires on the normalised combo',
       function()
         local fired = false

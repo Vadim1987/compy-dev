@@ -60,6 +60,21 @@ describe('input surface: inbound events — combo serialisation'
     assert.equal('s', cs('s'))
   end)
 
+  -- Registration canonicalises to lower case
+  -- (doc/development/decisions/input.md, Decision 8: a project
+  -- registers 'Ctrl+S' "and still match"), so dispatch has to
+  -- emit lower case or the slot is unreachable. Only textinput
+  -- can deliver an upper-case trigger — keypressed tokens are
+  -- LÖVE key constants and are already lower.
+  it('an upper-case trigger serialises lower', function()
+    assert.equal('i', cs('I'))
+  end)
+
+  it('an upper-case trigger folds under modifiers', function()
+    mock.hold('lshift')
+    assert.equal('shift+i', cs('I'))
+  end)
+
   it('ctrl+s from lctrl held', function()
     mock.hold('lctrl')
     assert.equal('ctrl+s', cs('s'))
