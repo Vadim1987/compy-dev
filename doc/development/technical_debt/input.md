@@ -115,26 +115,6 @@ paid, or turned out not to be debt.
   point at *"Combos the framework keeps"* for the reassurance rather than
   restating it.
 
-### T-MAZE-NEUTRALIZE — `maze` neutralises its hooks by clearing a flag, not by the framework guard
-
-- **Where:** the `maze` example repo — the hook sites in `draw_main.lua` and
-  `maze_main.lua`. (`core_editor.lua` already carries an equivalent,
-  pre-existing `is_shown` guard.)
-- **State:** those two sites suppress themselves by setting
-  `ctrl_pressed = nil` rather than by asking whether the widget is shown. A
-  cold review could not trace the pattern across every path and stopped short
-  of a verdict, so **whether it is equivalent to the guard is unverified** —
-  not known-broken.
-- **Why it stands:** `maze` is a reference implementation, and a superseded
-  pattern in one teaches the pattern to the next reader. Against that: it is
-  a separate repo, the approach may be perfectly legitimate, and rewriting
-  working example code to match a house idiom is overreach. **Both sides are
-  real, which is why the row that pays this entry opens with the weighing and
-  may close it `wontfix`.**
-- **Revisit:** `BUG-01-11`, and not before its evaluation step has run.
-
-## BACKLOG
-
 ### Decision 1 — console/editor convergence onto the shared chain is unimplemented
 
 - **Where:** `src/controller/consoleController.lua` (`ConsoleController:keypressed`,
@@ -1221,6 +1201,34 @@ changes.
   anyway.
 
 ## RETIRED
+
+### T-MAZE-NEUTRALIZE — `maze` neutralises two hook sites by clearing a flag, not by the widget guard (NOT DEBT, 2026-08-31)
+
+- **Resolution: `wontfix`, by owner ruling — and the entry's premise was wrong.**
+  The row opened by weighing rather than by fixing, and the weighing found
+  nothing to weigh. No code changed in `maze`.
+- **`ctrl_pressed` is maze's control-mode slot, not a neutralisation idiom.**
+  `controls.lua` defines the modes and each one assigns it — `keys()` sets
+  `handle_key`, `plan()` sets `plan_key` with a matching `ctrl_update`. Clearing
+  it says *no control mode is active*, which is a statement about the game.
+- **The contrast the entry drew inverts.** It read `core_editor.lua` as the file
+  doing it the other way; `arm_editor` there is itself `ctrl_pressed = nil`. And
+  that file's `is_shown` call is a **show-vs-configure** branch — *is there a
+  field to reconfigure?* — not a double-handling guard, which is a different
+  shape from `turtle`'s whole-handler early return.
+- **Double-handling is prevented, and the path is traceable** (the cold review
+  could not trace it): the hook fires while the widget is shown, finds
+  `SYSTEM_KEYS[k]` nil — that table is only ever populated by member name — and
+  `ctrl_pressed` nil, so the keystroke reaches the widget alone.
+- **The shape is the one the guide advises** (owner, 2026-08-31): read the
+  hardware early and turn the result into a deterministic variable the rest of
+  the logic runs on — `../../input_api.md`, *"Perform hardware polling before
+  complex processing"*. The only thing to say against it is that the variable
+  is named after the keyboard where its role is mode selection (`special_mode`
+  would say it) — **semantics and taste, explicitly not fixed**, in another
+  repo's working code.
+- **Where:** nothing changed. Evidence:
+  `wip/77-new-input-api/validation/notes/BUG-01-11-maze-neutralisation-weighing.md`.
 
 ### T-BALLOON-LABEL — balloons keeps a shadow copy of the widget's label, re-pushed every cycle (RESOLVED, 2026-08-31)
 
