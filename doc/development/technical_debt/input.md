@@ -27,6 +27,45 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
+### T-KEYSET-SPLIT — the set of accepted config keys has no single home
+
+- **Where:** `consoleController.lua` decides what `show` / `configure` **accept**
+  (`CALLBACK_KEYS`, `WIDGET_KEYS`, and the `CONFIGURE_KEYS` / `SHOW_KEYS` sets
+  built from them); `userInputController.lua` decides what they **apply**
+  (`CONFIG_CALLBACKS` and the named branches at the top of `configure_core`).
+  Nothing ties the two sides together.
+- **State — one real duplication and one weaker coupling, and they are not the
+  same defect.** `CALLBACK_KEYS` and `CONFIG_CALLBACKS` are two lists holding
+  the same four strings — `validator`, `on_text_entered`, `on_limit_reached`,
+  `highlighter` — maintained separately, each for its own job: the first backs
+  the sticky `state.callbacks` store the surface merges from
+  (`merge_callback_keys`), the second assigns onto the widget's own
+  `self.callbacks`. `WIDGET_KEYS` against `configure_core` is **membership
+  duplication, not list duplication**: `prompt` and `auto_hide` reach
+  *different destinations* (`model.custom_label`, `self.auto_hide`), so there is
+  no list to share — only the fact that both calls take them.
+- **Why it matters: the failure is silent and one-directional.** A key added to
+  the accept side alone is taken by the surface and ignored by the widget, with
+  no raise and no warning — the config table is strictly validated against a set
+  that does not know what the widget implements. That is a drift source, and it
+  is the same family as `FIX-02-08`/`-09`: one fact stated twice, with nothing
+  reconciling the statements.
+- **It has already drifted in the way that counts** (2026-08-31). Not the
+  values, which have never diverged, but the *shape*: `FEAT-02` had to add an
+  entry on each side for `auto_hide`, and the entry that should have caught it
+  said only *"revisit when either list changes"* — a trigger that fires only if
+  someone remembers to look.
+- **The fix is a test, not a refactor** — deliberately, and the refactor is
+  named here as the thing not being done. Unifying the lists means one module
+  importing the other's across the surface/widget boundary the architecture
+  keeps separate, which is a larger change than the defect and reads worse on
+  review than the duplication does. Instead: **assert that every key the surface
+  accepts is a key the widget applies.** No such test exists — each key is
+  covered behaviourally and individually, and nothing asserts the *set* is
+  closed. A few lines, no behaviour change, and it turns an invisible coupling
+  into an executable one.
+- **Revisit:** `FIX-02-25`.
+
 ### T-MERMAID-MODEL — the class diagrams show a model field that no longer exists
 
 - **Where:** `../mermaid/input.md`, `../mermaid/editor.md`, `../mermaid/classes.md` — the
@@ -156,30 +195,6 @@ paid, or turned out not to be debt.
   the last unfixed defect on the primary call path.
 
 ## BACKLOG
-
-### The config-key list is duplicated across two modules
-
-- **Where:** `userInputController.lua` (`CONFIG_CALLBACKS`) and
-  `consoleController.lua` (`CALLBACK_KEYS`) — and, for the non-callback keys,
-  `consoleController.lua`'s `WIDGET_KEYS` against the explicit branches at the
-  top of `userInputController.lua`'s `configure_core`.
-- **State:** since `ARC-02-06` gave the highlighter one home, the two callback
-  lists hold identical contents — `validator`, `on_text_entered`,
-  `on_limit_reached`, `highlighter` — and are maintained separately. Adding a
-  project callback to one and not the other fails quietly in one direction:
-  the surface would accept the key and the widget would ignore it.
-- **The same split covers the non-callback keys, in a second pair of places**
-  (noted 2026-08-31): one module decides what `show` / `configure` *accept*
-  (`WIDGET_KEYS`), the other decides what they *apply* (`configure_core`), and
-  nothing ties the two together. `FEAT-02` went through here — `auto_hide`
-  needed an entry on each side — so the failure above is reachable for a key
-  that is not a callback at all. The pair grew from one key to two; it is the
-  shape that is the debt, not the length.
-- **Why it stands:** no defect today, and unifying it crosses a module
-  boundary that nothing else in this sprint touched. Reported rather than
-  fixed, per the discovered-debt rule.
-- **Revisit:** when either list next changes — that is the moment the
-  duplication costs something.
 
 ### Decision 1 — console/editor convergence onto the shared chain is unimplemented
 
