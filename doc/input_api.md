@@ -426,8 +426,9 @@ additional rules: Super/Cmd is **not** a modifier (there are exactly three:
 ctrl, alt, shift), a combo naming two triggers or none **raises**, and a
 combo is **case-insensitive** — `'Ctrl+S'`, `'ctrl+S'` and `'ctrl+s'` are
 one binding, and typing `I` fires the same `shortcuts.textinput['i']` that
-typing `i` does. A shortcut therefore cannot tell the two cases apart; if
-your project needs to, read the character in `hooks.textinput`.
+typing `i` does. Only the *matching* ignores case: the handler still
+receives the character the user actually typed as its first argument, so
+a shortcut that needs to tell `I` from `i` reads its own argument.
 
 The trigger may be `*`, which binds the whole modifier class: `'alt+*'` is
 every Alt chord, and the handler receives the actual key as its first

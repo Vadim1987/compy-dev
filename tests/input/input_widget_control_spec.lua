@@ -53,7 +53,7 @@ describe('input surface: widget control #input', function()
     -- changing it": text is "a string or list of line strings",
     -- so the string form carries its own newlines. The previous
     -- session's content must not survive one.
-    it('a fresh activation with a multi-line string sets every line',
+    it('a multi-line string sets every line',
       function()
         local input = F.compy_input()
         input.show({ text = 'previous' })

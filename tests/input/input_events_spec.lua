@@ -293,6 +293,21 @@ describe('input surface: inbound events — dispatch #input',
         assert.is_true(fired)
       end)
 
+    -- Only the MATCHING ignores case: the handler still gets
+    -- the character the user typed, so a shortcut that needs to
+    -- tell 'I' from 'i' reads its own argument
+    -- (doc/input_api.md, "Event hooks and shortcuts — when to
+    -- use which").
+    it('a textinput shortcut receives the typed case',
+      function()
+        local got
+        local input = F.activate_project()
+        input.shortcuts.textinput['i'] =
+            function(t) got = t; return true end
+        F.session.type('I')
+        assert.same('I', got)
+      end)
+
     it('a keyreleased combo fires on the normalised combo',
       function()
         local fired = false
