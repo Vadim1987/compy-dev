@@ -87,10 +87,11 @@ owner and revisable, not a frozen mandate.
   which moved the tree substantially. The guide itself was revised 2026-08-07: Set-3 letters now
   encode apply order, and Set 4 is cut as `4a-balloons` / `4b-maze` / `4c-keyboard`. Regeneration
   stays the LAST step before the PR.
-- **PERSISTENT DOCS CORPUS** (the only docs that survive `wip/77` deletion; all spec refs must
-  resolve here): `doc/input_api.md`, `doc/development/internals/user_input.md`,
-  `doc/development/decisions/input.md`, `doc/development/technical_debt/{input,general}.md`,
-  `doc/development/tests.md`.
+- **PERSISTENT DOCS CORPUS** — **everything under `doc/` that is not under `doc/development/wip/`**.
+  That is the whole rule, and it is stated as a rule on purpose: an enumeration goes stale the first
+  time the phase commissions a document (it did — `internals/text_encoding.md`, session60), and a
+  reader who trusts the list then treats a real persistent doc as ephemeral. These are the only docs
+  that survive `wip/77` deletion, and all spec refs must resolve here.
 
 ## The strategic frame (owner, 2026-07-18)
 
