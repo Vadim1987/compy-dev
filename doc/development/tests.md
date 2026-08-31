@@ -93,11 +93,17 @@ Tags beyond the file-level `#input`:
 
 ## Manual smoke — what no suite here can reach
 
-The nested example repositories (`src/examples/{keyboard,maze,balloons}`) have **no test suite**, and
-nothing in CI can press a key. Their gate is a human, and the checklists they are gated on live in
+Nothing in CI can press a key, and the example projects carry no suite of their own — the detached
+repositories (`src/examples/{keyboard,maze,balloons}`) have none at all, and the in-repo examples
+are exercised by nobody but a human. Where an example's **input mechanism** changed, the gate is
+therefore a person, and the checklists live in
 **[`smoke_checklists.md`](smoke_checklists.md)** — written to be run top-to-bottom with the expected
 result stated, and kept current with the code by whoever changes the mechanism. A checklist that
 tests a mechanism the code no longer has is worse than none, because it passes.
+
+**That document is the list of lists** — it says which examples owe one and why, and it covers
+in-repo examples as well as detached ones. Do not re-enumerate them here; a second copy of the set
+is how this paragraph went stale twice.
 
 ## Gaps — Areas Worth Filling
 
