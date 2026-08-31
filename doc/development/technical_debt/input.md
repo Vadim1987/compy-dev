@@ -1286,13 +1286,20 @@ changes.
   the constant stays, because the splash screen reads it directly.
 - **Not runtime-verified:** balloons has no suite and needs a display. Desk-
   checked and parses; the manual smoke pass is where it is exercised.
-- **Discovered and deliberately NOT fixed** (`agents/development.md`: report
-  non-blocking debt rather than fixing it): `ui_draw_status` reads
-  `ui_messages.results`, which nothing ever sets — `ui_status_finalize` writes
-  `ui_messages.result`, singular. The `results or` branch is dead and the
-  function always falls through to `status`, which is what the active state
-  wants, so nothing misbehaves. Unrelated to the input API and not ours; raised
-  for the owner rather than filed.
+- **A second defect was found here, raised, and then fixed on the owner's
+  ruling.** `ui_draw_status` read `ui_messages.results`, which nothing ever sets
+  — `ui_status_finalize` writes `ui_messages.result`, singular. It was reported
+  rather than filed (`agents/development.md`: report non-blocking debt), and the
+  owner ruled: *fix it if it is clearly a typo, delete it if it is clearly dead
+  code.* It is the second, so the branch was **deleted** in the balloons repo.
+- **Why deleting was right and repairing was not.** The two names are a
+  self-consistent *pair* — `ui_status_reset` cleared `results`, `ui_draw_status`
+  read it — so "repair the typo to `result`" would have changed nothing during
+  play (`ui_status_finalize` sets the result immediately before the state
+  becomes finished, where the splash renders instead of the status bar) and
+  would have been a **regression across games** (`result` is never cleared, so
+  game two's status bar would show game one's stats). Ask what the repaired code
+  would *do* before repairing.
 
 ### T-CURSOR-BYTES — `set_cursor` clamps by byte offset; the boundary event measures characters (RESOLVED, 2026-08-31)
 
