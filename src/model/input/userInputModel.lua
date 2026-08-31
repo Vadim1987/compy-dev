@@ -852,6 +852,27 @@ function UserInputModel:cancel()
 end
 
 
+--- The parser reports an error column as a BYTE offset, and
+--- the cursor counts characters (doc/input_api.md, "Live
+--- changes"), so the two need reconciling before the caret is
+--- seated. An offset landing inside a character trims back to
+--- that character's start, which is where the caret belongs
+--- anyway. Same trim-and-retry shape as sanitize_utf8 above,
+--- because utf8.len answers nil for a cut-short prefix.
+--- @param line string
+--- @param byte_c integer
+--- @return integer
+local function char_col(line, byte_c)
+  if byte_c < 1 then return byte_c end
+  local pre = string.sub(line, 1, byte_c - 1)
+  local n = utf8.len(pre)
+  while not n do
+    pre = string.sub(pre, 1, -2)
+    n = utf8.len(pre)
+  end
+  return n + 1
+end
+
 --- @private
 --- On a reject, seat the cursor on the error position.
 --- @param ent InputText
@@ -863,7 +884,7 @@ function UserInputModel:_apply_eval(ent)
   --- @TODO check line len and move to next if at end
   local perr = result[1]
   if not perr or not perr.c then return ok, result end
-  local c = perr.c
+  local c = char_col(self:get_text_line(perr.l), perr.c)
   if c > 1 then c = c + 1 end
   self:move_cursor(perr.l, c)
   return ok, result

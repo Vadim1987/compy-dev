@@ -42,6 +42,23 @@ describe("input model spec #input", function()
       --- @diagnostic disable-next-line: invisible
       assert.same({ '42' }, model.error)
     end)
+
+    -- The parser reports the error column as a BYTE offset,
+    -- while the cursor counts characters, so a line with
+    -- multi-byte content needs the two reconciled before the
+    -- caret is seated. Without it the byte column overshoots
+    -- the line's character bound and the caret does not move
+    -- at all.
+    it('seats the caret in characters on a multi-byte line',
+      function()
+        local model = UserInputModel(mockConf, luaEval)
+        model:set_text({ 'x = "привет" +' })
+        model:move_cursor(1, 1)
+        model:handle(true)
+        local _, c = model:get_cursor_pos()
+        assert.is_true(c > 1)
+        assert.is_true(c <= string.ulen('x = "привет" +') + 1)
+      end)
   end)
 
   describe('invalid UTF-8', function()
