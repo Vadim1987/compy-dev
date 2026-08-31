@@ -177,23 +177,6 @@ paid, or turned out not to be debt.
   user-visible misbehaviour found.
 - **Revisit:** when balloons is next touched for the label-stickiness work.
 
-### T-MULTILINE-STR — `set_text` silently ignores a multi-line *string*
-
-- **Where:** `userInputController.lua`, `UserInputModel:set_text`.
-- **State:** `self.entered` is assigned only when `#string.lines(text) == 1`;
-  a multi-line string falls through every branch and nothing is written, so
-  `show{text = "a\nb"}` leaves the previous session's content standing. A list
-  of line strings works; `doc/input_api.md` documents `text` as "a string or
-  list of line strings," so this is a silent failure on a documented, primary
-  call shape.
-- **Why it stands:** narrow fix, but the worst failure mode on this list —
-  silent, on a documented shape, on the primary call.
-- **Revisit:** the configuration-boundary work it was to ride along with
-  (`ARC-02`) has landed without it — that sprint reshaped which call may set
-  the content, not what `set_text` does with a string it is given, and
-  `reset_content` preserves the behaviour exactly. Still outstanding, and now
-  the last unfixed defect on the primary call path.
-
 ## BACKLOG
 
 ### Decision 1 — console/editor convergence onto the shared chain is unimplemented
@@ -1280,6 +1263,27 @@ changes.
   anyway.
 
 ## RETIRED
+
+### T-MULTILINE-STR — `set_text` silently ignores a multi-line *string* (RESOLVED, 2026-08-31)
+
+- **Resolution:** fixed at `BUG-01-09`. The string branch of
+  `UserInputModel:set_text` now splits with `string.lines` and hands every line
+  to `InputText`, which is what the table branch already did with a list. A
+  single-line string yields a one-element list, so that path is unchanged.
+- **The defect it closed:** `self.entered` was assigned only when the string
+  held one line, so a string with a newline matched no branch, nothing was
+  written, and the previous session's content survived into the new one — with
+  no warn and no raise. Reachable from `show{text = …}`, `configure{text = …}`
+  and the live `compy.input.set_text`.
+- **It was PRE-EXISTING, not ours.** The `#string.lines(text) == 1` guard is at
+  the PR base `3256aac` in the same shape. What this feature added is the
+  documented shape (`../../input_api.md`, *"The input widget — opening it and
+  changing it"*: "a string or list of line strings") and the project-facing
+  surface that reaches it — which is why it was fixed here rather than left
+  described.
+- **Where:** `model/input/userInputModel.lua` (`set_text`),
+  `tests/input/input_widget_control_spec.lua`,
+  `tests/input/input_cursor_text_spec.lua`, `../../../CHANGELOG.md` (*"Fixed"*).
 
 ### T-ONESHOT-SCOPE — the `show`-only `oneshot` becomes `auto_hide`, a widget property (RESOLVED, 2026-08-30)
 
