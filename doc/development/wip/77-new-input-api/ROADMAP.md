@@ -700,8 +700,23 @@ A-doc**, not only prose:
   `cancel()`**, so the rename is ours.
 - `src/controller/consoleController.lua:629`, `controller.lua`, `userInputController.lua` — comments.
 - `doc/input_api.md:45` · `doc/development/internals/user_input.md` · `doc/development/smoke_checklists.md:227`
-- `tests/input/input_widget_control_spec.lua` — also used as fixture *text*, which is noise when
-  grepping the term and should not be counted as a citation.
+- `tests/input/input_widget_control_spec.lua` — **one real citation and a lot of noise, and the two
+  must not be confused.** The file also uses "draft" as fixture *text*, which is not a citation;
+  but `:175` is `it('disarming at configure keeps the draft', …)` — a **test description**, which
+  this feature treats as contract text and as *the most durable place there is* (the reasoning is
+  `FEAT-02-05`'s correction, which caught a rule about to be re-filed in a test). **Corrected
+  2026-08-31 (session59):** as written this bullet said hits here were noise and *"should not be
+  counted as a citation"*, which after `FEAT-02` would have led this row's executor to skip the one
+  hit that matters.
+
+**Inventory re-dated 2026-08-31.** `FEAT-02` widened the spread while this row waited, which is
+nobody's error — "draft" is the right word for the sentences it added, and that is exactly why the
+ruling below is still owed. Three corpus files the 2026-08-26 inventory does not name now carry it:
+`doc/development/decisions/input.md` (5 — two added by Decision 36's Amendment),
+`doc/development/technical_debt/input.md` (3 — `T-ONESHOT-SCOPE`), and a further `doc/input_api.md`
+instance at `:272`. Current spread: `input_api.md` 3, `decisions/input.md` 5,
+`technical_debt/input.md` 3, `src/` 3, `tests/` 13. **Re-count before executing** rather than
+trusting these numbers — the row has now been re-sized twice.
 
 **The word is already overloaded, which the cold review caught (2026-08-26).** It carries **two
 different meanings** in the shipping tree, both involving text:
