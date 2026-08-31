@@ -526,15 +526,15 @@ function UserInputModel:set_cursor(c)
 end
 
 --- @private
---- Clamp self.cursor into the current text's valid range
---- (byte length, matching move_cursor's own bound below) —
+--- Clamp self.cursor into the current text's valid range,
+--- counted in characters like every other cursor move —
 --- set_text(t, true)'s landing when the
 --- new content is shorter than the preserved cursor
 --- position (doc/input_api.md, "Live changes").
 function UserInputModel:_clamp_cursor_pos()
   local n = self:get_n_text_lines()
   local l = math.max(1, math.min(self.cursor.l, n))
-  local llen = #(self:get_text_line(l))
+  local llen = string.ulen(self:get_text_line(l))
   local c = math.max(1, math.min(self.cursor.c, llen + 1))
   self:set_cursor(Cursor(l, c))
 end
@@ -551,7 +551,7 @@ function UserInputModel:move_cursor(y, x, selection)
   else
     l = prev_l
   end
-  local llen = #(self:get_text_line(l))
+  local llen = string.ulen(self:get_text_line(l))
   local char_limit = llen + 1
   if x and x >= 1 and x <= char_limit then
     c = x

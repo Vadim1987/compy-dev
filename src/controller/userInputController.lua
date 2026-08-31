@@ -185,15 +185,17 @@ end
 --- set_cursor(Cursor) above — that simple function
 --- already has a different signature/caller (editorController
 --- load_selection); this computes a valid landing itself
---- (byte length, matching move_cursor's own bound) rather
---- than relying on move_cursor's fallback-to-previous, which
---- does not clamp an out-of-range value to the line/text end.
+--- rather than relying on move_cursor's fallback-to-previous,
+--- which does not clamp an out-of-range value to the line/text
+--- end. The landing is counted in CHARACTERS, like every other
+--- cursor move in the model (doc/input_api.md, "Live changes":
+--- col is a caret position between characters).
 --- @param line integer
 --- @param col integer
 function UserInputController:set_cursor_pos(line, col)
   local n = self.model:get_n_text_lines()
   local l = math.max(1, math.min(line, n))
-  local llen = #(self.model:get_text_line(l))
+  local llen = string.ulen(self.model:get_text_line(l))
   local c = math.max(1, math.min(col, llen + 1))
   self.model:move_cursor(l, c)
 end

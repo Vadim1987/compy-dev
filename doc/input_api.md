@@ -194,11 +194,16 @@ empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
 it. Mutating calls warn and do nothing while the input widget is hidden.
 
 `col` is a **caret position between characters**, not a character index: it
-ranges over `1 .. #line + 1`, where `1` is before the first character and
-`#line + 1` is at the end of the line. So on `"lemon"`, `set_cursor(1, 3)`
-puts the caret between `e` and `m` — typing inserts there (`"leXmon"`) and
-Backspace deletes the character before it (`"lmon"`). Out-of-range values
-clamp to that range rather than failing.
+ranges from `1`, before the first character, to one past the last, at the
+end of the line. So on `"lemon"`, `set_cursor(1, 3)` puts the caret between
+`e` and `m` — typing inserts there (`"leXmon"`) and Backspace deletes the
+character before it (`"lmon"`). Out-of-range values clamp to that range
+rather than failing.
+
+**Characters, not bytes.** The line `"привет"` is six characters, so its
+caret positions are `1 .. 7` — not `1 .. 13`, which is what its length in
+bytes would give. Every cursor position the widget reports or accepts is
+counted this way.
 
 ## What the widget tells you — callbacks
 

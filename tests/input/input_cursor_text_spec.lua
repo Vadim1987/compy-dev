@@ -115,6 +115,32 @@ describe('input surface: widget control — cursor and text #input',
       assert.same(6, c) -- 'hello' end (len 5 + 1)
     end)
 
+    -- 'привет' is 6 characters in 12 bytes, so a byte-counted
+    -- clamp would accept anything up to 13 and leave the caret
+    -- past the end of the line. col is a caret position between
+    -- CHARACTERS (doc/input_api.md, "Live changes"), which is
+    -- also what every other cursor move in the model counts.
+    it('clamps an over-range column in characters, not bytes',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'привет' })
+        input.set_cursor(1, 2)
+        input.set_cursor(1, 10)
+        local _, c = input.get_cursor()
+        assert.same(7, c) -- 6 characters + 1
+      end)
+
+    -- The same bound on the other path into it: set_text's
+    -- keep_cursor landing, when the new content is shorter.
+    it('keep_cursor clamps in characters too', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello there' })
+      input.set_cursor(1, 10)
+      input.set_text('привет', true)
+      local _, c = input.get_cursor()
+      assert.same(7, c) -- 6 characters + 1
+    end)
+
     it('clamps an over-range line', function()
       local input = F.compy_input()
       input.show({ text = 'hello' })
