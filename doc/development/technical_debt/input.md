@@ -133,16 +133,6 @@ paid, or turned out not to be debt.
   may close it `wontfix`.**
 - **Revisit:** `BUG-01-11`, and not before its evaluation step has run.
 
-### T-CURSOR-BYTES — `set_cursor` clamps by byte offset; the boundary event measures characters
-
-- **Where:** the cursor-setting path in `userInputController.lua` /
-  `userInputModel.lua`.
-- **State:** two functions disagree on the unit a cursor position is counted
-  in — one clamps bytes, the other measures characters at the boundary. Which
-  is right has not been decided.
-- **Why it stands:** small, unresolved design call, not yet ruled.
-- **Revisit:** decide which unit is authoritative and make the other agree.
-
 ### T-BALLOON-LABEL — balloons keeps a shadow copy of the widget's label, re-pushed every cycle
 
 - **Where:** `src/examples/balloons` — `ui_messages.hint` and
@@ -1245,6 +1235,36 @@ changes.
   anyway.
 
 ## RETIRED
+
+### T-CURSOR-BYTES — `set_cursor` clamps by byte offset; the boundary event measures characters (RESOLVED, 2026-08-31)
+
+- **Resolution:** fixed at `BUG-01-05`. All three byte-bounded cursor clamps
+  now count characters with `string.ulen`.
+- **It was not an undecided design call.** The unit was already decided
+  everywhere else: `jump_end`, `jump_line_end`, `is_at_limit`,
+  `_update_cursor`, `cursor_left`/`right`, `cursor_vertical_move`, the
+  mouse-to-cursor translation and the view's pixel math all count characters.
+  Three clamps were the outlier, so the fix was to make them agree, not to pick
+  a winner between two equal conventions.
+- **The defect it closed:** on the six-character, twelve-byte `'привет'`,
+  `compy.input.set_cursor(1, 10)` was accepted — the byte bound allows 13 —
+  leaving the caret four positions past the end of the line and reporting 10
+  back from `get_cursor()`.
+- **Provenance, and it is mixed.** `UserInputModel:move_cursor`'s bound is
+  PRE-EXISTING and unchanged at the PR base `3256aac`; its 18 internal callers
+  all pass character values, so the gap was inert. `set_cursor_pos` and
+  `_clamp_cursor_pos` are OURS — absent at base — and were written to copy the
+  byte convention deliberately. They are what made the gap externally
+  reachable. All three were fixed, because leaving the outlier would make our
+  two differ from the function they were written to match.
+- **The bound only narrows** (`ulen` ≤ `#`), and internal callers pass
+  character values, so nothing that passed before is refused now.
+- **Where:** `model/input/userInputModel.lua` (`move_cursor`,
+  `_clamp_cursor_pos`), `controller/userInputController.lua`
+  (`set_cursor_pos`), `tests/input/input_cursor_text_spec.lua`,
+  `../../input_api.md` (*"Live changes"* — which had contradicted itself,
+  calling `col` a caret position between characters and then ranging it over
+  `1 .. #line + 1`).
 
 ### T-COMBO-CASE — `combo_string` does not normalise the case of a textinput token (RESOLVED, 2026-08-31)
 
