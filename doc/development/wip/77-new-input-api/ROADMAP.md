@@ -936,6 +936,17 @@ to change is what this ordering exists to prevent.
 Lists: [`doc/development/smoke_checklists.md`](../../smoke_checklists.md). **Tag every green pass**
 (`TAGS.md`, round 2) so "it passed" names a commit.
 
+**One example changed reachability and deliberately gets no row (checked 2026-08-31).** The
+`BUG-01-09` fix reaches `tixy` — `load_example` calls `compy.input.set_text(body)` with a raw
+string, which was a silent no-op for a multi-line body and now writes. It is **inert on shipped
+data**: `examples.lua` defines 35 examples and every `code` is `"r = " .. c`, a single line (the
+newlines in that file are all in *legends*). The other two example call sites, `tixy/main.lua`'s
+second one and `maze/core_editor.lua`, pass `string.lines(…)` and take the untouched table branch.
+So there is nothing for a smoke pass to observe, and `tixy` gains no checklist. **What would change
+this answer:** an `examples.lua` entry whose `code` spans lines — then the fix is visible and the
+example wants a look. Recorded here rather than dropped, so a reviewer who notices the changed
+reachability finds the check instead of re-running it.
+
 ---
 
 ## 🟡 REC-01 — upstream reconnaissance — *discovery, not release* — **PARTIALLY COMPLETE (Session 55)**
