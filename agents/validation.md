@@ -51,7 +51,9 @@ owner and revisable, not a frozen mandate.
    **1021 after session57**'s `FEAT-01` — eight cases for `oneshot`, one for the payload split,
    and one from its cold peer review, and **1023 after session58**'s `FEAT-02`: two cases were
    replaced in place (they pinned the show-only category the sprint retired) and two added — the
-   `configure` disarm that keeps the user's draft, and `false` as the unset.
+   `configure` disarm that keeps the user's draft, and `false` as the unset. **Session59 added
+   none**: it revalidated `FEAT-02` at the delivery level, applied six corrections to the
+   surroundings and promoted one debt entry, and 1023 held across all of its commits.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -313,7 +315,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session59/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session60/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
