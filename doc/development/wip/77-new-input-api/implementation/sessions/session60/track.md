@@ -152,3 +152,24 @@
 - Lesson: **the sprint's own claims were the weakest part, not its code.** Three of four findings
   are false statements in prose I wrote, none in a fix.
 - Suite **1032 / 0 / 0 / 10**.
+
+## owner follow-ups + wrap — 2026-08-31
+
+- **maze bug relocated on the owner's prompt.** It was only in compy's ledger and my note — both
+  ephemeral to a maze reader. Now `ISSUES.md` in the **maze repo** (`28213c7`, first tracked one
+  there; balloons' is untracked scratch), with both defects and an explicit note that the
+  control-mode slot is *not* the defect. Compy's entry repointed at it.
+- **View byte/char mismatch → BACKLOG, no slug** (owner: not fixing this release). Names `char_col`
+  as the reuse and says not to fix the view alone — the unit belongs settled at the boundary.
+- **Filing it caught damage I did.** Retiring `T-MAZE-NEUTRALIZE` sliced to the next `###` and took
+  `## BACKLOG` with it; the file sorts by release scope, so ~20 deferred entries had silently
+  become ACTIVE. Restored. **Lesson: slice to the next heading of the SAME level, or verify the
+  section list after.**
+- **UTF-8 doc commissioned and written** — `internals/text_encoding.md`, standalone and
+  roadmap-agnostic, indexed in `agents/rules.md`. Load-bearing fact: **three** `utf8`
+  implementations selected at load by `util/string/utf.lua`, so suite and app need not exercise the
+  same one. Stated the limit rather than hiding it: green here is LuaJIT + `lua-utf8`, not the
+  owner's PUC Lua.
+- **Wrapped.** Report written, `session61/prompt.md` written (revalidation first, then stand ready
+  for the owner's architecture question), pointer repointed, boot-ritual baseline 1023 → 1032.
+- Suite **1032 / 0 / 0 / 10**.
