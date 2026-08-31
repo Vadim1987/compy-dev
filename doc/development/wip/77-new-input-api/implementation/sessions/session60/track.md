@@ -113,3 +113,42 @@
   No double-handling, by construction.
 - Recommendation: **wontfix, and correct the premise** — the entry currently tells a reader maze
   uses the wrong idiom, which is the misleading part. **Owner's call; no code either way yet.**
+
+## owner remarks — 2026-08-31
+
+1. **"Field is open" is self-ratified jargon** — mine, five times in my own note, by a session whose
+   prompt states the rule. Corrected in place; `FIX-02-09` widened: **"docs" includes comments in
+   `src`, `tests` and the examples on equal footing**, and the row is confirmed **late**, because
+   the vocabulary is still being minted while the sweep waits.
+2. **`BUG-01-11` wontfix**, with a sharper reading than mine: the pattern is not merely harmless,
+   it is the shape the guide advises — *"Perform hardware polling before complex processing"*.
+   Named after the keyboard where its role is mode selection; taste, not fixed.
+3. **balloons `results`** — investigated: not a typo but a self-consistent **phantom pair** (reset
+   clears it, draw reads it; the real field is `result`). Repairing it to `result` would be a no-op
+   during play and a **regression** across games. Deleted the dead branch instead (`c2bd9b9`).
+   The owner's polling hypothesis is right and worth keeping: `ui_messages` IS the per-frame draw
+   buffer, which is why `status`/`result` belong there and `hint` did not.
+
+## cold peer review — 2026-08-31
+
+- Opus, cold: told what NOT to read (my track, my resolutions, my note, the evidence reports) and
+  given the **pre-sprint** row text from `git show b5022530:…`. Prompt + report on disk.
+- **Verdict: approve with comments.** All three platform fixes fix their rows; all five new tests
+  fail pre-fix for the right reason; **all three provenance claims verified correct** against
+  `3256aac` — the ones headed for the PR description.
+- **Four findings, all verified in code before acting, all real:**
+  - **My "by construction" claim on maze was false.** `jump_level` → `start_level` →
+    `cur_controls()` re-arms `ctrl_pressed` and hides nothing. The invariant holds by **level
+    ordering**. Ruling unaffected; claim corrected in three places; the latent maze bug is
+    reported, not fixed.
+  - **My guide sentence was false** — "a shortcut cannot tell the two cases apart". `dispatch`
+    passes the raw payload, so it can, from its own argument. Fixed and pinned with a test.
+  - **`BUG-01-05` had a missed caller and I regressed it.** `_apply_eval` feeds the parser's
+    **byte** column into the now-character bound → the caret stopped moving on multi-byte lines.
+    Console/editor path. Fixed with `char_col` + a breaking test. My commit message's "nothing that
+    passed before is refused now" was wrong.
+  - Two wrong facts in `32f8345d`'s message (`configure{text}` **raises**; `apply_config` is gone).
+    Messages are immutable, so corrected in the debt entry the PR description reads.
+- Lesson: **the sprint's own claims were the weakest part, not its code.** Three of four findings
+  are false statements in prose I wrote, none in a fix.
+- Suite **1032 / 0 / 0 / 10**.

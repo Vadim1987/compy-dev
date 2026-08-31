@@ -65,7 +65,27 @@ Yes, and the path is traceable end to end — which is what the cold review coul
 5. While the editor widget is shown, `arm_editor` has set `ctrl_pressed = nil`. So the hook runs,
    finds nothing to call, and the keystroke reaches the widget alone.
 
-No double-handling, on either game, by construction rather than by luck.
+No double-handling on this path.
+
+## Correction — "by construction" was too strong
+
+**The sprint's peer review falsified this section's original last line**, which read *"no
+double-handling, on either game, by construction rather than by luck."* The trace above is right
+for the paths it walks, and the conclusion does not follow.
+
+`jump_level` → `start_level` → `cur_controls()` (`maze_logic.lua`) **re-arms** `ctrl_pressed` —
+`apply_attrs` sets `cur_controls = maze.controls`, and a level declaring `controls = keys`
+(`levels.lua`) makes that `handle_key`. **Nothing on that path hides the widget**;
+`compy.input.hide()` appears only in the two menu exits. So a jump from an editor level to a
+`keys` level leaves the widget shown *and* `ctrl_pressed` live, and every later key both moves the
+robot and types into the widget.
+
+What actually holds the invariant is **level ordering**, not structure. That is a real latent
+defect in maze, it is maze's own, and this row is `wontfix` — so it is **reported to the owner,
+not fixed**. The `wontfix` ruling is unaffected: the pattern is still the shape the guide advises,
+and a latent bug in how a game sequences its levels is not an argument for rewriting the idiom.
+
+`draw_main` is safe outright — its `ctrl_pressed` branch has no live assignment.
 
 ## The weighing, for the record
 

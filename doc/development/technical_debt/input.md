@@ -1216,10 +1216,16 @@ changes.
   that file's `is_shown` call is a **show-vs-configure** branch — *is there a
   field to reconfigure?* — not a double-handling guard, which is a different
   shape from `turtle`'s whole-handler early return.
-- **Double-handling is prevented, and the path is traceable** (the cold review
-  could not trace it): the hook fires while the widget is shown, finds
-  `SYSTEM_KEYS[k]` nil — that table is only ever populated by member name — and
-  `ctrl_pressed` nil, so the keystroke reaches the widget alone.
+- **Double-handling is prevented on the paths that occur — but by level
+  ordering, not by structure.** The weighing first claimed "by construction";
+  the sprint's peer review falsified that and it is corrected here. The hook
+  fires while the widget is shown, finds `SYSTEM_KEYS[k]` nil — that table is
+  only ever populated by member name — and `ctrl_pressed` nil, so the keystroke
+  reaches the widget alone. **But `jump_level` → `start_level` → `cur_controls()`
+  re-arms `ctrl_pressed` and hides nothing** (`compy.input.hide()` appears only
+  in the two menu exits), so a jump from an editor level to a `controls = keys`
+  level would leave both live. **Reported to the owner, not fixed** — it is
+  maze's own latent defect, in another repo, and this row was ruled `wontfix`.
 - **The shape is the one the guide advises** (owner, 2026-08-31): read the
   hardware early and turn the result into a deterministic variable the rest of
   the logic runs on — `../../input_api.md`, *"Perform hardware polling before
@@ -1324,8 +1330,14 @@ changes.
 - **The defect it closed:** `self.entered` was assigned only when the string
   held one line, so a string with a newline matched no branch, nothing was
   written, and the previous session's content survived into the new one — with
-  no warn and no raise. Reachable from `show{text = …}`, `configure{text = …}`
-  and the live `compy.input.set_text`.
+  no warn and no raise. Reachable from `show{text = …}` and the live
+  `compy.input.set_text`. **Corrected 2026-08-31** by the sprint's peer review:
+  the fix commit's message also named `configure{text = …}`, which in fact
+  **raises** — `text` is in `SHOW_ONLY_KEYS` (`consoleController.lua`) — and
+  named `apply_config`, which no longer exists; the path is `api_show` →
+  `open_widget` → `reset_content`. Both are wrong in the commit message, which
+  cannot be amended, so the correction lives here, where the PR description
+  will read it.
 - **It was PRE-EXISTING, not ours.** The `#string.lines(text) == 1` guard is at
   the PR base `3256aac` in the same shape. What this feature added is the
   documented shape (`../../input_api.md`, *"The input widget — opening it and
