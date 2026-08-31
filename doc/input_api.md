@@ -348,9 +348,9 @@ compy.input.show{
 
 `compy.input.callbacks` is writable. These entries may also be supplied in
 `show` or `configure` and persist until replaced: `on_text_entered`,
-`on_limit_reached`, `validator`, and `highlighter`. `prompt` is not a
-callback, but it persists the same way — set it once and it stays until you
-set it again.
+`on_limit_reached`, `validator`, and `highlighter`. `prompt` and `auto_hide`
+are not callbacks, but they persist the same way — set one once and it stays
+until you set it again.
 
 Assigning here and passing the key to `show` / `configure` are the same
 write, and either takes effect immediately. Set any of them to `false` to
