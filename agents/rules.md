@@ -22,6 +22,7 @@ Mapping of reference docs:
 ./doc/development/conventions/input_adoption.md -- question-and-action checklist for adopting the input API (examples done; console/editor pending)
 `./doc/development/internals/*` -- current implementation essentials, derived from codebase isnpection -- currently cover editor, console, examples
 ./doc/development/internals/user_input.md -- cross-component usage of user input in different modes
+./doc/development/internals/text_encoding.md -- UTF-8 across the three runtimes; bytes vs characters, and where the two must not mix
 ./doc/development/drawing_system.md -- unobvious wiring of drawing system, enabling paper-and-pen vs realtime drawing modes
 
 Some (not all) essential excerpts from these docs are inlined below (they may be sufficient in many contexts)
