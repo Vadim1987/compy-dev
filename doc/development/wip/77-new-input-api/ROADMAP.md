@@ -453,8 +453,8 @@ row overturns part of it. A reader who did not argue for the thing being overtur
 preceded by `8bca3c04` repairing three citations of what had been withdrawn), `-02` `fe076244`
 (token-only rename), `-03` `2c6fe978` (the category move, with its four breaking tests — **the test
 inversions `-05` was filed for landed here**, because tests-first is what proves the move), `-04`
-`5ad6e518` (guide + internals + the retired `T-ONESHOT` entry marked as history). `-05` keeps the
-CHANGELOG and the ledger upkeep.
+`5ad6e518` (guide + internals + the retired `T-ONESHOT` entry marked as history), `-05` `6d0aa9af`
+(the CHANGELOG says *mode*, and `T-ONESHOT-SCOPE` retires).
 
 **One collision, ruled by the owner mid-sprint.** The persistence retires the *implicit* disarm a
 bare `show{force}` used to perform, so `a forced follow-up show survives the close` could not pass
