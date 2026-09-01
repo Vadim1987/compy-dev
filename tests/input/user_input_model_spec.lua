@@ -89,6 +89,39 @@ describe("input model spec #input", function()
     end)
   end)
 
+  -- Sibling of the group above, and for the same reason: the
+  -- cursor addresses content as (line, column), so content
+  -- that is not normalised makes that address ambiguous.
+  -- Invalid bytes leave a column's LENGTH undefined; a newline
+  -- inside a line leaves its POSITION undefined -- the caret
+  -- can sit past a line terminator. Both spellings of the one
+  -- documented shape therefore normalise the same way.
+  -- doc/development/internals/user_input.md, "Multiline input".
+  describe('embedded newlines', function()
+    it('set_text splits them in tables', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:set_text({ 'a\nb' })
+      assert.same({ 'a', 'b' }, model:get_text())
+    end)
+
+    -- string.split_array keeps an empty element rather than
+    -- dropping it, and a blank line is content.
+    it('set_text keeps empty lines while splitting', function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:set_text({ 'a\nb', '', 'c' })
+      assert.same({ 'a', 'b', '', 'c' }, model:get_text())
+    end)
+
+    it('both spellings agree on the cursor', function()
+      local listed = UserInputModel(mockConf, luaEval)
+      listed:set_text({ 'a\nb' })
+      local strung = UserInputModel(mockConf, luaEval)
+      strung:set_text('a\nb')
+      assert.same({ strung:get_cursor_pos() },
+        { listed:get_cursor_pos() })
+    end)
+  end)
+
   describe('basics', function()
     local model = UserInputModel(mockConf, luaEval)
 

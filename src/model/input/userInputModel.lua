@@ -134,6 +134,15 @@ function UserInputModel:add_text(text)
   end
 end
 
+--- Both spellings of the documented shape -- a string, or a
+--- list of line strings -- normalise the same way, and the
+--- cursor is why. It addresses content as (line, column), so
+--- un-normalised content makes that address ambiguous: invalid
+--- bytes leave a column's length undefined, and a newline
+--- inside a line leaves its position undefined. string.lines
+--- takes either spelling and splits both; over a list it keeps
+--- empty elements, so a blank line survives.
+--- doc/input_api.md, "Live changes".
 --- @param text str
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)
@@ -147,7 +156,7 @@ function UserInputModel:set_text(text, keep_cursor)
     for i, l in ipairs(text) do
       clean[i] = sanitize_utf8(l)
     end
-    self.entered = InputText(clean)
+    self.entered = InputText(string.lines(clean))
   end
   self:text_change()
   if keep_cursor then

@@ -220,6 +220,22 @@ describe('input surface: widget control — cursor and text #input',
         assert.same(2, c)
       end)
 
+    -- The list spelling of that same shape splits identically.
+    -- The cursor is the reason: unsplit, the element would be
+    -- one line three characters long and the caret could sit
+    -- past the newline, so the two spellings would disagree
+    -- about where the content ends.
+    it('splits a multi-line list element into lines',
+      function()
+        local input = F.compy_input()
+        input.show({ text = 'hello' })
+        input.set_text({ 'a\nb' })
+        assert.same({ 'a', 'b' }, F.widget:get_text())
+        local l, c = input.get_cursor()
+        assert.same(2, l)
+        assert.same(2, c)
+      end)
+
     describe("with keep_cursor", function()
     -- doc/input_api.md, "Live changes": keep_cursor
     -- preserves position (clamped).
