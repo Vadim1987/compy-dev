@@ -134,29 +134,38 @@ function UserInputModel:add_text(text)
   end
 end
 
---- Both spellings of the documented shape -- a string, or a
---- list of line strings -- normalise the same way, and the
---- cursor is why. It addresses content as (line, column), so
---- un-normalised content makes that address ambiguous: invalid
---- bytes leave a column's length undefined, and a newline
---- inside a line leaves its position undefined. string.lines
---- takes either spelling and splits both; over a list it keeps
---- empty elements, so a blank line survives.
---- doc/input_api.md, "Live changes".
+--- Normalise either spelling of the content shape -- a string,
+--- or a list of line strings -- to one list of lines, so the
+--- caller has a single path. Sanitise for UTF-8, then split on
+--- newlines; string.lines takes either spelling, and over a
+--- list it keeps empty elements, so a blank line survives.
+--- Anything else yields nil, which leaves content standing.
+--- @param text str
+--- @return string[]?
+local function normalized_lines(text)
+  if type(text) == 'string' then
+    return string.lines(sanitize_utf8(text))
+  end
+  if type(text) ~= 'table' then return end
+  local clean = {}
+  for i, l in ipairs(text) do
+    clean[i] = sanitize_utf8(l)
+  end
+  return string.lines(clean)
+end
+
+--- Both spellings normalise identically, and the cursor is why:
+--- it addresses content as (line, column), so un-normalised
+--- content makes that address ambiguous. Invalid bytes leave a
+--- column's length undefined; a newline inside a line leaves
+--- its position undefined. Decision 38, and doc/input_api.md,
+--- "Live changes".
 --- @param text str
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)
-  if type(text) == 'string' then
-    self.entered = InputText(string.lines(sanitize_utf8(text)))
-    if not keep_cursor then
-      self:_update_cursor(true)
-    end
-  elseif type(text) == 'table' then
-    local clean = {}
-    for i, l in ipairs(text) do
-      clean[i] = sanitize_utf8(l)
-    end
-    self.entered = InputText(string.lines(clean))
+  local lines = normalized_lines(text)
+  if lines then
+    self.entered = InputText(lines)
   end
   self:text_change()
   if keep_cursor then

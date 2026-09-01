@@ -120,6 +120,31 @@ describe("input model spec #input", function()
       assert.same({ strung:get_cursor_pos() },
         { listed:get_cursor_pos() })
     end)
+
+    -- The case a replaced content path gets wrong most easily:
+    -- the caret is parked past where the new content ends, so
+    -- a stale line index would seat it on a line that is gone.
+    -- Both spellings land at the end of the new content.
+    it('both land at the end of shorter content', function()
+      for _, replacement in ipairs({ 'x', { 'x' } }) do
+        local model = UserInputModel(mockConf, luaEval)
+        model:set_text({ 'one', 'two', 'three' })
+        model:move_cursor(3, 2)
+        model:set_text(replacement)
+        assert.same({ 1, 2 }, { model:get_cursor_pos() })
+      end
+    end)
+
+    -- Normalising to one path must not start accepting shapes
+    -- the two branches never did: content stands unchanged.
+    it('leaves content standing for a non-text value',
+      function()
+      local model = UserInputModel(mockConf, luaEval)
+      model:set_text({ 'kept' })
+      --- @diagnostic disable-next-line: param-type-mismatch
+      model:set_text(42)
+      assert.same({ 'kept' }, model:get_text())
+    end)
   end)
 
   describe('basics', function()
