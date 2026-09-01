@@ -180,6 +180,29 @@ release, and once it is substantial it belongs in
 `doc/development/technical_debt/` rather than in the source. An `INTERIM:` is
 scaffolding, and scaffolding that ships is a defect.
 
+**`DEBT:` — the marker for a defect that is registered and deliberately not
+fixed** (owner, 2026-09-01). Once the item is in
+`doc/development/technical_debt/`, the source still owes a reader who is
+looking at the wrong line and has no reason to suspect it. `DEBT:` is that
+pointer, and it is a payload-2 comment wearing a token: it names the defect,
+cites the register entry by **named section**, and by existing says *known,
+left alone on purpose*.
+
+- **It is durable, and it is deliberately NOT in the release gate above.**
+  `INTERIM:` and `REMARK:` are removed before release because they are
+  scaffolding; a `DEBT:` marker is most needed *at* release, when the defect
+  ships. Do not add it to the grep pattern by analogy — the pattern's
+  exclusion-free design is about markers that must reach zero, and this one
+  must not.
+- **It is not a licence to leave a defect in the source instead of the
+  register.** The entry is the record; the marker is a signpost to it. A
+  `DEBT:` with no entry behind it is the failure this rule exists to prevent,
+  and `grep -rn 'DEBT:' src/ tests/` cross-checked against the register's
+  headings is how that is caught.
+- **Say what is wrong, not merely that something is** — the reference rule
+  below applies in full. `-- DEBT: see technical_debt/input.md` has been
+  deleted, not written.
+
 ## Where this is enforced
 
 Comment cleanup is a **pre-PR gate**, not an ongoing chore: run it once the

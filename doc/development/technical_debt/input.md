@@ -160,20 +160,41 @@ paid, or turned out not to be debt.
   saying `jump_end` already does this correctly: it computes `#ent` and
   `ulen(ent[last_line]) + 1` from the *same* line and hands both to
   `move_cursor`.
-- **The fix has two shapes and the choice is a design call.** Either repair it
-  in place — `t[#t]` for the column, one token — or **delete it**: its intent is
-  `jump_end`'s, `clear_input` could call that instead, and `_set_text_line`'s
-  branch is unreachable, so the surviving need is one line in one function.
-  Deleting is the direction Decision 38's structural half points (one way to
-  seat the cursor rather than two that agree), but it touches a shared model
-  primitive rather than the input feature's own surface.
+- **The likelier disposition is not a repair at all: this is a partial,
+  unvalidated duplicate of `jump_end`, and what wants reviewing is its USAGE.**
+  Both exist to seat the caret at the end of the content — that is what
+  `_update_cursor` did correctly when it was single-line, and it is what
+  `jump_end` does now. `jump_end` computes `#ent` and
+  `string.ulen(ent[last_line]) + 1` **from the same line**, routes both through
+  the checked `move_cursor`, and finishes the job: it settles the selection and
+  moves the visible range. `_update_cursor` derives half its answer from a
+  different line, writes raw fields, and does neither. So the review to run is
+  *"does each call site want `jump_end`?"* rather than *"is this body right?"*,
+  and repairing `t[cl]` to `t[#t]` in place would leave a second way to do one
+  thing — which is what Decision 38's structural half exists to stop.
+- **It is not a drop-in swap, which is why this is a review and not an edit.**
+  At `clear_input` — the only reachable call site — `jump_end` would land the
+  caret identically at `(1,1)`, but it also calls `end_selection` and
+  `visible:to_end()`. `clear_input` already calls `clear_selection()` just
+  above, so the first is redundant rather than wrong; whether the visible-range
+  reset is *wanted* on a clear is a real question and has not been checked.
+  Answer it before swapping, not after.
+- **The narrow repair stays on the table** — `t[#t]` for the column, one token
+  — as the answer if the review finds a caller that genuinely wants a raw,
+  unvalidated seat. Nothing today does.
+- Either way it touches a shared model primitive rather than this feature's own
+  surface, which is why it is not being decided inside `#77`.
 - **Provenance: pre-existing, and not this feature's.** The slip is from 2023,
   three years before this branch, and `#77` neither introduced nor widened it —
   it only deleted the one call site that made the asymmetry visible.
 - **Not slugged** — a slug is the commitment to fix, and whether this is fixed
   before the release is not decided. Nothing user-visible depends on it.
-- **Revisit:** raised with the owner 2026-09-01 at `BUG-02-01`; awaiting a call
-  on repair-vs-delete.
+- **Revisit: a pure-refactoring pass over the cursor writers, not a bug fix**
+  (owner, 2026-09-01) — it does no harm unless another caller reaches it or the
+  call sites change, so it waits for the pass that would review
+  `_update_cursor` against `jump_end` and decide whether the first should exist
+  at all. Marked at the site with a `DEBT:` comment so a reader of the code
+  meets the entry rather than the bug.
 
 ### The error highlight compares a byte column against a character index
 
