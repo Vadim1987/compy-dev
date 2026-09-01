@@ -84,35 +84,17 @@ That is the whole model. Everything below either enables it or protects it.
 
 ## 3. What the model requires
 
-### 3.1 Interaction is claimed by ordinary assignment; the framework normalizes and can restore
+### 3.1 Interaction is claimed by ordinary assignment; the framework lifts its machinery above it
 
 **The engine's callback slots stay writable.** A program — or a typed line — claims interaction the
 way any LÖVE program does: by assigning `love.keypressed`, `love.draw`, `love.update` and their
-siblings. There is no interception and no shadowed view of the engine table. *(An earlier draft of
-this section proposed a guard; the owner ruled against it, 2026-08-31.)*
+siblings. There is no interception and no shadowed view of the engine table.
 
-Two things make that safe enough:
-
-- **One slot is off-limits, by contract: the raw event table (`love.handlers`).** It is the fixed
-  pump that runs before anything is forwarded to a callback, and it is where the reserved keys live
-  — quit, stop, restart, reset. Leaving it alone is what keeps **disarm reachable** after a program
-  has taken the keyboard. This is not a style preference; it is the whole recovery story, and it
-  should be stated as a contract rather than an expectation.
-- **Disarm restores the slots from a known-good source** — the framework's own defaults. *(Note for
-  whoever implements it: the framework keeps a defaults table today, but it holds three entries and
-  serves as a **comparison baseline** — "did the user change this slot?" — while restoration works
-  by re-running the console's installers. Either is a fine source; the existing table is not
-  complete.)*
-
-**What the model does need is a normalization step at the end of a load**, not a guard on the write.
-Without it, two invariants are lost:
-
-- a program that assigns the frame callback **displaces the framework's own frame loop**, and with
-  it the click timer — so single- and double-click detection stops working, *including for that
-  program*. This is why a project's frame callback is currently never installed into the slot: the
-  framework keeps it aside and calls it from within its own loop;
-- directly assigned handlers run **outside the framework's error boundary**, so a raise inside one
-  does not surface the way a project's does.
+**One table is off-limits, by contract: the raw event table (`love.handlers`).** It is the fixed
+pump that runs before anything is forwarded to a callback, and where the reserved keys live — quit,
+stop, restart, reset. Leaving it alone is what keeps disarm reachable after a program has taken the
+keyboard. Not a style preference: it is the cheap half of the recovery story, and it should be
+stated as a contract rather than left as an expectation.
 
 **The shape of the change is a lift, not a guard** (owner, 2026-09-01): the framework's own
 machinery — error containment, the canvas binding, the shortcut and widget walk, view compositing —
@@ -146,7 +128,10 @@ the user's value, so neither is an exception to the rule above:
   loop is already replaced in one mode today, so this is not a new capability.
 
 One consequence stands either way: **"is something running" is derivable by comparing the slots
-against the defaults** — a read, with no installation and no bookkeeping.
+against the defaults** — a read, with no installation and no bookkeeping. *(Implementation note: the
+framework keeps a defaults table today, but it holds three entries and is used for exactly this kind
+of comparison, while restoration works by re-running the console's installers. Either can be
+disarm's source; the existing table is not complete.)*
 
 ### 3.2 Disarm must be a real operation with a name
 
@@ -261,7 +246,44 @@ unnecessary once there is one environment. Those are documentation edits, made a
 The exception is the pair of surface questions above: they are naming decisions on an unreleased
 surface, and they are cheapest now.
 
-## 5. Non-goals
+## 5. What becomes of the existing modes
+
+The application has an app-state enumeration — *ready, project open, running, snapshot, inspect,
+editor, shutdown* — plus a separate launch mode. The model touches them unevenly.
+
+**`play` is not one of these states: it is a launch mode.** Started pointed at a project, the
+application mounts it and runs it as a standalone game, and the console-management reserved keys
+deliberately no-op there (only restart and profiling stay live). The purpose in §1 does not apply —
+nobody is typing — and it is the one context where **restarting really is the only recovery**, since
+the reserved-key escape is switched off by design. Nothing in the model changes it.
+
+**`suspend` / `inspect` is where the model pays off most.** Suspending today freezes a screenshot,
+saves the program's handlers, restores the console's, and — the load-bearing part — **switches the
+console to evaluate in the program's environment**. That switch is the entire reason the mode
+exists, and with one shared environment it evaporates: the console can already see the program's
+symbols, at any time, without suspending anything.
+
+What remains is purely interaction: **suspend = disarm, remembering what was armed; continue =
+re-arm from that memory.** That is the disarm primitive plus a saved set, and both halves already
+exist in the framework. The screenshot is a *view* affordance, orthogonal to either, and is
+unaffected.
+
+**So the machine reduces to three independent facts** rather than an enumeration:
+
+- is a project open?
+- is anything armed — and if not, is there a saved set to re-arm? *(armed / stopped / suspended)*
+- is the editor up?
+
+*Ready* and *project open* then differ only by the first; *running* and *project open* only by the
+second; *inspect* is "disarmed with memory, snapshot painted"; *snapshot* is a one-frame view
+transition; *shutdown* is terminal.
+
+**The recommendation is to derive the state from those facts, not to delete the enumeration.** It is
+read widely — including by the input feature and the reserved keys — and the editor route has not
+been examined. Deriving is the same move as "what is running is a question you answer by looking",
+applied to the whole machine; deleting is a separate decision that needs the editor looked at first.
+
+## 6. Non-goals
 
 - Not a sandbox. The model deliberately trades isolation for predictability, and it does not guard
   the interaction surface at all — a claimed slot is a claimed slot.
@@ -269,7 +291,7 @@ surface, and they are cheapest now.
 - Not an editor redesign. The editor's own environment has not been examined and is out of scope
   until it is.
 
-## 6. Decisions still owed by the project owner
+## 7. Decisions still owed by the project owner
 
 Answered in discussion and recorded above: the purpose (§1), a shared environment, free assignment
 with disarm by overwrite, `run` = reset + load with the reset automatic, and automatic disarm on
@@ -289,9 +311,9 @@ exit. What remains:
 5. **Is `dofile` still restricted to files of the open project?**
 6. **Does a load that claims nothing report anything, or is silence correct?**
 
-## 7. Sequencing
+## 8. Sequencing
 
 This work follows the input feature's release; it should not be folded into it. It is naturally two
-tickets — the environment model (§2–§3) and the dispatch unification (§4) — which are coupled but
+tickets — the environment model (§2–§3) and the dispatch unification (§4, §5) — which are coupled but
 separately deliverable. The environment model is what makes a single dispatcher natural; it is not
 what makes it possible.
