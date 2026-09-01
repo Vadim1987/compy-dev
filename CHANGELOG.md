@@ -144,13 +144,24 @@ newest first.
 
 - **Setting the widget's content to a string with newlines in it now
   works.** `text` is documented as "a string or list of line strings",
-  and the list form always worked; the string form was written only
-  when it held a single line, so `show{text = "a\nb"}` or
-  `set_text("a\nb")` silently wrote nothing and left the previous
-  content standing. This is longstanding, not new — the same guard is
-  in the release this one branches from — but this release is the one
-  that documents the shape and puts it on the project-facing surface,
-  so the silent case is fixed rather than described.
+  and the string form was written only when it held a single line, so
+  `show{text = "a\nb"}` or `set_text("a\nb")` silently wrote nothing
+  and left the previous content standing. This is longstanding, not
+  new — the same guard is in the release this one branches from — but
+  this release is the one that documents the shape and puts it on the
+  project-facing surface, so the silent case is fixed rather than
+  described.
+
+- **The two spellings of that shape now mean the same thing.** A list
+  element containing a newline used to be stored verbatim, so
+  `set_text{"a\nb"}` gave one line holding a line terminator the widget
+  counted as an ordinary character, while `set_text("a\nb")` gave two
+  lines. Both now give two. The reason is the cursor: it addresses
+  content as `(line, col)`, and a newline kept inside a line leaves
+  `col` unable to say where you are — the same reason the widget
+  already dropped invalid UTF-8 from content you set. Blank elements
+  are content and still survive. Also longstanding, and it only became
+  visible once the string form above was fixed.
 
 - **Project callbacks no longer lose their arguments on Lua runtimes
   without LuaJIT's `xpcall` extension.** The framework runs your code

@@ -62,21 +62,28 @@ The input is not single-line. `Shift+Enter` inserts a newline (`line_feed()`). T
 
 LÖVE has no multiline-text concept of its own; it only delivers discrete `textinput`/`keypressed` events, one character or one key at a time. Assembly is entirely compy's own: `UserInputController:keypressed`'s `newline()` local (`userInputController.lua:568-574`) calls `input:line_feed()` whenever Shift+Enter is detected — **unconditionally**. There is also no separate "keystroke assembly" buffer: `textinput` mutates the model's persistent text immediately and continuously, and Enter (a `keypressed`, not a `textinput`) is a purely discrete control signal that reads whatever the *current* buffer state is (`get_text()`) at the moment it fires. Nothing replays or buffers a keystroke history to reconstruct the submitted text; the live model state *is* the submitted text. True uniformly for console, editor, and the project's input widget (all three read `get_text()` at submit time); search has no evaluator/submit concept at all — its Enter jumps to the currently-selected result, not the typed query.
 
-**Known defect — `set_text`'s two branches disagree about newlines.** `UserInputModel:set_text`
+**`set_text` normalises both spellings, and the cursor is the reason.** `UserInputModel:set_text`
 accepts a string or a list of line strings, which the project-facing guide documents as one shape
-with two spellings. The string branch splits on newlines; the **list branch stores each element
-verbatim**, so `set_text({"a\nb"})` produces one line holding a raw newline, which the model then
-counts as an ordinary character — three characters long, caret positions `1..4`. `set_text("a\nb")`
-produces two lines. The content still round-trips through `string.unlines`, so a submit delivers
-what was set; the rendering of such a line is uncharacterised.
+with two spellings, so both are normalised identically: `string.lines` is polymorphic over
+`string | string[]` and delegates a list to `string.split_array`, which splits each element and
+explicitly preserves empty ones. `set_text("a\nb")`, `set_text({"a\nb"})` and `set_text({"a","b"})`
+all produce the same two lines and the same cursor.
 
-This is **pre-existing** — the list branch has never split — and it is currently unreachable from
-in-tree code: every caller passes either a raw string or `string.lines(…)`, which cannot emit an
-element containing a newline. It is written here because the guide's *"a string or list of line
-strings"* gives a project both spellings and no way to know they differ. Whether it is fixed before
-the release is undecided; the debt register carries it unslugged, *"`set_text`'s list branch does
-not split embedded newlines"*. The `add_text` path has no such split, having normalised with
-`string.unlines` at the controller before it reaches the model.
+**The rule is the same one the UTF-8 sanitisation on this path serves** (owner, 2026-09-01): the
+cursor addresses content as `(line, column)`, so content that is not normalised makes that address
+ambiguous. Invalid bytes leave a column's *length* undefined; a newline inside a line leaves its
+*position* undefined — the caret could sit past a line terminator. Both are normalised at the same
+seam for the same reason, and neither is a convenience.
+
+**The list branch did not always split.** Until 2026-09-01 it stored each element verbatim, so
+`set_text({"a\nb"})` produced one line holding a raw newline that the model counted as an ordinary
+character — three characters long, caret positions `1..4`. The defect was **pre-existing** (at this
+branch's base the list branch is `InputText(text)`, with no split and no sanitise) and unreachable
+from in-tree code, every caller passing a raw string or `string.lines(…)`; what this feature added
+was the per-element sanitise pass and the surface that let a project reach the branch at all. It is
+recorded because a reader meeting the old shape in an older tree needs to know why the two branches
+no longer differ. The `add_text` path never had the split, having normalised with `string.unlines`
+at the controller before it reaches the model.
 
 The input view height is `input_max = 14` lines. This is a display limit only — the model can hold more lines, and scrolling within the input works normally. In the editor context this becomes relevant when loading a monster block: the editor's buffer viewport is `LINES = 16`, a **separate** limit from `input_max`, so a block can exceed the 14-line input strip — all content stays in the model, but only 14 lines are visible at once. **Open:** `input_max` (14) and `LINES` (16) currently differ, and whether 14 or 16 is the correct monster-block threshold is **not yet settled** — reconciling them is a pending review item (see `editor.md` — *`input_max` vs `LINES`* and *Monster Blocks*).
 

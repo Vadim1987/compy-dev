@@ -101,7 +101,7 @@ Everything that puts the widget on screen and alters it while it is there.
 | Key | Meaning |
 |---|---|
 | `prompt` | Label shown next to the field. |
-| `text` | Initial content: a string or list of line strings. |
+| `text` | Initial content: a string or list of line strings — the two spellings mean the same thing. |
 | `cursor` | Initial `{line, col}` after `text` is applied. |
 | `highlighter` | `function(lines) -> coloring`; changes display only. |
 | `validator` | `function(lines) -> true` or `false, Error[]`; gates submit. |
@@ -204,6 +204,15 @@ rather than failing.
 caret positions are `1 .. 7` — not `1 .. 13`, which is what its length in
 bytes would give. Every cursor position the widget reports or accepts is
 counted this way.
+
+**Newlines always start a new line, in either spelling.** Content is a
+string or a list of line strings, and the two mean the same thing:
+`set_text("a\nb")` and `set_text{"a\nb"}` both give you two lines, exactly
+as `set_text{"a", "b"}` does. A newline is never kept as a character
+*inside* a line — if it were, the caret could sit past a line terminator
+and `col` would no longer say where you are. Blank elements are content
+and survive: `set_text{"a", "", "b"}` is three lines. The same holds for
+`text` at `show`.
 
 ## What the widget tells you — callbacks
 
