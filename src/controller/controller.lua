@@ -627,7 +627,8 @@ Controller = {
     -- a widget that takes keystrokes and paints nothing.
     -- get_user_input() carries the inspect gate, so the
     -- suspended project's widget stays unhonoured
-    -- (Decision 12).
+    -- (doc/development/internals/user_input.md,
+    -- "inspect mode").
     local function draw()
       View.draw(CC, CV)
       local ui = get_user_input()

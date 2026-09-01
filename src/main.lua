@@ -359,7 +359,8 @@ function love.load()
   -- so console/editor COULD rewire onto it. They stay on their
   -- own separate `UserInputController` instances anyway,
   -- because console's `inspect`-mode REPL state must persist
-  -- independently of the project's (Decision 12) — a single
+  -- independently of the project's (doc/development/internals/
+  -- user_input.md, "inspect mode") — a single
   -- shared instance would be clobbered across that boundary.
   -- Migration is therefore deliberately deferred (Decision 1),
   -- not blocked. The PROJECT's widget is not built here at all:

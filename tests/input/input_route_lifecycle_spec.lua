@@ -16,8 +16,8 @@
 -- Connect/disconnect at the 'running' boundary, full teardown
 -- at stop, inspect's project-route disconnect, and the
 -- compy.before_exit stop hook
--- (doc/development/decisions/input.md,
--- Decision 11 and Decision 12).
+-- (doc/development/decisions/input.md, Decision 11;
+-- internals/user_input.md, "inspect mode").
 
 local F = require('tests.helpers.input_fixture')
 
@@ -33,10 +33,10 @@ describe('input surface: inbound events — route lifetime #input',
   -- connect/disconnect at the 'running' boundary (same
   -- decision), pointer excluded from that disconnect (same
   -- decision), full teardown at stop (same decision), inspect
-  -- (doc/development/decisions/input.md, Decision 12), and the
-  -- compy.before_exit stop hook. All cases drive the REAL
-  -- production functions (Controller.release_keyboard_ route,
-  -- ConsoleController:stop_project_run/:suspend), not a
+  -- (doc/development/internals/user_input.md, "inspect mode"),
+  -- and the compy.before_exit stop hook. All cases drive the
+  -- REAL production functions (Controller.release_keyboard_
+  -- route, ConsoleController:stop_project_run/:suspend), not a
   -- simulation of them.
   -- ====================================================
 
@@ -424,10 +424,10 @@ describe('input surface: inbound events — route lifetime #input',
     end)
 
     describe('inspect', function()
-      -- doc/development/decisions/input.md, Decision 12:
-      -- inspect is the console bound over the project env --
-      -- the project route disconnects and its widget goes
-      -- unhonoured.
+      -- doc/development/internals/user_input.md,
+      -- "inspect mode": inspect is the console bound over the
+      -- project env -- the project route disconnects and its
+      -- widget goes unhonoured.
       it('disconnects the project route and its ' ..
           'widget goes unhonoured', function()
         F.activate_project()
@@ -442,7 +442,7 @@ describe('input surface: inbound events — route lifetime #input',
         -- shown flag and the widget handle the draw path reads
         -- are both left standing. Asserted because the two are
         -- easy to conflate and only the first is what
-        -- Decision 12 promises.
+        -- "inspect mode" describes.
         assert.is_true(F.widget:is_shown())
         assert.is_true(F.is_widget_visible())
       end)

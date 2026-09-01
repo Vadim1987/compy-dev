@@ -818,9 +818,9 @@ describe('input surface: widget control #input', function()
       assert.equal(0, painted)
     end)
 
-    -- doc/development/decisions/input.md, Decision 12: under
-    -- inspect the console owns the surface and the project's
-    -- widget is unhonoured — including on screen.
+    -- doc/development/internals/user_input.md, "inspect mode":
+    -- under inspect the console owns the surface and the
+    -- project's widget is unhonoured — including on screen.
     it('a widget is not painted under inspect', function()
       local painted = 0
       F.widget.view.draw = function() painted = painted + 1 end

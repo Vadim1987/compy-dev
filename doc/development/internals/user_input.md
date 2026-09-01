@@ -288,6 +288,8 @@ pointer hook, falls through and the app quits.
 `stop_project_run` re-points `love.keypressed` and friends at the console, the
 route is simply unreachable, so there is nothing to guard between events.
 
+### inspect mode — the console owns every channel
+
 **`inspect` mode overrides all of the above.** While `app_state == 'inspect'` (a paused/broken-into project), the console REPL owns every input channel and a project-set widget is not honoured, regardless of the routing described above. The mechanism is two things at once. Events: `ConsoleController:suspend()` physically swaps `love.keypressed`/`textinput`/`draw`/`update` back to the console's own functions through `set_default_handlers`, rather than short-circuiting them, so every `love.handlers.*` entry point reaches the console's default handler. Drawing: `get_user_input()` (`controller.lua`) returns `nil` unconditionally while `app_state == 'inspect'`, and both of its call sites are draw paths, so the widget is not painted either. The console additionally runs the *paused project's own* environment while inspecting: `get_effective_env()`/`evaluate_input()` select `project_env` (not the console env) when `app_state == 'inspect'`, so REPL input mutates the paused project's globals — a live debugger console, not a separate idle console. This behaviour is carried as characterized status quo, not a ratified contract — its shape under a future console/editor migration is an open call for the owner, not settled here.
 
 ### Key state: modifier reads and `combo_string`
