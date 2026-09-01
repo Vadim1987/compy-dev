@@ -1034,6 +1034,25 @@ Ledger compaction had three items and **none needs a phase**:
 
 Retiring L therefore drops nothing.
 
+**Documentation volume is not a defect, and is not weighed before the compaction step (owner,
+2026-09-01).** Asked during the session64 revalidation whether `#77`'s documentation is
+proportionate — ~100 lines of production change in session63 drew 620 lines of persistent
+documentation, `technical_debt/input.md` alone taking +383 in one day onto a register now past
+2400 lines — the owner ruled it is **not** a finding: *"we have planned compaction step before
+release. in the meantime, verbose docs support ongoing development and troubleshooting."* This is
+the doc-corpus statement of the rule `agents/rules/commenting.md` already makes for comments
+(*"Do not compact as you go"*, owner 2026-08-12): verbosity mid-development is doing real work, and
+compaction is one deliberate pass over stabilised material, not a running discipline. **Do not file
+volume as debt, and do not compact opportunistically while the corpus is still moving.**
+
+**Open, raised with the ruling and not yet answered: which row *is* the compaction step for prose?**
+`commenting.md` §*"Where this is enforced"* schedules compaction for **comments**. Phase L, the
+**ledger** compaction, is retired above, and its three items are specific excisions
+(`DEC-01-04`, a REMARK inside `FIX-02-01`, Decision 12's demotion) — none of them a volume pass over
+the registers or the internals docs. So the step the ruling relies on is currently scheduled for
+comments only. Either that is the intent and the prose corpus ships at its development size, or a
+row is missing; the owner disposes.
+
 ### Phases B, C, D — **dissolved** (owner ruling, 2026-08-26)
 
 They are absent from this roadmap by **ruling**, not by omission. They were a prediction of the
