@@ -166,3 +166,13 @@ checked"* is the same ceremony in prose.
 reopening its category rather than ruling on the fix — and both times the category was already
 ratified and I had not consulted it. The check to run *before* filing a surface finding: **is there
 a decision that already draws this line?**
+
+## Wrap — 2026-09-01
+
+Owner called it on context volume: *"lets wrap it and ask successor to move on with roadmap."*
+
+Report written; successor prompt `session65/prompt.md` frames **roadmap execution**, not the
+wait-for-human placeholder `agents/sessions.md` §5 prescribes after a revalidation — a **deliberate
+deviation on the owner's directive**, stated as such in the prompt. Recommends `DEC-01` (largest
+blast radius in the brace, blocks slice cutting, best-prepared row) with the pick left to the owner.
+Pointer repointed; the suite-history paragraph records that session64 added no tests.

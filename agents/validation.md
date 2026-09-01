@@ -65,6 +65,9 @@ owner and revisable, not a frozen mandate.
    unification that followed it, five for `BUG-02-02`'s boundary refusal, and five its second cold
    peer review earned (three list shapes an `ipairs` walk let through, `show{text = false}` opening
    empty, and the error blaming the caller's line rather than the framework's).
+   **Session64 added none**: a delivery-level revalidation of sessions 61 and 63, whose five findings
+   landed as ledger entries, two documentation fixes and a new `DOC-01` roadmap stage, and 1048 held
+   across all seven of its commits.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -333,7 +336,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session64/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session65/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
