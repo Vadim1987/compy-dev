@@ -166,3 +166,27 @@
   `set_text{42}` doesn't just drop — it **wipes content to `{''}`**, `is_empty` true.
 - Environment, stated not assumed: **lua-lsp still dead** (broken pipe) → grep, not AST;
   suite ran on **LuaJIT**, not the owner's PUC Lua.
+
+## 2026-09-01 — BUG-02-02: refuse structure, at the boundary
+
+- Owner ruling: **into `BUG-02`'s scope, fix now** — *"our own interim defect which this feature
+  introduced, and it does not go into release."* **An interim regression that never shipped is
+  not debt to weigh; it is work to finish.** That is the distinction I had missed — I filed it
+  BACKLOG and proposed a FIX row.
+- Owner's challenge killed the coercion lean, correctly: `{'a', 42}` is
+  `insert_text_line(text, li)`'s argument shape, so the likeliest source is **signature
+  confusion**, and coercing renders a caller's mistake as plausible content.
+- Evidence that sealed it: **no in-tree caller passes a non-string**, and a project that has a
+  number already converts at the call site (`pong/main.lua:104` → `tostring`). Coercion would
+  fire *only* where the author did not mean text.
+- Precedent **followed, not invented**: `BUG-01-08`/`checked_cursor` — one message naming the
+  call, never a raw framework error, never a silent repair. `checked_text` is its sibling;
+  `set_text` lifted into `api_set_text` for the level-4 depth rule, as `api_set_cursor` was.
+- 5 breaking tests, all seen to fail first. 1038 → **1043**. Error attribution probed against the
+  existing `set_cursor` message — identical shape.
+- Decision 38 gained the boundary as a **pair**: *normalise representation, refuse structure*. Its
+  old "nothing here rejects" sentence had claimed a strictness the code lacked — now the code has
+  it and the decision states the line.
+- CHANGELOG written **against the last release, not against this morning**: the drop/wipe never
+  shipped, so the stakeholder-visible change is the readable refusal replacing
+  `bad argument #1 to 'len'`.
