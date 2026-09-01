@@ -1715,7 +1715,7 @@ point.
 ratify it.** Its intent is this decision's own: *seat the caret at the end of the content*, which is
 what it did correctly when the input was single-line. The multiline migration broke it, and what it
 owes is filed as debt, not settled here. See `../technical_debt/input.md`, *"`_update_cursor`
-measures the column on one line and reports another"*.
+measures the column on the wrong line"*.
 
 ---
 

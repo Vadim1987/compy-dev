@@ -516,6 +516,9 @@ function UserInputModel:_update_cursor(replace_line)
   local cl = self:get_cursor_y()
   local t = self:get_text()
   if replace_line then
+    -- Postponed, not fixed: c is measured on t[cl] while l is
+    -- set to #t (doc/development/technical_debt/input.md,
+    -- "_update_cursor measures the column on the wrong line").
     self.cursor.c = string.ulen(t[cl]) + 1
     self.cursor.l = #t
   else

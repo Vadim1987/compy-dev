@@ -98,7 +98,7 @@ on — while setting `.l` to `#t`. `_set_text_line` writes line `ln`, which need
 Today nothing observes this: `_set_text_line`'s call is guarded by `if not keep_cursor` and all
 seven of its callers pass `true`, so it is unreachable, and `clear_input`'s content is empty, where
 every line measures zero. Filed in `../technical_debt/input.md`, *"`_update_cursor` measures the
-column on one line and reports another"*, with the repair-vs-delete call left open.
+column on the wrong line"*, with the repair-vs-delete call left open.
 
 **The list branch did not always split.** Until 2026-09-01 it stored each element verbatim, so
 `set_text({"a\nb"})` produced one line holding a raw newline that the model counted as an ordinary

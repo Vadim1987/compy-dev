@@ -117,7 +117,7 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
-### `_update_cursor` measures the column on one line and reports another
+### `_update_cursor` measures the column on the wrong line
 
 - **Where:** `src/model/input/userInputModel.lua` — `UserInputModel:_update_cursor`.
 - **State:** it sets `cursor.c` from `t[cl]`, the line the caret was on
