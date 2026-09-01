@@ -1818,3 +1818,64 @@ D-BUTTON-TRIGGER.
 
 Future retirements land here in the ordinary way.
 
+
+---
+
+## Crosswalk — the numbers these decisions used to have
+
+**Why this table exists.** Until 2026-09-01 every decision here was cited by a number, and the
+numbers are still in circulation: commit messages, the feature's working notes, and any document
+written before that date all say `Decision 21` where the ledger now says `D-COMBO-SHAPE`. A reader
+arriving from one of those needs the mapping, and it has to live where the decisions are — the
+feature's own working tree is scheduled for deletion, so a crosswalk kept there would go with it.
+
+**The numbers are not reused.** A removed decision's name is simply never minted again, and an
+added decision disturbs nothing, so this table is closed: it will not grow and no entry in it will
+ever mean something else. That property is the whole reason for the conversion — under
+renumbering, a citation the sweep missed would resolve to a *different, existing* decision and read
+as authoritative; under names it dangles visibly and greps out.
+
+| was | is | |
+|---|---|---|
+| Decision 1 | `D-ROUTE-OWNS` | |
+| Decision 2 | `D-CHAIN-OF-3` | |
+| Decision 3 | `D-WIDGET-AT-BOOT` | |
+| Decision 4 | `D-NO-POLLING` | |
+| Decision 5 | `D-TWO-SURFACES` | |
+| Decision 6 | `D-NO-FW-TIER` | |
+| Decision 7 | `D-FROZEN-SHELL` | |
+| Decision 8 | `D-COMBO-TABLES` | |
+| Decision 9 | — | **removed**; superseded by `D-LOVE-ARGS` |
+| Decision 10 | `D-HOOKS-SEEDED` | |
+| Decision 11 | `D-ROUTE-LIFETIME` | |
+| Decision 12 | — | **removed**; was never a decision. The behaviour it described is `../internals/user_input.md`, *"inspect mode"* |
+| Decision 13 | — | **removed**; the held-key arc, now `D-ASK-THE-DEVICE`, *"what it withdraws"* |
+| Decision 14 | `D-DEFACTO-KEPT` | |
+| Decision 15 | `D-UNKNOWN-RAISES` | |
+| Decision 16 | — | **removed**; superseded by `D-ONE-LIFETIME` and `D-BUTTON-TRIGGER`. What it ruled, and why the ruling fell, is in `D-ONE-LIFETIME`, *"what it reverses"* |
+| Decision 17 | `D-BEHAVIOUR-TEST` | |
+| Decision 18 | `D-ONE-STATE-ASK` | |
+| Decision 19 | — | never existed; the sequence had a gap |
+| Decision 20 | — | **removed**; the held-key arc, as 13 |
+| Decision 21 | `D-COMBO-SHAPE` | |
+| Decision 22 | `D-IGNORE-REPEAT` | |
+| Decision 23 | `D-NO-LOG-NOISE` | |
+| Decision 24 | `D-STOP-AND-SIDE` | |
+| Decision 25 | `D-ONE-LIFETIME` | |
+| Decision 26 | `D-LOVE-ARGS` | |
+| Decision 27 | `D-BUTTON-TRIGGER` | |
+| Decision 28 | `D-STOP-IS-FW` | |
+| Decision 29 | — | **removed**; the held-key arc, as 13 |
+| Decision 30 | `D-ASK-THE-DEVICE` | |
+| Decision 31 | `D-THREE-MODS` | |
+| Decision 32 | `D-USAGE-SHAPE` | |
+| Decision 33 | `D-EXACT-RESERVE` | |
+| Decision 34 | `D-RESERVE-TABLE` | |
+| Decision 35 | `D-CFG-BOUNDARY` | |
+| Decision 36 | `D-AUTO-HIDE` | |
+| Decision 37 | `D-PAYLOAD-SPLIT` | |
+| Decision 38 | `D-CONTENT-NORM` | |
+
+**Reading a `D-1`…`D-10` instead?** That is a different, dead namespace — the design-time ids from
+this subsystem's design phase, which lived only in the feature's working tree and never reached
+code or this corpus. Digits after the prefix mean that one; letters mean this one.
