@@ -196,6 +196,53 @@ factory reset restores the baseline (§3.3), and — for a program that has brok
 past that — restarting the application. Both should be stated in the user documentation, not
 discovered.
 
+### 3.7 Suggestion — a managed overlay beside the raw slots
+
+*Offered as a suggestion (owner, 2026-09-01), not as part of the minimum model.*
+
+Alongside the engine's own slots, projects get **convenience handlers the framework invokes**:
+`on_draw`, `on_update`, and the per-event hook tables the input feature already has. They are
+guaranteed to run *if set*, and they are opt-in — a project that prefers to redefine the engine's
+primitives still can, and still can shoot itself in the foot doing so.
+
+The principle that makes this consistent with §3.1's "nothing inspects or rewrites":
+
+> **Guarantees follow invocation, not registration.** The framework can promise things about
+> handlers *it* calls. It promises nothing about a slot the engine calls directly — not because it
+> refuses to, but because it is not there.
+
+**The load-bearing advantage is that this is an overlay on the dispatch path.** The managed handlers
+live in tables the lifted layer consults, so **disarming is detaching the overlay** — one operation,
+no slot rewriting, nothing to diff against a defaults table. Restoring the raw slots remains the
+fallback for a project that claimed them, which gives disarm two halves of very different cost: drop
+the overlay (cheap, always correct) and, only if raw slots were taken, put the defaults back.
+
+It also gives recovery a granularity that raw slots cannot have: a managed handler that raises can
+be **dropped individually** while the rest stay live, or the whole overlay detached, leaving the
+console usable either way. Re-arming is the same operation in reverse.
+
+Three points to settle if this is adopted:
+
+- **Precedence.** If a project sets both a hook and the engine slot for the same event, the order
+  must be stated. The natural one, given the lift: the framework layer runs first — reserved keys,
+  shortcuts, hooks, widget — and forwards to `love.<event>` only if nothing consumed. That keeps the
+  raw slot in its LÖVE-native position and makes "the managed form is the safer one" true
+  structurally rather than by convention.
+- **Where the frame handlers live.** The input hooks sit under the input namespace because they are
+  input; `on_draw` and `on_update` are not. Either they get their own home, or the idea generalises
+  to one hook table covering draw, update and the input events — more coherent, and a surface change
+  that is cheap now and not later.
+- **Containment is not the differentiator.** Since the framework forwards to the raw slots — and
+  would call the frame callbacks too, once it owns the run loop — it can wrap those calls without
+  inspecting anything. Raw handlers can be contained as well. What the managed form genuinely buys
+  is *manageability*: per-handler recovery, wholesale detach, and no competition with the slot the
+  engine owns.
+
+Because "two ways to do one thing" is exactly what a simpler-API mandate is suspicious of, the pair
+needs one line of justification wherever the surface is presented — *the managed form is what the
+framework can recover; the raw form is the engine-native escape hatch* — and a documentation line
+saying which to reach for.
+
 ## 4. What this means for the input feature (`#77`)
 
 The input feature is at release-candidate stage. For a reader unfamiliar with it, the parts that
@@ -215,16 +262,16 @@ callbacks a program attaches to the widget, and the reserved keys all survive un
 
 Three points do need decisions, and one of them is genuinely open:
 
-- **Two Compy-specific surfaces are candidates for retirement in favour of standard LÖVE ones, and
-  both are decisions for *now*.** Neither exists at the PR base — both are new surfaces of the
-  unreleased feature, so this is not deprecating a public API, it is **choosing one before it
-  becomes public**. The cost today is an example, a guide section, tests and a decision entry;
-  after the candidate ships it is that plus a migration.
-  - **`compy.input.hooks` versus the engine's own callbacks.** Hooks exist so a program's event
-    handlers have a slot the *program's* dispatcher owns. With one shared dispatch and the framework
-    machinery lifted above it, that slot can simply be `love.<event>` again — which is what "code in
-    a file and the same code typed at the console" implies anyway, since it is what a user would
-    naturally write.
+- **Two surfaces need a decision now rather than later.** Neither exists at the PR base — both are
+  new surfaces of the unreleased feature, so this is not deprecating a public API, it is **settling
+  one before it becomes public**. The cost today is an example, a guide section, tests and a
+  decision entry; after the candidate ships it is that plus a migration.
+  - **`compy.input.hooks` — no longer a retirement candidate** (owner, 2026-09-01). An earlier
+    reading had hooks superseded by `love.<event>` once the framework machinery is lifted above the
+    slot. The suggestion in §3.7 supersedes that: the two stop competing and become the **managed**
+    and **raw** forms of the same thing, with hooks as the overlay the framework can invoke, recover
+    and detach. What is owed is not a rename but a **stated relationship** — precedence, and one
+    line on which form to reach for.
   - **`compy.before_exit` versus `love.quit`.** Same direction, with one semantic to settle: in
     LÖVE, `love.quit` returning true **aborts** the quit, while this hook deliberately ignores its
     return — a program is not permitted to refuse to stop, which is the guarantee the reserved keys
@@ -309,13 +356,14 @@ Answered in discussion and recorded above: the purpose (§1), a shared environme
 with disarm by overwrite, `run` = reset + load with the reset automatic, and automatic disarm on
 exit. What remains:
 
-1. **The two surface names** (§4) — `compy.input.hooks` versus `love.<event>`, and
-   `compy.before_exit` versus `love.quit`, the latter needing the veto semantics settled. These are
-   the only decisions that touch the release.
-2. **Error containment.** With nothing wrapping a handler's value, a raise inside one reaches the
-   engine's error screen — including for `run()`, which has containment today. Containing it in the
-   lifted layer (§3.1) keeps the behaviour without touching what the user assigned; not doing so is
-   a deliberate regression. Which?
+1. **The two surfaces** (§4) — whether to adopt the managed/raw pairing of §3.7 and state its
+   precedence, and whether `compy.before_exit` becomes `love.quit`, the latter needing the veto
+   semantics settled. These are the only decisions that touch the release.
+2. **Error containment, and its granularity.** Containment itself is available for both forms, since
+   the framework forwards to the raw slots and would call the frame callbacks too (§3.7). What is
+   open is whether it is applied to the raw slots at all — declining is a deliberate regression,
+   because `run()` has containment today — and what happens when a managed handler raises: dropped
+   individually, or the whole overlay detached.
 3. **Failure during a load** — a file that raises halfway leaves its definitions and whatever it
    claimed. Disarm on failure, definitions kept, is the assumed answer.
 4. **Vocabulary** — `dofile`, `run`, and the user-facing names of disarm and factory reset. The
