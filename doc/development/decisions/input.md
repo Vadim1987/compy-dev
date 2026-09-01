@@ -940,15 +940,6 @@ the consume contract cost nothing because nothing returned a value, and the piec
 like distinct machinery — a second wrapper, a second install path, a bespoke click surface —
 existed only to serve the split. Unifying removes mechanism instead of adding it.
 
-**What it reverses, and why the reversal is not a preference.** The ratified design ruled pointer
-out of this pass in as many words — pointer and wheel stay *outside the chain*, and an implementor
-"must NOT 'unify' pointer". That was an **interim scope ruling of the owner's**, never a
-stakeholder requirement, and it rested on one factual claim: that the keyboard/pointer lifetime
-split was inherited platform behaviour and therefore not this feature's to touch. **The base check
-falsified the claim** — before this branch both had the same lifetime, so the exemption protected
-projects from a release this work had itself introduced (D-ROUTE-LIFETIME, amended). The ruling falls
-with its ground; it was not overridden on a preference.
-
 **Consequence, accepted.** A non-blocking project with no interaction surface keeps the keyboard
 until it stops, where it previously handed it back at `'project_open'`. That is the pre-feature
 behaviour, and `Ctrl+Esc` remains the documented exit.
