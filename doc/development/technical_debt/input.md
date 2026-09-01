@@ -115,6 +115,34 @@ paid, or turned out not to be debt.
   point at *"Combos the framework keeps"* for the reassurance rather than
   restating it.
 
+### T-DEVIATION-WHY — the deviation justifications live only in the PR description
+
+- **Where:** the *"Ratified deviations from the original design"* table in the
+  feature's `pr-description.md` — six rows, each pairing a deviation with the
+  reason it was taken.
+- **State:** every one of the six "Why" cells is a **technical** argument — a
+  base check, a measurement, a mechanism that dissolved the alternative — and
+  not one of them is procedural. They are the answer to *"a reviewer comparing
+  to the design will notice"*, and they sit in a file that dies when the
+  feature's working tree is deleted. The corresponding decisions argue **why
+  the current shape is right** and are silent on **what it replaced**, so a
+  reader of the persistent ledger alone cannot tell that a ratified position
+  was reversed at all.
+- **Why it stands (owner, 2026-09-01):** *justification should be lifted out of
+  `wip/` if it is technical, not procedural.* A PR description is read once, by
+  reviewers; a decision is read for as long as the code lives.
+- **One of the six is already done** — *"Pointer joined the chain"* is in
+  Decision 25 as of this sprint, because vacuuming the retired entry that held
+  the same record made it a precondition rather than a follow-up. **Five
+  remain**, and each has an obvious home: the four-tier chain → Decision 6;
+  one-time hook seeding → Decision 10; the route no longer released mid-run →
+  Decision 11; the retired `compy.singleclick`/`.doubleclick` → Decision 25;
+  unhandled events not logged → Decision 23.
+- **Not a duplication.** The PR description keeps its table — it is what a
+  reviewer reads. The obligation is that the argument **also** exists where it
+  outlives the review.
+- **Revisit:** `FIX-02-26`.
+
 ## BACKLOG
 
 ### `_set_text_line` has an unreachable table branch
