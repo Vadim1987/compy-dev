@@ -707,26 +707,38 @@ local function checked_cursor(fname, cursor)
     ': cursor must be a {line, col} pair of numbers', 4)
 end
 
+--- A DENSE array of strings, counted over every key rather than
+--- walked with ipairs: ipairs stops at the first hole and skips
+--- non-integer keys, so { [1]='a', [3]=42 } and { foo=42 }
+--- would both pass a walk and then lose content downstream,
+--- which is the failure this check exists to prevent.
+--- @param t table
+--- @return boolean
+local function is_line_list(t)
+  local n = 0
+  for _ in pairs(t) do n = n + 1 end
+  for i = 1, n do
+    if type(t[i]) ~= 'string' then return false end
+  end
+  return true
+end
+
 --- Sibling of checked_cursor, same level-4 depth rule. Content
 --- is normalised, never validated, once it is inside the model
---- (doc/development/decisions/input.md, Decision 38) — so the
---- one thing that cannot be normalised is refused here: an
---- element that is not a string is a structure error, not a
---- spelling of the shape, and coercing it would turn a caller's
---- mistake into content the project never wrote.
+--- (doc/development/decisions/input.md, Decision 38) — what
+--- cannot be normalised is refused here: a value that is not
+--- text, or a table that is not a list of lines, is a structure
+--- error rather than a spelling of the shape, and repairing it
+--- would turn a caller's mistake into content nobody wrote.
 --- @param fname string
 --- @param text any
 --- @return str? text
 local function checked_text(fname, text)
   if not text then return nil end
-  local ok = type(text) == 'string'
-  if type(text) == 'table' then
-    ok = true
-    for _, l in ipairs(text) do
-      if type(l) ~= 'string' then ok = false end
-    end
+  if type(text) == 'string' then return text end
+  if type(text) == 'table' and is_line_list(text) then
+    return text
   end
-  if ok then return text end
   error(fname ..
     ': text must be a string or a list of line strings', 4)
 end

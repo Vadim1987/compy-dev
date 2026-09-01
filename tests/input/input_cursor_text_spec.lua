@@ -247,11 +247,18 @@ describe('input surface: widget control — cursor and text #input',
     -- numbers wiped the content, and a boolean raised from
     -- inside utf8.len.
     describe("refuses a non-string element", function()
+      -- The last three are the ones a walk with ipairs lets
+      -- through: it stops at a hole and never sees a
+      -- non-integer key, so each of these used to be accepted
+      -- and then lose content downstream without a word.
       local bad = {
         ['a number'] = { 'a', 42 },
         ['only a number'] = { 42 },
         ['a boolean'] = { 'a', true },
         ['a nested table'] = { 'a', { 'b' } },
+        ['a hole'] = { [1] = 'a', [3] = 'b' },
+        ['a hole hiding a number'] = { [1] = 'a', [3] = 42 },
+        ['keys that are not indices'] = { foo = 'bar' },
       }
       for label, value in pairs(bad) do
         it('raises on ' .. label .. ', naming set_text',
@@ -273,7 +280,37 @@ describe('input surface: widget control — cursor and text #input',
           pcall(input.show, { text = { 'a', 42 } })
         assert.is_false(ok)
         assert.matches('compy%.input%.show', err)
+        assert.matches('list of line strings', err)
       end)
+
+      -- The error level is the whole reason api_set_text and
+      -- api_set_cursor are lifted out of the surface table, and
+      -- nothing tested it: changing 4 to 3 left the suite
+      -- green, so an edit that interposes a frame would point
+      -- every one of these messages at the framework's file.
+      it('blames the caller line, not the framework',
+        function()
+          local input = F.compy_input()
+          input.show({ text = 'kept' })
+          local ld = loadstring or load
+          local call = ld(
+            'return function(i) i.set_text({ 1 }) end',
+            '@/proj/main.lua')()
+          local _, err = pcall(call, input)
+          assert.matches('/proj/main%.lua:1:', err)
+        end)
+    end)
+
+    -- Decision 35: text given is the content, text absent is an
+    -- empty field, and false is the uniform unset — so an
+    -- unset text is an empty field, not the last session's
+    -- content surviving into this one.
+    it('show{text = false} opens empty', function()
+      local input = F.compy_input()
+      input.show({ text = 'previous' })
+      input.hide()
+      input.show({ text = false })
+      assert.same({ '' }, F.widget:get_text())
     end)
 
     describe("with keep_cursor", function()
