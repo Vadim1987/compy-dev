@@ -44,6 +44,12 @@ full text, because comments in `src/` and `tests/` cite them by number, and a ci
 to nothing is worse than one that resolves to a tombstone. A retired heading names what stands in
 its place.
 
+**That is a condition, not a permanent rule, and the input ledger has discharged it** (2026-09-01):
+`decisions/input.md` cites by `D-` slug, so a missed citation dangles visibly instead of resolving
+to a different live decision, and its `RETIRED` section is empty by ordinary sweep rather than by
+neglect. A numbered ledger still keeps its tombstones. **Convert first, then vacuum** — in that
+order, because it is the naming that makes the deletion safe.
+
 **Vacuuming retired entries is nevertheless allowed, and is an obvious operational need** (owner,
 2026-08-27). Two conditions, and no formal process is required beyond them:
 
