@@ -153,13 +153,21 @@ fallback-to-previous-position behaviour. **`compy` (project-facing)** now has it
 report" read, not a refusal); `set_cursor`/`set_text` no-op **and warn** while hidden.
 
 There are four call sites that manipulate the cursor programmatically (i.e., not as a direct
-response to an arrow/Home/End keypress): two in `editorController.lua` — `load_selection`
+response to a cursor-movement keypress): two in `editorController.lua` — `load_selection`
 (`:590-604`, reads/restores the cursor via the **controller** API to preserve the caret across an
 insert) and `reject_oversized` (`:628-633`, called from two live submit paths, jumps the cursor to
 a rejected block's start via **`input.model:move_cursor` directly, bypassing the controller**) —
 one in the model itself, `_apply_eval`, which seats the caret on the error position when an
 evaluation is rejected, and the project-facing `compy.input.set_cursor`/`set_text` above. Console
 and search never touch it programmatically.
+
+**A separate population writes the cursor's fields directly**, bypassing every mover above, and a
+sweep over cursor semantics needs both lists: `_update_cursor`, `_advance_cursor` and
+`insert_text_line`. The last is the one on a hot path — it sets `self.cursor.l` unvalidated and runs
+on **every Shift+Enter** (through `line_feed`) and on **Ctrl+D** duplicate-line, where the other two
+are reached rarely or not at all. The census above is *callers of the cursor API*; this is *writers
+of the field*, and a site can be neither, either or both. Enumerated with the case for reviewing
+them in `../technical_debt/input.md`, *"`_update_cursor` measures the column on the wrong line"*.
 
 **`_apply_eval` is the site that converts units, and it is the reason the census is worth keeping
 accurate.** It is fed by the Lua parser, which reports an error column as a **byte** offset, while

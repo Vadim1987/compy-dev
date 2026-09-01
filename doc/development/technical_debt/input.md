@@ -145,35 +145,6 @@ paid, or turned out not to be debt.
 - **Not slugged** — no commitment to fix before the release; that is an owner
   call, and taking it would be a `FIX` row rather than a reopening of `BUG-02`.
 
-### The programmatic-cursor census omits the one writer on a hot path
-
-- **Where:** `doc/development/internals/user_input.md`, *"Cursor access exists
-  at three layers"* — *"There are four call sites that manipulate the cursor
-  programmatically (i.e., not as a direct response to an arrow/Home/End
-  keypress)"*.
-- **State:** `insert_text_line` writes `self.cursor.l = l + 1` as a raw field
-  and is not among the four. It is not excluded by the census's own
-  parenthesis either: it is reached on **every Shift+Enter** (via `line_feed`)
-  and by **Ctrl+D** duplicate-line, neither of which is an arrow/Home/End
-  keypress. So the corpus answers *"what moves the cursor?"* two ways — this
-  census says four, *"`_update_cursor` measures the column on the wrong line"*
-  below says three raw writers including this one.
-- **Why it matters:** the census exists **because a sweep consults it instead
-  of re-deriving**, which is the argument its own last correction was made on
-  (session61, `ba09edcc`, adding `_apply_eval` after a sweep missed it). It
-  then missed a second site the same way, and the site it missed is the only
-  one live on ordinary editing.
-- **The fix is two sentences, not a review:** add `insert_text_line` with what
-  it writes and where it is reached, and either widen the parenthesis to name
-  the editing keys it means to exclude or drop it for *"not in response to a
-  cursor-movement key"*. Cross-reference the raw-writer entry so the two
-  statements cannot drift apart again.
-- **Provenance: ours** — the census paragraph is `#77`'s own writing; the
-  omitted fact was established by `#77`'s own cold peer review, 2026-09-01,
-  and recorded in the register without returning to the census.
-- **Not slugged** — an owner call, though it is small enough to fold into any
-  pass that touches the file.
-
 ### Four line citations were stale on arrival, in the commit that moved them
 
 - **Where:** `doc/development/technical_debt/input.md` — the raw-writer
@@ -1452,6 +1423,32 @@ changes.
   anyway.
 
 ## RETIRED
+
+### The programmatic-cursor census omitted the one writer on a hot path (RESOLVED, 2026-09-01)
+
+- **Resolution:** `internals/user_input.md`, *"Cursor access exists at three
+  layers"*, now carries the field-writers as a **second, explicitly separate
+  population** — `_update_cursor`, `_advance_cursor`, `insert_text_line` — with
+  the note that the last runs on every Shift+Enter and on Ctrl+D, and a
+  cross-reference to *"`_update_cursor` measures the column on the wrong line"*.
+  The census's own parenthesis was widened from *"an arrow/Home/End keypress"*
+  to *"a cursor-movement keypress"*, which is what it always meant.
+- **What was wrong:** the census said four programmatic call sites and
+  `insert_text_line` was not among them, though it writes `self.cursor.l`
+  unvalidated and its exclusion was not covered by the parenthesis. The corpus
+  answered *"what moves the cursor?"* two ways, 90 lines apart in two files.
+- **Why it was worth fixing rather than filing:** the census exists **because a
+  sweep consults it instead of re-deriving** — the argument its previous
+  correction was made on (session61, `ba09edcc`, which added `_apply_eval`
+  after a sweep had missed it). It then missed a second site the same way, and
+  that site is the only cursor writer live on ordinary editing. The two lists
+  are now stated as different kinds — *callers of the cursor API* against
+  *writers of the field* — because conflating them is what let a site fall
+  between them.
+- **Provenance: ours.** The census paragraph is `#77`'s writing; the omitted
+  fact came from `#77`'s own second cold peer review, 2026-09-01, and was
+  recorded in this register without anyone returning to the census. Found by
+  the session64 delivery revalidation the same day and fixed on the owner's go.
 
 ### `set_text` answered a malformed content element three different ways (RESOLVED, 2026-09-01)
 
