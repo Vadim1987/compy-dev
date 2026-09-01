@@ -74,6 +74,39 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### Line citations across the persistent corpus are unverified, and a fifth of the checkable ones do not resolve
+
+- **Where:** every `doc/` file outside `wip/` that cites source by line —
+  `technical_debt/input.md` (24), `internals/user_input.md` (19),
+  `internals/event_dispatch_layers.md` (17), `internals/project_sandbox_env.md` (6),
+  `internals/editor.md` (4), `tests.md` (3), this file (2), `internals/console.md` (2),
+  `internals/examples/repl.md` (1), `drawing_system.md` (1). 77 distinct `file.lua:N` references.
+- **State, measured 2026-09-01:** 62 resolve to a basename unique under `src/`; the other 15 name
+  files that exist in several repos (`main.lua`, `input.lua`, …) and were not checked at all.
+  **Of the 62, fourteen — 23% — land on a blank line or a bare `end`.** That is a floor, not the
+  count: a drifted citation can also land on plausible code, which is how
+  `userInputModel.lua:487` passed as a history-restore `set_text` while pointing at
+  `self:clear_input()`.
+- **Why it matters:** this is `T-DEC-NUMBERED`'s sibling. A citation by a coordinate that moves
+  **resolves to the wrong thing instead of dangling**, so it reads as authoritative and greps
+  clean — the argument `agents/rules/roadmap.md` §2 makes for ids in code, and
+  `agents/validation.md`'s *"Comment References"* makes for section names. Line numbers are the
+  same hazard with no mitigation at all: nothing in the workspace can tell you one has drifted.
+- **How it happens is ordinary, not careless:** the six corrected under
+  `input.md`'s *"Six line citations into `userInputModel.lua` were stale on arrival"* were written
+  in the very commit that shifted them, by a session that had verified each one before its own
+  unrelated edit moved the file. No sweep catches that; only not citing lines does.
+- **The fix is the one the corpus keeps re-deriving:** cite the **function or section name**.
+  Where a line is genuinely the point, cite the name and quote the line's text so a reader can
+  grep it. Sizing is real work — 77 references, and the 15 example-repo ones need the repo
+  identified before they can even be checked.
+- **Provenance: mixed and mostly ours.** The corpus is `#77`'s own creation (at
+  `wip77/20260826/mergebase`, `doc/development/` holds five entries), but the practice of citing
+  by line predates the feature and is not confined to it.
+- **Not slugged** — no commitment to fix before release; that is an owner call. If taken it is a
+  `FIX` row, and it belongs beside `FIX-03`, which runs late for the same reason: a citation
+  sweep run while the tree still moves is run twice.
+
 ### The conventions the examples demonstrate carry no test coverage
 
 - **Where:** `src/examples/` and the nested example repos. No example anywhere

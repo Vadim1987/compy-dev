@@ -1403,30 +1403,40 @@ changes.
 
 ## RETIRED
 
-### Four line citations were stale on arrival (RESOLVED, 2026-09-01)
+### Six line citations into `userInputModel.lua` were stale on arrival (RESOLVED, 2026-09-01)
 
-- **Resolution:** all four replaced with **function names**, which do not
-  drift — `UserInputModel:insert_text_line`, `:line_feed`, `:set_cursor` and
-  `:_set_text_line`, plus the Ctrl+D site named as the `modify` handler inside
-  `_normal_mode_keys` rather than by line.
-- **What was wrong:** the raw-writer correction under *"`_update_cursor`
-  measures the column on the wrong line"* cited `userInputModel.lua:224`,
-  `:263`, `:546`, and *"`_set_text_line` has an unreachable table branch"*
-  cited `:196-198`. The real lines were `221`, `260`, `543` and `193-195` —
-  every one off by exactly **3**. Commit `e3484987` inserted the three-line
-  `DEBT:` comment and wrote all four citations **in that same commit** against
-  the pre-edit numbering, so none of them ever resolved: they pointed a reader
-  at `end` and at a `--- @private` tag.
+- **Resolution:** all six replaced with **function names**, which do not
+  drift — `UserInputModel:insert_text_line`, `:line_feed`, `:set_cursor`,
+  `:_set_text_line`, `:history_back` and `:history_fwd`, plus the Ctrl+D site
+  named as the `modify` handler inside `_normal_mode_keys`.
+- **What was wrong, and the mechanism** (corrected in the pass that filed it —
+  the first version of this entry named the wrong cause and the wrong count):
+  commit `e3484987` **trimmed the `set_text` doc comment from six lines to
+  three** at `:157`, its own finding F7. Everything below moved **up by 3**,
+  and the citations it wrote or carried in that same commit were numbered
+  against the pre-trim file. Affected: `:224`, `:263`, `:546`, `:196-198` in
+  two entries, and `:475`/`:487` in a third (the `set_text` caller
+  enumeration). The real lines are `221`, `260`, `543`, `193-195`, `472` and
+  `484`. None ever resolved; they pointed a reader at `end`, at a blank line,
+  at `--- @private`, and at `self:clear_input()` in place of the history
+  restore it claimed to cite.
 - **Why it was worth fixing rather than filing:** a citation that does not
   resolve *reads as authoritative* — the standing objection in
   `agents/validation.md`, *"Comment References"*. And the rule was already
   ours: session61 replaced this same file's `set_cursor_pos` line citation with
-  a function name **one day earlier**, giving the reason verbatim.
-- **Scope checked, not assumed:** the other two line citations into
-  `userInputModel.lua` from the persistent corpus resolve correctly, as do the
-  two into `editorController.lua` in the census paragraph.
-- **Provenance: ours**, 2026-09-01, all four in one commit. Found by the
-  session64 delivery revalidation and fixed on the owner's go.
+  a function name **one day earlier**, giving this reason verbatim.
+- **A line citation is not verified by reading a range around it.** `:475` was
+  first checked by printing `472..478`, seeing `set_text` in the output, and
+  calling it correct; it is `end`, and `set_text` is at `472`. Resolve the
+  exact line or resolve nothing.
+- **Scope checked, not assumed:** the corpus's citations into
+  `editorController.lua` (`:336`, `:602`, and the census's `:590-604`,
+  `:628-633`) and `userInputController.lua:316` resolve, being in files that
+  commit did not touch. The wider population is **not** clean — see `general.md`,
+  *"Line citations across the persistent corpus are unverified, and a fifth of
+  the checkable ones do not resolve"*.
+- **Provenance: ours**, 2026-09-01, all six traceable to one commit. Found by
+  the session64 delivery revalidation and fixed on the owner's go.
 
 ### The programmatic-cursor census omitted the one writer on a hot path (RESOLVED, 2026-09-01)
 
@@ -1572,9 +1582,9 @@ changes.
   either a raw string or `string.lines(…)`, and `string.lines` never emits an
   element containing a newline. **The enumeration was incomplete as first
   written** (cold peer review, 2026-09-01): the model's `set_text` is also
-  called from `editorController.lua:336` and `:602`, `userInputModel.lua:475`
-  and `:487` (history restore) and `userInputController.lua:316` (`show`'s
-  `cfg.text`). All five were checked and the conclusion survives — `pprint`
+  called from `editorController.lua:336` and `:602`, from
+  `UserInputModel:history_back` and `:history_fwd` (history restore) and from
+  `userInputController.lua:316` (`show`'s `cfg.text`). All five were checked and the conclusion survives — `pprint`
   returns `string.lines(src)`, and buffer lines and history entries are already
   split — but "all three" would have let a reader think they did not exist. Nor could a user: `add_text` splits, and the paste path pre-joins
   with `string.unlines` at the controller before the model sees it. A project
