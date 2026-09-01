@@ -732,7 +732,7 @@ end
 --- would turn a caller's mistake into content nobody wrote.
 --- @param fname string
 --- @param text any
---- @return str? text
+--- @return string|string[]|nil text
 local function checked_text(fname, text)
   if not text then return nil end
   if type(text) == 'string' then return text end
@@ -813,7 +813,7 @@ end
 --- shared error level has to land on the project's line from
 --- here as well as from api_show.
 --- @param get_widget fun(): UserInputController?
---- @param get_active fun(): table?
+--- @param get_active fun(): boolean?
 --- @param text any
 --- @param keep_cursor boolean?
 local function api_set_text(get_widget, get_active,

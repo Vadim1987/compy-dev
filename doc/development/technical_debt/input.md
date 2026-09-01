@@ -117,6 +117,34 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### The callable config keys are unchecked, and fail later as raw Lua errors
+
+- **Where:** `src/controller/consoleController.lua` — `api_show` validates
+  `cursor` (`checked_cursor`) and `text` (`checked_text`) and nothing else;
+  `check_keys` admits a key by NAME without looking at its value.
+- **State:** `show{validator = 42}` and `show{on_text_entered = 42}` are
+  accepted silently, and then fail at submit inside the framework —
+  `attempt to call local 'validator' (a number value)`
+  (`userInputController.lua:417`) and the same for `cb` at `:437`. The same
+  holds for `highlighter` and `on_limit_reached`, and `prompt = 42` /
+  `prompt = {'x'}` are accepted with no complaint at all.
+- **Why it matters:** it is the class `BUG-01-08` closed for `cursor` and
+  `BUG-02-02` closed for `text`, still open on the remaining keys — and the
+  failure lands **far from the call that caused it**, at submit rather than at
+  `show`, naming a local variable the project author never wrote. Decision 38
+  is scoped to `text` and `cursor` precisely so it does not claim otherwise.
+- **Why it is BACKLOG:** nothing in-tree passes a non-callable, the shipped
+  examples all pass functions, and the failure — while ugly — is loud rather
+  than silent, which puts it below the drop-and-wipe class that was fixed.
+- **The fix is one shape repeated, not a design question:** a `checked_callable`
+  beside its two siblings, raising the same message form under the name of the
+  call. `prompt` wants a string check on the same pass.
+- **Provenance: this feature's** — the config table and its four callable keys
+  are `#77`'s own surface. Found by the second cold peer review of `BUG-02-02`,
+  2026-09-01, while checking whether Decision 38 claimed more than it settled.
+- **Not slugged** — no commitment to fix before the release; that is an owner
+  call, and taking it would be a `FIX` row rather than a reopening of `BUG-02`.
+
 ### `_set_text_line` has an unreachable table branch
 
 - **Where:** `src/model/input/userInputModel.lua:196-198` —
