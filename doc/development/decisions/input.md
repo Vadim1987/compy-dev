@@ -1727,8 +1727,19 @@ This settles `text` the same way `BUG-01-08` settled `cursor`: a malformed value
 message naming the call and the expected shape, rather than a raw Lua error from inside the
 framework or a silent repair. **It settles those two keys and no others** — `show{validator = 42}`
 and `show{on_text_entered = 42}` are still accepted and still fail later at
-`userInputController.lua` with a raw `attempt to call` error. Extending the treatment to the
-callable keys is unscheduled work, not something this decision has done.
+`userInputController.lua` with a raw `attempt to call` error.
+
+**And it settles exactly the right two, which is not a coincidence and is no longer left open**
+(owner ruling, 2026-09-01). `text` and `cursor` are the **user's content**; every other key is
+**project-owned** — Decision 35's line, the same one that decides what `configure` may touch. The
+two classes fail differently and so are treated differently: *pass a wrong `text` and you confuse
+the **user**, who did not write it and cannot fix it; pass a wrong `validator` and you confuse
+**yourself**, in your own code, with a raise that names `validator` — the very key you set.* The
+first must be refused at the door; the second is self-diagnosing, so loud-and-late is an acceptable
+answer where silent was not. Extending the treatment to the callable keys is therefore **ruled
+against, not merely unscheduled**: *"I'd just not enroll too much input checking ceremony beyond
+necessary. its edu project, not space rocket navigation."* Retired in
+`../technical_debt/input.md`, *"The callable config keys are unchecked"*.
 
 **Consequence.** No public surface changes, and no capability of the documented shape is removed:
 the state normalisation eliminates — a line holding a raw newline — could not be produced by typing

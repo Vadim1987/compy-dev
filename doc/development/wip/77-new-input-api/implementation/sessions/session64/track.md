@@ -136,3 +136,33 @@ Design calls made while filing it, each stated in the row itself:
 `validation/plan.md:125` still carries the old sequence in a dated blockquote. **Left alone
 deliberately** — that document states it is never retro-edited and its NAVIGATION block already
 sends a reader to the ROADMAP for what-next.
+
+## Owner ruling — F4 is wontfix, and my framing was wrong (2026-09-01)
+
+> *"if you check reasoning on where prompt belongs you will see why text and cursor are special.
+> they are user-owned and everything else is project-owned. So there are already two classes of
+> args… pass wrong text and you confuse user, pass wrong validator and you confuse yourself. fair
+> enough. honestly I'd just not enroll too much input checking ceremony beyond necessary. its edu
+> project, not space rocket navigation."*
+
+**The finding is refuted at its premise, not merely declined.** I read the checked pair as one class
+closed one key at a time — patch archaeology. It is **Decision 35**'s ratified line: `text` and
+`cursor` are the user's content, everything else is project-owned, and the boundary checks the
+content class **completely**. Verified in `decisions/input.md` before conceding.
+
+The consequence argument is the part I could not have derived from the code, and it is what makes
+the asymmetry correct rather than tolerable: **a bad `text` reaches someone who did not write it and
+cannot fix it; a bad `validator` reaches its own author, and the raise names `validator` — the key
+they set.** My "names a local variable the project author never wrote" was wrong on the facts too:
+the local *is* the key name, so it is self-diagnosing.
+
+Executed: entry moved to RETIRED as `wontfix`, carrying the corrected premise; **Decision 38's
+closing paragraph amended**, because it said extending the check was *"unscheduled work"* — which
+after a ruling reads as a pending obligation, `roadmap.md` §5's worse failure mode (a citation that
+still resolves, to a meaning that changed). No guide sentence: documenting *"these keys are not
+checked"* is the same ceremony in prose.
+
+**Behavioural note for the successor.** Twice now the owner has answered a defect-shaped question by
+reopening its category rather than ruling on the fix — and both times the category was already
+ratified and I had not consulted it. The check to run *before* filing a surface finding: **is there
+a decision that already draws this line?**

@@ -117,34 +117,6 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
-### The callable config keys are unchecked, and fail later as raw Lua errors
-
-- **Where:** `src/controller/consoleController.lua` — `api_show` validates
-  `cursor` (`checked_cursor`) and `text` (`checked_text`) and nothing else;
-  `check_keys` admits a key by NAME without looking at its value.
-- **State:** `show{validator = 42}` and `show{on_text_entered = 42}` are
-  accepted silently, and then fail at submit inside the framework —
-  `attempt to call local 'validator' (a number value)`
-  (`userInputController.lua:417`) and the same for `cb` at `:437`. The same
-  holds for `highlighter` and `on_limit_reached`, and `prompt = 42` /
-  `prompt = {'x'}` are accepted with no complaint at all.
-- **Why it matters:** it is the class `BUG-01-08` closed for `cursor` and
-  `BUG-02-02` closed for `text`, still open on the remaining keys — and the
-  failure lands **far from the call that caused it**, at submit rather than at
-  `show`, naming a local variable the project author never wrote. Decision 38
-  is scoped to `text` and `cursor` precisely so it does not claim otherwise.
-- **Why it is BACKLOG:** nothing in-tree passes a non-callable, the shipped
-  examples all pass functions, and the failure — while ugly — is loud rather
-  than silent, which puts it below the drop-and-wipe class that was fixed.
-- **The fix is one shape repeated, not a design question:** a `checked_callable`
-  beside its two siblings, raising the same message form under the name of the
-  call. `prompt` wants a string check on the same pass.
-- **Provenance: this feature's** — the config table and its four callable keys
-  are `#77`'s own surface. Found by the second cold peer review of `BUG-02-02`,
-  2026-09-01, while checking whether Decision 38 claimed more than it settled.
-- **Not slugged** — no commitment to fix before the release; that is an owner
-  call, and taking it would be a `FIX` row rather than a reopening of `BUG-02`.
-
 ### `_set_text_line` has an unreachable table branch
 
 - **Where:** `src/model/input/userInputModel.lua` —
@@ -1402,6 +1374,42 @@ changes.
   anyway.
 
 ## RETIRED
+
+### The callable config keys are unchecked (WONTFIX by owner ruling, 2026-09-01 — the premise was wrong)
+
+- **Resolution: `wontfix`, by owner ruling, and the entry's framing was wrong
+  before its facts were.** *"I'd just not enroll too much input checking
+  ceremony beyond necessary. its edu project, not space rocket navigation."*
+- **What the entry got wrong:** it read the checked pair as *one class closed
+  one key at a time* — `BUG-01-08` for `cursor`, `BUG-02-02` for `text`, "still
+  open on the remaining keys". That is patch archaeology, and it is not what
+  happened. **`text` and `cursor` are the user's content; every other key is
+  project-owned**, and that line is ratified as **Decision 35**, *"the
+  configuration boundary: the user's content is `show`'s alone"* — the same
+  split that decides which keys `configure` may touch and which reset on each
+  `show`. The boundary checks the content class **completely**. There is no
+  half-closed class.
+- **And the two classes deserve different treatment, which is the owner's
+  argument:** *"pass wrong text and you confuse the user, pass wrong validator
+  and you confuse yourself."* A bad `text` reaches a person who did not write
+  it and cannot fix it, so it is refused at the door. A bad `validator` reaches
+  the project author, in their own code, and the raise names `validator` — the
+  very key they set. That is self-diagnosing, which is why *loud and late* is
+  an acceptable answer here and *silent* was not.
+- **Facts, kept because they are still true:** `show{validator = 42}` raises
+  `attempt to call local 'validator' (a number value)` at submit
+  (`userInputController.lua:417`, and the same for `cb` at `:437`); the same
+  holds for `highlighter`, `on_text_entered` and `on_limit_reached`;
+  `prompt = 42` is assigned to `custom_label` unchecked and flows into the draw
+  path where the annotation promises `string?`. Nothing in-tree passes a
+  non-callable and every shipped example passes functions.
+- **No guide sentence either.** Documenting *"these keys are not checked"*
+  would be the same ceremony in prose, and it would teach a distinction the
+  reader does not need: the guide already frames content and configuration as
+  different things.
+- **Provenance:** `#77`'s own surface. Found by the second cold peer review of
+  `BUG-02-02`, 2026-09-01; re-raised as a delivery question by the session64
+  revalidation the same day and ruled the same day.
 
 ### Six line citations into `userInputModel.lua` were stale on arrival (RESOLVED, 2026-09-01)
 
