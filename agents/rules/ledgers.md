@@ -67,6 +67,38 @@ may only ever grow.
 superseded while its heading does not will be read as live by anyone scanning, and it will be
 mis-sorted by anyone maintaining.
 
+### What a decision records about its own past (owner, ratified 2026-09-01)
+
+**What was not in a released version is considered never to have existed** — with one exception,
+**anything stakeholders explicitly ratified**, which is a record of what was asked and stays.
+
+A ruling reshaped before release therefore leaves **nothing to argue with**. Prose that
+re-litigates an interim version of our own decision — *"the original decision said X"*, *"the
+rationale was withdrawn because Y"*, a paragraph explaining why a name we used for a week is not
+the name we shipped — is archaeology. It describes a system nobody ever ran, inside a ledger read
+by people asking how today's system works.
+
+**The test is whether a reader would plausibly propose the alternative again.** A decision saying
+*"X, and not Y"* is doing its job when Y is a live option someone reaches for — that is the whole
+purpose of recording rationale, and it is why an entry names what it was chosen over. It is doing
+the opposite when Y is a draft of X that existed for a fortnight inside the branch. **Argue with
+live alternatives; never with your own overwritten past.**
+
+This is narrower than "do not argue with yourself", deliberately: an entry weighing a real
+alternative, or amending another live entry, is doing exactly what the ledger is for. The defect
+is specifically an **interim, overwritten** past.
+
+Two things survive this cut and must not be swept with it:
+
+- **Facts about the pre-feature baseline.** *"At the base, both channels stayed installed until
+  stop"* is provenance — it tells a reviewer the release **restored** behaviour rather than
+  changing it, which is a different claim from anything about our own drafts. Keep the fact; drop
+  the argument with the withdrawn rationale the fact settled.
+- **Whatever a stakeholder ratified explicitly**, per the exception above.
+
+§2's vacuum removes whole retired entries; this removes dead prose from entries that are still in
+force. Both are ordinary upkeep, and neither needs a ceremony beyond doing it.
+
 ## 3. The debt register is split ACTIVE / BACKLOG / RETIRED
 
 The line between the first two is **release scope** — not severity, and not intent:
