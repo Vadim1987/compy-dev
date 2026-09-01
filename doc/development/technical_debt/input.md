@@ -115,34 +115,6 @@ paid, or turned out not to be debt.
   point at *"Combos the framework keeps"* for the reassurance rather than
   restating it.
 
-### T-DEVIATION-WHY — the deviation justifications live only in the PR description
-
-- **Where:** the *"Ratified deviations from the original design"* table in the
-  feature's `pr-description.md` — six rows, each pairing a deviation with the
-  reason it was taken.
-- **State:** every one of the six "Why" cells is a **technical** argument — a
-  base check, a measurement, a mechanism that dissolved the alternative — and
-  not one of them is procedural. They are the answer to *"a reviewer comparing
-  to the design will notice"*, and they sit in a file that dies when the
-  feature's working tree is deleted. The corresponding decisions argue **why
-  the current shape is right** and are silent on **what it replaced**, so a
-  reader of the persistent ledger alone cannot tell that a ratified position
-  was reversed at all.
-- **Why it stands (owner, 2026-09-01):** *justification should be lifted out of
-  `wip/` if it is technical, not procedural.* A PR description is read once, by
-  reviewers; a decision is read for as long as the code lives.
-- **One of the six is already done** — *"Pointer joined the chain"* is in
-  D-ONE-LIFETIME as of this sprint, because vacuuming the retired entry that held
-  the same record made it a precondition rather than a follow-up. **Five
-  remain**, and each has an obvious home: the four-tier chain → D-NO-FW-TIER;
-  one-time hook seeding → D-HOOKS-SEEDED; the route no longer released mid-run →
-  D-ROUTE-LIFETIME; the retired `compy.singleclick`/`.doubleclick` → D-ONE-LIFETIME;
-  unhandled events not logged → D-NO-LOG-NOISE.
-- **Not a duplication.** The PR description keeps its table — it is what a
-  reviewer reads. The obligation is that the argument **also** exists where it
-  outlives the review.
-- **Revisit:** `FIX-02-26`.
-
 ## BACKLOG
 
 ### `_set_text_line` has an unreachable table branch
@@ -1403,6 +1375,30 @@ changes.
   anyway.
 
 ## RETIRED
+
+### The deviation justifications live only in the PR description — NOT DEBT, the premise was false (2026-09-01)
+
+- **Was `T-DEVIATION-WHY`**, filed and refuted the same day.
+- **The claim:** the PR description's *"Ratified deviations"* table holds six technical
+  justifications that die with the feature's working tree, while the decisions they belong to
+  argue why today's shape is right and never say what it replaced.
+- **The second half is false, and it was checkable.** Every one of the five outstanding
+  arguments is already in its own decision, in more depth than the table's one-sentence cell:
+  `D-ROUTE-LIFETIME` marks itself SUPERSEDED IN PART, quotes the superseded claim verbatim and
+  records the base check that killed it; `D-NO-LOG-NOISE` has a *"What this settles"* naming the
+  design's proposed debug log and a *"Why the log is declined"*; `D-HOOKS-SEEDED` argues the
+  one-time seed against a precedence rule by name; `D-NO-FW-TIER` argues the framework tier was
+  covering a leak; `D-ONE-LIFETIME` already carried the base-check provenance. The table
+  **summarises** the ledger; it is not a unique home for anything.
+- **And the first half wanted the wrong thing anyway** (owner, 2026-09-01): *"we do not make
+  archaeology"* — `../../../agents/rules/ledgers.md`, *"What a decision records about its own
+  past"*. Lifting more reversal narration in is the opposite of what the corpus needs; the real
+  work is `T-ARGUES-INTERIM`, which takes it out.
+- **Why it is recorded rather than deleted:** a defect refuted at its premise gets re-filed by the
+  next reader who notices the same surface. The surface is real — a reviewer's table and a ledger
+  do overlap — and the reason it is not a defect is the part worth keeping.
+- **Cost of the error:** one paragraph written into `D-ONE-LIFETIME` (`e9a3501a`) and removed
+  again (`cd1264da`), and a roadmap row filed and withdrawn.
 
 ### The callable config keys are unchecked (WONTFIX by owner ruling, 2026-09-01 — the premise was wrong)
 

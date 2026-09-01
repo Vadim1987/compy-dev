@@ -459,7 +459,10 @@ the change. Breaking-and-fixing the affected examples was the explicit expectati
 regression to avoid; handler-only projects (no widget) are unaffected.
 
 ## D-ROUTE-LIFETIME — the route is held by an open project, released at its stop
-> REMARK: clean up self-arguing with past decisions that were than reshaped before release. WHat was not in released version is considered as never existing (except few bits explicitly ratified by stakeholders) 
+> REMARK: clean up self-arguing with past decisions that were than reshaped before release. WHat was not in released version is considered as never existing (except few bits explicitly ratified by stakeholders)
+> — TRACKED as `T-ARGUES-INTERIM` (`../technical_debt/general.md`), ratified as a rule in
+> `agents/rules/ledgers.md`, *"What a decision records about its own past"*. **This marker is
+> retained on purpose and is removed when `DEC-02` pays the entry, not by a marker sweep.** 
 
 **SUPERSEDED IN PART, 2026-08-03** — see D-ONE-LIFETIME. The original decision released
 keyboard/text at the `'running' → 'project_open'` boundary while exempting pointer, and justified

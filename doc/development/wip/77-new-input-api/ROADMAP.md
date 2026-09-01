@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 } → FIX-03 → DOC-01 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 } → FIX-03 → DEC-02 → DOC-01 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -21,6 +21,7 @@ the sequence**. Updated 2026-08-30.
 | **FEAT-02** ✅ | **`oneshot` becomes `auto_hide`**, a widget property — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
 | **{ BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. **`DEC-01`'s half is discharged** (session65), so the slice cut now waits on `CHG-01` alone. A third was conditional and is likewise **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first |
 | **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
+| **DEC-02** | the decisions ledger stops arguing with an interim past that never shipped | **owner, 2026-09-01**, promoted from a `REMARK` in the ledger to a rule in `agents/rules/ledgers.md`. `DEC-01` vacuumed the retired *entries*; this vacuums dead *prose inside live ones*. It sits here for `DOC-01`'s reason and is **not** `FIX-03`: that sweep matches subjects absent at base and today, and a rule's withdrawn version is not an absent subject |
 | **DOC-01** | the documentation compaction sweep — one deliberate pass over the stabilised prose corpus | **owner, 2026-09-01**, restoring a step the roadmap had scheduled for comments only. It runs **after** `FIX-03` because that sweep's deletions are *mechanical* (subject absent at base and today) and shrink the floor this one exercises judgement over, and **before** `ACC-02` because a cold reviewer should read the prose that ships, not the prose that was being written |
 | **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
 | **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain |
@@ -698,7 +699,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | **FIX-02-23** | **the guide never says a project's own keys stay live while the widget is shown**, nor names the whole-handler guard as the remedy · **`T-GUARD-LIVE`** | narrow — *a few lines at the `is_shown` paragraph of `doc/input_api.md`*, the paragraph a project author reads before mixing native handlers with a prompt. Earned by `BUG-01-03`: the guide documents the tier mechanism and the trigger-key case, and a reader of it alone still would not know to write the guard that fixes `turtle` — which the suite already pins as the idiom (`input_widget_control_spec.lua`). **Scope corrected 2026-08-30:** the row first also claimed the reservation exemption was undocumented; *"Combos the framework keeps"* documents it, `ctrl+pause` included, so these lines **point at that section** rather than restating it |
 | **FIX-02-24** | **the mermaid class diagrams show a model field the feature deleted** · **`T-MERMAID-MODEL`** | narrow to fix, **unknown to verify** — `doc/mermaid/{input,editor,classes}.md` all list `oneshot: boolean` on `InputModel`/`UserInputModel`. The model lost that constructor argument in this feature ([`validation/notes/oneshot-at-the-pr-base.md`](validation/notes/oneshot-at-the-pr-base.md)), and the `auto_hide` key that restored the *capability* lives on the **controller**, so the diagrams show a field on the wrong class rather than an old name. `custom_label` is missing from the same blocks. Nobody has walked them since the input work, so the row is *verify all three against the current classes*, not *delete one line*. **A diagram is read before the code and carries no hedge**, which is why it outranks its size. Found 2026-08-30 during `FEAT-02`'s rename sweep; **numbered out of execution order** for the reason `FIX-02-20` records |
 | **FIX-02-25** | **the set of config keys the surface accepts has no single home, and disagreeing with the widget fails silently** · **`T-KEYSET-SPLIT`** | **narrow to fix, and the fix is a test** — `consoleController.lua` decides what `show`/`configure` accept, `userInputController.lua` decides what they apply, and nothing reconciles them: a key on the accept side alone is taken by the surface and ignored by the widget, with no raise. **Scoped deliberately as *pin the agreement*, not *unify the lists*** — unifying crosses the surface/widget boundary the architecture keeps separate, which is a larger change than the defect and reads worse on review than the duplication does. No such test exists today; every key is covered individually and nothing asserts the set is closed. **Promoted from BACKLOG to ACTIVE 2026-08-31 (owner):** it is a code-quality defect and a drift source, so it is fixed before release, but it is **not functional and does not block it**. Found at session59's `FEAT-02` revalidation — `FEAT-02` had to add `auto_hide` to each side and the old entry's *"revisit when either list changes"* trigger did not fire. **Numbered out of execution order** for the reason `FIX-02-20` records |
-| **FIX-02-26** | **the deviation justifications live only in the PR description, and every one of them is technical** · **`T-DEVIATION-WHY`** | narrow to fix, and it is five paragraphs in five decisions. **Owner directive, 2026-09-01: *justification should be lifted out of `wip/` if it is technical, not procedural.*** The *"Ratified deviations"* table's six "Why" cells are base checks, measurements and dissolved alternatives — none procedural — and they die with the tree, while the decisions they belong to argue why today's shape is right and never say what it replaced. **One of the six is already lifted** (*"Pointer joined the chain"* → Decision 25, `e9a3501a`), because vacuuming the retired entry that held the same record at `DEC-01-04` made it a precondition rather than a follow-up. The other five map to Decisions 6, 10, 11, 23 and 25. The table stays where it is; the obligation is that the argument also exists where it outlives the review. **Numbered out of execution order** for the reason `FIX-02-20` records |
+| ~~**FIX-02-26**~~ | ~~lift the deviation justifications out of the PR description~~ · **WITHDRAWN 2026-09-01, premise refuted** | **Recorded, not deleted** (`agents/rules/roadmap.md` §5). The row claimed the decisions argue why today's shape is right and never say what it replaced. **They do say it** — `D-ROUTE-LIFETIME` marks itself SUPERSEDED IN PART and quotes the superseded claim, `D-NO-LOG-NOISE` names the design's proposed debug log and declines it, `D-HOOKS-SEEDED` argues the seed against a precedence rule — so the PR table summarises the ledger rather than uniquely holding anything. **And the direction was backwards** (owner): *"we do not make archaeology"* — the corpus needs less reversal narration, not more. Its inverse is **`DEC-02`**. Retirement note: `technical_debt/input.md`, RETIRED |
 | **FIX-02-22** | **three documents say a hidden widget keeps its content; the code clears it** | narrow, but **one site is in the persistent corpus** and outlives `wip/77`. `design/spec.md:155` (*"Content preserved for the next `show()` without `text`"*, contradicting its own §3 five lines up), the round-2 reviewed text `spec.versions/version01.md:191-194`, and **`decisions/input.md` Decision 3** (*"hide and bring back with state intact"*, amended last session). Code clears (`open_widget`), the suite pins it, and **turtle depends on it in a comment** (`main.lua`, the `after_submit` block — line numbers moved 2026-08-30 when the example took `auto_hide`). **Disposition: fix the documents** — the owner ruled the behaviour 2026-08-27, and the stakeholder requirement (FR-3/FR-4, the sapper complaint) is about not tearing the widget down, which still holds. Decision 3 needs one qualifier: state survives *except the draft text*. Found 2026-08-27, ARC-01-07 follow-up |
 
 **FIX-02-21, found while fixing BUG-01-01's sibling.** `consoleController.lua` splits config keys into
@@ -999,6 +1000,56 @@ from this one for good.
 **The one thing a reader of `wip/` must know:** every document in this tree, every commit message
 before 2026-09-01, and this roadmap's own history cite decisions by number. The crosswalk in
 `doc/development/decisions/input.md` is the translation, and it is the half that survives.
+
+---
+
+### ⬜ DEC-02 — vacuum the prose that argues with an overwritten past — **runs after FIX-03, before DOC-01**
+
+**Debt goal: `T-ARGUES-INTERIM`** (`technical_debt/general.md`). **Rule:**
+[`agents/rules/ledgers.md`](../../../../agents/rules/ledgers.md), *"What a decision records about
+its own past"* — ratified 2026-09-01 out of a `REMARK` the owner had left in the ledger itself.
+
+**`DEC-01` vacuumed the RETIRED block; this vacuums the live entries.** What is left is not dead
+*entries* but dead *prose inside entries still in force*: paragraphs re-litigating an interim
+version of our own ruling. What was not in a released version is considered never to have existed,
+so a ruling reshaped before release leaves nothing to argue with.
+
+**The two shapes, both measured:**
+
+| shape | instance |
+|---|---|
+| a section arguing with a **withdrawn rationale** | `D-ROUTE-LIFETIME`'s *"Why the original rationale was withdrawn"* — ten lines refuting a justification that never reached a release |
+| a **name that lived a fortnight** | `oneshot`, ruled and overruled in a day, never released, **13 mentions** in the ledger explaining why the key a reader has never seen is not the key they have |
+
+**It is not a mechanical sweep, and that is the whole difficulty.** Two things sit inside the same
+paragraphs and must survive: **pre-feature baseline facts**, which are provenance saying the release
+*restored* behaviour rather than changing it, and **anything stakeholders explicitly ratified**.
+`D-ROUTE-LIFETIME` is the worked example of both — the base check inside that section
+(`set_default_handlers` called from exactly two sites at `3256aac`) is what must be kept while the
+argument around it goes.
+
+**The qualifier is `interim, overwritten`** (owner correction, 2026-09-01), **not `self-arguing`**,
+which is too wide and catches the legitimate cases: an entry weighing a live alternative, or
+amending an entry still in force, is the ledger doing its job. **The test: would a reader plausibly
+propose that alternative again?**
+
+| id | step | note |
+|---|---|---|
+| DEC-02-01 | enumerate the passages: withdrawn rationales, superseded-in-part narration, and every mention of a name that never shipped | `oneshot` is the known one; re-derive rather than trust it |
+| DEC-02-02 | classify each against the two exclusions — baseline fact, stakeholder-ratified | **the judgement step**; a passage can be part keep, part cut |
+| DEC-02-03 | cut, preserving the facts identified at `-02` | one commit per entry, so the diff reads |
+| DEC-02-04 | remove the `REMARK` at `decisions/input.md` that raised this, **and only now** | owner, 2026-09-01: a marker goes when its defect is solved, not when a sweep reaches it |
+
+**Placement — after `FIX-03`, before `DOC-01`**, the same argument that placed `DOC-01`: `FIX-03`'s
+deletions are mechanical (subject absent at base and today) and shrink the floor this one exercises
+judgement over, and a cold reviewer at `ACC-02` should read the prose that ships. **It is distinct
+from `FIX-03`, not a duplicate:** that sweep matches subjects *absent at base and today*, and a
+decision arguing with its own earlier version is about a subject that is very much present — the
+route lifetime still exists, it is the withdrawn *version* of the rule that does not. `FIX-03`'s
+test cannot see this class.
+
+**Also carries the marker consequence:** the retained `REMARK` is now an exception any pass over
+`doc/` markers must honour, so a sweep that takes it before `DEC-02-04` is a defect.
 
 ---
 

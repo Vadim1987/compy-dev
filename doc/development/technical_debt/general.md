@@ -57,6 +57,38 @@ paid, or turned out not to be debt.
   to run it rather than to skip it.
 - **Roadmap:** `FIX-02-05`.
 
+### T-ARGUES-INTERIM — the decisions ledger argues with an interim past that never shipped
+
+- **Where:** `doc/development/decisions/input.md`, throughout the live entries — not the `RETIRED`
+  section, which is already empty.
+- **The rule it fails:** `../../../agents/rules/ledgers.md`, *"What a decision records about its
+  own past"* — what was not in a released version is considered never to have existed, except what
+  stakeholders explicitly ratified. Prose re-litigating an interim version of our own ruling
+  describes a system nobody ran.
+- **Two measured instances, and they are the two shapes:**
+  - **A whole section arguing with a withdrawn rationale.** `D-ROUTE-LIFETIME` carries *"Why the
+    original rationale was withdrawn"* — ten lines quoting a justification that never reached a
+    release and refuting it point by point. The mid-run release it describes was introduced and
+    removed inside this branch.
+  - **A name that lived a fortnight.** `oneshot` was ruled and overruled within a day, never
+    released, and is mentioned **13 times** in the ledger — amendment narration explaining why the
+    key a reader has never seen is not the key they have.
+- **Not a mechanical sweep, and this is the whole difficulty.** Two things sit inside the same
+  paragraphs and must survive: **pre-feature baseline facts**, which are provenance telling a
+  reviewer the release *restored* behaviour rather than changing it, and **anything stakeholders
+  ratified**. `D-ROUTE-LIFETIME`'s section is the worked example of both — the base check inside it
+  (`set_default_handlers` called from exactly two sites at `3256aac`; the `running → project_open`
+  transition released nothing) is exactly what must be kept while the argument around it goes.
+- **The qualifier is `interim, overwritten`, not `self-arguing`** (owner correction, 2026-09-01).
+  An entry weighing a live alternative, or amending another entry still in force, is the ledger
+  doing its job. The test is whether a reader would plausibly propose the alternative again.
+- **The `REMARK` that raised it stays until this is paid, deliberately** (owner, 2026-09-01):
+  `decisions/input.md`'s *"clean up self-arguing with past decisions that were then reshaped before
+  release"*. A marker is removed when the defect it names is solved, not when a sweep reaches it —
+  so whichever pass takes the corpus markers must leave this one, and paying this entry is what
+  removes it.
+- **Revisit:** `DEC-02`.
+
 ## BACKLOG
 
 ### Line citations across the persistent corpus are unverified, and a fifth of the checkable ones do not resolve
