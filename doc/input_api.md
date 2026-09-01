@@ -133,7 +133,9 @@ they set:
 `false` is how you unset any project-owned key (`prompt`, `highlighter`, `validator`, `on_text_entered`, `on_limit_reached`, `auto_hide`). Passing `false` restores the key to its absent/default state, making expressions like `custom_validator or false` safe to pass when dynamically toggling settings.
 
 For `prompt`, `''` is an empty label and `false` restores the default one. A
-`cursor` of `false` seats none, leaving the baseline `show` just applied.
+`cursor` of `false` seats none, leaving the baseline `show` just applied. A
+`text` of `false` is the same as leaving `text` out: the widget opens **empty**,
+because `show` is what seats content and content it is not given is not there.
 
 A `cursor` that is not a `{line, col}` pair of numbers raises, naming the
 shape. Out-of-range numbers are fine and clamp — `{1, 999}` lands at the end
@@ -214,7 +216,7 @@ and `col` would no longer say where you are. Blank elements are content
 and survive: `set_text{"a", "", "b"}` is three lines. The same holds for
 `text` at `show`.
 
-**Every element must be a string, and a list containing anything else is
+**A list must be a dense run of strings from `1`, and anything else is
 refused** — `set_text{"a", 42}` raises
 `compy.input.set_text: text must be a string or a list of line strings`,
 and `show` raises the same message under its own name. The widget will

@@ -1398,19 +1398,47 @@ changes.
   refuse structure.** A string against a list, an embedded newline, an invalid
   byte — one value spelled differently, and normalised silently. A number,
   boolean or table where a line belongs is not text at all. Coercing it would be
-  tolerance producing a lie: `{'a', 42}` has the exact shape of
-  `UserInputModel:insert_text_line(text, li)`'s arguments, so the likeliest
-  source is a caller confusing two functions, and rendering `42` as content
-  hides that behind something plausible. A project that has a number and wants
-  it shown converts at the call site, as `pong/main.lua:104` does.
+  tolerance producing a lie: the contract is documented and closed, so a value
+  outside it can only be a mistake, and rendering `42` as a visible line hides
+  that behind content which looks deliberate. **Corrected 2026-09-01 by the
+  second cold review:** this entry first argued from `{'a', 42}` matching
+  `UserInputModel:insert_text_line(text, li)`'s arguments, and cited
+  `pong/main.lua:104` as a project converting numbers itself. Both are wrong —
+  `insert_text_line` is a model method a sandboxed project can neither see nor
+  call, and that `pong` line calls pong's **own** `set_text(name, str)`
+  (`:95`), a `gfx.newText` wrapper unrelated to `compy.input`. **No in-tree
+  project passes a number to `compy.input.set_text` in either direction**, and
+  saying that plainly is stronger than either citation was.
 - **Precedent followed, not invented:** `BUG-01-08` settled this class for
   `cursor` — a malformed value on the public surface earns one message naming
   the call and the expected shape, never a raw Lua error from inside the
   framework and never a silent repair.
 - **Where:** `src/controller/consoleController.lua` (`checked_text`,
-  `api_set_text`, `api_show`), `tests/input/input_cursor_text_spec.lua`
-  (*"refuses a non-string element"*, five cases), `../../input_api.md`
-  (*"Live changes"*), `../decisions/input.md` (Decision 38).
+  `api_set_text`, `api_show`, `is_line_list`),
+  `tests/input/input_cursor_text_spec.lua` (*"refuses a non-string element"*),
+  `../../input_api.md` (*"Live changes"*), `../decisions/input.md` (Decision 38).
+- **The first fix was incomplete, and the second cold review caught it**
+  (2026-09-01). `checked_text` walked the list with `ipairs`, which stops at the
+  first hole and never sees a non-integer key, so `{[1]='a', [3]=42}` was
+  accepted and dropped the number, and `{foo = 42}` was accepted and wiped the
+  content — **both silent symptoms, one spelling further out**, through `show`
+  as well as `set_text`. A hole is not exotic: a `pairs` loop over a sparse
+  source builds one in a line of ordinary project code. `is_line_list` now
+  counts every key and requires `1..n` to be strings, which is what *"a list of
+  line strings"* implies and what an `ipairs` prefix-test never checked.
+- **`normalized_lines` deliberately keeps its `ipairs` walk.** The boundary
+  refuses structure and the model normalises representation (Decision 38); the
+  only callers reaching the model without passing the boundary are
+  framework-internal (editor, history) and pass dense lists. Duplicating the
+  validation into the model would blur that split.
+- **A second behaviour changed with the lift and was not noticed at the time:**
+  `show{text = false}` went from *"the previous content survives"* to *"the
+  field opens empty"*, because `checked_text` normalises falsy to `nil` and
+  `reset_content` branches on `cfg.text == nil`. The new behaviour is the
+  correct one — Decision 35 statement 1 makes an absent `text` an empty field
+  and statement 3 makes `false` the uniform unset — so a second defect closed
+  by accident. It is now documented in `../../input_api.md` and pinned by a
+  test, having shipped as neither.
 
 ### `set_text`'s list branch does not split embedded newlines (RESOLVED, 2026-09-01)
 

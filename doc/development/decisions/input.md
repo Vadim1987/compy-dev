@@ -1709,16 +1709,26 @@ cannot be addressed, and nothing else.
   (`consoleController.lua`), raising `compy.input.set_text: text must be a string or a list of line
   strings` under the name of the call that failed.
 
-Coercing the second would be tolerance producing a lie: `{"a", 42}` has the exact shape of
-`UserInputModel:insert_text_line(text, li)`'s arguments, so the likeliest way a project builds one
-is by confusing two functions — and turning that into the visible line `42` hides the mistake
-behind plausible content. A project that genuinely has a number and wants it shown converts at the
-call site, as `pong` already does. **Tolerance is for input we can read; it is not for input we
-would have to guess at.**
+Coercing the second would be tolerance producing a lie. **The contract is documented and closed,
+so a value outside it can only be a mistake** — and rendering `42` as a visible line hides that
+mistake behind content that looks deliberate. A project that genuinely has a number and wants it
+shown converts it itself, which costs one `tostring` and says what was meant. **Tolerance is for
+input we can read; it is not for input we would have to guess at.**
 
-This also settles the class the same way `BUG-01-08` settled it for `cursor`: a malformed value on
-the public surface earns **one** message naming the call and the expected shape, never a raw Lua
-error from inside the framework and never a silent repair.
+*(An earlier draft of this paragraph argued instead that `{"a", 42}` is the argument shape of
+`UserInputModel:insert_text_line(text, li)`, so such a list most likely comes from confusing two
+functions. That reasoning does not hold and is recorded as withdrawn rather than quietly dropped:
+`insert_text_line` is a model method, absent from `compy.input` and from this guide, and
+unreachable from a project's sandbox — nobody can confuse `set_text` with a function they cannot
+see or call. The conclusion survives on the closed-contract argument above, which needs no such
+story.)*
+
+This settles `text` the same way `BUG-01-08` settled `cursor`: a malformed value earns **one**
+message naming the call and the expected shape, rather than a raw Lua error from inside the
+framework or a silent repair. **It settles those two keys and no others** — `show{validator = 42}`
+and `show{on_text_entered = 42}` are still accepted and still fail later at
+`userInputController.lua` with a raw `attempt to call` error. Extending the treatment to the
+callable keys is unscheduled work, not something this decision has done.
 
 **Consequence.** No public surface changes, and no capability of the documented shape is removed:
 the state normalisation eliminates — a line holding a raw newline — could not be produced by typing
