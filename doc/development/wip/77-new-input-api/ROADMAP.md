@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → DOC-01 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -21,6 +21,7 @@ the sequence**. Updated 2026-08-30.
 | **FEAT-02** ✅ | **`oneshot` becomes `auto_hide`**, a widget property — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
 | **{ BUG-01 ✅ · BUG-02 ✅ · FIX-01 · FIX-02 · DEC-01 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. A third was conditional and is **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first |
 | **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
+| **DOC-01** | the documentation compaction sweep — one deliberate pass over the stabilised prose corpus | **owner, 2026-09-01**, restoring a step the roadmap had scheduled for comments only. It runs **after** `FIX-03` because that sweep's deletions are *mechanical* (subject absent at base and today) and shrink the floor this one exercises judgement over, and **before** `ACC-02` because a cold reviewer should read the prose that ships, not the prose that was being written |
 | **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
 | **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain |
 | **MERGE-01** | upstream reconciliation — actually merge | 🟡 platform repo **done** (`f4913833`); `maze`, `keyboard`, `balloons` remain |
@@ -946,6 +947,53 @@ out of scope** — frozen history, and it carries its own dead `D-1…D-10` name
 
 ---
 
+## ⬜ DOC-01 — the documentation compaction sweep — **runs after FIX-03, before ACC-02**
+
+**Restored by the owner, 2026-09-01**, when this pass reported that the compaction step the volume
+ruling relies on was scheduled for **comments** only (`agents/rules/commenting.md`, *"Where this is
+enforced"*) and that Phase L, the ledger compaction, is retired. Phase L **stays retired and this is
+not it**: L was three specific excisions, all still owned elsewhere (`DEC-01-04`, a `REMARK` inside
+`FIX-02-01`, Decision 12's demotion). `DOC-01` is the volume pass over the prose corpus that L never
+was.
+
+**The method is already written** — `agents/rules/commenting.md`, *"Where this is enforced"*, in the
+verbosity paragraph: compaction is **its own substep near the end, taken once, over stabilised
+material**.
+It *"dries up history and obituaries, intermediate rulings, and second phrasings, keeping only the
+reasons."* `P-18-10` is the worked example — `keyboard`'s `input.lua`, 177 comment lines to 101
+without losing an argument. This row is that rule applied to prose instead of comments, and the
+owner's framing is the test: **verbose docs support ongoing development; the release is what they
+stop supporting.**
+
+**Scope is the rule, not a list** (`agents/validation.md`, *"Fixed pointers"*, the persistent-docs-corpus
+entry): everything
+under `doc/` not under `doc/development/wip/`, plus `CHANGELOG.md`. A file list goes stale — that is
+how `FIX-02-09` came to be sized by one file. `wip/77` is **out of scope**: it is deleted or kept
+whole by the `PR-01-05` ruling, and compacting something that may be deleted is the one certain
+waste here.
+
+| id | step | note |
+|---|---|---|
+| DOC-01-01 | **size it before working it** — measure the corpus as it stands, per file | the sizes in the finding that opened this row are from 2026-09-01 and will have moved; `technical_debt/input.md` was 2447 lines then |
+| DOC-01-02 | **the debt registers** — `technical_debt/input.md` and `general.md` | the largest surface and the most repetitive. An entry keeps its **disposition, its reason, and its provenance**; what goes is the argument's history, the second phrasing, and the intermediate ruling superseded by the one above it |
+| DOC-01-03 | **the internals docs** — `internals/`, `decisions/`, `drawing_system.md`, `smoke_checklists.md` | these are read by a developer *working*, not by a reviewer once; compact for redundancy, not for brevity |
+| DOC-01-04 | **`doc/input_api.md` and `CHANGELOG.md`** — the two a stakeholder actually reads | **the tightest constraint on the row.** `PR-01-03` gates the guide as reviewable **alone**; compact it for redundancy only, **never for completeness**, and re-run that gate after |
+| DOC-01-05 | **citation check over everything this row rewrote** | `agents/rules/roadmap.md` §5 — *the pass that causes an orphan owes the fix*. Rewriting a paragraph breaks section-name citations into it, and `FIX-03-05` will already have run |
+
+**Two guards, both learned rather than assumed.**
+
+**A compacted document must still carry why, not only what.** The corpus's value is that it records
+reasons a reader cannot re-derive from code — that is the whole argument of `agents/rules/commenting.md`'s
+payload rules, and it is what makes this a judgement pass rather than a word count. **Nothing here is
+sized by a target length**, and no entry is compacted because it is long.
+
+**Do not compact what is still moving.** This row sits where it does for the same reason `FIX-03`
+and `FIX-02-09` do: a sweep run while the writing continues is run twice. If a later row reopens a
+subject — a returned `ACC-02` finding, an upstream merge — the prose it writes is **not** retro-fitted
+into this pass; `DOC-01` is taken once and what follows it stands as written.
+
+---
+
 ## ⬜ ACC-02 — human acceptance — **blocked on the six sprints**
 
 Runs only once the tree is fixed. Every row costs owner time; re-running them against a tree about
@@ -1045,13 +1093,13 @@ the doc-corpus statement of the rule `agents/rules/commenting.md` already makes 
 compaction is one deliberate pass over stabilised material, not a running discipline. **Do not file
 volume as debt, and do not compact opportunistically while the corpus is still moving.**
 
-**Open, raised with the ruling and not yet answered: which row *is* the compaction step for prose?**
-`commenting.md` §*"Where this is enforced"* schedules compaction for **comments**. Phase L, the
-**ledger** compaction, is retired above, and its three items are specific excisions
-(`DEC-01-04`, a REMARK inside `FIX-02-01`, Decision 12's demotion) — none of them a volume pass over
-the registers or the internals docs. So the step the ruling relies on is currently scheduled for
-comments only. Either that is the intent and the prose corpus ships at its development size, or a
-row is missing; the owner disposes.
+**Answered the same day: the row was missing, and it is now `DOC-01`.** Raised with the ruling —
+`commenting.md` §*"Where this is enforced"* schedules compaction for **comments**, and Phase L, the
+**ledger** compaction, is retired above with its three items owned elsewhere, so nothing scheduled a
+volume pass over the prose. The owner's disposition was to add one: *"well than please add documents
+compaction sweep back to the roadmap."* See `DOC-01`, which runs after `FIX-03` and before `ACC-02`.
+**Phase L is not un-retired** — its retirement reasoning still holds, and `DOC-01` is new work rather
+than L restored.
 
 ### Phases B, C, D — **dissolved** (owner ruling, 2026-08-26)
 

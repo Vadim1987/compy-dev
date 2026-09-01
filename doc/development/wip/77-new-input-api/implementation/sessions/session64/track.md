@@ -111,3 +111,28 @@ items are specific excisions, none a volume pass. So no row currently compacts t
 **Lesson worth carrying:** the failure this pass was hunting — a session's *documents* not
 surviving attack while its *code* does — reproduced inside the pass itself, on the first try, in
 the entry written to record that exact failure mode.
+
+## Owner directive — restore the compaction sweep (2026-09-01)
+
+> *"well than please add documents compaction sweep back to the roadmap."*
+
+Added as **`DOC-01`**, a top-level stage: `{brace} → FIX-03 → **DOC-01** → ACC-02 → …`, five steps.
+
+Design calls made while filing it, each stated in the row itself:
+
+- **New KIND rather than `FIX-04`.** `DEC` and `CHG` set the precedent that a distinct release-prep
+  docs operation gets its own kind (`roadmap.md` §4). It also keeps `FIX-03`'s number stable — no
+  renumber, no crosswalk, no retired-id citations to wipe (§2, §5).
+- **After `FIX-03`, not before.** First instinct was before, on "shrink the floor". Wrong way round:
+  `FIX-03`'s deletions are *mechanical* (subject absent at base and today) and cheap, so running
+  them first shrinks the floor that `DOC-01`'s **judgement** works over. Reversed before filing.
+- **Before `ACC-02`**, so the cold reviewer reads the prose that ships.
+- **Phase L is NOT un-retired.** Its retirement reasoning still holds; `DOC-01` is new work. Said
+  explicitly in both places so a reader does not read this as a reversal.
+- **`wip/77` out of scope** — `PR-01-05` may delete it whole.
+- **`DOC-01-05` is a citation check over everything the row rewrites**, per `roadmap.md` §5: the
+  pass that causes an orphan owes the fix, and `FIX-03-05` will already have run.
+
+`validation/plan.md:125` still carries the old sequence in a dated blockquote. **Left alone
+deliberately** — that document states it is never retro-edited and its NAVIGATION block already
+sends a reader to the ROADMAP for what-next.
