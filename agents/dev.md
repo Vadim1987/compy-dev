@@ -61,6 +61,18 @@ or whether an edit type-checks:
   dynamically typed, so LSP refs can be **incomplete** — a thin result you *trust* hides a caller.
 - After a bash/script edit to any `.lua` / `.luarc.json`, **`sleep 1` before** calling the MCP
   refs/defs/diagnostics tools — the language server needs a beat to re-index.
+- **When it goes dark, `/mcp` lies.** The status line reports only the client→bridge handshake, and
+  the bridge outlives its `lua-language-server` child — so it reads "connected" while every query
+  fails. The tell is `failed to write header: write |1: broken pipe` on any `mcp__lua-lsp__*` call:
+  that is a dead child, not a transient error, so **do not retry the call**. `/mcp reconnect` alone
+  does not help either — it re-handshakes the *existing* bridge. Kill it
+  (`pkill -f mcp-language-server`), then **ask the human** to run `/mcp reconnect lua-lsp` — a slash
+  command is theirs to run, not yours. Confirm recovery with a real `definition` / `references`,
+  never with the status line. Observed 2026-09-01: the child died on a stdio framing desync
+  (`unexpected character 'C'` — the `C` of the next `Content-Length` — in
+  `/tmp/lua-ls-log/file_repo.log`, after a burst of `didChangeWatchedFiles`) and sat unreaped as a
+  zombie for two days. The danger is not the outage but misreading it: **a `references` call that
+  errors is not a call that found nothing.**
 
 ## Boot
 

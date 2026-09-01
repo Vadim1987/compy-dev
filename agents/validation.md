@@ -249,7 +249,11 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
   grep to find candidates, then LSP to resolve a symbol, prove "who calls this", and check an edit
   type-checks. Every agent that touches or inspects `.lua` must be told it exists and when to reach
   for it (and to `sleep 1` after a `.lua` edit before querying refs/diagnostics — the server
-  re-indexes). This applies to the parent (you) too.
+  re-indexes). This applies to the parent (you) too. Tell them the failure mode as well: a
+  `broken pipe` error means the `lua-language-server` child is dead while `/mcp` still reports
+  "connected", and an errored query is **not** an empty result — a worker that reads it as one
+  reports a false fact upward. Instruct workers to surface the outage instead of working around
+  it; recovery is the parent's job (`agents/dev.md`), since only the human can `/mcp reconnect`.
 - **(b) Delegate down by default.** If a unit of work *can* be done by a cheaper model, it should
   be — either spawn a **Sonnet** worker (explicit `model`, always) or, when you are the expensive
   model and the sub-task is mechanical, hand it off rather than doing it yourself. Reserve the
@@ -266,7 +270,9 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
   `/repo` tree** (order by dependency), not concurrently in isolated worktrees. Parallel worktrees
   have proven to cost more than the speed they buy: they land **nested under `/repo`**, so the
   `lua-lsp` workspace indexes duplicate copies of the whole source tree (duplicate defs/refs —
-  degraded LSP correctness for workers *and* parent), and a fresh worktree cwd lacks the project's
+  degraded LSP correctness for workers *and* parent; the tell is duplicate hits under **differing**
+  paths — the routine echo of one symbol under both `Kind: Variable` and `Kind: Field`, at
+  *identical* paths, is benign and is not this), and a fresh worktree cwd lacks the project's
   rock/`busted` environment, prompting workers to bootstrap their own `luarocks` ecosystem. **Keep
   the toolchain footprint minimal** — no per-agent environment setup; clarity and stability
   outrank speed. Serial-in-shared-tree also means the parent reconciles nothing: each unit lands,

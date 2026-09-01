@@ -55,6 +55,12 @@ symbol in hand; grep first only when exploring for a pattern. **Caveat:** Lua is
 so LSP refs can be **incomplete** — cross-check with grep before trusting a thin result to clear a
 change. (You may **read** via the LSP freely; you still edit only the review + the debt ledger.)
 
+**If the LSP errors, it has not cleared anything.** `broken pipe` on a `lua-lsp` call means the
+`lua-language-server` child is dead while the bridge still answers `/mcp` as "connected" — a false
+green. Never let an errored `references` stand in for impact verification: an error is not an
+empty result, and clearing a change on one is how a broken caller ships. Recovery (kill the bridge,
+have the human reconnect, re-verify with a real query) is in `agents/dev.md`.
+
 ## Boot
 
 1. The human names a **milestone id** (e.g. `M4`, `M4-0-characterization-net`).

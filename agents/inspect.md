@@ -36,6 +36,11 @@ Grep is the correct **opening** move for "where is this pattern"; the LSP resolv
 after. (Your loaded orientation carries the full protocol — including that LSP refs can be
 incomplete in dynamically-typed Lua, so backstop completeness-critical sweeps with grep.)
 
+If a `lua-lsp` call returns `broken pipe`, the server is down even though `/mcp` reports it
+connected — the bridge outlives its dead `lua-language-server` child. Report the tool as
+unavailable and say so plainly rather than reporting a thin or empty answer as a finding; an
+errored query is not evidence of absence. `agents/dev.md` carries the recovery steps.
+
 ## Boundaries
 
 - **Read-only.** grep/bash/sed and read-only checks (running `busted tests`, `xvfb-run love
