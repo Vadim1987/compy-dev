@@ -117,3 +117,29 @@
 - Shortened the entry heading to *"measures the column on the wrong line"* so the citation fits
   un-truncated, and updated its **two** existing citations in the same commit (Decision 38,
   `internals/user_input.md`). Old wording greps clean — the pass that causes an orphan owes the fix.
+
+## 2026-09-01 — DEBT: marker, and the duplicate named
+
+- Owner: *"would DEBT read better than 'postponed, not fixed'?"* — **yes, and it greps.** One
+  uppercase token → every registered-unfixed site is one grep away. Prose cannot do that.
+- **Hazard flagged and written into the rules:** the release gate is deliberately exclusion-free
+  and gets *widened* whenever a marker hides from it. A new uppercase token sitting outside it
+  invites a well-meant edit that would delete every `DEBT:` before the PR. `commenting.md` now
+  says explicitly it must NOT join the pattern, and why: `INTERIM` is scaffolding and must reach
+  zero; `DEBT` is most needed **at** release. **I edited an owner-authored rules file** —
+  flagged to the owner.
+- Two guards written with it: a `DEBT:` is a signpost, never a substitute for the entry
+  (cross-check: grep `DEBT:` vs register headings); and it must say *what* is wrong.
+- Owner's second question was the better one: *does the entry carry the suspicion that this is a
+  misused duplicate of something else — name it.* It did not, and now does: **`_update_cursor`
+  is a partial, unvalidated duplicate of `jump_end`.** Same intent (seat caret at end of
+  content); `jump_end` takes both coordinates from the SAME line, goes through the checked
+  `move_cursor`, and settles selection + visible range.
+- **This reframes the disposition:** the review is *"does each call site want `jump_end`?"*, not
+  *"is this body right?"*. Repairing `t[cl]`→`t[#t]` in place would leave two ways to do one
+  thing — the very thing Decision 38's structural half exists to stop.
+- Stated honestly as review-not-edit: `jump_end` is **not** a drop-in at `clear_input` — same
+  `(1,1)`, but it also calls `end_selection` (redundant there) and `visible:to_end()`, and
+  whether a clear should reset the visible range is unchecked.
+- **Pattern:** "what is the likely disposition" beats "here are two options" — the owner asked
+  for the suspicion, not the menu.
