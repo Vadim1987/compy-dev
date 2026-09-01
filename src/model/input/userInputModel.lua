@@ -154,12 +154,9 @@ local function normalized_lines(text)
   return string.lines(clean)
 end
 
---- Both spellings normalise identically, and the cursor is why:
---- it addresses content as (line, column), so un-normalised
---- content makes that address ambiguous. Invalid bytes leave a
---- column's length undefined; a newline inside a line leaves
---- its position undefined. Decision 38, and doc/input_api.md,
---- "Live changes".
+--- Both spellings normalise identically, so the cursor's
+--- (line, column) address is unambiguous over whatever is
+--- stored (doc/development/decisions/input.md, Decision 38).
 --- @param text str
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)

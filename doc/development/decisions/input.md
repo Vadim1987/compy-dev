@@ -1669,7 +1669,10 @@ as that fix, because the rule already governed a behaviour nobody had written do
 the documented shape — a string, or a list of line strings. Normalisation is: drop bytes that do not
 form valid UTF-8, then split on newlines. `set_text("a\nb")`, `set_text{"a\nb"}` and
 `set_text{"a", "b"}` therefore produce identical state. Empty elements are content and survive.
-**No line ever contains a line terminator.**
+**No line ever contains `\n`.** (`\r` is *not* treated — nothing in the model or the string
+utilities mentions it, so `set_text("a\r\nb")` yields `{"a\r", "b"}` and the stray `\r` is counted
+as an ordinary column. Pre-existing, unchanged by this decision, and filed as debt; the rule below
+is stated over `\n` because that is what the code implements.)
 
 **Why — the cursor.** The widget addresses content as `(line, column)`, and both halves of that
 address are only meaningful over normalised content:
@@ -1695,10 +1698,14 @@ spellings and newlines on only one.
 nothing here rejects, truncates, escapes or re-flows what is set. The rule removes representations
 that cannot be addressed, and nothing else.
 
-**Consequence.** No public surface changes, and no capability is removed: the state normalisation
-eliminates — a line holding a raw newline — could not be produced by typing or by pasting, and could
-not be read back at all, the `compy.input` surface having no content getter. It reached one
-documented shape through one call and rendered wrong in both draw paths. The behaviour change is
+**Consequence.** No public surface changes, and no capability of the documented shape is removed:
+the state normalisation eliminates — a line holding a raw newline — could not be produced by typing
+or by pasting, and reached one documented shape through one call while rendering wrong in both draw
+paths. It **was** observable, and the earlier claim here that it "could not be read back at all" was
+too strong (corrected 2026-09-01 by cold peer review): the `compy.input` surface has no content
+*getter*, so no set/get round-trip is affected, but `after_submit` receives the line list itself
+(Decision 37), so a project could see the difference at submit and will now see something else.
+That is exactly why the change carries a `CHANGELOG.md` line. The behaviour change is
 recorded in `CHANGELOG.md`, stated for a project author in `../../input_api.md`
 (*"Live changes"*), and described for a maintainer in `../internals/user_input.md`
 (*"Multiline input"*).

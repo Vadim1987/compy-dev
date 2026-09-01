@@ -117,6 +117,47 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### `_set_text_line` has an unreachable table branch
+
+- **Where:** `src/model/input/userInputModel.lua:196-198` —
+  `elseif type(text) == 'table' and ln == 1 then` is nested **inside**
+  `if type(text) == 'string' then`, so its guard can never hold.
+- **State:** dead code that reads as a supported shape. A reader looking for
+  "can `_set_text_line` take a list?" finds a branch saying yes, and it has
+  never run.
+- **Provenance: pre-existing**, and the same fossil family as the dead
+  `_update_cursor` call `BUG-02-01` retired — a shape carried through a
+  migration and never re-checked. Found by that row's cold peer review,
+  2026-09-01.
+- **Not slugged**; nothing depends on it and no behaviour changes when it goes.
+- **Revisit:** a one-line deletion inside the `_update_cursor` review below —
+  same function, same pass, and the two should not be walked twice.
+
+### Content normalisation treats `\n` but not `\r`
+
+- **Where:** `src/util/string/string.lua` — `string.lines` splits on `'\n'`;
+  nothing in `src/model/input/`, the string utilities or
+  `userInputController.lua` mentions `'\r'` at all.
+- **State:** `set_text("a\r\nb")` yields `{"a\r", "b"}`. The stray `\r` stays
+  inside a line and the model counts it as an ordinary column, so the line
+  measures one character longer than it displays and the caret can be seated on
+  a position that renders nowhere. That is precisely the ambiguity **Decision
+  38** says normalisation removes — the decision is now scoped to `\n`
+  explicitly because that is what the code implements.
+- **Reachable:** a project setting content it read from a CRLF file. Whether the
+  clipboard path is exposed is **unverified** — SDL may normalise
+  `love.system.getClipboardText`, and nothing in the tree states either way; the
+  project-sets-a-CRLF-string path needs no such assumption.
+- **Provenance: pre-existing**, and not `#77`'s. `string.lines` has always split
+  on `'\n'` alone. Found by the cold peer review of `BUG-02-01`, 2026-09-01.
+- **Not slugged** — no commitment to fix; the release does not depend on it, and
+  no shipped example reads CRLF content.
+- **Revisit:** with the `_update_cursor` pass below, if one happens — both are
+  about the model's idea of what a line is. Note the fix is **not** obviously
+  "split on `\r\n` too": stripping a lone `\r` is a content change, and whether
+  the framework should silently rewrite what a project set is the same
+  tolerance question Decision 38 bounds.
+
 ### `_update_cursor` measures the column on the wrong line
 
 - **Where:** `src/model/input/userInputModel.lua` — `UserInputModel:_update_cursor`.
@@ -154,12 +195,23 @@ paid, or turned out not to be debt.
   model's checked mover: it rejects an out-of-range line or column, falling back
   to the previous value, and it measures the line length **on the line it is
   moving to**. `_update_cursor` writes `self.cursor.l` and `self.cursor.c` as
-  raw fields instead — it and `_advance_cursor` are the only two writers that
-  do — so nothing catches the mismatch. Routed through `move_cursor` the bad
-  `(3,7)` above could not have been produced, which is the same statement as
-  saying `jump_end` already does this correctly: it computes `#ent` and
-  `ulen(ent[last_line]) + 1` from the *same* line and hands both to
+  raw fields instead, so nothing catches the mismatch. Routed through
+  `move_cursor` the bad `(3,7)` above could not have been produced, which is the
+  same statement as saying `jump_end` already does this correctly: it computes
+  `#ent` and `ulen(ent[last_line]) + 1` from the *same* line and hands both to
   `move_cursor`.
+- **There are THREE raw writers, not two, and the third is on a hot path.
+  Corrected 2026-09-01 by cold peer review**, which refuted this entry's
+  original claim that `_update_cursor` and `_advance_cursor` were "the only two".
+  `insert_text_line` (`:224`) does `self.cursor.l = l + 1` unvalidated, and it is
+  reached on **every Shift+Enter** (`line_feed`, `:263`) and by Ctrl+D
+  duplicate-line (`userInputController.lua:702`) — where the other two are
+  reached rarely or not at all. The correction **strengthens** this entry's
+  disposition rather than weakening it: the population to review is three, one
+  of them live on ordinary editing, so *"review the cursor writers"* is a bigger
+  and better-justified pass than *"repair this body"*. (`set_cursor` at `:546`
+  also replaces the whole `Cursor` with no check, but it takes a constructed
+  `Cursor` rather than writing fields, so it is a different shape.)
 - **The likelier disposition is not a repair at all: this is a partial,
   unvalidated duplicate of `jump_end`, and what wants reviewing is its USAGE.**
   Both exist to seat the caret at the end of the content — that is what
@@ -1367,10 +1419,16 @@ changes.
   coordinates, so the newline draws nothing and reads as a blank column. Not
   display-verified — read from the draw code, which is why it was fixed rather
   than left described.
-- **Why it was still narrow:** no in-tree caller could reach it. All three
-  (`maze/core_editor.lua`, `tixy/main.lua` twice) pass either a raw string or
-  `string.lines(…)`, and `string.lines` never emits an element containing a
-  newline. Nor could a user: `add_text` splits, and the paste path pre-joins
+- **Why it was still narrow:** no in-tree caller could reach it. The three
+  **project-facing** ones (`maze/core_editor.lua`, `tixy/main.lua` twice) pass
+  either a raw string or `string.lines(…)`, and `string.lines` never emits an
+  element containing a newline. **The enumeration was incomplete as first
+  written** (cold peer review, 2026-09-01): the model's `set_text` is also
+  called from `editorController.lua:336` and `:602`, `userInputModel.lua:475`
+  and `:487` (history restore) and `userInputController.lua:316` (`show`'s
+  `cfg.text`). All five were checked and the conclusion survives — `pprint`
+  returns `string.lines(src)`, and buffer lines and history entries are already
+  split — but "all three" would have let a reader think they did not exist. Nor could a user: `add_text` splits, and the paste path pre-joins
   with `string.unlines` at the controller before the model sees it. A project
   had to hand-build such a list, and **nothing could read it back** — the
   `compy.input` surface has no content getter, so there is no set/get
@@ -1419,8 +1477,12 @@ changes.
   chosen to expose it — shorter replacement with the caret parked past the new
   end, longer replacement, and a 20-line buffer collapsing to one line, each in
   both spellings — produce byte-identical cursor and visible-range snapshots
-  with the call and without it, and the suite is green either way. Two of them
-  are now pinned as tests (*"both land at the end of shorter content"*).
+  with the call and without it, and the suite is green either way. The
+  **behaviour** is now pinned by tests (*"both land at the end of shorter
+  content"*); **the deletion is not, and cannot be** — an inert call is
+  indistinguishable from its absence, so restoring it leaves the suite fully
+  green. Reintroduction is not test-detectable, which is worth knowing before
+  anyone reads those tests as a guard against it (cold peer review, 2026-09-01).
 - **`_update_cursor` itself stays, and only the `set_text` call site was
   deleted. Corrected 2026-09-01, same day:** this entry first said
   `_set_text_line` and `clear_input` "both call it live", which is wrong about

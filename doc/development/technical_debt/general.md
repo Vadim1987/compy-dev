@@ -163,6 +163,24 @@ paid, or turned out not to be debt.
 - **Revisit:** when the console's debug affordances or the terminal widget are next worked
   on. Fix is one operator; the work is confirming the revived path still renders sensibly.
 
+### `string.split_array`'s type guard never fires
+
+- **Where:** `src/util/string/string.lua:241` —
+  `if not type(str_arr) == 'table' then return {} end`.
+- **State:** operator precedence makes this `(not type(str_arr)) == 'table'`,
+  which is `false == 'table'`, i.e. **always false**. The guard never returns
+  early, so a non-table argument reaches `ipairs(str_arr)` and raises there
+  instead of being handled. The intended form is `type(str_arr) ~= 'table'`.
+- **Why it matters beyond the typo:** `string.lines` delegates every list to
+  this function, and `UserInputModel:set_text` delegates to `string.lines`, so
+  the guard sits on the input widget's content path. It is **latent, not live** —
+  every current caller passes a table — which is why this is BACKLOG.
+- **Provenance: pre-existing**, another author's utility module. Found by the
+  cold peer review of `BUG-02-01`, 2026-09-01, while checking how a non-string
+  element is handled.
+- **Not slugged**, and **no size refactor implied** — the fix is the two
+  characters that make the guard mean what it says.
+
 ### `table.protect(love.handlers)` is a no-op on the passed table
 
 - **Where:** `src/controller/controller.lua` — end of `setup_callback_handlers`.
