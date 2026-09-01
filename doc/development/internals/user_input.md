@@ -69,11 +69,27 @@ with two spellings, so both are normalised identically: `string.lines` is polymo
 explicitly preserves empty ones. `set_text("a\nb")`, `set_text({"a\nb"})` and `set_text({"a","b"})`
 all produce the same two lines and the same cursor.
 
-**The rule is the same one the UTF-8 sanitisation on this path serves** (owner, 2026-09-01): the
-cursor addresses content as `(line, column)`, so content that is not normalised makes that address
-ambiguous. Invalid bytes leave a column's *length* undefined; a newline inside a line leaves its
-*position* undefined — the caret could sit past a line terminator. Both are normalised at the same
-seam for the same reason, and neither is a convenience.
+**The rule is the same one the UTF-8 sanitisation on this path serves**, and it is ratified as
+**Decision 38** (`../decisions/input.md`): the cursor addresses content as `(line, column)`, so
+content that is not normalised makes that address ambiguous. Invalid bytes leave a column's *length*
+undefined; a newline inside a line leaves its *position* undefined — the caret could sit past a line
+terminator. Both are normalised at the same seam for the same reason, and neither is a convenience.
+
+**Structurally this is one path, not two branches that agree.** `normalized_lines` takes either
+spelling and returns the lines; `set_text` stores them and seats the cursor. The decision's
+structural half is that per-spelling branches which each decide what to normalise **drift apart** —
+which is precisely what had happened, UTF-8 being sanitised on both spellings and newlines on only
+one. An unsupported value normalises to nothing and leaves content standing, as both branches did.
+
+**A dead cursor call went with the unification.** The string branch called `_update_cursor(true)`
+and the list branch did not, an asymmetry inherited from the commit that first wrote the function
+(`472c6bba`) — where `jump_end()` already ran unconditionally afterwards. `_update_cursor` sets
+`cursor.c` from the line at the *old* cursor index in the *new* text and `cursor.l` to `#t`, so its
+result is incoherent by construction, and `init_visible` plus `jump_end` then overwrite both the
+cursor and the visible range it moved. The call had **never** had an effect on this path, which is
+why the branch lacking it behaved identically. Deleted at `BUG-02-01`, mutation-tested first.
+**`_update_cursor` itself stays** — `_set_text_line` and `clear_input` call it live, and there the
+line it reads is the line it just wrote.
 
 **The list branch did not always split.** Until 2026-09-01 it stored each element verbatim, so
 `set_text({"a\nb"})` produced one line holding a raw newline that the model counted as an ordinary

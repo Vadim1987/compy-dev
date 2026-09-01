@@ -1254,15 +1254,21 @@ changes.
 - **Never slugged, and correctly so.** A slug is the commitment to fix and is
   earned when an entry becomes `ACTIVE`; this one was ruled and fixed in the
   same session, so it went `BACKLOG` → `RETIRED` without passing through.
-- **The rule behind it is the owner's** (2026-09-01), and it is the same one the
-  UTF-8 sanitisation on this path already served: **the cursor addresses content
-  as `(line, column)`, so content that is not normalised makes that address
+- **The rule behind it is the owner's** (2026-09-01) and is now ratified as
+  **Decision 38**, `../decisions/input.md`. It is the same rule the UTF-8
+  sanitisation on this path already served: **the cursor addresses content as
+  `(line, column)`, so content that is not normalised makes that address
   ambiguous.** Invalid bytes leave a column's *length* undefined; a newline
   inside a line leaves its *position* undefined — the caret could sit past a
   line terminator. Neither normalisation is a convenience, and they are now
   symmetric across both spellings. Written up in
   `../internals/user_input.md`, *"Multiline input"*, and stated for a project
   author in `../../input_api.md`, *"Live changes"*.
+- **The two branches are now one path preceded by a normalisation step** (owner,
+  2026-09-01), which is Decision 38's structural half: per-spelling branches
+  that each decide what to normalise are what let UTF-8 and newlines drift onto
+  different rules in the first place. `normalized_lines` returns the lines,
+  `set_text` stores them, and there is one place left where either could drift.
 - **The defect it closed:** the two branches of one function disagreed about
   what a newline means. `set_text({"a\nb"})` yielded **one** line holding a raw
   newline, which the model counted as an ordinary character — three characters
@@ -1302,6 +1308,47 @@ changes.
   `tests/input/user_input_model_spec.lua` (*"embedded newlines"*, three cases),
   `tests/input/input_cursor_text_spec.lua` (the surface case, beside its string
   twin), `../../input_api.md`, `../internals/user_input.md`, `../../../CHANGELOG.md`.
+
+### `set_text`'s two branches disagreed about the cursor, and the call was dead (RESOLVED, 2026-09-01)
+
+- **Resolution:** fixed at `BUG-02-01`, in the same unit as the entry above and
+  on the owner's direction — *"either discard or cursor movement should be
+  deleted, and in either case both paths should be unified"*. The call is
+  **deleted** and the two branches are now **one path preceded by a
+  normalisation step** (`normalized_lines`). Ratified as **Decision 38**,
+  `../decisions/input.md`, closing section.
+- **Registered here rather than left in a session track** (owner, 2026-09-01):
+  a finding parked in a track dies with the session, so it goes in the ledger
+  even when it is fixed the same day.
+- **The defect:** `UserInputModel:set_text`'s string branch called
+  `_update_cursor(true)` when `keep_cursor` was falsy; the list branch never
+  did. The call was **inert on this path**, so the asymmetry was invisible:
+  `_update_cursor` sets `cursor.c` from the line at the *old* cursor index in
+  the *new* text and `cursor.l` to `#t` — a column from one line and a line
+  from another, incoherent by construction — and `set_text` then runs
+  `init_visible`, which replaces the whole `VisibleContent`, and `jump_end`,
+  which overwrites both cursor fields with coherent ones. Every effect,
+  including the visible-range move `text_change`'s `_follow_cursor` makes from
+  it, is discarded before the call returns to its caller.
+- **It never worked.** The commit that introduced the call (`472c6bba`, the
+  transitional UserInput triplet) already ended `set_text` with an
+  unconditional `jump_end()`. There is no revision in which it had an effect,
+  which is why the branch lacking it behaved identically and the disagreement
+  survived unnoticed. Shape copied from `_set_text_line`, where the call **is**
+  live, into a function that already seated the cursor.
+- **Mutation-tested before deletion, not reasoned about only:** five cases
+  chosen to expose it — shorter replacement with the caret parked past the new
+  end, longer replacement, and a 20-line buffer collapsing to one line, each in
+  both spellings — produce byte-identical cursor and visible-range snapshots
+  with the call and without it, and the suite is green either way. Two of them
+  are now pinned as tests (*"both land at the end of shorter content"*).
+- **`_update_cursor` itself is NOT dead and stays**: `_set_text_line` and
+  `clear_input` both call it live. Only the `set_text` call site was dead.
+- **Provenance: pre-existing**, inherited from the transitional triplet and
+  present at the PR base in the same shape.
+- **Where:** `src/model/input/userInputModel.lua` (`set_text`,
+  `normalized_lines`), `tests/input/user_input_model_spec.lua`
+  (*"embedded newlines"*).
 
 ### T-MAZE-NEUTRALIZE — `maze` neutralises two hook sites by clearing a flag, not by the widget guard (NOT DEBT, 2026-08-31)
 
