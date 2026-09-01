@@ -145,6 +145,58 @@ paid, or turned out not to be debt.
 - **Not slugged** — no commitment to fix before the release; that is an owner
   call, and taking it would be a `FIX` row rather than a reopening of `BUG-02`.
 
+### The programmatic-cursor census omits the one writer on a hot path
+
+- **Where:** `doc/development/internals/user_input.md`, *"Cursor access exists
+  at three layers"* — *"There are four call sites that manipulate the cursor
+  programmatically (i.e., not as a direct response to an arrow/Home/End
+  keypress)"*.
+- **State:** `insert_text_line` writes `self.cursor.l = l + 1` as a raw field
+  and is not among the four. It is not excluded by the census's own
+  parenthesis either: it is reached on **every Shift+Enter** (via `line_feed`)
+  and by **Ctrl+D** duplicate-line, neither of which is an arrow/Home/End
+  keypress. So the corpus answers *"what moves the cursor?"* two ways — this
+  census says four, *"`_update_cursor` measures the column on the wrong line"*
+  below says three raw writers including this one.
+- **Why it matters:** the census exists **because a sweep consults it instead
+  of re-deriving**, which is the argument its own last correction was made on
+  (session61, `ba09edcc`, adding `_apply_eval` after a sweep missed it). It
+  then missed a second site the same way, and the site it missed is the only
+  one live on ordinary editing.
+- **The fix is two sentences, not a review:** add `insert_text_line` with what
+  it writes and where it is reached, and either widen the parenthesis to name
+  the editing keys it means to exclude or drop it for *"not in response to a
+  cursor-movement key"*. Cross-reference the raw-writer entry so the two
+  statements cannot drift apart again.
+- **Provenance: ours** — the census paragraph is `#77`'s own writing; the
+  omitted fact was established by `#77`'s own cold peer review, 2026-09-01,
+  and recorded in the register without returning to the census.
+- **Not slugged** — an owner call, though it is small enough to fold into any
+  pass that touches the file.
+
+### Four line citations were stale on arrival, in the commit that moved them
+
+- **Where:** `doc/development/technical_debt/input.md` — the raw-writer
+  correction under *"`_update_cursor` measures the column on the wrong line"*
+  cites `userInputModel.lua:224`, `:263` and `:546`; *"`_set_text_line` has an
+  unreachable table branch"* cites `:196-198`.
+- **State:** the real lines are `221`, `260`, `543` and `193-195` — every one
+  off by exactly **3**. Commit `e3484987` inserted the three-line `DEBT:`
+  comment at `:516` and wrote all four citations in the **same commit**,
+  against the pre-edit numbering. They have never resolved. The other two
+  line citations in the persistent corpus (`:475`, `:45-63`) were checked and
+  are correct.
+- **Why it matters:** a citation that does not resolve *reads as
+  authoritative* — the standing objection in `agents/validation.md`,
+  *"Comment References"*. Here it points a reader at `end` and at a
+  `--- @private` tag.
+- **The fix is the one this corpus already ruled on:** cite the **function
+  name**, which does not drift — the correction session61 applied to this same
+  file's `set_cursor_pos` citation one day earlier, for this same reason.
+- **Provenance: ours**, 2026-09-01, all four in one commit.
+- **Not slugged** — mechanical, and it should be taken by whichever pass
+  touches these entries next.
+
 ### `_set_text_line` has an unreachable table branch
 
 - **Where:** `src/model/input/userInputModel.lua:196-198` —

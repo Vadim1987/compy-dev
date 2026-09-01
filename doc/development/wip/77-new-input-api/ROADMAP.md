@@ -739,6 +739,20 @@ examples are one corpus for this sweep, on equal footing — a term that survive
 misleading as one that survives in the guide, and comments are where `FIX-02-14` already hid once.
 `doc/input_api.md` alone still carries **13** "field"s, every one of them the widget sense (re-counted 2026-08-31; the note first said eight).
 
+**And "docs" means the whole persistent corpus, not the guide (found 2026-09-01, session64).** Sizing
+this row by `doc/input_api.md` understates it: the widget sense is also live in `CHANGELOG.md`,
+`doc/development/smoke_checklists.md`, `internals/user_input.md` and `decisions/input.md` — and
+`smoke_checklists.md:215` carries **the banned idiom verbatim**, *"the command field is open"*. None
+of it is another author's to leave alone: at `wip77/20260826/mergebase` there is **no `CHANGELOG.md`
+and no `doc/development/smoke_checklists.md`**, and `doc/development/` holds five entries in total —
+the corpus this row sweeps is `#77`'s own creation, in full. Size the row against the rule
+(*everything under `doc/` not under `wip/`, plus `CHANGELOG.md`*), never against a file list; the
+list is what went stale here, exactly as it did in `agents/validation.md`. **The count is a sweep
+input, not a scope statement** — a raw `field` grep also catches `@field` annotations and ordinary
+table fields, so re-derive by sense, not by number. Session63 **added** one on 2026-09-01
+(`CHANGELOG.md:164`), the day the rule was in force, which is this row's own argument for running
+late restated as evidence.
+
 **The vocabulary is still being minted, which makes this a LATE row.** "Field is open" kept
 resurfacing in session60's own conversation and went into a validation note five times before it
 was caught — long after this row was scoped, by a session that knew the rule. A sweep run before
