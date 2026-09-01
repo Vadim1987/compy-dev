@@ -57,21 +57,6 @@ paid, or turned out not to be debt.
   to run it rather than to skip it.
 - **Roadmap:** `FIX-02-05`.
 
-### T-DEC-NUMBERED — The decisions ledger is cited by number, and numbers resolve to the wrong entry when they move
-
-- **Where:** `doc/development/decisions/input.md`; roughly 165 citations across `src/` and
-  `tests/`.
-- **What is owed:** the conversion from numbers to mnemonic names. Under numbering, a missed
-  citation after any renumber still resolves — **to the wrong decision** — and reads as
-  authoritative; under names it dangles visibly and greps out. The same argument
-  `agents/rules/roadmap.md` §2 makes for ids in code.
-- **Why it is an entry:** an **obvious operational need** — readability debt in a ledger is debt
-  (`agents/rules/ledgers.md` §4), and this one degrades silently.
-- **Also unblocks the vacuum:** the retired entries that were never the stakeholder's may be
-  swept once names make a dangling citation safe (`ledgers.md` §2).
-- **Roadmap:** `DEC-01`, six steps. Not absorbed by the 2026-08-27 restructuring, which did the
-  sectioning only.
-
 ## BACKLOG
 
 ### Line citations across the persistent corpus are unverified, and a fifth of the checkable ones do not resolve
@@ -225,6 +210,26 @@ paid, or turned out not to be debt.
   consume the returned proxy or change `table.protect`'s semantics.
 
 ## RETIRED
+
+### The decisions ledger is cited by number — PAID by the conversion to names (2026-09-01)
+
+- **Was `T-DEC-NUMBERED`.**
+- **What was owed:** the conversion from numbers to mnemonic names. Under numbering a missed
+  citation after any renumber still resolves — **to the wrong decision** — and reads as
+  authoritative; under names it dangles visibly and greps out.
+- **Paid by `DEC-01`.** 31 decisions carry a `D-` slug declared first in the heading, and
+  `Decisions? [0-9]+` returns zero across `src/`, `tests/`, the persistent corpus and `agents/`.
+  The crosswalk from every number the ledger ever issued is an appendix to the ledger itself, so
+  it outlives the feature's working tree.
+- **Sized at 165 citations across 18 files; it was 554 across 36**, and the gap was not drift.
+  Three forms were invisible to the pattern the sizing used: **18 line-broken citations** with the
+  number on the next line, 11 plural mentions, and **8 bare back-references** — a decision cited by
+  number with no `Decision` word anywhere near it, all of them in a sentence unpacking a plural.
+  `DEC-01-01` made every mention one greppable token before anything was rewritten, which is what
+  the spec's sentinel gate was for and where the owner moved the burden when the sentinels were
+  dropped.
+- **It also discharged the tombstone condition.** `ledgers.md` §2 keeps retired entries *while the
+  ledger is numbered*; six were vacuumed once that stopped being true, and the rule now says so.
 
 ### T-NAMESPACE-CLONE — a live platform table in a namespace travels to the project as a copy — PAID by a written practice
 

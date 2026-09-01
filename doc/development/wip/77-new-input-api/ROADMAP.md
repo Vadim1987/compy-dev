@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · FIX-01 · FIX-02 · DEC-01 · CHG-01 } → FIX-03 → DOC-01 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 } → FIX-03 → DOC-01 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -19,7 +19,7 @@ the sequence**. Updated 2026-08-30.
 | **OP-01** ✅ | ledger upkeep for the owner's three hand-filed entries → **Decisions 36 and 37** | needed no ruling, and it produced the design inputs the next stage implements |
 | **FEAT-01** | the two surface proposals: **`oneshot`**, and the **payload split** that tells the submit callbacks apart | **leads by blast radius** — it changes the public surface, so `FIX-02-01` is one of its rows' seams, `CHG-01` carries what it breaks, and a slice cut before it lands is cut twice |
 | **FEAT-02** ✅ | **`oneshot` becomes `auto_hide`**, a widget property — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
-| **{ BUG-01 ✅ · BUG-02 ✅ · FIX-01 · FIX-02 · DEC-01 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. A third was conditional and is **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first |
+| **{ BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. **`DEC-01`'s half is discharged** (session65), so the slice cut now waits on `CHG-01` alone. A third was conditional and is likewise **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first |
 | **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
 | **DOC-01** | the documentation compaction sweep — one deliberate pass over the stabilised prose corpus | **owner, 2026-09-01**, restoring a step the roadmap had scheduled for comments only. It runs **after** `FIX-03` because that sweep's deletions are *mechanical* (subject absent at base and today) and shrink the floor this one exercises judgement over, and **before** `ACC-02` because a cold reviewer should read the prose that ships, not the prose that was being written |
 | **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
@@ -590,7 +590,8 @@ would hide which half is waiting on a decision.
 
 **Rows are ordered by blast radius, not severity** — see the principle below. Three hard
 constraints on top of that: **DEC-01 and CHG-01 must both finish before any
-slice is cut**, **CHG-01 also gates ACC-02**, and **FIX-03 runs last** — it is the sweep that catches what FIX-02 and DEC-01 miss, and running it
+slice is cut** (`DEC-01` did, session65 — the cut now waits on `CHG-01` alone), **CHG-01 also
+gates ACC-02**, and **FIX-03 runs last** — it is the sweep that catches what FIX-02 and DEC-01 miss, and running it
 first means three brooms over one floor. Within BUG-01, `01`
 and `02` are the majors.
 
@@ -899,6 +900,12 @@ through, not the plan for handling it.
    (`LEDGER-01`'s two greps `comm`'d), all four from the `ARC-02` era. These are on **completed**
    rows, so the citation is historical rather than actionable — decide per row whether to re-point
    at the retirement or to say plainly that the goal is retired.
+3. **`T-DEC-NUMBERED` joined them 2026-09-01 and is already dispositioned** — the `DEC-01` row says
+   in the same breath that the goal is RETIRED and that the citation resolves to the retirement
+   note. Listed anyway, because the cross-check will keep flagging it and a sweep that finds an
+   unexplained flag re-does the work: this one needs **nothing**. It is also the worked example for
+   §5's rule that *the pass causing an orphan owes the fix* — the fix here was one clause written
+   at the moment the slug was retired, not a line for this sweep to carry.
 
 **Check it is clean with the cross-check already written for it** (`LEDGER-01`, above): `comm` the
 `^### T-` headings against the roadmap's `T-` citations. A citation missing from the heading side is
@@ -912,9 +919,48 @@ delete*. And **prose that is the only record of a deviation from pre-feature beh
 **Scope includes `src/` and `tests/` comments** — where FIX-02-14 hid, and where no doc sweep
 reaches.
 
-### DEC-01 — decisions ledger: names, not numbers (6 steps)
+### ✅ DEC-01 — decisions ledger: names, not numbers — **COMPLETE (session65)**
 
-**Debt goal: `T-DEC-NUMBERED`** (`technical_debt/general.md`) — six tasks, one goal.
+**Debt goal `T-DEC-NUMBERED` is RETIRED** (`technical_debt/general.md`, under `RETIRED` — the
+register drops the slug from a paid entry's heading, so this citation is historical and resolves
+to the retirement note rather than to a live goal).
+
+**Landed 2026-09-01**, seven commits `65281671`..`68b7e1fb`, suite 1048 throughout. 31 decisions
+carry a `D-` slug declared first in the heading; `Decisions? [0-9]+` returns **zero** across
+`src/`, `tests/`, the persistent corpus and `agents/`; the crosswalk from every number the ledger
+ever issued is an appendix to the ledger, so it outlives this tree.
+
+**Two method changes, both the owner's, 2026-09-01.** *(a)* **No sentinel wrapping** — we are not
+renumbering, so the substitution ran directly, in descending numeric order so `Decision 3` could
+not land inside `Decision 33`, with a word-boundary match as the second belt. `DEC-01-02` was
+therefore **not executed**, and the completeness burden it carried moved to `DEC-01-01`, where the
+owner put it: *inventorize the mentions first and ensure no leftover is there due to newline.*
+*(b)* **The conversion map lives in `wip/` for forensics** — resolved as two artifacts, since the
+owner's own caveat was that the forensic file may itself become a victim of later changes: the
+reasoning and counts in `validation/`, the bare crosswalk in the ledger.
+
+**The sizing was 165 citations across 18 files. It was 554 across 36, and the gap was not drift.**
+Three forms were invisible to the pattern that sized it: **18 line-broken citations** with the
+number on the next line (the spec knew of 3, all in the ledger; they were spread across five
+files), 11 plural mentions, and **8 bare back-references** — a decision cited by number with no
+`Decision` word anywhere near it, every one of them in a sentence unpacking a plural. Proof they
+were invisible: joining them alone moved the occurrence count 510 → 528.
+
+**All six retired entries were vacuumed, not four** — owner ruling on the one in doubt: Decision 16
+recorded the Gate-2 scope ruling that kept pointer out of this pass, and *"if it's not in
+stakeholders' verbatim attestations, it's my interim ruling and I reverted it with reason."* Its
+technical justification was lifted into `D-ONE-LIFETIME` first (`e9a3501a`), because deleting the
+entry would otherwise have removed the only record in the persistent corpus that a ratified
+position was reversed. **That lift generalised into `FIX-02-26`** — the owner's standing directive
+that a *technical* justification does not live in `wip/`, which the whole *"Ratified deviations"*
+table fails.
+
+**Two things it closes that were parked.** Where Decision 20's `keys_pressed` history goes:
+into `D-ASK-THE-DEVICE`, *"what it withdraws"*, keeping the two details that still bite — the view
+was index-only on the shipping LuaJIT/5.1 runtime, and the consumer that justified exposing it is
+served by the device. And the spec's *"one decision the owner owes"* (how the slug is declared) was
+already ruled: `agents/rules/ledgers.md` §3 defines the `T-` slug as *"same shape as the decisions
+ledger's `D-SLUG` … declared first in the heading with the prose after"*.
 
 **NOT absorbed by `LEDGER-01-02`** (2026-08-27) — I recommended absorbing it before reading it in
 full, and it is a different job: this sprint is the numbers→names conversion, not a sectioning. The
@@ -936,15 +982,23 @@ sweeps and which it keeps as stakeholder record.
 
 | id | step | gate |
 |---|---|---|
-| DEC-01-01 | join the 3 line-broken mentions; normalise plural/lower-case | `grep -cE 'Decision$'` = 0 |
-| DEC-01-02 | wrap every id in sentinels | **the governing gate** — no bare `Decisions?` in scope |
-| DEC-01-03 | inventory: 29 slugs + 4 removals | drafted; owner will grep-and-rename if a slug displeases |
-| DEC-01-04 | remove the 4 tombstones (13, 16, 20, 29) | no `TOMB-` survives · decide where Decision 20's `keys_pressed` history goes |
-| DEC-01-05 | substitute slugs, one pass per file | reflow long lines **in the same commit** |
-| DEC-01-06 | strip sentinels; read the diff; append the crosswalk to the ledger | suite green |
+| ~~DEC-01-01~~ ✅ | join the line-broken mentions; normalise plural/lower-case | **18 joins, not 3**, plus 11 plurals, 1 lower-case and 8 bare back-references. `65281671` |
+| ~~DEC-01-02~~ | ~~wrap every id in sentinels~~ | **NOT EXECUTED** — owner dropped it with the renumbering; the gate moved to `-01` |
+| ~~DEC-01-03~~ ✅ | inventory: **31 slugs + 6 removals** | `94ce4960`; forensic map in [`validation/reviews/DEC-01-03-inventory.md`](validation/reviews/DEC-01-03-inventory.md) |
+| ~~DEC-01-04~~ ✅ | remove **all six** retired entries | `f30c5a72` (Decision 12's seven code citations rehomed first), `9c8cc631` (the vacuum) |
+| ~~DEC-01-05~~ ✅ | substitute slugs | `cac3c739` — 554 substitutions, 36 files, 68 comment blocks reflowed in the same commit |
+| ~~DEC-01-06~~ ✅ | read the diff; append the crosswalk to the ledger | `187b62a3`; `68b7e1fb` discharges the tombstone clause in `ledgers.md` §2 |
 
-**Scope:** the ledger, ~10 persistent docs, and **`src/` + `tests/` (165 citations)**. **`wip/` is
-out of scope** — frozen history, and it carries its own dead `D-1…D-10` namespace.
+**Scope as executed:** the ledger, **14** persistent docs, **`src/` + `tests/`**, and **`agents/`**
+— the last an owner-approved addition, because `agents/rules/commenting.md`'s four citations are the
+*exemplars* teaching what a good citation looks like, and leaving them numbered would have had the
+rule governing comment citations demonstrate a form that no longer resolves. **`wip/` stayed out** —
+frozen history, and it carries its own dead `D-1…D-10` namespace, which the crosswalk now separates
+from this one for good.
+
+**The one thing a reader of `wip/` must know:** every document in this tree, every commit message
+before 2026-09-01, and this roadmap's own history cite decisions by number. The crosswalk in
+`doc/development/decisions/input.md` is the translation, and it is the half that survives.
 
 ---
 
@@ -1132,7 +1186,7 @@ Not open questions to chase — each has a trigger:
 | Decision 12 — a ledger entry that says it is not a decision | **owner disposes during review** — needs context, stays in place |
 | the slug table | **no review needed** — grep-and-rename if a slug displeases |
 | provenance beyond the 3 files | **deferred** — a formal violation does not displace real work |
-| where Decision 20's `keys_pressed` history lives after removal | **at DEC-01-04**, per entry |
+| ~~where Decision 20's `keys_pressed` history lives after removal~~ | **ANSWERED at `DEC-01-04`** — into `D-ASK-THE-DEVICE`, *"what it withdraws"* |
 | ~~which sprint (and KIND) the three owner debt entries are filed into~~ | **ANSWERED 2026-08-30** — two new KINDs, owner-ruled: `OP-01` for the ledger upkeep (operational, no parent decision), `FEAT-01` for the design and implementation |
 | does `oneshot` close on cancel as well as submit, and what happens when the project also set `after_submit`? | **at `FEAT-01-01`** — the design ruling, before any code |
 | is `maze`'s flag-clearing neutralisation worth rewriting, or `wontfix`? | **at `BUG-01-11`**, whose first step is that weighing |
