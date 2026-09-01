@@ -214,6 +214,15 @@ and `col` would no longer say where you are. Blank elements are content
 and survive: `set_text{"a", "", "b"}` is three lines. The same holds for
 `text` at `show`.
 
+**Every element must be a string, and a list containing anything else is
+refused** — `set_text{"a", 42}` raises
+`compy.input.set_text: text must be a string or a list of line strings`,
+and `show` raises the same message under its own name. The widget will
+reshape how your content is *spelled*, but it will not guess what you
+meant by a value that is not text: convert it yourself with `tostring`
+where you want a number shown. The refusal leaves the current content
+untouched.
+
 ## What the widget tells you — callbacks
 
 Everything the widget calls back about: a submission, a cancel, a boundary, a validation.

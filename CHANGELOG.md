@@ -152,6 +152,17 @@ newest first.
   project-facing surface, so the silent case is fixed rather than
   described.
 
+- **Content that is not text is refused with a message you can read.**
+  `show{text = …}` and `set_text` take a string or a list of line
+  strings; anything else — a number, a boolean, a table — now raises
+  `compy.input.set_text: text must be a string or a list of line
+  strings`, naming the call that failed. Previously such a value died
+  inside the framework with `bad argument #1 to 'len'`, naming a
+  function you never called. Convert with `tostring` where you want a
+  number shown; the widget reshapes how content is *spelled* but does
+  not guess what a non-text value meant. Same treatment `cursor`
+  already had.
+
 - **The two spellings of that shape now mean the same thing.** A list
   element containing a newline used to be stored verbatim, so
   `set_text{"a\nb"}` gave one line holding a line terminator the widget

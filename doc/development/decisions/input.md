@@ -1695,8 +1695,30 @@ spellings and newlines on only one.
 `string.unlines` before the model sees it.
 
 **What it does not license.** Normalisation is not validation. A project's content is still its own:
-nothing here rejects, truncates, escapes or re-flows what is set. The rule removes representations
-that cannot be addressed, and nothing else.
+nothing here truncates, escapes or re-flows what is set. The rule removes representations that
+cannot be addressed, and nothing else.
+
+**The boundary, stated as the pair it is: normalise representation, refuse structure**
+(owner, 2026-09-01). The two are different mistakes and deserve different answers.
+
+- **A representation variance is one value spelled differently** — a string against a list, an
+  embedded newline, a byte that is not valid UTF-8. The project meant text and we can tell what
+  text. Normalise silently; that is everything above.
+- **A structure error is a value that is not text at all** — a number, a boolean, a table where a
+  line belongs. **Refused at the project boundary**, with `checked_text` beside `checked_cursor`
+  (`consoleController.lua`), raising `compy.input.set_text: text must be a string or a list of line
+  strings` under the name of the call that failed.
+
+Coercing the second would be tolerance producing a lie: `{"a", 42}` has the exact shape of
+`UserInputModel:insert_text_line(text, li)`'s arguments, so the likeliest way a project builds one
+is by confusing two functions — and turning that into the visible line `42` hides the mistake
+behind plausible content. A project that genuinely has a number and wants it shown converts at the
+call site, as `pong` already does. **Tolerance is for input we can read; it is not for input we
+would have to guess at.**
+
+This also settles the class the same way `BUG-01-08` settled it for `cursor`: a malformed value on
+the public surface earns **one** message naming the call and the expected shape, never a raw Lua
+error from inside the framework and never a silent repair.
 
 **Consequence.** No public surface changes, and no capability of the documented shape is removed:
 the state normalisation eliminates — a line holding a raw newline — could not be produced by typing

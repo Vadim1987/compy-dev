@@ -117,64 +117,6 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
-### `set_text` answers a malformed content element three different ways
-
-- **Where:** `src/model/input/userInputModel.lua` — `normalized_lines`, and the
-  absence of any check at the project boundary in
-  `src/controller/consoleController.lua` (`build_widget_api`'s `set_text`, and
-  `show`'s `cfg.text`).
-- **State:** `text` is documented as *"a string or list of line strings"*. A list
-  element that is **not** a string gets one of three unrelated treatments, none
-  of them announced:
-
-  | input | result |
-  |---|---|
-  | `{'a', 42}` | the `42` is **silently dropped** — `string.split` type-checks and returns `{}` |
-  | `{42}` | **content wiped** to `{''}`; `is_empty()` is then true |
-  | `{'a', true}`, `{'a', {'b'}}` | raw `bad argument #1 to 'len'` from inside `sanitize_utf8` |
-
-- **Why the drop and the wipe are worse than the raise.** They are silent and
-  they *look* right: the widget comes up with content, just not the content the
-  project set. The raise at least stops the program — though it names `len`, a
-  function the project author never called.
-- **This is a structure error, not a representation variant, and that is the
-  distinction that decides it** (owner, 2026-09-01). Normalising a string
-  against a list, splitting newlines, dropping invalid UTF-8 — those are one
-  value spelled differently, and tolerance is right for them (Decision 38).
-  A number where a line belongs is a **different kind of mistake**: the shape
-  `{string, number}` is exactly the signature of
-  `UserInputModel:insert_text_line(text, li)` (`@param text string`,
-  `@param li integer?`), so the likeliest source of such a list is a caller
-  confusing two functions — and coercing it would turn a programming error into
-  plausible-looking content the author never wrote.
-- **Coercion also has no constituency.** No in-tree caller passes a non-string,
-  and a project that *has* a number and wants it displayed already converts at
-  the call site — `pong/main.lua:104` writes `tostring(S.score.player)`. So
-  framework-side coercion would fire only where the author did **not** mean
-  text.
-- **The house already ruled this class, and the precedent is a check at the
-  project boundary.** `BUG-01-08` — `show{cursor = {}}` raising a raw Lua error
-  from inside the framework — was a **defect**, and the fix was neither
-  coercion nor silence: `checked_cursor` (`consoleController.lua:699-708`)
-  validates at the surface and raises
-  `'compy.input.show: cursor must be a {line, col} pair of numbers'` at level 4,
-  so the traceback lands on the project's own line. The symmetrical fix here is
-  a `checked_text` beside it, replacing all three behaviours above with one
-  message naming the call and the expected shape.
-- **Provenance is mixed.** The raw raise is **pre-existing** — identical at the
-  PR base. The **drop and the wipe are this feature's**, introduced 2026-09-01
-  by `BUG-02-01`'s fix: base stored the raw number (a phantom — `is_empty()`
-  true while the screen drew `42`), head drops it. Neither base nor head is
-  coherent; both are silent.
-- **Not slugged — the disposition is open** and is the owner's. The reviewer of
-  `BUG-02-01` recommended leaving the code and narrowing Decision 38's wording,
-  having weighed head against *base* rather than against a boundary check.
-- **Revisit:** a `FIX` row, not a reopening of `BUG-02` — it is a public-surface
-  behaviour change and earns a CHANGELOG line and a justification line of its
-  own. If it is **not** taken before the release, Decision 38's tolerance
-  boundary should say plainly that behaviour on out-of-contract elements is
-  defined but lossy.
-
 ### `_set_text_line` has an unreachable table branch
 
 - **Where:** `src/model/input/userInputModel.lua:196-198` —
@@ -1430,6 +1372,45 @@ changes.
   anyway.
 
 ## RETIRED
+
+### `set_text` answered a malformed content element three different ways (RESOLVED, 2026-09-01)
+
+- **Resolution:** fixed at `BUG-02-02` — the step the owner added to `BUG-02`'s
+  scope on the ground that *"it's our own interim defect which this feature
+  introduced, and it does not go into release"*. `checked_text` sits beside
+  `checked_cursor` at the project boundary (`consoleController.lua`) and refuses
+  any `text` that is not a string or a list of strings, raising
+  `compy.input.set_text: text must be a string or a list of line strings` — or
+  the same message under `compy.input.show` — at the same level-4 depth. The
+  surface's `set_text` was lifted into an `api_set_text` for that depth rule, as
+  `api_set_cursor` already was.
+- **The three behaviours it replaced**, all silent or unhelpful, none announced:
+  `{'a', 42}` **silently dropped** the number, `{42}` **wiped the content** to
+  `{''}`, and `{'a', true}` raised `bad argument #1 to 'len'` from inside
+  `sanitize_utf8` — naming a function the project author never called.
+- **Provenance, and why it was fixed rather than filed.** The raw raise is
+  pre-existing; **the drop and the wipe were this feature's own**, introduced
+  hours earlier the same day by `BUG-02-01`'s fix, when `string.lines` began
+  type-checking elements that `InputText` had previously stored as-is. An
+  interim regression that never reached a release is not debt to weigh — it is
+  work to finish, which is the owner's ruling above.
+- **The rule it settles is Decision 38's boundary: normalise representation,
+  refuse structure.** A string against a list, an embedded newline, an invalid
+  byte — one value spelled differently, and normalised silently. A number,
+  boolean or table where a line belongs is not text at all. Coercing it would be
+  tolerance producing a lie: `{'a', 42}` has the exact shape of
+  `UserInputModel:insert_text_line(text, li)`'s arguments, so the likeliest
+  source is a caller confusing two functions, and rendering `42` as content
+  hides that behind something plausible. A project that has a number and wants
+  it shown converts at the call site, as `pong/main.lua:104` does.
+- **Precedent followed, not invented:** `BUG-01-08` settled this class for
+  `cursor` — a malformed value on the public surface earns one message naming
+  the call and the expected shape, never a raw Lua error from inside the
+  framework and never a silent repair.
+- **Where:** `src/controller/consoleController.lua` (`checked_text`,
+  `api_set_text`, `api_show`), `tests/input/input_cursor_text_spec.lua`
+  (*"refuses a non-string element"*, five cases), `../../input_api.md`
+  (*"Live changes"*), `../decisions/input.md` (Decision 38).
 
 ### `set_text`'s list branch does not split embedded newlines (RESOLVED, 2026-09-01)
 
