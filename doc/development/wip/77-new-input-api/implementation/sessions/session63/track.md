@@ -143,3 +143,26 @@
   whether a clear should reset the visible range is unchecked.
 - **Pattern:** "what is the likely disposition" beats "here are two options" — the owner asked
   for the suspicion, not the menu.
+
+## 2026-09-01 — cold peer review: changes needed, and it caught a real one
+
+- Spawned Opus, model explicit, prompt of record `22276407`, report `cd494d85`. Verdict
+  **changes needed**: code sound, **durable documents** carried false statements.
+- All 10 claims CONFIRMED — it verified rather than agreed (counted the 7 callers itself,
+  reproduced `(3,7)`, walked **72 revisions** of `set_text`, ran a 22-input base-vs-head matrix).
+- **F1 refuted my claim** and I verified it: `insert_text_line:224` writes `cursor.l` raw and is
+  live on **every Shift+Enter** + Ctrl+D. So THREE raw writers, not two — and the correction
+  *strengthens* the entry (bigger, better-justified review pass).
+- F2: the ROADMAP still carried the claim I'd corrected **twice** elsewhere the same day.
+  **Lesson: a correction applied to 2 of 3 artefacts is not a correction** — and the one missed
+  was the summary doc a PR reader opens first.
+- F4/F6/F8 overclaims corrected; F7 comment trimmed (it restated Decision 38 after citing it).
+- Three findings registered in the ledger, none ours: `\r` untreated; `_set_text_line`'s
+  unreachable table branch; `split_array`'s dead type guard (precedence bug).
+- **Reviewer's open-item recommendation (leave the code) rests on an incomplete option set** — it
+  compared head vs BASE, never vs coercion. Verified: coercion gives `{'a','42'}` → submits
+  `"a\n42"`, and `{42}` → `"42"` non-empty. **More coherent than base AND head.**
+- **F3 corrected MY report to the owner:** base stored the raw **number** 42, not `"42"`; and
+  `set_text{42}` doesn't just drop — it **wipes content to `{''}`**, `is_empty` true.
+- Environment, stated not assumed: **lua-lsp still dead** (broken pipe) → grep, not AST;
+  suite ran on **LuaJIT**, not the owner's PUC Lua.
