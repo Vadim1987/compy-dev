@@ -7,14 +7,14 @@ require('util.jni')
 ---
 --- THREADING: JNIEnv is thread-local and cached here, so
 --- the backend must be created and polled on one thread.
+--- Driven from the frame loop it reads in short bursts and
+--- the tail of a reply sits on the device until the next
+--- write; model/serial/worker.lua runs it on a thread of
+--- its own instead, where the read can block. Both work,
+--- the threaded one keeps a request outstanding.
 ---
 --- Verified on the device: scan, permission, open, write,
 --- read, detach on unplug and a clean reconnect all run.
---- Open problem: reads stop early. After a write the board's
---- reply arrives in two or three slices and then no read
---- brings anything until the next write, while the same
---- board answers a Mac at once. The knobs and counters below
---- (serial_tune, serial_stats) exist to pin this down.
 
 --- @class AndroidBackend
 --- @field new function
@@ -30,10 +30,8 @@ local CDC_COMM = 2
 local CDC_DATA = 10
 local EP_BULK = 2
 local DIR_IN = 0x80
-local RX_CAP = 512
-local RX_SIZE = 64
+local RX_SIZE = 512
 local READ_MS = 5
-local DRAIN_MAX = 16
 local WRITE_MS = 1000
 local CTRL_MS = 1000
 --- PendingIntent.FLAG_IMMUTABLE, required on Android 12+
@@ -51,18 +49,13 @@ local function now()
   return os.time()
 end
 
---- Read-path knobs, changeable on the live port from the
---- console (serial_tune) while the receive stall is being
---- chased. The defaults are the original behaviour exactly:
---- one read per poll, a 5 ms window, 64 bytes asked for.
+--- How long one read waits for bytes. Short on the frame
+--- loop, because the frame has to come back; long on a
+--- thread, where waiting costs nothing. Changeable on the
+--- live port from the console (serial_tune).
 --- @return table
 local function default_tune()
-  return {
-    read_ms = READ_MS,
-    read_size = RX_SIZE,
-    gap_s = 0,
-    drain = false,
-  }
+  return { read_ms = READ_MS }
 end
 
 --- What the read path did so far, for serial_stats
@@ -92,12 +85,23 @@ function AndroidBackend.new()
   self.extras_told = false
   self.tune = default_tune()
   self.stats = fresh_stats()
-  self.next_read = 0
   return self
 end
 
 function AndroidBackend:resetStats()
   self.stats = fresh_stats()
+end
+
+--- One knob, by name, so the console and the worker change
+--- it the same way. An unknown name is an error: a typo
+--- must not pass for a setting.
+--- @param k string
+--- @param v any
+function AndroidBackend:setTune(k, v)
+  if self.tune[k] == nil then
+    error('no such knob ' .. tostring(k))
+  end
+  self.tune[k] = v
 end
 
 function AndroidBackend:start(sink)
@@ -339,7 +343,7 @@ function AndroidBackend:openDevice(entry)
   }
   jniDropLocal(env, conn)
   jniDropLocal(env, connCls)
-  local rx = env[0].NewByteArray(env, RX_CAP)
+  local rx = env[0].NewByteArray(env, RX_SIZE)
   port.rx = jniGlobal(env, rx)
   jniDropLocal(env, rx)
   if not jniCallBool(env, port.conn, port.claimM,
@@ -385,9 +389,8 @@ function AndroidBackend:read()
   local port = self.port
   local tune = self.tune
   local st = self.stats
-  local size = math.min(tune.read_size, RX_CAP)
   local n = jniCallInt(env, port.conn, port.bulkM,
-    port.epIn, port.rx, size, tune.read_ms)
+    port.epIn, port.rx, RX_SIZE, tune.read_ms)
   st.reads = st.reads + 1
   if n > 0 then
     st.got = st.got + 1
@@ -401,21 +404,6 @@ function AndroidBackend:read()
     st.neg = st.neg + 1
   end
   return ''
-end
-
---- Everything the port gives right now: one read, or, with
---- drain on, reads until one comes back empty
---- @return string
-function AndroidBackend:readAll()
-  local chunk = self:read()
-  if not self.tune.drain or chunk == '' then return chunk end
-  local parts = { chunk }
-  for _ = 2, DRAIN_MAX do
-    local more = self:read()
-    if more == '' then break end
-    parts[#parts + 1] = more
-  end
-  return table.concat(parts)
 end
 
 --- @param data string
@@ -535,11 +523,8 @@ end
 --- @return string? fault
 function AndroidBackend:pollOpen()
   self.stats.polls = self.stats.polls + 1
-  if now() >= self.next_read then
-    self.next_read = now() + self.tune.gap_s
-    local chunk = self:readAll()
-    if chunk ~= '' then self.sink.bytes(chunk) end
-  end
+  local chunk = self:read()
+  if chunk ~= '' then self.sink.bytes(chunk) end
   if now() < self.due then return end
   self.due = now() + PRESENCE_S
   local listed = self:present()

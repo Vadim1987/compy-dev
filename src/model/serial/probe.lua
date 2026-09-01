@@ -5,9 +5,9 @@
 --- serial_probe()            print events, send PING
 --- serial_probe('print(1)')  same, but send that line
 --- serial_probe(false)       stop printing, release fields
---- serial_stats()            read-path counters and knobs
+--- serial_stats()            read-path counters
 --- serial_stats(true)        the same, then zero counters
---- serial_tune{read_ms=50}   change knobs on the live port
+--- serial_tune{read_ms=50}   change the read wait
 
 --- Byte values, so an unprintable reply is still readable
 --- @param chunk string
@@ -66,45 +66,47 @@ local function ago(t)
   return string.format('%.1fs ago', love.timer.getTime() - t)
 end
 
---- What the platform port's read path did so far, and how
---- it is set. Backends without counters say so.
+--- What the platform port's read path did so far. On the
+--- threaded backend the counters cross once a second, so
+--- right after a reset there is nothing to print yet.
 --- @param reset boolean?
 function serial_stats(reset)
   local b = SerialPort.backend
-  if not b.stats then
+  if not b.resetStats then
     print('stats: none on this backend')
     return
   end
-  local s, t = b.stats, b.tune
-  print(string.format(
-    'stats: polls %d reads %d got %d empty %d neg %d bytes %d',
-    s.polls, s.reads, s.got, s.empty, s.neg, s.bytes))
-  print('stats: sends ' .. s.sends .. ', last byte ' ..
-    ago(s.last_got_at) .. ', last send ' .. ago(s.last_send_at))
-  print(string.format(
-    'tune: read_ms %d read_size %d gap_s %.3f drain %s',
-    t.read_ms, t.read_size, t.gap_s, tostring(t.drain)))
+  local s = b.stats
+  if not s then
+    print('stats: none in yet')
+  else
+    print(string.format(
+      'stats: polls %d reads %d got %d',
+      s.polls, s.reads, s.got))
+    print(string.format(
+      'stats: empty %d neg %d bytes %d',
+      s.empty, s.neg, s.bytes))
+    print('stats: sends ' .. s.sends .. ', last byte ' ..
+      ago(s.last_got_at) .. ', last send ' ..
+      ago(s.last_send_at))
+  end
   if reset then
     b:resetStats()
     print('stats: zeroed')
   end
 end
 
---- Change read-path knobs on the live port, e.g.
---- serial_tune{read_ms = 50, gap_s = 0.05, drain = true}.
---- An unknown key is an error, so a typo cannot pass quietly.
+--- Change a read-path knob on the live port, e.g.
+--- serial_tune{read_ms = 50}. An unknown name is an error,
+--- so a typo cannot pass for a setting.
 --- @param t table
 function serial_tune(t)
   local b = SerialPort.backend
-  if not b.tune then
+  if not b.setTune then
     print('tune: none on this backend')
     return
   end
   for k, v in pairs(t or {}) do
-    if b.tune[k] == nil then
-      error('tune: no such knob ' .. tostring(k))
-    end
-    b.tune[k] = v
+    b:setTune(k, v)
   end
-  serial_stats()
 end

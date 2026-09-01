@@ -1088,8 +1088,8 @@ function ConsoleController.prepare_env(cc)
   local terminal            = cc.model.output.terminal
   require('model.serial.init')
   if love.system.getOS() == 'Android' then
-    require('model.serial.backend_android')
-    SerialPort = Serial.new(AndroidBackend.new())
+    require('model.serial.backend_thread')
+    SerialPort = Serial.new(ThreadBackend.new())
   else
     require('model.serial.backend_null')
     SerialPort = Serial.new(NullBackend.new())
