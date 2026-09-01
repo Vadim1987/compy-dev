@@ -117,36 +117,6 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
-### `set_text`'s list branch does not split embedded newlines
-
-- **Where:** `src/model/input/userInputModel.lua` — `UserInputModel:set_text`,
-  the `type(text) == 'table'` branch, which sanitises each element and stores it
-  verbatim.
-- **State:** the two branches of one function disagree about what a newline
-  means. `set_text("a\nb")` yields two lines; `set_text({"a\nb"})` yields **one**
-  line holding a raw newline, which the model then counts as an ordinary
-  character — three characters long, caret positions `1..4`. The content
-  round-trips through `string.unlines` unchanged, so a submit delivers what was
-  set; what is uncharacterised is the rendering, which needs a display.
-- **Why it matters:** `../input_api.md` documents `text` as *"a string or list
-  of line strings"*, one shape with two spellings, and the spellings now behave
-  differently. This is the same **one fact stated twice** family as the
-  accept-side/apply-side key lists — nothing reconciles the two branches, and
-  the disagreement is silent.
-- **Why it is narrow, stated so the weighing is honest:** no in-tree caller can
-  reach it. All three (`maze/core_editor.lua`, `tixy/main.lua` twice) pass
-  either a raw string or `string.lines(…)`, and `string.lines` never emits an
-  element containing a newline. A project has to hand-build such a list. The
-  sibling path differs too: `UserInputController:add_text` normalises with
-  `string.unlines` before handing over, so the *add* path has no such branch.
-- **Provenance: pre-existing.** At the PR base the table branch is
-  `InputText(text)` — no split, no sanitise. This feature fixed the *string*
-  half and thereby made the two halves visibly disagree; it did not introduce
-  the branch. Found by the cold peer review of the fix that exposed it.
-- **No slug, deliberately** — a slug is the commitment to fix, and whether this
-  is fixed before the release is not yet decided.
-- **Revisit:** `BUG-02-01`, whose first step is that decision.
-
 ### The error highlight compares a byte column against a character index
 
 - **Where:** `src/view/input/userInputView.lua` — `ec = perr.c` is read off the
@@ -1272,6 +1242,67 @@ changes.
 
 ## RETIRED
 
+### `set_text`'s list branch does not split embedded newlines (RESOLVED, 2026-09-01)
+
+- **Resolution:** fixed at `BUG-02-01`. The `type(text) == 'table'` branch hands
+  its sanitised list to `string.lines`, which is polymorphic over
+  `string | string[]` and delegates a list to `string.split_array` — so each
+  element splits and empty elements are preserved. `set_text("a\nb")`,
+  `set_text({"a\nb"})` and `set_text({"a","b"})` now produce the same two lines
+  and the same cursor. One call; the two branches converge on the function the
+  string branch already used instead of stating the rule twice.
+- **Never slugged, and correctly so.** A slug is the commitment to fix and is
+  earned when an entry becomes `ACTIVE`; this one was ruled and fixed in the
+  same session, so it went `BACKLOG` → `RETIRED` without passing through.
+- **The rule behind it is the owner's** (2026-09-01), and it is the same one the
+  UTF-8 sanitisation on this path already served: **the cursor addresses content
+  as `(line, column)`, so content that is not normalised makes that address
+  ambiguous.** Invalid bytes leave a column's *length* undefined; a newline
+  inside a line leaves its *position* undefined — the caret could sit past a
+  line terminator. Neither normalisation is a convenience, and they are now
+  symmetric across both spellings. Written up in
+  `../internals/user_input.md`, *"Multiline input"*, and stated for a project
+  author in `../../input_api.md`, *"Live changes"*.
+- **The defect it closed:** the two branches of one function disagreed about
+  what a newline means. `set_text({"a\nb"})` yielded **one** line holding a raw
+  newline, which the model counted as an ordinary character — three characters
+  long, caret positions `1..4`.
+- **What was observable, established at the weighing** — more than the entry
+  first claimed. The content round-trips through `string.unlines`, so
+  `on_text_entered` could not tell the two apart; but `after_submit` receives
+  the line list itself (Decision 37's payload split), so the spellings handed a
+  project `{"a","b"}` versus `{"a\nb"}`. The validator runs per line and would
+  have measured the concatenation and named the wrong line. And the rendering —
+  recorded as *"needs a display"* — was read out of the draw code instead: both
+  paths reach `gfx.print`, which honours the newline, and they corrupt it
+  **differently**. `ViewUtils.write_line` draws the tail one row down at `x = 0`
+  over its neighbour while the model still believes it drew one row, so the
+  cursor, the visible window and the scroll arithmetic all disagree with the
+  screen; the highlighted path prints character by character at explicit
+  coordinates, so the newline draws nothing and reads as a blank column. Not
+  display-verified — read from the draw code, which is why it was fixed rather
+  than left described.
+- **Why it was still narrow:** no in-tree caller could reach it. All three
+  (`maze/core_editor.lua`, `tixy/main.lua` twice) pass either a raw string or
+  `string.lines(…)`, and `string.lines` never emits an element containing a
+  newline. Nor could a user: `add_text` splits, and the paste path pre-joins
+  with `string.unlines` at the controller before the model sees it. A project
+  had to hand-build such a list, and **nothing could read it back** — the
+  `compy.input` surface has no content getter, so there is no set/get
+  round-trip the normalisation could break.
+- **Provenance: pre-existing.** At the PR base `3256aac` the table branch is
+  `InputText(text)` — no split, no sanitise. This feature fixed the *string*
+  half (`T-MULTILINE-STR`) and thereby made the two halves visibly disagree; it
+  did not introduce the branch. Two refinements found at the weighing: the
+  per-element sanitise pass **is** ours, so the branch carrying the split is
+  code this feature wrote, and the asymmetry — UTF-8 on both spellings,
+  newlines on one — was its own choice rather than an inheritance. Found by the
+  cold peer review of the fix that exposed it.
+- **Where:** `src/model/input/userInputModel.lua` (`set_text`),
+  `tests/input/user_input_model_spec.lua` (*"embedded newlines"*, three cases),
+  `tests/input/input_cursor_text_spec.lua` (the surface case, beside its string
+  twin), `../../input_api.md`, `../internals/user_input.md`, `../../../CHANGELOG.md`.
+
 ### T-MAZE-NEUTRALIZE — `maze` neutralises two hook sites by clearing a flag, not by the widget guard (NOT DEBT, 2026-08-31)
 
 - **Resolution: `wontfix`, by owner ruling — and the entry's premise was wrong.**
@@ -1403,8 +1434,11 @@ changes.
 
 - **Resolution:** fixed at `BUG-01-09`. The string branch of
   `UserInputModel:set_text` now splits with `string.lines` and hands every line
-  to `InputText`, which is what the table branch already did with a list. A
+  to `InputText`, which is where the table branch already handed its list. A
   single-line string yields a one-element list, so that path is unchanged.
+  **The table branch did not itself split** — fixing this half is what made the
+  two visibly disagree, and that is the entry above,
+  *"`set_text`'s list branch does not split embedded newlines"*.
 - **The defect it closed:** `self.entered` was assigned only when the string
   held one line, so a string with a newline matched no branch, nothing was
   written, and the previous session's content survived into the new one — with
