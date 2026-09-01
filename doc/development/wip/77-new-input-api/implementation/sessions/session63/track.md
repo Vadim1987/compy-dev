@@ -190,3 +190,26 @@
 - CHANGELOG written **against the last release, not against this morning**: the drop/wipe never
   shipped, so the stakeholder-visible change is the readable refusal replacing
   `bad argument #1 to 'len'`.
+
+## 2026-09-01 — second cold review: changes needed, and it found the miss
+
+- **`BUG-02-02`'s first fix did not close its own class.** `checked_text` walked with `ipairs` →
+  `{[1]='a',[3]=42}` accepted + **42 dropped**; `{foo=42}` accepted + **content wiped**. The same
+  two silent symptoms, one spelling out. Verified before acting. Fixed with `is_line_list`
+  (count every key, require `1..n` strings) — `8451fa63`, suite 1043 → **1048**.
+- Also found: **`show{text=false}` silently changed meaning** with the lift (previous content
+  survived → opens empty). The NEW behaviour is correct per Decision 35, so a second defect closed
+  **by accident** — but shipped untested and unsaid. Now documented + pinned.
+- **The depth rule was untested anywhere**: `error(…,4)`→`error(…,3)` left the suite green, and it
+  is the *sole* justification for three `api_*` functions. Test added that loads a named chunk and
+  asserts the caller's `file:line`.
+- Four document claims corrected (`f179b269`): the CHANGELOG's "previously" (sanitize_utf8 **does
+  not exist at base** — verified), Decision 38's scope overclaim, the withdrawn `insert_text_line`
+  rationale, and `pong/main.lua:104` — which calls **pong's own** unrelated `set_text`. Cited three
+  times as evidence. **A citation that greps is not a citation that resolves.**
+- Registered not fixed: the **unchecked callable keys** (`show{validator=42}` → raw error at
+  submit). Same class `BUG-01-08` and `BUG-02-02` each closed for one key.
+- **Seven of my claims corrected this session, five in the persistent corpus. The code survived
+  every attack; the documents did not.** That asymmetry is the session's real lesson.
+- Wrapped: report, session64 prompt (delivery-level revalidation of 60/61/63), pointer repointed,
+  `validation.md` baseline updated 1032 → 1048.

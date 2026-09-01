@@ -30,7 +30,7 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **1032 / 0 / 0 / 10**. A different count is
+6. Confirm the baseline: `busted tests` → expect **1048 / 0 / 0 / 10**. A different count is
    a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
    (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
    session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
@@ -61,6 +61,10 @@ owner and revisable, not a frozen mandate.
    level, applied the owner's rulings on its findings and opened `BUG-02`, and 1032 held across all
    of its commits. **Session62 added none either**: an architecture side-track on the console/project
    environment relationship, producing documents under `validation/` and touching no production code.
+   **1048 after session63**'s `BUG-02` — four for `BUG-02-01`'s list splitting, two more for the
+   unification that followed it, five for `BUG-02-02`'s boundary refusal, and five its second cold
+   peer review earned (three list shapes an `ipairs` walk let through, `show{text = false}` opening
+   empty, and the error blaming the caller's line rather than the framework's).
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -323,7 +327,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session63/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session64/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
