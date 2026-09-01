@@ -54,3 +54,23 @@
   persistent corpus would add a site to `FIX-01-02`.
 - Parked, still not investigated: string/table branches disagree on `_update_cursor`, and
   `jump_end` may make it redundant.
+
+## 2026-09-01 — Decision 38, the unification, and a standing rule
+
+- **Owner rule (standing, behavioural):** *never leave debt in the track without registering it
+  with the ledger.* A track dies with the session; the ledger is persistent corpus. Applied
+  immediately — the cursor fossil got its own RETIRED entry (`64441d69`) rather than staying a
+  track line. Saved to memory.
+- **Decision 38** created (`c7c6b151`): content is normalised so the cursor address is
+  unambiguous. Written as the general rule, not as the fix — the owner's reason generalises past
+  `set_text`. Bounded twice on purpose: not about return payloads (Decision 37's), and
+  **normalisation is not validation**.
+- **The cursor disagreement, answered:** the call was **inert**, in *every* revision. `472c6bba`
+  (the transitional triplet, the commit that introduced it) already ended `set_text` with an
+  unconditional `jump_end`. `_update_cursor` sets `.c` from the old cursor line in the new text
+  and `.l` to `#t` — incoherent by construction — then `init_visible` replaces the visible object
+  and `jump_end` overwrites the cursor. Nothing survives.
+- Mutation-tested **before** deleting: 5 cases × both spellings, byte-identical snapshots.
+  The shape was copied from `_set_text_line`, where it IS live. `_update_cursor` stays.
+- **Unified** (`9c718a56`): `normalized_lines` + one storage path, body 19 → 10 lines. 1036 → 1038.
+- Ledger gate went FIRST (decision, then code), matching `ARC-01-03` / `ARC-02-01` precedent.
