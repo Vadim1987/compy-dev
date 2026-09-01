@@ -31,3 +31,26 @@
   normalise are ours.
 - Parked finding: string/table branches disagree on `_update_cursor`, and `jump_end` may make it
   redundant. Not this row.
+
+## 2026-09-01 — BUG-02-01 ruled FIX, executed, closed
+
+- Owner ruling: **fix**, and the reason is the rule — *"same as for utf-8 sanitization: we need
+  cursor to be set without ambiguity"*. Recorded as a rule, not a preference: `(line, column)`
+  addressing is what both normalisations protect. This is the design-level answer pattern again
+  — the category, not the patch.
+- Tests first: 4 breaking cases, **all seen to fail** (1032/4 fail) before the fix. Then one call.
+  1032 → **1036**, green at every commit.
+- Three commits at the seam: `2986fd80` production fix · `dd19cf64` guide + internals + CHANGELOG
+  · `99ad8150` debt retirement + roadmap.
+- **lua-lsp bridge was DOWN** (broken pipe, twice) — no diagnostics pass. Stated in the fix
+  commit rather than left implied; the suite and the probe are what back the change.
+- The guide's rule went into "Live changes" right after *"Characters, not bytes"* — same rule
+  about the same thing, so it reads as one paragraph rather than a bolt-on.
+- Two stale sibling claims found and corrected while landing, both saying the list form was fine:
+  the CHANGELOG's *"the list form always worked"* and `T-MULTILINE-STR`'s *"which is what the
+  table branch already did"*. **A fix that makes a neighbouring claim false is a two-place edit.**
+- Entry retired **unslugged** — BACKLOG → RETIRED without passing ACTIVE, per the register's rule.
+- Weighing note cited from ROADMAP only, NOT from the debt register: a `wip/` path in the
+  persistent corpus would add a site to `FIX-01-02`.
+- Parked, still not investigated: string/table branches disagree on `_update_cursor`, and
+  `jump_end` may make it redundant.
