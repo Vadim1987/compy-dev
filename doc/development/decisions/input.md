@@ -1659,6 +1659,60 @@ code at `FEAT-01-03`, 2026-08-30):
 
 ---
 
+## Decision 38 — content is normalised so the cursor address is unambiguous
+
+**Status: implemented** (owner, 2026-09-01; built at `BUG-02-01`). Ruled while weighing whether
+`set_text`'s list branch should split embedded newlines, and stated as the general rule rather than
+as that fix, because the rule already governed a behaviour nobody had written down.
+
+**Decision.** Content entering the widget is **normalised before it is stored**, in both spellings of
+the documented shape — a string, or a list of line strings. Normalisation is: drop bytes that do not
+form valid UTF-8, then split on newlines. `set_text("a\nb")`, `set_text{"a\nb"}` and
+`set_text{"a", "b"}` therefore produce identical state. Empty elements are content and survive.
+**No line ever contains a line terminator.**
+
+**Why — the cursor.** The widget addresses content as `(line, column)`, and both halves of that
+address are only meaningful over normalised content:
+
+- **invalid bytes leave a column's *length* undefined** — `utf8.len` cannot measure the line, so
+  there is no last column to clamp to;
+- **a newline inside a line leaves a column's *position* undefined** — the caret could sit past a
+  line terminator, at a coordinate that names no place a user can see.
+
+This is why the two normalisations are one rule and not two conveniences, and it is the ground the
+owner ruled on: *"the key reason is same as for utf-8 sanitization — we need cursor to be set
+without ambiguity."* It also settles the shape of the code — **a single storage path preceded by a
+normalisation step**, rather than per-spelling branches that each decide what to normalise. Branches
+that decide separately drift apart, which is exactly what had happened: UTF-8 was sanitised on both
+spellings and newlines on only one.
+
+**Scope: what a project hands the widget.** The rule governs `text` at `show` and the live
+`set_text`. It is not a claim about what the widget hands back — the submit payloads are Decision
+37's business — nor about `add_text`, which never had the problem: the controller normalises with
+`string.unlines` before the model sees it.
+
+**What it does not license.** Normalisation is not validation. A project's content is still its own:
+nothing here rejects, truncates, escapes or re-flows what is set. The rule removes representations
+that cannot be addressed, and nothing else.
+
+**Consequence.** No public surface changes, and no capability is removed: the state normalisation
+eliminates — a line holding a raw newline — could not be produced by typing or by pasting, and could
+not be read back at all, the `compy.input` surface having no content getter. It reached one
+documented shape through one call and rendered wrong in both draw paths. The behaviour change is
+recorded in `CHANGELOG.md`, stated for a project author in `../../input_api.md`
+(*"Live changes"*), and described for a maintainer in `../internals/user_input.md`
+(*"Multiline input"*).
+
+**One fossil retired with it.** `set_text`'s string branch called `_update_cursor(true)` and the list
+branch did not — an asymmetry inherited from the commit that first wrote the function, where
+`jump_end()` already ran unconditionally afterwards and overwrote its result. The call had therefore
+never had an effect on this path, which is why the branch lacking it behaved identically and nobody
+noticed. It is deleted rather than copied to the other branch: the unified path ends by seating the
+cursor deliberately (`jump_end`, or `_clamp_cursor_pos` under `keep_cursor`), and one seat is the
+point. `_update_cursor` itself stays — `_set_text_line` and `clear_input` call it live.
+
+---
+
 ## RETIRED
 
 Decisions that no longer rule anything. Five of the six were superseded in full by a later
