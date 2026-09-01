@@ -150,3 +150,16 @@
   loop and kills click synthesis for the program itself, and raw handlers escape the error boundary.
 - Corpus discipline (owner): keep ALL of this under `wip/`. Nothing persistent touched; verified by
   `git status` — six new untracked files, zero tracked modifications.
+
+## Wrap (2026-09-01)
+
+- Owner directive: **successor continues normal roadmap work**, not a revalidation. Recorded as a
+  deliberate deviation from `agents/sessions.md` §5 (a cognitive-heavy session would ordinarily hand
+  over a revalidation task). The reason is that this session's product is a side-draft outside the
+  feature's delivery — there is nothing in `#77`'s scope to revalidate, and the roadmap has been
+  paused for a day.
+- Commit audit before wrap: seven commits, every one touching only files under
+  `wip/77-new-input-api/`. No persistent corpus, no example repos, no scratch swept in.
+- Suite 1032 / 0 / 0 / 10 at every commit; no production code was touched this session.
+- Final ordering of the discussion's rulings is in the spec draft; the assessment keeps the
+  superseded positions in place rather than rewriting them, which is where the reasoning lives.

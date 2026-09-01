@@ -59,7 +59,8 @@ owner and revisable, not a frozen mandate.
    plus two from its cold peer review (a shortcut receiving the typed case, and the parser's byte
    column reaching the caret). **Session61 added none**: it revalidated `BUG-01` at the delivery
    level, applied the owner's rulings on its findings and opened `BUG-02`, and 1032 held across all
-   of its commits.
+   of its commits. **Session62 added none either**: an architecture side-track on the console/project
+   environment relationship, producing documents under `validation/` and touching no production code.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -322,7 +323,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session62/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session63/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
