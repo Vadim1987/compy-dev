@@ -278,18 +278,30 @@ unaffected.
 second; *inspect* is "disarmed with memory, snapshot painted"; *snapshot* is a one-frame view
 transition; *shutdown* is terminal.
 
-**The recommendation is to derive the state from those facts, not to delete the enumeration.** It is
-read widely — including by the input feature and the reserved keys — and the editor route has not
-been examined. Deriving is the same move as "what is running is a question you answer by looking",
-applied to the whole machine; deleting is a separate decision that needs the editor looked at first.
+**The third fact is a mode flag, and the editor is host code** (owner, 2026-09-01). Activating the
+editor switches a flag that selects the view responsible for rendering and the controller
+responsible for dispatch. Unlike a program, it is deterministic from the console's point of view: it
+declares nothing into the environment and does not take slots unpredictably. Checked, and it holds
+in the strongest form — **the editor never executes user code at all**: its only evaluation is the
+parser it uses to pretty-print and re-chunk text (`editorController.lua:341`), and it contains no
+`codeload`, `run_user_code`, `setfenv` or `loadstring`. The editor therefore has no execution
+environment, and no stake in the environment model.
+
+That gives the trust classes this whole specification turns on: **its rules govern user code; the
+console and the editor are host code.** The only unpredictable claimant is a program.
+
+**The recommendation is still to derive the state from those facts rather than delete the
+enumeration.** It is read widely, including by the input feature and the reserved keys, so removing
+it is a separate mechanical decision — but nothing is *blocked* on examining the editor any more.
 
 ## 6. Non-goals
 
 - Not a sandbox. The model deliberately trades isolation for predictability, and it does not guard
   the interaction surface at all — a claimed slot is a claimed slot.
 - Not a change to how events reach the application, nor to the reserved keys.
-- Not an editor redesign. The editor's own environment has not been examined and is out of scope
-  until it is.
+- Not an editor redesign. The editor is host code and has no execution environment of its own
+  (§5), so it has no stake in the environment model. It remains a participant of the dispatch
+  question, where it is named alongside the console.
 
 ## 7. Decisions still owed by the project owner
 
