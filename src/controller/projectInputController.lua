@@ -24,8 +24,9 @@ require("util.key")
 --
 -- Truthy at a consumer stops the walk; falsey falls through.
 -- The widget's participation derives from its shownness, not a
--- return value (doc/development/decisions/input.md, Decision
--- 5). Routing contract: doc/development/internals/user_input.md
+-- return value (doc/development/decisions/input.md,
+-- Decision 5). Routing contract:
+-- doc/development/internals/user_input.md
 
 -- Every channel the chain dispatches on, in ONE list. The
 -- derived clicks belong in it: where an event comes from (LÖVE,
@@ -161,10 +162,10 @@ end
 --- Take the keyboard route for a project run. `handlers` holds
 --- the project's own error-wrapped love.* keyboard handlers
 --- (from the caller); they seed the hooks table once here
---- (seed_hooks; doc/development/decisions/input.md, Decision
---- 10) — only where the project set no explicit hook. After
---- seeding, hooks is read directly on each event; there is no
---- separate handlers store.
+--- (seed_hooks; doc/development/decisions/input.md,
+--- Decision 10) — only where the project set no explicit hook.
+--- After seeding, hooks is read directly on each event; there
+--- is no separate handlers store.
 --- @param handlers table?
 --- @param compy_input table
 function ProjectInputController:activate(handlers, compy_input)

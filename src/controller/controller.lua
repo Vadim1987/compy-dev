@@ -379,11 +379,12 @@ local MOD_HELD = {
 --- table: three concatenations, not an allocation per call, and
 --- nothing here to make reentrancy-unsafe.
 ---
---- The trigger is lower-cased because registration is: Decision
---- 8 canonicalises an assigned combo whole, so 'Shift+I' is
---- stored as 'shift+i' and a dispatch that kept the typed case
---- could never reach it. Only textinput delivers a cased
---- trigger — keypressed tokens are LÖVE key constants.
+--- The trigger is lower-cased because registration is:
+--- Decision 8 canonicalises an assigned combo whole, so
+--- 'Shift+I' is stored as 'shift+i' and a dispatch that kept
+--- the typed case could never reach it. Only textinput
+--- delivers a cased trigger — keypressed tokens are LÖVE key
+--- constants.
 --- @param k string            triggering key (raw LÖVE name)
 --- @return string             canonical combo string
 local function combo_string(k)
@@ -625,8 +626,8 @@ Controller = {
     -- technical_debt/input.md, ruling (a)) would otherwise show
     -- a widget that takes keystrokes and paints nothing.
     -- get_user_input() carries the inspect gate, so the
-    -- suspended project's widget stays unhonoured (Decision
-    -- 12).
+    -- suspended project's widget stays unhonoured
+    -- (Decision 12).
     local function draw()
       View.draw(CC, CV)
       local ui = get_user_input()

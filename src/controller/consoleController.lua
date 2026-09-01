@@ -186,9 +186,10 @@ local function hide_input_widget()
 end
 
 --- The project's widget is built when a run starts and dropped
---- when it stops (doc/development/decisions/input.md, Decision
---- 3 as amended): a store a project leaves on it cannot reach
---- the next project, because the object it lived on is gone.
+--- when it stops (doc/development/decisions/input.md,
+--- Decision 3 as amended): a store a project leaves on it
+--- cannot reach the next project, because the object it lived
+--- on is gone.
 --- The console's, editor's and search strip's widgets are
 --- unaffected: those surfaces live as long as the app does.
 --- Its own evaluator, NOT the shared `InputEvalText` instance:
@@ -499,8 +500,9 @@ local function build_shortcuts_surface(shortcuts)
 end
 
 --- The dispatch combinators
---- (doc/development/decisions/input.md, Decisions 22 and 24),
---- reached as compy.input.fn.*. Stateless and orthogonal:
+--- (doc/development/decisions/input.md, Decision 22 and
+--- Decision 24), reached as compy.input.fn.*. Stateless and
+--- orthogonal:
 --- `ignore_repeat` decides whether the handler RUNS,
 --- `stop_here`/`side_run` decide whether the event PROPAGATES —
 --- each returns a fixed truthy/falsy in place of whatever the

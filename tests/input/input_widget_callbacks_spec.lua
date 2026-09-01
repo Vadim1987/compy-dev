@@ -4,10 +4,10 @@
 
 -- The OUTPUTS half of the dispatch chain: Decision 5's four
 -- widget output fields, the highlighter / on_limit_reached
--- boundary, and the submit/cancel call-order chains of Decision
--- 6 (doc/development/decisions/input.md). The mechanics half —
--- order, consume, fall-through, combo tables, signatures — is
--- input_events_spec.lua.
+-- boundary, and the submit/cancel call-order chains of
+-- Decision 6 (doc/development/decisions/input.md). The
+-- mechanics half — order, consume, fall-through, combo tables,
+-- signatures — is input_events_spec.lua.
 
 local F    = require('tests.helpers.input_fixture')
 local mock = require('tests.mock')
@@ -911,10 +911,10 @@ describe('input surface: widget callbacks #input', function()
   -- One lifecycle — `submit_flow` / `cancel_flow` — serves the
   -- console line, the editor's input and the project's widget
   -- alike, and no instance reads the screen mode to decide what
-  -- a key does (doc/development/decisions/input.md, Decision
-  -- 6). A surface that needs to differ says so locally: the
-  -- editor consumes Enter/Escape upstream, Ctrl+D is the
-  -- per-instance `allow_duplicate_line` flag.
+  -- a key does (doc/development/decisions/input.md,
+  -- Decision 6). A surface that needs to differ says so
+  -- locally: the editor consumes Enter/Escape upstream, Ctrl+D
+  -- is the per-instance `allow_duplicate_line` flag.
   --
   -- The repetition below IS the claim — same two keys, same
   -- lifecycle, three surfaces — and it guards against that

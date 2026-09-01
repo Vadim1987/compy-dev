@@ -142,9 +142,9 @@ paid, or turned out not to be debt.
 - **State:** `set_text("a\r\nb")` yields `{"a\r", "b"}`. The stray `\r` stays
   inside a line and the model counts it as an ordinary column, so the line
   measures one character longer than it displays and the caret can be seated on
-  a position that renders nowhere. That is precisely the ambiguity **Decision
-  38** says normalisation removes — the decision is now scoped to `\n`
-  explicitly because that is what the code implements.
+  a position that renders nowhere. That is precisely the ambiguity
+  **Decision 38** says normalisation removes — the decision is now scoped to
+  `\n` explicitly because that is what the code implements.
 - **Reachable:** a project setting content it read from a CRLF file. Whether the
   clipboard path is exposed is **unverified** — SDL may normalise
   `love.system.getClipboardText`, and nothing in the tree states either way; the
@@ -296,9 +296,9 @@ paid, or turned out not to be debt.
   single-argument dispatch, not the project route's `dispatch(shortcuts, hooks,
   widget, event, trigger, ...)` chain.
 - **State:** Decision 1 (`../decisions/input.md`) names this convergence as
-  "deliberately left as a follow-on, not attempted," and Decisions 26 and 33
-  repeat the same scope note in different words. The decision text is honest
-  about the gap; the gap itself is still open.
+  "deliberately left as a follow-on, not attempted," and Decision 26 and
+  Decision 33 repeat the same scope note in different words. The decision text
+  is honest about the gap; the gap itself is still open.
 - **Why it stands:** out of this feature's mandate — scoped out on filing, not
   an oversight found later.
 - **Revisit:** when the console/editor routes are migrated onto the combo
@@ -902,8 +902,9 @@ paid, or turned out not to be debt.
 - **The constraint that matters most: it stays SEPARATE from the physical polling surface.** A
   reader must always know which question they are asking — *what the event stream says is held*,
   or *what the device says is held*. The two answers legitimately differ, and conflating them is
-  the "two clocks" problem this feature spent its length removing (Decisions 29 → 30). One
-  surface answering both, or silently switching between them, would rebuild it under a new name.
+  the "two clocks" problem this feature spent its length removing
+  (Decision 29 → Decision 30). One surface answering both, or silently switching between them,
+  would rebuild it under a new name.
 - **What would have to be true first.** A real consumer that cannot be served by a device poll —
   which is *not* what the example corpus showed: every held-state read in it is a "right now"
   question the device answers. Until such a consumer exists, this stays a direction.
@@ -1765,9 +1766,9 @@ changes.
 ### T-COMBO-CASE — `combo_string` does not normalise the case of a textinput token (RESOLVED, 2026-08-31)
 
 - **Resolution:** fixed at `BUG-01-04`. `combo_string` (`controller.lua`) now
-  lower-cases the trigger, so dispatch emits what registration stores. Decision
-  8 already ratified the rule — "a project can register `['Ctrl+S']` and still
-  match" — this only makes the dispatch half implement it.
+  lower-cases the trigger, so dispatch emits what registration stores.
+  Decision 8 already ratified the rule — "a project can register `['Ctrl+S']`
+  and still match" — this only makes the dispatch half implement it.
 - **The defect it closed:** registration canonicalises the whole combo
   (`key.lua`, `combo:lower()` inside `split_combo`), dispatch did not, so
   `shortcuts.textinput['Shift+I']` was stored as `shift+i` while typing `I`

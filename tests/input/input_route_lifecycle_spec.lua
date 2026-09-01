@@ -16,8 +16,8 @@
 -- Connect/disconnect at the 'running' boundary, full teardown
 -- at stop, inspect's project-route disconnect, and the
 -- compy.before_exit stop hook
--- (doc/development/decisions/input.md, Decision 11 and Decision
--- 12).
+-- (doc/development/decisions/input.md,
+-- Decision 11 and Decision 12).
 
 local F = require('tests.helpers.input_fixture')
 
@@ -441,8 +441,8 @@ describe('input surface: inbound events — route lifetime #input',
         -- route, so the widget receives nothing, while its own
         -- shown flag and the widget handle the draw path reads
         -- are both left standing. Asserted because the two are
-        -- easy to conflate and only the first is what Decision
-        -- 12 promises.
+        -- easy to conflate and only the first is what
+        -- Decision 12 promises.
         assert.is_true(F.widget:is_shown())
         assert.is_true(F.is_widget_visible())
       end)

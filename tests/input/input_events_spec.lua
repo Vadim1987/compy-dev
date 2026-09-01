@@ -524,7 +524,8 @@ describe('input surface: inbound events — dispatch #input',
   -- The dispatch combinators live under compy.input.fn, named
   -- for what they do to the EVENT — that is what a reader of a
   -- registration table wants to know
-  -- (doc/development/decisions/input.md, Decisions 22 and 24).
+  -- (doc/development/decisions/input.md, Decision 22 and
+  -- Decision 24).
   -- They are orthogonal: ignore_repeat is about whether the
   -- handler RUNS, stop_here/side_run about where the event
   -- GOES.

@@ -438,11 +438,12 @@ local function run_callback(self, name, ...)
   debug_noop(name)
 end
 
---- Submit flow (doc/development/decisions/input.md, Decision
---- 6): the widget's own Enter behaviour. A truthy before_submit
---- VETOES; otherwise empty guard → validate → deliver (fires
---- on_text_entered) → after_submit. after_submit defaults to a
---- no-op, so the widget stays open unless a callback hides it.
+--- Submit flow (doc/development/decisions/input.md,
+--- Decision 6): the widget's own Enter behaviour. A truthy
+--- before_submit VETOES; otherwise empty guard → validate →
+--- deliver (fires on_text_entered) → after_submit.
+--- after_submit defaults to a no-op, so the widget stays open
+--- unless a callback hides it.
 ---
 --- The two deliveries differ by PAYLOAD, which is what tells
 --- the callbacks apart (Decision 37): the concatenated text to

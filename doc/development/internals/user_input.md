@@ -295,10 +295,10 @@ route is simply unreachable, so there is nothing to guard between events.
 Modifier state is read from the device. `Key.ctrl()` / `Key.alt()` /
 `Key.shift()` (`util/key.lua`) are `love.keyboard.isDown` over the
 left/right pair of one modifier, and they are the single source of
-held-modifier truth in dispatch (`../decisions/input.md`, Decision
-30). The framework maintains no held-key table of its own: there is
-no accumulated model to go stale when a release never arrives, and
-so nothing to reconcile against the device afterwards.
+held-modifier truth in dispatch (`../decisions/input.md`,
+Decision 30). The framework maintains no held-key table of its own:
+there is no accumulated model to go stale when a release never
+arrives, and so nothing to reconcile against the device afterwards.
 
 `Controller.combo_string(k)` serialises a key event into a canonical
 combo string. It asks the device about each modifier row of

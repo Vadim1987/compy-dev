@@ -114,7 +114,7 @@ proving ground for the shape.
 **Decision.** Inside the active route, every keyboard/text event runs one chain of three
 components, in order:
 
-> REMARK: any real reason to treat widget specially? why not interpret it as any other chain element? I feel special treatment is an artifact of design hallucinations that were self-inflicted and dissolved. I see no reason to treat widget separately -- and if we discard decision 5, codebase change would be minimal and won't change any behaviour
+> REMARK: any real reason to treat widget specially? why not interpret it as any other chain element? I feel special treatment is an artifact of design hallucinations that were self-inflicted and dissolved. I see no reason to treat widget separately -- and if we discard Decision 5, codebase change would be minimal and won't change any behaviour
 
 1. **`shortcuts[event][combo]`** — per-combo functions the project registered (Decision 8's
    per-event keying and canonical-combo normalisation apply unchanged).
@@ -122,14 +122,14 @@ components, in order:
    callback and the legacy project `love.*` handler seeding path into one hook (Decision 10).
 3. **the widget** — terminal, always invoked while the route is active. Its *shownness*, not its
    return value, decides whether it consumed the event: shown → the widget runs and the chain
-   reports consumed; hidden → the widget is skipped and the chain reports not-consumed (Decision
-   5 explains why the widget's own return stays chain-meaningless).
+   reports consumed; hidden → the widget is skipped and the chain reports not-consumed
+   (Decision 5 explains why the widget's own return stays chain-meaningless).
 
 A **truthy return at any component consumes** the event: it travels no further, the widget
 included. A falsey return falls through. The same three-component shape runs on **every**
 channel — the keyboard trio (`keypressed`, `textinput`, `keyreleased`) and the pointer
 channels alike, which reach it through the same dispatch with a combo vocabulary of their own
-(Decisions 25 and 27); a component with no participant simply falls through.
+(Decision 25 and Decision 27); a component with no participant simply falls through.
 
 **Three components, and no fourth.** Nothing above the chain claims Enter or Escape: their
 default behaviour is the widget's own (Decision 6), and the gateway's power keys sit outside
@@ -238,10 +238,10 @@ migrate to `compy.input.*`; the replacement mapping is documented in the usage g
 **Decision.** The chain routes events *into* the active route. The widget reports results *out*
 through its own configured **widget outputs**, which are **not** chain components:
 
-- `on_text_entered(lines)` — fires at submit, with assembled line strings. **Amended by Decision
-  37 (2026-08-30): the payload is now the joined string; `after_submit` carries the line list.** The
-  text is left as ruled — what this decision settles is that widget results leave through callbacks
-  of the widget's own, not what one of them is handed.
+- `on_text_entered(lines)` — fires at submit, with assembled line strings. **Amended by
+  Decision 37 (2026-08-30): the payload is now the joined string; `after_submit` carries the
+  line list.** The text is left as ruled — what this decision settles is that widget results
+  leave through callbacks of the widget's own, not what one of them is handed.
 - `on_limit_reached(direction, scope)` — fires when the cursor tries to move past a boundary
   (`direction` up/down/left/right; `scope` whole-input or current-line).
 - `validator(lines)` and `highlighter(lines)` — widget behaviour; the
@@ -258,9 +258,9 @@ subsystem was explicitly designed around. Events arriving are a chain concern; a
 widget's to announce. In particular:
 
 - **`on_text_entered` is widget vocabulary, not the per-character chain callback.** The
-  per-character textinput callback is `hooks.textinput` — the chain's hooks component (Decision
-  2). The two names are never interchangeable — an easy and costly confusion, kept apart by
-  naming on purpose.
+  per-character textinput callback is `hooks.textinput` — the chain's hooks component
+  (Decision 2). The two names are never interchangeable — an easy and costly confusion, kept
+  apart by naming on purpose.
 - **Results never travel as chain return values.** The widget is terminal, so nothing sits above
   it to read a return; a boundary or submit condition therefore *cannot* report upward through
   the chain and must use the widget's own outputs. (This is the narrow thing the "no results via
@@ -1045,10 +1045,11 @@ because the raise ends the run rather than the stop.
 ## Decision 30 — modifier state is read from the device; `keys_pressed` is dissolved
 
 **Supersedes Decision 13, Decision 20 and Decision 29.** Those three are the held-key-set
-decisions: 13 exposed it read-only, 20 made it readable outside an event, 29 made it the
-framework's truth for event-time questions. All three are withdrawn. Decisions 8, 21, 26 and 27
-(combo serialisation, combo naming, LÖVE's own argument list, one combo vocabulary) **stand
-unchanged** — only the *source* the matcher reads from changes.
+decisions: Decision 13 exposed it read-only, Decision 20 made it readable outside an event,
+Decision 29 made it the framework's truth for event-time questions. All three are withdrawn.
+Decision 8, Decision 21, Decision 26 and Decision 27 (combo serialisation, combo naming,
+LÖVE's own argument list, one combo vocabulary) **stand unchanged** — only the *source* the
+matcher reads from changes.
 
 **Decision.** Four statements, in force together.
 
@@ -1176,9 +1177,9 @@ tracked set. They are withdrawn with it rather than deferred.
 
 ## Decision 31 — the modifier set is closed, and it is `ctrl`, `alt`, `shift`
 
-**Amends Decision 8**, whose serialisation rule named a fourth modifier row. Decisions 21 and 30
-stand unchanged and are the reason this one is small: 21 already rules what a combo may name, and
-30 already rules where modifier state is read from.
+**Amends Decision 8**, whose serialisation rule named a fourth modifier row. Decision 21 and
+Decision 30 stand unchanged and are the reason this one is small: Decision 21 already rules
+what a combo may name, and Decision 30 already rules where modifier state is read from.
 
 **Decision.** The framework recognises exactly three modifiers — `ctrl`, `alt`, `shift`, each a
 left/right pair folded to its generic name. `gui` (super / cmd / win) is **not** a modifier.
@@ -1214,8 +1215,9 @@ carries the pointer so the option stays discoverable from that side too.
 ## Decision 32 — how the input API is meant to be used: transitions, state, and no reconstruction
 
 **Amends Decision 30 point 3** (`Key.*` at a call site is a smell), which is withdrawn as a
-general claim and replaced by the boundary below. Decisions 8, 21, 26, 30 and 31 stand unchanged:
-this decision is about **use**, not about mechanism.
+general claim and replaced by the boundary below. Decision 8, Decision 21, Decision 26,
+Decision 30 and Decision 31 stand unchanged: this decision is about **use**, not about
+mechanism.
 
 **Why it exists.** The feature introduced a framework-tracked held-key set on an early sense that
 polling needed to be a legitimate, centralised method — and deferred the analysis of that sense to
@@ -1270,9 +1272,9 @@ the proposal.
 ## Decision 33 — a framework reservation matches its modifier set exactly
 
 **Owner ruling, 2026-08-16.** Amends nothing; it states for the **gate** the rule
-Decision 21 already states for everyone else. Decisions 21, 30 and 31 stand unchanged —
-21 rules that a combo *is* its modifier set exactly, 30 rules where modifier state is
-read from, 31 closes the set at three.
+Decision 21 already states for everyone else. Decision 21, Decision 30 and Decision 31
+stand unchanged — Decision 21 rules that a combo *is* its modifier set exactly, Decision 30
+rules where modifier state is read from, Decision 31 closes the set at three.
 
 **Decision.** Every combination the framework reserves for itself matches **exactly**:
 the modifiers it names are held, and **no other modifier is**. A reservation written as
@@ -1341,9 +1343,9 @@ available:
    possible at all.
 2. Exactness is most naturally *expressed* as the canonical combo string the
    project already builds (`combo_string`, Decision 8's precedence) — and a
-   string equality cannot tolerate an unnamed modifier, so the rule of Decision
-   33 becomes a property of the representation instead of a discipline to
-   remember.
+   string equality cannot tolerate an unnamed modifier, so the rule of
+   Decision 33 becomes a property of the representation instead of a
+   discipline to remember.
 3. Once every reservation is a string, the cascade **is** a table written the
    long way. Writing it as a table is the smaller form, not the more elaborate
    one.
@@ -1382,8 +1384,9 @@ deliberately reachable without the gate.
 
 ## Decision 35 — the configuration boundary: the user's content is `show`'s alone
 
-**Owner-ruled 2026-08-27.** **Adds a `show`-only key category to Decision 15** (below). Decisions 3, 6 and 18
-stand unchanged: this decision is about *which call may set what*, not about lifecycle or routing.
+**Owner-ruled 2026-08-27.** **Adds a `show`-only key category to Decision 15** (below).
+Decision 3, Decision 6 and Decision 18 stand unchanged: this decision is about *which call
+may set what*, not about lifecycle or routing.
 
 **The shape.** A config table carries two kinds of field, separated by **who owns the thing it
 sets**:
@@ -1690,9 +1693,9 @@ that decide separately drift apart, which is exactly what had happened: UTF-8 wa
 spellings and newlines on only one.
 
 **Scope: what a project hands the widget.** The rule governs `text` at `show` and the live
-`set_text`. It is not a claim about what the widget hands back — the submit payloads are Decision
-37's business — nor about `add_text`, which never had the problem: the controller normalises with
-`string.unlines` before the model sees it.
+`set_text`. It is not a claim about what the widget hands back — the submit payloads are
+Decision 37's business — nor about `add_text`, which never had the problem: the controller
+normalises with `string.unlines` before the model sees it.
 
 **What it does not license.** Normalisation is not validation. A project's content is still its own:
 nothing here truncates, escapes or re-flows what is set. The rule removes representations that
@@ -1843,7 +1846,7 @@ proxy per event. This is a non-functional requirement, not a project-facing
 identity guarantee: a callback may rely on the view being read-only and
 current, never on object equality across calls.
 
-## Decision 16 — defer future input unification — SUPERSEDED by Decisions 25 and 27
+## Decision 16 — defer future input unification — SUPERSEDED by Decision 25 and Decision 27
 
 **Retired in place, 2026-08-25.** The number is kept because decisions are cited
 by number; the content below no longer describes the system.
