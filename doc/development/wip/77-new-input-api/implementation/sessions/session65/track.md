@@ -113,6 +113,45 @@ registered as `T-DEVIATION-WHY` / `FIX-02-26` (`42825710`) rather than absorbed 
   64-char limit to *coding*, and the prose corpus has no width convention (96 to 1158 chars in the
   touched files).
 
+## 2026-09-01 — the owner reopens the category, and `T-DEVIATION-WHY` was a phantom
+
+Sequence worth keeping, because the correction went through three stages and only the last one was
+right.
+
+1. I filed `T-DEVIATION-WHY`: the PR table's technical justifications die with the tree, and the
+   decisions never say what they replaced.
+2. Owner contested the **slug** — *"describes shape not subject"*. Correct, and I proposed
+   `T-OVERTURNED`.
+3. Owner then contested the **premise**: *"maybe not stating what was overturned is a good
+   instinct. we do not make archaeology. 'X... why not Y' only makes sense if Y is likely option to
+   be considered again."*
+
+**Checking beat arguing.** The five decisions were read instead of assumed, and the second half of
+my claim is simply false — `D-ROUTE-LIFETIME` marks itself SUPERSEDED IN PART and quotes the
+superseded claim; `D-NO-LOG-NOISE` names the design's proposed debug log and declines it;
+`D-HOOKS-SEEDED` argues the seed against a precedence rule by name. The PR table **summarises** the
+ledger. The entry was a phantom problem in the strict sense of `agents/validation.md`'s checklist.
+
+**And the answer was already in the file I was editing.** `decisions/input.md:462` carries the
+owner's `REMARK`: *"clean up self-arguing with past decisions that were then reshaped before
+release. What was not in released version is considered as never existing (except few bits
+explicitly ratified by stakeholders)."* I filed a debt entry that runs directly against a standing
+position sitting two lines above the decision I was editing. **Second time in two sessions** the
+ledger already drew the line and I read the commit trail instead — session64's F4 was the first.
+
+**The owner's own correction to their phrasing is the load-bearing part:** the defect is arguing
+with an **interim, overwritten** past, *not* "arguing with itself" — that is too wide and catches
+the legitimate cases. A decision weighing a live alternative is the ledger doing its job. The
+operable test is theirs: *would a reader plausibly propose Y again?*
+
+Landed: the rule (`16f5018e`), the archaeology paragraph removed from `D-ONE-LIFETIME` (`cd1264da`,
+reversing `e9a3501a`), `T-DEVIATION-WHY` retired NOT DEBT, `T-ARGUES-INTERIM` opened, `FIX-02-26`
+withdrawn, `DEC-02` filed (`1a162e5a`).
+
+**One ruling with teeth beyond this row:** a `REMARK` is removed **when its defect is solved**, not
+when a sweep reaches it. So the marker at `:462` is retained on purpose, names its slug, and
+`DEC-02-04` is what deletes it. Any pass over `doc/` markers that takes it early is a defect.
+
 **Where the sizing gap came from, since it will recur:** the spec sized by grepping `Decision N`.
 Three forms do not match that pattern — line-broken, plural, and bare back-reference. The last is
 the interesting one: it exists *because* of the plural, since the sentence unpacking a list drops
