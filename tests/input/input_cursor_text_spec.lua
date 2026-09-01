@@ -236,6 +236,46 @@ describe('input surface: widget control — cursor and text #input',
         assert.same(2, c)
       end)
 
+    -- A list element that is not a string is a STRUCTURE error,
+    -- not a spelling of the content shape, so it is refused at
+    -- the boundary rather than normalised (Decision 38's
+    -- tolerance boundary; the check follows checked_cursor,
+    -- doc/development/technical_debt/input.md, "set_text
+    -- answers a malformed content element three different
+    -- ways"). One message for every bad element type: before
+    -- this, a number was silently dropped, a list of only
+    -- numbers wiped the content, and a boolean raised from
+    -- inside utf8.len.
+    describe("refuses a non-string element", function()
+      local bad = {
+        ['a number'] = { 'a', 42 },
+        ['only a number'] = { 42 },
+        ['a boolean'] = { 'a', true },
+        ['a nested table'] = { 'a', { 'b' } },
+      }
+      for label, value in pairs(bad) do
+        it('raises on ' .. label .. ', naming set_text',
+          function()
+            local input = F.compy_input()
+            input.show({ text = 'kept' })
+            local ok, err = pcall(input.set_text, value)
+            assert.is_false(ok)
+            assert.matches('compy%.input%.set_text', err)
+            assert.matches('list of line strings', err)
+            -- refusal leaves the content alone
+            assert.same({ 'kept' }, F.widget:get_text())
+          end)
+      end
+
+      it('raises from show too, naming show', function()
+        local input = F.compy_input()
+        local ok, err =
+          pcall(input.show, { text = { 'a', 42 } })
+        assert.is_false(ok)
+        assert.matches('compy%.input%.show', err)
+      end)
+    end)
+
     describe("with keep_cursor", function()
     -- doc/input_api.md, "Live changes": keep_cursor
     -- preserves position (clamped).

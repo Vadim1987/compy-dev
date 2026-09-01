@@ -707,6 +707,30 @@ local function checked_cursor(fname, cursor)
     ': cursor must be a {line, col} pair of numbers', 4)
 end
 
+--- Sibling of checked_cursor, same level-4 depth rule. Content
+--- is normalised, never validated, once it is inside the model
+--- (doc/development/decisions/input.md, Decision 38) — so the
+--- one thing that cannot be normalised is refused here: an
+--- element that is not a string is a structure error, not a
+--- spelling of the shape, and coercing it would turn a caller's
+--- mistake into content the project never wrote.
+--- @param fname string
+--- @param text any
+--- @return str? text
+local function checked_text(fname, text)
+  if not text then return nil end
+  local ok = type(text) == 'string'
+  if type(text) == 'table' then
+    ok = true
+    for _, l in ipairs(text) do
+      if type(l) ~= 'string' then ok = false end
+    end
+  end
+  if ok then return text end
+  error(fname ..
+    ': text must be a string or a list of line strings', 4)
+end
+
 -- The two stores compy.input keeps for a project live ON the
 -- widget, and the surface RESOLVES them instead of holding
 -- them: a widget lives for a project RUN, so a captured
@@ -751,6 +775,8 @@ local function api_show(get_widget, state, cfg)
   check_keys(next_cfg, 'compy.input.show', SHOW_KEYS)
   next_cfg.cursor =
     checked_cursor('compy.input.show', next_cfg.cursor)
+  next_cfg.text =
+    checked_text('compy.input.show', next_cfg.text)
   merge_callback_keys(state, next_cfg)
   local ui = get_widget()
   if ui then ui:show(next_cfg) end
@@ -769,6 +795,23 @@ local function api_set_cursor(get_widget, get_active, line, col)
   local pair =
     checked_cursor('compy.input.set_cursor', { line, col })
   get_widget():set_cursor_pos(pair[1], pair[2])
+end
+
+--- Lifted out for the same depth rule as api_set_cursor: the
+--- shared error level has to land on the project's line from
+--- here as well as from api_show.
+--- @param get_widget fun(): UserInputController?
+--- @param get_active fun(): table?
+--- @param text any
+--- @param keep_cursor boolean?
+local function api_set_text(get_widget, get_active,
+                            text, keep_cursor)
+  if not get_active() then
+    Log.warn('compy.input.set_text ignored — hidden')
+    return
+  end
+  get_widget():set_text(
+    checked_text('compy.input.set_text', text), keep_cursor)
 end
 
 --- Sibling of api_show, and lifted out for the same reason it
@@ -846,11 +889,8 @@ local function build_widget_api(get_widget, get_active_flag, state)
     -- while hidden; view updates via the controller's
     -- set_text (no re-show).
     set_text = function(text, keep_cursor)
-      if not get_active_flag() then
-        Log.warn('compy.input.set_text ignored — hidden')
-        return
-      end
-      get_widget():set_text(text, keep_cursor)
+      api_set_text(
+        get_widget, get_active_flag, text, keep_cursor)
     end,
     -- doc/development/internals/user_input.md,
     -- "configure(config)": the project-owned fields, applied
