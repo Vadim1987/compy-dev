@@ -117,6 +117,54 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### `_update_cursor` measures the column on one line and reports another
+
+- **Where:** `src/model/input/userInputModel.lua` — `UserInputModel:_update_cursor`.
+- **State:** it sets `cursor.c` from `t[cl]`, the line the caret was on
+  *before* the change, and `cursor.l` to `#t`, the last line of the content
+  *after* it. When those differ the result is a column measured on one line and
+  reported against another, and it can be **out of range**: on
+  `{'one','twotwo','xx'}` with the caret on line 2, it yields `(3, 7)` — line 3
+  is `"xx"`, whose caret positions are `1..3`. Probed, not inferred.
+- **The intent is not in doubt, and the function used to satisfy it.** Before
+  multiline it read, in full:
+  `self.cursor.c = utf8.len(t) + 1` over a **string** `self.entered` — *seat the
+  caret at the end of the content*, which is exactly what `jump_end` now does
+  for a line list. The multiline commit (`19351528`, 2023-07-17, *"add multiline
+  input representation"*) rewrote it to index a list and **measured the wrong
+  line**: to preserve the intent it needed `t[#t]`, the line `.l` is being set
+  to, and it used `t[cl]`.
+- **The empty `else` is not a missing feature**, though it reads like one. The
+  pre-multiline version was `if destructive then … end` with no `else` at all;
+  the migration wrote the no-op branch out longhand and left it empty. Nothing
+  has ever depended on it, in any revision.
+- **Why it is BACKLOG and not ACTIVE: nothing observes it today.** After
+  `BUG-02-01` deleted the `set_text` call, two call sites remain and neither
+  exposes the defect. `_set_text_line`'s is guarded by `if not keep_cursor` and
+  **all seven of its callers pass `true`**, so it is unreachable. `clear_input`
+  reaches it, but on empty content every line measures zero, so the wrong line
+  cannot give a wrong answer — it lands at `(1,1)`, which is correct by
+  accident rather than by construction.
+- **Why it is still debt:** it is a trap with no warning sign. The first caller
+  to pass `keep_cursor = false` to `_set_text_line`, or the first content change
+  that leaves `clear_input` non-empty, gets an out-of-range cursor with no raise
+  — and the function's name and privacy marker both suggest it is a settled
+  primitive.
+- **The fix has two shapes and the choice is a design call.** Either repair it
+  in place — `t[#t]` for the column, one token — or **delete it**: its intent is
+  `jump_end`'s, `clear_input` could call that instead, and `_set_text_line`'s
+  branch is unreachable, so the surviving need is one line in one function.
+  Deleting is the direction Decision 38's structural half points (one way to
+  seat the cursor rather than two that agree), but it touches a shared model
+  primitive rather than the input feature's own surface.
+- **Provenance: pre-existing, and not this feature's.** The slip is from 2023,
+  three years before this branch, and `#77` neither introduced nor widened it —
+  it only deleted the one call site that made the asymmetry visible.
+- **Not slugged** — a slug is the commitment to fix, and whether this is fixed
+  before the release is not decided. Nothing user-visible depends on it.
+- **Revisit:** raised with the owner 2026-09-01 at `BUG-02-01`; awaiting a call
+  on repair-vs-delete.
+
 ### The error highlight compares a byte column against a character index
 
 - **Where:** `src/view/input/userInputView.lua` — `ec = perr.c` is read off the
@@ -1342,8 +1390,14 @@ changes.
   both spellings — produce byte-identical cursor and visible-range snapshots
   with the call and without it, and the suite is green either way. Two of them
   are now pinned as tests (*"both land at the end of shorter content"*).
-- **`_update_cursor` itself is NOT dead and stays**: `_set_text_line` and
-  `clear_input` both call it live. Only the `set_text` call site was dead.
+- **`_update_cursor` itself stays, and only the `set_text` call site was
+  deleted. Corrected 2026-09-01, same day:** this entry first said
+  `_set_text_line` and `clear_input` "both call it live", which is wrong about
+  the first. `_set_text_line` guards the call with `if not keep_cursor`, and
+  **all seven of its callers pass `true`** — so that call is unreachable, and
+  `clear_input` is the only reachable one. The correction matters because the
+  claim would tell a later reader that path is exercised when nothing exercises
+  it. What the function owes beyond that is its own entry, below.
 - **Provenance: pre-existing**, inherited from the transitional triplet and
   present at the PR base in the same shape.
 - **Where:** `src/model/input/userInputModel.lua` (`set_text`,

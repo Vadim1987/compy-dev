@@ -1709,7 +1709,13 @@ branch did not — an asymmetry inherited from the commit that first wrote the f
 never had an effect on this path, which is why the branch lacking it behaved identically and nobody
 noticed. It is deleted rather than copied to the other branch: the unified path ends by seating the
 cursor deliberately (`jump_end`, or `_clamp_cursor_pos` under `keep_cursor`), and one seat is the
-point. `_update_cursor` itself stays — `_set_text_line` and `clear_input` call it live.
+point.
+
+`_update_cursor` itself is left in place — **but it is not sound, and this decision does not
+ratify it.** Its intent is this decision's own: *seat the caret at the end of the content*, which is
+what it did correctly when the input was single-line. The multiline migration broke it, and what it
+owes is filed as debt, not settled here. See `../technical_debt/input.md`, *"`_update_cursor`
+measures the column on one line and reports another"*.
 
 ---
 
