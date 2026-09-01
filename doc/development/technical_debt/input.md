@@ -150,6 +150,16 @@ paid, or turned out not to be debt.
   that leaves `clear_input` non-empty, gets an out-of-range cursor with no raise
   — and the function's name and privacy marker both suggest it is a settled
   primitive.
+- **The mechanism is that it bypasses the validated path.** `move_cursor` is the
+  model's checked mover: it rejects an out-of-range line or column, falling back
+  to the previous value, and it measures the line length **on the line it is
+  moving to**. `_update_cursor` writes `self.cursor.l` and `self.cursor.c` as
+  raw fields instead — it and `_advance_cursor` are the only two writers that
+  do — so nothing catches the mismatch. Routed through `move_cursor` the bad
+  `(3,7)` above could not have been produced, which is the same statement as
+  saying `jump_end` already does this correctly: it computes `#ent` and
+  `ulen(ent[last_line]) + 1` from the *same* line and hands both to
+  `move_cursor`.
 - **The fix has two shapes and the choice is a design call.** Either repair it
   in place — `t[#t]` for the column, one token — or **delete it**: its intent is
   `jump_end`'s, `clear_input` could call that instead, and `_set_text_line`'s

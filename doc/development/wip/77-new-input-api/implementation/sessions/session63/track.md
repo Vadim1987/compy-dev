@@ -74,3 +74,30 @@
   The shape was copied from `_set_text_line`, where it IS live. `_update_cursor` stays.
 - **Unified** (`9c718a56`): `normalized_lines` + one storage path, body 19 → 10 lines. 1036 → 1038.
 - Ledger gate went FIRST (decision, then code), matching `ARC-01-03` / `ARC-02-01` precedent.
+
+## 2026-09-01 — owner challenges the fossil framing, and is right
+
+- Owner: *"function named update_cursor but effectively doing jump_end looks broken -- maybe its
+  intent is to move cursor to desired position, not the end -- and this intent is mistakenly not
+  implemented?"* **The instinct was right; my framing stopped one question early.** I answered
+  *was it ever live* and never asked *what was it for*.
+- **Archaeology:** pre-multiline the whole body was `self.cursor.c = utf8.len(t) + 1` over a
+  **string** `entered` — seat the caret at end of content, correct then, and literally what
+  `jump_end` does now for a line list. `19351528` (2023-07-17, multiline) rewrote it to index a
+  list and **measured the wrong line**: needed `t[#t]`, used `t[cl]`.
+- **Probe:** `{'one','twotwo','xx'}`, caret on l2 → `_update_cursor(true)` gives **(3,7)**.
+  Line 3 is `"xx"` — positions 1..3. **Out of range on the line it names.**
+- The empty `else` is **not** the missing intent (the other half of the challenge): pre-multiline
+  was `if destructive then … end` with no else; the migration wrote the no-op longhand.
+- **Mechanism:** it writes `cursor.l`/`.c` as raw fields, bypassing `move_cursor`, which validates
+  range and measures on the line it moves to. `_update_cursor` and `_advance_cursor` are the only
+  raw writers.
+- **THREE of my own claims from earlier today were wrong and are corrected** (`cd56778b`):
+  `_set_text_line` does NOT call it live — guarded by `if not keep_cursor` and **all 7 callers
+  pass true**; "the line it reads is the line it just wrote" was asserted unchecked and is false;
+  and Decision 38 read as if leaving the function in place ratified it.
+- Filed BACKLOG unslugged: unobservable today (`clear_input`'s content is empty, so every line
+  measures zero → (1,1) correct *by accident*). Repair-vs-delete is the owner's call.
+- **Pattern worth carrying:** the fix that deletes a call site is not the end of the enquiry —
+  ask what the callee was *for*. Also: "X calls it live" is a reachability claim and needs the
+  callers checked, not just the call site.
