@@ -101,3 +101,19 @@
 - **Pattern worth carrying:** the fix that deletes a call site is not the end of the enquiry —
   ask what the callee was *for*. Also: "X calls it live" is a reachability claim and needs the
   callers checked, not just the call site.
+
+## 2026-09-01 — owner rules: register, don't fix; comment at the site
+
+- Ruling: **keep it registered, do not fix.** Owner's reading: *"makes no harm unless some other
+  code tries to use it or call sites change"* → **subject for pure refactoring**, which will
+  likely remove it. Matches the entry's own delete option.
+- Asked for a **one-line comment at the place of the defect**: name it, cite the entry, say it is
+  **postponed, not fixed**.
+- **Deliberately NOT an `INTERIM:`/`REMARK:` marker** — those must be zero before release and are
+  removed by the gate; this one must *survive* release, which is exactly when a reader needs it.
+  So: durable payload-2 comment. Marker gate re-run, still clean.
+- Carries the defect itself, not a bare pointer (`commenting.md`, *"A reference is not an
+  annotation"*). Costs 3 lines at the 64-char limit, not 1 — the citation path is long.
+- Shortened the entry heading to *"measures the column on the wrong line"* so the citation fits
+  un-truncated, and updated its **two** existing citations in the same commit (Decision 38,
+  `internals/user_input.md`). Old wording greps clean — the pass that causes an orphan owes the fix.
