@@ -239,7 +239,7 @@ cd <repo root> && love src play /abs/path/out/maze     # and .../draw
 **B8–B10 have never been pressed by anyone.** The game registers all four
 members of the family, but two of them — the Ctrl-bearing ones — used to reach
 the platform's gate first, which read them as `Ctrl+Esc` and tore the project
-down on the release. That is what Decision 33 changed (a reservation now matches
+down on the release. That is what D-EXACT-RESERVE changed (a reservation now matches
 its modifiers exactly), and `da9d1c2` restored the family on the maze side. The
 two halves have never been exercised together on a device.
 
@@ -340,7 +340,7 @@ or stops accepting text — not a crash.
 
 ### B — submit delivers the command string the handlers expect
 
-The API hands `on_text_entered` the submitted content as **one string** (Decision 37), which is the
+The API hands `on_text_entered` the submitted content as **one string** (D-PAYLOAD-SPLIT), which is the
 shape the game's handlers index by, so `terminal.lua` passes it straight through. It used to hand
 an array and `deliver` joined it; either way a mistake here does not crash — it silently compares
 the wrong thing, so **every answer reads as wrong**, which is what makes B1 worth walking.

@@ -4,7 +4,7 @@
 -- Widget lifecycle: activation and reset through the public
 -- compy.input surface, and the rule that a hidden widget
 -- consumes nothing (doc/input_api.md, "`show(config)`";
--- doc/development/decisions/input.md, Decision 2).
+-- doc/development/decisions/input.md, D-CHAIN-OF-3).
 
 local F  = require('tests.helpers.input_fixture')
 
@@ -75,7 +75,7 @@ describe('input surface: widget control #input', function()
         assert.same({ 'first' }, F.widget:get_text())
       end)
 
-    -- doc/development/decisions/input.md, Decision 15:
+    -- doc/development/decisions/input.md, D-UNKNOWN-RAISES:
     -- show()/configure() take a closed config table, so an
     -- unrecognised key can only be an authoring mistake. It
     -- raises rather than warning — the project stops at the
@@ -98,7 +98,7 @@ describe('input surface: widget control #input', function()
         assert.matches('result', err)
       end)
 
-    -- doc/development/decisions/input.md, Decision 15,
+    -- doc/development/decisions/input.md, D-UNKNOWN-RAISES,
     -- Consequence: the trace lands on the PROJECT's own
     -- show()/configure() line. A trace pointing inside
     -- consoleController tells the author nothing about which
@@ -152,7 +152,7 @@ describe('input surface: widget control #input', function()
 
     -- A show()-only key is refused with a message NAMING where
     -- it belongs, the way a lifecycle callback already is
-    -- (doc/development/decisions/input.md, Decision 35,
+    -- (doc/development/decisions/input.md, D-CFG-BOUNDARY,
     -- statement 2). Refusing `force` as an "unknown config
     -- key" was misleading for a key the guide documents.
     it('configure names where a show-only key belongs',
@@ -168,7 +168,7 @@ describe('input surface: widget control #input', function()
 
     -- auto_hide is NOT show-only: the category protects what
     -- the USER owns, and the user does not own lifecycle
-    -- (doc/development/decisions/input.md, Decision 36's
+    -- (doc/development/decisions/input.md, D-AUTO-HIDE's
     -- Amendment). configure takes it like any other
     -- project-owned key.
     it('a widget armed at configure closes on submit',
@@ -181,8 +181,8 @@ describe('input surface: widget control #input', function()
       end)
 
     -- The live defect the move closes. Before it, disarming
-    -- meant show{force} — a full re-setup that clears the
-    -- draft (Decision 35, statement 4) — and nothing could read
+    -- meant show{force} — a full re-setup that clears the draft
+    -- (D-CFG-BOUNDARY, statement 4) — and nothing could read
     -- the draft back to re-supply it, so changing your mind
     -- cost the user's typing outright.
     it('disarming at configure keeps the draft',
@@ -213,7 +213,7 @@ describe('input surface: widget control #input', function()
     end)
 
     -- `false` is the uniform unset across the config table
-    -- (doc/development/decisions/input.md, Decision 35,
+    -- (doc/development/decisions/input.md, D-CFG-BOUNDARY,
     -- statement 3), so a computed `cursor` that came to
     -- nothing is not an authoring error — it seats no cursor
     -- and the activation baseline stands.
@@ -262,7 +262,7 @@ describe('input surface: widget control #input', function()
 
     -- force with NO text CLEARS, because a forced show is a
     -- full re-setup and absent text means an empty field
-    -- (doc/development/decisions/input.md, Decision 35,
+    -- (doc/development/decisions/input.md, D-CFG-BOUNDARY,
     -- statements 1 and 4). This reverses the earlier rule that
     -- content survived a bare forced show; a project that wants
     -- the draft kept passes it, or does not pass force.
@@ -275,8 +275,8 @@ describe('input surface: widget control #input', function()
       end)
 
     -- A forced show applies every project-owned field, not the
-    -- text subset alone (Decision 35, statement 4: there is no
-    -- field one call applies and the other silently drops).
+    -- text subset alone (D-CFG-BOUNDARY, statement 4: there is
+    -- no field one call applies and the other silently drops).
     it('force applies the prompt', function()
       local input = F.compy_input()
       input.show({ text = 'hi', prompt = 'first?' })
@@ -423,14 +423,15 @@ describe('input surface: widget control #input', function()
       assert.equal('left', new_dir)
     end)
 
-    -- doc/development/decisions/input.md, Decision 35,
+    -- doc/development/decisions/input.md, D-CFG-BOUNDARY,
     -- statement 2: text/cursor are the USER's content and
     -- belong to show()/set_text/set_cursor, so configure()
     -- refuses them as keys belonging to another call
-    -- (Decision 15's show-only category, the treatment `force`
-    -- already gets). The refusal is at the key check, before
-    -- anything is applied — so a live field passed alongside
-    -- does not land either. Nothing partial, nothing silent.
+    -- (D-UNKNOWN-RAISES's show-only category, the treatment
+    -- `force` already gets). The refusal is at the key check,
+    -- before anything is applied — so a live field passed
+    -- alongside does not land either. Nothing partial, nothing
+    -- silent.
     it('raises on text on an active session, and ' ..
       'applies nothing it was mixed with',
       function()
@@ -463,13 +464,14 @@ describe('input surface: widget control #input', function()
   end)
 
   describe('configure(): while hidden', function()
-    -- doc/development/decisions/input.md, Decision 15's
-    -- show-only category as added by Decision 35: text/cursor
-    -- raise from configure() in BOTH states. The call is wrong
-    -- whatever the widget is doing, so being hidden does not
-    -- make it a legitimate call at an inconvenient moment.
-    -- A project seeding content passes it to the show() that
-    -- brings the widget up, before it is visible.
+    -- doc/development/decisions/input.md, D-UNKNOWN-RAISES's
+    -- show-only category as added by D-CFG-BOUNDARY:
+    -- text/cursor raise from configure() in BOTH states. The
+    -- call is wrong whatever the widget is doing, so being
+    -- hidden does not make it a legitimate call at an
+    -- inconvenient moment. A project seeding content passes it
+    -- to the show() that brings the widget up, before it is
+    -- visible.
     it('raises on text while hidden too', function()
       local input = F.compy_input()
       assert.has_error(function()
@@ -504,7 +506,7 @@ describe('input surface: widget control #input', function()
     -- The project-owned fields are STICKY, not one-shot: a
     -- hidden configure() writes them straight onto the widget,
     -- so they survive every later bare show() rather than
-    -- being spent by the first (Decision 35, statement 3 —
+    -- being spent by the first (D-CFG-BOUNDARY, statement 3 —
     -- set-if-given, persisting until replaced). This is a
     -- change: the retained prompt used to be consumed by the
     -- next show() and was one-shot in the store, even though
@@ -558,7 +560,7 @@ describe('input surface: widget control #input', function()
   end)
 
   describe('the mutable boundary', function()
-    -- doc/development/decisions/input.md, Decision 7: the
+    -- doc/development/decisions/input.md, D-FROZEN-SHELL: the
     -- mutable boundary is unchanged for the two new callables.
     it('assigning configure/clear raises', function()
       local input = F.compy_input()
@@ -572,34 +574,31 @@ describe('input surface: widget control #input', function()
   end)
 
   -- Hidden widget does not consume
-  -- (doc/development/decisions/input.md, Decision 2: "its
+  -- (doc/development/decisions/input.md, D-CHAIN-OF-3: "its
   -- hidden-check is internal"): an event arriving while the
   -- widget is hidden never mutates widget state — it reaches
   -- the active route instead. Inter-route dispatch is
   -- unchanged. One case per channel: the pair differs only in
   -- which channel the event arrives on (textinput vs
   -- keypressed), so they are named for that and nothing else.
-  --
   -- These ran on the CONSOLE route while it still had a widget
   -- step, and were tagged #disputable because the second half
   -- of each -- the console line receiving what the hidden
   -- widget declined -- rested on a fallback nobody had ruled
   -- on. That fallback is gone: the console route has no widget
-  -- step at all now (Decision 1, "widget visibility is never a
-  -- routing condition"), which would leave these cases passing
-  -- for a reason unrelated to their claim -- a SHOWN widget
-  -- would satisfy them there just as well.
-  --
-  -- Re-sited on the project route, where a hidden widget is a
-  -- real decision: the walk skips it and reports not-consumed.
-  -- What discriminates hidden from shown is the WIDGET's own
-  -- text, and the third case is the control that says so. The
-  -- hook assertion is not a discriminator -- hooks run BEFORE
-  -- the widget, so it fires either way; it proves the event
-  -- reached the chain at all rather than being dropped
-  -- upstream, which would make an unchanged widget prove
-  -- nothing. The dispute is settled, not pinned, so the tag is
-  -- gone.
+  -- step at all now (D-ROUTE-OWNS, "widget visibility is never
+  -- a routing condition"), which would leave these cases
+  -- passing for a reason unrelated to their claim -- a SHOWN
+  -- widget would satisfy them there just as well.  Re-sited on
+  -- the project route, where a hidden widget is a real
+  -- decision: the walk skips it and reports not-consumed. What
+  -- discriminates hidden from shown is the WIDGET's own text,
+  -- and the third case is the control that says so. The hook
+  -- assertion is not a discriminator -- hooks run BEFORE the
+  -- widget, so it fires either way; it proves the event reached
+  -- the chain at all rather than being dropped upstream, which
+  -- would make an unchanged widget prove nothing. The dispute
+  -- is settled, not pinned, so the tag is gone.
   describe('a hidden widget is skipped', function()
 
     it('a typed character while hidden does not mutate it',
@@ -835,7 +834,7 @@ describe('input surface: widget control #input', function()
   -- tests/editor/editor_spec.lua ("with blocks:" → "navigation
   -- at the block limit"): it is editor-INTERNAL behaviour
   -- driven below the gate, not a routing contract of the kind
-  -- doc/development/decisions/input.md, Decision 1, asserts.
+  -- doc/development/decisions/input.md, D-ROUTE-OWNS, asserts.
   -- This suite asserts only that the keystrokes reach the
   -- editor route (input_routing_spec.lua, "routing: editor
   -- mode").

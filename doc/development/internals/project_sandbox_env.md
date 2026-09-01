@@ -91,7 +91,7 @@ restore mechanism for T3 global state, which the project cannot restore reliably
 
 **What it cannot guarantee.** The hook is a notification, not a veto and not a transaction. The
 framework calls it from inside a teardown function of its own, in a `pcall`, and reads nothing it
-returns (Decision 28) — so an absent hook is skipped, a raising one is logged and the stop
+returns (D-STOP-IS-FW) — so an absent hook is skipped, a raising one is logged and the stop
 continues, and a project cannot refuse to stop, defer the stop, or break it by failing. The consequence a project author has to
 plan around is the one this cannot fix: **a project that raises before reaching a clean state never
 gets to run its teardown at all**, because the raise, not the stop, is what ends the run. That gap is
@@ -100,9 +100,9 @@ registered, not implemented. The register entry is
 `doc/development/technical_debt/input.md`, "A project that raises leaves global device state dirty;
 no force-reset exists", which names the same crash path from the other side:
 `run_project`'s failed-run branch drops to `project_open` without ever calling `stop_project_run`,
-so the hook is uninstalled but never fired. See `doc/development/decisions/input.md`, Decision 28,
+so the hook is uninstalled but never fired. See `doc/development/decisions/input.md`, D-STOP-IS-FW,
 for the hook's contract (framework-owned teardown, called from inside it, return value unread) and
-Decision 11 for the teardown invariant itself.
+D-ROUTE-LIFETIME for the teardown invariant itself.
 
 > REMARK: make pointer annotations more useful for reader, and also check their completeness/consistency and whther they are actual
 ## Pointers
@@ -110,4 +110,4 @@ Decision 11 for the teardown invariant itself.
 - Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).
 - Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
 - The stop sequence `before_exit` opens: [`../decisions/input.md`](../decisions/input.md),
-  Decision 11 (the route connects only while the project is actively running).
+  D-ROUTE-LIFETIME (the route connects only while the project is actively running).

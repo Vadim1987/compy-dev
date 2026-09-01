@@ -37,7 +37,7 @@ owner and revisable, not a frozen mandate.
    session27 remark pass, 955 after session29's two production fixes, 942 after session35's
    dissolution of the held-key set, which deleted more test cases than it added, 946 after
    session36 added `Key.any_pressed` with its own spec, and **968 after session43** — 949 once
-   P13's harmony spec was reverted and rewritten as three cases, 964 after the Decision 33 sweep
+   P13's harmony spec was reverted and rewritten as three cases, 964 after the D-EXACT-RESERVE sweep
    added the first cases asserting what a reservation does *not* claim, 966 with the
    `ctrl+shift+s` pair, 967 with harmony's boolean `isDown`, 968 with the Ctrl+S relocation, and
    **970 after session47** — two breaking tests for the two lifetime leaks it fixed, and **979

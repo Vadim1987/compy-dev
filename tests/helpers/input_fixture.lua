@@ -157,12 +157,12 @@ local cfg, CC, widget, session
 -- F for Fixture. Fields
 -- (F.cc/console/editor/widget/session/cfg) are nil until
 -- F.setup runs; reading them at describe-body scope is a bug.
---
 -- `F.widget` is NOT a field: the project widget lives for one
--- project run (doc/development/decisions/input.md, Decision 3
--- as amended), so a captured reference goes stale the moment a
--- case runs or stops a project. It resolves to whichever widget
--- is current, which is what a project sees through compy.input.
+-- project run (doc/development/decisions/input.md,
+-- D-WIDGET-AT-BOOT as amended), so a captured reference goes
+-- stale the moment a case runs or stops a project. It resolves
+-- to whichever widget is current, which is what a project sees
+-- through compy.input.
 local F = setmetatable({}, {
   __index = function(_, k)
     if k == 'widget' then
@@ -262,9 +262,9 @@ end
 function F.activate_project(handlers)
   love.state.app_state = 'running'
   -- A real run builds the widget at this same boundary
-  -- (Decision 3 as amended), so the narrow seam does too —
-  -- otherwise a case that stops and re-activates would find no
-  -- widget where production gives it a fresh one.
+  -- (D-WIDGET-AT-BOOT as amended), so the narrow seam does too
+  -- — otherwise a case that stops and re-activates would find
+  -- no widget where production gives it a fresh one.
   widget = build_widget(cfg)
   Controller.set_user_handlers(handlers or { }, CC)
   return F.compy_input()
@@ -331,7 +331,8 @@ function F.reset()
   -- The stop DESTROYS the widget, as a real stop does. A case
   -- that never runs a project still needs one to drive, so the
   -- fixture stands the next one up here — which is also what
-  -- makes each case's widget its own (Decision 3 as amended).
+  -- makes each case's widget its own (D-WIDGET-AT-BOOT as
+  -- amended).
   widget = build_widget(cfg)
   -- The device outlives a test the way a keyboard outlives a
   -- keystroke: a chord that never released leaves its modifier

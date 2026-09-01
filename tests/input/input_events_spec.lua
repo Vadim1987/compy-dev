@@ -3,20 +3,20 @@
 -- (since 1.0.0-rc20260712); none exist prior to it.
 
 -- dispatch chain: tier mechanics  Routing invariant
--- (doc/development/decisions/input.md, Decision 1): inter-route
--- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
--- fixed by the active screen mode. Vocabulary
--- (doc/development/internals/user_input.md, "Dispatch chain"):
--- ROUTE = the controller an event is dispatched to; WIDGET =
--- the route-managed input surface and terminal of the chain.
--- Tests assert observable outcomes at public seams, never
--- method-name spies.  keypressed fires for every physical key,
--- textinput only for character-producing keys
--- (doc/development/internals/user_input.md, "Data flow").  This
--- file covers the dispatch-chain MECHANICS:
+-- (doc/development/decisions/input.md, D-ROUTE-OWNS):
+-- inter-route dispatch is EXCLUSIVE — each event reaches
+-- exactly ONE route, fixed by the active screen mode.
+-- Vocabulary (doc/development/internals/user_input.md,
+-- "Dispatch chain"): ROUTE = the controller an event is
+-- dispatched to; WIDGET = the route-managed input surface and
+-- terminal of the chain. Tests assert observable outcomes at
+-- public seams, never method-name spies.  keypressed fires for
+-- every physical key, textinput only for character-producing
+-- keys (doc/development/internals/user_input.md, "Data flow").
+-- This file covers the dispatch-chain MECHANICS:
 -- order/consume/fall-through, combo tables, signatures,
 -- defaults, hook and handler install, the mutable/immutable
--- boundary (doc/development/decisions/input.md, Decision 2).
+-- boundary (doc/development/decisions/input.md, D-CHAIN-OF-3).
 -- Widget OUTPUTS (the callbacks fired on submit and cancel)
 -- live in input_widget_callbacks_spec.lua.
 
@@ -42,7 +42,7 @@ describe('input surface: inbound events — dispatch #input',
 
   -- Press a modifier then a trigger so the combo serialises to
   -- 'ctrl+…' — a real chord
-  -- (doc/development/decisions/input.md, Decision 8).
+  -- (doc/development/decisions/input.md, D-COMBO-TABLES).
   local function chord(mod, k)
     F.session.press(mod)
     F.session.press(k)
@@ -125,14 +125,14 @@ describe('input surface: inbound events — dispatch #input',
       end)
   end)
 
-  -- doc/development/decisions/input.md, Decision 2: only the
+  -- doc/development/decisions/input.md, D-CHAIN-OF-3: only the
   -- shortcut tier is KEYED — it participates for its own combo
   -- and for nothing else, while the hook and the widget are
   -- unkeyed and therefore see every event their channel
   -- carries. The groups above pin what a MATCHED shortcut does;
   -- these pin its silence on every other key, once per channel,
   -- since each channel keys its own combo table
-  -- (doc/development/decisions/input.md, Decision 8). Every
+  -- (doc/development/decisions/input.md, D-COMBO-TABLES). Every
   -- shortcut here is registered CONSUMING, so a spurious match
   -- would be observable twice over: `fired` flips AND the tiers
   -- below it stop receiving.
@@ -184,7 +184,7 @@ describe('input surface: inbound events — dispatch #input',
       end)
   end)
 
-  -- doc/development/decisions/input.md, Decision 2: the
+  -- doc/development/decisions/input.md, D-CHAIN-OF-3: the
   -- interception matrix. Two at once — each participant
   -- intercepts for itself only (a consumer stops the walk
   -- exactly where it sits), and a MISSING participant is not a
@@ -249,7 +249,7 @@ describe('input surface: inbound events — dispatch #input',
   end)
 
   describe('shortcuts fire on the normalised combo', function()
-    -- doc/development/decisions/input.md, Decision 8: each
+    -- doc/development/decisions/input.md, D-COMBO-TABLES: each
     -- channel has its OWN combo sub-table and keys normalise on
     -- assignment ('Ctrl+J' -> 'ctrl+j'). The trigger is
     -- deliberately NOT 's': the gateway's own power shortcuts
@@ -319,7 +319,7 @@ describe('input surface: inbound events — dispatch #input',
         assert.is_true(fired)
       end)
 
-    -- doc/development/decisions/input.md, Decision 8: the
+    -- doc/development/decisions/input.md, D-COMBO-TABLES: the
     -- per-event tables are distinct — asserted by BEHAVIOUR (a
     -- registration on one channel does not fire on another)
     -- rather than by reading the table structure, which was the
@@ -347,13 +347,13 @@ describe('input surface: inbound events — dispatch #input',
   end)
 
   -- A combo is modifiers plus ONE trigger
-  -- (doc/development/decisions/input.md, Decision 21). The rule
-  -- is enforced at registration because the canonical form
+  -- (doc/development/decisions/input.md, D-COMBO-SHAPE). The
+  -- rule is enforced at registration because the canonical form
   -- silently kept the LAST non-modifier token before:
   -- 'ctrl+a+b' became 'ctrl+b', and 'a+b+*' became a bare '*' —
   -- the widest possible binding written as the narrowest.
   -- Raising is the same treatment show/configure give an
-  -- unrecognised key (Decision 15).
+  -- unrecognised key (D-UNKNOWN-RAISES).
   describe('the combo registration contract', function()
 
     it('rejects a combo with two triggers', function()
@@ -420,9 +420,9 @@ describe('input surface: inbound events — dispatch #input',
   end)
 
   -- A trailing '*' binds the whole modifier class
-  -- (doc/development/decisions/input.md, Decision 21): 'alt+*'
-  -- is every Alt chord. Exact bindings win; the class is
-  -- consulted only on a miss, so the hit path is unchanged.
+  -- (doc/development/decisions/input.md, D-COMBO-SHAPE):
+  -- 'alt+*' is every Alt chord. Exact bindings win; the class
+  -- is consulted only on a miss, so the hit path is unchanged.
   describe('combo classes', function()
 
     local function bind_class(input, combo)
@@ -524,8 +524,8 @@ describe('input surface: inbound events — dispatch #input',
   -- The dispatch combinators live under compy.input.fn, named
   -- for what they do to the EVENT — that is what a reader of a
   -- registration table wants to know
-  -- (doc/development/decisions/input.md, Decision 22 and
-  -- Decision 24).
+  -- (doc/development/decisions/input.md, D-IGNORE-REPEAT and
+  -- D-STOP-AND-SIDE).
   -- They are orthogonal: ignore_repeat is about whether the
   -- handler RUNS, stop_here/side_run about where the event
   -- GOES.
@@ -553,7 +553,7 @@ describe('input surface: inbound events — dispatch #input',
 
     -- It says nothing about propagation: a fresh press returns
     -- whatever the handler returned, exactly as an unwrapped
-    -- one would (Decision 2).
+    -- one would (D-CHAIN-OF-3).
     it('a fresh press propagates the handler return value',
       function()
         local reached = false
@@ -638,7 +638,7 @@ describe('input surface: inbound events — dispatch #input',
 
     -- No function at all: a binding whose only job is to
     -- swallow. The modifier's own press is not in its class
-    -- (Decision 21), so it reaches the hook and the Alt chord
+    -- (D-COMBO-SHAPE), so it reaches the hook and the Alt chord
     -- does not — which is what makes this assertion about the
     -- class rather than about nothing arriving at all.
     it('consumes with no function to run', function()
@@ -756,7 +756,7 @@ describe('input surface: inbound events — dispatch #input',
   end)
 
   -- ---- participant signatures
-  -- (doc/development/decisions/input.md, Decision 26) ---
+  -- (doc/development/decisions/input.md, D-LOVE-ARGS) ---
 
   describe('participant signatures', function()
     -- keypressed participants receive LÖVE's own argument list,
@@ -856,8 +856,8 @@ describe('input surface: inbound events — dispatch #input',
   end)
 
   -- defaults + hidden widget
-  -- (doc/development/decisions/input.md, Decision 10 and
-  -- Decision 2)
+  -- (doc/development/decisions/input.md, D-HOOKS-SEEDED and
+  -- D-CHAIN-OF-3)
 
   describe('defaults and the hidden widget', function()
     -- The non-defined-participant permutations the symmetry
@@ -866,7 +866,7 @@ describe('input surface: inbound events — dispatch #input',
     -- matrix above; this group covers what the DEFAULTS do once
     -- the event arrives.
 
-    -- doc/development/decisions/input.md, Decision 10: the
+    -- doc/development/decisions/input.md, D-HOOKS-SEEDED: the
     -- default hook neither edits nor consumes — the event falls
     -- through to the widget, which performs the edit.
     it('with no project hook set, the event passes through to the widget',
@@ -893,7 +893,7 @@ describe('input surface: inbound events — dispatch #input',
         assert.same({ 'ab' }, F.console:get_text())
       end)
 
-    -- doc/development/decisions/input.md, Decision 2: whether
+    -- doc/development/decisions/input.md, D-CHAIN-OF-3: whether
     -- the route reports the event as consumed follows from ONE
     -- fact -- is the widget shown. The cases above observe that
     -- through mutations; this one reads the route's own answer,
@@ -930,8 +930,8 @@ describe('input surface: inbound events — dispatch #input',
   end)
 
   -- ---- the per-event hook
-  -- (doc/development/decisions/input.md, Decision 5 and
-  -- Decision 10) ---
+  -- (doc/development/decisions/input.md, D-TWO-SURFACES and
+  -- D-HOOKS-SEEDED) ---
 
   describe('the per-event hook', function()
 
@@ -940,7 +940,7 @@ describe('input surface: inbound events — dispatch #input',
     -- delivered-triple case both drive hooks.keypressed. What
     -- is specific to textinput, and is why this case exists, is
     -- the PER-CHARACTER cadence.
-    -- doc/development/decisions/input.md, Decision 5: the
+    -- doc/development/decisions/input.md, D-TWO-SURFACES: the
     -- textinput hook fires PER-CHARACTER (distinct from the
     -- submit output on_text_entered)
     it('the textinput hook fires per character as text arrives',
@@ -955,7 +955,7 @@ describe('input surface: inbound events — dispatch #input',
         assert.same({ 'a', 'b' }, got)
       end)
 
-    -- doc/development/decisions/input.md, Decision 10 (hooks
+    -- doc/development/decisions/input.md, D-HOOKS-SEEDED (hooks
     -- install path): a truthy callback intercepts the widget; a
     -- present-but-falsey callback falls through.
     it('a truthy textinput hook intercepts; falsey reaches the widget',
@@ -972,10 +972,10 @@ describe('input surface: inbound events — dispatch #input',
   end)
 
   -- ---- the project-handler install path
-  -- (doc/development/decisions/input.md, Decision 10) -----
+  -- (doc/development/decisions/input.md, D-HOOKS-SEEDED) -----
 
   describe('the project-handler install path', function()
-    -- doc/development/decisions/input.md, Decision 10: a
+    -- doc/development/decisions/input.md, D-HOOKS-SEEDED: a
     -- project handler is a plain hook participant that fires
     -- REGARDLESS of widget-shown state (the reversed
     -- suppress-while-shown mutation is gone). Fires in all
@@ -1026,7 +1026,7 @@ describe('input surface: inbound events — dispatch #input',
       assert.is_function(input.hooks.doubleclick)
     end)
 
-    -- doc/development/decisions/input.md, Decision 10,
+    -- doc/development/decisions/input.md, D-HOOKS-SEEDED,
     -- project-handler path: a truthy handler intercepts the
     -- widget.
     it('a handler returning truthy intercepts the widget',
@@ -1039,9 +1039,9 @@ describe('input surface: inbound events — dispatch #input',
         assert.same({ 'ab' }, F.widget:get_text())
       end)
 
-    -- doc/development/decisions/input.md, Decision 10, project-
-    -- handler path: a falsey handler falls through to the
-    -- widget (asserted on the textinput channel too, so all
+    -- doc/development/decisions/input.md, D-HOOKS-SEEDED,
+    -- project- handler path: a falsey handler falls through to
+    -- the widget (asserted on the textinput channel too, so all
     -- three channels are covered across the handler cases).
     it('a falsey handler textinput falls through to the widget',
       function()
@@ -1053,7 +1053,7 @@ describe('input surface: inbound events — dispatch #input',
         assert.same({ 'Z' }, F.widget:get_text())
       end)
 
-    -- doc/development/decisions/input.md, Decision 10
+    -- doc/development/decisions/input.md, D-HOOKS-SEEDED
     -- precedence: an explicit hook takes precedence over the
     -- captured handler — the handler never seeds the hook when
     -- an explicit hook is set (no "replace" relation).
@@ -1078,7 +1078,7 @@ describe('input surface: inbound events — dispatch #input',
         assert.equal(0, handler_hits)
       end)
 
-    -- doc/development/decisions/input.md, Decision 10:
+    -- doc/development/decisions/input.md, D-HOOKS-SEEDED:
     -- the seeding happens ONCE, at activation. Clearing the
     -- hook afterwards leaves it cleared -- the captured handler
     -- is not re-resolved behind it. (The retired model re-read
@@ -1100,11 +1100,11 @@ describe('input surface: inbound events — dispatch #input',
   end)
 
   -- ---- the mutable/immutable boundary
-  -- (doc/development/decisions/input.md, Decision 7)
+  -- (doc/development/decisions/input.md, D-FROZEN-SHELL)
   -- -------------
 
   describe('the mutable/immutable boundary', function()
-    -- doc/development/decisions/input.md, Decision 7:
+    -- doc/development/decisions/input.md, D-FROZEN-SHELL:
     -- `compy.input` and the IDENTITY of its three sub-tables
     -- (shortcuts, hooks, callbacks) are frozen, while every
     -- leaf inside them is freely writable. A project therefore

@@ -38,7 +38,7 @@ Each raw handler does exactly two jobs, in order:
    restart (`:928-932`), Ctrl+Alt+P / F10 profiler toggle (`:933-955`), Ctrl+Esc quit (on the
    *release* side, `handlers.keyreleased`, `:997-998`). The raw handler keeps only these: it
    holds no state of its own, and whatever needs to know which modifiers are down asks the
-   keyboard (`../decisions/input.md`, Decision 30).
+   keyboard (`../decisions/input.md`, D-ASK-THE-DEVICE).
 2. **Forward to the active route.** Once the framework-level concerns have run, the raw handler
    defers unconditionally to whatever route currently owns the corresponding `love.<event>`:
    `if love.keypressed then return love.keypressed(k, sc, isr) end` (`controller.lua:983-985`).
@@ -59,7 +59,7 @@ is the console/editor route's default handler for that event.
 
 `Controller.set_default_handlers(CC, CV)` (`controller.lua:809`) is the bulk operation that makes
 the console the owner of every `love.<event>` at once — "restore to the default route," in the
-vocabulary of [`../decisions/input.md`](../decisions/input.md), Decision 1. It does three things,
+vocabulary of [`../decisions/input.md`](../decisions/input.md), D-ROUTE-OWNS. It does three things,
 in order:
 
 1. Calls `Controller.project_input:deactivate()` (`controller.lua:817`) — drops the project route
@@ -111,7 +111,7 @@ author writing them believes they are installing handlers:
 
 > REMARK: this needs actualization, because the routing was recently unified and there's no more artificial divergence between keyboard/pointer?
 - **keyboard and text** (`keypressed`, `keyreleased`, `textinput`) — captured from the project's
-  sandboxed `love` table and **seeded as `compy.input.hooks[event]`** (Decision 10), once, at
+  sandboxed `love` table and **seeded as `compy.input.hooks[event]`** (D-HOOKS-SEEDED), once, at
   activation. They run in hook position inside the route's walk, with hook semantics: a truthy
   return consumes. They are never installed as `love.<event>`; the route owns that. Writing
   `compy.input.hooks.textinput = f` directly is the same thing said plainly, and is the

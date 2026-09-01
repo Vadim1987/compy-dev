@@ -26,7 +26,7 @@ compy.input.show{
 }
 ```
 
-This is the continuous-session idiom (see [Compy Input API](../../../input_api.md)): `compy.input.show{}` activates the widget once; `on_text_entered` receives the submitted text as one string while the session is active (`after_submit` is the one that receives the lines — Decision 37); `after_submit` clears the next draft. `LineValidators({ is_natural })` adapts the existing line rule to the widget validator.
+This is the continuous-session idiom (see [Compy Input API](../../../input_api.md)): `compy.input.show{}` activates the widget once; `on_text_entered` receives the submitted text as one string while the session is active (`after_submit` is the one that receives the lines — D-PAYLOAD-SPLIT); `after_submit` clears the next draft. `LineValidators({ is_natural })` adapts the existing line rule to the widget validator.
 
 The old `r = user_input()` / `validated_input(...)` polling pattern is **(deprecated, removed in 1.0.0-rc20260712)**.
 

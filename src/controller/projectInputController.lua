@@ -6,27 +6,23 @@ require("util.key")
 -- / EditorController. The route is DUMB: it navigates every
 -- event, keyboard and pointer alike, through THREE consumers in
 -- order, stopping at the first that returns truthy
--- (doc/development/decisions/input.md, Decision 2):
---
---   1. compy.input.shortcuts[event][combo]  project shortcut
---      combos (doc/development/decisions/input.md, Decision 8:
---      per-event sub-tables, normalising)
---   2. compy.input.hooks[event]             one hook per event
---    (doc/development/decisions/input.md, Decision 10): the
---    single source of truth, seeded once at activate() with
---    the project's captured love.* handler where unset; a nil
---    clears with no resurrection
---   3. the widget                           terminal; consumes
---    whenever it is shown (its own internal flag), skipped when
---    hidden. Enter/Escape/submit/cancel are the WIDGET's own
---    business (userInputController), signalled via callbacks —
---    never a routing concern.
---
--- Truthy at a consumer stops the walk; falsey falls through.
--- The widget's participation derives from its shownness, not a
--- return value (doc/development/decisions/input.md,
--- Decision 5). Routing contract:
--- doc/development/internals/user_input.md
+-- (doc/development/decisions/input.md, D-CHAIN-OF-3):  1.
+-- compy.input.shortcuts[event][combo]  project shortcut combos
+-- (doc/development/decisions/input.md, D-COMBO-TABLES:
+-- per-event sub-tables, normalising) 2.
+-- compy.input.hooks[event]             one hook per event
+-- (doc/development/decisions/input.md, D-HOOKS-SEEDED): the
+-- single source of truth, seeded once at activate() with the
+-- project's captured love.* handler where unset; a nil clears
+-- with no resurrection 3. the widget
+-- terminal; consumes whenever it is shown (its own internal
+-- flag), skipped when hidden. Enter/Escape/submit/cancel are
+-- the WIDGET's own business (userInputController), signalled
+-- via callbacks — never a routing concern.  Truthy at a
+-- consumer stops the walk; falsey falls through. The widget's
+-- participation derives from its shownness, not a return value
+-- (doc/development/decisions/input.md, D-TWO-SURFACES). Routing
+-- contract: doc/development/internals/user_input.md
 
 -- Every channel the chain dispatches on, in ONE list. The
 -- derived clicks belong in it: where an event comes from (LÖVE,
@@ -56,7 +52,7 @@ local TRIGGER = {
 }
 
 --- Seed the project's hooks table
---- (doc/development/decisions/input.md, Decision 10): each
+--- (doc/development/decisions/input.md, D-HOOKS-SEEDED): each
 --- event with no explicit project hook gets the project's own
 --- love.* handler, once, at activation. After this the hooks
 --- table is the single source of truth — a nil'd hook clears,
@@ -87,7 +83,7 @@ ProjectInputController = class.create(new)
 ProjectInputController.EVENTS = EVENTS
 
 --- Exact combo first, then the modifier class
---- (doc/development/decisions/input.md, Decision 21): 'alt+*'
+--- (doc/development/decisions/input.md, D-COMBO-SHAPE): 'alt+*'
 --- is every Alt chord. The class key needs no parsing — it is
 --- the same serialisation with '*' as the trigger. A modifier's
 --- own press names no shortcut at all: no combo with a modifier
@@ -124,8 +120,8 @@ end
 --- consumer fired or the widget was shown. A free function over
 --- plain tables + a widget reference, so any adopter (not only
 --- the project widget) can reuse it over its own instance. The
---- nil guards are deliberate (Decision 23): whether a hook is
---- set is information a project reads, so an unset one stays
+--- nil guards are deliberate (D-NO-LOG-NOISE): whether a hook
+--- is set is information a project reads, so an unset one stays
 --- nil rather than defaulting to a callable noop. Nothing is
 --- logged when an event is consumed by nobody either — that
 --- would be a line per ordinary keystroke at this tier.
@@ -163,9 +159,9 @@ end
 --- the project's own error-wrapped love.* keyboard handlers
 --- (from the caller); they seed the hooks table once here
 --- (seed_hooks; doc/development/decisions/input.md,
---- Decision 10) — only where the project set no explicit hook.
---- After seeding, hooks is read directly on each event; there
---- is no separate handlers store.
+--- D-HOOKS-SEEDED) — only where the project set no explicit
+--- hook. After seeding, hooks is read directly on each event;
+--- there is no separate handlers store.
 --- @param handlers table?
 --- @param compy_input table
 function ProjectInputController:activate(handlers, compy_input)
@@ -174,9 +170,9 @@ function ProjectInputController:activate(handlers, compy_input)
 end
 
 --- Forget the project's handlers
---- (doc/development/decisions/input.md, Decision 11). Nulling
---- compy_input does not itself disconnect anything: the caller
---- (controller.lua release_keyboard_route /
+--- (doc/development/decisions/input.md, D-ROUTE-LIFETIME).
+--- Nulling compy_input does not itself disconnect anything: the
+--- caller (controller.lua release_keyboard_route /
 --- set_default_handlers) re-points the love.* callbacks at the
 --- console, after which _dispatch is unreachable. Dropping the
 --- reference here lets the stopped project's handlers be

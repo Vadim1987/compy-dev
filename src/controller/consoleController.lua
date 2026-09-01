@@ -45,7 +45,7 @@ function ConsoleController.new(M, main_ctrl)
   -- Console history navigation: at the vertical boundary the
   -- widget fires on_limit_reached; the console maps up/down to
   -- history back/forward (doc/development/decisions/input.md,
-  -- Decision 5), retiring the old keypressed
+  -- D-TWO-SURFACES), retiring the old keypressed
   -- return-value channel.
   IC.callbacks.on_limit_reached = function(dir)
     if dir == 'up' then IC:history_back() end
@@ -177,8 +177,8 @@ end
 --- `love.state.user_input`: the widget's own `shown` flag has
 --- to fall with the handle, or the next project's show() is
 --- refused as a repeat (doc/development/decisions/input.md,
---- Decision 3). `hide()` fires no cancel flow (Decision 6) —
---- teardown is not a user-facing dismiss.
+--- D-WIDGET-AT-BOOT). `hide()` fires no cancel flow
+--- (D-NO-FW-TIER) — teardown is not a user-facing dismiss.
 local function hide_input_widget()
   local widget = love.state.user_input_controller
   if widget then return widget:hide() end
@@ -187,7 +187,7 @@ end
 
 --- The project's widget is built when a run starts and dropped
 --- when it stops (doc/development/decisions/input.md,
---- Decision 3 as amended): a store a project leaves on it
+--- D-WIDGET-AT-BOOT as amended): a store a project leaves on it
 --- cannot reach the next project, because the object it lived
 --- on is gone.
 --- The console's, editor's and search strip's widgets are
@@ -212,7 +212,7 @@ end
 --- widget itself dropped. Bound to the STOP, never to the
 --- 'running' → 'project_open' transition — a non-blocking
 --- project lives in `project_open` and still owns its widget
---- there (Decision 11, and the asymmetry its amendment
+--- there (D-ROUTE-LIFETIME, and the asymmetry its amendment
 --- deleted).
 local function destroy_input_widget()
   hide_input_widget()
@@ -335,10 +335,11 @@ function ConsoleController:run_project(name)
       if not rok then
         -- Top-level code raised, so the route was never
         -- connected. Release, then take down any widget the
-        -- project managed to show first: Decision 11's teardown
-        -- invariant says a widget whose owning route is
-        -- inactive goes unhonoured, and a shown one is not
-        -- (doc/development/decisions/input.md, Decision 11).
+        -- project managed to show first: D-ROUTE-LIFETIME's
+        -- teardown invariant says a widget whose owning route
+        -- is inactive goes unhonoured, and a shown one is not
+        -- (doc/development/decisions/input.md,
+        -- D-ROUTE-LIFETIME).
         self.main_ctrl.release_keyboard_route(self)
         destroy_input_widget()
         -- ...and the participants it installed before raising.
@@ -362,7 +363,8 @@ function ConsoleController:run_project(name)
           -- release this feature added was what forced pointer
           -- to be exempted from it. With every channel on one
           -- route there is nothing left to exempt.
-          -- (doc/development/decisions/input.md, Decision 11.)
+          -- (doc/development/decisions/input.md,
+          -- D-ROUTE-LIFETIME.)
           love.state.app_state = 'project_open'
         end
       end
@@ -456,12 +458,12 @@ end
 -- projects never touch the controller directly. Namespace +
 -- lifecycle docs: doc/development/internals/user_input.md.
 -- compy.input's write boundary
--- (doc/development/decisions/input.md, Decision 7): the
+-- (doc/development/decisions/input.md, D-FROZEN-SHELL): the
 -- container and the IDENTITY of its three sub-tables (shortcuts
 -- / hooks / callbacks) are frozen — a project cannot replace
 -- them (compy.input.shortcuts = {} raises). Every LEAF inside
 -- is freely writable: shortcuts[event][combo] = fn (through the
--- combo table's own normalising __newindex, Decision 8),
+-- combo table's own normalising __newindex, D-COMBO-TABLES),
 -- hooks[event] = fn, callbacks[name] = fn. One structural rule
 -- replaces the old enumerated 11-name allowlist — nothing to
 -- keep in sync with the API surface.
@@ -491,7 +493,7 @@ end
 --- shortcuts sub-table: per-event combo tables whose identities
 --- are frozen (shortcuts.keypressed = {} raises); leaf combo
 --- writes reach the combo table's own normalising __newindex
---- (doc/development/decisions/input.md, Decision 8).
+--- (doc/development/decisions/input.md, D-COMBO-TABLES).
 --- @param shortcuts table
 local function build_shortcuts_surface(shortcuts)
   return build_frozen_view(
@@ -500,8 +502,8 @@ local function build_shortcuts_surface(shortcuts)
 end
 
 --- The dispatch combinators
---- (doc/development/decisions/input.md, Decision 22 and
---- Decision 24), reached as compy.input.fn.*. Stateless and
+--- (doc/development/decisions/input.md, D-IGNORE-REPEAT and
+--- D-STOP-AND-SIDE), reached as compy.input.fn.*. Stateless and
 --- orthogonal:
 --- `ignore_repeat` decides whether the handler RUNS,
 --- `stop_here`/`side_run` decide whether the event PROPAGATES —
@@ -546,7 +548,7 @@ local input_fn_surface = build_frozen_view(
 --- Assemble the compy.input surface: reads resolve the three
 --- frozen sub-tables (shortcuts / hooks / callbacks), the
 --- combinator table, or a callable method; every write to the
---- container itself is refused loudly (Decision 7 — frozen
+--- container itself is refused loudly (D-FROZEN-SHELL — frozen
 --- container, writable leaves).
 --- @param state table
 --- @param methods table
@@ -594,10 +596,10 @@ local CALLBACK_KEYS = {
 -- content and only activation seats them, while `force` answers
 -- "replace the widget that is already up", which configure()
 -- never faces. See doc/development/decisions/input.md,
--- Decision 15's show-only category, added there by Decision 35.
--- `auto_hide` was admitted on that resemblance and left again
--- (Decision 36's Amendment): it is machinery, and the user does
--- not own lifecycle.
+-- D-UNKNOWN-RAISES's show-only category, added there by
+-- D-CFG-BOUNDARY. `auto_hide` was admitted on that resemblance
+-- and left again (D-AUTO-HIDE's Amendment): it is machinery,
+-- and the user does not own lifecycle.
 local SHOW_ONLY_KEYS = {
   text    = 'show(), or set_text on a live widget',
   cursor  = 'show(), or set_cursor on a live widget',
@@ -619,7 +621,8 @@ local WIDGET_KEYS = { 'prompt', 'auto_hide' }
 
 -- What each entry point accepts. The difference between them is
 -- exactly SHOW_ONLY_KEYS: everything else is project-owned and
--- both calls take it, set-if-given (Decision 35, statement 3).
+-- both calls take it, set-if-given (D-CFG-BOUNDARY, statement
+-- 3).
 local CONFIGURE_KEYS = key_set(CALLBACK_KEYS)
 local SHOW_KEYS = key_set(CALLBACK_KEYS)
 for _, k in ipairs(WIDGET_KEYS) do
@@ -654,14 +657,15 @@ local function bad_key_message(fname, key)
 end
 
 --- Strict contract enforcement
---- (doc/development/decisions/input.md, Decision 15):
+--- (doc/development/decisions/input.md, D-UNKNOWN-RAISES):
 --- the config table is CLOSED, so a key
 --- outside it can only be an authoring error — raise, and let
 --- the project stop at the typo instead of running on in a
 --- shape nobody asked for. Level 3 puts the trace on the
 --- project's own show()/configure() line.
 --- Runtime STATE no-ops (the widget already active, or
---- hidden) are NOT this: they keep warning, per Decision 3.
+--- hidden) are NOT this: they keep warning, per
+--- D-WIDGET-AT-BOOT.
 ---
 --- Level 4 puts the trace on the project's own line, and holds
 --- only while every caller sits at the same depth: project →
@@ -690,11 +694,11 @@ end
 --- thing: it is well-formed and still clamps, which is what
 --- doc/input_api.md promises.
 ---
---- Falsey is the uniform unset (Decision 35, statement 3), so a
---- computed cursor that came to nothing seats none instead of
---- raising, and normalising it to nil here is what lets the
---- activation path keep one absence to test for.
---- Same level-4 depth rule as check_keys above.
+--- Falsey is the uniform unset (D-CFG-BOUNDARY, statement 3),
+--- so a computed cursor that came to nothing seats none instead
+--- of raising, and normalising it to nil here is what lets the
+--- activation path keep one absence to test for. Same level-4
+--- depth rule as check_keys above.
 --- @param fname string
 --- @param cursor any
 --- @return table? pair
@@ -727,7 +731,7 @@ end
 
 --- Sibling of checked_cursor, same level-4 depth rule. Content
 --- is normalised, never validated, once it is inside the model
---- (doc/development/decisions/input.md, Decision 38) — what
+--- (doc/development/decisions/input.md, D-CONTENT-NORM) — what
 --- cannot be normalised is refused here: a value that is not
 --- text, or a table that is not a list of lines, is a structure
 --- error rather than a spelling of the shape, and repairing it
@@ -749,10 +753,11 @@ end
 -- widget, and the surface RESOLVES them instead of holding
 -- them: a widget lives for a project RUN, so a captured
 -- reference would be the previous run's table
--- (doc/development/decisions/input.md, Decision 3). Between
--- runs there is no widget and no store — every reader below
--- reads "no store" as "nothing to remember" and does nothing,
--- which is the rule the rest of this surface already follows.
+-- (doc/development/decisions/input.md, D-WIDGET-AT-BOOT).
+-- Between runs there is no widget and no store — every reader
+-- below reads "no store" as "nothing to remember" and does
+-- nothing, which is the rule the rest of this surface already
+-- follows.
 local WIDGET_STORES = { callbacks = true }
 
 --- @param k any
@@ -851,11 +856,11 @@ local function api_hide(get_widget)
 end
 
 -- Builds the compy.input surface: the three-consumer dispatch
--- surface (doc/development/decisions/input.md, Decision 2) a
+-- surface (doc/development/decisions/input.md, D-CHAIN-OF-3) a
 -- project registers against. `shortcuts[event]` are the
--- doc/development/decisions/input.md, Decision 8 per-event
+-- doc/development/decisions/input.md, D-COMBO-TABLES per-event
 -- combo sub-tables (normalising); `hooks[event]` is the one
--- seeded hook per event (Decision 10). show/hide drive the
+-- seeded hook per event (D-HOOKS-SEEDED). show/hide drive the
 -- widget (resolved from love.state, never held by the project).
 -- The widget-method surface a project drives (show/hide/
 -- configure/set_text/set_cursor/get_cursor/clear),
@@ -875,11 +880,11 @@ local function build_widget_api(get_widget, get_active_flag, state)
   return {
     show = function(cfg) api_show(get_widget, state, cfg) end,
     hide = function() api_hide(get_widget) end,
-    -- doc/development/decisions/input.md, Decision 18: the one
-    -- state question a project may ask the widget. It cannot
-    -- read this itself — a project's `love` is a sandboxed
-    -- clone, so `love.state.user_input` is always nil inside a
-    -- project (internals/project_sandbox_env.md).
+    -- doc/development/decisions/input.md, D-ONE-STATE-ASK: the
+    -- one state question a project may ask the widget. It
+    -- cannot read this itself — a project's `love` is a
+    -- sandboxed clone, so `love.state.user_input` is always nil
+    -- inside a project (internals/project_sandbox_env.md).
     is_shown = function()
       return get_active_flag() or false
     end,
@@ -913,7 +918,7 @@ local function build_widget_api(get_widget, get_active_flag, state)
     -- the widget and the widget outlives its own visibility.
     -- Hidden is not a refusal and does not warn. text/cursor
     -- never arrive: check_keys refuses them above
-    -- (doc/development/decisions/input.md, Decision 35).
+    -- (doc/development/decisions/input.md, D-CFG-BOUNDARY).
     -- Between runs there is no widget, so this is inert rather
     -- than a raise — the rule the rest of this surface follows.
     configure = function(cfg)
@@ -950,9 +955,9 @@ local get_compy_input = function()
   for _, ev in ipairs(ProjectInputController.EVENTS) do
     shortcut_tables[ev] = Key.new_handler_table()
   end
-  -- shortcuts: per-event combo tables (Decision 8,
+  -- shortcuts: per-event combo tables (D-COMBO-TABLES,
   -- normalising). hooks: one fn per event, seeded once at
-  -- activation (Decision 10). Both are the surface's own and
+  -- activation (D-HOOKS-SEEDED). Both are the surface's own and
   -- start empty (leaves fill on project write). callbacks is
   -- NOT a field — it is the widget's, reached through __index
   -- (widget_store), and it carries the widget's stay-open
@@ -983,13 +988,13 @@ local get_compy_namespace = function(terminal)
   require("util.namespace.fonts")
   -- Two members are held as upvalues rather than fields, and
   -- for the same reason: a metatable's __newindex only fires
-  -- for a key the table does NOT hold, so a raw field cannot
-  -- be defended. `input` must refuse assignment (Decision 7)
-  -- and `before_exit` must intercept it.
-  -- UNSETTLED: an upvalue also survives table.clone by
-  -- reference, so every env clone shares ONE before_exit slot.
-  -- Nothing relies on that; nothing rules it out either.
-  -- See doc/development/technical_debt/input.md,
+  -- for a key the table does NOT hold, so a raw field cannot be
+  -- defended. `input` must refuse assignment (D-FROZEN-SHELL)
+  -- and `before_exit` must intercept it. UNSETTLED: an upvalue
+  -- also survives table.clone by reference, so every env clone
+  -- shares ONE before_exit slot. Nothing relies on that;
+  -- nothing rules it out either. See
+  -- doc/development/technical_debt/input.md,
   -- "`compy.before_exit` is a closure slot".
   local before_exit_slot = default_before_exit
   local input_surface = get_compy_input()
@@ -1009,7 +1014,7 @@ local get_compy_namespace = function(terminal)
       if k == 'before_exit' then
         before_exit_slot = v
       elseif k == 'input' then
-        -- Decision 7's first clause. compy.input's own
+        -- D-FROZEN-SHELL's first clause. compy.input's own
         -- metatable cannot defend this: replacing the
         -- container is a write to `compy`, one table up.
         error("compy.input is not assignable — write to its"
@@ -1456,7 +1461,7 @@ end
 --- Closing ends the project, so it ends the project's widget:
 --- reachable from a running project's own env and from the
 --- console during `inspect`, and without this a closed
---- project's widget outlives it (Decision 3 as amended).
+--- project's widget outlives it (D-WIDGET-AT-BOOT as amended).
 --- Unconditional, ahead of the has-a-project check: with no
 --- project there is no widget either, so it is a no-op there,
 --- and the invariant does not depend on the bookkeeping order.
@@ -1656,7 +1661,7 @@ function ConsoleController:keypressed(k)
     -- History navigation at the vertical boundary is driven by
     -- the widget's on_limit_reached callback (set at
     -- construction), not by keypressed's return value (retired,
-    -- doc/development/decisions/input.md, Decision 5).
+    -- doc/development/decisions/input.md, D-TWO-SURFACES).
     -- keypressed still runs for its editing side effects; its
     -- return is unused.
     input:keypressed(k)

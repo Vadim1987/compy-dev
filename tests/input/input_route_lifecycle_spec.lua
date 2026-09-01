@@ -3,20 +3,20 @@
 -- and the compy.before_exit hook.
 
 -- route connection lifecycle. Routing invariant
--- (doc/development/decisions/input.md, Decision 1): inter-route
--- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
--- fixed by the active screen mode. Vocabulary
--- (doc/development/internals/user_input.md, "Dispatch chain"):
--- ROUTE = the controller an event is dispatched to; WIDGET =
--- the route-managed input surface and terminal of the chain.
--- Tests assert observable outcomes at public seams, never
--- method-name spies. keypressed fires for every physical key,
--- textinput only for character-producing keys
--- (doc/development/internals/user_input.md, "Data flow").
+-- (doc/development/decisions/input.md, D-ROUTE-OWNS):
+-- inter-route dispatch is EXCLUSIVE — each event reaches
+-- exactly ONE route, fixed by the active screen mode.
+-- Vocabulary (doc/development/internals/user_input.md,
+-- "Dispatch chain"): ROUTE = the controller an event is
+-- dispatched to; WIDGET = the route-managed input surface and
+-- terminal of the chain. Tests assert observable outcomes at
+-- public seams, never method-name spies. keypressed fires for
+-- every physical key, textinput only for character-producing
+-- keys (doc/development/internals/user_input.md, "Data flow").
 -- Connect/disconnect at the 'running' boundary, full teardown
 -- at stop, inspect's project-route disconnect, and the
 -- compy.before_exit stop hook
--- (doc/development/decisions/input.md, Decision 11;
+-- (doc/development/decisions/input.md, D-ROUTE-LIFETIME;
 -- internals/user_input.md, "inspect mode").
 
 local F = require('tests.helpers.input_fixture')
@@ -29,7 +29,7 @@ describe('input surface: inbound events — route lifetime #input',
 
   -- ====================================================
   -- Route connection lifecycle
-  -- (doc/development/decisions/input.md, Decision 11):
+  -- (doc/development/decisions/input.md, D-ROUTE-LIFETIME):
   -- connect/disconnect at the 'running' boundary (same
   -- decision), pointer excluded from that disconnect (same
   -- decision), full teardown at stop (same decision), inspect
@@ -94,7 +94,7 @@ describe('input surface: inbound events — route lifetime #input',
     end)
 
     describe('stop teardown', function()
-      -- doc/development/decisions/input.md, Decision 11
+      -- doc/development/decisions/input.md, D-ROUTE-LIFETIME
       -- (teardown invariant): stop clears every compy.input
       -- participant a project installed -- combo handlers and
       -- every project-mutable field.
@@ -117,10 +117,10 @@ describe('input surface: inbound events — route lifetime #input',
         assert.is_nil(next_run.callbacks.validator)
       end)
 
-      -- doc/development/decisions/input.md, Decision 11: a
+      -- doc/development/decisions/input.md, D-ROUTE-LIFETIME: a
       -- widget left shown at
       -- stop is silently hidden -- teardown is not a cancel,
-      -- so no cancel chain fires (contrast Decision 6).
+      -- so no cancel chain fires (contrast D-NO-FW-TIER).
       it('silently hides a shown widget without ' ..
           'firing the cancel chain', function()
         local input = F.activate_project()
@@ -137,8 +137,8 @@ describe('input surface: inbound events — route lifetime #input',
         assert.equal(0, cancelled)
       end)
 
-      -- doc/development/decisions/input.md, Decision 11: the
-      -- widget's OWN mirrored output fields
+      -- doc/development/decisions/input.md, D-ROUTE-LIFETIME:
+      -- the widget's OWN mirrored output fields
       -- (userInputController.configure_core) persist across a
       -- hide/re-show within one run (doc/input_api.md,
       -- "Callback assignments") but must not leak into the next
@@ -160,13 +160,14 @@ describe('input surface: inbound events — route lifetime #input',
           assert.is_nil(F.widget.model.evaluator.highlighter)
         end)
 
-      -- doc/development/decisions/input.md, Decision 11: the
-      -- next project meets the documented stay-open DEFAULTS --
-      -- neither the previous project's after_cancel nor a
-      -- nil-call error. It used to get them from a re-seed at
-      -- teardown; it now gets them from a widget built with
-      -- them (Decision 3 as amended). The guarantee is what is
-      -- asserted here, not the mechanism behind it.
+      -- doc/development/decisions/input.md, D-ROUTE-LIFETIME:
+      -- the next project meets the documented stay-open
+      -- DEFAULTS -- neither the previous project's after_cancel
+      -- nor a nil-call error. It used to get them from a
+      -- re-seed at teardown; it now gets them from a widget
+      -- built with them (D-WIDGET-AT-BOOT as amended). The
+      -- guarantee is what is asserted here, not the mechanism
+      -- behind it.
       it('gives the next project the default callbacks',
         function()
           local first = F.activate_project()
@@ -184,14 +185,14 @@ describe('input surface: inbound events — route lifetime #input',
           assert.is_true(F.widget:is_empty())
         end)
 
-      -- doc/development/decisions/input.md, Decision 11: the
-      -- case above starts its first project WITHOUT an input
-      -- widget, so it cannot see whether stop leaves the widget
-      -- re- showable. This one does: project one shows, is
-      -- stopped, and project two shows again. The widget must
-      -- come up with the SECOND project's text — the widget's
-      -- shown flag is part of what teardown resets, not merely
-      -- the published love.state handle.
+      -- doc/development/decisions/input.md, D-ROUTE-LIFETIME:
+      -- the case above starts its first project WITHOUT an
+      -- input widget, so it cannot see whether stop leaves the
+      -- widget re- showable. This one does: project one shows,
+      -- is stopped, and project two shows again. The widget
+      -- must come up with the SECOND project's text — the
+      -- widget's shown flag is part of what teardown resets,
+      -- not merely the published love.state handle.
       it('a second project gets its input widget after the first ' ..
           'is stopped', function()
         local first = F.activate_project()
@@ -205,13 +206,13 @@ describe('input surface: inbound events — route lifetime #input',
         assert.same({ 'two' }, F.widget:get_text())
       end)
 
-      -- doc/development/decisions/input.md, Decision 11: the
-      -- prompt LABEL is widget configuration like any other, so
-      -- it cannot outlive the project that set it. configure_core
-      -- writes model.custom_label only when cfg.prompt is
-      -- given, so the next project's bare show() never
-      -- overwrites it. Nothing clears it either: the widget it
-      -- was written on does not survive the run.
+      -- doc/development/decisions/input.md, D-ROUTE-LIFETIME:
+      -- the prompt LABEL is widget configuration like any
+      -- other, so it cannot outlive the project that set it.
+      -- configure_core writes model.custom_label only when
+      -- cfg.prompt is given, so the next project's bare show()
+      -- never overwrites it. Nothing clears it either: the
+      -- widget it was written on does not survive the run.
       it('clears a prompt label set by the stopped project',
         function()
           local first = F.activate_project()
@@ -232,7 +233,7 @@ describe('input surface: inbound events — route lifetime #input',
       -- anyone remembering to clear a store. (This case used
       -- to pass `text` as well; text/cursor at configure now
       -- raise — doc/development/decisions/input.md,
-      -- Decision 35, statement 2.)
+      -- D-CFG-BOUNDARY, statement 2.)
       it('discards a prompt set by a hidden configure',
         function()
           local first = F.activate_project()
@@ -248,10 +249,10 @@ describe('input surface: inbound events — route lifetime #input',
     end)
 
     -- The widget's own lifetime (doc/development/decisions/
-    -- input.md, Decision 3 as amended): it is constructed when
-    -- a run starts and destroyed when the run stops, so a store
-    -- a project left on it cannot reach the next project —
-    -- structurally, rather than by a teardown wipe list.
+    -- input.md, D-WIDGET-AT-BOOT as amended): it is constructed
+    -- when a run starts and destroyed when the run stops, so a
+    -- store a project left on it cannot reach the next project
+    -- — structurally, rather than by a teardown wipe list.
     describe('the widget lives for one project run', function()
 
       it('a run publishes a widget', function()
@@ -305,7 +306,7 @@ describe('input surface: inbound events — route lifetime #input',
       -- A pen-and-paper project settles in 'project_open' and
       -- keeps running there (sapper). The widget belongs to the
       -- RUN, so that transition must not take it — the trap
-      -- Decision 11's amendment exists to keep deleted.
+      -- D-ROUTE-LIFETIME's amendment exists to keep deleted.
       it('a non-blocking run keeps its widget at project_open',
         function()
           F.run_project()
@@ -314,7 +315,7 @@ describe('input surface: inbound events — route lifetime #input',
         end)
     end)
 
-    -- doc/development/decisions/input.md, Decision 11 (the
+    -- doc/development/decisions/input.md, D-ROUTE-LIFETIME (the
     -- teardown invariant): a project whose TOP-LEVEL code
     -- raises never reaches the route installer, so run_project
     -- tears the route down instead of connecting it. An
@@ -347,10 +348,11 @@ describe('input surface: inbound events — route lifetime #input',
       end
 
       -- Both halves, deliberately: the published handle is
-      -- cleared AND the widget itself is gone. Under Decision 3
-      -- as amended a failed run ends the run, so it takes the
-      -- widget with it, so the case need not ask whether
-      -- a surviving widget still believes it is active.
+      -- cleared AND the widget itself is gone. Under
+      -- D-WIDGET-AT-BOOT as amended a failed run ends the run,
+      -- so it takes the widget with it, so the case need not
+      -- ask whether a surviving widget still believes it is
+      -- active.
       it('leaves no input widget behind', function()
         run_raising_project()
         assert.is_false(F.is_widget_visible())
@@ -359,7 +361,7 @@ describe('input surface: inbound events — route lifetime #input',
 
       -- The user-visible consequence of the case above, and the
       -- control that proves it is not vacuous: show() is a
-      -- no-op over an active widget (Decision 3), so a
+      -- no-op over an active widget (D-WIDGET-AT-BOOT), so a
       -- surviving widget would silently swallow the next run's.
       it('lets the next run show its own input widget', function()
         run_raising_project()
@@ -371,11 +373,11 @@ describe('input surface: inbound events — route lifetime #input',
 
       -- Same invariant as the stop-teardown case above, on the
       -- other end of a run: top-level code that raises has
-      -- usually installed participants first, and Decision 11
-      -- lets none of them outlive the project that installed
-      -- them. Nothing to inspect on this path either: a
-      -- top-level raise is caught by run_user_code's bare
-      -- pcall, so it never reaches suspend_run and never
+      -- usually installed participants first, and
+      -- D-ROUTE-LIFETIME lets none of them outlive the project
+      -- that installed them. Nothing to inspect on this path
+      -- either: a top-level raise is caught by run_user_code's
+      -- bare pcall, so it never reaches suspend_run and never
       -- enters 'inspect'.
       it('clears every project-installed handler and hook',
         function()
@@ -610,7 +612,7 @@ describe('input surface: inbound events — route lifetime #input',
 
       -- The hook resets to its noop default on stop -- same
       -- lifecycle as compy.input's before_/after_ hooks
-      -- (doc/development/decisions/input.md, Decision 11).
+      -- (doc/development/decisions/input.md, D-ROUTE-LIFETIME).
       it('resets to noop after stop',
         function()
           local calls = 0
@@ -628,7 +630,7 @@ describe('input surface: inbound events — route lifetime #input',
       -- does that escapes -- a raise, or a truthy return read
       -- as a veto -- would abandon the rest of the sequence.
       -- That is the whole contract for this hook, and it is
-      -- decided rather than deferred (Decision 11).
+      -- decided rather than deferred (D-ROUTE-LIFETIME).
       it('a raising hook does not block the stop', function()
         F.activate_project()
         F.cc:get_project_env().compy.before_exit = function()

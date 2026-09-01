@@ -173,7 +173,7 @@ end
 --- covers it once the route is entered, which is what makes a
 --- seeded handler an ordinary chain participant rather than a
 --- specially-protected one (doc/development/decisions/input.md,
---- Decision 10).
+--- D-HOOKS-SEEDED).
 ---
 --- The guard is load-bearing, not ceremony: without it a
 --- project that never overrode an event seeds `hooks[event]`
@@ -193,7 +193,7 @@ end
 
 --- The project's own keyboard/text handlers, for seeding as
 --- hooks[event] (doc/development/decisions/input.md,
---- Decision 10) — raw, so a seeded hook is an ordinary chain
+--- D-HOOKS-SEEDED) — raw, so a seeded hook is an ordinary chain
 --- participant: it consumes on truthy and falls through on
 --- falsey exactly like one the project assigned itself.
 --- @param userlove table
@@ -215,11 +215,11 @@ end
 --- @param CC ConsoleController
 -- `userlove`: the project's sandboxed `love` table. `occupy`:
 -- take over the keyboard/text handlers for the project route's
--- run (doc/development/decisions/input.md Decision 11 uses this
--- verb). Giving the project route its own connect path — not a
--- generic route swap — is deliberate: the three routes are not
--- yet fully symmetric (the editor is still reached via the
--- console fork), so PIC is wired explicitly here. See
+-- run (doc/development/decisions/input.md D-ROUTE-LIFETIME uses
+-- this verb). Giving the project route its own connect path —
+-- not a generic route swap — is deliberate: the three routes
+-- are not yet fully symmetric (the editor is still reached via
+-- the console fork), so PIC is wired explicitly here. See
 -- doc/development/decisions/input.md #1 "route-centric routing"
 -- + #11 "route connects only while running". It installs even
 -- with no project handlers: an unhandled event must stop in the
@@ -299,8 +299,8 @@ end
 
 -- Teardown clears every bindable channel: else a stopped
 -- project's pointer hook survives and blocks the NEXT project's
--- seeding (seed_hooks fills only a nil slot). Decision 11's
--- teardown invariant covers all of them.
+-- seeding (seed_hooks fills only a nil slot).
+-- D-ROUTE-LIFETIME's teardown invariant covers all of them.
 local HOOK_EVENTS = _bindable
 
 --- @param t table
@@ -309,12 +309,12 @@ local function wipe_table(t)
 end
 
 --- Teardown of the project's compy.input registrations
---- (doc/development/decisions/input.md, Decision 11): clears
---- the project's shortcuts and hooks. The callbacks table lives
---- on the widget, which the stop destroys outright, so there is
---- nothing to clear there. Reaches through the
+--- (doc/development/decisions/input.md, D-ROUTE-LIFETIME):
+--- clears the project's shortcuts and hooks. The callbacks
+--- table lives on the widget, which the stop destroys outright,
+--- so there is nothing to clear there. Reaches through the
 --- frozen container's sub-tables — the container itself refuses
---- direct writes (Decision 7).
+--- direct writes (D-FROZEN-SHELL).
 --- @param CC ConsoleController
 local function reset_compy_input(CC)
   local input = CC:get_project_env().compy.input
@@ -375,12 +375,12 @@ local MOD_HELD = {
 --- ("ctrl+s", "alt+shift+f4"). Held modifiers are prepended in
 --- COMBO_MODS precedence, l/r folded to generic names, and come
 --- from the keyboard itself
---- (doc/development/decisions/input.md, Decision 30). No buffer
---- table: three concatenations, not an allocation per call, and
---- nothing here to make reentrancy-unsafe.
+--- (doc/development/decisions/input.md, D-ASK-THE-DEVICE). No
+--- buffer table: three concatenations, not an allocation per
+--- call, and nothing here to make reentrancy-unsafe.
 ---
 --- The trigger is lower-cased because registration is:
---- Decision 8 canonicalises an assigned combo whole, so
+--- D-COMBO-TABLES canonicalises an assigned combo whole, so
 --- 'Shift+I' is stored as 'shift+i' and a dispatch that kept
 --- the typed case could never reach it. Only textinput
 --- delivers a cased trigger — keypressed tokens are LÖVE key
@@ -487,9 +487,9 @@ Controller = {
     local function keypressed(k, _, isr)
       -- TODO(debt): these debug-hotkey if-blocks predate
       -- combos; migrate onto the combo-table mechanism
-      -- (doc/development/decisions/input.md, Decision 8). See
-      -- doc/development/technical_debt/input.md "Console debug
-      -- hotkeys are ad-hoc".
+      -- (doc/development/decisions/input.md, D-COMBO-TABLES).
+      -- See doc/development/technical_debt/input.md "Console
+      -- debug hotkeys are ad-hoc".
       if Key.ctrl() and Key.shift() then
         if love.DEBUG then
           if k == "1" then
@@ -516,7 +516,7 @@ Controller = {
       end
       -- Widget visibility is state on the widget, never a
       -- routing condition (doc/development/decisions/input.md,
-      -- Decision 1): a project's widget is reached inside the
+      -- D-ROUTE-OWNS): a project's widget is reached inside the
       -- PROJECT route's chain, and the console never holds the
       -- slot while one is up.
       CC:keypressed(k)
@@ -720,8 +720,8 @@ Controller = {
   --- Hand keyboard/text back to the console at the moment a
   --- project's code finishes running but the project stays open
   --- (the 'running' -> 'project_open' state change —
-  --- doc/development/decisions/input.md, Decision 11). Pointer
-  --- handlers stay hooked until the project stops (same
+  --- doc/development/decisions/input.md, D-ROUTE-LIFETIME).
+  --- Pointer handlers stay hooked until the project stops (same
   --- decision).
   --- @param CC ConsoleController
   release_keyboard_route = function(CC)
@@ -798,7 +798,7 @@ Controller = {
 
     -- Reservations below run unconditionally in dev mode; in
     -- playback (cfg.mode == 'play') only restart/profile stay
-    -- live (doc/development/decisions/input.md, Decision 1) —
+    -- live (doc/development/decisions/input.md, D-ROUTE-OWNS) —
     -- each project/console-management one checks it and no-ops.
     local function reserved_quickswitch()
       if playback then return end
@@ -862,7 +862,7 @@ Controller = {
     end
 
     -- The gate's own reservations
-    -- (doc/development/decisions/input.md, Decision 34): a
+    -- (doc/development/decisions/input.md, D-RESERVE-TABLE): a
     -- SECOND, PRIVILEGED table, structurally separate from a
     -- project's own compy.input.shortcuts — consulted before
     -- any route exists, and never overridable by one.
@@ -883,7 +883,8 @@ Controller = {
         ['f10']              = reserved_overlay,
       },
       -- Ctrl+Escape lives on release, matching the key it quits
-      -- on (doc/development/decisions/input.md, Decision 34).
+      -- on (doc/development/decisions/input.md,
+      -- D-RESERVE-TABLE).
       keyreleased = {
         ['ctrl+escape'] = function() love.event.quit() end,
       },
@@ -1080,7 +1081,7 @@ Controller = {
     -- Only the surface's own stores. The widget's outputs are
     -- not re-seeded here and no longer can be: the widget
     -- belongs to the run and is destroyed with it
-    -- (doc/development/decisions/input.md, Decision 3 as
+    -- (doc/development/decisions/input.md, D-WIDGET-AT-BOOT as
     -- amended), so the next run meets a fresh one.
     reset_compy_input(CC)
   end,

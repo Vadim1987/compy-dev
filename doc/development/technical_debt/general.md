@@ -245,8 +245,8 @@ paid, or turned out not to be debt.
   subsystem handing a project a live table, not the input surface — and a table that is
   genuinely a snapshot may be passed by value quite correctly, so the right instrument is
   a practice with a question attached (*does anyone write to this after the run starts?*),
-  not a ruling. `decisions/input.md` Decision 7 carries the one-line pointer to it, which
-  is where `serial`'s author suggested the note belonged; Decision 18 records the same
+  not a ruling. `decisions/input.md` D-FROZEN-SHELL carries the one-line pointer to it, which
+  is where `serial`'s author suggested the note belonged; D-ONE-STATE-ASK records the same
   hazard met from the other direction (`love.state.user_input` read inside a project is
   always `nil`).
 - **Retired 2026-08-30.** Nothing outstanding: the obligation was documentation, and the

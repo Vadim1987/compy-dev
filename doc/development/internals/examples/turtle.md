@@ -41,7 +41,7 @@ end
 
 `eval(input)` looks up `actions[input]` and calls the function if found. Actions are defined in `action.lua` as a table mapping strings to closures. Typed input is thus a command dispatcher; the submit callback passes it the first submitted line.
 
-"Re-arm" was the pre-feature vocabulary: because submit used to close the widget, a project that wanted another line had to re-open it. That is reversed now — the widget stays open after submit (Decision 6), so a *one-shot* prompt is the shape that needs the extra line, and turtle's `after_submit` is it. And yes: the missing close is exactly why typed commands used to pile up in the field (report A2, "input is not cleared after Enter") — a one-shot prompt that never closed kept the previous command.
+"Re-arm" was the pre-feature vocabulary: because submit used to close the widget, a project that wanted another line had to re-open it. That is reversed now — the widget stays open after submit (D-NO-FW-TIER), so a *one-shot* prompt is the shape that needs the extra line, and turtle's `after_submit` is it. And yes: the missing close is exactly why typed commands used to pile up in the field (report A2, "input is not cleared after Enter") — a one-shot prompt that never closed kept the previous command.
 
 `love.keyreleased`: `i` opens the prompt when it is not already open, and consumes the key only in that case; while the prompt is up, `i` belongs to it. `shift+r`, which resets the turtle position, is on `love.keypressed` and asks `Key` for the modifier.
 

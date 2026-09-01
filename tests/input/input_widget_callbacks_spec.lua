@@ -2,10 +2,10 @@
 -- (1.0.0-rc20260712) — the widget output fields are new with
 -- it, and it is what set today's submit/cancel defaults.
 
--- The OUTPUTS half of the dispatch chain: Decision 5's four
+-- The OUTPUTS half of the dispatch chain: D-TWO-SURFACES's four
 -- widget output fields, the highlighter / on_limit_reached
 -- boundary, and the submit/cancel call-order chains of
--- Decision 6 (doc/development/decisions/input.md). The
+-- D-NO-FW-TIER (doc/development/decisions/input.md). The
 -- mechanics half — order, consume, fall-through, combo tables,
 -- signatures — is input_events_spec.lua.
 
@@ -28,8 +28,8 @@ describe('input surface: widget callbacks #input', function()
   before_each(function() F.reset() end)
 
   describe('the callback fields', function()
-    -- doc/development/decisions/input.md, Decision 5: the four
-    -- widget outputs are project-assignable fields on
+    -- doc/development/decisions/input.md, D-TWO-SURFACES: the
+    -- four widget outputs are project-assignable fields on
     -- compy.input (same boundary, widened allowlist).
     it('the four widget output fields are assignable',
       function()
@@ -42,7 +42,7 @@ describe('input surface: widget callbacks #input', function()
         end)
       end)
 
-    -- doc/development/decisions/input.md, Decision 5:
+    -- doc/development/decisions/input.md, D-TWO-SURFACES:
     -- show(config) keys and field assignment hit the same
     -- underlying callbacks.
     it('show(config) and fields share one output field',
@@ -57,11 +57,11 @@ describe('input surface: widget callbacks #input', function()
         assert.equal(hl, input.callbacks.highlighter)
       end)
 
-    -- doc/development/decisions/input.md, Decision 5 cont.:
+    -- doc/development/decisions/input.md, D-TWO-SURFACES cont.:
     -- on_text_entered and validator also reach the same
     -- callback via config key and via field write
     -- (settable-only here; firing/gating is decisions/
-    -- input.md, Decision 6).
+    -- input.md, D-NO-FW-TIER).
     it('show(config) shares on_text_entered callback',
       function()
         local input = F.compy_input()
@@ -98,8 +98,8 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   describe('highlighter', function()
-    -- doc/development/decisions/input.md, Decision 5: a custom
-    -- highlighter transforms live text and the queried
+    -- doc/development/decisions/input.md, D-TWO-SURFACES: a
+    -- custom highlighter transforms live text and the queried
     -- highlight reflects that transformed output.
     it('a custom highlighter transforms queried highlight',
       function()
@@ -145,10 +145,10 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   describe('navigation boundaries', function()
-    -- doc/development/decisions/input.md, Decision 5, boundary
-    -- half: crossing attempts fire on_limit_reached(direction,
-    -- scope) and its return value is ignored (observational
-    -- only; widget still runs).
+    -- doc/development/decisions/input.md, D-TWO-SURFACES,
+    -- boundary half: crossing attempts fire
+    -- on_limit_reached(direction, scope) and its return value
+    -- is ignored (observational only; widget still runs).
     it('up boundary fires direction up with input scope',
       function()
         local seen = { }
@@ -195,7 +195,7 @@ describe('input surface: widget callbacks #input', function()
         assert.same({ { 'left', 'input' } }, seen)
       end)
 
-    -- doc/development/decisions/input.md, Decision 5:
+    -- doc/development/decisions/input.md, D-TWO-SURFACES:
     -- line-scope boundary in multiline text.
     it('left line boundary fires scope line', function()
       local seen = { }
@@ -259,7 +259,7 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   -- ---- submit and cancel (doc/development/decisions/input.md,
-  -- Decision 6) -------
+  -- D-NO-FW-TIER) -------
 
   describe('submit', function()
     -- A truthy before_submit VETOES the submit, the mirror of
@@ -304,9 +304,10 @@ describe('input surface: widget callbacks #input', function()
         assert.equal('abc', entered)
       end)
 
-    -- doc/development/decisions/input.md, Decision 6: the full
-    -- submit call-order chain on a real Enter keypress. Every
-    -- project callback receives the widget's native line array.
+    -- doc/development/decisions/input.md, D-NO-FW-TIER: the
+    -- full submit call-order chain on a real Enter keypress.
+    -- Every project callback receives the widget's native line
+    -- array.
     it('Enter runs the full submit call-order chain',
       function()
         local order = { }
@@ -337,12 +338,12 @@ describe('input surface: widget callbacks #input', function()
           }, order)
       end)
 
-    -- doc/development/decisions/input.md, Decision 37: the two
-    -- submit callbacks are told apart by their PAYLOAD --
-    -- on_text_entered takes the concatenated text,
-    -- after_submit the list of lines. Multi-line content, so
-    -- the two shapes cannot coincide: with one line they are
-    -- 'a' and { 'a' }, which a broken split would still pass.
+    -- doc/development/decisions/input.md, D-PAYLOAD-SPLIT: the
+    -- two submit callbacks are told apart by their PAYLOAD --
+    -- on_text_entered takes the concatenated text, after_submit
+    -- the list of lines. Multi-line content, so the two shapes
+    -- cannot coincide: with one line they are 'a' and { 'a' },
+    -- which a broken split would still pass.
     it('the two submit callbacks differ by payload',
       function()
         local seen = { }
@@ -359,7 +360,7 @@ describe('input surface: widget callbacks #input', function()
         assert.same({ 'a', 'b' }, seen.after)
       end)
 
-    -- Decision 6: submit does not auto-close. The default
+    -- D-NO-FW-TIER: submit does not auto-close. The default
     -- after_submit is a no-op, so BOTH on_text_entered and
     -- after_submit see the session still active — the widget
     -- stays open unless a callback hides it (AC3).
@@ -467,7 +468,7 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   describe('cancel — the Escape chain', function()
-    -- Decision 6: Escape runs the cancel call-order chain
+    -- D-NO-FW-TIER: Escape runs the cancel call-order chain
     -- (before_cancel → clear → after_cancel) and CLEARS
     -- content, but the default after_cancel is a no-op — the
     -- widget stays shown unless a callback hides it.
@@ -508,7 +509,7 @@ describe('input surface: widget callbacks #input', function()
       end)
   end)
 
-  -- doc/development/decisions/input.md, Decision 36: auto_hide
+  -- doc/development/decisions/input.md, D-AUTO-HIDE: auto_hide
   -- is sugar over `after_submit = function() hide() end`, and
   -- that equivalence is what every case here pins. The edges
   -- are ruled there too, and read them AS AMENDED -- the
@@ -531,8 +532,8 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.is_widget_visible())
     end)
 
-    -- Decision 36, ruled edge 2: Escape clears and leaves the
-    -- widget standing (Decision 6), and auto_hide does not
+    -- D-AUTO-HIDE, ruled edge 2: Escape clears and leaves the
+    -- widget standing (D-NO-FW-TIER), and auto_hide does not
     -- change what Escape does.
     it('it does not close on cancel', function()
       local input = F.activate_project()
@@ -542,7 +543,7 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.widget:is_empty())
     end)
 
-    -- Decision 36, ruled edge 3: it composes with a project's
+    -- D-AUTO-HIDE, ruled edge 3: it composes with a project's
     -- own after_submit rather than refusing one, and the close
     -- comes LAST -- so the callback still runs against a live
     -- widget, which is what lets it clear or read the field.
@@ -577,7 +578,7 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.widget:has_error())
     end)
 
-    -- Decision 36's Amendment, reversing ruled edge 1: the flag
+    -- D-AUTO-HIDE's Amendment, reversing ruled edge 1: the flag
     -- configures a TYPE of behaviour, not one show/hide cycle,
     -- so it persists until replaced exactly like validator. A
     -- later bare show() inherits it.
@@ -590,8 +591,8 @@ describe('input surface: widget callbacks #input', function()
       assert.is_false(F.is_widget_visible())
     end)
 
-    -- ...and false is the unset (Decision 35, statement 3), so
-    -- the disarm needs no vocabulary of its own. This is the
+    -- ...and false is the unset (D-CFG-BOUNDARY, statement 3),
+    -- so the disarm needs no vocabulary of its own. This is the
     -- pair of the case above: without it, "persists" would be
     -- indistinguishable from "cannot be turned off".
     it('a later show passing false stops the closing',
@@ -606,13 +607,13 @@ describe('input surface: widget callbacks #input', function()
 
     -- A follow-up prompt opened from inside the submit chain
     -- survives the close only by DISARMING: the mode persists,
-    -- so silence is not a disarm (Decision 36's Amendment).
+    -- so silence is not a disarm (D-AUTO-HIDE's Amendment).
     -- The other two follow-up shapes -- one that stays silent,
     -- one that passes auto_hide ITSELF -- are documented at
     -- doc/input_api.md, "Asking one question", and deliberately
     -- NOT pinned: both are closed by the submit in progress
     -- today, and both would survive if the close ever owned a
-    -- generation token, which Decision 36's Amendment records
+    -- generation token, which D-AUTO-HIDE's Amendment records
     -- as considered and declined. A test would cement the case
     -- a fix is meant to change.
     -- What the case pins is the flag's read PLACEMENT — after
@@ -640,7 +641,7 @@ describe('input surface: widget callbacks #input', function()
         assert.equal('again?', F.widget.model:get_label())
       end)
 
-    -- Decision 36, ruled edge 4 -- the one REVERSED from the
+    -- D-AUTO-HIDE, ruled edge 4 -- the one REVERSED from the
     -- entry's own recommendation. A raised callback leaves the
     -- widget standing, which is what the hand-written
     -- after_submit = hide would also have done: the raise
@@ -688,11 +689,11 @@ describe('input surface: widget callbacks #input', function()
         assert.same({ 'return', 'escape' }, seen)
       end)
 
-    -- Decision 6: Enter/Escape are ordinary chain participants
-    -- — a project shortcut on 'return' runs first and consumes,
-    -- so the widget's submit never fires (the withdrawn
-    -- non-overridable guarantee; the gateway power keys remain
-    -- the unshadowable safety net, not this).
+    -- D-NO-FW-TIER: Enter/Escape are ordinary chain
+    -- participants — a project shortcut on 'return' runs first
+    -- and consumes, so the widget's submit never fires (the
+    -- withdrawn non-overridable guarantee; the gateway power
+    -- keys remain the unshadowable safety net, not this).
     it('a shortcut on return shadows the widget submit',
       function()
         local shadowed = false
@@ -737,7 +738,7 @@ describe('input surface: widget callbacks #input', function()
     -- it: it is an ordinary combo, so a project shortcut on
     -- 'shift+return' consumes it like any other key and no
     -- newline is inserted (doc/development/decisions/input.md,
-    -- Decision 2 — the route holds no unshadowable keys; the
+    -- D-CHAIN-OF-3 — the route holds no unshadowable keys; the
     -- gateway power keys are the only ones a project cannot
     -- reach).
     it('a shortcut on shift+return intercepts the newline',
@@ -756,7 +757,7 @@ describe('input surface: widget callbacks #input', function()
   end)
 
   describe('hide() and force fire no cancel', function()
-    -- doc/development/decisions/input.md, Decision 6 ("hide()
+    -- doc/development/decisions/input.md, D-NO-FW-TIER ("hide()
     -- ... fires no cancel chain"): hide() and a force=true
     -- reconfigure fire no cancel chain (the user-facing dismiss
     -- is Escape only).
@@ -799,7 +800,7 @@ describe('input surface: widget callbacks #input', function()
         assert.equal(2, hits)
       end)
 
-    -- Decision 6: absent callbacks default to no-ops — submit
+    -- D-NO-FW-TIER: absent callbacks default to no-ops — submit
     -- and cancel both complete without error and the widget
     -- STAYS OPEN. Submit preserves content (no auto-clear);
     -- cancel clears it.
@@ -861,7 +862,7 @@ describe('input surface: widget callbacks #input', function()
       function()
         local input = F.activate_project()
         local seen = { }
-        -- The idiom (Decision 6): the widget stays open;
+        -- The idiom (D-NO-FW-TIER): the widget stays open;
         -- the project clears between prompts from after_submit.
         input.callbacks.after_submit = function() input.clear() end
         input.show({
@@ -912,7 +913,7 @@ describe('input surface: widget callbacks #input', function()
   -- console line, the editor's input and the project's widget
   -- alike, and no instance reads the screen mode to decide what
   -- a key does (doc/development/decisions/input.md,
-  -- Decision 6). A surface that needs to differ says so
+  -- D-NO-FW-TIER). A surface that needs to differ says so
   -- locally: the editor consumes Enter/Escape upstream, Ctrl+D
   -- is the per-instance `allow_duplicate_line` flag.
   --
@@ -1155,7 +1156,7 @@ describe('input surface: widget callbacks #input', function()
     -- not by the screen mode. Each case still sets app_state,
     -- to the value the real caller would have, precisely to
     -- show the flag and not the mode is what decides
-    -- (doc/development/decisions/input.md, Decision 6).
+    -- (doc/development/decisions/input.md, D-NO-FW-TIER).
     describe('the modify flag alone gates Ctrl+D', function()
       it('with the flag: Ctrl+D duplicates the line', function()
         local c = bare_uic()
@@ -1185,7 +1186,7 @@ describe('input surface: widget callbacks #input', function()
     -- Submit triggers on any Enter that is not Shift+Enter, so
     -- Ctrl+Enter and Alt+Enter submit as well; only the newline
     -- is carved out (doc/development/decisions/input.md,
-    -- Decision 6 and Decision 14; mechanism in
+    -- D-NO-FW-TIER and D-DEFACTO-KEPT; mechanism in
     -- doc/development/internals/user_input.md). It is
     -- longstanding behaviour the input API kept, pinned here so
     -- the breadth is not narrowed to bare Enter by accident —

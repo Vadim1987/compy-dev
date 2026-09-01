@@ -50,7 +50,7 @@ Text characters arrive via `love.textinput` (OS-processed, handles IME and layou
 
 The "keypressed = control channel, textinput = character channel" split used throughout this doc is therefore **compy's own convention, not a LÖVE2D guarantee**. Nowhere does compy's `keypressed` code filter out or ignore textual keycodes — it simply never gives `k` a match that means "insert this character" (see `UserInputController:keypressed` below: every branch checks `k` against a fixed set of named control keys, or a modifier + letter combo used as a *shortcut*, e.g. Ctrl+C). A bare `keypressed('q')` with no modifier held matches nothing and falls through untouched. All literal character insertion (`UserInputModel:add_text`) is reachable only from `textinput` handlers, plus two `keypressed`-triggered paths that move **existing** text (not the pressed key) into the model — clipboard paste (Ctrl+V) and `load_selection` (Escape, editor mode, loads buffer text into the input).
 
-Every channel carries LÖVE's own argument list end to end, unchanged. LÖVE calls `love.handlers.keypressed` with `(key, scancode, isrepeat)`; the gateway keeps all three, and the project route forwards all three to every consumer — shortcut, hook and widget alike. A handler written as `love.keypressed(key, scancode, isrepeat)` therefore behaves identically once it is seeded as a hook, which is the point (Decision 26).
+Every channel carries LÖVE's own argument list end to end, unchanged. LÖVE calls `love.handlers.keypressed` with `(key, scancode, isrepeat)`; the gateway keeps all three, and the project route forwards all three to every consumer — shortcut, hook and widget alike. A handler written as `love.keypressed(key, scancode, isrepeat)` therefore behaves identically once it is seeded as a hook, which is the point (D-LOVE-ARGS).
 
 The console/editor route is the one place that narrows: its default handler accepts the arguments and calls `CC:keypressed(k)` (and from there `EditorController:keypressed(k)`), so console/editor mode dispatch sees neither `scancode` nor `isrepeat`. It has no widget step to thread them to — see "Keyboard Handling".
 
@@ -70,7 +70,7 @@ explicitly preserves empty ones. `set_text("a\nb")`, `set_text({"a\nb"})` and `s
 all produce the same two lines and the same cursor.
 
 **The rule is the same one the UTF-8 sanitisation on this path serves**, and it is ratified as
-**Decision 38** (`../decisions/input.md`): the cursor addresses content as `(line, column)`, so
+**D-CONTENT-NORM** (`../decisions/input.md`): the cursor addresses content as `(line, column)`, so
 content that is not normalised makes that address ambiguous. Invalid bytes leave a column's *length*
 undefined; a newline inside a line leaves its *position* undefined — the caret could sit past a line
 terminator. Both are normalised at the same seam for the same reason, and neither is a convenience.
@@ -237,11 +237,11 @@ love.handlers.keypressed (k, scancode, isrepeat)
            keypressed/keyreleased/textinput:
            1. compy.input.shortcuts[event][combo]  (project
                 shortcuts; per-event tables, normalising —
-                Decision 8)
+                D-COMBO-TABLES)
            2. compy.input.hooks[event]  (one hook per event,
                 seeded once at activation with the project's
                 captured love.* handler where unset — no
-                per-event precedence re-resolution — Decision 10
+                per-event precedence re-resolution — D-HOOKS-SEEDED
                 revised)
            3. the widget (UserInputController) — terminal;
                 consumes whenever it is shown (its own internal
@@ -253,9 +253,9 @@ love.handlers.keypressed (k, scancode, isrepeat)
 
 `app_state == 'starting'` is never observed by any input path: `main.lua`'s `love.load()` sets it, then flips it to `'ready'` a few lines later — both synchronously, before LÖVE's event pump runs, so no `love.handlers.*` entry point can ever see the `'starting'` value.
 
-Global shortcuts are answered in `love.handlers.keypressed` before anything reaches the active route's controller. They live in `RESERVED` (`controller.lua`, in `setup_callback_handlers`): a **second, privileged combo table** keyed per event, structurally separate from a project's `compy.input.shortcuts` — same shape, consulted before any route exists, never overridable by one, and never consuming (`decisions/input.md`, Decision 34). Its keys are canonical combo strings: `ctrl+pause` suspends, `ctrl+q` quits the project, `ctrl+s` stops a run, `ctrl+shift+r` resets the application, `ctrl+alt+r` restarts the project, `ctrl+t` quick-switches between run and edit, `ctrl+alt+p` / `ctrl+alt+shift+p` start and stop the profiler, and bare `f10` cycles the FPS-overlay corner. `ctrl+escape` (quit) is the one reservation living on the release side, in `RESERVED.keyreleased`, not keypressed. Each entry is a function that also checks the state it applies in — the project- and console-management ones no-op in playback (`cfg.mode == 'play'`), the profiler three require a profiling build — which is why the project guide's table carries a "when" column.
+Global shortcuts are answered in `love.handlers.keypressed` before anything reaches the active route's controller. They live in `RESERVED` (`controller.lua`, in `setup_callback_handlers`): a **second, privileged combo table** keyed per event, structurally separate from a project's `compy.input.shortcuts` — same shape, consulted before any route exists, never overridable by one, and never consuming (`decisions/input.md`, D-RESERVE-TABLE). Its keys are canonical combo strings: `ctrl+pause` suspends, `ctrl+q` quits the project, `ctrl+s` stops a run, `ctrl+shift+r` resets the application, `ctrl+alt+r` restarts the project, `ctrl+t` quick-switches between run and edit, `ctrl+alt+p` / `ctrl+alt+shift+p` start and stop the profiler, and bare `f10` cycles the FPS-overlay corner. `ctrl+escape` (quit) is the one reservation living on the release side, in `RESERVED.keyreleased`, not keypressed. Each entry is a function that also checks the state it applies in — the project- and console-management ones no-op in playback (`cfg.mode == 'play'`), the profiler three require a profiling build — which is why the project guide's table carries a "when" column.
 
-Each of these matches its modifier set **exactly** — the modifiers it names held, and no other (`decisions/input.md`, Decision 33). Since a reservation is looked up by the canonical combo string built for the event, that exactness is a property of the representation: a string equality cannot tolerate an unnamed modifier. "Intercepted" describes what the gate may *claim*, not what passes through it: every keypress enters here, and one the gate does not claim is forwarded to the route unchanged, exactly as a claimed one is (the gate consumes nothing — see below).
+Each of these matches its modifier set **exactly** — the modifiers it names held, and no other (`decisions/input.md`, D-EXACT-RESERVE). Since a reservation is looked up by the canonical combo string built for the event, that exactness is a property of the representation: a string equality cannot tolerate an unnamed modifier. "Intercepted" describes what the gate may *claim*, not what passes through it: every keypress enters here, and one the gate does not claim is forwarded to the route unchanged, exactly as a claimed one is (the gate consumes nothing — see below).
 
 Ctrl+S in the **editor** shows both halves of that. The chord reaches the gate like any other; the gate declines it — Ctrl+Shift+S because the modifiers do not match the reservation, plain Ctrl+S because the reservation acts only while `app_state == 'running'` — and forwards it to the route, where `ConsoleController` hands it to the editor and `EditorController:_save_keys` decides: Ctrl+S closes the buffer, Ctrl+Shift+S finishes the edit. Deciding that inside the route is the point: it is the editor's business, and the gate has no opinion on it. None of these consume the key: it still reaches the active route afterward (§6.3 non-consuming shortcuts).
 
@@ -298,7 +298,7 @@ Modifier state is read from the device. `Key.ctrl()` / `Key.alt()` /
 `Key.shift()` (`util/key.lua`) are `love.keyboard.isDown` over the
 left/right pair of one modifier, and they are the single source of
 held-modifier truth in dispatch (`../decisions/input.md`,
-Decision 30). The framework maintains no held-key table of its own:
+D-ASK-THE-DEVICE). The framework maintains no held-key table of its own:
 there is no accumulated model to go stale when a release never
 arrives, and so nothing to reconcile against the device afterwards.
 
@@ -318,7 +318,7 @@ modifiers serialises to just the key name.
 ```
 
 There are three rows, not four: `gui` is not a modifier
-(`../decisions/input.md`, Decision 31), so `lgui`/`rgui` are
+(`../decisions/input.md`, D-THREE-MODS), so `lgui`/`rgui` are
 ordinary key names and reach the builder as triggers like any
 other key.
 
@@ -340,7 +340,7 @@ project-route keyboard/text event with `Controller.combo_string`
 and looks the result up first against `compy.input.shortcuts.<event>`,
 then `compy.input.hooks[event]`. Downstream consumers — shortcuts,
 hooks, and the widget, project code included — receive LÖVE's own
-argument list and nothing added (Decision 26); a consumer that wants
+argument list and nothing added (D-LOVE-ARGS); a consumer that wants
 modifier state asks the device for it, and so does a project that
 *renders* held state, since `love.draw` has no event argument to
 consult (`examples/keyboard` draws shifted key labels this way).
@@ -351,7 +351,7 @@ and then dispatches its events one at a time, so a poll taken while
 dispatching the first of several queued events reports the state
 after the last: with a press and a release queued in the same frame,
 the combo built for the **press** can already see the key released.
-That error is accepted (Decision 30). It is bounded by one frame's
+That error is accepted (D-ASK-THE-DEVICE). It is bounded by one frame's
 batch and gone on the next read, whereas a tracked set's staleness
 persists until some later event happens to correct it — and the only
 way to detect that drift is to compare the set against this same
@@ -364,7 +364,7 @@ see "Data flow" above for what the console route narrows. Dispatch
 never gates on `isrepeat`, so a shortcut fires on **every** repeat
 and not only on a fresh press. A binding that wants fresh-only
 wraps itself: `compy.input.fn.ignore_repeat`
-(`../decisions/input.md`, Decision 22) is a convenience for the
+(`../decisions/input.md`, D-IGNORE-REPEAT) is a convenience for the
 binding to apply, deliberately not a rule the tier enforces.
 
 ### Console-specific keys
@@ -380,7 +380,7 @@ generic controller — see the dispatch chain above: the console/editor route fo
 `ConsoleController:keypressed` before any of this runs.
 
 **The "limit reached" boundary signal used to travel two independent paths; the return-value one is
-retired (Decision 5).** `cursor_vertical_move`/`is_at_limit` return `true` at a boundary, but
+retired (D-TWO-SURFACES).** `cursor_vertical_move`/`is_at_limit` return `true` at a boundary, but
 `UserInputController:keypressed` no longer threads that out as its own return value at all — the
 method returns nothing now. The sole notification path, for every consumer, is the widget output:
 the same boundary check calls `self.callbacks.on_limit_reached(dir, scope)` directly from inside the
@@ -392,7 +392,7 @@ through this same callback: `ConsoleController.new` wires `console_widget.callba
 directly on its own `UserInputController` instance (`consoleController.lua:49-52`) to call
 `history_back()`/`history_fwd()`, replacing the old `local limit = input:keypressed(k)` return-value
 capture (`ConsoleController:keypressed` now calls `input:keypressed(k)` purely for its editing side
-effects, return value unused — Decision 5). Editor never needed the signal at all, since it
+effects, return value unused — D-TWO-SURFACES). Editor never needed the signal at all, since it
 independently computes boundary state via `inputView:is_at_limit(...)` at the view layer.
 
 > REMARK: FR-6 is ref-id unknown to reader (implementation-time encoding of requiements)
@@ -466,7 +466,7 @@ this same shared method, **uniformly for every instance**: `Key.is_enter(k) and 
 calls `self:submit_flow()`; `k == 'escape' and not Key.ctrl()` calls
 `self:cancel_flow()` — see "Submit and cancel" below. **The guard is "Enter without
 Shift", not "bare Enter": Ctrl+Enter and Alt+Enter submit too** (only Shift+Enter is carved out, as
-the newline); likewise Escape-without-Ctrl cancels. This is a de-facto contract (Decision 14,
+the newline); likewise Escape-without-Ctrl cancels. This is a de-facto contract (D-DEFACTO-KEPT,
 guard shape `return and not shift_held`), pinned by `tests/input/input_widget_callbacks_spec.lua`, the
 `the same lifecycle on every route` group.
 The widget's own
@@ -521,7 +521,7 @@ search widget's instance never runs the shared submit/cancel flow at all, and ne
 the `app_state` fork was removed. There is no evaluator (search input is free text with no
 validation) and **Enter returns the currently-selected result** (a jump target `{block, line}`) up to
 `_search_mode_keys` rather than submitting the typed query — the same "keypress return value carries a
-domain result" shape the shared widget's own limit-flag return was retired for (Decision 5);
+domain result" shape the shared widget's own limit-flag return was retired for (D-TWO-SURFACES);
 left in place here because `SearchController` is a different class, out of the input API's scope
 (`technical_debt/input.md`). `SearchController` defines no `:keyreleased` method at all — combined with the missing
 editor fork above, search's `UserInputController` instance never receives a release under any
@@ -576,7 +576,7 @@ upstream consumed the event — so a pointer hook returning truthy now stops the
 seeing that event, the reverse of the old always-both delivery.
 
 Pointer channels run the same three tiers as keyboard/text, with one combo vocabulary across all
-of them (Decision 27). `mousepressed`/`mousereleased` name the button as their trigger, serialised
+of them (D-BUTTON-TRIGGER). `mousepressed`/`mousereleased` name the button as their trigger, serialised
 `mouseN`, so `compy.input.shortcuts.mousepressed['mouse2']` is a right-click and `'ctrl+mouse2'` a
 modified one. The channels with no discrete trigger — `mousemoved`, `wheelmoved`, touch, the
 derived clicks — take modifier classes only; with no modifier held `find_shortcut` returns before
@@ -587,7 +587,7 @@ over every bindable channel, `controller.lua`); an explicit `compy.input.hooks.<
 still wins over the seed.
 
 Pointer payloads are exactly LÖVE's own arguments, unchanged (`projectInputController.lua:30-39`),
-as every other channel's are (Decision 26); a project that wants held modifier state inside a
+as every other channel's are (D-LOVE-ARGS); a project that wants held modifier state inside a
 pointer handler asks the device for it, the same way the matcher above does.
 
 ### Framework-level click handling
@@ -662,7 +662,7 @@ called from `run_project` and `stop_project_run`); while it exists it is stored 
 `love.state.user_input_controller`. **Between runs that field is nil**, and every consumer of it
 resolves it dynamically and guards. The same model, controller, view — and the widget's own
 evaluator — are reused across every widget session *within* the run, so per-session allocation is
-eliminated, which is what the NFR asks for (`decisions/input.md`, Decision 3 as amended).
+eliminated, which is what the NFR asks for (`decisions/input.md`, D-WIDGET-AT-BOOT as amended).
 
 The run boundary, not the open boundary: `restart()` and the `Ctrl+T` quickswitch call
 `stop_project_run` + `run_project` directly and never re-open, so a widget built at open would
@@ -699,7 +699,7 @@ While a project runs, `compy.input.show(config)`/etc. drive the *same* widget in
 of the main controller" special case any more. In short: the gateway always calls the active
 route's occupant; the console/editor route's default handler goes straight to its own surface
 (the console line, or the editor fork) with no widget test in front of it — widget visibility is
-state on the widget, never a routing condition (`../decisions/input.md`, Decision 1); the project
+state on the widget, never a routing condition (`../decisions/input.md`, D-ROUTE-OWNS); the project
 route always reaches the widget as its walk's terminal consumer. The widget view is drawn via `user_input.V:draw()` inside
 the framework's `love.update` wrapping of the project draw function (`controller.lua`,
 `set_love_update`).
@@ -709,13 +709,13 @@ one keypress — see "Submit and cancel" below for the exact order.
 
 ### Submit and cancel — widget-owned callback sequences
 
-Enter and Escape are **ordinary keys handled by the widget itself** (Decision 6), with no
+Enter and Escape are **ordinary keys handled by the widget itself** (D-NO-FW-TIER), with no
 non-overridable interception above it: a project
 shortcut registered on `'return'`/`'escape'` (`compy.input.shortcuts.keypressed['return']`, etc.)
 wins over the widget's default, same as any other combo (**withdrawn guarantee**, deliberate — see
-Decision 6's "Withdrawn guarantee" note in `decisions/input.md`; the gateway's power keys, Ctrl+Q etc.,
+D-NO-FW-TIER's "Withdrawn guarantee" note in `decisions/input.md`; the gateway's power keys, Ctrl+Q etc.,
 remain the real, permanent escape hatch, non-overridable by any shortcut — though only for the
-chords they name exactly, per Decision 33). Only once no shortcut/hook
+chords they name exactly, per D-EXACT-RESERVE). Only once no shortcut/hook
 consumes the key does the widget's own `UserInputController:keypressed` reach its lifecycle guard
 (`Key.is_enter(k) and not Key.shift()` → submit; `k == 'escape' and not Key.ctrl()` → cancel — so
 Ctrl+Enter and Alt+Enter submit too, only Shift+Enter is the newline), and only while the widget is
@@ -735,7 +735,7 @@ run_callback(self, 'after_submit', lines)               -- DEFAULT: no-op — wi
 if self.auto_hide then self:hide() end                    -- while auto_hide is set
 ```
 
-**The two deliveries differ by payload** (Decision 37): `on_text_entered` receives the submitted
+**The two deliveries differ by payload** (D-PAYLOAD-SPLIT): `on_text_entered` receives the submitted
 content as one joined string, `after_submit` the line list. That difference is what tells the two
 callbacks apart — before it, both received the same argument and the guide could not say what
 distinguished them. The `validator` keeps the lines: it runs per line, and `LineValidators` reports
@@ -743,11 +743,11 @@ which one failed.
 
 `on_text_entered` fires **while the widget is still active**: there is no implicit hide.
 `after_submit` DEFAULTS to a no-op, so **a successful submit leaves the widget open**
-(Decision 6) unless a project's own `after_submit` calls `compy.input.hide()`. A truthy `before_submit` **vetoes** the submit outright:
+(D-NO-FW-TIER) unless a project's own `after_submit` calls `compy.input.hide()`. A truthy `before_submit` **vetoes** the submit outright:
 nothing downstream runs and the text stays in the field. It is a guard on *whether to submit at
 all*; rejecting bad input with a message is still the `validator`'s job.
 
-**`auto_hide` is the exception to "no implicit hide"** (Decision 36), and it is sugar for
+**`auto_hide` is the exception to "no implicit hide"** (D-AUTO-HIDE), and it is sugar for
 the `after_submit = hide` above rather than a second policy. The close sits at the END of this
 flow, which is what gives it its edges for free: every early return above suppresses it, a project's
 own `after_submit` still runs against a live widget, and a callback that **raises** leaves the
@@ -755,7 +755,7 @@ widget standing — the raise unwinds to the route boundary past that line, exac
 past a hand-written `after_submit` that hides. The flag is **project-owned and persistent**: it is
 seated in `configure_core` like every other project-owned field, so `show` and `configure` both set
 it, set-if-given, and it applies to every later submit until a call passes `auto_hide = false`
-(Decision 36's Amendment). It is read at the END of the submit and not captured before the
+(D-AUTO-HIDE's Amendment). It is read at the END of the submit and not captured before the
 callbacks, which is what lets a follow-up prompt opened from inside the chain disarm itself and
 survive the close belonging to the submit still in progress.
 
@@ -775,7 +775,7 @@ the field but the widget stays open, same flipped default as submit.
 `run_callback(self, name, ...)` (`userInputController.lua:438-442`) looks up `self.callbacks[name]`;
 absent → no-op + debug-log. `self.callbacks` is the widget's own table, seeded at construction with
 `DEFAULT_CALLBACKS` (`after_submit`/`after_cancel`/`on_limit_reached` = stay-open no-ops) and
-re-seeded — never wiped to `nil` — on project teardown (Decision 11; a nil'd `after_cancel` must
+re-seeded — never wiped to `nil` — on project teardown (D-ROUTE-LIFETIME; a nil'd `after_cancel` must
 not silently mean "stays open forever" for the next project). For the **project widget**,
 `compy.input.callbacks` **resolves to this exact same table** (owner ruling 2026-07-20, re-made
 2026-08-27; resolved per access in `get_compy_input`, not captured) — a project's
@@ -812,14 +812,14 @@ For a project-author usage guide with examples, see
 calls a single time at construction. Cloning the environment does not separate instances either —
 the container is metatable-only and `table.clone` copies the metatable, so every clone resolves to
 the same private state. Anything held there that must not outlive a run is therefore cleared by the
-stop teardown, or kept on the widget where that teardown already reaches (Decision 11).
+stop teardown, or kept on the widget where that teardown already reaches (D-ROUTE-LIFETIME).
 Its container and the identity of its three sub-tables
-(`shortcuts`/`hooks`/`callbacks`) are frozen — Decision 7, see the
+(`shortcuts`/`hooks`/`callbacks`) are frozen — D-FROZEN-SHELL, see the
 "compy.input's write boundary" comment in `consoleController.lua` — but every leaf inside them is
 freely writable. It exposes:
 - `compy.input.show(config)` — activates the widget
 - `compy.input.hide()` — deactivates without firing the cancel sequence
-- `compy.input.is_shown()` — whether the widget is up (Decision 18); the one
+- `compy.input.is_shown()` — whether the widget is up (D-ONE-STATE-ASK); the one
   state query, and the only way a project can learn this — its own
   `love.state.user_input` is a sandbox clone and never set
   (`project_sandbox_env.md`)
@@ -830,8 +830,8 @@ freely writable. It exposes:
   session; `compy.input.clear()` — resets an active session's
   content.
 - `compy.input.shortcuts.keypressed/keyreleased/textinput[combo]` — the per-event combo tables
-  (Decision 8), and `compy.input.hooks.keypressed/keyreleased/textinput` — the one seeded hook per
-  event (Decision 10).
+  (D-COMBO-TABLES), and `compy.input.hooks.keypressed/keyreleased/textinput` — the one seeded hook per
+  event (D-HOOKS-SEEDED).
 - `compy.input.callbacks.{on_text_entered, on_limit_reached, validator, highlighter, before_submit,
   after_submit, before_cancel, after_cancel}` — the widget's own `self.callbacks` table (same
   object, not a copy — see "Submit and cancel" above); every member is a plain leaf-write, uniform
@@ -843,7 +843,7 @@ function (`build_input_surface`, `consoleController.lua:425-438`); assigning to
 `compy.input.shortcuts`/`hooks`/`callbacks` themselves (replacing the sub-table) also raises —
 only their leaves are writable.
 
-`compy.input.is_shown()` is the one state predicate on this surface (Decision 18). It returns the
+`compy.input.is_shown()` is the one state predicate on this surface (D-ONE-STATE-ASK). It returns the
 widget's own internal `self.shown` flag (`UserInputController:is_shown()`), so a project's answer
 cannot drift from the one the dispatch walk reads.
 
@@ -862,7 +862,7 @@ All fields are optional and match the project-facing guide's table:
 `validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, `auto_hide`
 and `force`. The project wrapper checks this table before it reaches
 `configure_core`: an unrecognised key **raises** at the project's call line
-(`decisions/input.md`, Decision 15), rather than being dropped. This
+(`decisions/input.md`, D-UNKNOWN-RAISES), rather than being dropped. This
 includes lifecycle names such as `after_submit`, which are direct
 `compy.input.callbacks` assignments rather than `show` keys, and which raise
 with a message naming `callbacks`. The wrapper does not expose the host
@@ -881,8 +881,8 @@ config.
 `text`, `cursor` and `force` **raise** here. They are
 `show`-only keys — keys that belong to another call, the treatment lifecycle
 callbacks already get — and the raise carries a message naming
-where each belongs (`decisions/input.md`, Decision 15's show-only
-category, added there by Decision 35). The live writes for content
+where each belongs (`decisions/input.md`, D-UNKNOWN-RAISES's show-only
+category, added there by D-CFG-BOUNDARY). The live writes for content
 are `set_text` / `set_cursor` / `clear`.
 
 Hidden or shown makes no difference. `configure` writes the fields
@@ -891,7 +891,7 @@ there is nothing to defer and nothing to stash: a hidden
 `configure` applies at once, is still in force at the next `show`,
 and never warns (it is not a refusal). It is **run-scoped** by
 construction rather than by a teardown step — the widget it wrote
-on does not survive the run (`decisions/input.md`, Decision 11), so
+on does not survive the run (`decisions/input.md`, D-ROUTE-LIFETIME), so
 it cannot reach the next project's widget. Between runs there is no
 widget at all and the call is inert.
 

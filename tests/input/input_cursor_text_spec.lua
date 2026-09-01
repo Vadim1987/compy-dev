@@ -26,7 +26,7 @@ describe('input surface: widget control — cursor and text #input',
   -- These three are non-assignable methods (NOT in
   -- INPUT_CALLBACKS), so they ride the same frozen-surface
   -- boundary as show/hide — doc/development/decisions/input.md,
-  -- Decision 7 (what a project may assign).
+  -- D-FROZEN-SHELL (what a project may assign).
 
 
   describe("get_cursor", function()
@@ -151,11 +151,11 @@ describe('input surface: widget control — cursor and text #input',
 
     -- A cursor is {line, col}, two numbers. A malformed one is
     -- an authoring error and is refused the way a bad config
-    -- KEY is (doc/development/decisions/input.md, Decision 15)
-    -- — with a framework message naming the expected shape,
-    -- not a raw arithmetic error from inside math.min. This is
-    -- distinct from an out-of-RANGE number, which is
-    -- well-formed and still clamps (cases above).
+    -- KEY is (doc/development/decisions/input.md,
+    -- D-UNKNOWN-RAISES) — with a framework message naming the
+    -- expected shape, not a raw arithmetic error from inside
+    -- math.min. This is distinct from an out-of-RANGE number,
+    -- which is well-formed and still clamps (cases above).
     it('raises a framework error on a nil position',
       function()
         local input = F.compy_input()
@@ -238,7 +238,7 @@ describe('input surface: widget control — cursor and text #input',
 
     -- A list element that is not a string is a STRUCTURE error,
     -- not a spelling of the content shape, so it is refused at
-    -- the boundary rather than normalised (Decision 38's
+    -- the boundary rather than normalised (D-CONTENT-NORM's
     -- tolerance boundary; the check follows checked_cursor,
     -- doc/development/technical_debt/input.md, "set_text
     -- answers a malformed content element three different
@@ -301,8 +301,8 @@ describe('input surface: widget control — cursor and text #input',
         end)
     end)
 
-    -- Decision 35: text given is the content, text absent is an
-    -- empty field, and false is the uniform unset — so an
+    -- D-CFG-BOUNDARY: text given is the content, text absent is
+    -- an empty field, and false is the uniform unset — so an
     -- unset text is an empty field, not the last session's
     -- content surviving into this one.
     it('show{text = false} opens empty', function()
@@ -379,8 +379,8 @@ describe('input surface: widget control — cursor and text #input',
     end)
   end)
 
-    -- doc/development/decisions/input.md, Decision 7 (what a
-    -- project may assign): the three callables are not among
+    -- doc/development/decisions/input.md, D-FROZEN-SHELL (what
+    -- a project may assign): the three callables are not among
     -- them, so the frozen surface raises loudly rather than
     -- swallowing the write.
     it('assigning the cursor/text callables raises',

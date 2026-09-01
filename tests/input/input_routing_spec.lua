@@ -4,7 +4,7 @@
 -- The mode x channel routing grid — console, editor, editor
 -- search, project run — against the rule that each event
 -- reaches exactly ONE route
--- (doc/development/decisions/input.md, Decision 1).
+-- (doc/development/decisions/input.md, D-ROUTE-OWNS).
 
 local F = require('tests.helpers.input_fixture')
 
@@ -18,12 +18,12 @@ describe('input surface: inbound events — routing #input',
   -- Preserved routing invariant — behaviour that predates the
   -- Compy input API and was kept by it.  Keyboard, text and
   -- pointer are EXCLUSIVE on the active route
-  -- (doc/development/decisions/input.md, Decision 1 and
-  -- Decision 2; doc/development/internals/user_input.md,
+  -- (doc/development/decisions/input.md, D-ROUTE-OWNS and
+  -- D-CHAIN-OF-3; doc/development/internals/user_input.md,
   -- "Dispatch chain"): the mode-fixed route receives, the
   -- others do not. One subgroup per mode below, so a missing
   -- mode x channel cell is visible on sight (the routing
-  -- invariant, doc/development/decisions/input.md Decision 1,
+  -- invariant, doc/development/decisions/input.md D-ROUTE-OWNS,
   -- applied per mode x channel). Every test in this group fires
   -- its events through the installed love.handlers entries —
   -- the same dispatch path a real keystroke takes — via the
@@ -36,8 +36,8 @@ describe('input surface: inbound events — routing #input',
     -- Setup seeds text via the model; the assertion path
     -- (backspace) travels love.handlers to the console, so
     -- routing itself is what is witnessed
-    -- (doc/development/decisions/input.md, Decision 1 and
-    -- Decision 2; doc/development/internals/user_input.md,
+    -- (doc/development/decisions/input.md, D-ROUTE-OWNS and
+    -- D-CHAIN-OF-3; doc/development/internals/user_input.md,
     -- "Dispatch chain").
     it('routes keys to the console', function()
       F.console:add_text('ab')
@@ -46,8 +46,8 @@ describe('input surface: inbound events — routing #input',
       assert.is_true(F.cc.editor.input:is_empty())
     end)
 
-    -- (doc/development/decisions/input.md, Decision 1 and
-    -- Decision 2; doc/development/internals/user_input.md,
+    -- (doc/development/decisions/input.md, D-ROUTE-OWNS and
+    -- D-CHAIN-OF-3; doc/development/internals/user_input.md,
     -- "Data flow").
     it('routes text to the console', function()
       F.session.type('Z')
@@ -89,8 +89,8 @@ describe('input surface: inbound events — routing #input',
     -- The key channel witnessed on its own: text arrives via
     -- textinput, then a KEY event (backspace) mutates the
     -- editor buffer — travelling the same gate.
-    -- (doc/development/decisions/input.md, Decision 1 and
-    -- Decision 2; doc/development/internals/user_input.md,
+    -- (doc/development/decisions/input.md, D-ROUTE-OWNS and
+    -- D-CHAIN-OF-3; doc/development/internals/user_input.md,
     -- "Dispatch chain").
     it('routes keys to the editor', function()
       F.session.type('q')
@@ -99,8 +99,8 @@ describe('input surface: inbound events — routing #input',
       assert.is_true(F.console:is_empty())
     end)
 
-    -- (doc/development/decisions/input.md, Decision 1 and
-    -- Decision 2; doc/development/internals/user_input.md,
+    -- (doc/development/decisions/input.md, D-ROUTE-OWNS and
+    -- D-CHAIN-OF-3; doc/development/internals/user_input.md,
     -- "Data flow").
     it('routes text to the editor', function()
       F.session.type('q')
@@ -117,7 +117,7 @@ describe('input surface: inbound events — routing #input',
     -- input_nfr_mechanism_spec. What IS assertable, and is the
     -- routing claim this grid cell exists for, is EXCLUSIVITY —
     -- the release does not leak to the console
-    -- (doc/development/decisions/input.md, Decision 1;
+    -- (doc/development/decisions/input.md, D-ROUTE-OWNS;
     -- doc/development/internals/user_input.md, "Key release").
     it('a key release under editor does not reach the console',
       function()
@@ -152,8 +152,8 @@ describe('input surface: inbound events — routing #input',
 
     -- The project's sandboxed love.* callback witnesses
     -- witnessing delivery to the project route.
-    -- (doc/development/decisions/input.md, Decision 1 and
-    -- Decision 2; doc/development/internals/user_input.md,
+    -- (doc/development/decisions/input.md, D-ROUTE-OWNS and
+    -- D-CHAIN-OF-3; doc/development/internals/user_input.md,
     -- "Dispatch chain").
     it('routes keys to the project', function()
       local got = { }
@@ -165,8 +165,8 @@ describe('input surface: inbound events — routing #input',
       assert.is_true(F.console:is_empty())
     end)
 
-    -- (doc/development/decisions/input.md, Decision 1 and
-    -- Decision 2; doc/development/internals/user_input.md,
+    -- (doc/development/decisions/input.md, D-ROUTE-OWNS and
+    -- D-CHAIN-OF-3; doc/development/internals/user_input.md,
     -- "Data flow").
     it('routes text to the project', function()
       local got = { }

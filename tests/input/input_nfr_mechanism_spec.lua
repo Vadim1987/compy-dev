@@ -3,11 +3,9 @@
 -- 1.0.0-rc20260712).
 
 -- NFR and mechanism guards. Routing invariant
--- (doc/development/decisions/input.md, Decision 1): inter-route
--- dispatch is EXCLUSIVE — each event reaches exactly ONE route,
--- fixed by the active screen mode.
---
---
+-- (doc/development/decisions/input.md, D-ROUTE-OWNS):
+-- inter-route dispatch is EXCLUSIVE — each event reaches
+-- exactly ONE route, fixed by the active screen mode.
 -- Vocabulary (doc/development/internals/user_input.md,
 -- "Dispatch chain"): ROUTE = the controller an event is
 -- dispatched to; WIDGET = the route-managed input surface and
@@ -72,8 +70,8 @@ describe('input contracts: NFR and mechanism guards #input',
         end)
 
       -- No reallocation per input session
-      -- (doc/development/decisions/input.md, Decision 3): the
-      -- backing model is reused across activations.
+      -- (doc/development/decisions/input.md, D-WIDGET-AT-BOOT):
+      -- the backing model is reused across activations.
       it('no widget model is reallocated', function()
         local m1 = F.widget.model
         F.show_widget()
@@ -88,7 +86,7 @@ describe('input contracts: NFR and mechanism guards #input',
       -- than holding it (owner ruling 2026-07-20, re-made
       -- 2026-08-27: compy.input.callbacks resolves to the
       -- current widget's table). Identity is frozen against the
-      -- project (Decision 7) and stable for as long as a
+      -- project (D-FROZEN-SHELL) and stable for as long as a
       -- project can observe it; it is not frozen against the
       -- framework replacing the widget underneath.
       it('callbacks resolve to the current widget', function()
@@ -136,13 +134,14 @@ describe('input contracts: NFR and mechanism guards #input',
 
   -- ====================================================
   -- Teardown, seen from the LÖVE side. The project-facing half
-  -- of Decision 11 is input_route_lifecycle_spec.lua; this case
-  -- watches the same stop from below, where the wiring actually
+  -- of D-ROUTE-LIFETIME is input_route_lifecycle_spec.lua; this
+  -- case watches the same stop from below, where the wiring
+  -- actually
   -- lives. ====================================================
   describe('teardown leaves the love.* wiring at defaults',
     function()
 
-      -- Decision 11 requires full teardown: after stop no
+      -- D-ROUTE-LIFETIME requires full teardown: after stop no
       -- project handler remains wired in any love.* callback.
       it('stop leaves no project handler wired in any ' ..
           'love.* callback', function()

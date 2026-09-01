@@ -49,7 +49,7 @@ describe('input surface: inbound events — combo serialisation'
 
   -- The modifiers come from the keyboard, so a case holds them
   -- on the device rather than handing over a table
-  -- (doc/development/decisions/input.md, Decision 30).
+  -- (doc/development/decisions/input.md, D-ASK-THE-DEVICE).
   before_each(function() mock.release_keys() end)
 
   it('bare key escape', function()
@@ -61,11 +61,11 @@ describe('input surface: inbound events — combo serialisation'
   end)
 
   -- Registration canonicalises to lower case
-  -- (doc/development/decisions/input.md, Decision 8: a project
-  -- registers 'Ctrl+S' "and still match"), so dispatch has to
-  -- emit lower case or the slot is unreachable. Only textinput
-  -- can deliver an upper-case trigger — keypressed tokens are
-  -- LÖVE key constants and are already lower.
+  -- (doc/development/decisions/input.md, D-COMBO-TABLES: a
+  -- project registers 'Ctrl+S' "and still match"), so dispatch
+  -- has to emit lower case or the slot is unreachable. Only
+  -- textinput can deliver an upper-case trigger — keypressed
+  -- tokens are LÖVE key constants and are already lower.
   it('an upper-case trigger serialises lower', function()
     assert.equal('i', cs('I'))
   end)

@@ -70,7 +70,7 @@ the size rule as well.
 
   -- PAYLOAD: a prohibition the next edit could violate.
   -- Widget visibility is state on the widget, never a routing
-  -- condition (decisions/input.md, Decision 1).
+  -- condition (decisions/input.md, D-ROUTE-OWNS).
   ```
 - **Narrate history** — "this used to…", "we removed…", "previously the
   handler…" — outside an interim marker. Git holds history.
@@ -109,7 +109,7 @@ is deleted:
 ## A reference is not an annotation (owner ruling, 2026-08-25)
 
 **Compaction must not turn comments into an index of reference ids.** A comment
-reduced to `-- Decision 21` or `-- see input_api.md, "Held keys"` has been
+reduced to `-- D-COMBO-SHAPE` or `-- see input_api.md, "Held keys"` has been
 deleted, not compacted: it tells the reader that something governs this code
 without telling them **what**, so the only way to find out is to leave the file.
 A reader skimming for orientation gets nothing, and an assistant reading the
@@ -122,12 +122,12 @@ optional.
 
 ```lua
 -- BAD: an index entry. What is true here?
--- (doc/development/decisions/input.md, Decision 33)
+-- (doc/development/decisions/input.md, D-EXACT-RESERVE)
 local reservation = RESERVED.keypressed[combo_string(k)]
 
 -- GOOD: the claim, then where it is argued.
 -- A reservation matches its modifier set exactly, so an
--- unnamed modifier misses (decisions/input.md, Decision 33).
+-- unnamed modifier misses (decisions/input.md, D-EXACT-RESERVE).
 local reservation = RESERVED.keypressed[combo_string(k)]
 ```
 

@@ -42,7 +42,7 @@ describe('input surface: inbound events — shortcuts and clicks'
       -- that a developer runs it to work on it. 'play' narrows
       -- the shortcut set so a player cannot manage projects:
       -- restart/profile stay live, quit/stop/quickswitch do not
-      -- (doc/development/decisions/input.md, Decision 1;
+      -- (doc/development/decisions/input.md, D-ROUTE-OWNS;
       -- doc/development/internals/user_input.md, "Dispatch
       -- chain"). The shared fixture is built in dev mode, so
       -- this test wires a private play-mode stub controller and
@@ -137,8 +137,8 @@ describe('input surface: inbound events — shortcuts and clicks'
       end)
 
     -- Modifiers compose with the button exactly as they do with
-    -- a key, and exact beats the class (Decision 21) — the same
-    -- rule the keyboard channels follow.
+    -- a key, and exact beats the class (D-COMBO-SHAPE) — the
+    -- same rule the keyboard channels follow.
     it('exact modifier+button wins over the modifier class',
       function()
         local hit
@@ -240,7 +240,7 @@ describe('input surface: inbound events — shortcuts and clicks'
   end)
 
   -- Project stop returns input to the console
-  -- (doc/development/decisions/input.md, Decision 11): a
+  -- (doc/development/decisions/input.md, D-ROUTE-LIFETIME): a
   -- project's the project handler is installed while it runs;
   -- after stop it receives nothing and typing lands in the
   -- console again. Asserted end-to-end on behaviour — who

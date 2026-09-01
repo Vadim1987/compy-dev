@@ -106,7 +106,7 @@ end)
 -- single-line, so Up hits the vertical limit at once and the
 -- widget reports that through on_limit_reached, which the
 -- console maps to history_back
--- (doc/development/decisions/input.md, Decision 5).
+-- (doc/development/decisions/input.md, D-TWO-SURFACES).
 describe('console history navigation #input #history',
   function()
   setup(function() F.setup() end)

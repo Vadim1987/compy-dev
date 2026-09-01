@@ -156,7 +156,7 @@ end
 
 --- Both spellings normalise identically, so the cursor's
 --- (line, column) address is unambiguous over whatever is
---- stored (doc/development/decisions/input.md, Decision 38).
+--- stored (doc/development/decisions/input.md, D-CONTENT-NORM).
 --- @param text str
 --- @param keep_cursor boolean
 function UserInputModel:set_text(text, keep_cursor)

@@ -132,12 +132,12 @@ paid, or turned out not to be debt.
   `wip/` if it is technical, not procedural.* A PR description is read once, by
   reviewers; a decision is read for as long as the code lives.
 - **One of the six is already done** — *"Pointer joined the chain"* is in
-  Decision 25 as of this sprint, because vacuuming the retired entry that held
+  D-ONE-LIFETIME as of this sprint, because vacuuming the retired entry that held
   the same record made it a precondition rather than a follow-up. **Five
-  remain**, and each has an obvious home: the four-tier chain → Decision 6;
-  one-time hook seeding → Decision 10; the route no longer released mid-run →
-  Decision 11; the retired `compy.singleclick`/`.doubleclick` → Decision 25;
-  unhandled events not logged → Decision 23.
+  remain**, and each has an obvious home: the four-tier chain → D-NO-FW-TIER;
+  one-time hook seeding → D-HOOKS-SEEDED; the route no longer released mid-run →
+  D-ROUTE-LIFETIME; the retired `compy.singleclick`/`.doubleclick` → D-ONE-LIFETIME;
+  unhandled events not logged → D-NO-LOG-NOISE.
 - **Not a duplication.** The PR description keeps its table — it is what a
   reviewer reads. The obligation is that the argument **also** exists where it
   outlives the review.
@@ -171,7 +171,7 @@ paid, or turned out not to be debt.
   inside a line and the model counts it as an ordinary column, so the line
   measures one character longer than it displays and the caret can be seated on
   a position that renders nowhere. That is precisely the ambiguity
-  **Decision 38** says normalisation removes — the decision is now scoped to
+  **D-CONTENT-NORM** says normalisation removes — the decision is now scoped to
   `\n` explicitly because that is what the code implements.
 - **Reachable:** a project setting content it read from a CRLF file. Whether the
   clipboard path is exposed is **unverified** — SDL may normalise
@@ -185,7 +185,7 @@ paid, or turned out not to be debt.
   about the model's idea of what a line is. Note the fix is **not** obviously
   "split on `\r\n` too": stripping a lone `\r` is a content change, and whether
   the framework should silently rewrite what a project set is the same
-  tolerance question Decision 38 bounds.
+  tolerance question D-CONTENT-NORM bounds.
 
 ### `_update_cursor` measures the column on the wrong line
 
@@ -253,7 +253,7 @@ paid, or turned out not to be debt.
   different line, writes raw fields, and does neither. So the review to run is
   *"does each call site want `jump_end`?"* rather than *"is this body right?"*,
   and repairing `t[cl]` to `t[#t]` in place would leave a second way to do one
-  thing — which is what Decision 38's structural half exists to stop.
+  thing — which is what D-CONTENT-NORM's structural half exists to stop.
 - **It is not a drop-in swap, which is why this is a review and not an edit.**
   At `clear_input` — the only reachable call site — `jump_end` would land the
   caret identically at `(1,1)`, but it also calls `end_selection` and
@@ -316,16 +316,16 @@ paid, or turned out not to be debt.
 - **Revisit:** when the error display is next touched, or if mis-coloured errors
   are reported on non-ASCII source.
 
-### Decision 1 — console/editor convergence onto the shared chain is unimplemented
+### D-ROUTE-OWNS — console/editor convergence onto the shared chain is unimplemented
 
 - **Where:** `src/controller/consoleController.lua` (`ConsoleController:keypressed`,
   `:1516`) and `src/controller/editorController.lua`
   (`EditorController:keypressed`, `:825`) — each still runs its own narrow,
   single-argument dispatch, not the project route's `dispatch(shortcuts, hooks,
   widget, event, trigger, ...)` chain.
-- **State:** Decision 1 (`../decisions/input.md`) names this convergence as
-  "deliberately left as a follow-on, not attempted," and Decision 26 and
-  Decision 33 repeat the same scope note in different words. The decision text
+- **State:** D-ROUTE-OWNS (`../decisions/input.md`) names this convergence as
+  "deliberately left as a follow-on, not attempted," and D-LOVE-ARGS and
+  D-EXACT-RESERVE repeat the same scope note in different words. The decision text
   is honest about the gap; the gap itself is still open.
 - **Why it stands:** out of this feature's mandate — scoped out on filing, not
   an oversight found later.
@@ -432,7 +432,7 @@ paid, or turned out not to be debt.
   assumption about a platform that in fact restores nothing.
 - **Where it goes when built (2026-08-07):** `framework_before_exit`
   (`consoleController.lua`) is now the framework's own teardown function and
-  the only caller of a project's hook (Decision 28). It is the seam this entry
+  the only caller of a project's hook (D-STOP-IS-FW). It is the seam this entry
   has been describing — a framework-owned step, adjacent to but independent of
   `compy.before_exit`. Note the crash path still does not reach it: it calls
   `reset_before_exit` only, deliberately, since a partially initialised project
@@ -474,7 +474,7 @@ paid, or turned out not to be debt.
   input-API redesign unchanged — renamed from the old tier-3/tier-4
   vocabulary to hooks/widget, but the underlying coupling is the same.
 - **Why it stands:** The truthy-consume shape (decisions/input.md,
-  Decision 2) is working as designed; it just wasn't checked against
+  D-CHAIN-OF-3) is working as designed; it just wasn't checked against
   this specific hooks/widget interaction. No dedicated guard exists.
 - **Revisit:** Note the coupling wherever `on_limit_reached` is
   documented for project authors, or decide it needs a guard.
@@ -493,9 +493,9 @@ paid, or turned out not to be debt.
   → `user_error_handler` → `suspend_run(msg)` → the error window over the
   project's last frame.
 - **Why it matters:** balloons (smoke report 5) passed a lifecycle callback
-  inside `show{}`, which Decision 15 makes a raise. The raise printed its line
+  inside `show{}`, which D-UNKNOWN-RAISES makes a raise. The raise printed its line
   and left the user "in a console that gave no signal they were still inside a
-  project" — which is the failure mode Decision 15's own rationale ("explicit
+  project" — which is the failure mode D-UNKNOWN-RAISES's own rationale ("explicit
   failure mode") is meant to prevent.
 - **Options:** (a) route a top-level raise through the same suspend/error
   window path as a handler raise — one failure surface for one class of
@@ -717,7 +717,7 @@ paid, or turned out not to be debt.
   (interactive). Keyboard hooks are neither. So a project whose only
   interaction surface is `love.keypressed`/`keyreleased`/`textinput` — no
   draw, no update, no widget, no pointer — hands the keyboard back to the
-  console, and the hooks the framework captured for it (Decision 10) can
+  console, and the hooks the framework captured for it (D-HOOKS-SEEDED) can
   never fire. `examples/keyboard` is *not* an instance: it defines
   `love.update` and `love.draw`, so it is blocking and keeps the route.
 - **Why it stands:** hypothetical. No such project exists in the tree, and one
@@ -730,13 +730,13 @@ paid, or turned out not to be debt.
 ### `gui` is supportable as a modifier, and deliberately not supported
 
 - **Not a defect, and not deferred work.** `gui` (super / cmd / win) is outside
-  the modifier set by decision (`../decisions/input.md`, **Decision 31**), which
+  the modifier set by decision (`../decisions/input.md`, **D-THREE-MODS**), which
   carries the rationale: never requested, added only for symmetry with the
-  table-driven builder Decision 30 dissolves. This entry exists so the option is
+  table-driven builder D-ASK-THE-DEVICE dissolves. This entry exists so the option is
   discoverable from the debt side; the decision is the authority.
 - **What it costs today:** nothing observable. No shipped project or example
   registers a `gui` combo. `gui+s` is refused at registration (it names two
-  triggers, Decision 21) and `lgui` is bindable as an ordinary trigger.
+  triggers, D-COMBO-SHAPE) and `lgui` is bindable as an ordinary trigger.
 - **What re-adding takes:** a `gui()` accessor beside `ctrl()`/`alt()`/`shift()`
   in `src/util/key.lua`, the pair restored to `mod_triples` and the fold table,
   and the precedence list extended. Bounded and additive.
@@ -768,7 +768,7 @@ paid, or turned out not to be debt.
 - **Revisit: worth one review, at no scheduled point.** At least three
   directions are open and this entry favours none of them — widen the modifier
   set, keep it deliberately narrow (which is the standing position,
-  `../decisions/input.md`, Decision 31), or introduce a distinct class for
+  `../decisions/input.md`, D-THREE-MODS), or introduce a distinct class for
   service keys with its own rules.
 
 ### The widget-handle shape test exercises a stub, not the real draw wiring
@@ -920,7 +920,7 @@ paid, or turned out not to be debt.
 
 - **Status:** owner's direction, 2026-08-11. **Not a commitment**, and explicitly not this
   release; recorded so that the day someone needs it, they do not each build their own.
-- **The rule it follows from** (`../decisions/input.md`, Decision 32.5): a project does not
+- **The rule it follows from** (`../decisions/input.md`, D-USAGE-SHAPE.5): a project does not
   reconstruct "what is held" from `keypressed`/`keyreleased`, nor the mouse equivalent, unless it
   is a deliberate decision taken in awareness of the drift — virtual mutable state with no path
   back to the truth, wrong after a focus change or a processing hiccup, and silently so.
@@ -930,7 +930,7 @@ paid, or turned out not to be debt.
 - **The constraint that matters most: it stays SEPARATE from the physical polling surface.** A
   reader must always know which question they are asking — *what the event stream says is held*,
   or *what the device says is held*. The two answers legitimately differ, and conflating them is
-  the "two clocks" problem this feature spent its length removing (Decision 30, *"what it
+  the "two clocks" problem this feature spent its length removing (D-ASK-THE-DEVICE, *"what it
   withdraws"*). One surface answering both, or silently switching between them, would rebuild it
   under a new name.
 - **What would have to be true first.** A real consumer that cannot be served by a device poll —
@@ -955,7 +955,7 @@ paid, or turned out not to be debt.
   Today it proxies straight to the device. If a mirror populated from `keypressed`/`keyreleased`
   is ever genuinely needed, it can be swapped in **behind the same surface**, transparently to
   every project — which is precisely what a bare `keys_pressed` table could not do, because the
-  table *was* the contract. Decision 30 removed a model kept beside the device; this proposal
+  table *was* the contract. D-ASK-THE-DEVICE removed a model kept beside the device; this proposal
   removes the need to ever expose which one is in use.
 - **Two optional extensions, later and only if a need appears:**
   - **An enumerator** — "list every key currently held". This is the one capability a device poll
@@ -989,7 +989,7 @@ paid, or turned out not to be debt.
   which, on the evidence above, is most input-heavy projects. See also the entry below, whose
   on/off transition problem the `compy.states` half of this proposal is the general answer to.
 - **CONDITION — this proposal carries something for another decision, and dropping it silently
-  would leave that unanswered.** Decision 30 (`../decisions/input.md`) dissolved the framework's
+  would leave that unanswered.** D-ASK-THE-DEVICE (`../decisions/input.md`) dissolved the framework's
   tracked held-key set. It was challenged on the ground that the biggest input-heavy example had
   *independently* grown a model of the same shape, which is evidence of an unmet need. The
   challenge was examined and the decision stands: what that example's model was actually reaching
@@ -997,7 +997,7 @@ paid, or turned out not to be debt.
   reached for no held-state at all — plus **foldable held-state convenience**, which a stateless
   device poll answers and which *this proposal* is the durable answer to.
   **So if this proposal is dropped, deferred indefinitely, or replaced by something that does not
-  answer the convenience half, that convergence evidence stops being addressed and Decision 30's
+  answer the convenience half, that convergence evidence stops being addressed and D-ASK-THE-DEVICE's
   standing should be re-examined at that point.** Recorded here rather than in a review document
   because reviews are transient and this is the condition, not the argument.
 
@@ -1018,7 +1018,7 @@ paid, or turned out not to be debt.
   - *A modifier released first.* `keypressed['alt+h']` sets a flag; the player lets go of Alt
     before `h`, so `keyreleased('h')` serialises as plain `'h'` and the `'alt+h'` binding never
     fires. **No second binding closes it** — a modifier's own release has no expressible combo
-    at all (Decision 21: one trigger, so `'alt+lalt'` and bare `'lalt'` both raise).
+    at all (D-COMBO-SHAPE: one trigger, so `'alt+lalt'` and bare `'lalt'` both raise).
   - *An unrelated modifier pressed mid-hold.* The guide's own flag example binds bare
     `'space'` on both channels; press Space, then press Ctrl, then release Space, and the
     release serialises as `'ctrl+space'`, missing the `'space'` clearing binding. **The
@@ -1201,7 +1201,7 @@ paid, or turned out not to be debt.
 - **Why it stands:** Cosmetic; the branches work and run only under
   `love.DEBUG`. Not worth a behavioural change on its own.
 - **Revisit:** When this handler is next touched — lift the debug toggles
-  onto the combo-table mechanism (Decision 8), or a `toggle_debug(k)` helper.
+  onto the combo-table mechanism (D-COMBO-TABLES), or a `toggle_debug(k)` helper.
 
 ### Per-event `set_love_*` installers are lexically isomorphic
 
@@ -1225,10 +1225,10 @@ be silently narrowed later (any change is a separate, owner-gated decision):
 
 - **Non-shift Enter submits** — Ctrl+Enter and Alt+Enter submit, not only bare
   Enter (guard is `is_enter and not shift`; also consistent with
-  `doc/development/decisions/input.md` Decision 6). Pinned for widget + console.
+  `doc/development/decisions/input.md` D-NO-FW-TIER). Pinned for widget + console.
 - **`SearchController:keypressed` returns a jump target** (`{block, line}`) up its
   caller on Enter — the same "keypress return carries a domain result" shape the
-  shared widget's limit-flag return was retired for (Decision 5). Left as
+  shared widget's limit-flag return was retired for (D-TWO-SURFACES). Left as
   is because `SearchController` is a different class, out of scope here.
 - **The project widget's view skips the per-frame `update_view()` workaround by
   widget *identity*** (`userInputView.lua:draw`, `self.controller ~=
@@ -1270,7 +1270,7 @@ hardcoded 1 and 2. This feature renamed the bindings (`compy.X` →
 `compy.input.hooks.X`) and changed nothing about the meaning.
 
 **Why it cannot simply be fixed by binding the button.** The derived clicks name no button by
-ratified decision (`../decisions/input.md`, Decision 27, "The derived clicks keep `(x, y)` and
+ratified decision (`../decisions/input.md`, D-BUTTON-TRIGGER, "The derived clicks keep `(x, y)` and
 name no button"): they are not LÖVE events and the click timer synthesises them from
 left-button releases only. A project that needs to know which button produced a click binds
 `mousereleased` and does its own timing — which is exactly what the framework's timer does on
@@ -1300,7 +1300,7 @@ works, and this is about how easy it is to keep working.
    conventional secondary-action gesture, it reads the same on a trackpad and on hardware with
    no reliable second button, and the input API expresses it directly:
    `shortcuts.mousepressed['ctrl+mouse1']` is a ctrl-click and `shortcuts.mousemoved['ctrl+*']`
-   a ctrl-drag (`../decisions/input.md`, Decision 27). That would also let double-click go back
+   a ctrl-drag (`../decisions/input.md`, D-BUTTON-TRIGGER). That would also let double-click go back
    to meaning something double-click-shaped, instead of standing in for a button paint cannot
    observe.
 
@@ -1328,7 +1328,7 @@ changes.
   `searchController.lua:101,105`), none of which is affected today because the
   callee only tests the value for truthiness. The comparison form was observed
   once, in the gate's `only_mods` helper, which normalised with `not not`; that
-  helper no longer exists (Decision 34 replaced the predicate cascade with a
+  helper no longer exists (D-RESERVE-TABLE replaced the predicate cascade with a
   combo-string table), so **no site in the tree compares a modifier read today**.
 - **Why it stands:** nothing is wrong under a real device, no patcher offends
   today, and no caller compares. Changing the accessors is a small edit with a
@@ -1347,7 +1347,7 @@ changes.
   `consoleController.lua` (4) — `if Key.ctrl() and not Key.shift() and not
   Key.alt() and Key.is_enter(k)`, and the same shape for Escape, paste, scroll
   and the debug toggles. Six further reads are **not** this debt: `_scroll('up',
-  Key.ctrl())` passes a held modifier as continuous state, which Decision 32
+  Key.ctrl())` passes a held modifier as continuous state, which D-USAGE-SHAPE
   rules correct.
 - **State:** these are combos written the long way, at the one layer the feature
   did not convert. Two costs, and the second is the live one:
@@ -1357,17 +1357,17 @@ changes.
   - **Each test claims every modifier it does not name.** The editor's `load()`
     tests Ctrl and Shift but not Alt, so **Alt+Escape loads the selection**; the
     console's `if Key.ctrl() then if k == "l"` makes **Ctrl+Shift+L and
-    Ctrl+Alt+L clear the output**. This is exactly the tolerance Decision 33
+    Ctrl+Alt+L clear the output**. This is exactly the tolerance D-EXACT-RESERVE
     outlawed for the pre-dispatch gate, still present one layer down — and the
     same handlers write the exact form (`not Key.shift() and not Key.alt()`)
     elsewhere, so the inconsistency is within a single file.
 - **Why it stands:** no project competes for these keys — the console owns the
   route precisely when no project runs — so nothing is broken today, and
-  Decision 33's scope clause deliberately left this layer out. It is soft debt:
+  D-EXACT-RESERVE's scope clause deliberately left this layer out. It is soft debt:
   a consistency and legibility cost, not a defect.
 - **Shape, if it is answered:** register these as combo tables on the
   controllers, the way a project registers its own. That is the console/editor
-  adoption Decision 1 defers, and it subsumes the debug-toggle entry above.
+  adoption D-ROUTE-OWNS defers, and it subsumes the debug-toggle entry above.
 - **Revisit:** with the console/editor migration, or the first time one of these
   handlers has to state what it claims — a tolerant test is invisible until a
   chord that extends it is wanted.
@@ -1376,7 +1376,7 @@ changes.
 
 - **Where:** `compy.input.shortcuts` and the combo grammar (`src/util/key.lua`,
   `split_combo`/`check_combo`). A combo is its modifier set **exactly**
-  (Decision 21), and the `'*'` class key is a class of one modifier set too —
+  (D-COMBO-SHAPE), and the `'*'` class key is a class of one modifier set too —
   `'alt+*'` does not match `alt+shift+key`.
 - **State:** a project that wants *"Ctrl+Alt+Up, and I do not care whether
   Shift is also down"* must register `ctrl+alt+up` **and**
@@ -1413,7 +1413,7 @@ changes.
   one key at a time* — `BUG-01-08` for `cursor`, `BUG-02-02` for `text`, "still
   open on the remaining keys". That is patch archaeology, and it is not what
   happened. **`text` and `cursor` are the user's content; every other key is
-  project-owned**, and that line is ratified as **Decision 35**, *"the
+  project-owned**, and that line is ratified as **D-CFG-BOUNDARY**, *"the
   configuration boundary: the user's content is `show`'s alone"* — the same
   split that decides which keys `configure` may touch and which reset on each
   `show`. The boundary checks the content class **completely**. There is no
@@ -1522,7 +1522,7 @@ changes.
   type-checking elements that `InputText` had previously stored as-is. An
   interim regression that never reached a release is not debt to weigh — it is
   work to finish, which is the owner's ruling above.
-- **The rule it settles is Decision 38's boundary: normalise representation,
+- **The rule it settles is D-CONTENT-NORM's boundary: normalise representation,
   refuse structure.** A string against a list, an embedded newline, an invalid
   byte — one value spelled differently, and normalised silently. A number,
   boolean or table where a line belongs is not text at all. Coercing it would be
@@ -1544,7 +1544,7 @@ changes.
 - **Where:** `src/controller/consoleController.lua` (`checked_text`,
   `api_set_text`, `api_show`, `is_line_list`),
   `tests/input/input_cursor_text_spec.lua` (*"refuses a non-string element"*),
-  `../../input_api.md` (*"Live changes"*), `../decisions/input.md` (Decision 38).
+  `../../input_api.md` (*"Live changes"*), `../decisions/input.md` (D-CONTENT-NORM).
 - **The first fix was incomplete, and the second cold review caught it**
   (2026-09-01). `checked_text` walked the list with `ipairs`, which stops at the
   first hole and never sees a non-integer key, so `{[1]='a', [3]=42}` was
@@ -1555,7 +1555,7 @@ changes.
   counts every key and requires `1..n` to be strings, which is what *"a list of
   line strings"* implies and what an `ipairs` prefix-test never checked.
 - **`normalized_lines` deliberately keeps its `ipairs` walk.** The boundary
-  refuses structure and the model normalises representation (Decision 38); the
+  refuses structure and the model normalises representation (D-CONTENT-NORM); the
   only callers reaching the model without passing the boundary are
   framework-internal (editor, history) and pass dense lists. Duplicating the
   validation into the model would blur that split.
@@ -1563,7 +1563,7 @@ changes.
   `show{text = false}` went from *"the previous content survives"* to *"the
   field opens empty"*, because `checked_text` normalises falsy to `nil` and
   `reset_content` branches on `cfg.text == nil`. The new behaviour is the
-  correct one — Decision 35 statement 1 makes an absent `text` an empty field
+  correct one — D-CFG-BOUNDARY statement 1 makes an absent `text` an empty field
   and statement 3 makes `false` the uniform unset — so a second defect closed
   by accident. It is now documented in `../../input_api.md` and pinned by a
   test, having shipped as neither.
@@ -1581,7 +1581,7 @@ changes.
   earned when an entry becomes `ACTIVE`; this one was ruled and fixed in the
   same session, so it went `BACKLOG` → `RETIRED` without passing through.
 - **The rule behind it is the owner's** (2026-09-01) and is now ratified as
-  **Decision 38**, `../decisions/input.md`. It is the same rule the UTF-8
+  **D-CONTENT-NORM**, `../decisions/input.md`. It is the same rule the UTF-8
   sanitisation on this path already served: **the cursor addresses content as
   `(line, column)`, so content that is not normalised makes that address
   ambiguous.** Invalid bytes leave a column's *length* undefined; a newline
@@ -1591,7 +1591,7 @@ changes.
   `../internals/user_input.md`, *"Multiline input"*, and stated for a project
   author in `../../input_api.md`, *"Live changes"*.
 - **The two branches are now one path preceded by a normalisation step** (owner,
-  2026-09-01), which is Decision 38's structural half: per-spelling branches
+  2026-09-01), which is D-CONTENT-NORM's structural half: per-spelling branches
   that each decide what to normalise are what let UTF-8 and newlines drift onto
   different rules in the first place. `normalized_lines` returns the lines,
   `set_text` stores them, and there is one place left where either could drift.
@@ -1602,7 +1602,7 @@ changes.
 - **What was observable, established at the weighing** — more than the entry
   first claimed. The content round-trips through `string.unlines`, so
   `on_text_entered` could not tell the two apart; but `after_submit` receives
-  the line list itself (Decision 37's payload split), so the spellings handed a
+  the line list itself (D-PAYLOAD-SPLIT's payload split), so the spellings handed a
   project `{"a","b"}` versus `{"a\nb"}`. The validator runs per line and would
   have measured the concatenation and named the wrong line. And the rendering —
   recorded as *"needs a display"* — was read out of the draw code instead: both
@@ -1647,7 +1647,7 @@ changes.
   on the owner's direction — *"either discard or cursor movement should be
   deleted, and in either case both paths should be unified"*. The call is
   **deleted** and the two branches are now **one path preceded by a
-  normalisation step** (`normalized_lines`). Ratified as **Decision 38**,
+  normalisation step** (`normalized_lines`). Ratified as **D-CONTENT-NORM**,
   `../decisions/input.md`, closing section.
 - **Registered here rather than left in a session track** (owner, 2026-09-01):
   a finding parked in a track dies with the session, so it goes in the ledger
@@ -1795,7 +1795,7 @@ changes.
 
 - **Resolution:** fixed at `BUG-01-04`. `combo_string` (`controller.lua`) now
   lower-cases the trigger, so dispatch emits what registration stores.
-  Decision 8 already ratified the rule — "a project can register `['Ctrl+S']`
+  D-COMBO-TABLES already ratified the rule — "a project can register `['Ctrl+S']`
   and still match" — this only makes the dispatch half implement it.
 - **The defect it closed:** registration canonicalises the whole combo
   (`key.lua`, `combo:lower()` inside `split_combo`), dispatch did not, so
@@ -1862,20 +1862,20 @@ changes.
 - **The defect it closed:** disarming used to require `show{force}`, a full
   re-setup that clears the user's draft — and nothing could read that draft back
   first (no text getter on the surface; a project's `love` is a sandboxed clone,
-  Decision 18). `configure{auto_hide = false}` now disarms without touching it.
+  D-ONE-STATE-ASK). `configure{auto_hide = false}` now disarms without touching it.
 - **What it did NOT fix, deliberately:** a follow-up `show{force}` from inside the
   submit chain is still closed by the submit in progress unless it passes
   `auto_hide = false`. Owning the close by the submit that armed it needs a
   generation token, judged not worth the state; the guide carries the idiom.
 - **Where:** `consoleController.lua` (`SHOW_ONLY_KEYS`, `WIDGET_KEYS`),
   `userInputController.lua` (`configure_core`, `submit_flow`), `../input_api.md`
-  (*"Asking one question"*), `../internals/user_input.md`, Decision 36's
+  (*"Asking one question"*), `../internals/user_input.md`, D-AUTO-HIDE's
   Amendment, `../../CHANGELOG.md`.
 
 ### T-ONESHOT — `oneshot` is ruled in and nothing implements it (RESOLVED, 2026-08-30)
 
 - **Resolution:** built at `FEAT-01-02` after `FEAT-01-01` ratified the edges —
-  three as Decision 36 recommended them, one **reversed**: it closes on a *clean*
+  three as D-AUTO-HIDE recommended them, one **reversed**: it closes on a *clean*
   submit only, because the error boundary the recommendation stood on wraps the
   route rather than the submit chain. `show{ oneshot = true }` seats the flag at
   activation and `submit_flow` spends it after `after_submit`; `configure{oneshot}`
@@ -1883,7 +1883,7 @@ changes.
   asymmetry Escape leaves standing.
 - **Where:** `userInputController.lua` (`open_widget`, `submit_flow`),
   `consoleController.lua` (`SHOW_ONLY_KEYS`), `../input_api.md`
-  (*"Asking one question"*), Decision 36.
+  (*"Asking one question"*), D-AUTO-HIDE.
 - **Read the paragraph above as history, not as behaviour** (2026-08-30, the same
   day): `T-ONESHOT-SCOPE` and `FEAT-02` replaced that shape. The key is
   **`auto_hide`**, it is project-owned and settable at `configure`, and it
@@ -1891,7 +1891,7 @@ changes.
 
 ### T-PLAINTEXT-ENTERED — the two submit callbacks receive identical payloads (RESOLVED, 2026-08-30)
 
-- **Resolution:** built at `FEAT-01-04` per Decision 37 — `on_text_entered`
+- **Resolution:** built at `FEAT-01-04` per D-PAYLOAD-SPLIT — `on_text_entered`
   receives the joined string, `after_submit` the line list, and that difference is
   what tells them apart. This also closed **`FIX-02-01`**, which asked whether the
   two were one callback set two ways; the answer needed the write-up as much as
@@ -1902,7 +1902,7 @@ changes.
   indexed (`turtle`, `valid`, `guess`) broke **silently** and migrated with the
   framework.
 - **Where:** `userInputController.lua` (submit flow), `../input_api.md`,
-  `CHANGELOG.md` (`Changed`, leading with the migration), Decision 37.
+  `CHANGELOG.md` (`Changed`, leading with the migration), D-PAYLOAD-SPLIT.
 
 ### T-TURTLE-DUP — `turtle` double-handles its own keys (RESOLVED, 2026-08-28)
 
@@ -1934,19 +1934,19 @@ changes.
 
 ### The `show`/`configure` content-ownership boundary was not built (RESOLVED, 2026-08-27)
 
-- **Resolution:** built as sprint `ARC-02`, the implementing pass Decision 35's
+- **Resolution:** built as sprint `ARC-02`, the implementing pass D-CFG-BOUNDARY's
   own text named as not yet landed. `configure` refuses `text`/`cursor` as
   `show`-only keys, the hidden-`configure` stash is gone with `state.pending`
   entirely, and a forced `show` with no `text` clears. Was `T-CFG-BOUNDARY`.
 - **Where it was:** `consoleController.lua` (`PER_SHOW_KEYS`, `check_keys`,
   `stash_hidden_configure`) and `userInputController.lua` (`re_show`).
 - **Note:** the two behaviour changes against stakeholder-seen text — the
-  clearing forced `show`, and the dropped stash — are recorded in Decision 35,
+  clearing forced `show`, and the dropped stash — are recorded in D-CFG-BOUNDARY,
   which is the deviation record for them.
 
 ### A highlighter could not be turned off — `false` already did it, unratified (RESOLVED, 2026-08-27)
 
-- **Resolution:** ratified rather than built. Decision 35, statement 3 makes
+- **Resolution:** ratified rather than built. D-CFG-BOUNDARY, statement 3 makes
   `false` the uniform unset for every project-owned field, and
   `doc/input_api.md` documents it with the `computed or false` idiom. No code
   changed: every consumer already tested truthiness, so a stored `false`
@@ -2063,13 +2063,13 @@ changes.
 - **Resolution:** done, and in the direction this entry doubted. Every
   channel — keyboard, text, pointer, and the derived singleclick/doubleclick
   events — routes through one chain with one error boundary and one lifetime
-  (`../decisions/input.md`, Decision 25). The derived clicks did fold into
+  (`../decisions/input.md`, D-ONE-LIFETIME). The derived clicks did fold into
   hooks: `compy.singleclick` is gone and `compy.input.hooks.singleclick`
   replaces it.
 - **Where this entry was wrong, worth keeping:** it recorded the asymmetry as
   predating the input API. It did not. At the PR base every event installed
   through one path and none was released before stop; the split was
-  introduced by this feature (Decision 11, amended). The entry then reasoned
+  introduced by this feature (D-ROUTE-LIFETIME, amended). The entry then reasoned
   from the false premise to "folding clicks into hooks would falsely imply" a
   shared contract — when a shared contract was in fact the pre-existing state.
 - **What genuinely remains unproven** and is recorded separately: pointer
@@ -2094,7 +2094,7 @@ changes.
   collapse could be behaviour-preserving rather than a fix in disguise.
 - `CC:wrap_handler` survived this step for the compy single/double click
   handlers, then went with them when the clicks became ordinary events
-  (Decision 25). Nothing wraps project code any other way now: `guarded`
+  (D-ONE-LIFETIME). Nothing wraps project code any other way now: `guarded`
   (`controller.lua`), applied where a route is entered, is the only one.
 - **Verified behaviour-preserving:** suite 911/0/0/3 across the change, and
   the pointer path now propagates a return value that both `love.handlers`
@@ -2136,7 +2136,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   (`examples/sapper`), this meant (1) submit was dead — typing
   still reached the widget but Enter never fired, because
   submit/cancel (then a non-overridable framework tier, since
-  retired — Decision 2) lives in the *project*
+  retired — D-CHAIN-OF-3) lives in the *project*
   route, which `project_open` disconnected — and (2) Ctrl+Esc quit the whole
   app instead of returning to the console, because `love.quit`
   only stopped-to-console while `app_state == 'running'`.
@@ -2190,7 +2190,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   supersession below.) Placed on
   `compy.input` rather than at the top of `compy`: it is input state, and the
   input guide is where a reader looks for it.
-- **Resolution superseded** (`../decisions/input.md`, Decision 30): the view is
+- **Resolution superseded** (`../decisions/input.md`, D-ASK-THE-DEVICE): the view is
   dissolved and no held-key surface is exposed. **The need this entry recorded
   is still met, by a different answer** — the renderer that ruled out
   callback-arg access asks the device instead (`love.keyboard.isDown`), which a
@@ -2213,8 +2213,8 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   consumer should have to write them.
 - **Resolution:** owner ruled that dispatch keeps firing on every repeat and a
   binding opts out for itself — `compy.input.fn.ignore_repeat(fn)`
-  (`../decisions/input.md`, Decision 22), with `fn.stop_here` alongside it
-  when the binding also claims the key (Decision 24). Filtering inside the shortcut tier
+  (`../decisions/input.md`, D-IGNORE-REPEAT), with `fn.stop_here` alongside it
+  when the binding also claims the key (D-STOP-AND-SIDE). Filtering inside the shortcut tier
   was rejected for two reasons: it suppresses with no way to recover a
   hold-to-act binding, and it would leave the same hand-written check in
   `hooks.keypressed`, where commands are equally idiomatically bound. The
@@ -2234,7 +2234,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   re-show with exactly that read: dead code that never fires, which is why
   maze re-shows the widget on every tick.
 - **Resolution:** owner ruled to expose it —
-  `compy.input.is_shown()` (`../decisions/input.md`, Decision 18), returning
+  `compy.input.is_shown()` (`../decisions/input.md`, D-ONE-STATE-ASK), returning
   the widget's own flag so it cannot drift from the one the dispatch walk
   reads. Used by `examples/turtle` for its open-only-if-closed guard.
 
@@ -2244,7 +2244,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   widget step at all. The three `forward_*` functions that implemented it were
   deleted, so every keyboard/text event on that route goes to `CC:keypressed` /
   `CC:textinput` (the console line, or the editor fork), hidden widget or
-  shown. Decision 1's "widget visibility is never a routing condition" now
+  shown. D-ROUTE-OWNS's "widget visibility is never a routing condition" now
   holds on both routes. The two routes still read differently — the project
   route ends an unclaimed event in the chain, the console route ends it in its
   own input surface — but that is each route's own terminal, not two answers
@@ -2262,7 +2262,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   console-route defaults then fell back to `CC:keypressed` / `CC:textinput`.
 - **Why it stands:** The general principle — *input the widget declined
   should have no effect* — was ruled for the **project** route only:
-  Decision 11 ("Changed baseline behaviour", `../decisions/input.md`) gives
+  D-ROUTE-LIFETIME ("Changed baseline behaviour", `../decisions/input.md`) gives
   a running project's route every keyboard/text event, so an event no
   shortcut, hook, or shown widget takes simply ends there, instead of
   accumulating in the console behind the project's screen. The **console**
@@ -2271,7 +2271,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   the terminal" is arguably the correct reading, not a leak. What is unruled
   is whether the two routes should read the same way.
 - **Reachability:** No leak path through a *running* project is known today
-  — the running case is Decision 11's, and the `project_open` case is
+  — the running case is D-ROUTE-LIFETIME's, and the `project_open` case is
   narrowed by ruling (a) above (`user_is_interactive`), which keeps the
   project route for any project with a widget or a pointer handler. The
   open question is therefore a contract question first: two routes, two
@@ -2284,13 +2284,13 @@ because the pattern recurs: when a producer goes, grep for its consumer.
 
 - **Resolution:** `check_combo` (`src/util/key.lua`) now raises on a `*`
   trigger with no modifiers, naming the alternative in the message ("for every
-  key, use `compy.input.hooks`"). Decision 21 and `doc/input_api.md` carry the
+  key, use `compy.input.hooks`"). D-COMBO-SHAPE and `doc/input_api.md` carry the
   rule, and two rows pin it — the raise, and the control that `shift+*` is
   still accepted, so the check cannot pass by rejecting classes generally.
 - **What it was (measured 2026-08-03):** `shortcuts.keypressed['*']`
   registered without raising and caught every **unmodified** key — `q` fired
   it, `ctrl+s` did not, that belonging to the `ctrl+*` class. Coherent with
-  Decision 21 (a class is its modifier set exactly, and the empty set is a
+  D-COMBO-SHAPE (a class is its modifier set exactly, and the empty set is a
   class), but undocumented, untested, and a second spelling for what a hook
   already expresses.
 - The entry was kept here rather than in `../decisions/input.md` while it was
@@ -2316,14 +2316,14 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   mechanism"). Reconstructing it from a pair of flag-setting shortcuts is
   **not** the answer — that shape is now named as an antipattern there.
 - **Resolution:** registration now **raises** on a combo naming more than one
-  trigger, or none (`../decisions/input.md`, Decision 21) — the same treatment
+  trigger, or none (`../decisions/input.md`, D-COMBO-SHAPE) — the same treatment
   `show`/`configure` give an unrecognised key. `a+b+*` no longer registers the
   widest possible binding; it is refused with the legal shape in the message.
 
 ### A combo table cannot express a modifier-class rule (RESOLVED, 2026-08-03)
 
 - **Where:** `compy.input.shortcuts[event]` (`../decisions/input.md`,
-  Decision 8) — `Key.new_handler_table`, an exact canonical lookup keyed by
+  D-COMBO-TABLES) — `Key.new_handler_table`, an exact canonical lookup keyed by
   one full combo string.
 - **State:** every binding names one combo, and dispatch is one exact lookup
   of `combo_string`'s output. A project that wants "**every** `alt+x` is a
@@ -2344,7 +2344,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   the combo **`alt+lalt`**, since `combo_string` prepends the held modifier to
   a trigger that *is* that modifier. A naive `^alt%+` pattern matches it.
 - **Resolution:** owner ruled a sanctioned form — a trailing `*` binds the
-  modifier class (`../decisions/input.md`, Decision 21). `alt+*` is every Alt
+  modifier class (`../decisions/input.md`, D-COMBO-SHAPE). `alt+*` is every Alt
   chord; exact bindings win, the class is consulted only on a miss, and it
   never matches the modifier's own press. The three questions above are
   answered by it: precedence is exact-first; the trigger is already the
@@ -2371,7 +2371,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   (`src/controller/projectInputController.lua`) calls `combo_string` **twice** on
   a miss — once for the exact combo, once for the `'*'` class — so one event can
   ask the device six times instead of three. Reusing the first walk needs either
-  a parameter on `combo_string`, cached state, or a second copy of Decision 8's
+  a parameter on `combo_string`, cached state, or a second copy of D-COMBO-TABLES's
   precedence logic; all three were judged worse than the cost.
 - **Revisit:** with the `'*'`-class lookup, if combo dispatch ever lands
   somewhere genuinely hot.
@@ -2398,7 +2398,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   synchronously from inside its own callback — a re-entry guard
   suppressed it, then `hide()` wiped it. One example project worked around
   this by deferring the reshow a frame.
-- **Resolution:** Auto-close on submit is gone (Decision 6):
+- **Resolution:** Auto-close on submit is gone (D-NO-FW-TIER):
   `after_submit` DEFAULTS to a
   no-op and the widget stays open. A rejected validator locks the field with the
   rejected text still showing — there is nothing to reshow, so the one-frame
@@ -2413,7 +2413,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
 - **Old state:** The precedence (explicit `on_*` wins, else captured native, else
   noop) was fixed at `activate` but re-resolved on every dispatched event
   instead of once.
-- **Resolution:** `_generic_callback` is gone. Decision 10
+- **Resolution:** `_generic_callback` is gone. D-HOOKS-SEEDED
   replaced the two-store precedence rule with one table (`hooks[event]`), seeded once at
   `activate` (`seed_hooks`, `projectInputController.lua:43-49`) — there is
   no per-event resolution left to memoise; `dispatch` (`:74-86`) just reads
@@ -2423,14 +2423,14 @@ because the pattern recurs: when a producer goes, grep for its consumer.
 ### Pointer delivery is an unstructured broadcast, not a chain (RESOLVED, 2026-08-03)
 
 - **Resolution:** pointer joined the existing chain rather than getting a
-  mirror of it (`../decisions/input.md`, Decision 25). The gateway's pointer
+  mirror of it (`../decisions/input.md`, D-ONE-LIFETIME). The gateway's pointer
   entries no longer deliver to the widget themselves; they hand the event to
   the active route like every other channel, and the widget is the chain's
   terminal. A pointer hook consumes on a truthy return, so a shown widget
   *can* now be starved of a click aimed past it — the capability this entry
   asked about.
 - **What made it cheap in the end:** the owner's ruling that the
-  keyboard/pointer split was self-inflicted rather than inherited (Decision 11,
+  keyboard/pointer split was self-inflicted rather than inherited (D-ROUTE-LIFETIME,
   amended). The consume contract itself cost nothing: measured across
   `life`, `sapper`, `tixy`, `paint` and `pong`, no project pointer handler
   returns a value, and the return was discarded in any case. So this was never
@@ -2442,7 +2442,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   the framework deciding for it.
 - **Also still open:** a pointer *combo* vocabulary (a modifier-only shortcut
   such as `ctrl` plus a button). Pointer has no shortcuts tier and enters the
-  walk at the hook tier; Decision 25 records the question as not-decided.
+  walk at the hook tier; D-ONE-LIFETIME records the question as not-decided.
 
 ### `UserInputController:keypressed` forked on `love.state.app_state == 'editor'` (RESOLVED — the `app_state` fork was removed, 2026-07-21)
 
@@ -2453,7 +2453,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   Enter/Escape submit/cancel ran. Flagged by the owner (2026-07-20) as an
   abstraction leak: the widget could not be reasoned about — or migrated onto the
   new API by the editor later — without knowing it was "the editor." See
-  `doc/development/decisions/input.md` Decision 6.
+  `doc/development/decisions/input.md` D-NO-FW-TIER.
 - **Resolution:** The branch is deleted; `keypressed` runs one uniform path. The
   two real differences moved to honest homes: (1) `modify` (Ctrl+D) is a
   per-instance `allow_duplicate_line` constructor flag, set only by the editor's input,
@@ -2465,7 +2465,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
 - **Revisit:** `allow_duplicate_line` is a one-off flag; the widget owning its own
   **combo table** (Ctrl+D and the lifecycle keys as registered combos an editor or
   project extends) is the better end-state the owner named — deferred with the
-  console/editor migration (Decision 1), not this pass. The former inline question
+  console/editor migration (D-ROUTE-OWNS), not this pass. The former inline question
   at `:724` is retired (its concern is resolved
   in shape; the combo-table refinement is what remains).
 
@@ -2516,7 +2516,7 @@ moved under it.
 - **Note (2026-08-03):** this entry used to also cover `forward_keypressed` /
   `forward_keyreleased` / `forward_textinput`. Those were **deleted, not
   renamed** — they implemented the console route's widget gate, which
-  Decision 1 rules out ("widget visibility is state on the widget, never a
+  D-ROUTE-OWNS rules out ("widget visibility is state on the widget, never a
   routing condition"), and which was unreachable once the failed-run teardown
   was fixed. Its description here was also wrong on fact: it routed to the
   console route's active *widget*, not to "the currently-active keyboard

@@ -93,7 +93,7 @@ nothing to grab.
 The practice, then, is two habits together: resolve the table through `__index` on access, and
 refuse assignment to the table itself, so a project cannot swap the surface out from under the
 resolution. `compy.input` is built that way (its identities are frozen — `decisions/input.md`,
-Decision 7); the `serial` surface was later built the same way, assignment guard included (reported
+D-FROZEN-SHELL); the `serial` surface was later built the same way, assignment guard included (reported
 by its author — that surface is not in this repository).
 
 Two notes on why this is worth stating rather than leaving to be rediscovered:
@@ -103,7 +103,7 @@ Two notes on why this is worth stating rather than leaving to be rediscovered:
 - **The framework has already met it from the other direction.** A project reading
   `love.state.user_input` always sees `nil` — the framework writes the real global and the project
   reads its copy — which is why `compy.input.is_shown()` exists at all (`decisions/input.md`,
-  Decision 18). Same hazard, opposite direction.
+  D-ONE-STATE-ASK). Same hazard, opposite direction.
 
 It is a **suggested practice, not a ruling**: a table that is genuinely a snapshot may be handed
 over by value quite correctly. The question to ask of any new namespace member is simply *"does

@@ -25,8 +25,9 @@ local mock = require('tests.mock')
 -- does not stand up. A minimal stub records which of the two
 -- the raw gate invoked, isolating the modifier-exactness
 -- question from project loading (doc/development/decisions/
--- input.md, Decision 17's named-seam exception; same technique
--- as input_shortcuts_click_spec.lua's play-mode case).
+-- input.md, D-BEHAVIOUR-TEST's named-seam exception; same
+-- technique as input_shortcuts_click_spec.lua's play-mode
+-- case).
 -- @param combo string  mock.keystroke syntax, e.g. 'C-M-r'
 -- @return table  {restart = true?, reset = true?}
 local function drive_stub(combo)
@@ -96,7 +97,7 @@ describe('input surface: inbound events — global platform'
     end)
 
   -- A reservation matches its modifier set exactly
-  -- (doc/development/decisions/input.md, Decision 33): the
+  -- (doc/development/decisions/input.md, D-EXACT-RESERVE): the
   -- named modifiers held, and no other. Each pair below proves
   -- the boundary, not the reserved combo's own effect (that
   -- stays a named pending gap, per P15).
