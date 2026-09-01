@@ -145,32 +145,10 @@ paid, or turned out not to be debt.
 - **Not slugged** — no commitment to fix before the release; that is an owner
   call, and taking it would be a `FIX` row rather than a reopening of `BUG-02`.
 
-### Four line citations were stale on arrival, in the commit that moved them
-
-- **Where:** `doc/development/technical_debt/input.md` — the raw-writer
-  correction under *"`_update_cursor` measures the column on the wrong line"*
-  cites `userInputModel.lua:224`, `:263` and `:546`; *"`_set_text_line` has an
-  unreachable table branch"* cites `:196-198`.
-- **State:** the real lines are `221`, `260`, `543` and `193-195` — every one
-  off by exactly **3**. Commit `e3484987` inserted the three-line `DEBT:`
-  comment at `:516` and wrote all four citations in the **same commit**,
-  against the pre-edit numbering. They have never resolved. The other two
-  line citations in the persistent corpus (`:475`, `:45-63`) were checked and
-  are correct.
-- **Why it matters:** a citation that does not resolve *reads as
-  authoritative* — the standing objection in `agents/validation.md`,
-  *"Comment References"*. Here it points a reader at `end` and at a
-  `--- @private` tag.
-- **The fix is the one this corpus already ruled on:** cite the **function
-  name**, which does not drift — the correction session61 applied to this same
-  file's `set_cursor_pos` citation one day earlier, for this same reason.
-- **Provenance: ours**, 2026-09-01, all four in one commit.
-- **Not slugged** — mechanical, and it should be taken by whichever pass
-  touches these entries next.
-
 ### `_set_text_line` has an unreachable table branch
 
-- **Where:** `src/model/input/userInputModel.lua:196-198` —
+- **Where:** `src/model/input/userInputModel.lua` —
+  `UserInputModel:_set_text_line`, where
   `elseif type(text) == 'table' and ln == 1 then` is nested **inside**
   `if type(text) == 'string' then`, so its guard can never hold.
 - **State:** dead code that reads as a supported shape. A reader looking for
@@ -254,15 +232,16 @@ paid, or turned out not to be debt.
 - **There are THREE raw writers, not two, and the third is on a hot path.
   Corrected 2026-09-01 by cold peer review**, which refuted this entry's
   original claim that `_update_cursor` and `_advance_cursor` were "the only two".
-  `insert_text_line` (`:224`) does `self.cursor.l = l + 1` unvalidated, and it is
-  reached on **every Shift+Enter** (`line_feed`, `:263`) and by Ctrl+D
-  duplicate-line (`userInputController.lua:702`) — where the other two are
-  reached rarely or not at all. The correction **strengthens** this entry's
-  disposition rather than weakening it: the population to review is three, one
-  of them live on ordinary editing, so *"review the cursor writers"* is a bigger
-  and better-justified pass than *"repair this body"*. (`set_cursor` at `:546`
-  also replaces the whole `Cursor` with no check, but it takes a constructed
-  `Cursor` rather than writing fields, so it is a different shape.)
+  `UserInputModel:insert_text_line` does `self.cursor.l = l + 1` unvalidated, and
+  it is reached on **every Shift+Enter** (`UserInputModel:line_feed`) and by
+  Ctrl+D duplicate-line (`userInputController.lua`, the `modify` handler in
+  `_normal_mode_keys`) — where the other two are reached rarely or not at all.
+  The correction **strengthens** this entry's disposition rather than weakening
+  it: the population to review is three, one of them live on ordinary editing,
+  so *"review the cursor writers"* is a bigger and better-justified pass than
+  *"repair this body"*. (`UserInputModel:set_cursor` also replaces the whole
+  `Cursor` with no check, but it takes a constructed `Cursor` rather than
+  writing fields, so it is a different shape.)
 - **The likelier disposition is not a repair at all: this is a partial,
   unvalidated duplicate of `jump_end`, and what wants reviewing is its USAGE.**
   Both exist to seat the caret at the end of the content — that is what
@@ -1423,6 +1402,31 @@ changes.
   anyway.
 
 ## RETIRED
+
+### Four line citations were stale on arrival (RESOLVED, 2026-09-01)
+
+- **Resolution:** all four replaced with **function names**, which do not
+  drift — `UserInputModel:insert_text_line`, `:line_feed`, `:set_cursor` and
+  `:_set_text_line`, plus the Ctrl+D site named as the `modify` handler inside
+  `_normal_mode_keys` rather than by line.
+- **What was wrong:** the raw-writer correction under *"`_update_cursor`
+  measures the column on the wrong line"* cited `userInputModel.lua:224`,
+  `:263`, `:546`, and *"`_set_text_line` has an unreachable table branch"*
+  cited `:196-198`. The real lines were `221`, `260`, `543` and `193-195` —
+  every one off by exactly **3**. Commit `e3484987` inserted the three-line
+  `DEBT:` comment and wrote all four citations **in that same commit** against
+  the pre-edit numbering, so none of them ever resolved: they pointed a reader
+  at `end` and at a `--- @private` tag.
+- **Why it was worth fixing rather than filing:** a citation that does not
+  resolve *reads as authoritative* — the standing objection in
+  `agents/validation.md`, *"Comment References"*. And the rule was already
+  ours: session61 replaced this same file's `set_cursor_pos` line citation with
+  a function name **one day earlier**, giving the reason verbatim.
+- **Scope checked, not assumed:** the other two line citations into
+  `userInputModel.lua` from the persistent corpus resolve correctly, as do the
+  two into `editorController.lua` in the census paragraph.
+- **Provenance: ours**, 2026-09-01, all four in one commit. Found by the
+  session64 delivery revalidation and fixed on the owner's go.
 
 ### The programmatic-cursor census omitted the one writer on a hot path (RESOLVED, 2026-09-01)
 
