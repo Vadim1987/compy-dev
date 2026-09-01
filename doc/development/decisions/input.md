@@ -497,7 +497,7 @@ survives the project that installed it — including an unspent hidden-`configur
 widget configuration that has not been applied yet rather than an exception to the rule. Combined with the connection rule, stale configuration can
 never act outside its creator's window: a disconnected route's participants receive nothing, and
 a widget whose owning route is inactive goes unhonoured. `inspect` mode is the model case of the
-latter (Decision 12).
+latter (`../internals/user_input.md`, *"inspect mode"*).
 
 ---
 
@@ -623,7 +623,8 @@ Neither changes project-facing behaviour — both are pure refactors:
   ergonomics over its own instance.
 
 Multiple `UserInputController` instances remain required — console's REPL state must persist
-independently through `inspect` mode (Decision 12) and would be clobbered by a single shared
+independently through `inspect` mode (`../internals/user_input.md`, *"inspect mode"*) and would be
+clobbered by a single shared
 instance. What these extractions share is the *wrapper shape*, never the instance. This resolves a
 standing in-tree question about a shared dispatcher without committing to when — or whether —
 console/editor actually migrate onto this surface; that migration remains deliberately deferred per
@@ -971,9 +972,9 @@ something other than what it was written against; and every per-channel method h
 own payload shape, which is what kept `keypressed`/`keyreleased`/`textinput` from collapsing into
 the same generated channel as the other nine.
 
-The `keys_pressed` argument in particular bought nothing once Decision 20 made the set globally
-readable — and a project that RENDERS held state has to read it that way regardless, since a
-per-frame draw has no event argument in hand.
+The `keys_pressed` argument in particular bought nothing once the set was made globally readable —
+an intermediate step, itself withdrawn by Decision 30 — and a project that RENDERS held state has
+to read it that way regardless, since a per-frame draw has no event argument in hand.
 
 **Consequence, accepted.** `scancode` reaches consumers although nothing inside compy reads it,
 and combo triggers remain key-name-only (`doc/development/technical_debt/input.md`, "Combo
@@ -1053,9 +1054,21 @@ because the raise ends the run rather than the stop.
 
 ## Decision 30 — modifier state is read from the device; `keys_pressed` is dissolved
 
-**Supersedes Decision 13, Decision 20 and Decision 29.** Those three are the held-key-set
-decisions: Decision 13 exposed it read-only, Decision 20 made it readable outside an event,
-Decision 29 made it the framework's truth for event-time questions. All three are withdrawn.
+**What it withdraws — the whole held-key-set arc, which took three decisions and is now this one.**
+The framework used to maintain a table of currently-held keys and expose it as
+`compy.input.keys_pressed`: a read-only view of the live set — reads passing through, assignment
+raising — arriving as the second argument of every chain signature, then readable at any time so
+that a per-frame `love.draw` could ask, and finally declared the framework's truth for event-time
+questions. **All of it is withdrawn**: the table, the view, the argument and the surface. Nothing
+replaced it, because the device answers the same question with no model to keep in step.
+
+Two details of that arc are kept here because they still bite. The view was **index-only in
+practice** on the shipping LuaJIT/Lua 5.1 runtime — `pairs` ignores `__pairs`, so iteration
+yielded nothing while indexing worked, and the iterability was carried for a 5.2+ host that never
+arrived. And the consumer that justified exposing it at all — `examples/keyboard`, which renders
+shifted key labels **during draw**, where no event argument is in hand — is served by
+`love.keyboard.isDown` directly, which is why removing the surface cost that example nothing.
+
 Decision 8, Decision 21, Decision 26 and Decision 27 (combo serialisation, combo naming,
 LÖVE's own argument list, one combo vocabulary) **stand unchanged** — only the *source* the
 matcher reads from changes.
@@ -1783,179 +1796,25 @@ measures the column on the wrong line"*.
 
 ## RETIRED
 
-Decisions that no longer rule anything. Five of the six were superseded in full by a later
-decision, named right in the retired heading; the sixth, Decision 12, is kept as a correction —
-its own heading says NOT A DECISION — because in-tree comments cite it by number even though it
-never ruled anything. Each entry below keeps its original number and its full text unchanged;
-follow the heading's own pointer to see what stands in its place.
+**Empty, and that is a state rather than an oversight.** Six entries stood here — five superseded
+in full by a later decision, and one that its own heading called NOT A DECISION. All six were
+vacuumed on 2026-09-01, under `agents/rules/ledgers.md` §2: a ruling we made for ourselves may be
+swept once it rules nothing, and none of the six came from a stakeholder.
 
-## Decision 9 — uniform signatures and `isrepeat` threading — SUPERSEDED by Decision 26
+**What made the sweep safe is the naming, not the emptiness.** That rule keeps retired entries
+*"while the ledger is numbered"*, because a citation resolving to nothing is worse than one
+resolving to a tombstone — under numbering, the number a sweep misses still exists and now means a
+different decision. Under names it dangles visibly and greps out. So the tombstones were doing one
+job, and that job ended when the numbers did.
 
-**SUPERSEDED, 2026-08-07** — see Decision 26. The number is kept so the citations that name it
-still resolve; the content below is what was decided, not what the code does.
+**Where the content went, for the three that had any worth keeping.** The held-key-set arc — a
+read-only view of the live set, then a globally readable surface, then the framework's truth for
+event-time questions — is described in full by **Decision 30**, *"what it withdraws"*, including
+the two details that still bite. The `inspect` narrative, whose entry had said in its own body
+that it belonged elsewhere, is `../internals/user_input.md`, *"inspect mode"*. The remaining two
+were superseded in full and left nothing behind — one ruled uniform chain signatures and
+`isrepeat` threading, now Decision 26; the other deferred input unification, now Decision 25 and
+Decision 27.
 
-**Decision (superseded).** Every participant on a channel receives the same signature, the widget
-included: keypressed carries `(k, keys_pressed, isrepeat)`, textinput `(text, keys_pressed)`,
-keyreleased `(k, keys_pressed)`. On the project route, `isrepeat` is threaded through every
-component of the chain (Decision 2).
+Future retirements land here in the ordinary way.
 
-**Why it was decided.** A single signature per channel is the uniformity that lets the widget be
-just another participant rather than a special case. `isrepeat` was restored so a project can
-distinguish a held-key repeat from a fresh press.
-
-**Why it did not survive.** The signature was uniform across compy's three keyboard/text channels
-and different from LÖVE's on all of them, while pointer channels already passed LÖVE's arguments
-verbatim — so "uniform" held within a subset and broke at its edge. Decision 20 then made
-`compy.input.keys_pressed` globally readable, which is where a project must read it anyway (a
-per-frame draw has no event argument), leaving the threaded copy with no job. Decision 26 keeps
-the uniformity and drops the invention: every consumer gets LÖVE's own list.
-
-**What survives.** `isrepeat` still reaches every consumer, in LÖVE's own third position. And
-`shortcuts` dispatch still does not gate on it — a shortcut fires on every repeat, and a binding
-that wants once per physical press wraps itself in `compy.input.fn.ignore_repeat` (Decision 22),
-which is the wrapper that replaced the deferred marker this entry once pointed at.
-
-## Decision 12 — `inspect` is a mode-to-route line — NOT A DECISION, de-facto behaviour
-
-**Retired in place, 2026-08-25**, against the rule that behaviour the platform
-always had was never a decision to record. Suspending a project restored every
-handler to the console before this feature and still does. The number is kept
-because decisions are cited by number — seven comments cite this one — and the
-description is kept because it is worth having; it just is not a ruling.
-
-**The behaviour.** `inspect` (a paused or broken-into project) is **the console
-route active, bound over the project's environment**. The project route is
-disconnected exactly as the connection rule (Decision 11) describes, and the
-project's own widget is unhonoured because its owning route is inactive. That
-makes it a live debugger console rather than a separate idle one, and it needs
-no rules of its own. The narrative belongs to
-`internals/user_input.md`; this entry exists for the citations.
-
-## Decision 13 — the held-key set is exposed read-only, callback-only — SUPERSEDED by Decision 30
-
-**Decision.** Downstream consumers never touch the live held-key table. Every chain signature's
-second argument is a **read-only pressed-keys view**: reads pass through to the live set, writes
-raise. There is no project-facing way to *poll* held keys outside a callback — the view only ever
-arrives as a callback argument.
-
-**Why.** The held set is framework-owned state maintained at the gateway; letting project code
-mutate it would corrupt every downstream consumer. Read-only access covers the legitimate need
-(a callback asking "is Ctrl down?") without exposing the write. Keeping it callback-only rather
-than pollable is consistent with the callback-over-poll principle (Decision 4) — there is no
-per-frame "is this key down?" surface by design.
-
-**Recorded honestly:** on the shipping LuaJIT/Lua 5.1 runtime the view is index-only in
-practice — `pairs()` ignores the metamethod that would make it iterable, so iteration yields
-nothing; indexing works. The iteration support is kept for a future 5.2+ host. See the
-technical-debt register.
-
-**Allocation note.** The implementation caches the view while the backing
-held-key table has the same identity, so normal dispatch does not allocate a
-proxy per event. This is a non-functional requirement, not a project-facing
-identity guarantee: a callback may rely on the view being read-only and
-current, never on object equality across calls.
-
-## Decision 16 — defer future input unification — SUPERSEDED by Decision 25 and Decision 27
-
-**Retired in place, 2026-08-25.** The number is kept because decisions are cited
-by number; the content below no longer describes the system.
-
-This entry deferred pointer unification and said, in as many words, *do not add
-click entries to the hooks table and do not route pointer events through
-keyboard/text dispatching*. The feature does both: `hooks.singleclick` and
-`hooks.doubleclick` are ordinary events (Decision 25), and every pointer channel
-runs the same dispatch with a shortcuts tier of its own (Decision 27).
-
-**Which unification, though — the distinction this entry is kept for.** The
-**event axis** is unified: one channel list, one dispatch, one combo vocabulary
-with the button as a trigger. **Routing** across console, editor and project is
-**still deferred** — three controllers still own their own wiring, and that
-migration is Decision 1's, not this one's. A reader who takes "unification is
-deferred" from the heading alone gets the wrong half.
-
-## Decision 20 — a project can read the held-key set outside an event — SUPERSEDED by Decision 30
-
-
-**Status: implemented** (owner ruling, 2026-08-03).
-
-**Decision.** `compy.input.keys_pressed` is the read-only pressed-keys view
-(Decision 13), readable at any time — not only as a dispatch argument. Reads
-pass through to the live held set; assignment raises. It resolves on every
-access rather than being captured once, so it cannot go stale when the backing
-table's identity changes.
-
-**Why.** The same reason as Decision 18: a project's `love` is a sandboxed deep
-clone, so it cannot reach the real held set on its own. Until now the view
-arrived only as argument 2 of a shortcut/hook/widget call, which serves a
-project that *reacts* to keys and fails one that *renders* them: a per-frame
-`love.draw` runs between events with no argument in hand.
-
-**The consumer that settled it.** `examples/keyboard` maintains its own
-`INPUT.held` / `INPUT.shift` mirror, updated on every press and release, and
-reads it during draw to decide whether to render shifted key labels
-(`keyboard_view.lua`). It is a hand-built copy of a table the framework already
-owns, and it exists because there was no way to ask.
-
-**Placement.** On `compy.input`, beside `is_shown()`, rather than as a new
-top-level `compy.keys_pressed`: it is input state, the input guide is where a
-reader looks for it, and `compy`'s other members are subsystems. The ruling was
-to expose the table; this placement is the implementation's choice.
-
-**Not a new capability.** It is the same view, with the same read-through and
-write-raise contract, reachable from a second place. Iteration remains inert on
-the shipping LuaJIT runtime (`pairs` ignores `__pairs`), so it is index-only —
-`keys_pressed['lctrl']`, not a loop over held keys.
-
-## Decision 29 — event-tracked keys are the framework's truth; combos are the project's tool — SUPERSEDED by Decision 30
-
-**Decision.** Three statements, in force together.
-
-1. **The framework reads held state from the event-tracked set.** `Controller.keys_pressed` is
-   maintained at the top of `love.handlers.keypressed` / `keyreleased`, before any downstream
-   handler runs, and it is what every **event-time** question is answered from — combo
-   serialisation first among them. The framework does not consult the device for a question about
-   an event.
-2. **A project expresses chords through combos.** `shortcuts[channel][combo]` is the primary way a
-   project reacts to a modified event. It is declarative, it is folded (`ctrl`, never `lctrl`), and
-   it is one vocabulary across every channel (Decision 27).
-3. **The direct reads remain, as secondary channels — for wherever combo and shortcut logic does
-   not fit.** A per-frame draw with no event in hand is the clearest case (Decision 20), not the
-   only one: anything asking about held state in a shape a declarative combo cannot express reads
-   `compy.input.keys_pressed`, or the physical device queries where the event-tracked set cannot
-   answer. Neither is deprecated, and neither is second-class — they are second *choice*, after the
-   declarative route has been considered and found not to fit.
-
-**Why the framework must use the event-tracked set, and this is the load-bearing part.** The two
-sources answer on **different clocks**. `love.keyboard.isDown` reports the device *now*. The
-event-tracked set reports what was held *at the event being dispatched*. LÖVE pumps the entire
-event queue and then dispatches its events one at a time, so with a press and a release queued in
-the same frame, a device poll taken while dispatching the **press** already reports the key
-released. A combo built that way would be built from the future.
-
-This is why the set exists at all, and the reason survives Decision 26 removing it from the
-payload: what a handler is *handed* and what the framework must *track* are different questions.
-Dropping the argument did not remove the need for the tracking.
-
-**Why a project should reach for a combo first.** A modified event asked about imperatively becomes
-a cascade — `if not shift and not alt and not ctrl then` — restated at every call site, with the
-folding hand-rolled each time. The combo says the same thing once, as data, in the vocabulary the
-framework already serialises. The direct reads are for what a combo cannot express: held state
-during a draw, and the physical distinction between the two keys of a modifier pair.
-
-**Consequence, accepted.** The set can go stale where the device cannot: a key released while the
-window is unfocused never delivers its release. That is bounded and fixable in the framework
-(`technical_debt/input.md`), and the fix is to clear the set — **not** to rebuild combos on the
-device poll, which would trade a bounded staleness for the unbounded one described above.
-
-**Consequence, accepted.** `keys_pressed` stays keyed by LÖVE key name, unfolded: `lshift` and
-`rshift` are separate entries. Folding is lossy in the direction a keyboard renderer needs — it
-wants the cap that is actually down — and physical→logical is one `or` while the reverse is
-impossible. Folded names live in the combo vocabulary, which is where the folding is wanted.
-
-**Consequence, and the one part of the above the surface does not deliver.** "Filter or iterate the
-held set" reads as a natural use of a table, and it does not work: the read-only view is an empty
-proxy carrying `__index` and `__pairs`, and the shipping LuaJIT/Lua 5.1 runtime ignores `__pairs`,
-so `pairs(compy.input.keys_pressed)` yields nothing. The view is index-only in practice.
-`../../input_api.md` states the limitation, so a reader is warned rather than misled — but the
-surface is a table that cannot be read as one. Whether to give it a real snapshot accessor or to
-declare it index-only by design is **unruled**, and recorded in `technical_debt/input.md`.

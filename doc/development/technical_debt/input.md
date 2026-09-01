@@ -930,9 +930,9 @@ paid, or turned out not to be debt.
 - **The constraint that matters most: it stays SEPARATE from the physical polling surface.** A
   reader must always know which question they are asking — *what the event stream says is held*,
   or *what the device says is held*. The two answers legitimately differ, and conflating them is
-  the "two clocks" problem this feature spent its length removing
-  (Decision 29 → Decision 30). One surface answering both, or silently switching between them,
-  would rebuild it under a new name.
+  the "two clocks" problem this feature spent its length removing (Decision 30, *"what it
+  withdraws"*). One surface answering both, or silently switching between them, would rebuild it
+  under a new name.
 - **What would have to be true first.** A real consumer that cannot be served by a device poll —
   which is *not* what the example corpus showed: every held-state read in it is a "right now"
   question the device answers. Until such a consumer exists, this stays a direction.
@@ -2183,9 +2183,11 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   render shifted key labels. A per-event argument cannot serve a per-frame
   renderer, so callback-arg access alone is insufficient for any project that
   *renders* held state rather than reacting to it.
-- **Resolution:** owner ruled to expose it — `compy.input.keys_pressed`
-  (`../decisions/input.md`, Decision 20), the same read-only view the chain
-  hands participants, resolved per access so it cannot go stale. Placed on
+- **Resolution:** owner ruled to expose it — `compy.input.keys_pressed`, the
+  same read-only view the chain handed participants, resolved per access so it
+  could not go stale. (That ruling had a decision of its own; it was withdrawn
+  whole with the rest of the held-key arc and the entry is gone — see the
+  supersession below.) Placed on
   `compy.input` rather than at the top of `compy`: it is input state, and the
   input guide is where a reader looks for it.
 - **Resolution superseded** (`../decisions/input.md`, Decision 30): the view is
