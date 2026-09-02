@@ -1745,6 +1745,12 @@ resolving to a tombstone — under numbering, the number a sweep misses still ex
 different decision. Under names it dangles visibly and greps out. So the tombstones were doing one
 job, and that job ended when the numbers did.
 
+**The six themselves are archived, not destroyed** — `wip/77-new-input-api/validation/archive/decisions-vacuumed.md`,
+under `agents/rules/ledgers.md`, *"Vacuuming is a move, not a deletion"*. That archive leaves the
+release when the feature's working tree is deleted, which is correct: none of it is the product's
+history. It answers *what did the ledger used to contain* and *what work happened here* without a
+trip through `git log`, and it is **not** a second ledger — nothing in it rules anything.
+
 **Where the content went, for the three that had any worth keeping.** The held-key-set arc — a
 read-only view of the live set, then a globally readable surface, then the framework's truth for
 event-time questions — is described in full by **D-ASK-THE-DEVICE**, *"what it withdraws"*, including
@@ -1813,6 +1819,11 @@ as authoritative; under names it dangles visibly and greps out.
 | Decision 36 | `D-AUTO-HIDE` | |
 | Decision 37 | `D-PAYLOAD-SPLIT` | |
 | Decision 38 | `D-CONTENT-NORM` | |
+
+**The seven that map to nothing are archived**, not destroyed —
+`wip/77-new-input-api/validation/archive/decisions-vacuumed.md` holds the six vacuumed entries in
+full, and the overruled half of `D-AUTO-HIDE` beside them. It goes with the working tree; the
+mapping above is the part that stays.
 
 **Reading a `D-1`…`D-10` instead?** That is a different, dead namespace — the design-time ids from
 this subsystem's design phase, which lived only in the feature's working tree and never reached
