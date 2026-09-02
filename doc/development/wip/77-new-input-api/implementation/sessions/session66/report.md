@@ -2,7 +2,8 @@
 
 **Date:** 2026-09-02 · **Suite:** 1048 / 0 / 0 / 10 throughout, LuaJIT 2.1 in the container (the
 owner runs PUC Lua) · **Mode:** revalidation, then execution of its findings, then a replan the
-owner ruled in-session. Ten commits, none pushed. **No test was added or removed.**
+owner ruled in-session, then a **cold revalidation of this session's own work** whose corrections
+are applied. Fifteen commits, none pushed. **No test was added or removed.**
 
 ---
 
@@ -11,7 +12,7 @@ owner ruled in-session. Ten commits, none pushed. **No test was added or removed
 The scoped delivery-level revalidation session65 owed (`agents/rules/revalidation.md`), over four
 named subjects **plus a fifth the owner added on boot**: *"validating replan sanity and integrity —
 anything omitted, lost, done in a way that undermines path to release?"* Then the findings executed,
-four owner rulings collected, and `FIX-02` reordered.
+five owner rulings collected, and `FIX-02` reordered.
 
 Deliverable of record:
 [`validation/reviews/S66-session65-delivery-revalidation.md`](../../../validation/reviews/S66-session65-delivery-revalidation.md)
@@ -98,12 +99,47 @@ citation that still resolves to the wrong row.
 - **Generalising has a price.** A rule earns its place by the passes it saves, and one written to
   close a single instance is one the next reader must interpret. Record where it is consumed.
 
-## 8. Artifacts
+## 8. The session's own work, cold-reviewed — and what it caught
 
-- Track: `session66/track.md` — boot, the pass, each ruling as it arrived
-- **Ten commits**, `d5362b06`..`4582678d`, suite green and stated at each; **none pushed**
-- New: `validation/reviews/S66-session65-delivery-revalidation.md`
-- Ledger: four RETIRED entries (three in `technical_debt/general.md`, one in `input.md`) and the
-  `T-NEVER-SHIPPED` provenance ruling
+At the owner's instruction the session commissioned a **cold revalidation of itself** (Opus,
+no access to this session's reasoning):
+[`validation/outcomes/S66-cold-revalidation.md`](../../../validation/outcomes/S66-cold-revalidation.md),
+commission in `validation/prompts/`.
+
+**It cleared the judgement and caught the execution.** All nine findings hold, none is a phantom,
+F4's premise is verified on both halves — so the owner's two rulings were **not** collected on a
+false report — and all four applied corrections state something true. But:
+
+- **Two of twenty rows were in the wrong half of the split I wrote for session67.** `FIX-02-05` sat
+  in (b) while `CHG-01-03` names it as its **feeder** and `CHG-01` runs in (a) and gates `ACC-02` —
+  the producer scheduled after its consumer. `FIX-02-13` was separated from `-22` against its own
+  cell's *"write with `FIX-02-22`, same paragraph of the same doc"*.
+- **The deletion lost a status fact and promoted the instruction that fact refuted.** *"Gap closed
+  (B11, D8, D9)"* went with the duplicated table, and the same commit wrote *"Track 2 rows first"*
+  into the live roadmap row — an obligation discharged on 2026-08-26 at 17:47, standing in front of
+  a device pass.
+- **My own citation sweep skipped `ROADMAP.md`** — the document the renumber was performed in, and
+  the one file guaranteed to cite every id. Two `ACC-02-01` citations survived there while the
+  RETIRED entry reported the class resolved.
+- **The counts I measured were not written back** into `T-NEVER-SHIPPED` and `T-RETIRED-UNVER`,
+  which are exactly the documents `FIX-02-05` and `LEDGER-02` execute from.
+
+**The lesson is the one to carry, and it is uncomfortable in the right way: the pass that names a
+defect class is not thereby immune to it.** F3's own finding was *"the blast radius was measured in
+the wrong place"*, and the sweep it produced was measured in the wrong place, one file over.
+Five correction commits followed (`7150d15b`, `cce77919`, `1e052c7d`, `2a486215`, `cb159e39`),
+and a sixth pre-existing class the cold read found on the way: five `FIX-02-01` citations meaning a
+row that has been `FIX-02-07` since an earlier renumber, two of them parked questions whose triggers
+had fired on the wrong row.
+
+## 9. Artifacts
+
+- Track: `session66/track.md` — boot, the pass, each ruling as it arrived, the cold read
+- **Fifteen commits**, `d5362b06`..`cb159e39`, suite green and stated at each; **none pushed**
+- New: `validation/reviews/S66-session65-delivery-revalidation.md`,
+  `validation/outcomes/S66-cold-revalidation.md`, `validation/prompts/S66-cold-revalidation-commission.md`
+- Ledger: six RETIRED entries (five in `technical_debt/general.md`, one in `input.md`), the
+  `T-NEVER-SHIPPED` provenance ruling, and re-dated sizings on it and `T-RETIRED-UNVER`
 - Amended: `agents/rules/ledgers.md` §6, `decisions/input.md`'s crosswalk, `ROADMAP.md`
-  (both reorders), `validation/plan.md` (superseded in place)
+  (both reorders, the split's corrections, five stale ids), `validation/plan.md` (superseded in
+  place, and the Track-2 discharge restored)

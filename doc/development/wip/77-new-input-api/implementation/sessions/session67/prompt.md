@@ -33,17 +33,25 @@ placeholder — the owner asked for one explicitly, so `agents/sessions.md` §5'
 default does not apply.
 
 **Work `FIX-02` half (a), and `CHG-01` with it.** The rows, from `ROADMAP.md`'s "Execution order"
-note: `FIX-02-03` · `-04` · `-06` · `-17` · `-22` · `-23` · `-24` · `-25`, plus the
+note: `FIX-02-03` · `-04` · `-05` · `-06` · `-13` · `-17` · `-22` · `-23` · `-24` · `-25`, plus the
 `smoke_checklists.md` slice of `-09`. **Confirm the starting row with the owner; the order within
 the half is yours to propose.**
+
+**Two of those rows are bound to others and cannot be taken alone.** `-13` runs **with `-22`** —
+same paragraph of the same doc, by `-13`'s own cell. And **`-05` must precede `CHG-01-03`**, which
+names it as its feeder; `-05` is the largest row in the half (51 retired entries, each base-checked)
+and the roadmap records the owner's fallback if it proves too large to run before the sitting.
 
 Two recommendations, either defensible:
 
 - **`CHG-01` first** — it gates `ACC-02` *and* the slice cut, and it is the last thing in the brace
   doing so. `FIX-02-17` feeds it, so they are one sitting.
-- **`-22` first** — the sharpest of the prose defects: three documents say a hidden widget keeps its
-  content and the code clears it, so a pass that sees a cleared draft is told by the docs it found a
-  bug. One of the three sites is in the persistent corpus.
+- **`-22` first** (with `-13`) — the sharpest of the prose defects: three documents say a hidden
+  widget keeps its content and the code clears it, so a pass that sees a cleared draft is told by the
+  docs it found a bug. **Read the gate before you start it:** only the `decisions/input.md` site is
+  yours to fix. The other two — `design/spec.md:155` and `design/spec.versions/version01.md:191-194`
+  — are inside the **FROZEN `design/` tree**, which `agents/validation.md` marks *read, never edit*
+  and amending is **owner-gated**. Propose those two; do not edit them.
 
 **`-25` is the only row in the half that ships code** — a test pinning that the accept-side and
 apply-side key sets agree. Scoped as *pin the agreement*, **not** *unify the lists*: unifying crosses
@@ -87,6 +95,19 @@ the canonical form** — `DEC-01` was sized at 165 and executed at 554.
   unverified. `FIX-02-25` will need it. If it fails, say so rather than silently substituting grep.
 - **Markdown is not bound by the 64-character limit** — `agents/rules.md` scopes it to *coding*.
   Comment blocks in `.lua` are.
+
+## Your work was cold-reviewed before you got it
+
+Session66 commissioned a **cold revalidation of its own output** at the owner's instruction:
+[`validation/outcomes/S66-cold-revalidation.md`](../../../validation/outcomes/S66-cold-revalidation.md),
+commission in `validation/prompts/`. Its verdict: session66's nine findings all hold and its four
+corrections are all true, but **the split it wrote for you had two rows in the wrong half** and its
+own citation sweep had missed the roadmap. Nine corrections were applied on top (`7150d15b`,
+`cce77919`, `1e052c7d`, `2a486215`, `cb159e39`) — the row list above is the corrected one.
+
+**Read it if you want the one thing it says that this prompt cannot:** the pass that finds a defect
+class is not thereby immune to it. Session66 diagnosed *"the blast radius was measured in the wrong
+place"* and then measured its own sweep in the wrong place, one file over.
 
 ## Left open by session66, deliberately
 

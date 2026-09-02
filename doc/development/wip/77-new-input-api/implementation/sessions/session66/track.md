@@ -126,3 +126,42 @@ next reader must interpret. Record where it is consumed.
 Checked while recording, since the ruling asserts it: `CHANGELOG.md` `CURRENT_SCOPE` *Added* carries
 `auto_hide` at user-facing altitude and correctly never mentions `oneshot` — no project could write
 it — and `D-AUTO-HIDE` names the outside request and the old name for the grep.
+
+## 2026-09-02 — the `FIX-02` split (the entry it should have had at the time)
+
+**Owner:** *"Makes sense to run RECON+MERGE+SMOKE before this huge bundle of editorial fixes? If
+anything arises, verbose prose could help troubleshooting, but incorrect prose could confuse it. So
+I would lean to run editorial bundle first to reduce possible noise and confusion."* Then, on the
+proposal: *"I agree with reordering. Do it and put a remark saying we temporarily skip crosswalk
+renumbering so the roadmap order prevails."*
+
+Ruled as a **split**, not a move — moving the bundle whole would have swept `keyboard` and `maze`
+immediately before merging upstream into them, which is the inversion the acceptance reorder had
+just removed. Landed `4582678d`.
+
+**The strongest form of the owner's argument was not in their sentence:** the document read *during*
+the sitting is `smoke_checklists.md`, and it carries the banned widget-sense idiom. Prose that
+misleads is worst in the file open on the desk.
+
+## 2026-09-02 — the cold read of this session's own work
+
+Owner: *"Is any of your own work worth cold revalidation? If so, run an agent to do it, then apply
+corrections in place so the next session won't deviate from the primary mission."* Commissioned
+(Opus, cold): `validation/prompts/S66-cold-revalidation-commission.md` →
+`validation/outcomes/S66-cold-revalidation.md`.
+
+**Judgement cleared, execution caught.** Nine findings hold, F4's premise verified on both halves,
+four corrections all true — and **two of twenty rows were in the wrong half of the split**, the
+deletion lost a status fact while promoting the instruction that fact refuted, and my own citation
+sweep skipped `ROADMAP.md`.
+
+**The line worth keeping:** *the pass that names a defect class is not thereby immune to it.* F3's
+finding was "the blast radius was measured in the wrong place"; its own sweep was measured in the
+wrong place, one file over. **And a scoping assumption is the thing to state out loud** — the sweep
+assumed the renumbering pass had cleaned the document it was performed in, and that assumption was
+never written down anywhere it could be checked.
+
+Six correction commits: `7150d15b` (the split's two rows + four overstatements), `cce77919` (the
+Track-2 fact), `1e052c7d` (the roadmap's own `ACC-` citations), `2a486215` (five pre-existing
+`FIX-02-01` citations and two fired triggers), `cb159e39` (the stale sizings), and the wrap
+correction.
