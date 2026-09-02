@@ -45,37 +45,6 @@ paid, or turned out not to be debt.
   hedge. A field shown there reads as current in a way a stale sentence does not.
 - **Revisit:** `FIX-02-24`, with the rest of the documentation sweep.
 
-### T-GUARD-LIVE — the guide never says a project's own keys stay live while the widget is shown
-
-- **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
-  widget sits at tier 3"*.
-- **State:** the guide documents the **mechanism** (three consumers, tried in
-  order, the shown widget always consumes at tier 3) and one **case** —
-  guarding the trigger key so a later press does not re-open the prompt. It
-  never states the consequence that falls out of the two: while the widget is
-  shown, a project's *unrelated* keys are still live, because tier 2 runs
-  above it. An unguarded native handler acts on the keys the user is typing —
-  a space toggles a mode, a capital `R` moves the world — and the event still
-  reaches the widget, so nothing looks wrong from either side. **The remedy —
-  an early return on `is_shown()` covering the whole handler — is never named
-  either**, though the suite pins it as the idiom
-  (`tests/input/input_widget_control_spec.lua`, *"the guard the ruling asks an
-  example to write"*).
-- **What is NOT missing, corrected 2026-08-30:** an earlier draft of this entry
-  claimed the guide never says a framework reservation is beyond a project's
-  reach. It does — *"Combos the framework keeps"* says a reservation is
-  answered before the project's route exists and cannot be overridden, and
-  tables `ctrl+pause` with the rest. The entry is narrower than first written:
-  what is missing is the *consequence for a shown widget*, not the
-  reservation rule.
-- **Why it stands:** `turtle` shipped unguarded for months (`T-TURTLE-DUP`),
-  and a reader of the guide alone would not have known to write the guard that
-  fixed it.
-- **Revisit:** `FIX-02-23` — a few lines at the `is_shown` paragraph, the one a
-  project author reads before mixing native handlers with a prompt. It can
-  point at *"Combos the framework keeps"* for the reassurance rather than
-  restating it.
-
 ## BACKLOG
 
 ### `release_keyboard_route` is named for a lifecycle step that no longer exists
@@ -1401,6 +1370,51 @@ changes.
   anyway.
 
 ## RETIRED
+
+### The guide never says a project's own keys stay live while the widget is shown (RESOLVED, 2026-09-02)
+
+**Filed as `T-GUARD-LIVE`.** Everything down to **Resolution** is the filing as written.
+
+- **Where:** `../input_api.md` — the `is_shown` paragraph, and *"Why the
+  widget sits at tier 3"*.
+- **State:** the guide documents the **mechanism** (three consumers, tried in
+  order, the shown widget always consumes at tier 3) and one **case** —
+  guarding the trigger key so a later press does not re-open the prompt. It
+  never states the consequence that falls out of the two: while the widget is
+  shown, a project's *unrelated* keys are still live, because tier 2 runs
+  above it. An unguarded native handler acts on the keys the user is typing —
+  a space toggles a mode, a capital `R` moves the world — and the event still
+  reaches the widget, so nothing looks wrong from either side. **The remedy —
+  an early return on `is_shown()` covering the whole handler — is never named
+  either**, though the suite pins it as the idiom
+  (`tests/input/input_widget_control_spec.lua`, *"the guard the ruling asks an
+  example to write"*).
+- **What is NOT missing, corrected 2026-08-30:** an earlier draft of this entry
+  claimed the guide never says a framework reservation is beyond a project's
+  reach. It does — *"Combos the framework keeps"* says a reservation is
+  answered before the project's route exists and cannot be overridden, and
+  tables `ctrl+pause` with the rest. The entry is narrower than first written:
+  what is missing is the *consequence for a shown widget*, not the
+  reservation rule.
+- **Why it stands:** `turtle` shipped unguarded for months (`T-TURTLE-DUP`),
+  and a reader of the guide alone would not have known to write the guard that
+  fixed it.
+- **Resolution — `FIX-02-23`, and it is prose.** Was `T-GUARD-LIVE`.
+  `../input_api.md`'s `is_shown` paragraph now states the consequence (hooks sit
+  above the widget, so an unguarded handler acts on the user's typing while the
+  widget is shown), names the remedy (an early return on `is_shown()` covering
+  the **whole** handler), and distinguishes it from the narrow guard on the key
+  that opens the widget — two guards, two jobs.
+- **The reassurance is pointed at rather than restated**, as this entry's own
+  2026-08-30 correction asked: *"Combos the framework keeps"* already says a
+  reservation is answered before the project's route exists.
+- **One mechanism error was caught in the drafting and is worth keeping.** The
+  first draft said the platform's combos survive a blanket guard because they
+  never reach the project's handler. It is the other way round: a reservation
+  **acts and passes the key on**, never consuming, so what survives the guard is
+  the platform's action and not the project's binding. The guide uses
+  `ctrl+escape` as the example because it is the one reservation marked
+  *"always"* rather than development-only.
 
 ### The set of accepted config keys has no single home (RESOLVED, 2026-09-02)
 
