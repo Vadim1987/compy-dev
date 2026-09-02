@@ -206,3 +206,41 @@ Commits `07812c41` (guide), `3923a4ce` (ledger). Suite 1050.
 
 Half (a) remaining: `-03`/`-04`/`-24`, then `-05` → `-17` → `CHG-01`, then the
 `smoke_checklists.md` slice of `-09`.
+
+## 2026-09-02 — `FIX-02-24`. Delegated the evidence; the owner supplied the disposition.
+
+Commits `2e43af48` (audit artifacts), `d547f144` (marking), `54f31e99` (ledger). Suite 1050.
+
+- **Owner suggested a sub-agent and was right about the shape.** Sonnet worker, explicit model,
+  commission and report both on disk (`validation/prompts/S67-mermaid-diagram-audit.md`,
+  `validation/outcomes/S67-mermaid-audit.md`). Scope widened in the commission from the row's three
+  files to all seven, on the *"a count in a row is a lower bound"* rule. 32 class blocks audited
+  member-by-member. It reported LSP healthy and **distinguished an output-cap overflow from a
+  broken pipe unprompted** — the exact distinction hygiene (a) exists to get.
+- **Owner's disposition, mid-task:** *"old mermaid version is a good artifact to check feature
+  implementation vs intent… if it's not the live doc and never was, maybe we should not update it,
+  just mark (historical)?"* **Third time this session a row was answered at design level rather
+  than at the level it was filed at.** The pattern is now unmistakable and belongs in the report.
+- **The base check settled it in two commands.** All seven files are `aldum`'s (2024-07-29 →
+  2025-01-13, three committed as *"unfinished docs"*), and **none of the eight classes they draw
+  existed at the PR base either**. So: another author's, stale a year before this feature, never
+  live. Marked, not corrected. `doc/mermaid/README.md` carries the reasoning once; seven banners
+  point at it.
+- **Of 32 class blocks, exactly ONE line was ours** — `editor.md`'s `oneshot` on `UserInputModel`,
+  base-present and gone today. Deleted, on the principle that *a historical marker excuses
+  inherited drift, not drift you caused*. `custom_label`, `evaluator: EvalBase` and the
+  `wrapped_error`/`error` conflation were each base-checked and are identical there, so they stay.
+- **The row's premise was wrong** and the retirement says so: *"the model lost that constructor
+  argument in this feature"* is true of `UserInputModel` only.
+- **The strongest argument for marking rather than correcting came out of the audit, not the
+  ruling:** `eval.md`'s section headed *"Current"* describes a hierarchy **never built**, while
+  its *"Planned refactor"* section is closer to what shipped. A correction pass would have deleted
+  the evidence that plan and build diverged — which is precisely the owner's *"good artifact to
+  check implementation vs intent"*.
+- Filed from the audit's margins: three `@field` annotations disagreeing with their own
+  constructors, all byte-identical at base → `technical_debt/general.md`, one entry, unslugged,
+  recorded not claimed.
+- **`ACTIVE` in `technical_debt/input.md` is now EMPTY**, and the section says so in words.
+
+Half (a) remaining: `-03`, `-04`, then `-05` → `-17` → `CHG-01`, then the `smoke_checklists.md`
+slice of `-09`.
