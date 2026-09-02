@@ -186,6 +186,28 @@ wrappers made reachable on purpose). And the row says what it must **not** take:
 entry is `CHG-01-03`'s evidence, so deleting it would erase the record that this release fixed
 something users had met — the principle inverted by the sweep meant to serve it.
 
+## 2026-09-02 — vacuuming becomes a move, and the earlier deletions are recovered
+
+**Owner amendment:** a vacuumed entry goes to an **archive under `wip/`** rather than being deleted.
+Three reasons, and the middle one is the one I had not weighed when `DEC-01-04` deleted six entries
+outright: **a ruling made and overruled is work that happened**, and once its entry is gone it
+leaves no trace in the corpus, so the effort reads as if it never occurred. The archive outlines the
+scope of work actually done. Plus traceability without `git log` archaeology, and retrospective
+analysis, which needs the drafts and not only the result.
+
+**It still leaves the release** — that is the point, not a compromise. The archive lives under
+`wip/`, so deleting the working tree takes it, and none of it is the product's history.
+
+Landed: the rule (`cbd88b00`), the archive with the six entries recovered from `9c8cc631^` plus
+`D-AUTO-HIDE`'s overruled half (`369b75e9`, 356 lines), the two unrun rows switched from *cut* to
+*move* and `DEC-01` noted as reconciled (`a7abdf78`), and `validation/archive/` registered as an
+artifact kind (`4cb21185`).
+
+**The sentence I made sure was in the rule:** *it is not a second ledger* — nothing in it rules
+anything, and the ledger wins any disagreement. A second live timeline has cost this project weeks
+once (the TF2 spinoff), and an archive of superseded rulings is exactly the shape that could become
+one.
+
 **Where the sizing gap came from, since it will recur:** the spec sized by grepping `Decision N`.
 Three forms do not match that pattern — line-broken, plural, and bare back-reference. The last is
 the interesting one: it exists *because* of the plural, since the sentence unpacking a list drops
