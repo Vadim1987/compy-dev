@@ -244,3 +244,41 @@ Commits `2e43af48` (audit artifacts), `d547f144` (marking), `54f31e99` (ledger).
 
 Half (a) remaining: `-03`, `-04`, then `-05` → `-17` → `CHG-01`, then the `smoke_checklists.md`
 slice of `-09`.
+
+## 2026-09-02 — `FIX-02-03` and `FIX-02-04`, the two cheap verification rows
+
+Commits `e6bc45ce`, `ae0b191c`, plus the roadmap. Suite 1050.
+
+**`-03` — three alleged factual errors in the A-doc. One real, two already fixed, code right.**
+
+- All three cited line numbers had **drifted**; claims recovered from the filing, not the citation.
+- **Claim 1 refuted with a mechanism**: projects genuinely cannot install evaluator objects — no
+  `evaluator` key on a closed config table, `set_eval` not on the surface, and `consoleController`
+  **withholds** `InputEvalText`/`InputEvalLua`/`ValidatedTextEval`/`LuaEditorEval` from
+  `project_env`, which starts as a clone carrying them. But the remark was a **fair reading**: the
+  bullet said projects supply "callbacks for validation and display" and then that they cannot
+  install evaluators, without ever drawing the function/object line. Drawn now.
+- **Claims 2 and 3 object to text that no longer exists** — only the remarks quoting it survived.
+- **A false finding caught before filing.** LSP: zero references for `UserInputController:set_eval`
+  → reads as dead code. grep: `editorController` holds a `UserInputController` and calls it three
+  times. **Empty LSP references are a hint, not ground truth** — the rule earned again, and this
+  is the second time this session the LSP under-reported.
+
+**`-04` — the sandbox doc's pointers. Unknown yield, and it paid.**
+
+- One pointer carried **the stale route-lifetime claim `-06` removed this morning** — *"the route
+  connects only while the project is actively running"* — a **fourth site**, found by a row filed
+  for something else, after a sweep that believed it was complete. **The claim spreads by being
+  restated in passing**, which is why annotation text is as dangerous as prose.
+- Same line cited the **wrong decision**: `D-ROUTE-LIFETIME` for the `before_exit` contract, which
+  is `D-STOP-IS-FW` — correctly cited two paragraphs above in the same document.
+- Completeness: three pointers where the doc earns six. Every target resolved before writing.
+- Body line citations into `consoleController.lua` have drifted (3 of 4 spot-checked). **Known
+  class, already in `general.md`** — recorded, not re-filed, not this row.
+
+**Running theme, now four for four:** every row in this half that was filed as narrow turned out to
+be either larger (more sites) or smaller (already fixed) than its cell said, and in both directions
+the cell was written by someone who could only grep the obvious form.
+
+Half (a) remaining: `-05` (the big ledger audit) → `-17` → `CHG-01`, then the `smoke_checklists.md`
+slice of `-09`.
