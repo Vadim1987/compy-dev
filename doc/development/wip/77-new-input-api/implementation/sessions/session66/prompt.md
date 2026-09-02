@@ -34,10 +34,58 @@ consequences you will meet before you meet the roadmap.
 merges precede the smoke because `ACC-02` smokes the three example repos that `MERGE-01-01/02/03`
 merge into. **Everything after `ACC-02` is prose**, which is the property the order exists to buy.
 
-## Your task — execution, and the roadmap says what
+## Your task, part 1 — a scoped revalidation, FIRST
 
-**Owner directive, 2026-09-02: move towards the roadmap.** No revalidation pass is scheduled; take
-the next row and work it. Confirm the pick with the owner before starting — the choice is theirs.
+**Owner, 2026-09-02.** Session65 was cognitive-heavy and its successor owes a revalidation
+(`agents/sessions.md` §5), which the wrap initially skipped. Work
+[`rules/revalidation.md`](../../../../../../agents/rules/revalidation.md), at the **delivery**
+level — *did the outcome match the need, was anything overlooked, was anything unnecessary
+delivered* — over **four subjects and no more**.
+
+**Read this before you scope it wider.** Three of session65's deliverables are already proven and
+re-checking them is the recursion `agents/validation.md` warns about:
+
+- **the 554 substitutions** — the slug map drove the headings *and* the citations from one
+  dictionary, so a wrong entry would have produced a visibly wrong heading, and all 31 headings were
+  read. Verified by construction plus inspection;
+- **the 68 reflowed comment blocks** — proved word-for-word identical to the pre-substitution text
+  with only the slug applied, not eyeballed;
+- **`DEC-02` and `LEDGER-02` as filed** — plans whose own first step re-derives them.
+
+**The four subjects, in descending risk. Each was hand-written by one reader and reviewed by nobody.**
+
+1. **`D-AUTO-HIDE`'s live-vs-churn split** (`d0f4e66c`, 132 → 77 lines). The judgement was *what is
+   still in force* versus *what was interim*. **If a live ruling was dropped, the entry now
+   under-specifies behaviour the suite pins and the suite stays green** — so the check is against
+   the tests and the guide, not against the diff. The pre-rewrite text is in
+   `validation/archive/decisions-vacuumed.md`; diff it *for meaning*, not for lines.
+2. **The eleven re-pointed citations.** *"D-AUTO-HIDE's Amendment"* (6) and *"ruled edge N"* (4)
+   were mapped onto numbered statements by reading. **Resolve each one**: does the statement now
+   cited say what the citing comment or test asserts? A wrong statement number is silent and green.
+3. **What the vacuum rehomed** — `D-ASK-THE-DEVICE`'s *"what it withdraws"* paragraph and
+   `internals/user_input.md`'s *"inspect mode"* section, both written from entries that were then
+   deleted, plus the seven code citations re-pointed at the latter. Check against the archive: **was
+   anything lost, and is anything asserted there that the originals did not say?**
+4. **The three additions to `agents/rules/ledgers.md`** — *"What a decision records about its own
+   past"*, *"Vacuuming is a move, not a deletion"*, and §3's introduced-vs-pre-existing rule. They
+   govern all future ledger work. Check them for overreach and for contradiction with what already
+   stood.
+
+**One mechanical sweep to run with it, cheap:** residual references to ids this session renumbered
+or removed — `ACC-02-0[678]`, the six vacuumed decision numbers, and any heading citation that no
+longer resolves. `ROADMAP.md` and `smoke_checklists.md` were fixed; nothing else was checked.
+
+**Why this pass and not a general one.** Session65 had **two findings refuted at their premise by
+the owner** — `T-DEVIATION-WHY` and the `D-ONE-LIFETIME` paragraph. The calls the owner reviewed are
+settled; the four above are the same kind of call by the same reader, unreviewed. That is the whole
+scope. **Findings go to the ledger, not to your track**, and the pass is closed when the four are
+answered — do not let it grow into a re-verification of the feature (`agents/validation.md`,
+guardrail 1).
+
+## Your task, part 2 — then the roadmap
+
+**Owner directive, 2026-09-02: move towards the roadmap** once the revalidation is closed. Confirm
+the pick with the owner before starting — the choice is theirs.
 
 **The recommendation is `FIX-02`**, the largest remaining row in the brace and the one gating the
 most:
