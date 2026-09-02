@@ -166,6 +166,14 @@ paid, or turned out not to be debt.
   `input.md`'s *"Six line citations into `userInputModel.lua` were stale on arrival"* were written
   in the very commit that shifted them, by a session that had verified each one before its own
   unrelated edit moved the file. No sweep catches that; only not citing lines does.
+- **A worked instance of the worse mode, found 2026-09-02 at `FIX-02-06`:**
+  `internals/event_dispatch_layers.md`'s Layer-2 section cites `controller.lua` by line about a
+  dozen times and **every one checked was wrong by roughly 110 lines** — `:854-860`, offered as
+  `set_default_handlers`'s internals, lands in the profiler helpers; `:234-297` and `:974-982` name
+  the wrong functions; `main.lua:389-390` and `consoleController.lua:1033`/`:1130` land in
+  unrelated code. None of them dangles. All of them read as authoritative, which is this entry's
+  point made in one document. The three that carried a claim being corrected were replaced with
+  symbol names; the rest were left, because they are this entry's work and not that row's.
 - **The fix is the one the corpus keeps re-deriving:** cite the **function or section name**.
   Where a line is genuinely the point, cite the name and quote the line's text so a reader can
   grep it. Sizing is real work — 77 references, and the 15 example-repo ones need the repo

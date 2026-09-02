@@ -689,7 +689,8 @@ the prose says it is a defect.
 **unknown yield**, since a defect found at a desk is cheaper than one found at a sitting
 (`agents/rules/roadmap.md` §3):
 
-`FIX-02-03` · `-04` · `-05` · `-06` · ~~`-13`~~ ✅ · `-17` · ~~`-22`~~ ✅ · `-23` · `-24` · ~~`-25`~~ ✅,
+`FIX-02-03` · `-04` · `-05` · ~~`-06`~~ ✅ · ~~`-13`~~ ✅ · `-17` · ~~`-22`~~ ✅ · `-23` · `-24` ·
+~~`-25`~~ ✅,
 and **the `smoke_checklists.md` slice of `-09`**.
 
 *(Struck rows are done, 2026-09-02 session67.)*
@@ -703,9 +704,10 @@ and **the `smoke_checklists.md` slice of `-09`**.
 - ~~**`-13` runs with `-22`, by that row's own instruction**~~ — **DONE with it**, one paragraph,
   one sitting, as the instruction intended.
 - **`-23`** is the guard that `BUG-01-03` was: a pass meeting that shape finds no remedy named.
-- **`-06`** is a stale routing-lifetime claim in three places, which is troubleshooting prose by
-  definition; **`-03`, `-04`, `-24`** are verification rows whose yield is unknown, and `-03`'s may
-  be *code* work — it may show the code wrong rather than the doc.
+- ~~**`-06`** is a stale routing-lifetime claim in three places~~ — **DONE, 2026-09-02**, and it
+  was four places: the third was a paragraph in a document the row had already named. **`-03`,
+  `-04`, `-24`** are verification rows whose yield is unknown, and `-03`'s may be *code* work — it
+  may show the code wrong rather than the doc.
 - **`-05` is here on a hard dependency, not on the criterion** — though it meets that too
   (*"unknown yield"*). `CHG-01-03` names it as its **feeder**, and `CHG-01` is in this half and
   **gates `ACC-02` and every slice cut**: leaving `-05` in (b) schedules the producer after its
@@ -758,7 +760,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | **FIX-02-03** | the A-doc's three factual claims (`:79`, `:650`, `:675`) | **may reveal the code is wrong, not the doc** |
 | **FIX-02-04** | pointer annotations in `project_sandbox_env.md` — completeness never checked | **unknown yield** — a verification task |
 | **FIX-02-05** | the debt ledger's 20 resolved entries · **`T-RETIRED-UNVER`** | **unknown yield** — each tested against base; may find more rot. **NOT absorbed by `LEDGER-01-03`**, which sorted them into `RETIRED` on their headings without testing one of them against the base. The sort is done; **the verification this row exists for is untouched**, and it now has a section to walk rather than a scattered set |
-| **FIX-02-06** | the stale keyboard/pointer divergence claim | **one defect in three places** — `release_keyboard_route`'s comment, `event_dispatch_layers.md:112`, and the second doc. **Fix as one**; any survivor re-seeds the others |
+| ~~**FIX-02-06**~~ ✅ | **COMPLETE (session67) — four sites, not three, and the unnamed third was a paragraph in a document already named.** The row left *"the second doc"* unidentified; sweeping by sense found the survivor **inside `event_dispatch_layers.md` itself**, forty lines below the bullets, asserting the asymmetry again and sourcing it to a debt entry RESOLVED 2026-08-03. Fixing the bullets alone would have left the claim standing and cited. Also repaired: `occupy_keyboard` and `hook_pointer` are cited by name across the persistent corpus and **neither exists** (`occupy_input`, `mark_pointer_liveness` — the second installs nothing now). `internals/user_input.md` was **already correct on substance** and is the document the other two contradicted; only its two stale names moved. **Verified in code first** — `project_handlers` seeds off `_bindable` (keyboard + pointer + derived), and `release_keyboard_route`'s only call site is the crash path. **Two findings registered rather than fixed here:** the function's *name* (`technical_debt/input.md`, BACKLOG — renaming needs a call on merging it with `clear_user_handlers`, which is design, not docs), and this doc's systematic line-citation drift, which **the ledger already held** (`technical_debt/general.md`) and gained a worked instance instead of a duplicate entry. The `> REMARK:` that triggered the row is answered and removed, so `FIX-02-07` should not hunt for it. *Original filing:* the stale keyboard/pointer divergence claim | **one defect in three places** — `release_keyboard_route`'s comment, `event_dispatch_layers.md:112`, and the second doc. **Fix as one**; any survivor re-seeds the others |
 | **FIX-02-07** | execute the 37 remark dispositions | triage **complete**; breadth known, 12 files |
 | **FIX-02-08** | "tier" / "chain" / "the walk" — three names, one thing | known breadth, 3 slices |
 | **FIX-02-09** | "overlay" / "widget" / "area" / "field" — four names | known breadth; `src` half done in S45, docs half open. **The examples were not in that sweep** — found 2026-08-30. `turtle` was fixed on the spot while it was being edited anyway; what remains is the **nested repos**, `keyboard` (six files) and `maze` (`maze_render.lua`), which open their own PRs and are swept there. **Scope clarified by the owner, 2026-08-31 — see the note below** |

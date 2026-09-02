@@ -78,6 +78,33 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### `release_keyboard_route` is named for a lifecycle step that no longer exists
+
+- **Where:** `controller.lua`, `Controller.release_keyboard_route`. One call
+  site: `consoleController.lua`, `run_project`'s failure branch.
+- **State:** the name asserts three things that are not true. It is **not
+  keyboard-specific** — it calls `project_input:deactivate()`, dropping the
+  whole route, and empties the derived click slots. It is **not a lifecycle
+  release** — the `'running' → 'project_open'` release is gone and every channel
+  shares one lifetime ending at the project's stop (`../decisions/input.md`,
+  D-ROUTE-LIFETIME as amended). And it is **not reached on the transition it
+  names**: the crash path is its only caller.
+- **Why this is not simply a rename, which is why `FIX-02-06` left it.** The
+  caller follows it immediately with `clear_user_handlers`, which clears every
+  bindable channel; the two together are the crash teardown, and this one covers
+  the part the other does not. Naming it accurately means first deciding whether
+  they should be **one** function — a design call, not a docs sweep. A rename
+  chosen without that decision would just be a second inaccurate name.
+- **What it costs today:** the doc comment now opens with *"NOT a lifecycle
+  step, despite the name"*. That is a comment paying rent for a name, which is
+  the smell — not a defect. No behaviour is wrong and no reader is misled now
+  that the comment says so.
+- **Trigger:** revisit when the crash teardown is touched, or if
+  `clear_user_handlers` changes. Found 2026-09-02 at `FIX-02-06`, whose own
+  triage (`ACC-01-02-findings-triage.md`, old `FIX-02-14`) proposed the rename
+  and did not have this dependency in view.
+- **Not slugged** — no commitment to fix before release.
+
 ### `_set_text_line` has an unreachable table branch
 
 - **Where:** `src/model/input/userInputModel.lua` —
