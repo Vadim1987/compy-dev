@@ -1413,7 +1413,7 @@ than L restored.
 They are absent from this roadmap by **ruling**, not by omission. They were a prediction of the
 shape of pre-release work; that shape emerged differently, so the placeholders go.
 
-- **B, the intent check** → done by the **cold reviews** (`ACC-01-02`, repeated at `ACC-02-01`) —
+- **B, the intent check** → done by the **cold reviews** (`ACC-01-02`, repeated at `ACC-03-01`) —
   and by a reviewer with no stake, which a self-check could never be.
 - **C2, the disposition table** → emerged as the **defect register**.
 - **C1 and D** → dissolved outright: *principles are enforced at the row, without abstract
@@ -1421,7 +1421,7 @@ shape of pre-release work; that shape emerged differently, so the placeholders g
 
 **This settled the gate early.** The collapse ruling was scheduled as step zero of Phase G; it is
 done, and G no longer opens with it. **Phase F** goes with them — its "final revalidation" is what
-`ACC-02-01` is.
+`ACC-03-01` is.
 
 ---
 

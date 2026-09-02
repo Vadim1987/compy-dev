@@ -293,9 +293,16 @@ paid, or turned out not to be debt.
 
 ### A renumber shipped its crosswalk without the sweep, and five citations resolved to the wrong pass (RESOLVED, 2026-09-02)
 
-- **Where:** the feature's working tree — `validation/plan.md` (the duplicated `ACC-02`
-  table, the coverage-gap heading and its instruction), `validation/outcomes/
-  BUG-01-03-turtle-fix-peer-review.md`, `validation/reviews/FEAT-02-delivery-revalidation.md`.
+- **Where:** `ROADMAP.md` (two citations at `:1416` and `:1425`, found by the cold
+  revalidation after the first sweep reported clean) and the feature's working tree —
+  `validation/plan.md` (the duplicated `ACC-02` table, the coverage-gap heading and its
+  instruction), `validation/outcomes/BUG-01-03-turtle-fix-peer-review.md`,
+  `validation/reviews/FEAT-02-delivery-revalidation.md`.
+- **The scope error, recorded because it is the reusable half:** the first sweep was scoped
+  to `validation/` and `implementation/` on the assumption that the renumbering pass had
+  cleaned the document it was performed in. **It had not**, and the roadmap is the one file
+  guaranteed to cite every id. **A renumber's sweep starts in the document that was
+  renumbered.**
 - **The defect:** the 2026-09-02 acceptance split renumbered the smoke passes. `ACC-02-04`
   had been `maze` + `draw` and became `sapper`, so *"add rows for Track 2 before running
   `ACC-02-04`"* — a **standing instruction** about an unexercised upstream mechanic — came to
