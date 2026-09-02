@@ -115,6 +115,7 @@ set_text, configure, clear`.
 
 `FIX-02-22` closes. Next: `-25`.
 
+
 - Owner then added the getter proposal's **real consumer** (`b28dbe26`): reading content **outside
   submit and cancel** — on a timeout, or from a project-launched process off a hotkey. Today those
   two moments are the entire read surface. Reframes the entry: *"restore a draft across a hide"* is
@@ -147,3 +148,36 @@ Commits `a3097082` (spec), `16e2c100` (ledger retirement + citation sweep). **Su
   `T-HL-TWO-HOMES` is the standing example. Swept: the roadmap's renumber REMARK, the row, **and my
   own spec header written an hour earlier**. The filing text is kept and labelled rather than
   rewritten (*"No such test exists"* was true when written).
+
+## 2026-09-02 — `FIX-02-06`. Four sites, and the third was hiding in a doc already named.
+
+Commits `d832979c` (the fix), `05730ff8` (ledger). Suite 1050 throughout.
+
+- **The row said three places and left the third as *"whichever second doc `FIX-02-05` found"*.**
+  Nobody had ever identified it. Sweeping the corpus by sense: the survivor is **inside
+  `event_dispatch_layers.md` itself**, ~40 lines below the bullets — a closing paragraph asserting
+  the asymmetry again and sourcing it to a debt entry **RESOLVED 2026-08-03**. Fixing the bullets
+  alone would have left the claim standing *and* cited. That is the row's own *"any survivor
+  re-seeds the others"*, and the survivor was in the file being edited.
+- **`internals/user_input.md` was already correct** and is the doc the other two contradicted. Only
+  its two stale function names moved. Worth noting: the corpus was not uniformly wrong; one
+  document had it right the whole time.
+- **Two function names cited across the corpus do not exist** — `occupy_keyboard` (now
+  `occupy_input`) and `hook_pointer` (now `mark_pointer_liveness`, and it installs nothing).
+- **The rename the triage proposed was NOT done, deliberately.** `release_keyboard_route`'s caller
+  pairs it with `clear_user_handlers`; naming it accurately means first deciding whether the two
+  should be one function. That is design, not a docs sweep, and a name chosen without that decision
+  is just a second wrong name. Filed BACKLOG. **This is the second time this session that a
+  documentation row turned out to sit on a design question** — the first was `-22`, where the owner
+  made the same move. Worth watching as the pattern of this sprint rather than a coincidence.
+- **A finding I did NOT file:** `event_dispatch_layers.md`'s line citations are wrong by ~110 lines
+  and land on unrelated code. `technical_debt/general.md` **already holds that class**, sized at 77
+  references, naming *"lands on plausible code"* as the worse mode. Added a worked instance to it
+  instead of a duplicate entry. The standing constraint earned its keep here.
+- **Caught in my own edit:** a `python` substitution turned *"keeps its literal meaning for
+  neither"* into *"for either"* — the exact F5 failure from session66 (read to the end of the
+  sentence, not the end of the token). Caught by re-reading the rendered paragraph, not by the
+  diff.
+
+Half (a) remaining: `-23`, then `-03`/`-04`/`-24`, then `-05` → `-17` → `CHG-01`, then the
+`smoke_checklists.md` slice of `-09`.
