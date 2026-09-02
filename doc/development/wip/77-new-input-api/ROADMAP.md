@@ -1160,10 +1160,22 @@ early — everything downstream of them is prose, and prose is cheap to redo. Th
 the docs, so it wants to run late, on the prose that ships. Moving the row whole would have got one
 of the two right and reversed the owner's own 2026-09-01 placement of `DOC-01`. Splitting gets both.
 
-**And it fixes an inversion nobody had noticed.** `ACC-02-02/03/04` smoke `balloons`, `keyboard` and
-`maze`; `MERGE-01-01/02/03` merge upstream **into those same repos**. As sequenced before today the
-smoke ran first, so either its result was stale or the passes were run twice — the exact waste this
-row's own preamble exists to prevent. **`REC-01` and `MERGE-01` now precede it.**
+**And the merges now precede it — a ruling made twice, in opposite directions, and this is the
+live one.** `ACC-02-01/02/03` smoke `balloons`, `keyboard` and `maze`; `MERGE-01-01/02/03` merge
+upstream **into those same repos**, so one of the two orders has to give.
+
+- **2026-08-26, smoke first:** a pass on the pre-merge tree is the **control** for the post-merge
+  one, because a later device failure otherwise has two candidate causes — our branch and an
+  advanced upstream — and no way to separate them (`validation/plan.md`, superseded in place).
+- **2026-09-02, merges first (owner, and in force):** *"we are accelerating now, so no point in
+  having two separate sessions of smoke testing and defect fixing just for ceremony. Recon will
+  document what changed in the upstreams before the merge; this knowledge will assist
+  troubleshooting."*
+
+**The control is bought differently, not abandoned** — that is the part to carry. The first ruling
+spent a second owner sitting to keep the causes apart; `REC-01`'s written upstream delta separates
+them at desk cost, which is what makes the extra sitting ceremony rather than insurance. **`REC-01`
+therefore owes that document before `MERGE-01` runs**, and it is the condition this order stands on.
 
 Runs only once the tree is fixed. Every row costs owner time; re-running them against a tree about
 to change is what this ordering exists to prevent.
@@ -1210,15 +1222,21 @@ reachability finds the check instead of re-running it.
 
 ---
 
-
-
----
-
 ## ⬜ ACC-03 — the cold read — **runs after DOC-01, immediately before PR-01**
 
 **Split from `ACC-02`, owner 2026-09-02.** This is the half that must read **the prose that ships**,
 which is `DOC-01`'s placement argument of 2026-09-01 and the reason the split exists rather than a
 wholesale move.
+
+**It runs after keyboard time, and that reverses a standing placement** (owner, 2026-09-02). The old
+`ACC-02-01` was *"a second cold PR review, over the fixed tree — before the owner touches a
+keyboard"*: a desk pass in front of the sitting, so the sitting is not spent on a tree the review
+would have condemned. The owner's ground for dropping it: *"It was supposed to de-risk by spotting
+bugs, but it can also become wasted effort or misfire. Smoke becomes more important in the same way
+as behavioural versus unit testing — the cold review checks internals, smoke validates the surface.
+When the planning horizon collapses to one day, postponing smoke for the sake of additional peace of
+mind makes no sense."* **A de-risking step whose cost is a sitting loses to one that produces a
+result** once the horizon is short — the same reasoning that put the merges ahead of `ACC-02`.
 
 | id | step | note |
 |---|---|---|
@@ -1235,6 +1253,12 @@ by its own findings, so a defect it raises is a late defect by construction and 
 `ACC-02` smokes those same repos — merging into them afterwards smokes a tree that then changes.
 Everything downstream of `ACC-02` is prose, so this is now the last pair of rows that can move code
 without being prompted by a finding.
+
+**And this row now carries the load the old order gave to a second smoke sitting.** The 2026-08-26
+ruling ran the smoke first so a post-merge failure had one candidate cause; the acceleration ruling
+replaces that with **what this row writes down** — what moved in each upstream, in our surfaces,
+before the merge lands. That document is not a by-product of the recon here, it is the reason the
+merge may precede the smoke, and a failure in `ACC-02` is read against it.
 
 **Renamed from "recon" and lifted out of the release path (owner, 2026-08-26)**, because it is not
 release work: it measures **86+ commits** of drift we currently cannot see, and if upstream moved in

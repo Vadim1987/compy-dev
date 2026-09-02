@@ -437,6 +437,20 @@ and FIX-02 (13). Two are already closed and stay visible so the count reconciles
 
 #### ACC-02 — the human acceptance pass — **BLOCKED on BUG-01 and FIX-02**
 
+> **SPLIT 2026-09-02 (owner) — this sprint is now two, and the ids below have moved.** `ACC-02` is
+> the **device passes**; `ACC-03` is the **cold read**, after `DOC-01`. See `ROADMAP.md` for the
+> rows, the crosswalk and the state — it is authoritative for both, and the passage below is kept
+> for the *why* it carries about upstream sensitivity and `maze`'s branch.
+>
+> **The cold review no longer runs before keyboard time**, reversing the placement the row below
+> states. Owner's ground: *"It was supposed to de-risk by spotting bugs, but it can also become
+> wasted effort or misfire. Smoke becomes more important in the same way as behavioural versus unit
+> testing — the cold review checks internals, smoke validates the surface. When the planning horizon
+> collapses to one day, postponing smoke for the sake of additional peace of mind makes no sense."*
+> The 2026-08-26 split of `ACC-01`/`ACC-02` stands on its own ground — the defects were fixed first
+> either way; what changes is that the *second* cold read is no longer a gate in front of the
+> sitting.
+
 **Runs only once the defect sprints are done** (owner, 2026-08-26). Every row needs the owner at a
 device or reading slices, and re-running them against a tree that is about to change is the
 sitting-time this ordering exists to protect.
@@ -550,6 +564,14 @@ The checklist covers `draw` (§A runs in both). The buffer is input-driven in ex
 textually clean, semantically broken, and no hunk touched both files. The plan buffer likewise
 reasons about *"tracking which keys are down"*, which is what session35 dissolved. **Add rows for
 Track 2 before running ACC-02-04.**
+
+> **SUPERSEDED 2026-09-02 (owner) — the merges now run BEFORE the smoke.** *"We are accelerating
+> now, so there is no point in having two separate sessions of smoke testing and defect fixing just
+> for ceremony. The recon part will document what changed in the upstreams before the merge, and
+> that knowledge will assist troubleshooting."* The control below is not abandoned, it is **bought
+> differently**: the ruling as written spent a second owner sitting to keep the two candidate causes
+> apart, and recon's written upstream delta separates them at desk cost instead. `ROADMAP.md`'s
+> sequence is authoritative — `REC-01 → MERGE-01 → ACC-02`.
 
 **Why ACC runs before U, not after (owner, 2026-08-26).** A smoke pass on the pre-merge tree is
 not merely reassurance — it is the **control** for the post-merge one. Merging an advanced
