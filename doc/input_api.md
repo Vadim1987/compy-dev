@@ -157,6 +157,29 @@ compy.input.callbacks.after_submit = function()
 end
 ```
 
+### `hide()`
+
+`compy.input.hide()` takes the input widget off screen. It does **not** tear
+it down, and there is no call that does: the widget belongs to the surface it
+serves — for a project, to the run — so `hide` and a later `show` are state
+flips on one instance, never a rebuild. Your project never holds the widget
+object, and nothing survives the end of a run.
+
+**Your settings survive a hide; the content does not.** `prompt`,
+`highlighter`, `validator`, the callbacks and `auto_hide` are all still in
+force at the next `show`, because they are yours and stay until you replace
+them. What the user typed is not carried over: `show` is what seats content,
+so a `show` with no `text` opens **empty** — after a `hide` exactly as it
+does the first time.
+
+```lua
+compy.input.show{ prompt = 'name?', text = 'ada' }
+compy.input.hide()
+compy.input.show()   -- still labelled 'name?', and empty
+```
+
+If you want the text back, keep it yourself and pass it to that `show`.
+
 ### Live changes
 
 `compy.input.configure(config)` changes the project's own settings on the
