@@ -46,7 +46,7 @@ narrow mechanical rows follow. Sizing a small row against an unsettled surface i
 |---|---|
 | branch | `feature/77-newapi-analysis-s20260615` |
 | suite | **1048 / 0 / 0 / 10** — 1043 + the five the second cold review earned (three list shapes an `ipairs` walk let through, `show{text = false}` opening empty, and the error blaming the caller's line); 1043 was 1038 + `BUG-02-02`'s five (four bad element types, and the same refusal through `show`); 1038 was 1036 + the two `BUG-02-01`'s unification earned (both spellings land at the end of shorter content; a non-text value leaves content standing); 1036 was 1032 + its four (the list splits, empty lines survive it, both spellings agree on the cursor, and the same split at the surface); 1032 was 1030 + the two the sprint's cold peer review earned (a shortcut receiving the typed case, and the parser's byte column reaching the caret); 1030 was 1028 + `BUG-01-05`'s two (the character clamp, at `set_cursor` and at the `set_text` keep_cursor landing); 1028 was 1025 + `BUG-01-04`'s three (upper-case serialisation bare and modified, and the end-to-end textinput dispatch); 1025 was 1023 + `BUG-01-09`'s two breaking tests (the multi-line string, at `show` and at the live `set_text`); 1023 was 1021 + `FEAT-02`'s two (the `configure` disarm that keeps the draft, and `false` as the unset; two further cases replaced the ones pinning the retired category); the 10 pending are an owner ruling, an 11th is a finding |
-| marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is FIX-02-01 |
+| marker gate (`src`/`tests`) | clean — **but it never covered `doc/`**, which is `FIX-02-07` |
 | slices | regenerated, **100 / 100 complete and disjoint** |
 | baselines | pinned as local tags, [`TAGS.md`](TAGS.md) — nothing fetched since |
 | upstream | **Platform repo reconciled** with `upstream/dev` (`aldum/dev`) via MERGE-01-04 (commit `f4913833`) |
@@ -1178,7 +1178,7 @@ pre-existing half of any mixed entry. Deleting either would remove the record th
 ruling relies on was scheduled for **comments** only (`agents/rules/commenting.md`, *"Where this is
 enforced"*) and that Phase L, the ledger compaction, is retired. Phase L **stays retired and this is
 not it**: L was three specific excisions, all still owned elsewhere (`DEC-01-04`, a `REMARK` inside
-`FIX-02-01`, Decision 12's demotion). `DOC-01` is the volume pass over the prose corpus that L never
+`FIX-02-07`, Decision 12's demotion). `DOC-01` is the volume pass over the prose corpus that L never
 was.
 
 **The method is already written** — `agents/rules/commenting.md`, *"Where this is enforced"*, in the
@@ -1384,7 +1384,7 @@ Ledger compaction had three items and **none needs a phase**:
 
 1. excise the collapsed decisions → **DEC-01-04**, which is a *superset* (it also removes 16);
 2. remove Decision 11's withdrawn-rationale trail → **already a row**: it is REMARK `:429`, inside
-   FIX-02-01;
+   `FIX-02-07`;
 3. demote Decision 12 → **parked**, the owner disposes it during review.
 
 Retiring L therefore drops nothing.
@@ -1432,9 +1432,9 @@ Not open questions to chase — each has a trigger:
 | question | answered at |
 |---|---|
 | highlighter: sentinel, or a `clear_highlighter` member? | **when BUG-01-02 is fixed** |
-| the 14 remarks: ruled individually, or swept? | **when FIX-02-01 starts** |
+| the 37 remarks: ruled individually, or swept? | **ANSWERED — swept, by the triage that produced the dispositions; `FIX-02-07` executes them.** (The trigger said `FIX-02-01` and the count said 14; both predate the sprint's renumber and its triage) |
 | does "draft" stay (and get defined) or go? | **at FIX-02-20**, with the 08–10 vocabulary cluster |
-| is `prompt` sticky or per-show *within* a run? | **at FIX-02-21** — escalates to a BUG row if the answer is per-show |
+| is `prompt` sticky or per-show *within* a run? | **ANSWERED 2026-08-27 (owner) — sticky, and the classification was the defect.** `FIX-02-21` ✅, executed by `ARC-02-05`/`-08`; it did not escalate |
 | Decision 12 — a ledger entry that says it is not a decision | **owner disposes during review** — needs context, stays in place |
 | the slug table | **no review needed** — grep-and-rename if a slug displeases |
 | provenance beyond the 3 files | **deferred** — a formal violation does not displace real work |

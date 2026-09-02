@@ -320,6 +320,27 @@ paid, or turned out not to be debt.
   ids drift at once. The plan keeps the *why* the roadmap does not carry, and the roadmap's
   `maze` row now cites the Track-2 obligation that lived only in the plan.
 
+### The `FIX-02` renumber's own citations were never swept (RESOLVED, 2026-09-02)
+
+- **Where:** `wip/77-new-input-api/ROADMAP.md` — `:49`, `:1181`, `:1388`, `:1435`, `:1437`.
+- **The defect:** an earlier `FIX-02` renumber (*"was 20, then 19 — the old `05` and `14`
+  merged into `06`"*) left five citations naming **`FIX-02-01`** to mean the **remark**
+  row, which is now `FIX-02-07`. `FIX-02-01` exists and is a different row — the two
+  submit callbacks — and it is closed ✅, so every one of them resolved silently to the
+  wrong thing. `roadmap.md` §5's second failure mode, and **pre-existing**: none of it was
+  introduced by the 2026-09-02 splits.
+- **The one with teeth:** `:1435` is a **parked question whose trigger had already fired
+  on the wrong row** — *"the 14 remarks: ruled individually, or swept? · when `FIX-02-01`
+  starts"*. The triage ran, answered it, and corrected the count to 37; the question sat
+  open against a closed row that never had anything to do with it. `:1437`'s trigger
+  (`FIX-02-21`) was likewise closed and answered.
+- **Resolution:** the four citations repointed to `FIX-02-07`, the two parked questions
+  marked ANSWERED with what answered them. **There is no `FIX-02` crosswalk** — that
+  renumber shipped without one — so the sense was resolved from the rows' own cells, which
+  is what §2 says a crosswalk exists to spare you.
+- **Found by** the cold revalidation of session66 (`validation/outcomes/S66-cold-revalidation.md`,
+  C7), not by the `ACC-` sweep one sprint over that was looking at the same file.
+
 ### `ledgers.md` still called unruled the question it had just ruled (RESOLVED, 2026-09-02)
 
 - **Where:** `../../../agents/rules/ledgers.md` §6, closing paragraph.
