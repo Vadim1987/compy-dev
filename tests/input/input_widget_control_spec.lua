@@ -168,8 +168,8 @@ describe('input surface: widget control #input', function()
 
     -- auto_hide is NOT show-only: the category protects what
     -- the USER owns, and the user does not own lifecycle
-    -- (doc/development/decisions/input.md, D-AUTO-HIDE's
-    -- Amendment). configure takes it like any other
+    -- (doc/development/decisions/input.md, D-AUTO-HIDE,
+    -- statement 2). configure takes it like any other
     -- project-owned key.
     it('a widget armed at configure closes on submit',
       function()

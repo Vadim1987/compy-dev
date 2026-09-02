@@ -597,9 +597,9 @@ local CALLBACK_KEYS = {
 -- "replace the widget that is already up", which configure()
 -- never faces. See doc/development/decisions/input.md,
 -- D-UNKNOWN-RAISES's show-only category, added there by
--- D-CFG-BOUNDARY. `auto_hide` was admitted on that resemblance
--- and left again (D-AUTO-HIDE's Amendment): it is machinery,
--- and the user does not own lifecycle.
+-- D-CFG-BOUNDARY. `auto_hide` is NOT in it (D-AUTO-HIDE,
+-- statement 2): it is machinery, and the user does not own
+-- lifecycle.
 local SHOW_ONLY_KEYS = {
   text    = 'show(), or set_text on a live widget',
   cursor  = 'show(), or set_cursor on a live widget',

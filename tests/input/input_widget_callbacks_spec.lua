@@ -511,9 +511,8 @@ describe('input surface: widget callbacks #input', function()
 
   -- doc/development/decisions/input.md, D-AUTO-HIDE: auto_hide
   -- is sugar over `after_submit = function() hide() end`, and
-  -- that equivalence is what every case here pins. The edges
-  -- are ruled there too, and read them AS AMENDED -- the
-  -- Amendment superseded the show-only one.
+  -- that equivalence is what every case here pins. Its five
+  -- statements are the edges each case below names.
   describe('auto_hide', function()
     it('an auto_hide show closes on submit', function()
       local input = F.activate_project()
@@ -532,7 +531,7 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.is_widget_visible())
     end)
 
-    -- D-AUTO-HIDE, ruled edge 2: Escape clears and leaves the
+    -- D-AUTO-HIDE, statement 3: Escape clears and leaves the
     -- widget standing (D-NO-FW-TIER), and auto_hide does not
     -- change what Escape does.
     it('it does not close on cancel', function()
@@ -543,7 +542,7 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.widget:is_empty())
     end)
 
-    -- D-AUTO-HIDE, ruled edge 3: it composes with a project's
+    -- D-AUTO-HIDE, statement 4: it composes with a project's
     -- own after_submit rather than refusing one, and the close
     -- comes LAST -- so the callback still runs against a live
     -- widget, which is what lets it clear or read the field.
@@ -578,7 +577,7 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.widget:has_error())
     end)
 
-    -- D-AUTO-HIDE's Amendment, reversing ruled edge 1: the flag
+    -- D-AUTO-HIDE, statement 2: the flag
     -- configures a TYPE of behaviour, not one show/hide cycle,
     -- so it persists until replaced exactly like validator. A
     -- later bare show() inherits it.
@@ -607,13 +606,13 @@ describe('input surface: widget callbacks #input', function()
 
     -- A follow-up prompt opened from inside the submit chain
     -- survives the close only by DISARMING: the mode persists,
-    -- so silence is not a disarm (D-AUTO-HIDE's Amendment).
+    -- so silence is not a disarm (D-AUTO-HIDE, statement 2).
     -- The other two follow-up shapes -- one that stays silent,
     -- one that passes auto_hide ITSELF -- are documented at
     -- doc/input_api.md, "Asking one question", and deliberately
     -- NOT pinned: both are closed by the submit in progress
     -- today, and both would survive if the close ever owned a
-    -- generation token, which D-AUTO-HIDE's Amendment records
+    -- generation token, which D-AUTO-HIDE records
     -- as considered and declined. A test would cement the case
     -- a fix is meant to change.
     -- What the case pins is the flag's read PLACEMENT — after
@@ -641,7 +640,7 @@ describe('input surface: widget callbacks #input', function()
         assert.equal('again?', F.widget.model:get_label())
       end)
 
-    -- D-AUTO-HIDE, ruled edge 4 -- the one REVERSED from the
+    -- D-AUTO-HIDE, statement 5 -- the widget survives a raise;
     -- entry's own recommendation. A raised callback leaves the
     -- widget standing, which is what the hand-written
     -- after_submit = hide would also have done: the raise

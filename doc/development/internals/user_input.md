@@ -755,7 +755,7 @@ widget standing — the raise unwinds to the route boundary past that line, exac
 past a hand-written `after_submit` that hides. The flag is **project-owned and persistent**: it is
 seated in `configure_core` like every other project-owned field, so `show` and `configure` both set
 it, set-if-given, and it applies to every later submit until a call passes `auto_hide = false`
-(D-AUTO-HIDE's Amendment). It is read at the END of the submit and not captured before the
+(D-AUTO-HIDE, statement 2). It is read at the END of the submit and not captured before the
 callbacks, which is what lets a follow-up prompt opened from inside the chain disarm itself and
 survive the close belonging to the submit still in progress.
 

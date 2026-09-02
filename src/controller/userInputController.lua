@@ -290,7 +290,7 @@ local configure_core = function(self, cfg)
   end
   -- Persistent until replaced, like every other key here: it
   -- configures a TYPE of behaviour, not one show/hide cycle
-  -- (D-AUTO-HIDE's Amendment). `false` is the unset.
+  -- (D-AUTO-HIDE, statement 2). `false` is the unset.
   if cfg.auto_hide ~= nil then
     self.auto_hide = cfg.auto_hide
   end

@@ -1865,13 +1865,13 @@ changes.
   generation token, judged not worth the state; the guide carries the idiom.
 - **Where:** `consoleController.lua` (`SHOW_ONLY_KEYS`, `WIDGET_KEYS`),
   `userInputController.lua` (`configure_core`, `submit_flow`), `../input_api.md`
-  (*"Asking one question"*), `../internals/user_input.md`, D-AUTO-HIDE's
-  Amendment, `../../CHANGELOG.md`.
+  (*"Asking one question"*), `../internals/user_input.md`, D-AUTO-HIDE,
+  `../../CHANGELOG.md`.
 
 ### T-ONESHOT — `oneshot` is ruled in and nothing implements it (RESOLVED, 2026-08-30)
 
 - **Resolution:** built at `FEAT-01-02` after `FEAT-01-01` ratified the edges —
-  three as D-AUTO-HIDE recommended them, one **reversed**: it closes on a *clean*
+  three as first recommended, one **reversed**: it closes on a *clean*
   submit only, because the error boundary the recommendation stood on wraps the
   route rather than the submit chain. `show{ oneshot = true }` seats the flag at
   activation and `submit_flow` spends it after `after_submit`; `configure{oneshot}`
