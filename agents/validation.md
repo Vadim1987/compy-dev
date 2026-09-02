@@ -310,7 +310,13 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
   - `validation/outcomes/` — sub-agent deliverables / audit reports;
   - `validation/reviews/` — cross-session **judgment** documents *produced in this validation
     phase* (assessments, ruling sheets, plan revisions, convergence-check, principle sheet,
-    disposition table, final-revalidation).
+    disposition table, final-revalidation);
+  - `validation/archive/` — **ledger content vacuumed from the persistent corpus** (owner,
+    2026-09-02). Not this phase's own output: entries and superseded passages *moved* out of
+    `decisions/*` and `technical_debt/*` under `agents/rules/ledgers.md` §2, *"Vacuuming is a move,
+    not a deletion"*. It keeps traceability and outlines the scope of work actually done, and it
+    leaves the release with `wip/` on purpose. **It is not a ledger** — nothing in it rules
+    anything, and the persistent ledger wins any disagreement.
   **`implementation/reviews/` is the implementation-phase archive** — the older reviews produced
   during implementation (drift assessment, Pass-2 ruling sheet, etc.) **stay there**; do not
   move them and do not add new validation-phase reviews to it. Historical session dirs (01–10,
