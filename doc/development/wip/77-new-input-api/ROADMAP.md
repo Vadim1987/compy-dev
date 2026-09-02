@@ -2,13 +2,18 @@
 
 **The navigable view.** One page, current, ordered. The reasoning lives in
 [`validation/plan.md`](validation/plan.md) and the review documents this points at; **this file is
-the sequence**. Updated 2026-08-30.
+the sequence**. Updated 2026-09-02.
 
 ---
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 } → REC-01 → MERGE-01 → ACC-02 → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-03 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 (a) · CHG-01 } → REC-01 → MERGE-01 → ACC-02 → FIX-02 (b) → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-03 → PR-01**
+
+*`FIX-02` runs in two halves across the device passes (owner, 2026-09-02) — **(a)** the rows whose
+prose a smoke pass reads or whose yield is unknown, **(b)** vocabulary and process. See the sprint's
+**"Execution order"** note; the halves are passes, **not new ids**, and the rows are **not
+renumbered**.*
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -19,10 +24,11 @@ the sequence**. Updated 2026-08-30.
 | **OP-01** ✅ | ledger upkeep for the owner's three hand-filed entries → **Decisions 36 and 37** | needed no ruling, and it produced the design inputs the next stage implements |
 | **FEAT-01** | the two surface proposals: **`oneshot`**, and the **payload split** that tells the submit callbacks apart | **leads by blast radius** — it changes the public surface, so `FIX-02-01` is one of its rows' seams, `CHG-01` carries what it breaks, and a slice cut before it lands is cut twice |
 | **FEAT-02** ✅ | **`oneshot` becomes `auto_hide`**, a widget property — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
-| **{ BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. **`DEC-01`'s half is discharged** (session65), so the slice cut now waits on `CHG-01` alone. A third was conditional and is likewise **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first |
+| **{ BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 (a) · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. **`DEC-01`'s half is discharged** (session65), so the slice cut now waits on `CHG-01` alone. A third was conditional and is likewise **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first. **`FIX-02` is here as half (a) only** (owner, 2026-09-02) — the rows a smoke pass reads or whose yield is unknown; the vocabulary and process half runs after `ACC-02` |
 | **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
 | **DEC-02** | the decisions ledger stops arguing with an interim past that never shipped | **owner, 2026-09-01**, promoted from a `REMARK` in the ledger to a rule in `agents/rules/ledgers.md`. `DEC-01` vacuumed the retired *entries*; this vacuums dead *prose inside live ones*. It sits here for `DOC-01`'s reason and is **not** `FIX-03`: that sweep matches subjects absent at base and today, and a rule's withdrawn version is not an absent subject |
 | **LEDGER-02** | the debt register stops keeping defects that never existed outside the branch | **owner, 2026-09-01**, extending `DEC-02`'s principle to the second ledger: *introduced-then-paid never existed for the outer world.* It sits beside `DEC-02` because it is the same rule on a different register, and **after `FIX-02-05`**, which already produces the classification it needs |
+| **FIX-02 (b)** | the vocabulary and process half of the same sprint | **after `ACC-02`, owner 2026-09-02.** Its nested-repo scope (`keyboard`, `maze` — `FIX-02-09`) is the very tree `MERGE-01` merges into, so sweeping first means sweeping twice; and nothing in it changes what a device pass can observe |
 | **DOC-01** | the documentation compaction sweep — one deliberate pass over the stabilised prose corpus | **owner, 2026-09-01**, restoring a step the roadmap had scheduled for comments only. It runs **after** `FIX-03` because that sweep's deletions are *mechanical* (subject absent at base and today) and shrink the floor this one exercises judgement over, and **before** `ACC-02` because a cold reviewer should read the prose that ships, not the prose that was being written |
 | **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain. **Moved ahead of `ACC-02`, owner 2026-09-02** — the smoke passes exercise those repos, so merging into them afterwards smokes a tree that then changes |
 | **MERGE-01** | upstream reconciliation — actually merge | 🟡 platform repo **done** (`f4913833`); `maze`, `keyboard`, `balloons` remain. Same move, same reason |
@@ -670,6 +676,53 @@ branch is `InputText(text)` with no split and no sanitise. What this feature did
 the branch.
 
 ### FIX-02 — docs, vocabulary, process (26), in priority order
+
+#### Execution order — the sprint runs in two halves, across the device passes (owner, 2026-09-02)
+
+**The owner's reasoning, which is the whole ruling:** *"If anything arises, verbose prose could help
+troubleshooting, but **incorrect prose could confuse it**. So I would lean to run the editorial
+bundle first to reduce possible noise and confusion."* A document that asserts something false about
+behaviour is worse during a smoke pass than no document at all — the pass sees the real behaviour and
+the prose says it is a defect.
+
+**(a) — before `REC-01`, with `CHG-01`.** Everything whose prose a pass *reads*, plus everything with
+**unknown yield**, since a defect found at a desk is cheaper than one found at a sitting
+(`agents/rules/roadmap.md` §3):
+
+`FIX-02-03` · `-04` · `-06` · `-17` · `-22` · `-23` · `-24` · `-25`, and **the
+`smoke_checklists.md` slice of `-09`**.
+
+- **`-22` is the sharpest case:** three documents say a hidden widget keeps its content and **the
+  code clears it**, so a pass that sees a cleared draft is told by the docs that it found a bug.
+- **`-23`** is the guard that `BUG-01-03` was: a pass meeting that shape finds no remedy named.
+- **`-06`** is a stale routing-lifetime claim in three places, which is troubleshooting prose by
+  definition; **`-03`, `-04`, `-24`** are verification rows that may produce *code* work.
+- **`-25` is in (a) although it is the sprint's only code row** — precisely because it is: its test
+  can surface a key the surface accepts and the widget ignores, and finding that after the sitting
+  means the sitting ran against an unknown.
+- **The `-09` slice is bounded to `doc/development/smoke_checklists.md`**, the document in the
+  owner's hands during the pass, which carries the widget sense at `:212, 219, 232, 254, 338, 343`.
+  Safe to take early **because no remaining merge touches it** — `MERGE-01-04` (platform) is done,
+  and the three open merges land in the nested repos.
+
+**(b) — after `ACC-02`.** The rest: `-05` · `-07` · `-08` · `-09` (the remainder) · `-10` · `-13` ·
+`-14` · `-15` · `-16` · `-18` · `-19` · `-20`.
+
+- **`-09` and `-20` must not precede `MERGE-01`.** Their remaining scope is `keyboard` and `maze` —
+  the repos the merges land in — so sweeping first means the merge brings fresh violations in behind
+  the sweep. That is the same inversion the acceptance reorder fixed this morning, and it is why the
+  bundle is split rather than moved whole.
+- `-05` still blocks `LEDGER-02`, which is downstream of `ACC-02` already, so nothing is delayed by
+  its being here.
+
+**REMARK — the crosswalk renumbering is deliberately skipped, and the roadmap's order prevails.**
+`agents/rules/roadmap.md` §2 says numbering follows execution order; after this split it does not,
+inside `FIX-02`. **We are not renumbering** (owner, 2026-09-02): the rows are cited from prompts,
+notes, ledger entries and two live goals (`T-RETIRED-UNVER`, `T-NEVER-SHIPPED`, `T-KEYSET-SPLIT`,
+`T-MERMAID-MODEL`), and a renumber this close to the PR buys ordering cosmetics at the price of the
+failure §5 names — a citation that still resolves, to the wrong row. **(a)/(b) are passes, not ids**;
+no row id changes, and **this section is the order of record** where the numbers disagree with it.
+Revisit only if the sprint outlives the PR.
 
 *(was 20, then 19 — the old `05` and `14` merged into `06`, being one defect in three places — and
 back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26; **24 with
