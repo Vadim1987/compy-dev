@@ -104,3 +104,25 @@ owner reads, and the sequence line is already right.
 **The class F1 and F3 share, for whoever sweeps next.** Both were measured against `src/` and
 `tests/` and both live outside it — a doc citing a doc, and a plan citing a plan. **The scope of a
 citation sweep is where the citations are, not where the code is.**
+
+## 2026-09-02 — F9 ruled, and the shape of the ruling is the point
+
+**Owner:** *"Let's rule for this specific case, no time and need to generalize. 'Why oneshot is gone
+and what replaces it' will be the answer, which should be answered by decisions. It's not a debt
+because the contradiction did not exist at base (there was `oneshot` and nothing replaced it). So
+it's swept from debt but stands in decisions and changelog."*
+
+So the two entries go, and **§3's test is not amended** — I had offered a one-line general clause
+and it was declined on cost. The ruling landed on `T-NEVER-SHIPPED`, where `LEDGER-02` reads its
+input, not in the rule file.
+
+**Two things to carry.** The owner's ground is sharper than the one I proposed: I argued the outside
+request is *preserved elsewhere*, they argued the entry **was never debt** — at `3256aac` there was
+`oneshot` and nothing replacing it, so *"ruled in and nothing implements it"* is a contradiction this
+branch created and closed. Provenance never had to be weighed. And **generalising has a price**: a
+rule earns its place by the passes it saves, and a rule written to close one instance is a rule the
+next reader must interpret. Record where it is consumed.
+
+Checked while recording, since the ruling asserts it: `CHANGELOG.md` `CURRENT_SCOPE` *Added* carries
+`auto_hide` at user-facing altitude and correctly never mentions `oneshot` — no project could write
+it — and `D-AUTO-HIDE` names the outside request and the old name for the grep.

@@ -303,7 +303,7 @@ Does §2's stakeholder carve-out reach §3? See Subject 4.
 | F4 | **ruled by the owner — both halves confirm the new order**, and both are now recorded on the roadmap and superseded in place in `plan.md` | `156b8cd4` |
 | F6 | stray `---` removed; **the section-order move is not done** — the bodies still run `DOC-01` → `ACC-02` → `ACC-03` → `REC-01` → `MERGE-01` against a sequence that runs the merges first. Left for the owner: it is a large diff in a file they read | — |
 | F8 | closed here, no action | — |
-| F9 | **open** — answered when the owner rules, before `LEDGER-02` runs | — |
+| F9 | **ruled for the instance, not generalised** (owner, 2026-09-02) — `T-ONESHOT` and `T-ONESHOT-SCOPE` are swept despite the outside request behind them, because *"why is `oneshot` gone and what replaces it"* is a **decisions** question, and the contradiction they record did not exist at base: there was `oneshot` and nothing replacing it. They stand in `D-AUTO-HIDE` and, as the capability, in `CHANGELOG.md`. §3's test is unchanged. Recorded on `T-NEVER-SHIPPED`, where `LEDGER-02` will read it | — |
 
 **The two rulings, in the owner's terms, because they generalise past these rows.** Merges before
 smoke: *"we are accelerating now, so no point in having two separate sessions of smoke testing and

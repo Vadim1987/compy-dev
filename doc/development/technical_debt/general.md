@@ -123,6 +123,18 @@ paid, or turned out not to be debt.
 - **Two entries are known to go already:** `T-ONESHOT` and `T-ONESHOT-SCOPE`, which record a key
   ruled and overruled inside a day and never released — the same arc `D-AUTO-HIDE` was rewritten to
   drop (`d0f4e66c`). They are the scope question `T-ARGUES-INTERIM` left open, and this answers it.
+- **Their provenance was raised and ruled, for these two entries only** (owner, 2026-09-02). The
+  capability was **asked for from outside the input work** — the `serial` API's author — and §2 keeps
+  a ruling that came from outside, so the sweep was checked against that before it runs. **They still
+  go.** The owner's ground: the question those entries would answer is *"why is `oneshot` gone and
+  what replaces it"*, and **that is a decisions question**, answered by `D-AUTO-HIDE` — which names
+  the outside request and names `oneshot` deliberately, for the developer who will grep it. It is
+  **not debt, because the contradiction did not exist at the base**: at `3256aac` there was
+  `oneshot` and nothing replacing it, so *"ruled in and nothing implements it"* is a state this
+  branch created and closed. Swept from the register; **stands in the decisions ledger and, as the
+  capability, in `CHANGELOG.md`** (`CURRENT_SCOPE`, *Added*, which describes `auto_hide` at
+  user-facing altitude and correctly never mentions `oneshot` — no project could write it).
+  **Ruled for this instance; §3's test is unchanged and stays the base check.**
 - **Revisit:** `LEDGER-02`.
 
 ## BACKLOG
