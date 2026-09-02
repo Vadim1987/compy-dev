@@ -23,3 +23,11 @@ local.just
 *.swp
 *.swo
 *~
+
+# macOS
+.DS_Store
+
+# рабочие материалы, не часть проекта
+*.pdf
+Докс/
+editor_rework/
