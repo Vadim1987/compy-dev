@@ -1019,7 +1019,7 @@ so a ruling reshaped before release leaves nothing to argue with.
 | shape | instance |
 |---|---|
 | a section arguing with a **withdrawn rationale** | `D-ROUTE-LIFETIME`'s *"Why the original rationale was withdrawn"* — ten lines refuting a justification that never reached a release |
-| a **name that lived a fortnight** | `oneshot`, ruled and overruled in a day, never released, **13 mentions** in the ledger explaining why the key a reader has never seen is not the key they have |
+| a **name that lived a fortnight** | `oneshot`, ruled and overruled in a day, never released. **This instance is PAID** (`d0f4e66c`) — `D-AUTO-HIDE` went 132 lines to 77, restated as the single decision *"`auto_hide` replaces `oneshot`"*, and **eleven citations moved with it**, six naming *"the Amendment"* and four *"ruled edge N"*. That is the cost pattern to expect: self-arguing prose teaches the code to cite it as a diff |
 
 **It is not a mechanical sweep, and that is the whole difficulty.** Two things sit inside the same
 paragraphs and must survive: **pre-feature baseline facts**, which are provenance saying the release
@@ -1035,7 +1035,7 @@ propose that alternative again?**
 
 | id | step | note |
 |---|---|---|
-| DEC-02-01 | enumerate the passages: withdrawn rationales, superseded-in-part narration, and every mention of a name that never shipped | `oneshot` is the known one; re-derive rather than trust it |
+| DEC-02-01 | enumerate the passages: withdrawn rationales, superseded-in-part narration, and every mention of a name that never shipped | `D-AUTO-HIDE` is done; `D-ROUTE-LIFETIME` is the known remainder. **Re-derive rather than trust it**, and settle the open scope question on `T-ARGUES-INTERIM`: whether the debt register's `RETIRED` section is in scope |
 | DEC-02-02 | classify each against the two exclusions — baseline fact, stakeholder-ratified | **the judgement step**; a passage can be part keep, part cut |
 | DEC-02-03 | cut, preserving the facts identified at `-02` | one commit per entry, so the diff reads |
 | DEC-02-04 | remove the `REMARK` at `decisions/input.md` that raised this, **and only now** | owner, 2026-09-01: a marker goes when its defect is solved, not when a sweep reaches it |

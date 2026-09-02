@@ -70,9 +70,14 @@ paid, or turned out not to be debt.
     original rationale was withdrawn"* — ten lines quoting a justification that never reached a
     release and refuting it point by point. The mid-run release it describes was introduced and
     removed inside this branch.
-  - **A name that lived a fortnight.** `oneshot` was ruled and overruled within a day, never
-    released, and is mentioned **13 times** in the ledger — amendment narration explaining why the
-    key a reader has never seen is not the key they have.
+  - **A name that lived a fortnight.** `oneshot` was ruled and overruled within a day and never
+    released. **PAID for this instance, 2026-09-01** (`d0f4e66c`): `D-AUTO-HIDE` was 132 lines with
+    24 of churn and is 77 stated as one decision, on the owner's framing that replacing `oneshot`
+    with `auto_hide` is a single decision from a stakeholder's perspective. The name survives four
+    times, deliberately — the developer who asked for the flag asked for it by that name. **Eleven
+    citations moved with it**, six naming *"the Amendment"* and four *"ruled edge N"*: prose that
+    argues with itself teaches the code to cite it that way, which is what makes the class
+    expensive rather than merely untidy.
 - **Not a mechanical sweep, and this is the whole difficulty.** Two things sit inside the same
   paragraphs and must survive: **pre-feature baseline facts**, which are provenance telling a
   reviewer the release *restored* behaviour rather than changing it, and **anything stakeholders
@@ -87,6 +92,12 @@ paid, or turned out not to be debt.
   release"*. A marker is removed when the defect it names is solved, not when a sweep reaches it —
   so whichever pass takes the corpus markers must leave this one, and paying this entry is what
   removes it.
+- **Open scope question for `DEC-02-01`:** the debt register's own `RETIRED` section carries the
+  same arc twice more — `T-ONESHOT` (*"ruled in and nothing implements it"*, with a paragraph
+  labelled *"read the paragraph above as history, not as behaviour"*) and `T-ONESHOT-SCOPE`. A
+  retired debt entry is a record of what was owed and paid, which is a weaker case for deletion
+  than a live decision arguing with itself. **Not decided here**; the entry is scoped to
+  `decisions/*` until it is.
 - **Revisit:** `DEC-02`.
 
 ## BACKLOG
