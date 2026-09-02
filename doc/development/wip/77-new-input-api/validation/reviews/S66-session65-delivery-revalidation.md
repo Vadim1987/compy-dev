@@ -292,12 +292,29 @@ Does §2's stakeholder carve-out reach §3? See Subject 4.
 
 ---
 
-## Recommended disposition
+## Disposition — as executed, 2026-09-02
 
-| # | what | who |
+| # | outcome | where |
 |---|---|---|
-| F1, F2, F5, F7 | mechanical fixes, one commit each at the seam; ledger records them as paid | assistant |
-| F3 | scoped `ACC-` id sweep across `validation/` + `implementation/`; debt entry either way | assistant |
-| F4 | **ruling** — confirm or restore the merge/smoke order and the cold review's placement | **owner** |
-| F6 | move the three sections into sequence order, or state that the body is grouped by kind | assistant, on a nod |
-| F8, F9 | F8 closed here; F9 answered when the owner rules | — |
+| F1, F7 | **fixed**; RETIRED entry in `technical_debt/general.md` carries the `*"section"*` sweep | `4ebc9dff` |
+| F2 | **fixed** — §6 points at §2 and keeps the *record, not a second ledger* half | `aeab2a78` |
+| F5 | **fixed**, two ragged neighbours rewrapped with it, wording untouched | `cdf28968` |
+| F3 | **swept**; `plan.md`'s duplicate row table deleted rather than renumbered | `b365a42e` |
+| F4 | **ruled by the owner — both halves confirm the new order**, and both are now recorded on the roadmap and superseded in place in `plan.md` | `156b8cd4` |
+| F6 | stray `---` removed; **the section-order move is not done** — the bodies still run `DOC-01` → `ACC-02` → `ACC-03` → `REC-01` → `MERGE-01` against a sequence that runs the merges first. Left for the owner: it is a large diff in a file they read | — |
+| F8 | closed here, no action | — |
+| F9 | **open** — answered when the owner rules, before `LEDGER-02` runs | — |
+
+**The two rulings, in the owner's terms, because they generalise past these rows.** Merges before
+smoke: *"we are accelerating now, so no point in having two separate sessions of smoke testing and
+defect fixing just for ceremony. Recon will document what changed in the upstreams before the merge;
+this knowledge will assist troubleshooting."* The cold read after keyboard time: *"it was supposed to
+de-risk by spotting bugs, but can also become wasted effort or misfire. Smoke becomes more important
+in the same way as behavioural versus unit testing — cold review checks internals, smoke validates
+the surface. When the planning horizon collapses to one day, postponing smoke for the sake of
+additional peace of mind makes no sense."*
+
+**Neither ruling overturns the 2026-08-26 reasoning on its merits; both change what it is priced
+against.** The control the old order bought with a second sitting is now bought by `REC-01`'s written
+upstream delta — which is why that document is recorded on the row as the condition this order stands
+on, and not as a by-product of the recon.

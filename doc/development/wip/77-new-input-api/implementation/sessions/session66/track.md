@@ -80,3 +80,27 @@ reasoning is priced against.
 **Consequence for the record:** `plan.md`'s *"Why ACC runs before U, not after"* is superseded in
 place, and `ROADMAP.md`'s *"an inversion nobody had noticed"* framing must go — it is now known to be
 false, and left standing it would mislead the next reader exactly as it misled session65.
+
+## 2026-09-02 — the fix set lands; part 1 closed
+
+Six commits, `d5362b06`..`b365a42e`, suite 1048 at each, none pushed. F1/F2/F5/F7 fixed, F3 swept,
+F4 recorded, F8 closed. **Open: F9** (does §2's stakeholder carve-out reach §3 — owed before
+`LEDGER-02`) and **F6's section-order move**, deliberately not taken: a large diff in a file the
+owner reads, and the sequence line is already right.
+
+**Three judgement calls inside the fixes, worth their own line:**
+
+- **`plan.md`'s `ACC-02` table was deleted, not renumbered.** It duplicated the roadmap's schedule,
+  which is `roadmap.md` §1's second-timeline failure arriving by the side door, and it is why seven
+  ids drifted in one edit. Renumbering it would have preserved the defect in working order. The
+  plan keeps the *why* the roadmap does not carry, and the roadmap's `maze` row gained the Track-2
+  obligation that lived only in the plan.
+- **Dated records keep their text.** The turtle peer review and the `FEAT-02` revalidation get a
+  bracketed note rather than an edit — rewriting a finding to match today falsifies the record it is.
+- **`REC-01`'s delta document is written onto the row as a condition**, not as an outcome. The order
+  now in force rests on it: without that document the merges precede the smoke with nothing standing
+  in for the control the old order bought.
+
+**The class F1 and F3 share, for whoever sweeps next.** Both were measured against `src/` and
+`tests/` and both live outside it — a doc citing a doc, and a plan citing a plan. **The scope of a
+citation sweep is where the citations are, not where the code is.**
