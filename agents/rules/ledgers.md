@@ -63,6 +63,33 @@ order, because it is the naming that makes the deletion safe.
 the ruling. A rule that exists to keep citations resolving must not be read as a rule that the ledger
 may only ever grow.
 
+### Vacuuming is a move, not a deletion (owner, 2026-09-02)
+
+**A vacuumed entry goes to an archive under the feature's working tree** — for this feature,
+`doc/development/wip/77-new-input-api/validation/archive/`. It is not deleted, and it does not stay
+in the ledger.
+
+Three reasons, and the third is the one that is easy to miss:
+
+- **Traceability.** What the ledger used to contain is answerable without a `git log` archaeology
+  session, by anyone, including someone reading a copy of the tree.
+- **It outlines the scope of work actually done.** A ruling made and overruled is *work that
+  happened*. Once its entry is gone it leaves no trace in the corpus at all, and the effort behind
+  it reads as if it never occurred.
+- **Retrospective analysis needs the drafts, not only the result.** The archive can be carried in a
+  copy of the branch alongside `wip/`, and stays useful there long after the ledger has stopped
+  mentioning any of it.
+
+**It leaves the release on purpose.** The archive lives under `wip/`, so deleting the feature's
+working tree takes it — which is the correct outcome: none of it is the product's history, which is
+exactly why it was vacuumed. The archive is **not a second ledger**. Nothing in it rules anything,
+nothing cites it as authority, and where the two disagree the ledger is right and the archive is a
+record of something that stopped being true.
+
+**This applies to a superseded *part* of a live entry too**, not only to whole retired ones — the
+overruled half of a decision that was reshaped before release is the same material, and archiving it
+is what makes removing it from the live entry a tidy-up rather than a loss.
+
 **Disclose supersession in the heading**, not only in the body. An entry whose body says it was
 superseded while its heading does not will be read as live by anyone scanning, and it will be
 mis-sorted by anyone maintaining.
@@ -120,7 +147,9 @@ what makes its numbering dangerous, while a debt entry is cited from **plans**. 
 need a stable handle are exactly the ones a roadmap row points at, and slugging a hundred `BACKLOG`
 entries that nobody references is ceremony.
 
-**What was introduced and paid inside a branch is vacuumed; what pre-existed is kept.** A defect a
+**What was introduced and paid inside a branch is vacuumed** — moved to the archive, per §2's
+*"Vacuuming is a move, not a deletion"*, which governs this register too — **and what pre-existed is
+kept.** A defect a
 branch introduced and fixed before release never existed for anyone outside it, so its entry records
 our own drafting rather than the product's history. A **pre-existing** defect the branch fixed is
 the opposite: it shipped, users met it, and its entry is the evidence behind a changelog line.
