@@ -181,3 +181,28 @@ Commits `d832979c` (the fix), `05730ff8` (ledger). Suite 1050 throughout.
 
 Half (a) remaining: `-23`, then `-03`/`-04`/`-24`, then `-05` → `-17` → `CHG-01`, then the
 `smoke_checklists.md` slice of `-09`.
+
+## 2026-09-02 — `FIX-02-23`. The row was right; my first draft of the fix was not.
+
+Commits `07812c41` (guide), `3923a4ce` (ledger). Suite 1050.
+
+- The gap was real and exactly as filed: the guide had the **mechanism** and one **case**, never
+  the consequence — hooks sit above the widget, so while it is shown an unguarded handler acts on
+  the user's typing and the key still reaches the widget. Nothing looks wrong from either side.
+- **The error I nearly shipped.** First draft said a blanket guard is safe because the platform's
+  reserved combos never reach your handler. **Backwards.** *"Combos the framework keeps"* says a
+  reservation **acts and passes the key on** and never consumes — so a blanket guard silences the
+  *project's* binding and leaves the *platform's* action standing. Same conclusion (the user is not
+  stranded), opposite mechanism. Caught by reading the section I was citing instead of citing it
+  from memory. Kept in the retired entry because it is the kind that gets re-made.
+- Also switched the example to `ctrl+escape`: `ctrl+pause`, which the entry names, is marked
+  **development only** and is inert in a packaged build, so it is the wrong reassurance to offer.
+- **My own vocabulary slipped twice** — "lands in the field", "while the prompt is up". Both are
+  the idiom `FIX-02-09` exists to delete, written by the session that is carrying the rule. Zero
+  new instances after the fix, but the tell is worth recording: it happens while writing *about*
+  the widget, not while sweeping for it.
+- **`ACTIVE` in `technical_debt/input.md` is down to one entry** — `T-MERMAID-MODEL`, i.e.
+  `FIX-02-24`, still in this half.
+
+Half (a) remaining: `-03`/`-04`/`-24`, then `-05` → `-17` → `CHG-01`, then the
+`smoke_checklists.md` slice of `-09`.
