@@ -214,6 +214,31 @@ That guard stops *later* presses of `i` from re-opening the prompt. It does
 not stop the `i` that opened it from being typed into it — see "Worked
 example: the trigger key echoes into the widget it opened" below.
 
+**While the widget is shown, your own handlers keep running.** Hooks and
+shortcuts sit *above* it — see "Why the widget sits at tier 3" — so every key
+the user types reaches yours first. An unguarded handler acts on that typing:
+a space toggles your mode, a capital `R` moves your world, and the keystroke
+still lands in the widget, so nothing looks wrong from either side.
+
+The remedy is one line, and it covers the **whole** handler:
+
+```lua
+compy.input.hooks.keypressed = function(key)
+  if compy.input.is_shown() then return end
+  -- the rest of your handler, inert while the widget is shown
+end
+```
+
+**Those are two different guards and you want both.** The narrow one above
+belongs on the key that *opens* the widget, which must still act while it is
+down. The blanket one belongs on everything else.
+
+A blanket guard switches your own hotkeys off for as long as the widget is
+shown. That is usually what you want, and it does not strand anyone: the
+combos the platform keeps are answered before your project sees the event, so
+`ctrl+escape` still ends the run no matter what your handler does — see
+"Combos the framework keeps".
+
 `compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
 empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
 it. Mutating calls warn and do nothing while the input widget is hidden.
