@@ -562,6 +562,14 @@ textually clean, semantically broken, and no hunk touched both files. The plan b
 reasons about *"tracking which keys are down"*, which is what session35 dissolved. **Add rows for
 Track 2 before running ACC-02-03.**
 
+> **DISCHARGED the same day (2026-08-26, 17:47).** Rows **B11** (`Shift+Esc` from a plan level),
+> **D8** (submit and run a whole plan) and **D9** (a plan that misses the goal) are in
+> `doc/development/smoke_checklists.md` at `:241, 270, 271`, each marked `[new]`. The obligation
+> above is **met, not outstanding** — this section is kept for *why those rows matter*, which is
+> what a reader running the pass needs. *(Restored 2026-09-02: the status cell recording this,*
+> *"gap closed (B11, D8, D9)", was lost when this document's duplicate row table was deleted, and
+> the instruction above was briefly promoted into the roadmap as though it still stood.)*
+
 > **SUPERSEDED 2026-09-02 (owner) — the merges now run BEFORE the smoke.** *"We are accelerating
 > now, so there is no point in having two separate sessions of smoke testing and defect fixing just
 > for ceremony. The recon part will document what changed in the upstreams before the merge, and
