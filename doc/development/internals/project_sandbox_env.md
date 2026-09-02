@@ -104,10 +104,21 @@ so the hook is uninstalled but never fired. See `doc/development/decisions/input
 for the hook's contract (framework-owned teardown, called from inside it, return value unread) and
 D-ROUTE-LIFETIME for the teardown invariant itself.
 
-> REMARK: make pointer annotations more useful for reader, and also check their completeness/consistency and whther they are actual
 ## Pointers
 
-- Input singleton namespace + lifecycle: [`user_input.md`](user_input.md).
-- Project-author input usage guide: [`../../input_api.md`](../../input_api.md).
-- The stop sequence `before_exit` opens: [`../decisions/input.md`](../decisions/input.md),
-  D-ROUTE-LIFETIME (the route connects only while the project is actively running).
+Each says what you get by following it, so the list can be scanned rather than sampled.
+
+- **How a project's own `love.*` callbacks actually reach it** — T1 above, from the dispatch side:
+  [`event_dispatch_layers.md`](event_dispatch_layers.md).
+- **The input widget's namespace, lifetime and routing contract**:
+  [`user_input.md`](user_input.md).
+- **What a project author is told about any of this** — the public guide:
+  [`../../input_api.md`](../../input_api.md).
+- **The `before_exit` contract** — teardown is the framework's, the hook is called from inside it,
+  and its return value is unread: [`../decisions/input.md`](../decisions/input.md), D-STOP-IS-FW.
+- **Why the input route outlives the run** — every channel is held from activation until the
+  project *stops*, so a non-blocking project sitting in `project_open` keeps them all:
+  [`../decisions/input.md`](../decisions/input.md), D-ROUTE-LIFETIME.
+- **The T3 leak, registered rather than fixed**:
+  [`../technical_debt/input.md`](../technical_debt/input.md), *"A project that raises leaves
+  global device state dirty; no force-reset exists"*.
