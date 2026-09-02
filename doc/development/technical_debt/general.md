@@ -92,13 +92,38 @@ paid, or turned out not to be debt.
   release"*. A marker is removed when the defect it names is solved, not when a sweep reaches it —
   so whichever pass takes the corpus markers must leave this one, and paying this entry is what
   removes it.
-- **Open scope question for `DEC-02-01`:** the debt register's own `RETIRED` section carries the
-  same arc twice more — `T-ONESHOT` (*"ruled in and nothing implements it"*, with a paragraph
-  labelled *"read the paragraph above as history, not as behaviour"*) and `T-ONESHOT-SCOPE`. A
-  retired debt entry is a record of what was owed and paid, which is a weaker case for deletion
-  than a live decision arguing with itself. **Not decided here**; the entry is scoped to
-  `decisions/*` until it is.
+- **Scope question ANSWERED, and it moved to its own goal** (owner, 2026-09-01): *"I would vacuum
+  debt on the same principle — introduced-then-paid never existed for the outer world."* So the
+  debt register's `RETIRED` section is in scope for the principle but **not for this entry**, which
+  stays on `decisions/*`. `T-NEVER-SHIPPED` carries it, because the register needs a base check per
+  entry where the decisions ledger needed a reading — different work, different pass. `T-ONESHOT`
+  and `T-ONESHOT-SCOPE` go there.
 - **Revisit:** `DEC-02`.
+
+### T-NEVER-SHIPPED — the register keeps entries for defects that never existed outside the branch
+
+- **Where:** `input.md`'s `RETIRED` section (45 entries) and this file's (2).
+- **The rule it fails:** `../../../agents/rules/ledgers.md` §3 — what a branch introduced and paid
+  before release never existed for anyone outside it, so its entry records our own drafting rather
+  than the product's history. A **pre-existing** defect the branch fixed is the opposite: it
+  shipped, users met it, and the entry is the evidence behind a changelog line.
+- **The classification is already scheduled, and this reuses it rather than re-deriving it.**
+  `T-RETIRED-UNVER` / `FIX-02-05` tests every retired entry against the PR base to verify its
+  resolution claim — **the same check answers *did this exist at the base?*** One pass, one
+  classification, **two consumers**: `CHG-01-03` already takes the pre-existing half into the
+  changelog, and this goal takes the other half out of the register. Nothing new is enumerated,
+  which is why this is a step and not a survey.
+- **Measured 2026-09-01, so the row is not sized on a guess:** 47 retired entries. **Fourteen
+  already say the defect was ours** and **seven say pre-existing**; ten cite the base explicitly.
+  Roughly half carry the answer in their own text; the rest are `FIX-02-05`'s work either way.
+- **Mixed provenance is a third category and it keeps the entry.** `BUG-01-05` is the worked
+  example — a pre-existing byte bound that our own wrappers made externally reachable by copying its
+  convention deliberately. The pre-existing half shipped and is the outer world's; the drafting half
+  is not. **Rewrite to the first half; do not delete, and do not keep both.**
+- **Two entries are known to go already:** `T-ONESHOT` and `T-ONESHOT-SCOPE`, which record a key
+  ruled and overruled inside a day and never released — the same arc `D-AUTO-HIDE` was rewritten to
+  drop (`d0f4e66c`). They are the scope question `T-ARGUES-INTERIM` left open, and this answers it.
+- **Revisit:** `LEDGER-02`.
 
 ## BACKLOG
 

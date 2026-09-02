@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 } → FIX-03 → DEC-02 → DOC-01 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 } → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-02 → REC-01 → MERGE-01 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -22,6 +22,7 @@ the sequence**. Updated 2026-08-30.
 | **{ BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. **`DEC-01`'s half is discharged** (session65), so the slice cut now waits on `CHG-01` alone. A third was conditional and is likewise **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first |
 | **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
 | **DEC-02** | the decisions ledger stops arguing with an interim past that never shipped | **owner, 2026-09-01**, promoted from a `REMARK` in the ledger to a rule in `agents/rules/ledgers.md`. `DEC-01` vacuumed the retired *entries*; this vacuums dead *prose inside live ones*. It sits here for `DOC-01`'s reason and is **not** `FIX-03`: that sweep matches subjects absent at base and today, and a rule's withdrawn version is not an absent subject |
+| **LEDGER-02** | the debt register stops keeping defects that never existed outside the branch | **owner, 2026-09-01**, extending `DEC-02`'s principle to the second ledger: *introduced-then-paid never existed for the outer world.* It sits beside `DEC-02` because it is the same rule on a different register, and **after `FIX-02-05`**, which already produces the classification it needs |
 | **DOC-01** | the documentation compaction sweep — one deliberate pass over the stabilised prose corpus | **owner, 2026-09-01**, restoring a step the roadmap had scheduled for comments only. It runs **after** `FIX-03` because that sweep's deletions are *mechanical* (subject absent at base and today) and shrink the floor this one exercises judgement over, and **before** `ACC-02` because a cold reviewer should read the prose that ships, not the prose that was being written |
 | **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
 | **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain |
@@ -1050,6 +1051,46 @@ test cannot see this class.
 
 **Also carries the marker consequence:** the retained `REMARK` is now an exception any pass over
 `doc/` markers must honour, so a sweep that takes it before `DEC-02-04` is a defect.
+
+---
+
+### ⬜ LEDGER-02 — vacuum the debt register of what never existed outside — **runs after FIX-02-05, beside DEC-02**
+
+**Debt goal: `T-NEVER-SHIPPED`** (`technical_debt/general.md`). **Rule:**
+[`agents/rules/ledgers.md`](../../../../agents/rules/ledgers.md) §3.
+
+**Owner, 2026-09-01: the same principle, the second ledger.** *"I would vacuum debt on the same
+principle — introduced-then-paid never existed for the outer world."* `DEC-01-04` vacuumed the
+decisions ledger's retired entries and `DEC-02` takes its interim prose; this is the debt register's
+turn. What a branch introduced and fixed before release is a record of our own drafting; what
+pre-existed and was fixed is the product's history, and is the evidence behind a changelog line.
+
+**It enumerates nothing.** `FIX-02-05` (`T-RETIRED-UNVER`) already tests every retired entry against
+the PR base to verify its resolution claim, and **the same check answers *did this exist at the
+base?*** One pass, one classification, **two consumers** — `CHG-01-03` takes the pre-existing half
+into the CHANGELOG, this row takes the other half out of the register. That is the whole reason this
+is four steps and not a survey, and it is the hard ordering constraint: **`FIX-02-05` first.**
+
+**Sized on measurement, 2026-09-01:** 47 retired entries (45 in `input.md`, 2 in `general.md`).
+**Fourteen already state the defect was ours, seven state pre-existing**, and ten cite the base
+explicitly — so roughly half carry the answer in their own text.
+
+| id | step | note |
+|---|---|---|
+| LEDGER-02-01 | take `FIX-02-05`'s base-check classification | **do not re-derive it**; re-deriving is how one check becomes two walks that disagree |
+| LEDGER-02-02 | vacuum the introduced-and-paid entries | `T-ONESHOT` and `T-ONESHOT-SCOPE` are known members — the arc `D-AUTO-HIDE` was rewritten to drop |
+| LEDGER-02-03 | **mixed provenance: rewrite to the half that shipped** | the judgement step. `BUG-01-05` is the worked example — a pre-existing bound our own wrappers made reachable on purpose. Keep the entry, state the pre-existing half, drop the drafting note |
+| LEDGER-02-04 | run the same test over `CHANGELOG.md` | **expected yield may be zero**, and it is worth the ten minutes: a changelog line for something introduced and removed inside the branch is news about nothing. Stated as a check, not as a fix |
+
+**Why it is not `FIX-03`.** That sweep uses the same base check, and the overlap is real — but it
+disposes of **prose narrating a closed arc**, wherever it appears, while this disposes of **whole
+ledger entries** under a governance rule about what a register is for. Running them together would
+also put `FIX-03` before `FIX-02-05`, which is backwards: this row's input does not exist until that
+verification has run.
+
+**What it must not take.** A pre-existing defect's entry, which is `CHG-01-03`'s evidence, and the
+pre-existing half of any mixed entry. Deleting either would remove the record that this release
+**fixed something users had met** — the opposite of the principle, applied by the same sweep.
 
 ---
 

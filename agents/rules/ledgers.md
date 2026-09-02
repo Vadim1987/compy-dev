@@ -99,6 +99,9 @@ Two things survive this cut and must not be swept with it:
 §2's vacuum removes whole retired entries; this removes dead prose from entries that are still in
 force. Both are ordinary upkeep, and neither needs a ceremony beyond doing it.
 
+**The principle is not the decisions ledger's** — it governs all three, and the changelog has always
+worked this way, since it records what shipped. §3 applies it to the debt register.
+
 ## 3. The debt register is split ACTIVE / BACKLOG / RETIRED
 
 The line between the first two is **release scope** — not severity, and not intent:
@@ -116,6 +119,19 @@ The asymmetry is deliberate rather than lazy: a decision is cited from `src/` an
 what makes its numbering dangerous, while a debt entry is cited from **plans**. So the entries that
 need a stable handle are exactly the ones a roadmap row points at, and slugging a hundred `BACKLOG`
 entries that nobody references is ceremony.
+
+**What was introduced and paid inside a branch is vacuumed; what pre-existed is kept.** A defect a
+branch introduced and fixed before release never existed for anyone outside it, so its entry records
+our own drafting rather than the product's history. A **pre-existing** defect the branch fixed is
+the opposite: it shipped, users met it, and its entry is the evidence behind a changelog line.
+
+**The test is the base check, and it is the same check the changelog needs** — run it once and read
+it twice, rather than walking the register twice for two questions.
+
+**Mixed provenance keeps the entry and states only the half that shipped.** A pre-existing bound
+that a branch's own wrappers made externally reachable is a real defect of the released product
+*plus* a drafting note; only the first is anyone else's business. Rewrite to it — do not delete, and
+do not keep both halves.
 
 Two consequences worth stating, because both have been got wrong:
 
