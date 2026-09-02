@@ -70,6 +70,9 @@ owner and revisable, not a frozen mandate.
    across all seven of its commits. **Session65 added none either**: `DEC-01`'s numbers→names
    conversion, four owner rulings that followed from it, and the acceptance reordering — 1048 held
    across all twenty of its commits, which touched `src/` and `tests/` comments only.
+   **Session66 added none either**: the revalidation session65 owed, its nine findings executed or
+   ruled, five owner rulings, and the `FIX-02` split — 1048 held across all ten of its commits, whose
+   only `.lua` edit was a comment.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -344,7 +347,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session66/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session67/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
