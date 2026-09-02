@@ -279,6 +279,20 @@ paid, or turned out not to be debt.
 
 ## RETIRED
 
+### `ledgers.md` still called unruled the question it had just ruled (RESOLVED, 2026-09-02)
+
+- **Where:** `../../../agents/rules/ledgers.md` §6, closing paragraph.
+- **The defect:** *"**Where** vacuumed entries go — dropped outright, or moved to an archive —
+  remains unruled."* `cbd88b00` ruled it that morning, at §2 *"Vacuuming is a move, not a
+  deletion"*, and left the older sentence standing. A live rule file gave opposite
+  instructions in two places to whoever runs `DEC-02` or `LEDGER-02` next.
+- **Resolution:** the paragraph now points at §2 and keeps the part that was §6's own — that
+  the archive is a **record and not a second ledger**, which is the failure mode §6 exists to
+  guard against.
+- **The class, since a rule file is where it is most expensive:** an addition that answers an
+  open question must **close the question where it was left open**. Searching for the question
+  is how you find the sentence that will contradict you.
+
 ### The crosswalk pointed at a section deleted two hours after it was written (RESOLVED, 2026-09-02)
 
 - **Where:** `../decisions/input.md`, the crosswalk's Decision 16 row and its closing

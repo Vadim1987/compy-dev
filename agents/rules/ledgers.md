@@ -231,5 +231,7 @@ accident. **The three ledgers hold state, not plans.** The moment a register sec
 ordering, its own status column, or its own sense of being unfinished, it has become a second
 roadmap, and the failure that rule describes has arrived by another door.
 
-**Where** vacuumed entries go — dropped outright, or moved to an archive — remains unruled; §2 rules
-only that the sweep may happen and on what condition.
+**Where** vacuumed entries go is ruled at §2, *"Vacuuming is a move, not a deletion"* — an archive
+under the feature's working tree, which is a **record**, not a second ledger. That distinction is
+this section's, and it is why the archive states in its own opening that nothing in it rules
+anything.
