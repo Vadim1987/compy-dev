@@ -30,6 +30,18 @@ local DIR_IN = 0x80
 local RX_SIZE = 64
 local READ_MS = 5
 local WRITE_MS = 1000
+--- Bytes per poll on the way out. The Lua REPL on the board
+--- is an interactive terminal — it echoes each character,
+--- handles backspace, and its README has you connect with
+--- screen — and it takes a command whole only up to a rate.
+--- Measured over pyserial on a Mac, no Compy in the path,
+--- the same command at different rates: in one write 0/5,
+--- byte by byte back to back 0/5, at 0.5 ms 4/5, at 2 ms
+--- 10/10, at 5 ms 10/10 — about the speed of typing.
+--- MicroPython on the same board takes the whole string in
+--- one write, 5/5, so the rate is this firmware's. A poll is
+--- a frame, some 16 ms, well inside it.
+local TX_PER_POLL = 1
 local CTRL_MS = 1000
 --- PendingIntent.FLAG_IMMUTABLE, required on Android 12+
 local PI_IMMUTABLE = 0x04000000
@@ -55,6 +67,7 @@ function AndroidBackend.new()
   self.dev = nil
   self.due = 0
   self.extras_told = false
+  self.tx = ''
   return self
 end
 
@@ -343,6 +356,9 @@ function AndroidBackend:read()
   return jniReadBytes(env, port.rx, n)
 end
 
+--- Queued, not written here: the bytes leave one per poll,
+--- see TX_PER_POLL. A refusal therefore arrives as a fault
+--- on the poll that does the write, not from this call.
 --- @param data string
 --- @return boolean? ok
 --- @return string? err
@@ -350,16 +366,26 @@ function AndroidBackend:send(data)
   if self.state ~= 'open' then
     return nil, 'no device connected'
   end
+  self.tx = self.tx .. data
+  return true
+end
+
+--- One slice of the outgoing queue
+--- @return string? fault
+function AndroidBackend:write()
+  if self.tx == '' then return end
   local env = self.env
   local port = self.port
-  local arr = jniBytes(env, data)
+  local out = self.tx:sub(1, TX_PER_POLL)
+  local arr = jniBytes(env, out)
   local n = jniCallInt(env, port.conn, port.bulkM,
-    port.epOut, arr, #data, WRITE_MS)
+    port.epOut, arr, #out, WRITE_MS)
   jniDropLocal(env, arr)
-  if n ~= #data then
-    return nil, 'bulk write sent ' .. n .. ' of ' .. #data
+  if n ~= #out then
+    self.tx = ''
+    return 'bulk write sent ' .. n .. ' of ' .. #out
   end
-  return true
+  self.tx = self.tx:sub(#out + 1)
 end
 
 --- Is the open device still on the bus? Takes no global
@@ -381,6 +407,7 @@ end
 
 --- Called on detach and on stop
 function AndroidBackend:closePort(notify)
+  self.tx = ''
   if self.port then self:release(self.port) end
   jniDropGlobal(self.env, self.dev and self.dev.dev)
   self:dropDevice()
@@ -459,6 +486,8 @@ end
 function AndroidBackend:pollOpen()
   local chunk = self:read()
   if chunk ~= '' then self.sink.bytes(chunk) end
+  local fault = self:write()
+  if fault then return fault end
   if now() < self.due then return end
   self.due = now() + PRESENCE_S
   local listed = self:present()
