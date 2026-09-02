@@ -1473,7 +1473,7 @@ the decision already raises for *a key that belongs to another call* — `force`
 and raises from `configure`. `text`/`cursor` join that existing category rather than crossing a line
 the decision had drawn elsewhere.
 
-**What this changes for a project — two things, both stated rather than discovered.**
+**What this changes for a project — three things, all stated rather than discovered.**
 
 **First, a forced `show` with no `text` now clears.** Before this decision it preserved the content,
 which is what the spec approved in round 2 said (*"content replaced if `text` is provided, preserved
@@ -1488,6 +1488,37 @@ next `show`.** Nothing is lost: content for a widget that is about to come up is
 that brings it up**, before it is visible, and any richer deferral is a local variable in the
 project. The retained `prompt` is unaffected — it is project-owned, applies immediately, and is
 still there at the next `show`.
+
+**Third, content is not preserved across `hide` → `show` either, and the approved design said it
+would be** (owner-ruled 2026-09-02). The ratified spec required restoration in as many words —
+*"Content preserved for the next `show()` without `text`"* — and the round-2 reviewed text spelled
+it out: *"Input content is preserved (subsequent `show()` will display it unless `text` is
+provided)"*. Statement 1 is why it is not: `show` seats the content baseline, so a bare `show()`
+opens empty whether or not a `hide()` came before it. Note the boundary, because the sentence above
+is loose about it: **`hide()` itself preserves the content** — it flips the shown flag and clears
+`love.state.user_input` and does nothing else. What a project loses is the round trip.
+
+**The requirement is retired as unfeasible-for-the-need, not overlooked.** It was approved in a
+batch and never checked against a use case. There is no scenario, in this tree or in the
+stakeholder's ask, that hides a widget and needs exactly the same text and cursor back — and the two
+`hide()` call sites that exist (`maze_main.lua:126`, `draw_main.lua:233`) both **abandon** the
+prompt to return to a menu, so they want the clearing, not the restoration. Making restoration
+first-class would put a content-lifetime rule into a surface whose entire content story is *"`show`
+seats it"*, which is more API to explain than the case is worth.
+
+**If a project ever needs it, it saves and restores the content itself — and today it can do half
+of that.** `get_cursor()` reads the caret before the `hide` and `set_cursor` puts it back after the
+`show`; both are refused while hidden, so the read happens before hiding. **There is no content
+getter on `compy.input`** — `set_text` writes and nothing reads — so the text half is not available
+without the project mirroring keystrokes, which is not a thing to ask of one. **This is the honest
+weak point of the ruling, and it is named rather than left to be discovered.** If the case does
+arrive, the repair is a **read-only content getter** — one function, symmetrical with `get_cursor`,
+useful for more than this — and *not* a return to preservation, which is a lifetime rule that would
+have to interact with the content baseline in every call that seats it.
+
+**No CHANGELOG line is owed for this**, unlike the two above. Preservation was never shipped: at the
+PR base the widget was rebuilt per activation, so content survived nothing, and this is a design
+requirement that was not built rather than a behaviour a user could notice changing.
 
 **Recommended and deliberately not built: `reset()`.** `clear()` resets what the **user** owns.
 Nothing resets what the **project** owns, so returning a widget to its defaults means naming every

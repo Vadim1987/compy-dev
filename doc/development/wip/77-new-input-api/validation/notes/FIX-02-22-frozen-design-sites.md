@@ -1,6 +1,6 @@
 ---
 description: FIX-02-22's frozen-tree half — the full site inventory, and a recommendation NOT to amend design/
-status: proposal — owner ruling owed
+status: RULED 2026-09-02 — `design/` is not amended; see §0
 audience: owner
 authored: llm
 session: 67
@@ -16,6 +16,34 @@ row's disposition is *"fix the documents"*; the persistent-corpus half is done
 
 **The recommendation is to leave `design/` alone.** The reasoning is in §3 and it inverts the row's
 implied disposition, so it is stated as a proposal, not applied.
+
+## 0. Owner ruling, 2026-09-02 — `design/` is not amended, on better grounds than §3's
+
+The owner reached the same disposition by a different and stronger route: **§3 argues about where
+prose should live; the owner asked whether the rule was ever any good.**
+
+> *"neither of existing known scenarios relies on hiding and restoring widget with exactly same
+> text/cursor. If it's ever needed, this could be done in calling project… so we optimized towards
+> most common case. Adding support of not-yet-needed and fairly exotic case as first-class scenario
+> would complicate the API. So the requirement as originally written is likely useless and
+> batch-approved. Therefore it was retired and it's fine."*
+
+Three consequences, all applied:
+
+1. **The requirement is retired, not violated.** The deviation is deliberate and now argued in the
+   persistent ledger — `D-CFG-BOUNDARY`, *"Third, content is not preserved across `hide` → `show`
+   either"*. That is where a reader who outlives `wip/77` meets it.
+2. **`design/spec/M2.md` is out of scope entirely** (owner): it is a historical spec subslice, the
+   period's analogue of today's roadmap rows, not a statement of the shipped contract. §1 keeps it
+   listed as inventory only.
+3. **`design/` is untouched.** Both routes agree, so nothing here is edited.
+
+**The premise was checked in code, and it holds with one gap the ruling now names.** No in-tree
+scenario wants restoration: the only two `hide()` call sites (`maze_main.lua:126`,
+`draw_main.lua:233`) both abandon the prompt for a menu and want the clearing. The escape hatch is
+**half available** — `get_cursor()` exists, and there is **no content getter** on `compy.input`, so
+a project cannot save the text today. The ruling states that plainly and names the cheap repair (a
+read-only getter) rather than leaving it to be found.
 
 ## 1. The inventory is larger than the row says — five sites, and two different claims
 
