@@ -916,9 +916,15 @@ paid, or turned out not to be debt.
 - **And explicitly not the alternative.** Restoring preservation across `hide`/`show` is a
   content-**lifetime** rule that every call seating content would have to agree with; a getter is one
   function that adds no rule. If this is ever paid, it is paid as the getter.
-- **What would have to be true first:** a project that hides a widget mid-session and needs the
-  user's half-typed text back. None exists in the tree or in the stakeholder ask, which is why this
-  is a proposal and carries no slug.
+- **The likelier consumer is not the hide/show case at all** (owner, 2026-09-02). Today a project
+  learns the content only at **submit or cancel** — those two moments are the entire read surface.
+  A getter is what it needs to read the content at a moment of *its own* choosing: **on a timeout**
+  (grab whatever has been typed so far when the clock runs out), or **from a process the project
+  launched itself**, e.g. off a hotkey combo, that wants the current text without making the user
+  submit first. That is a more ordinary shape than restoring a draft across a hide, and it is the
+  case to weigh this against when the time comes.
+- **What would have to be true first:** one of the above, actually asked for. Neither exists in the
+  tree or in the stakeholder ask today, which is why this is a proposal and carries no slug.
 
 ### PROPOSAL: if event-sourced held state is ever needed, it belongs to the framework
 
