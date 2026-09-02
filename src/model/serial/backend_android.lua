@@ -7,14 +7,11 @@ require('util.jni')
 ---
 --- THREADING: JNIEnv is thread-local and cached here, so
 --- the backend must be created and polled on one thread.
---- Driven from the frame loop it reads in short bursts and
---- the tail of a reply sits on the device until the next
---- write; model/serial/worker.lua runs it on a thread of
---- its own instead, where the read can block. Both work,
---- the threaded one keeps a request outstanding.
 ---
 --- Verified on the device: scan, permission, open, write,
---- read, detach on unplug and a clean reconnect all run.
+--- detach on unplug and a clean reconnect all run. Nothing
+--- has come back from the board yet, so the read path is
+--- exercised but not confirmed.
 
 --- @class AndroidBackend
 --- @field new function
@@ -30,7 +27,7 @@ local CDC_COMM = 2
 local CDC_DATA = 10
 local EP_BULK = 2
 local DIR_IN = 0x80
-local RX_SIZE = 512
+local RX_SIZE = 64
 local READ_MS = 5
 local WRITE_MS = 1000
 local CTRL_MS = 1000
@@ -49,31 +46,6 @@ local function now()
   return os.time()
 end
 
---- How long one read waits for bytes. Short on the frame
---- loop, because the frame has to come back; long on a
---- thread, where waiting costs nothing. Changeable on the
---- live port from the console (serial_tune).
---- @return table
-local function default_tune()
-  return { read_ms = READ_MS }
-end
-
---- What the read path did so far, for serial_stats
---- @return table
-local function fresh_stats()
-  return {
-    polls = 0,
-    reads = 0,
-    got = 0,
-    empty = 0,
-    neg = 0,
-    bytes = 0,
-    sends = 0,
-    last_got_at = nil,
-    last_send_at = nil,
-  }
-end
-
 --- @return AndroidBackend
 function AndroidBackend.new()
   local self = setmetatable({}, AndroidBackend)
@@ -83,25 +55,7 @@ function AndroidBackend.new()
   self.dev = nil
   self.due = 0
   self.extras_told = false
-  self.tune = default_tune()
-  self.stats = fresh_stats()
   return self
-end
-
-function AndroidBackend:resetStats()
-  self.stats = fresh_stats()
-end
-
---- One knob, by name, so the console and the worker change
---- it the same way. An unknown name is an error: a typo
---- must not pass for a setting.
---- @param k string
---- @param v any
-function AndroidBackend:setTune(k, v)
-  if self.tune[k] == nil then
-    error('no such knob ' .. tostring(k))
-  end
-  self.tune[k] = v
 end
 
 function AndroidBackend:start(sink)
@@ -378,32 +332,15 @@ function AndroidBackend:release(port)
   jniDropGlobal(env, port.conn)
 end
 
---- One bulk-in slice; '' when the slice brought nothing.
---- Every outcome is counted apart: bulkTransfer returns a
---- negative for both timeout and error, zero for an empty
---- packet, and the stall shows as reads that keep coming
---- back empty while the board still has bytes to give.
+--- One bulk-in slice; '' when the slice brought nothing
 --- @return string
 function AndroidBackend:read()
   local env = self.env
   local port = self.port
-  local tune = self.tune
-  local st = self.stats
   local n = jniCallInt(env, port.conn, port.bulkM,
-    port.epIn, port.rx, RX_SIZE, tune.read_ms)
-  st.reads = st.reads + 1
-  if n > 0 then
-    st.got = st.got + 1
-    st.bytes = st.bytes + n
-    st.last_got_at = now()
-    return jniReadBytes(env, port.rx, n)
-  end
-  if n == 0 then
-    st.empty = st.empty + 1
-  else
-    st.neg = st.neg + 1
-  end
-  return ''
+    port.epIn, port.rx, RX_SIZE, READ_MS)
+  if n <= 0 then return '' end
+  return jniReadBytes(env, port.rx, n)
 end
 
 --- @param data string
@@ -422,8 +359,6 @@ function AndroidBackend:send(data)
   if n ~= #data then
     return nil, 'bulk write sent ' .. n .. ' of ' .. #data
   end
-  self.stats.sends = self.stats.sends + 1
-  self.stats.last_send_at = now()
   return true
 end
 
@@ -522,7 +457,6 @@ end
 
 --- @return string? fault
 function AndroidBackend:pollOpen()
-  self.stats.polls = self.stats.polls + 1
   local chunk = self:read()
   if chunk ~= '' then self.sink.bytes(chunk) end
   if now() < self.due then return end

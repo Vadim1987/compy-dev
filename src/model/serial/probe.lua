@@ -5,9 +5,6 @@
 --- serial_probe()            print events, send PING
 --- serial_probe('print(1)')  same, but send that line
 --- serial_probe(false)       stop printing, release fields
---- serial_stats()            read-path counters
---- serial_stats(true)        the same, then zero counters
---- serial_tune{read_ms=50}   change the read wait
 
 --- Byte values, so an unprintable reply is still readable
 --- @param chunk string
@@ -56,57 +53,5 @@ function serial_probe(arg)
     hello()
   else
     print('probe: started, plug the micro:bit in')
-  end
-end
-
---- @param t number?
---- @return string
-local function ago(t)
-  if not t then return 'never' end
-  return string.format('%.1fs ago', love.timer.getTime() - t)
-end
-
---- What the platform port's read path did so far. On the
---- threaded backend the counters cross once a second, so
---- right after a reset there is nothing to print yet.
---- @param reset boolean?
-function serial_stats(reset)
-  local b = SerialPort.backend
-  if not b.resetStats then
-    print('stats: none on this backend')
-    return
-  end
-  local s = b.stats
-  if not s then
-    print('stats: none in yet')
-  else
-    print(string.format(
-      'stats: polls %d reads %d got %d',
-      s.polls, s.reads, s.got))
-    print(string.format(
-      'stats: empty %d neg %d bytes %d',
-      s.empty, s.neg, s.bytes))
-    print('stats: sends ' .. s.sends .. ', last byte ' ..
-      ago(s.last_got_at) .. ', last send ' ..
-      ago(s.last_send_at))
-  end
-  if reset then
-    b:resetStats()
-    print('stats: zeroed')
-  end
-end
-
---- Change a read-path knob on the live port, e.g.
---- serial_tune{read_ms = 50}. An unknown name is an error,
---- so a typo cannot pass for a setting.
---- @param t table
-function serial_tune(t)
-  local b = SerialPort.backend
-  if not b.setTune then
-    print('tune: none on this backend')
-    return
-  end
-  for k, v in pairs(t or {}) do
-    b:setTune(k, v)
   end
 end
