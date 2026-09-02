@@ -217,7 +217,7 @@ crosswalk is for.
 
 ### F4 — the reordering reverses two owner rulings without citing either — **owner call, not a defect**
 
-**(a) *"Why ACC runs before U, not after"* (owner, 2026-08-26; `validation/plan.md:553-557`).**
+**(a) *"Why ACC runs before U, not after"* (owner, 2026-08-26; `validation/plan.md:554-558`).**
 
 > *"A smoke pass on the pre-merge tree is not merely reassurance — it is the **control** for the
 > post-merge one. Merging an advanced upstream … into a branch whose behaviour no human has

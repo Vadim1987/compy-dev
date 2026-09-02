@@ -48,7 +48,9 @@ paid, or turned out not to be debt.
 
 ### T-RETIRED-UNVER — The register's resolved entries claim resolution that was never verified
 
-- **Where:** `input.md`'s `RETIRED` section — 21 entries carrying a `RESOLVED` marker.
+- **Where:** `input.md`'s `RETIRED` section — 21 entries carrying a `RESOLVED` marker **when this
+  was written; the section holds 46 today and the whole of it is this row's scope** (`T-NEVER-SHIPPED`
+  takes the same pass). Re-derive before executing.
 - **What is owed:** the 2026-08-27 restructuring sorted them on their **headings**. Not one was
   tested against the PR base to confirm the claim. A register whose retired section is unaudited
   is a register that quietly forgets things it never finished.
@@ -102,7 +104,9 @@ paid, or turned out not to be debt.
 
 ### T-NEVER-SHIPPED — the register keeps entries for defects that never existed outside the branch
 
-- **Where:** `input.md`'s `RETIRED` section (45 entries) and this file's (2).
+- **Where:** `input.md`'s `RETIRED` section and this file's — **51 entries, 46 + 5, counted
+  2026-09-02** (was 45 + 2 on 2026-09-01; session66 retired four and the cold revalidation two more.
+  Re-count when the row opens: this register grows as the sprints pay into it).
 - **The rule it fails:** `../../../agents/rules/ledgers.md` §3 — what a branch introduced and paid
   before release never existed for anyone outside it, so its entry records our own drafting rather
   than the product's history. A **pre-existing** defect the branch fixed is the opposite: it
@@ -113,7 +117,8 @@ paid, or turned out not to be debt.
   classification, **two consumers**: `CHG-01-03` already takes the pre-existing half into the
   changelog, and this goal takes the other half out of the register. Nothing new is enumerated,
   which is why this is a step and not a survey.
-- **Measured 2026-09-01, so the row is not sized on a guess:** 47 retired entries. **Fourteen
+- **Measured 2026-09-01, so the row is not sized on a guess:** 47 retired entries **(51 today —
+  see *Where*; the proportions below were not re-derived)**. **Fourteen
   already say the defect was ours** and **seven say pre-existing**; ten cite the base explicitly.
   Roughly half carry the answer in their own text; the rest are `FIX-02-05`'s work either way.
 - **Mixed provenance is a third category and it keeps the entry.** `BUG-01-05` is the worked

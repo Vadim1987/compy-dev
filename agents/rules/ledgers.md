@@ -232,6 +232,7 @@ ordering, its own status column, or its own sense of being unfinished, it has be
 roadmap, and the failure that rule describes has arrived by another door.
 
 **Where** vacuumed entries go is ruled at §2, *"Vacuuming is a move, not a deletion"* — an archive
-under the feature's working tree, which is a **record**, not a second ledger. That distinction is
-this section's, and it is why the archive states in its own opening that nothing in it rules
-anything.
+under the feature's working tree, which is a **record**, not a second ledger — §2 says so where it
+rules the destination, and it is why the archive states in its own opening that nothing in it rules
+anything. **This section is why that matters:** a record that acquires ordering or status has become
+the second timeline rule 1 forbids.
