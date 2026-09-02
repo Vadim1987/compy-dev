@@ -114,3 +114,36 @@ set_text, configure, clear`.
   consequence for the **shipped surface**, which I had not separated from it when I asked.
 
 `FIX-02-22` closes. Next: `-25`.
+
+- Owner then added the getter proposal's **real consumer** (`b28dbe26`): reading content **outside
+  submit and cancel** — on a timeout, or from a project-launched process off a hotkey. Today those
+  two moments are the entire read surface. Reframes the entry: *"restore a draft across a hide"* is
+  exotic, *"read the field without forcing a submit"* is not, and sizing it from the hide/show
+  framing alone would under-price it.
+
+## 2026-09-02 — `FIX-02-25`. The test reads the real set; no defect behind it.
+
+Commits `a3097082` (spec), `16e2c100` (ledger retirement + citation sweep). **Suite 1048 → 1050.**
+
+- **The design call that mattered.** A hand-written list of the accepted keys would have been a
+  **third** copy — and it cannot fail on a key it does not know about, which is the entire defect.
+  So the spec **reads the real set out of the surface**: `show` → `api_show` → `SHOW_KEYS`, two
+  upvalue hops **by name**, and the `configure` equivalent. Probed first (scratch spec) to confirm
+  reachability before committing to the design.
+- **Mutation-tested both ways, and the second one is the important one.** `'ghost'` into
+  `WIDGET_KEYS` → both cases fail naming the key. Renaming `SHOW_KEYS` → *"upvalue SHOW_KEYS is
+  gone; fix this reader"* rather than **silently checking an empty set**. A reader that returns nil
+  on a rename would have degraded to a test that passes while checking nothing; hence the asserts
+  and the non-empty guard.
+- **No production defect.** `CALLBACK_KEYS` and `CONFIG_CALLBACKS` hold the same four strings;
+  `prompt`/`auto_hide` → `configure_core`, `text`/`cursor` → `open_widget`, `force` gates in the
+  widget's own `show`. The prompt reserved a separate commit for a defect here; not needed, and the
+  row's placement argument (*"the sitting would run against an unknown"*) is now discharged.
+- **`lua-lsp` is HEALTHY** — its health was unverified since session65. `diagnostics` clean on the
+  new spec, and `references` on `configure_core` returned the two real call sites. Reported because
+  the prompt asked for it either way.
+- **Ledger: retired, and the slug sweep done in the same commit.** `roadmap.md` §5 makes the pass
+  that causes an orphan owe the fix, and dropping a slug from a heading *is* that pass —
+  `T-HL-TWO-HOMES` is the standing example. Swept: the roadmap's renumber REMARK, the row, **and my
+  own spec header written an hour earlier**. The filing text is kept and labelled rather than
+  rewritten (*"No such test exists"* was true when written).
