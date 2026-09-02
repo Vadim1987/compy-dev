@@ -124,14 +124,23 @@ When an error is set on the model (`set_error()`), the input is visually locked:
 
 ### Evaluator and validation
 
-> REMARK: "projects cannot install evaluator objects" is not correct now? we allow them to configure evalator function
-
 Each `UserInputModel` has an `Evaluator` that runs on submit:
 - **Console**: `LuaEval` — metalua parse, validates Lua syntax before accepting the submit
 - **Editor input (Lua file)**: `LuaEditorEval` — same as LuaEval but adds 64-char line length validator
-- **Project widgets**: the internal plain evaluator plus project callbacks for
-  validation and display. Projects cannot install evaluator objects.
+- **Project widgets**: the internal plain evaluator (`Evaluator.plain`, chosen at
+  construction) plus project callbacks for validation and display
 - **Search**: `nil` evaluator (search input is free text, no validation)
+
+**A project supplies functions; it never supplies the evaluator.** The two are easy
+to conflate and the distinction is enforced, not merely stated: there is no
+`evaluator` key on `show`/`configure` — the config table is closed and would raise —
+`set_eval` is not on the `compy.input` surface, and `consoleController` **withholds**
+`InputEvalText`, `InputEvalLua`, `ValidatedTextEval` and `LuaEditorEval` from
+`project_env`, which starts as a clone of the application environment carrying them.
+What a project configures is the `validator` (runs at submit, receives `string[]`,
+returns `true` or `false, Error[]`) and the `highlighter` (display only). The
+evaluator decides what a submit *means* for the widget; those two are the project's
+hooks into it.
 
 Host evaluators can validate during editing. The project widget's public
 validator runs at submit and receives `string[]`; it returns `true` or
@@ -723,8 +732,6 @@ shown — hidden, the widget is skipped entirely by the dispatch walk.
 
 **Submit** (`UserInputController:submit_flow`):
 
-> REMARK: what do you mean 'reserved, unbuilt' and what is R9? If we declare that callback should be veto-ing, than it should be
-
 ```
 if run_callback(self, 'before_submit') then return end   -- truthy = veto
 if self.model:get_text():is_empty() then return end
@@ -767,7 +774,6 @@ self.model:cancel()                                   -- clear, hardwired
 run_callback(self, 'after_cancel')                     -- DEFAULT: no-op — widget stays open
 ```
 
-> REMARK: "unlike_submit" should be wrong because submit should also be honored 
 `before_cancel`'s return value is honoured the same way `before_submit`'s is: a truthy return
 vetoes the clear step entirely (content and widget state untouched, `after_cancel` does not fire). `after_cancel` DEFAULTS to a no-op, so Escape clears
 the field but the widget stays open, same flipped default as submit.
