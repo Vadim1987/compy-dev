@@ -577,10 +577,10 @@ describe('input surface: widget callbacks #input', function()
       assert.is_true(F.widget:has_error())
     end)
 
-    -- D-AUTO-HIDE, statement 2: the flag
-    -- configures a TYPE of behaviour, not one show/hide cycle,
-    -- so it persists until replaced exactly like validator. A
-    -- later bare show() inherits it.
+    -- D-AUTO-HIDE, statement 2: the flag configures a TYPE of
+    -- behaviour, not one show/hide cycle, so it persists until
+    -- replaced exactly like validator. A later bare show()
+    -- inherits it.
     it('a later bare show still closes on submit', function()
       local input = F.activate_project()
       input.show({ text = 'a', auto_hide = true })
@@ -612,9 +612,9 @@ describe('input surface: widget callbacks #input', function()
     -- doc/input_api.md, "Asking one question", and deliberately
     -- NOT pinned: both are closed by the submit in progress
     -- today, and both would survive if the close ever owned a
-    -- generation token, which D-AUTO-HIDE records
-    -- as considered and declined. A test would cement the case
-    -- a fix is meant to change.
+    -- generation token, which D-AUTO-HIDE records as
+    -- considered and declined. A test would cement the case a
+    -- fix is meant to change.
     -- What the case pins is the flag's read PLACEMENT — after
     -- the callbacks, so the follow-up's own `false` is what the
     -- close reads. Capturing the value before them closes this
@@ -640,14 +640,14 @@ describe('input surface: widget callbacks #input', function()
         assert.equal('again?', F.widget.model:get_label())
       end)
 
-    -- D-AUTO-HIDE, statement 5 -- the widget survives a raise;
-    -- entry's own recommendation. A raised callback leaves the
-    -- widget standing, which is what the hand-written
-    -- after_submit = hide would also have done: the raise
-    -- unwinds past it. Asserted against the error channel, not
-    -- against "no crash" -- the route boundary swallows the
-    -- raise and suspends, so a silently-skipped callback would
-    -- pass a has_no.errors check just as well.
+    -- D-AUTO-HIDE, statement 5 -- the widget survives a raise.
+    -- A raised callback leaves the widget standing, which is
+    -- what the hand-written after_submit = hide would also
+    -- have done: the raise unwinds past it. Asserted against
+    -- the error channel, not against "no crash" -- the route
+    -- boundary swallows the raise and suspends, so a
+    -- silently-skipped callback would pass a has_no.errors
+    -- check just as well.
     it('a raised callback leaves it open', function()
       local ran = 0
       local input = F.activate_project()

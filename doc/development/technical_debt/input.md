@@ -1376,7 +1376,23 @@ changes.
 
 ## RETIRED
 
-### The guide led with the hand-written close and offered `auto_hide` as an afterthought (RESOLVED, 2026-09-02)
+### A citation edit left half a sentence asserting the opposite of the statement it cites (RESOLVED, 2026-09-02)
+
+- **Where:** `tests/input/input_widget_callbacks_spec.lua`, the `auto_hide` block's
+  raise case.
+- **The defect:** `d0f4e66c` re-pointed *"D-AUTO-HIDE, ruled edge 4 -- the one REVERSED
+  from the entry's own recommendation"* onto the numbered statement, and stopped at the
+  clause boundary. What stood afterwards was *"statement 5 -- the widget survives a
+  raise; entry's own recommendation."* — a fragment reading as a claim that statement 5
+  **is** the entry's recommendation, when the entry's recommendation was the opposite
+  and its reversal is exactly the churn `D-AUTO-HIDE`'s rewrite retired. Silent: the
+  comment is prose, the case passes either way.
+- **Resolution:** the fragment removed and the block rewrapped; two neighbouring blocks
+  left ragged by the same substitution were rewrapped with it, wording untouched.
+- **The rule it fails is one the same session wrote:** *prove a mechanical edit, do not
+  eyeball it.* The 68 reflowed comment blocks were proved word-for-word; these thirteen
+  citation edits were read. **A substitution that shortens a sentence must be read to the
+  end of the sentence**, not to the end of the token it replaced.
 
 - **Where:** `../../input_api.md`, *"The input widget — opening it and changing it"*.
 - **The defect:** *"To close it after a submit, make that choice explicit"* followed by
