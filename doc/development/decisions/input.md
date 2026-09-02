@@ -72,8 +72,8 @@ The previous input API had three structural faults that projects tripped over:
   `love.keypressed` / `love.textinput` handlers were not called at all — routing was gated on
   widget presence, so a shown widget swallowed the project's key events wholesale. Reacting to
   a hotkey *while* soliciting text was impossible.
-- **No show/hide without teardown.** A prompt could not be hidden and brought back with its
-  state intact; dismissing it meant tearing it down and rebuilding.
+- **No show/hide without teardown.** A prompt could not be hidden and brought back at all:
+  dismissing it meant tearing it down, and asking again meant building a new one.
 
 The design goal was an event-driven input surface consistent with LÖVE's own callback style,
 expressive enough that the console REPL and the editor input strip *could* be rebuilt on it,
@@ -191,8 +191,17 @@ session** — the device is memory-constrained and the common pattern is repeate
 Repeated prompting happens *within* a run, so a per-run widget satisfies that requirement in full:
 a project that prompts a hundred times allocates once. The requirement was previously applied one
 boundary wider than it states, and that wider boundary was never examined. A shared-within-the-run
-instance also keeps "hide and bring back with state intact" free — the state is not destroyed while
-the project that owns it is alive — and it is what makes D-ROUTE-OWNS cheap.
+instance also gives FR-3/FR-4 — hide and bring the prompt back — for nothing: the widget and
+everything the project set on it are not destroyed while the project that owns it is alive, and it
+is what makes D-ROUTE-OWNS cheap.
+
+**What comes back is the widget and the project's settings, not the user's text.** `show` is the
+call that seats the content baseline, so a bare `show()` after a `hide()` opens **empty**
+(D-CFG-BOUNDARY, statement 1; pinned by *"a fresh activation with no text is empty"*). `hide()`
+itself preserves the content — it flips `shown` and clears `love.state.user_input`, nothing more —
+so what a project loses is the round trip, not the moment of hiding. Said the other way: this
+decision buys FR-3's *"without removing it"*, which is about teardown, and it was never a promise
+about what the user had typed.
 
 **Per-run is strictly less allocation than the system this feature replaced.** At the PR base the
 project's widget was built **per activation** — model, controller and view, fresh on every
