@@ -689,31 +689,48 @@ the prose says it is a defect.
 **unknown yield**, since a defect found at a desk is cheaper than one found at a sitting
 (`agents/rules/roadmap.md` §3):
 
-`FIX-02-03` · `-04` · `-06` · `-17` · `-22` · `-23` · `-24` · `-25`, and **the
+`FIX-02-03` · `-04` · `-05` · `-06` · `-13` · `-17` · `-22` · `-23` · `-24` · `-25`, and **the
 `smoke_checklists.md` slice of `-09`**.
 
 - **`-22` is the sharpest case:** three documents say a hidden widget keeps its content and **the
   code clears it**, so a pass that sees a cleared draft is told by the docs that it found a bug.
+  **Two of its three sites are in the FROZEN `design/` tree** and are **owner-gated** — propose,
+  do not edit; only the `decisions/input.md` site is ours to fix outright.
+- **`-13` runs with `-22`, by that row's own instruction** — *"same paragraph of the same doc"*.
+  Splitting them would edit one paragraph twice across a device sitting.
 - **`-23`** is the guard that `BUG-01-03` was: a pass meeting that shape finds no remedy named.
 - **`-06`** is a stale routing-lifetime claim in three places, which is troubleshooting prose by
-  definition; **`-03`, `-04`, `-24`** are verification rows that may produce *code* work.
+  definition; **`-03`, `-04`, `-24`** are verification rows whose yield is unknown, and `-03`'s may
+  be *code* work — it may show the code wrong rather than the doc.
+- **`-05` is here on a hard dependency, not on the criterion** — though it meets that too
+  (*"unknown yield"*). `CHG-01-03` names it as its **feeder**, and `CHG-01` is in this half and
+  **gates `ACC-02` and every slice cut**: leaving `-05` in (b) schedules the producer after its
+  consumer. **It is the largest row in the half** — 51 retired entries, each base-checked (counted
+  2026-09-02; the row still says 20). If it proves too large to precede the sitting, the fallback is
+  the owner's: record on `CHG-01-03` that it ran on an unverified classification and revisit it
+  after (b). Do not simply move it back.
 - **`-25` is in (a) although it is the sprint's only code row** — precisely because it is: its test
   can surface a key the surface accepts and the widget ignores, and finding that after the sitting
   means the sitting ran against an unknown.
 - **The `-09` slice is bounded to `doc/development/smoke_checklists.md`**, the document in the
-  owner's hands during the pass, which carries the widget sense at `:212, 219, 232, 254, 338, 343`.
+  owner's hands during the pass. **~21 sites, and re-derive them by sense** — the row's own warning
+  applies to this slice as much as to the whole: *the count is a sweep input, not a scope statement.*
   Safe to take early **because no remaining merge touches it** — `MERGE-01-04` (platform) is done,
   and the three open merges land in the nested repos.
 
-**(b) — after `ACC-02`.** The rest: `-05` · `-07` · `-08` · `-09` (the remainder) · `-10` · `-13` ·
-`-14` · `-15` · `-16` · `-18` · `-19` · `-20`.
+**(b) — after `ACC-02`.** The rest: `-07` · `-08` · `-09` (the remainder) · `-10` · `-14` · `-15` ·
+`-16` · `-18` · `-19` · `-20`.
 
-- **`-09` and `-20` must not precede `MERGE-01`.** Their remaining scope is `keyboard` and `maze` —
-  the repos the merges land in — so sweeping first means the merge brings fresh violations in behind
-  the sweep. That is the same inversion the acceptance reorder fixed this morning, and it is why the
-  bundle is split rather than moved whole.
-- `-05` still blocks `LEDGER-02`, which is downstream of `ACC-02` already, so nothing is delayed by
-  its being here.
+- **`-09` must not precede `MERGE-01`.** Its remaining scope is `keyboard` and `maze` — the repos the
+  merges land in — so sweeping first means the merge brings fresh violations in behind the sweep.
+  That is the same inversion the acceptance reorder fixed this morning, and it is why the bundle is
+  split rather than moved whole.
+- **`-20` is here on its own LATE-row ground** (the note below), **not** on the nested-repo argument:
+  *"draft"* appears once in all three example repos (`maze_main.lua:187`) and not at all in
+  `keyboard`. It runs with the 08–10 vocabulary cluster because the vocabulary is still being minted.
+- **`-07` opens `internals/user_input.md`, which `-03` also edits in (a)** — a second broom over one
+  floor, accepted deliberately: `-07`'s blocks are editorial and `-03`'s three claims are factual,
+  and only the second kind misleads a troubleshooter.
 
 **REMARK — the crosswalk renumbering is deliberately skipped, and the roadmap's order prevails.**
 `agents/rules/roadmap.md` §2 says numbering follows execution order; after this split it does not,
