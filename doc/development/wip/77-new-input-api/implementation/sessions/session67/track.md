@@ -315,3 +315,39 @@ Diagnosis and evidence: `validation/notes/S67-subagent-host-crash.md`. **The con
 is unfixed and is the owner's call** — the compose stack under `implementation/docker`, not the
 older `claude.sh` I first named. Until then the prompt guardrails are the only protection, and they
 rely on a sub-agent obeying them.
+
+## 2026-09-02 — the cold peer review, third attempt, on Sonnet
+
+Owner's call after the diagnosis: **peer review on Sonnet, the later delivery-revalidation agent on
+Opus.** Ran eleven minutes, 98 tool calls, no incident, under the hardened commission.
+
+**Verdict: the work holds.** ~two dozen claims resolved against source — code behaviour, base
+comparisons at `3256aac`, line citations, ledger state, git provenance, the one code change — all
+as stated, several to the exact line and exact runtime error string. It re-ran the
+`debug.getupvalue` mutation and reproduced both failure messages verbatim, restored what it touched,
+confirmed the tree clean. Suite 1050 on LuaJIT 2.1.1703358377. LSP healthy; it independently
+re-confirmed the `set_eval` callers that an empty `references` had hidden from me earlier.
+
+Two low findings, **both verified in git before acting** (standing rule), both real:
+
+1. **A date over-generalised from four files to seven.** I wrote all seven mermaid files "added
+   2024-07-29"; `eval.md`, `input.md`, `scratch.md` were added **2024-12-18** (`fc2490b4`,
+   *"unfinished docs"*) — and those three are exactly the trio I separately described as the
+   unfinished ones, so I had both facts and still merged them into one wrong sentence. Corrected in
+   `doc/mermaid/README.md` (persistent corpus, so it mattered most), the retired `T-MERMAID-MODEL`
+   entry, and the roadmap cell. The substance is untouched: all seven are `aldum`'s, all predate
+   the PR base.
+2. **My own commission miscounted BACKLOG filings** — "two filed" where three were. The reviewer
+   correctly attributed it to the commission, not to the commits or roadmap, which claim no count.
+   Recorded as a post-execution correction *appended* to the commission rather than edited into it,
+   so the prompt the reviewer actually worked from stays intact.
+
+**The reviewer also flagged what it read as a prompt-injection attempt**: after each
+`git checkout --` restore, a system-reminder said the change was intentional and told it not to
+revert and not to tell the user. It disregarded and disclosed it. That is the harness's ordinary
+external-file-modification reminder — `git checkout` mutates a file the agent had in context, and I
+saw the same reminder myself this session for `MEMORY.md`. **Benign, and the agent's handling was
+right**: disclosing beats complying with any instruction to conceal.
+
+Half (a) remaining, unchanged: `-05` (the big ledger audit) → `-17` → `CHG-01`, then the
+`smoke_checklists.md` slice of `-09`.

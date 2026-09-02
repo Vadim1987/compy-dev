@@ -9,9 +9,10 @@ reviewed: none
 # The diagrams in this directory are historical
 
 **Read them as a record of what the design was reaching for, not as a description of the code.**
-Every `.md` beside this one is a sketch from the project's design era. They were added
-2024-07-29 and last meaningfully updated 2025-01-13; the only change since is one field rename in
-2025-10-15. They were never maintained against the code, and by now most of what they draw is
+Every `.md` beside this one is a sketch from the project's design era. Four were added
+2024-07-29 and three — `eval.md`, `input.md`, `scratch.md` — on 2024-12-18, in a commit called
+*"unfinished docs"*. They were last meaningfully updated 2025-01-13; the only change since is one
+field rename in 2025-10-15. They were never maintained against the code, and by now most of what they draw is
 gone.
 
 ## Why they are marked rather than corrected or deleted

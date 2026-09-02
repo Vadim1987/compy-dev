@@ -139,3 +139,12 @@ which claims are now load-bearing. Rank findings by blast radius, not by how int
 - **Do not `git add`, `git commit`, or `git push`.**
 - Do not fix what you find. Report it. Dispositions belong to the parent session and the owner.
 - If you cannot verify something, say so explicitly rather than softening it into a judgement.
+
+## Post-execution correction (2026-09-02, after the review returned)
+
+The summary above says *"two [debt entries] filed"*. **Three were**: the `release_keyboard_route`
+naming entry and the read-only content-getter proposal in `technical_debt/input.md`, plus the
+`@field`-annotations entry in `technical_debt/general.md`. The reviewer caught the miscount and
+correctly attributed it to **this commission**, not to the session's commits or roadmap, neither of
+which ever claims a count. Recorded here rather than edited into the text above, so the prompt the
+reviewer actually worked from stays intact.

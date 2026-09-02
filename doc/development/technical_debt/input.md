@@ -1384,9 +1384,9 @@ changes.
   rather than an old name"*. `InputModel` — the class carrying `oneshot` in `classes.md` and
   `input.md` — **did not exist at the PR base `3256aac` either**, together with
   `InterpreterModel`, `InterpreterController`, `InputController`, `InputView`, `InterpreterView`,
-  `EvalBase` and `EditorInterpreter`. The diagrams are `aldum`'s, added 2024-07-29 and last
-  meaningfully updated 2025-01-13, three of them committed as *"unfinished docs"*. They were
-  stale a year before this feature began.
+  `EvalBase` and `EditorInterpreter`. The diagrams are `aldum`'s — four added 2024-07-29 and
+  three (`eval.md`, `input.md`, `scratch.md`) on 2024-12-18 as *"unfinished docs"* — and last
+  meaningfully updated 2025-01-13. They were stale a year before this feature began.
 - **Exactly one line of 32 class blocks was ours**, and it is deleted: `editor.md`'s `oneshot` on
   `UserInputModel`, a live class whose field did exist at base. A historical marker excuses
   inherited drift, not drift you caused. `custom_label`'s absence, `evaluator: EvalBase` and the
