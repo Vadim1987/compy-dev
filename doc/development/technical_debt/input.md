@@ -27,23 +27,9 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-### T-MERMAID-MODEL — the class diagrams show a model field that no longer exists
-
-- **Where:** `../mermaid/input.md`, `../mermaid/editor.md`, `../mermaid/classes.md` — the
-  `InputModel` / `UserInputModel` class blocks.
-- **State:** all three list `oneshot: boolean` as a model field. It is **gone**: at the PR base
-  it was a constructor argument (`UserInputModel.new(cfg, eval, oneshot, custom_label)`)
-  distinguishing the transient prompt widget from the console's permanent one, and this feature
-  removed it — `new(cfg, eval, custom_label)` today. The `auto_hide` key that replaced the
-  *capability* lives on the **controller**, not the model, so the diagrams do not merely use an
-  old name; they show a field on the wrong class. `custom_label`, a live field, is missing from
-  the same blocks.
-- **Why it stands:** the diagrams were never re-checked against the model after the input work.
-  The drift is presumed wider than the one field — nobody has walked them — so the row is
-  *verify all three against the current classes*, not *delete one line*.
-- **Reader risk:** a diagram is what someone opens **before** reading code, and it carries no
-  hedge. A field shown there reads as current in a way a stale sentence does not.
-- **Revisit:** `FIX-02-24`, with the rest of the documentation sweep.
+**Empty as of 2026-09-02** — every entry that had to be resolved before this release ships is
+paid, and each is in `RETIRED` below with what paid it. This section being empty is a state, not
+an omission: `BACKLOG` is still full, deliberately, and nothing there blocks the release.
 
 ## BACKLOG
 
@@ -1370,6 +1356,47 @@ changes.
   anyway.
 
 ## RETIRED
+
+### The class diagrams show a model field that no longer exists (RESOLVED, 2026-09-02 — and the premise was half wrong)
+
+**Filed as `T-MERMAID-MODEL`.** Everything down to **Resolution** is the filing as written.
+
+- **Where:** `../mermaid/input.md`, `../mermaid/editor.md`, `../mermaid/classes.md` — the
+  `InputModel` / `UserInputModel` class blocks.
+- **State:** all three list `oneshot: boolean` as a model field. It is **gone**: at the PR base
+  it was a constructor argument (`UserInputModel.new(cfg, eval, oneshot, custom_label)`)
+  distinguishing the transient prompt widget from the console's permanent one, and this feature
+  removed it — `new(cfg, eval, custom_label)` today. The `auto_hide` key that replaced the
+  *capability* lives on the **controller**, not the model, so the diagrams do not merely use an
+  old name; they show a field on the wrong class. `custom_label`, a live field, is missing from
+  the same blocks.
+- **Why it stands:** the diagrams were never re-checked against the model after the input work.
+  The drift is presumed wider than the one field — nobody has walked them — so the row is
+  *verify all three against the current classes*, not *delete one line*.
+- **Reader risk:** a diagram is what someone opens **before** reading code, and it carries no
+  hedge. A field shown there reads as current in a way a stale sentence does not.
+- **Resolution — `FIX-02-24`. The diagrams are marked historical, not corrected.**
+  Was `T-MERMAID-MODEL`. Owner's call: *"if it's not the live doc and never was, maybe we should
+  not update it, just mark (historical)?"* `doc/mermaid/README.md` carries the reasoning and each
+  of the seven files got a one-line banner. No diagram content was rewritten.
+- **The premise this entry was filed on does not survive the check.** It reads *"the model lost
+  that constructor argument in this feature"* and *"the diagrams show a field on the wrong class
+  rather than an old name"*. `InputModel` — the class carrying `oneshot` in `classes.md` and
+  `input.md` — **did not exist at the PR base `3256aac` either**, together with
+  `InterpreterModel`, `InterpreterController`, `InputController`, `InputView`, `InterpreterView`,
+  `EvalBase` and `EditorInterpreter`. The diagrams are `aldum`'s, added 2024-07-29 and last
+  meaningfully updated 2025-01-13, three of them committed as *"unfinished docs"*. They were
+  stale a year before this feature began.
+- **Exactly one line of 32 class blocks was ours**, and it is deleted: `editor.md`'s `oneshot` on
+  `UserInputModel`, a live class whose field did exist at base. A historical marker excuses
+  inherited drift, not drift you caused. `custom_label`'s absence, `evaluator: EvalBase` and the
+  `wrapped_error`/`error` conflation were each checked against base and are identical there.
+- **Evidence:** a field-by-field audit of all seven files, 32 class blocks
+  ([`../wip/77-new-input-api/validation/outcomes/S67-mermaid-audit.md`](../wip/77-new-input-api/validation/outcomes/S67-mermaid-audit.md)).
+  It also found the source-annotation drift now recorded in `general.md`, and that `eval.md`'s
+  section headed *"Current"* describes a hierarchy never built while its *"Planned refactor"*
+  section is closer to what shipped — which is the argument for keeping these files intact:
+  they are the record of intent, and a correction pass would have deleted it.
 
 ### The guide never says a project's own keys stay live while the widget is shown (RESOLVED, 2026-09-02)
 

@@ -144,6 +144,36 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### `@field` annotations disagree with their own constructors in at least three files
+
+- **Where:** `src/model/editor/bufferModel.lua:125` — `@field replace_selected_text function`
+  names a method that was never implemented (the real one is `replace_content`, called from
+  `editorController.lua`). `src/view/editor/bufferView.lua:31` — `@field buffers
+  Dequeue<BufferModel>` is never assigned or read; the runtime field is singular `self.buffer`.
+  `src/view/editor/visibleStructuredContent.lua:19` — `@field size_max integer` is declared on
+  the class but only ever exists nested at `self.opts.size_max`.
+- **Why it is one entry and not three:** three independent files, the same defect shape, found by
+  one pass that was looking for something else. That is the signature of a class rather than a
+  set of typos, and the likely mechanism is visible in the third instance — a constructor
+  refactored to take an options table without the annotations following it.
+- **Why it matters more than a stale diagram:** an `@field` is read by the language server, so a
+  wrong one is offered as a completion and type-checked against. It misleads a reader, an editor
+  and an agent, and unlike a diagram it sits in the file being changed.
+- **Provenance: NOT ours, and identical at the PR base `3256aac`** — all three annotations are
+  byte-for-byte the same there. This is the platform author's code and the entry is recorded, not
+  claimed: the standing practice is to measure against the base first and not to refactor another
+  author's subsystem on the way past.
+- **Also seen, same pass:** `love.state.app_state` takes the value `'snapshot'`
+  (`consoleController.lua`), which is real, current, pre-existing, and absent from the `AppState`
+  alias in `types.lua` **and** from both FSM diagrams. Same category — a declaration that does
+  not match the code.
+- **Found:** 2026-09-02, by the `doc/mermaid/` audit commissioned for `FIX-02-24`
+  ([`../wip/77-new-input-api/validation/outcomes/S67-mermaid-audit.md`](../wip/77-new-input-api/validation/outcomes/S67-mermaid-audit.md),
+  "Out of scope, seen in passing"). The audit was looking at diagrams; these are in the source it
+  checked them against.
+- **Not slugged** — pre-existing, not this release's to pay, and an upstream conversation rather
+  than a branch task.
+
 ### Line citations across the persistent corpus are unverified, and a fifth of the checkable ones do not resolve
 
 - **Where:** every `doc/` file outside `wip/` that cites source by line —
