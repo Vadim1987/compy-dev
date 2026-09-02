@@ -76,3 +76,41 @@ top of `design/spec.md` instead of five edits.
 the roadmap row instead — the row is live and cited, `design/` dies with `wip/77`, and an entry
 retired in the same breath is noise. Flagging rather than deciding, since three sessions running
 have mis-called exactly this boundary.
+
+## 2026-09-02 — owner rules, and reframes the question I asked
+
+- **Behavioural note, the one worth keeping from this session.** I asked *"where does this finding
+  get recorded"*. The owner ignored the filing question and asked **whether the rule was ever any
+  good**: *"neither of existing known scenarios relies on hiding and restoring widget with exactly
+  same text/cursor… the requirement as originally written is likely useless and batch-approved."*
+  Same disposition, better ground — and it is the third time this phase has gone this way. The
+  memory is *"defects get answered at design level"*; this is that, applied to a **documentation**
+  defect, which I had not seen it reach before. A wrong sentence about a rule is a reason to
+  re-examine the rule.
+- The owner also pre-authorised the honest outcome: *"if rationale is weak and decision is not
+  justified, tell it was by mistake but not fixed in release because cost of urgent repair outweighs
+  cost of failure."* Judged **not** weak — evidence below — so it is recorded as a retirement.
+- **Second correction to my framing:** I asked about a "line in decisions/changelog"; **no CHANGELOG
+  line is owed.** Preservation was never shipped — at the PR base the widget was rebuilt per
+  activation — so this is a design requirement not built, not a behaviour anyone could notice
+  changing. Stated in the decision so the next reader does not re-ask.
+- `design/spec/M2.md` out of scope by owner ruling: historical spec subslice, the period's analogue
+  of a roadmap row.
+
+**The premise was checked in code and holds, with one gap.** The only two `hide()` call sites in
+the tree — `maze_main.lua:126`, `draw_main.lua:233` — both abandon the prompt for a menu and
+**want** the clearing. Zero want restoration. But the owner's fallback (*"could be done in calling
+project (i hope we have accessors to get cursor position)"*) is **half available**: `get_cursor()`
+exists; **there is no content getter**. Surface is `show, hide, is_shown, get_cursor, set_cursor,
+set_text, configure, clear`.
+
+- Landed as `D-CFG-BOUNDARY`'s third *"what this changes for a project"* item (`b6394761`), which
+  quotes both frozen spec sentences **verbatim** so the record survives `wip/77`'s deletion.
+- The gap is **registered** (`2acd6a9e`) — *"PROPOSAL: a read-only content getter"*, BACKLOG,
+  unslugged. It had been cited as background in **three** unrelated entries and filed as none; the
+  three-unrelated-routes signature is what earned it the entry, not the third instance.
+- **So the ledger question answered itself, one level over.** The design-tree finding stays on the
+  row (subject and record die together); the thing that *did* belong in the permanent ledger was the
+  consequence for the **shipped surface**, which I had not separated from it when I asked.
+
+`FIX-02-22` closes. Next: `-25`.
