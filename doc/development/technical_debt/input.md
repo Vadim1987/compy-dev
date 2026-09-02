@@ -888,6 +888,38 @@ paid, or turned out not to be debt.
   runs them.
 - **Revisit:** Migrate or delete at will; not blocking anything.
 
+### PROPOSAL: a read-only content getter — the half of the save-it-yourself fallback that does not exist
+
+- **Status:** named by an owner ruling, 2026-09-02. **Not a commitment and not this release** —
+  recorded because the ruling *depends* on this gap being small, and a reader who meets the gap
+  later should find it already weighed rather than discover it as a surprise.
+- **The gap, exactly.** `compy.input` has `set_text` and nothing that reads content back.
+  `get_cursor()` exists, so a project can save and restore **the caret** across a `hide` → `show`
+  and cannot save and restore **the text**. Both reads are unavailable while hidden, so the save
+  has to happen before the `hide` either way.
+- **Why it is recorded now.** The ratified design required content restored across `hide` → `show`
+  (`../decisions/input.md`, D-CFG-BOUNDARY, *"Third, content is not preserved…"*). The owner retired
+  that requirement on the ground that no scenario needs it and a project that ever does can keep the
+  content itself. **That fallback covers the cursor and not the text**, which is the one soft spot in
+  an otherwise well-evidenced ruling — the two `hide()` call sites in the tree (`maze_main.lua:126`,
+  `draw_main.lua:233`) both abandon the prompt for a menu and want the clearing.
+- **It is a class, not an instance — three earlier mentions, none of them an entry.** The absence is
+  cited as a *supporting fact* inside `set_text`'s list branch does not split embedded newlines
+  (*"nothing could read it back … so there is no set/get round-trip"*), inside the `oneshot` →
+  `auto_hide` entry below it (*"nothing could read that draft back first"*, an entry `LEDGER-02` is
+  scheduled to vacuum), and in the roadmap's `BUG-02-01` row. Three unrelated routes reached the
+  same missing function and each treated it as background.
+- **The shape, if a consumer ever appears.** `compy.input.get_text()`, read-only, symmetrical with
+  `get_cursor`: `nil` while hidden rather than a warning, because a read of *"nothing to report"* is
+  not a refused mutation — the rule `get_cursor` already follows (D-ONE-STATE-ASK's neighbourhood,
+  `../internals/user_input.md`, *"Cursor manipulation and \"reset\""*).
+- **And explicitly not the alternative.** Restoring preservation across `hide`/`show` is a
+  content-**lifetime** rule that every call seating content would have to agree with; a getter is one
+  function that adds no rule. If this is ever paid, it is paid as the getter.
+- **What would have to be true first:** a project that hides a widget mid-session and needs the
+  user's half-typed text back. None exists in the tree or in the stakeholder ask, which is why this
+  is a proposal and carries no slug.
+
 ### PROPOSAL: if event-sourced held state is ever needed, it belongs to the framework
 
 - **Status:** owner's direction, 2026-08-11. **Not a commitment**, and explicitly not this

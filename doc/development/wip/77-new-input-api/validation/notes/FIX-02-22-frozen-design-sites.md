@@ -12,10 +12,11 @@ date: 2026-09-02
 `agents/validation.md` marks `design/` **read, never edit**, and amending it is owner-gated. The
 row's disposition is *"fix the documents"*; the persistent-corpus half is done
 (`decisions/input.md`, commit `f3a41997`) and the guide now states the rule
-(`doc/input_api.md`, `86f73731`). This note is the frozen half, for a ruling.
+(`doc/input_api.md`, `86f73731`). This note was the frozen half, written for a ruling.
 
-**The recommendation is to leave `design/` alone.** The reasoning is in §3 and it inverts the row's
-implied disposition, so it is stated as a proposal, not applied.
+**It has one, and `design/` is not amended** — §0. Sections 1–5 are kept as written, before the
+ruling: §3 is the case this note argued, and the owner's route in §0 is a different and better one.
+Reading them in that order is the point.
 
 ## 0. Owner ruling, 2026-09-02 — `design/` is not amended, on better grounds than §3's
 
@@ -43,7 +44,10 @@ scenario wants restoration: the only two `hide()` call sites (`maze_main.lua:126
 `draw_main.lua:233`) both abandon the prompt for a menu and want the clearing. The escape hatch is
 **half available** — `get_cursor()` exists, and there is **no content getter** on `compy.input`, so
 a project cannot save the text today. The ruling states that plainly and names the cheap repair (a
-read-only getter) rather than leaving it to be found.
+read-only getter) rather than leaving it to be found — and the repair is **registered**, as
+*"PROPOSAL: a read-only content getter"* in `doc/development/technical_debt/input.md` (BACKLOG,
+unslugged). It was already cited as a supporting fact inside three other places and had never been
+an entry of its own.
 
 ## 1. The inventory is larger than the row says — five sites, and two different claims
 
@@ -118,8 +122,9 @@ owner-gated edit rather than five. That is the fallback, not the recommendation.
 ## 4. What is left open by taking this route
 
 Nothing in the persistent corpus. The claim is corrected where it is read (`decisions/input.md`,
-`doc/input_api.md`), and the frozen sites keep the record of what was approved. **If the owner rules
-the other way**, the edit is five sites and two claims, not two sites and one — §1 is the list.
+`doc/input_api.md`), and the frozen sites keep the record of what was approved. **This is the route
+taken** — §0. Had it gone the other way, the edit was five sites and two claims, not two and one;
+§1 is that list, kept for the same reason the rest of this note is.
 
 ## 5. Two records in the implementation archive, deliberately untouched
 
