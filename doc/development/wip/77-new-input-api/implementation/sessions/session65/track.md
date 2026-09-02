@@ -152,6 +152,40 @@ withdrawn, `DEC-02` filed (`1a162e5a`).
 when a sweep reaches it. So the marker at `:462` is retained on purpose, names its slug, and
 `DEC-02-04` is what deletes it. Any pass over `doc/` markers that takes it early is a defect.
 
+## 2026-09-01 — `D-AUTO-HIDE` rewritten, and the principle reaches the second ledger
+
+**Owner framing:** `oneshot` was retired without stakeholder ratification (their interim call) and
+came back in a new shape covering widget behaviour rather than the nearest open-close cycle — so
+from a stakeholder's perspective it is **one decision: `auto_hide` replaces `oneshot`**. Rationale
+for the replacement kept short, naming the internal complexity without unpacking it.
+
+Done as `DEC-02`'s first instance (`d0f4e66c`): 132 lines → 77, five numbered statements in force
+instead of a decision diffed against itself over one day.
+
+**The cost that was not in the estimate: eleven citations.** Six named *"D-AUTO-HIDE's Amendment"*,
+four *"ruled edge N"* — across two production files, two specs, the internals doc and two retired
+debt entries. They cited the entry **as a diff**, because with the rule existing in two versions
+that was the only stable handle. **Self-arguing prose teaches the code to cite it that way**, which
+is what makes the class expensive rather than merely untidy; recorded on the goal and the row so
+`DEC-02-01` sizes the rest with it in view.
+
+**Then the owner extended the principle to the debt register** — *"introduced-then-paid never
+existed for the outer world"* — and asked for it **planned, not executed**. `LEDGER-02` +
+`T-NEVER-SHIPPED` (`e00784e4`).
+
+**The planning finding that shaped that row:** `FIX-02-05` already tests every retired debt entry
+against the PR base to verify its resolution claim, and **the same check answers whether the defect
+existed at the base**. So the enumeration exists; one pass feeds two consumers — `CHG-01-03` takes
+the pre-existing half into the CHANGELOG, `LEDGER-02` takes the other half out. The row enumerates
+nothing, and the hard ordering constraint is `FIX-02-05` first. **Look for the pass that already
+produces your input before filing one that re-derives it.**
+
+**Third category, written into the rule because a mechanical sweep gets it wrong:** mixed provenance
+keeps its entry and states only the half that shipped (`BUG-01-05` — a pre-existing bound our own
+wrappers made reachable on purpose). And the row says what it must **not** take: a pre-existing
+entry is `CHG-01-03`'s evidence, so deleting it would erase the record that this release fixed
+something users had met — the principle inverted by the sweep meant to serve it.
+
 **Where the sizing gap came from, since it will recur:** the spec sized by grepping `Decision N`.
 Three forms do not match that pattern — line-broken, plural, and bare back-reference. The last is
 the interesting one: it exists *because* of the plural, since the sentence unpacking a list drops
