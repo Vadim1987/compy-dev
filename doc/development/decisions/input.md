@@ -1796,7 +1796,7 @@ as authoritative; under names it dangles visibly and greps out.
 | Decision 13 | — | **removed**; the held-key arc, now `D-ASK-THE-DEVICE`, *"what it withdraws"* |
 | Decision 14 | `D-DEFACTO-KEPT` | |
 | Decision 15 | `D-UNKNOWN-RAISES` | |
-| Decision 16 | — | **removed**; superseded by `D-ONE-LIFETIME` and `D-BUTTON-TRIGGER`. What it ruled, and why the ruling fell, is in `D-ONE-LIFETIME`, *"what it reverses"* |
+| Decision 16 | — | **removed**; superseded by `D-ONE-LIFETIME` and `D-BUTTON-TRIGGER`, and it left nothing behind in the corpus |
 | Decision 17 | `D-BEHAVIOUR-TEST` | |
 | Decision 18 | `D-ONE-STATE-ASK` | |
 | Decision 19 | — | never existed; the sequence had a gap |
@@ -1820,10 +1820,11 @@ as authoritative; under names it dangles visibly and greps out.
 | Decision 37 | `D-PAYLOAD-SPLIT` | |
 | Decision 38 | `D-CONTENT-NORM` | |
 
-**The seven that map to nothing are archived**, not destroyed —
-`wip/77-new-input-api/validation/archive/decisions-vacuumed.md` holds the six vacuumed entries in
-full, and the overruled half of `D-AUTO-HIDE` beside them. It goes with the working tree; the
-mapping above is the part that stays.
+**The six that were vacuumed are archived**, not destroyed —
+`wip/77-new-input-api/validation/archive/decisions-vacuumed.md` holds them in full, and the
+overruled half of `D-AUTO-HIDE` beside them. (Seven rows map to nothing: Decision 19 is the
+seventh, and it never existed to archive.) The archive goes with the working tree; the mapping
+above is the part that stays.
 
 **Reading a `D-1`…`D-10` instead?** That is a different, dead namespace — the design-time ids from
 this subsystem's design phase, which lived only in the feature's working tree and never reached

@@ -279,6 +279,27 @@ paid, or turned out not to be debt.
 
 ## RETIRED
 
+### The crosswalk pointed at a section deleted two hours after it was written (RESOLVED, 2026-09-02)
+
+- **Where:** `../decisions/input.md`, the crosswalk's Decision 16 row and its closing
+  paragraph.
+- **The defect:** the row said *"What it ruled, and why the ruling fell, is in
+  `D-ONE-LIFETIME`, **"what it reverses"**"*. That section was added at `e9a3501a` and removed
+  at `cd1264da` when the owner refuted its premise — **two hours after the crosswalk cited
+  it**. The prose forty lines above the table meanwhile said the entry *"left nothing
+  behind"*, so the file contradicted itself. A second, smaller error sat in the closing
+  paragraph: *"the seven that map to nothing are archived"*, where six are — Decision 19
+  never existed to archive.
+- **Resolution:** the row states the supersession and nothing more; the closing paragraph
+  counts six and names the seventh.
+- **Why the removal pass did not catch it.** `agents/validation.md`'s rule — *when you rename
+  or remove a heading, grep `src/` and `tests/` for citations* — names **code**, and this was a
+  doc citing a doc. `cd1264da`'s own message concluded *"Nothing is lost"*.
+- **The sweep that does catch it, and it is cheap:** resolve every `*"section"*` citation in
+  `src/`, `tests/` and the persistent corpus against the set of **headings plus bold lead-ins**
+  — this corpus names sections both ways, and headings alone produce about forty false
+  positives. Run over the whole corpus it returned exactly one real orphan: this one.
+
 ### The decisions ledger is cited by number — PAID by the conversion to names (2026-09-01)
 
 - **Was `T-DEC-NUMBERED`.**
