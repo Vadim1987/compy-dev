@@ -30,7 +30,7 @@ owner and revisable, not a frozen mandate.
    prompt, files in its directory, and `git log`; note the reconstruction in your own track.
 5. Read the **FOUNDATION** documents (fixed pointers below) as far as the current prompt
    directs.
-6. Confirm the baseline: `busted tests` → expect **1048 / 0 / 0 / 10**. A different count is
+6. Confirm the baseline: `busted tests` → expect **1050 / 0 / 0 / 10**. A different count is
    a finding, not a go-signal — record it in track and raise it with the owner before proceeding.
    (The count moves as batches land — 815 through session ~15, 841 after Phase R, 854 after the
    session21 mop-up, 904 after session25, 923 after the session26 unification, 953 after the
@@ -73,6 +73,9 @@ owner and revisable, not a frozen mandate.
    **Session66 added none either**: the revalidation session65 owed, its nine findings executed or
    ruled, five owner rulings, and the `FIX-02` split — 1048 held across all ten of its commits, whose
    only `.lua` edit was a comment.
+   **1050 after session67**'s `FIX-02` half (a) — two cases in one new spec, `FIX-02-25`'s pinning
+   that the surface's accepted config keys and the widget's applied keys agree; its other seven rows
+   were documentation and ledger work and added none.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -347,7 +350,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session67/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session68/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
