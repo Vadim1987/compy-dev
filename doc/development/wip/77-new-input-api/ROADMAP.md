@@ -968,6 +968,13 @@ ledger's `D-SLUG` … declared first in the heading with the prose after"*.
 full, and it is a different job: this sprint is the numbers→names conversion, not a sectioning. The
 split took the structural half and nothing else; all six steps stand.
 
+**Archived retroactively, 2026-09-02.** `DEC-01-04`'s six deletions predate the move-to-archive
+mechanic (`ledgers.md` §2, *"Vacuuming is a move, not a deletion"*, owner 2026-09-02) and were
+recovered into [`validation/archive/decisions-vacuumed.md`](validation/archive/decisions-vacuumed.md)
+at `369b75e9`, together with `D-AUTO-HIDE`'s overruled half. **Nothing this sprint removed is gone**;
+it is out of the ledger and out of the release, which was the intent, and still readable while the
+working tree exists.
+
 **`DEC-01-04` (remove the four tombstones) needs no reconciling — owner-ruled 2026-08-27:**
 *"the need to vacuum retired decisions which were not stakeholder's is an obvious operational need;
 absence of a formal process should not prevent it from being ruled in place."* I had proposed
@@ -1038,7 +1045,7 @@ propose that alternative again?**
 |---|---|---|
 | DEC-02-01 | enumerate the passages: withdrawn rationales, superseded-in-part narration, and every mention of a name that never shipped | `D-AUTO-HIDE` is done; `D-ROUTE-LIFETIME` is the known remainder. **Re-derive rather than trust it**, and settle the open scope question on `T-ARGUES-INTERIM`: whether the debt register's `RETIRED` section is in scope |
 | DEC-02-02 | classify each against the two exclusions — baseline fact, stakeholder-ratified | **the judgement step**; a passage can be part keep, part cut |
-| DEC-02-03 | cut, preserving the facts identified at `-02` | one commit per entry, so the diff reads |
+| DEC-02-03 | **move** the cut passages to `validation/archive/decisions-vacuumed.md`, preserving the facts identified at `-02` in the live entry | one commit per entry, so the diff reads. **Vacuuming is a move, not a deletion** (`ledgers.md` §2) — `D-AUTO-HIDE`'s overruled half is already there as the worked example |
 | DEC-02-04 | remove the `REMARK` at `decisions/input.md` that raised this, **and only now** | owner, 2026-09-01: a marker goes when its defect is solved, not when a sweep reaches it |
 
 **Placement — after `FIX-03`, before `DOC-01`**, the same argument that placed `DOC-01`: `FIX-03`'s
@@ -1078,8 +1085,8 @@ explicitly — so roughly half carry the answer in their own text.
 | id | step | note |
 |---|---|---|
 | LEDGER-02-01 | take `FIX-02-05`'s base-check classification | **do not re-derive it**; re-deriving is how one check becomes two walks that disagree |
-| LEDGER-02-02 | vacuum the introduced-and-paid entries | `T-ONESHOT` and `T-ONESHOT-SCOPE` are known members — the arc `D-AUTO-HIDE` was rewritten to drop |
-| LEDGER-02-03 | **mixed provenance: rewrite to the half that shipped** | the judgement step. `BUG-01-05` is the worked example — a pre-existing bound our own wrappers made reachable on purpose. Keep the entry, state the pre-existing half, drop the drafting note |
+| LEDGER-02-02 | **move** the introduced-and-paid entries to `validation/archive/debt-vacuumed.md` | `T-ONESHOT` and `T-ONESHOT-SCOPE` are known members — the arc `D-AUTO-HIDE` was rewritten to drop. A second archive file beside the decisions one, same contract: nothing in it rules anything, and it leaves the release with `wip/` |
+| LEDGER-02-03 | **mixed provenance: rewrite to the half that shipped**, archiving the half that did not | the judgement step. `BUG-01-05` is the worked example — a pre-existing bound our own wrappers made reachable on purpose. Keep the entry, state the pre-existing half, drop the drafting note |
 | LEDGER-02-04 | run the same test over `CHANGELOG.md` | **expected yield may be zero**, and it is worth the ten minutes: a changelog line for something introduced and removed inside the branch is news about nothing. Stated as a check, not as a fix |
 
 **Why it is not `FIX-03`.** That sweep uses the same base check, and the overlap is real — but it
