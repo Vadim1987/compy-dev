@@ -263,7 +263,7 @@ The gateway (`love.handlers.*`) routes on the **active route** and nothing else:
 
 **One lifetime for every channel the project route occupies.** Keyboard, text,
 pointer and the derived clicks are installed together at run start
-(`occupy_keyboard`) and released together at the project's stop, when
+(`occupy_input`) and released together at the project's stop, when
 `stop_project_run` reinstalls the console's own handlers through
 `set_default_handlers`. The `'running'` → `'project_open'` transition releases
 nothing: a non-blocking project that returns (no `update`/`draw` hooked) drops
@@ -272,7 +272,7 @@ any pointer hook keep working.
 
 `Controller.release_keyboard_route` exists for one case only — defensive cleanup
 when a project raises at top level (`consoleController.lua`, `run_project`'s
-failure branch). `occupy_keyboard` is only reached after a successful top-level
+failure branch). `occupy_input` is only reached after a successful top-level
 run, so in that branch there is usually nothing to disconnect; it is not a step
 of the normal lifecycle.
 

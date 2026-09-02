@@ -717,12 +717,16 @@ Controller = {
   ----------------
   ---  public  ---
   ----------------
-  --- Hand keyboard/text back to the console at the moment a
-  --- project's code finishes running but the project stays open
-  --- (the 'running' -> 'project_open' state change —
-  --- doc/development/decisions/input.md, D-ROUTE-LIFETIME).
-  --- Pointer handlers stay hooked until the project stops (same
-  --- decision).
+  --- Defensive cleanup after a project raises at top level:
+  --- deactivate the route, hand the keyboard channels back to
+  --- the console, empty the derived click slots. The caller
+  --- pairs it with clear_user_handlers for the rest.
+  --- NOT a lifecycle step, despite the name: the
+  --- 'running' -> 'project_open' transition releases nothing,
+  --- and every channel shares ONE lifetime that ends at the
+  --- project's stop (doc/development/decisions/input.md,
+  --- D-ROUTE-LIFETIME as amended — the keyboard-only release
+  --- and the pointer exemption it forced are both gone).
   --- @param CC ConsoleController
   release_keyboard_route = function(CC)
     Controller.project_input:deactivate()
@@ -903,7 +907,7 @@ Controller = {
       -- This is `love.handlers.keypressed`, the raw
       -- event-pump entry; `love.keypressed` below holds the
       -- active route's handler (console via
-      -- set_love_keypressed, project via occupy_keyboard).
+      -- set_love_keypressed, project via occupy_input).
       -- Forwarding = invoke whichever route is installed.
       -- Widgets are reached inside the route, never gated
       -- here. (Mirrors stock LÖVE's love.handlers[name] ->

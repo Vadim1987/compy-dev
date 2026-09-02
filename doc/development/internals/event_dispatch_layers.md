@@ -78,11 +78,12 @@ again on every project teardown: `src/controller/consoleController.lua:1033` and
 `stop_project_run` call at `:1130`.
 
 During a project **run**, the project route takes `love.keypressed` (and the other event handlers)
-away from the console instead, via `occupy_keyboard` (`controller.lua:234-297`).
+away from the console instead, via `occupy_input` (`controller.lua`).
 `set_default_handlers` is what takes it back on stop — it is the console's own restore operation,
-not a general-purpose "reset everything" call. The `controller.lua:974-982` comment states this
-explicitly at the Layer-1 forwarding site: *"`love.keypressed` below holds the active route's
-handler — console via `set_love_keypressed`, project via `occupy_keyboard`."*
+not a general-purpose "reset everything" call. The comment on `love.handlers.keypressed`
+(`controller.lua`) states this explicitly at the Layer-1 forwarding site: *"`love.keypressed` below
+holds the active route's handler — console via `set_love_keypressed`, project via
+`occupy_input`."*
 
 ---
 
@@ -109,17 +110,23 @@ Compy-specific sense of *handler* to collide with it — the input API's vocabul
 What does need saying is what happens to a project's own `love.*` functions, because a project
 author writing them believes they are installing handlers:
 
-> REMARK: this needs actualization, because the routing was recently unified and there's no more artificial divergence between keyboard/pointer?
-- **keyboard and text** (`keypressed`, `keyreleased`, `textinput`) — captured from the project's
-  sandboxed `love` table and **seeded as `compy.input.hooks[event]`** (D-HOOKS-SEEDED), once, at
-  activation. They run in hook position inside the route's walk, with hook semantics: a truthy
-  return consumes. They are never installed as `love.<event>`; the route owns that. Writing
-  `compy.input.hooks.textinput = f` directly is the same thing said plainly, and is the
-  encouraged form.
-- **pointer** (`mousepressed`, `mousemoved`, …) — installed as the **actual** `love.<event>`
-  handlers (`hook_pointer`), error-wrapped, return value discarded. Here "handler" keeps its
-  literal meaning and nothing is demoted.
+**Every channel is treated the same way, and that is the whole answer.** Keyboard and text
+(`keypressed`, `keyreleased`, `textinput`), pointer (`mousepressed`, `mousemoved`, …) and the
+derived clicks (`singleclick`, `doubleclick`) are all captured from the project's sandboxed `love`
+table and **seeded as `compy.input.hooks[event]`** (D-HOOKS-SEEDED), once, at activation, off one
+channel list (`_bindable`). They run in hook position inside the route's walk, with hook semantics:
+a truthy return consumes. None of them is installed as `love.<event>`; the route owns that. Writing
+`compy.input.hooks.textinput = f` directly is the same thing said plainly, and is the encouraged
+form.
 
-So the two channels answer the question differently, and that asymmetry is carried in
-[`../technical_debt/input.md`](../technical_debt/input.md) ("Pointer delivery is an unstructured
-broadcast, not a chain"; Standing: "Future input unification") rather than resolved here.
+So a project author's `love.mousepressed` is demoted to a hook exactly as their `love.keypressed`
+is, and "handler" keeps its literal meaning for neither.
+
+**Two pointer questions are still open, and neither is an install asymmetry:** whether a shown
+widget should consume clicks **within its bounds** automatically — nothing does bounds checks, so
+the chain gives a project the means to decide rather than deciding for it — and whether a pointer
+*combo* vocabulary is wanted, a modifier plus a button, pointer having no shortcuts tier and
+entering the walk at the hook tier. Both are recorded as deliberately open under
+[`../technical_debt/input.md`](../technical_debt/input.md), *"Pointer delivery is an unstructured
+broadcast, not a chain"* — an entry whose heading reads RESOLVED because the broadcast itself was
+resolved: pointer joined the one chain (`../decisions/input.md`, D-ONE-LIFETIME).
