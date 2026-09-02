@@ -8,7 +8,7 @@ the sequence**. Updated 2026-08-30.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 } → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-02 → REC-01 → MERGE-01 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 · CHG-01 } → REC-01 → MERGE-01 → ACC-02 → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-03 → PR-01**
 
 | stage | what it is | why it sits here |
 |---|---|---|
@@ -24,9 +24,10 @@ the sequence**. Updated 2026-08-30.
 | **DEC-02** | the decisions ledger stops arguing with an interim past that never shipped | **owner, 2026-09-01**, promoted from a `REMARK` in the ledger to a rule in `agents/rules/ledgers.md`. `DEC-01` vacuumed the retired *entries*; this vacuums dead *prose inside live ones*. It sits here for `DOC-01`'s reason and is **not** `FIX-03`: that sweep matches subjects absent at base and today, and a rule's withdrawn version is not an absent subject |
 | **LEDGER-02** | the debt register stops keeping defects that never existed outside the branch | **owner, 2026-09-01**, extending `DEC-02`'s principle to the second ledger: *introduced-then-paid never existed for the outer world.* It sits beside `DEC-02` because it is the same rule on a different register, and **after `FIX-02-05`**, which already produces the classification it needs |
 | **DOC-01** | the documentation compaction sweep — one deliberate pass over the stabilised prose corpus | **owner, 2026-09-01**, restoring a step the roadmap had scheduled for comments only. It runs **after** `FIX-03` because that sweep's deletions are *mechanical* (subject absent at base and today) and shrink the floor this one exercises judgement over, and **before** `ACC-02` because a cold reviewer should read the prose that ships, not the prose that was being written |
-| **ACC-02** | human acceptance — a second cold review, then the smoke passes on real hardware | the first row that needs a keyboard and a device; everything before it is desk work |
-| **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain |
-| **MERGE-01** | upstream reconciliation — actually merge | 🟡 platform repo **done** (`f4913833`); `maze`, `keyboard`, `balloons` remain |
+| **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain. **Moved ahead of `ACC-02`, owner 2026-09-02** — the smoke passes exercise those repos, so merging into them afterwards smokes a tree that then changes |
+| **MERGE-01** | upstream reconciliation — actually merge | 🟡 platform repo **done** (`f4913833`); `maze`, `keyboard`, `balloons` remain. Same move, same reason |
+| **ACC-02** | **the device passes** — smoke on real hardware | **moved ahead of the prose rows, owner 2026-09-02.** It is the last thing that can find a *runtime* defect, so everything after it is cheap to redo and nothing after it is done twice |
+| **ACC-03** | **the cold read** — a second cold PR review over the finished tree, then the slice-readiness pass | **stays late**, on the 2026-09-01 placement of `DOC-01`: a cold reviewer should read the prose that ships, not the prose that was being written |
 | **PR-01** | assembly — the shipping slice cut, the description, the coordinated PRs | last by construction: a slice regenerated before the tree stops moving is regenerated twice |
 
 *The ordering principle throughout is **blast radius, not severity** — anything that can reveal more
@@ -1101,7 +1102,7 @@ pre-existing half of any mixed entry. Deleting either would remove the record th
 
 ---
 
-## ⬜ DOC-01 — the documentation compaction sweep — **runs after FIX-03, before ACC-02**
+## ⬜ DOC-01 — the documentation compaction sweep — **runs after FIX-03, before ACC-03**
 
 **Restored by the owner, 2026-09-01**, when this pass reported that the compaction step the volume
 ruling relies on was scheduled for **comments** only (`agents/rules/commenting.md`, *"Where this is
@@ -1148,24 +1149,53 @@ into this pass; `DOC-01` is taken once and what follows it stands as written.
 
 ---
 
-## ⬜ ACC-02 — human acceptance — **blocked on the six sprints**
+## ⬜ ACC-02 — the device passes — **runs after MERGE-01, ahead of the prose rows**
+
+**Split from the old single `ACC-02`, owner 2026-09-02**, and moved ahead of `FIX-03`/`DEC-02`/
+`LEDGER-02`/`DOC-01`. The cold review is now `ACC-03`. Crosswalk at the end of this section.
+
+**Why the split rather than moving the row whole.** The old row bundled two activities with
+**opposite** ordering requirements. The device passes find *runtime* defects, so they want to run
+early — everything downstream of them is prose, and prose is cheap to redo. The cold review reads
+the docs, so it wants to run late, on the prose that ships. Moving the row whole would have got one
+of the two right and reversed the owner's own 2026-09-01 placement of `DOC-01`. Splitting gets both.
+
+**And it fixes an inversion nobody had noticed.** `ACC-02-02/03/04` smoke `balloons`, `keyboard` and
+`maze`; `MERGE-01-01/02/03` merge upstream **into those same repos**. As sequenced before today the
+smoke ran first, so either its result was stale or the passes were run twice — the exact waste this
+row's own preamble exists to prevent. **`REC-01` and `MERGE-01` now precede it.**
 
 Runs only once the tree is fixed. Every row costs owner time; re-running them against a tree about
 to change is what this ordering exists to prevent.
 
 | id | step | note |
 |---|---|---|
-| ACC-02-01 | **a second cold PR review**, over the fixed tree | before any keyboard time |
-| ACC-02-02 | `balloons` smoke | **first** — 5 ahead / 0 behind, the one result recon cannot invalidate |
-| ACC-02-03 | `keyboard` smoke | the review could not check `4c`'s timing — run this one carefully |
-| ACC-02-04 | `maze` + `draw` smoke | **against `newinput-edge`** — `da9d1c2` is on that branch only |
-| ACC-02-05 | `sapper` smoke | **section C is expected to fail** — P19's accepted defect, described in the list |
-| ACC-02-08 | `turtle` smoke | **added 2026-08-30** — `FEAT-02` put its prompt lifecycle on `auto_hide`, so the game no longer closes the widget itself. In-repo, so **run it beside `ACC-02-05`**; numbered out of execution order for the reason `FIX-02-20` records. List: `doc/development/smoke_checklists.md`, *"turtle"* |
-| ACC-02-06 | slice regeneration, if the passes moved anything | |
-| ACC-02-07 | owner's readability review of the slices | |
+| ACC-02-01 | `balloons` smoke | **first** — 5 ahead / 0 behind, the one result recon cannot invalidate |
+| ACC-02-02 | `keyboard` smoke | the review could not check `4c`'s timing — run this one carefully |
+| ACC-02-03 | `maze` + `draw` smoke | **against `newinput-edge`** — `da9d1c2` is on that branch only |
+| ACC-02-04 | `sapper` smoke | **section C is expected to fail** — P19's accepted defect, described in the list |
+| ACC-02-05 | `turtle` smoke | `FEAT-02` put its prompt lifecycle on `auto_hide`, so the game no longer closes the widget itself. In-repo, so **run it beside `ACC-02-04`** |
 
 Lists: [`doc/development/smoke_checklists.md`](../../smoke_checklists.md). **Tag every green pass**
 (`TAGS.md`, round 2) so "it passed" names a commit.
+
+**If a pass moves code, the rows after it are unaffected** — that is the whole point of the move.
+What it does affect is `ACC-03`'s cold read and the slice cut, both of which come later by design.
+
+**Crosswalk (split + renumber, 2026-09-02).** No `ACC` id appears in `src/` or `tests/`, so
+`agents/rules/roadmap.md` §2's renumber branch applies. Earlier prompts, notes and commit messages
+carry the old ids.
+
+| was | is | step |
+|---|---|---|
+| `ACC-02-01` | **`ACC-03-01`** | second cold PR review |
+| `ACC-02-02` | **`ACC-02-01`** | `balloons` smoke |
+| `ACC-02-03` | **`ACC-02-02`** | `keyboard` smoke |
+| `ACC-02-04` | **`ACC-02-03`** | `maze` + `draw` smoke |
+| `ACC-02-05` | **`ACC-02-04`** | `sapper` smoke |
+| `ACC-02-08` | **`ACC-02-05`** | `turtle` smoke — filed out of order, now in it |
+| `ACC-02-06` | **`ACC-03-02`** | slice regeneration, if anything moved |
+| `ACC-02-07` | **`ACC-03-03`** | owner's readability review of the slices |
 
 **One example changed reachability and deliberately gets no row (checked 2026-08-31).** The
 `BUG-01-09` fix reaches `tixy` — `load_example` calls `compy.input.set_text(body)` with a raw
@@ -1180,7 +1210,31 @@ reachability finds the check instead of re-running it.
 
 ---
 
+
+
+---
+
+## ⬜ ACC-03 — the cold read — **runs after DOC-01, immediately before PR-01**
+
+**Split from `ACC-02`, owner 2026-09-02.** This is the half that must read **the prose that ships**,
+which is `DOC-01`'s placement argument of 2026-09-01 and the reason the split exists rather than a
+wholesale move.
+
+| id | step | note |
+|---|---|---|
+| ACC-03-01 | **a second cold PR review**, over the finished tree | the tree is fixed *and* the prose is final by the time this runs — the first cold review (`ACC-01-02`) had neither |
+| ACC-03-02 | slice regeneration, if anything moved | `ACC-02`'s device passes are the likeliest thing to have moved something |
+| ACC-03-03 | owner's readability review of the slices | |
+
+**What it inherits from the reordering:** everything upstream of it can no longer move code except
+by its own findings, so a defect it raises is a late defect by construction and is weighed as one.
+
 ## 🟡 REC-01 — upstream reconnaissance — *discovery, not release* — **PARTIALLY COMPLETE (Session 55)**
+
+**Moved ahead of `ACC-02`, owner 2026-09-02.** Its remaining half is the three example repos, and
+`ACC-02` smokes those same repos — merging into them afterwards smokes a tree that then changes.
+Everything downstream of `ACC-02` is prose, so this is now the last pair of rows that can move code
+without being prompted by a finding.
 
 **Renamed from "recon" and lifted out of the release path (owner, 2026-08-26)**, because it is not
 release work: it measures **86+ commits** of drift we currently cannot see, and if upstream moved in
@@ -1211,6 +1265,11 @@ PR.
 
 **Mechanic, standing:** pull each upstream into **its own branch**; never merge into the working
 branch as the first move.
+
+**Moved ahead of `ACC-02`, owner 2026-09-02**, with `REC-01` and for the same reason: `-01`, `-02`
+and `-03` change the very repos `ACC-02` smokes. **`MERGE-01-04` is already done**, so what moves is
+only the example half — the platform tree is not touched again, and the platform slice cut is
+unaffected either way.
 
 ## ⬜ PR-01 — assembly
 
