@@ -1376,6 +1376,21 @@ changes.
 
 ## RETIRED
 
+### The guide led with the hand-written close and offered `auto_hide` as an afterthought (RESOLVED, 2026-09-02)
+
+- **Where:** `../../input_api.md`, *"The input widget — opening it and changing it"*.
+- **The defect:** *"To close it after a submit, make that choice explicit"* followed by
+  `after_submit = hide`, with *"Or pass `auto_hide` and let `show` do it"* trailing it. Nothing
+  false — but `FEAT-01`/`FEAT-02` made `auto_hide` the recommended form, and a reader following the
+  guide's own ordering writes the superseded idiom. **A recommendation drifts by staying still
+  while the surface moves**, which is why no grep for a wrong statement would have found it.
+- **Resolution:** the paragraph leads with `auto_hide` and keeps the hand-written form as what the
+  key *does* — it is still the anchor the *"Asking one question"* section uses to predict the
+  edges, so it could not simply be deleted.
+- **Found by the owner reading the guide**, not by any planned row: `FEAT-01-05` and `FEAT-02-04`
+  each documented the new key and neither re-read what the old idiom's own paragraph now implied.
+  **Adding a surface does not re-rank the advice around it** — worth carrying into `DOC-01`.
+
 ### The deviation justifications live only in the PR description — NOT DEBT, the premise was false (2026-09-01)
 
 - **Was `T-DEVIATION-WHY`**, filed and refuted the same day.

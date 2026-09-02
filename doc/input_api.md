@@ -256,16 +256,16 @@ machinery that happens to run at submit time: re-arming a prompt, clearing the
 field, closing something. Following it costs nothing and buys a reader of your
 project one less question; ignoring it breaks nothing.
 
-The input widget remains shown by default. To close it after a submit, make that
-choice explicit:
+The input widget remains shown by default. To close it after a submit, pass
+`auto_hide = true` — that is the form to reach for, and it is covered in
+*"Asking one question"* below. Written by hand it is one callback, worth seeing
+because it is exactly what the key does:
 
 ```lua
 compy.input.callbacks.after_submit = function()
   compy.input.hide()
 end
 ```
-
-Or pass `auto_hide` and let `show` do it — see below.
 
 Escape first runs `before_cancel()`. A truthy return vetoes the
 cancel. Otherwise it clears the field and calls `after_cancel()`; it also
