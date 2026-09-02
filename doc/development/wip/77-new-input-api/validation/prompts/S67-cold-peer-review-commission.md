@@ -32,8 +32,9 @@ stated justifications and are exactly the claims you are testing.
   the session booted under, including its standing constraints. **Judge against this.**
 - `doc/development/wip/77-new-input-api/ROADMAP.md` — `FIX-02`'s section, especially the
   "Execution order" note and the rows marked complete.
-- The commit range **`4a0b4dd0..HEAD`** — 25 commits. `git log`, `git show`, `git diff` are your
-  primary instruments.
+- The commit range **`4a0b4dd0..874411f5^`** — 25 commits. `git log`, `git show`, `git diff` are
+  your primary instruments. (`874411f5` itself only commits *this* commission file and is not part
+  of the work under review. Do not use `..HEAD`: HEAD moves as the parent session works.)
 - The files the work landed in, as they now stand.
 - `agents/rules/ledgers.md`, `agents/rules/roadmap.md`, `agents/rules/commenting.md` where a
   commit claims to be following one.
@@ -59,8 +60,16 @@ retired; two filed; one owner ruling recorded as a decision.
    whether the session redefined the row to match what it did.
 3. **Did anything get missed the same way the session says other passes missed things?** It
    repeatedly found that a claim survived in one more place than a row named. Look for a survivor
-   it did not find — in `doc/`, `src/`, `tests/`, the planning tree, and the nested example repos
-   under `src/examples/`. **Search where the citations are, not only where the code is.**
+   it did not find. **Search where the citations are, not only where the code is** — the ground
+   worth sweeping is `doc/`, `src/controller/`, `src/model/`, `src/view/`, `tests/`, and the
+   roadmap and `validation/` trees.
+
+   **Scope every search; do not recurse from `/repo` root.** A bare `grep -r <pattern> .` there
+   walks 63 MB of `.git`, 28 MB of binary assets under `src/assets/`, a tarball, and five nested
+   repositories. Prefer **`git grep`** — it respects the index and is bounded — or `grep -r` with
+   an explicit directory and `--include='*.lua' --include='*.md'`. The nested example repos
+   (`src/examples/{balloons,keyboard,maze}`) are in scope for their `.lua` and `.md` files only,
+   via `git grep` run inside each; never as a whole-tree walk.
 4. **Are the ledger moves right?** Three entries moved ACTIVE → RETIRED. Does each resolution
    actually resolve the entry as filed? Were the slug citations swept — and did the sweep miss
    any? Is `ACTIVE` legitimately empty, or was something retired that should not have been?
@@ -111,6 +120,20 @@ which claims are now load-bearing. Rank findings by blast radius, not by how int
 
 ## Rules that apply to you
 
+- **You are a LEAF agent. Do not spawn sub-agents — do not use the `Agent` task tool at all**, for
+  any part of this, including "just to search". Work the seven questions **yourself, one at a time,
+  sequentially**.
+
+  This is a hard operational limit, not a style preference. This container has **2 CPUs and 3.8 GB
+  of RAM, no swap, and no cgroup memory ceiling**, so it can consume its host; concurrent agent
+  contexts in a single process have **twice** taken that host down hard enough to require a power
+  cycle, killing the review before it wrote a line. Nothing here needs parallelism — every
+  operation this commission asks for is sub-second: the whole range diff is 3074 lines, `git grep`
+  at the base rev takes 0.36 s, the suite takes 2.3 s. If the job feels too large to do alone, say
+  so in the deliverable and stop. **Do not delegate it.**
+- **Query `lua-lsp` serially.** It is one shared `lua-language-server` process indexing the whole
+  workspace, not a per-query worker. One request at a time, and `sleep 1` after any `.lua` edit
+  before the next query.
 - **Do not edit any file** except your one deliverable. If you mutate a file to test something,
   restore it and say so.
 - **Do not `git add`, `git commit`, or `git push`.**

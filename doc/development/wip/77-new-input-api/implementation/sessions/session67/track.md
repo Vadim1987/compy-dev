@@ -282,3 +282,36 @@ the cell was written by someone who could only grep the obvious form.
 
 Half (a) remaining: `-05` (the big ledger audit) → `-17` → `CHG-01`, then the `smoke_checklists.md`
 slice of `-09`.
+
+## 2026-09-02 — the cold peer review took the host down, twice
+
+Spawned the peer reviewer at 20:09 and again at 22:24 (after the crash forced a `/compact`). **Both
+took the host to 100% CPU, max disk read and swapping within ~20 seconds**, needing a hard reboot.
+Neither wrote a line; the second cost this session its context. Owner asked for a diagnosis before
+any further spawn.
+
+- **The review's workload is innocent.** Measured every operation the commission prescribes: range
+  diff 3074 lines, `git log -p` 4269, `git grep` at base 0.36 s, suite 2.3 s.
+- **The control settles it.** Three spawns this session, identical but for the model: the `sonnet`
+  mermaid audit ran 9 minutes and returned; both `opus` peer reviews died at ~16 s and ~22 s.
+- **No ceiling anywhere.** `memory.max`/`cpu.max` = `max`; 2 CPUs, 3819 MB, no swap, Node heap limit
+  2006 MB. A process climbing toward a 2 GB ceiling on a 3.8 GB box gives precisely the reported
+  triad — GC thrash, RSS past RAM, swap-in reads.
+- **Leading hypothesis, explicitly unproven** (no sidechain records survived, `dmesg` blocked):
+  recursive agent fan-out. `general-purpose` has `Tools: *` **including `Agent`**, and my spawn
+  message said *"a spawned agent inherits none of the repo's CLAUDE.md"* and then restated only the
+  LSP, git and suite rules — **omitting sub-agent hygiene**, i.e. the very rule against
+  parallelising. Seven independently-scoped questions is a fan-out shape.
+
+**The self-inflicted part is the lesson.** Declaring the repo's rules inapplicable and restating a
+subset is a licence to do anything unrestated. I restated the constraints on the reviewer's
+*conclusions* and none on its *behaviour*.
+
+Hardened the commission: leaf-agent rule (no `Agent` tool, questions worked sequentially, reason
+stated), serial `lua-lsp` use, scoped searches (never recurse from `/repo` root — 63 MB `.git`,
+28 MB `src/assets`, five nested repos), and the commit range pinned to `4a0b4dd0..874411f5^`.
+
+Diagnosis and evidence: `validation/notes/S67-subagent-host-crash.md`. **The container limit itself
+is unfixed and is the owner's call** — the compose stack under `implementation/docker`, not the
+older `claude.sh` I first named. Until then the prompt guardrails are the only protection, and they
+rely on a sub-agent obeying them.
