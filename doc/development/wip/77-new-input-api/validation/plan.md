@@ -319,7 +319,7 @@ code. Then TF2 resumes.
 >   of the delivered solution against the original stakeholder ask, producing the satisfied /
 >   deviated split and hunting scaffolding-suspects under the heading *Vocabulary*. It was performed
 >   by a reviewer with **no stake in the work**, which B — a self-check — could not have been.
->   `ACC-02-01` repeats it over the fixed tree.
+>   `ACC-03-01` (was `ACC-02-01`) repeats it over the fixed tree.
 > - **C2 — the disposition table — emerged as the defect register.** Every finding mapped to a
 >   disposition and a sprint row, in `../reviews/ACC-01-02-findings-triage.md`. Ids instead of
 >   principle-mappings; the same function.
@@ -455,15 +455,12 @@ and FIX-02 (13). Two are already closed and stay visible so the count reconciles
 device or reading slices, and re-running them against a tree that is about to change is the
 sitting-time this ordering exists to protect.
 
-| id | step | state |
-|---|---|---|
-| **ACC-02-01** | **A second cold PR review**, over the fixed tree — before the owner touches a keyboard (owner, 2026-08-26) | re-runs the ACC-01-02 method |
-| **ACC-02-02** | `balloons` smoke | list written 2026-08-26 |
-| **ACC-02-03** | `keyboard` smoke | list exists, anchors refreshed. **Read the review's "could not check": `4c` is a behavioural rewrite whose correctness depends on timing it could not observe** |
-| **ACC-02-04** | `maze` + `draw` smoke | list exists, gap closed (B11, D8, D9) |
-| **ACC-02-05** | `sapper` smoke | list written 2026-08-26 |
-| **ACC-02-06** | Slice regeneration — the **third** cut, if the smoke passes moved anything | after the passes |
-| **ACC-02-07** | Owner's readability review of the slices | last in ACC |
+**The rows live in [`../ROADMAP.md`](../ROADMAP.md)** — `ACC-02` (five device passes) and `ACC-03`
+(the cold read, the slice regeneration, the readability review), with the split's crosswalk from
+every id this table used to carry. They are **not repeated here**: a schedule kept in two places is
+the second-timeline failure `agents/rules/roadmap.md` §1 exists to prevent, and this table drifted
+into exactly that — after the 2026-09-02 split each of its seven ids still resolved, to a different
+pass. What stays here is the reasoning the roadmap does not carry:
 
 **Order by upstream sensitivity.** `balloons` first: 5 ahead / 0 behind `origin/main`, the only repo
 with no divergence to reconcile, so its result is the one recon cannot invalidate. **`maze` runs
@@ -530,7 +527,7 @@ treat as already done. Spec:
 **FIX-01 stays as it is** — citations, session numbers, the editorial marker list. Different batch,
 different source; merging them would lose that.
 
-#### ACC-02-04 carries a coverage gap, found 2026-08-26
+#### ACC-02-03 — `maze` — carries a coverage gap, found 2026-08-26
 
 **`maze`'s reconciliation brought in a whole upstream game and a new input mechanic, and one of
 them is unexercised.** Between the old upstream point (`12f675f6`, 2026-05-25) and the base maze
@@ -563,7 +560,7 @@ The checklist covers `draw` (§A runs in both). The buffer is input-driven in ex
 `inputStale`, the held-key filter this branch deleted, and the game raised on the first glyph —
 textually clean, semantically broken, and no hunk touched both files. The plan buffer likewise
 reasons about *"tracking which keys are down"*, which is what session35 dissolved. **Add rows for
-Track 2 before running ACC-02-04.**
+Track 2 before running ACC-02-03.**
 
 > **SUPERSEDED 2026-09-02 (owner) — the merges now run BEFORE the smoke.** *"We are accelerating
 > now, so there is no point in having two separate sessions of smoke testing and defect fixing just

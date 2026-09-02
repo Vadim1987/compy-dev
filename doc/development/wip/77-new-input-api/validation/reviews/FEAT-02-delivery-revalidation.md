@@ -193,7 +193,9 @@ CHANGELOG and the ledger upkeep"* in the present tense and **no hash**, though i
   `T-MERMAID-MODEL` opened with a Revisit trigger that resolves (`FIX-02-24`). All 25 roadmap ids
   cited from the persistent corpus and code resolve in `ROADMAP.md`. `FIX-02-24` and `ACC-02-08` are
   both numbered out of execution order and **both carry the note licensing it**, citing
-  `FIX-02-20`'s reasoning at `:688`, which exists and says what they claim.
+  `FIX-02-20`'s reasoning at `:688`, which exists and says what they claim. *(`ACC-02-08` became
+  `ACC-02-05` at the 2026-09-02 acceptance split and is now in execution order; the finding above
+  is left as it was recorded.)*
 - **Comment gate.** `grep -rnE 'INTERIM|REMARK|^[[:space:]]*--(->|>)' src/ tests/` returns **nothing**
   (excluding the nested example repos). No `wip/` path is cited from any `.lua` file.
 - **Scope discipline — all three extras belong, and the judgement is stated either way.**

@@ -1184,7 +1184,7 @@ to change is what this ordering exists to prevent.
 |---|---|---|
 | ACC-02-01 | `balloons` smoke | **first** — 5 ahead / 0 behind, the one result recon cannot invalidate |
 | ACC-02-02 | `keyboard` smoke | the review could not check `4c`'s timing — run this one carefully |
-| ACC-02-03 | `maze` + `draw` smoke | **against `newinput-edge`** — `da9d1c2` is on that branch only |
+| ACC-02-03 | `maze` + `draw` smoke | **against `newinput-edge`** — `da9d1c2` is on that branch only. **Track 2 rows first**: `validation/plan.md`, *"`ACC-02-03` — `maze` — carries a coverage gap"* |
 | ACC-02-04 | `sapper` smoke | **section C is expected to fail** — P19's accepted defect, described in the list |
 | ACC-02-05 | `turtle` smoke | `FEAT-02` put its prompt lifecycle on `auto_hide`, so the game no longer closes the widget itself. In-repo, so **run it beside `ACC-02-04`** |
 

@@ -279,6 +279,28 @@ paid, or turned out not to be debt.
 
 ## RETIRED
 
+### A renumber shipped its crosswalk without the sweep, and five citations resolved to the wrong pass (RESOLVED, 2026-09-02)
+
+- **Where:** the feature's working tree — `validation/plan.md` (the duplicated `ACC-02`
+  table, the coverage-gap heading and its instruction), `validation/outcomes/
+  BUG-01-03-turtle-fix-peer-review.md`, `validation/reviews/FEAT-02-delivery-revalidation.md`.
+- **The defect:** the 2026-09-02 acceptance split renumbered the smoke passes. `ACC-02-04`
+  had been `maze` + `draw` and became `sapper`, so *"add rows for Track 2 before running
+  `ACC-02-04`"* — a **standing instruction** about an unexercised upstream mechanic — came to
+  name a different repo's pass. Nothing dangled and no grep complained, which is
+  `../../../agents/rules/roadmap.md` §5's second failure mode: *a citation that still
+  resolves, to a heading that no longer means what it did.*
+- **The rule it fails is §2's own cheap branch:** *"renumbering is cheap. Ids live in a
+  handful of planning documents; **sweep them**, ship the crosswalk, done."* The crosswalk
+  shipped; the sweep did not. The blast radius had been measured as *"no `ACC` id appears in
+  `src/` or `tests/`"* — true, and the wrong question, because **planning ids are cited from
+  plans** (`ledgers.md` §3 says so of debt slugs for the same reason).
+- **Resolution:** ids updated in the live documents; dated records keep their text with a
+  bracketed note. `plan.md`'s duplicate row table is **deleted rather than renumbered** — it
+  was a second copy of the schedule, which `roadmap.md` §1 forbids, and it is what let seven
+  ids drift at once. The plan keeps the *why* the roadmap does not carry, and the roadmap's
+  `maze` row now cites the Track-2 obligation that lived only in the plan.
+
 ### `ledgers.md` still called unruled the question it had just ruled (RESOLVED, 2026-09-02)
 
 - **Where:** `../../../agents/rules/ledgers.md` §6, closing paragraph.

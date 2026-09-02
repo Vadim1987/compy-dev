@@ -348,4 +348,5 @@ introducing an example-under-test genre is out of scope for a defect row.
 **Left open for the owner:** the reviewer could not fully trace `maze`'s two
 hook sites (`draw_main.lua`, `maze_main.lua`), which neutralise via
 `ctrl_pressed = nil` rather than an `is_shown` guard. `maze` is an untracked
-nested repo and is covered by `ACC-02-04`'s smoke; not blocking here.
+nested repo and is covered by `ACC-02-03`'s smoke (the `maze` pass, renumbered
+from `ACC-02-04` on 2026-09-02); not blocking here.
