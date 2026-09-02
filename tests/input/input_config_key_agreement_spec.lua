@@ -6,8 +6,11 @@
 -- ACCEPT; userInputController decides which ones they APPLY,
 -- and nothing reconciles the two. A key on the accept side
 -- alone is taken by the surface and dropped by the widget with
--- no raise and no warning
--- (doc/development/technical_debt/input.md, T-KEYSET-SPLIT).
+-- no raise and no warning. The contract itself is
+-- doc/development/decisions/input.md, D-CFG-BOUNDARY; the
+-- reason this spec exists is the retired entry "The set of
+-- accepted config keys has no single home" in
+-- doc/development/technical_debt/input.md.
 --
 -- This spec is that reconciliation. It reads the REAL accepted
 -- set out of the surface rather than restating it, so a key

@@ -27,45 +27,6 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-### T-KEYSET-SPLIT — the set of accepted config keys has no single home
-
-- **Where:** `consoleController.lua` decides what `show` / `configure` **accept**
-  (`CALLBACK_KEYS`, `WIDGET_KEYS`, and the `CONFIGURE_KEYS` / `SHOW_KEYS` sets
-  built from them); `userInputController.lua` decides what they **apply**
-  (`CONFIG_CALLBACKS` and the named branches at the top of `configure_core`).
-  Nothing ties the two sides together.
-- **State — one real duplication and one weaker coupling, and they are not the
-  same defect.** `CALLBACK_KEYS` and `CONFIG_CALLBACKS` are two lists holding
-  the same four strings — `validator`, `on_text_entered`, `on_limit_reached`,
-  `highlighter` — maintained separately, each for its own job: the first backs
-  the sticky `state.callbacks` store the surface merges from
-  (`merge_callback_keys`), the second assigns onto the widget's own
-  `self.callbacks`. `WIDGET_KEYS` against `configure_core` is **membership
-  duplication, not list duplication**: `prompt` and `auto_hide` reach
-  *different destinations* (`model.custom_label`, `self.auto_hide`), so there is
-  no list to share — only the fact that both calls take them.
-- **Why it matters: the failure is silent and one-directional.** A key added to
-  the accept side alone is taken by the surface and ignored by the widget, with
-  no raise and no warning — the config table is strictly validated against a set
-  that does not know what the widget implements. That is a drift source, and it
-  is the same family as `FIX-02-08`/`-09`: one fact stated twice, with nothing
-  reconciling the statements.
-- **It has already drifted in the way that counts** (2026-08-31). Not the
-  values, which have never diverged, but the *shape*: `FEAT-02` had to add an
-  entry on each side for `auto_hide`, and the entry that should have caught it
-  said only *"revisit when either list changes"* — a trigger that fires only if
-  someone remembers to look.
-- **The fix is a test, not a refactor** — deliberately, and the refactor is
-  named here as the thing not being done. Unifying the lists means one module
-  importing the other's across the surface/widget boundary the architecture
-  keeps separate, which is a larger change than the defect and reads worse on
-  review than the duplication does. Instead: **assert that every key the surface
-  accepts is a key the widget applies.** No such test exists — each key is
-  covered behaviourally and individually, and nothing asserts the *set* is
-  closed. A few lines, no behaviour change, and it turns an invisible coupling
-  into an executable one.
-- **Revisit:** `FIX-02-25`.
-
 ### T-MERMAID-MODEL — the class diagrams show a model field that no longer exists
 
 - **Where:** `../mermaid/input.md`, `../mermaid/editor.md`, `../mermaid/classes.md` — the
@@ -1413,6 +1374,66 @@ changes.
   anyway.
 
 ## RETIRED
+
+### The set of accepted config keys has no single home (RESOLVED, 2026-09-02)
+
+**Filed as `T-KEYSET-SPLIT`.** Everything down to **Resolution** is the filing as
+written, present tense and all — *"No such test exists"* was true when it was
+written and is the record of why the work was scheduled. The Resolution bullets
+are what happened.
+
+- **Where:** `consoleController.lua` decides what `show` / `configure` **accept**
+  (`CALLBACK_KEYS`, `WIDGET_KEYS`, and the `CONFIGURE_KEYS` / `SHOW_KEYS` sets
+  built from them); `userInputController.lua` decides what they **apply**
+  (`CONFIG_CALLBACKS` and the named branches at the top of `configure_core`).
+  Nothing ties the two sides together.
+- **State — one real duplication and one weaker coupling, and they are not the
+  same defect.** `CALLBACK_KEYS` and `CONFIG_CALLBACKS` are two lists holding
+  the same four strings — `validator`, `on_text_entered`, `on_limit_reached`,
+  `highlighter` — maintained separately, each for its own job: the first backs
+  the sticky `state.callbacks` store the surface merges from
+  (`merge_callback_keys`), the second assigns onto the widget's own
+  `self.callbacks`. `WIDGET_KEYS` against `configure_core` is **membership
+  duplication, not list duplication**: `prompt` and `auto_hide` reach
+  *different destinations* (`model.custom_label`, `self.auto_hide`), so there is
+  no list to share — only the fact that both calls take them.
+- **Why it matters: the failure is silent and one-directional.** A key added to
+  the accept side alone is taken by the surface and ignored by the widget, with
+  no raise and no warning — the config table is strictly validated against a set
+  that does not know what the widget implements. That is a drift source, and it
+  is the same family as `FIX-02-08`/`-09`: one fact stated twice, with nothing
+  reconciling the statements.
+- **It has already drifted in the way that counts** (2026-08-31). Not the
+  values, which have never diverged, but the *shape*: `FEAT-02` had to add an
+  entry on each side for `auto_hide`, and the entry that should have caught it
+  said only *"revisit when either list changes"* — a trigger that fires only if
+  someone remembers to look.
+- **The fix is a test, not a refactor** — deliberately, and the refactor is
+  named here as the thing not being done. Unifying the lists means one module
+  importing the other's across the surface/widget boundary the architecture
+  keeps separate, which is a larger change than the defect and reads worse on
+  review than the duplication does. Instead: **assert that every key the surface
+  accepts is a key the widget applies.** No such test exists — each key is
+  covered behaviourally and individually, and nothing asserts the *set* is
+  closed. A few lines, no behaviour change, and it turns an invisible coupling
+  into an executable one.
+- **Resolution — `FIX-02-25`, and it is a test.** Was `T-KEYSET-SPLIT`.
+  `tests/input/input_config_key_agreement_spec.lua` **reads the real accepted
+  set out of the surface** — `show` → `api_show` → `SHOW_KEYS`, and the
+  `configure` equivalent, by upvalue and by name — and requires every member
+  to carry a proof there that the key reaches the widget. A third hand-written
+  copy of the list was rejected for the reason this entry exists: it cannot
+  fail on a key it does not know about, which is the whole defect.
+- **Mutation-tested in both directions.** Adding `'ghost'` to `WIDGET_KEYS`
+  with no `configure_core` branch fails both cases naming the key; renaming
+  `SHOW_KEYS` fails with *"upvalue SHOW_KEYS is gone; fix this reader"*
+  instead of silently checking an empty set. That second one is why the reader
+  asserts rather than returning nil.
+- **No production defect was found.** The two sides agree today, so nothing was
+  changed: the row allowed for a divergence and there is none. What is fixed is
+  that the next divergence cannot be silent.
+- **The refactor named here is still not done, deliberately** — unifying the
+  lists remains the larger change this entry rejected.
 
 ### A citation edit left half a sentence asserting the opposite of the statement it cites (RESOLVED, 2026-09-02)
 
