@@ -178,7 +178,15 @@ compy.input.hide()
 compy.input.show()   -- still labelled 'name?', and empty
 ```
 
-If you want the text back, keep it yourself and pass it to that `show`.
+If you want the text back, keep it yourself and pass it to that `show`. Note
+what "keep it yourself" can mean: the text you passed to a `show`, or the text
+handed to `on_text_entered` at the last submit. **There is no call that reads
+the current content** — so anything the user typed and did not submit is gone
+at the `hide`, and cannot be restored by the project either.
+
+`get_cursor()` returns `nil` while the widget is hidden — a plain "nothing to
+report" rather than a refusal, so it does not warn the way the mutating calls
+do. Read the cursor you mean to restore *before* the `hide`.
 
 ### Live changes
 
