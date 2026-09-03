@@ -792,12 +792,12 @@ and ~~**the `smoke_checklists.md` slice of `-09`**~~ ✅.
   empty field"* → *"press Enter with nothing typed"*, which drops the noun rather than swapping it —
   the turtle section says *"the prompt"* throughout, and inserting *widget* into one row of it would
   have put three names in one paragraph.
-  **One thing deliberately not swept, and it is the (b) half's to rule:** `turtle`'s section calls
-  the thing **"the prompt"** ~20 times and says it *opens* and *closes*. That is a **fifth** name for
-  the widget, and it collides with the documented `prompt` **key**, which is the label. It is outside
-  this row's four names, nobody has ruled it, and rewriting the owner's device script on my own
-  reading is the wrong trade — but session67 caught itself writing *"while the prompt is up"* as a
-  slip, so the question is real. **Raise it before (b) sweeps prose.**
+  **One thing deliberately not swept:** `turtle`'s section calls the thing **"the prompt"** 21 times
+  and says it *opens* and *closes* — a **fifth** name, colliding with the documented `prompt` key.
+  Rewriting the owner's device script on my own reading was the wrong trade, so it went to the row
+  that unifies terminology, **where it now has its own ruling and its sites** (see `FIX-02-09`'s
+  note). The owner's disposition, 2026-09-03: a drift is registered as planned debt **or** described
+  in the unifying step if that step has not run — it had not.
 
 **(b) — after `ACC-02`.** The rest: `-07` · `-08` · `-09` (the remainder) · `-10` · `-14` · `-15` ·
 `-16` · `-18` · `-19` · `-20` · `-27`.
@@ -838,7 +838,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | ~~**FIX-02-06**~~ ✅ | **COMPLETE (session67) — four sites, not three, and the unnamed third was a paragraph in a document already named.** The row left *"the second doc"* unidentified; sweeping by sense found the survivor **inside `event_dispatch_layers.md` itself**, forty lines below the bullets, asserting the asymmetry again and sourcing it to a debt entry RESOLVED 2026-08-03. Fixing the bullets alone would have left the claim standing and cited. Also repaired: `occupy_keyboard` and `hook_pointer` are cited by name across the persistent corpus and **neither exists** (`occupy_input`, `mark_pointer_liveness` — the second installs nothing now). `internals/user_input.md` was **already correct on substance** and is the document the other two contradicted; only its two stale names moved. **Verified in code first** — `project_handlers` seeds off `_bindable` (keyboard + pointer + derived), and `release_keyboard_route`'s only call site is the crash path. **The completeness claim was not met, and a delivery-level review caught it** (2026-09-02): three **present-tense** sites survived in `technical_debt/input.md` — the one persistent document of the three this sweep did not open — asserting `hook_pointer` and `chain_project_handler` as current. Repaired 2026-09-03 with the line citations that had drifted with them, and the lesson is the row's own predicted failure mode arriving one file over: **a sweep's scope is every document that could carry the claim, and the register is a document.** **Two findings registered rather than fixed here:** the function's *name* (`technical_debt/input.md`, BACKLOG — renaming needs a call on merging it with `clear_user_handlers`, which is design, not docs), and this doc's systematic line-citation drift, which **the ledger already held** (`technical_debt/general.md`) and gained a worked instance instead of a duplicate entry. The `> REMARK:` that triggered the row is answered and removed, so `FIX-02-07` should not hunt for it. *Original filing:* the stale keyboard/pointer divergence claim | **one defect in three places** — `release_keyboard_route`'s comment, `event_dispatch_layers.md:112`, and the second doc. **Fix as one**; any survivor re-seeds the others |
 | **FIX-02-07** | execute the remaining remark dispositions — **was 37; re-count when the row opens** | triage **complete**; breadth known. Five dispositions were executed early at `FIX-02-03`/`-04`/`-06` (2026-09-02), each because the marker's defect was solved in the same pass (`DEC-02-04`'s rule), and those three cells say so. Markers standing at HEAD: **34 across 12 files** when this cell was written, **32 now** — `CHG-01-04` executed two more the same day (`internals/user_input.md`'s and `project_sandbox_env.md`'s requests for a concrete version reference, both answered by the version ruling), and the CHANGELOG's own marker went with them. Markers are not one-to-one with dispositions, so this sizes the row rather than restating its count |
 | **FIX-02-08** | "tier" / "chain" / "the walk" — three names, one thing | known breadth, 3 slices |
-| **FIX-02-09** | "overlay" / "widget" / "area" / "field" — four names | known breadth; `src` half done in S45, docs half open. **The examples were not in that sweep** — found 2026-08-30. `turtle` was fixed on the spot while it was being edited anyway; what remains is the **nested repos**, `keyboard` (six files) and `maze` (`maze_render.lua`), which open their own PRs and are swept there. **Scope clarified by the owner, 2026-08-31 — see the note below** |
+| **FIX-02-09** | "overlay" / "widget" / "area" / "field" — four names, **and "prompt" is a fifth, unruled** | known breadth; `src` half done in S45, docs half open. **The examples were not in that sweep** — found 2026-08-30. `turtle` was fixed on the spot while it was being edited anyway; what remains is the **nested repos**, `keyboard` (six files) and `maze` (`maze_render.lua`), which open their own PRs and are swept there. **Scope clarified by the owner, 2026-08-31 — see the note below** |
 | **FIX-02-10** | "combinator" — concept earned, word not | narrow |
 | ~~**FIX-02-11**~~ ✅ | **RESOLVED — `doc/input_api.md:69,321,333` already states the widget always consumes when shown and explains tier 3 placement. Symptom (`BUG-01-03`) fixed in `turtle/main.lua`.** the guide never says a shown widget **always consumes** (keyboard) | **RESOLVED** — documented in `doc/input_api.md` |
 | ~~**FIX-02-12**~~ ✅ | **ANSWERED by `ARC-02-08` (`e4748e60`) — `false` documented as the uniform unset in `doc/input_api.md`, with the `computed or false` idiom. Ratified rather than built: every consumer already tested truthiness.**  the guide never says callbacks cannot be un-set | narrow — depends on BUG-01-02's ruling. **Write with `FIX-02-21`**: both are answered by the same paragraph — the ownership rule (*content resets; everything the project sets persists until replaced*) plus the sentence saying what "replaced" cannot mean. Not a duplicate of it; the same edit |
@@ -912,6 +912,34 @@ input, not a scope statement** — a raw `field` grep also catches `@field` anno
 table fields, so re-derive by sense, not by number. Session63 **added** one on 2026-09-01
 (`CHANGELOG.md:164`), the day the rule was in force, which is this row's own argument for running
 late restated as evidence.
+
+**"Prompt" is the fifth name, and it is this row's to rule** (registered 2026-09-03, owner: *"either
+registered as active debt and planned, or described in the step which unifies terminology if it was
+not yet executed"* — this row is unexecuted, so it lands here rather than as a second ledger entry
+for one goal). **The corpus says *"the prompt opens"*, *"the prompt closes"*, *"while the prompt is
+up"* for the widget** — 21 occurrences in `smoke_checklists.md`'s turtle section alone, plus
+`internals/examples/turtle.md` and `decisions/input.md`, so it is not one example's habit.
+
+**Three things make this harder than the other four, and all three must be in the executor's hands:**
+
+- **It collides with a documented key.** `prompt` is a `show`/`configure` key meaning **the label**
+  (`doc/input_api.md`, *"Label shown next to the field"*). A reader meeting *"the prompt closes"*
+  cannot tell whether the label or the widget is meant, which is exactly the failure the other four
+  names cause — but here one of the two senses is **API** and cannot be renamed away.
+- **Never sweep it by count.** *"Prompt"* appears **113 times** in the persistent corpus and the
+  large majority are legitimate: the config key, the console's own prompt line, and the ordinary
+  English verb. **The defect is the idiom, not the noun** — *the prompt opens / closes / is up*
+  said of the widget. Re-derive by sense, as the `smoke_checklists.md` slice did.
+- **It is genuinely the better word in one place.** *"A one-shot prompt"* reads well and
+  *"a one-shot widget"* does not. If the ruling is *keep it*, then say so once in
+  `doc/input_api.md`'s vocabulary section and define which sense is which; if the ruling is *go*,
+  the replacement is *the widget is shown / hidden*. **Either way it is one ruling, made once.**
+
+**`internals/examples/turtle.md` also carries live `field` uses** (*"piled up in the field"*, *"the
+field it just opened"*) — inside this row's original four names, and untouched, because the
+2026-09-03 slice was bounded to `smoke_checklists.md`. Corpus-wide the four names stand at **83**
+`field` occurrences outside `@field` annotations, across `doc/` and `CHANGELOG.md`, counted
+2026-09-03. **Size the row against the rule, not this number.**
 
 **The vocabulary is still being minted, which makes this a LATE row.** "Field is open" kept
 resurfacing in session60's own conversation and went into a validation note five times before it
