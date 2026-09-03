@@ -27,10 +27,9 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-**Empty as of 2026-09-03** — every entry **in this file** that had to be resolved before this
-release ships is paid, and each is in `RETIRED` below with what paid it. The section being empty is
-a state, not an omission: `BACKLOG` is still full, deliberately, and nothing there blocks the
-release.
+**One entry, as of 2026-09-03.** Everything else **in this file** that had to be resolved before
+this release ships is paid, and each is in `RETIRED` below with what paid it. `BACKLOG` is still
+full, deliberately, and nothing there blocks the release.
 
 **This file is not the whole of the release's input obligations.** Two of the three `ACTIVE`
 entries in [`general.md`](general.md) are this work's, filed there because they are cross-cutting
@@ -40,9 +39,7 @@ both files. *(Two more were paid on 2026-09-03: the version question, which the 
 verification of this file's `RETIRED` claims, which `FIX-02-05` ran.)*
 
 
-## BACKLOG
-
-### Two shipped example READMEs still teach the removed polling idiom
+### T-EXAMPLE-README — two shipped example READMEs still teach the removed polling idiom
 
 - **Where:** `src/examples/repl/README.md` — the *"How this translates into code"* block
   (`r = user_input()`, `r:is_empty()`, `local input = r()`) and the two-options list under it
@@ -61,10 +58,13 @@ verification of this file's `RETIRED` claims, which `FIX-02-05` ran.)*
   about its own set.
 - **Found:** 2026-09-03, while base-checking `FIX-02-17` by differencing `project_env`'s keys at
   `3256aac` against HEAD. Nothing was looking for it; the retired names simply still had hits.
-- **Revisit:** whether this is release scope is the **owner's call** — it is documentation rather
-  than behaviour, which argues for deferring, and it is *shipped, project-author-facing*
-  documentation that is now false, which argues the other way. Filed `BACKLOG` because a slug is
-  the commitment to fix.
+- **Release scope, ruled by the owner 2026-09-03** — filed `BACKLOG` on the day it was found, with
+  the argument stated both ways, and promoted the same day: *"document README drifts as active
+  defects to be fixed."* Shipped, project-author-facing documentation that is now false is a defect
+  the release would otherwise ship.
+- **Roadmap:** `FIX-02-27`.
+
+## BACKLOG
 
 ### `release_keyboard_route` is named for a lifecycle step that no longer exists
 
