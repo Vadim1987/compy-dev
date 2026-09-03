@@ -116,6 +116,41 @@ on `newinput` tests a branch without the fix.
 
 ---
 
+## Round 3 — `20260903`, taken after the recon fetch — and why nothing needed a "pre" round
+
+The round-3 plan below asks for a photograph **before** the fetch that moves a baseline. That
+fetch did not move one. The live views were fetched into **new `-https` remotes** (added this
+session so the work does not depend on the owner's SSH key), so `upstream/dev` and
+`dsent/dsent/dev` still denote exactly what they denoted before — the round-1 photograph is
+intact by construction, and this round is the "post" half with nothing to pair it against.
+
+Evidence note, with the ahead/behind analysis, the dry merges and the two open upstream PRs:
+[`validation/notes/S70-REC-01-drift-measurement.md`](validation/notes/S70-REC-01-drift-measurement.md).
+
+### Platform — `/repo`
+
+| tag | sha | what it is |
+|---|---|---|
+| `wip77/20260903/head` | `97839691470a00e91f5a1e43d3e67206a35c927c` | `feature/77-newapi-analysis-s20260615`, at the inventory commit |
+| `wip77/20260903/base-upstream-dev` | `af9a5782980cdb5684a8b434916da503a5b61b69` | `aldum/dev` **live** (2026-08-17) — and **we are 0 behind it** |
+| `wip77/20260903/base-dsent-edge` | `5a52cba254303c2d92fc8b9546b3d01a917fc2db` | `dsent/dsent/dev` **live** (2026-09-03) — 71 ahead of `aldum/dev` |
+| `wip77/20260903/base-pr45` | `16eb33d79fd8711e8c467d8581d47e6632b1607e` | upstream **PR #45**, the editor rework — contained in the edge |
+| `wip77/20260903/base-pr41` | `ebc3117c114a0268051cbb9a41c1d8fa4c99f64a` | upstream **PR #41**, the input render-cost fix — contained in the edge |
+| `wip77/20260903/mergebase-upstream-dev` | `af9a5782980cdb5684a8b434916da503a5b61b69` | **equals base** — the equality is the finding: `MERGE-01-04` still holds |
+| `wip77/20260903/mergebase-dsent-edge` | `9cb27e0f81ece6d6d298f47d63b42e9eae39ef0a` | where our line left the edge (2026-07-22) |
+| `wip77/20260903/mergebase-pr45` | `945a5d1d765fac35b6360238077b214c5bbb8fcd` | 2026-07-09 |
+
+### The three example repos
+
+| repo | `head` | `base` | `mergebase` | drift |
+|---|---|---|---|---|
+| `balloons` | `c2bd9b99e7b2736be8ea41b376f31461e3a58f2e` | `9e7a1e1a9218607e31400945dc55f705e6ec5854` (`origin/main`) | equals base | **0 behind**, 8 ahead |
+| `maze` | `28213c722622448c8bcc70300a5e5dd9a51a9b43` | `b8cc436fc9bf14713f5c91e31a158b9115cc28bd` (`dsent/dsent/dev`) | equals base | **0 behind**, 13 ahead |
+| `keyboard` | `e5689611a0fa8740ce4f39b6f32ac61d399f7fdc` | `96d66292577f317dc2fd9bc272b20110787cab28` (`origin/dsent/dev`) | `025e85810f8e37fc300ad9d7c9e52a291795aa1b` | **1 behind**, 37 ahead |
+
+`keyboard`'s one commit is a build descriptor and merges clean. The round-1 trap is
+re-verified and still live: the **local** branch named `dsent/dev` is not a tracking mirror.
+
 ## Rounds planned
 
 **Round 2 — `smoke-green`.** After a human smoke pass comes back clean, tag the exact state it

@@ -1561,9 +1561,38 @@ Recon for external example submodules (`maze`, `keyboard`, `balloons`) remains p
 
 | id | step | status |
 |---|---|---|
-| REC-01-01 | fetch every remote; measure the real drift against the pinned tags | **DONE (Platform repo)** — 24 commits in `aldum/dev` evaluated via `feature/77-newinput-premerge` |
-| REC-01-02 | assess whether it touched our surfaces — the reported edge-side editor overhaul above all | **DONE (Platform repo)** — no collision with #77 input surface/routing grid |
-| REC-01-03 | triage anything it surfaces into a sprint, or record that it surfaced nothing | **DONE (Platform repo)** — single defect: `FS.sync` missing test stub in `filesystem.lua` |
+| REC-01-01 | fetch every remote; measure the real drift against the pinned tags | **DONE (all four repos, 2026-09-03)** — round-3 tags laid; the 2026-08-26 Session-55 platform pass stands as the first half |
+| REC-01-02 | assess whether it touched our surfaces — the reported edge-side editor overhaul above all | **DONE (2026-09-03)** — it does. The edge's editor rework touches 25 of our 87 changed files; two collisions are design calls, not merge resolutions |
+| REC-01-03 | triage anything it surfaces into a sprint, or record that it surfaced nothing | **DONE (2026-09-03)** — nothing that changes the sequence. `MERGE-01-01`/`-02`/`-03` are near-empty; the edge is not the PR base and is not merged before shipping |
+
+**Scope widened, and answered the same day (owner, 2026-09-03):** *"We need to recon and merge
+against not only these repos, but against platform again — most likely our changes will be combined
+with another PR, and drift evaluated towards edge. I need all this measured and analyzed on recon
+stage."* Also: **https remotes**, so the work does not depend on the owner's SSH key. Ten were
+**added beside** the SSH ones rather than replacing them, which is why no existing remote-tracking
+ref moved and the round-1 photograph is still comparable.
+
+**The measurement is [`validation/notes/S70-REC-01-drift-measurement.md`](validation/notes/S70-REC-01-drift-measurement.md)**,
+every figure with its command. Four results decide the rest of this sprint:
+
+- **We are 0 behind `aldum/dev`, which has not moved since 2026-08-17.** The re-merge against the
+  PR's own base is a **no-op today**, and `MERGE-01-04` still holds.
+- **The drift is entirely towards the edge — 71 commits — and the edge already contains both
+  input-touching open PRs**, #45 (the editor rework) and #41. Evaluating towards the edge evaluates
+  against both at once, which is exactly the combination the owner expects.
+- **A dry merge of the edge conflicts in 7 files / 10 hunks**, and
+  `userInputController.lua`/`consoleController.lua` **auto-merge**. The two real collisions are
+  semantic: `UserInputModel.new`'s signature, changed by both sides, and `set_text`, rewritten by
+  both for different reasons. A third is invisible to a merge tool — the edge changes what bare
+  Home/End do inside the widget, and **`doc/input_api.md` documents key behaviour**.
+- **The three example repos have almost no drift**: `balloons` and `maze` are 0 behind, `keyboard`
+  is 1 behind and that commit is a build descriptor that merges clean.
+
+**Two things for the owner** (also in §6 of the note): **PR #22 is already open** against
+`aldum:dev` as a draft, on a branch whose name lacks the `-s20260615` suffix — `PR-01-04` does not
+say whether it is reused or replaced. And the landing order of #45 versus ours is not ours to
+decide; the reconciliation cost is the same work whoever pays it, which argues for **naming it in
+the PR description** rather than delaying the PR.
 
 ## 🟡 MERGE-01 — upstream reconciliation — **PARTIALLY COMPLETE (Session 56)**
 
@@ -1572,10 +1601,11 @@ PR.
 
 | id | step | note |
 |---|---|---|
-| MERGE-01-01 | `maze` | a **re-merge**, not a first one — reconciled already at a base dated 2026-07-24 |
-| MERGE-01-02 | `keyboard` | merged at S37; ancestry preserved so re-merges stay cheap |
-| MERGE-01-03 | `balloons` | zero divergence today |
-| MERGE-01-04 | the platform repo | **DONE (Session 56)** — merged `aldum/dev` into platform repo (`f4913833`), test mock fix committed (`75a7e5b3`), 1011/0/0/10 green |
+| MERGE-01-01 | `maze` | **nothing to merge, measured 2026-09-03** — 0 behind `dsent/dsent/dev`, which has not moved since 2026-07-24 |
+| MERGE-01-02 | `keyboard` | **one commit, and it merges clean** — `96d6629`, 32 lines of `.compy/build`, no source file. The S37 ancestry held |
+| MERGE-01-03 | `balloons` | **still zero divergence**, re-measured 2026-09-03 |
+| MERGE-01-04 | the platform repo | **DONE (Session 56)** — merged `aldum/dev` into platform repo (`f4913833`), test mock fix committed (`75a7e5b3`), 1011/0/0/10 green. **Re-verified 2026-09-03: still 0 behind `aldum/dev`**, so the re-merge the owner asked for is a no-op against the PR base |
+| MERGE-01-05 | **the edge, and the open PRs it contains** | **NOT a merge before the PR, and not this sprint's to take unilaterally.** `dsent/dsent/dev` is 71 ahead of our PR base and carries upstream PRs #45 and #41; a dry merge conflicts in 7 files, two of them design calls (`UserInputModel.new`'s signature, `set_text`). Owner territory: it is the *landing order* question, not a merge task |
 
 **Mechanic, standing:** pull each upstream into **its own branch**; never merge into the working
 branch as the first move.
@@ -1584,6 +1614,10 @@ branch as the first move.
 and `-03` change the very repos `ACC-02` smokes. **`MERGE-01-04` is already done**, so what moves is
 only the example half — the platform tree is not touched again, and the platform slice cut is
 unaffected either way.
+
+**The 2026-09-03 recon discharges that ordering cheaply**: the example repos have nothing to take
+except one build-descriptor commit in `keyboard`, so `ACC-02` is not smoking a tree that then
+changes. The platform half is `MERGE-01-05`, and it is deliberately **not** scheduled before the PR.
 
 ## ⬜ PR-01 — assembly
 
