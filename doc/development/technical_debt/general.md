@@ -78,8 +78,9 @@ paid, or turned out not to be debt.
 
 ### T-NEVER-SHIPPED — the register keeps entries for defects that never existed outside the branch
 
-- **Where:** `input.md`'s `RETIRED` section and this file's — **56 entries, 50 + 6, counted
-  2026-09-03** (51 the day before, 47 the day before that; the section grows every time a sprint
+- **Where:** `input.md`'s `RETIRED` section and this file's — **61 entries, 53 + 8, counted
+  2026-09-03**; the pass walked a 56-entry snapshot — see `T-RETIRED-UNVER`'s resolution for the
+  five outside it (51 the day before, 47 the day before that; the section grows every time a sprint
   pays into it, and it grew twice *during* `FIX-02-05` itself). **Do not trust this number either —
   count it when the row opens.** The figure is here to size the row, not to be cited.
 - **The rule it fails:** `../../../agents/rules/ledgers.md` §3 — what a branch introduced and paid
