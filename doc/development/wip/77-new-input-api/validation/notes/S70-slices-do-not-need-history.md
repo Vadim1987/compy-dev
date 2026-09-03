@@ -45,14 +45,14 @@ Run just now, `aldum/dev` → our head:
 |---|---|
 | commits on the branch | **1276** |
 | `wip/` files touched | **901** — all excluded |
-| **shipping surface** | **114 files** |
+| **shipping surface** | **113 files** — 114 before the drift document moved to the working tree |
 | unclassified | **0** — the gate passes unchanged |
 
 Partition: Set 1 **26** · Set 2 **17** · 3a **21** · 3b **22** · 3c **1** · 3d **3** ·
 3e **4** · 3f **8** · 3g **12**.
 
 Against the 2026-08-26 verification (100 files: 3a 11, 3b 21, 3d 3, 3e 4, 3f 7, 3g 12,
-Set 1 26, Set 2 15) the change is **+14 files**, almost all in `3a` (the persistent
+Set 1 26, Set 2 15) the change is **+13 files**, almost all in `3a` (the persistent
 docs this phase has been writing) — no new *kind* of content, and **no rule needed
 changing**.
 
@@ -85,14 +85,18 @@ holds both halves.
 **(b) The classifier's `doc/*.md` rule crosses directories.** In a shell `case`, `*`
 matches `/`, so `doc/*.md` swallows everything under `doc/` that the earlier, more
 specific Set 1 cases did not already claim. That is why the gate passes with zero
-unclassified even for files nobody has considered: today's new
-`doc/development/upstream_drift.md` lands in **3a, the input-documentation slice**,
-which is not where it belongs by concern — it is a release-process document, not part
-of the input API's prose.
+unclassified even for files nobody has considered: today's new drift document landed
+in **3a, the input-documentation slice**, which is not where it belonged by concern —
+it is a release-process document, not part of the input API's prose.
 
 The gate is doing its job (nothing is silently omitted), but **a catch-all that never
 fires is not a gate**. Worth a narrower rule before the cut, so that a genuinely new
 kind of document surfaces as `UNCLASSIFIED` instead of being absorbed.
+
+*(That example has since resolved itself the other way: the owner moved the drift
+document into the working tree, where it is excluded from the enumeration entirely.
+The finding stands without it — the catch-all still cannot fail for anything new
+under `doc/`, and the shipping surface is now **113** files, not 114.)*
 
 ## 4. What actually changes for `PR-01-01`
 
