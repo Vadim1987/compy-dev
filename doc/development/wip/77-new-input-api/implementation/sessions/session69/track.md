@@ -69,9 +69,10 @@ Roadmap ticked and note updated at `733b56b5`.
   `SearchController` calls its instance's `textinput`; it calls `add_text`. Answering a remark
   re-reads the code, and that is where the yield was.
 - R164 **kept both headings** (`show(config)`, `configure(config)`) though the merged treatment
-  read better — ten live citations name `configure(config)` as a section (2 in `src/`, 7 in
-  `tests/`, 1 in the debt register), and an editorial row should not buy a heading with a comment
-  sweep across `src/` and `tests/`.
+  read better — **nine** live citations name `configure(config)` as a section (2 in `src/`, 6 in
+  `tests/`, 1 in the debt register; *ten* was a miscount of the spec file, corrected by the peer
+  review), and an editorial row should not buy a heading with a comment sweep across `src/` and
+  `tests/`.
 
 ## `FIX-01-02` / `-03` re-derived — and a fourth class (2026-09-03)
 
@@ -82,7 +83,7 @@ Note: `validation/notes/FIX-01-02-03-rederivation.md`, commit `461b4489`. Four c
   `LEDGER-02`'s, not repointing work.
 - **B** session numbers — **12**, not 4. This session added one of them.
 - **C** `FR-n` — 7 sites; two are the owner's own REMARKs, so answering them clears the markers.
-- **D** citations of **live roadmap ids** — **119 occurrences**. No row owns it, no convention
+- **D** citations of **live roadmap ids** — **~120 occurrences** (the figure first filed was 119 and came from a hand-listed directory set; see the note). No row owns it, no convention
   bans it, it is not `FIX-03-05` (which wipes *retired* ids), and `LEDGER-02`/`DEC-02` are about
   to delete some of the prose carrying it. **Left for the owner with a recommendation, not taken.**
 
@@ -94,7 +95,7 @@ whether D is in scope at all.
 **Ruling: rule now, sweep after the ledger vacuuming.** Landed as three commits — the convention
 (`c9f765e7`), the debt entry `T-EPHEMERAL-IDS` (`61c66ba3`), the roadmap step `DOC-01-06`
 (`e3b8b1af`). **`DOC-01`, not `FIX-03-05`:** that row is the retired-id sweep and runs *before*
-`DEC-02`/`LEDGER-02`, which vacuum the two registers holding 94 of the 119.
+`DEC-02`/`LEDGER-02`, which vacuum the two registers holding the great majority of them.
 
 Then executed: `5d8ae109` (B, 12 sites), `ab8c2415` (A, 14 of 20), `6c96c96f` (C, 7 sites,
 **spelled out rather than dropped** — the remark asked for the essence, not the deletion).
@@ -109,8 +110,10 @@ Then executed: `5d8ae109` (B, 12 sites), `ab8c2415` (A, 14 of 20), `6c96c96f` (C
 
 ## Owner question — the 31 REMARK mentions (2026-09-03)
 
-Counted at boot and at HEAD, so the delta is attributable: **29 markers across 10 files at
-session69's boot, 24 now**, all five retired by `FIX-01-01`. `src/` and `tests/` return **nothing**
+Counted at boot and at HEAD, so the delta is attributable — **two series, stated together after
+the delivery review found the single one did not close**: anchored `^> REMARK` **29 → 22**, raw
+`REMARK` **31 → 24** (the extra two are prose *about* markers). **Both fall by 7**: five to
+`FIX-01-01`, two to `FIX-01-02`'s `FR-n` translation. `src/` and `tests/` return **nothing**
 for the gate pattern. **The five under `src/examples` are not markers** — they are Alice prose in
 `keyboard/words_corpus.lua` (*"she remarked"*), which is exactly why `agents/rules/commenting.md`
 makes the pattern case-sensitive. The row is **`FIX-02-07`**, in `FIX-02`'s **(b)** half → after
