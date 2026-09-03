@@ -1,5 +1,9 @@
 # Tag registry — which tag to reach for, in which repo
 
+**Companion: [`ANCHORS.md`](ANCHORS.md)** — the remotes, upstream refs, pull-request
+heads, merge bases and derived trees the 2026-09-03 reconciliation rests on, with the
+command that rebuilds each. This file stays authoritative for the **tags**.
+
 **The single inventory of the local tags this feature laid.** Four repositories, one namespace,
 one date-stamped snapshot per round. If you are looking for "the state we developed against" or
 "where our branch left upstream", it is in a table below.
