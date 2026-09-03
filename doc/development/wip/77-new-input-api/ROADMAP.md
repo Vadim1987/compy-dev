@@ -1006,6 +1006,21 @@ than writing** — a bullet asserting the payload shape `FEAT-01-04` had already
 describing the branch's own interim behaviour as what a user had — and both were found by reading
 claims against the tree rather than by reading the file for sense.
 
+**A third was found *after* the tick, and the sprint's honest limit is worth stating.** Answering an
+owner question the same evening, a scratch spec printed the project environment and turned up a
+**fifth removal** — four evaluator objects reachable at base and withheld now — which neither
+`-01`'s claim-by-claim read nor `FIX-02-17`'s set difference could see, because the removal is
+written as `project_env[name] = nil` rather than as an absent assignment. The bullet is written and
+the entry is in the register. **The row stays ✅ — its four steps ran and their work landed — but
+"validated against the diff" means validated by the methods used**, and a third method found a third
+thing within hours. `ACC-03`'s cold read is the backstop, and this is the concrete argument for
+keeping it late.
+
+**What still touches this file after this sprint**, so nobody reads ✅ as *frozen*: `LEDGER-02-04`
+runs the vacuum test over it, `FIX-02` (b) sweeps its vocabulary (*"an active overlay"* is gone but
+the sweep is corpus-wide), `ACC-03` reads it cold, `PR-01` ships it in slice `3a` — and **every
+further code change owes its own line**, as three did today.
+
 **Owner, 2026-08-26: runs before ACC-02 and before any PR reassembly.** The CHANGELOG ships in slice
 `3a` and is the first thing a stakeholder scans for what breaks; sending a cold reviewer or a smoke
 sitting at a tree whose CHANGELOG is wrong wastes the pass.
