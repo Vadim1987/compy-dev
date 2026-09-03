@@ -250,25 +250,43 @@ paid, or turned out not to be debt.
 
 - **Where:** the platform repo's edge line (`5a52cba2`, 2026-09-03). It is **71 commits** ahead of
   the line this branch develops against; **52 of those are the editor rework** covered by
-  `T-DRIFT-PR45`, and **the remaining 16 are this entry**.
-- **What is in the 16:** the 64-slot colour palette and the terminal-colour fixes that follow it,
-  a colours example, a filesystem durability API (`FS.fsync` / `FS.sync`) and the editor checkpoint
-  path that uses it, packaging changes (zip instead of 7-zip, release signing), the Android exit
-  path, a terminal repaint gate, the per-character input render-cost fix that is its own open
-  upstream pull request, and a storage-fallback label at the prompt.
-- **Blast radius: small, and almost all of it is outside this subsystem — with one exception that
-  is not.** The storage-fallback commit widens the widget's label from a string to *either* a
-  string *or* a `{ text, tone }` table, and renders the tone in the status line. **This feature's
-  public `prompt` key writes exactly that field**, so after this line merges, a project could pass
-  a table where the guide documents a string, and it would work by accident. That is a public
-  surface question, not a merge conflict, and it is the reason this entry is not filed as pure
-  packaging drift.
-- **What it costs:** measured after the editor rework is merged, the remainder conflicts in
-  **five files, two of which are artifacts of a probe resolution**. What genuinely needs hands is
-  the console model (the label change plus the constructor both sides moved), an **add/add on the
-  colours example** — the same file arriving by two routes, 245 lines against 247 — and
-  `.gitignore`. Plus one decision: whether the tone-bearing label is admitted to the documented
-  surface, refused, or left undocumented.
+  `T-DRIFT-PR45`, and **15 are this entry**. *(Not 16 — the filesystem durability API is already an
+  ancestor of our head. Derive with*
+  `git rev-list --count --no-merges HEAD..<edge> ^<rework>`*, subtracting both, and re-derive when
+  this is taken.)*
+- **What is in the 15:** the 64-slot colour palette and the terminal-colour fixes that follow it,
+  a colours example, the editor checkpoint's filesystem info, packaging changes (zip instead of
+  7-zip, release signing), a Lua 5.1 test-runner launcher, the Android exit path, a terminal
+  repaint gate, the per-character input render-cost fix that is its own open upstream pull
+  request, and a storage-fallback label at the prompt.
+- **Analysed by essence, not only by conflict** (2026-09-03), because *"does it merge"* and *"does
+  it still do what it did"* are different questions. **Three findings, in descending order:**
+  - **The Android exit path is silently lossy against our tree.** It reroutes every full exit
+    through a request that `love.quit` consumes and answers by returning to the launcher first —
+    including the **Ctrl+Escape** handler, which is one of the lines this branch **moved** into
+    the privileged reservation table. A project's typed `quit()` takes the change cleanly; the
+    reservation does not conflict with it and keeps calling `love.event.quit()` directly, which
+    never raises the request. **The defect is in the line that does not conflict**, so resolving
+    the visible hunk correctly still ships it — and it fails only on a device, where no headless
+    suite can see it. One line fixes it: the reservation calls the request instead.
+  - **The prompt label widens from a string to a string or a `{ text, tone }` table**, and this
+    feature's public `prompt` key writes exactly that field. Verified: with the label passed
+    correctly, the widened form works through our constructor. So the question is whether the
+    guide **admits** it, refuses it, or stays silent — a surface decision, not a break.
+  - **Two draw-path changes cannot be cleared here at all** — the per-character render-cost fix
+    (which deletes lines from the very function this branch also edited) and the terminal's
+    dirty-flag repaint gate. Their failure mode is a stale or mis-drawn frame, and this container
+    has no display. **They belong on the device pass, and are named rather than cleared.**
+  - Everything else is additive or outside this subsystem. The palette is new slots plus two
+    things to check once: black gains its own bright slot, which changes an existing symbolic
+    combination, and an out-of-range index now raises where it was tolerated.
+- **What it costs:** measured by **building the whole stack and running it** — the branch, the
+  editor rework, then this line: **1108 passing / 22 failing, and the 22 are the same 22 the
+  editor rework already owed.** This line adds **no new failure**. Its own two casualties were
+  positional call sites assuming the constructor shape the rework changed, mechanical and fixed in
+  place. What needs hands: the console model, an **add/add on the colours example** (the same file
+  by two routes, 245 lines against 247), `.gitignore`, the one-line exit routing, and one surface
+  decision.
 - **Provenance: not ours.**
 - **Deferred by decision, not by neglect** (2026-09-03): this release ships on the editor rework;
   the rest of the edge follows afterwards.

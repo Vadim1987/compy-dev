@@ -88,28 +88,63 @@ errors on our side and fixes none of its own.
 ## 2. Toward the platform's experimental line — deferred on purpose
 
 The experimental line runs **71 commits** ahead of the base we develop against. **52
-are the editor rework above**; the **remaining 16** are this section, and they ship
-**after** this release.
+are the editor rework above**, and **15** are this section, which ships **after**
+this release. (One commit that looks like a sixteenth — a filesystem durability
+interface — we already have.)
 
 They contain: the 64-slot colour palette and the terminal-colour fixes that follow
-it, a colours example, a filesystem durability interface and the editor checkpoint
-path that uses it, packaging changes, the Android exit path, a terminal repaint
-gate, a per-character input render-cost fix that is its own open pull request, and
-a storage-fallback label at the prompt.
+it, a colours example, the editor checkpoint's filesystem information, packaging
+changes, a test-runner launcher that pins the Lua version, the Android exit path, a
+terminal repaint gate, a per-character input render-cost fix that is its own open
+pull request, and a storage-fallback label at the prompt.
 
-**Fifteen of the sixteen are outside this subsystem. The sixteenth is not, and it
-is the only thing in this section that needs a decision.** The storage-fallback
-commit widens the widget's label from a string to *either* a string *or* a
-`{ text, tone }` table, and the status line renders the tone. **The project-facing
-`prompt` key documented in [the input API guide](../input_api.md) writes exactly
-that field.** So once this line merges, a project could pass a table where the
-guide says string, and it would work — by accident rather than by design. The
-choice is to document it, refuse it, or leave it undocumented; all three are
-defensible and none is automatic.
+**These were read one by one for what they would do to our code, not only for
+whether they would merge — and the two questions give different answers.** Three
+things came out of that reading.
 
-Measured after the rework is merged, the rest of this line needs three files by
-hand: the console model, an add/add collision on the colours example — the same
-file arriving by two routes, 245 lines against 247 — and `.gitignore`.
+**One change is silently lossy against our work.** The Android exit path reroutes
+every full exit so the device returns to its launcher before closing. One of the
+places it reroutes is the Ctrl+Escape handler — and that is a line this branch
+**moved**, into the privileged table of shortcuts the framework keeps for itself.
+The result is that a merge tool sees no problem: a project's typed `quit()` picks
+up the new route cleanly, and our relocated shortcut quietly keeps the old one. It
+would fail **only on the device**, where no automated test can see it. **One line
+fixes it**, and the fix is proven in a built tree. This is the clearest example of
+why "it merges" is not the same as "it still works".
+
+**One change reaches a documented part of our surface, without breaking it.** The
+storage-fallback commit widens the widget's label from a string to *either* a
+string *or* a `{ text, tone }` pair, and the status line colours the tone. The
+project-facing `prompt` setting documented in
+[the input API guide](../input_api.md) writes exactly that field. Verified: the
+widened form works through our code. So the decision is whether the guide
+**admits** it, refuses it, or stays silent — all three defensible, none automatic.
+
+**Two changes cannot be judged by any automated test we have.** The
+render-cost fix and the terminal's repaint gate are both **drawing** changes, and
+this environment has no display. Their failure mode is a stale or mis-drawn frame.
+They are named for the on-device pass rather than cleared.
+
+Everything else is additive or outside this subsystem. Merging the rest needs three
+files by hand: the console model, an add/add collision on the colours example — the
+same file arriving by two routes, 245 lines against 247 — and `.gitignore`.
+
+### Do the three stack?
+
+The expected release order is **the editor rework, then this feature, then the rest
+of the experimental line**. That order was built and run rather than assumed:
+
+| tree | test suite |
+|---|---|
+| this branch | 1055 pass |
+| the rework, alone | 753 pass |
+| this branch on the rework | 1100 pass, 22 fail |
+| **all three together** | **1108 pass, 22 fail** |
+
+**The 22 failures at the end are the same 22 as in the middle.** The experimental
+line adds **no new failure** to the stack — its only casualties were two of its own
+tests written against a function signature the rework changed, mechanical and fixed
+in place. **They stack.**
 
 ## 3. Toward the maze game's upstream — nothing to do
 

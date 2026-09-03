@@ -30,7 +30,7 @@ edge's BACKLOG entry). The stakeholder-facing version is
 | 4 | the re-pins and the two decisions, each its own commit | `MERGE-01-05` | same, plus the Ctrl+S ruling recorded in the decisions ledger |
 | 5 | **`ACC-02`, the device passes** | `ACC-02` | as today |
 | 6 | the prose rows, the cold read, assembly | `FIX-02` (b) … `PR-01` | as today |
-| 7 | the edge remainder | `MERGE-01-06` | after the release |
+| 7 | the edge remainder | `MERGE-01-06` | after the release — **and it is verified to stack**: the branch, then the rework, then the whole edge runs 1108/22, the same 22 the rework already owed |
 
 **Three ordering claims, each with its reason.**
 
@@ -49,10 +49,45 @@ edge's BACKLOG entry). The stakeholder-facing version is
 
 ## 2. What step 3 actually does, mechanically
 
-**Merge, do not rebase.** One merge commit whose second parent is PR #45's pinned
-head, so the reconciliation is a single reviewable object and can be reverted as
-one. The re-pins and decisions of step 4 land **after** it, in their own commits,
-so that a later change in #45 costs a re-merge and not an archaeology exercise.
+**Revised 2026-09-03 by three landscape clarifications from the owner**, which change
+the mechanics without changing the order:
+
+1. **#45 is the target base *by content*, and it may be force-pushed at any moment**
+   (its author rewrites for commit hygiene). We stay on this branch for continuity.
+2. **The PR is delivered as a set of patches against #45**, not as a branch whose
+   history must be a descendant of it. *"Slices" have always been patches; the word
+   is the only new thing.*
+3. **The release order is #45, then ours, then the edge remainder**, and the goal is
+   that the three **stack**.
+
+### What follows from a force-pushable base
+
+**A merge commit's second parent can become unreachable.** If #45 is rewritten after
+we merge it, our merge parent points at an object nobody upstream has any more: the
+lineage claim becomes a fiction, and the patches we generate against *"#45"* would
+be generated against a version that no longer exists.
+
+So the mechanics are:
+
+- **Merge locally for reconciliation and smoke, and treat the merge as disposable.**
+  It exists to produce a runnable tree and to prove the stack — which it has already
+  done — not to be the shipping artifact.
+- **The shipping artifact is the patch set**, generated against **#45's head at
+  generation time**, and regenerated when that head moves. Generation is last in the
+  sequence for exactly this reason.
+- **Pin every base we generate against** as a local tag, in the round-3 namespace, so
+  *"which #45 was this cut against"* is answerable after a rewrite. `base-pr45`
+  (`16eb33d7`) is the first such pin.
+- **Keep our own work in commits that carry one concern each** — which the phase
+  already requires — because a patch set is only reviewable if its members are.
+  A rewritten base costs a re-generation; it must not cost a re-authoring.
+- **Do not depend on ancestry anywhere.** No "since the merge base" reasoning in the
+  PR description, no diff ranges quoted against #45's sha in prose that ships.
+
+### The conflict resolutions, unchanged by the above
+
+The four conflicts and their intended resolutions (the trial's probes are marked;
+they are *not* the plan):
 
 The four conflicts and their intended resolutions (the trial's probes are marked;
 they are *not* the plan):
@@ -89,15 +124,22 @@ is not ours to execute.*
 
 ---
 
-**R2 — #45 changes before it lands.** `medium impact, medium likelihood`
+**R2 — #45 changes, or is force-pushed, before it lands.** `medium impact, high likelihood`
 
-Its head has not moved since 2026-07-24 — **six weeks** — and it is a large,
-review-heavy change. Review feedback on it is likely, not unlikely.
+**The owner states this as a given, not a risk to be hoped away**: its author
+rewrites it for commit hygiene. Its head has also not moved since 2026-07-24 — six
+weeks — and it is a large, review-heavy change, so content feedback is likely too.
 
-*Mitigation:* the head is pinned as a local tag, so *"what changed since we merged"*
-is one command. Because the merge is a single commit and the re-pins are separate,
-absorbing a revised #45 is a second merge, not a redo. The measured cost of the
-first merge is the best available estimate of the second.
+*Mitigation:* the head is pinned as a local tag, so *"what changed"* stays
+answerable across a rewrite. Nothing we ship depends on ancestry (§2), so a rewrite
+costs a **re-generated patch set and a re-run merge**, not a redo of authored work.
+The measured cost of the first reconciliation is the best available estimate of the
+second — and it is small.
+
+*The trap to avoid is subtler than the rewrite:* if #45 is rewritten **and its
+content changes at the same time**, a re-generated patch set can apply cleanly while
+resolving against different behaviour. **Re-run the stack, do not just re-apply the
+patches** — the suite numbers in §5 of the essence note are the comparison.
 
 ---
 
@@ -177,6 +219,38 @@ its baseline as a go-signal must not be left with a stale one.
 Not a conflict and not this release's problem, but it is the reason the edge
 remainder is not merely packaging. Recorded on its register entry so that whoever
 takes `MERGE-01-06` meets it as a decision rather than as a surprise.
+
+---
+
+**R11 — a change that merges cleanly and stops working.** `high impact, observed once`
+
+**Not hypothetical: it is in the edge remainder now.** The Android exit path
+reroutes every full exit through a request the quit handler consumes; one of the
+call sites it rewrites is the Ctrl+Escape handler, which **this branch moved** into
+the reservation table. The rewrite lands on the old location, our relocated
+reservation does not conflict with it, and it keeps calling `love.event.quit()`
+directly — so the device stops returning to its launcher. Full analysis and the
+one-line fix: [`../notes/S70-edge-essence-and-stack.md`](../notes/S70-edge-essence-and-stack.md) §2.
+
+*Mitigation, and it generalises beyond this instance:* **for every upstream commit
+that rewrites a call site, ask where that call site is in our tree.** The class is
+*"they changed a line we moved"*, it is invisible to both the merge and the suite,
+and this feature moved a great deal of the input path. The reservation table, the
+hook seeding and the routing grid are the three places to check first.
+
+---
+
+**R12 — two upstream changes are drawing changes, and this container has no display.**
+`medium impact, certain`
+
+The per-character render-cost fix deletes lines from the very view function this
+branch also edited, and the terminal's repaint gate makes drawing conditional on a
+dirty flag. Neither can fail a headless suite; both can produce a stale or mis-drawn
+frame.
+
+*Mitigation:* they go on the device pass explicitly, as named steps rather than as
+general "does it look right" — the typing path for the first, and console output
+after a project writes for the second.
 
 ---
 
