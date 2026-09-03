@@ -20,6 +20,60 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
+### T-DRIFT-PR45 — this branch does not sit on the editor rework it will ship beside
+
+- **Where:** the platform repo. Our branch and the upstream editor-rework pull request
+  (*"Editor rework: explicit modes, line navigation, durable accepts, undo/redo"*, head
+  `16eb33d7`) share a base of 2026-07-09 and have diverged since. The rework is **52 commits, 20
+  files, +3018/−377** across `src/` and `tests/`; **11 of those files are ones this branch also
+  changed**.
+- **State:** the two are **compatible, and this is measured rather than argued.** A trial merge in
+  a throwaway clone, resolved and run, gives **1100 passing / 22 failing** where this branch alone
+  gives 1055/0 and the rework alone gives 753/0. **No failure is in the `compy.input` surface** —
+  the public API, the routing grid, the hooks and shortcuts tables, the widget's configuration and
+  every non-editor lifecycle case pass unchanged.
+- **Blast radius — the editor route's key semantics, and nothing wider.** The rework introduces
+  explicit navigation/editing submodes, so typing no longer inserts by default; it rewrites Enter
+  handling around block accept; it redefines Escape; and it reassigns the Ctrl+S family. Six of
+  this branch's specs pin the behaviour it replaces. Five of those are **re-pins** — the rework is
+  entitled to change them — and exactly one is a genuine two-answers-one-key conflict: **bare
+  Ctrl+S in the editor**, which closes the buffer here and is reserved for the rework's checkpoint
+  there.
+- **What it costs, itemised:** one **integration point** — the rework reaches into the framework's
+  power-shortcut block, which this branch restructured into a privileged reservation table, so its
+  editor reservations become entries in that table; one **mechanical signature merge** on the input
+  model's constructor, which both sides changed; one **key-meaning decision** (bare Ctrl+S); one
+  resolution of the editor controller, whose rewrite is a superset of our edits there; and **five
+  spec re-pins**. It also **forces a repeat of the on-device pass** for anything that types in the
+  editor, because the keys move.
+- **Settled by measurement, not preference:** `set_text` was rewritten by both sides. Keeping ours
+  and adding the rework's one-line history reset gives 1100/22; taking theirs gives 1094/28, the six
+  extra being this branch's own content contracts. **Keep ours.** The two test harnesses are also
+  **not interchangeable** — adopting the rework's `tests/mock.lua` wholesale adds 145 errors here
+  and fixes none of its own failures.
+- **Provenance: not ours.** Upstream work by another author, on its own timeline.
+- **Revisit: it is release work, not deferred debt.** The decision of record (2026-09-03) is to
+  build on the rework so the two ship together.
+
+### T-DRIFT-KEYBOARD — the keyboard example is one commit behind its upstream, and its upstream was renamed
+
+- **Where:** the `keyboard` example repository. Upstream is **one commit ahead** (`96d6629`,
+  2026-08-20): it adds `.compy/build`, 32 lines, **no source file touched**, following the
+  packaging convention the `maze` repository set — one source tree emitting two shipped projects,
+  `keyboard/` and `k/`, so a beginner can reach the typing game without typing eight letters.
+- **State:** merges **clean** — verified, not assumed.
+- **Blast radius: packaging only.** Nothing it adds is read by this feature's work, and nothing
+  this feature changed is read by it.
+- **What it costs:** one merge, no decisions. The only care needed is that the build script's
+  expectation — a flat source tree with `main.lua` and `README.md` at the top — stays true of
+  whatever this branch leaves behind in that repository.
+- **A second finding, free:** the upstream repository has been **renamed** (`keyboard` →
+  `compy.keyboard`). The old remote URL still resolves by redirect, so nothing is broken today and
+  it will keep working until it does not. Worth correcting when that repository's pull request is
+  opened.
+- **Provenance: not ours.**
+- **Revisit:** before that repository's pull request is opened.
+
 > REMARK: its not a defect, but convention -- gfx is alias for love.graphics, sfx is alias for compy.audio
 
 ### T-GFX-GLOBAL — `gfx` implicit global in `controller.lua`
@@ -181,6 +235,33 @@ paid, or turned out not to be debt.
   takes its ids out with it and a sweep run first sweeps prose that is about to leave.
 
 ## BACKLOG
+
+### The branch is 16 commits behind the platform's experimental line, beyond the editor rework
+
+- **Where:** the platform repo's edge line (`5a52cba2`, 2026-09-03). It is **71 commits** ahead of
+  the line this branch develops against; **52 of those are the editor rework** covered by
+  `T-DRIFT-PR45`, and **the remaining 16 are this entry**.
+- **What is in the 16:** the 64-slot colour palette and the terminal-colour fixes that follow it,
+  a colours example, a filesystem durability API (`FS.fsync` / `FS.sync`) and the editor checkpoint
+  path that uses it, packaging changes (zip instead of 7-zip, release signing), the Android exit
+  path, a terminal repaint gate, the per-character input render-cost fix that is its own open
+  upstream pull request, and a storage-fallback label at the prompt.
+- **Blast radius: small, and almost all of it is outside this subsystem — with one exception that
+  is not.** The storage-fallback commit widens the widget's label from a string to *either* a
+  string *or* a `{ text, tone }` table, and renders the tone in the status line. **This feature's
+  public `prompt` key writes exactly that field**, so after this line merges, a project could pass
+  a table where the guide documents a string, and it would work by accident. That is a public
+  surface question, not a merge conflict, and it is the reason this entry is not filed as pure
+  packaging drift.
+- **What it costs:** measured after the editor rework is merged, the remainder conflicts in
+  **five files, two of which are artifacts of a probe resolution**. What genuinely needs hands is
+  the console model (the label change plus the constructor both sides moved), an **add/add on the
+  colours example** — the same file arriving by two routes, 245 lines against 247 — and
+  `.gitignore`. Plus one decision: whether the tone-bearing label is admitted to the documented
+  surface, refused, or left undocumented.
+- **Provenance: not ours.**
+- **Deferred by decision, not by neglect** (2026-09-03): this release ships on the editor rework;
+  the rest of the edge follows afterwards.
 
 ### The persistent corpus cites the rule chain, and the rule chain does not ship
 
