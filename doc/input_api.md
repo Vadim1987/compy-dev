@@ -15,7 +15,8 @@ not only the ones the text field cares about.
 It is three surfaces, and the rest of this guide is those three in order:
 
 1. **The input widget** — put a text field on screen and change it while it is
-   there: `show`, `hide`, `configure`, `set_text`, `set_cursor`, `clear`.
+   there: `show`, `hide`, `configure`, `set_text`, `set_cursor`, `clear` —
+   and the reads `is_shown`, `get_text`, `get_cursor`.
 2. **Callbacks** — what the widget tells you back: a submission, a cancel, a
    cursor hitting a boundary, a validator's verdict.
 3. **Inbound events** — shortcuts and hooks over the keyboard, the mouse and
@@ -178,15 +179,22 @@ compy.input.hide()
 compy.input.show()   -- still labelled 'name?', and empty
 ```
 
-If you want the text back, keep it yourself and pass it to that `show`. Note
-what "keep it yourself" can mean: the text you passed to a `show`, or the text
-handed to `on_text_entered` at the last submit. **There is no call that reads
-the current content** — so anything the user typed and did not submit is gone
-at the `hide`, and cannot be restored by the project either.
+If you want the text back, keep it yourself and pass it to that `show`.
+`get_text()` and `get_cursor()` read the content and the caret, so saving them
+is two calls:
 
-`get_cursor()` returns `nil` while the widget is hidden — a plain "nothing to
-report" rather than a refusal, so it does not warn the way the mutating calls
-do. Read the cursor you mean to restore *before* the `hide`.
+```lua
+local text = compy.input.get_text()
+local l, c = compy.input.get_cursor()
+compy.input.hide()
+-- later
+compy.input.show{ text = text, cursor = { l, c } }
+```
+
+**Both reads must happen before the `hide`.** While the widget is hidden they
+answer `nil` — a plain "nothing to report" rather than a refusal, so neither
+warns the way the mutating calls do, and a save written after the `hide`
+silently saves nothing.
 
 ### Live changes
 
@@ -248,8 +256,19 @@ combos the platform keeps are answered before your project sees the event, so
 "Combos the framework keeps".
 
 `compy.input.set_text(text [, keep_cursor])` replaces content. `clear()`
-empties it. `get_cursor()` returns `line, col`; `set_cursor(line, col)` moves
-it. Mutating calls warn and do nothing while the input widget is hidden.
+empties it. `get_text()` reads it back. `get_cursor()` returns `line, col`;
+`set_cursor(line, col)` moves it. Mutating calls warn and do nothing while
+the input widget is hidden.
+
+**`get_text()` answers one string**, with `\n` between lines — the same
+spelling `on_text_entered` is given, and one you can hand straight back to
+`set_text`. An empty widget answers `''`; a hidden one answers `nil`, so the
+two are never confused. Like `get_cursor()`, reading while hidden is not an
+error and does not warn: there is simply nothing to report.
+
+It is the only way to see what the user has typed **without waiting for a
+submit** — useful when your project decides the moment: a timeout that takes
+whatever has been entered so far, or a hotkey that acts on the current text.
 
 `col` is a **caret position between characters**, not a character index: it
 ranges from `1`, before the first character, to one past the last, at the

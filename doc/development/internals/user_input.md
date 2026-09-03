@@ -157,9 +157,15 @@ clamped 2D mover: `get_cursor_info`/`get_cursor_pos`/`set_cursor(Cursor)`/`jump_
 `set_cursor_pos(line, col)` — the last one (`userInputController.lua`, `set_cursor_pos`) computes
 its own clamp against line/text length rather than relying on `move_cursor`'s
 fallback-to-previous-position behaviour. **`compy` (project-facing)** now has its own surface on the input widget:
-`compy.input.get_cursor()` / `set_cursor(line, col)` / `set_text(text[, keep_cursor])`
-(`consoleController.lua:487-510`) — `get_cursor` returns `nil` while hidden (a plain "nothing to
-report" read, not a refusal); `set_cursor`/`set_text` no-op **and warn** while hidden.
+`compy.input.get_cursor()` / `set_cursor(line, col)` / `get_text()` / `set_text(text[, keep_cursor])`
+(`consoleController.lua`, `build_widget_api` — named rather than cited by line, which drifts) —
+**the two reads return `nil` while hidden** (a plain "nothing to report" read, not a refusal, so
+neither warns); `set_cursor`/`set_text` no-op **and warn** while hidden. `get_text` answers one
+string with `\n` between lines — `on_text_entered`'s spelling, and the one `set_text` takes back
+unchanged; `''` when the widget is up and empty, which is how a project tells *nothing typed* from
+*nothing to report*. **It is the only read of the content outside a submit**, and until it was added
+(2026-09-03) there was none: the surface wrote content and never read it, so a project could not
+save what the user had typed.
 
 There are four call sites that manipulate the cursor programmatically (i.e., not as a direct
 response to a cursor-movement keypress): two in `editorController.lua` — `load_selection`
@@ -829,7 +835,7 @@ freely writable. It exposes:
   state query, and the only way a project can learn this — its own
   `love.state.user_input` is a sandbox clone and never set
   (`project_sandbox_env.md`)
-- `compy.input.get_cursor()` / `set_cursor(line, col)` /
+- `compy.input.get_cursor()` / `set_cursor(line, col)` / `get_text()` /
   `set_text(text [, keep_cursor])` — the cursor/text surface; see
   "Cursor manipulation" above for the layering this sits on.
 - `compy.input.configure(config)` — live-reconfigures an active
