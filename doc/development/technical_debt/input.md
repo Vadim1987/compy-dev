@@ -2324,12 +2324,20 @@ are what happened.
 
 ### Project-handler wrapping: dedup the guard, drop the misleading `keyboard_` name (RESOLVED, 2026-08-03)
 
-- **Resolution:** the two builders are one. `chain_project_handler(CC, fn)`
-  wraps, `project_handler(userlove, CC, key)` guards, and both the keyboard
-  participants (`project_handlers`) and the pointer installs (`hook_pointer`)
-  use it. The guard exists once. `wrapped_native` / `keyboard_native` /
-  `chain_native` are gone, and with them the `native` label and the
-  keyboard-specific name on a function that was never keyboard-specific.
+- **Resolution:** the two builders became one — one wrapper, one guard, used by
+  the keyboard participants and the pointer path alike. The guard exists once.
+  `wrapped_native` / `keyboard_native` / `chain_native` are gone, and with them
+  the `native` label and the keyboard-specific name on a function that was never
+  keyboard-specific.
+- **The names moved after this was written, and this bullet asserted the old ones
+  in the present tense until 2026-09-03.** As of today: the guard is
+  `project_handler(userlove, key)`, which answers the project's own handler or
+  nothing; `project_handlers` seeds them; `occupy_input` (formerly
+  `occupy_keyboard`) activates the route and wraps it **once** in
+  `with_canvas_and_errors`, rather than wrapping per participant, so
+  `chain_project_handler` no longer exists at all; and the pointer path is
+  `mark_pointer_liveness`, which **installs nothing** — it only marks the project
+  live. The resolution stands; only its vocabulary had rotted.
 - **What made the collapse possible:** the split was justified by return
   policy — `CC:wrap_handler` discards the return by construction, and a chain
   participant's return is its consume signal. That was never a real
@@ -2347,9 +2355,10 @@ are what happened.
   and the poll loop discard.
 - **What it was:** two builders adapting a project's own `love.*` handlers —
   `wrapped_native` (via `CC:wrap_handler`, return discarded, installed
-  straight onto `love.*` by `hook_pointer`) and `keyboard_native` (via
-  `chain_native`, return propagated, seeded as `hooks[event]` by
-  `occupy_keyboard`) — carrying the **identical** guard
+  straight onto `love.*` by what was then `hook_pointer`, today
+  `mark_pointer_liveness`) and `keyboard_native` (via `chain_native`, return
+  propagated, seeded as `hooks[event]` by what was then `occupy_keyboard`,
+  today `occupy_input`) — carrying the **identical** guard
   (`orig and new and orig ~= new`) and differing only in the wrapper they
   called. `keyboard_native` was misnamed: nothing about it was
   keyboard-specific. Deferred out of the D5 vocabulary rename (2026-07-21)
@@ -2367,13 +2376,13 @@ because the pattern recurs: when a producer goes, grep for its consumer.
 
 ### Input-only / pointer-only projects stay live in `project_open` (RESOLVED, ruling a)
 
-- **Where:** `consoleController.lua` `run_project`
-  (`consoleController.lua:260-269`), `controller.lua`
-  `user_is_interactive` (`controller.lua:1112-1113`),
-  `user_pointer` / `hook_pointer` (`controller.lua:68`,
-  `:238-249`), `set_default_handlers`
-  (`controller.lua:778-824`, resets `user_pointer`), and
-  `love.quit` (`controller.lua:733-758`).
+- **Where:** `consoleController.lua`'s `run_project`; and in `controller.lua`,
+  `user_is_interactive`, the module-local `user_pointer` flag,
+  `mark_pointer_liveness` (which sets it — named `hook_pointer` when this was
+  written), `set_default_handlers` (which resets it) and `love.quit`. **Named,
+  not cited by line, deliberately:** every line number this bullet carried had
+  drifted by 2026-09-03, which is the class `general.md` already holds — a
+  function name moves once and greps out, a line number rots silently.
 - **State (old, broken behaviour):** A non-blocking project (no
   `update`/`draw` hooked) always dropped to `'project_open'` with
   the project route unconditionally released
@@ -2395,7 +2404,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   project is "live" without hooking `update`/`draw`. New
   predicate `Controller.user_is_interactive()` returns
   `love.state.user_input ~= nil or user_pointer`, where the
-  module-local `user_pointer` flag is set in `hook_pointer` when
+  module-local `user_pointer` flag is set in `mark_pointer_liveness` when
   a project installs any pointer/click handler and reset in
   `set_default_handlers`. `run_project` now releases the keyboard
   route only when `not user_is_interactive()` — an interactive

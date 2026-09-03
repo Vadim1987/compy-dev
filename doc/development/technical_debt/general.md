@@ -78,9 +78,10 @@ paid, or turned out not to be debt.
 
 ### T-NEVER-SHIPPED — the register keeps entries for defects that never existed outside the branch
 
-- **Where:** `input.md`'s `RETIRED` section and this file's — **51 entries, 46 + 5, counted
-  2026-09-02** (was 45 + 2 on 2026-09-01; session66 retired four and the cold revalidation two more.
-  Re-count when the row opens: this register grows as the sprints pay into it).
+- **Where:** `input.md`'s `RETIRED` section and this file's — **56 entries, 50 + 6, counted
+  2026-09-03** (51 the day before, 47 the day before that; the section grows every time a sprint
+  pays into it, and it grew twice *during* `FIX-02-05` itself). **Do not trust this number either —
+  count it when the row opens.** The figure is here to size the row, not to be cited.
 - **The rule it fails:** `../../../agents/rules/ledgers.md` §3 — what a branch introduced and paid
   before release never existed for anyone outside it, so its entry records our own drafting rather
   than the product's history. A **pre-existing** defect the branch fixed is the opposite: it
