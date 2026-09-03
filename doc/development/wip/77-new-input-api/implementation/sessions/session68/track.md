@@ -118,6 +118,61 @@ consumer standing on this branch** (the `serial` API work), and the debt registe
 API to `1.0.0-rc20260712` — so whether `eval` was ever released to anyone is a fact I do not have.
 Batched with `CHG-01-04`'s version question, which is the same *what counts as released* question.
 
+## The owner's four questions, and what they turned up (2026-09-03, after the mandate)
+
+Asked at the point I offered to wrap. **Three of the four changed something**, which is the
+argument for asking them.
+
+- **`eval`/`result`: I answered by executing, and it corrected me twice.** A scratch spec printed
+  the project environment: `eval` a function (the *Lua evaluator* global, exported at base and
+  today — unrelated to the widget), `result` **nil** and never a name at all, the four evaluator
+  objects **nil** in `project_env` while still present in `pre_env`. That gap is the finding: they
+  were **reachable at base** and are **withheld now** (`project_env[name] = nil`, commented, with
+  its reason). A removal the CHANGELOG did not record.
+- **`FIX-02-17`'s set difference could not have found it**, and this is the transferable part: the
+  check differences *assignment keys*, and `project_env[name] = nil` is **the unmaking of a name,
+  not the assignment of one**. It is on neither side. *A set difference finds what is absent; it
+  does not find what is actively removed.* The method that caught `astv_input` — which no grep
+  would have looked for — was structurally blind to these four.
+- **`internals/user_input.md` already documented the withholding, correctly.** The CHANGELOG and
+  the guide did not. `FIX-02-06`'s shape exactly: the corpus knows, and the two documents a
+  stakeholder reads are the ones that do not.
+- **The `result` row went with them.** Nobody wrote `result = ...`; a project wrote
+  `r = user_input()` and polled `r`. Folded into the `user_input()` row, which now says there is no
+  handle at all.
+
+## The owner corrects a term, and it lands in the cell about terminology (2026-09-03)
+
+> *"one-shot widget is autohiding widget now, because behaviour itself is repetitive."*
+
+I had argued for keeping *"prompt"* on the grounds that *"a one-shot prompt"* reads well where
+*"a one-shot widget"* does not. **The behaviour is not one-shot** — `auto_hide` is a standing mode —
+and `D-AUTO-HIDE` says so in as many words. **I argued for a name using vocabulary this feature had
+already retired, inside the cell whose whole subject is retired vocabulary.** The phrase is *"an
+auto-hiding widget"* and it reads fine, so that side of the ruling has no ergonomic case left.
+
+**Grepping for the retired word found a retired mechanism.** `internals/examples/turtle.md`
+documented the **pre-`auto_hide`** turtle in five places — *including its Lua code sample*
+(`after_submit = function() compy.input.hide() end`, and a `show` with no `auto_hide`). `FEAT-02`
+migrated the example and not its document. Fixed against `main.lua`; the file's *vocabulary* drift
+is deliberately left to `FIX-02-09`.
+
+## Two process changes, both the owner's (2026-09-03)
+
+- **The turtle drift's disposition** — *"either registered as active debt and planned, or described
+  in the step which unifies terminology if it was not yet executed"*. `FIX-02-09` had not executed,
+  so it landed there, with its ruling and its sites, rather than becoming a second ledger entry for
+  a goal that already has a row. I checked route three first: `src/examples/turtle/README.md` does
+  not mention the widget at all, so no deeper rewrite is coming.
+- **The closing order is now three steps** (`agents/validation.md`): commit → **Sonnet peer review
+  of the changes** → wrap → **Opus delivery-level review**. Neither sub-agent may spawn its own —
+  strict, host-protection, stated with its reason in every prompt.
+
+**And I broke a commit rule while writing that down.** `git add -u` swept the workflow change into
+the turtle commit, whose message says nothing about it — a change no commit accounted for. Reverted
+and re-applied as its own commit rather than amended: **history is not rewritten here, and a trail
+showing the mistake is worth more than a tidy one that hides it.**
+
 ## `FIX-02-05`, and the half closes (2026-09-03)
 
 - **Worker returned in ~18 minutes**, deliverable complete and **honest about itself** — it reported
