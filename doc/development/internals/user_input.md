@@ -521,31 +521,33 @@ routing is untouched by the input API).
 
 ### Search — a third widget instance, live only in editor/search mode
 
-> REMARK: heavy, unreadable paragraph below, rewrite
+`EditorController`'s constructor (`editorController.lua`) wraps a `SearchController`/`Search` model
+pair around a `UserInputController` instance of its own — a **third** consumer of the shared widget primitive, alongside console's and
+the editor's main input. It is live only while `app_state == 'editor'` and
+`EditorController.mode == 'search'` (Ctrl+F, see "Editor-specific keys" above), reached through
+`EditorController:_search_mode_keys` for keys and `EditorController:textinput` for characters.
 
-`EditorController.search` (`editorController.lua:14-17`) wraps its own `SearchController`/`Search`
-model pair around its own `UserInputController` instance — a **third** consumer of the shared input
-widget primitive, alongside console's own and the editor's main input. It is live only while
-`app_state == 'editor'` and `EditorController.mode == 'search'` (entered via Ctrl+F, see
-"Editor-specific keys" above). `keypressed` forwards through `EditorController:_search_mode_keys`
-(`:485-503`) to `SearchController:keypressed`; `textinput` forwards through `EditorController:textinput`
-(`:287-302`) when in search mode. **`SearchController:keypressed` fully owns its key handling and
-never delegates to its wrapped `UserInputController:keypressed`** — it drives navigate/removers/Enter
-itself and only ever calls its instance's `textinput`/`update_view`, never its `keypressed`. So the
-search widget's instance never runs the shared submit/cancel flow at all, and needed no change when
-the `app_state` fork was removed. There is no evaluator (search input is free text with no
-validation) and **Enter returns the currently-selected result** (a jump target `{block, line}`) up to
-`_search_mode_keys` rather than submitting the typed query — the same "keypress return value carries a
-domain result" shape the shared widget's own limit-flag return was retired for (D-TWO-SURFACES);
-left in place here because `SearchController` is a different class, out of the input API's scope
-(`technical_debt/input.md`). `SearchController` defines no `:keyreleased` method at all — combined with the missing
-editor fork above, search's `UserInputController` instance never receives a release under any
-circumstance. `SearchController:clear()` (`searchController.lua:44-47`) reaches past its own
-controller straight into `self.model.input:clear_input()`, skipping `clear_error()` — currently
-harmless (search has no evaluator, so no error can ever be set) but a layering inconsistency against
-every other reset path described above. None of the input API's design documents mention this
-surface — it is real, live code with no corresponding entry in the design corpus, carried here as
-the first record of it in the permanent doc corpus.
+**It borrows the widget's model, not its behaviour.** `SearchController:keypressed` owns its key
+handling outright and never delegates to its instance's `keypressed`: it drives navigation,
+backspace/delete and Enter itself, and touches the instance only through `update_view` and
+`add_text`. Consequences, in order of how likely they are to surprise a reader:
+
+- The instance **never runs the shared submit/cancel flow**, which is why it needed no change when
+  the `app_state` fork was removed.
+- There is **no evaluator** — search input is free text — and **Enter returns the selected result**
+  (a jump target `{block, line}`) up to `_search_mode_keys` rather than submitting what was typed.
+  That is the same "keypress return carries a domain result" shape the shared widget's limit-flag
+  return was retired for (D-TWO-SURFACES). It stays: `SearchController` is a different class, out
+  of the input API's scope (`technical_debt/input.md`).
+- `SearchController` defines **no `:keyreleased`** — with the missing editor fork above, this
+  instance never receives a release under any circumstance.
+- `SearchController:clear()` reaches past its own controller into `self.model.input:clear_input()`,
+  skipping the `clear_error()` that `UserInputController:clear` pairs with it. Harmless today (no
+  evaluator, so no error can be set), but a layering inconsistency against every other reset path
+  above. Its `keypressed` removers reach the same way.
+
+No design document mentions this surface; it is live code the design corpus never covered, and this
+is its first record in the permanent one.
 
 ### Future editor migration path (analysis, not scheduled)
 
