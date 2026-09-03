@@ -92,6 +92,44 @@ block itself, and item 4's ruling.
 Found while reading: **`sync-input-proposal.md` is cited by `doc/input_api.md`
 and is not in the tree.**
 
+## Owner rulings — 2026-09-03, four questions put, four answered
+
+1. **`PROP-01` runs after `PR-01`.** The recommendation stood. Sprint written
+   (`97839691`), seven rows, three carve-outs named.
+2. **`REC-01`/`MERGE-01` — scope widened.** *"recon and merge against not only
+   these repos, but against platform again — most likely our changes will be
+   combined with another PR, and drift evaluated towards edge. I need all this
+   measured and analyzed on recon stage."* Plus **https remotes**, all repos
+   public, so nothing depends on their SSH access.
+3. **F5 — `agents/` is NOT in the corpus.** *"Agents are not in the corpus and
+   will be carved out alongside with wip/. They can bear references into wip/.
+   It's a working surface that is not promoted to upstream."* Recorded in
+   `conventions/docs.md`; **the ruling creates a class the same minute** — 19
+   citations of `agents/…` sit in documents that do ship. Filed unslugged.
+4. **F6 — the pre-PR gate: *"I need to discuss it."*** Held. Nothing written to
+   `agents/validation.md`.
+
+## REC-01 — executed the same session
+
+Measurement: `validation/notes/S70-REC-01-drift-measurement.md` (`c898e12f`),
+round-3 tags in all four repos, `TAGS.md` updated.
+
+Shape of the answer, in the order it changed my picture:
+
+- **0 behind `aldum/dev`.** The re-merge against the PR base is a no-op today.
+- **Four open PRs upstream, two of them input-touching**, and **the edge already
+  contains both**. So *"drift towards edge"* is the right instrument and it was
+  the owner's instinct — one measurement covers #45 and #41.
+- **The two files this feature is most about auto-merge.** The collisions are
+  semantic and small in number: the constructor signature, `set_text`, and the
+  key semantics the guide documents.
+- **The example repos are empty rows.** That discharges the 2026-09-02 ordering
+  argument (merge before smoke) almost for free.
+
+Method note worth keeping: **`git merge-tree --write-tree` predicts conflicts with
+no worktree**, which is how the dry merges were taken without violating the
+no-parallel-worktrees rule or touching the tree the LSP indexes.
+
 ## Mode
 
 Execution (S69 dispositions F1–F4, F9) then evaluation + replanning (the
