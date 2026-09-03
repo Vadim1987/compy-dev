@@ -191,6 +191,69 @@ describe('input surface: widget control — cursor and text #input',
     end)
  end)
 
+ describe("get_text", function()
+
+    -- doc/development/technical_debt/input.md,
+    -- T-CONTENT-READ: the read the surface never had. It
+    -- answers a STRING, the spelling on_text_entered
+    -- delivers, because set_text takes either spelling and
+    -- treats them as the same thing — so a string round-trips
+    -- and needs no type the guide does not already name.
+    it('reports the content seated by show', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello' })
+      assert.same('hello', input.get_text())
+    end)
+
+    -- THE case the entry exists for. Everything else here a
+    -- project could already reconstruct from what it seated;
+    -- what the user typed and did not submit was unreadable,
+    -- which is why "keep it yourself" was not followable
+    -- advice (doc/input_api.md, "hide()").
+    -- activate_project, not compy_input: this case TYPES.
+    it('reports what the user typed, not only what was seated',
+      function()
+        local input = F.activate_project()
+        input.show({ text = 'hi' })
+        F.session.type('!')
+        assert.same('hi!', input.get_text())
+      end)
+
+    -- Multiline is the one place the return shape is visible:
+    -- lines are joined, not dropped, and the result feeds
+    -- straight back into set_text, which splits it again.
+    it('joins multiline content with newlines', function()
+      local input = F.compy_input()
+      input.show({ text = { 'ab', 'cd' } })
+      assert.same('ab\ncd', input.get_text())
+    end)
+
+    -- Empty content is '' and hidden is nil: two different
+    -- answers, so a project can tell "nothing typed" from
+    -- "nothing to report". Pinned as a pair, or one could
+    -- collapse into the other unnoticed.
+    it('answers an empty string when up and empty', function()
+      local input = F.compy_input()
+      input.show()
+      assert.same('', input.get_text())
+    end)
+
+    -- Shown-with-text first, THEN hidden — same reason as
+    -- get_cursor's case: a nil from a widget that was never
+    -- active proves nothing. nil, and NOT a warning: a read of
+    -- "nothing to report" is not a refused mutation
+    -- (doc/development/internals/user_input.md, "Cursor
+    -- manipulation and \"reset\"", the rule get_cursor
+    -- follows).
+    it('returns nil when hidden', function()
+      local input = F.compy_input()
+      input.show({ text = 'hello' })
+      assert.is_not_nil(input.get_text())
+      input.hide()
+      assert.is_nil(input.get_text())
+    end)
+ end)
+
  describe("set_text", function()
     -- doc/input_api.md, "Live changes": replace
     -- content, cursor to end.
@@ -380,7 +443,7 @@ describe('input surface: widget control — cursor and text #input',
   end)
 
     -- doc/development/decisions/input.md, D-FROZEN-SHELL (what
-    -- a project may assign): the three callables are not among
+    -- a project may assign): the four callables are not among
     -- them, so the frozen surface raises loudly rather than
     -- swallowing the write.
     it('assigning the cursor/text callables raises',
@@ -394,6 +457,9 @@ describe('input surface: widget control — cursor and text #input',
         end)
         assert.has_error(function()
           input.set_text = function() end
+        end)
+        assert.has_error(function()
+          input.get_text = function() end
         end)
       end)
 end)

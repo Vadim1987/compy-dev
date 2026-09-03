@@ -239,6 +239,7 @@
 --- @field hide fun()
 --- @field is_shown fun(): boolean
 --- @field get_cursor fun(): integer?, integer?
+--- @field get_text fun(): string?
 --- @field set_cursor fun(line: integer, col: integer)
 --- @field set_text fun(text: str, keep_cursor: boolean?)
 --- configure takes InputShowConfig minus the show-only keys —

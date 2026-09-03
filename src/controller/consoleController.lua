@@ -863,7 +863,7 @@ end
 -- seeded hook per event (D-HOOKS-SEEDED). show/hide drive the
 -- widget (resolved from love.state, never held by the project).
 -- The widget-method surface a project drives (show/hide/
--- configure/set_text/set_cursor/get_cursor/clear),
+-- configure/set_text/get_text/set_cursor/get_cursor/clear),
 -- parameterized by instance: any adopter — not only the project
 -- widget — gets the same ergonomics over ITS OWN widget by
 -- supplying its own resolvers. `get_widget` resolves the
@@ -896,6 +896,16 @@ local function build_widget_api(get_widget, get_active_flag, state)
     get_cursor = function()
       if not get_active_flag() then return nil end
       return get_widget():get_cursor_pos()
+    end,
+    -- doc/input_api.md, "Live changes": the content read,
+    -- answering the string spelling on_text_entered
+    -- delivers — set_text takes either spelling and means
+    -- the same by both, so a string round-trips and names no
+    -- type the guide does not have. nil when hidden, and
+    -- silent for get_cursor's reason above.
+    get_text = function()
+      if not get_active_flag() then return nil end
+      return string.unlines(get_widget():get_text())
     end,
     -- doc/development/internals/user_input.md, "Cursor
     -- manipulation and \"reset\"": clamped move; no-op +
