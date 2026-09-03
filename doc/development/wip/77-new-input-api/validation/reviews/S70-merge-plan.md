@@ -18,7 +18,7 @@ the trial merge onto PR #45
 ([`../notes/S70-PR45-as-base.md`](../notes/S70-PR45-as-base.md)), and the three
 register entries that carry the cost (`T-DRIFT-PR45`, `T-DRIFT-KEYBOARD`, and the
 edge's BACKLOG entry). The stakeholder-facing version is
-`doc/development/upstream_drift.md`.
+[`../notes/upstream-drift.md`](../notes/upstream-drift.md).
 
 ## 1. The order, and why it is this order
 
@@ -62,8 +62,10 @@ the mechanics without changing the order:
 
 ### The import shape — owner's plan, 2026-09-03
 
-**#45's content enters our branch as one commit** (`git merge --squash`, not
-`diff | apply` — a two-way apply cannot resolve the four collisions), we work and
+**#45's content enters our branch as one commit** — by a **three-way** application,
+which `git merge --squash` and `git apply --3way` both give and a bare `git apply`
+does not (measured: the bare form rejects 8 hunks in 5 files, one of them a conflict
+that does not exist). We work and
 smoke against that *"future-merged"* tree, and the PR is generated from **content**
 rather than from history. A force-push that carries new content is answered by a
 **corrective commit**. Assessment, with the invariant and the one failure mode it
@@ -111,9 +113,6 @@ So the mechanics are:
   PR description, no diff ranges quoted against #45's sha in prose that ships.
 
 ### The conflict resolutions, unchanged by the above
-
-The four conflicts and their intended resolutions (the trial's probes are marked;
-they are *not* the plan):
 
 The four conflicts and their intended resolutions (the trial's probes are marked;
 they are *not* the plan):

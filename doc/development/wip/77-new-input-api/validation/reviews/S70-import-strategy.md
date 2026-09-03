@@ -25,14 +25,41 @@ where the device pass and the reconciliation actually happen.
 
 Four additions, one of which is not optional.
 
-## 1. Do the import with `merge --squash`, not `diff | apply`
+## 1. Use a **three-way** application — `git apply --3way` or `merge --squash`, either
 
-A two-way `git apply` of `updev..updev+#45` onto our branch **will fail** in the four
-files where both sides changed the same regions — no merge base, no three-way
-resolution, just context mismatch. `git merge --squash <pr45>` does the correct
-three-way merge against the true base (`945a5d1d`), surfaces exactly those four
-conflicts, and leaves **one staged changeset** — which is the same single commit the
-plan asks for, reached by the mechanically correct route.
+**Corrected 2026-09-03 after measuring it.** An earlier draft said *"use
+`merge --squash`, not `diff | apply`"*. That was too coarse: the distinction that
+matters is **two-way versus three-way**, not patch-level versus git-level. Staying in
+the patch idiom is entirely possible, and the owner's instinct to do so was right.
+
+The patch is `git diff <updev> <tree of updev+#45>` — **19 files, 92 hunks**. Applied
+to our branch three ways:
+
+| route | result |
+|---|---|
+| `git apply` (two-way) | **refuses 5 files.** With `--reject`: **8 hunks rejected**, and one of the five is `consoleController.lua`, which has **no real conflict at all** — the rejection is context lost to our own edits nearby. It is also **all-or-nothing**: one error rolls back the entire application |
+| `git apply --3way` | **4 files with conflicts — `controller.lua` 1 hunk, `editorController.lua` 2, `userInputModel.lua` 2, `tests/mock.lua` 1** — `consoleController.lua` applies cleanly, and `#45`'s new `editHistory.lua` is created |
+| `git merge --squash <pr45>` | **identical**: the same 4 files, the same 6 hunks |
+
+So: **`git apply --3way` and `merge --squash` produce the same tree and the same
+conflicts here.** Choose on secondary grounds:
+
+- **`--3way` needs the pre-image blobs present locally.** They are, because we fetch
+  #45. Generate the patch somewhere without that object context and `--3way` silently
+  degrades to the two-way behaviour above.
+- **`merge --squash` works from the true merge base over the whole tree**, so renames,
+  deletions and mode changes are handled uniformly rather than only as far as the diff
+  encoded them.
+- **Neither records ancestry.** This is the reassurance worth stating plainly:
+  `merge --squash` creates **no merge parent and no `MERGE_HEAD`** in the result. The
+  commit is an ordinary commit whose *content* happens to include #45's changes. It
+  does not make git believe #45 is merged, and it does not contaminate the
+  content-level model the plan is built on.
+
+**Recommendation: `merge --squash`, for the whole-tree handling — but if the patch
+idiom is preferred, `git apply --3way` is measured to be equivalent and the plan does
+not change.** What must not be used is a bare `git apply`, which invents conflicts
+that are not there.
 
 ## 2. The invariant that makes the whole scheme checkable
 
