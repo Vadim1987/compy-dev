@@ -1,0 +1,44 @@
+# session69 track
+
+## Boot (2026-09-03)
+
+- HEAD `1a864137` (`docs(session68): commission the delivery-level review — step 3 of the closing order`).
+- Working tree: two untracked S68 closing artifacts (`validation/outcomes/S68-cold-peer-review.md`, `validation/reviews/S68-delivery-revalidation.md`); known scratch left alone (`claude.sh`, `src/STEPS.md`, nested examples, etc.).
+- No prior `session69/track.md` — fresh start.
+- Predecessor track ends at `FIX-02-05` / `CHG-01` complete / F2 nearly missed; **no entries for the peer review, wrap, or delivery commission** (S68 delivery review F1).
+- CURRENT PROMPT pointer matches `session69/prompt.md`.
+- Owner instruction this turn: housekeeping first — commit the two untracked S68-review files file-by-file, then apply the delivery review's corrective actions. Ask if unsure.
+
+## S68 delivery review as received (2026-09-03)
+
+Read `validation/reviews/S68-delivery-revalidation.md`. Verdict: seven findings, none blocking; dispositions table promised by `session69/prompt.md` is **not in the file**. File ends at F5. Findings present:
+
+- **F1** — peer review of record untracked; wrap carried no track. Propose: commit the file, late-record the track, one line on `session69/prompt.md`.
+- **F2** — `get_text()` has no smoke/example coverage while `FEAT-03` claims `ACC-02` exercises it. Propose: checklist row + soften the claim; **question for owner**.
+- **F3** — `LEDGER-02` still sized on superseded 56/47 counts.
+- **F4** — five unwalked entries dispositioned in a retired entry; carry into `LEDGER-02-01` (folded into F3c).
+- **F5** — `FEAT-02` and `FEAT-03` both claim "last surface change".
+
+Conflict: F1 wants a line in the booted prompt; `agents/sessions.md` says never edit a booted prompt. Will ask.
+
+## Owner rulings on the S68 delivery review (2026-09-03)
+
+1. Reviewer was interrupted. Add an **optional** operational roadmap step to re-review S68 and recover the missing findings; it does **not** block the release.
+2. F1 note is **track-only** — do not edit the booted prompt.
+3. `get_text()` shipped when the ask was to file it as debt. Update `doc/input_api.md` so it does not go unnoticed: delivered prematurely, **experimental**, may be withdrawn unless needed. **No smoke-testing.**
+4. F5 wording: *"until `FEAT-03`"*.
+5. Apply F3–F5 now, one by one, small incremental commits.
+
+Housekeeping already landed: `d8468910` peer review of record, `3be6da02` delivery review.
+
+## Dispositions executed (2026-09-03)
+
+F1 remainder: late-record on `session68/track.md` (`e298d60c`); note stays in this track, prompt untouched.
+F5: `f8dac501` — "until `FEAT-03`".
+F3a: `a3d7c876` — `T-NEVER-SHIPPED` Where is 61.
+F3b: `1d268e9d` — 47/14/7 replaced with the 39/9/5/3 classification.
+F4: `6e636f7a` — `LEDGER-02-01` carries the five unwalked.
+F2 as ruled: no smoke. `38a40b4b` marks `get_text()` experimental in `doc/input_api.md` and CHANGELOG; `bacc0f24` records it on `T-CONTENT-READ`; `45bec9df` drops the `ACC-02` claim.
+OP-02: `0a5c44c1` — optional, not in the release sequence.
+
+Next: `FIX-01` as the prompt says, after the owner is happy with this pass.
