@@ -99,10 +99,11 @@ paid, or turned out not to be debt.
   it.** The three cannot-tells are the `maze`/`balloons` entries, whose repos have no comparable
   base commit — **leave them in the register**, since the rule vacuums what is known to be ours and
   not what is merely unproven.
-- **Measured 2026-09-01, so the row is not sized on a guess:** 47 retired entries **(51 today —
-  see *Where*; the proportions below were not re-derived)**. **Fourteen
-  already say the defect was ours** and **seven say pre-existing**; ten cite the base explicitly.
-  Roughly half carry the answer in their own text; the rest are `FIX-02-05`'s work either way.
+- **Sized on `FIX-02-05`'s classification, not on the 2026-09-01 measurement.** That figure
+  (47, then patched to 51, then to 56 in *Where*) is superseded. Take the evidence document:
+  **39 introduced-in-branch · 9 pre-existing · 5 mixed · 3 cannot-tell** over the walked 56;
+  five more sit outside that snapshot and are dispositioned in `T-RETIRED-UNVER`'s resolution —
+  all `INTRODUCED-IN-BRANCH`, and not close. Do not re-derive either half.
 - **Mixed provenance is a third category and it keeps the entry.** `BUG-01-05` is the worked
   example — a pre-existing byte bound that our own wrappers made externally reachable by copying its
   convention deliberately. The pre-existing half shipped and is the outer world's; the drafting half

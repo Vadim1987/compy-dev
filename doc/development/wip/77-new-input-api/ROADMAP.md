@@ -1313,9 +1313,10 @@ base?*** One pass, one classification, **two consumers** — `CHG-01-03` takes t
 into the CHANGELOG, this row takes the other half out of the register. That is the whole reason this
 is four steps and not a survey, and it is the hard ordering constraint: **`FIX-02-05` first.**
 
-**Sized on measurement, 2026-09-01:** 47 retired entries (45 in `input.md`, 2 in `general.md`).
-**Fourteen already state the defect was ours, seven state pre-existing**, and ten cite the base
-explicitly — so roughly half carry the answer in their own text.
+**Sized on `FIX-02-05`'s classification, 2026-09-03:** **39 introduced-in-branch · 9 pre-existing ·
+5 mixed · 3 cannot-tell** over the walked 56. The 2026-09-01 measurement (47 entries, 14/7
+self-stated) is superseded — take the evidence document, do not re-derive it. Five further
+entries sit outside that snapshot; `LEDGER-02-01` names them.
 
 | id | step | note |
 |---|---|---|
