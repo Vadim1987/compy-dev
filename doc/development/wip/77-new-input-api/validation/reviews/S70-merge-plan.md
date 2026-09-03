@@ -60,6 +60,22 @@ the mechanics without changing the order:
 3. **The release order is #45, then ours, then the edge remainder**, and the goal is
    that the three **stack**.
 
+### The import shape — owner's plan, 2026-09-03
+
+**#45's content enters our branch as one commit** (`git merge --squash`, not
+`diff | apply` — a two-way apply cannot resolve the four collisions), we work and
+smoke against that *"future-merged"* tree, and the PR is generated from **content**
+rather than from history. A force-push that carries new content is answered by a
+**corrective commit**. Assessment, with the invariant and the one failure mode it
+creates: [`S70-import-strategy.md`](S70-import-strategy.md).
+
+**The invariant, checked after the import and after every correction:**
+`git diff <tree of updev+#45> HEAD -- src/ tests/` **is our work and nothing else.**
+
+**The gate that no tool will prompt for:** where our reconciliation drops #45's
+content, the patch set carries a **silent revert of upstream work**. Every deletion
+in the ten shared files is read and justified before the patch set ships.
+
 ### What follows from a force-pushable base
 
 **A merge commit's second parent can become unreachable.** If #45 is rewritten after
