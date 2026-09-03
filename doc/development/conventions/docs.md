@@ -54,6 +54,13 @@ reviewed: none | <name>, <YYYY-MM-DD>
 - Cite canonical docs (`doc/…`), never a feature's ephemeral working tree
   (`doc/development/wip/…`), and cite a **named section** rather than a
   paragraph number.
+- **An ephemeral *id* is a citation too** (owner ruling, 2026-09-03). A bare
+  `FIX-02-05` or `BUG-01-11` is not a path, but it resolves only inside the
+  working tree that names it, so it dangles the day that tree is deleted — the
+  same failure as a `wip/` link, with nothing to grep for. A persistent document
+  says **what was decided or done and when**; the sprint id that carried it
+  belongs in the working tree, or spelled out (*"the pass that base-checked the
+  retired entries, 2026-09-02"*) where the reader needs the referent.
 
 ## Vocabulary: "de-facto behaviour" has a boundary (owner ruling, 2026-08-11)
 
