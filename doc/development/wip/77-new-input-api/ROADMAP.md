@@ -1594,11 +1594,23 @@ trial merge that tested it is [`validation/notes/S70-PR45-as-base.md`](validatio
 This changes what `REC-01` was for — it was scoped as *discovery, not release*, and one of its
 findings has now become release work.
 
-**Two things for the owner** (also in §6 of the recon note): **PR #22 is already open** against
-`aldum:dev` as a draft, on a branch whose name lacks the `-s20260615` suffix — `PR-01-04` does not
-say whether it is reused or replaced. And the landing order of #45 versus ours is not ours to
-decide; the reconciliation cost is the same work whoever pays it, which argues for **naming it in
-the PR description** rather than delaying the PR.
+**The drifts are inventorized as debt, with blast radius and cost** (owner, 2026-09-03 — *"in
+principle, every drift could be described as debt entry with its blast radius and what it costs.
+addressing them becomes a question of replanning and prioritization"*): `T-DRIFT-PR45` and
+`T-DRIFT-KEYBOARD` are ACTIVE, the edge's remainder is BACKLOG by decision, and **`maze` gets no
+entry because zero drift is not debt**. The stakeholder-readable version lives in the persistent
+corpus at `doc/development/upstream_drift.md` — *shown from this repo, so it carries no working-tree
+paths and no sprint ids.*
+
+**The merge plan, with its risks evaluated, is
+[`validation/reviews/S70-merge-plan.md`](validation/reviews/S70-merge-plan.md)** — order, gates,
+rollback, ten risks. **The one that is the owner's rather than ours: R1** — merging #45 while it is
+still open would put its 52 commits inside *our* PR's diff, which defeats the reviewability gate.
+The mitigation is coordination, not code: **#45 lands first, then ours**, or ours opens as a draft
+naming the dependency.
+
+**PR #22 is ignored** (owner, 2026-09-03): it will be superseded by the PR this phase prepares. Not
+re-targeted, not updated, not closed here.
 
 ## 🟡 MERGE-01 — upstream reconciliation — **PARTIALLY COMPLETE (Session 56)**
 
@@ -1607,11 +1619,11 @@ PR.
 
 | id | step | note |
 |---|---|---|
-| MERGE-01-01 | `maze` | **nothing to merge, measured 2026-09-03** — 0 behind `dsent/dsent/dev`, which has not moved since 2026-07-24 |
-| MERGE-01-02 | `keyboard` | **one commit, and it merges clean** — `96d6629`, 32 lines of `.compy/build`, no source file. The S37 ancestry held |
-| MERGE-01-03 | `balloons` | **still zero divergence**, re-measured 2026-09-03 |
+| MERGE-01-01 | `maze` | **nothing to merge, and measured across every branch** (2026-09-03, owner asked for the deeper look): `dsent/dev`, `feat/reconcile`, `main` and `v1`–`v3.4` are **all ancestors** of our head. Newest upstream movement 2026-07-24; no open PRs upstream. *"No drift on the branch we track"* and *"no drift anywhere"* are different claims — this is the second |
+| MERGE-01-02 | `keyboard` | **one commit, and it merges clean** — `96d6629`, 32 lines of `.compy/build`, no source file: the packaging convention `maze` set, emitting `keyboard/` and `k/`. Registered as `T-DRIFT-KEYBOARD`. **Goes first in the merge plan because it is free.** Its upstream repo was **renamed** (`dsent/keyboard` → `dsent/compy.keyboard`); our remote resolves by redirect, correct it when that PR opens |
+| MERGE-01-03 | `balloons` | **frozen, owner attestation 2026-09-03** — no recon needed. Last upstream movement 2026-05-11, zero divergence |
 | MERGE-01-04 | the platform repo | **DONE (Session 56)** — merged `aldum/dev` into platform repo (`f4913833`), test mock fix committed (`75a7e5b3`), 1011/0/0/10 green. **Re-verified 2026-09-03: still 0 behind `aldum/dev`**, so the re-merge the owner asked for is a no-op against the PR base |
-| MERGE-01-05 | **build on top of PR #45, so the two ship together** | **owner direction, 2026-09-03.** Tested by trial merge, run: [`validation/notes/S70-PR45-as-base.md`](validation/notes/S70-PR45-as-base.md). **No fundamental conflict** — nothing in `compy.input`'s machinery collides; what collides is the **editor route's key semantics**, which #45 redefines on purpose. The integration is one place: #45's editor reservations expressed as entries in **our** `RESERVED` table, which is what that table is for. Plus one mechanical signature merge, one key-meaning decision (**bare Ctrl+S in the editor**: ours closes the buffer, #45 reserves it for the checkpoint), and a re-pin of five editor-route specs |
+| MERGE-01-05 | **build on top of PR #45, so the two ship together** | **owner direction, 2026-09-03.** Tested by trial merge, run: [`validation/notes/S70-PR45-as-base.md`](validation/notes/S70-PR45-as-base.md); cost itemised on `T-DRIFT-PR45`; sequencing, gates and rollback in [`validation/reviews/S70-merge-plan.md`](validation/reviews/S70-merge-plan.md). **No fundamental conflict** — nothing in `compy.input`'s machinery collides; what collides is the **editor route's key semantics**, which #45 redefines on purpose. The integration is one place: #45's editor reservations expressed as entries in **our** `RESERVED` table, which is what that table is for. Plus one mechanical signature merge, one key-meaning decision (**bare Ctrl+S in the editor**: ours closes the buffer, #45 reserves it for the checkpoint), and a re-pin of five editor-route specs. **Merge, never rebase** — one revertible merge commit, re-pins after it, because #45 is still open and may move |
 | MERGE-01-06 | the **edge minus #45**, afterwards | **owner, 2026-09-03: it ships later.** 19 commits beyond #45; its extra dry-merge conflicts are `.gitignore`, `consoleModel.lua` and an add/add on an example — **no input-API surface**. Separable, as expected |
 
 **Mechanic, standing:** pull each upstream into **its own branch**; never merge into the working
