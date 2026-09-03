@@ -119,3 +119,30 @@ for the gate pattern. **The five under `src/examples` are not markers** — they
 makes the pattern case-sensitive. The row is **`FIX-02-07`**, in `FIX-02`'s **(b)** half → after
 `ACC-02`. Cell recounted at `7c7cf6d2`, with the shape stated: **the count only ever falls by side
 effect**, since a marker retires with the pass that fixes what it points at.
+
+## Closing order run end to end (2026-09-03)
+
+**Step 1 — Sonnet peer review** (`4d8b3c42` commission, `7dd52785` report of record). Four findings,
+all `correction`, applied at `82a65b9d`. Three were one error: `T-EPHEMERAL-IDS`'s figures came from
+a hand-listed directory set instead of the corpus rule, quoted after my own sweep had moved four of
+the files. **The note warning that counts drift was the one that drifted.** Remedy that actually
+works: the deriving command beside the number, now on the entry.
+
+**Step 2 — wrap** (`365cfc2b`): report, `session70/prompt.md`, pointer, baseline line.
+
+**Step 3 — Opus delivery review** (`c1740783` commission, report in `validation/reviews/`).
+**Verdict: the session did what it was for** — all three mandate parts discharged, the stop held,
+and the mode transition was named to the owner *before* being taken. Nine findings, none blocking.
+
+**F1 and F9 applied here** (`924efc43`) rather than deferred, because F1 is an error I introduced
+while fixing another: the marker cell narrated **29 → 24** and attributed five, mixing an anchored
+start with a raw end. Measured: anchored 29 → 22, raw 31 → 24, **both falling by exactly 7**. It also
+claimed a `doc/` marker gate exists — it does not; `commenting.md`'s is unanchored and scoped to
+`src/`/`tests/`.
+
+**The remaining seven are session70's opening work**, per the closing order. The two that matter
+most: **F2** — `FIX-01-02` is ✅ over two live sites of its own class (`technical_debt/input.md`
+`design/` paths) that the derivation's pattern stopped one directory short of, and **no debt entry
+now covers ephemeral paths** since `T-EPHEMERAL-IDS` is ids only. **F3** — both of `FIX-01`'s
+residues (the six handed to `LEDGER-02`, R100's to `DEC-02`) live **only in `wip/` documents**,
+which is the debt-goes-to-the-ledger rule this session was handed and did not apply to itself.
