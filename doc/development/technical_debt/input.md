@@ -32,12 +32,12 @@ release ships is paid, and each is in `RETIRED` below with what paid it. The sec
 a state, not an omission: `BACKLOG` is still full, deliberately, and nothing there blocks the
 release.
 
-**This file is not the whole of the release's input obligations.** Four of the five `ACTIVE`
+**This file is not the whole of the release's input obligations.** Three of the four `ACTIVE`
 entries in [`general.md`](general.md) are this work's, filed there because they are cross-cutting
-rather than input-specific: **`T-VERSION-NUM`** (the version number for the four removed globals),
-**`T-RETIRED-UNVER`** and **`T-NEVER-SHIPPED`** (both scoped to *this file's* `RETIRED` section),
-and **`T-ARGUES-INTERIM`** (`../decisions/input.md`). A reader scanning for *what is still owed*
-reads both files.
+rather than input-specific: **`T-RETIRED-UNVER`** and **`T-NEVER-SHIPPED`** (both scoped to *this
+file's* `RETIRED` section) and **`T-ARGUES-INTERIM`** (`../decisions/input.md`). A reader scanning
+for *what is still owed* reads both files. *(`T-VERSION-NUM` was the fourth and is paid — the owner
+ruled the version question 2026-09-03.)*
 
 
 ## BACKLOG

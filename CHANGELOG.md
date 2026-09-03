@@ -1,5 +1,3 @@
-> REMARK: too shy for major changes done -- rewired dispatching, unblocked event-handling, new topology with shortcuts/hooks.... many documentation and technical debt added. And version is 1.0.0-rc...
-
 # Changelog
 
 Protocol: `CURRENT_SCOPE` holds everything not yet released. When a version
@@ -8,6 +6,14 @@ section named for that version. Released versions are listed below it,
 newest first.
 
 ## CURRENT_SCOPE
+
+> **This release breaks projects written against the previous one**, in two places, both
+> detailed below. The legacy text-input globals are **removed with no compatibility shim**
+> (*Removed*), and **`on_text_entered` now receives one string** instead of a list of lines
+> (*Changed*) — the second is the quiet one, because a callback that indexed the old payload
+> keeps running and starts reading `nil`. This is still a `1.0.0-rc` release and nothing
+> before 1.0.0 promises a stable surface, so the break is announced here rather than in the
+> number.
 
 ### Removed
 

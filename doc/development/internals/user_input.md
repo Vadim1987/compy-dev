@@ -549,8 +549,8 @@ the first record of it in the permanent doc corpus.
 
 ### Future editor migration path (analysis, not scheduled)
 
-> REMARK: reference specific version not just 'input API' but 'input API (1.0.0-rc...)
-The input API makes a later editor migration possible; it does not migrate the editor. The reusable
+The input API **(1.0.0-rc20260712)** makes a later editor migration possible; it does not migrate
+the editor. The reusable
 seam is the three-consumer dispatch shape — shortcuts, hook, widget — over plain tables and a widget
 instance. It must not be mistaken for an instruction to share the project widget: console, editor,
 and Search keep independent text, cursor, history, and view state.

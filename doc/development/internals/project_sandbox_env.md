@@ -68,9 +68,7 @@ lives in a global subsystem nobody snapshots.
 
 ### `compy.before_exit` — the project teardown hook
 
-> REMARK: Update 'exists, not a proposal' with concrete avaiability reference -- "since version..."
-
-It exists and is wired; it is **not** a proposal. `compy.before_exit` is a slot on the injected
+It exists and is wired **since 1.0.0-rc20260712**; it is **not** a proposal. `compy.before_exit` is a slot on the injected
 `compy` namespace, defaulting to a no-op (`default_before_exit`, `consoleController.lua`), assignable
 by the project through the namespace metatable (`build_project_env`'s `before_exit_slot`) — assign a
 function to it and the framework calls it **once, first thing, when the project stops**

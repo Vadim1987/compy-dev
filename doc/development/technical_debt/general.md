@@ -33,19 +33,6 @@ paid, or turned out not to be debt.
 - **Revisit:** When the controller's load/aliasing is next reworked — prefer a module-top
   `local gfx = love.graphics` per the standard-aliases convention.
 
-### T-VERSION-NUM — The changelog's version number has never been settled against the scale of the change
-
-- **Where:** `CHANGELOG.md`, and three independent askers — the file's own `REMARK:`,
-  `doc/development/internals/user_input.md:470`, and
-  `doc/development/conventions/../internals/project_sandbox_env.md:71`.
-- **What is owed:** the tree calls itself `1.0.0-rc`, and the input work removed four public
-  globals with no shim. Whether an rc number is honest against a break of that size was never
-  ruled. Three places ask; none answers.
-- **Why it is an entry:** an **obvious operational need** — a version number is the first thing
-  an upgrader reads, and it is not settleable after the release it labels.
-- **Roadmap:** `CHG-01-04` is the task. The rest of `CHG-01` was done by the ledger
-  restructuring (2026-08-27); this part was not.
-
 ### T-RETIRED-UNVER — The register's resolved entries claim resolution that was never verified
 
 - **Where:** `input.md`'s `RETIRED` section — 21 entries carrying a `RESOLVED` marker **when this
@@ -333,6 +320,40 @@ paid, or turned out not to be debt.
   consume the returned proxy or change `table.protect`'s semantics.
 
 ## RETIRED
+
+### The changelog's version number has never been settled against the scale of the change (RESOLVED, 2026-09-03)
+
+**Filed as `T-VERSION-NUM`.** Everything down to **Resolution** is the filing as written.
+
+- **Where:** `CHANGELOG.md`, and three independent askers — the file's own `REMARK:`,
+  `doc/development/internals/user_input.md:470`, and
+  `doc/development/conventions/../internals/project_sandbox_env.md:71`.
+- **What is owed:** the tree calls itself `1.0.0-rc`, and the input work removed four public
+  globals with no shim. Whether an rc number is honest against a break of that size was never
+  ruled. Three places ask; none answers.
+- **Why it is an entry:** an **obvious operational need** — a version number is the first thing
+  an upgrader reads, and it is not settleable after the release it labels.
+- **Roadmap:** `CHG-01-04` is the task. The rest of `CHG-01` was done by the ledger
+  restructuring (2026-08-27); this part was not.
+- **Resolution — ruled by the owner, 2026-09-03: keep `1.0.0-rc`, and announce the break in
+  prose.** *"1.0.0-rc + explicit break note."* `CURRENT_SCOPE` now opens with a note naming both
+  breaks — the removed globals, and `on_text_entered`'s payload, *"the quiet one, because a callback
+  that indexed the old payload keeps running and starts reading `nil`"* — and saying why the number
+  does not move: nothing before 1.0.0 promises a stable surface, so the announcement belongs in the
+  file an upgrader reads rather than in a digit. **All three askers are answered and all three
+  markers are gone**: the CHANGELOG's own marker above its H1, and the two that asked for a
+  concrete availability reference — `internals/user_input.md` (the editor-migration paragraph now
+  says *"the input API (1.0.0-rc20260712)"*) and `internals/project_sandbox_env.md`
+  (`compy.before_exit` *"exists and is wired since 1.0.0-rc20260712"*).
+- **One correction to the filing, found on the way** (`FIX-02-17`, 2026-09-03): it says the work
+  removed **four** public globals. It removed **five** — `input_text`, `input_code`,
+  `validated_input`, `user_input`, `write_to_input` — plus the debug-only `astv_input`, and the
+  count disagreed three ways across the corpus (this entry said four, `CHANGELOG.md` said five,
+  `doc/development/tests.md` said six). Established by differencing `project_env`'s assignment keys
+  at `3256aac` against HEAD, and the CHANGELOG now names all six. **The ruling is unaffected** — it
+  was made against a break of that size either way.
+- **Roadmap:** `CHG-01-04`, done.
+
 
 ### A renumber shipped its crosswalk without the sweep, and five citations resolved to the wrong pass (RESOLVED, 2026-09-02)
 
