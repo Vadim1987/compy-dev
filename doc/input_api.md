@@ -927,6 +927,59 @@ used to be visible there by accident, never as API; they are withheld now. Use
 `LuaHighlighter`, `LuaSyntaxValidator` and `LineValidators`, which are exported
 and go in the `highlighter` and `validator` keys.
 
+## Proposed updates/changes
+
+### @dsent DevX amendments
+
+Rationale comes from the usage survey of upstream's examples, the IDE's console and editor, and our games (`maze`, `balloons`, `sapper`). Synchronous input is a separate product proposal: `sync-input-proposal.md`.
+
+#### 1. Add `compy.input.get_text()`
+
+- Change: export the widget's content getter, returning a string; works while hidden.
+- Why: `love.draw` has no event to consult, and the 64-character cap needs the length while typing. With item 2 the callbacks see the draft as their argument; the getter covers everything outside them.
+
+remark: de-facto implemented (see above), but marked 'experimental until somebody need it' which now happens.
+
+#### 2. One payload shape: the string
+
+- Change: every callback that can see content receives the same string. `on_text_entered(text)`, `after_submit(text)`, `before_submit(text)`, `before_cancel(text)`, `after_cancel(text)`. `validator(lines)` and `highlighter(lines)` keep lines.
+- Why: every program-facing consumer wants a string; only positional plumbing wants lines. Today two callbacks are told apart by payload shape, and `lines[1]` on a string fails silently. A callback that ignores the argument loses nothing, and a veto can look at the draft.
+
+#### 3. Submit clears the field by default
+
+- Change: after a successful submit the field is empty. `auto_clear = false`, a persistent key like `auto_hide`, keeps the text.
+- Why: five of seven real prompts clear after submit and each writes the same `after_submit`. The two that keep text, `tixy` and the maze, already hold it themselves.
+
+#### 4. Escape hides, and does not clear
+
+- Change: cancel takes the widget down and leaves the content. `before_cancel` veto and `after_cancel` stay. The always-shown console and editor widgets keep their own Escape.
+- Why: Escape is "get back from whatever is active". Clearing on Escape is the P1 data-loss hazard, reachable from the right mouse button.
+
+#### 5. `show{...}` is a new question; `show()` brings the field back
+
+- Change: a `show` with a table starts from its `text` or empty. A bare `show()` re-shows the field as it was left. Settings persist as today.
+- Why: unrelated prompts in one program must not inherit a stale draft; a re-show after `auto_hide` must. The distinction needs no new verb.
+
+remarks from discussion:
+- soft objections: semantically inobvious behaviour difference (show() vs show({}) would be hard to comprehend; its not clear whether case frequency justifies optimizing API for it)
+- alternative: bind auto-clear on hide, and see if `(auto_clear x auto_hide)` covers required scenarios and if better names for these flags could be figured out
+- alternative 2, currently suggested by docs: `get_text` before hide + save and reset content in external variable
+
+### @nagydani - simplified minimalistic set
+
+Here's how I see the desired input API. It is asynchronous, but extremely simple, with one function and two callbacks:
+
+One callback, something like compy.input(text) is called when text is entered (i.e. Enter pressed), with the argument containing the actual text.
+The other callback, something like compy.inputControl(key) is called when some control key is pressed, when editing.
+The function is something like compy.ask(prompt, highlighter, initialText, cursorPosition) where prompt defaults to "text", highlighter defaults to everything being black (highlighters for Lua syntax, numbers, etc. should be provided), initialText defaults to empty string, cursorPosition defaults to 0.
+
+When any of the callbacks are called, the input is removed from the screen. If editing should be continued for whatever reason, compy.ask should be called again from that callback.
+
+#### resolution
+
+In the live discussion it was agreed to expose current (aka 'low-level' API) and suggested simple surface altogether under same compy.input namespace. Projects can use what they need. 
+Details to be figured out.
+
 ## See also
 
 - [User Input — Implementation Overview](development/internals/user_input.md)
