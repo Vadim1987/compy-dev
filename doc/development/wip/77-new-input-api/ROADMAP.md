@@ -750,7 +750,7 @@ the prose says it is a defect.
 **unknown yield**, since a defect found at a desk is cheaper than one found at a sitting
 (`agents/rules/roadmap.md` §3):
 
-~~`FIX-02-03`~~ ✅ · ~~`-04`~~ ✅ · `-05` · ~~`-06`~~ ✅ · ~~`-13`~~ ✅ · `-17` · ~~`-22`~~ ✅ ·
+~~`FIX-02-03`~~ ✅ · ~~`-04`~~ ✅ · `-05` · ~~`-06`~~ ✅ · ~~`-13`~~ ✅ · ~~`-17`~~ ✅ · ~~`-22`~~ ✅ ·
 ~~`-23`~~ ✅ · ~~`-24`~~ ✅ · ~~`-25`~~ ✅,
 and **the `smoke_checklists.md` slice of `-09`**.
 
@@ -836,7 +836,7 @@ back to 20 with `FIX-02-20`, and 21 with `FIX-02-21`, both registered 2026-08-26
 | **FIX-02-14** | the channel list exists twice | narrow |
 | **FIX-02-15** | `technical_debt/general.md` carries an entry that is not debt · **`T-GFX-GLOBAL`** | narrow |
 | **FIX-02-16** | a `pending()` routing case deferred in the hardest-read area | narrow |
-| **FIX-02-17** | CHANGELOG omits the breaking change | narrow — **feeds CHG-01** |
+| ~~**FIX-02-17**~~ ✅ | **COMPLETE (session68) — the section was already there and the row's verification still yielded.** `LEDGER-01-01` wrote the `Removed` section on 2026-08-27 and it leads `CURRENT_SCOPE`, naming the five globals and `compy.singleclick`/`doubleclick`; nobody had since checked the list **against the diff**. Doing so found a **sixth** removal: `project_env.astv_input`, debug-only (`if love.debug`) at the base and deleted by `M8-03`'s pinned ruling. `doc/development/tests.md` and `internals/user_input.md` both already name it among the retired globals, so the CHANGELOG was the one document of the three that did not — now one clause, stating it was only ever present in a debug build. **Method, and it is the reusable part:** the check is a set difference, not a grep — `project_env.*` assignments at `3256aac` against HEAD (23 keys → 17), which finds a removal nobody thought to search for. The `compy` namespace itself lost nothing (`audio`/`fonts`/`graphics`/`terminal` all survive). **One candidate omission was checked and correctly stays out:** `compy.text_input` existed at base as `compy_namespace.text_input = input_text`, and `input_text` is not in scope there — it assigned **`nil`** and never functioned (`design/context.md`, NFR-3), so its removal is not a behaviour anyone could notice. **A count disagreement was found and is not this row's to fix:** `T-VERSION-NUM` says the work removed *four* public globals, the CHANGELOG named five and `tests.md` names six — the true figure is five public plus one debug-only. Registered for `CHG-01-04`, which owns that entry. *Original filing:* **CHANGELOG omits the breaking change** | narrow — **feeds CHG-01** |
 | **FIX-02-18** | `pong/README.md` — 316-line diff, 2-line change | narrow |
 | **FIX-02-19** | provenance front matter, 3 files | narrow |
 | **FIX-02-20** | **"draft" — unratified vocabulary, and the widest-spread of them** | **runs with the 08–10 cluster, not last** — see the note below |
@@ -998,7 +998,7 @@ with retired vocabulary in its own prose (*"an active **overlay**"*), no `Remove
 | id | step |
 |---|---|
 | CHG-01-01 | **validate what is there against the actual diff** — the claims-vs-reality check that caught the PR description |
-| CHG-01-02 | add the **`Removed`** section for the four retired globals *(feeder: FIX-02-17)* |
+| CHG-01-02 ✅ | add the **`Removed`** section for the retired globals *(feeder: FIX-02-17)* — **six, not four**: five public plus the debug-only `astv_input`, established by set-difference at `FIX-02-17` (session68). The row's original word *"four"* is one of the three counts that disagreed |
 | CHG-01-03 | absorb pre-existing-resolved debt and behavioural changes, per the owner's ruling *(feeder: FIX-02-05)* |
 | CHG-01-04 | completeness against the breaking changes; settle the **version question** — `1.0.0-rc` against the scale of the change. **Three independent askers**: the CHANGELOG's own remark, `user_input.md:470`, `project_sandbox_env.md:71` | · **`T-VERSION-NUM`**
 
@@ -1012,6 +1012,16 @@ beside it.
 **PARTLY DONE by `LEDGER-01-01`** (2026-08-27): `-02` is complete — the `Removed` section exists and
 leads with the breaking change, closing `FIX-02-17`. `-01` and `-03` are **partly** done: the file
 was written from the PR artifacts and spot-checked, not validated claim-by-claim against the diff.
+
+**What `FIX-02-17`'s verification means for `-01` and `-04`** (session68). The `Removed` section was
+right in substance and short by one name — `astv_input`, found by differencing `project_env`'s keys
+at `3256aac` against HEAD rather than by grepping for anything. **`-01`'s remaining work is that
+method applied to the other three sections**: a claim-by-claim read finds wrong claims, and a set
+difference finds *absent* ones, which is the failure the section had. And **`-04` inherits a count
+that disagrees three ways** — `T-VERSION-NUM` says the work removed *four* public globals,
+`CHANGELOG.md` named five until this morning, `doc/development/tests.md` names six. The true figure
+is **five public plus one debug-only**; the entry is `-04`'s and the correction belongs with the
+version question rather than beside it.
 **`-04` is untouched, and it carries the one thing here nobody else will do — the version question**
 (`1.0.0-rc` against the scale of the change, asked independently in three places). `ARC-02-07` also
 revisits this file, because `ARC-02` changes behaviour its bullets describe.

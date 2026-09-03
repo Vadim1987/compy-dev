@@ -14,7 +14,8 @@ newest first.
 - **Breaking: the legacy text-input globals are gone, with no
   compatibility shim.** `input_text`, `input_code`, `validated_input`,
   `user_input`, and `write_to_input` no longer exist in the project
-  environment. Move their work to `compy.input.show{...}` and a
+  environment — nor does `astv_input`, which was only ever present in
+  a debug build. Move their work to `compy.input.show{...}` and a
   callback — see "Migration from the legacy globals" in
   `doc/input_api.md` for the replacement of each. `compy.singleclick`
   and `compy.doubleclick` are also gone; use
