@@ -163,6 +163,40 @@ no-parallel-worktrees rule or touching the tree the LSP indexes.
 - The convergence nobody planned: **`D-EXACT-RESERVE` chose `ctrl+s` /
   `ctrl+shift+s` as its worked example, and #45 uses the same pair differently.**
 
+## Third owner round — inventory, stakeholder doc, merge plan
+
+Instruction: recon the example repos **again** and deeper (`dsent`'s keyboard and
+maze specifically; **balloons is frozen — owner guarantee**); describe every drift
+as a **debt entry with blast radius and cost**, so prioritisation becomes
+replanning; produce a **stakeholder-showable doc in this repo** evaluating all four
+drifts; **ignore PR #22**, it will be superseded; then a **merge plan evaluated for
+risks**.
+
+Measured, deeper than the first pass:
+
+- **maze: zero, on every branch** — `dsent/dev`, `feat/reconcile`, `main`, `v1`
+  through `v3.4`, all ancestors. The first pass checked only the tracked branch;
+  the answers agree, but only the second one is safe to plan against.
+- **keyboard: one commit**, `.compy/build`, no source. And its upstream repo has
+  been **renamed** — `dsent/keyboard` → `dsent/compy.keyboard`, resolving today by
+  redirect only. Found by an API call that returned *"Moved Permanently"*.
+- **the edge beyond #45 is 16 commits and is not input-free.** The storage-fallback
+  commit widens the widget label to `{text, tone}` — and **our public `prompt` key
+  writes exactly that field**. A surface widening arriving from another line, by
+  accident.
+- **after #45 is merged, the edge remainder conflicts in 5 files**, two of them my
+  probe's artifacts; genuinely the console model, an **add/add on the colours
+  example** (same file, two routes, 245 vs 247 lines) and `.gitignore`.
+
+Landed: `2a8ddc11` three register entries (2 ACTIVE, 1 BACKLOG; **maze gets none —
+zero drift is not debt**), `db926377` `doc/development/upstream_drift.md` in the
+**persistent** corpus and citation-clean by construction, `799d17e7` the merge plan
+with ten risks.
+
+**The risk worth the owner's eye is R1** and it is not technical: merging #45 while
+it is open puts its 52 commits inside our PR's diff, which defeats the
+reviewability gate. Mitigation is landing order, which is not ours to execute.
+
 ## Mode
 
 Execution (S69 dispositions F1–F4, F9) then evaluation + replanning (the
