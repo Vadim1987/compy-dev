@@ -191,7 +191,7 @@ session** — the device is memory-constrained and the common pattern is repeate
 Repeated prompting happens *within* a run, so a per-run widget satisfies that requirement in full:
 a project that prompts a hundred times allocates once. The requirement was previously applied one
 boundary wider than it states, and that wider boundary was never examined. A shared-within-the-run
-instance also gives FR-3/FR-4 — hide and bring the prompt back — for nothing: the widget and
+instance also gives hiding the widget without tearing it down, and showing it again — for nothing: the widget and
 everything the project set on it are not destroyed while the project that owns it is alive, and it
 is what makes D-ROUTE-OWNS cheap.
 
@@ -200,7 +200,7 @@ call that seats the content baseline, so a bare `show()` after a `hide()` opens 
 (D-CFG-BOUNDARY, statement 1; pinned by *"a fresh activation with no text is empty"*). `hide()`
 itself preserves the content — it flips `shown` and clears `love.state.user_input`, nothing more —
 so what a project loses is the round trip, not the moment of hiding. Said the other way: this
-decision buys FR-3's *"without removing it"*, which is about teardown, and it was never a promise
+decision buys hiding *without removing*, which is about teardown, and it was never a promise
 about what the user had typed.
 
 **Per-run is strictly less allocation than the system this feature replaced.** At the PR base the

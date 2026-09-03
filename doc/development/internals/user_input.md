@@ -196,8 +196,9 @@ for the other consumer of the same value. `UserInputModel:set_cursor(c)` is a ra
 instead routes through `UserInputController:set_cursor_pos`, which clamps rather than trusting the
 raw model setter with an arbitrary project-supplied pair.
 
-> REMARK: FR-1 is deelopment-time requirement id,(refid needs to be translated/deleted and essence needs to be explained to cold reader?)
-**FR-1's "initial cursor position" is implemented at the controller layer, not the model's.**
+**An initial cursor position — one of the setup parameters the widget was required to accept,
+alongside initial text, highlighter, validator and prompt label — is implemented at the controller
+layer, not the model's.**
 `UserInputModel.new(cfg, eval, custom_label)` (`userInputModel.lua:45-63`) still hardcodes
 `cursor = Cursor()` — always `(1, 1)`, no cursor constructor parameter — but an activation
 (`open_widget`) applies a `cfg.cursor = {line, col}` via `set_cursor_pos` after `text` is applied.
@@ -410,9 +411,9 @@ capture (`ConsoleController:keypressed` now calls `input:keypressed(k)` purely f
 effects, return value unused — D-TWO-SURFACES). Editor never needed the signal at all, since it
 independently computes boundary state via `inputView:is_at_limit(...)` at the view layer.
 
-> REMARK: FR-6 is ref-id unknown to reader (implementation-time encoding of requiements)
-
-**FR-6 (project notification of key events): the keyboard exclusion is resolved as of 1.0.0-rc20260712.**
+**A project must be able to hear key events that produce no character in the widget** — Ctrl
+combinations, navigation and function keys. **That requirement's keyboard exclusion is resolved as
+of 1.0.0-rc20260712.**
 Historically, while `love.state.user_input` was set, `controller.lua`'s
 `handlers.keypressed`/`handlers.textinput` called *only* the widget — the project's own
 `love.keypressed`/`love.textinput` were not called at all (binary, not partial). With the gate
@@ -421,7 +422,7 @@ surface consumes them (the widget while shown, the project's handler — seeded 
 hook — while hidden) is the route's internal delegation, no longer a gateway drop. Mouse had no
 such gate to begin with: at the time, `handlers.mousepressed`/`mousereleased` called the widget
 conditionally but called the project's own handler **unconditionally**, regardless of widget
-state — which is why touch/mouse needed no separate FR-6 scope item; only keyboard was ever
+state — which is why touch and mouse needed no scope item of their own; only keyboard was ever
 exclusively gated. That mouse-specific shape is itself now retired: pointer channels (mouse and
 touch alike) have since been folded into this very same project-route dispatch chain as
 keyboard/text — see "Mouse Input" below for the current routing and what changed.
