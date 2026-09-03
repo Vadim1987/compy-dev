@@ -24,7 +24,7 @@ edge's BACKLOG entry). The stakeholder-facing version is
 
 | # | step | roadmap row | gate before moving on |
 |---|---|---|---|
-| 1 | `keyboard` takes its one upstream commit | `MERGE-01-02` | its own suite green; the build script still finds a flat source tree |
+| 1 | `keyboard` takes its one upstream commit | `MERGE-01-02` | its own suite green; the build script still finds a flat source tree — **verified 2026-09-03**: our file set there is identical to upstream's, so its `*.lua` glob emits our tree |
 | 2 | `maze`, `balloons` — **nothing to do**, recorded as measured | `MERGE-01-01`/`-03` | — |
 | 3 | **merge PR #45's head into our branch** as one merge commit | `MERGE-01-05` | **both suites present, 0 failures** |
 | 4 | the re-pins and the two decisions, each its own commit | `MERGE-01-05` | same, plus the Ctrl+S ruling recorded in the decisions ledger |

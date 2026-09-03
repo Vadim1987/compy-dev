@@ -64,9 +64,19 @@ paid, or turned out not to be debt.
 - **State:** merges **clean** — verified, not assumed.
 - **Blast radius: packaging only.** Nothing it adds is read by this feature's work, and nothing
   this feature changed is read by it.
-- **What it costs:** one merge, no decisions. The only care needed is that the build script's
-  expectation — a flat source tree with `main.lua` and `README.md` at the top — stays true of
-  whatever this branch leaves behind in that repository.
+- **What it costs:** one merge, no decisions — **and this was checked rather than assumed**
+  (2026-09-03), because *"merges clean"* and *"costs nothing"* are different claims. The script
+  copies `*.lua` plus `README.md` from a flat source tree. Our branch is **37 commits ahead** in
+  that repository and its file set is **identical to upstream's** apart from the script itself:
+  every commit changed the contents of an existing file, and none added a file or a subdirectory.
+  So the script emits our tree correctly, and the cost really is one merge.
+- **The sibling repository is the fragile one, and it is worth knowing before anything is added
+  there.** `maze` set this convention first, but **its build script enumerates its sources by
+  name** rather than globbing — three explicit lists, one per emitted program. A file added to
+  that repository and not added to the list is **silently absent from the shipped project**. Our
+  `maze` work adds no file (its tree differs from upstream's only by a repository-local
+  `ISSUES.md`, which is correctly not emitted), so nothing is dropped today. The hazard is for the
+  next person, and it is theirs, not this feature's.
 - **A second finding, free:** the upstream repository has been **renamed** (`keyboard` →
   `compy.keyboard`). The old remote URL still resolves by redirect, so nothing is broken today and
   it will keep working until it does not. Worth correcting when that repository's pull request is

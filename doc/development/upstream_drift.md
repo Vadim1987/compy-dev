@@ -130,9 +130,21 @@ source tree emitting two shipped projects, the long name and a one-letter alias,
 that reaching a game which teaches typing does not itself demand typing eight
 letters. It **merges clean**.
 
-One incidental finding: that repository has been **renamed** upstream. The remote
-address we use still resolves, by redirect, so nothing is broken today. It is worth
-correcting when that repository's pull request is opened.
+**"Merges clean" and "costs nothing" are different claims, so the second was checked
+too.** The script copies every `.lua` file plus the README from a flat source tree.
+Our work in that repository is 37 commits ahead and its **file set is identical to
+upstream's**: every commit changed the contents of a file that already existed, and
+none added a file or a folder. So the script emits our version of the game
+correctly, and the cost really is one merge.
+
+Two incidental findings. That repository has been **renamed** upstream — the address
+we use still resolves, by redirect, so nothing is broken today, and it is worth
+correcting when its pull request is opened. And the **maze** repository, which set
+this packaging convention first, does it the fragile way: **its build script lists
+its source files by name** instead of copying them all, so a file added there and
+not added to the list would be silently missing from the shipped game. Nothing is
+missing today. It is a note for whoever adds the next file, not a cost of this
+release.
 
 ## How this was measured, for anyone repeating it
 
