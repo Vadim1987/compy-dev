@@ -130,6 +130,39 @@ Method note worth keeping: **`git merge-tree --write-tree` predicts conflicts wi
 no worktree**, which is how the dry merges were taken without violating the
 no-parallel-worktrees rule or touching the tree the LSP indexes.
 
+## Second owner round — three corrections and a question
+
+1. **`agents/` splits, it does not leave whole.** *"Generic rules like commenting
+   and code guides and doc formatting may survive; workflow and pointers and
+   operational limitations (git rules) should not — they are local to my work."*
+   So the F5 finding stops being "19 sites" and becomes a table by target:
+   **4 confirmed defects** (3 cite `agents/validation.md`, 1 `development.md`),
+   **11 waiting on two calls** (`ledgers.md` 9, `roadmap.md` 2), 4 likely fine
+   (`rules.md`, whose commit-convention half is still local). `aba72cc5`.
+   The repair — *state the rule instead of pointing at it* — is immune to the
+   split, which is why it need not wait for the two calls.
+2. **`PROP-01` is an analysis sprint first.** *"Some props can be weighed,
+   disputed or reshaped as remarks already suggest."* `-01` is now the holistic
+   pass; declining an item with a reason is a result. `4dabdabe`.
+3. **Build on #45, ship together; the edge's remainder later.** Answered by trial
+   merge rather than by argument — `validation/notes/S70-PR45-as-base.md`,
+   `345b0861`.
+
+## The #45 trial — method notes worth keeping
+
+- **Throwaway clone outside `/repo`**, never a worktree under it. The shared tree
+  never held a merge and the LSP index was never polluted.
+- **`src/util/string` and `src/lib/metalua` are submodules.** A fresh clone fails
+  38 specs until they are copied in. Cost me one wrong hypothesis.
+- **Both suites in one tree is the instrument.** Ours 1055, theirs 753, merged
+  1100/22 — and the *shape* of the 22 is the answer, not the number.
+- **Two candidate causes were falsified rather than assumed**: `set_text` (tested
+  both ways, editor failures identical) and `tests/mock.lua` (their harness adds
+  145 errors in our specs and fixes none of theirs). What remained was the
+  probe's own `--ours` on `controller.lua`.
+- The convergence nobody planned: **`D-EXACT-RESERVE` chose `ctrl+s` /
+  `ctrl+shift+s` as its worked example, and #45 uses the same pair differently.**
+
 ## Mode
 
 Execution (S69 dispositions F1–F4, F9) then evaluation + replanning (the
