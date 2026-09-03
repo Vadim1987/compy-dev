@@ -223,6 +223,34 @@ the shas.
 | `maze` | `head` / `base` / `mergebase` | `28213c72…` / `b8cc436f…` / `b8cc436f…` |
 | `keyboard` | `head` / `base` / `mergebase` | `e5689611…` / `96d66292…` / `025e8581…` |
 
+## 5a. Provenance of every number above — the SSH views were stale, and none was used
+
+Asked by the owner, 2026-09-03: *"did you check maze@dsent and keyboard@dsent
+towards their live versions accessible via http? ssh origins were not fetched
+recently on this server."* **Yes — and the question was worth asking, because two of
+the four SSH views were behind.** Re-verified against the canonical URLs with
+`git ls-remote`, which fetches nothing and caches nothing:
+
+| ref | SSH view (stale) | live https | which the measurement used |
+|---|---|---|---|
+| platform `aldum/dev` | `af9a5782` | `af9a5782` | https — **and they agree** |
+| platform edge `dsent/dsent/dev` | `617bbe65` (2026-08-21) | `5a52cba2` (2026-09-03) | **https** — the SSH view was 13 days behind |
+| `keyboard` `dsent/dev` | `025e858` (2026-08-02) | `96d6629` (2026-08-20) | **https** — the SSH view was one commit behind, and that commit *is* the drift |
+| `maze`, all 11 branches | identical | identical | https — upstream has not moved since 2026-07-24 |
+
+Two details worth keeping:
+
+- **`maze` was checked branch by branch against the live listing**, not just on the
+  tracked branch: `dsent/dev`, `feat/reconcile`, `main`, `v1`, `v1.1`, `v2`, `v3`,
+  `v3.1`, `v3.2`, `v3.3`, `v3.4`. Every one is an ancestor of our head.
+- **`keyboard` was fetched through the pre-rename URL**, which redirects.
+  `git ls-remote` on the old and the canonical (`dsent/compy.keyboard`) addresses
+  returns **byte-identical tips**, so the redirect is not hiding anything today.
+
+**No SSH fetch is needed.** All four repositories and both upstream pull-request
+heads are reachable read-only over https from this container, which is what the
+`-https` remotes were added for.
+
 ## 6. Two things the owner should see
 
 - **PR #22 is open and draft** against `aldum:dev`, on a branch whose name lacks
