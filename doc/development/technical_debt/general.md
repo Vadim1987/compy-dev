@@ -125,6 +125,29 @@ paid, or turned out not to be debt.
   **Ruled for this instance; §3's test is unchanged and stays the base check.**
 - **Revisit:** `LEDGER-02`.
 
+### T-EPHEMERAL-IDS — the persistent ledgers cite sprint ids that only resolve inside the working tree
+
+- **Where:** 119 occurrences across `technical_debt/input.md` (53), this file (41),
+  `decisions/input.md` (12), `smoke_checklists.md` (11), and one each in
+  `internals/user_input.md` and `internals/examples/turtle.md`. The heaviest are
+  `FIX-02-05`, `FEAT-02` and `BUG-02-01` at eleven apiece. Derived at HEAD 2026-09-03.
+- **Why it matters:** the ids resolve **only** in the tree that names them, and that tree is
+  deleted or kept whole by an owner ruling at assembly time. If it goes, every one of these
+  reads as a live pointer to a sprint the reader cannot find — and it is the failure mode the
+  line-citation entry above calls worse than dangling, because it **greps clean**.
+- **Distinct from two rows that look like it.** The retired-id sweep takes citations of ids that
+  are already dead; these are all **live and correct today**. And the ephemeral-**path** rule
+  this shares its logic with never covered bare ids, which is why the count reached 119 without
+  a single pass flagging it.
+- **Provenance: ours, entirely.** The ids are this branch's own vocabulary; at the PR base
+  `3256aac` neither the ledgers nor the ids exist.
+- **Found:** 2026-09-03, re-deriving the citation-hygiene rows — which had been sized at ~12
+  sites and were measuring paths only.
+- **Slugged, and scheduled late on purpose** (owner ruling, 2026-09-03). The rule landed
+  immediately (`conventions/docs.md`, *Rules*) so the prose written from here on does not add to
+  the pile; the **sweep runs after the two ledger-vacuuming passes**, because a vacuumed entry
+  takes its ids out with it and a sweep run first sweeps prose that is about to leave.
+
 ## BACKLOG
 
 ### `@field` annotations disagree with their own constructors in at least three files
