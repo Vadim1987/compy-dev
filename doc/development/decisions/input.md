@@ -1774,9 +1774,9 @@ resolving to a tombstone — under numbering, the number a sweep misses still ex
 different decision. Under names it dangles visibly and greps out. So the tombstones were doing one
 job, and that job ended when the numbers did.
 
-**The six themselves are archived, not destroyed** — `wip/77-new-input-api/validation/archive/decisions-vacuumed.md`,
-under `agents/rules/ledgers.md`, *"Vacuuming is a move, not a deletion"*. That archive leaves the
-release when the feature's working tree is deleted, which is correct: none of it is the product's
+**The six themselves are archived, not destroyed** — moved to the feature's working tree under
+`agents/rules/ledgers.md`, *"Vacuuming is a move, not a deletion"*. That archive leaves the
+release when the working tree is deleted, which is correct: none of it is the product's
 history. It answers *what did the ledger used to contain* and *what work happened here* without a
 trip through `git log`, and it is **not** a second ledger — nothing in it rules anything.
 
@@ -1849,9 +1849,8 @@ as authoritative; under names it dangles visibly and greps out.
 | Decision 37 | `D-PAYLOAD-SPLIT` | |
 | Decision 38 | `D-CONTENT-NORM` | |
 
-**The six that were vacuumed are archived**, not destroyed —
-`wip/77-new-input-api/validation/archive/decisions-vacuumed.md` holds them in full, and the
-overruled half of `D-AUTO-HIDE` beside them. (Seven rows map to nothing: Decision 19 is the
+**The six that were vacuumed are archived**, not destroyed — the feature's working tree holds
+them in full, and the overruled half of `D-AUTO-HIDE` beside them. (Seven rows map to nothing: Decision 19 is the
 seventh, and it never existed to archive.) The archive goes with the working tree; the mapping
 above is the part that stays.
 

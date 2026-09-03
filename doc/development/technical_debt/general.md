@@ -92,15 +92,13 @@ paid, or turned out not to be debt.
   **the same check answers *did this exist at the base?*** One pass, one classification, **two
   consumers**: `CHG-01-03` takes the pre-existing half into the changelog, and this goal takes the
   other half out of the register. Nothing new is enumerated, which is why this is a step and not a
-  survey. **The pass ran 2026-09-03** and its verdict is
-  [`../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md`](../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md),
-  entry by entry with the command behind each: **39 introduced-in-branch, 9 pre-existing, 5 mixed,
-  3 cannot-tell** over 56 entries. This row's input therefore exists; **take it, do not re-derive
-  it.** The three cannot-tells are the `maze`/`balloons` entries, whose repos have no comparable
+  survey. **The pass ran 2026-09-03** and its verdict — entry by entry, with the command behind
+  each — is **39 introduced-in-branch, 9 pre-existing, 5 mixed, 3 cannot-tell** over 56 entries.
+  This row's input therefore exists; **take it, do not re-derive it.** The three cannot-tells are the `maze`/`balloons` entries, whose repos have no comparable
   base commit — **leave them in the register**, since the rule vacuums what is known to be ours and
   not what is merely unproven.
 - **Sized on `FIX-02-05`'s classification, not on the 2026-09-01 measurement.** That figure
-  (47, then patched to 51, then to 56 in *Where*) is superseded. Take the evidence document:
+  (47, then patched to 51, then to 56 in *Where*) is superseded. Take the classification above:
   **39 introduced-in-branch · 9 pre-existing · 5 mixed · 3 cannot-tell** over the walked 56;
   five more sit outside that snapshot and are dispositioned in `T-RETIRED-UNVER`'s resolution —
   all `INTRODUCED-IN-BRANCH`, and not close. Do not re-derive either half.
@@ -173,9 +171,8 @@ paid, or turned out not to be debt.
   (`consoleController.lua`), which is real, current, pre-existing, and absent from the `AppState`
   alias in `types.lua` **and** from both FSM diagrams. Same category — a declaration that does
   not match the code.
-- **Found:** 2026-09-02, by the `doc/mermaid/` audit commissioned for `FIX-02-24`
-  ([`../wip/77-new-input-api/validation/outcomes/S67-mermaid-audit.md`](../wip/77-new-input-api/validation/outcomes/S67-mermaid-audit.md),
-  "Out of scope, seen in passing"). The audit was looking at diagrams; these are in the source it
+- **Found:** 2026-09-02, by the `doc/mermaid/` audit commissioned for `FIX-02-24`, out of that
+  audit's scope and seen in passing. The audit was looking at diagrams; these are in the source it
   checked them against.
 - **Not slugged** — pre-existing, not this release's to pay, and an upstream conversation rather
   than a branch task.
@@ -372,12 +369,11 @@ paid, or turned out not to be debt.
   **grows while it runs** must state *the snapshot it walked*, not *the section* — otherwise its
   completeness claim decays the moment the next entry lands, and the pass's own author is usually
   the one landing it. Two questions per entry, run as one pass: does the resolution claim hold at
-  HEAD, and did the subject exist at the PR base `3256aac`. Evidence per entry, with the command
-  behind every answer:
-  [`../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md`](../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md).
+  HEAD, and did the subject exist at the PR base `3256aac`. Evidence was recorded per entry, with the command
+  behind every answer.
 - **No resolution claim failed.** Twelve rest on something not independently re-derived — a suite
-  run, a mutation example, a call graph deeper than a grep reaches — and each is named in the
-  evidence document rather than counted as verified. **One numeric drift** was found and corrected
+  run, a mutation example, a call graph deeper than a grep reaches — and each is named there
+  rather than counted as verified. **One numeric drift** was found and corrected
   in place: `F.reset()`'s entry said nine code lines; it is eleven, still under the limit.
 - **The classification, which is the half `LEDGER-02` and `CHG-01-03` consume:**
   **39 introduced-in-branch · 9 pre-existing · 5 mixed · 3 cannot-tell.** The proportion is not

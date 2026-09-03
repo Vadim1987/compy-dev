@@ -1554,9 +1554,8 @@ changes.
   `UserInputModel`, a live class whose field did exist at base. A historical marker excuses
   inherited drift, not drift you caused. `custom_label`'s absence, `evaluator: EvalBase` and the
   `wrapped_error`/`error` conflation were each checked against base and are identical there.
-- **Evidence:** a field-by-field audit of all seven files, 32 class blocks
-  ([`../wip/77-new-input-api/validation/outcomes/S67-mermaid-audit.md`](../wip/77-new-input-api/validation/outcomes/S67-mermaid-audit.md)).
-  It also found the source-annotation drift now recorded in `general.md`, and that `eval.md`'s
+- **Evidence:** a field-by-field audit of all seven files, 32 class blocks, run
+  2026-09-02 for the diagram row. It also found the source-annotation drift now recorded in `general.md`, and that `eval.md`'s
   section headed *"Current"* describes a hierarchy never built while its *"Planned refactor"*
   section is closer to what shipped — which is the argument for keeping these files intact:
   they are the record of intent, and a correction pass would have deleted it.
@@ -2043,8 +2042,8 @@ are what happened.
   is named after the keyboard where its role is mode selection (`special_mode`
   would say it) — **semantics and taste, explicitly not fixed**, in another
   repo's working code.
-- **Where:** nothing changed. Evidence:
-  `wip/77-new-input-api/validation/notes/BUG-01-11-maze-neutralisation-weighing.md`.
+- **Where:** nothing changed. The decision not to rename was weighed when the
+  fix landed and is recorded with it.
 
 ### T-BALLOON-LABEL — balloons keeps a shadow copy of the widget's label, re-pushed every cycle (RESOLVED, 2026-08-31)
 

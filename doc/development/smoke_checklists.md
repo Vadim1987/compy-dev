@@ -4,9 +4,9 @@ Checklists a **human** runs, for the parts of this project no automated suite ca
 example repos have no tests, and nothing in CI can press a key. Each list is written to be run
 top-to-bottom in one sitting, with the expected result stated so a failure is unambiguous.
 
-**Referenced from:** `doc/development/tests.md` (what is and is not covered),
-`wip/77-new-input-api/validation/plan.md` Phase G (the PR's own gate) and its §16.3 (each detached
-example repo's PR gate is a human smoke pass), and the step that last changed the code.
+**Referenced from:** `doc/development/tests.md` (what is and is not covered), the feature's own PR
+gate — where each detached example repo's gate is a human smoke pass — and the step that last
+changed the code.
 
 **Which examples owe a list** (measured 2026-08-13; Phase G carries the full reasoning): this
 feature changed code in twelve examples — nine tracked and three detached. **All four owed lists
@@ -33,9 +33,9 @@ result nobody can invalidate is banked before the exposed ones:
 cold review became `ACC-03`. **The upstream merges now run before these passes, not after**, so
 "no later merge can invalidate the result" is true of every row above and not only the first.)*
 
-**A clean pass is worth pinning.** Tag the exact state a green run was made against — the scheme
-and the standing tag registry are in `wip/77-new-input-api/TAGS.md` — so that "it passed" names a
-commit rather than an afternoon.
+**A clean pass is worth pinning.** Tag the exact state a green run was made against — the tags
+themselves live in the repository, which is what outlives any registry of them — so that "it
+passed" names a commit rather than an afternoon.
 
 **Keep this document current with the code.** A checklist that tests a mechanism the code no longer
 has is worse than none, because it passes.
@@ -161,8 +161,7 @@ nothing but this table.)*
 ### What a failure here means
 
 - **A2, A4, B2, B6, B9, B10, B11, B12, B13, C2, C5, D3, D5, D7, D8b, D10, G1** are the new mechanism and its restorations. A failure is
-  a defect in the 2026-08-12 work — report it against
-  `wip/77-new-input-api/validation/reviews/P-18-00-triage-and-plan.md`.
+  a defect in the 2026-08-12 work — see the four commits named above.
 - **E3** is a question, not a test: either answer closes it.
 - Everything else is a regression check. A failure there means the migration changed behaviour it was
   not supposed to touch, which is the thing that ruling exists to prevent.
@@ -173,8 +172,7 @@ nothing but this table.)*
 
 **Repository:** `src/examples/maze` (separate remote, own PR). **Last mechanism change:** 2026-08-13
 — the command editor moved onto the project input API, `Shift+Esc` became a registered combo, and
-three pieces of remembered keyboard state were replaced by asking the keyboard. Plan and reasoning:
-`wip/77-new-input-api/validation/reviews/P-17-04-triage-and-substeps.md`.
+three pieces of remembered keyboard state were replaced by asking the keyboard.
 
 **This repo now ships TWO programs**, `maze` and `draw`, built from one source tree. Both share the
 command editor, so **section C must be run in both**.
@@ -284,7 +282,7 @@ defect against `P-17-03` §5, not a mystery.)*
 ### What a failure here means
 
 - **A1–A5, B1–B3, D3–D5, D7, E3** are the new mechanisms. A failure is a defect in the 2026-08-13
-  work — report it against `wip/77-new-input-api/validation/reviews/P-17-04-triage-and-substeps.md`.
+  work — see the four commits named above.
 - **D4** is a **stated behaviour change**, not a bug: confirm it reads acceptably rather than whether
   it differs.
 - **E5** and **B7** are deliberate preservations. A failure there means the migration changed
@@ -556,7 +554,7 @@ idiom for a project whose hooks run above the widget.
 ### What a failure here means
 
 - **A2–A5, A7 and B2** are the 2026-08-30 change. A failure is a defect in `FEAT-02` or in the echo
-  guard's new home — report it against `wip/77-new-input-api/ROADMAP.md`, `FEAT-02`.
+  guard's new home — see the two commits named above.
 - **A3 specifically** distinguishes the mode from a one-off: if only the first submit closes, the
   flag is being cleared somewhere it should not be, and that is a **platform** defect, not turtle's.
 - **A6** is the documented asymmetry: `auto_hide` closes on submit and never on cancel. Confirm it
