@@ -197,6 +197,47 @@ with ten risks.
 it is open puts its 52 commits inside our PR's diff, which defeats the
 reviewability gate. Mitigation is landing order, which is not ours to execute.
 
+## Fourth owner round — "by essence, not by merge"
+
+The question that earned the most: *"did you analyze all drifts by essence?
+exactly not only 'will it merge cleanly' but 'will the changes interfere/break our
+tree'?"* **Honest answer at the time: #45 yes** (a merge resolved and run), **keyboard
+yes at its scale** (what the build script emits), **maze not applicable**, **the edge
+no** — conflict prediction plus a reading of commit subjects. Closed it:
+`validation/notes/S70-edge-essence-and-stack.md`, `5b0d93d4`.
+
+**The finding the whole exercise exists to catch, and it was there.** The edge's
+Android exit commit reroutes every full exit through a request the quit handler
+consumes. One of the call sites it rewrites is the `ctrl+escape` handler — **a line
+this branch moved** into the reservation table. Their rewrite lands on the old
+location; our reservation does not conflict with it and keeps calling
+`love.event.quit()` directly, so the device stops returning to its launcher.
+**The defect is in the line that does *not* conflict.** Invisible to the merge tool,
+invisible to a headless suite, one line to fix — and the fix is in the built tree.
+Generalised into the plan as R11: *for every upstream commit that rewrites a call
+site, ask where that call site is in our tree.*
+
+**The stack was built, not argued:** ours 1055 → +#45 1100/22 → +the whole edge
+**1108/22, the same 22**. The edge adds no new failure; its own two casualties were
+positional call sites against #45's changed signature (R6 biting a second time).
+
+**Two corrections to my own published numbers.** The remainder is **15**, not 16 —
+the FS durability API is already an ancestor of our head, and an *edge-minus-#45*
+range does not subtract *ours*. And the phase's stakeholder doc and register both
+carried the wrong figure for an hour.
+
+**Landscape clarifications absorbed** (owner): #45 is the target base **by content**
+and is **force-pushable**; we stay on this branch for continuity and **ship a patch
+set** — *"slices" were always patches*; release order is #45 → ours → the edge
+remainder, and they must stack. Plan mechanics rewritten accordingly: the merge is
+**disposable reconciliation**, nothing shipped may depend on ancestry, every
+generation base is pinned, and a moved base means **re-run the stack**, not merely
+re-apply.
+
+## Open — the owner's message ended mid-sentence
+
+*"3) for keyboard and maze"* — truncated. Asked rather than guessed.
+
 ## Mode
 
 Execution (S69 dispositions F1–F4, F9) then evaluation + replanning (the
