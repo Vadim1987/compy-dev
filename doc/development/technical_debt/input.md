@@ -1512,6 +1512,13 @@ changes.
   roadmap's `BUG-02-01` cell; the two register sites are past-tensed rather than deleted, because
   each was true when its argument was made.
 
+  **Owner, 2026-09-03 (session69):** the ship was premature — the ruling of
+  record was *"write it as active technical debt"*, and the function landed
+  the same sitting. It stays in the surface as **experimental** and **may be
+  withdrawn** unless something needs it; `doc/input_api.md` *"Live changes"*
+  and the CHANGELOG `Added` line now say so. Not reopened as ACTIVE: the
+  code is there, the contract is not.
+
 ### The class diagrams show a model field that no longer exists (RESOLVED, 2026-09-02 — and the premise was half wrong)
 
 **Filed as `T-MERMAID-MODEL`.** Everything down to **Resolution** is the filing as written.
