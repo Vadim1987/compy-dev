@@ -1038,8 +1038,8 @@ is cheap and renumbering those was not.*
 | id | defect | blast radius |
 |---|---|---|
 | ~~**FIX-01-01**~~ ✅ | P11's deferred editorial list — **named as a count, never enumerated** | **COMPLETE 2026-09-03 (session69).** Derived: eight W10-batch-3 ids, **three live sites** — four were already paid (R085, R143, R162, and R100's list) and R100's residue is `DEC-02`'s. All three landed: `ddcdd936` (R091+R092), `cd420088` (R150), `5dd9e455` (R164). Enumeration: [`validation/notes/FIX-01-01-enumeration.md`](validation/notes/FIX-01-01-enumeration.md) |
-| **FIX-01-02** | ephemeral citations in the persistent corpus — 10 step-id/`wip/` paths, **plus the `FR-1`/`FR-6` namespace** found by the remark triage | known, ~12 sites — **re-derive rather than trust the count**: the `BUG-01-11` retirement added one more `wip/` path to the debt register in 2026-08-31, so the sizing drifts whenever a row cites its own evidence note |
-| **FIX-01-03** | session numbers in the persistent corpus | known, 4 sites |
+| **FIX-01-02** | ephemeral citations in the persistent corpus — `wip/` paths, **plus the `FR-1`/`FR-6` namespace** found by the remark triage | **RE-DERIVED 2026-09-03: 20 paths + 7 `FR-n`**, not ~12 — the old count was a `wip/` grep and **eight of the twenty are written relative** (`validation/outcomes/…`, `ROADMAP.md`, `plan.md`), so they never contained the string. **Five of the twenty are `LEDGER-02`'s, not this row's**: debt entries whose *subject* is a file inside `wip/`, which have no canonical target to repoint at. **Sprint-id citations are excluded by owner ruling** the same day → `T-EPHEMERAL-IDS`, swept at `DOC-01-06`. Enumeration: [`validation/notes/FIX-01-02-03-rederivation.md`](validation/notes/FIX-01-02-03-rederivation.md) |
+| **FIX-01-03** | session numbers in the persistent corpus | **RE-DERIVED 2026-09-03: 12 sites**, not 4 — sessions keep writing their own number into the ledgers they amend, and session69 added one of them. Each carries a date already, so the fix is subtraction. Same note |
 
 *(Old `01`→**02**, `02`→**03**, `03`→**01**.)*
 
@@ -1385,6 +1385,7 @@ waste here.
 | DOC-01-03 | **the internals docs** — `internals/`, `decisions/`, `drawing_system.md`, `smoke_checklists.md` | these are read by a developer *working*, not by a reviewer once; compact for redundancy, not for brevity |
 | DOC-01-04 | **`doc/input_api.md` and `CHANGELOG.md`** — the two a stakeholder actually reads | **the tightest constraint on the row.** `PR-01-03` gates the guide as reviewable **alone**; compact it for redundancy only, **never for completeness**, and re-run that gate after |
 | DOC-01-05 | **citation check over everything this row rewrote** | `agents/rules/roadmap.md` §5 — *the pass that causes an orphan owes the fix*. Rewriting a paragraph breaks section-name citations into it, and `FIX-03-05` will already have run |
+| **DOC-01-06** | **the ephemeral-id sweep** — `T-EPHEMERAL-IDS`, 119 occurrences of live sprint ids in the persistent corpus | **owner ruling, 2026-09-03**, deferred out of `FIX-01-02`. Runs **here** and not at `FIX-03-05`: that row wipes citations of *retired* ids and sits **before** `DEC-02`/`LEDGER-02`, which vacuum entries out of the very ledgers holding most of these — a sweep run first sweeps prose that is about to leave. Re-derive the 119; the rule (`conventions/docs.md`, *Rules*) landed 2026-09-03 so the interval adds none. **Compaction runs first within this row:** an entry `DOC-01-02` shortens may lose its id without a rewrite |
 
 **Two guards, both learned rather than assumed.**
 
