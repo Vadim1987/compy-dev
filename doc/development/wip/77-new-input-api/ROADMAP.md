@@ -1699,6 +1699,15 @@ a surface under revision is a moving part, where a surface that ships with its s
 **named in the PR description** is not. The cost is honest and was weighed: the proposals come from
 the reviewers the PR is for, so this release will be followed by a breaking one.
 
+**This is an analysis sprint before it is an implementation sprint** (owner, 2026-09-03). The block
+is not a work order: the items **interact** — 3, 4 and 6 are three answers to one question about
+what a submit and a cancel leave behind, and 2 changes what every callback sees while 6 proposes a
+surface that would hide most of them — and the block **already argues with itself**, since item 5
+arrived with soft objections and two alternatives attached by the discussion that produced it. Read
+as seven tickets it produces seven changes; read as one design it may produce two, or a different
+one. **Weighing, disputing and reshaping an item are all admissible outcomes of `PROP-01-01`**, and
+declining one with a stated reason is a result, not a failure to deliver.
+
 **Three carve-outs are taken before the PR, and none of them is design work.**
 
 1. **`DOC-01-07`** — `get_text()` stops being experimental. Landed as a row 2026-09-03.
@@ -1711,7 +1720,7 @@ the reviewers the PR is for, so this release will be followed by a breaking one.
 
 | id | step | note |
 |---|---|---|
-| PROP-01-01 | **triage and provenance** — what each item would break against the shipped surface | the classification the rest is sized against. Item 1 is already discharged by `DOC-01-07` |
+| PROP-01-01 | **the holistic pass** — read the block as one design, not seven tickets | **owner, 2026-09-03: *"some props can be weighed, disputed or reshaped, as the remarks already suggest."*** This row's output is a **position on each item — accept, dispute, reshape, or decline — with the reason**, plus what each would break against the shipped surface. It is not a triage that hands seven rows to implementation. The rows below are the *shape* of the work if the items survive it, and any of them may be struck by this one. Item 1 is already discharged by `DOC-01-07` |
 | PROP-01-02 | **the two-surface shape** — a `compy.ask`-style simple surface exposed beside the current one, same namespace, per the live-discussion resolution | **first, by blast radius.** It decides how much the rest matters: defaults on a low-level surface that a wrapper hides are a different question. *"Details to be figured out"* is the honest state of it, and it is the one item nobody has claimed is small |
 | PROP-01-03 | **one payload shape** — every content-bearing callback receives the string | **this reopens a ratified decision.** `FIX-02-01` asked whether `on_text_entered` and `after_submit` are two ways to set one callback and was answered by Decision 37 — *they are told apart by their payload* — which `FEAT-01` then implemented and documented. The proposal calls that distinction the defect. Legitimate, and it is a ledger reopening rather than a tweak, **with a live consumer**: the platform's `serial` API already migrated to the split |
 | PROP-01-04 | **`auto_clear`** — submit clears by default | joins `auto_hide`'s family or replaces the pair with better names, which is the block's own alternative. Weigh with `-06`: the two flags and the `show()`/`show{}` distinction are three answers to one question |
