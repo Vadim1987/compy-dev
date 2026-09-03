@@ -127,8 +127,9 @@ shas on each line): `38d7c754`, `6897d689`, `9693779a`, `ea6efd1d`.
 | `keyboard` | `e5689611a0fa8740ce4f39b6f32ac61d399f7fdc` | `newinput` | `origin-https/dsent/dev` | `96d66292…` (2026-08-20) | **1 commit**, packaging only, merges clean |
 
 **The `keyboard` trap, first recorded at session 37 and still live:** the **local**
-branch named `dsent/dev` is `eb90389515b86d994e3e3adda68919f986f064d7` — **37 ahead,
-8 behind** the real upstream. It is not a tracking mirror. Take upstream from
+branch named `dsent/dev` is `eb90389515b86d994e3e3adda68919f986f064d7` — **8 ahead and
+37 behind** the real upstream (it was 8/36 at session 46; the extra one behind is the
+packaging commit). It is not a tracking mirror. Take upstream from
 `origin-https/dsent/dev`; never from the local name.
 
 **`maze` was checked branch by branch**, not only on the tracked one — `dsent/dev`,
