@@ -1428,15 +1428,16 @@ changes.
   PR base the evaluator was chosen by *which global you called* (`input(InputEvalLua, prompt,
   init)`), never passed in: no example writes `eval =`, and the config table a project could reach
   did not exist yet. The names are **internal**, from the pre-feature implementation and the design
-  discussion — the evaluator object, and `input_ref` passed as *"the `result`"*
-  (`design/notes/decisions.md`) — restated in two project-facing documents as though they had been
+  discussion — the evaluator object, and `input_ref` passed as *"the `result`"* in the feature's
+  design-phase decision notes — restated in two project-facing documents as though they had been
   project keys. A migration row for a shape nobody could have written is worse than silence: it
   tells a reader they may have used it.
 - **Owner's question is what settled it** (2026-09-03): *"I do not think it was used and not sure
   where it came from. Can we check if it was in the original requirements or grew spontaneously?"*
-  **It grew spontaneously.** The frozen `design/spec.md` names `validator` / `highlighter` as the
-  project-facing configuration and never an `eval` key, and its own migration table maps
-  `input_text(prompt, init)` to `validator`, not to an evaluator.
+  **It grew spontaneously.** The feature's frozen design specification — ratified before
+  implementation, and part of the working tree that does not ship — names `validator` /
+  `highlighter` as the project-facing configuration and never an `eval` key, and its own migration
+  table maps `input_text(prompt, init)` to `validator`, not to an evaluator.
 - **Resolution.** Both rows dropped from the guide; the clause dropped from the CHANGELOG. The
   raise itself is unaffected and undocumented on purpose — the config table is **closed**, so `eval`
   raises like any other unknown key, without being advertised as a retired one.
