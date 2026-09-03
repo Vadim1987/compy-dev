@@ -193,12 +193,12 @@ describe('input surface: widget control — cursor and text #input',
 
  describe("get_text", function()
 
-    -- doc/development/technical_debt/input.md,
-    -- T-CONTENT-READ: the read the surface never had. It
-    -- answers a STRING, the spelling on_text_entered
-    -- delivers, because set_text takes either spelling and
-    -- treats them as the same thing — so a string round-trips
-    -- and needs no type the guide does not already name.
+    -- doc/input_api.md, "Live changes": the read the surface
+    -- never had. It answers a STRING, the spelling
+    -- on_text_entered delivers, because set_text takes either
+    -- spelling and treats them as the same thing — so a
+    -- string round-trips and needs no type the guide does not
+    -- already name.
     it('reports the content seated by show', function()
       local input = F.compy_input()
       input.show({ text = 'hello' })

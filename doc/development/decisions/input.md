@@ -1506,32 +1506,26 @@ prompt to return to a menu, so they want the clearing, not the restoration. Maki
 first-class would put a content-lifetime rule into a surface whose entire content story is *"`show`
 seats it"*, which is more API to explain than the case is worth.
 
-**If a project ever needs it, it saves and restores the content itself — and today it can do half
-of that.** `get_cursor()` reads the caret before the `hide` and `set_cursor` puts it back after the
-`show`; both are refused while hidden, so the read happens before hiding. **There is no content
-getter on `compy.input`** — `set_text` writes and nothing reads — so the text half is not available
-without the project mirroring keystrokes, which is not a thing to ask of one. **This is the honest
-weak point of the ruling, and it is named rather than left to be discovered.** If the case does
-arrive, the repair is a **read-only content getter** — one function, symmetrical with `get_cursor`,
-useful for more than this — and *not* a return to preservation, which is a lifetime rule that would
-have to interact with the content baseline in every call that seats it.
+**If a project ever needs it, it saves and restores the content itself, and it can do all of that.**
+`get_text()` and `get_cursor()` read the content and the caret before the `hide`, and
+`show{text = …, cursor = …}` puts both back; both reads answer `nil` while hidden, so the save
+happens before hiding either way. The **content getter is this release's** (2026-09-03, owner:
+*"write it as active technical debt to be resolved before release"*) and it was added **because of
+this ruling**: the fallback offered here covered the caret and not the text, which made
+`doc/input_api.md`'s *"keep it yourself"* advice unfollowable for anything the user had typed. It is
+one function, symmetrical with `get_cursor` and useful for more than this — and deliberately **not**
+a return to preservation, which is a lifetime rule that would have to interact with the content
+baseline in every call that seats it.
+
+**The retirement rests on the scenario, not on the fallback**, which is why closing the gap changes
+nothing here: there is no case that needs restoration, and a project that ever meets one now has two
+reads and a `show` rather than a rule.
 
 **No CHANGELOG line is owed for this**, unlike the two above. Preservation was never shipped: at the
 PR base the widget was rebuilt per activation, so content survived nothing, and this is a design
-requirement that was not built rather than a behaviour a user could notice changing.
-
-**Amended 2026-09-03 — the weak point is being closed, not only named.** The paragraph above says
-the repair exists *if the case arrives*; the case arrived from the other direction. A delivery-level
-revalidation found `doc/input_api.md` telling a project author to *"keep it yourself and pass it to
-that `show`"* — advice this surface does not permit for text the user typed — and the owner ruled the
-getter into release scope: *"write it as active technical debt to be resolved before release;
-disclose the gap but mark it as defect fixable with getter until ruled otherwise."* The missing read
-is now **`T-CONTENT-READ`** in `../technical_debt/input.md`, `ACTIVE`, and the two paragraphs above
-describe the state **until it lands**. Its `Added` line is the getter's own, not this retirement's.
-
-**The retirement itself is unaffected**, and this is the distinction worth keeping: it rests on there
-being no scenario that needs restoration — not on the do-it-yourself fallback being complete. The gap
-was in the consolation offered beside the ruling, which is why closing it changes nothing here.
+requirement that was not built rather than a behaviour a user could notice changing. (The getter has
+its own `Added` line, as an addition to the surface — that line is the function's, not this
+retirement's.)
 
 **Recommended and deliberately not built: `reset()`.** `clear()` resets what the **user** owns.
 Nothing resets what the **project** owns, so returning a widget to its defaults means naming every

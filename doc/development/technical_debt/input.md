@@ -27,9 +27,10 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-**One entry, as of 2026-09-03.** Everything else **in this file** that had to be resolved before
-this release ships is paid, and each is in `RETIRED` below with what paid it. `BACKLOG` is still
-full, deliberately, and nothing there blocks the release.
+**Empty as of 2026-09-03** — every entry **in this file** that had to be resolved before this
+release ships is paid, and each is in `RETIRED` below with what paid it. The section being empty is
+a state, not an omission: `BACKLOG` is still full, deliberately, and nothing there blocks the
+release.
 
 **This file is not the whole of the release's input obligations.** Four of the five `ACTIVE`
 entries in [`general.md`](general.md) are this work's, filed there because they are cross-cutting
@@ -38,51 +39,6 @@ rather than input-specific: **`T-VERSION-NUM`** (the version number for the four
 and **`T-ARGUES-INTERIM`** (`../decisions/input.md`). A reader scanning for *what is still owed*
 reads both files.
 
-### T-CONTENT-READ — a project cannot read the widget's content except at submit
-
-- **Where:** the `compy.input` surface — `consoleController.lua`, `build_widget_api`. It exposes
-  `show`, `hide`, `is_shown`, `get_cursor`, `set_cursor`, `set_text`, `clear` and `configure`, and
-  **no reader**. Content reaches project code only through `on_text_entered` and `after_submit`,
-  both inside `UserInputController:submit_flow` (`userInputController.lua`); `cancel_flow` delivers
-  nothing.
-- **What is owed:** `compy.input.get_text()`, read-only, symmetrical with `get_cursor` — `nil`
-  while hidden rather than a warning, because a read of *"nothing to report"* is not a refused
-  mutation, the rule `get_cursor` already follows (`../internals/user_input.md`, *"Cursor
-  manipulation and \"reset\""*). It is an **addition to the public surface**, so it owes its guide
-  entry and a CHANGELOG line with the function itself, and `doc/input_api.md`'s `hide()` section
-  currently discloses the gap and stops being true when this lands.
-- **Why it is an entry:** a **self-describing gap in a shipped surface** — no decision produced it,
-  and the decision it bears on (`../decisions/input.md`, **D-CFG-BOUNDARY**) rests on it being
-  small. That ruling retired the ratified requirement that content survive `hide` → `show`, on the
-  ground that a project which ever needs it can keep the content itself. **That fallback covers the
-  cursor and not the text:** `get_cursor()` exists, so the caret round-trips and the content does
-  not. The ruling's own evidence is unaffected — the two `hide()` call sites in the tree
-  (`maze_main.lua:126`, `draw_main.lua:233`) both abandon the prompt for a menu and *want* the
-  clearing — so the gap is in the fallback offered as consolation, not in the decision.
-- **Why ACTIVE, and it was BACKLOG until 2026-09-03.** Filed 2026-09-02 as *"PROPOSAL: a read-only
-  content getter — the half of the save-it-yourself fallback that does not exist"*, unslugged and
-  explicitly not a commitment, on the reasoning that no consumer had asked. The delivery
-  revalidation then found the guide instructing an author to *"keep it yourself"* — advice the
-  surface does not permit — and escalated whether the release closes the gap or documents it. **The
-  owner ruled it release scope** (2026-09-03): *"write it as active technical debt to be resolved
-  before release; disclose the gap but mark it as defect fixable with getter until ruled
-  otherwise."* So the disclosure in the guide stands as the interim state and this is the fix.
-- **The consumer is not the hide/show case** (owner, 2026-09-02). Today a project learns the
-  content only at **submit** — that one moment is the entire read surface. A getter is what it
-  needs to read at a moment of *its own* choosing: **on a timeout** (take whatever has been typed
-  when the clock runs out), or **from a process the project launched itself**, e.g. off a hotkey,
-  that wants the current text without making the user submit first. That is a more ordinary shape
-  than restoring a draft across a hide, and sizing this from the hide/show framing under-prices it.
-- **And explicitly not the alternative.** Restoring preservation across `hide` → `show` is a
-  content-**lifetime** rule that every call seating content would have to agree with; a getter is
-  one function that adds no rule. This is paid as the getter.
-- **It is a class, not an instance — three earlier mentions, none of them an entry.** The absence is
-  cited as a *supporting fact* inside `set_text`'s list branch does not split embedded newlines
-  (*"nothing could read it back … so there is no set/get round-trip"*), inside the `oneshot` →
-  `auto_hide` entry (*"nothing could read that draft back first"*, an entry `LEDGER-02` is scheduled
-  to vacuum), and in the roadmap's `BUG-02-01` row. Three unrelated routes reached the same missing
-  function and each treated it as background.
-- **Roadmap:** `FEAT-03`.
 
 ## BACKLOG
 
@@ -1372,6 +1328,69 @@ changes.
 
 ## RETIRED
 
+### A project cannot read the widget's content except at submit (RESOLVED, 2026-09-03)
+
+**Filed as `T-CONTENT-READ`.** Everything down to **Resolution** is the filing as written.
+
+- **Where:** the `compy.input` surface — `consoleController.lua`, `build_widget_api`. It exposes
+  `show`, `hide`, `is_shown`, `get_cursor`, `set_cursor`, `set_text`, `clear` and `configure`, and
+  **no reader**. Content reaches project code only through `on_text_entered` and `after_submit`,
+  both inside `UserInputController:submit_flow` (`userInputController.lua`); `cancel_flow` delivers
+  nothing.
+- **What is owed:** `compy.input.get_text()`, read-only, symmetrical with `get_cursor` — `nil`
+  while hidden rather than a warning, because a read of *"nothing to report"* is not a refused
+  mutation, the rule `get_cursor` already follows (`../internals/user_input.md`, *"Cursor
+  manipulation and \"reset\""*). It is an **addition to the public surface**, so it owes its guide
+  entry and a CHANGELOG line with the function itself, and `doc/input_api.md`'s `hide()` section
+  currently discloses the gap and stops being true when this lands.
+- **Why it is an entry:** a **self-describing gap in a shipped surface** — no decision produced it,
+  and the decision it bears on (`../decisions/input.md`, **D-CFG-BOUNDARY**) rests on it being
+  small. That ruling retired the ratified requirement that content survive `hide` → `show`, on the
+  ground that a project which ever needs it can keep the content itself. **That fallback covers the
+  cursor and not the text:** `get_cursor()` exists, so the caret round-trips and the content does
+  not. The ruling's own evidence is unaffected — the two `hide()` call sites in the tree
+  (`maze_main.lua:126`, `draw_main.lua:233`) both abandon the prompt for a menu and *want* the
+  clearing — so the gap is in the fallback offered as consolation, not in the decision.
+- **Why ACTIVE, and it was BACKLOG until 2026-09-03.** Filed 2026-09-02 as *"PROPOSAL: a read-only
+  content getter — the half of the save-it-yourself fallback that does not exist"*, unslugged and
+  explicitly not a commitment, on the reasoning that no consumer had asked. The delivery
+  revalidation then found the guide instructing an author to *"keep it yourself"* — advice the
+  surface does not permit — and escalated whether the release closes the gap or documents it. **The
+  owner ruled it release scope** (2026-09-03): *"write it as active technical debt to be resolved
+  before release; disclose the gap but mark it as defect fixable with getter until ruled
+  otherwise."* So the disclosure in the guide stands as the interim state and this is the fix.
+- **The consumer is not the hide/show case** (owner, 2026-09-02). Today a project learns the
+  content only at **submit** — that one moment is the entire read surface. A getter is what it
+  needs to read at a moment of *its own* choosing: **on a timeout** (take whatever has been typed
+  when the clock runs out), or **from a process the project launched itself**, e.g. off a hotkey,
+  that wants the current text without making the user submit first. That is a more ordinary shape
+  than restoring a draft across a hide, and sizing this from the hide/show framing under-prices it.
+- **And explicitly not the alternative.** Restoring preservation across `hide` → `show` is a
+  content-**lifetime** rule that every call seating content would have to agree with; a getter is
+  one function that adds no rule. This is paid as the getter.
+- **It is a class, not an instance — three earlier mentions, none of them an entry.** The absence is
+  cited as a *supporting fact* inside `set_text`'s list branch does not split embedded newlines
+  (*"nothing could read it back … so there is no set/get round-trip"*), inside the `oneshot` →
+  `auto_hide` entry (*"nothing could read that draft back first"*, an entry `LEDGER-02` is scheduled
+  to vacuum), and in the roadmap's `BUG-02-01` row. Three unrelated routes reached the same missing
+  function and each treated it as background.
+- **Roadmap:** `FEAT-03`.
+
+- **Resolution.** `compy.input.get_text()` shipped the same day it was filed, `FEAT-03`. Five
+  breaking tests first, each seen to fail with *"attempt to call field 'get_text' (a nil value)"*;
+  suite 1050 → **1055**. It answers **one string** with `\n` between lines — `on_text_entered`'s
+  spelling, and the one `set_text` takes back unchanged, so it round-trips without naming a type the
+  guide does not have and hands a project no internal object (`after_submit`'s `InputText` was the
+  alternative and was declined for that reason). `''` when the widget is up and empty, `nil` while
+  hidden, silently: the pair lets a project tell *nothing typed* from *nothing to report*. Documented
+  in `../../input_api.md` (the surface list, *"Live changes"*, and the `hide()` section, which now
+  carries the worked save-and-restore example instead of advice a project could not follow) and in
+  `../internals/user_input.md`; `Added` line in `CHANGELOG.md`. **The three restatements of the
+  absence were swept with it** — `../decisions/input.md`'s `D-CFG-BOUNDARY`, which now describes the
+  whole fallback rather than half of one, this file's `set_text` list-branch entry, and the
+  roadmap's `BUG-02-01` cell; the two register sites are past-tensed rather than deleted, because
+  each was true when its argument was made.
+
 ### The class diagrams show a model field that no longer exists (RESOLVED, 2026-09-02 — and the premise was half wrong)
 
 **Filed as `T-MERMAID-MODEL`.** Everything down to **Resolution** is the filing as written.
@@ -1795,8 +1814,10 @@ are what happened.
   split — but "all three" would have let a reader think they did not exist. Nor could a user: `add_text` splits, and the paste path pre-joins
   with `string.unlines` at the controller before the model sees it. A project
   had to hand-build such a list, and **nothing could read it back** — the
-  `compy.input` surface has no content getter, so there is no set/get
-  round-trip the normalisation could break.
+  `compy.input` surface had no content getter when this landed, so there was
+  no set/get round-trip the normalisation could break. (`get_text` arrived
+  2026-09-03 and answers the normalised content, so the round-trip that exists
+  now agrees with what this fix established rather than contradicting it.)
 - **Provenance: pre-existing.** At the PR base `3256aac` the table branch is
   `InputText(text)` — no split, no sanitise. This feature fixed the *string*
   half (`T-MULTILINE-STR`) and thereby made the two halves visibly disagree; it
