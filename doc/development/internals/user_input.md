@@ -815,47 +815,30 @@ This whole `before_*`/`after_*` + widget-output surface (`on_text_entered`, `on_
 
 ### `compy.input` namespace
 
-For a project-author usage guide with examples, see
-[Compy Input API](../../input_api.md).
+**The call shapes live in the project-author guide, [Compy Input API](../../input_api.md), and this
+section does not restate them.** What it records is what the table *is*, where it comes from, and
+what its shape is fixed by.
 
-> REMARK: why restate the shape of API there? Just tell what the table is and where its constructed and where its described
+`compy.input` is created **once for the application**, not once per project (`get_compy_input()` in
+`consoleController.lua`, wrapped into the project's `compy` table by `get_compy_namespace()`): it is
+built inside `prepare_project_env`, which `ConsoleController.new` calls a single time at
+construction. Cloning the environment does not separate instances either — the container is
+metatable-only and `table.clone` copies the metatable, so every clone resolves to the same private
+state. Anything held there that must not outlive a run is therefore cleared by the stop teardown, or
+kept on the widget where that teardown already reaches (D-ROUTE-LIFETIME).
 
-`compy.input` is a table created **once for the application**, not once per project
-(`get_compy_input()` in `consoleController.lua`, wrapped into the project's `compy` table by
-`get_compy_namespace()`): it is built inside `prepare_project_env`, which `ConsoleController.new`
-calls a single time at construction. Cloning the environment does not separate instances either —
-the container is metatable-only and `table.clone` copies the metatable, so every clone resolves to
-the same private state. Anything held there that must not outlive a run is therefore cleared by the
-stop teardown, or kept on the widget where that teardown already reaches (D-ROUTE-LIFETIME).
-Its container and the identity of its three sub-tables
-(`shortcuts`/`hooks`/`callbacks`) are frozen — D-FROZEN-SHELL, see the
-"compy.input's write boundary" comment in `consoleController.lua` — but every leaf inside them is
-freely writable. It exposes:
-- `compy.input.show(config)` — activates the widget
-- `compy.input.hide()` — deactivates without firing the cancel sequence
-- `compy.input.is_shown()` — whether the widget is up (D-ONE-STATE-ASK); the one
-  state query, and the only way a project can learn this — its own
-  `love.state.user_input` is a sandbox clone and never set
-  (`project_sandbox_env.md`)
-- `compy.input.get_cursor()` / `set_cursor(line, col)` / `get_text()` /
-  `set_text(text [, keep_cursor])` — the cursor/text surface; see
-  "Cursor manipulation" above for the layering this sits on.
-- `compy.input.configure(config)` — live-reconfigures an active
-  session; `compy.input.clear()` — resets an active session's
-  content.
-- `compy.input.shortcuts.keypressed/keyreleased/textinput[combo]` — the per-event combo tables
-  (D-COMBO-TABLES), and `compy.input.hooks.keypressed/keyreleased/textinput` — the one seeded hook per
-  event (D-HOOKS-SEEDED).
-- `compy.input.callbacks.{on_text_entered, on_limit_reached, validator, highlighter, before_submit,
-  after_submit, before_cancel, after_cancel}` — the widget's own `self.callbacks` table (same
-  object, not a copy — see "Submit and cancel" above); every member is a plain leaf-write, uniform
-  with `shortcuts`/`hooks`.
+Through it a project can raise and dismiss the widget, ask whether it is up (D-ONE-STATE-ASK, and
+the reason it must ask *here* is below), read and write the content and cursor (see "Cursor
+manipulation" above for the layering that sits under it), reconfigure a live session, and register
+its inbound handlers and outbound callbacks. Those registrations go through three sub-tables, each
+with a decision of its own: **`shortcuts`** — the per-event combo tables (D-COMBO-TABLES);
+**`hooks`** — the one seeded hook per event (D-HOOKS-SEEDED); **`callbacks`** — the widget's own
+`self.callbacks` table, the same object rather than a copy (see "Submit and cancel" above).
 
-Everything on `compy.input` other than the `shortcuts`/`hooks`/`callbacks` sub-table identities is
-callable API: assigning to any of the method names raises loudly rather than silently replacing the
-function (`build_input_surface`, `consoleController.lua:425-438`); assigning to
-`compy.input.shortcuts`/`hooks`/`callbacks` themselves (replacing the sub-table) also raises —
-only their leaves are writable.
+The container and those three sub-table identities are **frozen** (D-FROZEN-SHELL — see the
+"compy.input's write boundary" comment in `consoleController.lua`); every leaf inside them is freely
+writable. Assigning over one of the method names, or over a sub-table itself, raises loudly rather
+than replacing it silently (`build_input_surface`, `consoleController.lua`).
 
 `compy.input.is_shown()` is the one state predicate on this surface (D-ONE-STATE-ASK). It returns the
 widget's own internal `self.shown` flag (`UserInputController:is_shown()`), so a project's answer
@@ -868,36 +851,25 @@ project guards a per-tick re-arm with exactly that read; the guard has never fir
 that project re-issues `show()` on every tick. That dead guard is the concrete reason the
 predicate was added.
 
-> REMARK: it belongs to API documentation, do not duplicate here if not needed. Or describe one-level-of-abstraction-up -- tell what this api is capable of doing, not invocation details and signatures
 #### `show(config)` — activate
 
-All fields are optional and match the project-facing guide's table:
-`prompt`, `text`, `cursor` (`{line, col}`, applied after `text`),
-`validator`, `highlighter`, `on_text_entered`, `on_limit_reached`, `auto_hide`
-and `force`. The project wrapper checks this table before it reaches
-`configure_core`: an unrecognised key **raises** at the project's call line
-(`decisions/input.md`, D-UNKNOWN-RAISES), rather than being dropped. This
-includes lifecycle names such as `after_submit`, which are direct
-`compy.input.callbacks` assignments rather than `show` keys, and which raise
-with a message naming `callbacks`. The wrapper does not expose the host
-evaluator or legacy result paths.
+The field table is the guide's. What belongs here is that it is **closed**: the
+project wrapper checks the config before it reaches `configure_core`, so an
+unrecognised key **raises at the project's call line** rather than being dropped
+(`decisions/input.md`, D-UNKNOWN-RAISES). The same check catches lifecycle names
+such as `after_submit` — those are direct `compy.input.callbacks` assignments
+rather than `show` keys, and the message says so. The wrapper exposes neither
+the host evaluator nor the legacy result paths.
 
 #### `configure(config)` — the live-reconfigure surface
 
-`configure` carries the **project-owned** fields and only those:
-`prompt`, `highlighter`, `validator`, `auto_hide`, and the
-widget-output callbacks (`on_text_entered`, `on_limit_reached`).
-Each is applied only when given, immediately, and stays until
-replaced. There is no partial application: each field either
-applies in full or is not named at all — never a half-applied
-config.
-
-`text`, `cursor` and `force` **raise** here. They are
-`show`-only keys — keys that belong to another call, the treatment lifecycle
-callbacks already get — and the raise carries a message naming
-where each belongs (`decisions/input.md`, D-UNKNOWN-RAISES's show-only
-category, added there by D-CFG-BOUNDARY). The live writes for content
-are `set_text` / `set_cursor` / `clear`.
+`configure` carries the **project-owned** fields and only those. Each is applied
+only when given, immediately, and stays until replaced; there is no partial
+application — a field either applies in full or is not named at all. The content
+keys **raise** here, because they belong to the other call: that is
+D-UNKNOWN-RAISES's show-only category, added by D-CFG-BOUNDARY, and the message
+names where each key belongs. The live writes for content are `set_text` /
+`set_cursor` / `clear`.
 
 Hidden or shown makes no difference. `configure` writes the fields
 onto the widget, and the widget outlives its own visibility, so
