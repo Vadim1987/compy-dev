@@ -88,3 +88,31 @@ Note: `validation/notes/FIX-01-02-03-rederivation.md`, commit `461b4489`. Four c
 
 A/B/C are uncontested and are `FIX-01-02`/`-03`'s work. **Raised with the owner before executing**:
 whether D is in scope at all.
+
+## Owner ruling on class D, and `FIX-01` closes (2026-09-03)
+
+**Ruling: rule now, sweep after the ledger vacuuming.** Landed as three commits — the convention
+(`c9f765e7`), the debt entry `T-EPHEMERAL-IDS` (`61c66ba3`), the roadmap step `DOC-01-06`
+(`e3b8b1af`). **`DOC-01`, not `FIX-03-05`:** that row is the retired-id sweep and runs *before*
+`DEC-02`/`LEDGER-02`, which vacuum the two registers holding 94 of the 119.
+
+Then executed: `5d8ae109` (B, 12 sites), `ab8c2415` (A, 14 of 20), `6c96c96f` (C, 7 sites,
+**spelled out rather than dropped** — the remark asked for the essence, not the deletion).
+`b4968192` ticks `FIX-01` complete in all three places and empties the brace.
+
+- **Six path sites stayed and were handed to `LEDGER-02`** — `general.md`'s two renumber entries,
+  where the wip file **is the defect's location**, not a reference. No canonical target exists and
+  repointing would destroy the entry. Recurring shape; named in `LEDGER-02`'s section.
+- `smoke_checklists.md` got *better*, not merely correct: every section already carried a
+  *"the N commits a result should be reported against"* table — durable and specific — so the wip
+  pointers were a second, worse answer to a question the document had already answered.
+
+## Owner question — the 31 REMARK mentions (2026-09-03)
+
+Counted at boot and at HEAD, so the delta is attributable: **29 markers across 10 files at
+session69's boot, 24 now**, all five retired by `FIX-01-01`. `src/` and `tests/` return **nothing**
+for the gate pattern. **The five under `src/examples` are not markers** — they are Alice prose in
+`keyboard/words_corpus.lua` (*"she remarked"*), which is exactly why `agents/rules/commenting.md`
+makes the pattern case-sensitive. The row is **`FIX-02-07`**, in `FIX-02`'s **(b)** half → after
+`ACC-02`. Cell recounted at `7c7cf6d2`, with the shape stated: **the count only ever falls by side
+effect**, since a marker retires with the pass that fixes what it points at.

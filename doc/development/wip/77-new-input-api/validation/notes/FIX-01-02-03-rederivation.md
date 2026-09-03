@@ -97,3 +97,31 @@ ledger entry naming the sprint that paid it is a **record**, not a pointer, and
 a reader who cannot resolve `FIX-02-05` has lost nothing they needed.
 
 Either answer is cheap **now** and expensive after the slices are cut.
+
+## Ruled and executed, same day
+
+**Owner, 2026-09-03: option (i).** The rule landed immediately
+(`conventions/docs.md`, *Rules* — an ephemeral **id** is a citation too) so the
+interval between the ruling and the sweep adds nothing to the pile; the sweep
+itself is `DOC-01-06`, registered as `T-EPHEMERAL-IDS`.
+
+`DOC-01`, not `FIX-03-05`, and the placement is the substance of the ruling:
+`FIX-03-05` looks like the home — it is the retired-id sweep — but it runs
+**before** `DEC-02` and `LEDGER-02`, which vacuum entries out of the two
+registers holding 94 of the 119. A sweep there sweeps prose that is about to
+leave.
+
+| class | size | outcome |
+|---|---|---|
+| A — paths | 20 | 14 swept (`ab8c2415`); **6 handed to `LEDGER-02`** |
+| B — session numbers | 12 | all (`5d8ae109`); the deriving grep now returns nothing |
+| C — `FR-n` | 7 | all (`6c96c96f`), **spelled out, not deleted** — two markers retired with them |
+| D — sprint ids | 119 | deferred to `DOC-01-06` by ruling; rule landed now |
+
+**The six that stayed are a shape worth naming**, because it will recur in every
+citation sweep: `general.md`'s two renumber entries cite `ROADMAP.md`, `plan.md`
+and three `validation/` documents in their **Where** and **Resolution** fields —
+and there the wip file is not a *reference*, it is **the location of the
+defect**. There is no canonical target, and repointing would destroy the entry.
+Both are also textbook `T-NEVER-SHIPPED` members, so `LEDGER-02` will most
+likely archive them and the citations leave with them.
