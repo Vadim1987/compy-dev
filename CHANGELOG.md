@@ -179,8 +179,10 @@ newest first.
   `show{text = …}` and `set_text` take a string or a list of line
   strings — a list meaning a dense run of strings from `1`. Anything
   else raises `compy.input.set_text: text must be a string or a list
-  of line strings`, naming the call that failed, rather than being
-  silently repaired or dropped. Convert with `tostring` where you want
+  of line strings`, naming the call that failed. Previously a list
+  element that was not a string was stored as it came and corrupted the
+  display from then on, with nothing said at the point of the mistake.
+  Convert with `tostring` where you want
   a number shown: the widget reshapes how content is *spelled*, but it
   does not guess what a non-text value meant. This is the treatment
   `cursor` already gets. (`false` is not a malformed value — it is the
@@ -196,6 +198,16 @@ newest first.
   already dropped invalid UTF-8 from content you set. Blank elements
   are content and still survive. Also longstanding, and it only became
   visible once the string form above was fixed.
+
+- **A crash in a project's `love.update` or in a pointer handler no
+  longer vanishes.** The error boundary called its message handler with
+  the wrong number of arguments, so the report was assembled from a
+  `nil` and raised *inside* the handler, where it was swallowed: no
+  error window, no console line, and the run carried on as though
+  nothing had happened. Keyboard handlers went down a different path and
+  reported correctly, which is what made the gap easy to miss — the same
+  project would show you one crash and hide another. This is
+  longstanding, not new.
 
 - **Project callbacks no longer lose their arguments on Lua runtimes
   without LuaJIT's `xpcall` extension.** The framework runs your code

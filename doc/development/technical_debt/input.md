@@ -32,12 +32,12 @@ release ships is paid, and each is in `RETIRED` below with what paid it. The sec
 a state, not an omission: `BACKLOG` is still full, deliberately, and nothing there blocks the
 release.
 
-**This file is not the whole of the release's input obligations.** Three of the four `ACTIVE`
+**This file is not the whole of the release's input obligations.** Two of the three `ACTIVE`
 entries in [`general.md`](general.md) are this work's, filed there because they are cross-cutting
-rather than input-specific: **`T-RETIRED-UNVER`** and **`T-NEVER-SHIPPED`** (both scoped to *this
-file's* `RETIRED` section) and **`T-ARGUES-INTERIM`** (`../decisions/input.md`). A reader scanning
-for *what is still owed* reads both files. *(`T-VERSION-NUM` was the fourth and is paid — the owner
-ruled the version question 2026-09-03.)*
+rather than input-specific: **`T-NEVER-SHIPPED`** (scoped to *this file's* `RETIRED` section) and
+**`T-ARGUES-INTERIM`** (`../decisions/input.md`). A reader scanning for *what is still owed* reads
+both files. *(Two more were paid on 2026-09-03: the version question, which the owner ruled, and the
+verification of this file's `RETIRED` claims, which `FIX-02-05` ran.)*
 
 
 ## BACKLOG
@@ -2608,7 +2608,11 @@ because the pattern recurs: when a producer goes, grep for its consumer.
   helper delegates to production teardown (`CC:stop_project_run()`) and clears
   only what production does not own. Nine code lines as of the widget-shown
   fix, which removed the last compensating assignment (`widget.shown = false`).
-  Nothing to extract.
+  Nothing to extract. **Re-counted 2026-09-03 at `FIX-02-05`: eleven**, not
+  nine — the helper has grown three restores since (`love.update(1.0)`, and
+  `clear()` on the editor's input and the widget). Still under the 14-line
+  limit, so the resolution holds; the figure had drifted, which is the one
+  numeric drift the verification pass found across 56 entries.
 
 ### `submit()`'s deliver-then-hide ordering forced example-side deferral of any reshow (RESOLVED by the input-API redesign)
 

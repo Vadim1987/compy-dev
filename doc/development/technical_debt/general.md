@@ -33,19 +33,6 @@ paid, or turned out not to be debt.
 - **Revisit:** When the controller's load/aliasing is next reworked — prefer a module-top
   `local gfx = love.graphics` per the standard-aliases convention.
 
-### T-RETIRED-UNVER — The register's resolved entries claim resolution that was never verified
-
-- **Where:** `input.md`'s `RETIRED` section — 21 entries carrying a `RESOLVED` marker **when this
-  was written; the section holds 46 today and the whole of it is this row's scope** (`T-NEVER-SHIPPED`
-  takes the same pass). Re-derive before executing.
-- **What is owed:** the 2026-08-27 restructuring sorted them on their **headings**. Not one was
-  tested against the PR base to confirm the claim. A register whose retired section is unaudited
-  is a register that quietly forgets things it never finished.
-- **Why it is an entry:** an **obvious operational need**, and the register's own upkeep is debt
-  like any other (`agents/rules/ledgers.md` §4). Expected yield is unknown, which is the reason
-  to run it rather than to skip it.
-- **Roadmap:** `FIX-02-05`.
-
 ### T-ARGUES-INTERIM — the decisions ledger argues with an interim past that never shipped
 
 - **Where:** `doc/development/decisions/input.md`, throughout the live entries — not the `RETIRED`
@@ -99,11 +86,17 @@ paid, or turned out not to be debt.
   than the product's history. A **pre-existing** defect the branch fixed is the opposite: it
   shipped, users met it, and the entry is the evidence behind a changelog line.
 - **The classification is already scheduled, and this reuses it rather than re-deriving it.**
-  `T-RETIRED-UNVER` / `FIX-02-05` tests every retired entry against the PR base to verify its
-  resolution claim — **the same check answers *did this exist at the base?*** One pass, one
-  classification, **two consumers**: `CHG-01-03` already takes the pre-existing half into the
-  changelog, and this goal takes the other half out of the register. Nothing new is enumerated,
-  which is why this is a step and not a survey.
+  `FIX-02-05` tested every retired entry against the PR base to verify its resolution claim —
+  **the same check answers *did this exist at the base?*** One pass, one classification, **two
+  consumers**: `CHG-01-03` takes the pre-existing half into the changelog, and this goal takes the
+  other half out of the register. Nothing new is enumerated, which is why this is a step and not a
+  survey. **The pass ran 2026-09-03** and its verdict is
+  [`../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md`](../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md),
+  entry by entry with the command behind each: **39 introduced-in-branch, 9 pre-existing, 5 mixed,
+  3 cannot-tell** over 56 entries. This row's input therefore exists; **take it, do not re-derive
+  it.** The three cannot-tells are the `maze`/`balloons` entries, whose repos have no comparable
+  base commit — **leave them in the register**, since the rule vacuums what is known to be ours and
+  not what is merely unproven.
 - **Measured 2026-09-01, so the row is not sized on a guess:** 47 retired entries **(51 today —
   see *Where*; the proportions below were not re-derived)**. **Fourteen
   already say the defect was ours** and **seven say pre-existing**; ten cite the base explicitly.
@@ -320,6 +313,48 @@ paid, or turned out not to be debt.
   consume the returned proxy or change `table.protect`'s semantics.
 
 ## RETIRED
+
+### The register's resolved entries claim resolution that was never verified (RESOLVED, 2026-09-03)
+
+**Filed as `T-RETIRED-UNVER`.** Everything down to **Resolution** is the filing as written.
+
+- **Where:** `input.md`'s `RETIRED` section — 21 entries carrying a `RESOLVED` marker **when this
+  was written; the section holds 46 today and the whole of it is this row's scope** (`T-NEVER-SHIPPED`
+  takes the same pass). Re-derive before executing.
+- **What is owed:** the 2026-08-27 restructuring sorted them on their **headings**. Not one was
+  tested against the PR base to confirm the claim. A register whose retired section is unaudited
+  is a register that quietly forgets things it never finished.
+- **Why it is an entry:** an **obvious operational need**, and the register's own upkeep is debt
+  like any other (`agents/rules/ledgers.md` §4). Expected yield is unknown, which is the reason
+  to run it rather than to skip it.
+- **Roadmap:** `FIX-02-05`.
+- **Resolution.** All **56** retired entries walked, 2026-09-03 (`input.md` 50, `general.md` 6 —
+  the count the earlier documents' 20 / 46 / 47 / 51 / 55 all superseded, each right when written).
+  Two questions per entry, run as one pass: does the resolution claim hold at HEAD, and did the
+  subject exist at the PR base `3256aac`. Evidence per entry, with the command behind every answer:
+  [`../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md`](../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md).
+- **No resolution claim failed.** Twelve rest on something not independently re-derived — a suite
+  run, a mutation example, a call graph deeper than a grep reaches — and each is named in the
+  evidence document rather than counted as verified. **One numeric drift** was found and corrected
+  in place: `F.reset()`'s entry said nine code lines; it is eleven, still under the limit.
+- **The classification, which is the half `LEDGER-02` and `CHG-01-03` consume:**
+  **39 introduced-in-branch · 9 pre-existing · 5 mixed · 3 cannot-tell.** The proportion is not
+  padding — the *subject* of most entries (`compy.input`, `doc/input_api.md`, the combo grammar, the
+  decisions ledger, the whole `wip/` tree) is itself absent at base, so a defect in it could not
+  have been met from outside. `compy.input` returns **zero** hits at `3256aac`.
+- **The three cannot-tells are structural, not gaps:** their subjects live in `src/examples/maze`
+  and `balloons`, untracked sibling repositories with their own histories, so there is no comparable
+  base commit to check against. Their resolution claims hold; only the provenance question is
+  unanswerable by this method.
+- **Nine were spot-verified by the parent directly at base**, the pre-existing set being the
+  consequential direction — a false *pre-existing* invents a changelog line for something nobody
+  met, a false *introduced* deletes the evidence of a real fix. All nine confirmed:
+  `set_text`'s `n_added == 1` guard and its unsplit table branch, the string branch's lone
+  `_update_cursor(true)`, `xpcall(f, user_error_handler, ...)` and the `_G.web` branch in `wrap`,
+  `handlers.userinput` with its two push sites, `love.state.app_state == 'editor'` in
+  `UserInputController:keypressed`, `userlove`, and the `love.draw` swap.
+- **Roadmap:** `FIX-02-05`, done.
+
 
 ### The changelog's version number has never been settled against the scale of the change (RESOLVED, 2026-09-03)
 
