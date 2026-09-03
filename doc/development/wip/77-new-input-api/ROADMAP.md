@@ -752,7 +752,7 @@ the prose says it is a defect.
 
 ~~`FIX-02-03`~~ ✅ · ~~`-04`~~ ✅ · ~~`-05`~~ ✅ · ~~`-06`~~ ✅ · ~~`-13`~~ ✅ · ~~`-17`~~ ✅ · ~~`-22`~~ ✅ ·
 ~~`-23`~~ ✅ · ~~`-24`~~ ✅ · ~~`-25`~~ ✅,
-and **the `smoke_checklists.md` slice of `-09`**.
+and ~~**the `smoke_checklists.md` slice of `-09`**~~ ✅.
 
 *(Struck rows are done, 2026-09-02 session67.)*
 
@@ -783,11 +783,21 @@ and **the `smoke_checklists.md` slice of `-09`**.
   reason it was placed here was that its test could surface a key the surface accepts and the widget
   ignores. **It did not**: the two sides agree, so the sitting runs against a known. The test is in
   place, mutation-proven, and no production change was needed.
-- **The `-09` slice is bounded to `doc/development/smoke_checklists.md`**, the document in the
-  owner's hands during the pass. **~21 sites, and re-derive them by sense** — the row's own warning
-  applies to this slice as much as to the whole: *the count is a sweep input, not a scope statement.*
-  Safe to take early **because no remaining merge touches it** — `MERGE-01-04` (platform) is done,
-  and the three open merges land in the nested repos.
+- ~~**The `-09` slice is bounded to `doc/development/smoke_checklists.md`**~~ — **DONE 2026-09-03
+  (session68), 21 sites.** The estimate was *~21* and the count came out at exactly 21, which is
+  luck rather than method: the raw grep returns **25**, and **four are the `Alt+H` help overlay** —
+  a different piece of UI that is not the input widget and keeps its name. *The count is a sweep
+  input, not a scope statement*, and this is what that sentence is for. Two idioms went with the
+  nouns: *"the command field is open"* → *"the command widget is shown"*, and *"press Enter on the
+  empty field"* → *"press Enter with nothing typed"*, which drops the noun rather than swapping it —
+  the turtle section says *"the prompt"* throughout, and inserting *widget* into one row of it would
+  have put three names in one paragraph.
+  **One thing deliberately not swept, and it is the (b) half's to rule:** `turtle`'s section calls
+  the thing **"the prompt"** ~20 times and says it *opens* and *closes*. That is a **fifth** name for
+  the widget, and it collides with the documented `prompt` **key**, which is the label. It is outside
+  this row's four names, nobody has ruled it, and rewriting the owner's device script on my own
+  reading is the wrong trade — but session67 caught itself writing *"while the prompt is up"* as a
+  slip, so the question is real. **Raise it before (b) sweeps prose.**
 
 **(b) — after `ACC-02`.** The rest: `-07` · `-08` · `-09` (the remainder) · `-10` · `-14` · `-15` ·
 `-16` · `-18` · `-19` · `-20`.

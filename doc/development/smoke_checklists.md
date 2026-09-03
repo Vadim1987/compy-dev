@@ -209,28 +209,28 @@ cd <repo root> && love src play /abs/path/out/maze     # and .../draw
   `Ctrl+Esc` has nothing to return to. Start with `love src`, open the project from the console.
 - **maze's menu** offers three tracks: **1** Drive the robot (direct keys) · **2** Plan a path (tile
   buffer) · **3** All mazes (the sandbox, which is where the **command editor** levels are).
-- **draw's menu** offers Free draw and the picture tasks. **Free draw keeps its command field open
+- **draw's menu** offers Free draw and the picture tasks. **Free draw keeps its command widget shown
   the whole time**, which is what makes section C and row B1 matter there.
 
 ### A — the command editor (run in **maze track 3** and in **draw**)
 
 | | do | expect |
 |---|---|---|
-| A1 | enter an editor level | the command field is open, **empty**, prompting `Commands:` |
+| A1 | enter an editor level | the command widget is shown, **empty**, prompting `Commands:` |
 | A2 | type a valid program and press Enter | it runs; the robot moves |
-| A3 | after that run ends without winning | the prompt returns **once**, with the program still in the field to edit |
+| A3 | after that run ends without winning | the prompt returns **once**, with the program still in the widget to edit |
 | A4 | type an invalid command (e.g. `FFX`) and Enter | the **error message replaces the prompt** and the typed text stays for correction |
 | A5 | correct it and Enter | it runs; the prompt goes back to `Commands:` |
-| A6 | in maze: crash into a wall, then press Tab | the robot goes home and the **kept program** is back in the field |
+| A6 | in maze: crash into a wall, then press Tab | the robot goes home and the **kept program** is back in the widget |
 | A7 | type a long command, watching each character | each character appears **once** — the game now also sees every keystroke, and should do nothing with it |
 
 ### B — Shift+Esc, the gesture this work adds
 
 | | do | expect |
 |---|---|---|
-| B1 | on an **editor level with the field active**, press `Shift+Esc` | you return to the menu. **This is the new capability** — it previously could not reach the program at all |
-| B2 | look at the screen after B1 | **no command field is left over the menu** |
-| B3 | immediately press a menu digit | the track starts, and **the digit does not also land in a field** |
+| B1 | on an **editor level with the widget shown**, press `Shift+Esc` | you return to the menu. **This is the new capability** — it previously could not reach the program at all |
+| B2 | look at the screen after B1 | **no command widget is left over the menu** |
+| B3 | immediately press a menu digit | the track starts, and **the digit does not also land in the widget** |
 | B4 | on a **direct-control** level, press `Shift+Esc` | returns to the menu, as before |
 | B5 | at the menu, press `Shift+Esc` | **nothing happens** — the menu is the top level; `Ctrl+Esc` is how you leave to the console |
 | B6 | type a draft, then `Shift+Esc` | you leave — the draft is not silently wiped *and then* the game left, which is what one keystroke doing both would look like |
@@ -238,7 +238,7 @@ cd <repo root> && love src play /abs/path/out/maze     # and .../draw
 | B8 | on an editor level, `Alt+Shift+Esc` | **[new]** also leaves for the menu |
 | B9 | on an editor level, `Ctrl+Shift+Esc` | **[new]** also leaves — and the run is **not** stopped back to the console behind it |
 | B10 | on an editor level, `Ctrl+Alt+Shift+Esc` | **[new]** same as B9 |
-| B11 | on a **Track 2 (plan)** level, press `Shift+Esc` | **[new]** returns to the menu, and **no plan strip is left over it**. *(B4 covers direct-control only; the plan track has its own field-like surface.)* |
+| B11 | on a **Track 2 (plan)** level, press `Shift+Esc` | **[new]** returns to the menu, and **no plan strip is left over it**. *(B4 covers direct-control only; the plan track has its own widget-like surface.)* |
 
 **B8–B10 have never been pressed by anyone.** The game registers all four
 members of the family, but two of them — the Ctrl-bearing ones — used to reach
@@ -251,7 +251,7 @@ two halves have never been exercised together on a device.
 
 | | do | expect |
 |---|---|---|
-| C1 | from the menu press `3` to enter the sandbox | the command field opens **empty** — no stray `3` in it |
+| C1 | from the menu press `3` to enter the sandbox | the command widget opens **empty** — no stray `3` in it |
 
 *(If a `3` appears, the fix is the documented one-shot `textinput` guard, and the row becomes a
 defect against `P-17-03` §5, not a mystery.)*
@@ -278,7 +278,7 @@ defect against `P-17-03` §5, not a mystery.)*
 | E2 | win a level, press `Tab` | the next level starts |
 | E3 | **hold** `Tab` | the level advances **once**, not repeatedly |
 | E4 | press `Shift+Tab`, then `Ctrl+Tab` | each still advances/resets as a bare Tab does — these were preserved deliberately, one registration each |
-| E5 | on an **editor level**, press `Tab` | the level acts **and** a tab reaches the field, as it did before. *(Odd, pre-existing, deliberately not changed.)* |
+| E5 | on an **editor level**, press `Tab` | the level acts **and** a tab reaches the widget, as it did before. *(Odd, pre-existing, deliberately not changed.)* |
 | E6 | in **draw**, complete a picture and press `Tab` | the next picture starts |
 
 ### What a failure here means
@@ -330,17 +330,17 @@ takes the command `start`), **active** (answering), and **finished** (which take
 ### A — the session stays open, which is the whole migration
 
 The retired idiom re-armed the input widget after every submit. The new one activates **once** and
-stays open; `after_submit` clears the line. If that is wrong, the symptom is a field that vanishes
+stays open; `after_submit` clears the line. If that is wrong, the symptom is a widget that vanishes
 or stops accepting text — not a crash.
 
 | | do | expect |
 |---|---|---|
-| A1 | launch, and look at the splash | the command field is **open and empty**, hinting `To start: Type <start>` |
+| A1 | launch, and look at the splash | the command widget is **shown and empty**, hinting `To start: Type <start>` |
 | A2 | type `start`, press Enter | the game starts; balloons begin rising |
-| A3 | look at the field immediately after A2 | it is **still open**, and **empty** — not gone, not still holding `start` |
+| A3 | look at the widget immediately after A2 | it is **still shown**, and **empty** — not gone, not still holding `start` |
 | A4 | answer a balloon correctly (e.g. `f` for `giraf..e`) and press Enter | it scores; the hint shows `Your answer: <f>` |
 | A5 | keep answering five in a row without touching anything else | every one is accepted — the session does **not** need re-arming between submits |
-| A6 | let the game finish, then type `restart` and Enter | it restarts, and the field is open and empty again |
+| A6 | let the game finish, then type `restart` and Enter | it restarts, and the widget is shown and empty again |
 
 ### B — submit delivers the command string the handlers expect
 
@@ -353,20 +353,20 @@ the wrong thing, so **every answer reads as wrong**, which is what makes B1 wort
 |---|---|---|
 | B1 | answer one balloon **correctly** | it is accepted. *(If a correct answer scores as wrong, the join is the suspect, not the game logic.)* |
 | B2 | answer one **incorrectly** on purpose | it is rejected — the rejection path still works |
-| B3 | press Enter on an **empty** field | nothing breaks; the game does not raise |
+| B3 | press Enter with the widget **empty** | nothing breaks; the game does not raise |
 | B4 | type an answer with a trailing space, then Enter | behaves as it did before the migration |
 
 ### C — ESC clears, and cannot strand you
 
 `ESC` clears the line and **leaves the widget open** by default. That is deliberate: the command
-line is the only way to talk to this game, so a dismissable field would be a dead end with no
+line is the only way to talk to this game, so a dismissable widget would be a dead end with no
 re-arm.
 
 | | do | expect |
 |---|---|---|
-| C1 | type a few characters, press `ESC` | the line clears; **the field stays open** |
+| C1 | type a few characters, press `ESC` | the line clears; **the widget stays shown** |
 | C2 | immediately type again | the characters appear — you are not stranded |
-| C3 | press `ESC` on an already-empty field | nothing happens; still open |
+| C3 | press `ESC` with the widget already empty | nothing happens; still shown |
 
 ### D — on the way out
 
@@ -518,7 +518,7 @@ itself — the prompt would stay open from the second command on.
 | A2 | type `forward`, press Enter | the turtle moves up **and the prompt closes by itself** |
 | A3 | press `i`, type `back`, Enter; repeat three or four times | **every** cycle closes on submit — not just the first. *(A prompt that stays open from the second command on is the flag failing to persist.)* |
 | A4 | press `i`, type `xyzzy` (not a command), Enter | the prompt closes and the turtle does not move — the close follows a **successful submit**, and an unknown word is still a valid submission here (this game installs no validator) |
-| A5 | press `i`, press Enter on the **empty** field | **nothing happens and the prompt stays open** — an empty submit is not a submit, so nothing closes |
+| A5 | press `i`, press Enter with **nothing typed** | **nothing happens and the prompt stays open** — an empty submit is not a submit, so nothing closes |
 | A6 | **with the prompt still open from A5** (do not press `i` again — the guard is spent, so it would type an `i`), type `left`, then press **Escape** | the line clears and **the prompt stays open** — Escape is not a close, deliberately |
 | A7 | type `left` again and press Enter | it moves and the prompt closes, leaving you where A3 left off |
 
@@ -529,7 +529,7 @@ re-armed on submit — which is now `after_submit`'s only job, so B2 is what pro
 
 | | do | expect |
 |---|---|---|
-| B1 | press `i` and look at the field | it is **empty** — no `i` was typed into the prompt it opened |
+| B1 | press `i` and look at the widget | it is **empty** — no `i` was typed into the prompt it opened |
 | B2 | submit a command (the prompt closes), then press `i` again | still **empty**. *(A stray `i` here means the guard was not re-armed — the one thing `after_submit` still does.)* |
 | B3 | with the prompt open, type `iii` | all three appear — the guard is spent after the first, and `i` is ordinary content afterwards |
 | B4 | type a long command, watching each character | each appears **once** — the echo check every list carries |
@@ -543,7 +543,7 @@ idiom for a project whose hooks run above the widget.
 |---|---|---|
 | C1 | with the prompt **open**, press `space` | the debug readout does **not** toggle |
 | C2 | with the prompt **closed**, press `space` | it toggles |
-| C3 | with the prompt **open**, press `Shift+R` | the turtle does **not** jump home, and an `R` lands in the field |
+| C3 | with the prompt **open**, press `Shift+R` | the turtle does **not** jump home, and an `R` lands in the widget |
 | C4 | with the prompt **closed**, press `Shift+R` | the turtle returns to the centre |
 
 ### D — on the way out
