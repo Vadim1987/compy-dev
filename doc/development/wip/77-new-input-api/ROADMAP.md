@@ -15,6 +15,9 @@ prose a smoke pass reads or whose yield is unknown, **(b)** vocabulary and proce
 **"Execution order"** note; the halves are passes, **not new ids**, and the rows are **not
 renumbered**.*
 
+*`OP-02` is optional and **does not delay the release** (owner, 2026-09-03) — recover the
+truncated S68 delivery review. It is **not in the sequence above**; skip it and ship.*
+
 | stage | what it is | why it sits here |
 |---|---|---|
 | **ACC-01** ✅ | device-free acceptance — a cold PR review against the original stakeholder ask | it found the 26 defects everything after it works through; nothing could be sized before it ran |
@@ -35,6 +38,7 @@ renumbered**.*
 | **MERGE-01** | upstream reconciliation — actually merge | 🟡 platform repo **done** (`f4913833`); `maze`, `keyboard`, `balloons` remain. Same move, same reason |
 | **ACC-02** | **the device passes** — smoke on real hardware | **moved ahead of the prose rows, owner 2026-09-02.** It is the last thing that can find a *runtime* defect, so everything after it is cheap to redo and nothing after it is done twice |
 | **ACC-03** | **the cold read** — a second cold PR review over the finished tree, then the slice-readiness pass | **stays late**, on the 2026-09-01 placement of `DOC-01`: a cold reviewer should read the prose that ships, not the prose that was being written |
+| **OP-02** | optional — finish the interrupted S68 delivery review | **owner, 2026-09-03**. The review claims seven findings and the file ends at F5; there is no dispositions table. A re-read recovers whatever was not written. **Does not delay the release** |
 | **PR-01** | assembly — the shipping slice cut, the description, the coordinated PRs | last by construction: a slice regenerated before the tree stops moving is regenerated twice |
 
 *The ordering principle throughout is **blast radius, not severity** — anything that can reveal more
@@ -1493,6 +1497,27 @@ result** once the horizon is short — the same reasoning that put the merges ah
 
 **What it inherits from the reordering:** everything upstream of it can no longer move code except
 by its own findings, so a defect it raises is a late defect by construction and is weighed as one.
+
+## ⬜ OP-02 — recover the truncated S68 delivery review — **optional, does not delay the release**
+
+**Owner, 2026-09-03.** The first run of the three-step closing order commissioned an Opus
+delivery review of session68; the reviewer was interrupted. The artifact at
+[`validation/reviews/S68-delivery-revalidation.md`](validation/reviews/S68-delivery-revalidation.md)
+claims **seven findings, none blocking**, and a dispositions table `session69/prompt.md` was told
+to execute. The file **ends at F5**. F1–F5 are dispositioned (session69). What is missing is
+whatever F6 and F7 were, and the table.
+
+**It is not a gate.** Skip it and the release still ships. Run it when a cold reader has the
+time: the cost of not running it is unknown findings, not a blocked PR.
+
+**Do not re-walk F1–F5.** They are executed. The job is the remainder of that commission, from
+the same altitude (roadmap integrity, omission, drift from the strategic frame), over
+`c610805b..ace9a6b8` (the session proper; wrap and the two review-landing commits are
+housekeeping around it).
+
+| id | step | note |
+|---|---|---|
+| OP-02-01 | re-read session68's outcome and write the missing findings | produce F6/F7 or record that the "seven" was a count the interrupted draft never reached; land a dispositions table. Same artifact path, or a successor in `validation/reviews/` cross-linked from it. **Neither this row nor its worker may spawn sub-agents** — host protection, `agents/validation.md` |
 
 ## 🟡 REC-01 — upstream reconnaissance — *discovery, not release* — **PARTIALLY COMPLETE (Session 55)**
 
