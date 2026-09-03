@@ -42,6 +42,30 @@ verification of this file's `RETIRED` claims, which `FIX-02-05` ran.)*
 
 ## BACKLOG
 
+### Two shipped example READMEs still teach the removed polling idiom
+
+- **Where:** `src/examples/repl/README.md` — the *"How this translates into code"* block
+  (`r = user_input()`, `r:is_empty()`, `local input = r()`) and the two-options list under it
+  (`input_text()`, `input_code()`); `src/examples/valid/README.md` — the opening sentence and the
+  worked snippet (`user_input()`, `validated_input({non_empty})`).
+- **State:** both examples' `main.lua` **are** onboarded onto `compy.input`. Only the READMEs were
+  left behind, so each project ships working code beside a document teaching an API that no longer
+  exists — a reader following the README calls a `nil`.
+- **Why this is not the entry beside it.** *"Per-example internals docs still describe a retired
+  polling idiom"* covers `../internals/examples/*.md`, a different set of files in the development
+  corpus. These two ship **inside the example project**, which is the first place a project author
+  looks, and neither entry's sweep would have found the other's files.
+- **Size: not a find/replace.** `repl`'s README is a tutorial whose narrative *is* the poll loop —
+  create a handle, test it for emptiness, read the value — and the replacement has no handle and no
+  polling at all. Each needs a real rewrite, the same conclusion the internals-docs entry reached
+  about its own set.
+- **Found:** 2026-09-03, while base-checking `FIX-02-17` by differencing `project_env`'s keys at
+  `3256aac` against HEAD. Nothing was looking for it; the retired names simply still had hits.
+- **Revisit:** whether this is release scope is the **owner's call** — it is documentation rather
+  than behaviour, which argues for deferring, and it is *shipped, project-author-facing*
+  documentation that is now false, which argues the other way. Filed `BACKLOG` because a slug is
+  the commitment to fix.
+
 ### `release_keyboard_route` is named for a lifecycle step that no longer exists
 
 - **Where:** `controller.lua`, `Controller.release_keyboard_route`. One call
