@@ -49,15 +49,16 @@ newest first.
   clears without closing; see "Asking one question" in
   `doc/input_api.md`.
 
-- **`compy.input.get_text()` reads the widget's current content**, so a
-  project no longer has to wait for a submit to find out what the user
-  has typed — a timeout can take whatever has been entered so far, and a
-  hotkey can act on the text in place. It answers one string with `\n`
-  between lines: the spelling `on_text_entered` receives, and the one
-  `set_text` takes back unchanged. An empty widget answers `''` and a
-  hidden one answers `nil`, so the two never look alike. With
-  `get_cursor()` it also makes saving and restoring content across a
-  `hide()` two calls — see "hide()" in `doc/input_api.md`.
+- **`compy.input.get_text()` (experimental) reads the widget's current
+  content** and may be withdrawn — see "Live changes" in
+  `doc/input_api.md`. While it is here, a project no longer has to wait
+  for a submit to find out what the user has typed — a timeout can take
+  whatever has been entered so far, and a hotkey can act on the text in
+  place. It answers one string with `\n` between lines: the spelling
+  `on_text_entered` receives, and the one `set_text` takes back unchanged.
+  An empty widget answers `''` and a hidden one answers `nil`, so the two
+  never look alike. With `get_cursor()` it also makes saving and restoring
+  content across a `hide()` two calls — see "hide()" in `doc/input_api.md`.
 
 - A new `compy.input` API for showing an input prompt and reacting to
   input events. `show`/`hide`/`configure`/`clear` replace the old

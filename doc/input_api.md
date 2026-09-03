@@ -16,7 +16,8 @@ It is three surfaces, and the rest of this guide is those three in order:
 
 1. **The input widget** — put a text field on screen and change it while it is
    there: `show`, `hide`, `configure`, `set_text`, `set_cursor`, `clear` —
-   and the reads `is_shown`, `get_text`, `get_cursor`.
+   and the reads `is_shown`, `get_text` (experimental — see "Live changes"),
+   `get_cursor`.
 2. **Callbacks** — what the widget tells you back: a submission, a cancel, a
    cursor hitting a boundary, a validator's verdict.
 3. **Inbound events** — shortcuts and hooks over the keyboard, the mouse and
@@ -181,7 +182,8 @@ compy.input.show()   -- still labelled 'name?', and empty
 
 If you want the text back, keep it yourself and pass it to that `show`.
 `get_text()` and `get_cursor()` read the content and the caret, so saving them
-is two calls:
+is two calls. **`get_text()` is experimental** (see "Live changes") and may
+not be there later; `get_cursor()` is the stable half of the pair.
 
 ```lua
 local text = compy.input.get_text()
@@ -260,11 +262,18 @@ empties it. `get_text()` reads it back. `get_cursor()` returns `line, col`;
 `set_cursor(line, col)` moves it. Mutating calls warn and do nothing while
 the input widget is hidden.
 
-**`get_text()` answers one string**, with `\n` between lines — the same
-spelling `on_text_entered` is given, and one you can hand straight back to
-`set_text`. An empty widget answers `''`; a hidden one answers `nil`, so the
-two are never confused. Like `get_cursor()`, reading while hidden is not an
-error and does not warn: there is simply nothing to report.
+**`get_text()` is experimental.** It shipped in this release when the work
+asked of it was to remain technical debt until something needed it. It is
+in this guide so the gap is not silent, but it is **not a guaranteed part
+of the surface** and may be withdrawn. Prefer the submit callbacks; treat
+this read as a convenience that might go.
+
+**While it is here, `get_text()` answers one string**, with `\n` between
+lines — the same spelling `on_text_entered` is given, and one you can hand
+straight back to `set_text`. An empty widget answers `''`; a hidden one
+answers `nil`, so the two are never confused. Like `get_cursor()`, reading
+while hidden is not an error and does not warn: there is simply nothing to
+report.
 
 It is the only way to see what the user has typed **without waiting for a
 submit** — useful when your project decides the moment: a timeout that takes
