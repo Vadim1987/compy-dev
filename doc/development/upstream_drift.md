@@ -34,6 +34,17 @@ The rework is an open pull request against the platform's development line:
 undo/redo*. It is **52 commits, 20 files, roughly 3000 added lines**, and **11 of
 those files are files this branch also changed**.
 
+**It is built on a development line that has since moved.** The rework branched on
+2026-07-09 and is **seven commits behind** the platform's development head — among
+them the colour palette and the terminal's repaint change, both of which touch
+drawing, which is what a 3000-line editor rework also touches. **We already have all
+seven.** Two consequences, and neither is alarming: our work must be delivered as
+patches against *the development line plus the rework*, not against the rework
+alone, or it would carry seven commits that are already upstream; and the rework
+**will change** when its author catches it up, so the reconciliation described below
+is re-run rather than assumed at that point. The rework merges into the development
+line cleanly today.
+
 **The decision of record (2026-09-03) is to build on it, so that the two ship
 together.** That decision was taken against a measurement rather than an estimate:
 the merge was performed in a throwaway clone, resolved, and **run**.
@@ -89,8 +100,14 @@ errors on our side and fixes none of its own.
 
 The experimental line runs **71 commits** ahead of the base we develop against. **52
 are the editor rework above**, and **15** are this section, which ships **after**
-this release. (One commit that looks like a sixteenth — a filesystem durability
-interface — we already have.)
+this release.
+
+**Fifteen is the count of commits; the count of *changes* is eleven.** The two lines
+copy work between each other, so the same change appears on both with a different
+identity — four of the fifteen are already in our tree under other names, and three
+more are **alternate versions** of colour work we already carry, which is why the
+colours example collides rather than simply applying. Counting commits overstates
+this drift by a third; the number that matters is eleven.
 
 They contain: the 64-slot colour palette and the terminal-colour fixes that follow
 it, a colours example, the editor checkpoint's filesystem information, packaging

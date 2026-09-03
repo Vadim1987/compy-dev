@@ -72,9 +72,16 @@ So the mechanics are:
 - **Merge locally for reconciliation and smoke, and treat the merge as disposable.**
   It exists to produce a runnable tree and to prove the stack — which it has already
   done — not to be the shipping artifact.
-- **The shipping artifact is the patch set**, generated against **#45's head at
-  generation time**, and regenerated when that head moves. Generation is last in the
-  sequence for exactly this reason.
+- **The shipping artifact is the patch set**, generated against **`aldum/dev` + #45
+  at generation time** — *not against #45 alone* — and regenerated when either head
+  moves. Generation is last in the sequence for exactly this reason.
+
+  **Why `dev + #45` and not #45**: #45 forked from `dev` on 2026-07-09 and is **seven
+  commits behind** it; we have all seven. Generated against bare #45, our patch set
+  would carry those seven as apparent changes. `dev + #45` is also the tree that
+  exists the moment #45 lands, and it merges cleanly today, so it can be constructed
+  locally at any time. Ancestry note:
+  [`../notes/S70-platform-ancestry.md`](../notes/S70-platform-ancestry.md).
 - **Pin every base we generate against** as a local tag, in the round-3 namespace, so
   *"which #45 was this cut against"* is answerable after a rewrite. `base-pr45`
   (`16eb33d7`) is the first such pin.
@@ -129,6 +136,12 @@ is not ours to execute.*
 **The owner states this as a given, not a risk to be hoped away**: its author
 rewrites it for commit hygiene. Its head has also not moved since 2026-07-24 — six
 weeks — and it is a large, review-heavy change, so content feedback is likely too.
+
+**And there is a structural reason it must move at least once**: #45 is **seven
+commits behind `aldum/dev`**, including the 64-slot palette and the terminal repaint
+gate — both drawing changes, in a rework that is itself largely about drawing an
+editor. Catching it up is not a hash-only rebase; it is a merge with real content on
+both sides. **Treat "#45 changes" as scheduled, not as a hazard.**
 
 *Mitigation:* the head is pinned as a local tag, so *"what changed"* stays
 answerable across a rewrite. Nothing we ship depends on ancestry (§2), so a rewrite

@@ -254,6 +254,14 @@ paid, or turned out not to be debt.
   ancestor of our head. Derive with*
   `git rev-list --count --no-merges HEAD..<edge> ^<rework>`*, subtracting both, and re-derive when
   this is taken.)*
+- **By content it is 11, not 15, and counting by hash is what overstated it.** The two lines
+  cherry-pick between each other, so the same change exists on both with different hashes.
+  `git cherry` compares patch-ids instead: **four of the fifteen are already ours** — the editor's
+  checkpoint filesystem info, the extended-palette termcolor fix, the terminal repaint gate and
+  black's own bright slot. **Three of the remaining eleven are alternate versions of colour work we
+  already carry**, which is why the colours example collides as an add/add rather than applying.
+  *"Commits in A not in B"* answers a question about hashes; the question meant here is *"changes
+  in A not in B"*, and `git cherry HEAD <edge>` is the command for it.
 - **What is in the 15:** the 64-slot colour palette and the terminal-colour fixes that follow it,
   a colours example, the editor checkpoint's filesystem info, packaging changes (zip instead of
   7-zip, release signing), a Lua 5.1 test-runner launcher, the Android exit path, a terminal
