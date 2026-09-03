@@ -61,13 +61,18 @@ reviewed: none | <name>, <YYYY-MM-DD>
   says **what was decided or done and when**; the sprint id that carried it
   belongs in the working tree, or spelled out (*"the pass that base-checked the
   retired entries, 2026-09-02"*) where the reader needs the referent.
-- **`agents/` is ephemeral too** (owner ruling, 2026-09-03). The rule chain is a
-  **working surface that is not promoted upstream** — it is carved out alongside
-  the feature working trees it governs. So `agents/` may cite `wip/` freely, and
-  a document under `doc/` that cites `agents/…` has the same problem as one
-  citing `wip/…`: the target does not ship. Name the rule and what it says
-  (*"a decision does not argue with a version that never released"*), not its
-  path.
+- **`agents/` is mostly ephemeral, and the split does not follow file
+  boundaries** (owner ruling, 2026-09-03, refined the same day). The rule chain is
+  a **working surface that is not promoted upstream**, so it may cite `wip/`
+  freely. It does not leave whole: **generic rules survive** — commenting, the
+  coding guide, documentation formatting — while **workflow, boot pointers and
+  operational limits (the git rules) do not**, being local to how this repository
+  is worked. One file can hold both.
+  So a citation from `doc/` into `agents/…` is unsafe by default, and the safe
+  form costs nothing: **name the rule and state what it says** (*"a decision does
+  not argue with a version that never released"*) rather than pointing at a path.
+  A citation written that way survives whichever side of the split its target
+  lands on.
 
 ## Vocabulary: "de-facto behaviour" has a boundary (owner ruling, 2026-08-11)
 

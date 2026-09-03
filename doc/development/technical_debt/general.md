@@ -194,16 +194,31 @@ paid, or turned out not to be debt.
   undercounts** — the same trap the ephemeral-path sweep fell into twice.
   **Re-derive:** `git grep -nE 'agents/' -- doc/ CHANGELOG.md ':!doc/development/wip/'`. Do not
   cite this count; it is here to size the entry.
-- **Why it is debt now and was not yesterday.** The owner ruled on 2026-09-03 that **`agents/` is
-  not in the persistent corpus**: it is a working surface that is not promoted upstream, and it is
-  carved out alongside the feature working trees it governs. Before that ruling its status was
-  open. After it, a citation into `agents/` is the same defect as a citation into `wip/` — the
-  target is not there for the reader, and unlike a broken link inside a shipped tree, nothing
-  reports it.
+- **Why it is debt now and was not yesterday, and why the entry is not simply "19 sites".** The
+  owner ruled on 2026-09-03 that `agents/` is not in the persistent corpus — *"a working surface
+  that is not promoted upstream"* — and then **refined it the same day**: the tree **splits**.
+  *"Generic rules like commenting and code guides and doc formatting may survive; workflow and
+  pointers and operational limitations (git rules) should not — they are local to my work."* So a
+  citation into `agents/` is a defect **only if its target is on the local side of that split**,
+  and the split does not run along file boundaries everywhere (`rules.md` is a code guide **and**
+  carries the commit conventions).
+- **The citations, by target, measured at `1299ed2b` before this entry was written:**
+
+  | target | sites | survives? |
+  |---|---|---|
+  | `agents/rules/ledgers.md` | 9 | **owner call** — it governs the three ledgers, and the ledgers ship |
+  | `agents/rules.md` | 4 | **likely** — a code guide, except its commit-convention half |
+  | `agents/validation.md` | 3 | **no** — a boot pointer for this phase; these are confirmed defects |
+  | `agents/rules/roadmap.md` | 2 | **owner call** — plan shape, and the plan is `wip/` |
+  | `agents/development.md` | 1 | **no** — workflow; confirmed defect |
+
+  **Four are defects under the ruling as it stands; eleven wait on two calls.**
 - **The heaviest shape is the one that matters most.** Most of these are the debt register's own
   *"The rule it fails: `agents/rules/ledgers.md` §3"* lines — the sentence a reader needs to
   understand why an entry exists. They are not decorative pointers, so the repair is the
-  `FR-n` treatment rather than deletion: **name the rule and state what it says**.
+  `FR-n` treatment rather than deletion: **name the rule and state what it says**. That repair is
+  also **immune to the split**: a citation that states the rule survives its target either way,
+  which is an argument for doing it to all of them rather than waiting on the two calls.
 - **Provenance: ours.** Neither the rule chain in this shape nor these registers exist at the PR
   base `3256aac`.
 - **Found:** 2026-09-03, immediately after the ruling that created the class.
