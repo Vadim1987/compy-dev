@@ -404,7 +404,8 @@ verification of this file's `RETIRED` claims, which `FIX-02-05` ran.)*
   be load-bearing for a path not yet identified.
 - **Revisit:** Decide whether the sharing is intended. If it is, say so where
   the slot is built; if not, a plain field is simpler. Evidence, with probe
-  transcripts: the frozen-surface audit run in session27.
+  transcripts: the frozen-surface audit run during this feature's
+  implementation.
 - **Not to be confused with** the crashes fixed on 2026-08-07: the call site is
   now guarded against both an absent hook and a raising one, which is orthogonal
   to how the slot is stored.
@@ -1512,7 +1513,7 @@ changes.
   roadmap's `BUG-02-01` cell; the two register sites are past-tensed rather than deleted, because
   each was true when its argument was made.
 
-  **Owner, 2026-09-03 (session69):** the ship was premature — the ruling of
+  **Owner, 2026-09-03:** the ship was premature — the ruling of
   record was *"write it as active technical debt"*, and the function landed
   the same sitting. It stays in the surface as **experimental** and **may be
   withdrawn** unless something needs it; `doc/input_api.md` *"Live changes"*
@@ -1753,8 +1754,8 @@ are what happened.
   reader does not need: the guide already frames content and configuration as
   different things.
 - **Provenance:** `#77`'s own surface. Found by the second cold peer review of
-  `BUG-02-02`, 2026-09-01; re-raised as a delivery question by the session64
-  revalidation the same day and ruled the same day.
+  `BUG-02-02`, 2026-09-01; re-raised as a delivery question by the
+  revalidation that followed, the same day, and ruled the same day.
 
 ### Six line citations into `userInputModel.lua` were stale on arrival (RESOLVED, 2026-09-01)
 
@@ -1776,7 +1777,7 @@ are what happened.
 - **Why it was worth fixing rather than filing:** a citation that does not
   resolve *reads as authoritative* — the standing objection in
   `agents/validation.md`, *"Comment References"*. And the rule was already
-  ours: session61 replaced this same file's `set_cursor_pos` line citation with
+  ours: this same file's `set_cursor_pos` line citation had been replaced with
   a function name **one day earlier**, giving this reason verbatim.
 - **A line citation is not verified by reading a range around it.** `:475` was
   first checked by printing `472..478`, seeing `set_text` in the output, and
@@ -1789,7 +1790,7 @@ are what happened.
   *"Line citations across the persistent corpus are unverified, and a fifth of
   the checkable ones do not resolve"*.
 - **Provenance: ours**, 2026-09-01, all six traceable to one commit. Found by
-  the session64 delivery revalidation and fixed on the owner's go.
+  the delivery revalidation that followed and fixed on the owner's go.
 
 ### The programmatic-cursor census omitted the one writer on a hot path (RESOLVED, 2026-09-01)
 
@@ -1806,7 +1807,7 @@ are what happened.
   answered *"what moves the cursor?"* two ways, 90 lines apart in two files.
 - **Why it was worth fixing rather than filing:** the census exists **because a
   sweep consults it instead of re-deriving** — the argument its previous
-  correction was made on (session61, `ba09edcc`, which added `_apply_eval`
+  correction was made on (`ba09edcc`, which added `_apply_eval`
   after a sweep had missed it). It then missed a second site the same way, and
   that site is the only cursor writer live on ordinary editing. The two lists
   are now stated as different kinds — *callers of the cursor API* against
@@ -1815,7 +1816,7 @@ are what happened.
 - **Provenance: ours.** The census paragraph is `#77`'s writing; the omitted
   fact came from `#77`'s own second cold peer review, 2026-09-01, and was
   recorded in this register without anyone returning to the census. Found by
-  the session64 delivery revalidation the same day and fixed on the owner's go.
+  the delivery revalidation the same day and fixed on the owner's go.
 
 ### `set_text` answered a malformed content element three different ways (RESOLVED, 2026-09-01)
 
@@ -2623,7 +2624,7 @@ because the pattern recurs: when a producer goes, grep for its consumer.
 - The entry was kept here rather than in `../decisions/input.md` while it was
   unimplemented, deliberately: a ratified entry describing behaviour the code
   lacks is the exact error this phase spent a session undoing.
-- Corrected while closing: the session25 claim that the multi-trigger raise
+- Corrected while closing: the earlier claim that the multi-trigger raise
   "settles whether a bare `*` is legal" was wrong. It permitted it.
 
 ### A multi-trigger combo is silently truncated at registration (RESOLVED, 2026-08-03)

@@ -744,7 +744,7 @@ binding conditional on nothing else being held: hold `a` for movement, press
 that wants them uses a hook, which sees every event on its channel, and asks
 the device for the key state it needs.
 
-> **Amended in place, 2026-08-10 (session34).** The paragraph above named the
+> **Amended in place, 2026-08-10.** The paragraph above named the
 > held-key view as a hook argument and `compy.input.keys_pressed` as the
 > out-of-event path. The first was already wrong — D-LOVE-ARGS gives every
 > consumer LÖVE's own argument list and nothing added — and the second is
@@ -1160,8 +1160,8 @@ so every variadic `Key.ctrl()` under test consults only the **left** key of the 
 become variadic (harmony's `patch_isDown` shape) before the suite can be trusted about modifiers
 at all.
 
-> **Amended in place, 2026-08-09 (session33) — scope corrected, then reinstated by ruling.**
-> Session32 challenged this paragraph and was right on the facts as they then stood: no test can
+> **Amended in place, 2026-08-09 — scope corrected, then reinstated by ruling.**
+> An earlier pass challenged this paragraph and was right on the facts as they then stood: no test can
 > reach a state where left and right differ (the mock's token map writes only `lctrl`/`lshift`/
 > `lalt`, and no test installs its own keyboard `isDown`), so making the mock variadic changes
 > **zero existing test results**, and the single-argument `isDown` is pre-existing and untouched

@@ -479,8 +479,8 @@ paid, or turned out not to be debt.
   marked ANSWERED with what answered them. **There is no `FIX-02` crosswalk** — that
   renumber shipped without one — so the sense was resolved from the rows' own cells, which
   is what §2 says a crosswalk exists to spare you.
-- **Found by** the cold revalidation of session66 (`validation/outcomes/S66-cold-revalidation.md`,
-  C7), not by the `ACC-` sweep one sprint over that was looking at the same file.
+- **Found by** a cold revalidation, 2026-09-02, not by the `ACC-` sweep one sprint over that was
+  looking at the same file.
 
 ### `ledgers.md` still called unruled the question it had just ruled (RESOLVED, 2026-09-02)
 
