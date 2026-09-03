@@ -1037,7 +1037,7 @@ is cheap and renumbering those was not.*
 
 | id | defect | blast radius |
 |---|---|---|
-| **FIX-01-01** | P11's deferred editorial list — **named as a count, never enumerated** | **UNKNOWN SIZE** — re-derive before sizing; this is why it leads |
+| **FIX-01-01** | P11's deferred editorial list — **named as a count, never enumerated** | **DERIVED 2026-09-03:** eight W10-batch-3 ids, **three live sites**. Four already paid (R085, R143, R162, and R100's list). Enumeration: [`validation/notes/FIX-01-01-enumeration.md`](validation/notes/FIX-01-01-enumeration.md) |
 | **FIX-01-02** | ephemeral citations in the persistent corpus — 10 step-id/`wip/` paths, **plus the `FR-1`/`FR-6` namespace** found by the remark triage | known, ~12 sites — **re-derive rather than trust the count**: the `BUG-01-11` retirement added one more `wip/` path to the debt register in 2026-08-31, so the sizing drifts whenever a row cites its own evidence note |
 | **FIX-01-03** | session numbers in the persistent corpus | known, 4 sites |
 
