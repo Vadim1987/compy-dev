@@ -182,6 +182,35 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
+### The persistent corpus cites the rule chain, and the rule chain does not ship
+
+- **Where:** 19 citations of `agents/…` from documents that survive the working tree, measured
+  before this entry was written — `technical_debt/general.md` (9), `decisions/input.md` (5),
+  `technical_debt/input.md` (4), `technical_debt/README.md` (1). The command below also returns
+  this entry's own command and `conventions/docs.md`'s statement of the rule, which are
+  illustrations and not citations, the same exemption the ephemeral-id rule's examples get.
+  Both spellings occur, bare (`agents/rules/ledgers.md`) and
+  relative (`../../../agents/rules/ledgers.md`), so **the relative form is where a bare-path grep
+  undercounts** — the same trap the ephemeral-path sweep fell into twice.
+  **Re-derive:** `git grep -nE 'agents/' -- doc/ CHANGELOG.md ':!doc/development/wip/'`. Do not
+  cite this count; it is here to size the entry.
+- **Why it is debt now and was not yesterday.** The owner ruled on 2026-09-03 that **`agents/` is
+  not in the persistent corpus**: it is a working surface that is not promoted upstream, and it is
+  carved out alongside the feature working trees it governs. Before that ruling its status was
+  open. After it, a citation into `agents/` is the same defect as a citation into `wip/` — the
+  target is not there for the reader, and unlike a broken link inside a shipped tree, nothing
+  reports it.
+- **The heaviest shape is the one that matters most.** Most of these are the debt register's own
+  *"The rule it fails: `agents/rules/ledgers.md` §3"* lines — the sentence a reader needs to
+  understand why an entry exists. They are not decorative pointers, so the repair is the
+  `FR-n` treatment rather than deletion: **name the rule and state what it says**.
+- **Provenance: ours.** Neither the rule chain in this shape nor these registers exist at the PR
+  base `3256aac`.
+- **Found:** 2026-09-03, immediately after the ruling that created the class.
+- **Not slugged — the release-scope call is the owner's.** If it is taken, it belongs with the
+  ephemeral-id sweep in the documentation sprint: same corpus, same rule, adjacent commands, and
+  one broom over one floor.
+
 ### `@field` annotations disagree with their own constructors in at least three files
 
 - **Where:** `src/model/editor/bufferModel.lua:125` — `@field replace_selected_text function`
