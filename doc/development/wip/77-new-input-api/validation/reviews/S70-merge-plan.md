@@ -73,8 +73,11 @@ creates: [`S70-import-strategy.md`](S70-import-strategy.md).
 `git diff <tree of updev+#45> HEAD -- src/ tests/` **is our work and nothing else.**
 
 **The gate that no tool will prompt for:** where our reconciliation drops #45's
-content, the patch set carries a **silent revert of upstream work**. Every deletion
-in the ten shared files is read and justified before the patch set ships.
+content, the patch set carries a **silent revert of upstream work**. The audit is
+*not* "read every deletion" — most deletions are our own restructuring and belong
+there. It is: **for each shared file, list the lines #45 added that are absent from
+our result, and account for each.** Measured at the crudest resolution that is
+**49 lines out of 1005**, in three places, one of which we intend.
 
 ### What follows from a force-pushable base
 

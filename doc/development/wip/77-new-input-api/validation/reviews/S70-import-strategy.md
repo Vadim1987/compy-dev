@@ -52,31 +52,50 @@ mechanically as the diff between the old and new #45 trees; after applying it, t
 invariant must still hold, and the stack must be re-run. That keeps the branch honest
 across any number of force-pushes.
 
-## 3. The failure mode this scheme creates — and no tool warns about it
+## 3. The failure mode this scheme creates — real, and **much smaller than first stated**
 
-**Anywhere our reconciliation drops #45's content, the patch set contains a silent
-revert of upstream work, delivered as our change.** Conflict markers do not warn
-about this: the conflict is resolved, the tree is green, and the deletion looks like
-an ordinary line of our diff.
+**The risk:** anywhere our reconciliation drops #45's content, the patch set contains
+a **silent revert of upstream work, delivered as our change**. Conflict markers do
+not warn about it — the conflict is resolved, the tree is green, and the deletion
+reads as an ordinary line of our diff.
 
-This is not hypothetical. In the trial tree, resolving `controller.lua` by taking our
-side wholesale produces, in the generated patch:
+**The size, corrected.** An earlier draft of this note reported *"340 removed lines in
+`controller.lua`"* and called it lost upstream work. **That number measured the wrong
+thing.** `git diff <updev+#45> HEAD` counts every line our branch removes, and the
+overwhelming majority of those are **our own restructuring removing pre-existing
+code** — the inline `handlers.keypressed` body that became the reservation table.
+Those deletions are our work and belong in the patch set. The conflict surface really
+is small, as measured; the two statements were never in tension, my metric was.
 
+**The right metric** is not *"how many lines does our patch remove"* but *"how many of
+**#45's own additions** are absent from our result"*:
+
+```sh
+# per file both sides touched:
+#   lines #45 added        = git diff 945a5d1d..pr45 -- <file> | grep '^+'
+#   lost                   = those lines, not present in our resolved file
 ```
-removed lines in src/controller/controller.lua: 340
-  - local ed_state = CC:finish_edit()
-  - --- checkpoint (rework spec 2.6); saving
-  - if Key.shift() then ...
-```
 
-That is #45's editor checkpoint and Ctrl+Shift+S handling, deleted by us, inside a
-patch offered as *our* feature. It would land, apply cleanly, and quietly undo part
-of the pull request we are stacking on.
+Measured against the crudest defensible resolution — `merge --squash`, then **keep
+our side of every conflicted hunk** and nothing else:
 
-**The gate:** before the patch set ships, **every deletion in the ten shared files is
-read and justified.** Ten files is a cheap review, and it is the one review nothing
-will prompt for — the merge is done, the suite is green, and the diff looks like
-work.
+| file | lines #45 adds | absent from our result | what they are |
+|---|---:|---:|---|
+| `editorController.lua` | 842 | **35** | their Ctrl+Enter block-accept rewrite (spec 2.7) — **must be kept**; it is their subsystem |
+| `userInputModel.lua` | 114 | **10** | the `editing` flag and its documentation, plus their `set_text` branch — **partly intentional**: we keep our `set_text`, measured better, and we do want `editing` |
+| `controller.lua` | 34 | **3** | the comment stating bare Ctrl+S is the checkpoint — the **key decision** in prose form |
+| `tests/mock.lua` | 15 | **1** | a `played_sounds` export — a pure union oversight |
+| **total** | **1005** | **49** | |
+
+**Five percent, in three identifiable places, one of which we intend.** That is
+protocol-able exactly as the owner suggested, and it is a review of a page, not of a
+patch set.
+
+**The gate, restated as a command rather than a habit:** before the patch set ships,
+run the audit above over the shared files and account for **every** line it reports —
+kept, or dropped on purpose with the reason. The expected end state is *"lost: only
+the `set_text` branch, deliberately, because keeping ours measured 1100/22 against
+theirs 1094/28"*.
 
 ## 4. The import commit is red, and the phase's rule says commits are green
 
