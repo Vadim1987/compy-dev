@@ -104,8 +104,13 @@ newest first.
   not — a fresh `show()` starts with an empty field unless you pass
   `text`.
 
-- Project input now uses separate `highlighter`, `validator`, and
-  `on_text_entered` callbacks. Submissions are line arrays.
+- **Which behaviour you get is now yours to set, not implied by the
+  call you made.** Colouring, the submit gate and what runs on a
+  successful submit used to be bundled into the choice between
+  `input_text`, `input_code` and `validated_input`; they are three
+  independent, optional keys — `highlighter`, `validator` and
+  `on_text_entered` — so a plain prompt with a filter, or a coloured
+  one with no gate, is now expressible.
 
 - `compy.input.show` and `compy.input.configure` raise on a key outside
   their config table, rather than ignoring it. This includes the retired
@@ -113,7 +118,8 @@ newest first.
   that belong on `compy.input.callbacks`, and — at `configure` — `text`,
   `cursor` and `force`, which are `show`'s. Each raise names where the key
   belongs. Calls that are no-ops because of the current state — `show` on
-  an active overlay, mutations while hidden — still warn as before.
+  a widget that is already shown, mutations while hidden — still warn
+  as before.
 
 - `show` and `configure` are one configuration path, split by who owns the
   field. Your content (`text`, `cursor`) is `show`'s alone; everything the
