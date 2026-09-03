@@ -8,7 +8,7 @@ the sequence**. Updated 2026-09-02.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 (a) · FEAT-03 ✅ · CHG-01 } → REC-01 → MERGE-01 → ACC-02 → FIX-02 (b) → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-03 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 (a) ✅ · FEAT-03 ✅ · CHG-01 ✅ } → REC-01 → MERGE-01 → ACC-02 → FIX-02 (b) → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-03 → PR-01**
 
 *`FIX-02` runs in two halves across the device passes (owner, 2026-09-02) — **(a)** the rows whose
 prose a smoke pass reads or whose yield is unknown, **(b)** vocabulary and process. See the sprint's
@@ -25,7 +25,7 @@ renumbered**.*
 | **FEAT-01** | the two surface proposals: **`oneshot`**, and the **payload split** that tells the submit callbacks apart | **leads by blast radius** — it changes the public surface, so `FIX-02-01` is one of its rows' seams, `CHG-01` carries what it breaks, and a slice cut before it lands is cut twice |
 | **FEAT-02** ✅ | **`oneshot` becomes `auto_hide`**, a widget property — overruling `FEAT-01-01`'s Q1 | **leads for the same reason `FEAT-01` did, and it is the last surface change**: it moves a key out of the show-only category, so `FIX-02-01`'s neighbours and every slice are sized against it. It also closes a live defect — disarming a `oneshot` today costs the user's draft |
 | **FEAT-03** ✅ | **`get_text()`** — the read of its own content the surface never had | **owner, 2026-09-03**, on the escalation F1 raised: the retirement of the hide/show preservation requirement rested on a project keeping the content itself, and it cannot read what the user typed. Placed by `FEAT-01`'s argument at smaller scale — it changes the public surface, so `CHG-01` carries its line, `ACC-02` exercises it, and a slice cut before it lands is cut twice. **An addition, not a break**: nothing that works today stops working |
-| **{ BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 (a) · FEAT-03 ✅ · CHG-01 }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. **`DEC-01`'s half is discharged** (session65), so the slice cut now waits on `CHG-01` alone. A third was conditional and is likewise **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first. **`FIX-02` is here as half (a) only** (owner, 2026-09-02) — the rows a smoke pass reads or whose yield is unknown; the vocabulary and process half runs after `ACC-02`. **`FEAT-03` joined the brace 2026-09-03** and was the one member with an internal order — it finished **before `CHG-01`**, which validates its CHANGELOG line rather than writing it — and it is **done** (session68) |
+| **{ BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 · FIX-02 (a) ✅ · FEAT-03 ✅ · CHG-01 ✅ }** | the defect sprints — runtime defects, citation hygiene, docs and vocabulary, the decisions ledger's rename, the changelog | one brace, not a sequence: they interleave. Two hard constraints — **DEC-01 and CHG-01 finish before any slice is cut**, and **CHG-01 also gates ACC-02**. **`DEC-01`'s half is discharged** (session65) and **`CHG-01`'s too (session68)**, so **the slice cut and `ACC-02` are no longer gated by this brace** — what remains in it is `FIX-01` and `FIX-02`'s (b) half, and (b) runs after `ACC-02` by the owner's own ordering. A third was conditional and is likewise **discharged**: `BUG-02`'s weighing went to *fix*, and it finished first. **`FIX-02` is here as half (a) only** (owner, 2026-09-02) — the rows a smoke pass reads or whose yield is unknown; the vocabulary and process half runs after `ACC-02`. **`FEAT-03` joined the brace 2026-09-03** and was the one member with an internal order — it finished **before `CHG-01`**, which validates its CHANGELOG line rather than writing it — and it is **done** (session68) |
 | **FIX-03** | the ephemeral-citation sweep, **and retired-id citations** | **runs last of the fixes on purpose** — it catches what the others miss, and running it first means three brooms over one floor |
 | **DEC-02** | the decisions ledger stops arguing with an interim past that never shipped | **owner, 2026-09-01**, promoted from a `REMARK` in the ledger to a rule in `agents/rules/ledgers.md`. `DEC-01` vacuumed the retired *entries*; this vacuums dead *prose inside live ones*. It sits here for `DOC-01`'s reason and is **not** `FIX-03`: that sweep matches subjects absent at base and today, and a rule's withdrawn version is not an absent subject |
 | **LEDGER-02** | the debt register stops keeping defects that never existed outside the branch | **owner, 2026-09-01**, extending `DEC-02`'s principle to the second ledger: *introduced-then-paid never existed for the outer world.* It sits beside `DEC-02` because it is the same rule on a different register, and **after `FIX-02-05`**, which already produces the classification it needs |
@@ -995,7 +995,15 @@ is cheap and renumbering those was not.*
 
 *(Old `01`→**02**, `02`→**03**, `03`→**01**.)*
 
-### CHG-01 — CHANGELOG validation and update (4 steps) — **gates ACC-02 and every slice cut**
+### ✅ CHG-01 — CHANGELOG validation and update (4 steps) — **COMPLETE (session68); the gate on `ACC-02` and the slice cut is discharged**
+
+**All four steps done 2026-09-03.** `-02` had been complete since 2026-08-27 and `-01`/`-03`/`-04`
+landed this session, in that dependency order: `FIX-02-17` verified the `Removed` list against the
+diff and found the sixth global, `FIX-02-05` produced the pre-existing classification `-03` consumes,
+and the owner ruled the version question `-04` carries. **Two defects came out of validating rather
+than writing** — a bullet asserting the payload shape `FEAT-01-04` had already changed, and a bullet
+describing the branch's own interim behaviour as what a user had — and both were found by reading
+claims against the tree rather than by reading the file for sense.
 
 **Owner, 2026-08-26: runs before ACC-02 and before any PR reassembly.** The CHANGELOG ships in slice
 `3a` and is the first thing a stakeholder scans for what breaks; sending a cold reviewer or a smoke
