@@ -511,9 +511,17 @@ existing decision. That is worse than a dangling one, and 165 of the citations a
 cut.** The file ships in `3a` and is what a stakeholder scans first for what breaks, so a cold
 review or a smoke sitting over a wrong CHANGELOG wastes the pass. Today it is 22 lines, entirely
 added by this feature, carrying one `Changed` section, retired vocabulary (*"an active overlay"*),
-no `Removed` section for the four retired globals, and a `> REMARK:` **above its own H1** which is
-this step's brief rather than a marker to clear. Three rows feed it — FIX-02-04, FIX-02-15 and that
-remark — so **write it once**; assembled separately they duplicate and disagree.
+no `Removed` section for the retired globals, and a `> REMARK:` **above its own H1** which is
+this step's brief rather than a marker to clear. Three rows feed it — `FIX-02-17`, `FIX-02-05` and
+that remark — so **write it once**; assembled separately they duplicate and disagree.
+
+*(Two corrections to the paragraph above, 2026-09-03. The feeders were written **pre-crosswalk** as
+`FIX-02-04` and `FIX-02-15`: under today's numbering those ids still resolve — to pointer
+annotations in `project_sandbox_env.md` and to a `general.md` entry that is not debt — and neither
+has anything to do with the CHANGELOG. `roadmap.md` §2's named hazard, and the worse half of it,
+since `FIX-02-04` is now **ticked**, so a reader could conclude a feeder is discharged. The
+roadmap's own `CHG-01` table has always named the real ones. And the globals were **six**, not four
+— five public plus the debug-only `astv_input`, established at `FIX-02-17`.)*
 
 **FIX-03 — the closed-arc sweep (owner proposal, 2026-08-26).** Retire prose narrating history that
 opened *and closed* inside this branch. Commissioned because three instances were found this session
