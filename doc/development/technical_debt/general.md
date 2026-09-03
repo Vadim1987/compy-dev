@@ -54,6 +54,13 @@ paid, or turned out not to be debt.
     citations moved with it**, six naming *"the Amendment"* and four *"ruled edge N"*: prose that
     argues with itself teaches the code to cite it that way, which is what makes the class
     expensive rather than merely untidy.
+- **A third measured instance, found 2026-09-03 by the citation-hygiene pass and left for this
+  goal:** `D-HOOKS-SEEDED`'s *Why* closes on *"the resurrection-on-nil behaviour was **never asked
+  for**; it was an artifact of two separate storage locations being resolved late"*
+  (`decisions/input.md`, the paragraph before *Consequence, accepted*). It is the first shape at
+  one-sentence scale — a defence against an alternative that existed only between two interim
+  storage layouts inside this branch. The list of unasked alternatives that stood beside it is
+  already gone; this clause outlived it.
 - **Not a mechanical sweep, and this is the whole difficulty.** Two things sit inside the same
   paragraphs and must survive: **pre-feature baseline facts**, which are provenance telling a
   reviewer the release *restored* behaviour rather than changing it, and **anything stakeholders
@@ -121,6 +128,15 @@ paid, or turned out not to be debt.
   capability, in `CHANGELOG.md`** (`CURRENT_SCOPE`, *Added*, which describes `auto_hide` at
   user-facing altitude and correctly never mentions `oneshot` — no project could write it).
   **Ruled for this instance; §3's test is unchanged and stays the base check.**
+- **Two members carry ephemeral path citations, and their disposition rides on this sweep**
+  (2026-09-03). This file's two renumber entries — *"A renumber shipped its crosswalk without the
+  sweep, and five citations resolved to the wrong pass"* and *"The `FIX-02` renumber's own citations
+  were never swept"* — name the feature's roadmap, its plan and three of its review documents in
+  their **Where** and **Resolution** fields, six citations in all. The citation-hygiene pass left
+  them there deliberately: in these two entries the working-tree file **is the defect's location**,
+  not a reference, so there is nothing canonical to repoint at and rewriting them would destroy the
+  entry. Both are introduced-in-branch by this entry's own test. **If this sweep archives them the
+  citations leave with them; if it keeps either, that entry owes the repoint before the PR.**
 - **Revisit:** `LEDGER-02`.
 
 ### T-EPHEMERAL-IDS — the persistent ledgers cite sprint ids that only resolve inside the working tree
@@ -146,6 +162,15 @@ paid, or turned out not to be debt.
   are already dead; these are all **live and correct today**. And the ephemeral-**path** rule
   this shares its logic with never covered bare ids, which is why the count reached three figures
   without a single pass flagging it.
+- **The sibling path class is closed, and its pattern is recorded here because its first two
+  derivations were both short.** The citation-hygiene pass fixed 14 paths on 2026-09-03 and handed
+  six to `LEDGER-02` (see `T-NEVER-SHIPPED`); a delivery review then found **two more it had never
+  matched**, both naming the frozen `design/` tree, and both are fixed. The pattern that covers the
+  whole class — relative forms included, which is how the first derivation undercounted —
+  is `git grep -nE '(wip/77|77-new-input-api|design/|validation/|implementation/|pr-slices|pr-assembly|sessions/session|ROADMAP\.md|plan\.md)' -- doc/ ':!doc/development/wip/'`,
+  and it should return only the six handed to `LEDGER-02` plus this file's own illustrations. Run
+  it beside this entry's own command; **a path citation does not have to spell the path**, and the
+  one sub-tree most likely to be cited by name is the one the phase treats as authoritative.
 - **Provenance: ours, entirely.** The ids are this branch's own vocabulary; at the PR base
   `3256aac` neither the ledgers nor the ids exist.
 - **Found:** 2026-09-03, re-deriving the citation-hygiene rows — which had been sized at ~12
