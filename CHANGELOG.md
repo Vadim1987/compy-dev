@@ -27,6 +27,16 @@ newest first.
   and `compy.doubleclick` are also gone; use
   `compy.input.hooks.singleclick` / `.doubleclick` instead.
 
+- **The four evaluator objects are no longer reachable from a project.**
+  `InputEvalText`, `InputEvalLua`, `ValidatedTextEval` and
+  `LuaEditorEval` were never documented as project API, but they were
+  *there* — a project environment starts as a copy of the framework's
+  own globals, and they came along with it. They are now withheld
+  deliberately. What a project needs from them is exported instead, and
+  narrower: `LuaHighlighter`, `LuaSyntaxValidator` and `LineValidators`
+  are in the project environment and go in the `highlighter` and
+  `validator` keys of `compy.input.show`.
+
 ### Added
 
 - **`auto_hide`** takes the input widget down after a successful

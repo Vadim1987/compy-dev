@@ -1352,6 +1352,39 @@ changes.
 
 ## RETIRED
 
+### The CHANGELOG missed a removal that is expressed as a deletion, not an absence (RESOLVED, 2026-09-03)
+
+- **Where:** `../../../CHANGELOG.md`, `CURRENT_SCOPE` → `Removed`, and
+  `../../input_api.md`'s closing paragraph under *"Migration from the legacy globals"*.
+- **State:** four evaluator objects — `InputEvalText`, `InputEvalLua`, `ValidatedTextEval`,
+  `LuaEditorEval` — were **reachable from project code at the PR base** and are not now. Never
+  documented as API: a project environment starts as `table.clone(getfenv())`, so the framework's
+  own globals came along with it (the class `general.md` holds as `T-NAMESPACE-CLONE`). This
+  feature **withholds them deliberately** (`consoleController.lua`, the
+  `project_env[name] = nil` loop with its stated reason) and exports `LuaHighlighter`,
+  `LuaSyntaxValidator` and `LineValidators` instead, which were reachable the same accidental way
+  at base and are now intentional. So a project's reach changed in both directions and the
+  changelog recorded neither.
+- **Why the sweep that was looking for exactly this missed it.** `FIX-02-17` found the sixth
+  removed global by **differencing `project_env`'s assignment keys** at `3256aac` against HEAD — a
+  method good enough to catch what no grep would look for, and **blind to a removal expressed as a
+  deletion**: `project_env[name] = nil` is not an assignment of a name, it is the unmaking of one,
+  and it does not appear in either side of that difference. **A set difference finds what is
+  absent; it does not find what is actively removed.** The four names are invisible to both halves
+  of the check that was designed to find them.
+- **Found by executing, not by reading** (2026-09-03). The owner asked whether `eval`/`result` were
+  ever really exported. A scratch spec printed the project environment: `eval` a function (the Lua
+  evaluator, unrelated to the widget, exported at base and today), `result` **nil** — never a name
+  at all — and the four evaluator objects **nil**, while `pre_env` still carried them. The gap
+  between those two tables is what pointed at the withholding loop.
+- **Resolution.** A `Removed` bullet in the CHANGELOG at user-facing altitude, saying they were
+  never API but were *there*, and naming the three exported replacements. The guide's closing
+  paragraph said *"are not project API. Do not place them in `show` or `configure` tables"* — advice
+  about a key that does not exist, phrased as though the objects were still to hand; it now says
+  they are not in the environment and names what is.
+- **Provenance: the removal is this branch's; the reachability was pre-existing.** Mixed in
+  `ledgers.md` §3's sense, and stated to the half that shipped: a project at base could reach them.
+
 ### The guide and the CHANGELOG carried a migration from an `eval` key no project could write (RESOLVED, 2026-09-03)
 
 - **Where:** `../../input_api.md`, *"Migration from the legacy globals"* (two rows) and

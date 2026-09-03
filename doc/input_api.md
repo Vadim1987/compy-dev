@@ -904,18 +904,19 @@ their work into a callback:
 
 | Old shape | Replacement |
 |---|---|
-| `user_input()` plus a per-frame poll | `on_text_entered = function(text) ... end` |
+| `user_input()` plus a per-frame poll of the handle it returned | `on_text_entered = function(text) ... end`. **There is no handle now** — nothing is returned to poll, and the text arrives as the callback's argument. |
 | `input_text(prompt, text)` | `show{ prompt = prompt, text = text, on_text_entered = fn }` |
 | `input_code(prompt, text)` | `show{ prompt = prompt, text = text, highlighter = LuaHighlighter, validator = LuaSyntaxValidator, on_text_entered = fn }` |
 | `validated_input(filters, prompt)` | `show{ prompt = prompt, validator = LineValidators(filters), on_text_entered = fn }` |
 | `write_to_input(text)` | `compy.input.set_text(text)` |
 | `function compy.singleclick(x, y)` | `compy.input.hooks.singleclick = function(x, y) ... end` |
 | `function compy.doubleclick(x, y)` | `compy.input.hooks.doubleclick = function(x, y) ... end` |
-| `result = ...` | Consume the `text` in `on_text_entered`; no result object exists. |
 
-The old evaluator globals (`InputEvalText`, `InputEvalLua`,
-`ValidatedTextEval`, and `LuaEditorEval`) are not project API. Do not place
-them in `show` or `configure` tables.
+The old evaluator globals — `InputEvalText`, `InputEvalLua`,
+`ValidatedTextEval`, `LuaEditorEval` — are **not in your environment**. They
+used to be visible there by accident, never as API; they are withheld now. Use
+`LuaHighlighter`, `LuaSyntaxValidator` and `LineValidators`, which are exported
+and go in the `highlighter` and `validator` keys.
 
 ## See also
 
