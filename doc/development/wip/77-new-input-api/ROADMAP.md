@@ -8,7 +8,7 @@ the sequence**. Updated 2026-09-02.
 
 ## The one-line sequence
 
-**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 ✅ · FIX-02 (a) ✅ · FEAT-03 ✅ · CHG-01 ✅ } → REC-01 → MERGE-01 → ACC-02 → FIX-02 (b) → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-03 → PR-01**
+**ACC-01 ✅ → ARC-01 ✅ → LEDGER-01 ✅ → ARC-02 ✅ → OP-01 ✅ → FEAT-01 ✅ → FEAT-02 ✅ → { BUG-01 ✅ · BUG-02 ✅ · DEC-01 ✅ · FIX-01 ✅ · FIX-02 (a) ✅ · FEAT-03 ✅ · CHG-01 ✅ } → REC-01 → MERGE-01 → ACC-02 → FIX-02 (b) → FIX-03 → DEC-02 → LEDGER-02 → DOC-01 → ACC-03 → PR-01 → PROP-01**
 
 *`FIX-02` runs in two halves across the device passes (owner, 2026-09-02) — **(a)** the rows whose
 prose a smoke pass reads or whose yield is unknown, **(b)** vocabulary and process. See the sprint's
@@ -40,6 +40,7 @@ truncated S68 delivery review. It is **not in the sequence above**; skip it and 
 | **ACC-03** | **the cold read** — a second cold PR review over the finished tree, then the slice-readiness pass | **stays late**, on the 2026-09-01 placement of `DOC-01`: a cold reviewer should read the prose that ships, not the prose that was being written |
 | **OP-02** | optional — finish the interrupted S68 delivery review | **owner, 2026-09-03**. The review claims seven findings and the file ends at F5; there is no dispositions table. A re-read recovers whatever was not written. **Does not delay the release** |
 | **PR-01** | assembly — the shipping slice cut, the description, the coordinated PRs | last by construction: a slice regenerated before the tree stops moving is regenerated twice |
+| **PROP-01** | the proposal block — the stakeholders' answer to the shipped surface | **after the PR, owner 2026-09-03.** Items 2–6 reopen the public surface, and everything before `PR-01` is sized against the current one. Three carve-outs stay pre-PR and none is design: the `get_text` promotion (`DOC-01-07`), the destination of the block itself, and a contract-or-defect ruling on Escape |
 
 *The ordering principle throughout is **blast radius, not severity** — anything that can reveal more
 defects, escalate into a design decision, or reach deep enough to cause regressions goes first, and
@@ -1642,6 +1643,51 @@ shape of pre-release work; that shape emerged differently, so the placeholders g
 **This settled the gate early.** The collapse ruling was scheduled as step zero of Phase G; it is
 done, and G no longer opens with it. **Phase F** goes with them — its "final revalidation" is what
 `ACC-03-01` is.
+
+---
+
+## ⬜ PROP-01 — the proposal block — **runs after `PR-01`** (owner ruling, 2026-09-03)
+
+**The stakeholders answered the shipped surface with a design proposal, and the owner placed it
+after the PR.** The block lives in `doc/input_api.md` (`## Proposed updates/changes`, committed by
+the owner at `1299ed2b`): five DevX amendments, a second minimalistic surface, and a live-discussion
+resolution that both surfaces are exposed under `compy.input`. The classification, the two things
+the block does not say about itself, and the placement argument are in
+[`validation/reviews/S70-proposal-block-placement.md`](validation/reviews/S70-proposal-block-placement.md);
+this section is the sequence.
+
+**Why after.** Items 2–6 reopen the public surface, and every remaining row before `PR-01` is sized
+against the current one — `ACC-02` smokes it on hardware, `CHG-01` has already written its
+changelog, `DEC-02`/`LEDGER-02` vacuum the ledgers that record it, `PR-01` cuts slices from it. This
+is the roadmap's own ordering principle applied to the surface itself: *sizing a small row against an
+unsettled surface is sizing it twice*. The strategic frame argues the same way from the other end —
+a surface under revision is a moving part, where a surface that ships with its successor's questions
+**named in the PR description** is not. The cost is honest and was weighed: the proposals come from
+the reviewers the PR is for, so this release will be followed by a breaking one.
+
+**Three carve-outs are taken before the PR, and none of them is design work.**
+
+1. **`DOC-01-07`** — `get_text()` stops being experimental. Landed as a row 2026-09-03.
+2. **The block itself does not ship inside the guide as it stands** — it carries author handles, a
+   `remark:` line, unresolved alternatives, and a pointer to `sync-input-proposal.md`, which is not
+   in this repository. `PR-01-02`/`-03` own the destination; the PR description's **open questions**
+   section is where a reviewer expects to meet it.
+3. **A ruling on Escape** — contract or defect (see `PROP-01-05`). Cheap either way, and it decides
+   whether the release documents a data-loss path as intended behaviour.
+
+| id | step | note |
+|---|---|---|
+| PROP-01-01 | **triage and provenance** — what each item would break against the shipped surface | the classification the rest is sized against. Item 1 is already discharged by `DOC-01-07` |
+| PROP-01-02 | **the two-surface shape** — a `compy.ask`-style simple surface exposed beside the current one, same namespace, per the live-discussion resolution | **first, by blast radius.** It decides how much the rest matters: defaults on a low-level surface that a wrapper hides are a different question. *"Details to be figured out"* is the honest state of it, and it is the one item nobody has claimed is small |
+| PROP-01-03 | **one payload shape** — every content-bearing callback receives the string | **this reopens a ratified decision.** `FIX-02-01` asked whether `on_text_entered` and `after_submit` are two ways to set one callback and was answered by Decision 37 — *they are told apart by their payload* — which `FEAT-01` then implemented and documented. The proposal calls that distinction the defect. Legitimate, and it is a ledger reopening rather than a tweak, **with a live consumer**: the platform's `serial` API already migrated to the split |
+| PROP-01-04 | **`auto_clear`** — submit clears by default | joins `auto_hide`'s family or replaces the pair with better names, which is the block's own alternative. Weigh with `-06`: the two flags and the `show()`/`show{}` distinction are three answers to one question |
+| PROP-01-05 | **Escape hides and does not clear** | implementation of whatever the pre-PR ruling decided. Today's behaviour is a *documented contract* (`doc/input_api.md`, *"Asking one question"*; `CHANGELOG.md`), and the register already names the asymmetry it leaves — so this is a reversal, not a repair, unless the ruling says otherwise |
+| PROP-01-06 | **`show()` vs `show{...}`** | the one item that **arrived with its own dissent**: *"semantically inobvious"*, and the case frequency unproven. Two alternatives are recorded with it, and the third — read before hiding, restore from a project variable — is what the guide already advises and only works because `get_text()` shipped. Its do-nothing branch is therefore live |
+| PROP-01-07 | the guide and the changelog absorb whatever landed | after, not during |
+
+**Synchronous input is a separate product proposal** and is deliberately not in this sprint — the
+block's own rationale says so. `sync-input-proposal.md` is cited from the guide and is **not in this
+repository**; if it is meant to be here, that is a finding for carve-out 2 rather than a row here.
 
 ---
 
