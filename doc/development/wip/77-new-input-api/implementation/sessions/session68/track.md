@@ -209,3 +209,17 @@ not after. The prompt's order (`-05` → `-17` → `CHG-01`) was written before 
 the roadmap's own principle — *sizing a small row against an unsettled surface is sizing it twice*
 — puts the code row first. `FIX-02-05` walks the `RETIRED` section, which holds one of the three
 *"there is no content getter"* claims that `FEAT-03` falsifies.
+
+## Late record, session69 (2026-09-03) — the wrap carried no track
+
+The wrap commit `ace9a6b8` is three files and none of them is this one. These bullets are
+session69's, dated as the late record they are. The booted prompt is not edited for them.
+
+- **Cold peer review** commissioned (`e7fd2af7`) and returned two findings, both arithmetic, both
+  confirmed and applied (`882ba6c3`). The deliverable sat untracked until session69 committed it
+  (`d8468910`) — step 1 of the three-step order left git in its first run.
+- **Wrap** (`ace9a6b8`): report, session69 handover, pointer. No track in that commit; this file
+  stopped at *"F2 finished last"*.
+- **Delivery review** commissioned (`1a864137`). Its output
+  (`validation/reviews/S68-delivery-revalidation.md`) was likewise untracked until session69
+  (`3be6da02`). The review claims seven findings and the file ends at F5.
