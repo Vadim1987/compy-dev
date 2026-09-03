@@ -125,18 +125,27 @@ paid, or turned out not to be debt.
 
 ### T-EPHEMERAL-IDS — the persistent ledgers cite sprint ids that only resolve inside the working tree
 
-- **Where:** 119 occurrences across `technical_debt/input.md` (53), this file (41),
-  `decisions/input.md` (12), `smoke_checklists.md` (11), and one each in
-  `internals/user_input.md` and `internals/examples/turtle.md`. The heaviest are
-  `FIX-02-05`, `FEAT-02` and `BUG-02-01` at eleven apiece. Derived at HEAD 2026-09-03.
+- **Where — a snapshot, and it moves under its own sweep.** Measured 2026-09-03 at
+  `d90b3fd6`: **118 matches**, of which **2 are `conventions/docs.md`'s own illustrations of the
+  rule** and the remaining **116 are citations** — `technical_debt/input.md` (52), this file (40),
+  `decisions/input.md` (12), `smoke_checklists.md` (10), and one each in
+  `internals/user_input.md` and `internals/examples/turtle.md`. Heaviest: `BUG-02-01` (12),
+  `FEAT-02` (11), `FIX-02-05` (9).
+- **How to re-derive it, because the first derivation of this entry was wrong by its method:**
+  `git grep -oE '\b(ACC|ARC|LEDGER|FEAT|BUG|FIX|CHG|DEC|OP|REC|MERGE|PR)-0[0-9](-[0-9]{2})?\b'
+  -- doc/ ':!doc/development/wip/'`. The figures first filed here (119, and *"eleven apiece"* for
+  three ids) came from a hand-listed set of directories rather than the corpus rule, and were
+  taken **before** the same session's own path sweep edited four of these files. **Both errors are
+  the same error**: a count derived from a narrower subject than the one it claims, then quoted
+  after the subject moved. Re-derive when the row opens; do not cite these numbers.
 - **Why it matters:** the ids resolve **only** in the tree that names them, and that tree is
   deleted or kept whole by an owner ruling at assembly time. If it goes, every one of these
   reads as a live pointer to a sprint the reader cannot find — and it is the failure mode the
   line-citation entry above calls worse than dangling, because it **greps clean**.
 - **Distinct from two rows that look like it.** The retired-id sweep takes citations of ids that
   are already dead; these are all **live and correct today**. And the ephemeral-**path** rule
-  this shares its logic with never covered bare ids, which is why the count reached 119 without
-  a single pass flagging it.
+  this shares its logic with never covered bare ids, which is why the count reached three figures
+  without a single pass flagging it.
 - **Provenance: ours, entirely.** The ids are this branch's own vocabulary; at the PR base
   `3256aac` neither the ledgers nor the ids exist.
 - **Found:** 2026-09-03, re-deriving the citation-hygiene rows — which had been sized at ~12

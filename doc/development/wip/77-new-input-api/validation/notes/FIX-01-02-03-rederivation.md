@@ -65,13 +65,21 @@ ship. The ask on the remark is not "delete the reference" but **"explain the
 essence to a cold reader"** — the requirement text has to be inlined, not
 dropped.
 
-## D — roadmap and sprint ids (**119 occurrences**) — **not sized by any row**
+## D — roadmap and sprint ids (**~120 occurrences**) — **not sized by any row**
 
-`FIX-02-05` (11), `FEAT-02` (11), `BUG-02-01` (11), `FIX-02-01` (6),
-`LEDGER-02` (4) and ~50 more, spread over `technical_debt/input.md` (53),
-`technical_debt/general.md` (41), `decisions/input.md` (12),
-`smoke_checklists.md` (11), and one each in `internals/user_input.md` and
-`internals/examples/turtle.md`.
+`BUG-02-01` (12), `FEAT-02` (11), `FIX-02-05` (9), `FIX-02-01` (6),
+`LEDGER-02` (4) and ~50 more, spread over `technical_debt/input.md`,
+`technical_debt/general.md`, `decisions/input.md`, `smoke_checklists.md`, and
+one each in `internals/user_input.md` and `internals/examples/turtle.md`.
+
+**Corrected 2026-09-03 by the session's own peer review.** This section first
+said *119, eleven apiece for three ids*. Both figures were derived from a
+hand-listed set of directories instead of the corpus rule, and quoted after this
+session's path sweep had edited four of the files. The command that reproduces
+the count is now recorded on `T-EPHEMERAL-IDS`; the totals are a snapshot and
+the row re-derives them when it opens. **The note that warned "your count will
+be a snapshot too" was itself the one that drifted**, which is the strongest
+form of that lesson available.
 
 **This class is a question, not a task, and it is the owner's.** Three reasons
 it is not simply "the rest of `FIX-01-02`":
@@ -94,7 +102,7 @@ extends the citation ban to ephemeral **ids**, swept once after `LEDGER-02` and
 `DEC-02` — the sweep `FIX-03` is already positioned for; or (ii) accepting id
 citations as historical bookkeeping in the ledgers, on the argument that a
 ledger entry naming the sprint that paid it is a **record**, not a pointer, and
-a reader who cannot resolve `FIX-02-05` has lost nothing they needed.
+a reader who cannot resolve the id has lost nothing they needed.
 
 Either answer is cheap **now** and expensive after the slices are cut.
 
@@ -108,15 +116,15 @@ itself is `DOC-01-06`, registered as `T-EPHEMERAL-IDS`.
 `DOC-01`, not `FIX-03-05`, and the placement is the substance of the ruling:
 `FIX-03-05` looks like the home — it is the retired-id sweep — but it runs
 **before** `DEC-02` and `LEDGER-02`, which vacuum entries out of the two
-registers holding 94 of the 119. A sweep there sweeps prose that is about to
-leave.
+registers holding the great majority of them. A sweep there sweeps prose that is
+about to leave.
 
 | class | size | outcome |
 |---|---|---|
 | A — paths | 20 | 14 swept (`ab8c2415`); **6 handed to `LEDGER-02`** |
 | B — session numbers | 12 | all (`5d8ae109`); the deriving grep now returns nothing |
 | C — `FR-n` | 7 | all (`6c96c96f`), **spelled out, not deleted** — two markers retired with them |
-| D — sprint ids | 119 | deferred to `DOC-01-06` by ruling; rule landed now |
+| D — sprint ids | ~120 | deferred to `DOC-01-06` by ruling; rule landed now |
 
 **The six that stayed are a shape worth naming**, because it will recur in every
 citation sweep: `general.md`'s two renumber entries cite `ROADMAP.md`, `plan.md`

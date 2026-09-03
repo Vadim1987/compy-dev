@@ -38,7 +38,7 @@ All three landed as separate commits, one per site:
 |---|---|---|
 | R091 + R092 | `ddcdd936` | `D-TWO-SURFACES`' Why states the distinction instead of defending it |
 | R150 | `cd420088` | the Search wall becomes a claim + four consequences — **and one of its claims was false**: it said `SearchController` calls its instance's `textinput`, but that path goes through `add_text`. Four line citations resolved at HEAD and were still replaced by the function names |
-| R164 | `5dd9e455` | the `compy.input` inventory and the `show`/`configure` field lists go to `doc/input_api.md`; the decisions and the raise rules stay. **Both headings kept** — ten live citations name `configure(config)` as a section |
+| R164 | `5dd9e455` | the `compy.input` inventory and the `show`/`configure` field lists go to `doc/input_api.md`; the decisions and the raise rules stay. **Both headings kept** — **nine** live citations name `configure(config)` as a section (2 in `src/`, 6 in `tests/`, 1 in the debt register; the commit message says ten and miscounted the spec file) |
 
 A note on method, since `FIX-01-02` will meet it: **rewriting to answer a remark
 re-reads the code, and re-reading found a defect** the reflow would not have.
