@@ -58,6 +58,41 @@ Two conveniences fall out of the measurement:
 - **Upstream's own merge is clean**, so `dev + #45` is a well-defined tree we can
   construct locally at any time to generate against, without waiting.
 
+## 2a. Can we predict #45's post-force-push form? **Yes — it is built, and it is green**
+
+The worry this raised is reasonable and it turns out not to hold: *"we cannot predict
+the form of #45 until it is force-pushed, because it now has a merge conflict with
+upstream."* **It has no conflict with upstream, in either form.** Both were built and
+run:
+
+| tree | result |
+|---|---|
+| `aldum/dev` alone | **693 / 0** |
+| **`dev` + #45, merged** | **760 / 0** — no conflicts |
+| **#45 rebased onto `dev`** | **760 / 0** — 52 commits replay, **zero conflicts** |
+
+And the two are not merely both green: **the resulting trees are byte-identical**
+(`a8cb98e2f11f4435249f48bd71adfa62f4c26904`). Merge or rebase, the integrated
+content of #45-on-current-dev is **fully determined** — so its future form is
+predictable today, and constructible in about a minute.
+
+Two details the rebase volunteered. Git dropped **two of the 52 commits** itself,
+reporting *"patch contents already upstream"* — the filesystem durability API and
+the flush-on-quit commit, which reached `dev` by another route. That is the same
+cherry-pick duplication §4 describes, confirmed by the tool rather than by
+inspection, and it leaves **50 commits** on top of `dev`.
+
+**Our analysis transfers to that future form unchanged.** Merging our branch into
+the *rebased* #45 produces **exactly the same four conflicts** as against today's
+head — `controller.lua`, `editorController.lua`, `userInputModel.lua`,
+`tests/mock.lua`.
+
+**What remains genuinely unpredictable** is not the integration: it is commit
+boundaries, messages and hashes (which is what *"force-push for commit hygiene"*
+means, and which nothing we ship depends on), plus any **new content** the author
+adds for review feedback. Only the second could move our numbers, and re-running the
+stack costs minutes.
+
 ## 3. What it changes for the risk of #45 moving
 
 **It raises it.** #45 has not been rebased since 2026-07-09 and is missing seven

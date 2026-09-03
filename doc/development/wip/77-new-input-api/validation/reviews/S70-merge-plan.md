@@ -138,10 +138,20 @@ rewrites it for commit hygiene. Its head has also not moved since 2026-07-24 —
 weeks — and it is a large, review-heavy change, so content feedback is likely too.
 
 **And there is a structural reason it must move at least once**: #45 is **seven
-commits behind `aldum/dev`**, including the 64-slot palette and the terminal repaint
-gate — both drawing changes, in a rework that is itself largely about drawing an
-editor. Catching it up is not a hash-only rebase; it is a merge with real content on
-both sides. **Treat "#45 changes" as scheduled, not as a hazard.**
+commits behind `aldum/dev`**. **Treat "#45 changes" as scheduled, not as a hazard** —
+and the catch-up itself is **not** the hazardous part, which was checked rather than
+assumed:
+
+- **#45 rebases onto current `dev` with zero conflicts**, dropping two commits that
+  reached `dev` by another route, leaving 50 — and the result is **green, 760/0**.
+- **Merging instead of rebasing gives a byte-identical tree.** So the integrated
+  content is determined; only its commit shape is not.
+- **Our branch meets the rebased form with exactly the same four conflicts** as it
+  meets today's head.
+
+*So the residual in this risk is narrower than it looks: not the catch-up, but any*
+***new content*** *the author adds for review feedback. That is the only thing that
+can move our numbers, and re-running the stack costs minutes.*
 
 *Mitigation:* the head is pinned as a local tag, so *"what changed"* stays
 answerable across a rewrite. Nothing we ship depends on ancestry (§2), so a rewrite

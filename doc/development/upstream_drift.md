@@ -34,16 +34,23 @@ The rework is an open pull request against the platform's development line:
 undo/redo*. It is **52 commits, 20 files, roughly 3000 added lines**, and **11 of
 those files are files this branch also changed**.
 
-**It is built on a development line that has since moved.** The rework branched on
-2026-07-09 and is **seven commits behind** the platform's development head — among
-them the colour palette and the terminal's repaint change, both of which touch
-drawing, which is what a 3000-line editor rework also touches. **We already have all
-seven.** Two consequences, and neither is alarming: our work must be delivered as
-patches against *the development line plus the rework*, not against the rework
-alone, or it would carry seven commits that are already upstream; and the rework
-**will change** when its author catches it up, so the reconciliation described below
-is re-run rather than assumed at that point. The rework merges into the development
-line cleanly today.
+**It is built on a development line that has since moved**, and that is worth stating
+plainly because it sounds worse than it is. The rework branched on 2026-07-09 and is
+**seven commits behind** the platform's development head. **We already have all
+seven.**
+
+**It does not conflict with the development line, and its caught-up form can be
+built today.** Both possible forms were constructed and run: merging it into the
+development line gives a green tree, and replaying it commit by commit gives a
+**byte-identical** green tree, with two commits dropped because their content had
+already arrived by another route. **So the rework's future content is predictable
+now, not only after its author updates it** — and our work meets that future form
+with exactly the same four collisions it meets today's.
+
+Two consequences follow: our work is delivered as patches against *the development
+line plus the rework*, not against the rework alone, or it would carry seven commits
+that are already upstream; and what remains unpredictable is the rework's **commit
+shape** and any **new** changes made in response to review — not its integration.
 
 **The decision of record (2026-09-03) is to build on it, so that the two ship
 together.** That decision was taken against a measurement rather than an estimate:
