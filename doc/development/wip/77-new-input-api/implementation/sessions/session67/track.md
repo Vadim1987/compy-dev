@@ -351,3 +351,42 @@ right**: disclosing beats complying with any instruction to conceal.
 
 Half (a) remaining, unchanged: `-05` (the big ledger audit) → `-17` → `CHG-01`, then the
 `smoke_checklists.md` slice of `-09`.
+
+## 2026-09-03 — delivery revalidation, dispositioned; the re-wrap
+
+Opus, cold, **fifteen minutes without incident** under the leaf-agent clause — so Opus is not itself
+the crash cause and the clause is the likely fix. One data point, not a proof; recorded as such.
+
+**Verdict: the session did what it was commissioned to do, the feature is closer to release, and the
+gating chain is exactly where it was.** `CHG-01` was never opened and now sits behind `FIX-02-05`.
+Owner's confirmed order, so a call and not a drift — but it is the delivery fact of the session.
+
+It cleared the heaviest check: **every completed roadmap cell and every retired ledger entry
+preserves its original filing verbatim**, diffed one by one against `2986f028`.
+
+Nine findings, **all ACCEPT, none rejected**; F1–F5 and F7 re-verified in git/code before
+dispositioning. Table appended to the revalidation doc, clearly marked as the parent's.
+
+- **F1** — the guide's new `hide()` section tells an author to *"keep it yourself"* and content
+  reaches a project **only at submit**. `D-CFG-BOUNDARY`, landed the same day, says mirroring
+  keystrokes *"is not a thing to ask of one"*. **Two documents disagree and the overstating one is
+  what a stakeholder reads.** Guide correction accepted **and** the getter marked **ESCALATE** —
+  owner directive: *marking as escalatable is disposition, escalating is acting*, so session68 puts
+  it. The retirement itself is undamaged: the reviewer re-verified both `hide()` call sites,
+  including in the untracked nested repos `git grep` cannot see.
+- **F2** — three present-tense stale-name sites survive in `technical_debt/input.md`. **Overturns a
+  cold peer-review clearance** — two cold readers disagreed and the second was right.
+- **F3** — I staled my own successor's sizing: 52 at session start, **55** now, four documents say
+  51. The three entries I retired land in exactly the set `FIX-02-05` walks.
+- **F4** — `plan.md` names `CHG-01`'s feeders by pre-crosswalk ids and my ✅ turned one into a row
+  that reads as discharged. `roadmap.md` §2's named hazard, activated without touching the file.
+
+**The uncomfortable part, and it is the report's lead:** three of the four significant findings are
+this session's own lesson turned on itself. I wrote *a claim spreads by being restated in passing*
+and then left a dead name in a third document, a stale count in four, and an id resolving to a ticked
+row in a fifth. Session66 recorded the same shape about itself — **twice makes it a property of the
+workflow, not a coincidence.**
+
+Applied here (my own handover artifacts): F7's commit arithmetic, F6's three prompt omissions — the
+no-CHANGELOG ruling, the base-check carryover, the LSP caveat now at **three** false negatives.
+Session68 opens by acting on F1–F5, F8, F9.

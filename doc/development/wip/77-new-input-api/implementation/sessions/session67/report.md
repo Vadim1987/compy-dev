@@ -2,8 +2,10 @@
 
 **Date:** 2026-09-02 · **Suite:** 1048 → **1050** / 0 / 0 / 10, LuaJIT 2.1.1703358377 in the
 container (the owner runs PUC Lua) · **Mode:** execution, with three owner rulings taken mid-flight
-and a **cold peer review of this session's own work** whose findings are applied. Twenty-nine
-commits, `2986f028`..`9bc2b0cf`, none pushed. **Two tests added**, both in one new spec.
+and a **cold peer review of this session's own work** whose findings are applied, then a **cold
+delivery-level revalidation** whose nine findings are dispositioned below. **Twenty-eight commits,
+`2986f028`..`9bc2b0cf`**, plus the wrap and the revalidation that followed it; none pushed. **Two
+tests added**, both in one new spec.
 
 ---
 
@@ -182,10 +184,47 @@ prompt now carries an explicit leaf-agent clause.
 - **The pass that names a defect class is not immune to it** — session66's lesson, earned again here:
   the session carrying `FIX-02-09`'s vocabulary rule wrote *"the field"* twice.
 
-## 11. Artifacts
+## 11. The delivery-level revalidation, and what it costs the successor
+
+Commissioned after the wrap, on Opus at the owner's instruction:
+[`validation/reviews/S67-delivery-revalidation.md`](../../../validation/reviews/S67-delivery-revalidation.md),
+commission in `validation/prompts/`. Its dispositions are recorded there in a table appended by this
+session; **session68 opens by executing them.**
+
+**Verdict: the session did what it was commissioned to do and the feature is closer to release — but
+the gating chain is exactly where it was.** `CHG-01` gates `ACC-02` and every slice cut, was never
+opened, and now sits behind `FIX-02-05`. That was the owner's confirmed order, so it is a call and
+not a drift; it is still the most important delivery fact here.
+
+It cleared the heaviest check: **every completed roadmap cell and every retired ledger entry
+preserves its original filing verbatim**, diffed one by one against `2986f028`. No row was redefined
+to match what was done.
+
+Nine findings, none blocking. The four that matter:
+
+- **The guide instructs something the surface cannot do.** The new `hide()` section ends *"keep it
+  yourself and pass it to that `show`"*, and a project can read content **only at submit**. The
+  `D-CFG-BOUNDARY` addition landed the same day says so outright — *"not a thing to ask of one"* —
+  so **the two documents disagree and the one that overstates is the one a stakeholder reads.**
+- **`FIX-02-06`'s completeness claim is not met**, and this overturns a peer-review clearance: three
+  present-tense stale-name sites survive in `technical_debt/input.md`, the one persistent document
+  the sweep did not open. **A fifth site, after a sweep that found four and believed itself done.**
+- **This session staled its own successor's sizing.** `FIX-02-05`'s set was 52 at session start and
+  is **55** now — the three entries this session retired land in exactly the set that row walks —
+  while four documents still say 51.
+- **`plan.md` names `CHG-01`'s feeders by pre-crosswalk ids**, and this session's ✅ turned one of
+  them into a row that reads as discharged. `roadmap.md` §2's named hazard, activated without
+  touching the file.
+
+**The pattern in three of the four is the session's own, turned on itself:** it recorded that a claim
+spreads by being restated in passing, and then left a dead name in a third document, a stale count in
+four, and an id resolving to the wrong row in a fifth.
+
+## 12. Artifacts
 
 - Track: `session67/track.md` — boot, each row, each owner ruling as it arrived, the crash, the review
-- **Twenty-nine commits**, `2986f028`..`9bc2b0cf`, suite green and stated at each; **none pushed**
+- **Twenty-eight commits**, `2986f028`..`9bc2b0cf`, plus the wrap and the revalidation commits after
+  it; suite green and stated at each; **none pushed**
 - New code: `tests/input/input_config_key_agreement_spec.lua` (+2 tests, 1048 → 1050)
 - New: `validation/outcomes/S67-mermaid-audit.md`, `validation/outcomes/S67-cold-peer-review.md`,
   `validation/notes/S67-subagent-host-crash.md`,

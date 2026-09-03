@@ -432,3 +432,67 @@ any other index- or history-mutating command was run; the only writes were to th
 correction above is **proposed**, not applied — dispositions belong to the parent session and the
 owner, and `agents/rules/revalidation.md` §"After the checks" requires that they be asked before
 anything proceeds.
+
+---
+
+# Dispositions
+
+**Recorded by session67 (the parent session), 2026-09-03, after verifying F1–F5 and F7 in git and in
+code.** Everything above this line is the cold reviewer's; everything below is the parent's ruling on
+it. Owner directive: *"disposition now, open session68 with acting — escalation to human is acting,
+marking as escalatable is disposition."* So a finding marked **ESCALATE** below is dispositioned;
+**session68 performs the escalation**, and does not re-litigate it first.
+
+| # | Disposition | Owner |
+|---|---|---|
+| **F1** | **ACCEPT the guide correction · ESCALATE the design question** | session68 applies the two sentences; session68 raises the getter with the owner |
+| **F2** | **ACCEPT** — three edits, taken when `FIX-02-05` opens that file anyway | session68 |
+| **F3** | **ACCEPT, in the durable form** — state today's count *and* "re-count when the row opens" | session68 (corpus); parent (prompt, done) |
+| **F4** | **ACCEPT** — one line, belongs to whoever opens `CHG-01` | session68 |
+| **F5** | **ACCEPT** — the scope clause and the pointer | session68 |
+| **F6** | **ACCEPT** — applied now; it is this session's own handover | parent, done |
+| **F7** | **ACCEPT** — applied now; same reason | parent, done |
+| **F8** | **ACCEPT**, deliberately imprecise — "was 37; re-count when the row opens" | session68 |
+| **F9** | **ACCEPT** — one line into `LEDGER-02`; the risk is contingent, the fix is cheap | session68 |
+
+**No finding is rejected.** All nine were verified or are cheap enough that verifying costs more than
+fixing; F1–F5 and F7 were re-checked in git or in code by the parent before this table was written.
+
+## The one that is not just an edit — F1
+
+**The guide correction is accepted and is not the whole of it.** Two documents disagree about what a
+project can do, and the disagreement is not a wording accident: `doc/input_api.md` tells an author to
+*"keep it yourself"*, `decisions/input.md` says mirroring keystrokes *"is not a thing to ask of one"*,
+and the BACKLOG entry is titled *"the half of the save-it-yourself fallback that does not exist"*.
+Correcting the guide makes the three consistent **by disclosing a hole in the shipped surface**, in
+the one document the PR must be reviewable from.
+
+That is a design question and it is the owner's, so it is **marked escalatable rather than answered
+here**. Session68 puts it, in this shape:
+
+> Retiring the hide/show preservation requirement rested on a project being able to save and restore
+> the content itself. It can save what it seated and what a submit delivered; **it cannot read what
+> the user typed**. Does the release ship the read-only content getter (BACKLOG, unslugged — a slug
+> is the commitment to fix), or does `doc/input_api.md` disclose the gap and the getter stay
+> post-release?
+
+**Session68 applies the guide correction either way** — it is true under both answers, and the guide
+is wrong today. If the owner rules for the getter, the guide is revised again when it lands.
+
+**Why this is not a defect of the retirement.** The owner's ruling stands on its own evidence, which
+the reviewer independently re-verified: exactly two `hide()` call sites exist across `/repo/src`
+**including the untracked nested example repos** `git grep` cannot see, and both abandon the prompt
+for a menu and want the clearing. Zero want restoration. The gap is in the *fallback offered as
+consolation*, not in the decision.
+
+## Two notes for whoever reads this next
+
+- **F2 overturns a cold peer review's clearance.** The peer review called the surviving
+  `occupy_keyboard`/`hook_pointer` occurrences *"not a live claim"*; three of the five are
+  present-tense assertions about today's code. **Two cold readers disagreed and the second was
+  right** — which is the argument for the delivery-level pass being a different question rather than
+  a second opinion on the same one.
+- **Three of the four significant findings are this session's own lesson turned on itself.** It
+  recorded that *a claim spreads by being restated in passing*, and then left a dead name in a third
+  document, a stale count in four, and an id resolving to a ticked row in a fifth. The rule was
+  written and not applied to the writing of it.
