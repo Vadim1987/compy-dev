@@ -27,9 +27,62 @@ paid, or turned out not to be debt.
 
 ## ACTIVE
 
-**Empty as of 2026-09-02** — every entry that had to be resolved before this release ships is
-paid, and each is in `RETIRED` below with what paid it. This section being empty is a state, not
-an omission: `BACKLOG` is still full, deliberately, and nothing there blocks the release.
+**One entry, as of 2026-09-03.** Everything else **in this file** that had to be resolved before
+this release ships is paid, and each is in `RETIRED` below with what paid it. `BACKLOG` is still
+full, deliberately, and nothing there blocks the release.
+
+**This file is not the whole of the release's input obligations.** Four of the five `ACTIVE`
+entries in [`general.md`](general.md) are this work's, filed there because they are cross-cutting
+rather than input-specific: **`T-VERSION-NUM`** (the version number for the four removed globals),
+**`T-RETIRED-UNVER`** and **`T-NEVER-SHIPPED`** (both scoped to *this file's* `RETIRED` section),
+and **`T-ARGUES-INTERIM`** (`../decisions/input.md`). A reader scanning for *what is still owed*
+reads both files.
+
+### T-CONTENT-READ — a project cannot read the widget's content except at submit
+
+- **Where:** the `compy.input` surface — `consoleController.lua`, `build_widget_api`. It exposes
+  `show`, `hide`, `is_shown`, `get_cursor`, `set_cursor`, `set_text`, `clear` and `configure`, and
+  **no reader**. Content reaches project code only through `on_text_entered` and `after_submit`,
+  both inside `UserInputController:submit_flow` (`userInputController.lua`); `cancel_flow` delivers
+  nothing.
+- **What is owed:** `compy.input.get_text()`, read-only, symmetrical with `get_cursor` — `nil`
+  while hidden rather than a warning, because a read of *"nothing to report"* is not a refused
+  mutation, the rule `get_cursor` already follows (`../internals/user_input.md`, *"Cursor
+  manipulation and \"reset\""*). It is an **addition to the public surface**, so it owes its guide
+  entry and a CHANGELOG line with the function itself, and `doc/input_api.md`'s `hide()` section
+  currently discloses the gap and stops being true when this lands.
+- **Why it is an entry:** a **self-describing gap in a shipped surface** — no decision produced it,
+  and the decision it bears on (`../decisions/input.md`, **D-CFG-BOUNDARY**) rests on it being
+  small. That ruling retired the ratified requirement that content survive `hide` → `show`, on the
+  ground that a project which ever needs it can keep the content itself. **That fallback covers the
+  cursor and not the text:** `get_cursor()` exists, so the caret round-trips and the content does
+  not. The ruling's own evidence is unaffected — the two `hide()` call sites in the tree
+  (`maze_main.lua:126`, `draw_main.lua:233`) both abandon the prompt for a menu and *want* the
+  clearing — so the gap is in the fallback offered as consolation, not in the decision.
+- **Why ACTIVE, and it was BACKLOG until 2026-09-03.** Filed 2026-09-02 as *"PROPOSAL: a read-only
+  content getter — the half of the save-it-yourself fallback that does not exist"*, unslugged and
+  explicitly not a commitment, on the reasoning that no consumer had asked. The delivery
+  revalidation then found the guide instructing an author to *"keep it yourself"* — advice the
+  surface does not permit — and escalated whether the release closes the gap or documents it. **The
+  owner ruled it release scope** (2026-09-03): *"write it as active technical debt to be resolved
+  before release; disclose the gap but mark it as defect fixable with getter until ruled
+  otherwise."* So the disclosure in the guide stands as the interim state and this is the fix.
+- **The consumer is not the hide/show case** (owner, 2026-09-02). Today a project learns the
+  content only at **submit** — that one moment is the entire read surface. A getter is what it
+  needs to read at a moment of *its own* choosing: **on a timeout** (take whatever has been typed
+  when the clock runs out), or **from a process the project launched itself**, e.g. off a hotkey,
+  that wants the current text without making the user submit first. That is a more ordinary shape
+  than restoring a draft across a hide, and sizing this from the hide/show framing under-prices it.
+- **And explicitly not the alternative.** Restoring preservation across `hide` → `show` is a
+  content-**lifetime** rule that every call seating content would have to agree with; a getter is
+  one function that adds no rule. This is paid as the getter.
+- **It is a class, not an instance — three earlier mentions, none of them an entry.** The absence is
+  cited as a *supporting fact* inside `set_text`'s list branch does not split embedded newlines
+  (*"nothing could read it back … so there is no set/get round-trip"*), inside the `oneshot` →
+  `auto_hide` entry (*"nothing could read that draft back first"*, an entry `LEDGER-02` is scheduled
+  to vacuum), and in the roadmap's `BUG-02-01` row. Three unrelated routes reached the same missing
+  function and each treated it as background.
+- **Roadmap:** `FEAT-03`.
 
 ## BACKLOG
 
@@ -830,44 +883,6 @@ an omission: `BACKLOG` is still full, deliberately, and nothing there blocks the
 - **Why it stands:** Not part of the shipped example set; nobody currently
   runs them.
 - **Revisit:** Migrate or delete at will; not blocking anything.
-
-### PROPOSAL: a read-only content getter — the half of the save-it-yourself fallback that does not exist
-
-- **Status:** named by an owner ruling, 2026-09-02. **Not a commitment and not this release** —
-  recorded because the ruling *depends* on this gap being small, and a reader who meets the gap
-  later should find it already weighed rather than discover it as a surprise.
-- **The gap, exactly.** `compy.input` has `set_text` and nothing that reads content back.
-  `get_cursor()` exists, so a project can save and restore **the caret** across a `hide` → `show`
-  and cannot save and restore **the text**. Both reads are unavailable while hidden, so the save
-  has to happen before the `hide` either way.
-- **Why it is recorded now.** The ratified design required content restored across `hide` → `show`
-  (`../decisions/input.md`, D-CFG-BOUNDARY, *"Third, content is not preserved…"*). The owner retired
-  that requirement on the ground that no scenario needs it and a project that ever does can keep the
-  content itself. **That fallback covers the cursor and not the text**, which is the one soft spot in
-  an otherwise well-evidenced ruling — the two `hide()` call sites in the tree (`maze_main.lua:126`,
-  `draw_main.lua:233`) both abandon the prompt for a menu and want the clearing.
-- **It is a class, not an instance — three earlier mentions, none of them an entry.** The absence is
-  cited as a *supporting fact* inside `set_text`'s list branch does not split embedded newlines
-  (*"nothing could read it back … so there is no set/get round-trip"*), inside the `oneshot` →
-  `auto_hide` entry below it (*"nothing could read that draft back first"*, an entry `LEDGER-02` is
-  scheduled to vacuum), and in the roadmap's `BUG-02-01` row. Three unrelated routes reached the
-  same missing function and each treated it as background.
-- **The shape, if a consumer ever appears.** `compy.input.get_text()`, read-only, symmetrical with
-  `get_cursor`: `nil` while hidden rather than a warning, because a read of *"nothing to report"* is
-  not a refused mutation — the rule `get_cursor` already follows (D-ONE-STATE-ASK's neighbourhood,
-  `../internals/user_input.md`, *"Cursor manipulation and \"reset\""*).
-- **And explicitly not the alternative.** Restoring preservation across `hide`/`show` is a
-  content-**lifetime** rule that every call seating content would have to agree with; a getter is one
-  function that adds no rule. If this is ever paid, it is paid as the getter.
-- **The likelier consumer is not the hide/show case at all** (owner, 2026-09-02). Today a project
-  learns the content only at **submit or cancel** — those two moments are the entire read surface.
-  A getter is what it needs to read the content at a moment of *its own* choosing: **on a timeout**
-  (grab whatever has been typed so far when the clock runs out), or **from a process the project
-  launched itself**, e.g. off a hotkey combo, that wants the current text without making the user
-  submit first. That is a more ordinary shape than restoring a draft across a hide, and it is the
-  case to weigh this against when the time comes.
-- **What would have to be true first:** one of the above, actually asked for. Neither exists in the
-  tree or in the stakeholder ask today, which is why this is a proposal and carries no slug.
 
 ### PROPOSAL: if event-sourced held state is ever needed, it belongs to the framework
 

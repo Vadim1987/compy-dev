@@ -1520,6 +1520,19 @@ have to interact with the content baseline in every call that seats it.
 PR base the widget was rebuilt per activation, so content survived nothing, and this is a design
 requirement that was not built rather than a behaviour a user could notice changing.
 
+**Amended 2026-09-03 — the weak point is being closed, not only named.** The paragraph above says
+the repair exists *if the case arrives*; the case arrived from the other direction. A delivery-level
+revalidation found `doc/input_api.md` telling a project author to *"keep it yourself and pass it to
+that `show`"* — advice this surface does not permit for text the user typed — and the owner ruled the
+getter into release scope: *"write it as active technical debt to be resolved before release;
+disclose the gap but mark it as defect fixable with getter until ruled otherwise."* The missing read
+is now **`T-CONTENT-READ`** in `../technical_debt/input.md`, `ACTIVE`, and the two paragraphs above
+describe the state **until it lands**. Its `Added` line is the getter's own, not this retirement's.
+
+**The retirement itself is unaffected**, and this is the distinction worth keeping: it rests on there
+being no scenario that needs restoration — not on the do-it-yourself fallback being complete. The gap
+was in the consolation offered beside the ruling, which is why closing it changes nothing here.
+
 **Recommended and deliberately not built: `reset()`.** `clear()` resets what the **user** owns.
 Nothing resets what the **project** owns, so returning a widget to its defaults means naming every
 field with its own falsey value. A `compy.input.reset()` — `configure` with the platform defaults —
