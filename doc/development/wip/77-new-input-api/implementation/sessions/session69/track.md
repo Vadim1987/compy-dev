@@ -42,3 +42,49 @@ F2 as ruled: no smoke. `38a40b4b` marks `get_text()` experimental in `doc/input_
 OP-02: `0a5c44c1` — optional, not in the release sequence.
 
 Next: `FIX-01` as the prompt says, after the owner is happy with this pass.
+
+## Re-entrance — second incarnation (2026-09-03, Claude/Opus after the Cursor-led run died)
+
+Track was stale by one commit and one working-tree edit. Reconciled against `git log` + tree:
+
+- `9eb91de2` (not in track) — `FIX-01-01` re-derived. The "eight" is **three live sites**:
+  R091+R092 (`decisions/input.md`, `D-TWO-SURFACES` Why), R150 (`internals/user_input.md`, the
+  Search paragraph), R164 (same file, the restated API). Four were already paid by later passes
+  that never ticked the row; R100's residue is `DEC-02`'s. Enumeration:
+  `validation/notes/FIX-01-01-enumeration.md`.
+- Uncommitted `decisions/input.md` — the R091/R092 rewrite, mid-flight, unwrapped. Verified
+  against the two REMARKs it answers, re-wrapped to the file's column, committed as `ddcdd936`.
+- Suite confirmed at boot: **1055 / 0 / 0 / 10** (LuaJIT 2.1, container).
+- Untracked `broken-busted/`, `repos.txt`, `worklog.md` are owner scratch — left alone.
+
+Remaining in `FIX-01-01`: R150, R164. Then `FIX-01-02` (re-derive, do not trust ~12) and
+`FIX-01-03` (4 sites).
+
+## `FIX-01-01` — complete (2026-09-03)
+
+Three commits, one per site: `ddcdd936` (R091+R092), `cd420088` (R150), `5dd9e455` (R164).
+Roadmap ticked and note updated at `733b56b5`.
+
+- R150's rewrite **found a false claim** the reflow would have kept: the paragraph said
+  `SearchController` calls its instance's `textinput`; it calls `add_text`. Answering a remark
+  re-reads the code, and that is where the yield was.
+- R164 **kept both headings** (`show(config)`, `configure(config)`) though the merged treatment
+  read better — ten live citations name `configure(config)` as a section (2 in `src/`, 7 in
+  `tests/`, 1 in the debt register), and an editorial row should not buy a heading with a comment
+  sweep across `src/` and `tests/`.
+
+## `FIX-01-02` / `-03` re-derived — and a fourth class (2026-09-03)
+
+Note: `validation/notes/FIX-01-02-03-rederivation.md`, commit `461b4489`. Four classes:
+
+- **A** ephemeral paths — **20** sites, not ~12. The old count was a `wip/` grep and eight are
+  written **relative**. Five of the twenty are debt entries whose *subject* is a wip file →
+  `LEDGER-02`'s, not repointing work.
+- **B** session numbers — **12**, not 4. This session added one of them.
+- **C** `FR-n` — 7 sites; two are the owner's own REMARKs, so answering them clears the markers.
+- **D** citations of **live roadmap ids** — **119 occurrences**. No row owns it, no convention
+  bans it, it is not `FIX-03-05` (which wipes *retired* ids), and `LEDGER-02`/`DEC-02` are about
+  to delete some of the prose carrying it. **Left for the owner with a recommendation, not taken.**
+
+A/B/C are uncontested and are `FIX-01-02`/`-03`'s work. **Raised with the owner before executing**:
+whether D is in scope at all.
