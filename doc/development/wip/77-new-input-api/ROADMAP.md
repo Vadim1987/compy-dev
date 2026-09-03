@@ -1645,7 +1645,7 @@ settled; its checklists are written; its description was rewritten.)*
 
 | id | step |
 |---|---|
-| PR-01-01 | the final slice cut — **the shipping one**, after MERGE-01. **Cut against #45's head at generation time, not against our merge** (owner, 2026-09-03): the slices *are* patches, #45 is force-pushable, and nothing we deliver may depend on ancestry. Pin the base as a tag in the same motion |
+| PR-01-01 | the final slice cut — **the shipping one**, after MERGE-01. **Cut against the tree of `updev + #45` at generation time** (owner, 2026-09-03): the slices *are* patches, #45 is force-pushable, and nothing we deliver may depend on ancestry. Pin the base as a tag in the same motion. **Slices stay concern-based, and that costs nothing** — the guide's §1.0 derivation is a *two-tree* diff with `wip/` excluded, so our 1276 commits and 901 `wip/` files are invisible to it. **Re-verified 2026-09-03 against `aldum/dev`: 114 shipping files, zero unclassified, no rule changed.** Two follow-ups before cutting, neither about history: **Set 2 is `agents/` and today's ruling says that is not promoted upstream** — a scope decision, not a classifier fix; and the classifier's `doc/*.md` case **crosses directories**, so it absorbs new documents that should have surfaced as unclassified. [`validation/notes/S70-slices-do-not-need-history.md`](validation/notes/S70-slices-do-not-need-history.md) |
 | PR-01-02 | the justification table in the PR description |
 | PR-01-03 | reviewability gate: `doc/input_api.md` + the description, alone |
 | PR-01-04 | open the coordinated PRs — platform + three example repos |
