@@ -1168,7 +1168,7 @@ explicitly — so roughly half carry the answer in their own text.
 | id | step | note |
 |---|---|---|
 | LEDGER-02-01 | take `FIX-02-05`'s base-check classification | **do not re-derive it**; re-deriving is how one check becomes two walks that disagree |
-| LEDGER-02-02 | **move** the introduced-and-paid entries to `validation/archive/debt-vacuumed.md` | `T-ONESHOT` and `T-ONESHOT-SCOPE` are known members — the arc `D-AUTO-HIDE` was rewritten to drop. A second archive file beside the decisions one, same contract: nothing in it rules anything, and it leaves the release with `wip/` |
+| LEDGER-02-02 | **move** the introduced-and-paid entries to `validation/archive/debt-vacuumed.md` | **check inbound citations first — see the note below.** `T-ONESHOT` and `T-ONESHOT-SCOPE` are known members — the arc `D-AUTO-HIDE` was rewritten to drop. A second archive file beside the decisions one, same contract: nothing in it rules anything, and it leaves the release with `wip/` |
 | LEDGER-02-03 | **mixed provenance: rewrite to the half that shipped**, archiving the half that did not | the judgement step. `BUG-01-05` is the worked example — a pre-existing bound our own wrappers made reachable on purpose. Keep the entry, state the pre-existing half, drop the drafting note |
 | LEDGER-02-04 | run the same test over `CHANGELOG.md` | **expected yield may be zero**, and it is worth the ten minutes: a changelog line for something introduced and removed inside the branch is news about nothing. Stated as a check, not as a fix |
 
@@ -1181,6 +1181,17 @@ verification has run.
 **What it must not take.** A pre-existing defect's entry, which is `CHG-01-03`'s evidence, and the
 pre-existing half of any mixed entry. Deleting either would remove the record that this release
 **fixed something users had met** — the opposite of the principle, applied by the same sweep.
+
+**A cited entry is never silently relocated** (found 2026-09-02, `S67-delivery-revalidation.md` F9).
+Before moving an entry, grep the **persistent** corpus for citations of its heading: an entry moved
+into `validation/archive/` leaves with `wip/77`, so a persistent document citing it is orphaned by
+the move. A cited entry is either rewritten in place or its citation is re-homed **in the same
+commit** — `agents/rules/roadmap.md` §5, the pass that causes the orphan owes the fix. **One is
+already known:** `internals/event_dispatch_layers.md` records two live open pointer questions as
+held under *"Pointer delivery is an unstructured broadcast, not a chain"*, an entry sitting under
+`## RETIRED`. It reads as pre-existing (the broadcast shipped) and should survive this row on its
+own classification — but that classification is `FIX-02-05`'s and is not made yet, so the check is
+owed rather than pre-answered.
 
 ---
 
