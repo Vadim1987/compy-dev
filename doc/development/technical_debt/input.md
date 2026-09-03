@@ -1328,6 +1328,38 @@ changes.
 
 ## RETIRED
 
+### The guide and the CHANGELOG carried a migration from an `eval` key no project could write (RESOLVED, 2026-09-03)
+
+- **Where:** `../../input_api.md`, *"Migration from the legacy globals"* (two rows) and
+  `../../../CHANGELOG.md`, the closed-config-table bullet (*"the retired `eval` and `result`
+  keys"*).
+- **State:** neither was ever a key of `compy.input.show` or `configure`. **No commit made one** —
+  `git log -S"'eval'"` and `-S"'result'"` over `consoleController.lua` are both empty — and at the
+  PR base the evaluator was chosen by *which global you called* (`input(InputEvalLua, prompt,
+  init)`), never passed in: no example writes `eval =`, and the config table a project could reach
+  did not exist yet. The names are **internal**, from the pre-feature implementation and the design
+  discussion — the evaluator object, and `input_ref` passed as *"the `result`"*
+  (`design/notes/decisions.md`) — restated in two project-facing documents as though they had been
+  project keys. A migration row for a shape nobody could have written is worse than silence: it
+  tells a reader they may have used it.
+- **Owner's question is what settled it** (2026-09-03): *"I do not think it was used and not sure
+  where it came from. Can we check if it was in the original requirements or grew spontaneously?"*
+  **It grew spontaneously.** The frozen `design/spec.md` names `validator` / `highlighter` as the
+  project-facing configuration and never an `eval` key, and its own migration table maps
+  `input_text(prompt, init)` to `validator`, not to an evaluator.
+- **Resolution.** Both rows dropped from the guide; the clause dropped from the CHANGELOG. The
+  raise itself is unaffected and undocumented on purpose — the config table is **closed**, so `eval`
+  raises like any other unknown key, without being advertised as a retired one.
+- **What was checked and correctly stays:** the `| result = ... |` row in the same table. `result`
+  is not a config key either, but it *was* project-visible — `user_input()` and `input_text()`
+  returned `input_ref` and a project polled it (`turtle/main.lua:51` at base, `r =
+  input_text("TURTLE")`). That row migrates from something real, and the entry above it is exactly
+  the reason to check each row rather than sweep the table. The caution paragraph naming the
+  evaluator globals stays too: those are real globals, and the row above it mentions
+  `LuaHighlighter`, so a porting reader can plausibly reach for one.
+- **Provenance: introduced in this branch.** Both documents are the branch's own — there is no
+  `CHANGELOG.md` and no `doc/input_api.md` at `3256aac`.
+
 ### A project cannot read the widget's content except at submit (RESOLVED, 2026-09-03)
 
 **Filed as `T-CONTENT-READ`.** Everything down to **Resolution** is the filing as written.

@@ -911,8 +911,6 @@ their work into a callback:
 | `write_to_input(text)` | `compy.input.set_text(text)` |
 | `function compy.singleclick(x, y)` | `compy.input.hooks.singleclick = function(x, y) ... end` |
 | `function compy.doubleclick(x, y)` | `compy.input.hooks.doubleclick = function(x, y) ... end` |
-| `eval = InputEvalLua` | `highlighter = LuaHighlighter, validator = LuaSyntaxValidator` |
-| `eval = ValidatedTextEval(filters)` | `validator = LineValidators(filters)` |
 | `result = ...` | Consume the `text` in `on_text_entered`; no result object exists. |
 
 The old evaluator globals (`InputEvalText`, `InputEvalLua`,

@@ -113,8 +113,8 @@ newest first.
   one with no gate, is now expressible.
 
 - `compy.input.show` and `compy.input.configure` raise on a key outside
-  their config table, rather than ignoring it. This includes the retired
-  `eval` and `result` keys, lifecycle callbacks such as `after_submit`
+  their config table, rather than ignoring it. This includes lifecycle
+  callbacks such as `after_submit`
   that belong on `compy.input.callbacks`, and — at `configure` — `text`,
   `cursor` and `force`, which are `show`'s. Each raise names where the key
   belongs. Calls that are no-ops because of the current state — `show` on
