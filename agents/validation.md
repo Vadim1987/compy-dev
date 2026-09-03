@@ -305,6 +305,35 @@ agent does not inherit this repo's CLAUDE.md or your context — state them expl
    alongside the platform one — see `pr-assembly-guide.md` §5. Commit in them
    as the work demands; **never push** any of them either.
 
+## Closing a session — the three-step review order (owner directive, 2026-09-03)
+
+**This replaces "wrap, then commission a revalidation".** The order is deliberate and the two
+reviews answer different questions at different altitudes; running them the other way round makes
+the second one re-read work the first already dispositioned.
+
+1. **Commit, then commission a Sonnet peer review of the session's own changes** — *integrity and
+   sanity*: do the claims hold against the code, do the citations resolve, does the arithmetic
+   close, is anything internally contradictory. It reads the diff, not the plan.
+2. **Wrap** — report, successor prompt, repointed pointer, updated baseline (`agents/sessions.md`
+   §5). The peer review's findings are applied or dispositioned **before** this, because the report
+   is what states them.
+3. **Commission an Opus review of the session outcome from the delivery perspective** — the
+   higher-level question: **roadmap integrity, whether anything was omitted, whether the work
+   drifted from its purpose.** It reads the plan and the range, and it is the one that can say *the
+   session did what it was for* or *it did not*. Its dispositions are recorded for the successor,
+   which opens by executing them.
+
+**Neither sub-agent may spawn sub-agents of its own. This is a strict rule and it protects the
+host, not a preference** — two spawns took the container's host down on 2026-09-02 (100% CPU, hard
+reboot within ~20 seconds), and the container still has no CPU or memory ceiling, so a runaway takes
+the machine rather than the box. **State the clause and its reason in every spawn prompt**, or the
+agent reads it as fussiness and routes around it.
+
+*(Model tiers are not interchangeable here: step 1 is mechanical verification against source, which
+is Sonnet work; step 3 is judgment about whether a delivery is sound, which is not. Both prompts and
+both outputs are materialized on disk — `validation/prompts/`, `validation/outcomes/` for the peer
+review, `validation/reviews/` for the delivery review.)*
+
 ## Session mechanics (strict — sweep-style discipline, sessions 01–05 pattern)
 
 Sessions 06–09 ran without tracks because no workflow document covered this phase; 

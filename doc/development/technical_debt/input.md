@@ -1352,6 +1352,32 @@ changes.
 
 ## RETIRED
 
+### `internals/examples/turtle.md` documented the pre-`auto_hide` turtle, sample code included (RESOLVED, 2026-09-03)
+
+- **Where:** `../internals/examples/turtle.md` — the summary line (`:15`), the Lua **code sample**
+  (`:22`ff), the *"Re-arm"* paragraph (`:44`), the echo-guard paragraph (`:48`) and the first
+  points-of-attention bullet (`:58`).
+- **State:** all five described the close as the **callback's** — `after_submit` calling
+  `compy.input.hide()`, with a `show` carrying no `auto_hide`. `FEAT-02` moved the example onto
+  `auto_hide` (`main.lua`: `auto_hide = true` in the `show`, `after_submit = arm_echo_guard`), and
+  the document was not migrated with it. **The code sample is the serious half** — prose can be read
+  around, a sample is copied.
+- **Why it matters beyond accuracy:** the sample taught the shape the feature *replaced*, in the
+  document a troubleshooter opens when the example misbehaves, and it would have been read during a
+  device pass as the intended behaviour.
+- **Found 2026-09-03**, checking whether *"one-shot"* was live vocabulary after the owner corrected
+  the term: *"one-shot widget is autohiding widget now, because behaviour itself is repetitive."*
+  The grep for the retired word landed on a retired **mechanism**.
+- **Resolution.** All five corrected against `main.lua`, with the mode stated where it was implied:
+  `auto_hide` closes on **every** submit until something passes `auto_hide = false`, so *"one-shot"*
+  is the wrong word for it — the point `D-AUTO-HIDE` already makes (*"`oneshot` names a single
+  occurrence while this is a standing mode"*). The genuinely one-shot thing in that file, the
+  self-unregistering `textinput` shortcut, keeps the word and now says why it earns it.
+- **Deliberately not done here:** the file's remaining vocabulary drift (*"the prompt"* for the
+  widget, two live `field` uses). That is `FIX-02-09`'s, which now carries the fifth-name ruling;
+  only the false mechanism was taken.
+- **Provenance: introduced in this branch.** The document is `#77`'s own, and so is `auto_hide`.
+
 ### The CHANGELOG missed a removal that is expressed as a deletion, not an absence (RESOLVED, 2026-09-03)
 
 - **Where:** `../../../CHANGELOG.md`, `CURRENT_SCOPE` → `Removed`, and

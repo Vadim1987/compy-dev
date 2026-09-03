@@ -930,10 +930,24 @@ up"* for the widget** — 21 occurrences in `smoke_checklists.md`'s turtle secti
   large majority are legitimate: the config key, the console's own prompt line, and the ordinary
   English verb. **The defect is the idiom, not the noun** — *the prompt opens / closes / is up*
   said of the widget. Re-derive by sense, as the `smoke_checklists.md` slice did.
-- **It is genuinely the better word in one place.** *"A one-shot prompt"* reads well and
-  *"a one-shot widget"* does not. If the ruling is *keep it*, then say so once in
-  `doc/input_api.md`'s vocabulary section and define which sense is which; if the ruling is *go*,
-  the replacement is *the widget is shown / hidden*. **Either way it is one ruling, made once.**
+- **The ergonomic argument for keeping it does not survive contact** (owner correction,
+  2026-09-03). This bullet first said *"a one-shot prompt"* reads well where *"a one-shot widget"*
+  does not — but **the behaviour is not one-shot**: `auto_hide` is a standing mode that closes on
+  every submit, which is exactly why `FEAT-02` retired `oneshot` (`decisions/input.md`,
+  `D-AUTO-HIDE`: *"`oneshot` names a single occurrence while this is a standing mode"*). The phrase
+  is **"an auto-hiding widget"**, and it reads fine. That does not decide the ruling; it removes the
+  one thing that made it look close. **Either way it is one ruling, made once** — if *keep*, say so
+  in `doc/input_api.md`'s vocabulary section and define which sense is which; if *go*, the
+  replacement is *the widget is shown / hidden*.
+  *(The correction is worth more than the bullet: I argued for a name using vocabulary this feature
+  had already retired, inside the cell whose whole subject is retired vocabulary.)*
+
+**`internals/examples/turtle.md` was found *factually* stale while this note was being written, and
+that half is fixed** (2026-09-03): it documented the **pre-`auto_hide`** turtle throughout — the
+summary line, the code sample (`after_submit = function() compy.input.hide() end`, and a `show` with
+no `auto_hide`), the re-arm paragraph and the points-of-attention bullet. `FEAT-02` migrated the
+example and not its document. Corrected against `main.lua`; **its vocabulary sweep is still this
+row's**, only the false mechanism was taken.
 
 **`internals/examples/turtle.md` also carries live `field` uses** (*"piled up in the field"*, *"the
 field it just opened"*) — inside this row's original four names, and untouched, because the
