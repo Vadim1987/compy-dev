@@ -259,36 +259,18 @@ through its own configured **widget outputs**, which are **not** chain component
 These are set at `show()` / `configure()`, or assigned as `compy.input.callbacks` fields — one
 underlying callback, two ergonomics.
 
-> REMARK: conflating them is not generally a trap -- so no need for this false rationalization. Just say we distinguish
-> REMARK: overall this block has too much self-invented explanation, including 'student' passage. No need to overprotect the normal engineering decision.
- 
-**Why.** Routing has two genuinely different directions and conflating them is the trap this
-subsystem was explicitly designed around. Events arriving are a chain concern; a *result* is the
-widget's to announce. In particular:
-
-- **`on_text_entered` is widget vocabulary, not the per-character chain callback.** The
-  per-character textinput callback is `hooks.textinput` — the chain's hooks component
-  (D-CHAIN-OF-3). The two names are never interchangeable — an easy and costly confusion, kept
-  apart by naming on purpose.
-- **Results never travel as chain return values.** The widget is terminal, so nothing sits above
-  it to read a return; a boundary or submit condition therefore *cannot* report upward through
-  the chain and must use the widget's own outputs. (This is the narrow thing the "no results via
-  return values" rule fixes — it is a consequence of the widget being terminal, not a general ban
-  on status returns.)
-- **The limit signal travels exclusively through `on_limit_reached`.** `UserInputController:
-  keypressed`'s return value used to carry a *second*, undocumented meaning alongside
-  `on_limit_reached` — a vertical-limit flag — a quiet violation of this decision's own rule (the
-  old code set the flag *and* fired `on_limit_reached` in the same branch, redundantly). That
-  dual channel is retired: the return value now carries only the chain-consumption signal
-  (D-CHAIN-OF-3), and `on_limit_reached` — already a widget output under this decision, just
-  underused before — is the sole notification path.
+**Why.** Events arriving are a chain concern; a result is the widget's to announce.
+`on_text_entered` is widget vocabulary, not `hooks.textinput` — the chain's per-character callback
+(D-CHAIN-OF-3). Results never travel as chain return values: the widget is terminal, so nothing
+above it could read one. The limit signal is `on_limit_reached` only —
+`UserInputController:keypressed`'s return used to carry a second, undocumented vertical-limit flag
+alongside the callback, and that dual channel is retired.
 
 **Consequence.** A project gets soliciting input working with nothing but
-`show{ ...callbacks... }` — no chain knowledge required. That "easy path" is the pedagogical
-target the whole two-surface split protects. Console's history navigation (Page-equivalent
-Up/Down at a boundary), the one live consumer of the old return-value channel, is wired through
-its own instance's `on_limit_reached`, filtered to the vertical direction; no other consumer
-exists — editor's search widget reads its own, unrelated return contract and is untouched
+`show{ ...callbacks... }` — no chain knowledge required. Console's history navigation
+(Page-equivalent Up/Down at a boundary), the one live consumer of the old return-value channel, is
+wired through its own instance's `on_limit_reached`, filtered to the vertical direction; no other
+consumer exists — editor's search widget reads its own, unrelated return contract and is untouched
 (a discovered, pinned behaviour; see D-DEFACTO-KEPT).
 
 
