@@ -1588,7 +1588,13 @@ every figure with its command. Four results decide the rest of this sprint:
 - **The three example repos have almost no drift**: `balloons` and `maze` are 0 behind, `keyboard`
   is 1 behind and that commit is a build descriptor that merges clean.
 
-**Two things for the owner** (also in §6 of the note): **PR #22 is already open** against
+**The landing-order question was answered the same day (owner, 2026-09-03): we build on #45 and the
+two ship together**, with the edge's remainder following. `MERGE-01-05`/`-06` carry it, and the
+trial merge that tested it is [`validation/notes/S70-PR45-as-base.md`](validation/notes/S70-PR45-as-base.md).
+This changes what `REC-01` was for — it was scoped as *discovery, not release*, and one of its
+findings has now become release work.
+
+**Two things for the owner** (also in §6 of the recon note): **PR #22 is already open** against
 `aldum:dev` as a draft, on a branch whose name lacks the `-s20260615` suffix — `PR-01-04` does not
 say whether it is reused or replaced. And the landing order of #45 versus ours is not ours to
 decide; the reconciliation cost is the same work whoever pays it, which argues for **naming it in
@@ -1605,7 +1611,8 @@ PR.
 | MERGE-01-02 | `keyboard` | **one commit, and it merges clean** — `96d6629`, 32 lines of `.compy/build`, no source file. The S37 ancestry held |
 | MERGE-01-03 | `balloons` | **still zero divergence**, re-measured 2026-09-03 |
 | MERGE-01-04 | the platform repo | **DONE (Session 56)** — merged `aldum/dev` into platform repo (`f4913833`), test mock fix committed (`75a7e5b3`), 1011/0/0/10 green. **Re-verified 2026-09-03: still 0 behind `aldum/dev`**, so the re-merge the owner asked for is a no-op against the PR base |
-| MERGE-01-05 | **the edge, and the open PRs it contains** | **NOT a merge before the PR, and not this sprint's to take unilaterally.** `dsent/dsent/dev` is 71 ahead of our PR base and carries upstream PRs #45 and #41; a dry merge conflicts in 7 files, two of them design calls (`UserInputModel.new`'s signature, `set_text`). Owner territory: it is the *landing order* question, not a merge task |
+| MERGE-01-05 | **build on top of PR #45, so the two ship together** | **owner direction, 2026-09-03.** Tested by trial merge, run: [`validation/notes/S70-PR45-as-base.md`](validation/notes/S70-PR45-as-base.md). **No fundamental conflict** — nothing in `compy.input`'s machinery collides; what collides is the **editor route's key semantics**, which #45 redefines on purpose. The integration is one place: #45's editor reservations expressed as entries in **our** `RESERVED` table, which is what that table is for. Plus one mechanical signature merge, one key-meaning decision (**bare Ctrl+S in the editor**: ours closes the buffer, #45 reserves it for the checkpoint), and a re-pin of five editor-route specs |
+| MERGE-01-06 | the **edge minus #45**, afterwards | **owner, 2026-09-03: it ships later.** 19 commits beyond #45; its extra dry-merge conflicts are `.gitignore`, `consoleModel.lua` and an add/add on an example — **no input-API surface**. Separable, as expected |
 
 **Mechanic, standing:** pull each upstream into **its own branch**; never merge into the working
 branch as the first move.
