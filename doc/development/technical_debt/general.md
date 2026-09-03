@@ -329,10 +329,26 @@ paid, or turned out not to be debt.
   like any other (`agents/rules/ledgers.md` §4). Expected yield is unknown, which is the reason
   to run it rather than to skip it.
 - **Roadmap:** `FIX-02-05`.
-- **Resolution.** All **56** retired entries walked, 2026-09-03 (`input.md` 50, `general.md` 6 —
-  the count the earlier documents' 20 / 46 / 47 / 51 / 55 all superseded, each right when written).
-  Two questions per entry, run as one pass: does the resolution claim hold at HEAD, and did the
-  subject exist at the PR base `3256aac`. Evidence per entry, with the command behind every answer:
+- **Resolution.** **56 entries walked**, 2026-09-03 — and the section held **59 by the time that
+  was written**, which the peer review caught and this bullet now states. The walk's snapshot was
+  `input.md` 50 + `general.md` 6, taken when the pass began; **three more were retired while it ran,
+  all of them by this same session**, so the sweep could not have seen them and the *"every retired
+  entry"* claim was already an overstatement when made. The three, with their resolutions, which
+  need no re-derivation because this session performed them: the **`eval`-key migration** entry
+  (rows dropped from the guide, clause dropped from the CHANGELOG), **`T-VERSION-NUM`** (owner ruled
+  the version question; the break note landed and all three markers are gone), and **this entry
+  itself**, which the row retires — walking itself is not a check. **Two more have retired since**
+  (the deletion-invisible removal, and `turtle.md`'s pre-`auto_hide` mechanism), so the section
+  stands at **61** at the time of writing, with **five** entries outside the walked set. **All five
+  are `INTRODUCED-IN-BRANCH` and the check is not close:** every one is about `CHANGELOG.md`,
+  `doc/input_api.md`, this register, or `auto_hide` — three of those four do not exist at
+  `3256aac` at all, and `auto_hide` is this feature's.
+- **The lesson is about verification passes generally, not about this count.** A pass whose subject
+  **grows while it runs** must state *the snapshot it walked*, not *the section* — otherwise its
+  completeness claim decays the moment the next entry lands, and the pass's own author is usually
+  the one landing it. Two questions per entry, run as one pass: does the resolution claim hold at
+  HEAD, and did the subject exist at the PR base `3256aac`. Evidence per entry, with the command
+  behind every answer:
   [`../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md`](../wip/77-new-input-api/validation/outcomes/S68-FIX-02-05-base-evidence.md).
 - **No resolution claim failed.** Twelve rest on something not independently re-derived — a suite
   run, a mutation example, a call graph deeper than a grep reaches — and each is named in the

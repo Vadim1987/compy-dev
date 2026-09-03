@@ -1391,13 +1391,19 @@ changes.
   `LuaSyntaxValidator` and `LineValidators` instead, which were reachable the same accidental way
   at base and are now intentional. So a project's reach changed in both directions and the
   changelog recorded neither.
-- **Why the sweep that was looking for exactly this missed it.** `FIX-02-17` found the sixth
-  removed global by **differencing `project_env`'s assignment keys** at `3256aac` against HEAD — a
-  method good enough to catch what no grep would look for, and **blind to a removal expressed as a
-  deletion**: `project_env[name] = nil` is not an assignment of a name, it is the unmaking of one,
-  and it does not appear in either side of that difference. **A set difference finds what is
-  absent; it does not find what is actively removed.** The four names are invisible to both halves
-  of the check that was designed to find them.
+- **Why the sweep that was looking for exactly this missed it — two reasons, and the second is the
+  one worth carrying.** `FIX-02-17` found the sixth removed global by **differencing `project_env`'s
+  assignment keys** at `3256aac` against HEAD. **(a) Structural:** that difference is blind to a
+  removal expressed as a *deletion* — `project_env[name] = nil` is not an assignment of a name, it
+  is the unmaking of one, and appears on neither side. *A set difference finds what is absent; it
+  does not find what is actively removed.* **(b) Mine, found by the peer review 2026-09-03:** the
+  grep was `project_env\.[a-z_]+`, **case-sensitive and lowercase-only**, so it also hid the three
+  *additions* — `LuaHighlighter`, `LuaSyntaxValidator`, `LineValidators` — and **those are the
+  evaluator replacements**. Three new evaluator-shaped exports showing up in the difference would
+  have asked *"replacing what?"*, which is the question that leads straight to the withheld four.
+  **The method would have worked; a character class dropped a third of its input without saying
+  so.** The published figure was *23 → 17*; the true shape is **23 → 20**, six removed and three
+  added.
 - **Found by executing, not by reading** (2026-09-03). The owner asked whether `eval`/`result` were
   ever really exported. A scratch spec printed the project environment: `eval` a function (the Lua
   evaluator, unrelated to the widget, exported at base and today), `result` **nil** — never a name
