@@ -10,7 +10,10 @@ local serial = compy.serial
 -- Everything means everything: bytes are assembled into
 -- lines here, and a tail that stays unterminated (the
 -- REPL's "> " prompt, partial output) is shown after a
--- short settle instead of waiting for a terminator.
+-- short settle instead of waiting for a terminator. It
+-- goes out through io.write, which leaves the line open,
+-- so the prompt stays where a terminal would keep it and
+-- whatever follows continues on the same line.
 local tail = ''
 local settle = 0
 
@@ -30,7 +33,7 @@ function love.update(dt)
   if tail == '' then return end
   settle = settle - dt
   if settle <= 0 then
-    print(tail)
+    io.write(tail)
     tail = ''
   end
 end
