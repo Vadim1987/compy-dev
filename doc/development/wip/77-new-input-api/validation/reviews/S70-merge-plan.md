@@ -26,8 +26,8 @@ edge's BACKLOG entry). The stakeholder-facing version is
 |---|---|---|---|
 | 1 | `keyboard` takes its one upstream commit | `MERGE-01-02` | its own suite green; the build script still finds a flat source tree — **verified 2026-09-03**: our file set there is identical to upstream's, so its `*.lua` glob emits our tree |
 | 2 | `maze`, `balloons` — **nothing to do**, recorded as measured | `MERGE-01-01`/`-03` | — |
-| 3 | **merge PR #45's head into our branch** as one merge commit | `MERGE-01-05` | **both suites present, 0 failures** |
-| 4 | the re-pins and the two decisions, each its own commit | `MERGE-01-05` | same, plus the Ctrl+S ruling recorded in the decisions ledger |
+| 3 | **import PR #45's content into our branch as one *squashed* commit**, three-way | `MERGE-01-05` | **none — this commit is allowed to be red** (owner, 2026-09-03). It states its failing count and the rows that close it |
+| 4 | the re-pins and the two decisions, each its own commit | `MERGE-01-05` | **both suites present, 0 failures — green is required here, not at step 3**, plus the Ctrl+S ruling recorded in the decisions ledger and the new baseline written into `agents/validation.md` |
 | 5 | **`ACC-02`, the device passes** | `ACC-02` | as today |
 | 6 | the prose rows, the cold read, assembly | `FIX-02` (b) … `PR-01` | as today |
 | 7 | the edge remainder | `MERGE-01-06` | after the release — **and it is verified to stack**: the branch, then the rework, then the whole edge runs 1108/22, the same 22 the rework already owed |

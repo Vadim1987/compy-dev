@@ -34,8 +34,8 @@ truncated S68 delivery review. It is **not in the sequence above**; skip it and 
 | **LEDGER-02** | the debt register stops keeping defects that never existed outside the branch | **owner, 2026-09-01**, extending `DEC-02`'s principle to the second ledger: *introduced-then-paid never existed for the outer world.* It sits beside `DEC-02` because it is the same rule on a different register, and **after `FIX-02-05`**, which already produces the classification it needs |
 | **FIX-02 (b)** | the vocabulary and process half of the same sprint | **after `ACC-02`, owner 2026-09-02.** Its nested-repo scope (`keyboard`, `maze` — `FIX-02-09`) is the very tree `MERGE-01` merges into, so sweeping first means sweeping twice; and nothing in it changes what a device pass can observe |
 | **DOC-01** | the documentation compaction sweep — one deliberate pass over the stabilised prose corpus | **owner, 2026-09-01**, restoring a step the roadmap had scheduled for comments only. It runs **after** `FIX-03` because that sweep's deletions are *mechanical* (subject absent at base and today) and shrink the floor this one exercises judgement over, and **before** `ACC-03` because a cold reviewer should read the prose that ships, not the prose that was being written. *(The 2026-09-01 placement named `ACC-02`, which was then the cold read; the 2026-09-02 split moved that role to `ACC-03` and the reasoning is unchanged — only the row name.)* |
-| **REC-01** | upstream reconnaissance — measure the real drift, decide what it means | 🟡 platform repo **done**; the three example repos remain. **Moved ahead of `ACC-02`, owner 2026-09-02** — the smoke passes exercise those repos, so merging into them afterwards smokes a tree that then changes |
-| **MERGE-01** | upstream reconciliation — actually merge | 🟡 platform repo **done** (`f4913833`); `maze`, `keyboard`, `balloons` remain. Same move, same reason |
+| **REC-01** ✅ | upstream reconnaissance — measure the real drift, decide what it means | **COMPLETE (session70)** — all four repos and the two open input-touching upstream PRs, measured against live https remotes. It **stopped being discovery-only**: its finding that #45 is a viable base became release work |
+| **MERGE-01** | upstream reconciliation — actually merge | 🟡 `-04` done (`f4913833`). **`maze` and `balloons` have nothing to take and `keyboard` has one packaging commit**, so the live row is **`-05`: import PR #45 into this branch** before `ACC-02`. `-06`, the edge remainder, is after the release |
 | **ACC-02** | **the device passes** — smoke on real hardware | **moved ahead of the prose rows, owner 2026-09-02.** It is the last thing that can find a *runtime* defect, so everything after it is cheap to redo and nothing after it is done twice |
 | **ACC-03** | **the cold read** — a second cold PR review over the finished tree, then the slice-readiness pass | **stays late**, on the 2026-09-01 placement of `DOC-01`: a cold reviewer should read the prose that ships, not the prose that was being written |
 | **OP-02** | optional — finish the interrupted S68 delivery review | **owner, 2026-09-03**. The review claims seven findings and the file ends at F5; there is no dispositions table. A re-read recovers whatever was not written. **Does not delay the release** |
@@ -1396,8 +1396,7 @@ waste here.
 | DOC-01-04 | **`doc/input_api.md` and `CHANGELOG.md`** — the two a stakeholder actually reads | **the tightest constraint on the row.** `PR-01-03` gates the guide as reviewable **alone**; compact it for redundancy only, **never for completeness**, and re-run that gate after |
 | DOC-01-05 | **citation check over everything this row rewrote** | `agents/rules/roadmap.md` §5 — *the pass that causes an orphan owes the fix*. Rewriting a paragraph breaks section-name citations into it, and `FIX-03-05` will already have run |
 | **DOC-01-06** | **the ephemeral-id sweep** — `T-EPHEMERAL-IDS`, citations of live sprint ids in the persistent corpus | **owner ruling, 2026-09-03**, deferred out of `FIX-01-02`. Runs **here** and not at `FIX-03-05`: that row wipes citations of *retired* ids and sits **before** `DEC-02`/`LEDGER-02`, which vacuum entries out of the very ledgers holding most of these — a sweep run first sweeps prose that is about to leave. **Size it from the entry's own command, not from a figure in this cell** (the entry's snapshot was 116 citations plus 2 illustrations, and it moves under its own sweep). **Compaction runs first within this row:** an entry `DOC-01-02` shortens may lose its id without a rewrite. **Ordering against `-05` is unsettled and is decided when this row opens** (S69 delivery review, F7): `-05` is the citation check over everything the row rewrote, and this step rewrites after it — either this runs before `-05`, or `-05` re-runs over what this touched |
-
-| **DOC-01-07** | **`get_text()` stops being experimental** — the one documentation consequence of the proposal block | **owner instruction, 2026-09-03**, on the proposal section committed into `doc/input_api.md` (`1299ed2b`): the *"experimental until somebody needs it"* condition session69 attached has been met, so the qualifier is retracted. **Not compaction and not design** — the status call is the owner's and is already made; this row executes it. Five sites: `doc/input_api.md` (the surface inventory, the `hide()` cross-reference, and the *"`get_text()` is experimental"* paragraph in *"Live changes"*, which goes rather than being softened), the `CHANGELOG.md` `Added` line, and the `T-CONTENT-READ` entry's closing paragraph, which is **past-tensed, not deleted** — it records a ruling that was true when made. Re-derive with `git grep -n 'experimental' -- doc/ CHANGELOG.md ':!doc/development/wip/'`, which returns two more the row does not want: `internals/examples/clock.md`'s stencil block, unrelated, and the proposal block's own line, whose fate is the open question in [`validation/reviews/S70-proposal-block-placement.md`](validation/reviews/S70-proposal-block-placement.md) §5. The count above is a snapshot, not a scope statement |
+| **DOC-01-07** | **`get_text()` stops being experimental** — the one documentation consequence of the proposal block | **owner instruction, 2026-09-03**, on the proposal section committed into `doc/input_api.md` (`1299ed2b`): the *"experimental until somebody needs it"* condition session69 attached has been met, so the qualifier is retracted. **Not compaction and not design** — the status call is the owner's and is already made; this row executes it. Five sites: `doc/input_api.md` (the surface inventory, the `hide()` cross-reference, and the *"`get_text()` is experimental"* paragraph in *"Live changes"*, which goes rather than being softened), the `CHANGELOG.md` `Added` line, and the `T-CONTENT-READ` entry's closing paragraph, which is **past-tensed, not deleted** — it records a ruling that was true when made. Re-derive with `git grep -n 'experimental' -- doc/ CHANGELOG.md ':!doc/development/wip/'`, which returns **three** the row does not want: `internals/examples/clock.md`'s stencil block, unrelated; the proposal block's own line, whose fate is the open question in [`validation/reviews/S70-proposal-block-placement.md`](validation/reviews/S70-proposal-block-placement.md) §5; and `technical_debt/general.md`'s BACKLOG heading for the edge drift, which the same day's own work added. **Re-run the command; do not cite any figure in this cell** — the unwanted set grew by one within hours of being written |
 
 **One row here is not compaction.** `DOC-01-07` is a status retraction the owner
 ruled separately; it sits in this sprint because it is documentation work over the
@@ -1537,7 +1536,7 @@ housekeeping around it).
 |---|---|---|
 | OP-02-01 | re-read session68's outcome and write the missing findings | produce F6/F7 or record that the "seven" was a count the interrupted draft never reached; land a dispositions table. Same artifact path, or a successor in `validation/reviews/` cross-linked from it. **Neither this row nor its worker may spawn sub-agents** — host protection, `agents/validation.md` |
 
-## 🟡 REC-01 — upstream reconnaissance — *discovery, not release* — **PARTIALLY COMPLETE (Session 55)**
+## ✅ REC-01 — upstream reconnaissance — **COMPLETE (session70, 2026-09-03)** — *and it stopped being discovery-only*
 
 **Moved ahead of `ACC-02`, owner 2026-09-02.** Its remaining half is the three example repos, and
 `ACC-02` smokes those same repos — merging into them afterwards smokes a tree that then changes.
@@ -1555,7 +1554,7 @@ release work: it measures **86+ commits** of drift we currently cannot see, and 
 our surfaces its output is **new defect work**. It may spawn a sprint. Fetch-only, read-only;
 nothing merges here.
 
-**Session 55 status:** Platform repo RECON analyzed against `feature/77-newinput-premerge` (`aldum/dev` merge).
+**Session 55 status (superseded 2026-09-03 — kept as the first half of the record):** Platform repo RECON analyzed against `feature/77-newinput-premerge` (`aldum/dev` merge).
 Upstream 24 commits analyzed: no architectural overlap with #77 input API, single unit-test regression identified in `src/util/filesystem.lua` (`FS.sync` stub missing for `TESTING=true`).
 Recon for external example submodules (`maze`, `keyboard`, `balloons`) remains pending.
 
@@ -1605,7 +1604,7 @@ in the corpus's terms all the same: no working-tree paths, no sprint ids.
 
 **The merge plan, with its risks evaluated, is
 [`validation/reviews/S70-merge-plan.md`](validation/reviews/S70-merge-plan.md)** — order, gates,
-rollback, ten risks. **The one that is the owner's rather than ours: R1** — merging #45 while it is
+rollback, **twelve risks** (re-count them; do not cite this figure). **The one that is the owner's rather than ours: R1** — merging #45 while it is
 still open would put its 52 commits inside *our* PR's diff, which defeats the reviewability gate.
 The mitigation is coordination, not code: **#45 lands first, then ours**, or ours opens as a draft
 naming the dependency.
@@ -1613,7 +1612,7 @@ naming the dependency.
 **PR #22 is ignored** (owner, 2026-09-03): it will be superseded by the PR this phase prepares. Not
 re-targeted, not updated, not closed here.
 
-## 🟡 MERGE-01 — upstream reconciliation — **PARTIALLY COMPLETE (Session 56)**
+## 🟡 MERGE-01 — upstream reconciliation — **`-04` done (S56); `-01`/`-02`/`-03` are near-empty; `-05` is the #45 import and is the live row**
 
 *(was Phase U — renamed, unchanged in substance.)* Four repos, each with its own remote and its own
 PR.
@@ -1628,16 +1627,23 @@ PR.
 | MERGE-01-06 | the **edge minus #45**, afterwards | **owner, 2026-09-03: it ships later, and the three must stack.** **15** commits beyond #45 (not 19, and not 16 — the FS durability API is already ours). **Read by essence, and the stack was built and run: 1108/22, the same 22 `MERGE-01-05` already owed — it adds no new failure.** [`validation/notes/S70-edge-essence-and-stack.md`](validation/notes/S70-edge-essence-and-stack.md). Three findings: the **Android exit reroute is silently lossy** against our relocated `ctrl+escape` reservation (one line, and the defect is in the line that does *not* conflict); the **prompt label widens to `{text, tone}`** and reaches our documented `prompt` key — a surface decision, verified not a break; and **two draw-path changes no headless suite can clear**, named for the device pass |
 
 **Mechanic, standing:** pull each upstream into **its own branch**; never merge into the working
-branch as the first move.
+branch as the first move. **`MERGE-01-05` is the stated exception** (owner, 2026-09-03): #45's
+content enters *this* branch as one squashed commit, because the reconciliation has to be run and
+smoked where the work is, and because nothing we deliver depends on ancestry.
 
 **Moved ahead of `ACC-02`, owner 2026-09-02**, with `REC-01` and for the same reason: `-01`, `-02`
 and `-03` change the very repos `ACC-02` smokes. **`MERGE-01-04` is already done**, so what moves is
-only the example half — the platform tree is not touched again, and the platform slice cut is
-unaffected either way.
+only the example half — **as that ruling stood.** It has since been overtaken: `MERGE-01-05`
+imports PR #45 into this branch **before `ACC-02`**, so the platform tree *is* touched again, and
+the slice cut is affected — it is generated against `updev + #45` rather than against the old
+anchor. What survives of the 2026-09-02 ruling is its reason, and it now argues more strongly:
+the import moves keys a hand-run checklist exercises.
 
 **The 2026-09-03 recon discharges that ordering cheaply**: the example repos have nothing to take
 except one build-descriptor commit in `keyboard`, so `ACC-02` is not smoking a tree that then
-changes. The platform half is `MERGE-01-05`, and it is deliberately **not** scheduled before the PR.
+changes. **`MERGE-01-05` is the #45 import and runs before `ACC-02`; `MERGE-01-06` is the edge
+remainder and is the row deliberately not scheduled before the PR.** (Both names moved on
+2026-09-03; prose written before that redefinition read `-05` as the edge.)
 
 ## ⬜ PR-01 — assembly
 
@@ -1646,11 +1652,13 @@ settled; its checklists are written; its description was rewritten.)*
 
 | id | step |
 |---|---|
-| PR-01-01 | the final slice cut — **the shipping one**, after MERGE-01. **Cut against the tree of `updev + #45` at generation time** (owner, 2026-09-03): the slices *are* patches, #45 is force-pushable, and nothing we deliver may depend on ancestry. Pin the base as a tag in the same motion. **Slices stay concern-based, and that costs nothing** — the guide's §1.0 derivation is a *two-tree* diff with `wip/` excluded, so our 1276 commits and 901 `wip/` files are invisible to it. **Re-verified 2026-09-03 against `aldum/dev`: 114 shipping files, zero unclassified, no rule changed.** Two follow-ups before cutting, neither about history: **Set 2 is `agents/` and today's ruling says that is not promoted upstream** — a scope decision, not a classifier fix; and the classifier's `doc/*.md` case **crosses directories**, so it absorbs new documents that should have surfaced as unclassified. [`validation/notes/S70-slices-do-not-need-history.md`](validation/notes/S70-slices-do-not-need-history.md) |
+| PR-01-01 | the final slice cut — **the shipping one**, after MERGE-01. **Cut against the tree of `updev + #45` at generation time** (owner, 2026-09-03): the slices *are* patches, #45 is force-pushable, and nothing we deliver may depend on ancestry. Pin the base as a tag in the same motion. **Slices stay concern-based, and that costs nothing** — the guide's §1.0 derivation is a *two-tree* diff with `wip/` excluded, so our 1276 commits and 901 `wip/` files are invisible to it. **Re-verified against `aldum/dev`: 113 shipping files, zero unclassified, no rule changed** — re-run the derivation when the row opens rather than citing that figure; it moved from 114 within the same day when one document left the corpus. Two follow-ups before cutting, neither about history: **Set 2 is `agents/` and today's ruling says that is not promoted upstream** — a scope decision, not a classifier fix; and the classifier's `doc/*.md` case **crosses directories**, so it absorbs new documents that should have surfaced as unclassified. [`validation/notes/S70-slices-do-not-need-history.md`](validation/notes/S70-slices-do-not-need-history.md) |
 | PR-01-02 | the justification table in the PR description |
 | PR-01-03 | reviewability gate: `doc/input_api.md` + the description, alone |
 | PR-01-04 | open the coordinated PRs — platform + three example repos |
 | PR-01-05 | the `wip/77` deletion ruling — **owner-gated, after the PRs are up** |
+| PR-01-06 | **the proposal block's destination** — `PROP-01` carve-out 2. The `## Proposed updates/changes` section currently ships inside `doc/input_api.md`, carrying author handles, a `remark:` line, unresolved alternatives and a pointer to `sync-input-proposal.md`, **which is not in this repository**. It belongs in the description's *open questions*, or in the working tree, or it stays with a reason. Settled **before** `PR-01-03`'s reviewability gate, which it would otherwise fail |
+| PR-01-07 | **the Escape ruling** — `PROP-01` carve-out 3: contract or defect. Today Escape clears the widget's content without closing it, which is a *documented* contract; the proposal calls it a P1 data-loss path reachable from the right mouse button. **A ruling, not an implementation** — the implementation is `PROP-01-05`, after the PR. **Which sprint holds this is the owner's call**; it sits here so it is reachable before the release rather than only after it |
 
 ### Phase L — **retired** (owner-approved, 2026-08-26)
 

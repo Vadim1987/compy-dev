@@ -8,6 +8,16 @@ Lua** — container-green is not their-machine green, and any suite claim states
 interpreter). A different count *before you start* is a finding. **After the import
 it changes by design — see "The baseline moves" below.**
 
+## Open by executing the delivery review's dispositions
+
+[`../../../validation/reviews/S70-delivery-revalidation.md`](../../../validation/reviews/S70-delivery-revalidation.md)
+— ten findings with a dispositions table. **Session70 applied the mechanical ones
+before wrapping** (the merge plan's superseded row 3, `MERGE-01`'s stale prose, the
+`REC-01`/`MERGE-01` headers and summary cells, four uncorrected counts, the two
+unowned `PROP-01` carve-outs, and the `T-EPHEMERAL-IDS` line). **Read the table
+first and verify that** — a disposition marked applied that is not is the first
+finding of your session — then take what remains.
+
 ## Your task
 
 **Execute the import of upstream PR #45 into this branch, then reconcile.** This is
@@ -25,7 +35,8 @@ before touching anything:
 
 **Step 0 — `keyboard` first, because it is free.** One upstream commit
 (`96d6629`, `.compy/build`, no source file), merges clean. Its own suite green.
-That is `MERGE-01-02` and it closes `T-DRIFT-KEYBOARD`. `maze` and `balloons` need
+That is `MERGE-01-02` and it closes **`T-DRIFT-KEYBOARD`** — retire that entry with
+the merge, in the same commit. `maze` and `balloons` need
 nothing; record that they were re-checked, do not re-measure them from scratch.
 
 **Step 1 — the import, as one commit, and it is allowed to be red.**
@@ -46,6 +57,12 @@ failures are the consequence):
 | `userInputModel.lua` `new()` | ours plus their `editing` flag; **update every positional call site in the same commit** — `editorModel.lua` and two specs. A wrong positional binding fails two layers away and nothing raises |
 | `editorController.lua` | theirs as the base, then re-apply our edits to that file deliberately |
 | `controller.lua` | **neither side wholesale.** Express #45's editor reservations as entries in our `RESERVED` table — this is the one piece of real integration, and it is what `D-RESERVE-TABLE` exists for |
+
+**`T-DRIFT-PR45` is the ACTIVE register entry whose whole content is this work.** It
+carries the cost itemisation, the measured `set_text` verdict and the harness finding;
+read it before step 1 and **update or retire it when the import lands** — an ACTIVE
+entry describing work that is done is the failure mode this phase files entries to
+avoid.
 
 **The commit message states**: that it is a mechanical import of #45 at
 `16eb33d79fd8711e8c467d8581d47e6632b1607e`, **authored upstream, not our work**; the
@@ -106,6 +123,17 @@ After the import the tree carries both suites. The trial ran **1122 cases**
   Verified to stack: 1108/22, the same 22.
 - **`ACC-02`** — it runs *after* this, because #45 moves keys a hand-run checklist
   exercises.
+
+## Numbers, and how this phase has been getting them wrong
+
+**State the command beside any number you write, and do not cite a figure from a
+roadmap cell or a ledger entry — re-run it.** This is S69's F8, which session70 was
+asked to carry into this prompt and did not; the delivery review then found **four
+uncorrected counts** in that same session's own range, every one of them the same
+shape: *measured over set A, stated over a superset*. All four were caught by someone
+asking how the number was derived, which is not a check the process contains. The
+working form that has held is **command + explicit do-not-cite**, and the sites that
+carry it have stayed right.
 
 ## Standing constraints
 

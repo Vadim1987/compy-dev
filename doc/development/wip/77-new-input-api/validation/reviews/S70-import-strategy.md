@@ -130,9 +130,10 @@ The import lands the editor rework's suite next to ours: measured, **~1100 passi
 22 failing** until the reconciliation commits follow. The standing rule is *suite
 green at every commit, count stated in the message*.
 
-Three ways out, and this is the owner's call:
+**RULED (owner, 2026-09-03): (a) — the import commit is allowed to be red.** The
+options below are kept as the reasoning behind that ruling, not as an open question.
 
-- **(a) Ratify a one-off exception** — the import is not authored work, its message
+- **(a) Ratify a one-off exception** — **taken** — the import is not authored work, its message
   states the expected failing count and names the rows that close it, and green is
   required by the end of the reconciliation sequence. **Recommended:** it keeps the
   import mechanical and the reconciliation reviewable, which is the whole point of

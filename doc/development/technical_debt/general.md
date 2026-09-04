@@ -239,6 +239,11 @@ paid, or turned out not to be debt.
   `3256aac` neither the ledgers nor the ids exist.
 - **Found:** 2026-09-03, re-deriving the citation-hygiene rows — which had been sized at ~12
   sites and were measuring paths only.
+- **A pre-PR gate over this class was proposed 2026-09-03 and is with the owner** — *"I need to
+  discuss it"*. The argument for it: the sibling path rule had no mechanical check and the class
+  reached three figures under it; the command above would sit beside the marker gate and be re-run
+  at `ACC-03`/`PR-01`, so the class cannot regrow between the sweep and the release. **Unruled.**
+  It is recorded here rather than only in a session prompt, because a prompt chain breaks.
 - **Slugged, and scheduled late on purpose** (owner ruling, 2026-09-03). The rule landed
   immediately (`conventions/docs.md`, *Rules*) so the prose written from here on does not add to
   the pile; the **sweep runs after the two ledger-vacuuming passes**, because a vacuumed entry
@@ -246,7 +251,7 @@ paid, or turned out not to be debt.
 
 ## BACKLOG
 
-### The branch is 16 commits behind the platform's experimental line, beyond the editor rework
+### The branch is 15 commits behind the platform's experimental line, beyond the editor rework — 11 changes
 
 - **Where:** the platform repo's edge line (`5a52cba2`, 2026-09-03). It is **71 commits** ahead of
   the line this branch develops against; **52 of those are the editor rework** covered by
