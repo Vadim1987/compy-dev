@@ -84,6 +84,14 @@ owner and revisable, not a frozen mandate.
    mid-flight, executed the S68 delivery review's dispositions under five owner rulings, completed
    `FIX-01`'s three citation-hygiene rows, and applied its own peer review's four corrections —
    1055 held across all of its commits, which touched `doc/` and `agents/` only and no `.lua` at all.
+   **Session70 added none either**: the S69 dispositions, the `PROP-01` placement, a full upstream
+   reconnaissance across four repositories and two open upstream pull requests, and the merge plan
+   that came out of it — 1055 held across all 36 of its commits, no `.lua` touched.
+   **This number is about to change by design.** `MERGE-01-05` imports upstream PR #45, whose own
+   suite comes with it: the rehearsed tree ran **1122 cases (1100 passing / 22 failing)** before
+   reconciliation. The session that lands it **states the new count and its arithmetic in the merge
+   commit and updates this line in the same commit that reaches green** — a stale baseline here is
+   read as a go-signal.
    **The current session's `prompt.md` carries the authoritative number**, this line is the
    fallback.)
    **The pending count is 10 by owner ruling, not by drift** (2026-08-10): the original 3 are
@@ -387,7 +395,7 @@ Sessions 06–09 ran without tracks because no workflow document covered this ph
 
 ## Volatile pointer — the only line that changes between sessions
 
-- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session70/prompt.md`
+- **CURRENT PROMPT:** `doc/development/wip/77-new-input-api/implementation/sessions/session71/prompt.md`
 
 ## Commit authority (owner grant, 2026-07-18 — supersedes earlier per-session prohibitions)
 
