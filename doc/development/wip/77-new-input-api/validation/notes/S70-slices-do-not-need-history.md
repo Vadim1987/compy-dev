@@ -48,8 +48,10 @@ Run just now, `aldum/dev` → our head:
 | **shipping surface** | **113 files** — 114 before the drift document moved to the working tree |
 | unclassified | **0** — the gate passes unchanged |
 
-Partition: Set 1 **26** · Set 2 **17** · 3a **21** · 3b **22** · 3c **1** · 3d **3** ·
-3e **4** · 3f **8** · 3g **12**.
+Partition: Set 1 **26** · Set 2 **17** · 3a **20** · 3b **22** · 3c **1** · 3d **3** ·
+3e **4** · 3f **8** · 3g **12** — sums to 113. *(The first version of this table said
+`3a` 21 and summed to 114: it was written before the drift document moved out of the
+corpus, and the headline was corrected without the row. Re-derived 2026-09-04.)*
 
 Against the 2026-08-26 verification (100 files: 3a 11, 3b 21, 3d 3, 3e 4, 3f 7, 3g 12,
 Set 1 26, Set 2 15) the change is **+13 files**, almost all in `3a` (the persistent

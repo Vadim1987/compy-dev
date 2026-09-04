@@ -180,10 +180,15 @@ in place. **They stack.**
 
 ## 3. Toward the maze game's upstream — nothing to do
 
-**Every branch of the upstream repository is an ancestor of ours**, checked one by
-one rather than only on the branch we track: the development branch (last moved
-2026-07-24), the release branches, the reconciliation branch and the default
-branch. We are ahead of all of them and behind none.
+**Every *live* branch of the upstream repository is an ancestor of ours**, checked
+one by one rather than only on the branch we track: the development branch (last
+moved 2026-07-24), the current release branches, the reconciliation branch and the
+default branch. We are ahead of all of them and behind none.
+
+Two old release lines, from February and March, are **not** ancestors — and are not
+part of the upstream's own current line either, so there is nothing to take from
+them. They are recorded because the honest version of this claim is *"nine of
+eleven, and the other two are abandoned"*, not *"all"*.
 
 This is worth stating rather than omitting: *"no drift"* measured across every
 branch is a different claim from *"no drift"* measured on one, and only the first

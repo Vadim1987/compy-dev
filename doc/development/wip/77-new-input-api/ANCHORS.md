@@ -123,7 +123,7 @@ shas on each line): `38d7c754`, `6897d689`, `9693779a`, `ea6efd1d`.
 | repo | our head | branch | upstream ref | upstream head | drift |
 |---|---|---|---|---|---|
 | `balloons` | `c2bd9b99e7b2736be8ea41b376f31461e3a58f2e` | `main` | `origin-https/main` | `9e7a1e1a…` (2026-05-11) | **0** — frozen by owner attestation |
-| `maze` | `28213c722622448c8bcc70300a5e5dd9a51a9b43` | `newinput-edge` | `dsent-https/dsent/dev` | `b8cc436f…` (2026-07-24) | **0 on every branch** |
+| `maze` | `28213c722622448c8bcc70300a5e5dd9a51a9b43` | `newinput-edge` | `dsent-https/dsent/dev` | `b8cc436f…` (2026-07-24) | **0 on every live branch** — see the two dead ones below |
 | `keyboard` | `e5689611a0fa8740ce4f39b6f32ac61d399f7fdc` | `newinput` | `origin-https/dsent/dev` | `96d66292…` (2026-08-20) | **1 commit**, packaging only, merges clean |
 
 **The `keyboard` trap, first recorded at session 37 and still live:** the **local**
@@ -132,9 +132,20 @@ branch named `dsent/dev` is `eb90389515b86d994e3e3adda68919f986f064d7` — **8 a
 packaging commit). It is not a tracking mirror. Take upstream from
 `origin-https/dsent/dev`; never from the local name.
 
-**`maze` was checked branch by branch**, not only on the tracked one — `dsent/dev`,
-`feat/reconcile`, `main`, `v1`, `v1.1`, `v2`, `v3`, `v3.1`, `v3.2`, `v3.3`, `v3.4`.
-All are ancestors of our head.
+**`maze`, branch by branch — and two of the eleven are *not* ancestors, corrected
+2026-09-04 after the peer review checked what I had generalised.** Ancestors of our
+head: `dsent/dev`, `feat/reconcile`, `main`, `v2`, `v3`, `v3.1`, `v3.2`, `v3.3`,
+`v3.4` — nine. **Not ancestors: `v1` (1 commit) and `v1.1` (21).** They are abandoned
+release lines from February and March 2026, and **upstream's own `dsent/dev` does not
+contain them either** — so there is nothing to merge *from* them and the drift verdict
+is unchanged; what was wrong was the sentence, which named eleven branches on six
+measurements.
+
+```sh
+for b in $(git for-each-ref --format='%(refname:short)' refs/remotes/dsent-https); do
+  git merge-base --is-ancestor $b HEAD && echo "ancestor  $b" || echo "NOT       $b"
+done
+```
 
 ---
 
