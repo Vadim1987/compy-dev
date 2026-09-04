@@ -189,8 +189,11 @@ Measured, deeper than the first pass:
   example** (same file, two routes, 245 vs 247 lines) and `.gitignore`.
 
 Landed: `2a8ddc11` three register entries (2 ACTIVE, 1 BACKLOG; **maze gets none —
-zero drift is not debt**), `db926377` `doc/development/upstream_drift.md` in the
-**persistent** corpus and citation-clean by construction, `799d17e7` the merge plan
+zero drift is not debt**), `db926377` the stakeholder drift document,
+citation-clean by construction — first written into the **persistent** corpus, and
+**moved to `validation/notes/upstream-drift.md` the same day on the owner's ruling
+that it is a working-tree document**: shown to stakeholders during the release, not
+shipped, `799d17e7` the merge plan
 with ten risks.
 
 **The risk worth the owner's eye is R1** and it is not technical: merging #45 while

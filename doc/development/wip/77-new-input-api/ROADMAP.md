@@ -1598,9 +1598,10 @@ findings has now become release work.
 principle, every drift could be described as debt entry with its blast radius and what it costs.
 addressing them becomes a question of replanning and prioritization"*): `T-DRIFT-PR45` and
 `T-DRIFT-KEYBOARD` are ACTIVE, the edge's remainder is BACKLOG by decision, and **`maze` gets no
-entry because zero drift is not debt**. The stakeholder-readable version lives in the persistent
-corpus at `doc/development/upstream_drift.md` — *shown from this repo, so it carries no working-tree
-paths and no sprint ids.*
+entry because zero drift is not debt**. The stakeholder-readable version is
+[`validation/notes/upstream-drift.md`](validation/notes/upstream-drift.md) — **a working-tree
+document** (owner, 2026-09-03: it is shown to stakeholders during the release, not shipped), written
+in the corpus's terms all the same: no working-tree paths, no sprint ids.
 
 **The merge plan, with its risks evaluated, is
 [`validation/reviews/S70-merge-plan.md`](validation/reviews/S70-merge-plan.md)** — order, gates,

@@ -30,7 +30,7 @@ it is our merge base with the edge. The correct derivation subtracts both:
 git rev-list --count --no-merges HEAD..dsent-https/dsent/dev ^upstream-pr/45   # 15
 ```
 
-Corrected in the register entry and in `doc/development/upstream_drift.md`.
+Corrected in the register entry and in [`upstream-drift.md`](upstream-drift.md).
 
 ## 1. The 15, by what they would do to our tree
 

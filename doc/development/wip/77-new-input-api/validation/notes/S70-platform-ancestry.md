@@ -137,6 +137,6 @@ actually mean is *"changes in A not in B"*, and the command for that is `git che
 
 - `technical_debt/general.md`, the edge entry: 15 shas, **11 by content**, with the
   four duplicates named.
-- `doc/development/upstream_drift.md`: same, at stakeholder altitude.
+- [`upstream-drift.md`](upstream-drift.md): same, at stakeholder altitude.
 - The merge plan: generate against **`dev + #45`**, and R2's likelihood is raised
   with the rebase-changes-behaviour trap stated.

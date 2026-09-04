@@ -4,9 +4,17 @@ status: active
 audience: stakeholder
 authored: llm
 reviewed: none
+session: 70
+date: 2026-09-03
 ---
 
 # Upstream drift — where we stand against each line we merge with
+
+**A working-tree document** (owner, 2026-09-03), kept with the feature's other
+evidence and **not** part of the persistent corpus — it is written to be *shown* to
+stakeholders from this repository during the release, not to survive it. It is
+nonetheless written in the corpus's terms: no sprint ids, no working-tree paths, and
+nothing a reader outside this tree cannot resolve.
 
 **Measured 2026-09-03.** Four repositories, four upstreams, one question each:
 *how far apart are we, what is in the gap, and what does closing it cost?*
@@ -140,7 +148,7 @@ why "it merges" is not the same as "it still works".
 storage-fallback commit widens the widget's label from a string to *either* a
 string *or* a `{ text, tone }` pair, and the status line colours the tone. The
 project-facing `prompt` setting documented in
-[the input API guide](../input_api.md) writes exactly that field. Verified: the
+[the input API guide](../../../../../input_api.md) writes exactly that field. Verified: the
 widened form works through our code. So the decision is whether the guide
 **admits** it, refuses it, or stays silent — all three defensible, none automatic.
 
