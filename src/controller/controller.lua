@@ -535,6 +535,12 @@ Controller = {
       if love.PROFILE then
         Prof.update()
       end
+      if Serial and SerialPort then
+        for _, f in ipairs(SerialPort:update()) do
+          print('serial fault [' .. f.env .. ']: ' ..
+            tostring(f.err))
+        end
+      end
       if click_timer > 0 then
         click_timer = click_timer - dt
       end
