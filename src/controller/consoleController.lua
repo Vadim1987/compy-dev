@@ -1559,6 +1559,9 @@ function ConsoleController:stop_project_run()
   View.clear_snapshot()
   self.main_ctrl.set_love_draw(self, self.view)
   self.main_ctrl.clear_user_handlers(self)
+  -- The program's serial handlers go with its other handlers:
+  -- a stopped project must not keep hearing the board.
+  SerialPort:programEnded()
   self.main_ctrl.report()
   love.state.app_state = 'project_open'
 end
