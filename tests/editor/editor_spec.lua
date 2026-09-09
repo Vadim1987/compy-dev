@@ -965,8 +965,12 @@ describe('Editor #editor', function()
     it('the console widget keeps plain keys', function()
       --- a console-style input: no editing flag
       local model = UserInputModel(
-        TU.mock_view_cfg(), LuaEval(), false, 'console')
-      local con = UserInputController(model)
+        TU.mock_view_cfg(), LuaEval(), 'console')
+      --- MERGE MECHANICS, not this spec's subject: since
+      --- this branch, a widget only takes keys while it is
+      --- shown, and the console's is a permanent surface.
+      --- Without this the presses below no-op silently.
+      local con = UserInputController(model):always_shown()
       --- keypressed refreshes the view first; a stub
       --- is enough, the spec is about the keys
       con.view = { refresh = function() end }
@@ -1351,6 +1355,68 @@ describe('Editor #editor', function()
       end)
     end)
 
+    --- Shift+Esc is the rework's documented way out
+    --- (spec 2.3). It is the ONLY exit that consults the
+    --- discard guard, and the guarantee below is what makes
+    --- it safe: an unwritten block cannot leave through it.
+    --- The two Ctrl chords that leave without the guard are
+    --- technical_debt/input.md, T-LEAVE-KEYS-LOSES-BLOCK.
+    describe('leaving through Shift+Esc (2.3)', function()
+      require("tests.helpers.codesnippets")
+      local controller, press, inter, left
+
+      before_each(function()
+        local f1 = mock_func_snippet('one')
+        controller, press = wire(TU.mock_view_cfg())
+        local save = TU.get_save_function(f1)
+        controller:open('main.lua', f1 .. '\n', save)
+        inter = controller.input
+        left = false
+        controller.console = {
+          finish_edit = function() left = true end,
+        }
+      end)
+
+      it('a dirty block cannot leave: it asks instead',
+        function()
+          mock.keystroke('return', press)
+          inter:set_text(string.lines(
+            mock_func_snippet('renamed')))
+          mock.keystroke('S-escape', press)
+          assert.same('discard', controller.pending_confirm)
+          assert.is_false(left)
+          assert.same('edit', controller:get_mode())
+        end)
+
+      it('a clean block leaves the block, not the editor',
+        function()
+          mock.keystroke('return', press)
+          mock.keystroke('S-escape', press)
+          assert.same('nav', controller:get_mode())
+          assert.is_nil(controller.pending_confirm)
+          assert.is_false(left)
+        end)
+
+      it('in nav with nothing loaded it leaves the editor',
+        function()
+          assert.same('nav', controller:get_mode())
+          assert.is_true(inter:is_empty())
+          mock.keystroke('S-escape', press)
+          assert.is_true(left)
+        end)
+
+      it('confirming the discard leaves the block only',
+        function()
+          mock.keystroke('return', press)
+          inter:set_text(string.lines(
+            mock_func_snippet('renamed')))
+          mock.keystroke('S-escape', press)
+          mock.keystroke('return', press)
+          assert.same('nav', controller:get_mode())
+          assert.is_false(left)
+        end)
+    end)
+
     describe('mouse (2.9)', function()
       require("tests.helpers.codesnippets")
       local controller, press, buffer, inter
@@ -1571,6 +1637,62 @@ describe('Editor #editor', function()
         session = EditorSession(controller, press, save, mock)
       end)
 
+      -- 'nav' is what leaving search returns to, and it is
+      -- the SAME state these cases pinned as 'edit' before
+      -- the upstream editor rework: that rework made the two
+      -- modes explicit, so 'nav' is the default (moving
+      -- between blocks) and 'edit' now means inside an open
+      -- block. `is_normal_mode()` still answers true to both.
+      describe('search mode', function()
+        before_each(function()
+          love.system = {
+            getClipboardText = function() return '' end,
+          }
+        end)
+
+        -- A typed query arrives one character at a time
+        -- (doc/development/internals/user_input.md, "Data
+        -- flow"), which is what a search box gets in practice;
+        -- handing the controller the whole string was a
+        -- shortcut the device never takes. mock.textinput with
+        -- an explicit handler is exactly that handler call, so
+        -- it buys nothing here.
+        local function type_search(text)
+          for ch in text:gmatch('.') do
+            controller:textinput(ch)
+          end
+        end
+
+        it('types a query and Enter jumps to its definition', function()
+          local alpha = mock_func_snippet('alpha')
+          local beta = mock_func_snippet('beta')
+          session:open(src(alpha, '', beta), 3)
+
+          mock.keystroke('C-f', press)
+          type_search('beta')
+          mock.keystroke('return', press)
+
+          assert.same('nav', controller:get_mode())
+          assert.same(3, session.buffer:get_selection())
+          assert.is_true(controller.search.input:is_empty())
+        end)
+
+        it('Escape leaves search without moving the selection', function()
+          local alpha = mock_func_snippet('alpha')
+          local beta = mock_func_snippet('beta')
+          session:open(src(alpha, '', beta), 3)
+          session:select_block(1)
+
+          mock.keystroke('C-f', press)
+          type_search('beta')
+          mock.keystroke('escape', press)
+
+          assert.same('nav', controller:get_mode())
+          assert.same(1, session.buffer:get_selection())
+          assert.is_true(controller.search.input:is_empty())
+        end)
+      end)
+
       describe("replacement with", function()
         it('single normal block', function()
           local f_orig = mock_func_snippet("orig")
@@ -1751,6 +1873,26 @@ describe('Editor #editor', function()
           assert.same( edited.."\n", savefile() )
         end)
 
+      end)
+
+      -- Block navigation at the buffer limit: with block #3
+      -- open in the input, 'down' and the first 'up' stay
+      -- inside it; the next 'up' crosses out to the previous
+      -- block. Guards block navigation against the widget's own
+      -- line-scope limit handling (is_at_limit).
+      describe("navigation at the block limit", function()
+        it('up at the top limit navigates blocks', function()
+          local f1 = mock_func_snippet("one")
+          local f2 = mock_func_snippet("two")
+          local _, buffer = session:open(src(f1, '', f2), 3)
+          session:select_and_open_block(3)
+          mock.keystroke('down', press)
+          assert.equal(3, buffer.selection)
+          mock.keystroke('up', press)
+          assert.equal(3, buffer.selection)
+          mock.keystroke('up', press)
+          assert.is_true(buffer.selection < 3)
+        end)
       end)
 
       describe("insertion of", function()
