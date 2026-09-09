@@ -11,8 +11,10 @@ local class = require('util.class')
 --- @field cfg Config
 EditorModel = class.create(function(cfg)
   return {
-    input = UserInputModel(cfg, LuaEval(),
-      false, nil, true),
+    -- editing = true: the editor's rich input (#45). The
+    -- oneshot slot this call used upstream is gone, so the
+    -- label stays nil and `editing` moves up one position.
+    input = UserInputModel(cfg, LuaEval(), nil, true),
     buffers = Dequeue.new({}, 'BufferModel'),
     search = Search(cfg),
     cfg = cfg,

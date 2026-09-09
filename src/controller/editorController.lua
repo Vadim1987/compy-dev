@@ -10,11 +10,15 @@ local class = require('util.class')
 --- @oaram CC ConsoleController
 local function new(M, CC)
   return {
-    input = UserInputController(M.input, nil, true),
+    -- Host chrome, not a transient widget: always_shown makes
+    -- hide() refuse rather than leave the editor without an
+    -- input line. Selection is disabled on both surfaces.
+    input = UserInputController(M.input, true, true)
+        :always_shown(),
     model = M,
     search = SearchController(
       M.search,
-      UserInputController(M.search.input, nil, true)
+      UserInputController(M.search.input, true):always_shown()
     ),
     console = CC,
     view = nil,
@@ -44,6 +48,28 @@ end
 --- @field accepted_n integer --- blocks the last
 --- acceptance produced; the leave gate steps past them
 EditorController = class.create(new)
+
+--- @private
+--- DEPRECATED (owner ruling, 2026-09-06). Ctrl+Shift+S
+--- leaves the editor and stays bound, but Shift+Esc is the
+--- supported way out and this chord is on its way to
+--- removal. Its author calls it inherited, absent from the
+--- editor spec, and it is undocumented in the editor's own
+--- keymap. It is kept only because our shipped guide, the
+--- README walkthrough and a spec of ours all carry it.
+--- It also LOSES an open changed block: this path reaches
+--- finish_edit with no acceptance step
+--- (technical_debt/input.md, T-LEAVE-KEYS-LOSES-BLOCK).
+--- Route-level and not a gate reservation, because the gate
+--- binds only what competes with a running project
+--- (D-EXACT-RESERVE, "Scope"), and nothing runs while the
+--- editor owns the route.
+--- @param k string
+function EditorController:_leave_keys(k)
+  if k == "s" and Key.shift() and not Key.alt() then
+    self.console:finish_edit()
+  end
+end
 
 --- @param v EditorView
 function EditorController:init_view(v)
@@ -1519,6 +1545,7 @@ function EditorController:keypressed(k)
     if k == "f" then
       self:set_mode('search')
     end
+    self:_leave_keys(k)
   end
 
   if mode == 'reorder' then
