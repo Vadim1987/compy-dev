@@ -159,15 +159,18 @@ default, and entered input will be appended to the end.
 
 ![hello](./doc/interface/hello.apng)
 
-To modify an existing line, navigate there with
-<kbd>⇧</kbd>/<kbd>⇩</kbd>. Then load the text by pressing
-<kbd>Esc</kbd>, make the desired changes, then send it back with
-<kbd>Enter ⏎</kbd>
+To modify an existing block, navigate there with
+<kbd>⇧</kbd>/<kbd>⇩</kbd>. Open it for editing by pressing
+<kbd>Enter ⏎</kbd>, make the desired changes, then send it back
+with <kbd>Enter ⏎</kbd>
 
 ![capitalized](./doc/interface/hello_cap.apng)
 
-Happy with the modifications now, we can quit by pressing
-<kbd>Ctrl-Shift-S</kbd>
+Happy with the modifications now, we can leave the editor by
+pressing <kbd>Shift-Esc</kbd>. <kbd>Ctrl-Shift-S</kbd> also
+leaves, but it is **deprecated** and will be removed — it skips
+the acceptance step, so an open block you have changed is not
+written.
 
 ![quit](./doc/interface/quit_editor.apng)
 
