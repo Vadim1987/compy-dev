@@ -561,7 +561,7 @@ Controller = {
         Prof.update()
       end
       if Serial and SerialPort then
-        for _, f in ipairs(SerialPort:update()) do
+        for _, f in ipairs(SerialPort:update(dt)) do
           print('serial fault [' .. f.env .. ']: ' ..
             tostring(f.err))
         end

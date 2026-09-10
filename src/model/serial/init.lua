@@ -1,5 +1,6 @@
 require('model.serial.line_reader')
 require('model.serial.dispatcher')
+require('model.serial.echo')
 
 --- Backend contract:
 ---   backend:start(sink)  sink.attach(info), sink.detach(),
@@ -17,6 +18,7 @@ require('model.serial.dispatcher')
 --- @field programPaused function
 --- @field programContinued function
 --- @field programEnded function
+--- @field echo Echo
 --- @field update function
 --- @field stop function
 Serial = {}
@@ -32,6 +34,7 @@ function Serial.new(backend, max_line)
   self.dispatcher = Dispatcher.new()
   self.faults = {}
   self.connected = false
+  self.echo = Echo.new(io.write, print)
   for _, env in ipairs({ 'console', 'program' }) do
     local t = self.dispatcher:table_for(env)
     t.send = function(line)
@@ -127,8 +130,10 @@ end
 
 --- Call once per update loop
 --- @return table[] errors
-function Serial:update()
+--- @param dt number
+function Serial:update(dt)
   self:fault(self.backend:poll())
+  self.echo:tick(dt)
   local errors = self.dispatcher:pump()
   for _, f in ipairs(self.faults) do
     errors[#errors + 1] = f

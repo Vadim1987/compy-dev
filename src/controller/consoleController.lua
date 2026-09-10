@@ -1444,6 +1444,22 @@ function ConsoleController.prepare_env(cc)
     SerialPort = Serial.new(NullBackend.new())
   end
 
+  --- Show what the board sends, or stop showing it. Off
+  --- until something asks for it.
+  --- @param on boolean?
+  prepared.echo             = function(on)
+    local port = SerialPort:table_for('console')
+    if on == false then
+      SerialPort.echo:off()
+      port.onBytes = nil
+      return
+    end
+    SerialPort.echo:on()
+    port.onBytes = function(chunk)
+      SerialPort.echo:bytes(chunk)
+    end
+  end
+
   local compy_namespace     = get_compy_namespace(terminal,
     false, cc, SerialPort:table_for('console'))
   prepared.compy            = compy_namespace
