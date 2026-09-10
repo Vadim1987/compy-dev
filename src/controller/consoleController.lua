@@ -394,6 +394,9 @@ function ConsoleController:run_project(name)
       -- construct-at-open would leave every restart on the
       -- previous run's widget.
       build_input_widget(self.cfg)
+      -- The program speaks for the board from here on; the
+      -- console's own listeners wait until it has stopped.
+      SerialPort:programStarted()
       local rok, run_err = run_user_code(f, self, path)
       if not rok then
         -- Top-level code raised, so the route was never

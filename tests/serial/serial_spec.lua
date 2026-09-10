@@ -7,6 +7,29 @@ local function make()
 end
 
 describe('Serial', function()
+  it('mutes the console while a program runs', function()
+    local s, b = make()
+    local heard = {}
+    s:table_for('console').onBytes = function(c)
+      heard[#heard + 1] = c
+    end
+    b:attach({ name = 'mb' })
+    s:update(0)
+    b:rx('one')
+    s:update(0)
+    assert.same({ 'one' }, heard)
+
+    s:programStarted()
+    b:rx('two')
+    s:update(0)
+    assert.same({ 'one' }, heard)
+
+    s:programEnded()
+    b:rx('three')
+    s:update(0)
+    assert.same({ 'one', 'three' }, heard)
+  end)
+
   it('starts disconnected', function()
     local s = make()
     assert.is_false(s:isConnected())

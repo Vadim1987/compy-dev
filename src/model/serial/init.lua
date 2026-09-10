@@ -15,6 +15,7 @@ require('model.serial.echo')
 --- @field table_for function
 --- @field send function
 --- @field isConnected function
+--- @field programStarted function
 --- @field programPaused function
 --- @field programContinued function
 --- @field programEnded function
@@ -113,6 +114,14 @@ function Serial:isConnected()
   return self.connected
 end
 
+--- A running program speaks for the board, so the console
+--- stops listening while it does — otherwise both print what
+--- arrives and every answer is shown twice.
+function Serial:programStarted()
+  self.dispatcher:suspend_env('console')
+  self.echo:off()
+end
+
 --- Stopped, but continue() may follow
 function Serial:programPaused()
   self.dispatcher:suspend_env('program')
@@ -126,6 +135,7 @@ end
 function Serial:programEnded()
   self.dispatcher:resume_env('program')
   self.dispatcher:clear_env('program')
+  self.dispatcher:resume_env('console')
 end
 
 --- Call once per update loop
