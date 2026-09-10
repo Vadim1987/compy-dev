@@ -30,6 +30,29 @@ describe('Serial', function()
     assert.same({ 'one', 'three' }, heard)
   end)
 
+  it('hears again when the program falls idle', function()
+    local s, b = make()
+    local heard = {}
+    s:table_for('console').onBytes = function(c)
+      heard[#heard + 1] = c
+    end
+    local kept = function() end
+    b:attach({ name = 'mb' })
+    s:update(0)
+
+    s:programStarted()
+    s:table_for('program').onBytes = kept
+    b:rx('one')
+    s:update(0)
+    assert.same({}, heard)
+
+    s:programIdle()
+    b:rx('two')
+    s:update(0)
+    assert.same({ 'two' }, heard)
+    assert.equal(kept, s:table_for('program').onBytes)
+  end)
+
   it('starts disconnected', function()
     local s = make()
     assert.is_false(s:isConnected())

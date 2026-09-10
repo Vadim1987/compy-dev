@@ -16,6 +16,7 @@ require('model.serial.echo')
 --- @field send function
 --- @field isConnected function
 --- @field programStarted function
+--- @field programIdle function
 --- @field programPaused function
 --- @field programContinued function
 --- @field programEnded function
@@ -120,6 +121,14 @@ end
 function Serial:programStarted()
   self.dispatcher:suspend_env('console')
   self.echo:off()
+end
+
+--- The program's top-level code has finished without taking
+--- the frame: nothing speaks for the board any more, so the
+--- console listens again. Handlers the program set stay —
+--- it has not stopped, it is only idle.
+function Serial:programIdle()
+  self.dispatcher:resume_env('console')
 end
 
 --- Stopped, but continue() may follow

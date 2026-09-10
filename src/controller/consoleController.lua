@@ -417,6 +417,9 @@ function ConsoleController:run_project(name)
         self.main_ctrl.clear_user_handlers(self)
         self:get_project_env().compy.before_exit =
             default_before_exit
+        -- Its serial handlers go the same way, by the same
+        -- invariant, and the console is heard again.
+        SerialPort:programEnded()
         love.state.app_state = 'project_open'
         print('Error: ', run_err)
       else
@@ -431,6 +434,10 @@ function ConsoleController:run_project(name)
           -- route there is nothing left to exempt.
           -- (doc/development/decisions/input.md,
           -- D-ROUTE-LIFETIME.)
+          -- Serial is the exception: the program is idle, not
+          -- stopped, so its handlers stay, but it is no longer
+          -- the one speaking and the console listens again.
+          SerialPort:programIdle()
           love.state.app_state = 'project_open'
         end
       end
