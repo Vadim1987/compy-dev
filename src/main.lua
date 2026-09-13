@@ -1,5 +1,6 @@
 local redirect_to = require("model.io.redirect")
 local OS = require("util.os")
+local AndroidStorage = require("util.androidStorage")
 
 require("model.consoleModel")
 require("controller.controller")
@@ -122,27 +123,13 @@ local config_view = function(flags)
   }
 end
 
---- Find removable and user-writable storage
---- Assumptions are made, which might be specific to the target
---- platform/device
+--- Find the SD card's storage root
 --- @return boolean success
 --- @return string? path
 local android_storage_find = function()
-  -- Yes, I know. We are working with the limitations
-  --- of Android here.
-  local quadhex = string.times('[0-9A-F]', 4)
-  local uuid_regex = quadhex .. '-' .. quadhex
-  local regex = '/dev/fuse /storage/' .. uuid_regex
-  local grep = string.format("grep /proc/mounts -e '%s'", regex)
-  local _, result = OS.runcmd(grep)
-  local lines = string.lines(result or '')
-  if not string.is_non_empty_string_array(lines) then
-    return false
-  end
-  local tok = string.split(lines[1], ' ')
-  if string.is_non_empty_string_array(tok) then
-    return true, tok[2]
-  end
+  local _, mounts = OS.runcmd('cat /proc/mounts')
+  local root = AndroidStorage.find_card(mounts or '')
+  if root then return true, root end
   return false
 end
 
