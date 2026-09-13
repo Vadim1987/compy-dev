@@ -183,11 +183,11 @@ package-js-dir DT: version
   node render_md.js
   rm ../$WEB/theme/bg.png
   # cp index.html ../$WEB
-  sed -e 's/%%VERSION%%/{{VERSION}}/' index.html \
+  sed -e 's:%%VERSION%%:{{VERSION}}:' index.html \
       > ../$WEB/index.html
   cat head.html ../{{DIST}}/_readme.html \
       >  ../$WEB/readme.html
-  sed -e 's/%%VERSION%%/{{VERSION}}/' tail.html \
+  sed -e 's:%%VERSION%%:{{VERSION}}:' tail.html \
       >> ../$WEB/readme.html
   cp love.css ../$WEB/theme/
 
