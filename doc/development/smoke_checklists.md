@@ -9,14 +9,15 @@ gate — where each detached example repo's gate is a human smoke pass — and t
 changed the code.
 
 **Which examples owe a list** (measured 2026-08-13; Phase G carries the full reasoning): this
-feature changed code in twelve examples — nine tracked and three detached. **All four owed lists
-now exist**: `keyboard`, `maze`+`draw`, `balloons` (detached, so its PR's only gate is this pass)
-and `sapper` (tracked, but its input mechanism changed materially and it carries a live defect).
+feature changed code in twelve examples — nine tracked and three detached. **The owed lists
+exist**: `keyboard`, `maze`+`draw` and `balloons` (detached, so its PR's only gate is this pass).
+Sapper owed one too and ships from <https://github.com/dsent/compy.sapper>, outside this
+repository.
 The remaining tracked examples ride the platform PR's review pass.
 
 **A fifth was added 2026-08-30: `turtle`.** It moved onto the widget's own hide at `FEAT-02`, so its widget
-lifecycle is now the framework's rather than its own — the same class of change that earned `sapper`
-a list, and the only in-tree consumer of the key. **It changed again on 2026-09-08** (`BUG-03-03`):
+lifecycle is now the framework's rather than its own — the class of change that earns a list — and
+it is the only in-tree consumer of the key. **It changed again on 2026-09-08** (`BUG-03-03`):
 its two keyboard channels moved from `love.keypressed`/`love.keyreleased` to
 `compy.input.hooks.*`, because a handler captured from `love.*` now consumes its channel and would
 have shielded turtle's own widget. Nothing a player does should differ — group C is the pass that
@@ -35,14 +36,13 @@ result nobody can invalidate is banked before the exposed ones:
 | **1** | `balloons` | 5 ahead / 0 behind its upstream — no divergence to reconcile, so no later merge can invalidate the result |
 | **2** | `keyboard` | reconciled 2026-08-11; upstream may have moved since |
 | **3** | `maze` + `draw` | reconciled against a base dated 2026-07-24 |
-| **4** | `sapper` | in-repo, so it moves with the platform |
-| **5** | `turtle` | in-repo, and the last mechanism to land; run it beside `sapper` |
-| **6** | `sine` | in-repo, one row, no game to learn; run it last or first, it depends on nothing |
+| **4** | `turtle` | in-repo, and the last mechanism to land |
+| **5** | `sine` | in-repo, one row, no game to learn; run it last or first, it depends on nothing |
 
 *(**The upstream merges run before these passes, not after**, so "no later merge can invalidate the
 result" is true of every row above and not only the first.)*
 
-**Report a result by the list's name — `balloons`, `keyboard`, `maze` + `draw`, `sapper`,
+**Report a result by the list's name — `balloons`, `keyboard`, `maze` + `draw`,
 `turtle` — and by the commit it ran against.** These rows were once keyed by the development
 sprint's own step ids; the numbers above are reading order for one sitting and nothing else. A
 checklist outlives the plan that scheduled it, and a result filed under a step id becomes
@@ -401,97 +401,6 @@ re-arm.
 - **D2** is the echo check every list carries; a doubled character is a platform-side defect, not a
   balloons one.
 - Everything else is a regression check against behaviour the example already had.
-
----
-
-## sapper
-
-**In-repo** (`src/examples/sapper`), so it ships with the platform PR and has no separate remote.
-**Last mechanism change:** 2026-09-08 — `love.mousepressed` became
-`compy.input.hooks.mousepressed`, so one spelling covers all three of this game's pointer channels.
-**What to watch:** the Shift+click and Ctrl+click chords still act, and nothing a click does leaks
-into the console strip underneath. Before that, `b1885568` — single and double clicks are
-**emitted as events** through the gateway, retiring the direct `compy.singleclick` /
-`compy.doubleclick` entry points.
-The example's own logic was left alone: against its original import the file differs only in those
-two registration lines.
-
-**Read this before running: one row is expected to fail, by ruling.** See section C.
-
-### The two commits a result should be reported against
-
-| what | ref | commit |
-|---|---|---|
-| platform repo, the branch under test | `feature/77-newapi-analysis-s20260615` | **`c7e065c3`** |
-| platform edge upstream, for comparison | `dsent/dsent/dev` | **`9ed375d4`** |
-
-### How to launch
-
-- **Desktop / nodejs:** from the repo root, `love src play src/examples/sapper`.
-- **The exit row (D1) needs the IDE**, as elsewhere: `love src`, then open the project.
-
-**The controls, which are unusual and deliberate:** a **single click flags** a cell; a **double
-click unlocks** it. Because a single tap is often accidental on a touch device and a double tap
-unreliable, the example also offers a **press-time** route with a modifier held — **`Shift`+press
-flags**, **`Ctrl`+press unlocks** — and that route acts immediately, without waiting out the
-double-click window. It is a touch fallback, not a shortcut, and it was kept deliberately
-(`technical_debt/input.md`, *"sapper's modifier click path is a touch fallback…"*).
-
-### A — the derived clicks, which now arrive as events
-
-| | do | expect |
-|---|---|---|
-| A1 | with no modifier held, single-click a covered cell | it is **flagged** |
-| A2 | single-click the same cell again | the flag is **removed** — flagging toggles |
-| A3 | double-click a covered cell | it is **unlocked** |
-| A4 | double-click with the game in `ready` state | the mode advances, as before |
-| A5 | after a win or a loss, double-click anywhere | a new game starts |
-| A6 | click and **drag** before releasing | **nothing happens** — a drifting pointer discards the derived click, unchanged |
-
-### B — the press-time modifier route (the touch fallback)
-
-**Hold the modifier down for the whole gesture** in these rows. Releasing it early is section C.
-
-| | do | expect |
-|---|---|---|
-| B1 | hold `Shift`, click a covered cell, **keep holding** ~1 s, release | the cell is flagged, and **stays** flagged |
-| B2 | hold `Ctrl`, click a covered cell, keep holding ~1 s, release | the cell is unlocked |
-| B3 | hold `Shift`+`Alt` together and click | **nothing happens** — each route demands *its* modifier and neither of the other two |
-| B4 | hold `Ctrl`+`Shift` and click | **nothing happens**, same rule |
-| B5 | hold `Alt` alone and click | **nothing happens** |
-| B6 | compare B1's timing against A1's | B1 acts **immediately**; A1 waits out the double-click window (~0.4 s). That gap is the point of the fallback |
-
-### C — the known defect: let go of Shift too soon and the flag undoes itself
-
-**This row is expected to fail, and the failure is not yours to report as new.** It predates this
-feature entirely, was ruled on 2026-08-11, and was **accepted without a guard**.
-
-| | do | expect |
-|---|---|---|
-| C1 | hold `Shift`, click a covered cell, and **release `Shift` immediately** | the cell flags, then **un-flags about 0.4 s later**. Net effect: *shift-click appears to do nothing* |
-
-**Why.** `Shift`+press flags at once. The gateway synthesises the derived single click ~0.4 s later
-(`controller.lua`, `click_delay`) and a derived click samples its modifiers **at synthesis time**,
-not at press. Shift is gone by then, so the echo arrives unmodified, passes the plain hook's
-*"nothing held"* guard, and runs the action a second time — and flagging toggles.
-
-**What to report.** Only a *deviation from this description*. If C1 behaves differently — no undo
-at all, or an undo that also fires while Shift is still held (which would contradict B1) — that is
-a real finding. The described behaviour itself is recorded in `technical_debt/input.md`.
-
-### D — on the way out
-
-| | do | expect |
-|---|---|---|
-| D1 | leave with `Ctrl+Esc` (**IDE launch**) | you are back in the console |
-
-### What a failure here means
-
-- **A1–A6** are the event-emission change. The example's logic did not move, so a difference here
-  is a **platform** defect in how derived clicks are routed, not a sapper one.
-- **B1–B6** are the press path. It was reverted to its original shape deliberately after a
-  conversion broke it; a failure means the revert was incomplete.
-- **C1** is the known defect. Confirm it matches the description; do not file it as new.
 
 ---
 

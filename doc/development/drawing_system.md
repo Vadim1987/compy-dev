@@ -10,7 +10,7 @@ User projects can draw in one of two ways, selected by whether `love.draw` is ov
 
 Project code calls `gfx.*` primitives imperatively — in response to events (clicks, input) or at startup. There is no per-frame redraw loop. The framework composites everything on each frame regardless, but the virtual canvas only changes when the project explicitly draws to it, so unchanged content persists for free.
 
-**Example:** `src/examples/sapper` — all drawing happens in click handlers (`drawCellLocked`, `drawCellFlagged`, etc.). The board is drawn once at setup and partially updated on each user action.
+**Example:** `src/examples/sine` — plots the curve once at startup and defines no `love.draw`; the plot stays on the canvas with nothing redrawing it.
 
 ### Real-time draw mode
 

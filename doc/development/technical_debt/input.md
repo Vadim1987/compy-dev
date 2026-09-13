@@ -2024,8 +2024,10 @@ chord and of what our re-homing adopted.
 - **Revisit:** when a project needs held-chord state and the honest answer is still a poll —
   which is what the keyboard example's help overlay does today, deliberately.
 
-### sapper's modifier click path is a touch fallback, and converting it needs the platform's help
+### sapper's modifier click path is a touch fallback, and converting it needs the platform's help (RESOLVED, 2026-09-14)
 
+- **Resolved:** the sapper example left this repository. Sapper ships from
+  <https://github.com/dsent/compy.sapper>.
 - **Where:** `src/examples/sapper/main.lua` — the two guarded click hooks and `love.mousepressed`.
 - **What it is.** Shift+press flags and Ctrl+press unlocks, each guarded as *this modifier and
   none of the other two*; the plain click hooks act only when nothing is held. **Its purpose is
@@ -2224,7 +2226,10 @@ be silently narrowed later (any change is a separate, owner-gated decision):
   `oneshot` flag. Its survival under a console/editor re-plug remains a
   tracked future concern, out of the input API's scope.
 
-### paint's `useCanvas(btn)` means a mouse button on one path and a click count on the other (pre-existing)
+### paint's `useCanvas(btn)` means a mouse button on one path and a click count on the other (pre-existing; RESOLVED, 2026-09-14)
+
+**Resolved:** the paint example left this repository. The Paint that ships with
+Compy is a different program, <https://github.com/dsent/compy.paint>.
 
 `src/examples/paint/main.lua` calls `useCanvas(x, y, btn)` from two places, and `btn` means
 something different in each:
@@ -4982,8 +4987,9 @@ console terminal** and defines no `love.draw` of its own does reach it, so the c
 prompt stays on screen for the whole run, inert: the input route belongs to the project, so
 anything typed at that strip goes to the project, not to the prompt it appears to offer.
 
-`src/examples/sapper` is the case in hand — it renders the minefield as terminal output and
-binds only the derived clicks, so the strip sits under the game field for the entire session.
+The sapper example, since removed from this repository, was the case in hand — it rendered the
+minefield as terminal output and bound only the derived clicks, so the strip sat under the game
+field for the entire session.
 Surfaced by the owner's smoke test as *"any chance to not show inactive console input at the
 bottom?"*.
 
