@@ -1,0 +1,99 @@
+From 4ba61caef53575f9cc272e40fc3dc457a5fbf0c3 Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Tue, 14 Jul 2026 10:51:43 +0000
+Subject: [PATCH 11/12] feat(editor): draw the active line, follow it on scroll
+
+- draw_highlight paints the active line's wrapped rows a
+  shade brighter (fg at .125 alpha) inside the block
+  highlight; no new palette keys, tunable later
+- BufferView:follow_line() scrolls just enough to keep
+  the active line's wrapped rows in range, the line-wise
+  sibling of follow_selection
+- covered by a spec walking the line out of the viewport
+  in both directions; suite at 693 green
+---
+ src/view/editor/bufferView.lua | 28 ++++++++++++++++++++++++++++
+ tests/editor/editor_spec.lua   | 21 +++++++++++++++++++++
+ 2 files changed, 49 insertions(+)
+
+diff --git a/src/view/editor/bufferView.lua b/src/view/editor/bufferView.lua
+index bd13404..5b8de5b 100644
+--- a/src/view/editor/bufferView.lua
++++ b/src/view/editor/bufferView.lua
+@@ -268,6 +268,21 @@ function BufferView:follow_selection()
+   end
+ end
+ 
++--- Scroll just enough to keep the active line visible
++function BufferView:follow_line()
++  local al = self.buffer:get_active_line()
++  local wl = self.content.wrap_forward[al]
++  if not wl then return end
++  local r = self.content.range
++  local first = wl[1]
++  local last = wl[#wl]
++  if first < r.start then
++    self:scroll('up', r.start - first)
++  elseif last > r.fin then
++    self:scroll('down', last - r.fin)
++  end
++end
++
+ --------------
+ ---  draw  ---
+ --------------
+@@ -329,6 +344,19 @@ function BufferView:draw(special)
+         end
+       end
+     end
++
++    --- the active line, a shade brighter inside the block
++    local al = self.buffer:get_active_line()
++    local wl = self.content.wrap_forward[al]
++    if wl then
++      gfx.setColor(Color.with_alpha(colors.fg, .125))
++      for _, v in ipairs(wl) do
++        if self.content.range:inc(v) then
++          local l_y = (v - off - 1) * fh
++          gfx.rectangle('fill', 0, l_y, width, fh)
++        end
++      end
++    end
+   end
+ 
+   local draw_text = function()
+diff --git a/tests/editor/editor_spec.lua b/tests/editor/editor_spec.lua
+index 8c77934..bc490d8 100644
+--- a/tests/editor/editor_spec.lua
++++ b/tests/editor/editor_spec.lua
+@@ -209,6 +209,27 @@ describe('Editor #editor', function()
+         assert.same(off, bv:get_offset())
+         assert.same(start_range, visible.range)
+       end)
++      it('follows the active line', function()
++        --- walk the line up out of the viewport
++        for _ = 1, l + 2 do
++          buf:move_line('up')
++        end
++        local al = buf:get_active_line()
++        assert.is_true(al < visible.range.start)
++        bv:follow_line()
++        assert.is_true(visible.range:inc(al))
++        --- and back down below it
++        for _ = 1, l + 4 do
++          buf:move_line('down')
++        end
++        bv:follow_line()
++        assert.is_true(
++          visible.range:inc(buf:get_active_line()))
++        --- restore the historical position for the
++        --- describes that follow
++        buf:move_selection('down', nil, true)
++        bv:scroll_to(off)
++      end)
+       local base = Range(1, l)
+       it('scrolls up', function()
+         controller:keypressed('pageup')
+-- 
+2.43.0
+

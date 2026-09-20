@@ -1,0 +1,221 @@
+From cd931b2ef0c99e242d1a4e9a8e06e03989c32595 Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Tue, 14 Jul 2026 10:46:54 +0000
+Subject: [PATCH 10/12] feat(editor): active line in the buffer model
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Adds the line coordinate under the block selection, per
+the rework spec's line-wise navigation:
+
+- active_line: absolute source line, always inside the
+  selected block; clamped on every selection mutation
+  (set_selection, move_selection, warps)
+- get_selection_lines(): source-line span of the
+  selected block; singleton for plaintext and for the
+  phantom past-end position
+- move_line(dir): steps by one line, crossing block
+  boundaries — down lands on the next block's first
+  line, up on the previous block's last
+
+Block selection stays the source of truth for open,
+replace, and insert; the line is a refinement inside
+it. For plaintext, blocks are lines, so move_line
+degenerates to block movement.
+
+Covered by a new line-navigation spec group; suite at
+692 green.
+---
+ src/model/editor/bufferModel.lua | 60 ++++++++++++++++++++++++++++++++
+ tests/editor/buffer_spec.lua     | 58 ++++++++++++++++++++++++++++++
+ 2 files changed, 118 insertions(+)
+
+diff --git a/src/model/editor/bufferModel.lua b/src/model/editor/bufferModel.lua
+index cd1a19d..5cdcf35 100644
+--- a/src/model/editor/bufferModel.lua
++++ b/src/model/editor/bufferModel.lua
+@@ -90,6 +90,7 @@ local function new(
+     revmap = {},
+     semantic = semantic,
+     selection = sel,
++    active_line = 1,
+     readonly = readonly
+   }
+   local id = tostring(self):gsub('table: ', '')
+@@ -108,6 +109,7 @@ end
+ --- @field content_type ContentType
+ --- @field save_file function
+ --- @field selection integer
++--- @field active_line integer --- source line inside the selection
+ --- @field loaded integer?
+ --- @field readonly boolean
+ --- @field semantic BufferSemanticInfo?
+@@ -213,10 +215,12 @@ function BufferModel:move_selection(dir, by, warp, move)
+   if warp then
+     if dir == 'up' then
+       self.selection = 1
++      self:clamp_active_line()
+       return true
+     end
+     if dir == 'down' then
+       self.selection = last
++      self:clamp_active_line()
+       return true
+     end
+     return false
+@@ -227,12 +231,14 @@ function BufferModel:move_selection(dir, by, warp, move)
+   if dir == 'up' then
+     if (cur - by) >= 1 then
+       self.selection = cur - by
++      self:clamp_active_line()
+       return true
+     end
+   end
+   if dir == 'down' then
+     if (cur + by) <= last + 1 then
+       self.selection = cur + by
++      self:clamp_active_line()
+       return true
+     end
+   end
+@@ -245,6 +251,7 @@ function BufferModel:set_selection(sel)
+   if not sel or sel < 1 then sel = 1 end
+   if sel > max then sel = max end
+   self.selection = sel
++  self:clamp_active_line()
+ end
+ 
+ --- Get index of selected line/block
+@@ -280,6 +287,59 @@ function BufferModel:get_selection_start_line()
+   return self.selection
+ end
+ 
++--- Source-line span of the selected block
++--- @return Range
++function BufferModel:get_selection_lines()
++  if self.content_type == 'lua' then
++    local b = self:_get_selected_block()
++    if b and b.pos then return b.pos end
++  end
++  return Range.singleton(self.selection)
++end
++
++--- @return integer
++function BufferModel:get_active_line()
++  return self.active_line
++end
++
++--- Pull the active line into the selected block
++function BufferModel:clamp_active_line()
++  local span = self:get_selection_lines()
++  local ln = self.active_line
++  if ln < span.start or ln > span.fin then
++    self.active_line = span.start
++  end
++end
++
++--- Move the active line, crossing block boundaries
++--- @param dir VerticalDir
++--- @return boolean moved
++function BufferModel:move_line(dir)
++  local span = self:get_selection_lines()
++  local ln = self.active_line
++  if dir == 'up' then
++    if ln > span.start then
++      self.active_line = ln - 1
++      return true
++    end
++    if self:move_selection('up') then
++      self.active_line = self:get_selection_lines().fin
++      return true
++    end
++  end
++  if dir == 'down' then
++    if ln < span.fin then
++      self.active_line = ln + 1
++      return true
++    end
++    if self:move_selection('down') then
++      self.active_line = self:get_selection_lines().start
++      return true
++    end
++  end
++  return false
++end
++
+ --- Return the selection as string array
+ --- @return string[]
+ function BufferModel:get_selected_text()
+diff --git a/tests/editor/buffer_spec.lua b/tests/editor/buffer_spec.lua
+index 5e5483e..8d5f157 100644
+--- a/tests/editor/buffer_spec.lua
++++ b/tests/editor/buffer_spec.lua
+@@ -245,6 +245,64 @@ print(sierpinski(4))]])
+         assert.same(68, buffer:get_selection_start_line())
+       end)
+ 
++      describe('line navigation', function()
++        local lnbuf
++        lazy_setup(function()
++          lnbuf = BufferModel('main.lua', turtle,
++            noop, chunker, hl)
++        end)
++
++        it('starts at the top', function()
++          assert.same(1, lnbuf:get_selection())
++          assert.same(1, lnbuf:get_active_line())
++        end)
++
++        it('walks lines within a block', function()
++          local span = lnbuf:get_selection_lines()
++          for _ = span.start, span.fin - 1 do
++            assert.is_true(lnbuf:move_line('down'))
++          end
++          --- still inside block 1, on its last line
++          assert.same(1, lnbuf:get_selection())
++          assert.same(span.fin, lnbuf:get_active_line())
++        end)
++
++        it('crosses the boundary downwards', function()
++          assert.is_true(lnbuf:move_line('down'))
++          assert.same(2, lnbuf:get_selection())
++          local span = lnbuf:get_selection_lines()
++          assert.same(span.start, lnbuf:get_active_line())
++        end)
++
++        it('crosses back upwards', function()
++          assert.is_true(lnbuf:move_line('up'))
++          assert.same(1, lnbuf:get_selection())
++          local span = lnbuf:get_selection_lines()
++          assert.same(span.fin, lnbuf:get_active_line())
++        end)
++
++        it('clamps on block jumps', function()
++          lnbuf:move_selection('down', nil, true)
++          local span = lnbuf:get_selection_lines()
++          assert.same(span.start, lnbuf:get_active_line())
++          lnbuf:set_selection(3)
++          span = lnbuf:get_selection_lines()
++          assert.same(span.start, lnbuf:get_active_line())
++        end)
++
++        it('plaintext follows the selection', function()
++          local pb = BufferModel('notes.txt',
++            { 'one', 'two', 'three' }, noop)
++          assert.same(1, pb:get_active_line())
++          assert.is_true(pb:move_line('down'))
++          assert.same(2, pb:get_selection())
++          assert.same(2, pb:get_active_line())
++          assert.is_true(pb:move_line('up'))
++          assert.same(1, pb:get_selection())
++          assert.same(1, pb:get_active_line())
++        end)
++      end)
++
+       it('dropping blocks', function()
+         local delbuf = table.clone(buffer)
+         delbuf:move_selection('up', nil, true)
+-- 
+2.43.0
+

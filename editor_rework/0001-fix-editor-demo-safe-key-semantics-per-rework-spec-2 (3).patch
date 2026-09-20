@@ -1,0 +1,101 @@
+From c8b004364469fc76f15f4909d3298e255987898d Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Sat, 11 Jul 2026 23:11:06 +0000
+Subject: [PATCH 01/12] fix(editor): demo-safe key semantics per rework spec
+ 2.2/2.3
+
+- Enter on an empty input opens the selected block for
+  editing (was: silent no-op); submit on non-empty input
+  is unchanged
+- bare Esc no longer loads the block and performs no
+  action, which also defuses the device RMB->Esc binding
+  silently replacing typed input
+- Shift+Esc discards the edit (clears input and loaded
+  state); on an empty input it closes the buffer /
+  leaves the editor
+- Ctrl+Y no longer deletes the block; deliberate
+  deletion stays on Ctrl+Delete
+- Ctrl+O follows the require if present and no longer
+  silently pops the buffer otherwise
+
+Stopgap ahead of the full editor rework (stage 1);
+matches the spec direction so none of it is throwaway.
+---
+ src/controller/editorController.lua | 40 +++++++++++++++++++----------
+ 1 file changed, 27 insertions(+), 13 deletions(-)
+
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index cd9b28e..74710ab 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -104,8 +104,6 @@ function EditorController:follow_require()
+   if reqsel then
+     local name = reqsel.name
+     self.console:edit(name .. '.lua')
+-  else
+-    self:pop_buffer()
+   end
+ end
+ 
+@@ -713,22 +711,29 @@ function EditorController:_normal_mode_keys(k)
+       self:_handle_submit(replace)
+     end
+   end
+-  local function load()
+-    if not Key.ctrl() and
+-        not Key.shift()
+-        and k == "escape" then
+-      load_selection()
+-    end
++  --- open the selected block for editing (spec 2.2: Enter)
++  local function open()
++    load_selection()
++    block_input()
++  end
++  --- spec 2.3: Shift+Esc discards the edit; on an empty
++  --- input it leaves the buffer / editor
++  local function discard()
+     if not Key.ctrl() and
+         Key.shift() and
+         k == "escape" then
+-      load_selection(true)
++      if is_empty then
++        self:close_buffer()
++      else
++        buf:clear_loaded()
++        input:clear()
++      end
++      block_input()
+     end
+   end
+   local function delete()
+     if Key.ctrl() then
+-      if k == "delete"
+-          or (k == "y" and is_empty) then
++      if k == "delete" then
+         delete_block()
+         block_input()
+       end
+@@ -794,8 +799,17 @@ function EditorController:_normal_mode_keys(k)
+     end
+   end
+ 
+-  submit()
+-  load()
++  local plain_enter = Key.is_enter(k)
++      and not Key.ctrl()
++      and not Key.shift()
++      and not Key.alt()
++
++  if is_empty and plain_enter then
++    open()
++  else
++    submit()
++  end
++  discard()
+   delete()
+   navigate()
+   clear()
+-- 
+2.43.0
+

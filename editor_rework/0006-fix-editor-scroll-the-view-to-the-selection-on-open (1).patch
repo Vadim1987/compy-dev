@@ -1,0 +1,46 @@
+From 01a6af567c35dbcd967cdb641038dc5bc4b322b2 Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Sun, 12 Jul 2026 15:30:46 +0000
+Subject: [PATCH 06/12] fix(editor): scroll the view to the selection on open
+
+BufferView opens scrolled to the end of the content,
+which stopped matching the selection once files started
+opening at the first block: the buffer showed the end
+while the selection sat at the top, and the first arrow
+snapped the view back to the start.
+
+On open, follow the selection when no remembered
+position was restored, so the view and selection agree
+from the first frame.
+---
+ src/controller/editorController.lua | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index 08100f6..a55b2d6 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -84,7 +84,9 @@ function EditorController:open(name, content, save)
+   local b = BufferModel(name, content, save, ch, hl, pp, tr)
+   self.model.buffers:push_front(b)
+   self.view:open(b)
+-  self:_restore_position(b)
++  if not self:_restore_position(b) then
++    self.view:get_current_buffer():follow_selection()
++  end
+   self:update_status()
+   self:set_state()
+   self.input:update_view()
+@@ -143,7 +145,9 @@ function EditorController:_restore_position(buf)
+       and saved.sel <= buf:get_content_length() then
+     buf:set_selection(saved.sel)
+     self.view:get_current_buffer():scroll_to(saved.off)
++    return true
+   end
++  return false
+ end
+ 
+ function EditorController:close_buffer()
+-- 
+2.43.0
+

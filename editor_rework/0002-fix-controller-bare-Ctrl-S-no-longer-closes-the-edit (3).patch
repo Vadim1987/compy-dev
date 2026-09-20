@@ -1,0 +1,36 @@
+From 60fa4206582e5b26db1c51744922ac1529045019 Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Sat, 11 Jul 2026 23:11:06 +0000
+Subject: [PATCH 02/12] fix(controller): bare Ctrl+S no longer closes the
+ editor
+
+Saving is automatic on block accept, so bare Ctrl+S in
+the editor state now does nothing; the key is reserved
+for the checkpoint (rework spec 2.6). Ctrl+Shift+S
+still finishes the edit, and leaving the editor is
+Shift+Esc.
+---
+ src/controller/controller.lua | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/controller/controller.lua b/src/controller/controller.lua
+index d577a47..0633239 100644
+--- a/src/controller/controller.lua
++++ b/src/controller/controller.lua
+@@ -563,10 +563,11 @@ Controller = {
+             if love.state.app_state == 'running' then
+               CC:stop_project_run()
+             elseif love.state.app_state == 'editor' then
++              --- bare Ctrl+S is reserved for the
++              --- checkpoint (rework spec 2.6); saving
++              --- is automatic, leaving is Shift+Esc
+               if Key.shift() then
+                 CC:finish_edit()
+-              else
+-                CC:close_buffer()
+               end
+             end
+           end
+-- 
+2.43.0
+

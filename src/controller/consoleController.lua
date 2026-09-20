@@ -1442,6 +1442,15 @@ function ConsoleController.prepare_env(cc)
     return check_open_pr(cc.edit, cc, name)
   end
 
+  --- @param content string
+  prepared.flash_microbit   = function(content)
+    return check_open_pr(cc.flash_microbit, cc, content)
+  end
+
+  prepared.detect_microbit  = function()
+    return cc:detect_microbit()
+  end
+
   prepared.run_project      = function(name)
     cc:run_project(name)
   end
@@ -1869,6 +1878,26 @@ function ConsoleController:stop_project_run()
   SerialPort:programEnded()
   self.main_ctrl.report()
   love.state.app_state = 'project_open'
+end
+
+--- Hand a firmware image to the board that is plugged in
+--- @param content string
+--- @return boolean success
+--- @return string? error
+function ConsoleController:flash_microbit(content)
+  local p = self.model.projects.current
+  if not p then return false end
+  return p:flash_microbit(content)
+end
+
+--- Look for a board again, for one plugged in after start
+--- @return string? path
+function ConsoleController:detect_microbit()
+  local path = require("util.usb").detect()
+  if type(love) == 'table' and love.paths then
+    love.paths.microbit_path = path
+  end
+  return path
 end
 
 function ConsoleController:quit_project()

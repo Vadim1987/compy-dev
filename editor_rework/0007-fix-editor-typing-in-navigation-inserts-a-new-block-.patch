@@ -1,0 +1,62 @@
+From 74cca8102e635d9a0c77ca4e3f385a36a0676049 Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Mon, 13 Jul 2026 17:52:42 +0000
+Subject: [PATCH 07/12] fix(editor): typing in navigation inserts a new block,
+ never replaces
+
+Files now open with the first block selected, so typing
+straight into a fresh file and pressing Enter went down
+the replace path and destroyed the first block with no
+undo (compy-ide-typing-overwrites-first-block).
+
+Plain Enter now replaces only when a block was
+deliberately opened (buf.loaded is set by Enter /
+load_selection); text composed from scratch in
+navigation goes through the existing insert path and
+lands at the selection, pushing content down. The
+destructive replace is unreachable without opening a
+block first.
+
+Also pads the yellow editing marker with a leading
+space so it no longer collides with the filetype label
+(compy-ide-edit-indicator-collides-with-filetype).
+---
+ src/controller/editorController.lua | 8 +++++++-
+ src/view/input/statusline.lua       | 2 +-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index a55b2d6..3c222f8 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -749,7 +749,13 @@ function EditorController:_normal_mode_keys(k)
+         and not Key.shift()
+         and not Key.alt()
+         and Key.is_enter(k) then
+-      self:_handle_submit(replace)
++      --- replace only what was deliberately opened;
++      --- fresh text composed in navigation is inserted
++      if buf.loaded then
++        self:_handle_submit(replace)
++      else
++        self:_handle_submit(add)
++      end
+     end
+   end
+   --- open the selected block for editing (spec 2.2: Enter)
+diff --git a/src/view/input/statusline.lua b/src/view/input/statusline.lua
+index aeb81b3..adaac9e 100644
+--- a/src/view/input/statusline.lua
++++ b/src/view/input/statusline.lua
+@@ -104,7 +104,7 @@ function Statusline:draw(status, start_y)
+         local more_i = morelabel(status.input_more) .. ' '
+         local edit_tag = ''
+         if custom.mode == 'edit' then
+-          edit_tag = 'E '
++          edit_tag = ' E '
+         end
+         local name = edit_tag .. custom.name .. ' '
+ 
+-- 
+2.43.0
+

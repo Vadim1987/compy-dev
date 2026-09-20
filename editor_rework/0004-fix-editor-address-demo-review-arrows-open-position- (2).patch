@@ -1,0 +1,100 @@
+From 7abf6c0fea96f8c497090668383db1b58962d912 Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Sun, 12 Jul 2026 14:56:13 +0000
+Subject: [PATCH 04/12] =?UTF-8?q?fix(editor):=20address=20demo=20review=20?=
+ =?UTF-8?q?=E2=80=94=20arrows,=20open=20position,=20indicator?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- bare Up/Down no longer move the buffer selection while
+  editing; they stay in the input and only navigate
+  blocks in navigation submode
+- files open at the first block/line instead of the last
+  (BufferModel selection defaults to 1); saved-state
+  restore is unchanged, leaving room for real position
+  memory later
+- statusline drops the [NAV] label and shows a single
+  yellow E while editing, before the filename
+---
+ src/controller/editorController.lua |  2 +-
+ src/model/editor/bufferModel.lua    |  5 ++---
+ src/view/input/statusline.lua       | 17 ++++++++++-------
+ 3 files changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index 246df6c..fbe9c71 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -770,7 +770,7 @@ function EditorController:_normal_mode_keys(k)
+       if k == "end" then
+         self:_move_sel('down', nil, true)
+       end
+-    else
++    elseif not self.editing then
+       if k == "up" and at_limit_start then
+         self:_move_sel('up')
+         block_input()
+diff --git a/src/model/editor/bufferModel.lua b/src/model/editor/bufferModel.lua
+index a809e0f..cd1a19d 100644
+--- a/src/model/editor/bufferModel.lua
++++ b/src/model/editor/bufferModel.lua
+@@ -53,7 +53,7 @@ local function new(
+     if _content:last() ~= '' then
+       _content:push('')
+     end
+-    sel = #_content
++    sel = 1
+   end
+   --- only passing this around so the linter shuts up about nil
+   --- @param chk function
+@@ -61,8 +61,7 @@ local function new(
+     ct = 'lua'
+     local ok, blocks = chk(lines)
+     if ok then
+-      local len = #blocks
+-      sel = len
++      sel = 1
+     else
+       readonly = true
+       sel = 1
+diff --git a/src/view/input/statusline.lua b/src/view/input/statusline.lua
+index 20bdc87..aeb81b3 100644
+--- a/src/view/input/statusline.lua
++++ b/src/view/input/statusline.lua
+@@ -102,13 +102,11 @@ function Statusline:draw(status, start_y)
+         end
+         local more_b = morelabel(custom.buffer_more) .. ' '
+         local more_i = morelabel(status.input_more) .. ' '
+-        local tag = ''
+-        if custom.mode == 'nav' then
+-          tag = '[NAV] '
+-        elseif custom.mode == 'edit' then
+-          tag = '[EDIT] '
++        local edit_tag = ''
++        if custom.mode == 'edit' then
++          edit_tag = 'E '
+         end
+-        local name = tag .. custom.name .. ' '
++        local name = edit_tag .. custom.name .. ' '
+ 
+         gfx.setColor(colors.fg)
+         local font = gfx.getFont()
+@@ -158,8 +156,13 @@ function Statusline:draw(status, start_y)
+         gfx.setColor(colors.fg)
+         gfx.print(more_b, s_mb, start_text.y)
+         -- filename
++        local ew = gfx.getFont():getWidth(edit_tag)
++        if edit_tag ~= '' then
++          gfx.setColor(Color[Color.yellow])
++          gfx.print(edit_tag, s_n, start_text.y)
++        end
+         gfx.setColor(Color[Color.white])
+-        gfx.print(tag .. custom.name, s_n, start_text.y)
++        gfx.print(custom.name, s_n + ew, start_text.y)
+       else
+         --- normal statusline
+         local pos_c = ':' .. c.c
+-- 
+2.43.0
+

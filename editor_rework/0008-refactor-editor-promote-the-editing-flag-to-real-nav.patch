@@ -1,0 +1,245 @@
+From 593e843dd24cd016a404d27c77efb6418bd2e876 Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Mon, 13 Jul 2026 18:35:47 +0000
+Subject: [PATCH 08/12] refactor(editor): promote the editing flag to real
+ nav/edit modes
+
+The 'edit' mode splits into 'nav' and 'edit' as first-
+class states, replacing the boolean submode flag from
+the demo series. Transitions are declared in an explicit
+table in set_mode: nav reaches edit/reorder/search, the
+special modes and edit only return to nav. Rejected
+transitions no longer log or repaint.
+
+Behavioral deltas from the flag version:
+- reorder and search are enterable from nav only; while
+  editing, Ctrl+M / Ctrl+F do nothing until the block is
+  accepted or discarded
+- a freshly opened buffer always starts in nav
+- the statusline receives the real mode, the display
+  mapping in _generate_status is gone
+
+is_normal() treats both nav and edit as normal-key modes,
+so the external is_normal_mode() contract is unchanged.
+---
+ src/controller/editorController.lua | 66 ++++++++++++-----------------
+ 1 file changed, 27 insertions(+), 39 deletions(-)
+
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index 3c222f8..ee5f7d8 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -17,15 +17,14 @@ local function new(M, CC)
+     ),
+     console = CC,
+     view = nil,
+-    mode = 'edit',
+-    editing = false,
++    mode = 'nav',
+     pos_memory = {},
+   }
+ end
+ 
+ --- @alias EditorMode
+ --- | 'edit' --- default
+---- | 'nav' --- display-only, 'edit' with editing off
++--- | 'nav' --- navigating between blocks
+ --- | 'reorder'
+ --- | 'search'
+ 
+@@ -37,7 +36,6 @@ end
+ --- @field view EditorView?
+ --- @field state EditorState?
+ --- @field mode EditorMode
+---- @field editing boolean --- submode of 'edit'
+ --- @field pos_memory table<string, {sel:integer, off:integer}>
+ EditorController = class.create(new)
+ 
+@@ -84,6 +82,7 @@ function EditorController:open(name, content, save)
+   local b = BufferModel(name, content, save, ch, hl, pp, tr)
+   self.model.buffers:push_front(b)
+   self.view:open(b)
++  self:set_mode('nav')
+   if not self:_restore_position(b) then
+     self.view:get_current_buffer():follow_selection()
+   end
+@@ -164,7 +163,7 @@ end
+ --- @param m EditorMode
+ --- @return boolean
+ local function is_normal(m)
+-  return m == 'edit'
++  return m == 'nav' or m == 'edit'
+ end
+ 
+ --- @param mode EditorMode
+@@ -182,8 +181,15 @@ function EditorController:set_mode(mode)
+     end
+   end
+ 
++  local ALLOWED = {
++    nav = { edit = true, reorder = true, search = true },
++    edit = { nav = true },
++    reorder = { nav = true },
++    search = { nav = true },
++  }
++
+   local current = self.mode
+-  if is_normal(current) then
++  if current ~= mode and ALLOWED[current][mode] then
+     if mode == 'reorder' then
+       set_reorg()
+     end
+@@ -191,14 +197,9 @@ function EditorController:set_mode(mode)
+       init_search()
+     end
+     self.mode = mode
+-  else
+-    --- currently in a special mode, only return is allowed
+-    if is_normal(mode) then
+-      self.mode = mode
+-    end
++    Log.info('-- ' .. string.upper(mode) .. ' --')
++    self:update_status()
+   end
+-  Log.info('-- ' .. string.upper(mode) .. ' --')
+-  self:update_status()
+ end
+ 
+ --- @return EditorMode
+@@ -298,9 +299,6 @@ function EditorController:_generate_status(sel)
+   local more = bufview.content:get_more()
+   local cs
+   local m = self.mode
+-  if m == 'edit' and not self.editing then
+-    m = 'nav'
+-  end
+   local ct = bufview.content_type
+   if ct == 'lua' then
+     local range = bufview.content:get_block_app_pos(sel)
+@@ -321,7 +319,7 @@ end
+ --- @param t string
+ function EditorController:textinput(t)
+   self.view:update_input()
+-  if self.mode == 'edit' then
++  if is_normal(self.mode) then
+     local input = self.model.input
+     if input:has_error() then
+       input:clear_error()
+@@ -329,10 +327,7 @@ function EditorController:textinput(t)
+       if Key.ctrl() and Key.shift() then
+         return
+       end
+-      if not self.editing then
+-        self.editing = true
+-        self:update_status()
+-      end
++      self:set_mode('edit')
+       self.input:textinput(t)
+     end
+   elseif self.mode == 'search' then
+@@ -471,7 +466,7 @@ function EditorController:_reorg(save)
+   end
+   self.view:refresh()
+ 
+-  self:set_mode('edit')
++  self:set_mode('nav')
+ end
+ 
+ --- @private
+@@ -523,7 +518,7 @@ end
+ 
+ function EditorController:_search_mode_keys(k)
+   if k == 'escape' then
+-    self:set_mode('edit')
++    self:set_mode('nav')
+     self.search:clear()
+     return
+   end
+@@ -536,7 +531,7 @@ function EditorController:_search_mode_keys(k)
+     local ln = jump.line - 1
+     buf:set_selection(bn)
+     self.view:get_current_buffer():scroll_to_line(ln)
+-    self:set_mode('edit')
++    self:set_mode('nav')
+     self.search:clear()
+   end
+ end
+@@ -707,9 +702,7 @@ function EditorController:_normal_mode_keys(k)
+       self:_move_sel('down', n)
+       buf:clear_loaded()
+       input:clear()
+-      self.editing = false
+-
+-      self:update_status()
++      self:set_mode('nav')
+     end
+ 
+     if Key.ctrl()
+@@ -737,9 +730,7 @@ function EditorController:_normal_mode_keys(k)
+         self:_move_sel('down', n)
+         buf:clear_loaded()
+         input:clear()
+-        self.editing = false
+-
+-        self:update_status()
++        self:set_mode('nav')
+       end
+ 
+       self:_handle_submit(add)
+@@ -761,8 +752,7 @@ function EditorController:_normal_mode_keys(k)
+   --- open the selected block for editing (spec 2.2: Enter)
+   local function open()
+     load_selection()
+-    self.editing = true
+-    self:update_status()
++    self:set_mode('edit')
+     block_input()
+   end
+   --- spec 2.3: Shift+Esc discards the edit; on an empty
+@@ -771,13 +761,12 @@ function EditorController:_normal_mode_keys(k)
+     if not Key.ctrl() and
+         Key.shift() and
+         k == "escape" then
+-      if is_empty and not self.editing then
++      if is_empty and self.mode == 'nav' then
+         self:close_buffer()
+       else
+         buf:clear_loaded()
+         input:clear()
+-        self.editing = false
+-        self:update_status()
++        self:set_mode('nav')
+       end
+       block_input()
+     end
+@@ -807,7 +796,7 @@ function EditorController:_normal_mode_keys(k)
+       if k == "end" then
+         self:_move_sel('down', nil, true)
+       end
+-    elseif not self.editing then
++    elseif self.mode == 'nav' then
+       if k == "up" and at_limit_start then
+         self:_move_sel('up')
+         block_input()
+@@ -847,8 +836,7 @@ function EditorController:_normal_mode_keys(k)
+     if Key.ctrl() and k == "w" then
+       buf:clear_loaded()
+       input:clear()
+-      self.editing = false
+-      self:update_status()
++      self:set_mode('nav')
+     end
+   end
+ 
+@@ -858,7 +846,7 @@ function EditorController:_normal_mode_keys(k)
+       and not Key.alt()
+ 
+   if is_empty and plain_enter then
+-    if not self.editing then open() end
++    if self.mode == 'nav' then open() end
+   else
+     submit()
+   end
+-- 
+2.43.0
+

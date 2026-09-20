@@ -1,0 +1,434 @@
+From 00de1c24c347325535447b143e1cb50dc4fe3f64 Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Tue, 14 Jul 2026 10:26:01 +0000
+Subject: [PATCH 09/12] refactor(editor): cleanup, and green the spec suite on
+ the new semantics
+
+Code:
+- load_selection loses its dead additive parameter
+  (Shift+Esc no longer additively loads)
+- mode transition table is a module constant, the exit
+  ritual is a leave_edit() method (also fixes it calling
+  clear on the input model instead of the controller)
+- add() hoisted to submit scope: the plain-Enter insert
+  dispatch referenced it out of scope, crashing on
+  composing a fresh line in plaintext/markdown buffers
+- note on device textinput-before-keypressed ordering at
+  the nav->edit transition
+
+Tests (suite was green on dev, 26 red after the editor
+changes; every red encoded pre-rework semantics):
+- open helper presses Enter, not the now-inert Esc
+- open-at-top expectations; scroll suites establish the
+  historical EOF position explicitly (walk + scroll_to)
+- arrows staying in the input while editing, Shift+Esc
+  as discard (additive-load spec repurposed)
+- insertion suites select the last block before adding
+
+685 successes / 0 failures / 0 errors.
+---
+ src/controller/editorController.lua | 98 ++++++++++++++---------------
+ tests/editor/buffer_spec.lua        |  9 ++-
+ tests/editor/editor_spec.lua        | 86 +++++++++++++++----------
+ tests/helpers/editor_session.lua    |  3 +-
+ 4 files changed, 110 insertions(+), 86 deletions(-)
+
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index ee5f7d8..6d8a24c 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -166,6 +166,14 @@ local function is_normal(m)
+   return m == 'nav' or m == 'edit'
+ end
+ 
++--- legal mode transitions; anything absent is rejected
++local TRANSITIONS = {
++  nav = { edit = true, reorder = true, search = true },
++  edit = { nav = true },
++  reorder = { nav = true },
++  search = { nav = true },
++}
++
+ --- @param mode EditorMode
+ function EditorController:set_mode(mode)
+   local buf = self:get_active_buffer()
+@@ -181,15 +189,8 @@ function EditorController:set_mode(mode)
+     end
+   end
+ 
+-  local ALLOWED = {
+-    nav = { edit = true, reorder = true, search = true },
+-    edit = { nav = true },
+-    reorder = { nav = true },
+-    search = { nav = true },
+-  }
+-
+   local current = self.mode
+-  if current ~= mode and ALLOWED[current][mode] then
++  if current ~= mode and TRANSITIONS[current][mode] then
+     if mode == 'reorder' then
+       set_reorg()
+     end
+@@ -212,6 +213,14 @@ function EditorController:is_normal_mode()
+   return is_normal(self.mode)
+ end
+ 
++--- drop the loaded block and the input, return to nav
++function EditorController:leave_edit()
++  local buf = self:get_active_buffer()
++  buf:clear_loaded()
++  self.input:clear()
++  self:set_mode('nav')
++end
++
+ --- @param clipboard string
+ function EditorController:set_clipboard(clipboard)
+   self.state.clipboard = clipboard
+@@ -327,6 +336,9 @@ function EditorController:textinput(t)
+       if Key.ctrl() and Key.shift() then
+         return
+       end
++      --- NB: on device, textinput precedes keypressed
++      --- (see dev/docs/compy-input-quirks.md), so this
++      --- transition lands before the same key's press
+       self:set_mode('edit')
+       self.input:textinput(t)
+     end
+@@ -621,21 +633,15 @@ function EditorController:_normal_mode_keys(k)
+   paste_k()
+ 
+   --- @param add boolean?
+-  local function load_selection(add)
++  local function load_selection()
+     local t = buf:get_selected_text()
+     if string.is_non_empty(t) then
+       buf:set_loaded()
+     else
+       buf:clear_loaded()
+     end
+-    if add then
+-      local c = input:get_cursor_info().cursor
+-      input:add_text(t)
+-      input:set_cursor(c)
+-    else
+-      input:set_text(t)
+-      input:jump_home()
+-    end
++    input:set_text(t)
++    input:jump_home()
+   end
+ 
+ 
+@@ -700,39 +706,35 @@ function EditorController:_normal_mode_keys(k)
+       self:save(buf)
+       self.view:refresh()
+       self:_move_sel('down', n)
+-      buf:clear_loaded()
+-      input:clear()
+-      self:set_mode('nav')
++      self:leave_edit()
+     end
+ 
+-    if Key.ctrl()
+-        and not Key.shift()
+-        and not Key.alt()
+-        and Key.is_enter(k) then
+-      --- @param newtext Block[]
+-      local function add(newtext)
+-        if not bufv:is_selection_visible() then
+-          return bufv:follow_selection()
+-        end
++    --- @param newtext Block[]
++    local function add(newtext)
++      if not bufv:is_selection_visible() then
++        return bufv:follow_selection()
++      end
+ 
+-        local approved, oversized = analyze_input(newtext)
+-        if not approved then
+-          if oversized then
+-            reject_oversized(newtext, oversized)
+-          end
+-          return
++      local approved, oversized = analyze_input(newtext)
++      if not approved then
++        if oversized then
++          reject_oversized(newtext, oversized)
+         end
+-
+-        local sel = buf:get_selection()
+-        local _, n = buf:insert_content(approved, sel)
+-        self:save(buf)
+-        self.view:refresh()
+-        self:_move_sel('down', n)
+-        buf:clear_loaded()
+-        input:clear()
+-        self:set_mode('nav')
++        return
+       end
+ 
++      local sel = buf:get_selection()
++      local _, n = buf:insert_content(approved, sel)
++      self:save(buf)
++      self.view:refresh()
++      self:_move_sel('down', n)
++      self:leave_edit()
++    end
++
++    if Key.ctrl()
++        and not Key.shift()
++        and not Key.alt()
++        and Key.is_enter(k) then
+       self:_handle_submit(add)
+     end
+ 
+@@ -764,9 +766,7 @@ function EditorController:_normal_mode_keys(k)
+       if is_empty and self.mode == 'nav' then
+         self:close_buffer()
+       else
+-        buf:clear_loaded()
+-        input:clear()
+-        self:set_mode('nav')
++        self:leave_edit()
+       end
+       block_input()
+     end
+@@ -834,9 +834,7 @@ function EditorController:_normal_mode_keys(k)
+   end
+   local function clear()
+     if Key.ctrl() and k == "w" then
+-      buf:clear_loaded()
+-      input:clear()
+-      self:set_mode('nav')
++      self:leave_edit()
+     end
+   end
+ 
+diff --git a/tests/editor/buffer_spec.lua b/tests/editor/buffer_spec.lua
+index 4d5d615..5e5483e 100644
+--- a/tests/editor/buffer_spec.lua
++++ b/tests/editor/buffer_spec.lua
+@@ -177,6 +177,8 @@ print(sierpinski(4))]])
+         ''
+       }
+       it('insert newline', function()
++        --- buffers open at the top; this test works the end
++        buffer:move_selection('down', nil, true)
+         assert.same(#turtle_doc + 1, buffer:get_selection())
+         buffer:replace_content({ qed })
+         assert.same(#turtle_doc + 1, buffer:get_selection())
+@@ -235,9 +237,12 @@ print(sierpinski(4))]])
+ 
+         assert.same(turtle, buffer:get_text_content())
+ 
+-        assert.same(n_blocks, buffer:get_selection())
++        assert.same(1, buffer:get_selection())
+         local ln = buffer:get_selection_start_line()
+-        assert.same(68, ln)
++        assert.same(1, ln)
++        buffer:move_selection('down', nil, true)
++        assert.same(n_blocks, buffer:get_selection())
++        assert.same(68, buffer:get_selection_start_line())
+       end)
+ 
+       it('dropping blocks', function()
+diff --git a/tests/editor/editor_spec.lua b/tests/editor/editor_spec.lua
+index 204b009..8c77934 100644
+--- a/tests/editor/editor_spec.lua
++++ b/tests/editor/editor_spec.lua
+@@ -80,10 +80,9 @@ describe('Editor #editor', function()
+ 
+       local sel = buffer:get_selection()
+       local sel_t = buffer:get_selected_text()
+-      --- default selection is at the end
+-      assert.same(#turtle_doc, sel)
+-      --- and it's an empty line, of course
+-      assert.same('', sel_t)
++      --- files open at the first line
++      assert.same(1, sel)
++      assert.same(turtle_doc[1], sel_t)
+     end)
+   end)
+ 
+@@ -109,13 +108,17 @@ describe('Editor #editor', function()
+ 
+         local sel = buffer:get_selection()
+         local sel_t = buffer:get_selected_text()
+-        --- default selection is at the end
+-        assert.same(start_sel, sel)
+-        --- and it's an empty line, of course
+-        assert.same('', sel_t)
++        --- files open at the first line
++        assert.same(1, sel)
++        assert.same(turtle_doc[1], sel_t)
+       end)
+ 
+       it('interacts', function()
++        --- files open at the top; walk to the end first,
++        --- as these interactions historically assume it
++        for _ = 1, start_sel - 1 do
++          mock.keystroke('down', press)
++        end
+         --- select middle line
+         mock.keystroke('up', press)
+         assert.same(start_sel - 1, buffer:get_selection())
+@@ -124,15 +127,18 @@ describe('Editor #editor', function()
+         local input = function()
+           return controller.input:get_text():items()
+         end
+-        mock.keystroke('escape', press)
++        mock.keystroke('return', press)
+         assert.same({ turtle_doc[2] }, input())
++        --- arrows stay in the input while editing
+         mock.keystroke('end', press)
+         mock.keystroke('down', press)
+-        assert.same(start_sel, buffer:get_selection())
+-        -- load the empty
+-        mock.keystroke('escape', press)
++        assert.same(start_sel - 1, buffer:get_selection())
++        --- drop the edit, walk to the trailing empty
++        mock.keystroke('S-escape', press)
+         assert.same({ '' }, input())
+-        --- add text
++        mock.keystroke('down', press)
++        assert.same(start_sel, buffer:get_selection())
++        --- compose text (inserted before the empty)
+         controller:textinput('-')
+         controller:textinput('-')
+         controller:textinput(' ')
+@@ -157,7 +163,7 @@ describe('Editor #editor', function()
+ 
+         mock.keystroke('up', press)
+         assert.same(start_sel, buffer:get_selection())
+-        --- replace
++        --- compose over it, then discard and reopen
+         controller:textinput('i')
+         controller:textinput('n')
+         controller:textinput('s')
+@@ -165,7 +171,8 @@ describe('Editor #editor', function()
+         controller:textinput('r')
+         controller:textinput('t')
+         assert.same({ 'insert' }, input())
+-        mock.keystroke('escape', press)
++        mock.keystroke('S-escape', press)
++        mock.keystroke('return', press)
+         assert.same({ '-- test' }, input())
+       end)
+     end)
+@@ -186,12 +193,19 @@ describe('Editor #editor', function()
+       local visible = bv.content
+       local scroll = bv.SCROLL_BY
+ 
++      --- files open at the top now; these specs assume
++      --- the historical EOF position, so walk down first
++      for _ = 1, #sierpinski do
++        controller:keypressed('down')
++      end
++
+       local off = #sierpinski - l + 1
++      bv:scroll_to(off)
+       local start_range = Range(off + 1, #sierpinski + 1)
+ 
+       it('loads', function()
+-        --- inital scroll is at EOF, meaning last l lines are visible
+-        --- plus the phantom line
++        --- selection is at EOF, view at the historical offset
++        assert.same(#sierpinski + 1, buf:get_selection())
+         assert.same(off, bv:get_offset())
+         assert.same(start_range, visible.range)
+       end)
+@@ -245,12 +259,19 @@ describe('Editor #editor', function()
+       local visible = bv.content
+       local scroll = bv.SCROLL_BY
+ 
++      --- files open at the top now; these specs assume
++      --- the historical EOF position, so walk down first
++      for _ = 1, #sierpinski do
++        press('down')
++      end
++
+       local clen = visible:get_content_length()
+       local off = clen - l
++      bv:scroll_to(off)
+       local start_range = Range(off + 1, clen)
+       it('loads', function()
+-        --- inital scroll is at EOF, meaning last l lines are visible
+-        --- plus the phantom line
++        --- selection is at EOF, view at the historical offset
++        assert.same(#sierpinski + 1, buffer:get_selection())
+         assert.same(off, bv:get_offset())
+         assert.same(start_range, visible.range)
+       end)
+@@ -409,25 +430,20 @@ describe('Editor #editor', function()
+       describe('input', function()
+         local inter = controller.input
+         it('loads', function()
+-          inter:add_text('asd')
+           local selected = buffer:get_selected_text()
+-          mock.keystroke('escape', press)
++          mock.keystroke('return', press)
+           assert.same(inter:get_text(), { selected })
+         end)
+         it("doesn't clear on move", function()
+-          mock.keystroke('C-end', press)
+-          -- load the empty
+-          mock.keystroke('escape', press)
+-          assert.same({ '' }, inter:get_text())
++          --- ctrl-moving the selection keeps the input
++          local loaded = inter:get_text()
++          mock.keystroke('C-up', press)
++          assert.same(loaded, inter:get_text())
+         end)
+-        it('inserts', function()
+-          -- mock.keystroke('up', press)
+-          local prefix = 'asd '
+-          local selected = buffer:get_selected_text()
+-          inter:add_text(prefix)
++        it('discards', function()
++          --- Shift+Esc drops the edit and returns to nav
+           mock.keystroke('S-escape', press)
+-          local res = string.join(inter:get_text())
+-          assert.same(prefix .. selected, res)
++          assert.same({ '' }, inter:get_text())
+         end)
+       end)
+     end)
+@@ -451,9 +467,11 @@ describe('Editor #editor', function()
+       assert.same(4, buffer:get_content_length())
+       local modified = table.clone(sierpinski)
+       local new_print = 'print(sierpinski(3))'
+-      mock.keystroke('up', press)
++      mock.keystroke('down', press)
++      mock.keystroke('down', press)
+       assert.same(3, buffer:get_selection())
+       assert.same({ print_result }, buffer:get_selected_text())
++      mock.keystroke('return', press)
+       input:clear()
+       input:add_text(new_print)
+       mock.keystroke('return', press)
+@@ -683,6 +701,8 @@ describe('Editor #editor', function()
+ 
+         before_each(function()
+           input, buffer = session:open(existing_src, n_blocks)
++          --- files open at the top; these insert at the end
++          session:select_block(n_blocks)
+         end)
+ 
+         it("single normal block", function()
+diff --git a/tests/helpers/editor_session.lua b/tests/helpers/editor_session.lua
+index 1d033de..ef83147 100644
+--- a/tests/helpers/editor_session.lua
++++ b/tests/helpers/editor_session.lua
+@@ -105,7 +105,8 @@ end
+ --- @param target_content string?
+ function EditorSession:select_and_open_block(n, target_content)
+   self:select_block(n, target_content)
+-  self.mock.keystroke("escape", self.press)
++  --- Enter on an empty input opens the block (Esc is inert)
++  self.mock.keystroke("return", self.press)
+ 
+   assert.same(n, self.buffer.loaded, fmt("loaded block #%s", n))
+   if target_content then
+-- 
+2.43.0
+

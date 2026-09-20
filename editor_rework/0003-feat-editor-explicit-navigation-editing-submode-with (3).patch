@@ -1,0 +1,163 @@
+From 3bc88b6aabe4aa17e992491742ce71ece39ae22d Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Sun, 12 Jul 2026 07:09:41 +0000
+Subject: [PATCH 03/12] feat(editor): explicit navigation/editing submode with
+ indicator
+
+Adds an 'editing' flag as a submode of 'edit', without
+touching the mode enum or its call sites:
+
+- entering: Enter opens the selected block, or typing
+  into an empty input starts a new block
+- leaving: accepting a block (Enter), discarding
+  (Shift+Esc), or clearing (Ctrl+W)
+- the statusline shows [NAV] / [EDIT] before the
+  filename; reorder and search render as before
+- while editing, Enter on an emptied input is a no-op
+  instead of reloading the block, and Shift+Esc first
+  drops back to navigation; a second Shift+Esc leaves
+- accepting a block no longer auto-loads the next one
+  into the input, so accept lands back in navigation
+---
+ src/controller/editorController.lua | 24 ++++++++++++++++++++----
+ src/view/input/statusline.lua       | 10 ++++++++--
+ 2 files changed, 28 insertions(+), 6 deletions(-)
+
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index 74710ab..246df6c 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -18,11 +18,13 @@ local function new(M, CC)
+     console = CC,
+     view = nil,
+     mode = 'edit',
++    editing = false,
+   }
+ end
+ 
+ --- @alias EditorMode
+ --- | 'edit' --- default
++--- | 'nav' --- display-only, 'edit' with editing off
+ --- | 'reorder'
+ --- | 'search'
+ 
+@@ -34,6 +36,7 @@ end
+ --- @field view EditorView?
+ --- @field state EditorState?
+ --- @field mode EditorMode
++--- @field editing boolean --- submode of 'edit'
+ EditorController = class.create(new)
+ 
+ --- @param v EditorView
+@@ -264,6 +267,9 @@ function EditorController:_generate_status(sel)
+   local more = bufview.content:get_more()
+   local cs
+   local m = self.mode
++  if m == 'edit' and not self.editing then
++    m = 'nav'
++  end
+   local ct = bufview.content_type
+   if ct == 'lua' then
+     local range = bufview.content:get_block_app_pos(sel)
+@@ -292,6 +298,10 @@ function EditorController:textinput(t)
+       if Key.ctrl() and Key.shift() then
+         return
+       end
++      if not self.editing then
++        self.editing = true
++        self:update_status()
++      end
+       self.input:textinput(t)
+     end
+   elseif self.mode == 'search' then
+@@ -666,8 +676,7 @@ function EditorController:_normal_mode_keys(k)
+       self:_move_sel('down', n)
+       buf:clear_loaded()
+       input:clear()
+-
+-      load_selection()
++      self.editing = false
+ 
+       self:update_status()
+     end
+@@ -697,6 +706,7 @@ function EditorController:_normal_mode_keys(k)
+         self:_move_sel('down', n)
+         buf:clear_loaded()
+         input:clear()
++        self.editing = false
+ 
+         self:update_status()
+       end
+@@ -714,6 +724,8 @@ function EditorController:_normal_mode_keys(k)
+   --- open the selected block for editing (spec 2.2: Enter)
+   local function open()
+     load_selection()
++    self.editing = true
++    self:update_status()
+     block_input()
+   end
+   --- spec 2.3: Shift+Esc discards the edit; on an empty
+@@ -722,11 +734,13 @@ function EditorController:_normal_mode_keys(k)
+     if not Key.ctrl() and
+         Key.shift() and
+         k == "escape" then
+-      if is_empty then
++      if is_empty and not self.editing then
+         self:close_buffer()
+       else
+         buf:clear_loaded()
+         input:clear()
++        self.editing = false
++        self:update_status()
+       end
+       block_input()
+     end
+@@ -796,6 +810,8 @@ function EditorController:_normal_mode_keys(k)
+     if Key.ctrl() and k == "w" then
+       buf:clear_loaded()
+       input:clear()
++      self.editing = false
++      self:update_status()
+     end
+   end
+ 
+@@ -805,7 +821,7 @@ function EditorController:_normal_mode_keys(k)
+       and not Key.alt()
+ 
+   if is_empty and plain_enter then
+-    open()
++    if not self.editing then open() end
+   else
+     submit()
+   end
+diff --git a/src/view/input/statusline.lua b/src/view/input/statusline.lua
+index 71fabfd..20bdc87 100644
+--- a/src/view/input/statusline.lua
++++ b/src/view/input/statusline.lua
+@@ -102,7 +102,13 @@ function Statusline:draw(status, start_y)
+         end
+         local more_b = morelabel(custom.buffer_more) .. ' '
+         local more_i = morelabel(status.input_more) .. ' '
+-        local name = custom.name .. ' '
++        local tag = ''
++        if custom.mode == 'nav' then
++          tag = '[NAV] '
++        elseif custom.mode == 'edit' then
++          tag = '[EDIT] '
++        end
++        local name = tag .. custom.name .. ' '
+ 
+         gfx.setColor(colors.fg)
+         local font = gfx.getFont()
+@@ -153,7 +159,7 @@ function Statusline:draw(status, start_y)
+         gfx.print(more_b, s_mb, start_text.y)
+         -- filename
+         gfx.setColor(Color[Color.white])
+-        gfx.print(custom.name, s_n, start_text.y)
++        gfx.print(tag .. custom.name, s_n, start_text.y)
+       else
+         --- normal statusline
+         local pos_c = ':' .. c.c
+-- 
+2.43.0
+

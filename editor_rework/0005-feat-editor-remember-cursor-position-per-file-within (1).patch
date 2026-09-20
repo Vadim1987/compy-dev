@@ -1,0 +1,86 @@
+From 23f157c9c790f54c5042de9240acc23edf46ebfb Mon Sep 17 00:00:00 2001
+From: Vadim1987 <Vadim.stetskiy@gmail.com>
+Date: Sun, 12 Jul 2026 15:02:00 +0000
+Subject: [PATCH 05/12] feat(editor): remember cursor position per file within
+ a session
+
+Stores the active buffer's selection and scroll offset by
+file name when the buffer is closed or popped, and
+restores them on open when still in range. In-memory for
+the session only; not persisted across restarts.
+
+Fresh files with no remembered position keep opening at
+the first block.
+---
+ src/controller/editorController.lua | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/src/controller/editorController.lua b/src/controller/editorController.lua
+index fbe9c71..08100f6 100644
+--- a/src/controller/editorController.lua
++++ b/src/controller/editorController.lua
+@@ -19,6 +19,7 @@ local function new(M, CC)
+     view = nil,
+     mode = 'edit',
+     editing = false,
++    pos_memory = {},
+   }
+ end
+ 
+@@ -37,6 +38,7 @@ end
+ --- @field state EditorState?
+ --- @field mode EditorMode
+ --- @field editing boolean --- submode of 'edit'
++--- @field pos_memory table<string, {sel:integer, off:integer}>
+ EditorController = class.create(new)
+ 
+ --- @param v EditorView
+@@ -82,6 +84,7 @@ function EditorController:open(name, content, save)
+   local b = BufferModel(name, content, save, ch, hl, pp, tr)
+   self.model.buffers:push_front(b)
+   self.view:open(b)
++  self:_restore_position(b)
+   self:update_status()
+   self:set_state()
+   self.input:update_view()
+@@ -114,13 +117,37 @@ function EditorController:pop_buffer()
+   local bs = self.model.buffers
+   local n_buffers = bs:length()
+   if n_buffers < 2 then return end
++  self:_remember_position()
+   bs:pop_front()
+   local b = bs:first()
+   self.view:get_current_buffer():open(b)
+   self:update_status()
+ end
+ 
++--- store the active buffer's position by file name
++function EditorController:_remember_position()
++  local buf = self:get_active_buffer()
++  local bv = self.view:get_current_buffer()
++  self.pos_memory[buf.name] = {
++    sel = buf:get_selection(),
++    off = bv:get_offset(),
++  }
++end
++
++--- restore a remembered position if it is still in range
++--- @param buf BufferModel
++function EditorController:_restore_position(buf)
++  local saved = self.pos_memory[buf.name]
++  if saved
++      and saved.sel >= 1
++      and saved.sel <= buf:get_content_length() then
++    buf:set_selection(saved.sel)
++    self.view:get_current_buffer():scroll_to(saved.off)
++  end
++end
++
+ function EditorController:close_buffer()
++  self:_remember_position()
+   local bs = self.model.buffers
+   local n_buffers = bs:length()
+   if n_buffers < 2 then
+-- 
+2.43.0
+
