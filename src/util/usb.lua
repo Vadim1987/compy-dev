@@ -9,7 +9,7 @@ local usb = {}
 
 usb.MICROBIT_LABEL = 'MICROBIT'
 --- DAPLink drives (micro:bit v1/v2) ship this file at the root
-usb.MICROBIT_MARKER = 'INFO_UF2.TXT'
+usb.MICROBIT_MARKER = 'DETAILS.TXT'
 
 local supported_os = {
   Linux = true,
