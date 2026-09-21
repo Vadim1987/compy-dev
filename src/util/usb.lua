@@ -55,14 +55,13 @@ function usb.parse_mounts(mounts)
   return out
 end
 
---- Candidate removable-storage mount: a real FAT filesystem
---- mounted somewhere removable (not the Android emulated/SD FUSE).
+--- Candidate removable-storage mount
 --- @param fstype string
 --- @param path string
 --- @return boolean
 function usb.is_removable_fat(fstype, path)
   if fstype ~= 'vfat' and fstype ~= 'exfat' and fstype ~= 'msdos'
-      and fstype ~= 'fuseblk' then
+      and fstype ~= 'fuseblk' and fstype ~= 'fuse' then
     return false
   end
   return string.matches_r(path, '^/storage/')
