@@ -172,26 +172,19 @@ function Project:flash_microbit(data)
   if not path then
     return false, messages.no_microbit_board
   end
-
-  local tmpname = string.format('.tmp_microbit_%d', math.random(100000, 999999))
-  local tmppath = FS.join_path(path, tmpname)
-  local wok, werr = FS.write(tmppath, data)
-  if not wok then
-    return false, werr
+  --- The board takes a hex as it arrives, by what is in it rather
+  --- than by its name, so the file is written once, under its own
+  --- name, and pushed all the way to the device before this
+  --- returns. Left in the page cache it reaches the board late and
+  --- in pieces, and a board already flashing takes the late pieces
+  --- for part of the image.
+  local hexpath = FS.join_path(path, 'MICROBIT.hex')
+  local ok, err = FS.write(hexpath, data)
+  if not ok then
+    return false, err
   end
-
-  --- make sure the copy actually reached the device before the
-  --- micro:bit re-enumerates the drive
-  if OS.get_name() == 'Linux' then
-    OS.runcmd('sync')
-  end
-
-  local hexpath = FS.join_path(path, 'microbit.hex')
-  local rok, rerr = FS.rename(tmppath, hexpath)
-  if not rok then
-    FS.rm(tmppath)
-    return false, rerr
-  end
+  FS.fsync(hexpath)
+  FS.sync()
   return true
 end
 
