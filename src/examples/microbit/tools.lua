@@ -258,8 +258,7 @@ local FRAME = "\30exec "
 local RAN = table.concat({
   "local z='\\r\\n\\30exec %s '..(o and'ok'or f and'error'",
   "or'compile')if not o then z=(f and'Runtime'or'Compile')",
-  "..' error: '..T(e)..z end if s then s(z..'\\r\\n')else W(z)",
-  "end end"
+  "..' error: '..T(e)..z end W(z..'\\n')end"
 })
 
 --- How many frames exec has made
@@ -276,30 +275,26 @@ end
 --- The first line exec sends begins so: what the chunk uses
 --- is taken from the board's globals as they are before the
 --- file runs, so what the file puts there changes nothing; the
---- frame goes straight to the port, when the board has one,
---- past whatever print is. With no pcall left from an earlier
---- file, the file runs unprotected. With no rawget or
---- loadstring the chunk stops before the file runs, and exec
---- says the board did not say whether it ran: the board's
---- prompt keeps a loadstring of its own, and reads every line;
---- with no tostring the file runs, and a mistake in it comes
---- with no frame.
+--- frame goes out by io.write, the way the board answers the
+--- line, over a radio link as over the cable. With no pcall
+--- left from an earlier file, the file runs unprotected. With
+--- no rawget, loadstring or io the chunk stops before the file
+--- runs, and exec says the board did not say whether it ran:
+--- the board's prompt keeps a loadstring of its own, and reads
+--- every line; with no tostring the file runs, and a mistake
+--- in it comes with no frame.
 local OPENING =
     "do local R,G=rawget,_G local f,e=R(G,'loadstring')("
 
 --- What the closing line adds after the file's name: the rest
 --- the chunk uses, taken still before the file runs
-local TAKE = table.concat({
-  "local m,P,T,W=R(G,'microbit'),R(G,'pcall'),",
-  "R(G,'tostring'),R(G,'print')"
-})
+local TAKE =
+    "local P,T,W=R(G,'pcall'),R(G,'tostring'),R(G,'io').write"
 
---- The line after it: where the chunk says how the file
---- ended, the port or else print; and the file's run, with
---- a pcall that runs it unprotected when there is none
+--- The line after it: the file's run, with a pcall that runs
+--- it unprotected when there is none
 local SAY = table.concat({
-  "local s=m and m.serial s=s and s.send",
-  " P=P or function(g)return true,g()end",
+  "P=P or function(g)return true,g()end",
   " local o if f then o,e=P(f)end"
 })
 

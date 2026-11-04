@@ -374,6 +374,23 @@ describe('micro:bit exec #microbit', function()
       end)
   end
 
+  --- over a radio link the port is the far board's own: the
+  --- end comes back the way the board answers, and none of it
+  --- goes to that port
+  it('reads the end of a file run over a radio link', function()
+    local on = newBoard()
+    local port = {}
+    on.env.microbit.serial.send = function(text)
+      port[#port + 1] = text
+    end
+    files['g.lua'] = 'x = 1\n'
+    local tools = load_tools()
+    board(ranOnBoard(tools, 'g.lua', on), '> ')
+    serial:update(0.25)
+    assert.equal('g.lua is on the board', said[#said])
+    assert.same({}, port)
+  end)
+
   --- the verdict comes from this exec's frame at the end,
   --- never from what the program printed; a frame of the
   --- program's own is shown as it is
