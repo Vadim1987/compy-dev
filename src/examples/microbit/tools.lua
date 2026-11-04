@@ -345,16 +345,14 @@ local function chunkLines(filename)
 end
 
 --- What the board has said since it echoed the line in flight
---- and started a new line on taking it. What came before the
---- echo, such as the greeting of a board just reset, is not
---- the line's.
+--- and started a new line on taking it, with CR LF, or CR CR LF
+--- on the bundled firmware. What came before the echo, such as
+--- the greeting of a board just reset, is not the line's.
 --- @return string?
 local function afterEcho()
   local line = sending.lines[sending.at]
-  local _, at = sending.heard:find(line .. "\r\r\n", 1, true)
-  if at then
-    return sending.heard:sub(at + 1)
-  end
+  local _, at = sending.heard:find(line .. "\r", 1, true)
+  return at and sending.heard:match("^\r?\n(.*)", at + 1)
 end
 
 --- The board's answer once its prompt has come, and whether
@@ -792,10 +790,10 @@ local function lastLine(after)
 end
 
 --- How much of the line in flight's echo has come, at the end
---- of what the board said
+--- of what the board said, short of the LF that ends it whole
 --- @return integer
 local function echoed()
-  local echo = sending.lines[sending.at] .. "\r\r\n"
+  local echo = sending.lines[sending.at] .. "\r\r"
   local heard = sending.heard
   for n = math.min(#heard, #echo), 1, -1 do
     if heard:sub(-n) == echo:sub(1, n) then

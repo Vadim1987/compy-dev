@@ -75,13 +75,17 @@ describe('micro:bit exec #microbit', function()
     return env
   end
 
+  --- How the board ends the echo of a line it takes: CR CR LF
+  --- on the bundled firmware
+  local entered
+
   --- The board takes the last line sent: its echo, what it has
   --- to say, and a prompt, ">> " unless given another
   --- @param answer string?
   --- @param prompt string?
   local function board(answer, prompt)
     local line = backend.sent[#backend.sent]:gsub('\r$', '')
-    backend:rx(line .. '\r\r\n' .. (answer or '')
+    backend:rx(line .. entered .. (answer or '')
       .. (prompt or '>> '))
     serial:update(0)
   end
@@ -137,6 +141,7 @@ describe('micro:bit exec #microbit', function()
     serial = Serial.new(backend)
     port = serial:table_for('program')
     said, echoes, flashed = {}, {}, false
+    entered = '\r\r\n'
     files = { ['f.lua'] = 'a = 1\nprint(a)\n' }
     backend:attach()
     serial:update(0)
@@ -2221,5 +2226,43 @@ describe('micro:bit exec #microbit', function()
       'big.lua is 300000 bytes, and MICROBIT.hex has room for',
       'Make it shorter')
     assert.is_nil(files['mine.hex'])
+  end)
+
+  --- The REPL on nagydani/microbit-lua main writes the end of a
+  --- line it takes once, CR LF, where the bundled one wrote CR
+  --- CR LF
+  describe('on firmware that ends a taken line CR LF', function()
+    before_each(function()
+      entered = '\r\n'
+    end)
+
+    it('runs a file', function()
+      local tools = load_tools()
+      run(tools)
+      assert.equal(6, sent())
+      assert.equal(RAN, said[#said])
+    end)
+
+    it('sends a file a line after another', function()
+      files['s.lua'] = 'a = 1\nb = 2\nc = 3\n'
+      local tools = load_tools()
+      tools.send('s.lua')
+      board(nil, '> ')
+      board(nil, '> ')
+      assert.equal(3, sent())
+      board(nil, '> ')
+      assert.is_nil(port.onTick)
+    end)
+
+    it('takes what came before the echo for none of its own',
+      function()
+        local tools = load_tools()
+        tools.exec('f.lua')
+        backend:rx('\r\nmicro:bit\r\nLua 5.1 REPL\r\n> ')
+        serial:update(0)
+        assert.equal(1, sent())
+        board()
+        assert.equal(2, sent())
+      end)
   end)
 end)
