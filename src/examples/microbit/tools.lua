@@ -518,10 +518,8 @@ local function heardLast()
 end
 
 --- The line the board entered in place of the line in flight,
---- once its prompt has come: the board ends a line it enters
---- with CR CR LF, and what came before that differs from the
---- line sent. nil while the line's own echo is there, or may
---- yet come.
+--- once its prompt has come. nil while the line's own echo is
+--- there, or may yet come.
 --- @return string?
 local function changed()
   local prompt = sending.heard:find(">>? $")
@@ -547,13 +545,44 @@ local function mistook()
   sendNext()
 end
 
+--- Whether a line the board said is the line sent less some
+--- of its characters
+--- @param said string
+--- @param line string
+--- @return boolean
+local function lost(said, line)
+  local at = 0
+  for c in said:gmatch(".") do
+    at = line:find(c, at + 1, true)
+    if not at then
+      return false
+    end
+  end
+  return said ~= ""
+end
+
+--- The first line the board said before the line in flight's
+--- echo that is that line less some characters: how a line
+--- goes wrong on its way
+--- @return string?
+local function lostLine()
+  local line = sending.lines[sending.at]
+  for said in sending.heard:gmatch("([^\r\n]*)\r?\r\n") do
+    if said == line then
+      return
+    end
+    if lost(said, line) then
+      return said
+    end
+  end
+end
+
 --- Whether the board entered the line in flight changed, done
 --- with when it did: the first line it entered is kept, as
 --- what it got, before a wait can show and drop it
 --- @return boolean
 local function heardChanged()
-  local entered = sending.heard:match("([^\n]*)\r\r\n")
-  sending.got = sending.got or entered
+  sending.got = sending.got or lostLine()
   local got = changed()
   if got then
     mistook()

@@ -931,14 +931,14 @@ describe('micro:bit exec #microbit', function()
     assert.equal(2, sent())
   end)
 
-  --- A line that reached the board changed: its echo, ended as
-  --- the board ends an entered line, differs from the line sent,
-  --- and a prompt follows. exec stops at once.
+  --- A line that reached the board changed: its echo is the line
+  --- sent less some characters, and a prompt follows. exec stops
+  --- at once.
   it('stops at once when the board got a line changed', function()
     local tools = load_tools()
     tools.exec('f.lua')
     board()
-    backend:rx('a = 2\r\r\n>> ')
+    backend:rx('a 1\r\r\n>> ')
     serial:update(0)
     assert.equal(2, sent())
     assert.is_nil(port.onTick)
@@ -954,7 +954,7 @@ describe('micro:bit exec #microbit', function()
     local tools = load_tools()
     tools.exec('f.lua')
     board()
-    backend:rx('a = 2\r')
+    backend:rx('a 1\r')
     serial:update(1)
     backend:rx('\r\n>> ')
     serial:update(0)
@@ -1205,14 +1205,14 @@ describe('micro:bit exec #microbit', function()
       tools.send('s.lua')
       board(nil, '> ')
       said = {}
-      backend:rx('b = 3\r\r\n> ')
+      backend:rx('b 2\r\r\n> ')
       serial:update(0)
       assert.equal(3, sent())
       assert.equal('c = 3\r', backend.sent[3])
       assert.truthy(allSaid():find('send: the board got line 2 of 3 of'
         .. ' s.lua changed, so what it ran may differ from the file;'
         .. ' the lines above show what it got.', 1, true), allSaid())
-      backend:rx('c = 4\r\r\n> ')
+      backend:rx('c 3\r\r\n> ')
       serial:update(0)
       assert.is_nil(port.onTick)
       local _, n = allSaid():gsub('changed', '')
@@ -2269,6 +2269,28 @@ describe('micro:bit exec #microbit', function()
       assert.equal(3, sent())
       board(nil, '> ')
       assert.is_nil(port.onTick)
+    end)
+
+    it('stops exec at once on a line the board got changed',
+      function()
+        local tools = load_tools()
+        tools.exec('f.lua')
+        board()
+        backend:rx('a 1\r\n>> ')
+        serial:update(0)
+        assert.is_nil(port.onTick)
+        assert.truthy(allSaid():find('got that line changed', 1, true))
+      end)
+
+    it('tells send\'s line the board got changed', function()
+      files['s.lua'] = 'a = 1\nb = 2\nc = 3\n'
+      local tools = load_tools()
+      tools.send('s.lua')
+      board(nil, '> ')
+      backend:rx('b 2\r\n> ')
+      serial:update(0)
+      assert.equal(3, sent())
+      assert.truthy(allSaid():find('s.lua changed', 1, true))
     end)
 
     it('takes what came before the echo for none of its own',
