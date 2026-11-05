@@ -519,10 +519,16 @@ end
 
 --- The line the board entered in place of the line in flight,
 --- once its prompt has come. nil while the line's own echo is
---- there, or may yet come.
+--- there, or may yet come. A prompt starts a line: a "> " in
+--- the middle of one is the echo's, cut there. Bytes alone do
+--- not always tell. A line sent whole still reads as changed
+--- when a program prints some of its characters as a line just
+--- before its echo, and then the program starts a line with
+--- "> ", or the line itself starts with "> " and its echo is
+--- cut right after that.
 --- @return string?
 local function changed()
-  local prompt = sending.heard:find(">>? $")
+  local prompt = ("\n" .. sending.heard):find("\n>>? $")
   local got = not afterEcho() and prompt and sending.got
   return got or nil
 end
@@ -563,16 +569,18 @@ end
 
 --- The first line the board said before the line in flight's
 --- echo that is that line less some characters: how a line
---- goes wrong on its way
+--- goes wrong on its way. A prompt it starts with, as the
+--- greeting of a board just reset leaves, is not the line's.
 --- @return string?
 local function lostLine()
   local line = sending.lines[sending.at]
   for said in sending.heard:gmatch("([^\r\n]*)\r?\r\n") do
-    if said == line then
+    local typed = said:gsub("^>>? ", "")
+    if typed == line then
       return
     end
-    if lost(said, line) then
-      return said
+    if lost(typed, line) then
+      return typed
     end
   end
 end

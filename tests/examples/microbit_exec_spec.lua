@@ -962,6 +962,20 @@ describe('micro:bit exec #microbit', function()
     assert.truthy(allSaid():find('got that line changed', 1, true))
   end)
 
+  --- the greeting of a board just reset ends in a prompt, and
+  --- the first line's echo comes after it on the same line
+  it('stops at once on a changed first line after a greeting',
+    function()
+      local tools = load_tools()
+      tools.exec('f.lua')
+      local line = backend.sent[1]:gsub('\r$', '')
+      backend:rx('micro:bit\r\nLua 5.1 REPL\r\n> '
+        .. line:sub(1, 10) .. line:sub(12) .. '\r\r\n>> ')
+      serial:update(0)
+      assert.is_nil(port.onTick)
+      assert.truthy(allSaid():find('got that line changed', 1, true))
+    end)
+
   --- what legitimately comes before or around a line's echo
   --- never reads as the line changed
   describe('takes as the line\'s own', function()
@@ -1019,6 +1033,23 @@ describe('micro:bit exec #microbit', function()
       local tools = load_tools()
       tools.exec('g.lua')
       through(tools, 3)
+      assert.equal('g.lua is on the board', said[#said])
+    end)
+
+    it('a program\'s line made of the line\'s characters, then an'
+      .. ' echo cut after its "> "', function()
+      files['g.lua'] = 'if distance > 10 then\nend\n'
+      local tools = load_tools()
+      tools.exec('g.lua')
+      board()
+      backend:rx('10\r\n')
+      serial:update(0)
+      backend:rx('if distance > ')
+      serial:update(0)
+      assert.is_nil(allSaid():find('changed', 1, true), allSaid())
+      backend:rx('10 then\r\r\n>> ')
+      serial:update(0)
+      through(tools, 16)
       assert.equal('g.lua is on the board', said[#said])
     end)
 
