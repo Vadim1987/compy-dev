@@ -1,11 +1,12 @@
 -- A TPBot drives a square by the compass. Put it on the
 -- floor away from metal and magnets and run this. It turns in
--- place until the compass has found its circle, then turns on
--- the spot to each side of the square and drives it for two
--- seconds. The display shows C while the compass calibrates,
--- then the side the robot is on, and X if the compass loses
--- its circle. A robot that is not on its wheels makes a sad
--- sound and stays still.
+-- place until the compass has found its circle, a whole turn
+-- or more back to where it started, then turns on the spot to
+-- each side of the square and drives it for two seconds. The
+-- display shows C while the compass calibrates, then the side
+-- the robot is on, and X if the compass loses its circle. A
+-- robot that is not on its wheels makes a sad sound and stays
+-- still.
 
 require("microbit.accelerometer")
 require("microbit.audio")
@@ -74,11 +75,14 @@ function upright(up_x, up_y, up_z)
   return math.abs(up_x) < -up_y and math.abs(up_z) < -up_y
 end
 
--- Turn in place, so that the compass sees the field go round
--- and finds its circle; heading noise 0.15 rad, 9 degrees
+-- Stand for a second, so that the compass knows the heading
+-- the turn is to end on, then turn in place, so that it sees
+-- the field go round and finds its circle; heading noise
+-- 0.15 rad, 9 degrees
 function calibrate(up_x, up_y, up_z)
   microbit.compass.track(up_x, up_y, up_z, 0.15)
   microbit.display.printAsync("C")
+  microbit.sleep(1000)
   tpbot.set_motors_speed(50, -50)
 end
 
